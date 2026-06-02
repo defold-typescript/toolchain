@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseDefoldApiDoc } from "../src/api-doc";
@@ -28,13 +28,19 @@ function fakeZip(entries: Record<string, string>): ZipAccessor {
 }
 
 describe("SYNC_MANIFEST coverage", () => {
-  test("covers every vision.md checklist namespace (core-mapped, extension-mapped, or UNMAPPED)", async () => {
-    const checklist = parseChecklistNamespaces(await Bun.file(VISION).text());
-    expect(checklist.length).toBeGreaterThan(0);
-    const mapped = new Set([...SYNC_MANIFEST, ...EXTENSION_MANIFEST].map((e) => e.namespace));
-    const missing = checklist.filter((ns) => !mapped.has(ns) && !UNMAPPED.has(ns));
-    expect(missing).toEqual([]);
-  });
+  // vision.md lives under the gitignored planning-doc surface, so it is absent
+  // in a fresh checkout (CI). This cross-check runs only where that private doc
+  // exists; it is an authoring-time guard, not a shipped invariant.
+  test.skipIf(!existsSync(VISION))(
+    "covers every vision.md checklist namespace (core-mapped, extension-mapped, or UNMAPPED)",
+    async () => {
+      const checklist = parseChecklistNamespaces(await Bun.file(VISION).text());
+      expect(checklist.length).toBeGreaterThan(0);
+      const mapped = new Set([...SYNC_MANIFEST, ...EXTENSION_MANIFEST].map((e) => e.namespace));
+      const missing = checklist.filter((ns) => !mapped.has(ns) && !UNMAPPED.has(ns));
+      expect(missing).toEqual([]);
+    },
+  );
 
   test("maps graphics to its src-script ref-doc entry", () => {
     const graphics = SYNC_MANIFEST.find((e) => e.namespace === "graphics");
