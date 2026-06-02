@@ -77,6 +77,20 @@ under both `node` and `bun` through `init` → `build` → `tsc --noEmit` → a 
 published packages resolve and run on a clean machine. It touches the network and
 the filesystem outside the repo, so it is a manual check, not a CI gate.
 
+After a release is live on npm, run the registry-sourced twin to confirm the
+**published** graph installs from the registry with no local checkout:
+
+```sh
+bun run registry-smoke          # tests the `latest` published version
+bun run registry-smoke 0.1.0    # or a specific published version
+```
+
+It is identical to `bun run smoke` in everything but the source of the bin:
+instead of packing local tarballs, it `bun add` / `npm install`s
+`@defold-typescript/cli@<version>` straight from npm, then drives the installed
+bin through `init` (both modes) → `build` → `tsc --noEmit`. Like `smoke`, it is
+network-touching and manual, never a CI gate.
+
 ## Next
 
 - Read [vector math](./vector-math.md) for the arithmetic methods on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`.

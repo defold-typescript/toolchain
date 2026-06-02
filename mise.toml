@@ -21,6 +21,10 @@ done
 description = "Advisory packed-install release smoke (network-touching, not a CI gate)"
 run = "bun scripts/release-smoke.ts"
 
+[tasks.registry-smoke]
+description = "Advisory registry-install smoke — pulls the published @defold-typescript/cli from npm (network-touching, not a CI gate)"
+run = "bun scripts/registry-smoke.ts"
+
 [tasks.publish]
 description = "Coordinated local npm publish (tags v<version> on success). Usage: mise run publish [<version>|patch|minor|major] [--publish] (dry-run without --publish)"
 run = "bun scripts/publish.ts"
