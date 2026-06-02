@@ -2,6 +2,7 @@
   "name": "@defold-typescript/types",
   "version": "0.0.0",
   "description": "TypeScript types for the Defold engine's Lua APIs.",
+  "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./index.d.ts",

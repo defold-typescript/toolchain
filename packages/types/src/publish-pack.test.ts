@@ -57,4 +57,14 @@ describe("@defold-typescript/types publish surface", () => {
     const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
     expect(manifest.publishConfig?.access).toBe("public");
   });
+
+  test("ships a README and LICENSE", () => {
+    expect(paths).toContain("README.md");
+    expect(paths).toContain("LICENSE");
+  });
+
+  test("declares the MIT license", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    expect(manifest.license).toBe("MIT");
+  });
 });

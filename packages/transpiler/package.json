@@ -2,6 +2,7 @@
   "name": "@defold-typescript/transpiler",
   "version": "0.0.0",
   "description": "TypeScript-to-Lua build pipeline tuned for Defold's runtime.",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

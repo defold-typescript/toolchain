@@ -77,6 +77,16 @@ describe("@defold-typescript/transpiler publish surface", () => {
     expect(manifest.publishConfig?.access).toBe("public");
   });
 
+  test("ships a README and LICENSE", () => {
+    expect(paths).toContain("README.md");
+    expect(paths).toContain("LICENSE");
+  });
+
+  test("declares the MIT license", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    expect(manifest.license).toBe("MIT");
+  });
+
   test("built entry has no extensionless relative imports", () => {
     for (const specifier of relativeImportSpecifiers(resolve(PKG_DIR, "dist/index.js"))) {
       expect(specifier).toMatch(/\.js$/);
