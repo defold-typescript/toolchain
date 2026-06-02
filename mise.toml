@@ -21,8 +21,12 @@ done
 description = "Advisory packed-install release smoke (network-touching, not a CI gate)"
 run = "bun scripts/release-smoke.ts"
 
+[tasks.publish]
+description = "Coordinated local npm publish. Usage: mise run publish [<version>|patch|minor|major] [--publish] (dry-run without --publish)"
+run = "bun scripts/publish.ts"
+
 [tasks.release]
-description = "Create and push a release tag. Usage: mise run release 1.0.0"
+description = "Tag a published release. Usage: mise run release 1.0.0 (run `mise run publish <version> --publish` first)"
 run = """
 #!/usr/bin/env bash
 set -e
@@ -32,8 +36,8 @@ if [ -z "$VERSION" ]; then
   echo "Example: mise run release 1.0.0"
   exit 1
 fi
-echo "Creating release v$VERSION..."
+echo "Tagging v$VERSION..."
 git tag -a "v$VERSION" -m "Release v$VERSION"
 git push origin "v$VERSION"
-echo "Done! Watch the release at: https://github.com/king8fisher/defold-typescript/actions"
+echo "Pushed tag v$VERSION. (release.yml is parked; npm publish is local via mise run publish.)"
 """
