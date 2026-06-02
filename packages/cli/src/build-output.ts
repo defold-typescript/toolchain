@@ -21,6 +21,12 @@ export function toPosix(p: string, sep: string = path.sep): string {
   return p.split(sep).join("/");
 }
 
+const TRANSPILER_SOURCE_RE = /\.(ts|tsx|cts|mts)$/;
+
+export function isTranspilerSource(rel: string): boolean {
+  return TRANSPILER_SOURCE_RE.test(toPosix(rel));
+}
+
 export function readBuildConfig(cwd: string): BuildConfig {
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   let raw: string;

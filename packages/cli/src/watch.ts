@@ -1,6 +1,6 @@
 import { existsSync, watch as fsWatch } from "node:fs";
 import * as path from "node:path";
-import { toPosix } from "./build-output";
+import { isTranspilerSource, toPosix } from "./build-output";
 import { type BuildSession, createBuildSession } from "./build-session";
 import { isComponentPath, isSkipped } from "./script-kind";
 
@@ -123,8 +123,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   function onEvent(e: WatchEvent): void {
     if (stopped) return;
+    if (!e.path || !isTranspilerSource(e.path)) return;
     rebuildBusy = true;
-    if (e.path) pending.add(e.path);
+    pending.add(e.path);
     if (scheduled) clearTimeout(scheduled);
     scheduled = setTimeout(rebuild, debounceMs);
   }

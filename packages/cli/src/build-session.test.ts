@@ -132,6 +132,31 @@ describe("createBuildSession", () => {
     expect(existsSync(path.join(cwd, "src/b.lua"))).toBe(false);
   });
 
+  test("applyEvents ignores a non-source changed key without writing or throwing", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", "export const a = 1;\n");
+
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    const result = session.applyEvents(["src/main.lua"], []);
+    expect(result.written).toEqual([]);
+  });
+
+  test("applyEvents emits the changed source while dropping a non-source removed key", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", "export const a = 1;\n");
+
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    writeIn(cwd, "src/main.ts", "export const a = 2;\n");
+    const result = session.applyEvents(["src/main.ts"], ["src/old.lua"]);
+
+    expect(result.written).toEqual(["src/main.lua"]);
+    expect(readFileSync(path.join(cwd, "src/main.lua"), "utf8")).toContain("2");
+  });
+
   test("a type error in a changed file throws the build-shaped error and the session stays usable", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
     writeIn(cwd, "src/main.ts", "export const a = 1;\n");

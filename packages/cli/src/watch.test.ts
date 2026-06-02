@@ -134,6 +134,31 @@ describe("runWatch", () => {
     await handle.done;
   });
 
+  test("generated .lua/.lua.map events trigger no rebuild and print no failure", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", "export const a = 1;\n");
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
+
+    factory.trigger("rename", "main.lua");
+    factory.trigger("change", "main.lua");
+    factory.trigger("rename", "main.lua.map");
+    factory.trigger("change", "main.lua.map");
+    await handle.waitForIdle();
+
+    expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
+    expect(err()).toBe("");
+    expect(err()).not.toContain("unsupported extension");
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("burst of events within debounce window coalesces to one rebuild", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", "export const a = 1;\n");

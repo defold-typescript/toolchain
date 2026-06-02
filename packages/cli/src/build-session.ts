@@ -9,6 +9,7 @@ import {
   type BuildConfig,
   collectFailures,
   computeLuaRel,
+  isTranspilerSource,
   readBuildConfig,
   throwIfFailures,
   toPosix,
@@ -75,23 +76,25 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
   }
 
   function applyEvents(changed: string[], removed: string[]): BuildResult {
+    const sourceChanged = changed.filter(isTranspilerSource);
+    const sourceRemoved = removed.filter(isTranspilerSource);
     const changes: Record<string, string | null> = {};
-    for (const rel of changed) {
+    for (const rel of sourceChanged) {
       changes[rel] = readFileSync(path.join(cwd, rel), "utf8");
     }
-    for (const rel of removed) {
+    for (const rel of sourceRemoved) {
       changes[rel] = null;
     }
 
     const result = session.update(changes);
 
-    for (const rel of removed) {
+    for (const rel of sourceRemoved) {
       const luaAbs = path.join(cwd, computeLuaRel(rel, config));
       rmSync(luaAbs, { force: true });
       rmSync(`${luaAbs}.map`, { force: true });
     }
 
-    return writeOutputs(result, changed);
+    return writeOutputs(result, sourceChanged);
   }
 
   return { buildAll, applyEvents };

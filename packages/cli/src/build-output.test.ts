@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { computeLuaRel, toPosix, writeLuaFile } from "./build-output";
+import { computeLuaRel, isTranspilerSource, toPosix, writeLuaFile } from "./build-output";
 
 describe("toPosix separator injection", () => {
   test("normalizes a Windows-separator path when sep is backslash", () => {
@@ -11,6 +11,27 @@ describe("toPosix separator injection", () => {
 
   test("default-separator call is unchanged (opt-in param)", () => {
     expect(toPosix("src/game/hero.ts")).toBe("src/game/hero.ts");
+  });
+});
+
+describe("isTranspilerSource", () => {
+  test("accepts every TypeScript input extension", () => {
+    expect(isTranspilerSource("src/main.ts")).toBe(true);
+    expect(isTranspilerSource("a.tsx")).toBe(true);
+    expect(isTranspilerSource("b.mts")).toBe(true);
+    expect(isTranspilerSource("c.cts")).toBe(true);
+  });
+
+  test("rejects generated output and non-source files", () => {
+    expect(isTranspilerSource("src/main.lua")).toBe(false);
+    expect(isTranspilerSource("src/main.lua.map")).toBe(false);
+    expect(isTranspilerSource("game.project")).toBe(false);
+    expect(isTranspilerSource("x.png")).toBe(false);
+  });
+
+  test("normalizes backslash separators before matching", () => {
+    expect(isTranspilerSource("src\\game\\hero.ts")).toBe(true);
+    expect(isTranspilerSource("src\\game\\hero.lua")).toBe(false);
   });
 });
 
