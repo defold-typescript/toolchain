@@ -209,11 +209,14 @@ describe("runInit (add-TS mode)", () => {
 });
 
 describe("runInit (repairs stale managed devDeps)", () => {
-  function devDepsAfterInit(devDependencies: Record<string, string>): Record<string, string> {
+  function devDepsAfterInit(
+    devDependencies: Record<string, string>,
+    force = false,
+  ): Record<string, string> {
     touch("game.project", "[project]\n");
     const original = { name: "user-project", version: "1.2.3", devDependencies };
     touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
-    runInit({ cwd });
+    runInit({ cwd, force });
     return JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")).devDependencies;
   }
 
@@ -240,6 +243,35 @@ describe("runInit (repairs stale managed devDeps)", () => {
     const devDeps = devDepsAfterInit({ "@defold-typescript/types": "0.1.0" });
 
     expect(devDeps["@defold-typescript/types"]).toBe("0.1.0");
+  });
+
+  test("--force rewrites a stale concrete types pin to the published CLI version", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/types": "^0.0.1" }, true);
+
+    expect(devDeps["@defold-typescript/types"]).toBe(TYPES_SPEC);
+  });
+
+  test("--force still deletes a stale transpiler dep", () => {
+    const devDeps = devDepsAfterInit(
+      { "@defold-typescript/transpiler": "workspace:*", "@defold-typescript/types": "^0.0.1" },
+      true,
+    );
+
+    expect(devDeps["@defold-typescript/transpiler"]).toBeUndefined();
+  });
+
+  test("--force does not overwrite a user's third-party pin or other deps", () => {
+    const devDeps = devDepsAfterInit(
+      {
+        "@defold-typescript/types": "^0.0.1",
+        "@biomejs/biome": "^2.0.0",
+        "some-dep": "^1.0.0",
+      },
+      true,
+    );
+
+    expect(devDeps["@biomejs/biome"]).toBe("^2.0.0");
+    expect(devDeps["some-dep"]).toBe("^1.0.0");
   });
 });
 
