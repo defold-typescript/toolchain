@@ -128,6 +128,20 @@ const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@biomejs/biome": "^2.2.0",
 };
 
+// Older scaffolds wrote both managed `@defold-typescript/*` devDeps as
+// `workspace:*`, which only resolves inside this monorepo and breaks
+// `bun install` in consumers. The additive merge in `writeTsSurface` never
+// repairs an entry it didn't itself create, so repair them explicitly: the
+// transpiler is CLI-internal and must not be a consumer dep at all, and a
+// `workspace:` types pin must become a concrete published version. A concrete
+// user-chosen types pin is left alone.
+function repairManagedDevDeps(devDeps: Record<string, string>): void {
+  delete devDeps["@defold-typescript/transpiler"];
+  if (devDeps["@defold-typescript/types"]?.startsWith("workspace:")) {
+    devDeps["@defold-typescript/types"] = typesVersionSpec();
+  }
+}
+
 function writeJson(filePath: string, value: unknown): void {
   writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
@@ -182,6 +196,7 @@ function writeTsSurface(cwd: string, written: string[]): ScriptKind | null {
         devDeps[name] = version;
       }
     }
+    repairManagedDevDeps(devDeps);
     existing.devDependencies = devDeps;
     existing["defold-typescript"] ??= { "defold-version": CURRENT_STABLE_DEFOLD_VERSION };
     writeJson(pkgPath, existing);

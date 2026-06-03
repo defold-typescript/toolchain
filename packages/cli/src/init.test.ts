@@ -208,6 +208,41 @@ describe("runInit (add-TS mode)", () => {
   });
 });
 
+describe("runInit (repairs stale managed devDeps)", () => {
+  function devDepsAfterInit(devDependencies: Record<string, string>): Record<string, string> {
+    touch("game.project", "[project]\n");
+    const original = { name: "user-project", version: "1.2.3", devDependencies };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+    runInit({ cwd });
+    return JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")).devDependencies;
+  }
+
+  test("removes a stale transpiler workspace dep, leaving other deps and a concrete types pin", () => {
+    const devDeps = devDepsAfterInit({
+      "@defold-typescript/transpiler": "workspace:*",
+      "@defold-typescript/types": "^0.2.0",
+      "some-dep": "^1.0.0",
+    });
+
+    expect(devDeps["@defold-typescript/transpiler"]).toBeUndefined();
+    expect(devDeps["@defold-typescript/types"]).toBe("^0.2.0");
+    expect(devDeps["some-dep"]).toBe("^1.0.0");
+  });
+
+  test("rewrites a workspace:* types pin to the published CLI version", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/types": "workspace:*" });
+
+    expect(devDeps["@defold-typescript/types"]).toBe(TYPES_SPEC);
+    expect(devDeps["@defold-typescript/types"]).not.toBe("workspace:*");
+  });
+
+  test("leaves a concrete user-chosen types pin untouched", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/types": "0.1.0" });
+
+    expect(devDeps["@defold-typescript/types"]).toBe("0.1.0");
+  });
+});
+
 describe("runInit (new-project mode)", () => {
   const NEW_PROJECT_FILES = [
     "game.project",
