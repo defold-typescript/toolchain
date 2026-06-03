@@ -73,6 +73,38 @@ function installedVersion(dir: string): string {
   }
 }
 
+// The published artifact's scaffolded pin is invisible to the init -> build ->
+// tsc flow above: a wrong `@defold-typescript/types` spec in the emitted
+// manifest (or `types` not co-published at the CLI's version) still installs
+// and compiles via the upward resolution, so a real drift would pass silently.
+// `init.test.ts` asserts the same `^${version}` rule against the *source* tree;
+// this checks it on the *published* manifest. Pure so the colocated test drives
+// every branch offline.
+export function checkScaffoldedTypesPin(
+  manifest: unknown,
+  installedVersion: string,
+): { ok: boolean; detail: string } {
+  if (installedVersion === "(unknown)") {
+    return {
+      ok: false,
+      detail: "installed cli version is (unknown); cannot derive the expected types pin",
+    };
+  }
+  const expected = `^${installedVersion}`;
+  const devDeps =
+    typeof manifest === "object" && manifest !== null
+      ? (manifest as { devDependencies?: Record<string, unknown> }).devDependencies
+      : undefined;
+  const found = devDeps?.["@defold-typescript/types"];
+  if (typeof found !== "string") {
+    return { ok: false, detail: `@defold-typescript/types devDep absent; expected ${expected}` };
+  }
+  if (found !== expected) {
+    return { ok: false, detail: `found ${found}, expected ${expected}` };
+  }
+  return { ok: true, detail: found };
+}
+
 function runtimeFlow(runtime: string, spec: string): void {
   // New-project mode: the published CLI installs into `proj`; the new project
   // synthesizes into an empty `app` subdir (new-project mode refuses a
@@ -100,6 +132,18 @@ function runtimeFlow(runtime: string, spec: string): void {
       )
     ) {
       return;
+    }
+
+    let manifest: unknown;
+    try {
+      manifest = JSON.parse(readFileSync(path.join(app, "package.json"), "utf8"));
+    } catch (err) {
+      manifest = undefined;
+      record(`${runtime} scaffolds types ^${installedVersion(proj)}`, false, String(err));
+    }
+    if (manifest !== undefined) {
+      const pin = checkScaffoldedTypesPin(manifest, installedVersion(proj));
+      record(`${runtime} scaffolds types ^${installedVersion(proj)}`, pin.ok, pin.detail);
     }
 
     const build = spawn([runtime, bin, "build", app], app);

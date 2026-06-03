@@ -46,6 +46,14 @@ bunx @defold-typescript/cli init
 
 The scaffold also ships an opinionated `biome.json` and adds `@biomejs/biome` to your `devDependencies`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched.
 
+If the scaffolded `@defold-typescript/types` pin looks older than the CLI you expect, you are running a stale `bunx` binary, not hitting a bug — the pin always matches the CLI's own version. Force the current release with an explicit `@latest`:
+
+```sh
+bunx @defold-typescript/cli@latest init
+```
+
+This is more reliable than clearing the cache with `bun pm cache rm`.
+
 ## Write a script
 
 Open `src/main.ts` and replace its body with:
