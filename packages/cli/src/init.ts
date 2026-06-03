@@ -134,10 +134,11 @@ const SCAFFOLD_DEV_DEPS: Record<string, string> = {
 // repairs an entry it didn't itself create, so repair them explicitly: the
 // transpiler is CLI-internal and must not be a consumer dep at all, and a
 // `workspace:` types pin must become a concrete published version. A concrete
-// user-chosen types pin is left alone.
-function repairManagedDevDeps(devDeps: Record<string, string>): void {
+// user-chosen types pin is left alone unless `force` is set, the explicit
+// opt-in to refresh the managed pin (and only that pin) to the CLI's version.
+function repairManagedDevDeps(devDeps: Record<string, string>, force = false): void {
   delete devDeps["@defold-typescript/transpiler"];
-  if (devDeps["@defold-typescript/types"]?.startsWith("workspace:")) {
+  if (force || devDeps["@defold-typescript/types"]?.startsWith("workspace:")) {
     devDeps["@defold-typescript/types"] = typesVersionSpec();
   }
 }
@@ -171,7 +172,7 @@ function writeBiome(cwd: string, written: string[]): void {
   written.push("biome.json");
 }
 
-function writeTsSurface(cwd: string, written: string[]): ScriptKind | null {
+function writeTsSurface(cwd: string, written: string[], force = false): ScriptKind | null {
   mkdirSync(path.join(cwd, "src"), { recursive: true });
   writeFileSync(path.join(cwd, "src", "main.ts"), MAIN_TS_CONTENT);
   written.push("src/main.ts");
@@ -196,7 +197,7 @@ function writeTsSurface(cwd: string, written: string[]): ScriptKind | null {
         devDeps[name] = version;
       }
     }
-    repairManagedDevDeps(devDeps);
+    repairManagedDevDeps(devDeps, force);
     existing.devDependencies = devDeps;
     existing["defold-typescript"] ??= { "defold-version": CURRENT_STABLE_DEFOLD_VERSION };
     writeJson(pkgPath, existing);
@@ -243,7 +244,7 @@ export function runNewProjectInit(cwd: string, force = false): RunInitResult {
   writeFileSync(path.join(cwd, "main", "main.script"), MAIN_SCRIPT_CONTENT);
   written.push("main/main.script");
 
-  const scriptKind = writeTsSurface(cwd, written);
+  const scriptKind = writeTsSurface(cwd, written, force);
 
   return { written, scriptKind };
 }
@@ -266,6 +267,6 @@ export function runInit(opts: RunInitOptions): RunInitResult {
   }
 
   const written: string[] = [];
-  const scriptKind = writeTsSurface(cwd, written);
+  const scriptKind = writeTsSurface(cwd, written, force);
   return { written, scriptKind };
 }
