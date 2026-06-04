@@ -1,6 +1,7 @@
 import "./generated/builtin-messages";
 import "./src/msg-overloads";
 import "./src/go-overloads";
+import "./src/engine-globals";
 import "./generated/b2d";
 import "./generated/buffer";
 import "./generated/camera";

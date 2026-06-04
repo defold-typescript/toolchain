@@ -97,7 +97,10 @@ How the surface is produced depends on the resolved version:
   reference docs are downloaded once on first use and cached, so later builds
   are offline. The generated faux package is self-contained: it carries its own
   `core-types.d.ts`, so the surface type-checks regardless of where the project
-  lives.
+  lives. It also carries `engine-globals.d.ts` and side-effect imports it from
+  the surface `index.d.ts`, so the engine types (`Vector3`, `Hash`, `Url`, …)
+  are ambient globals — name them with no import, matching the namespace
+  ergonomics (`vmath`, `go`, …).
 
 The `.defold-types/` directory is generated output, so build adds it to the
 project `.gitignore`. The materialized directory is reported in `--json` output

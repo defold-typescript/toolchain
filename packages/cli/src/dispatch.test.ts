@@ -375,8 +375,19 @@ describe("dispatch", () => {
 
   test("build --json materializes the selected surface and reports the dir", () => {
     scaffoldBuildProject();
-    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    const pkgRoot = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-pkg-"));
+    const sourceGeneratedDir = path.join(pkgRoot, "generated");
+    const pkgSrcDir = path.join(pkgRoot, "src");
+    mkdirSync(sourceGeneratedDir, { recursive: true });
+    mkdirSync(pkgSrcDir, { recursive: true });
     writeFileSync(path.join(sourceGeneratedDir, "label.d.ts"), "declare const __label: unknown;\n");
+    writeFileSync(path.join(pkgSrcDir, "msg-overloads.d.ts"), "export {};\n");
+    writeFileSync(path.join(pkgSrcDir, "go-overloads.d.ts"), "export {};\n");
+    writeFileSync(path.join(pkgSrcDir, "core-types.ts"), "export interface Hash {}\n");
+    writeFileSync(
+      path.join(pkgSrcDir, "engine-globals.d.ts"),
+      'import type * as Core from "./core-types";\ndeclare global {\n  type Hash = Core.Hash;\n}\nexport {};\n',
+    );
 
     const { io, out } = captureStreams();
     const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
@@ -384,9 +395,14 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
     expect(parsed.materializedSurface).toBe(".defold-types/defold-1.12.4");
-    expect(existsSync(path.join(cwd, ".defold-types", "defold-1.12.4", "label.d.ts"))).toBe(true);
+    const surfaceDir = path.join(cwd, ".defold-types", "defold-1.12.4");
+    expect(existsSync(path.join(surfaceDir, "label.d.ts"))).toBe(true);
+    expect(existsSync(path.join(surfaceDir, "engine-globals.d.ts"))).toBe(true);
+    expect(readFileSync(path.join(surfaceDir, "index.d.ts"), "utf8")).toContain(
+      'import "./engine-globals";',
+    );
 
-    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+    rmSync(pkgRoot, { recursive: true, force: true });
   });
 
   test("build --json on a single-.script project narrows to scriptKind script", () => {
@@ -475,6 +491,10 @@ describe("dispatch", () => {
     expect(existsSync(path.join(dir, "label.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "index.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "package.json"))).toBe(true);
+    expect(existsSync(path.join(dir, "engine-globals.d.ts"))).toBe(true);
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toContain(
+      'import "./engine-globals";',
+    );
 
     const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { typeRoots: string[]; types: string[] };

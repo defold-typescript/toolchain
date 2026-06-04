@@ -70,6 +70,8 @@ export function materializeApiSurface(
   );
   const coreTypesSrc = path.join(srcDir, "core-types.ts");
   const includeCoreTypes = overloads.length > 0 && existsSync(coreTypesSrc);
+  const engineGlobalsSrc = path.join(srcDir, "engine-globals.d.ts");
+  const includeEngineGlobals = includeCoreTypes && existsSync(engineGlobalsSrc);
 
   const wanted = new Set(sources);
   for (const file of overloads) {
@@ -77,6 +79,9 @@ export function materializeApiSurface(
   }
   if (includeCoreTypes) {
     wanted.add("core-types.d.ts");
+  }
+  if (includeEngineGlobals) {
+    wanted.add("engine-globals.d.ts");
   }
 
   for (const existing of readdirSync(absDir)) {
@@ -94,11 +99,17 @@ export function materializeApiSurface(
   if (includeCoreTypes) {
     writeFileSync(path.join(absDir, "core-types.d.ts"), readFileSync(coreTypesSrc, "utf8"));
   }
+  if (includeEngineGlobals) {
+    writeFileSync(path.join(absDir, "engine-globals.d.ts"), readFileSync(engineGlobalsSrc, "utf8"));
+  }
   for (const file of overloads) {
     writeFileSync(path.join(absDir, file), readFileSync(path.join(srcDir, file), "utf8"));
   }
 
   const modules = [...sources, ...overloads].map((file) => file.replace(/\.d\.ts$/, ""));
+  if (includeEngineGlobals) {
+    modules.push("engine-globals");
+  }
   const imports = modules.map((mod) => `import "./${mod}";`).join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
@@ -216,6 +227,12 @@ export async function materializeRefDocSurface(
       ...(excludeModules.length > 0 ? { excludeModules } : {}),
     });
     copyFileSync(path.join(root, "src", "core-types.ts"), path.join(absDir, "core-types.d.ts"));
+    copyFileSync(
+      path.join(root, "src", "engine-globals.d.ts"),
+      path.join(absDir, "engine-globals.d.ts"),
+    );
+    const indexPath = path.join(absDir, "index.d.ts");
+    writeFileSync(indexPath, `import "./engine-globals";\n${readFileSync(indexPath, "utf8")}`);
   } catch {
     rmSync(absDir, { recursive: true, force: true });
     return { materializedDir: null, active: null };
