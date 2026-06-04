@@ -2,6 +2,8 @@
 
 Scaffold a Defold project with TypeScript sources, write a script, and build to Lua. The whole loop runs on Bun — no `npm` or `node`.
 
+Coming from Lua? See [TypeScript vs Lua](./typescript-vs-lua.md) for a translation cheat-sheet.
+
 ## Install Bun
 
 Follow the official instructions at [bun.sh](https://bun.sh/). Verify:

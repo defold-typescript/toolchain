@@ -96,4 +96,30 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("## `as` is a compile-time assertion, not a runtime check");
     expect(body).toContain("## Some slots are `unknown` on purpose — the `any` wildcard");
   });
+
+  test("docs/guide/typescript-vs-lua.md exists with its section markers", async () => {
+    const f = Bun.file(resolve(GUIDE, "typescript-vs-lua.md"));
+    expect(await f.exists()).toBe(true);
+    const body = await readGuide("typescript-vs-lua.md");
+    expect(body).toContain("## Syntax at a glance");
+    expect(body).toContain("## Tables vs objects, arrays, and Maps");
+    expect(body).toContain("## Modules: `require` vs `import`");
+    expect(body).toContain("## Standard library and built-ins");
+  });
+
+  test("docs/guide/typescript-vs-lua.md carries the not-equal translation row", async () => {
+    const body = await readGuide("typescript-vs-lua.md");
+    expect(body).toContain("~=");
+    expect(body).toContain("!==");
+  });
+
+  test("docs/guide/README.md links the TypeScript-vs-Lua cheat sheet", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("typescript-vs-lua.md");
+  });
+
+  test("docs/guide/getting-started.md cross-links the TypeScript-vs-Lua cheat sheet", async () => {
+    const body = await readGuide("getting-started.md");
+    expect(body).toContain("typescript-vs-lua.md");
+  });
 });

@@ -2,6 +2,8 @@
 
 Sharp edges where TypeScript, the TypeScriptToLua transpiler, or the Defold runtime behave in ways the type system cannot fully express. Each entry names the symptom, explains why it happens, and gives the recommended workaround.
 
+New to TypeScript from Lua? Start with [TypeScript vs Lua](./typescript-vs-lua.md) for the syntax-and-idiom map; this page is the depth catalog you reach for when one of those quirks bites.
+
 ## Before you start: Lua vs TypeScript gotchas
 
 The one-line version of every trap on this page. Skim it once; jump to the full entry when one bites.

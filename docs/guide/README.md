@@ -5,6 +5,7 @@ End-user documentation for `defold-typescript`: how to scaffold a project, write
 ## Contents
 
 - [Getting started](./getting-started.md) — install Bun, scaffold a new project with `defold-typescript init`, write a one-screen script, and build to Lua with `defold-typescript build`.
+- [TypeScript vs Lua](./typescript-vs-lua.md) — the Lua-developer on-ramp: a cheat sheet that translates syntax, tables, modules, and the standard library from Lua to the TypeScript the toolchain expects.
 - [Defold editor](./defold-editor.md) — install Defold, open the generated project folder, build TypeScript to Lua next to each source file, and run the game.
 - [Add TypeScript to an existing project](./add-typescript.md) — run `defold-typescript init` in a folder with `game.project` to add the TypeScript surface without replacing the Defold project.
 - [Code editor setup](./editor-setup.md) — open the project in VSCode, use the generated `tsconfig.json`, and run `defold-typescript watch` beside the Defold editor.
