@@ -2,17 +2,13 @@
 
 `@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters.
 
+`init` **returns** the script's initial state — it does not receive and mutate `self`. That return is the single site TypeScript infers the `self` type (`TSelf`) from, so you write the field set once and every other hook's `self` is typed from it. No explicit type argument is needed:
+
 ```ts
 import { defineGuiScript, defineScript, type Hash } from "@defold-typescript/types";
 
-type PlayerSelf = {
-  speed: number;
-};
-
-export default defineScript<PlayerSelf>({
-  init(self) {
-    self.speed = 120;
-  },
+export default defineScript({
+  init: () => ({ speed: 120 }),
 
   on_input(self, action_id, action) {
     if (action_id === undefined) {
@@ -53,6 +49,10 @@ export const menu = defineGuiScript<MenuSelf>({
   },
 });
 ```
+
+The `menu` script above shows the escape hatch: pass an explicit type argument (`defineGuiScript<MenuSelf>`) when a script has no `init` to infer from, or to pin `self` to a named interface. With an explicit argument, `init`'s return is checked against it rather than inferred from it.
+
+At runtime Defold owns `self` (a userdata-backed table) and a script can populate but not replace it, so the transpiler can't emit a returning `init` verbatim. It wraps the body in a builder and merges the returned table onto the engine `self`; a `nil`/stateless return merges nothing. The hooks you write stay in terms of a typed `self`.
 
 `defineScript` and `defineGuiScript` both type `on_input` as `(self, action_id, action) => boolean | void`.
 

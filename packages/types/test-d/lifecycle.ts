@@ -17,11 +17,7 @@ const _url = null as unknown as Url;
 type Self = { counter: number };
 
 const hooks: ScriptHooks<Self> = defineScript<Self>({
-  init(self) {
-    self.counter = 0;
-    const _n: number = self.counter;
-    void _n;
-  },
+  init: () => ({ counter: 0 }),
   update(self, dt) {
     const _n: number = self.counter;
     const _dt: number = dt;
@@ -111,22 +107,36 @@ hooks.on_input?.(self, undefined, {});
 
 defineScript<Self>({});
 
+// Explicit `<Self>` keeps checking `init`'s return against the named type.
 defineScript<Self>({
-  init(self) {
-    self.counter = 1;
-  },
+  init: () => ({ counter: 1 }),
 });
 
+// @ts-expect-error init's return must satisfy the explicit Self
+defineScript<Self>({ init: () => ({ counter: "not-a-number" }) });
+
 void hooks;
+
+// No explicit type argument: `TSelf` is solved from `init`'s return alone and
+// flows into every other hook's `self` (the `NoInfer` wrappers keep `update`
+// from competing as a second inference site).
+const inferred = defineScript({
+  init: () => ({ counter: 0 }),
+  update(self, dt) {
+    const _n: number = self.counter;
+    const _dt: number = dt;
+    void _n;
+    void _dt;
+    // @ts-expect-error a property `init` never returned is not on the inferred self
+    void self.missing;
+  },
+});
+void inferred;
 
 type GuiSelf = { root: Hash };
 
 const guiHooks: GuiScriptHooks<GuiSelf> = defineGuiScript<GuiSelf>({
-  init(self) {
-    self.root = null as unknown as Hash;
-    const _root: Hash = self.root;
-    void _root;
-  },
+  init: () => ({ root: _hash }),
   on_message(self, message_id, message, sender) {
     const _self: GuiSelf = self;
     const _mid: Hash = message_id;
@@ -157,15 +167,24 @@ guiHooks.on_message?.(guiSelf, "set_parent", { anything: 1 }, _url);
 
 defineGuiScript<GuiSelf>({});
 
+// `defineGuiScript` infers `TSelf` from `init`'s return identically.
+const inferredGui = defineGuiScript({
+  init: () => ({ root: _hash }),
+  on_input(self) {
+    const _root: Hash = self.root;
+    void _root;
+    // @ts-expect-error a property `init` never returned is not on the inferred self
+    void self.missing;
+  },
+});
+void inferredGui;
+
 void guiHooks;
 
 type RenderSelf = { tile_pred: unknown };
 
 const renderHooks: RenderScriptHooks<RenderSelf> = defineRenderScript<RenderSelf>({
-  init(self) {
-    const _self: RenderSelf = self;
-    void _self;
-  },
+  init: () => ({ tile_pred: null }),
   update(self, dt) {
     const _self: RenderSelf = self;
     const _dt: number = dt;
@@ -200,6 +219,21 @@ renderHooks.on_message?.(renderSelf, _hash, { anything: 1 }, _url);
 renderHooks.on_message?.(renderSelf, "set_parent", { anything: 1 }, _url);
 
 defineRenderScript<RenderSelf>({});
+
+// `defineRenderScript` infers `TSelf` from `init`'s return identically, and
+// still omits `on_input` from its hook surface.
+const inferredRender = defineRenderScript({
+  init: () => ({ frames: 0 }),
+  update(self, dt) {
+    const _n: number = self.frames;
+    const _dt: number = dt;
+    void _n;
+    void _dt;
+    // @ts-expect-error a property `init` never returned is not on the inferred self
+    void self.missing;
+  },
+});
+void inferredRender;
 
 defineRenderScript<Record<string, never>>({
   // @ts-expect-error on_input is not a member of RenderScriptHooks

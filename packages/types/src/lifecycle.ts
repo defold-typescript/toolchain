@@ -40,27 +40,31 @@ export interface InputAction {
 }
 
 export interface ScriptHooks<TSelf> {
-  init?(self: TSelf): void;
-  update?(self: TSelf, dt: number): void;
-  fixed_update?(self: TSelf, dt: number): void;
-  late_update?(self: TSelf, dt: number): void;
+  // `init` returns the script's initial state; it is the sole site TypeScript
+  // solves `TSelf` from. The engine owns `self` (a userdata-backed table), so
+  // every other hook wraps it in `NoInfer<TSelf>` — otherwise their `self`
+  // competes as a second inference site and `TSelf` collapses to `{}`.
+  init?(): TSelf;
+  update?(self: NoInfer<TSelf>, dt: number): void;
+  fixed_update?(self: NoInfer<TSelf>, dt: number): void;
+  late_update?(self: NoInfer<TSelf>, dt: number): void;
   // Defold delivers message_id as a pre-hashed `hash`, so handlers must compare
   // it against `hash("...")` constants — a string literal never matches. Sender-
   // side payload narrowing by message id lives on `msg.post` (msg-overloads.d.ts).
   on_message?(
-    self: TSelf,
+    self: NoInfer<TSelf>,
     message_id: Hash,
     message: Record<string | number, unknown>,
     sender: Url,
   ): void;
   on_input?(
-    self: TSelf,
+    self: NoInfer<TSelf>,
     action_id: Hash | undefined,
     action: InputAction,
     // biome-ignore lint/suspicious/noConfusingVoidType: Defold lets handlers omit the return; `void` is the right shape for "may return boolean or nothing".
   ): boolean | void;
-  final?(self: TSelf): void;
-  on_reload?(self: TSelf): void;
+  final?(self: NoInfer<TSelf>): void;
+  on_reload?(self: NoInfer<TSelf>): void;
 }
 
 export const SCRIPT_HOOK_NAMES = [
@@ -87,15 +91,19 @@ export type GuiScriptHooks<TSelf> = ScriptHooks<TSelf>;
 
 export type RenderScriptHooks<TSelf> = Omit<ScriptHooks<TSelf>, "on_input">;
 
-export function defineScript<TSelf>(hooks: ScriptHooks<TSelf>): ScriptHooks<TSelf> {
+export function defineScript<TSelf = Record<never, never>>(
+  hooks: ScriptHooks<TSelf>,
+): ScriptHooks<TSelf> {
   return hooks;
 }
 
-export function defineGuiScript<TSelf>(hooks: GuiScriptHooks<TSelf>): GuiScriptHooks<TSelf> {
+export function defineGuiScript<TSelf = Record<never, never>>(
+  hooks: GuiScriptHooks<TSelf>,
+): GuiScriptHooks<TSelf> {
   return hooks;
 }
 
-export function defineRenderScript<TSelf>(
+export function defineRenderScript<TSelf = Record<never, never>>(
   hooks: RenderScriptHooks<TSelf>,
 ): RenderScriptHooks<TSelf> {
   return hooks;

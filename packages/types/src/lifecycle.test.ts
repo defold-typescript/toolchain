@@ -4,7 +4,7 @@ import { defineGuiScript, defineRenderScript, defineScript } from "./lifecycle";
 describe("defineScript", () => {
   test("returns the hooks object by identity (no wrapping)", () => {
     const hooks = {
-      init() {},
+      init: () => ({ counter: 0 }),
       update() {},
     };
     expect(defineScript<{ counter: number }>(hooks)).toBe(hooks);
@@ -37,7 +37,7 @@ describe("defineScript", () => {
 describe("defineGuiScript", () => {
   test("returns the hooks object by identity (no wrapping)", () => {
     const hooks = {
-      init() {},
+      init: () => ({ counter: 0 }),
       update() {},
     };
     expect(defineGuiScript<{ counter: number }>(hooks)).toBe(hooks);
@@ -47,7 +47,7 @@ describe("defineGuiScript", () => {
 describe("defineRenderScript", () => {
   test("returns the hooks object by identity (no wrapping)", () => {
     const hooks = {
-      init() {},
+      init: () => ({ counter: 0 }),
       update() {},
     };
     expect(defineRenderScript<{ counter: number }>(hooks)).toBe(hooks);

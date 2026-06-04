@@ -23,14 +23,21 @@ const anim_idle = hash("idle");
 const anim_jump = hash("jump");
 const anim_fall = hash("fall");
 
-interface PlayerSelf {
-  velocity: Vector3;
-  facing_direction: number;
-  correction: Vector3;
-  ground_contact: boolean;
-  wall_contact: boolean;
-  anim: Hash | undefined;
+// The script state is defined once, by `init`'s return shape. `PlayerSelf` is
+// derived from it so the standalone helpers keep a named annotation without a
+// second hand-maintained field list that could drift from `init`.
+function createPlayerSelf() {
+  return {
+    velocity: vmath.vector3(0, 0, 0),
+    facing_direction: 0,
+    correction: vmath.vector3(),
+    ground_contact: false,
+    wall_contact: false,
+    anim: undefined as Hash | undefined,
+  };
 }
+
+type PlayerSelf = ReturnType<typeof createPlayerSelf>;
 
 // The contact_point_response fields this script reads. on_message delivers the
 // payload as an untyped record, so we cast to the subset we use. (The typed
@@ -125,15 +132,12 @@ function walk(self: PlayerSelf, direction: number): void {
   }
 }
 
-export default defineScript<PlayerSelf>({
-  init(self) {
-    // This lets us handle input in this script.
+export default defineScript({
+  init() {
+    // This lets us handle input in this script. `init` returns the initial
+    // state; the transpiler merges it onto the engine-owned `self`.
     msg.post(".", "acquire_input_focus");
-    self.velocity = vmath.vector3(0, 0, 0);
-    self.facing_direction = 0;
-    self.correction = vmath.vector3();
-    self.ground_contact = false;
-    self.anim = undefined;
+    return createPlayerSelf();
   },
 
   fixed_update(self, dt) {

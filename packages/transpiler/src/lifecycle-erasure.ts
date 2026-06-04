@@ -1,14 +1,23 @@
 import * as ts from "typescript";
 import {
   createAssignmentStatement,
+  createBinaryExpression,
   createBlock,
+  createCallExpression,
   createExpressionStatement,
+  createForInStatement,
   createFunctionExpression,
   createIdentifier,
+  createIfStatement,
+  createNilLiteral,
+  createReturnStatement,
+  createTableIndexExpression,
+  createVariableDeclarationStatement,
   type Identifier,
   NodeFlags,
   type Plugin,
   type Statement,
+  SyntaxKind,
   type TransformationContext,
 } from "typescript-to-lua";
 
@@ -75,6 +84,92 @@ function transformHookBody(fn: HookFunction, context: TransformationContext): St
   return [createExpressionStatement(context.transformExpression(fn.body))];
 }
 
+function crossesFunctionBoundary(node: ts.Node): boolean {
+  return (
+    ts.isFunctionDeclaration(node) ||
+    ts.isFunctionExpression(node) ||
+    ts.isArrowFunction(node) ||
+    ts.isMethodDeclaration(node) ||
+    ts.isGetAccessorDeclaration(node) ||
+    ts.isSetAccessorDeclaration(node)
+  );
+}
+
+function initReturnsValue(fn: HookFunction): boolean {
+  if (!ts.isBlock(fn.body)) {
+    return true;
+  }
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (found || crossesFunctionBoundary(node)) {
+      return;
+    }
+    if (ts.isReturnStatement(node) && node.expression !== undefined) {
+      found = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  ts.forEachChild(fn.body, visit);
+  return found;
+}
+
+function initBuilderBody(fn: HookFunction, context: TransformationContext): Statement[] {
+  if (ts.isBlock(fn.body)) {
+    return context.transformStatements(fn.body.statements);
+  }
+  return [createReturnStatement([context.transformExpression(fn.body)])];
+}
+
+// init-merge: Defold owns `self` (a userdata-backed table) and a script can
+// populate but not replace it, so a returning `init(): TSelf` can't be emitted
+// verbatim. Wrap the body in a `____init` builder and merge its result onto the
+// engine `self`; a `nil` return (stateless script) merges nothing.
+function emitInitMerge(
+  fn: HookFunction,
+  context: TransformationContext,
+  property: ts.ObjectLiteralElementLike,
+): Statement[] {
+  const builder = createFunctionExpression(
+    createBlock(initBuilderBody(fn, context)),
+    [],
+    undefined,
+    NodeFlags.Declaration,
+    fn,
+  );
+  const builderDecl = createVariableDeclarationStatement(createIdentifier("____init"), builder);
+
+  const stateDecl = createVariableDeclarationStatement(
+    createIdentifier("____s"),
+    createCallExpression(createIdentifier("____init"), []),
+  );
+  const mergeAssignment = createAssignmentStatement(
+    createTableIndexExpression(createIdentifier("self"), createIdentifier("____k")),
+    createIdentifier("____v"),
+  );
+  const forIn = createForInStatement(
+    createBlock([mergeAssignment]),
+    [createIdentifier("____k"), createIdentifier("____v")],
+    [createCallExpression(createIdentifier("pairs"), [createIdentifier("____s")])],
+  );
+  const guard = createIfStatement(
+    createBinaryExpression(
+      createIdentifier("____s"),
+      createNilLiteral(),
+      SyntaxKind.InequalityOperator,
+    ),
+    createBlock([forIn]),
+  );
+  const initFn = createFunctionExpression(
+    createBlock([stateDecl, guard]),
+    [createIdentifier("self")],
+    undefined,
+    NodeFlags.Declaration,
+    fn,
+  );
+  return [builderDecl, createAssignmentStatement(createIdentifier("init"), initFn, property)];
+}
+
 function eraseFactoryCall(
   expression: ts.Expression,
   context: TransformationContext,
@@ -94,6 +189,10 @@ function eraseFactoryCall(
     const name = hookName(property);
     const fn = hookFunction(property);
     if (name === undefined || fn === undefined) {
+      continue;
+    }
+    if (name === "init" && initReturnsValue(fn)) {
+      statements.push(...emitInitMerge(fn, context, property));
       continue;
     }
     const params: Identifier[] = fn.parameters
