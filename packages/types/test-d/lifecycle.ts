@@ -40,10 +40,14 @@ const hooks: ScriptHooks<Self> = defineScript<Self>({
     void _self;
     void _dt;
   },
-  on_message(self, _message_id, _message, sender) {
+  on_message(self, message_id, message, sender) {
     const _self: Self = self;
+    const _mid: Hash = message_id;
+    const _message: Record<string | number, unknown> = message;
     const _sender: Url = sender;
     void _self;
+    void _mid;
+    void _message;
     void _sender;
   },
   on_input(self, action_id, action) {
@@ -96,24 +100,14 @@ const hooks: ScriptHooks<Self> = defineScript<Self>({
 
 const self: Self = { counter: 0 };
 
-hooks.on_message?.(self, "set_parent", { parent_id: _hash, keep_world_transform: 1 }, _url);
-hooks.on_message?.(self, "set_parent", {}, _url);
+// message_id is a Hash (Defold delivers it pre-hashed); message is an untyped record.
+hooks.on_message?.(self, _hash, { anything: 1 }, _url);
+hooks.on_message?.(self, _hash, {}, _url);
 
-// @ts-expect-error set_parent payload has no `wrong_field`
-hooks.on_message?.(self, "set_parent", { wrong_field: 1 }, _url);
+// @ts-expect-error message_id must be a Hash, not a string literal
+hooks.on_message?.(self, "set_parent", { anything: 1 }, _url);
 
-// @ts-expect-error parent_id must be Hash, not string
-hooks.on_message?.(self, "set_parent", { parent_id: "not a hash" }, _url);
-
-// @ts-expect-error keep_world_transform is 0 | 1, not arbitrary number
-hooks.on_message?.(self, "set_parent", { keep_world_transform: 2 }, _url);
-
-hooks.on_message?.(self, "my_custom_message", { anything: 1 }, _url);
-hooks.on_message?.(self, "another_custom", { 0: "x" }, _url);
 hooks.on_input?.(self, undefined, {});
-
-declare const dynamicId: string;
-hooks.on_message?.(self, dynamicId, { anything: 1 }, _url);
 
 defineScript<Self>({});
 
@@ -133,10 +127,14 @@ const guiHooks: GuiScriptHooks<GuiSelf> = defineGuiScript<GuiSelf>({
     const _root: Hash = self.root;
     void _root;
   },
-  on_message(self, _message_id, _message, sender) {
+  on_message(self, message_id, message, sender) {
     const _self: GuiSelf = self;
+    const _mid: Hash = message_id;
+    const _message: Record<string | number, unknown> = message;
     const _sender: Url = sender;
     void _self;
+    void _mid;
+    void _message;
     void _sender;
   },
   on_input(self, action_id, action) {
@@ -151,11 +149,11 @@ const guiHooks: GuiScriptHooks<GuiSelf> = defineGuiScript<GuiSelf>({
 
 const guiSelf: GuiSelf = { root: _hash };
 
-guiHooks.on_message?.(guiSelf, "set_parent", { parent_id: _hash, keep_world_transform: 1 }, _url);
+guiHooks.on_message?.(guiSelf, _hash, { anything: 1 }, _url);
 guiHooks.on_input?.(guiSelf, undefined, {});
 
-// @ts-expect-error set_parent payload has no `wrong_field`
-guiHooks.on_message?.(guiSelf, "set_parent", { wrong_field: 1 }, _url);
+// @ts-expect-error message_id must be a Hash, not a string literal
+guiHooks.on_message?.(guiSelf, "set_parent", { anything: 1 }, _url);
 
 defineGuiScript<GuiSelf>({});
 
@@ -174,10 +172,14 @@ const renderHooks: RenderScriptHooks<RenderSelf> = defineRenderScript<RenderSelf
     void _self;
     void _dt;
   },
-  on_message(self, _message_id, _message, sender) {
+  on_message(self, message_id, message, sender) {
     const _self: RenderSelf = self;
+    const _mid: Hash = message_id;
+    const _message: Record<string | number, unknown> = message;
     const _sender: Url = sender;
     void _self;
+    void _mid;
+    void _message;
     void _sender;
   },
   final(self) {
@@ -192,15 +194,10 @@ const renderHooks: RenderScriptHooks<RenderSelf> = defineRenderScript<RenderSelf
 
 const renderSelf: RenderSelf = { tile_pred: null };
 
-renderHooks.on_message?.(
-  renderSelf,
-  "set_parent",
-  { parent_id: _hash, keep_world_transform: 1 },
-  _url,
-);
+renderHooks.on_message?.(renderSelf, _hash, { anything: 1 }, _url);
 
-// @ts-expect-error set_parent payload has no `wrong_field`
-renderHooks.on_message?.(renderSelf, "set_parent", { wrong_field: 1 }, _url);
+// @ts-expect-error message_id must be a Hash, not a string literal
+renderHooks.on_message?.(renderSelf, "set_parent", { anything: 1 }, _url);
 
 defineRenderScript<RenderSelf>({});
 

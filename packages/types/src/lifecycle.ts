@@ -1,9 +1,5 @@
 import type { Hash, Url } from "./core-types";
 
-type OnMessagePayload<K> = K extends BuiltinMessageId
-  ? BuiltinMessages[K]
-  : Record<string | number, unknown>;
-
 export interface InputTouch {
   id?: number;
   pressed?: boolean;
@@ -48,10 +44,13 @@ export interface ScriptHooks<TSelf> {
   update?(self: TSelf, dt: number): void;
   fixed_update?(self: TSelf, dt: number): void;
   late_update?(self: TSelf, dt: number): void;
-  on_message?<K extends string>(
+  // Defold delivers message_id as a pre-hashed `hash`, so handlers must compare
+  // it against `hash("...")` constants — a string literal never matches. Sender-
+  // side payload narrowing by message id lives on `msg.post` (msg-overloads.d.ts).
+  on_message?(
     self: TSelf,
-    message_id: K,
-    message: OnMessagePayload<K>,
+    message_id: Hash,
+    message: Record<string | number, unknown>,
     sender: Url,
   ): void;
   on_input?(

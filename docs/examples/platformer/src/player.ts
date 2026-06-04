@@ -11,9 +11,9 @@ const gravity = -1900;
 // Take-off speed when jumping in pixel units.
 const jump_takeoff_speed = 1200;
 
-// Pre-hashed ids. In Defold these are hash() handles. Input/animation ids are
-// compared as Hash (works today); the contact message id is matched on its
-// string literal in on_message until pre-hashed message narrowing lands.
+// Pre-hashed ids. In Defold these are hash() handles. message_id, action_id,
+// and group are all delivered as hashes, so every comparison is Hash vs Hash.
+const msg_contact_point_response = hash("contact_point_response");
 const group_obstacle = hash("ground");
 const input_left = hash("left");
 const input_right = hash("right");
@@ -32,10 +32,10 @@ interface PlayerSelf {
   anim: Hash | undefined;
 }
 
-// The contact_point_response fields this script reads. Cast target until two
-// gaps close: (1) on_message narrows the payload on a pre-hashed id, and
-// (2) the typed contact_point_response payload carries `group` (today it only
-// exposes own_group/other_group — a builtin-messages fidelity gap).
+// The contact_point_response fields this script reads. on_message delivers the
+// payload as an untyped record, so we cast to the subset we use. (The typed
+// contact_point_response payload also lacks `group` today — it exposes only
+// own_group/other_group, a builtin-messages fidelity gap.)
 interface ContactPoint {
   group: Hash;
   normal: Vector3;
@@ -154,7 +154,7 @@ export default defineScript<PlayerSelf>({
   },
 
   on_message(self, message_id, message) {
-    if (message_id === "contact_point_response") {
+    if (message_id === msg_contact_point_response) {
       const contact = message as unknown as ContactPoint;
       // Check that the object is something we consider an obstacle.
       if (contact.group === group_obstacle) {

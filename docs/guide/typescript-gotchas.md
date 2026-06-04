@@ -13,6 +13,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [Some slots are `unknown` on purpose](#some-slots-are-unknown-on-purpose--the-any-wildcard) — `socket.skip` and friends accept anything and force a narrow on the way out.
 - [`if (x)` truthiness differs in Lua](#if-x-truthiness-differs--0-and--are-truthy-in-lua) — `0` and `""` are **truthy** once transpiled; test the value explicitly.
 - [`typeof` cannot narrow engine values](#typeof-cannot-narrow-engine-values--they-are-lua-userdata) — Defold handles are Lua `userdata`, so `typeof x === "object"` is `false` for them at runtime.
+- [`on_message` ids are hashes, not strings](#on_message-ids-are-hashes-not-strings) — compare `message_id` against a `hash("…")` constant; a string literal never matches at runtime.
 - [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
@@ -148,6 +149,37 @@ function asNode(x: unknown): unknown {
 **Typed alternative.** Do not reach for `typeof` to recognise an engine handle. The handles are already nominally typed (`Opaque<"node">` and friends — see [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds)), so thread the typed value through instead of re-checking it. When you genuinely hold an `unknown` from a wildcard slot, narrow it with the engine predicate that fits (a `nil` check, a field probe) rather than `typeof`.
 
 **How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots both forms: `typeof x === "object"` → `type(x) == "table"`, and the value form `typeof x` → `__TS__TypeOf(x)`. The committed Lua makes the userdata mismatch visible; if either lowering changed, the snapshot would fail.
+
+## `on_message` ids are hashes, not strings
+
+**Symptom.** A handler that compares `message_id` against a string literal never fires, even though it reads naturally and (under older typings) compiled. The object it should react to is silently ignored — in the platformer example, the player fell through every wall because the contact handler never ran.
+
+```ts
+on_message(self, message_id, message) {
+  if (message_id === "contact_point_response") {  // never true at runtime
+    // ...
+  }
+}
+```
+
+**Why.** Defold delivers `message_id` to `on_message` as a pre-hashed `hash` value, not a string — the same way `action_id` arrives in `on_input`. Lua's `==` does no cross-type coercion, so `hash_value == "contact_point_response"` is always `false`. The string comparison transpiles verbatim (`message_id == "contact_point_response"`) and silently never matches. `ScriptHooks.on_message` types `message_id` as `Hash` to make the mismatch a *compile* error rather than a runtime mystery; the string-literal form no longer type-checks.
+
+**Typed alternative.** Pre-hash the id once at module scope and compare `Hash` to `Hash`, exactly as the original Lua does and as `on_input` already does for `action_id`:
+
+```ts
+const msg_contact_point_response = hash("contact_point_response");
+
+on_message(self, message_id, message) {
+  if (message_id === msg_contact_point_response) {
+    const contact = message as unknown as ContactPoint;  // handler payload is an untyped record
+    // ...
+  }
+}
+```
+
+The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the messages guide), not on the handler.
+
+**How we pin this in the type tests.** `packages/types/test-d/lifecycle.ts` binds `message_id` to a `Hash` inside the handler and asserts a string-literal `message_id` at the call site carries `@ts-expect-error`. If `on_message` ever re-typed the id as a string, the expected error would disappear and the typecheck gate would fail.
 
 ## `null`, `undefined`, and `== null` all collapse to `nil`
 
