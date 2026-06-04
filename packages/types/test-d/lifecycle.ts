@@ -28,6 +28,18 @@ const hooks: ScriptHooks<Self> = defineScript<Self>({
     void _n;
     void _dt;
   },
+  fixed_update(self, dt) {
+    const _self: Self = self;
+    const _dt: number = dt;
+    void _self;
+    void _dt;
+  },
+  late_update(self, dt) {
+    const _self: Self = self;
+    const _dt: number = dt;
+    void _self;
+    void _dt;
+  },
   on_message(self, _message_id, _message, sender) {
     const _self: Self = self;
     const _sender: Url = sender;

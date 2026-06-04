@@ -47,6 +47,7 @@ export interface ScriptHooks<TSelf> {
   init?(self: TSelf): void;
   update?(self: TSelf, dt: number): void;
   fixed_update?(self: TSelf, dt: number): void;
+  late_update?(self: TSelf, dt: number): void;
   on_message?<K extends string>(
     self: TSelf,
     message_id: K,
@@ -62,6 +63,26 @@ export interface ScriptHooks<TSelf> {
   final?(self: TSelf): void;
   on_reload?(self: TSelf): void;
 }
+
+export const SCRIPT_HOOK_NAMES = [
+  "init",
+  "update",
+  "fixed_update",
+  "late_update",
+  "on_message",
+  "on_input",
+  "final",
+  "on_reload",
+] as const;
+
+export type ScriptHookName = (typeof SCRIPT_HOOK_NAMES)[number];
+
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+// drift-pin: SCRIPT_HOOK_NAMES must list exactly the ScriptHooks members
+const _hookNamesPinnedToInterface: Equal<ScriptHookName, keyof ScriptHooks<unknown>> = true;
+void _hookNamesPinnedToInterface;
 
 export type GuiScriptHooks<TSelf> = ScriptHooks<TSelf>;
 

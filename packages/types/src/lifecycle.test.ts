@@ -23,6 +23,15 @@ describe("defineScript", () => {
     };
     expect(defineScript<{ velocity: number }>(hooks)).toBe(hooks);
   });
+
+  test("accepts a late_update hook typed like update", () => {
+    const hooks = {
+      late_update(self: { velocity: number }, dt: number) {
+        self.velocity += dt;
+      },
+    };
+    expect(defineScript<{ velocity: number }>(hooks)).toBe(hooks);
+  });
 });
 
 describe("defineGuiScript", () => {

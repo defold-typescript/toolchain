@@ -62,6 +62,27 @@ export const menu = defineGuiScript<MenuSelf>({
 
 `defineRenderScript` intentionally has no `on_input` hook because Defold render scripts do not receive input callbacks.
 
+## Frame-update hooks
+
+Defold calls three per-frame hooks, all sharing the `(self, dt) => void` shape where `dt` is the time step in seconds:
+
+| Hook | When it runs |
+| ---- | ------------ |
+| `update` | every frame |
+| `fixed_update` | every fixed physics step (only when fixed time step is enabled) |
+| `late_update` | every frame, after `update` and animation/physics have run |
+
+```ts
+export default defineScript<{ velocity: number }>({
+  update(self, dt) {
+    self.velocity *= 1 - dt;
+  },
+  late_update(self, dt) {
+    void dt;
+  },
+});
+```
+
 ## API availability by script kind
 
 Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
