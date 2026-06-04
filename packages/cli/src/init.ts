@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { ScriptHookName } from "@defold-typescript/types";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import {
   detectScriptKinds,
@@ -88,43 +89,81 @@ interface VscodeSnippet {
   description: string;
 }
 
+// One learn-more comment and one parameter list per lifecycle hook, keyed by
+// `ScriptHookName` so a hook added to the types fails to compile here until both
+// maps gain an entry (`satisfies` exhaustiveness — the type is derived from the
+// canonical `SCRIPT_HOOK_NAMES`). The hook list is read off these keys rather
+// than imported as a runtime value: the types package is type-only and not
+// node-ESM-runnable, so the CLI bundle must not resolve it at runtime. `init` is
+// special-cased by the body builders (it carries the return placeholder, not a
+// `self` param), so its signature entry is unused but still required for
+// exhaustiveness.
+const HOOK_COMMENTS = {
+  init: "Initialize the component and return its state.",
+  update: "Update the component every frame; `dt` is the time step.",
+  fixed_update: "Update at the fixed physics time step.",
+  late_update: "Update every frame after `update`.",
+  on_message: "Handle an incoming message.",
+  on_input: "Handle input once input focus is acquired.",
+  final: "Clean up when the component is deleted.",
+  on_reload: "React to a hot reload of this script.",
+} satisfies Record<ScriptHookName, string>;
+
+const HOOK_SIGNATURES = {
+  init: "",
+  update: "self, dt",
+  fixed_update: "self, dt",
+  late_update: "self, dt",
+  on_message: "self, message_id, message, sender",
+  on_input: "self, action_id, action",
+  final: "self",
+  on_reload: "self",
+} satisfies Record<ScriptHookName, string>;
+
+const SNIPPET_HOOK_ORDER = Object.keys(HOOK_SIGNATURES) as ScriptHookName[];
+
+// Emit every hook except `init` (the caller writes it with its return
+// placeholder) as a commented `name(sig) {$N},` line. Render scripts pass
+// includeOnInput=false because `RenderScriptHooks` omits `on_input`. Tab stops
+// run sequentially from `startTabStop` across the hooks actually emitted.
+function hookLines(includeOnInput: boolean, startTabStop: number): string[] {
+  const lines: string[] = [];
+  let tabStop = startTabStop;
+  for (const hook of SNIPPET_HOOK_ORDER) {
+    if (hook === "init") {
+      continue;
+    }
+    if (hook === "on_input" && !includeOnInput) {
+      continue;
+    }
+    lines.push(`  // ${HOOK_COMMENTS[hook]}`);
+    lines.push(`  ${hook}(${HOOK_SIGNATURES[hook]}) {$${tabStop}},`);
+    tabStop += 1;
+  }
+  return lines;
+}
+
 // Whole-file TS scaffolds mirroring the Defold editor's empty script/gui/render
 // templates over the lifecycle factories. Two self-typing variants per kind:
 // inline-self (TSelf inferred from `init`'s return) and typed-self (an explicit
 // dummy `Self` placeholder). Hook order mirrors the Lua templates; render omits
 // `on_input` because `RenderScriptHooks` does. The final `$0` lands inside `init`.
 function inlineSnippetBody(factory: string, includeOnInput: boolean): string[] {
-  const lines = [
+  return [
     `import { ${factory} } from "@defold-typescript/types";`,
     "",
     `export const script = ${factory}({`,
-    "  // Initialize the component and return its state.",
+    `  // ${HOOK_COMMENTS.init}`,
     "  init() {",
     "    return { $0 };",
     "  },",
-    "  // Update the component every frame; `dt` is the time step.",
-    "  update(self, dt) {$1},",
-    "  // Update at the fixed physics time step.",
-    "  fixed_update(self, dt) {$2},",
-    "  // Update every frame after `update`.",
-    "  late_update(self, dt) {$3},",
-    "  // Handle an incoming message.",
-    "  on_message(self, message_id, message, sender) {$4},",
+    ...hookLines(includeOnInput, 1),
+    "});",
   ];
-  if (includeOnInput) {
-    lines.push("  // Handle input once input focus is acquired.");
-    lines.push("  on_input(self, action_id, action) {$5},");
-  }
-  lines.push("  // Clean up when the component is deleted.");
-  lines.push("  final(self) {$6},");
-  lines.push("  // React to a hot reload of this script.");
-  lines.push("  on_reload(self) {$7},");
-  lines.push("});");
-  return lines;
 }
 
 function typedSnippetBody(factory: string, includeOnInput: boolean): string[] {
-  const lines = [
+  return [
     `import { ${factory} } from "@defold-typescript/types";`,
     "",
     "type Self = {",
@@ -133,29 +172,13 @@ function typedSnippetBody(factory: string, includeOnInput: boolean): string[] {
     "};",
     "",
     `export const script = ${factory}<Self>({`,
-    "  // Initialize the component and return its state.",
+    `  // ${HOOK_COMMENTS.init}`,
     "  init(): Self {",
     "    return { $0 };",
     "  },",
-    "  // Update the component every frame; `dt` is the time step.",
-    "  update(self, dt) {$2},",
-    "  // Update at the fixed physics time step.",
-    "  fixed_update(self, dt) {$3},",
-    "  // Update every frame after `update`.",
-    "  late_update(self, dt) {$4},",
-    "  // Handle an incoming message.",
-    "  on_message(self, message_id, message, sender) {$5},",
+    ...hookLines(includeOnInput, 2),
+    "});",
   ];
-  if (includeOnInput) {
-    lines.push("  // Handle input once input focus is acquired.");
-    lines.push("  on_input(self, action_id, action) {$6},");
-  }
-  lines.push("  // Clean up when the component is deleted.");
-  lines.push("  final(self) {$7},");
-  lines.push("  // React to a hot reload of this script.");
-  lines.push("  on_reload(self) {$8},");
-  lines.push("});");
-  return lines;
 }
 
 const VSCODE_SNIPPETS_CONTENT: Record<string, VscodeSnippet> = {

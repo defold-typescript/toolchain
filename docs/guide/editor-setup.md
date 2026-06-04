@@ -49,6 +49,13 @@ In any `.ts` file, type one of these prefixes and accept the completion to scaff
 
 The two variants mirror the two self-typing idioms (see [Script lifecycle](script-lifecycle.md)). The inferred variant returns an inline object from `init`, and `TSelf` follows that return — the documented default. The typed variant declares a named `Self` type and passes it explicitly as `defineScript<Self>(…)`, the escape hatch for when you want to name the state shape up front. Render snippets omit `on_input`, which `RenderScriptHooks` does not expose.
 
+### Keeping snippets and types in sync
+
+An expanded snippet emits every lifecycle hook the installed `@defold-typescript/types` declares. If your editor reports `<hook> does not exist in type 'ScriptHooks'` (and the parameters of that method turn implicitly `any`), work through it in this order:
+
+1. **Restart the TypeScript server first.** A stale language-server process keeps the old type surface in memory after a dependency upgrade, so the error survives even once the right types are on disk. In VS Code, run *TypeScript: Restart TS Server* from the command palette. This clears most false positives.
+2. **Then check the types version.** `fixed_update` and `late_update` need `@defold-typescript/types >= 0.5.0`; a project whose resolved types lag the CLI that wrote the snippets genuinely lacks those hooks. Upgrade the dependency. `defold-typescript init --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
+
 Edit TypeScript under `src/`. Treat the generated `.ts.script` and `.ts.script.map` files next to your sources as build output; the scaffolded `.gitignore` keeps them out of version control.
 
 ## Run the watch loop

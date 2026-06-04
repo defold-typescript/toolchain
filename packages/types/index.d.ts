@@ -59,6 +59,8 @@ export {
   type InputAction,
   type InputTouch,
   type RenderScriptHooks,
+  SCRIPT_HOOK_NAMES,
+  type ScriptHookName,
   type ScriptHooks,
 } from "./src/lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./src/publish-dts";

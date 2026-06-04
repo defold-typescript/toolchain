@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { runInit } from "./init";
 
@@ -742,5 +743,52 @@ describe("runInit (.vscode script snippets)", () => {
     runInit({ cwd });
 
     expect(readFileSync(path.join(cwd, SNIPPETS_REL), "utf8")).toBe(garbage);
+  });
+
+  test("script and gui snippets emit every lifecycle hook; render omits only on_input", () => {
+    runInit({ cwd });
+    const snippets = readSnippets();
+
+    for (const key of [
+      "Defold script (inferred self)",
+      "Defold script (typed self)",
+      "Defold GUI script (inferred self)",
+      "Defold GUI script (typed self)",
+    ]) {
+      const body = snippetOf(snippets, key).body.join("\n");
+      for (const hook of SCRIPT_HOOK_NAMES) {
+        expect(body).toContain(`${hook}(`);
+      }
+    }
+
+    for (const key of [
+      "Defold render script (inferred self)",
+      "Defold render script (typed self)",
+    ]) {
+      const body = snippetOf(snippets, key).body.join("\n");
+      for (const hook of SCRIPT_HOOK_NAMES) {
+        if (hook === "on_input") {
+          expect(body).not.toContain("on_input");
+        } else {
+          expect(body).toContain(`${hook}(`);
+        }
+      }
+    }
+  });
+
+  test("every emitted hook is preceded by a learn-more comment", () => {
+    runInit({ cwd });
+    const snippets = readSnippets();
+    const hookNames: readonly string[] = SCRIPT_HOOK_NAMES;
+
+    for (const key of EXPECTED_KEYS) {
+      const lines = snippetOf(snippets, key).body;
+      lines.forEach((line, i) => {
+        const name = line.match(/^ {2}(\w+)\(/)?.[1];
+        if (name && hookNames.includes(name)) {
+          expect(lines[i - 1]?.trim().startsWith("//")).toBe(true);
+        }
+      });
+    }
   });
 });
