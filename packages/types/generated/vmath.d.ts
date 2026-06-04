@@ -3,59 +3,536 @@ import type { Matrix4, Quaternion, Vector, Vector3, Vector4 } from "../src/core-
 
 declare global {
   namespace vmath {
+    /**
+     * Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type
+     * return new vector3|vector4 with clamped value at every vector's element.
+     * Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element
+     *
+     * @param value - Input value or vector of values
+     * @param min - Min value(s) border
+     * @param max - Max value(s) border
+     * @returns Clamped value or vector
+     */
     function clamp(value: number | Vector3 | Vector4, min: number | Vector3 | Vector4, max: number | Vector3 | Vector4): number | Vector3 | Vector4;
+    /**
+     * Calculates the conjugate of a quaternion. The result is a
+     * quaternion with the same magnitudes but with the sign of
+     * the imaginary (vector) parts changed:
+     * `q* = [w, -v]`
+     *
+     * @param q1 - quaternion of which to calculate the conjugate
+     * @returns the conjugate
+     */
     function conj(q1: Quaternion): Quaternion;
+    /**
+     * Given two linearly independent vectors P and Q, the cross product,
+     * P &#x00D7; Q, is a vector that is perpendicular to both P and Q and
+     * therefore normal to the plane containing them.
+     * If the two vectors have the same direction (or have the exact
+     * opposite direction from one another, i.e. are not linearly independent)
+     * or if either one has zero length, then their cross product is zero.
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns a new vector representing the cross product
+     */
     function cross(v1: Vector3, v2: Vector3): Vector3;
+    /**
+     * The returned value is a scalar defined as:
+     * `P &#x22C5; Q = |P| |Q| cos &#x03B8;`
+     * where &#x03B8; is the angle between the vectors P and Q.
+     * - If the dot product is positive then the angle between the vectors is below 90 degrees.
+     * - If the dot product is zero the vectors are perpendicular (at right-angles to each other).
+     * - If the dot product is negative then the angle between the vectors is more than 90 degrees.
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns dot product
+     */
     function dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number;
+    /**
+     * Converts euler angles (x, y, z) in degrees into a quaternion
+     * The error is guaranteed to be less than 0.001.
+     * If the first argument is vector3, its values are used as x, y, z angles.
+     *
+     * @param x - rotation around x-axis in degrees or vector3 with euler angles in degrees
+     * @param y - rotation around y-axis in degrees
+     * @param z - rotation around z-axis in degrees
+     * @returns quaternion describing an equivalent rotation (231 (YZX) rotation sequence)
+     */
     function euler_to_quat(x: number | Vector3, y: number, z: number): Quaternion;
+    /**
+     * The resulting matrix is the inverse of the supplied matrix.
+     * For ortho-normal matrices, e.g. regular object transformation,
+     * use `vmath.ortho_inv()` instead.
+     * The specialized inverse for ortho-normalized matrices is much faster
+     * than the general inverse.
+     *
+     * @param m1 - matrix to invert
+     * @returns inverse of the supplied matrix
+     */
     function inv(m1: Matrix4): Matrix4;
+    /**
+     * Returns the length of the supplied vector or quaternion.
+     * If you are comparing the lengths of vectors or quaternions, you should compare
+     * the length squared instead as it is slightly more efficient to calculate
+     * (it eliminates a square root calculation).
+     *
+     * @param v - value of which to calculate the length
+     * @returns length
+     */
     function length(v: Vector3 | Vector4 | Quaternion): number;
+    /**
+     * Returns the squared length of the supplied vector or quaternion.
+     *
+     * @param v - value of which to calculate the squared length
+     * @returns squared length
+     */
     function length_sqr(v: Vector3 | Vector4 | Quaternion): number;
+    /**
+     * Linearly interpolate between two vectors. The function
+     * treats the vectors as positions and interpolates between
+     * the positions in a straight line. Lerp is useful to describe
+     * transitions from one place to another over time.
+     * The function does not clamp t between 0 and 1.
+     *
+     * @param t - interpolation parameter, 0-1
+     * @param v1 - vector to lerp from
+     * @param v2 - vector to lerp to
+     * @returns the lerped vector
+     */
     function lerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
+    /**
+     * Linearly interpolate between two quaternions. Linear
+     * interpolation of rotations are only useful for small
+     * rotations. For interpolations of arbitrary rotations,
+     * vmath.slerp yields much better results.
+     * The function does not clamp t between 0 and 1.
+     *
+     * @param t - interpolation parameter, 0-1
+     * @param q1 - quaternion to lerp from
+     * @param q2 - quaternion to lerp to
+     * @returns the lerped quaternion
+     */
     function lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;
+    /**
+     * Linearly interpolate between two values. Lerp is useful
+     * to describe transitions from one value to another over time.
+     * The function does not clamp t between 0 and 1.
+     *
+     * @param t - interpolation parameter, 0-1
+     * @param n1 - number to lerp from
+     * @param n2 - number to lerp to
+     * @returns the lerped number
+     */
     function lerp(t: number, n1: number, n2: number): number;
+    /**
+     * The resulting identity matrix describes a transform with
+     * no translation or rotation.
+     *
+     * @returns identity matrix
+     */
     function matrix4(): Matrix4;
+    /**
+     * Creates a new matrix with all components set to the
+     * corresponding values from the supplied matrix. I.e.
+     * the function creates a copy of the given matrix.
+     *
+     * @param m1 - existing matrix
+     * @returns matrix which is a copy of the specified matrix
+     */
     function matrix4(m1: Matrix4): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the axis by the specified angle.
+     *
+     * @param v - axis
+     * @param angle - angle in radians
+     * @returns matrix represented by axis and angle
+     */
     function matrix4_axis_angle(v: Vector3, angle: number): Matrix4;
+    /**
+     * Creates a new matrix constructed from separate
+     * translation vector, roation quaternion and scale vector
+     *
+     * @param translation - translation
+     * @param rotation - rotation
+     * @param scale - scale
+     * @returns new matrix4
+     */
     function matrix4_compose(translation: Vector3 | Vector4, rotation: Quaternion, scale: Vector3): Matrix4;
+    /**
+     * Constructs a frustum matrix from the given values. The left, right,
+     * top and bottom coordinates of the view cone are expressed as distances
+     * from the center of the near clipping plane. The near and far coordinates
+     * are expressed as distances from the tip of the view frustum cone.
+     *
+     * @param left - coordinate for left clipping plane
+     * @param right - coordinate for right clipping plane
+     * @param bottom - coordinate for bottom clipping plane
+     * @param top - coordinate for top clipping plane
+     * @param near - coordinate for near clipping plane
+     * @param far - coordinate for far clipping plane
+     * @returns matrix representing the frustum
+     */
     function matrix4_frustum(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4;
+    /**
+     * The resulting matrix is created from the supplied look-at parameters.
+     * This is useful for constructing a view matrix for a camera or
+     * rendering in general.
+     *
+     * @param eye - eye position
+     * @param look_at - look-at position
+     * @param up - up vector
+     * @returns look-at matrix
+     */
     function matrix4_look_at(eye: Vector3, look_at: Vector3, up: Vector3): Matrix4;
+    /**
+     * Creates an orthographic projection matrix.
+     * This is useful to construct a projection matrix for a camera or rendering in general.
+     *
+     * @param left - coordinate for left clipping plane
+     * @param right - coordinate for right clipping plane
+     * @param bottom - coordinate for bottom clipping plane
+     * @param top - coordinate for top clipping plane
+     * @param near - coordinate for near clipping plane
+     * @param far - coordinate for far clipping plane
+     * @returns orthographic projection matrix
+     */
     function matrix4_orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4;
+    /**
+     * Creates a perspective projection matrix.
+     * This is useful to construct a projection matrix for a camera or rendering in general.
+     *
+     * @param fov - angle of the full vertical field of view in radians
+     * @param aspect - aspect ratio
+     * @param near - coordinate for near clipping plane
+     * @param far - coordinate for far clipping plane
+     * @returns perspective projection matrix
+     */
     function matrix4_perspective(fov: number, aspect: number, near: number, far: number): Matrix4;
+    /**
+     * The resulting matrix describes the same rotation as the quaternion, but does not have any translation (also like the quaternion).
+     *
+     * @param q - quaternion to create matrix from
+     * @returns matrix represented by quaternion
+     */
     function matrix4_quat(q: Quaternion): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the x-axis
+     * by the specified angle.
+     *
+     * @param angle - angle in radians around x-axis
+     * @returns matrix from rotation around x-axis
+     */
     function matrix4_rotation_x(angle: number): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the y-axis
+     * by the specified angle.
+     *
+     * @param angle - angle in radians around y-axis
+     * @returns matrix from rotation around y-axis
+     */
     function matrix4_rotation_y(angle: number): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the z-axis
+     * by the specified angle.
+     *
+     * @param angle - angle in radians around z-axis
+     * @returns matrix from rotation around z-axis
+     */
     function matrix4_rotation_z(angle: number): Matrix4;
+    /**
+     * Creates a new matrix constructed from scale vector
+     *
+     * @param scale - scale
+     * @returns new matrix4
+     */
     function matrix4_scale(scale: Vector3): Matrix4;
+    /**
+     * creates a new matrix4 from uniform scale
+     *
+     * @param scale - scale
+     * @returns new matrix4
+     */
     function matrix4_scale(scale: number): Matrix4;
+    /**
+     * Creates a new matrix4 from three scale components
+     *
+     * @param scale_x - scale along X axis
+     * @param scale_y - sclae along Y axis
+     * @param scale_z - scale along Z asis
+     * @returns new matrix4
+     */
     function matrix4_scale(scale_x: number, scale_y: number, scale_z: number): Matrix4;
+    /**
+     * The resulting matrix describes a translation of a point
+     * in euclidean space.
+     *
+     * @param position - position vector to create matrix from
+     * @returns matrix from the supplied position vector
+     */
     function matrix4_translation(position: Vector3 | Vector4): Matrix4;
+    /**
+     * Performs an element wise multiplication between two vectors of the same type
+     * The returned value is a vector defined as (e.g. for a vector3):
+     * `v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns multiplied vector
+     */
     function mul_per_elem(v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
+    /**
+     * Normalizes a vector, i.e. returns a new vector with the same
+     * direction as the input vector, but with length 1.
+     * The length of the vector must be above 0, otherwise a
+     * division-by-zero will occur.
+     *
+     * @param v1 - vector to normalize
+     * @returns new normalized vector
+     */
     function normalize(v1: Vector3 | Vector4 | Quaternion): Vector3 | Vector4 | Quaternion;
+    /**
+     * The resulting matrix is the inverse of the supplied matrix.
+     * The supplied matrix has to be an ortho-normal matrix, e.g.
+     * describe a regular object transformation.
+     * For matrices that are not ortho-normal
+     * use the general inverse `vmath.inv()` instead.
+     *
+     * @param m1 - ortho-normalized matrix to invert
+     * @returns inverse of the supplied matrix
+     */
     function ortho_inv(m1: Matrix4): Matrix4;
+    /**
+     * Calculates the extent the projection of the first vector onto the second.
+     * The returned value is a scalar p defined as:
+     * `p = |P| cos &#x03B8; / |Q|`
+     * where &#x03B8; is the angle between the vectors P and Q.
+     *
+     * @param v1 - vector to be projected on the second
+     * @param v2 - vector onto which the first will be projected, must not have zero length
+     * @returns the projected extent of the first vector onto the second
+     */
     function project(v1: Vector3, v2: Vector3): number;
+    /**
+     * Creates a new identity quaternion. The identity
+     * quaternion is equal to:
+     * `vmath.quat(0, 0, 0, 1)`
+     *
+     * @returns new identity quaternion
+     */
     function quat(): Quaternion;
+    /**
+     * Creates a new quaternion with all components set to the
+     * corresponding values from the supplied quaternion. I.e.
+     * This function creates a copy of the given quaternion.
+     *
+     * @param q1 - existing quaternion
+     * @returns new quaternion
+     */
     function quat(q1: Quaternion): Quaternion;
+    /**
+     * Creates a new quaternion with the components set
+     * according to the supplied parameter values.
+     *
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @param z - z coordinate
+     * @param w - w coordinate
+     * @returns new quaternion
+     */
     function quat(x: number, y: number, z: number, w: number): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the axis described by the unit vector `v`.
+     *
+     * @param v - axis
+     * @param angle - angle
+     * @returns quaternion representing the axis-angle rotation
+     */
     function quat_axis_angle(v: Vector3, angle: number): Quaternion;
+    /**
+     * The resulting quaternion describes the rotation from the
+     * identity quaternion (no rotation) to the coordinate system
+     * as described by the given x, y and z base unit vectors.
+     *
+     * @param x - x base vector
+     * @param y - y base vector
+     * @param z - z base vector
+     * @returns quaternion representing the rotation of the specified base vectors
+     */
     function quat_basis(x: Vector3, y: Vector3, z: Vector3): Quaternion;
+    /**
+     * The resulting quaternion describes the rotation that,
+     * if applied to the first vector, would rotate the first
+     * vector to the second. The two vectors must be unit
+     * vectors (of length 1).
+     * The result is undefined if the two vectors point in opposite directions
+     *
+     * @param v1 - first unit vector, before rotation
+     * @param v2 - second unit vector, after rotation
+     * @returns quaternion representing the rotation from first to second vector
+     */
     function quat_from_to(v1: Vector3, v2: Vector3): Quaternion;
+    /**
+     * Creates a new quaternion with the components set
+     * according to the supplied parameter values.
+     *
+     * @param matrix - source matrix4
+     * @returns new quaternion
+     */
     function quat_matrix4(matrix: Matrix4): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the x-axis.
+     *
+     * @param angle - angle in radians around x-axis
+     * @returns quaternion representing the rotation around the x-axis
+     */
     function quat_rotation_x(angle: number): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the y-axis.
+     *
+     * @param angle - angle in radians around y-axis
+     * @returns quaternion representing the rotation around the y-axis
+     */
     function quat_rotation_y(angle: number): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the z-axis.
+     *
+     * @param angle - angle in radians around z-axis
+     * @returns quaternion representing the rotation around the z-axis
+     */
     function quat_rotation_z(angle: number): Quaternion;
+    /**
+     * Converts a quaternion into euler angles (r0, r1, r2), based on YZX rotation order.
+     * To handle gimbal lock (singularity at r1 ~ +/- 90 degrees), the cut off is at r0 = +/- 88.85 degrees, which snaps to +/- 90.
+     * The provided quaternion is expected to be normalized.
+     * The error is guaranteed to be less than +/- 0.02 degrees
+     *
+     * @param q - source quaternion
+     */
     function quat_to_euler(q: Quaternion): LuaMultiReturn<[number, number, number]>;
+    /**
+     * Returns a new vector from the supplied vector that is
+     * rotated by the rotation described by the supplied
+     * quaternion.
+     *
+     * @param q - quaternion
+     * @param v1 - vector to rotate
+     * @returns the rotated vector
+     */
     function rotate(q: Quaternion, v1: Vector3): Vector3;
+    /**
+     * Spherically interpolates between two vectors. The difference to
+     * lerp is that slerp treats the vectors as directions instead of
+     * positions in space.
+     * The direction of the returned vector is interpolated by the angle
+     * and the magnitude is interpolated between the magnitudes of the
+     * from and to vectors.
+     * Slerp is computationally more expensive than lerp.
+     * The function does not clamp t between 0 and 1.
+     *
+     * @param t - interpolation parameter, 0-1
+     * @param v1 - vector to slerp from
+     * @param v2 - vector to slerp to
+     * @returns the slerped vector
+     */
     function slerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
+    /**
+     * Slerp travels the torque-minimal path maintaining constant
+     * velocity, which means it travels along the straightest path along
+     * the rounded surface of a sphere. Slerp is useful for interpolation
+     * of rotations.
+     * Slerp travels the torque-minimal path, which means it travels
+     * along the straightest path the rounded surface of a sphere.
+     * The function does not clamp t between 0 and 1.
+     *
+     * @param t - interpolation parameter, 0-1
+     * @param q1 - quaternion to slerp from
+     * @param q2 - quaternion to slerp to
+     * @returns the slerped quaternion
+     */
     function slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;
+    /**
+     * Creates a vector of arbitrary size. The vector is initialized
+     * with numeric values from a table.
+     * The table values are converted to floating point
+     * values. If a value cannot be converted, a 0 is stored in that
+     * value position in the vector.
+     *
+     * @param t - table of numbers
+     * @returns new vector
+     */
     function vector(t: number[]): Vector;
+    /**
+     * Creates a new zero vector with all components set to 0.
+     *
+     * @returns new zero vector
+     */
     function vector3(): Vector3;
+    /**
+     * Creates a new vector with all components set to the
+     * supplied scalar value.
+     *
+     * @param n - scalar value to splat
+     * @returns new vector
+     */
     function vector3(n: number): Vector3;
+    /**
+     * Creates a new vector with all components set to the
+     * corresponding values from the supplied vector. I.e.
+     * This function creates a copy of the given vector.
+     *
+     * @param v1 - existing vector
+     * @returns new vector
+     */
     function vector3(v1: Vector3): Vector3;
+    /**
+     * Creates a new vector with the components set to the
+     * supplied values.
+     *
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @param z - z coordinate
+     * @returns new vector
+     */
     function vector3(x: number, y: number, z: number): Vector3;
+    /**
+     * Creates a new zero vector with all components set to 0.
+     *
+     * @returns new zero vector
+     */
     function vector4(): Vector4;
+    /**
+     * Creates a new vector with all components set to the
+     * supplied scalar value.
+     *
+     * @param n - scalar value to splat
+     * @returns new vector
+     */
     function vector4(n: number): Vector4;
+    /**
+     * Creates a new vector with all components set to the
+     * corresponding values from the supplied vector. I.e.
+     * This function creates a copy of the given vector.
+     *
+     * @param v1 - existing vector
+     * @returns new vector
+     */
     function vector4(v1: Vector4): Vector4;
+    /**
+     * Creates a new vector with the components set to the
+     * supplied values.
+     *
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @param z - z coordinate
+     * @param w - w coordinate
+     * @returns new vector
+     */
     function vector4(x: number, y: number, z: number, w: number): Vector4;
   }
 }

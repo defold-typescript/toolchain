@@ -12,6 +12,10 @@ The generated `tsconfig.json` sets:
 
 VSCode's built-in TypeScript support reads this file automatically when the project folder is open.
 
+## Hover documentation
+
+The generated type declarations carry the Defold reference docs inline as JSDoc. Hovering a Defold symbol in `src/*.ts` shows its description, each parameter (`@param`), and its return (`@returns`) straight from the engine API docs — no extra extension required, since it rides on VSCode's built-in TypeScript support. Autocomplete surfaces the same text. Undocumented engine functions simply show their signature with no description.
+
 ## Recommended editor extensions
 
 Defold runs standard Lua 5.1 (LuaJIT), **not** Luau — Luau is Roblox's dialect. Install the Lua tooling that matches:
