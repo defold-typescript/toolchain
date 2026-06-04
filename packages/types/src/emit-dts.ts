@@ -474,6 +474,9 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     lines.push(`${INDENT}${decl}type ${t.name} = Opaque<"${t.name}">;`);
   }
   for (const c of constants) {
+    for (const docLine of summaryDocLines(c.original.brief, c.original.description, INDENT)) {
+      lines.push(docLine);
+    }
     lines.push(`${INDENT}${decl}const ${c.name}: ${brandType(c.fqn)};`);
   }
   const aliases: { internal: string; public: string }[] = [];
@@ -484,7 +487,12 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     const reserved = TS_RESERVED_NAMES.has(v.name);
     const emitName = aliasName(v.name, aliases);
     const line = emitVariable(v, emitName, mapType);
-    if (line !== null) lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
+    if (line !== null) {
+      for (const docLine of summaryDocLines(v.original.brief, v.original.description, INDENT)) {
+        lines.push(docLine);
+      }
+      lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
+    }
   }
   for (const fn of functions) {
     const reserved = TS_RESERVED_NAMES.has(fn.name);
@@ -502,6 +510,9 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     const members = [...module.properties].sort((a, b) => a.name.localeCompare(b.name));
     lines.push(`${INDENT}${decl}interface properties {`);
     for (const p of members) {
+      for (const docLine of summaryDocLines(p.brief, p.description, `${INDENT}${INDENT}`)) {
+        lines.push(docLine);
+      }
       lines.push(`${INDENT}${INDENT}${emitPropertyMember(p, mapType)}`);
     }
     lines.push(`${INDENT}}`);
@@ -514,6 +525,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
 interface PreparedConstant {
   name: string;
   fqn: string;
+  original: ApiConstant;
 }
 
 interface PreparedFunction {
@@ -535,7 +547,7 @@ function prepareFunction(fn: ApiFunction, prefix: string): PreparedFunction | nu
 function prepareConstant(c: ApiConstant, prefix: string): PreparedConstant | null {
   const stripped = stripPrefix(c.name, prefix);
   if (!TS_IDENTIFIER.test(stripped)) return null;
-  return { name: stripped, fqn: c.name };
+  return { name: stripped, fqn: c.name, original: c };
 }
 
 function brandType(fqn: string): string {
@@ -598,18 +610,37 @@ function emitFunction(
 // resolves on hover; a single documented return becomes `@returns`. Returns `[]`
 // for a fully-undocumented function, leaving its emission byte-identical.
 function functionDocLines(fn: ApiFunction): string[] {
-  const rawSummary = fn.description.trim() !== "" ? fn.description : fn.brief;
   const params = fn.parameters.map((p, index) => ({
     name: TS_IDENTIFIER.test(p.name) ? p.name : `arg${index}`,
     doc: htmlToDocText(p.doc),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
   const parts: DocCommentParts = {
-    summary: htmlToDocText(rawSummary),
+    summary: htmlToDocText(summaryFor(fn.brief, fn.description)),
     params,
     ...(onlyReturn ? { returns: htmlToDocText(onlyReturn.doc) } : {}),
   };
-  return renderDocComment(parts).map((line) => `${INDENT}${line}`);
+  return indentDocLines(parts, INDENT);
+}
+
+// Summary-only doc lines for a member that carries no params or returns
+// (constants, variables, `properties` members). Reuses the same renderer and
+// summary precedence as functions; returns `[]` for an undocumented member so
+// its emission stays byte-identical. `indent` matches the member's own
+// indentation depth (one level inside the namespace, two inside `properties`).
+function summaryDocLines(brief: string, description: string, indent: string): string[] {
+  return indentDocLines({ summary: htmlToDocText(summaryFor(brief, description)) }, indent);
+}
+
+function indentDocLines(parts: DocCommentParts, indent: string): string[] {
+  return renderDocComment(parts).map((line) => `${indent}${line}`);
+}
+
+// Prefer the full `description`; fall back to the one-line `brief` when prose is
+// absent. Shared by every documented member kind so the summary source is
+// consistent across functions, constants, variables, and properties.
+function summaryFor(brief: string, description: string): string {
+  return description.trim() !== "" ? description : brief;
 }
 
 function isDocOptional(p: ApiParameter): boolean {

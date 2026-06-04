@@ -3,8 +3,17 @@ import type { Hash, Opaque, Quaternion, Url, Vector3 } from "../src/core-types";
 
 declare global {
   namespace collectionfactory {
+    /**
+     * loaded
+     */
     const STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" };
+    /**
+     * loading
+     */
     const STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" };
+    /**
+     * unloaded
+     */
     const STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" };
     /**
      * The URL identifies the collectionfactory component that should do the spawning.

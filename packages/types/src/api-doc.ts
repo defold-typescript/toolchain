@@ -12,6 +12,8 @@ export interface ApiModule {
 export interface ApiProperty {
   name: string;
   types: string[];
+  brief: string;
+  description: string;
 }
 
 export interface ApiTypedef {
@@ -99,7 +101,12 @@ function parseProperty(element: Record<string, unknown>): ApiProperty {
           .map((t) => t.trim())
           .filter((t) => t.length > 0)
       : [];
-  return { name: stringOr(element.name, ""), types };
+  return {
+    name: stringOr(element.name, ""),
+    types,
+    brief,
+    description: stringOr(element.description, ""),
+  };
 }
 
 function parseConstant(element: Record<string, unknown>): ApiConstant {

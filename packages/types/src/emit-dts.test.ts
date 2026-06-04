@@ -501,8 +501,8 @@ describe("emitDeclarations", () => {
       variables: [],
       constants: [],
       properties: [
-        { name: "size", types: ["vector3"] },
-        { name: "color", types: ["vector4"] },
+        { name: "size", types: ["vector3"], brief: "", description: "" },
+        { name: "color", types: ["vector4"], brief: "", description: "" },
       ],
       typedefs: [],
     };
@@ -521,7 +521,7 @@ describe("emitDeclarations", () => {
       functions: [],
       variables: [],
       constants: [],
-      properties: [{ name: "scale", types: ["number", "vector3"] }],
+      properties: [{ name: "scale", types: ["number", "vector3"], brief: "", description: "" }],
       typedefs: [],
     };
     expect(emitDeclarations(module)).toContain("    scale: number | Vector3;");
@@ -549,7 +549,7 @@ describe("emitDeclarations", () => {
       functions: [],
       variables: [],
       constants: [],
-      properties: [{ name: "some.dotted", types: ["number"] }],
+      properties: [{ name: "some.dotted", types: ["number"], brief: "", description: "" }],
       typedefs: [],
     };
     expect(emitDeclarations(module)).toContain('    "some.dotted": number;');
@@ -1027,6 +1027,112 @@ describe("function JSDoc emission", () => {
     expect(block).toContain(" * Uses `go.set` and go to apply.");
     expect(out).not.toContain("<code>");
     expect(out).not.toContain("<a ");
+  });
+});
+
+describe("constant, variable, and property JSDoc emission", () => {
+  test("a documented constant emits a summary JSDoc block before its const line", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [
+        { name: "ns.FOO", brief: "the foo flag", description: "Enables the foo behaviour." },
+      ],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "const FOO:");
+    expect(block.startsWith("  /**")).toBe(true);
+    expect(block).toContain(" * Enables the foo behaviour.");
+  });
+
+  test("a documented variable emits its summary block", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "pi",
+      description: "",
+      functions: [],
+      variables: [
+        { name: "ns.PI", brief: "pi", description: "The ratio of a circle's circumference." },
+      ].map((v) => ({ ...v, types: ["number"] })),
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "const PI:");
+    expect(block.startsWith("  /**")).toBe(true);
+    expect(block).toContain(" * The ratio of a circle's circumference.");
+  });
+
+  test("a reserved-name variable documents the _name declaration the alias re-exports", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [
+        { name: "ns.default", brief: "", description: "The default value.", types: ["number"] },
+      ],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "const _default:");
+    expect(block.startsWith("  /**")).toBe(true);
+    expect(block).toContain(" * The default value.");
+    expect(out).toContain("export { _default as default };");
+  });
+
+  test("a documented property member emits a summary block before its member line", () => {
+    const module: ApiModule = {
+      namespace: "label",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [
+        {
+          name: "color",
+          types: ["vector4"],
+          brief: '<span class="type">vector4</span> label color',
+          description: "The color of the label.",
+        },
+      ],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "color: Vector4");
+    expect(block.startsWith("    /**")).toBe(true);
+    expect(block).toContain("     * The color of the label.");
+  });
+
+  test("an undocumented constant, variable, and property emit no comment — byte-identical", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [{ name: "ns.PI", brief: "", description: "", types: ["number"] }],
+      constants: [{ name: "ns.FOO", brief: "", description: "" }],
+      properties: [{ name: "color", types: ["vector4"], brief: "", description: "" }],
+      typedefs: [],
+    };
+    expect(emitDeclarations(module)).toBe(
+      "declare namespace ns {\n" +
+        '  const FOO: number & { readonly __brand: "ns.FOO" };\n' +
+        "  const PI: number;\n" +
+        "  interface properties {\n" +
+        "    color: Vector4;\n" +
+        "  }\n" +
+        "}\n",
+    );
   });
 });
 

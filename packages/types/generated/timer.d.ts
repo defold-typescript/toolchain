@@ -1,6 +1,9 @@
 /** @noSelfInFile */
 declare global {
   namespace timer {
+    /**
+     * Indicates an invalid timer handle
+     */
     const INVALID_TIMER_HANDLE: number & { readonly __brand: "timer.INVALID_TIMER_HANDLE" };
     /**
      * You may cancel a timer from inside a timer callback.

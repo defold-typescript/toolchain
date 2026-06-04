@@ -3,8 +3,17 @@ import type { Hash, Opaque, Quaternion, Url, Vector3 } from "../src/core-types";
 
 declare global {
   namespace factory {
+    /**
+     * loaded
+     */
     const STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" };
+    /**
+     * loading
+     */
     const STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" };
+    /**
+     * unloaded
+     */
     const STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" };
     /**
      * The URL identifies which factory should create the game object.

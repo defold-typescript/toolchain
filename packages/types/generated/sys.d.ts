@@ -3,8 +3,17 @@ import type { Opaque } from "../src/core-types";
 
 declare global {
   namespace sys {
+    /**
+     * network connected through other, non cellular, connection
+     */
     const NETWORK_CONNECTED: number & { readonly __brand: "sys.NETWORK_CONNECTED" };
+    /**
+     * network connected through mobile cellular
+     */
     const NETWORK_CONNECTED_CELLULAR: number & { readonly __brand: "sys.NETWORK_CONNECTED_CELLULAR" };
+    /**
+     * no network connection found
+     */
     const NETWORK_DISCONNECTED: number & { readonly __brand: "sys.NETWORK_DISCONNECTED" };
     /**
      * This function will raise a Lua error if an error occurs while deserializing the buffer.

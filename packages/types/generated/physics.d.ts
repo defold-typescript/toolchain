@@ -3,11 +3,29 @@ import type { Hash, Url, Vector3 } from "../src/core-types";
 
 declare global {
   namespace physics {
+    /**
+     * The following properties are available when connecting a joint of `JOINT_TYPE_FIXED` type:
+     */
     const JOINT_TYPE_FIXED: number & { readonly __brand: "physics.JOINT_TYPE_FIXED" };
+    /**
+     * The following properties are available when connecting a joint of `JOINT_TYPE_HINGE` type:
+     */
     const JOINT_TYPE_HINGE: number & { readonly __brand: "physics.JOINT_TYPE_HINGE" };
+    /**
+     * The following properties are available when connecting a joint of `JOINT_TYPE_SLIDER` type:
+     */
     const JOINT_TYPE_SLIDER: number & { readonly __brand: "physics.JOINT_TYPE_SLIDER" };
+    /**
+     * The following properties are available when connecting a joint of `JOINT_TYPE_SPRING` type:
+     */
     const JOINT_TYPE_SPRING: number & { readonly __brand: "physics.JOINT_TYPE_SPRING" };
+    /**
+     * The following properties are available when connecting a joint of `JOINT_TYPE_WELD` type:
+     */
     const JOINT_TYPE_WELD: number & { readonly __brand: "physics.JOINT_TYPE_WELD" };
+    /**
+     * The following properties are available when connecting a joint of `JOINT_TYPE_WHEEL` type:
+     */
     const JOINT_TYPE_WHEEL: number & { readonly __brand: "physics.JOINT_TYPE_WHEEL" };
     const SHAPE_TYPE_BOX: number & { readonly __brand: "physics.SHAPE_TYPE_BOX" };
     const SHAPE_TYPE_CAPSULE: number & { readonly __brand: "physics.SHAPE_TYPE_CAPSULE" };
@@ -297,10 +315,30 @@ declare global {
      */
     function wakeup(url: string | Hash | Url): void;
     interface properties {
+      /**
+       * The angular damping value for the collision object. Setting this value alters the damping of
+       * angular motion of the object (rotation). Valid values are between 0 (no damping) and 1 (full damping).
+       */
       angular_damping: number;
+      /**
+       * The current angular velocity of the collision object component as a vector3.
+       * The velocity is measured as a rotation around the vector with a speed equivalent to the vector length
+       * in radians/s.
+       */
       angular_velocity: Vector3;
+      /**
+       * The linear damping value for the collision object. Setting this value alters the damping of
+       * linear motion of the object. Valid values are between 0 (no damping) and 1 (full damping).
+       */
       linear_damping: number;
+      /**
+       * The current linear velocity of the collision object component as a vector3.
+       * The velocity is measured in units/s (pixels/s).
+       */
       linear_velocity: Vector3;
+      /**
+       * READ ONLY Returns the defined physical mass of the collision object component as a number.
+       */
       mass: number;
     }
   }

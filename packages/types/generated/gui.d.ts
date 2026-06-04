@@ -3,109 +3,426 @@ import type { Hash, Opaque, Quaternion, Url, Vector, Vector3, Vector4 } from "..
 
 declare global {
   namespace gui {
+    /**
+     * Adjust mode is used when the screen resolution differs from the project settings.
+     * The fit mode ensures that the entire node is visible in the adjusted gui scene.
+     */
     const ADJUST_FIT: number & { readonly __brand: "gui.ADJUST_FIT" };
+    /**
+     * Adjust mode is used when the screen resolution differs from the project settings.
+     * The stretch mode ensures that the node is displayed as is in the adjusted gui scene, which might scale it non-uniformally.
+     */
     const ADJUST_STRETCH: number & { readonly __brand: "gui.ADJUST_STRETCH" };
+    /**
+     * Adjust mode is used when the screen resolution differs from the project settings.
+     * The zoom mode ensures that the node fills its entire area and might make the node exceed it.
+     */
     const ADJUST_ZOOM: number & { readonly __brand: "gui.ADJUST_ZOOM" };
+    /**
+     * bottom y-anchor
+     */
     const ANCHOR_BOTTOM: number & { readonly __brand: "gui.ANCHOR_BOTTOM" };
+    /**
+     * left x-anchor
+     */
     const ANCHOR_LEFT: number & { readonly __brand: "gui.ANCHOR_LEFT" };
+    /**
+     * no anchor
+     */
     const ANCHOR_NONE: number & { readonly __brand: "gui.ANCHOR_NONE" };
+    /**
+     * right x-anchor
+     */
     const ANCHOR_RIGHT: number & { readonly __brand: "gui.ANCHOR_RIGHT" };
+    /**
+     * top y-anchor
+     */
     const ANCHOR_TOP: number & { readonly __brand: "gui.ANCHOR_TOP" };
+    /**
+     * additive blending
+     */
     const BLEND_ADD: number & { readonly __brand: "gui.BLEND_ADD" };
+    /**
+     * additive alpha blending
+     */
     const BLEND_ADD_ALPHA: number & { readonly __brand: "gui.BLEND_ADD_ALPHA" };
+    /**
+     * alpha blending
+     */
     const BLEND_ALPHA: number & { readonly __brand: "gui.BLEND_ALPHA" };
+    /**
+     * multiply blending
+     */
     const BLEND_MULT: number & { readonly __brand: "gui.BLEND_MULT" };
+    /**
+     * screen blending
+     */
     const BLEND_SCREEN: number & { readonly __brand: "gui.BLEND_SCREEN" };
+    /**
+     * clipping mode none
+     */
     const CLIPPING_MODE_NONE: number & { readonly __brand: "gui.CLIPPING_MODE_NONE" };
+    /**
+     * clipping mode stencil
+     */
     const CLIPPING_MODE_STENCIL: number & { readonly __brand: "gui.CLIPPING_MODE_STENCIL" };
+    /**
+     * in-back
+     */
     const EASING_INBACK: number & { readonly __brand: "gui.EASING_INBACK" };
+    /**
+     * in-bounce
+     */
     const EASING_INBOUNCE: number & { readonly __brand: "gui.EASING_INBOUNCE" };
+    /**
+     * in-circlic
+     */
     const EASING_INCIRC: number & { readonly __brand: "gui.EASING_INCIRC" };
+    /**
+     * in-cubic
+     */
     const EASING_INCUBIC: number & { readonly __brand: "gui.EASING_INCUBIC" };
+    /**
+     * in-elastic
+     */
     const EASING_INELASTIC: number & { readonly __brand: "gui.EASING_INELASTIC" };
+    /**
+     * in-exponential
+     */
     const EASING_INEXPO: number & { readonly __brand: "gui.EASING_INEXPO" };
+    /**
+     * in-out-back
+     */
     const EASING_INOUTBACK: number & { readonly __brand: "gui.EASING_INOUTBACK" };
+    /**
+     * in-out-bounce
+     */
     const EASING_INOUTBOUNCE: number & { readonly __brand: "gui.EASING_INOUTBOUNCE" };
+    /**
+     * in-out-circlic
+     */
     const EASING_INOUTCIRC: number & { readonly __brand: "gui.EASING_INOUTCIRC" };
+    /**
+     * in-out-cubic
+     */
     const EASING_INOUTCUBIC: number & { readonly __brand: "gui.EASING_INOUTCUBIC" };
+    /**
+     * in-out-elastic
+     */
     const EASING_INOUTELASTIC: number & { readonly __brand: "gui.EASING_INOUTELASTIC" };
+    /**
+     * in-out-exponential
+     */
     const EASING_INOUTEXPO: number & { readonly __brand: "gui.EASING_INOUTEXPO" };
+    /**
+     * in-out-quadratic
+     */
     const EASING_INOUTQUAD: number & { readonly __brand: "gui.EASING_INOUTQUAD" };
+    /**
+     * in-out-quartic
+     */
     const EASING_INOUTQUART: number & { readonly __brand: "gui.EASING_INOUTQUART" };
+    /**
+     * in-out-quintic
+     */
     const EASING_INOUTQUINT: number & { readonly __brand: "gui.EASING_INOUTQUINT" };
+    /**
+     * in-out-sine
+     */
     const EASING_INOUTSINE: number & { readonly __brand: "gui.EASING_INOUTSINE" };
+    /**
+     * in-quadratic
+     */
     const EASING_INQUAD: number & { readonly __brand: "gui.EASING_INQUAD" };
+    /**
+     * in-quartic
+     */
     const EASING_INQUART: number & { readonly __brand: "gui.EASING_INQUART" };
+    /**
+     * in-quintic
+     */
     const EASING_INQUINT: number & { readonly __brand: "gui.EASING_INQUINT" };
+    /**
+     * in-sine
+     */
     const EASING_INSINE: number & { readonly __brand: "gui.EASING_INSINE" };
+    /**
+     * linear interpolation
+     */
     const EASING_LINEAR: number & { readonly __brand: "gui.EASING_LINEAR" };
+    /**
+     * out-back
+     */
     const EASING_OUTBACK: number & { readonly __brand: "gui.EASING_OUTBACK" };
+    /**
+     * out-bounce
+     */
     const EASING_OUTBOUNCE: number & { readonly __brand: "gui.EASING_OUTBOUNCE" };
+    /**
+     * out-circlic
+     */
     const EASING_OUTCIRC: number & { readonly __brand: "gui.EASING_OUTCIRC" };
+    /**
+     * out-cubic
+     */
     const EASING_OUTCUBIC: number & { readonly __brand: "gui.EASING_OUTCUBIC" };
+    /**
+     * out-elastic
+     */
     const EASING_OUTELASTIC: number & { readonly __brand: "gui.EASING_OUTELASTIC" };
+    /**
+     * out-exponential
+     */
     const EASING_OUTEXPO: number & { readonly __brand: "gui.EASING_OUTEXPO" };
+    /**
+     * out-in-back
+     */
     const EASING_OUTINBACK: number & { readonly __brand: "gui.EASING_OUTINBACK" };
+    /**
+     * out-in-bounce
+     */
     const EASING_OUTINBOUNCE: number & { readonly __brand: "gui.EASING_OUTINBOUNCE" };
+    /**
+     * out-in-circlic
+     */
     const EASING_OUTINCIRC: number & { readonly __brand: "gui.EASING_OUTINCIRC" };
+    /**
+     * out-in-cubic
+     */
     const EASING_OUTINCUBIC: number & { readonly __brand: "gui.EASING_OUTINCUBIC" };
+    /**
+     * out-in-elastic
+     */
     const EASING_OUTINELASTIC: number & { readonly __brand: "gui.EASING_OUTINELASTIC" };
+    /**
+     * out-in-exponential
+     */
     const EASING_OUTINEXPO: number & { readonly __brand: "gui.EASING_OUTINEXPO" };
+    /**
+     * out-in-quadratic
+     */
     const EASING_OUTINQUAD: number & { readonly __brand: "gui.EASING_OUTINQUAD" };
+    /**
+     * out-in-quartic
+     */
     const EASING_OUTINQUART: number & { readonly __brand: "gui.EASING_OUTINQUART" };
+    /**
+     * out-in-quintic
+     */
     const EASING_OUTINQUINT: number & { readonly __brand: "gui.EASING_OUTINQUINT" };
+    /**
+     * out-in-sine
+     */
     const EASING_OUTINSINE: number & { readonly __brand: "gui.EASING_OUTINSINE" };
+    /**
+     * out-quadratic
+     */
     const EASING_OUTQUAD: number & { readonly __brand: "gui.EASING_OUTQUAD" };
+    /**
+     * out-quartic
+     */
     const EASING_OUTQUART: number & { readonly __brand: "gui.EASING_OUTQUART" };
+    /**
+     * out-quintic
+     */
     const EASING_OUTQUINT: number & { readonly __brand: "gui.EASING_OUTQUINT" };
+    /**
+     * out-sine
+     */
     const EASING_OUTSINE: number & { readonly __brand: "gui.EASING_OUTSINE" };
+    /**
+     * default keyboard
+     */
     const KEYBOARD_TYPE_DEFAULT: number & { readonly __brand: "gui.KEYBOARD_TYPE_DEFAULT" };
+    /**
+     * email keyboard
+     */
     const KEYBOARD_TYPE_EMAIL: number & { readonly __brand: "gui.KEYBOARD_TYPE_EMAIL" };
+    /**
+     * number input keyboard
+     */
     const KEYBOARD_TYPE_NUMBER_PAD: number & { readonly __brand: "gui.KEYBOARD_TYPE_NUMBER_PAD" };
+    /**
+     * password keyboard
+     */
     const KEYBOARD_TYPE_PASSWORD: number & { readonly __brand: "gui.KEYBOARD_TYPE_PASSWORD" };
+    /**
+     * elliptical pie node bounds
+     */
     const PIEBOUNDS_ELLIPSE: number & { readonly __brand: "gui.PIEBOUNDS_ELLIPSE" };
+    /**
+     * rectangular pie node bounds
+     */
     const PIEBOUNDS_RECTANGLE: number & { readonly __brand: "gui.PIEBOUNDS_RECTANGLE" };
+    /**
+     * center pivot
+     */
     const PIVOT_CENTER: number & { readonly __brand: "gui.PIVOT_CENTER" };
+    /**
+     * east pivot
+     */
     const PIVOT_E: number & { readonly __brand: "gui.PIVOT_E" };
+    /**
+     * north pivot
+     */
     const PIVOT_N: number & { readonly __brand: "gui.PIVOT_N" };
+    /**
+     * north-east pivot
+     */
     const PIVOT_NE: number & { readonly __brand: "gui.PIVOT_NE" };
+    /**
+     * north-west pivot
+     */
     const PIVOT_NW: number & { readonly __brand: "gui.PIVOT_NW" };
+    /**
+     * south pivot
+     */
     const PIVOT_S: number & { readonly __brand: "gui.PIVOT_S" };
+    /**
+     * south-east pivot
+     */
     const PIVOT_SE: number & { readonly __brand: "gui.PIVOT_SE" };
+    /**
+     * south-west pivot
+     */
     const PIVOT_SW: number & { readonly __brand: "gui.PIVOT_SW" };
+    /**
+     * west pivot
+     */
     const PIVOT_W: number & { readonly __brand: "gui.PIVOT_W" };
+    /**
+     * loop backward
+     */
     const PLAYBACK_LOOP_BACKWARD: number & { readonly __brand: "gui.PLAYBACK_LOOP_BACKWARD" };
+    /**
+     * loop forward
+     */
     const PLAYBACK_LOOP_FORWARD: number & { readonly __brand: "gui.PLAYBACK_LOOP_FORWARD" };
+    /**
+     * ping pong loop
+     */
     const PLAYBACK_LOOP_PINGPONG: number & { readonly __brand: "gui.PLAYBACK_LOOP_PINGPONG" };
+    /**
+     * once backward
+     */
     const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: "gui.PLAYBACK_ONCE_BACKWARD" };
+    /**
+     * once forward
+     */
     const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: "gui.PLAYBACK_ONCE_FORWARD" };
+    /**
+     * once forward and then backward
+     */
     const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "gui.PLAYBACK_ONCE_PINGPONG" };
+    /**
+     * color property
+     */
     const PROP_COLOR: number & { readonly __brand: "gui.PROP_COLOR" };
+    /**
+     * euler property
+     */
     const PROP_EULER: number & { readonly __brand: "gui.PROP_EULER" };
+    /**
+     * fill_angle property
+     */
     const PROP_FILL_ANGLE: number & { readonly __brand: "gui.PROP_FILL_ANGLE" };
+    /**
+     * inner_radius property
+     */
     const PROP_INNER_RADIUS: number & { readonly __brand: "gui.PROP_INNER_RADIUS" };
+    /**
+     * leading property
+     */
     const PROP_LEADING: number & { readonly __brand: "gui.PROP_LEADING" };
+    /**
+     * outline color property
+     */
     const PROP_OUTLINE: number & { readonly __brand: "gui.PROP_OUTLINE" };
+    /**
+     * position property
+     */
     const PROP_POSITION: number & { readonly __brand: "gui.PROP_POSITION" };
+    /**
+     * rotation property
+     */
     const PROP_ROTATION: number & { readonly __brand: "gui.PROP_ROTATION" };
+    /**
+     * scale property
+     */
     const PROP_SCALE: number & { readonly __brand: "gui.PROP_SCALE" };
+    /**
+     * shadow color property
+     */
     const PROP_SHADOW: number & { readonly __brand: "gui.PROP_SHADOW" };
+    /**
+     * size property
+     */
     const PROP_SIZE: number & { readonly __brand: "gui.PROP_SIZE" };
+    /**
+     * slice9 property
+     */
     const PROP_SLICE9: number & { readonly __brand: "gui.PROP_SLICE9" };
+    /**
+     * tracking property
+     */
     const PROP_TRACKING: number & { readonly __brand: "gui.PROP_TRACKING" };
+    /**
+     * The provided data is not in the expected format or is in some other way
+     * incorrect, for instance the image data provided to gui.new_texture().
+     */
     const RESULT_DATA_ERROR: number & { readonly __brand: "gui.RESULT_DATA_ERROR" };
+    /**
+     * The system is out of resources, for instance when trying to create a new
+     * texture using gui.new_texture().
+     */
     const RESULT_OUT_OF_RESOURCES: number & { readonly __brand: "gui.RESULT_OUT_OF_RESOURCES" };
+    /**
+     * The texture id already exists when trying to use gui.new_texture().
+     */
     const RESULT_TEXTURE_ALREADY_EXISTS: number & { readonly __brand: "gui.RESULT_TEXTURE_ALREADY_EXISTS" };
+    /**
+     * Safe area mode that applies insets on all edges.
+     */
     const SAFE_AREA_BOTH: number & { readonly __brand: "gui.SAFE_AREA_BOTH" };
+    /**
+     * Safe area mode that applies insets only on the long edges.
+     */
     const SAFE_AREA_LONG: number & { readonly __brand: "gui.SAFE_AREA_LONG" };
+    /**
+     * Safe area mode that ignores safe area insets.
+     */
     const SAFE_AREA_NONE: number & { readonly __brand: "gui.SAFE_AREA_NONE" };
+    /**
+     * Safe area mode that applies insets only on the short edges.
+     */
     const SAFE_AREA_SHORT: number & { readonly __brand: "gui.SAFE_AREA_SHORT" };
+    /**
+     * The size of the node is determined by the currently assigned texture.
+     */
     const SIZE_MODE_AUTO: number & { readonly __brand: "gui.SIZE_MODE_AUTO" };
+    /**
+     * The size of the node is determined by the size set in the editor, the constructor or by gui.set_size()
+     */
     const SIZE_MODE_MANUAL: number & { readonly __brand: "gui.SIZE_MODE_MANUAL" };
+    /**
+     * box type
+     */
     const TYPE_BOX: number & { readonly __brand: "gui.TYPE_BOX" };
+    /**
+     * custom type
+     */
     const TYPE_CUSTOM: number & { readonly __brand: "gui.TYPE_CUSTOM" };
+    /**
+     * particlefx type
+     */
     const TYPE_PARTICLEFX: number & { readonly __brand: "gui.TYPE_PARTICLEFX" };
+    /**
+     * pie type
+     */
     const TYPE_PIE: number & { readonly __brand: "gui.TYPE_PIE" };
+    /**
+     * text type
+     */
     const TYPE_TEXT: number & { readonly __brand: "gui.TYPE_TEXT" };
     /**
      * This starts an animation of a node property according to the specified parameters.
@@ -1411,9 +1728,24 @@ declare global {
      */
     function update(self: Opaque<"userdata">, dt: number): void;
     interface properties {
+      /**
+       * The fonts used in the gui. The type of the property is hash.
+       * Key must be specified in options table.
+       */
       fonts: Hash;
+      /**
+       * The main material (the default material assigned to a GUI) used when rendering the gui. The type of the property is hash.
+       */
       material: Hash;
+      /**
+       * The materials used when rendering the gui. The type of the property is hash.
+       * Key must be specified in options table.
+       */
       materials: Hash;
+      /**
+       * The textures used in the gui. The type of the property is hash.
+       * Key must be specified in options table.
+       */
       textures: Hash;
     }
   }

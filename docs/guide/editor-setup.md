@@ -14,7 +14,7 @@ VSCode's built-in TypeScript support reads this file automatically when the proj
 
 ## Hover documentation
 
-The generated type declarations carry the Defold reference docs inline as JSDoc. Hovering a Defold symbol in `src/*.ts` shows its description, each parameter (`@param`), and its return (`@returns`) straight from the engine API docs — no extra extension required, since it rides on VSCode's built-in TypeScript support. Autocomplete surfaces the same text. Undocumented engine functions simply show their signature with no description.
+The generated type declarations carry the Defold reference docs inline as JSDoc. Hovering a Defold symbol in `src/*.ts` shows its description straight from the engine API docs — functions also list each parameter (`@param`) and their return (`@returns`); constants, variables, and component `properties` show a summary line. No extra extension required, since it rides on VSCode's built-in TypeScript support. Autocomplete surfaces the same text. Undocumented engine symbols simply show their signature with no description.
 
 ## Recommended editor extensions
 

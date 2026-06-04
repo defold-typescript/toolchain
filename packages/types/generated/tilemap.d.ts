@@ -3,10 +3,25 @@ import type { Hash, Url } from "../src/core-types";
 
 declare global {
   namespace tilemap {
+    /**
+     * flip tile horizontally
+     */
     const H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" };
+    /**
+     * rotate tile 180 degrees clockwise
+     */
     const ROTATE_180: number & { readonly __brand: "tilemap.ROTATE_180" };
+    /**
+     * rotate tile 270 degrees clockwise
+     */
     const ROTATE_270: number & { readonly __brand: "tilemap.ROTATE_270" };
+    /**
+     * rotate tile 90 degrees clockwise
+     */
     const ROTATE_90: number & { readonly __brand: "tilemap.ROTATE_90" };
+    /**
+     * flip tile vertically
+     */
     const V_FLIP: number & { readonly __brand: "tilemap.V_FLIP" };
     /**
      * Get the bounds for a tile map. This function returns multiple values:
@@ -95,7 +110,13 @@ declare global {
      */
     function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
     interface properties {
+      /**
+       * The material used when rendering the tile map. The type of the property is hash.
+       */
       material: Hash;
+      /**
+       * The tile source used when rendering the tile map. The type of the property is hash.
+       */
       tile_source: Hash;
     }
   }

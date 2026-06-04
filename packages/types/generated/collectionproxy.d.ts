@@ -3,8 +3,17 @@ import type { Hash, Url } from "../src/core-types";
 
 declare global {
   namespace collectionproxy {
+    /**
+     * It's impossible to change the collection if the collection is already loaded.
+     */
     const RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" };
+    /**
+     * It's impossible to change the collection while the collection proxy is loading.
+     */
     const RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" };
+    /**
+     * It's impossible to change the collection for a proxy that isn't excluded.
+     */
     const RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" };
     /**
      * return an indexed table of resources for a collection proxy where the

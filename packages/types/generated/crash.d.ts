@@ -1,18 +1,57 @@
 /** @noSelfInFile */
 declare global {
   namespace crash {
+    /**
+     * android build fingerprint
+     */
     const SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: "crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT" };
+    /**
+     * system device language as reported by sys.get_sys_info
+     */
     const SYSFIELD_DEVICE_LANGUAGE: number & { readonly __brand: "crash.SYSFIELD_DEVICE_LANGUAGE" };
+    /**
+     * device model as reported by sys.get_sys_info
+     */
     const SYSFIELD_DEVICE_MODEL: number & { readonly __brand: "crash.SYSFIELD_DEVICE_MODEL" };
+    /**
+     * engine version as hash
+     */
     const SYSFIELD_ENGINE_HASH: number & { readonly __brand: "crash.SYSFIELD_ENGINE_HASH" };
+    /**
+     * engine version as release number
+     */
     const SYSFIELD_ENGINE_VERSION: number & { readonly __brand: "crash.SYSFIELD_ENGINE_VERSION" };
+    /**
+     * system language as reported by sys.get_sys_info
+     */
     const SYSFIELD_LANGUAGE: number & { readonly __brand: "crash.SYSFIELD_LANGUAGE" };
+    /**
+     * device manufacturer as reported by sys.get_sys_info
+     */
     const SYSFIELD_MANUFACTURER: number & { readonly __brand: "crash.SYSFIELD_MANUFACTURER" };
+    /**
+     * The max number of sysfields.
+     */
     const SYSFIELD_MAX: number & { readonly __brand: "crash.SYSFIELD_MAX" };
+    /**
+     * system name as reported by sys.get_sys_info
+     */
     const SYSFIELD_SYSTEM_NAME: number & { readonly __brand: "crash.SYSFIELD_SYSTEM_NAME" };
+    /**
+     * system version as reported by sys.get_sys_info
+     */
     const SYSFIELD_SYSTEM_VERSION: number & { readonly __brand: "crash.SYSFIELD_SYSTEM_VERSION" };
+    /**
+     * system territory as reported by sys.get_sys_info
+     */
     const SYSFIELD_TERRITORY: number & { readonly __brand: "crash.SYSFIELD_TERRITORY" };
+    /**
+     * The max number of user fields.
+     */
     const USERFIELD_MAX: number & { readonly __brand: "crash.USERFIELD_MAX" };
+    /**
+     * The max size of a single user field.
+     */
     const USERFIELD_SIZE: number & { readonly __brand: "crash.USERFIELD_SIZE" };
     /**
      * A table is returned containing the addresses of the call stack.
