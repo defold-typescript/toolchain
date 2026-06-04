@@ -3,13 +3,43 @@ import type { Opaque } from "../src/core-types";
 
 declare global {
   namespace window {
+    /**
+     * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
+     */
     const DIMMING_OFF: number & { readonly __brand: "window.DIMMING_OFF" };
+    /**
+     * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
+     */
     const DIMMING_ON: number & { readonly __brand: "window.DIMMING_ON" };
+    /**
+     * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
+     * This mode indicates that the dim mode can't be determined, or that the platform doesn't support dimming.
+     */
     const DIMMING_UNKNOWN: number & { readonly __brand: "window.DIMMING_UNKNOWN" };
+    /**
+     * This event is sent to a window event listener when the game window or app screen is
+     * restored after being iconified.
+     */
     const WINDOW_EVENT_DEICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_DEICONIFIED" };
+    /**
+     * This event is sent to a window event listener when the game window or app screen has
+     * gained focus.
+     * This event is also sent at game startup and the engine gives focus to the game.
+     */
     const WINDOW_EVENT_FOCUS_GAINED: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_GAINED" };
+    /**
+     * This event is sent to a window event listener when the game window or app screen has lost focus.
+     */
     const WINDOW_EVENT_FOCUS_LOST: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_LOST" };
+    /**
+     * This event is sent to a window event listener when the game window or app screen is
+     * iconified (reduced to an application icon in a toolbar, application tray or similar).
+     */
     const WINDOW_EVENT_ICONFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONFIED" };
+    /**
+     * This event is sent to a window event listener when the game window or app screen is resized.
+     * The new size is passed along in the data field to the event listener.
+     */
     const WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" };
     /**
      * Returns the current dimming mode set on a mobile device.

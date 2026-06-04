@@ -3,53 +3,197 @@ import type { Hash, Matrix4, Opaque, Quaternion, Url, Vector, Vector3, Vector4 }
 
 declare global {
   namespace go {
+    /**
+     * in-back
+     */
     export const EASING_INBACK: number & { readonly __brand: "go.EASING_INBACK" };
+    /**
+     * in-bounce
+     */
     export const EASING_INBOUNCE: number & { readonly __brand: "go.EASING_INBOUNCE" };
+    /**
+     * in-circlic
+     */
     export const EASING_INCIRC: number & { readonly __brand: "go.EASING_INCIRC" };
+    /**
+     * in-cubic
+     */
     export const EASING_INCUBIC: number & { readonly __brand: "go.EASING_INCUBIC" };
+    /**
+     * in-elastic
+     */
     export const EASING_INELASTIC: number & { readonly __brand: "go.EASING_INELASTIC" };
+    /**
+     * in-exponential
+     */
     export const EASING_INEXPO: number & { readonly __brand: "go.EASING_INEXPO" };
+    /**
+     * in-out-back
+     */
     export const EASING_INOUTBACK: number & { readonly __brand: "go.EASING_INOUTBACK" };
+    /**
+     * in-out-bounce
+     */
     export const EASING_INOUTBOUNCE: number & { readonly __brand: "go.EASING_INOUTBOUNCE" };
+    /**
+     * in-out-circlic
+     */
     export const EASING_INOUTCIRC: number & { readonly __brand: "go.EASING_INOUTCIRC" };
+    /**
+     * in-out-cubic
+     */
     export const EASING_INOUTCUBIC: number & { readonly __brand: "go.EASING_INOUTCUBIC" };
+    /**
+     * in-out-elastic
+     */
     export const EASING_INOUTELASTIC: number & { readonly __brand: "go.EASING_INOUTELASTIC" };
+    /**
+     * in-out-exponential
+     */
     export const EASING_INOUTEXPO: number & { readonly __brand: "go.EASING_INOUTEXPO" };
+    /**
+     * in-out-quadratic
+     */
     export const EASING_INOUTQUAD: number & { readonly __brand: "go.EASING_INOUTQUAD" };
+    /**
+     * in-out-quartic
+     */
     export const EASING_INOUTQUART: number & { readonly __brand: "go.EASING_INOUTQUART" };
+    /**
+     * in-out-quintic
+     */
     export const EASING_INOUTQUINT: number & { readonly __brand: "go.EASING_INOUTQUINT" };
+    /**
+     * in-out-sine
+     */
     export const EASING_INOUTSINE: number & { readonly __brand: "go.EASING_INOUTSINE" };
+    /**
+     * in-quadratic
+     */
     export const EASING_INQUAD: number & { readonly __brand: "go.EASING_INQUAD" };
+    /**
+     * in-quartic
+     */
     export const EASING_INQUART: number & { readonly __brand: "go.EASING_INQUART" };
+    /**
+     * in-quintic
+     */
     export const EASING_INQUINT: number & { readonly __brand: "go.EASING_INQUINT" };
+    /**
+     * in-sine
+     */
     export const EASING_INSINE: number & { readonly __brand: "go.EASING_INSINE" };
+    /**
+     * linear interpolation
+     */
     export const EASING_LINEAR: number & { readonly __brand: "go.EASING_LINEAR" };
+    /**
+     * out-back
+     */
     export const EASING_OUTBACK: number & { readonly __brand: "go.EASING_OUTBACK" };
+    /**
+     * out-bounce
+     */
     export const EASING_OUTBOUNCE: number & { readonly __brand: "go.EASING_OUTBOUNCE" };
+    /**
+     * out-circlic
+     */
     export const EASING_OUTCIRC: number & { readonly __brand: "go.EASING_OUTCIRC" };
+    /**
+     * out-cubic
+     */
     export const EASING_OUTCUBIC: number & { readonly __brand: "go.EASING_OUTCUBIC" };
+    /**
+     * out-elastic
+     */
     export const EASING_OUTELASTIC: number & { readonly __brand: "go.EASING_OUTELASTIC" };
+    /**
+     * out-exponential
+     */
     export const EASING_OUTEXPO: number & { readonly __brand: "go.EASING_OUTEXPO" };
+    /**
+     * out-in-back
+     */
     export const EASING_OUTINBACK: number & { readonly __brand: "go.EASING_OUTINBACK" };
+    /**
+     * out-in-bounce
+     */
     export const EASING_OUTINBOUNCE: number & { readonly __brand: "go.EASING_OUTINBOUNCE" };
+    /**
+     * out-in-circlic
+     */
     export const EASING_OUTINCIRC: number & { readonly __brand: "go.EASING_OUTINCIRC" };
+    /**
+     * out-in-cubic
+     */
     export const EASING_OUTINCUBIC: number & { readonly __brand: "go.EASING_OUTINCUBIC" };
+    /**
+     * out-in-elastic
+     */
     export const EASING_OUTINELASTIC: number & { readonly __brand: "go.EASING_OUTINELASTIC" };
+    /**
+     * out-in-exponential
+     */
     export const EASING_OUTINEXPO: number & { readonly __brand: "go.EASING_OUTINEXPO" };
+    /**
+     * out-in-quadratic
+     */
     export const EASING_OUTINQUAD: number & { readonly __brand: "go.EASING_OUTINQUAD" };
+    /**
+     * out-in-quartic
+     */
     export const EASING_OUTINQUART: number & { readonly __brand: "go.EASING_OUTINQUART" };
+    /**
+     * out-in-quintic
+     */
     export const EASING_OUTINQUINT: number & { readonly __brand: "go.EASING_OUTINQUINT" };
+    /**
+     * out-in-sine
+     */
     export const EASING_OUTINSINE: number & { readonly __brand: "go.EASING_OUTINSINE" };
+    /**
+     * out-quadratic
+     */
     export const EASING_OUTQUAD: number & { readonly __brand: "go.EASING_OUTQUAD" };
+    /**
+     * out-quartic
+     */
     export const EASING_OUTQUART: number & { readonly __brand: "go.EASING_OUTQUART" };
+    /**
+     * out-quintic
+     */
     export const EASING_OUTQUINT: number & { readonly __brand: "go.EASING_OUTQUINT" };
+    /**
+     * out-sine
+     */
     export const EASING_OUTSINE: number & { readonly __brand: "go.EASING_OUTSINE" };
+    /**
+     * loop backward
+     */
     export const PLAYBACK_LOOP_BACKWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" };
+    /**
+     * loop forward
+     */
     export const PLAYBACK_LOOP_FORWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" };
+    /**
+     * ping pong loop
+     */
     export const PLAYBACK_LOOP_PINGPONG: number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" };
+    /**
+     * no playback
+     */
     export const PLAYBACK_NONE: number & { readonly __brand: "go.PLAYBACK_NONE" };
+    /**
+     * once backward
+     */
     export const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" };
+    /**
+     * once forward
+     */
     export const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" };
+    /**
+     * once ping pong
+     */
     export const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" };
     /**
      * This is only supported for numerical properties. If the node property is already being
@@ -445,9 +589,25 @@ declare global {
     export function world_to_local_transform(transformation: Matrix4, url: string | Hash | Url): Matrix4;
     export { _delete as delete };
     export interface properties {
+      /**
+       * The rotation of the game object expressed in Euler angles.
+       * Euler angles are specified in degrees in the interval (-360, 360).
+       * The type of the property is vector3.
+       */
       euler: Vector3;
+      /**
+       * The position of the game object.
+       * The type of the property is vector3.
+       */
       position: Vector3;
+      /**
+       * The rotation of the game object.
+       * The type of the property is quaternion.
+       */
       rotation: Quaternion;
+      /**
+       * The uniform scale of the game object. The type of the property is number.
+       */
       scale: number;
     }
   }

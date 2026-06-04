@@ -3,11 +3,29 @@ import type { Opaque } from "../src/core-types";
 
 declare global {
   namespace profiler {
+    /**
+     * pause on current frame
+     */
     const MODE_PAUSE: number & { readonly __brand: "profiler.MODE_PAUSE" };
+    /**
+     * start recording
+     */
     const MODE_RECORD: number & { readonly __brand: "profiler.MODE_RECORD" };
+    /**
+     * continously show latest frame
+     */
     const MODE_RUN: number & { readonly __brand: "profiler.MODE_RUN" };
+    /**
+     * pause at peak frame
+     */
     const MODE_SHOW_PEAK_FRAME: number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" };
+    /**
+     * show full profiler ui
+     */
     const VIEW_MODE_FULL: number & { readonly __brand: "profiler.VIEW_MODE_FULL" };
+    /**
+     * show mimimal profiler ui
+     */
     const VIEW_MODE_MINIMIZED: number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" };
     /**
      * logs the current frame to the console

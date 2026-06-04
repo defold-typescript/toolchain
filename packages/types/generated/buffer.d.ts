@@ -3,14 +3,41 @@ import type { Hash, Opaque } from "../src/core-types";
 
 declare global {
   namespace buffer {
+    /**
+     * Float, single precision, 4 bytes
+     */
     const VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" };
+    /**
+     * Signed integer, 2 bytes
+     */
     const VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" };
+    /**
+     * Signed integer, 4 bytes
+     */
     const VALUE_TYPE_INT32: number & { readonly __brand: "buffer.VALUE_TYPE_INT32" };
+    /**
+     * Signed integer, 8 bytes
+     */
     const VALUE_TYPE_INT64: number & { readonly __brand: "buffer.VALUE_TYPE_INT64" };
+    /**
+     * Signed integer, 1 byte
+     */
     const VALUE_TYPE_INT8: number & { readonly __brand: "buffer.VALUE_TYPE_INT8" };
+    /**
+     * Unsigned integer, 2 bytes
+     */
     const VALUE_TYPE_UINT16: number & { readonly __brand: "buffer.VALUE_TYPE_UINT16" };
+    /**
+     * Unsigned integer, 4 bytes
+     */
     const VALUE_TYPE_UINT32: number & { readonly __brand: "buffer.VALUE_TYPE_UINT32" };
+    /**
+     * Unsigned integer, 8 bytes
+     */
     const VALUE_TYPE_UINT64: number & { readonly __brand: "buffer.VALUE_TYPE_UINT64" };
+    /**
+     * Unsigned integer, 1 byte
+     */
     const VALUE_TYPE_UINT8: number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" };
     /**
      * Copy all data streams from one buffer to another, element wise.

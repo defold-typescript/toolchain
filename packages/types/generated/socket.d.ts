@@ -6,7 +6,13 @@ declare global {
     type client = Opaque<"client">;
     type master = Opaque<"master">;
     type unconnected = Opaque<"unconnected">;
+    /**
+     * This constant contains the maximum number of sockets that the select function can handle.
+     */
     const _SETSIZE: number & { readonly __brand: "socket._SETSIZE" };
+    /**
+     * This constant has a string describing the current LuaSocket version.
+     */
     const _VERSION: number & { readonly __brand: "socket._VERSION" };
     /**
      * This function is a shortcut that creates and returns a TCP client object connected to a remote

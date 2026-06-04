@@ -1,18 +1,57 @@
 /** @noSelfInFile */
 declare global {
   namespace liveupdate {
+    /**
+     * Mismatch between between expected bundled resources and actual bundled resources. The manifest expects a resource to be in the bundle, but it was not found in the bundle. This is typically the case when a non-excluded resource was modified between publishing the bundle and publishing the manifest.
+     */
     const LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH" };
+    /**
+     * Mismatch between running engine version and engine versions supported by manifest.
+     */
     const LIVEUPDATE_ENGINE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH" };
+    /**
+     * Failed to parse manifest data buffer. The manifest was probably produced by a different engine version.
+     */
     const LIVEUPDATE_FORMAT_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_FORMAT_ERROR" };
+    /**
+     * Argument was invalid
+     */
     const LIVEUPDATE_INVAL: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVAL" };
+    /**
+     * The handled resource is invalid.
+     */
     const LIVEUPDATE_INVALID_HEADER: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVALID_HEADER" };
+    /**
+     * The header of the resource is invalid.
+     */
     const LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVALID_RESOURCE" };
+    /**
+     * I/O operation failed
+     */
     const LIVEUPDATE_IO_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_IO_ERROR" };
+    /**
+     * Memory wasn't allocated
+     */
     const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_MEM_ERROR" };
+    /**
+     * LIVEUPDATE_OK
+     */
     const LIVEUPDATE_OK: number & { readonly __brand: "liveupdate.LIVEUPDATE_OK" };
+    /**
+     * Mismatch between scheme used to load resources. Resources are loaded with a different scheme than from manifest, for example over HTTP or directly from file. This is typically the case when running the game directly from the editor instead of from a bundle.
+     */
     const LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SCHEME_MISMATCH" };
+    /**
+     * Mismatch between expected and actual integrity data for legacy liveupdate verification.
+     */
     const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH" };
+    /**
+     * Unspecified error
+     */
     const LIVEUPDATE_UNKNOWN: number & { readonly __brand: "liveupdate.LIVEUPDATE_UNKNOWN" };
+    /**
+     * Mismatch between manifest expected version and actual version.
+     */
     const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_VERSION_MISMATCH" };
     /**
      * Adds a resource mount to the resource system.

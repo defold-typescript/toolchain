@@ -1,6 +1,9 @@
 /** @noSelfInFile */
 declare global {
   namespace json {
+    /**
+     * Represents the null primitive from a json file
+     */
     const _null: unknown;
     /**
      * Decode a string of JSON data into a Lua table.

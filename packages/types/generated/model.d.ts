@@ -96,10 +96,26 @@ declare global {
      */
     function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean): void;
     interface properties {
+      /**
+       * The current animation set on the component. The type of the property is hash.
+       */
       animation: Hash;
+      /**
+       * The normalized animation cursor. The type of the property is number.
+       * Please note that model events may not fire as expected when the cursor is manipulated directly.
+       */
       cursor: number;
+      /**
+       * The material used when rendering the model. The type of the property is hash.
+       */
       material: Hash;
+      /**
+       * The animation playback rate. A multiplier to the animation playback rate. The type of the property is number.
+       */
       playback_rate: number;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
       textureN: Hash;
     }
   }

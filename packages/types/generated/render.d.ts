@@ -9,8 +9,17 @@ declare global {
     const FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" };
     const FRUSTUM_PLANES_SIDES: number & { readonly __brand: "render.FRUSTUM_PLANES_SIDES" };
     const RENDER_TARGET_DEFAULT: number & { readonly __brand: "render.RENDER_TARGET_DEFAULT" };
+    /**
+     * Depth sort far-to-near (default; good for transparent passes).
+     */
     const SORT_BACK_TO_FRONT: number & { readonly __brand: "render.SORT_BACK_TO_FRONT" };
+    /**
+     * Depth sort near-to-far (good for opaque passes to reduce overdraw).
+     */
     const SORT_FRONT_TO_BACK: number & { readonly __brand: "render.SORT_FRONT_TO_BACK" };
+    /**
+     * No per-call sorting; draw entries in insertion order.
+     */
     const SORT_NONE: number & { readonly __brand: "render.SORT_NONE" };
     /**
      * Clear buffers in the currently enabled render target with specified value. If the render target has been created with multiple

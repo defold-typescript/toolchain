@@ -148,9 +148,24 @@ declare global {
      */
     function stop(url: string | Hash | Url, stop_properties?: { play_id?: number }): void;
     interface properties {
+      /**
+       * The gain on the sound-component. Note that gain is in linear scale,
+       * between 0 and 1.
+       */
       gain: number;
+      /**
+       * The pan on the sound-component. The valid range is from -1.0 to 1.0,
+       * representing -45 degrees left, to +45 degrees right.
+       */
       pan: number;
+      /**
+       * The sound data used when playing the sound. The type of the property is hash.
+       */
       sound: Hash;
+      /**
+       * The speed on the sound-component where 1.0 is normal speed, 0.5 is half
+       * speed and 2.0 is double speed. Valid range is 0.0 to 50.0.
+       */
       speed: number;
     }
   }
