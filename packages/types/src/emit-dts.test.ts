@@ -905,6 +905,131 @@ describe("emitDeclarations", () => {
   });
 });
 
+function jsdocBefore(out: string, fnSignature: string): string {
+  const lines = out.split("\n");
+  const idx = lines.findIndex((line) => line.includes(fnSignature));
+  if (idx === -1) throw new Error(`missing ${fnSignature}`);
+  const block: string[] = [];
+  for (let i = idx - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    if (line === undefined) break;
+    block.unshift(line);
+    if (line.trim().startsWith("/**")) break;
+  }
+  return block.join("\n");
+}
+
+describe("function JSDoc emission", () => {
+  test("go.get_position emits a JSDoc block with its summary and @param id doc", () => {
+    const module = parseDefoldApiDoc(goDoc);
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "function get_position(");
+    expect(block.startsWith("  /**")).toBe(true);
+    expect(block).toContain(" * The position is relative the parent");
+    expect(block).toContain(
+      " * @param id - optional id of the game object instance to get the position for, by default the instance of the calling script",
+    );
+  });
+
+  test("a function with a single documented return emits @returns with the rendered doc", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "ns.measure",
+          brief: "measure something",
+          description: "",
+          parameters: [],
+          returnValues: [{ name: "size", doc: "the measured size", types: ["number"] }].map(
+            (r) => ({
+              ...r,
+              isOptional: false,
+            }),
+          ),
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "function measure(");
+    expect(block).toContain(" * @returns the measured size");
+  });
+
+  test("a reserved-name function emits its JSDoc on the internal _name declaration", () => {
+    const module: ApiModule = {
+      namespace: "go",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "go.delete",
+          brief: "",
+          description: "deletes a game object instance",
+          parameters: [
+            { name: "id", doc: "the instance to delete", types: ["string"], isOptional: true },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "function _delete(");
+    expect(block.startsWith("  /**")).toBe(true);
+    expect(block).toContain(" * deletes a game object instance");
+    expect(block).toContain(" * @param id - the instance to delete");
+    expect(out).toContain("export { _delete as delete };");
+  });
+
+  test("an undocumented function emits no comment — byte-identical to the pre-change line", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: "",
+      functions: [{ name: "ns.run", brief: "", description: "", parameters: [], returnValues: [] }],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    expect(emitDeclarations(module)).toBe("declare namespace ns {\n  function run(): void;\n}\n");
+  });
+
+  test("HTML in a description is rendered — no raw <code>/<a> tags survive", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: 'Uses <code>go.set</code> and <a href="/ref/go">go</a> to apply.',
+      functions: [
+        {
+          name: "ns.apply",
+          brief: "",
+          description: 'Uses <code>go.set</code> and <a href="/ref/go">go</a> to apply.',
+          parameters: [],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "function apply(");
+    expect(block).toContain(" * Uses `go.set` and go to apply.");
+    expect(out).not.toContain("<code>");
+    expect(out).not.toContain("<a ");
+  });
+});
+
 describe("parseTableFields", () => {
   test("returns the ordered fields for a <dl> field-list doc", () => {
     const doc =

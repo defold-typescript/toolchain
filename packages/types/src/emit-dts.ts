@@ -7,6 +7,7 @@ import type {
   ApiVariable,
 } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
+import { type DocCommentParts, htmlToDocText, renderDocComment } from "./doc-comment";
 
 export interface EmitOptions {
   mapType?: (defoldType: string) => string;
@@ -488,6 +489,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   for (const fn of functions) {
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
+    for (const docLine of functionDocLines(fn.original)) lines.push(docLine);
     const line = emitFunction(fn, emitName, mapType, resolver);
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
   }
@@ -587,6 +589,27 @@ function emitFunction(
     .join(", ");
   const ret = emitReturn(prepared.original.returnValues, mapType, resolver, elementName);
   return `function ${name}(${params}): ${ret.type};${ret.trailing}`;
+}
+
+// Build the indented JSDoc lines for a function from its ref-doc prose. The
+// summary prefers the full `description`, falling back to the one-line `brief`;
+// each `@param` name is the parameter's *emitted* name (the `arg<index>`
+// fallback applies to non-identifier names, matching `emitParameter`) so the tag
+// resolves on hover; a single documented return becomes `@returns`. Returns `[]`
+// for a fully-undocumented function, leaving its emission byte-identical.
+function functionDocLines(fn: ApiFunction): string[] {
+  const rawSummary = fn.description.trim() !== "" ? fn.description : fn.brief;
+  const params = fn.parameters.map((p, index) => ({
+    name: TS_IDENTIFIER.test(p.name) ? p.name : `arg${index}`,
+    doc: htmlToDocText(p.doc),
+  }));
+  const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
+  const parts: DocCommentParts = {
+    summary: htmlToDocText(rawSummary),
+    params,
+    ...(onlyReturn ? { returns: htmlToDocText(onlyReturn.doc) } : {}),
+  };
+  return renderDocComment(parts).map((line) => `${INDENT}${line}`);
 }
 
 function isDocOptional(p: ApiParameter): boolean {
