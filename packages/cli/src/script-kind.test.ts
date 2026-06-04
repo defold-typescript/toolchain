@@ -6,6 +6,7 @@ import {
   DEFAULT_TYPES_ENTRYPOINT,
   detectScriptKinds,
   excludedModulesForKind,
+  isComponentPath,
   isSkipped,
   selectScriptKind,
   selectScriptKindEntrypoint,
@@ -68,6 +69,30 @@ describe("detectScriptKinds", () => {
     touch(".defold-types/defold-1.12.4/something.script");
     touch("build/default/copy.script");
     expect(detectScriptKinds(cwd)).toEqual(new Set());
+  });
+
+  test("ignores generated <name>.ts.script output alongside a real component", () => {
+    touch("src/main.ts.script");
+    touch("ui/hud.gui_script");
+    expect(detectScriptKinds(cwd)).toEqual(new Set(["gui-script"]));
+  });
+});
+
+describe("isComponentPath", () => {
+  test("real Defold component extensions are components", () => {
+    expect(isComponentPath("main/main.script")).toBe(true);
+    expect(isComponentPath("ui/hud.gui_script")).toBe(true);
+    expect(isComponentPath("render/default.render_script")).toBe(true);
+  });
+
+  test("generated <name>.ts.script output is not a component", () => {
+    expect(isComponentPath("src/main.ts.script")).toBe(false);
+    expect(isComponentPath("build/main.ts.script")).toBe(false);
+  });
+
+  test("non-component files are not components", () => {
+    expect(isComponentPath("src/main.ts")).toBe(false);
+    expect(isComponentPath("world.collection")).toBe(false);
   });
 });
 

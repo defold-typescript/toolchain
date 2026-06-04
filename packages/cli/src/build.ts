@@ -3,11 +3,11 @@ import * as path from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import {
   collectFailures,
-  computeLuaRel,
+  computeScriptRel,
   readBuildConfig,
   throwIfFailures,
   toPosix,
-  writeLuaFile,
+  writeScriptFile,
 } from "./build-output";
 import { scanFilesSync } from "./scan";
 
@@ -52,9 +52,9 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     if (!lua) {
       continue;
     }
-    const luaRel = computeLuaRel(rel, config);
-    writeLuaFile(cwd, luaRel, lua, result.sourceMaps[rel]);
-    written.push(luaRel);
+    const scriptRel = computeScriptRel(rel, config);
+    writeScriptFile(cwd, scriptRel, lua, result.sourceMaps[rel]);
+    written.push(scriptRel);
   }
 
   throwIfFailures(failures);

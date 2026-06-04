@@ -16,7 +16,19 @@ export function isSkipped(relPath: string): boolean {
   return relPath.split(/[/\\]/).some((segment) => SKIP_SEGMENTS.has(segment));
 }
 
+// Emitted transpiler output is `<name>.ts.script`, which ends in `.script`;
+// without this guard the kind detector would read our own build artifacts as
+// real Defold `.script` components and break the per-kind API wall.
+const GENERATED_SCRIPT_SUFFIX = ".ts.script";
+
+function isGeneratedScript(relPath: string): boolean {
+  return relPath.endsWith(GENERATED_SCRIPT_SUFFIX);
+}
+
 export function isComponentPath(relPath: string): boolean {
+  if (isGeneratedScript(relPath)) {
+    return false;
+  }
   return Object.keys(KIND_BY_EXT).some((ext) => relPath.endsWith(ext));
 }
 
@@ -24,7 +36,7 @@ export function detectScriptKinds(cwd: string): Set<ScriptKind> {
   const kinds = new Set<ScriptKind>();
   for (const [ext, kind] of Object.entries(KIND_BY_EXT)) {
     for (const match of scanFilesSync(cwd, `**/*${ext}`)) {
-      if (!isSkipped(match)) {
+      if (!isSkipped(match) && !isGeneratedScript(match)) {
         kinds.add(kind);
         break;
       }

@@ -195,8 +195,8 @@ describe("runInit (add-TS mode)", () => {
     runInit({ cwd });
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
-    expect(gitignore).toMatch(/^src\/\*\*\/\*\.lua$/m);
-    expect(gitignore).toMatch(/^src\/\*\*\/\*\.lua\.map$/m);
+    expect(gitignore).toMatch(/^src\/\*\*\/\*\.ts\.script$/m);
+    expect(gitignore).toMatch(/^src\/\*\*\/\*\.ts\.script\.map$/m);
   });
 
   test("appends ignore lines to an existing .gitignore without clobbering, idempotently", () => {
@@ -207,8 +207,8 @@ describe("runInit (add-TS mode)", () => {
     const afterFirst = readFileSync(path.join(cwd, ".gitignore"), "utf8");
     expect(afterFirst).toContain("node_modules");
     expect(afterFirst).toContain("*.log");
-    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.lua$/m);
-    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.lua\.map$/m);
+    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.ts\.script$/m);
+    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.ts\.script\.map$/m);
 
     // A second run must not duplicate the ignore lines.
     const second = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-init-rerun-"));

@@ -194,7 +194,7 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     expect(err()).toBe("");
     expect(out()).toMatch(/defold-typescript build: wrote 1 files/);
-    expect(out()).toContain("src/main.lua");
+    expect(out()).toContain("src/main.ts.script");
   });
 
   test("build failure writes error message to stderr and returns 1", () => {
@@ -239,7 +239,7 @@ describe("dispatch", () => {
     const parsed = JSON.parse(out()) as { ok: boolean; command: string; written: string[] };
     expect(parsed.ok).toBe(true);
     expect(parsed.command).toBe("build");
-    expect(parsed.written).toContain("src/main.lua");
+    expect(parsed.written).toContain("src/main.ts.script");
   });
 
   test("build --json on failure writes error JSON to stdout, nothing to stderr, returns 1", () => {

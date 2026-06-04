@@ -54,10 +54,10 @@ function stripIncludeBase(pattern: string): string {
   return lastSlash === -1 ? "" : upToWildcard.slice(0, lastSlash + 1);
 }
 
-export function computeLuaRel(rel: string, config: BuildConfig): string {
+export function computeScriptRel(rel: string, config: BuildConfig): string {
   const { outDir, include } = config;
   if (outDir === undefined || outDir === "" || outDir === ".") {
-    return rel.replace(/\.ts$/, ".lua");
+    return rel.replace(/\.ts$/, ".ts.script");
   }
   const includeBase =
     include
@@ -65,7 +65,7 @@ export function computeLuaRel(rel: string, config: BuildConfig): string {
       .filter((base) => rel.startsWith(base))
       .sort((a, b) => b.length - a.length)[0] ?? "";
   const relUnderBase = rel.slice(includeBase.length);
-  return path.posix.join(outDir, relUnderBase.replace(/\.ts$/, ".lua"));
+  return path.posix.join(outDir, relUnderBase.replace(/\.ts$/, ".ts.script"));
 }
 
 export function collectFailures(
@@ -94,19 +94,19 @@ export function throwIfFailures(failures: ReadonlyMap<string, string[]>): void {
   throw new Error(`defold-typescript build: ${failures.size} file(s) failed:\n${formatted}`);
 }
 
-export function writeLuaFile(
+export function writeScriptFile(
   cwd: string,
-  luaRel: string,
+  scriptRel: string,
   lua: string,
   map: string | undefined,
 ): void {
-  const luaAbs = path.join(cwd, luaRel);
-  mkdirSync(path.dirname(luaAbs), { recursive: true });
+  const scriptAbs = path.join(cwd, scriptRel);
+  mkdirSync(path.dirname(scriptAbs), { recursive: true });
   if (map) {
-    const mapBasename = `${path.posix.basename(luaRel)}.map`;
-    writeFileSync(`${luaAbs}.map`, map);
-    writeFileSync(luaAbs, `${lua}\n--# sourceMappingURL=${mapBasename}\n`);
+    const mapBasename = `${path.posix.basename(scriptRel)}.map`;
+    writeFileSync(`${scriptAbs}.map`, map);
+    writeFileSync(scriptAbs, `${lua}\n--# sourceMappingURL=${mapBasename}\n`);
   } else {
-    writeFileSync(luaAbs, lua);
+    writeFileSync(scriptAbs, lua);
   }
 }

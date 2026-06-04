@@ -8,12 +8,12 @@ import {
 import {
   type BuildConfig,
   collectFailures,
-  computeLuaRel,
+  computeScriptRel,
   isTranspilerSource,
   readBuildConfig,
   throwIfFailures,
   toPosix,
-  writeLuaFile,
+  writeScriptFile,
 } from "./build-output";
 import { scanFilesSync } from "./scan";
 
@@ -46,9 +46,9 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       if (lua === undefined) {
         continue;
       }
-      const luaRel = computeLuaRel(rel, config);
-      writeLuaFile(cwd, luaRel, lua, result.sourceMaps[rel]);
-      written.push(luaRel);
+      const scriptRel = computeScriptRel(rel, config);
+      writeScriptFile(cwd, scriptRel, lua, result.sourceMaps[rel]);
+      written.push(scriptRel);
     }
     throwIfFailures(failures);
     return { written };
@@ -89,9 +89,9 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     const result = session.update(changes);
 
     for (const rel of sourceRemoved) {
-      const luaAbs = path.join(cwd, computeLuaRel(rel, config));
-      rmSync(luaAbs, { force: true });
-      rmSync(`${luaAbs}.map`, { force: true });
+      const scriptAbs = path.join(cwd, computeScriptRel(rel, config));
+      rmSync(scriptAbs, { force: true });
+      rmSync(`${scriptAbs}.map`, { force: true });
     }
 
     return writeOutputs(result, sourceChanged);

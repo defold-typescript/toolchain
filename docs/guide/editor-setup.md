@@ -7,7 +7,7 @@ Open the Defold project folder in VSCode or any editor with TypeScript support. 
 The generated `tsconfig.json` sets:
 
 - `types: ["@defold-typescript/types"]` so Defold globals such as `vmath`, `msg`, and `print` type-check in `src/*.ts`.
-- no `outDir`, so transpiled Lua lands next to its `.ts` source (`src/main.ts` -> `src/main.lua`) for Defold to load. Set a concrete `outDir` to collect Lua under a separate tree instead.
+- no `outDir`, so the transpiled script lands next to its `.ts` source (`src/main.ts` -> `src/main.ts.script`) for Defold to load directly as a `.script` component (Defold resolves a resource by the extension after its last dot). Set a concrete `outDir` to collect the scripts under a separate tree instead.
 - `strict: true` so project code gets normal TypeScript checks.
 
 VSCode's built-in TypeScript support reads this file automatically when the project folder is open.
@@ -24,16 +24,16 @@ Defold runs standard Lua 5.1 (LuaJIT), **not** Luau — Luau is Roblox's dialect
 - [sumneko Lua](https://marketplace.visualstudio.com/items?itemName=sumneko.lua) (`sumneko.lua`): the Lua language server.
 - [Defold Kit](https://marketplace.visualstudio.com/items?itemName=astronachos.defold) (`astronachos.defold`): version-syncs the Defold Lua annotations, so `vmath`, `msg`, `go`, and friends resolve without manual globals config.
 
-Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold project. It reports `Failed to load sourcemap.json` and bogus diagnostics, because it expects a Roblox/Rojo `sourcemap.json` — an artifact this toolchain never produces. The `*.lua.map` files next to your output are TSTL source maps, unrelated to Roblox's `sourcemap.json`.
+Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold project. It reports `Failed to load sourcemap.json` and bogus diagnostics, because it expects a Roblox/Rojo `sourcemap.json` — an artifact this toolchain never produces. The `*.ts.script.map` files next to your output are TSTL source maps, unrelated to Roblox's `sourcemap.json`.
 
 `init` scaffolds a `.vscode/` folder that encodes all of the above:
 
 - `extensions.json` recommends sumneko Lua + Defold Kit and marks the Luau LSP as unwanted.
-- `settings.json` sets `Lua.workspace.ignoreDir: ["src"]` so sumneko does not lint the generated `*.lua` output (which would flag TSTL-emitted `self` parameters as unused). Hand-written Defold `.script` files under `main/` stay analyzed.
+- `settings.json` sets `Lua.workspace.ignoreDir: ["src"]` so sumneko does not lint the generated `*.ts.script` output (which would flag TSTL-emitted `self` parameters as unused). Hand-written Defold `.script` files under `main/` stay analyzed.
 
 Both files merge additively into any `.vscode/` config you already have, so your own recommendations and settings are preserved.
 
-Edit TypeScript under `src/`. Treat the generated `.lua` and `.lua.map` files next to your sources as build output; the scaffolded `.gitignore` keeps them out of version control.
+Edit TypeScript under `src/`. Treat the generated `.ts.script` and `.ts.script.map` files next to your sources as build output; the scaffolded `.gitignore` keeps them out of version control.
 
 ## Run the watch loop
 

@@ -79,8 +79,8 @@ describe("createBuildSession", () => {
     const session = createBuildSession({ cwd });
     session.buildAll();
 
-    const utilLuaBefore = readFileSync(path.join(cwd, "src/util.lua"), "utf8");
-    const mainLuaBefore = readFileSync(path.join(cwd, "src/main.lua"), "utf8");
+    const utilLuaBefore = readFileSync(path.join(cwd, "src/util.ts.script"), "utf8");
+    const mainLuaBefore = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
 
     // Delete the sibling source: applyEvents must not re-read it.
     rmSync(path.join(cwd, "src/util.ts"));
@@ -88,9 +88,9 @@ describe("createBuildSession", () => {
 
     const result = session.applyEvents(["src/main.ts"], []);
 
-    expect(result.written).toEqual(["src/main.lua"]);
-    expect(readFileSync(path.join(cwd, "src/util.lua"), "utf8")).toBe(utilLuaBefore);
-    expect(readFileSync(path.join(cwd, "src/main.lua"), "utf8")).not.toBe(mainLuaBefore);
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    expect(readFileSync(path.join(cwd, "src/util.ts.script"), "utf8")).toBe(utilLuaBefore);
+    expect(readFileSync(path.join(cwd, "src/main.ts.script"), "utf8")).not.toBe(mainLuaBefore);
   });
 
   test("applyEvents leaves an untouched sibling's output byte-identical", () => {
@@ -101,14 +101,14 @@ describe("createBuildSession", () => {
     const session = createBuildSession({ cwd });
     session.buildAll();
 
-    const bLuaBefore = readFileSync(path.join(cwd, "src/b.lua"), "utf8");
-    const bMtimeBefore = statSync(path.join(cwd, "src/b.lua")).mtimeMs;
+    const bLuaBefore = readFileSync(path.join(cwd, "src/b.ts.script"), "utf8");
+    const bMtimeBefore = statSync(path.join(cwd, "src/b.ts.script")).mtimeMs;
 
     writeIn(cwd, "src/a.ts", "export const a = 99;\n");
     session.applyEvents(["src/a.ts"], []);
 
-    expect(readFileSync(path.join(cwd, "src/b.lua"), "utf8")).toBe(bLuaBefore);
-    expect(statSync(path.join(cwd, "src/b.lua")).mtimeMs).toBe(bMtimeBefore);
+    expect(readFileSync(path.join(cwd, "src/b.ts.script"), "utf8")).toBe(bLuaBefore);
+    expect(statSync(path.join(cwd, "src/b.ts.script")).mtimeMs).toBe(bMtimeBefore);
   });
 
   test("applyEvents removes a deleted file's outputs and drops it from later builds", () => {
@@ -118,18 +118,18 @@ describe("createBuildSession", () => {
 
     const session = createBuildSession({ cwd });
     session.buildAll();
-    expect(existsSync(path.join(cwd, "src/b.lua"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/b.ts.script"))).toBe(true);
 
     rmSync(path.join(cwd, "src/b.ts"));
     session.applyEvents([], ["src/b.ts"]);
 
-    expect(existsSync(path.join(cwd, "src/b.lua"))).toBe(false);
-    expect(existsSync(path.join(cwd, "src/b.lua.map"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/b.ts.script"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/b.ts.script.map"))).toBe(false);
 
-    // A subsequent unrelated edit does not resurrect b.lua.
+    // A subsequent unrelated edit does not resurrect b.ts.script.
     writeIn(cwd, "src/a.ts", "export const a = 3;\n");
     session.applyEvents(["src/a.ts"], []);
-    expect(existsSync(path.join(cwd, "src/b.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/b.ts.script"))).toBe(false);
   });
 
   test("applyEvents ignores a non-source changed key without writing or throwing", () => {
@@ -139,7 +139,7 @@ describe("createBuildSession", () => {
     const session = createBuildSession({ cwd });
     session.buildAll();
 
-    const result = session.applyEvents(["src/main.lua"], []);
+    const result = session.applyEvents(["src/main.ts.script"], []);
     expect(result.written).toEqual([]);
   });
 
@@ -151,10 +151,10 @@ describe("createBuildSession", () => {
     session.buildAll();
 
     writeIn(cwd, "src/main.ts", "export const a = 2;\n");
-    const result = session.applyEvents(["src/main.ts"], ["src/old.lua"]);
+    const result = session.applyEvents(["src/main.ts"], ["src/old.ts.script"]);
 
-    expect(result.written).toEqual(["src/main.lua"]);
-    expect(readFileSync(path.join(cwd, "src/main.lua"), "utf8")).toContain("2");
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    expect(readFileSync(path.join(cwd, "src/main.ts.script"), "utf8")).toContain("2");
   });
 
   test("a type error in a changed file throws the build-shaped error and the session stays usable", () => {
@@ -169,6 +169,6 @@ describe("createBuildSession", () => {
 
     writeIn(cwd, "src/main.ts", "export const a = 3;\n");
     const result = session.applyEvents(["src/main.ts"], []);
-    expect(result.written).toEqual(["src/main.lua"]);
+    expect(result.written).toEqual(["src/main.ts.script"]);
   });
 });

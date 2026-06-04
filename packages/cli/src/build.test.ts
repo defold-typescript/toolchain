@@ -30,14 +30,14 @@ const DEFAULT_TSCONFIG = JSON.stringify(
 );
 
 describe("runBuild", () => {
-  test("transpiles a single src/main.ts to src/main.lua by default", () => {
+  test("transpiles a single src/main.ts to src/main.ts.script by default", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/main.ts", "export const v = vmath.vector3(0, 0, 0);\n");
 
     const result = runBuild({ cwd });
 
-    expect(result.written).toEqual(["src/main.lua"]);
-    const lua = readFileSync(path.join(cwd, "src/main.lua"), "utf8");
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
     expect(lua.length).toBeGreaterThan(0);
   });
 
@@ -48,9 +48,9 @@ describe("runBuild", () => {
 
     const result = runBuild({ cwd });
 
-    expect(result.written.sort()).toEqual(["src/a.lua", "src/b/c.lua"].sort());
-    expect(existsSync(path.join(cwd, "src/a.lua"))).toBe(true);
-    expect(existsSync(path.join(cwd, "src/b/c.lua"))).toBe(true);
+    expect(result.written.sort()).toEqual(["src/a.ts.script", "src/b/c.ts.script"].sort());
+    expect(existsSync(path.join(cwd, "src/a.ts.script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/b/c.ts.script"))).toBe(true);
   });
 
   test("outDir of '.' or '' behaves identically to absent (alongside)", () => {
@@ -67,8 +67,8 @@ describe("runBuild", () => {
 
       const result = runBuild({ cwd });
 
-      expect(result.written).toEqual(["src/main.lua"]);
-      expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(true);
+      expect(result.written).toEqual(["src/main.ts.script"]);
+      expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(true);
       rmSync(path.join(cwd, "src"), { recursive: true, force: true });
     }
   });
@@ -89,9 +89,9 @@ describe("runBuild", () => {
 
     const result = runBuild({ cwd });
 
-    expect(result.written).toEqual(["out/lua/main.lua"]);
-    expect(existsSync(path.join(cwd, "out/lua/main.lua"))).toBe(true);
-    expect(existsSync(path.join(cwd, "build/lua/main.lua"))).toBe(false);
+    expect(result.written).toEqual(["out/lua/main.ts.script"]);
+    expect(existsSync(path.join(cwd, "out/lua/main.ts.script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "build/lua/main.ts.script"))).toBe(false);
   });
 
   test("throws when tsconfig.json is missing", () => {
@@ -116,7 +116,7 @@ describe("runBuild", () => {
     writeFile("src/main.ts", 'const x: number = "oops";\n');
 
     expect(() => runBuild({ cwd })).toThrow(/src\/main\.ts/);
-    expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(false);
   });
 
   test("resolves cross-file imports between src/ TypeScript files", () => {
@@ -132,26 +132,26 @@ describe("runBuild", () => {
 
     const result = runBuild({ cwd });
 
-    expect(result.written.sort()).toEqual(["src/main.lua", "src/util.lua"]);
-    expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(true);
-    expect(existsSync(path.join(cwd, "src/util.lua"))).toBe(true);
+    expect(result.written.sort()).toEqual(["src/main.ts.script", "src/util.ts.script"]);
+    expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/util.ts.script"))).toBe(true);
   });
 
-  test("writes a sibling .lua.map and a sourceMappingURL comment", () => {
+  test("writes a sibling .ts.script.map and a sourceMappingURL comment", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/main.ts", "export const v = vmath.vector3(0, 0, 0);\n");
 
     const result = runBuild({ cwd });
 
-    expect(result.written).toEqual(["src/main.lua"]);
-    expect(existsSync(path.join(cwd, "src/main.lua.map"))).toBe(true);
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    expect(existsSync(path.join(cwd, "src/main.ts.script.map"))).toBe(true);
 
-    const rawMap = readFileSync(path.join(cwd, "src/main.lua.map"), "utf8");
+    const rawMap = readFileSync(path.join(cwd, "src/main.ts.script.map"), "utf8");
     const map = JSON.parse(rawMap) as { version: number };
     expect(map.version).toBe(3);
 
-    const lua = readFileSync(path.join(cwd, "src/main.lua"), "utf8");
-    expect(lua.trimEnd().endsWith("--# sourceMappingURL=main.lua.map")).toBe(true);
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
+    expect(lua.trimEnd().endsWith("--# sourceMappingURL=main.ts.script.map")).toBe(true);
   });
 
   test("aggregates diagnostics across multiple broken files", () => {

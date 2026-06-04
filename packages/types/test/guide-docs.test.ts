@@ -34,11 +34,11 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("v.unm()");
   });
 
-  test("docs/guide/defold-editor.md exists and names the Lua build output", async () => {
+  test("docs/guide/defold-editor.md exists and names the script build output", async () => {
     const f = Bun.file(resolve(GUIDE, "defold-editor.md"));
     expect(await f.exists()).toBe(true);
     const body = await readGuide("defold-editor.md");
-    expect(body).toContain("src/main.lua");
+    expect(body).toContain("src/main.ts.script");
   });
 
   test("docs/guide/add-typescript.md exists and explains add-TS mode", async () => {

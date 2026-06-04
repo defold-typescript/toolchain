@@ -45,4 +45,4 @@ After initialization, write TypeScript under `src/` and run:
 bunx @defold-typescript/cli build
 ```
 
-The default `tsconfig.json` type-checks against `@defold-typescript/types` and writes Lua next to each `.ts` source (`src/main.ts` -> `src/main.lua`). The scaffold also drops a `.gitignore` so the generated `.lua`/`.lua.map` files stay out of version control. Set a concrete `outDir` to collect Lua under a separate tree instead.
+The default `tsconfig.json` type-checks against `@defold-typescript/types` and writes a Defold script next to each `.ts` source (`src/main.ts` -> `src/main.ts.script`). Because Defold resolves a resource by the extension after its last dot, `src/main.ts.script` is a valid `.script` component that Defold loads directly, and its name keeps the TypeScript origin obvious. The scaffold also drops a `.gitignore` so the generated `.ts.script`/`.ts.script.map` files stay out of version control. Set a concrete `outDir` to collect the scripts under a separate tree instead.

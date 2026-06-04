@@ -106,7 +106,7 @@ describe("runWatch", () => {
     const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
     await handle.waitForIdle();
 
-    expect(readFileSync(path.join(cwd, "src/main.lua"), "utf8").length).toBeGreaterThan(0);
+    expect(readFileSync(path.join(cwd, "src/main.ts.script"), "utf8").length).toBeGreaterThan(0);
     expect(out()).toMatch(/wrote 1 files/);
     expect(factory.opened).toBe(true);
 
@@ -134,7 +134,7 @@ describe("runWatch", () => {
     await handle.done;
   });
 
-  test("generated .lua/.lua.map events trigger no rebuild and print no failure", async () => {
+  test("generated .ts.script/.ts.script.map events trigger no rebuild and print no failure", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", "export const a = 1;\n");
     const { stdout, stderr, out, err } = captureStreams();
@@ -145,10 +145,10 @@ describe("runWatch", () => {
 
     expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
 
-    factory.trigger("rename", "main.lua");
-    factory.trigger("change", "main.lua");
-    factory.trigger("rename", "main.lua.map");
-    factory.trigger("change", "main.lua.map");
+    factory.trigger("rename", "main.ts.script");
+    factory.trigger("change", "main.ts.script");
+    factory.trigger("rename", "main.ts.script.map");
+    factory.trigger("change", "main.ts.script.map");
     await handle.waitForIdle();
 
     expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
@@ -247,8 +247,8 @@ describe("runWatch", () => {
     factory.trigger("change", "main.ts");
     await handle.waitForIdle();
 
-    expect(readFileSync(path.join(cwd, "src/main.lua"), "utf8")).toContain("2");
-    expect(existsSync(path.join(cwd, "src/other.lua"))).toBe(false);
+    expect(readFileSync(path.join(cwd, "src/main.ts.script"), "utf8")).toContain("2");
+    expect(existsSync(path.join(cwd, "src/other.ts.script"))).toBe(false);
 
     handle.stop();
     await handle.done;

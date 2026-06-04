@@ -35,12 +35,12 @@ const TSCONFIG_COMPILER_OPTIONS = {
   skipLibCheck: true,
 };
 
-const GITIGNORE_LINES = ["src/**/*.lua", "src/**/*.lua.map"];
+const GITIGNORE_LINES = ["src/**/*.ts.script", "src/**/*.ts.script.map"];
 
 const BIOME_JSON_CONTENT = {
   $schema: "https://biomejs.dev/schemas/2.4.15/schema.json",
   files: {
-    includes: ["src/**/*.ts", "!**/dist", "!**/node_modules", "!**/*.lua"],
+    includes: ["src/**/*.ts", "!**/dist", "!**/node_modules", "!**/*.ts.script"],
   },
   formatter: {
     enabled: true,
