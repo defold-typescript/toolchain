@@ -1,6 +1,7 @@
 import "./generated/builtin-messages";
 import "./src/msg-overloads";
 import "./src/message-guard";
+import "./src/message-dispatch";
 import "./src/go-overloads";
 import "./src/engine-globals";
 import "./generated/b2d";

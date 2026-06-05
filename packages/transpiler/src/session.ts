@@ -4,6 +4,7 @@ import * as path from "node:path";
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
+import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { AMBIENT_FILES, collectOutputs, type TranspileProjectResult } from "./transpile";
 
@@ -23,7 +24,11 @@ const COMPILER_OPTIONS: tstl.CompilerOptions = {
   // Defold scripts are not OO: free helper functions never receive a context,
   // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
   noImplicitSelf: true,
-  luaPlugins: [{ plugin: lifecycleErasurePlugin }, { plugin: messageGuardLoweringPlugin }],
+  luaPlugins: [
+    { plugin: lifecycleErasurePlugin },
+    { plugin: messageGuardLoweringPlugin },
+    { plugin: messageDispatchLoweringPlugin },
+  ],
 };
 
 function normalizeSlashes(p: string): string {
