@@ -53,4 +53,29 @@ describe("facade doc reachability — hand-authored .d.ts surface is documented"
     }
     expect(offending).toEqual([]);
   });
+
+  const LIFECYCLE_FACTORIES = ["defineScript", "defineGuiScript", "defineRenderScript"];
+
+  test.each(
+    LIFECYCLE_FACTORIES,
+  )("lifecycle.ts: %s carries a description, a documented `hooks` param, and an @example", async (factory) => {
+    const surface = extractSurface(await readFacade("lifecycle.ts"));
+    const doc = surface.get(factory);
+    expect(doc).toBeDefined();
+    expect(doc?.hasDescription).toBe(true);
+    expect(doc?.hasExample).toBe(true);
+    expect(doc?.paramNames.has("hooks")).toBe(true);
+  });
+
+  test("lifecycle.ts: every line inside a /** */ block begins with *", async () => {
+    const offending = offGridLines(await readFacade("lifecycle.ts"));
+    if (offending.length > 0) {
+      const sample = offending
+        .slice(0, 5)
+        .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
+        .join("\n");
+      throw new Error(`${offending.length} off-grid JSDoc continuation line(s):\n${sample}`);
+    }
+    expect(offending).toEqual([]);
+  });
 });
