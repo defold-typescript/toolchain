@@ -91,18 +91,101 @@ export type GuiScriptHooks<TSelf> = ScriptHooks<TSelf>;
 
 export type RenderScriptHooks<TSelf> = Omit<ScriptHooks<TSelf>, "on_input">;
 
+/**
+ * Type a `.script` component's hook table. At runtime this is an identity
+ * function — it returns `hooks` unchanged; its only job is typing. It infers
+ * `TSelf` from `init`'s return so every other hook's `self` is typed, and the
+ * transpiler's `lifecycle-erasure` pass rewrites the top-level call into the
+ * flat `function init(self) … end` Defold chunk shape — zero runtime cost,
+ * nothing the engine sees changes.
+ *
+ * Accepts the full `ScriptHooks` set, all optional: `init`, `update`,
+ * `fixed_update`, `late_update`, `on_message`, `on_input`, `final`,
+ * `on_reload`.
+ *
+ * Scaffold it with the `defold-script` / `defold-script-typed` VSCode snippets
+ * from `defold-typescript init`.
+ *
+ * @param hooks - the `.script` lifecycle hook table to type and return.
+ * @returns the same `hooks` object, now typed (identity at runtime).
+ * @example
+ * ```ts
+ * export const script = defineScript({
+ *   init() {
+ *     return { hits: 0 };
+ *   },
+ *   update(self, dt) {
+ *     self.hits += 1;
+ *   },
+ * });
+ * ```
+ */
 export function defineScript<TSelf = Record<never, never>>(
   hooks: ScriptHooks<TSelf>,
 ): ScriptHooks<TSelf> {
   return hooks;
 }
 
+/**
+ * Type a `.gui_script` component's hook table. Like {@link defineScript} it is
+ * an identity function at runtime, infers `TSelf` from `init`'s return, and is
+ * erased by the transpiler's `lifecycle-erasure` pass into the flat Defold
+ * chunk shape.
+ *
+ * `GuiScriptHooks` is an alias of the `.script` hook set, so it accepts the same
+ * full set, all optional: `init`, `update`, `fixed_update`, `late_update`,
+ * `on_message`, `on_input`, `final`, `on_reload`.
+ *
+ * Scaffold it with the `defold-gui` / `defold-gui-typed` VSCode snippets from
+ * `defold-typescript init`.
+ *
+ * @param hooks - the `.gui_script` lifecycle hook table to type and return.
+ * @returns the same `hooks` object, now typed (identity at runtime).
+ * @example
+ * ```ts
+ * export const script = defineGuiScript({
+ *   init() {
+ *     return { node: gui.get_node("score") };
+ *   },
+ *   on_input(self, action_id, action) {
+ *     return false;
+ *   },
+ * });
+ * ```
+ */
 export function defineGuiScript<TSelf = Record<never, never>>(
   hooks: GuiScriptHooks<TSelf>,
 ): GuiScriptHooks<TSelf> {
   return hooks;
 }
 
+/**
+ * Type a `.render_script` component's hook table. Like {@link defineScript} it
+ * is an identity function at runtime, infers `TSelf` from `init`'s return, and
+ * is erased by the transpiler's `lifecycle-erasure` pass into the flat Defold
+ * chunk shape.
+ *
+ * `RenderScriptHooks` is `Omit<ScriptHooks, "on_input">` — render scripts do not
+ * receive input. It accepts the rest of the set, all optional: `init`,
+ * `update`, `fixed_update`, `late_update`, `on_message`, `final`, `on_reload`.
+ *
+ * Scaffold it with the `defold-render` / `defold-render-typed` VSCode snippets
+ * from `defold-typescript init`.
+ *
+ * @param hooks - the `.render_script` lifecycle hook table to type and return.
+ * @returns the same `hooks` object, now typed (identity at runtime).
+ * @example
+ * ```ts
+ * export const script = defineRenderScript({
+ *   init() {
+ *     return { clear: vmath.vector4(0, 0, 0, 1) };
+ *   },
+ *   update(self, dt) {
+ *     render.set_render_target(render.RENDER_TARGET_DEFAULT);
+ *   },
+ * });
+ * ```
+ */
 export function defineRenderScript<TSelf = Record<never, never>>(
   hooks: RenderScriptHooks<TSelf>,
 ): RenderScriptHooks<TSelf> {

@@ -52,6 +52,8 @@ export const menu = defineGuiScript<MenuSelf>({
 
 The `menu` script above shows the escape hatch: pass an explicit type argument (`defineGuiScript<MenuSelf>`) when a script has no `init` to infer from, or to pin `self` to a named interface. With an explicit argument, `init`'s return is checked against it rather than inferred from it.
 
+Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example.
+
 At runtime Defold owns `self` (a userdata-backed table) and a script can populate but not replace it, so the transpiler can't emit a returning `init` verbatim. It wraps the body in a builder and merges the returned table onto the engine `self`; a `nil`/stateless return merges nothing. The hooks you write stay in terms of a typed `self`.
 
 `defineScript` and `defineGuiScript` both type `on_input` as `(self, action_id, action) => boolean | void`.
