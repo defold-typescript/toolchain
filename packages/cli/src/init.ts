@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ScriptHookName } from "@defold-typescript/types";
+import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import {
   detectScriptKinds,
@@ -74,7 +75,7 @@ const BIOME_JSON_CONTENT = {
 };
 
 const VSCODE_EXTENSIONS_CONTENT = {
-  recommendations: ["sumneko.lua", "astronachos.defold"],
+  recommendations: ["sumneko.lua", "astronachos.defold", "tomblind.local-lua-debugger-vscode"],
   unwantedRecommendations: ["johnnymorganz.luau-lsp"],
 };
 
@@ -461,6 +462,41 @@ function writeVscodeSnippets(cwd: string, written: string[]): void {
   written.push(".vscode/defold-typescript.code-snippets");
 }
 
+function writeVscodeLaunch(cwd: string, written: string[]): void {
+  const dir = path.join(cwd, ".vscode");
+  const filePath = path.join(dir, "launch.json");
+  const ours = debugLaunchConfig();
+  if (existsSync(filePath)) {
+    const existing = readVscodeJson(filePath);
+    if (existing === null) {
+      return;
+    }
+    const configs = Array.isArray(existing.configurations) ? [...existing.configurations] : [];
+    const names = new Set(configs.map((c) => (isJsonObject(c) ? c.name : undefined)));
+    if (!names.has(ours.name)) {
+      configs.push(ours);
+    }
+    existing.configurations = configs;
+    existing.version ??= VSCODE_LAUNCH_CONTENT.version;
+    writeJson(filePath, existing);
+    return;
+  }
+  mkdirSync(dir, { recursive: true });
+  writeJson(filePath, VSCODE_LAUNCH_CONTENT);
+  written.push(".vscode/launch.json");
+}
+
+function writeVscodeDebugLauncher(cwd: string, written: string[]): void {
+  const dir = path.join(cwd, ".vscode");
+  const filePath = path.join(dir, "defold-debug.ts");
+  if (existsSync(filePath)) {
+    return;
+  }
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(filePath, DEBUG_LAUNCHER_SOURCE);
+  written.push(".vscode/defold-debug.ts");
+}
+
 function writeTsSurface(cwd: string, written: string[], force = false): ScriptKind | null {
   mkdirSync(path.join(cwd, "src"), { recursive: true });
   writeFileSync(path.join(cwd, "src", "main.ts"), MAIN_TS_CONTENT);
@@ -510,6 +546,8 @@ function writeTsSurface(cwd: string, written: string[], force = false): ScriptKi
   writeVscodeExtensions(cwd, written);
   writeVscodeSettings(cwd, written);
   writeVscodeSnippets(cwd, written);
+  writeVscodeLaunch(cwd, written);
+  writeVscodeDebugLauncher(cwd, written);
 
   return selectScriptKind(kinds);
 }
