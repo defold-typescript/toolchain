@@ -69,3 +69,15 @@ bunx @defold-typescript/cli watch
 ```
 
 `bunx @defold-typescript/cli watch` rebuilds Lua when files under `src/` change. Run the game from the Defold editor after the rebuild completes.
+
+If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` (below) gives you `mise run defold-typescript:watch` as the equivalent task.
+
+## Opinionated `mise.toml`
+
+`init` scaffolds (or additively merges into) an opinionated `mise.toml` with three tasks. The block is marker-fronted, so re-running `init` refreshes the managed tasks without disturbing your own `[tools]` or `[tasks.*]` entries.
+
+- **`defold-typescript:build`** — `bunx --no-install defold-typescript build`. Builds once with the **installed** CLI.
+- **`defold-typescript:watch`** — `bunx --no-install defold-typescript watch`. The watch loop above, as a task.
+- **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init --force` then `bun install`. The deliberate upgrade path.
+
+Build and watch use `bunx --no-install`, which resolves **only** the locally installed `defold-typescript` and never fetches from the registry — that is the installed-version contract the pinned `@defold-typescript/types` dependency upholds. Upgrade is the one task that intentionally pulls `@latest`: `init --force` re-pins `@defold-typescript/types` to the new CLI's version, and `bun install` reinstalls.

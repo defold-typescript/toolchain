@@ -50,6 +50,7 @@ describe("runInit (add-TS mode)", () => {
         ".vscode/launch.json",
         ".vscode/settings.json",
         "biome.json",
+        "mise.toml",
         "package.json",
         "src/main.ts",
         "tsconfig.json",
@@ -92,6 +93,7 @@ describe("runInit (add-TS mode)", () => {
         ".vscode/launch.json",
         ".vscode/settings.json",
         "biome.json",
+        "mise.toml",
         "package.json",
         "src/main.ts",
         "tsconfig.json",
@@ -313,6 +315,7 @@ describe("runInit (new-project mode)", () => {
     ".vscode/defold-typescript.code-snippets",
     ".vscode/launch.json",
     ".vscode/defold-debug.ts",
+    "mise.toml",
   ];
 
   test("missing target directory: creates the directory and writes the scaffold files", () => {
@@ -358,6 +361,25 @@ describe("runInit (new-project mode)", () => {
     expect(content).toMatch(/function update\b/);
     expect(content).toMatch(/function on_message\b/);
     expect(content).toMatch(/function final\b/);
+  });
+
+  test("scaffolds mise.toml with the three managed tasks", () => {
+    runInit({ cwd });
+    const content = readFileSync(path.join(cwd, "mise.toml"), "utf8");
+    expect(content).toContain('[tasks."defold-typescript:build"]');
+    expect(content).toContain('[tasks."defold-typescript:watch"]');
+    expect(content).toContain('[tasks."defold-typescript:upgrade"]');
+  });
+
+  test("merges into an existing user mise.toml additively, preserving user content", () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(path.join(cwd, "mise.toml"), '[tools]\nbun = "1.3"\n');
+
+    runInit({ cwd, force: true });
+
+    const content = readFileSync(path.join(cwd, "mise.toml"), "utf8");
+    expect(content).toContain('[tools]\nbun = "1.3"');
+    expect(content).toContain('[tasks."defold-typescript:build"]');
   });
 
   test("non-empty directory without game.project: refuses with --force message, writes nothing", () => {

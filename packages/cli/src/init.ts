@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { ScriptHookName } from "@defold-typescript/types";
 import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
+import { mergeMiseToml } from "./mise-scaffold";
 import {
   detectScriptKinds,
   type ScriptKind,
@@ -321,6 +322,13 @@ function writeBiome(cwd: string, written: string[]): void {
   written.push("biome.json");
 }
 
+function writeMiseTasks(cwd: string, written: string[]): void {
+  const misePath = path.join(cwd, "mise.toml");
+  const existing = existsSync(misePath) ? readFileSync(misePath, "utf8") : undefined;
+  writeFileSync(misePath, mergeMiseToml(existing));
+  written.push("mise.toml");
+}
+
 // Strip `//` line comments, `/* */` block comments, and trailing commas so a
 // hand-edited JSONC `.vscode` file parses with `JSON.parse`. The walk tracks
 // string state so a `//` or comma inside a value (e.g. a URL) is preserved.
@@ -542,6 +550,7 @@ function writeTsSurface(cwd: string, written: string[], force = false): ScriptKi
   written.push(".gitignore");
 
   writeBiome(cwd, written);
+  writeMiseTasks(cwd, written);
 
   writeVscodeExtensions(cwd, written);
   writeVscodeSettings(cwd, written);

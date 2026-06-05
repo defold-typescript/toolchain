@@ -55,6 +55,14 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("bunx @defold-typescript/cli watch");
   });
 
+  test("docs/guide/editor-setup.md documents the opinionated mise.toml tasks", async () => {
+    const body = await readGuide("editor-setup.md");
+    expect(body).toContain("opinionated `mise.toml`");
+    expect(body).toContain("defold-typescript:build");
+    expect(body).toContain("defold-typescript:watch");
+    expect(body).toContain("defold-typescript:upgrade");
+  });
+
   test("docs/guide/script-lifecycle.md exists", async () => {
     const f = Bun.file(resolve(GUIDE, "script-lifecycle.md"));
     expect(await f.exists()).toBe(true);
