@@ -226,27 +226,22 @@ declare global {
      * `property`
      * hash The id of the animated property.
      * @example
-     * ```lua
-     * Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:
-     * local function x_done(self, url, property)
-     *     go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1)
-     * end
+     * ```ts
+     * // Animate the position of a game object to x = 10 during 1 second, then
+     * // y = 20 during 1 second:
+     * go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {
+     *   go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);
+     * });
      *
-     * function init(self)
-     *     go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, x_done)
-     * end
-     *
-     * Animate the y position of a game object using a crazy custom easing curve:
-     * local values = { 0, 0, 0, 0, 0, 0, 0, 0,
-     *                  1, 1, 1, 1, 1, 1, 1, 1,
-     *                  0, 0, 0, 0, 0, 0, 0, 0,
-     *                  1, 1, 1, 1, 1, 1, 1, 1,
-     *                  0, 0, 0, 0, 0, 0, 0, 0,
-     *                  1, 1, 1, 1, 1, 1, 1, 1,
-     *                  0, 0, 0, 0, 0, 0, 0, 0,
-     *                  1, 1, 1, 1, 1, 1, 1, 1 }
-     * local vec = vmath.vector(values)
-     * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0)
+     * // Animate the y position of a game object using a crazy custom easing curve:
+     * const values = [
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     * ];
+     * const vec = vmath.vector(values);
+     * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
      * ```
      */
     export function animate(url: string | Hash | Url, property: string | Hash, playback: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" } | number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" }, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | number & { readonly __brand: "go.EASING_INBACK" } | number & { readonly __brand: "go.EASING_INBOUNCE" } | number & { readonly __brand: "go.EASING_INCIRC" } | number & { readonly __brand: "go.EASING_INCUBIC" } | number & { readonly __brand: "go.EASING_INELASTIC" } | number & { readonly __brand: "go.EASING_INEXPO" } | number & { readonly __brand: "go.EASING_INOUTBACK" } | number & { readonly __brand: "go.EASING_INOUTBOUNCE" } | number & { readonly __brand: "go.EASING_INOUTCIRC" } | number & { readonly __brand: "go.EASING_INOUTCUBIC" } | number & { readonly __brand: "go.EASING_INOUTELASTIC" } | number & { readonly __brand: "go.EASING_INOUTEXPO" } | number & { readonly __brand: "go.EASING_INOUTQUAD" } | number & { readonly __brand: "go.EASING_INOUTQUART" } | number & { readonly __brand: "go.EASING_INOUTQUINT" } | number & { readonly __brand: "go.EASING_INOUTSINE" } | number & { readonly __brand: "go.EASING_INQUAD" } | number & { readonly __brand: "go.EASING_INQUART" } | number & { readonly __brand: "go.EASING_INQUINT" } | number & { readonly __brand: "go.EASING_INSINE" } | number & { readonly __brand: "go.EASING_LINEAR" } | number & { readonly __brand: "go.EASING_OUTBACK" } | number & { readonly __brand: "go.EASING_OUTBOUNCE" } | number & { readonly __brand: "go.EASING_OUTCIRC" } | number & { readonly __brand: "go.EASING_OUTCUBIC" } | number & { readonly __brand: "go.EASING_OUTELASTIC" } | number & { readonly __brand: "go.EASING_OUTEXPO" } | number & { readonly __brand: "go.EASING_OUTINBACK" } | number & { readonly __brand: "go.EASING_OUTINBOUNCE" } | number & { readonly __brand: "go.EASING_OUTINCIRC" } | number & { readonly __brand: "go.EASING_OUTINCUBIC" } | number & { readonly __brand: "go.EASING_OUTINELASTIC" } | number & { readonly __brand: "go.EASING_OUTINEXPO" } | number & { readonly __brand: "go.EASING_OUTINQUAD" } | number & { readonly __brand: "go.EASING_OUTINQUART" } | number & { readonly __brand: "go.EASING_OUTINQUINT" } | number & { readonly __brand: "go.EASING_OUTINSINE" } | number & { readonly __brand: "go.EASING_OUTQUAD" } | number & { readonly __brand: "go.EASING_OUTQUART" } | number & { readonly __brand: "go.EASING_OUTQUINT" } | number & { readonly __brand: "go.EASING_OUTSINE" }, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
@@ -257,15 +252,15 @@ declare global {
      * @param url - url of the game object or component
      * @param property - optional id of the property to cancel
      * @example
-     * ```lua
-     * Cancel the animation of the position of a game object:
-     * go.cancel_animations(go.get_id(), "position")
+     * ```ts
+     * // Cancel the animation of the position of a game object:
+     * go.cancel_animations(go.get_id(), "position");
      *
-     * Cancel all property animations of the current game object:
-     * go.cancel_animations(".")
+     * // Cancel all property animations of the current game object:
+     * go.cancel_animations(".");
      *
-     * Cancel all property animations of the sprite component of the current game object:
-     * go.cancel_animations("#sprite")
+     * // Cancel all property animations of the sprite component of the current game object:
+     * go.cancel_animations("#sprite");
      * ```
      */
     export function cancel_animations(url: string | Hash | Url, property?: string | Hash): void;
@@ -280,26 +275,27 @@ declare global {
      * @param id - optional id or table of id's of the instance(s) to delete, the instance of the calling script is deleted by default
      * @param recursive - optional boolean, set to true to recursively delete child hiearchy in child to parent order
      * @example
-     * ```lua
-     * This example demonstrates how to delete game objects
-     * -- Delete the script game object
-     * go.delete()
-     * -- Delete a game object with the id "my_game_object".
-     * local id = go.get_id("my_game_object") -- retrieve the id of the game object to be deleted
-     * go.delete(id)
-     * -- Delete a list of game objects.
-     * local ids = { hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3") }
-     * go.delete(ids)
+     * ```ts
+     * // This example demonstrates how to delete game objects:
+     * // Delete the script's own game object.
+     * go.delete();
+     * // Delete a game object with the id "my_game_object".
+     * const id = go.get_id("my_game_object");
+     * go.delete(id);
+     * // Delete a list of game objects.
+     * const ids = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
+     * go.delete(ids);
      *
-     * This example demonstrates how to delete a game objects and their children (child to parent order)
-     * -- Delete the script game object and it's children
-     * go.delete(true)
-     * -- Delete a game object with the id "my_game_object" and it's children.
-     * local id = go.get_id("my_game_object") -- retrieve the id of the game object to be deleted
-     * go.delete(id, true)
-     * -- Delete a list of game objects and their children.
-     * local ids = { hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3") }
-     * go.delete(ids, true)
+     * // This example demonstrates how to delete game objects and their children
+     * // (child-to-parent order):
+     * // Delete the script's own game object and its children.
+     * go.delete(true);
+     * // Delete a game object with the id "my_game_object" and its children.
+     * const id2 = go.get_id("my_game_object");
+     * go.delete(id2, true);
+     * // Delete a list of game objects and their children.
+     * const ids2 = [hash("/my_object_1"), hash("/my_object_2"), hash("/my_object_3")];
+     * go.delete(ids2, true);
      * ```
      */
     function _delete(id?: string | Hash | Url | (string | Hash | Url)[], recursive?: boolean): void;
@@ -310,12 +306,12 @@ declare global {
      * @param url - url of the game object to check
      * @returns true if the game object exists
      * @example
-     * ```lua
-     * Check if game object "my_game_object" exists in the current collection
-     * go.exists("/my_game_object")
+     * ```ts
+     * // Check if game object "my_game_object" exists in the current collection:
+     * go.exists("/my_game_object");
      *
-     * Check if game object exists in another collection
-     * go.exists("other_collection:/my_game_object")
+     * // Check if game object exists in another collection:
+     * go.exists("other_collection:/my_game_object");
      * ```
      */
     export function exists(url: string | Hash | Url): boolean;
@@ -353,16 +349,17 @@ declare global {
      * @param path - path of the instance for which to return the id
      * @returns instance id
      * @example
-     * ```lua
-     * For the instance with path /my_sub_collection/my_instance, the following calls are equivalent:
-     * local id = go.get_id() -- no path, defaults to the instance containing the calling script
-     * print(id) --> hash: [/my_sub_collection/my_instance]
+     * ```ts
+     * // For the instance with path /my_sub_collection/my_instance, the following calls
+     * // are equivalent:
+     * const id = go.get_id(); // no path, defaults to the instance containing the calling script
+     * print(id); // => hash: [/my_sub_collection/my_instance]
      *
-     * local id = go.get_id("/my_sub_collection/my_instance") -- absolute path
-     * print(id) --> hash: [/my_sub_collection/my_instance]
+     * const id2 = go.get_id("/my_sub_collection/my_instance"); // absolute path
+     * print(id2); // => hash: [/my_sub_collection/my_instance]
      *
-     * local id = go.get_id("my_instance") -- relative path
-     * print(id) --> hash: [/my_sub_collection/my_instance]
+     * const id3 = go.get_id("my_instance"); // relative path
+     * print(id3); // => hash: [/my_sub_collection/my_instance]
      * ```
      */
     export function get_id(path?: string): Hash;
@@ -372,12 +369,12 @@ declare global {
      * @param id - optional id of the game object instance to get parent for, defaults to the instance containing the calling script
      * @returns parent instance or `nil`
      * @example
-     * ```lua
-     * Get parent of the instance containing the calling script:
-     * local parent_id = go.get_parent()
+     * ```ts
+     * // Get parent of the instance containing the calling script:
+     * const parent_id = go.get_parent();
      *
-     * Get parent of the instance with id "x":
-     * local parent_id = go.get_parent("x")
+     * // Get parent of the instance with id "x":
+     * const parent_id2 = go.get_parent("x");
      * ```
      */
     export function get_parent(id?: string | Hash | Url): Hash | unknown;
@@ -387,12 +384,12 @@ declare global {
      * @param id - optional id of the game object instance to get the position for, by default the instance of the calling script
      * @returns instance position
      * @example
-     * ```lua
-     * Get the position of the game object instance the script is attached to:
-     * local p = go.get_position()
+     * ```ts
+     * // Get the position of the game object the script is attached to:
+     * const p = go.get_position();
      *
-     * Get the position of another game object instance "my_gameobject":
-     * local pos = go.get_position("my_gameobject")
+     * // Get the position of another game object "my_gameobject":
+     * const pos = go.get_position("my_gameobject");
      * ```
      */
     export function get_position(id?: string | Hash | Url): Vector3;
@@ -402,12 +399,12 @@ declare global {
      * @param id - optional id of the game object instance to get the rotation for, by default the instance of the calling script
      * @returns instance rotation
      * @example
-     * ```lua
-     * Get the rotation of the game object instance the script is attached to:
-     * local r = go.get_rotation()
+     * ```ts
+     * // Get the rotation of the game object the script is attached to:
+     * const r = go.get_rotation();
      *
-     * Get the rotation of another game object instance with id "x":
-     * local r = go.get_rotation("x")
+     * // Get the rotation of another game object with id "x":
+     * const r2 = go.get_rotation("x");
      * ```
      */
     export function get_rotation(id?: string | Hash | Url): Quaternion;
@@ -417,12 +414,12 @@ declare global {
      * @param id - optional id of the game object instance to get the scale for, by default the instance of the calling script
      * @returns instance scale factor
      * @example
-     * ```lua
-     * Get the scale of the game object instance the script is attached to:
-     * local s = go.get_scale()
+     * ```ts
+     * // Get the scale of the game object the script is attached to:
+     * const s = go.get_scale();
      *
-     * Get the scale of another game object instance with id "x":
-     * local s = go.get_scale("x")
+     * // Get the scale of another game object with id "x":
+     * const s2 = go.get_scale("x");
      * ```
      */
     export function get_scale(id?: string | Hash | Url): Vector3;
@@ -432,12 +429,12 @@ declare global {
      * @param id - optional id of the game object instance to get the uniform scale for, by default the instance of the calling script
      * @returns uniform instance scale factor
      * @example
-     * ```lua
-     * Get the scale of the game object instance the script is attached to:
-     * local s = go.get_scale_uniform()
+     * ```ts
+     * // Get the uniform scale of the game object the script is attached to:
+     * const s = go.get_scale_uniform();
      *
-     * Get the uniform scale of another game object instance with id "x":
-     * local s = go.get_scale_uniform("x")
+     * // Get the uniform scale of another game object with id "x":
+     * const s2 = go.get_scale_uniform("x");
      * ```
      */
     export function get_scale_uniform(id?: string | Hash | Url): number;
@@ -449,12 +446,12 @@ declare global {
      * @param id - optional id of the game object instance to get the world position for, by default the instance of the calling script
      * @returns instance world position
      * @example
-     * ```lua
-     * Get the world position of the game object instance the script is attached to:
-     * local p = go.get_world_position()
+     * ```ts
+     * // Get the world position of the game object the script is attached to:
+     * const p = go.get_world_position();
      *
-     * Get the world position of another game object instance with id "x":
-     * local p = go.get_world_position("x")
+     * // Get the world position of another game object with id "x":
+     * const p2 = go.get_world_position("x");
      * ```
      */
     export function get_world_position(id?: string | Hash | Url): Vector3;
@@ -466,12 +463,12 @@ declare global {
      * @param id - optional id of the game object instance to get the world rotation for, by default the instance of the calling script
      * @returns instance world rotation
      * @example
-     * ```lua
-     * Get the world rotation of the game object instance the script is attached to:
-     * local r = go.get_world_rotation()
+     * ```ts
+     * // Get the world rotation of the game object the script is attached to:
+     * const r = go.get_world_rotation();
      *
-     * Get the world rotation of another game object instance with id "x":
-     * local r = go.get_world_rotation("x")
+     * // Get the world rotation of another game object with id "x":
+     * const r2 = go.get_world_rotation("x");
      * ```
      */
     export function get_world_rotation(id?: string | Hash | Url): Quaternion;
@@ -485,12 +482,12 @@ declare global {
      * @param id - optional id of the game object instance to get the world scale for, by default the instance of the calling script
      * @returns instance world 3D scale factor
      * @example
-     * ```lua
-     * Get the world 3D scale of the game object instance the script is attached to:
-     * local s = go.get_world_scale()
+     * ```ts
+     * // Get the world 3D scale of the game object the script is attached to:
+     * const s = go.get_world_scale();
      *
-     * Get the world scale of another game object instance "x":
-     * local s = go.get_world_scale("x")
+     * // Get the world scale of another game object "x":
+     * const s2 = go.get_world_scale("x");
      * ```
      */
     export function get_world_scale(id?: string | Hash | Url): Vector3;
@@ -502,12 +499,12 @@ declare global {
      * @param id - optional id of the game object instance to get the world scale for, by default the instance of the calling script
      * @returns instance world scale factor
      * @example
-     * ```lua
-     * Get the world scale of the game object instance the script is attached to:
-     * local s = go.get_world_scale_uniform()
+     * ```ts
+     * // Get the world uniform scale of the game object the script is attached to:
+     * const s = go.get_world_scale_uniform();
      *
-     * Get the world scale of another game object instance with id "x":
-     * local s = go.get_world_scale_uniform("x")
+     * // Get the world uniform scale of another game object with id "x":
+     * const s2 = go.get_world_scale_uniform("x");
      * ```
      */
     export function get_world_scale_uniform(id?: string | Hash | Url): number;
@@ -518,12 +515,12 @@ declare global {
      * @param id - optional id of the game object instance to get the world transform for, by default the instance of the calling script
      * @returns instance world transform
      * @example
-     * ```lua
-     * Get the world transform of the game object instance the script is attached to:
-     * local m = go.get_world_transform()
+     * ```ts
+     * // Get the world transform of the game object the script is attached to:
+     * const m = go.get_world_transform();
      *
-     * Get the world transform of another game object instance with id "x":
-     * local m = go.get_world_transform("x")
+     * // Get the world transform of another game object with id "x":
+     * const m2 = go.get_world_transform("x");
      * ```
      */
     export function get_world_transform(id?: string | Hash | Url): Matrix4;
@@ -763,22 +760,24 @@ declare global {
      * @param name - the id of the property
      * @param value - default value of the property. In the case of a url, only the empty constructor msg.url() is allowed. In the case of a resource one of the resource constructors (eg resource.atlas(), resource.font() etc) is expected.
      * @example
-     * ```lua
-     * This example demonstrates how to define a property called "health" in a script.
-     * The health is decreased whenever someone sends a message called "take_damage" to the script.
-     * go.property("health", 100)
+     * ```ts
+     * // This example defines a property "health" in a script. The health is decreased
+     * // whenever someone sends a "take_damage" message to the script.
+     * go.property("health", 100);
      *
-     * function init(self)
-     *     -- prints 100 to the output
-     *     print(self.health)
-     * end
+     * export default defineScript({
+     *   init(self) {
+     *     // prints 100 to the output
+     *     print(self.health);
+     *   },
      *
-     * function on_message(self, message_id, message, sender)
-     *     if message_id == hash("take_damage") then
-     *         self.health = self.health - message.damage
-     *         print("Ouch! My health is now: " .. self.health)
-     *     end
-     * end
+     *   on_message(self, message_id, message) {
+     *     if (message_id === hash("take_damage")) {
+     *       self.health = self.health - message.damage;
+     *       print(`Ouch! My health is now: ${self.health}`);
+     *     }
+     *   },
+     * });
      * ```
      */
     export function property(name: string, value: number | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource"> | boolean): void;
@@ -794,15 +793,15 @@ declare global {
      * @param parent_id - optional id of the new parent game object, defaults to detaching game object from its parent
      * @param keep_world_transform - optional boolean, set to true to maintain the world transform when changing spaces. Defaults to false.
      * @example
-     * ```lua
-     * Attach myself to another instance "my_parent":
-     * go.set_parent(go.get_id(),go.get_id("my_parent"))
+     * ```ts
+     * // Attach myself to another instance "my_parent":
+     * go.set_parent(go.get_id(), go.get_id("my_parent"));
      *
-     * Attach an instance "my_instance" to another instance "my_parent":
-     * go.set_parent(go.get_id("my_instance"),go.get_id("my_parent"))
+     * // Attach an instance "my_instance" to another instance "my_parent":
+     * go.set_parent(go.get_id("my_instance"), go.get_id("my_parent"));
      *
-     * Detach an instance "my_instance" from its parent (if any):
-     * go.set_parent(go.get_id("my_instance"))
+     * // Detach an instance "my_instance" from its parent (if any):
+     * go.set_parent(go.get_id("my_instance"));
      * ```
      */
     export function set_parent(id?: string | Hash | Url, parent_id?: string | Hash | Url, keep_world_transform?: boolean): void;
@@ -812,14 +811,15 @@ declare global {
      * @param position - position to set
      * @param id - optional id of the game object instance to set the position for, by default the instance of the calling script
      * @example
-     * ```lua
-     * Set the position of the game object instance the script is attached to:
-     * local p = ...
-     * go.set_position(p)
+     * ```ts
+     * // `p` is the desired position (a Vector3).
+     * const p = vmath.vector3();
      *
-     * Set the position of another game object instance with id "x":
-     * local p = ...
-     * go.set_position(p, "x")
+     * // Set the position of the game object the script is attached to:
+     * go.set_position(p);
+     *
+     * // Set the position of another game object with id "x":
+     * go.set_position(p, "x");
      * ```
      */
     export function set_position(position: Vector3, id?: string | Hash | Url): void;
@@ -829,14 +829,15 @@ declare global {
      * @param rotation - rotation to set
      * @param id - optional id of the game object instance to get the rotation for, by default the instance of the calling script
      * @example
-     * ```lua
-     * Set the rotation of the game object instance the script is attached to:
-     * local r = ...
-     * go.set_rotation(r)
+     * ```ts
+     * // `r` is the desired rotation (a Quaternion).
+     * const r = vmath.quat();
      *
-     * Set the rotation of another game object instance with id "x":
-     * local r = ...
-     * go.set_rotation(r, "x")
+     * // Set the rotation of the game object the script is attached to:
+     * go.set_rotation(r);
+     *
+     * // Set the rotation of another game object with id "x":
+     * go.set_rotation(r, "x");
      * ```
      */
     export function set_rotation(rotation: Quaternion, id?: string | Hash | Url): void;
@@ -847,14 +848,14 @@ declare global {
      * @param scale - vector or uniform scale factor, must be greater than 0
      * @param id - optional id of the game object instance to get the scale for, by default the instance of the calling script
      * @example
-     * ```lua
-     * Set the scale of the game object instance the script is attached to:
-     * local s = vmath.vector3(2.0, 1.0, 1.0)
-     * go.set_scale(s)
+     * ```ts
+     * // Set the scale of the game object the script is attached to:
+     * const s = vmath.vector3(2.0, 1.0, 1.0);
+     * go.set_scale(s);
      *
-     * Set the scale of another game object instance with id "obj_id":
-     * local s = 1.2
-     * go.set_scale(s, "obj_id")
+     * // Set the scale of another game object with id "obj_id":
+     * const s2 = 1.2;
+     * go.set_scale(s2, "obj_id");
      * ```
      */
     export function set_scale(scale: number | Vector3, id?: string | Hash | Url): void;
@@ -865,14 +866,14 @@ declare global {
      * @param scale - vector or uniform scale factor, must be greater than 0
      * @param id - optional id of the game object instance to get the scale for, by default the instance of the calling script
      * @example
-     * ```lua
-     * Set the scale of the game object instance the script is attached to:
-     * local s = vmath.vector3(2.0, 1.0, 5.0)
-     * go.set_scale_xy(s) -- z will not be set here, only x and y
+     * ```ts
+     * // Set the scale of the game object the script is attached to:
+     * const s = vmath.vector3(2.0, 1.0, 5.0);
+     * go.set_scale_xy(s); // z will not be set here, only x and y
      *
-     * Set the scale of another game object instance with id "obj_id":
-     * local s = 1.2
-     * go.set_scale_xy(s, "obj_id") -- z will not be set here, only x and y
+     * // Set the scale of another game object with id "obj_id":
+     * const s2 = 1.2;
+     * go.set_scale_xy(s2, "obj_id"); // z will not be set here, only x and y
      * ```
      */
     export function set_scale_xy(scale: number | Vector3, id?: string | Hash | Url): void;
@@ -908,12 +909,12 @@ declare global {
      *
      * @param id - optional id of the game object instance to update
      * @example
-     * ```lua
-     * Update this game object's world transform:
-     * go.update_world_transform()
+     * ```ts
+     * // Update this game object's world transform:
+     * go.update_world_transform();
      *
-     * Update another game object's world transform:
-     * go.update_world_transform("/other")
+     * // Update another game object's world transform:
+     * go.update_world_transform("/other");
      * ```
      */
     export function update_world_transform(id?: string | Hash | Url): void;
@@ -924,11 +925,11 @@ declare global {
      * @param url - url of the game object which coordinate system convert to
      * @returns converted position
      * @example
-     * ```lua
-     * Convert position of "test" game object into coordinate space of "child" object.
-     *   local test_pos = go.get_world_position("/test")
-     *   local child_pos = go.get_world_position("/child")
-     *   local new_position = go.world_to_local_position(test_pos, "/child")
+     * ```ts
+     * // Convert position of "test" game object into coordinate space of "child" object.
+     * const test_pos = go.get_world_position("/test");
+     * const child_pos = go.get_world_position("/child");
+     * const new_position = go.world_to_local_position(test_pos, "/child");
      * ```
      */
     export function world_to_local_position(position: Vector3, url: string | Hash | Url): Vector3;
@@ -939,11 +940,11 @@ declare global {
      * @param url - url of the game object which coordinate system convert to
      * @returns converted transformation
      * @example
-     * ```lua
-     * Convert transformation of "test" game object into coordinate space of "child" object.
-     *    local test_transform = go.get_world_transform("/test")
-     *    local child_transform = go.get_world_transform("/child")
-     *    local result_transform = go.world_to_local_transform(test_transform, "/child")
+     * ```ts
+     * // Convert transform of "test" game object into coordinate space of "child" object.
+     * const test_transform = go.get_world_transform("/test");
+     * const child_transform = go.get_world_transform("/child");
+     * const result_transform = go.world_to_local_transform(test_transform, "/child");
      * ```
      */
     export function world_to_local_transform(transformation: Matrix4, url: string | Hash | Url): Matrix4;

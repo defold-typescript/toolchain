@@ -13,16 +13,16 @@ declare global {
      * @param max - Max value(s) border
      * @returns Clamped value or vector
      * @example
-     * ```lua
-     * local value1 = 56
-     * print(vmath.clamp(value1, 89, 134)) -> 89
-     * local v2 = vmath.vector3(190, 190, -10)
-     * print(vmath.clamp(v2, -50, 150)) -> vmath.vector3(150, 150, -10)
-     * local v3 = vmath.vector4(30, -30, 45, 1)
-     * print(vmath.clamp(v3, 0, 20)) -> vmath.vector4(20, 0, 20, 1)
+     * ```ts
+     * const value1 = 56;
+     * print(vmath.clamp(value1, 89, 134)); // => 89
+     * const v2 = vmath.vector3(190, 190, -10);
+     * print(vmath.clamp(v2, -50, 150)); // => vmath.vector3(150, 150, -10)
+     * const v3 = vmath.vector4(30, -30, 45, 1);
+     * print(vmath.clamp(v3, 0, 20)); // => vmath.vector4(20, 0, 20, 1)
      *
-     * local min_v = vmath.vector4(0, -10, -10, 1)
-     * print(vmath.clamp(v3, min_v, 20)) -> vmath.vector4(20, -10, 20, 1)
+     * const min_v = vmath.vector4(0, -10, -10, 1);
+     * print(vmath.clamp(v3, min_v, 20)); // => vmath.vector4(20, -10, 20, 1)
      * ```
      */
     function clamp(value: number | Vector3 | Vector4, min: number | Vector3 | Vector4, max: number | Vector3 | Vector4): number | Vector3 | Vector4;
@@ -35,9 +35,9 @@ declare global {
      * @param q1 - quaternion of which to calculate the conjugate
      * @returns the conjugate
      * @example
-     * ```lua
-     * local quat = vmath.quat(1, 2, 3, 4)
-     * print(vmath.conj(quat)) --> vmath.quat(-1, -2, -3, 4)
+     * ```ts
+     * const quat = vmath.quat(1, 2, 3, 4);
+     * print(vmath.conj(quat)); // => vmath.quat(-1, -2, -3, 4)
      * ```
      */
     function conj(q1: Quaternion): Quaternion;
@@ -53,12 +53,12 @@ declare global {
      * @param v2 - second vector
      * @returns a new vector representing the cross product
      * @example
-     * ```lua
-     * local vec1 = vmath.vector3(1, 0, 0)
-     * local vec2 = vmath.vector3(0, 1, 0)
-     * print(vmath.cross(vec1, vec2)) --> vmath.vector3(0, 0, 1)
-     * local vec3 = vmath.vector3(-1, 0, 0)
-     * print(vmath.cross(vec1, vec3)) --> vmath.vector3(0, -0, 0)
+     * ```ts
+     * const vec1 = vmath.vector3(1, 0, 0);
+     * const vec2 = vmath.vector3(0, 1, 0);
+     * print(vmath.cross(vec1, vec2)); // => vmath.vector3(0, 0, 1)
+     * const vec3 = vmath.vector3(-1, 0, 0);
+     * print(vmath.cross(vec1, vec3)); // => vmath.vector3(0, -0, 0)
      * ```
      */
     function cross(v1: Vector3, v2: Vector3): Vector3;
@@ -74,11 +74,11 @@ declare global {
      * @param v2 - second vector
      * @returns dot product
      * @example
-     * ```lua
-     * if vmath.dot(vector1, vector2) == 0 then
-     *     -- The two vectors are perpendicular (at right-angles to each other)
-     *     ...
-     * end
+     * ```ts
+     * if (vmath.dot(vector1, vector2) === 0) {
+     *   // The two vectors are perpendicular (at right-angles to each other)
+     *   // ...
+     * }
      * ```
      */
     function dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number;
@@ -92,12 +92,12 @@ declare global {
      * @param z - rotation around z-axis in degrees
      * @returns quaternion describing an equivalent rotation (231 (YZX) rotation sequence)
      * @example
-     * ```lua
-     * local q = vmath.euler_to_quat(0, 45, 90)
-     * print(q) --> vmath.quat(0.27059805393219, 0.27059805393219, 0.65328145027161, 0.65328145027161)
+     * ```ts
+     * const q = vmath.euler_to_quat(0, 45, 90);
+     * print(q); // => vmath.quat(0.27059805393219, 0.27059805393219, 0.65328145027161, 0.65328145027161)
      *
-     * local v = vmath.vector3(0, 0, 90)
-     * print(vmath.euler_to_quat(v)) --> vmath.quat(0, 0, 0.70710676908493, 0.70710676908493)
+     * const v = vmath.vector3(0, 0, 90);
+     * print(vmath.euler_to_quat(v)); // => vmath.quat(0, 0, 0.70710676908493, 0.70710676908493)
      * ```
      */
     function euler_to_quat(x: number | Vector3, y: number, z: number): Quaternion;
@@ -111,11 +111,11 @@ declare global {
      * @param m1 - matrix to invert
      * @returns inverse of the supplied matrix
      * @example
-     * ```lua
-     * local mat1 = vmath.matrix4_rotation_z(3.141592653)
-     * local mat2 = vmath.inv(mat1)
-     * -- M * inv(M) = identity matrix
-     * print(mat1 * mat2) --> vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+     * ```ts
+     * const mat1 = vmath.matrix4_rotation_z(3.141592653);
+     * const mat2 = vmath.inv(mat1);
+     * // M * inv(M) = identity matrix
+     * print(mat1.mul(mat2)); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
      * ```
      */
     function inv(m1: Matrix4): Matrix4;
@@ -128,14 +128,14 @@ declare global {
      * @param v - value of which to calculate the length
      * @returns length
      * @example
-     * ```lua
-     * if vmath.length(self.velocity) < max_velocity then
-     *     -- The speed (velocity vector) is below max.
+     * ```ts
+     * if (vmath.length(self.velocity) < max_velocity) {
+     *   // The speed (velocity vector) is below max.
      *
-     *     -- TODO: max_velocity can be expressed as squared
-     *     -- so we can compare with length_sqr() instead.
-     *     ...
-     * end
+     *   // TODO: max_velocity can be expressed as squared
+     *   // so we can compare with length_sqr() instead.
+     *   // ...
+     * }
      * ```
      */
     function length(v: Vector3 | Vector4 | Quaternion): number;
@@ -145,11 +145,11 @@ declare global {
      * @param v - value of which to calculate the squared length
      * @returns squared length
      * @example
-     * ```lua
-     * if vmath.length_sqr(vector1) < vmath.length_sqr(vector2) then
-     *     -- Vector 1 has less magnitude than vector 2
-     *     ...
-     * end
+     * ```ts
+     * if (vmath.length_sqr(vector1) < vmath.length_sqr(vector2)) {
+     *   // Vector 1 has less magnitude than vector 2
+     *   // ...
+     * }
      * ```
      */
     function length_sqr(v: Vector3 | Vector4 | Quaternion): number;
@@ -165,20 +165,22 @@ declare global {
      * @param v2 - vector to lerp to
      * @returns the lerped vector
      * @example
-     * ```lua
-     * function init(self)
-     *     self.t = 0
-     * end
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     return { t: 0 };
+     *   },
      *
-     * function update(self, dt)
-     *     self.t = self.t + dt
-     *     if self.t <= 1 then
-     *         local startpos = vmath.vector3(0, 600, 0)
-     *         local endpos = vmath.vector3(600, 0, 0)
-     *         local pos = vmath.lerp(self.t, startpos, endpos)
-     *         go.set_position(pos, "go")
-     *     end
-     * end
+     *   update(self, dt) {
+     *     self.t = self.t + dt;
+     *     if (self.t <= 1) {
+     *       const startpos = vmath.vector3(0, 600, 0);
+     *       const endpos = vmath.vector3(600, 0, 0);
+     *       const pos = vmath.lerp(self.t, startpos, endpos);
+     *       go.set_position(pos, "go");
+     *     }
+     *   },
+     * });
      * ```
      */
     function lerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
@@ -244,13 +246,13 @@ declare global {
      *
      * @returns identity matrix
      * @example
-     * ```lua
-     * local mat = vmath.matrix4()
-     * print(mat) --> vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
-     * -- get column 0:
-     * print(mat.c0) --> vmath.vector4(1, 0, 0, 0)
-     * -- get the value in row 3 and column 2:
-     * print(mat.m32) --> 0
+     * ```ts
+     * const mat = vmath.matrix4();
+     * print(mat); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+     * // get column 0:
+     * print(mat.c0); // => vmath.vector4(1, 0, 0, 0)
+     * // get the value in row 3 and column 2:
+     * print(mat.m32); // => 0
      * ```
      */
     function matrix4(): Matrix4;
@@ -279,11 +281,11 @@ declare global {
      * @param angle - angle in radians
      * @returns matrix represented by axis and angle
      * @example
-     * ```lua
-     * local vec = vmath.vector4(1, 1, 0, 0)
-     * local axis = vmath.vector3(0, 0, 1) -- z-axis
-     * local mat = vmath.matrix4_axis_angle(axis, 3.141592653)
-     * print(mat * vec) --> vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const axis = vmath.vector3(0, 0, 1); // z-axis
+     * const mat = vmath.matrix4_axis_angle(axis, 3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)
      * ```
      */
     function matrix4_axis_angle(v: Vector3, angle: number): Matrix4;
@@ -296,12 +298,12 @@ declare global {
      * @param scale - scale
      * @returns new matrix4
      * @example
-     * ```lua
-     * local translation = vmath.vector3(103, -95, 14)
-     * local quat = vmath.quat(1, 2, 3, 4)
-     * local scale = vmath.vector3(1, 0.5, 0.5)
-     * local result = vmath.matrix4_compose(translation, quat, scale)
-     * print(result) --> vmath.matrix4(-25, -10, 11, 103, 28, -9.5, 2, -95, -10, 10, -4.5, 14, 0, 0, 0, 1)
+     * ```ts
+     * const translation = vmath.vector3(103, -95, 14);
+     * const quat = vmath.quat(1, 2, 3, 4);
+     * const scale = vmath.vector3(1, 0.5, 0.5);
+     * const result = vmath.matrix4_compose(translation, quat, scale);
+     * print(result); // => vmath.matrix4(-25, -10, 11, 103, 28, -9.5, 2, -95, -10, 10, -4.5, 14, 0, 0, 0, 1)
      * ```
      */
     function matrix4_compose(translation: Vector3 | Vector4, rotation: Quaternion, scale: Vector3): Matrix4;
@@ -319,11 +321,11 @@ declare global {
      * @param far - coordinate for far clipping plane
      * @returns matrix representing the frustum
      * @example
-     * ```lua
-     * -- Construct a projection frustum with a vertical and horizontal
-     * -- FOV of 45 degrees. Useful for rendering a square view.
-     * local proj = vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000)
-     * render.set_projection(proj)
+     * ```ts
+     * // Construct a projection frustum with a vertical and horizontal FOV of
+     * // 45 degrees. Useful for rendering a square view.
+     * const proj = vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000);
+     * render.set_projection(proj);
      * ```
      */
     function matrix4_frustum(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4;
@@ -337,16 +339,15 @@ declare global {
      * @param up - up vector
      * @returns look-at matrix
      * @example
-     * ```lua
-     * -- Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV
-     * -- Aspect ratio 4:3
-     * local eye = vmath.vector3(0, 0, 100)
-     * local look_at = vmath.vector3(0, 0, 0)
-     * local up = vmath.vector3(0, 1, 0)
-     * local view = vmath.matrix4_look_at(eye, look_at, up)
-     * render.set_view(view)
-     * local proj = vmath.matrix4_perspective(3.141592/2, 4/3, 1, 1000)
-     * render.set_projection(proj)
+     * ```ts
+     * // Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV, aspect ratio 4:3.
+     * const eye = vmath.vector3(0, 0, 100);
+     * const look_at = vmath.vector3(0, 0, 0);
+     * const up = vmath.vector3(0, 1, 0);
+     * const view = vmath.matrix4_look_at(eye, look_at, up);
+     * render.set_view(view);
+     * const proj = vmath.matrix4_perspective(3.141592 / 2, 4 / 3, 1, 1000);
+     * render.set_projection(proj);
      * ```
      */
     function matrix4_look_at(eye: Vector3, look_at: Vector3, up: Vector3): Matrix4;
@@ -362,13 +363,13 @@ declare global {
      * @param far - coordinate for far clipping plane
      * @returns orthographic projection matrix
      * @example
-     * ```lua
-     * -- Set up an orthographic projection based on the width and height
-     * -- of the game window.
-     * local w = render.get_width()
-     * local h = render.get_height()
-     * local proj = vmath.matrix4_orthographic(- w / 2, w / 2, -h / 2, h / 2, -1000, 1000)
-     * render.set_projection(proj)
+     * ```ts
+     * // Set up an orthographic projection based on the width and height of the
+     * // game window.
+     * const w = render.get_width();
+     * const h = render.get_height();
+     * const proj = vmath.matrix4_orthographic(-w / 2, w / 2, -h / 2, h / 2, -1000, 1000);
+     * render.set_projection(proj);
      * ```
      */
     function matrix4_orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4;
@@ -382,16 +383,15 @@ declare global {
      * @param far - coordinate for far clipping plane
      * @returns perspective projection matrix
      * @example
-     * ```lua
-     * -- Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV
-     * -- Aspect ratio 4:3
-     * local eye = vmath.vector3(0, 0, 100)
-     * local look_at = vmath.vector3(0, 0, 0)
-     * local up = vmath.vector3(0, 1, 0)
-     * local view = vmath.matrix4_look_at(eye, look_at, up)
-     * render.set_view(view)
-     * local proj = vmath.matrix4_perspective(3.141592/2, 4/3, 1, 1000)
-     * render.set_projection(proj)
+     * ```ts
+     * // Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV, aspect ratio 4:3.
+     * const eye = vmath.vector3(0, 0, 100);
+     * const look_at = vmath.vector3(0, 0, 0);
+     * const up = vmath.vector3(0, 1, 0);
+     * const view = vmath.matrix4_look_at(eye, look_at, up);
+     * render.set_view(view);
+     * const proj = vmath.matrix4_perspective(3.141592 / 2, 4 / 3, 1, 1000);
+     * render.set_projection(proj);
      * ```
      */
     function matrix4_perspective(fov: number, aspect: number, near: number, far: number): Matrix4;
@@ -401,11 +401,11 @@ declare global {
      * @param q - quaternion to create matrix from
      * @returns matrix represented by quaternion
      * @example
-     * ```lua
-     * local vec = vmath.vector4(1, 1, 0, 0)
-     * local quat = vmath.quat_rotation_z(3.141592653)
-     * local mat = vmath.matrix4_quat(quat)
-     * print(mat * vec) --> vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000)
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const quat = vmath.quat_rotation_z(3.141592653);
+     * const mat = vmath.matrix4_quat(quat);
+     * print(mat.mul(vec)); // => vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000)
      * ```
      */
     function matrix4_quat(q: Quaternion): Matrix4;
@@ -416,10 +416,10 @@ declare global {
      * @param angle - angle in radians around x-axis
      * @returns matrix from rotation around x-axis
      * @example
-     * ```lua
-     * local vec = vmath.vector4(1, 1, 0, 0)
-     * local mat = vmath.matrix4_rotation_x(3.141592653)
-     * print(mat * vec) --> vmath.vector4(1, -1, -8.7422776573476e-08, 0)
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const mat = vmath.matrix4_rotation_x(3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(1, -1, -8.7422776573476e-08, 0)
      * ```
      */
     function matrix4_rotation_x(angle: number): Matrix4;
@@ -430,10 +430,10 @@ declare global {
      * @param angle - angle in radians around y-axis
      * @returns matrix from rotation around y-axis
      * @example
-     * ```lua
-     * local vec = vmath.vector4(1, 1, 0, 0)
-     * local mat = vmath.matrix4_rotation_y(3.141592653)
-     * print(mat * vec) --> vmath.vector4(-1, 1, 8.7422776573476e-08, 0)
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const mat = vmath.matrix4_rotation_y(3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(-1, 1, 8.7422776573476e-08, 0)
      * ```
      */
     function matrix4_rotation_y(angle: number): Matrix4;
@@ -444,10 +444,10 @@ declare global {
      * @param angle - angle in radians around z-axis
      * @returns matrix from rotation around z-axis
      * @example
-     * ```lua
-     * local vec = vmath.vector4(1, 1, 0, 0)
-     * local mat = vmath.matrix4_rotation_z(3.141592653)
-     * print(mat * vec) --> vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const mat = vmath.matrix4_rotation_z(3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)
      * ```
      */
     function matrix4_rotation_z(angle: number): Matrix4;
@@ -457,10 +457,10 @@ declare global {
      * @param scale - scale
      * @returns new matrix4
      * @example
-     * ```lua
-     * local scale = vmath.vector3(1, 0.5, 0.5)
-     * local result = vmath.matrix4_scale(scale)
-     * print(result) --> vmath.matrix4(1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
+     * ```ts
+     * const scale = vmath.vector3(1, 0.5, 0.5);
+     * const result = vmath.matrix4_scale(scale);
+     * print(result); // => vmath.matrix4(1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
      * ```
      */
     function matrix4_scale(scale: Vector3): Matrix4;
@@ -497,11 +497,11 @@ declare global {
      * @param position - position vector to create matrix from
      * @returns matrix from the supplied position vector
      * @example
-     * ```lua
-     * -- Set camera view from custom view and translation matrices
-     * local mat_trans = vmath.matrix4_translation(vmath.vector3(0, 10, 100))
-     * local mat_view  = vmath.matrix4_rotation_y(-3.141592/4)
-     * render.set_view(mat_view * mat_trans)
+     * ```ts
+     * // Set camera view from custom view and translation matrices.
+     * const mat_trans = vmath.matrix4_translation(vmath.vector3(0, 10, 100));
+     * const mat_view = vmath.matrix4_rotation_y(-3.141592 / 4);
+     * render.set_view(mat_view.mul(mat_trans));
      * ```
      */
     function matrix4_translation(position: Vector3 | Vector4): Matrix4;
@@ -514,8 +514,8 @@ declare global {
      * @param v2 - second vector
      * @returns multiplied vector
      * @example
-     * ```lua
-     * local blend_color = vmath.mul_per_elem(color1, color2)
+     * ```ts
+     * const blend_color = vmath.mul_per_elem(color1, color2);
      * ```
      */
     function mul_per_elem(v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
@@ -528,11 +528,11 @@ declare global {
      * @param v1 - vector to normalize
      * @returns new normalized vector
      * @example
-     * ```lua
-     * local vec = vmath.vector3(1, 2, 3)
-     * local norm_vec = vmath.normalize(vec)
-     * print(norm_vec) --> vmath.vector3(0.26726123690605, 0.5345224738121, 0.80178368091583)
-     * print(vmath.length(norm_vec)) --> 0.99999994039536
+     * ```ts
+     * const vec = vmath.vector3(1, 2, 3);
+     * const norm_vec = vmath.normalize(vec);
+     * print(norm_vec); // => vmath.vector3(0.26726123690605, 0.5345224738121, 0.80178368091583)
+     * print(vmath.length(norm_vec)); // => 0.99999994039536
      * ```
      */
     function normalize(v1: Vector3 | Vector4 | Quaternion): Vector3 | Vector4 | Quaternion;
@@ -546,11 +546,11 @@ declare global {
      * @param m1 - ortho-normalized matrix to invert
      * @returns inverse of the supplied matrix
      * @example
-     * ```lua
-     * local mat1 = vmath.matrix4_rotation_z(3.141592653)
-     * local mat2 = vmath.ortho_inv(mat1)
-     * -- M * inv(M) = identity matrix
-     * print(mat1 * mat2) --> vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+     * ```ts
+     * const mat1 = vmath.matrix4_rotation_z(3.141592653);
+     * const mat2 = vmath.ortho_inv(mat1);
+     * // M * inv(M) = identity matrix
+     * print(mat1.mul(mat2)); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
      * ```
      */
     function ortho_inv(m1: Matrix4): Matrix4;
@@ -564,10 +564,10 @@ declare global {
      * @param v2 - vector onto which the first will be projected, must not have zero length
      * @returns the projected extent of the first vector onto the second
      * @example
-     * ```lua
-     * local v1 = vmath.vector3(1, 1, 0)
-     * local v2 = vmath.vector3(2, 0, 0)
-     * print(vmath.project(v1, v2)) --> 0.5
+     * ```ts
+     * const v1 = vmath.vector3(1, 1, 0);
+     * const v2 = vmath.vector3(2, 0, 0);
+     * print(vmath.project(v1, v2)); // => 0.5
      * ```
      */
     function project(v1: Vector3, v2: Vector3): number;
@@ -613,9 +613,9 @@ declare global {
      * @param w - w coordinate
      * @returns new quaternion
      * @example
-     * ```lua
-     * local quat = vmath.quat(1, 2, 3, 4)
-     * print(quat) --> vmath.quat(1, 2, 3, 4)
+     * ```ts
+     * const quat = vmath.quat(1, 2, 3, 4);
+     * print(quat); // => vmath.quat(1, 2, 3, 4)
      * ```
      */
     function quat(x: number, y: number, z: number, w: number): Quaternion;
@@ -627,11 +627,11 @@ declare global {
      * @param angle - angle
      * @returns quaternion representing the axis-angle rotation
      * @example
-     * ```lua
-     * local axis = vmath.vector3(1, 0, 0)
-     * local rot = vmath.quat_axis_angle(axis, 3.141592653)
-     * local vec = vmath.vector3(1, 1, 0)
-     * print(vmath.rotate(rot, vec)) --> vmath.vector3(1, -1, -8.7422776573476e-08)
+     * ```ts
+     * const axis = vmath.vector3(1, 0, 0);
+     * const rot = vmath.quat_axis_angle(axis, 3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(1, -1, -8.7422776573476e-08)
      * ```
      */
     function quat_axis_angle(v: Vector3, angle: number): Quaternion;
@@ -645,17 +645,17 @@ declare global {
      * @param z - z base vector
      * @returns quaternion representing the rotation of the specified base vectors
      * @example
-     * ```lua
-     * -- Axis rotated 90 degrees around z.
-     * local rot_x = vmath.vector3(0, -1, 0)
-     * local rot_y = vmath.vector3(1, 0, 0)
-     * local z = vmath.vector3(0, 0, 1)
-     * local rot1 = vmath.quat_basis(rot_x, rot_y, z)
-     * local rot2 = vmath.quat_from_to(vmath.vector3(0, 1, 0), vmath.vector3(1, 0, 0))
-     * if rot1 == rot2 then
-     *     -- These quaternions are equal!
-     *     print(rot2) --> vmath.quat(0, 0, -0.70710676908493, 0.70710676908493)
-     * end
+     * ```ts
+     * // Axis rotated 90 degrees around z.
+     * const rot_x = vmath.vector3(0, -1, 0);
+     * const rot_y = vmath.vector3(1, 0, 0);
+     * const z = vmath.vector3(0, 0, 1);
+     * const rot1 = vmath.quat_basis(rot_x, rot_y, z);
+     * const rot2 = vmath.quat_from_to(vmath.vector3(0, 1, 0), vmath.vector3(1, 0, 0));
+     * if (rot1 === rot2) {
+     *   // These quaternions are equal!
+     *   print(rot2); // => vmath.quat(0, 0, -0.70710676908493, 0.70710676908493)
+     * }
      * ```
      */
     function quat_basis(x: Vector3, y: Vector3, z: Vector3): Quaternion;
@@ -670,11 +670,11 @@ declare global {
      * @param v2 - second unit vector, after rotation
      * @returns quaternion representing the rotation from first to second vector
      * @example
-     * ```lua
-     * local v1 = vmath.vector3(1, 0, 0)
-     * local v2 = vmath.vector3(0, 1, 0)
-     * local rot = vmath.quat_from_to(v1, v2)
-     * print(vmath.rotate(rot, v1)) --> vmath.vector3(0, 0.99999994039536, 0)
+     * ```ts
+     * const v1 = vmath.vector3(1, 0, 0);
+     * const v2 = vmath.vector3(0, 1, 0);
+     * const rot = vmath.quat_from_to(v1, v2);
+     * print(vmath.rotate(rot, v1)); // => vmath.vector3(0, 0.99999994039536, 0)
      * ```
      */
     function quat_from_to(v1: Vector3, v2: Vector3): Quaternion;
@@ -693,10 +693,10 @@ declare global {
      * @param angle - angle in radians around x-axis
      * @returns quaternion representing the rotation around the x-axis
      * @example
-     * ```lua
-     * local rot = vmath.quat_rotation_x(3.141592653)
-     * local vec = vmath.vector3(1, 1, 0)
-     * print(vmath.rotate(rot, vec)) --> vmath.vector3(1, -1, -8.7422776573476e-08)
+     * ```ts
+     * const rot = vmath.quat_rotation_x(3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(1, -1, -8.7422776573476e-08)
      * ```
      */
     function quat_rotation_x(angle: number): Quaternion;
@@ -707,10 +707,10 @@ declare global {
      * @param angle - angle in radians around y-axis
      * @returns quaternion representing the rotation around the y-axis
      * @example
-     * ```lua
-     * local rot = vmath.quat_rotation_y(3.141592653)
-     * local vec = vmath.vector3(1, 1, 0)
-     * print(vmath.rotate(rot, vec)) --> vmath.vector3(-1, 1, 8.7422776573476e-08)
+     * ```ts
+     * const rot = vmath.quat_rotation_y(3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(-1, 1, 8.7422776573476e-08)
      * ```
      */
     function quat_rotation_y(angle: number): Quaternion;
@@ -721,10 +721,10 @@ declare global {
      * @param angle - angle in radians around z-axis
      * @returns quaternion representing the rotation around the z-axis
      * @example
-     * ```lua
-     * local rot = vmath.quat_rotation_z(3.141592653)
-     * local vec = vmath.vector3(1, 1, 0)
-     * print(vmath.rotate(rot, vec)) --> vmath.vector3(-0.99999988079071, -1, 0)
+     * ```ts
+     * const rot = vmath.quat_rotation_z(3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(-0.99999988079071, -1, 0)
      * ```
      */
     function quat_rotation_z(angle: number): Quaternion;
@@ -736,13 +736,14 @@ declare global {
      *
      * @param q - source quaternion
      * @example
-     * ```lua
-     * local q = vmath.quat_rotation_z(math.rad(90))
-     * print(vmath.quat_to_euler(q)) --> 0 0 90
+     * ```ts
+     * const q = vmath.quat_rotation_z(math.rad(90));
+     * print(vmath.quat_to_euler(q)); // => 0 0 90
      *
-     * local q2 = vmath.quat_rotation_y(math.rad(45)) * vmath.quat_rotation_z(math.rad(90))
-     * local v = vmath.vector3(vmath.quat_to_euler(q2))
-     * print(v) --> vmath.vector3(0, 45, 90)
+     * const q2 = vmath.quat_rotation_y(math.rad(45)).mul(vmath.quat_rotation_z(math.rad(90)));
+     * const [ex, ey, ez] = vmath.quat_to_euler(q2);
+     * const v = vmath.vector3(ex, ey, ez);
+     * print(v); // => vmath.vector3(0, 45, 90)
      * ```
      */
     function quat_to_euler(q: Quaternion): LuaMultiReturn<[number, number, number]>;
@@ -755,10 +756,10 @@ declare global {
      * @param v1 - vector to rotate
      * @returns the rotated vector
      * @example
-     * ```lua
-     * local vec = vmath.vector3(1, 1, 0)
-     * local rot = vmath.quat_rotation_z(3.141592563)
-     * print(vmath.rotate(rot, vec)) --> vmath.vector3(-1.0000002384186, -0.99999988079071, 0)
+     * ```ts
+     * const vec = vmath.vector3(1, 1, 0);
+     * const rot = vmath.quat_rotation_z(3.141592563);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(-1.0000002384186, -0.99999988079071, 0)
      * ```
      */
     function rotate(q: Quaternion, v1: Vector3): Vector3;
@@ -777,20 +778,22 @@ declare global {
      * @param v2 - vector to slerp to
      * @returns the slerped vector
      * @example
-     * ```lua
-     * function init(self)
-     *     self.t = 0
-     * end
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     return { t: 0 };
+     *   },
      *
-     * function update(self, dt)
-     *     self.t = self.t + dt
-     *     if self.t <= 1 then
-     *         local startpos = vmath.vector3(0, 600, 0)
-     *         local endpos = vmath.vector3(600, 0, 0)
-     *         local pos = vmath.slerp(self.t, startpos, endpos)
-     *         go.set_position(pos, "go")
-     *     end
-     * end
+     *   update(self, dt) {
+     *     self.t = self.t + dt;
+     *     if (self.t <= 1) {
+     *       const startpos = vmath.vector3(0, 600, 0);
+     *       const endpos = vmath.vector3(600, 0, 0);
+     *       const pos = vmath.slerp(self.t, startpos, endpos);
+     *       go.set_position(pos, "go");
+     *     }
+     *   },
+     * });
      * ```
      */
     function slerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
@@ -835,12 +838,12 @@ declare global {
      * @param t - table of numbers
      * @returns new vector
      * @example
-     * ```lua
-     * How to create a vector with custom data to be used for animation easing:
-     * local values = { 0, 0.5, 0 }
-     * local vec = vmath.vector(values)
-     * print(vec) --> vmath.vector (size: 3)
-     * print(vec[2]) --> 0.5
+     * ```ts
+     * // How to create a vector with custom data to be used for animation easing:
+     * const values = [0, 0.5, 0];
+     * const vec = vmath.vector(values);
+     * print(vec); // => vmath.vector (size: 3)
+     * print(vec[2]); // => 0.5
      * ```
      */
     function vector(t: number[]): Vector;
@@ -897,13 +900,13 @@ declare global {
      * @param z - z coordinate
      * @returns new vector
      * @example
-     * ```lua
-     * local vec = vmath.vector3(1.0, 2.0, 3.0)
-     * print(vec) --> vmath.vector3(1, 2, 3)
-     * print(-vec) --> vmath.vector3(-1, -2, -3)
-     * print(vec * 2) --> vmath.vector3(2, 4, 6)
-     * print(vec + vmath.vector3(2.0)) --> vmath.vector3(3, 4, 5)
-     * print(vec - vmath.vector3(2.0)) --> vmath.vector3(-1, 0, 1)
+     * ```ts
+     * const vec = vmath.vector3(1.0, 2.0, 3.0);
+     * print(vec); // => vmath.vector3(1, 2, 3)
+     * print(vec.unm()); // => vmath.vector3(-1, -2, -3)
+     * print(vec.mul(2)); // => vmath.vector3(2, 4, 6)
+     * print(vec.add(vmath.vector3(2.0))); // => vmath.vector3(3, 4, 5)
+     * print(vec.sub(vmath.vector3(2.0))); // => vmath.vector3(-1, 0, 1)
      * ```
      */
     function vector3(x: number, y: number, z: number): Vector3;
@@ -961,13 +964,13 @@ declare global {
      * @param w - w coordinate
      * @returns new vector
      * @example
-     * ```lua
-     * local vec = vmath.vector4(1.0, 2.0, 3.0, 4.0)
-     * print(vec) --> vmath.vector4(1, 2, 3, 4)
-     * print(-vec) --> vmath.vector4(-1, -2, -3, -4)
-     * print(vec * 2) --> vmath.vector4(2, 4, 6, 8)
-     * print(vec + vmath.vector4(2.0)) --> vmath.vector4(3, 4, 5, 6)
-     * print(vec - vmath.vector4(2.0)) --> vmath.vector4(-1, 0, 1, 2)
+     * ```ts
+     * const vec = vmath.vector4(1.0, 2.0, 3.0, 4.0);
+     * print(vec); // => vmath.vector4(1, 2, 3, 4)
+     * print(vec.unm()); // => vmath.vector4(-1, -2, -3, -4)
+     * print(vec.mul(2)); // => vmath.vector4(2, 4, 6, 8)
+     * print(vec.add(vmath.vector4(2.0))); // => vmath.vector4(3, 4, 5, 6)
+     * print(vec.sub(vmath.vector4(2.0))); // => vmath.vector4(-1, 0, 1, 2)
      * ```
      */
     function vector4(x: number, y: number, z: number, w: number): Vector4;

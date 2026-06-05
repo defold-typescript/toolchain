@@ -49,16 +49,16 @@ declare global {
      * @param fragment - fragment of the URL
      * @returns a new URL
      * @example
-     * ```lua
-     * local my_socket = "main" -- specify by valid name
-     * local my_path = hash("/my_collection/my_gameobject") -- specify as string or hash
-     * local my_fragment = "component" -- specify as string or hash
-     * local my_url = msg.url(my_socket, my_path, my_fragment)
+     * ```ts
+     * const my_socket = "main"; // specify by valid name
+     * const my_path = hash("/my_collection/my_gameobject"); // specify as string or hash
+     * const my_fragment = "component"; // specify as string or hash
+     * const my_url = msg.url(my_socket, my_path, my_fragment);
      *
-     * print(my_url) --> url: [main:/my_collection/my_gameobject#component]
-     * print(my_url.socket) --> 786443 (internal numeric value)
-     * print(my_url.path) --> hash: [/my_collection/my_gameobject]
-     * print(my_url.fragment) --> hash: [component]
+     * print(my_url); // => url: [main:/my_collection/my_gameobject#component]
+     * print(my_url.socket); // => 786443 (internal numeric value)
+     * print(my_url.path); // => hash: [/my_collection/my_gameobject]
+     * print(my_url.fragment); // => hash: [component]
      * ```
      */
     function url(socket?: string | Hash, path?: string | Hash, fragment?: string | Hash): Url;

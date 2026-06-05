@@ -28,22 +28,20 @@ declare global {
      * `playback_rate`
      * number the rate with which the animation will be played. Must be positive.
      * @example
-     * ```lua
-     * The following examples assumes that the model has id "sprite".
-     * How to play the "jump" animation followed by the "run" animation:
-     * local function anim_done(self, message_id, message, sender)
-     *   if message_id == hash("animation_done") then
-     *     if message.id == hash("jump") then
-     *       -- jump animation done, chain with "run"
-     *       sprite.play_flipbook(url, "run")
-     *     end
-     *   end
-     * end
-     *
-     * function init(self)
-     *   local url = msg.url("#sprite")
-     *   sprite.play_flipbook(url, "jump", anim_done)
-     * end
+     * ```ts
+     * // Assuming the sprite has id "sprite": play the "jump" animation followed by the
+     * // "run" animation:
+     * export default defineScript({
+     *   init() {
+     *     const url = msg.url("#sprite");
+     *     sprite.play_flipbook(url, "jump", (self, message_id, message) => {
+     *       if (message_id === hash("animation_done") && message.id === hash("jump")) {
+     *         // jump animation done, chain with "run"
+     *         sprite.play_flipbook(url, "run");
+     *       }
+     *     });
+     *   },
+     * });
      * ```
      */
     function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
@@ -55,14 +53,15 @@ declare global {
      * @param url - the sprite that should flip its animations
      * @param flip - `true` if the sprite should flip its animations, `false` if not
      * @example
-     * ```lua
-     * How to flip a sprite so it faces the horizontal movement:
-     * function update(self, dt)
-     *   -- calculate self.velocity somehow
-     *   sprite.set_hflip("#sprite", self.velocity.x < 0)
-     * end
-     *
-     * It is assumed that the sprite component has id "sprite" and that the original animations faces right.
+     * ```ts
+     * // How to flip a sprite so it faces the horizontal movement (it is assumed that
+     * // the sprite component has id "sprite" and the original animation faces right):
+     * export default defineScript({
+     *   update(self, dt) {
+     *     // calculate self.velocity somehow
+     *     sprite.set_hflip("#sprite", self.velocity.x < 0);
+     *   },
+     * });
      * ```
      */
     function set_hflip(url: string | Hash | Url, flip: boolean): void;
@@ -74,14 +73,16 @@ declare global {
      * @param url - the sprite that should flip its animations
      * @param flip - `true` if the sprite should flip its animations, `false` if not
      * @example
-     * ```lua
-     * How to flip a sprite in a game which negates gravity as a game mechanic:
-     * function update(self, dt)
-     *   -- calculate self.up_side_down somehow, then:
-     *   sprite.set_vflip("#sprite", self.up_side_down)
-     * end
-     *
-     * It is assumed that the sprite component has id "sprite" and that the original animations are up-right.
+     * ```ts
+     * // How to flip a sprite in a game which negates gravity as a game mechanic (it is
+     * // assumed that the sprite component has id "sprite" and the original animation
+     * // is up-right):
+     * export default defineScript({
+     *   update(self, dt) {
+     *     // calculate self.up_side_down somehow, then:
+     *     sprite.set_vflip("#sprite", self.up_side_down);
+     *   },
+     * });
      * ```
      */
     function set_vflip(url: string | Hash | Url, flip: boolean): void;

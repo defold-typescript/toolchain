@@ -1,1 +1,282 @@
-{}
+{
+  "go.animate": {
+    "sourceHash": "ec6a31d150125e06",
+    "ts": "// Animate the position of a game object to x = 10 during 1 second, then\n// y = 20 during 1 second:\ngo.animate(go.get_id(), \"position.x\", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {\n  go.animate(go.get_id(), \"position.y\", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);\n});\n\n// Animate the y position of a game object using a crazy custom easing curve:\nconst values = [\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n];\nconst vec = vmath.vector(values);\ngo.animate(\"go\", \"position.y\", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);"
+  },
+  "go.cancel_animations": {
+    "sourceHash": "4f012d6eb3d73ce9",
+    "ts": "// Cancel the animation of the position of a game object:\ngo.cancel_animations(go.get_id(), \"position\");\n\n// Cancel all property animations of the current game object:\ngo.cancel_animations(\".\");\n\n// Cancel all property animations of the sprite component of the current game object:\ngo.cancel_animations(\"#sprite\");"
+  },
+  "go.delete": {
+    "sourceHash": "63517a8a15d5d030",
+    "ts": "// This example demonstrates how to delete game objects:\n// Delete the script's own game object.\ngo.delete();\n// Delete a game object with the id \"my_game_object\".\nconst id = go.get_id(\"my_game_object\");\ngo.delete(id);\n// Delete a list of game objects.\nconst ids = [hash(\"/my_object_1\"), hash(\"/my_object_2\"), hash(\"/my_object_3\")];\ngo.delete(ids);\n\n// This example demonstrates how to delete game objects and their children\n// (child-to-parent order):\n// Delete the script's own game object and its children.\ngo.delete(true);\n// Delete a game object with the id \"my_game_object\" and its children.\nconst id2 = go.get_id(\"my_game_object\");\ngo.delete(id2, true);\n// Delete a list of game objects and their children.\nconst ids2 = [hash(\"/my_object_1\"), hash(\"/my_object_2\"), hash(\"/my_object_3\")];\ngo.delete(ids2, true);"
+  },
+  "go.exists": {
+    "sourceHash": "377b4eb5d71df398",
+    "ts": "// Check if game object \"my_game_object\" exists in the current collection:\ngo.exists(\"/my_game_object\");\n\n// Check if game object exists in another collection:\ngo.exists(\"other_collection:/my_game_object\");"
+  },
+  "go.get": {
+    "sourceHash": "7cac2203eda50a5e",
+    "ts": "// Get a property \"speed\" from a script \"player\"; the property must be declared\n// in the player script:\ngo.property(\"speed\", 50);\n\n// Then in the calling script (assumed to belong to the same game object, but it\n// does not have to):\nconst speed = go.get(\"#player\", \"speed\");\n\n// Get a value in a material property array (the glsl indices are 0-based):\ngo.get(url, \"example\", { index: 1 }); // the first vector4 in the array: example[0]\ngo.get(url, \"example\", { index: 16 }); // the last vector4 in the array: example[15]\ngo.get(url, \"example.x\", { index: 1 }); // an element of a vector4: example[0].x\n\n// Get all values in a material property array as a table:\ngo.get(url, \"example\"); // => [vector4, vector4, ...]\ngo.get(url, \"example.x\"); // => [number1, number2, ...]\n\n// Get a named property (the resource of a certain gui font):\nconst font_hash = go.get(\"#gui\", \"fonts\", { key: \"system_font_BIG\" });\n\n// Get a property from a sub-component, using the \"keys\" options table\n// (addressing the first level of a component):\ngo.get(\"#particlefx\", \"material\", { keys: [\"cone_emitter\"] });\n\n// Get a property in a deeper sub-hierarchy (if the component supports it).\n// Note: no built-in component supports this yet, but a custom one could.\ngo.get(\"#my_component\", \"some_property\", { keys: [\"root\", \"child_node\"] });"
+  },
+  "go.get_id": {
+    "sourceHash": "74e9ff5ee9521c51",
+    "ts": "// For the instance with path /my_sub_collection/my_instance, the following calls\n// are equivalent:\nconst id = go.get_id(); // no path, defaults to the instance containing the calling script\nprint(id); // => hash: [/my_sub_collection/my_instance]\n\nconst id2 = go.get_id(\"/my_sub_collection/my_instance\"); // absolute path\nprint(id2); // => hash: [/my_sub_collection/my_instance]\n\nconst id3 = go.get_id(\"my_instance\"); // relative path\nprint(id3); // => hash: [/my_sub_collection/my_instance]"
+  },
+  "go.get_parent": {
+    "sourceHash": "6e98305fd4cd8f14",
+    "ts": "// Get parent of the instance containing the calling script:\nconst parent_id = go.get_parent();\n\n// Get parent of the instance with id \"x\":\nconst parent_id2 = go.get_parent(\"x\");"
+  },
+  "go.get_position": {
+    "sourceHash": "958a14823ca50504",
+    "ts": "// Get the position of the game object the script is attached to:\nconst p = go.get_position();\n\n// Get the position of another game object \"my_gameobject\":\nconst pos = go.get_position(\"my_gameobject\");"
+  },
+  "go.get_rotation": {
+    "sourceHash": "46e4f7ff790322c3",
+    "ts": "// Get the rotation of the game object the script is attached to:\nconst r = go.get_rotation();\n\n// Get the rotation of another game object with id \"x\":\nconst r2 = go.get_rotation(\"x\");"
+  },
+  "go.get_scale": {
+    "sourceHash": "b6a9bd9d19741cdd",
+    "ts": "// Get the scale of the game object the script is attached to:\nconst s = go.get_scale();\n\n// Get the scale of another game object with id \"x\":\nconst s2 = go.get_scale(\"x\");"
+  },
+  "go.get_scale_uniform": {
+    "sourceHash": "0add83a46d3434c3",
+    "ts": "// Get the uniform scale of the game object the script is attached to:\nconst s = go.get_scale_uniform();\n\n// Get the uniform scale of another game object with id \"x\":\nconst s2 = go.get_scale_uniform(\"x\");"
+  },
+  "go.get_world_position": {
+    "sourceHash": "ab804a5cdcfd4f7d",
+    "ts": "// Get the world position of the game object the script is attached to:\nconst p = go.get_world_position();\n\n// Get the world position of another game object with id \"x\":\nconst p2 = go.get_world_position(\"x\");"
+  },
+  "go.get_world_rotation": {
+    "sourceHash": "05c7e59676f614f9",
+    "ts": "// Get the world rotation of the game object the script is attached to:\nconst r = go.get_world_rotation();\n\n// Get the world rotation of another game object with id \"x\":\nconst r2 = go.get_world_rotation(\"x\");"
+  },
+  "go.get_world_scale": {
+    "sourceHash": "bbbe0d3b0c6a9153",
+    "ts": "// Get the world 3D scale of the game object the script is attached to:\nconst s = go.get_world_scale();\n\n// Get the world scale of another game object \"x\":\nconst s2 = go.get_world_scale(\"x\");"
+  },
+  "go.get_world_scale_uniform": {
+    "sourceHash": "14162dd238db34dd",
+    "ts": "// Get the world uniform scale of the game object the script is attached to:\nconst s = go.get_world_scale_uniform();\n\n// Get the world uniform scale of another game object with id \"x\":\nconst s2 = go.get_world_scale_uniform(\"x\");"
+  },
+  "go.get_world_transform": {
+    "sourceHash": "832de2e98a73e953",
+    "ts": "// Get the world transform of the game object the script is attached to:\nconst m = go.get_world_transform();\n\n// Get the world transform of another game object with id \"x\":\nconst m2 = go.get_world_transform(\"x\");"
+  },
+  "go.property": {
+    "sourceHash": "96e6079cda36fa54",
+    "ts": "// This example defines a property \"health\" in a script. The health is decreased\n// whenever someone sends a \"take_damage\" message to the script.\ngo.property(\"health\", 100);\n\nexport default defineScript({\n  init(self) {\n    // prints 100 to the output\n    print(self.health);\n  },\n\n  on_message(self, message_id, message) {\n    if (message_id === hash(\"take_damage\")) {\n      self.health = self.health - message.damage;\n      print(`Ouch! My health is now: ${self.health}`);\n    }\n  },\n});"
+  },
+  "go.set": {
+    "sourceHash": "2ca1763ad71c1232",
+    "ts": "// Set a property \"speed\" of a script \"player\"; the property must be declared in\n// the player script:\ngo.property(\"speed\", 50);\n\n// Then in the calling script (assumed to belong to the same game object, but it\n// does not have to):\ngo.set(\"#player\", \"speed\", 100);\n\n// Set a vector4 in a material property array (the glsl indices are 0-based):\ngo.set(url, \"example\", vmath.vector4(1, 1, 1, 1), { index: 1 }); // example[0] = v\ngo.set(url, \"example\", vmath.vector4(2, 2, 2, 2), { index: 16 }); // example[15] = v\ngo.set(url, \"example.x\", 7, { index: 1 }); // example[0].x = 7\n\n// Set a material property array by a table of vector4 (only the first two are\n// set; extra array elements are ignored):\ngo.set(url, \"example\", [vmath.vector4(1, 1, 1, 1), vmath.vector4(2, 2, 2, 2)]);\n\n// Set a named property (inside init(self)):\ngo.property(\"big_font\", resource.font());\ngo.set(\"#gui\", \"fonts\", self.big_font, { key: \"system_font_BIG\" });\n\n// Set a property on a sub-component, using the \"keys\" options table (inside\n// init(self)):\ngo.property(\"my_material\", resource.material);\ngo.set(\"#particlefx\", \"material\", self.my_material, { keys: [\"cone_emitter\"] });\n\n// Set a property in a deeper sub-hierarchy (if the component supports it).\n// Note: no built-in component supports this yet, but a custom one could.\ngo.set(\"#my_component\", \"some_property\", some_value, { keys: [\"root\", \"child_node\"] });"
+  },
+  "go.set_parent": {
+    "sourceHash": "2822e1839ed2a321",
+    "ts": "// Attach myself to another instance \"my_parent\":\ngo.set_parent(go.get_id(), go.get_id(\"my_parent\"));\n\n// Attach an instance \"my_instance\" to another instance \"my_parent\":\ngo.set_parent(go.get_id(\"my_instance\"), go.get_id(\"my_parent\"));\n\n// Detach an instance \"my_instance\" from its parent (if any):\ngo.set_parent(go.get_id(\"my_instance\"));"
+  },
+  "go.set_position": {
+    "sourceHash": "ad83d0274d776e8f",
+    "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\n\n// Set the position of the game object the script is attached to:\ngo.set_position(p);\n\n// Set the position of another game object with id \"x\":\ngo.set_position(p, \"x\");"
+  },
+  "go.set_rotation": {
+    "sourceHash": "782b2092fc7f641f",
+    "ts": "// `r` is the desired rotation (a Quaternion).\nconst r = vmath.quat();\n\n// Set the rotation of the game object the script is attached to:\ngo.set_rotation(r);\n\n// Set the rotation of another game object with id \"x\":\ngo.set_rotation(r, \"x\");"
+  },
+  "go.set_scale": {
+    "sourceHash": "456df524622a534f",
+    "ts": "// Set the scale of the game object the script is attached to:\nconst s = vmath.vector3(2.0, 1.0, 1.0);\ngo.set_scale(s);\n\n// Set the scale of another game object with id \"obj_id\":\nconst s2 = 1.2;\ngo.set_scale(s2, \"obj_id\");"
+  },
+  "go.set_scale_xy": {
+    "sourceHash": "6d23b1a65292cf1f",
+    "ts": "// Set the scale of the game object the script is attached to:\nconst s = vmath.vector3(2.0, 1.0, 5.0);\ngo.set_scale_xy(s); // z will not be set here, only x and y\n\n// Set the scale of another game object with id \"obj_id\":\nconst s2 = 1.2;\ngo.set_scale_xy(s2, \"obj_id\"); // z will not be set here, only x and y"
+  },
+  "go.update_world_transform": {
+    "sourceHash": "0c189fdea4a6d715",
+    "ts": "// Update this game object's world transform:\ngo.update_world_transform();\n\n// Update another game object's world transform:\ngo.update_world_transform(\"/other\");"
+  },
+  "go.world_to_local_position": {
+    "sourceHash": "29852f7285321a3e",
+    "ts": "// Convert position of \"test\" game object into coordinate space of \"child\" object.\nconst test_pos = go.get_world_position(\"/test\");\nconst child_pos = go.get_world_position(\"/child\");\nconst new_position = go.world_to_local_position(test_pos, \"/child\");"
+  },
+  "go.world_to_local_transform": {
+    "sourceHash": "b9df312459adbb0f",
+    "ts": "// Convert transform of \"test\" game object into coordinate space of \"child\" object.\nconst test_transform = go.get_world_transform(\"/test\");\nconst child_transform = go.get_world_transform(\"/child\");\nconst result_transform = go.world_to_local_transform(test_transform, \"/child\");"
+  },
+  "msg.post": {
+    "sourceHash": "8eb90635d0b538fe",
+    "ts": "// Send \"enable\" to the sprite \"my_sprite\" in \"my_gameobject\":\nmsg.post(\"my_gameobject#my_sprite\", \"enable\");\n\n// Send a \"my_message\" to a url with some additional data:\nconst params = { my_parameter: \"my_value\" };\nmsg.post(my_url, \"my_message\", params);"
+  },
+  "msg.url": {
+    "sourceHash": "beb786e09647d2ac",
+    "ts": "const my_socket = \"main\"; // specify by valid name\nconst my_path = hash(\"/my_collection/my_gameobject\"); // specify as string or hash\nconst my_fragment = \"component\"; // specify as string or hash\nconst my_url = msg.url(my_socket, my_path, my_fragment);\n\nprint(my_url); // => url: [main:/my_collection/my_gameobject#component]\nprint(my_url.socket); // => 786443 (internal numeric value)\nprint(my_url.path); // => hash: [/my_collection/my_gameobject]\nprint(my_url.fragment); // => hash: [component]"
+  },
+  "sprite.play_flipbook": {
+    "sourceHash": "6bac8dc702dfffec",
+    "ts": "// Assuming the sprite has id \"sprite\": play the \"jump\" animation followed by the\n// \"run\" animation:\nexport default defineScript({\n  init() {\n    const url = msg.url(\"#sprite\");\n    sprite.play_flipbook(url, \"jump\", (self, message_id, message) => {\n      if (message_id === hash(\"animation_done\") && message.id === hash(\"jump\")) {\n        // jump animation done, chain with \"run\"\n        sprite.play_flipbook(url, \"run\");\n      }\n    });\n  },\n});"
+  },
+  "sprite.set_hflip": {
+    "sourceHash": "2d067cdccd1fb269",
+    "ts": "// How to flip a sprite so it faces the horizontal movement (it is assumed that\n// the sprite component has id \"sprite\" and the original animation faces right):\nexport default defineScript({\n  update(self, dt) {\n    // calculate self.velocity somehow\n    sprite.set_hflip(\"#sprite\", self.velocity.x < 0);\n  },\n});"
+  },
+  "sprite.set_vflip": {
+    "sourceHash": "89dcc94c14d785e2",
+    "ts": "// How to flip a sprite in a game which negates gravity as a game mechanic (it is\n// assumed that the sprite component has id \"sprite\" and the original animation\n// is up-right):\nexport default defineScript({\n  update(self, dt) {\n    // calculate self.up_side_down somehow, then:\n    sprite.set_vflip(\"#sprite\", self.up_side_down);\n  },\n});"
+  },
+  "vmath.clamp": {
+    "sourceHash": "ce47102e76e3186d",
+    "ts": "const value1 = 56;\nprint(vmath.clamp(value1, 89, 134)); // => 89\nconst v2 = vmath.vector3(190, 190, -10);\nprint(vmath.clamp(v2, -50, 150)); // => vmath.vector3(150, 150, -10)\nconst v3 = vmath.vector4(30, -30, 45, 1);\nprint(vmath.clamp(v3, 0, 20)); // => vmath.vector4(20, 0, 20, 1)\n\nconst min_v = vmath.vector4(0, -10, -10, 1);\nprint(vmath.clamp(v3, min_v, 20)); // => vmath.vector4(20, -10, 20, 1)"
+  },
+  "vmath.conj": {
+    "sourceHash": "d9d7d7193243f1a7",
+    "ts": "const quat = vmath.quat(1, 2, 3, 4);\nprint(vmath.conj(quat)); // => vmath.quat(-1, -2, -3, 4)"
+  },
+  "vmath.cross": {
+    "sourceHash": "49cf4657cc17973f",
+    "ts": "const vec1 = vmath.vector3(1, 0, 0);\nconst vec2 = vmath.vector3(0, 1, 0);\nprint(vmath.cross(vec1, vec2)); // => vmath.vector3(0, 0, 1)\nconst vec3 = vmath.vector3(-1, 0, 0);\nprint(vmath.cross(vec1, vec3)); // => vmath.vector3(0, -0, 0)"
+  },
+  "vmath.dot": {
+    "sourceHash": "4f4a1c2d340af81b",
+    "ts": "if (vmath.dot(vector1, vector2) === 0) {\n  // The two vectors are perpendicular (at right-angles to each other)\n  // ...\n}"
+  },
+  "vmath.euler_to_quat": {
+    "sourceHash": "e856805279355e1d",
+    "ts": "const q = vmath.euler_to_quat(0, 45, 90);\nprint(q); // => vmath.quat(0.27059805393219, 0.27059805393219, 0.65328145027161, 0.65328145027161)\n\nconst v = vmath.vector3(0, 0, 90);\nprint(vmath.euler_to_quat(v)); // => vmath.quat(0, 0, 0.70710676908493, 0.70710676908493)"
+  },
+  "vmath.inv": {
+    "sourceHash": "abd36cc3e2b23aaf",
+    "ts": "const mat1 = vmath.matrix4_rotation_z(3.141592653);\nconst mat2 = vmath.inv(mat1);\n// M * inv(M) = identity matrix\nprint(mat1.mul(mat2)); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"
+  },
+  "vmath.length": {
+    "sourceHash": "740d91676dd23d10",
+    "ts": "if (vmath.length(self.velocity) < max_velocity) {\n  // The speed (velocity vector) is below max.\n\n  // TODO: max_velocity can be expressed as squared\n  // so we can compare with length_sqr() instead.\n  // ...\n}"
+  },
+  "vmath.length_sqr": {
+    "sourceHash": "221e411fbcc2c4f8",
+    "ts": "if (vmath.length_sqr(vector1) < vmath.length_sqr(vector2)) {\n  // Vector 1 has less magnitude than vector 2\n  // ...\n}"
+  },
+  "vmath.lerp": {
+    "sourceHash": "8e7a50a5fc602639",
+    "ts": "export default defineScript({\n  init() {\n    return { t: 0 };\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startpos = vmath.vector3(0, 600, 0);\n      const endpos = vmath.vector3(600, 0, 0);\n      const pos = vmath.lerp(self.t, startpos, endpos);\n      go.set_position(pos, \"go\");\n    }\n  },\n});"
+  },
+  "vmath.matrix4": {
+    "sourceHash": "bb0da32d40dfd5fa",
+    "ts": "const mat = vmath.matrix4();\nprint(mat); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)\n// get column 0:\nprint(mat.c0); // => vmath.vector4(1, 0, 0, 0)\n// get the value in row 3 and column 2:\nprint(mat.m32); // => 0"
+  },
+  "vmath.matrix4_axis_angle": {
+    "sourceHash": "92382085d95e2a17",
+    "ts": "const vec = vmath.vector4(1, 1, 0, 0);\nconst axis = vmath.vector3(0, 0, 1); // z-axis\nconst mat = vmath.matrix4_axis_angle(axis, 3.141592653);\nprint(mat.mul(vec)); // => vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)"
+  },
+  "vmath.matrix4_compose": {
+    "sourceHash": "13fb0a04d5414e2e",
+    "ts": "const translation = vmath.vector3(103, -95, 14);\nconst quat = vmath.quat(1, 2, 3, 4);\nconst scale = vmath.vector3(1, 0.5, 0.5);\nconst result = vmath.matrix4_compose(translation, quat, scale);\nprint(result); // => vmath.matrix4(-25, -10, 11, 103, 28, -9.5, 2, -95, -10, 10, -4.5, 14, 0, 0, 0, 1)"
+  },
+  "vmath.matrix4_frustum": {
+    "sourceHash": "f7ad37e0c5cb348a",
+    "ts": "// Construct a projection frustum with a vertical and horizontal FOV of\n// 45 degrees. Useful for rendering a square view.\nconst proj = vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000);\nrender.set_projection(proj);"
+  },
+  "vmath.matrix4_look_at": {
+    "sourceHash": "90bdec3f296cdb34",
+    "ts": "// Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV, aspect ratio 4:3.\nconst eye = vmath.vector3(0, 0, 100);\nconst look_at = vmath.vector3(0, 0, 0);\nconst up = vmath.vector3(0, 1, 0);\nconst view = vmath.matrix4_look_at(eye, look_at, up);\nrender.set_view(view);\nconst proj = vmath.matrix4_perspective(3.141592 / 2, 4 / 3, 1, 1000);\nrender.set_projection(proj);"
+  },
+  "vmath.matrix4_orthographic": {
+    "sourceHash": "5e4ccc690aa0a732",
+    "ts": "// Set up an orthographic projection based on the width and height of the\n// game window.\nconst w = render.get_width();\nconst h = render.get_height();\nconst proj = vmath.matrix4_orthographic(-w / 2, w / 2, -h / 2, h / 2, -1000, 1000);\nrender.set_projection(proj);"
+  },
+  "vmath.matrix4_perspective": {
+    "sourceHash": "90bdec3f296cdb34",
+    "ts": "// Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV, aspect ratio 4:3.\nconst eye = vmath.vector3(0, 0, 100);\nconst look_at = vmath.vector3(0, 0, 0);\nconst up = vmath.vector3(0, 1, 0);\nconst view = vmath.matrix4_look_at(eye, look_at, up);\nrender.set_view(view);\nconst proj = vmath.matrix4_perspective(3.141592 / 2, 4 / 3, 1, 1000);\nrender.set_projection(proj);"
+  },
+  "vmath.matrix4_quat": {
+    "sourceHash": "c9a567a902c8a77d",
+    "ts": "const vec = vmath.vector4(1, 1, 0, 0);\nconst quat = vmath.quat_rotation_z(3.141592653);\nconst mat = vmath.matrix4_quat(quat);\nprint(mat.mul(vec)); // => vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000)"
+  },
+  "vmath.matrix4_rotation_x": {
+    "sourceHash": "36050c10eab8eadb",
+    "ts": "const vec = vmath.vector4(1, 1, 0, 0);\nconst mat = vmath.matrix4_rotation_x(3.141592653);\nprint(mat.mul(vec)); // => vmath.vector4(1, -1, -8.7422776573476e-08, 0)"
+  },
+  "vmath.matrix4_rotation_y": {
+    "sourceHash": "044fdf9b69dcb597",
+    "ts": "const vec = vmath.vector4(1, 1, 0, 0);\nconst mat = vmath.matrix4_rotation_y(3.141592653);\nprint(mat.mul(vec)); // => vmath.vector4(-1, 1, 8.7422776573476e-08, 0)"
+  },
+  "vmath.matrix4_rotation_z": {
+    "sourceHash": "2c2de878e481f0e9",
+    "ts": "const vec = vmath.vector4(1, 1, 0, 0);\nconst mat = vmath.matrix4_rotation_z(3.141592653);\nprint(mat.mul(vec)); // => vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)"
+  },
+  "vmath.matrix4_scale": {
+    "sourceHash": "e1ef381cf831b464",
+    "ts": "const scale = vmath.vector3(1, 0.5, 0.5);\nconst result = vmath.matrix4_scale(scale);\nprint(result); // => vmath.matrix4(1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)"
+  },
+  "vmath.matrix4_translation": {
+    "sourceHash": "3b57dbafcbacb5e1",
+    "ts": "// Set camera view from custom view and translation matrices.\nconst mat_trans = vmath.matrix4_translation(vmath.vector3(0, 10, 100));\nconst mat_view = vmath.matrix4_rotation_y(-3.141592 / 4);\nrender.set_view(mat_view.mul(mat_trans));"
+  },
+  "vmath.mul_per_elem": {
+    "sourceHash": "49995280c8b8dc5a",
+    "ts": "const blend_color = vmath.mul_per_elem(color1, color2);"
+  },
+  "vmath.normalize": {
+    "sourceHash": "86752f1a5eb02e85",
+    "ts": "const vec = vmath.vector3(1, 2, 3);\nconst norm_vec = vmath.normalize(vec);\nprint(norm_vec); // => vmath.vector3(0.26726123690605, 0.5345224738121, 0.80178368091583)\nprint(vmath.length(norm_vec)); // => 0.99999994039536"
+  },
+  "vmath.ortho_inv": {
+    "sourceHash": "4fc2428e2d7152d4",
+    "ts": "const mat1 = vmath.matrix4_rotation_z(3.141592653);\nconst mat2 = vmath.ortho_inv(mat1);\n// M * inv(M) = identity matrix\nprint(mat1.mul(mat2)); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"
+  },
+  "vmath.project": {
+    "sourceHash": "01772c731fb899ae",
+    "ts": "const v1 = vmath.vector3(1, 1, 0);\nconst v2 = vmath.vector3(2, 0, 0);\nprint(vmath.project(v1, v2)); // => 0.5"
+  },
+  "vmath.quat": {
+    "sourceHash": "0c75719779526345",
+    "ts": "const quat = vmath.quat(1, 2, 3, 4);\nprint(quat); // => vmath.quat(1, 2, 3, 4)"
+  },
+  "vmath.quat_axis_angle": {
+    "sourceHash": "40a0376b8995b7e9",
+    "ts": "const axis = vmath.vector3(1, 0, 0);\nconst rot = vmath.quat_axis_angle(axis, 3.141592653);\nconst vec = vmath.vector3(1, 1, 0);\nprint(vmath.rotate(rot, vec)); // => vmath.vector3(1, -1, -8.7422776573476e-08)"
+  },
+  "vmath.quat_basis": {
+    "sourceHash": "fd27ab961cbc4d89",
+    "ts": "// Axis rotated 90 degrees around z.\nconst rot_x = vmath.vector3(0, -1, 0);\nconst rot_y = vmath.vector3(1, 0, 0);\nconst z = vmath.vector3(0, 0, 1);\nconst rot1 = vmath.quat_basis(rot_x, rot_y, z);\nconst rot2 = vmath.quat_from_to(vmath.vector3(0, 1, 0), vmath.vector3(1, 0, 0));\nif (rot1 === rot2) {\n  // These quaternions are equal!\n  print(rot2); // => vmath.quat(0, 0, -0.70710676908493, 0.70710676908493)\n}"
+  },
+  "vmath.quat_from_to": {
+    "sourceHash": "68f8b7315dcf840f",
+    "ts": "const v1 = vmath.vector3(1, 0, 0);\nconst v2 = vmath.vector3(0, 1, 0);\nconst rot = vmath.quat_from_to(v1, v2);\nprint(vmath.rotate(rot, v1)); // => vmath.vector3(0, 0.99999994039536, 0)"
+  },
+  "vmath.quat_rotation_x": {
+    "sourceHash": "6fe4e9000a17ebe1",
+    "ts": "const rot = vmath.quat_rotation_x(3.141592653);\nconst vec = vmath.vector3(1, 1, 0);\nprint(vmath.rotate(rot, vec)); // => vmath.vector3(1, -1, -8.7422776573476e-08)"
+  },
+  "vmath.quat_rotation_y": {
+    "sourceHash": "e831483753250149",
+    "ts": "const rot = vmath.quat_rotation_y(3.141592653);\nconst vec = vmath.vector3(1, 1, 0);\nprint(vmath.rotate(rot, vec)); // => vmath.vector3(-1, 1, 8.7422776573476e-08)"
+  },
+  "vmath.quat_rotation_z": {
+    "sourceHash": "012e00b47b87f991",
+    "ts": "const rot = vmath.quat_rotation_z(3.141592653);\nconst vec = vmath.vector3(1, 1, 0);\nprint(vmath.rotate(rot, vec)); // => vmath.vector3(-0.99999988079071, -1, 0)"
+  },
+  "vmath.quat_to_euler": {
+    "sourceHash": "99474004e95ed10c",
+    "ts": "const q = vmath.quat_rotation_z(math.rad(90));\nprint(vmath.quat_to_euler(q)); // => 0 0 90\n\nconst q2 = vmath.quat_rotation_y(math.rad(45)).mul(vmath.quat_rotation_z(math.rad(90)));\nconst [ex, ey, ez] = vmath.quat_to_euler(q2);\nconst v = vmath.vector3(ex, ey, ez);\nprint(v); // => vmath.vector3(0, 45, 90)"
+  },
+  "vmath.rotate": {
+    "sourceHash": "537daa1275b53d87",
+    "ts": "const vec = vmath.vector3(1, 1, 0);\nconst rot = vmath.quat_rotation_z(3.141592563);\nprint(vmath.rotate(rot, vec)); // => vmath.vector3(-1.0000002384186, -0.99999988079071, 0)"
+  },
+  "vmath.slerp": {
+    "sourceHash": "48b2a7e8910d8948",
+    "ts": "export default defineScript({\n  init() {\n    return { t: 0 };\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startpos = vmath.vector3(0, 600, 0);\n      const endpos = vmath.vector3(600, 0, 0);\n      const pos = vmath.slerp(self.t, startpos, endpos);\n      go.set_position(pos, \"go\");\n    }\n  },\n});"
+  },
+  "vmath.vector": {
+    "sourceHash": "63ffad32dfb87144",
+    "ts": "// How to create a vector with custom data to be used for animation easing:\nconst values = [0, 0.5, 0];\nconst vec = vmath.vector(values);\nprint(vec); // => vmath.vector (size: 3)\nprint(vec[2]); // => 0.5"
+  },
+  "vmath.vector3": {
+    "sourceHash": "ddcab8eda46d059c",
+    "ts": "const vec = vmath.vector3(1.0, 2.0, 3.0);\nprint(vec); // => vmath.vector3(1, 2, 3)\nprint(vec.unm()); // => vmath.vector3(-1, -2, -3)\nprint(vec.mul(2)); // => vmath.vector3(2, 4, 6)\nprint(vec.add(vmath.vector3(2.0))); // => vmath.vector3(3, 4, 5)\nprint(vec.sub(vmath.vector3(2.0))); // => vmath.vector3(-1, 0, 1)"
+  },
+  "vmath.vector4": {
+    "sourceHash": "c98ee6ded6048d17",
+    "ts": "const vec = vmath.vector4(1.0, 2.0, 3.0, 4.0);\nprint(vec); // => vmath.vector4(1, 2, 3, 4)\nprint(vec.unm()); // => vmath.vector4(-1, -2, -3, -4)\nprint(vec.mul(2)); // => vmath.vector4(2, 4, 6, 8)\nprint(vec.add(vmath.vector4(2.0))); // => vmath.vector4(3, 4, 5, 6)\nprint(vec.sub(vmath.vector4(2.0))); // => vmath.vector4(-1, 0, 1, 2)"
+  }
+}
