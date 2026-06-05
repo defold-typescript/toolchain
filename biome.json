@@ -15,6 +15,7 @@
       "!**/dist",
       "!**/node_modules",
       "!**/generated",
+      "!**/test/fixtures",
       "!**/*.lua"
     ]
   },

@@ -13,5 +13,5 @@
     "index.d.ts",
     "generated/*.d.ts"
   ],
-  "exclude": ["node_modules", "dist", "**/dist", "test-d/versions", "test-d/kinds"]
+  "exclude": ["node_modules", "dist", "**/dist", "test-d/versions", "test-d/kinds", "test/fixtures"]
 }
