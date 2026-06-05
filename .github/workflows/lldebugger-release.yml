@@ -5,6 +5,11 @@
 #
 # Separate from the parked npm `release.yml`: that one publishes npm packages and
 # is blocked on a lockfile bug; this artifact is a Defold zip, unrelated.
+#
+# Publication gates on the `gate` job (green build/typecheck/lint/test on
+# ubuntu-latest): GitHub skips a job whose `needs` dependency fails, so a tag
+# cut from a red tree uploads no asset. Cross-OS coverage stays in ci.yml's
+# matrix, which fires on the same tag push.
 
 name: lldebugger Release
 
@@ -15,7 +20,19 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun test
+
   publish:
+    needs: gate
     runs-on: ubuntu-latest
     permissions:
       contents: write
