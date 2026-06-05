@@ -20,6 +20,7 @@ import {
   SyntaxKind,
   type TransformationContext,
 } from "typescript-to-lua";
+import { resolvesToDispatchExport } from "./message-dispatch-lowering";
 
 const FACTORY_MODULE = "@defold-typescript/types";
 const FACTORY_NAMES = new Set(["defineScript", "defineGuiScript", "defineRenderScript"]);
@@ -75,6 +76,20 @@ function hookFunction(property: ts.ObjectLiteralElementLike): HookFunction | und
     }
   }
   return undefined;
+}
+
+function dispatcherInitializer(
+  property: ts.ObjectLiteralElementLike,
+  checker: ts.TypeChecker,
+): ts.CallExpression | undefined {
+  if (!ts.isPropertyAssignment(property)) {
+    return undefined;
+  }
+  const initializer = property.initializer;
+  if (!ts.isCallExpression(initializer)) {
+    return undefined;
+  }
+  return resolvesToDispatchExport(initializer.expression, checker) ? initializer : undefined;
 }
 
 function transformHookBody(fn: HookFunction, context: TransformationContext): Statement[] {
@@ -187,8 +202,24 @@ function eraseFactoryCall(
   const statements: Statement[] = [];
   for (const property of hooks.properties) {
     const name = hookName(property);
+    if (name === undefined) {
+      continue;
+    }
     const fn = hookFunction(property);
-    if (name === undefined || fn === undefined) {
+    if (fn === undefined) {
+      // A hook whose initializer is a recognized `onMessage({...})` call: let it
+      // route through the message-dispatch lowering, which yields the flat
+      // `function(self, message_id, message, sender)` chunk, then bind it.
+      const dispatch = dispatcherInitializer(property, context.checker);
+      if (dispatch !== undefined) {
+        statements.push(
+          createAssignmentStatement(
+            createIdentifier(name),
+            context.transformExpression(dispatch),
+            property,
+          ),
+        );
+      }
       continue;
     }
     if (name === "init" && initReturnsValue(fn)) {

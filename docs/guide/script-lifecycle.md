@@ -106,6 +106,28 @@ export default defineScript({
 
 The guard ships only as a type declaration; the transpiler lowers the call to its runtime form `message_id == hash("contact_point_response")`, so the types package emits no runtime Lua.
 
+## Routing many messages with `onMessage`
+
+When a script handles several built-in messages, a chain of `if (isMessage(...))` blocks gets noisy. `onMessage` is a discriminated-union dispatcher built on the same narrowing: each handler key is a built-in message id, and that handler's `message` param is narrowed to the matching `BuiltinMessages` payload. It returns an `on_message` handler, so it slots straight into `defineScript`:
+
+```ts
+export default defineScript<Self>({
+  on_message: onMessage<Self>({
+    contact_point_response(self, message) {
+      // message: { normal: Vector3; distance: number; other_group: Hash; ... }
+      go.set_position(go.get_position().add(message.normal.mul(message.distance)));
+    },
+    set_parent(self, message) {
+      // message: { parent_id?: Hash; keep_world_transform?: 0 | 1 }
+    },
+  }),
+});
+```
+
+`self` threads via the explicit `onMessage<Self>` type argument, mirroring `defineScript<Self>`; a bare `onMessage({...})` defaults it to an empty record. An unknown key is a compile error, just like `isMessage`.
+
+Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output.
+
 ## API availability by script kind
 
 Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
