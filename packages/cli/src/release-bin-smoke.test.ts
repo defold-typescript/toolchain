@@ -7,6 +7,11 @@ const PKG_DIR = path.resolve(import.meta.dir, "..");
 const REPO_ROOT = path.resolve(PKG_DIR, "..", "..");
 const BIN = path.join(PKG_DIR, "dist", "bin.js");
 
+// Cold-spawning real `node dist/bin.js` is slow and variable on the Windows
+// CI runner (cold module cache, filesystem/AV overhead), so give these spawn
+// tests far more headroom than Bun's 5s default.
+const SPAWN_TEST_TIMEOUT_MS = 30_000;
+
 function build(cwd: string): void {
   const proc = Bun.spawnSync(["bun", "run", "build"], { cwd, stdout: "pipe", stderr: "pipe" });
   if (proc.exitCode !== 0) {
@@ -26,39 +31,47 @@ function tmp(label: string): string {
 describe("published bin scaffolds from dist", () => {
   build(PKG_DIR);
 
-  test("new-project mode: node dist/bin.js init writes game.project and src/main.ts", () => {
-    const cwd = tmp("new");
-    try {
-      const { code, output } = node(["init", cwd], cwd);
-      if (code !== 0) {
-        throw new Error(`init exited ${code}:\n${output}`);
+  test(
+    "new-project mode: node dist/bin.js init writes game.project and src/main.ts",
+    () => {
+      const cwd = tmp("new");
+      try {
+        const { code, output } = node(["init", cwd], cwd);
+        if (code !== 0) {
+          throw new Error(`init exited ${code}:\n${output}`);
+        }
+        expect(code).toBe(0);
+        expect(existsSync(path.join(cwd, "game.project"))).toBe(true);
+        expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
       }
-      expect(code).toBe(0);
-      expect(existsSync(path.join(cwd, "game.project"))).toBe(true);
-      expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
-  });
+    },
+    SPAWN_TEST_TIMEOUT_MS,
+  );
 
-  test("add-TS mode: node dist/bin.js init writes src/main.ts + tsconfig.json, leaves game.project", () => {
-    const cwd = tmp("add");
-    try {
-      const seed = "[project]\ntitle = seeded\n";
-      writeFileSync(path.join(cwd, "game.project"), seed);
+  test(
+    "add-TS mode: node dist/bin.js init writes src/main.ts + tsconfig.json, leaves game.project",
+    () => {
+      const cwd = tmp("add");
+      try {
+        const seed = "[project]\ntitle = seeded\n";
+        writeFileSync(path.join(cwd, "game.project"), seed);
 
-      const { code, output } = node(["init", cwd], cwd);
-      if (code !== 0) {
-        throw new Error(`init exited ${code}:\n${output}`);
+        const { code, output } = node(["init", cwd], cwd);
+        if (code !== 0) {
+          throw new Error(`init exited ${code}:\n${output}`);
+        }
+        expect(code).toBe(0);
+        expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+        expect(existsSync(path.join(cwd, "tsconfig.json"))).toBe(true);
+        expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(seed);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
       }
-      expect(code).toBe(0);
-      expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
-      expect(existsSync(path.join(cwd, "tsconfig.json"))).toBe(true);
-      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(seed);
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
-  });
+    },
+    SPAWN_TEST_TIMEOUT_MS,
+  );
 });
 
 describe("release smoke harness is discoverable", () => {
