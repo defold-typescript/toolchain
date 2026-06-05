@@ -25,7 +25,7 @@ declare global {
      *
      * @param collectionproxy - the collectionproxy to check for resources.
      * @returns the resources, or an empty list if the
-  collection was not excluded.
+     * collection was not excluded.
      * @example
      * ```lua
      * local function print_resources(self, cproxy)

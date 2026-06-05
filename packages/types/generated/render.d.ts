@@ -26,9 +26,9 @@ declare global {
      * color attachments, all buffers will be cleared with the same value.
      *
      * @param buffers - table with keys specifying which buffers to clear and values set to clear values. Available keys are:
-  - `graphics.BUFFER_TYPE_COLOR0_BIT`
-  - `graphics.BUFFER_TYPE_DEPTH_BIT`
-  - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @example
      * ```lua
      * Clear the color buffer and the depth buffer.
@@ -100,12 +100,12 @@ declare global {
      * Disables a render state.
      *
      * @param state - state to disable
-  - `graphics.STATE_DEPTH_TEST`
-  - `graphics.STATE_STENCIL_TEST`
-  - `graphics.STATE_BLEND`
-  - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
-  - `graphics.STATE_CULL_FACE`
-  - `graphics.STATE_POLYGON_OFFSET_FILL`
+     * - `graphics.STATE_DEPTH_TEST`
+     * - `graphics.STATE_STENCIL_TEST`
+     * - `graphics.STATE_BLEND`
+     * - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
+     * - `graphics.STATE_CULL_FACE`
+     * - `graphics.STATE_POLYGON_OFFSET_FILL`
      * @example
      * ```lua
      * Disable face culling when drawing the tile predicate:
@@ -142,8 +142,8 @@ declare global {
      * @param y - global work group size Y
      * @param z - global work group size Z
      * @param options - optional table with properties:
-  `constants`
-  constant_buffer optional constants to use while rendering
+     * `constants`
+     * constant_buffer optional constants to use while rendering
      * @example
      * ```lua
      * function init(self)
@@ -176,16 +176,16 @@ declare global {
      *
      * @param predicate - predicate to draw for
      * @param options - optional table with properties:
-  `frustum`
-  matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). default=nil
-  `frustum_planes`
-  int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
-  - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
-  - render.FRUSTUM_PLANES_ALL : All 6 sides of the frustum.
-  `constants`
-  constant_buffer optional constants to use while rendering
-  `sort_order`
-  int How to sort draw order for world-ordered entries. Default uses the renderer's preferred world sorting (back-to-front).
+     * `frustum`
+     * matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). default=nil
+     * `frustum_planes`
+     * int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
+     * - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
+     * - render.FRUSTUM_PLANES_ALL : All 6 sides of the frustum.
+     * `constants`
+     * constant_buffer optional constants to use while rendering
+     * `sort_order`
+     * int How to sort draw order for world-ordered entries. Default uses the renderer's preferred world sorting (back-to-front).
      * @example
      * ```lua
      * function init(self)
@@ -217,12 +217,12 @@ declare global {
      * Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
      *
      * @param options - optional table with properties:
-  `frustum`
-  matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). May be nil.
-  `frustum_planes`
-  int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
-  - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
-  - render.FRUSTUM_PLANES_ALL : All sides of the frustum.
+     * `frustum`
+     * matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). May be nil.
+     * `frustum_planes`
+     * int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
+     * - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
+     * - render.FRUSTUM_PLANES_ALL : All sides of the frustum.
      * @example
      * ```lua
      * function update(self, dt)
@@ -252,12 +252,12 @@ declare global {
      * Enables a particular render state. The state will be enabled until disabled.
      *
      * @param state - state to enable
-  - `graphics.STATE_DEPTH_TEST`
-  - `graphics.STATE_STENCIL_TEST`
-  - `graphics.STATE_BLEND`
-  - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
-  - `graphics.STATE_CULL_FACE`
-  - `graphics.STATE_POLYGON_OFFSET_FILL`
+     * - `graphics.STATE_DEPTH_TEST`
+     * - `graphics.STATE_STENCIL_TEST`
+     * - `graphics.STATE_BLEND`
+     * - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
+     * - `graphics.STATE_CULL_FACE`
+     * - `graphics.STATE_POLYGON_OFFSET_FILL`
      * @example
      * ```lua
      * Enable stencil test when drawing the gui predicate, then disable it:
@@ -283,16 +283,16 @@ declare global {
      * @param binding - texture binding, either by texture unit, string or hash for the sampler name that the texture should be bound to
      * @param handle_or_name - render target or texture handle that should be bound, or a named resource in the "Render Resource" table in the currently assigned .render file
      * @param buffer_type - optional buffer type from which to enable the texture. Note that this argument only applies to render targets. Defaults to `graphics.BUFFER_TYPE_COLOR0_BIT`. These values are supported:
-  - `graphics.BUFFER_TYPE_COLOR0_BIT`
-  If The render target has been created as depth and/or stencil textures, these buffer types can be used:
-  - `graphics.BUFFER_TYPE_DEPTH_BIT`
-  - `graphics.BUFFER_TYPE_STENCIL_BIT`
-  If the render target has been created with multiple color attachments, these buffer types can be used
-  to enable those textures as well. Currently 4 color attachments are supported:
-  - `graphics.BUFFER_TYPE_COLOR0_BIT`
-  - `graphics.BUFFER_TYPE_COLOR1_BIT`
-  - `graphics.BUFFER_TYPE_COLOR2_BIT`
-  - `graphics.BUFFER_TYPE_COLOR3_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     * If The render target has been created as depth and/or stencil textures, these buffer types can be used:
+     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     * If the render target has been created with multiple color attachments, these buffer types can be used
+     * to enable those textures as well. Currently 4 color attachments are supported:
+     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR1_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR2_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR3_BIT`
      * @example
      * ```lua
      * function update(self, dt)
@@ -350,9 +350,9 @@ declare global {
      *
      * @param render_target - render target from which to retrieve the buffer height
      * @param buffer_type - which type of buffer to retrieve the height from
-  - `graphics.BUFFER_TYPE_COLOR0_BIT`
-  - `graphics.BUFFER_TYPE_DEPTH_BIT`
-  - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @returns the height of the render target buffer texture
      * @example
      * ```lua
@@ -368,10 +368,10 @@ declare global {
      *
      * @param render_target - render target from which to retrieve the buffer width
      * @param buffer_type - which type of buffer to retrieve the width from
-  - `graphics.BUFFER_TYPE_COLOR0_BIT`
-  - `graphics.BUFFER_TYPE_COLOR[x]_BIT` (x: [0..3], if supported!)
-  - `graphics.BUFFER_TYPE_DEPTH_BIT`
-  - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     * - `graphics.BUFFER_TYPE_COLOR[x]_BIT` (x: [0..3], if supported!)
+     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @returns the width of the render target buffer texture
      * @example
      * ```lua
@@ -631,8 +631,8 @@ declare global {
      *
      * @param camera - camera id to use, or nil to reset
      * @param options - optional table with properties:
-  `use_frustum`
-  boolean If true, the renderer will use the cameras view-projection matrix for frustum culling (default: false)
+     * `use_frustum`
+     * boolean If true, the renderer will use the cameras view-projection matrix for frustum culling (default: false)
      * @example
      * ```lua
      * Set the current camera to be used for rendering
@@ -688,9 +688,9 @@ declare global {
      * `face_type` is `graphics.FACE_TYPE_BACK`.
      *
      * @param face_type - face type
-  - `graphics.FACE_TYPE_FRONT`
-  - `graphics.FACE_TYPE_BACK`
-  - `graphics.FACE_TYPE_FRONT_AND_BACK`
+     * - `graphics.FACE_TYPE_FRONT`
+     * - `graphics.FACE_TYPE_BACK`
+     * - `graphics.FACE_TYPE_FRONT_AND_BACK`
      * @example
      * ```lua
      * How to enable polygon culling and set front face culling:
@@ -744,11 +744,11 @@ declare global {
      * invalid but can be reloaded.
      *
      * @param callback - A callback that receives all render related events.
-  Pass `nil` if want to remove listener.
-  `self`
-  object The render script
-  `event_type`
-  string Rendering event. Possible values: `render.CONTEXT_EVENT_CONTEXT_LOST`, `render.CONTEXT_EVENT_CONTEXT_RESTORED`
+     * Pass `nil` if want to remove listener.
+     * `self`
+     * object The render script
+     * `event_type`
+     * string Rendering event. Possible values: `render.CONTEXT_EVENT_CONTEXT_LOST`, `render.CONTEXT_EVENT_CONTEXT_RESTORED`
      * @example
      * ```lua
      * Set listener and handle render context events.
@@ -812,13 +812,13 @@ declare global {
      *
      * @param render_target - render target to set. render.RENDER_TARGET_DEFAULT to set the default render target
      * @param options - optional table with behaviour parameters
-  `transient`
-  table Transient frame buffer types are only valid while the render target is active, i.e becomes undefined when a new target is set by a subsequent call to set_render_target.
-  Default is all non-transient. Be aware that some hardware uses a combined depth stencil buffer and when this is the case both are considered non-transient if exclusively selected!
-  A buffer type defined that doesn't exist in the render target is silently ignored.
-  - `graphics.BUFFER_TYPE_COLOR0_BIT`
-  - `graphics.BUFFER_TYPE_DEPTH_BIT`
-  - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     * `transient`
+     * table Transient frame buffer types are only valid while the render target is active, i.e becomes undefined when a new target is set by a subsequent call to set_render_target.
+     * Default is all non-transient. Be aware that some hardware uses a combined depth stencil buffer and when this is the case both are considered non-transient if exclusively selected!
+     * A buffer type defined that doesn't exist in the render target is silently ignored.
+     * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @example
      * ```lua
      * How to set a render target and draw to it and then switch back to the default render target

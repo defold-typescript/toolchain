@@ -26,10 +26,10 @@ declare global {
      * Get current iap provider
      *
      * @returns one of the following values
-  - `iap.PROVIDER_ID_GOOGLE`
-  - `iap.PROVIDER_ID_AMAZON`
-  - `iap.PROVIDER_ID_APPLE`
-  - `iap.PROVIDER_ID_FACEBOOK`
+     * - `iap.PROVIDER_ID_GOOGLE`
+     * - `iap.PROVIDER_ID_AMAZON`
+     * - `iap.PROVIDER_ID_APPLE`
+     * - `iap.PROVIDER_ID_FACEBOOK`
      */
     function get_provider_id(): Opaque<"constant">;
     /**

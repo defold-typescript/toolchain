@@ -42,8 +42,8 @@ declare global {
      * @param collisionobject_b - second collision object
      * @param position_b - local position where to attach the joint on the second collision object
      * @param properties - optional joint specific properties table
-  See each joint type for possible properties field. The one field that is accepted for all joint types is:
-  - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
+     * See each joint type for possible properties field. The one field that is accepted for all joint types is:
+     * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
      */
     function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: Record<string | number, unknown>): void;
     /**
@@ -77,11 +77,11 @@ declare global {
      *
      * @param url - the collision object to return the group of.
      * @returns hash value of the group.
-  `local function check_is_enemy()
-  local group = physics.get_group("#collisionobject")
-  return group == hash("enemy")
-  end
-  `
+     * `local function check_is_enemy()
+     * local group = physics.get_group("#collisionobject")
+     * return group == hash("enemy")
+     * end
+     * `
      */
     function get_group(url: string | Hash | Url): Hash;
     /**
@@ -92,7 +92,7 @@ declare global {
      * @param collisionobject - collision object where the joint exist
      * @param joint_id - id of the joint
      * @returns properties table. See the joint types for what fields are available, the only field available for all types is:
-  - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
+     * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
      */
     function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): { collide_connected: boolean };
     /**
@@ -122,12 +122,12 @@ declare global {
      * @param url - the collision object to check the mask of.
      * @param group - the name of the group to check for.
      * @returns boolean value of the maskbit. 'true' if present, 'false' otherwise.
-  `local function is_invincible()
-  -- check if the collisionobject would collide with the "bullet" group
-  local invincible = physics.get_maskbit("#collisionobject", "bullet")
-  return invincible
-  end
-  `
+     * `local function is_invincible()
+     * -- check if the collisionobject would collide with the "bullet" group
+     * local invincible = physics.get_maskbit("#collisionobject", "bullet")
+     * return invincible
+     * end
+     * `
      */
     function get_maskbit(url: string | Hash | Url, group: string): boolean;
     /**
@@ -136,30 +136,30 @@ declare global {
      * @param url - the collision object.
      * @param shape - the name of the shape to get data for.
      * @returns A table containing meta data about the physics shape
-  `type`
-  number The shape type. Supported values:
-  - `physics.SHAPE_TYPE_SPHERE`
-  - `physics.SHAPE_TYPE_BOX`
-  - `physics.SHAPE_TYPE_CAPSULE` *Only supported for 3D physics*
-  - `physics.SHAPE_TYPE_HULL`
-  The returned table contains different fields depending on which type the shape is.
-  If the shape is a sphere:
-  `diameter`
-  number the diameter of the sphere shape
-  If the shape is a box:
-  `dimensions`
-  vector3 a `vmath.vector3` of the box dimensions
-  If the shape is a capsule:
-  `diameter`
-  number the diameter of the capsule poles
-  `height`
-  number the height of the capsule
-  `local function get_shape_meta()
-  local sphere = physics.get_shape("#collisionobject", "my_sphere_shape")
-  -- returns a table with sphere.diameter
-  return sphere
-  end
-  `
+     * `type`
+     * number The shape type. Supported values:
+     * - `physics.SHAPE_TYPE_SPHERE`
+     * - `physics.SHAPE_TYPE_BOX`
+     * - `physics.SHAPE_TYPE_CAPSULE` *Only supported for 3D physics*
+     * - `physics.SHAPE_TYPE_HULL`
+     * The returned table contains different fields depending on which type the shape is.
+     * If the shape is a sphere:
+     * `diameter`
+     * number the diameter of the sphere shape
+     * If the shape is a box:
+     * `dimensions`
+     * vector3 a `vmath.vector3` of the box dimensions
+     * If the shape is a capsule:
+     * `diameter`
+     * number the diameter of the capsule poles
+     * `height`
+     * number the height of the capsule
+     * `local function get_shape_meta()
+     * local sphere = physics.get_shape("#collisionobject", "my_sphere_shape")
+     * -- returns a table with sphere.diameter
+     * return sphere
+     * end
+     * `
      */
     function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter: number; dimensions: Vector3; diameter: number; height: number };
     /**
@@ -174,8 +174,8 @@ declare global {
      * @param to - the world position of the end of the ray
      * @param groups - a lua table containing the hashed groups for which to test collisions against
      * @param options - a lua table containing options for the raycast.
-  `all`
-  boolean Set to `true` to return all ray cast hits. If `false`, it will only return the closest hit.
+     * `all`
+     * boolean Set to `true` to return all ray cast hits. If `false`, it will only return the closest hit.
      * @returns It returns a list. If missed it returns `nil`. See ray_cast_response for details on the returned values.
      * @example
      * ```lua
@@ -239,17 +239,17 @@ declare global {
      * Only one physics world event listener can be set at a time.
      *
      * @param callback - A callback that receives an information about all the physics interactions in this physics world.
-  `self`
-  object The calling script
-  `event`
-  constant The type of event. Can be one of these messages:
-  - contact_point_event
-  - collision_event
-  - trigger_event
-  - ray_cast_response
-  - ray_cast_missed
-  `data`
-  table The callback value data is a table that contains event-related data. See the documentation for details on the messages.
+     * `self`
+     * object The calling script
+     * `event`
+     * constant The type of event. Can be one of these messages:
+     * - contact_point_event
+     * - collision_event
+     * - trigger_event
+     * - ray_cast_response
+     * - ray_cast_missed
+     * `data`
+     * table The callback value data is a table that contains event-related data. See the documentation for details on the messages.
      * @example
      * ```lua
      * local function physics_world_listener(self, events)
@@ -352,10 +352,10 @@ declare global {
      *
      * @param url - the collision object affected.
      * @param group - the new group name to be assigned.
-  `local function change_collision_group()
-  physics.set_group("#collisionobject", "enemy")
-  end
-  `
+     * `local function change_collision_group()
+     * physics.set_group("#collisionobject", "enemy")
+     * end
+     * `
      */
     function set_group(url: string | Hash | Url, group: string): void;
     /**
@@ -380,7 +380,7 @@ declare global {
      * @param collisionobject - collision object where the joint exist
      * @param joint_id - id of the joint
      * @param properties - joint specific properties table
-  Note: The `collide_connected` field cannot be updated/changed after a connection has been made.
+     * Note: The `collide_connected` field cannot be updated/changed after a connection has been made.
      */
     function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: Record<string | number, unknown>): void;
     /**
@@ -389,11 +389,11 @@ declare global {
      * @param url - the collision object to change the mask of.
      * @param group - the name of the group (maskbit) to modify in the mask.
      * @param maskbit - boolean value of the new maskbit. 'true' to enable, 'false' to disable.
-  `local function make_invincible()
-  -- no longer collide with the "bullet" group
-  physics.set_maskbit("#collisionobject", "bullet", false)
-  end
-  `
+     * `local function make_invincible()
+     * -- no longer collide with the "bullet" group
+     * physics.set_maskbit("#collisionobject", "bullet", false)
+     * end
+     * `
      */
     function set_maskbit(url: string | Hash | Url, group: string, maskbit: boolean): void;
     /**
@@ -404,26 +404,26 @@ declare global {
      * @param url - the collision object.
      * @param shape - the name of the shape to get data for.
      * @param table - the shape data to update the shape with.
-  See physics.get_shape for a detailed description of each field in the data table.
-  `local function set_shape_data()
-  -- set capsule shape data
-  local data = {}
-  data.type = physics.SHAPE_TYPE_CAPSULE
-  data.diameter = 10
-  data.height = 20
-  physics.set_shape("#collisionobject", "my_capsule_shape", data)
-  -- set sphere shape data
-  data = {}
-  data.type = physics.SHAPE_TYPE_SPHERE
-  data.diameter = 10
-  physics.set_shape("#collisionobject", "my_sphere_shape", data)
-  -- set box shape data
-  data = {}
-  data.type = physics.SHAPE_TYPE_BOX
-  data.dimensions = vmath.vector3(10, 10, 5)
-  physics.set_shape("#collisionobject", "my_box_shape", data)
-  end
-  `
+     * See physics.get_shape for a detailed description of each field in the data table.
+     * `local function set_shape_data()
+     * -- set capsule shape data
+     * local data = {}
+     * data.type = physics.SHAPE_TYPE_CAPSULE
+     * data.diameter = 10
+     * data.height = 20
+     * physics.set_shape("#collisionobject", "my_capsule_shape", data)
+     * -- set sphere shape data
+     * data = {}
+     * data.type = physics.SHAPE_TYPE_SPHERE
+     * data.diameter = 10
+     * physics.set_shape("#collisionobject", "my_sphere_shape", data)
+     * -- set box shape data
+     * data = {}
+     * data.type = physics.SHAPE_TYPE_BOX
+     * data.dimensions = vmath.vector3(10, 10, 5)
+     * physics.set_shape("#collisionobject", "my_box_shape", data)
+     * end
+     * `
      */
     function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type?: number; diameter?: number; dimensions?: Vector3; diameter?: number; height?: number }): void;
     /**
@@ -457,12 +457,12 @@ declare global {
      * efficiency reasons. This function wakes them up.
      *
      * @param url - the collision object to wake.
-  `function on_input(self, action_id, action)
-  if action_id == hash("test") and action.pressed then
-  physics.wakeup("#collisionobject")
-  end
-  end
-  `
+     * `function on_input(self, action_id, action)
+     * if action_id == hash("test") and action.pressed then
+     * physics.wakeup("#collisionobject")
+     * end
+     * end
+     * `
      */
     function wakeup(url: string | Hash | Url): void;
     interface properties {

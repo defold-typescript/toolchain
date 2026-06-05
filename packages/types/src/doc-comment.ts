@@ -100,10 +100,18 @@ export function renderDocComment(parts: DocCommentParts): string[] {
   }
 
   for (const param of params) {
-    lines.push(` * @param ${param.name} - ${param.doc}`);
+    const [first, ...rest] = param.doc.split("\n");
+    lines.push(` * @param ${param.name} - ${first}`);
+    for (const line of rest) {
+      lines.push(line === "" ? " *" : ` * ${line}`);
+    }
   }
   if (returns !== "") {
-    lines.push(` * @returns ${returns}`);
+    const [first, ...rest] = returns.split("\n");
+    lines.push(` * @returns ${first}`);
+    for (const line of rest) {
+      lines.push(line === "" ? " *" : ` * ${line}`);
+    }
   }
   if (example !== "") {
     lines.push(" * @example");

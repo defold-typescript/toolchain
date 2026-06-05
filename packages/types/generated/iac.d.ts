@@ -6,7 +6,7 @@ declare global {
      *
      * @param payload - The iac payload.
      * @param type - The type of iac, an iac.TYPE_ enumeration. It can be one of the predefined constants below
-  - `iac.TYPE_INVOCATION`
+     * - `iac.TYPE_INVOCATION`
      */
     function set_listener(payload: Record<string | number, unknown>, type: number): void;
   }

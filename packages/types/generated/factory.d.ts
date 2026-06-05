@@ -55,9 +55,9 @@ declare global {
      *
      * @param url - the factory component to get status from
      * @returns status of the factory component
-  - `factory.STATUS_UNLOADED`
-  - `factory.STATUS_LOADING`
-  - `factory.STATUS_LOADED`
+     * - `factory.STATUS_UNLOADED`
+     * - `factory.STATUS_LOADING`
+     * - `factory.STATUS_LOADED`
      */
     function get_status(url?: string | Hash | Url): Opaque<"constant">;
     /**
@@ -66,12 +66,12 @@ declare global {
      *
      * @param url - the factory component to load
      * @param complete_function - function to call when resources are loaded.
-  `self`
-  object The current object.
-  `url`
-  url url of the factory component
-  `result`
-  boolean True if resources were loaded successfully
+     * `self`
+     * object The current object.
+     * `url`
+     * url url of the factory component
+     * `result`
+     * boolean True if resources were loaded successfully
      * @example
      * ```lua
      * How to load resources of a factory prototype.

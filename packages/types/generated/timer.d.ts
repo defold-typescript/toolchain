@@ -33,12 +33,12 @@ declare global {
      * @param delay - time interval in seconds
      * @param repeating - true = repeat timer until cancel, false = one-shot timer
      * @param callback - timer callback function
-  `self`
-  object The current object
-  `handle`
-  number The handle of the timer
-  `time_elapsed`
-  number The elapsed time - on first trigger it is time since timer.delay call, otherwise time since last trigger
+     * `self`
+     * object The current object
+     * `handle`
+     * number The handle of the timer
+     * `time_elapsed`
+     * number The elapsed time - on first trigger it is time since timer.delay call, otherwise time since last trigger
      * @returns identifier for the create timer, returns timer.INVALID_TIMER_HANDLE if the timer can not be created
      * @example
      * ```lua
@@ -64,12 +64,12 @@ declare global {
      *
      * @param handle - the timer handle returned by timer.delay()
      * @returns table or `nil` if timer is cancelled/completed. table with data in the following fields:
-  `time_remaining`
-  number Time remaining until the next time a timer.delay() fires.
-  `delay`
-  number Time interval.
-  `repeating`
-  boolean true = repeat timer until cancel, false = one-shot timer.
+     * `time_remaining`
+     * number Time remaining until the next time a timer.delay() fires.
+     * `delay`
+     * number Time interval.
+     * `repeating`
+     * boolean true = repeat timer until cancel, false = one-shot timer.
      * @example
      * ```lua
      * self.handle = timer.delay(1, true, function() print("print every second") end)

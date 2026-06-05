@@ -68,8 +68,8 @@ declare global {
      *
      * @param app_string - platform specific string with application package or query, see above for details.
      * @returns table with application information in the following fields:
-  `installed`
-  boolean `true` if the application is installed, `false` otherwise.
+     * `installed`
+     * boolean `true` if the application is installed, `false` otherwise.
      * @example
      * ```lua
      * Check if twitter is installed:
@@ -194,9 +194,9 @@ declare global {
      * On desktop, this function always return `sys.NETWORK_CONNECTED`.
      *
      * @returns network connectivity status:
-  - `sys.NETWORK_DISCONNECTED` (no network connection is found)
-  - `sys.NETWORK_CONNECTED_CELLULAR` (connected through mobile cellular)
-  - `sys.NETWORK_CONNECTED` (otherwise, Wifi)
+     * - `sys.NETWORK_DISCONNECTED` (no network connection is found)
+     * - `sys.NETWORK_CONNECTED_CELLULAR` (connected through mobile cellular)
+     * - `sys.NETWORK_CONNECTED` (otherwise, Wifi)
      * @example
      * ```lua
      * Check if we are connected through a cellular connection
@@ -210,12 +210,12 @@ declare global {
      * Returns a table with engine information.
      *
      * @returns table with engine information in the following fields:
-  `version`
-  string The current Defold engine version, i.e. "1.2.96"
-  `version_sha1`
-  string The SHA1 for the current engine build, i.e. "0060183cce2e29dbd09c85ece83cbb72068ee050"
-  `is_debug`
-  boolean If the engine is a debug or release version
+     * `version`
+     * string The current Defold engine version, i.e. "1.2.96"
+     * `version_sha1`
+     * string The SHA1 for the current engine build, i.e. "0060183cce2e29dbd09c85ece83cbb72068ee050"
+     * `is_debug`
+     * boolean If the engine is a debug or release version
      * @example
      * ```lua
      * How to retrieve engine information:
@@ -248,16 +248,16 @@ declare global {
      * Returns an array of tables with information on network interfaces.
      *
      * @returns an array of tables. Each table entry contain the following fields:
-  `name`
-  string Interface name
-  `address`
-  string IP address. might be `nil` if not available.
-  `mac`
-  string Hardware MAC address. might be nil if not available.
-  `up`
-  boolean `true` if the interface is up (available to transmit and receive data), `false` otherwise.
-  `running`
-  boolean `true` if the interface is running, `false` otherwise.
+     * `name`
+     * string Interface name
+     * `address`
+     * string IP address. might be `nil` if not available.
+     * `mac`
+     * string Hardware MAC address. might be nil if not available.
+     * `up`
+     * boolean `true` if the interface is up (available to transmit and receive data), `false` otherwise.
+     * `running`
+     * boolean `true` if the interface is running, `false` otherwise.
      * @example
      * ```lua
      * How to get the IP address of interface "en0":
@@ -306,30 +306,30 @@ declare global {
      * Returns a table with system information.
      *
      * @param options - optional options table
-  - ignore_secure boolean this flag ignores values might be secured by OS e.g. `device_ident`
+     * - ignore_secure boolean this flag ignores values might be secured by OS e.g. `device_ident`
      * @returns table with system information in the following fields:
-  `device_model`
-  string Only available on iOS and Android.
-  `manufacturer`
-  string Only available on iOS and Android.
-  `system_name`
-  string The system name: "Darwin", "Linux", "Windows", "HTML5", "Android" or "iPhone OS"
-  `system_version`
-  string The system OS version.
-  `api_version`
-  string The API version on the system.
-  `language`
-  string Two character ISO-639 format, i.e. "en".
-  `device_language`
-  string Two character ISO-639 format (i.e. "sr") and, if applicable, followed by a dash (-) and an ISO 15924 script code (i.e. "sr-Cyrl" or "sr-Latn"). Reflects the device preferred language.
-  `territory`
-  string Two character ISO-3166 format, i.e. "US".
-  `gmt_offset`
-  number The current offset from GMT (Greenwich Mean Time), in minutes.
-  `device_ident`
-  string This value secured by OS. "identifierForVendor" on iOS. "android_id" on Android. On Android, you need to add `READ_PHONE_STATE` permission to be able to get this data. We don't use this permission in Defold.
-  `user_agent`
-  string The HTTP user agent, i.e. "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8"
+     * `device_model`
+     * string Only available on iOS and Android.
+     * `manufacturer`
+     * string Only available on iOS and Android.
+     * `system_name`
+     * string The system name: "Darwin", "Linux", "Windows", "HTML5", "Android" or "iPhone OS"
+     * `system_version`
+     * string The system OS version.
+     * `api_version`
+     * string The API version on the system.
+     * `language`
+     * string Two character ISO-639 format, i.e. "en".
+     * `device_language`
+     * string Two character ISO-639 format (i.e. "sr") and, if applicable, followed by a dash (-) and an ISO 15924 script code (i.e. "sr-Cyrl" or "sr-Latn"). Reflects the device preferred language.
+     * `territory`
+     * string Two character ISO-3166 format, i.e. "US".
+     * `gmt_offset`
+     * number The current offset from GMT (Greenwich Mean Time), in minutes.
+     * `device_ident`
+     * string This value secured by OS. "identifierForVendor" on iOS. "android_id" on Android. On Android, you need to add `READ_PHONE_STATE` permission to be able to get this data. We don't use this permission in Defold.
+     * `user_agent`
+     * string The HTTP user agent, i.e. "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8"
      * @example
      * ```lua
      * How to get system information:
@@ -388,13 +388,13 @@ declare global {
      *
      * @param url - url to open
      * @param attributes - table with attributes
-  `target`
-  - string : Optional. Specifies the target attribute or the name of the window. The following values are supported:
-  - `_self` - (default value) URL replaces the current page.
-  - `_blank` - URL is loaded into a new window, or tab.
-  - `_parent` - URL is loaded into the parent frame.
-  - `_top` - URL replaces any framesets that may be loaded.
-  - `name` - The name of the window (Note: the name does not specify the title of the new window).
+     * `target`
+     * - string : Optional. Specifies the target attribute or the name of the window. The following values are supported:
+     * - `_self` - (default value) URL replaces the current page.
+     * - `_blank` - URL is loaded into a new window, or tab.
+     * - `_parent` - URL is loaded into the parent frame.
+     * - `_top` - URL replaces any framesets that may be loaded.
+     * - `name` - The name of the window (Note: the name does not specify the title of the new window).
      * @returns a boolean indicating if the url could be opened or not
      * @example
      * ```lua
@@ -482,12 +482,12 @@ declare global {
      * The error handler is a function which is called whenever a lua runtime error occurs.
      *
      * @param error_handler - the function to be called on error
-  `source`
-  string The runtime context of the error. Currently, this is always `"lua"`.
-  `message`
-  string The source file, line number and error message.
-  `traceback`
-  string The stack traceback.
+     * `source`
+     * string The runtime context of the error. Currently, this is always `"lua"`.
+     * `message`
+     * string The source file, line number and error message.
+     * `traceback`
+     * string The stack traceback.
      * @example
      * ```lua
      * Install error handler that just prints the errors

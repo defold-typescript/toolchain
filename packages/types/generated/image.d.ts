@@ -24,12 +24,12 @@ declare global {
      *
      * @param buffer - .astc file data buffer
      * @returns header or `nil` if buffer is not a valid .astc. The header has these fields:
-  - number `width`: image width
-  - number `height`: image height
-  - number `depth`: image depth
-  - number `block_size_x`: block size x
-  - number `block_size_y`: block size y
-  - number `block_size_z`: block size z
+     * - number `width`: image width
+     * - number `height`: image height
+     * - number `depth`: image depth
+     * - number `block_size_x`: block size x
+     * - number `block_size_y`: block size y
+     * - number `block_size_z`: block size z
      * @example
      * ```lua
      * How to get the block size and dimensions from a .astc file
@@ -44,19 +44,19 @@ declare global {
      *
      * @param buffer - image data buffer
      * @param options - An optional table containing parameters for loading the image. Supported entries:
-  `premultiply_alpha`
-  boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
-  `flip_vertically`
-  boolean True if the image contents should be flipped vertically. Defaults to `false`.
+     * `premultiply_alpha`
+     * boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
+     * `flip_vertically`
+     * boolean True if the image contents should be flipped vertically. Defaults to `false`.
      * @returns object or `nil` if loading fails. The object is a table with the following fields:
-  - number `width`: image width
-  - number `height`: image height
-  - constant `type`: image type
-  - `image.TYPE_RGB`
-  - `image.TYPE_RGBA`
-  - `image.TYPE_LUMINANCE`
-  - `image.TYPE_LUMINANCE_ALPHA`
-  - string `buffer`: the raw image data
+     * - number `width`: image width
+     * - number `height`: image height
+     * - constant `type`: image type
+     * - `image.TYPE_RGB`
+     * - `image.TYPE_RGBA`
+     * - `image.TYPE_LUMINANCE`
+     * - `image.TYPE_LUMINANCE_ALPHA`
+     * - string `buffer`: the raw image data
      * @example
      * ```lua
      * How to load an image from an URL and create a GUI texture from it:
@@ -73,19 +73,19 @@ declare global {
      *
      * @param buffer - image data buffer
      * @param options - An optional table containing parameters for loading the image. Supported entries:
-  `premultiply_alpha`
-  boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
-  `flip_vertically`
-  boolean True if the image contents should be flipped vertically. Defaults to `false`.
+     * `premultiply_alpha`
+     * boolean True if alpha should be premultiplied into the color components. Defaults to `false`.
+     * `flip_vertically`
+     * boolean True if the image contents should be flipped vertically. Defaults to `false`.
      * @returns object or `nil` if loading fails. The object is a table with the following fields:
-  - number `width`: image width
-  - number `height`: image height
-  - constant `type`: image type
-  - `image.TYPE_RGB`
-  - `image.TYPE_RGBA`
-  - `image.TYPE_LUMINANCE`
-  - `image.TYPE_LUMINANCE_ALPHA`
-  - buffer `buffer`: the script buffer that holds the decompressed image data. See buffer.create how to use the buffer.
+     * - number `width`: image width
+     * - number `height`: image height
+     * - constant `type`: image type
+     * - `image.TYPE_RGB`
+     * - `image.TYPE_RGBA`
+     * - `image.TYPE_LUMINANCE`
+     * - `image.TYPE_LUMINANCE_ALPHA`
+     * - buffer `buffer`: the script buffer that holds the decompressed image data. See buffer.create how to use the buffer.
      * @example
      * ```lua
      * Load an image from an URL as a buffer and create a texture resource from it:

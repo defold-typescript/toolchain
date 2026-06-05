@@ -144,13 +144,13 @@ declare global {
      * Set the on-screen profile mode - run, pause, record or show peak frame
      *
      * @param mode - the mode to set the ui profiler in
-  - `profiler.MODE_RUN` This is default mode that continously shows the last frame
-  - `profiler.MODE_PAUSE` Pauses on the currently displayed frame
-  - `profiler.MODE_SHOW_PEAK_FRAME` Pauses on the currently displayed frame but shows a new frame if that frame is slower
-  - `profiler.MODE_RECORD` Records all incoming frames to the recording buffer
-  To stop recording, switch to a different mode such as `MODE_PAUSE` or `MODE_RUN`.
-  You can also use the `view_recorded_frame` function to display a recorded frame. Doing so stops the recording as well.
-  Every time you switch to recording mode the recording buffer is cleared.
+     * - `profiler.MODE_RUN` This is default mode that continously shows the last frame
+     * - `profiler.MODE_PAUSE` Pauses on the currently displayed frame
+     * - `profiler.MODE_SHOW_PEAK_FRAME` Pauses on the currently displayed frame but shows a new frame if that frame is slower
+     * - `profiler.MODE_RECORD` Records all incoming frames to the recording buffer
+     * To stop recording, switch to a different mode such as `MODE_PAUSE` or `MODE_RUN`.
+     * You can also use the `view_recorded_frame` function to display a recorded frame. Doing so stops the recording as well.
+     * Every time you switch to recording mode the recording buffer is cleared.
      * @example
      * ```lua
      * function start_recording()
@@ -167,8 +167,8 @@ declare global {
      * Set the on-screen profile view mode - minimized or expanded
      *
      * @param mode - the view mode to set the ui profiler in
-  - `profiler.VIEW_MODE_FULL` The default mode which displays all the ui profiler details
-  - `profiler.VIEW_MODE_MINIMIZED` Minimized mode which only shows the top header (fps counters and ui profiler mode)
+     * - `profiler.VIEW_MODE_FULL` The default mode which displays all the ui profiler details
+     * - `profiler.VIEW_MODE_MINIMIZED` Minimized mode which only shows the top header (fps counters and ui profiler mode)
      * @example
      * ```lua
      * -- Minimize the profiler view
@@ -201,8 +201,8 @@ declare global {
      * The frame to show can either be an absolute frame or a relative frame to the current frame.
      *
      * @param frame_index - a table where you specify one of the following parameters:
-  - `distance` The offset from the currently displayed frame (this is truncated between zero and the number of recorded frames)
-  - `frame` The frame index in the recording buffer (1 is first recorded frame)
+     * - `distance` The offset from the currently displayed frame (this is truncated between zero and the number of recorded frames)
+     * - `frame` The frame index in the recording buffer (1 is first recorded frame)
      * @example
      * ```lua
      * -- Go back one frame

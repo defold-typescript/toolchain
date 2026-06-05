@@ -78,9 +78,9 @@ declare global {
      *
      * @param url - the collection factory component to get status from
      * @returns status of the collection factory component
-  - `collectionfactory.STATUS_UNLOADED`
-  - `collectionfactory.STATUS_LOADING`
-  - `collectionfactory.STATUS_LOADED`
+     * - `collectionfactory.STATUS_UNLOADED`
+     * - `collectionfactory.STATUS_LOADING`
+     * - `collectionfactory.STATUS_LOADED`
      */
     function get_status(url?: string | Hash | Url): Opaque<"constant">;
     /**
@@ -89,12 +89,12 @@ declare global {
      *
      * @param url - the collection factory component to load
      * @param complete_function - function to call when resources are loaded.
-  `self`
-  object The current object.
-  `url`
-  url url of the collection factory component
-  `result`
-  boolean True if resource were loaded successfully
+     * `self`
+     * object The current object.
+     * `url`
+     * url url of the collection factory component
+     * `result`
+     * boolean True if resource were loaded successfully
      * @example
      * ```lua
      * How to load resources of a collection factory prototype.

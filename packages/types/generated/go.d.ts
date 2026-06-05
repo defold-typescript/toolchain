@@ -208,23 +208,23 @@ declare global {
      * @param url - url of the game object or component having the property
      * @param property - id of the property to animate
      * @param playback - playback mode of the animation
-  - `go.PLAYBACK_ONCE_FORWARD`
-  - `go.PLAYBACK_ONCE_BACKWARD`
-  - `go.PLAYBACK_ONCE_PINGPONG`
-  - `go.PLAYBACK_LOOP_FORWARD`
-  - `go.PLAYBACK_LOOP_BACKWARD`
-  - `go.PLAYBACK_LOOP_PINGPONG`
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     * - `go.PLAYBACK_LOOP_PINGPONG`
      * @param to - target property value
      * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
      * @param duration - duration of the animation in seconds
      * @param delay - delay before the animation starts in seconds
      * @param complete_function - optional function to call when the animation has completed
-  `self`
-  object The current object.
-  `url`
-  url The game object or component instance for which the property is animated.
-  `property`
-  hash The id of the animated property.
+     * `self`
+     * object The current object.
+     * `url`
+     * url The game object or component instance for which the property is animated.
+     * `property`
+     * hash The id of the animated property.
      * @example
      * ```lua
      * Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:

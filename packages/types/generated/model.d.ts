@@ -87,31 +87,31 @@ declare global {
      * @param url - the model for which to play the animation
      * @param anim_id - id of the animation to play
      * @param playback - playback mode of the animation
-  - `go.PLAYBACK_ONCE_FORWARD`
-  - `go.PLAYBACK_ONCE_BACKWARD`
-  - `go.PLAYBACK_ONCE_PINGPONG`
-  - `go.PLAYBACK_LOOP_FORWARD`
-  - `go.PLAYBACK_LOOP_BACKWARD`
-  - `go.PLAYBACK_LOOP_PINGPONG`
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     * - `go.PLAYBACK_LOOP_PINGPONG`
      * @param play_properties - optional table with properties
-  Play properties table:
-  `blend_duration`
-  number Duration of a linear blend between the current and new animation.
-  `offset`
-  number The normalized initial value of the animation cursor when the animation starts playing.
-  `playback_rate`
-  number The rate with which the animation will be played. Must be positive.
+     * Play properties table:
+     * `blend_duration`
+     * number Duration of a linear blend between the current and new animation.
+     * `offset`
+     * number The normalized initial value of the animation cursor when the animation starts playing.
+     * `playback_rate`
+     * number The rate with which the animation will be played. Must be positive.
      * @param complete_function - function to call when the animation has completed.
-  `self`
-  object The current object.
-  `message_id`
-  hash The name of the completion message, `"model_animation_done"`.
-  `message`
-  table Information about the completion:
-  - hash `animation_id` - the animation that was completed.
-  - constant `playback` - the playback mode for the animation.
-  `sender`
-  url The invoker of the callback: the model component.
+     * `self`
+     * object The current object.
+     * `message_id`
+     * hash The name of the completion message, `"model_animation_done"`.
+     * `message`
+     * table Information about the completion:
+     * - hash `animation_id` - the animation that was completed.
+     * - constant `playback` - the playback mode for the animation.
+     * `sender`
+     * url The invoker of the callback: the model component.
      * @example
      * ```lua
      * The following examples assumes that the model has id "model".

@@ -180,4 +180,63 @@ describe("renderDocComment", () => {
       " */",
     ]);
   });
+
+  test("a multi-line @param doc prefixes every continuation line with ` * `", () => {
+    expect(
+      renderDocComment({
+        summary: "Make a buffer.",
+        params: [
+          {
+            name: "declaration",
+            doc: "A table where each entry describes a stream\n- `name`: the name\n- `type`: the data type",
+          },
+        ],
+      }),
+    ).toEqual([
+      "/**",
+      " * Make a buffer.",
+      " *",
+      " * @param declaration - A table where each entry describes a stream",
+      " * - `name`: the name",
+      " * - `type`: the data type",
+      " */",
+    ]);
+  });
+
+  test("a multi-line @returns doc prefixes every continuation line with ` * `", () => {
+    expect(
+      renderDocComment({ summary: "S.", returns: "a result\n- first part\n- second part" }),
+    ).toEqual([
+      "/**",
+      " * S.",
+      " *",
+      " * @returns a result",
+      " * - first part",
+      " * - second part",
+      " */",
+    ]);
+  });
+
+  test("a blank continuation line in a @param doc renders as a bare ` *`", () => {
+    expect(
+      renderDocComment({ summary: "", params: [{ name: "x", doc: "first\n\nthird" }] }),
+    ).toEqual(["/**", " * @param x - first", " *", " * third", " */"]);
+  });
+
+  test("single-line @param/@returns output is unchanged", () => {
+    expect(
+      renderDocComment({
+        summary: "Does a thing.",
+        params: [{ name: "id", doc: "the identifier" }],
+        returns: "the result",
+      }),
+    ).toEqual([
+      "/**",
+      " * Does a thing.",
+      " *",
+      " * @param id - the identifier",
+      " * @returns the result",
+      " */",
+    ]);
+  });
 });

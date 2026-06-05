@@ -152,28 +152,28 @@ declare global {
      *
      * @param url - the sound that should play
      * @param play_properties - optional table with properties:
-  `delay`
-  number delay in seconds before the sound starts playing, default is 0.
-  `gain`
-  number sound gain between 0 and 1, default is 1. The final gain of the sound will be a combination of this gain, the group gain and the master gain.
-  `pan`
-  number sound pan between -1 and 1, default is 0. The final pan of the sound will be an addition of this pan and the sound pan.
-  `speed`
-  number sound speed where 1.0 is normal speed, 0.5 is half speed and 2.0 is double speed. Valid range is 0.0 to 50.0. The final speed of the sound will be a multiplication of this speed and the sound speed.
-  `start_time`
-  number start playback offset (seconds). Optional, mutually exclusive with `start_frame`.
-  `start_frame`
-  number start playback offset (frames/samples). Optional, mutually exclusive with `start_time`. If both are provided, `start_frame` is used.
+     * `delay`
+     * number delay in seconds before the sound starts playing, default is 0.
+     * `gain`
+     * number sound gain between 0 and 1, default is 1. The final gain of the sound will be a combination of this gain, the group gain and the master gain.
+     * `pan`
+     * number sound pan between -1 and 1, default is 0. The final pan of the sound will be an addition of this pan and the sound pan.
+     * `speed`
+     * number sound speed where 1.0 is normal speed, 0.5 is half speed and 2.0 is double speed. Valid range is 0.0 to 50.0. The final speed of the sound will be a multiplication of this speed and the sound speed.
+     * `start_time`
+     * number start playback offset (seconds). Optional, mutually exclusive with `start_frame`.
+     * `start_frame`
+     * number start playback offset (frames/samples). Optional, mutually exclusive with `start_time`. If both are provided, `start_frame` is used.
      * @param complete_function - function to call when the sound has finished playing or stopped manually via sound.stop.
-  `self`
-  object The current object.
-  `message_id`
-  hash The name of the completion message, which can be either `"sound_done"` if the sound has finished playing, or `"sound_stopped"` if it was stopped manually.
-  `message`
-  table Information about the completion:
-  - number `play_id` - the sequential play identifier that was given by the sound.play function.
-  `sender`
-  url The invoker of the callback: the sound component.
+     * `self`
+     * object The current object.
+     * `message_id`
+     * hash The name of the completion message, which can be either `"sound_done"` if the sound has finished playing, or `"sound_stopped"` if it was stopped manually.
+     * `message`
+     * table Information about the completion:
+     * - number `play_id` - the sequential play identifier that was given by the sound.play function.
+     * `sender`
+     * url The invoker of the callback: the sound component.
      * @returns The identifier for the sound voice
      * @example
      * ```lua
@@ -236,8 +236,8 @@ declare global {
      *
      * @param url - the sound component that should stop
      * @param stop_properties - optional table with properties:
-  `play_id`
-  number the sequential play identifier that should be stopped (was given by the sound.play() function)
+     * `play_id`
+     * number the sequential play identifier that should be stopped (was given by the sound.play() function)
      * @example
      * ```lua
      * Assuming the script belongs to an instance with a sound-component with id "sound", this will make the component stop all playing voices:
