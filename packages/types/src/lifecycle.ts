@@ -110,7 +110,7 @@ export type RenderScriptHooks<TSelf> = Omit<ScriptHooks<TSelf>, "on_input">;
  * @returns the same `hooks` object, now typed (identity at runtime).
  * @example
  * ```ts
- * export const script = defineScript({
+ * export default defineScript({
  *   init() {
  *     return { hits: 0 };
  *   },
@@ -143,7 +143,7 @@ export function defineScript<TSelf = Record<never, never>>(
  * @returns the same `hooks` object, now typed (identity at runtime).
  * @example
  * ```ts
- * export const script = defineGuiScript({
+ * export default defineGuiScript({
  *   init() {
  *     return { node: gui.get_node("score") };
  *   },
@@ -176,7 +176,7 @@ export function defineGuiScript<TSelf = Record<never, never>>(
  * @returns the same `hooks` object, now typed (identity at runtime).
  * @example
  * ```ts
- * export const script = defineRenderScript({
+ * export default defineRenderScript({
  *   init() {
  *     return { clear: vmath.vector4(0, 0, 0, 1) };
  *   },

@@ -154,7 +154,7 @@ function inlineSnippetBody(factory: string, includeOnInput: boolean): string[] {
   return [
     `import { ${factory} } from "@defold-typescript/types";`,
     "",
-    `export const script = ${factory}({`,
+    `export default ${factory}({`,
     `  // ${HOOK_COMMENTS.init}`,
     "  init() {",
     "    return { $0 };",
@@ -173,7 +173,7 @@ function typedSnippetBody(factory: string, includeOnInput: boolean): string[] {
     "  $1",
     "};",
     "",
-    `export const script = ${factory}<Self>({`,
+    `export default ${factory}<Self>({`,
     `  // ${HOOK_COMMENTS.init}`,
     "  init(): Self {",
     "    return { $0 };",
