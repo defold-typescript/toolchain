@@ -145,7 +145,7 @@ describe("lifecycle erasure", () => {
           return {x = 1}
       end
       local function ____init()
-          return createSelf(_G)
+          return createSelf()
       end
       function init(self)
           local ____s = ____init()
