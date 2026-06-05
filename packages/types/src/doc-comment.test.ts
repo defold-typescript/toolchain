@@ -159,6 +159,29 @@ describe("renderDocComment", () => {
     ]);
   });
 
+  test("exampleLang ts emits a ```ts fence and the body", () => {
+    expect(
+      renderDocComment({ summary: "Does a thing.", example: "const x = 1;", exampleLang: "ts" }),
+    ).toEqual([
+      "/**",
+      " * Does a thing.",
+      " *",
+      " * @example",
+      " * ```ts",
+      " * const x = 1;",
+      " * ```",
+      " */",
+    ]);
+  });
+
+  test("exampleLang lua (or absent) emits a ```lua fence — today's behavior", () => {
+    const lua = renderDocComment({ summary: "S.", example: "local x = 1", exampleLang: "lua" });
+    const absent = renderDocComment({ summary: "S.", example: "local x = 1" });
+    expect(lua).toEqual(absent);
+    expect(lua).toContain(" * ```lua");
+    expect(lua).not.toContain(" * ```ts");
+  });
+
   test("example follows @returns", () => {
     expect(renderDocComment({ summary: "S.", returns: "r out", example: "call()" })).toEqual([
       "/**",

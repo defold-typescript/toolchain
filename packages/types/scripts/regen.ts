@@ -4,8 +4,10 @@ import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { emitDeclarations } from "../src/emit-dts";
 import { emitBuiltinMessages, parseMessagesDoc } from "../src/emit-messages";
+import type { TranslationStore } from "../src/example-store";
 import { wrapAsAmbientGlobal } from "../src/publish-dts";
 import { type DownloadRefDoc, refDocCacheDir, resolveRefDoc } from "./doc-source";
+import { loadTranslations } from "./example-store-io";
 import { type readZip, SYNC_MANIFEST, type SyncManifestEntry } from "./sync-api-docs";
 
 export interface ApiTargetModule {
@@ -159,6 +161,7 @@ export function collectConstantFqns(
 
 export interface GenerateOptions {
   knownConstantFqns?: ReadonlySet<string>;
+  translations?: TranslationStore;
 }
 
 export function generateModuleDeclaration(
@@ -178,7 +181,8 @@ export function generateModuleDeclaration(
     return true;
   });
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
-  const emitted = emitDeclarations(module, { knownConstantFqns });
+  const translations = options?.translations ?? loadTranslations();
+  const emitted = emitDeclarations(module, { knownConstantFqns, translations });
   const contents = wrapAsAmbientGlobal({
     namespace: module.namespace,
     emitted,
