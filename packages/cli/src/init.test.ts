@@ -12,7 +12,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
-import { runInit } from "./init";
+import { runInit, SCAFFOLD_DEV_DEPS } from "./init";
+import { MISE_TASKS_TOML } from "./mise-scaffold";
 
 const CLI_VERSION = (
   JSON.parse(readFileSync(path.join(import.meta.dir, "..", "package.json"), "utf8")) as {
@@ -132,11 +133,12 @@ describe("runInit (add-TS mode)", () => {
     expect(merged.devDependencies).toEqual({
       "some-other-dep": "^1.0.0",
       "@defold-typescript/types": TYPES_SPEC,
+      "@defold-typescript/cli": TYPES_SPEC,
       "@biomejs/biome": "^2.2.0",
     });
   });
 
-  test("pins @defold-typescript/types to the published CLI version and omits the transpiler", () => {
+  test("pins @defold-typescript/types and the CLI to the published version and omits the transpiler", () => {
     touch("game.project", "[project]\n");
 
     runInit({ cwd });
@@ -144,6 +146,8 @@ describe("runInit (add-TS mode)", () => {
     const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
     expect(pkg.devDependencies["@defold-typescript/types"]).toBe(TYPES_SPEC);
     expect(pkg.devDependencies["@defold-typescript/types"]).not.toBe("workspace:*");
+    expect(pkg.devDependencies["@defold-typescript/cli"]).toBe(TYPES_SPEC);
+    expect(pkg.devDependencies["@defold-typescript/cli"]).not.toBe("workspace:*");
     expect(pkg.devDependencies["@defold-typescript/transpiler"]).toBeUndefined();
   });
 
@@ -285,6 +289,25 @@ describe("runInit (repairs stale managed devDeps)", () => {
     expect(devDeps["@defold-typescript/transpiler"]).toBeUndefined();
   });
 
+  test("rewrites a workspace:* CLI pin to the published CLI version", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/cli": "workspace:*" });
+
+    expect(devDeps["@defold-typescript/cli"]).toBe(TYPES_SPEC);
+    expect(devDeps["@defold-typescript/cli"]).not.toBe("workspace:*");
+  });
+
+  test("leaves a concrete user-chosen CLI pin untouched", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/cli": "0.1.0" });
+
+    expect(devDeps["@defold-typescript/cli"]).toBe("0.1.0");
+  });
+
+  test("--force rewrites a stale concrete CLI pin to the published CLI version", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/cli": "^0.0.1" }, true);
+
+    expect(devDeps["@defold-typescript/cli"]).toBe(TYPES_SPEC);
+  });
+
   test("--force does not overwrite a user's third-party pin or other deps", () => {
     const devDeps = devDepsAfterInit(
       {
@@ -297,6 +320,17 @@ describe("runInit (repairs stale managed devDeps)", () => {
 
     expect(devDeps["@biomejs/biome"]).toBe("^2.0.0");
     expect(devDeps["some-dep"]).toBe("^1.0.0");
+  });
+});
+
+describe("scaffolded deps satisfy the managed mise tasks", () => {
+  test("the package providing the defold-typescript bin is a scaffolded devDependency", () => {
+    // The managed `defold-typescript:build`/`:watch` tasks run
+    // `bunx --no-install defold-typescript`, which only resolves a locally
+    // installed bin. That bin ships in `@defold-typescript/cli`, so the
+    // scaffold must always install it — guard against the dep ever dropping.
+    expect(MISE_TASKS_TOML).toContain("bunx --no-install defold-typescript");
+    expect(SCAFFOLD_DEV_DEPS).toHaveProperty("@defold-typescript/cli");
   });
 });
 

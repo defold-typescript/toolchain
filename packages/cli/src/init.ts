@@ -269,27 +269,31 @@ function typesVersionSpec(): string {
   }
 }
 
-// Only @defold-typescript/types ships into the consumer (type-only, for the
-// editor). The transpiler is a dependency of the CLI itself, pulled in when the
-// user runs `build`/`watch`; the scaffold must not duplicate it. Pin types to
-// this CLI's own version so the coordinated-release set stays in lockstep.
-const SCAFFOLD_DEV_DEPS: Record<string, string> = {
+// @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
+// (the local bin the managed `bunx --no-install defold-typescript` mise tasks
+// resolve) both ship into the consumer. The transpiler must NOT be a direct
+// consumer dep — it arrives transitively through the CLI. Pin both managed deps
+// to this CLI's own version so the coordinated-release set stays in lockstep.
+export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@defold-typescript/types": typesVersionSpec(),
+  "@defold-typescript/cli": typesVersionSpec(),
   "@biomejs/biome": "^2.2.0",
 };
 
-// Older scaffolds wrote both managed `@defold-typescript/*` devDeps as
+// Older scaffolds wrote the managed `@defold-typescript/*` devDeps as
 // `workspace:*`, which only resolves inside this monorepo and breaks
 // `bun install` in consumers. The additive merge in `writeTsSurface` never
 // repairs an entry it didn't itself create, so repair them explicitly: the
 // transpiler is CLI-internal and must not be a consumer dep at all, and a
-// `workspace:` types pin must become a concrete published version. A concrete
-// user-chosen types pin is left alone unless `force` is set, the explicit
-// opt-in to refresh the managed pin (and only that pin) to the CLI's version.
+// `workspace:` types/cli pin must become a concrete published version. A
+// concrete user-chosen pin is left alone unless `force` is set, the explicit
+// opt-in to refresh the managed pins (and only those) to the CLI's version.
 function repairManagedDevDeps(devDeps: Record<string, string>, force = false): void {
   delete devDeps["@defold-typescript/transpiler"];
-  if (force || devDeps["@defold-typescript/types"]?.startsWith("workspace:")) {
-    devDeps["@defold-typescript/types"] = typesVersionSpec();
+  for (const name of ["@defold-typescript/types", "@defold-typescript/cli"]) {
+    if (force || devDeps[name]?.startsWith("workspace:")) {
+      devDeps[name] = typesVersionSpec();
+    }
   }
 }
 
