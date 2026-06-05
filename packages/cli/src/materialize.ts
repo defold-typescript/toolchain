@@ -148,12 +148,21 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
       compilerOptions?: Record<string, unknown>;
       [key: string]: unknown;
     };
-    tsconfig.compilerOptions = {
-      ...(tsconfig.compilerOptions ?? {}),
-      typeRoots: [MATERIALIZED_ROOT],
-      types: [surfaceId],
-    };
-    writeJson(tsconfigPath, tsconfig);
+    const current = tsconfig.compilerOptions ?? {};
+    // Skip the write when already repointed so the file keeps its existing
+    // formatting (a consumer's Biome/Prettier shape) instead of churning to
+    // JSON.stringify's layout on every build.
+    const alreadyRepointed =
+      JSON.stringify(current.typeRoots) === JSON.stringify([MATERIALIZED_ROOT]) &&
+      JSON.stringify(current.types) === JSON.stringify([surfaceId]);
+    if (!alreadyRepointed) {
+      tsconfig.compilerOptions = {
+        ...current,
+        typeRoots: [MATERIALIZED_ROOT],
+        types: [surfaceId],
+      };
+      writeJson(tsconfigPath, tsconfig);
+    }
   }
 
   ensureGitignoreLine(cwd, `${MATERIALIZED_ROOT}/`);

@@ -287,6 +287,27 @@ describe("ensureMaterializedReference", () => {
     expect(second).toBe(first);
   });
 
+  test("leaves an already-repointed tsconfig byte-identical regardless of formatting", () => {
+    // Biome-style inline arrays: semantically already repointed, but not the
+    // multi-line shape JSON.stringify emits. The repoint must not reformat it.
+    const inline = [
+      "{",
+      '  "compilerOptions": {',
+      '    "strict": true,',
+      '    "typeRoots": [".defold-types"],',
+      '    "types": ["defold-1.12.4"]',
+      "  },",
+      '  "include": ["src/**/*.ts"]',
+      "}",
+      "",
+    ].join("\n");
+    writeFileSync(path.join(cwd, "tsconfig.json"), inline);
+
+    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+
+    expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(inline);
+  });
+
   test("a null materializedDir leaves tsconfig and .gitignore untouched", () => {
     writeTsconfig({ compilerOptions: { types: ["@defold-typescript/types"] } });
     const before = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
