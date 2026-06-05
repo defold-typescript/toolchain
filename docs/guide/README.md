@@ -13,6 +13,7 @@ End-user documentation for `defold-typescript`: how to scaffold a project, write
 - [TypeScript gotchas](./typescript-gotchas.md) — the canonical catalog of TS / TSTL / Defold sharp edges. Today: the unary-minus quirk that silently produces `number` from a `Vector3`. Future entries land here as the toolchain encounters them.
 - [Pinning the Defold API version](./pinning-defold-version.md) — keep the default latest surface, or pin an older Defold version whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
 - [Script lifecycle](./script-lifecycle.md) — type `self`, `on_message`, and `on_input` payloads with `defineScript`, `defineGuiScript`, and `defineRenderScript`.
+- [Debugging](./debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
 - [API docs vs. ts-defold-types](./api-docs-vs-ts-defold.md) — how the emitted JSDoc compares with the incumbent type package: where it is strictly cleaner (Markdown conversion, dash params, grid-aligned multi-line docs, branded constants) and the one deliberate `@example` trade-off.
 
 ## Coming later

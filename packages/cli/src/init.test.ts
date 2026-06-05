@@ -44,8 +44,10 @@ describe("runInit (add-TS mode)", () => {
     expect(result.written.sort()).toEqual(
       [
         ".gitignore",
+        ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
         ".vscode/extensions.json",
+        ".vscode/launch.json",
         ".vscode/settings.json",
         "biome.json",
         "package.json",
@@ -84,8 +86,10 @@ describe("runInit (add-TS mode)", () => {
     expect(result.written.sort()).toEqual(
       [
         ".gitignore",
+        ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
         ".vscode/extensions.json",
+        ".vscode/launch.json",
         ".vscode/settings.json",
         "biome.json",
         "package.json",
@@ -307,6 +311,8 @@ describe("runInit (new-project mode)", () => {
     ".vscode/extensions.json",
     ".vscode/settings.json",
     ".vscode/defold-typescript.code-snippets",
+    ".vscode/launch.json",
+    ".vscode/defold-debug.ts",
   ];
 
   test("missing target directory: creates the directory and writes the scaffold files", () => {
@@ -513,6 +519,7 @@ describe("runInit (.vscode editor config)", () => {
     const ext = readJson(".vscode/extensions.json");
     expect(ext.recommendations).toContain("sumneko.lua");
     expect(ext.recommendations).toContain("astronachos.defold");
+    expect(ext.recommendations).toContain("tomblind.local-lua-debugger-vscode");
     expect(ext.unwantedRecommendations).toContain("johnnymorganz.luau-lsp");
   });
 
@@ -592,6 +599,88 @@ describe("runInit (.vscode editor config)", () => {
     runInit({ cwd });
 
     expect(readFileSync(path.join(cwd, ".vscode", "extensions.json"), "utf8")).toBe(garbage);
+  });
+});
+
+describe("runInit (.vscode debugger launch scaffold)", () => {
+  function readJson(rel: string): Record<string, unknown> {
+    return JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
+  }
+
+  test("add-TS mode recommends the Local Lua Debugger extension", () => {
+    touch("game.project", "[project]\n");
+
+    runInit({ cwd });
+
+    const ext = readJson(".vscode/extensions.json");
+    expect(ext.recommendations).toContain("tomblind.local-lua-debugger-vscode");
+  });
+
+  test("both modes scaffold launch.json and defold-debug.ts", () => {
+    touch("game.project", "[project]\n");
+    const result = runInit({ cwd });
+
+    expect(result.written).toContain(".vscode/launch.json");
+    expect(result.written).toContain(".vscode/defold-debug.ts");
+    expect(existsSync(path.join(cwd, ".vscode", "launch.json"))).toBe(true);
+    expect(existsSync(path.join(cwd, ".vscode", "defold-debug.ts"))).toBe(true);
+
+    const fresh = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-init-debug-"));
+    try {
+      const freshResult = runInit({ cwd: fresh });
+      expect(freshResult.written).toContain(".vscode/launch.json");
+      expect(freshResult.written).toContain(".vscode/defold-debug.ts");
+    } finally {
+      rmSync(fresh, { recursive: true, force: true });
+    }
+  });
+
+  test("merges the debug config into an existing launch.json, keeping user configs", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const userConfig = { name: "My Launcher", type: "node", request: "launch" };
+    touch(
+      ".vscode/launch.json",
+      `${JSON.stringify({ version: "0.2.0", configurations: [userConfig] }, null, 2)}\n`,
+    );
+
+    const result = runInit({ cwd });
+
+    const launch = readJson(".vscode/launch.json");
+    const configs = launch.configurations as Array<Record<string, unknown>>;
+    const names = configs.map((c) => c.name);
+    expect(names).toContain("My Launcher");
+    expect(names).toContain("Defold: Debug (TypeScript)");
+    expect(result.written).not.toContain(".vscode/launch.json");
+  });
+
+  test("leaves an existing defold-debug.ts untouched", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const sentinel = "// user launcher\n";
+    touch(".vscode/defold-debug.ts", sentinel);
+
+    const result = runInit({ cwd });
+
+    expect(readFileSync(path.join(cwd, ".vscode", "defold-debug.ts"), "utf8")).toBe(sentinel);
+    expect(result.written).not.toContain(".vscode/defold-debug.ts");
+  });
+
+  test("no-shell gate: the launch config runs bun and no debug artifact references bash or .sh", () => {
+    runInit({ cwd });
+
+    const launch = readJson(".vscode/launch.json");
+    const configs = launch.configurations as Array<Record<string, unknown>>;
+    const luaLocal = configs.find((c) => c.type === "lua-local");
+    expect(luaLocal).toBeDefined();
+    expect((luaLocal?.program as Record<string, unknown>).command).toBe("bun");
+
+    const launchText = readFileSync(path.join(cwd, ".vscode", "launch.json"), "utf8");
+    const launcherText = readFileSync(path.join(cwd, ".vscode", "defold-debug.ts"), "utf8");
+    for (const text of [launchText, launcherText]) {
+      expect(text).not.toContain("bash");
+      expect(text).not.toMatch(/\.sh\b/);
+    }
   });
 });
 

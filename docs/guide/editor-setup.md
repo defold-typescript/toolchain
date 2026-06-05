@@ -23,6 +23,7 @@ Defold runs standard Lua 5.1 (LuaJIT), **not** Luau — Luau is Roblox's dialect
 - TypeScript support: built into VSCode.
 - [sumneko Lua](https://marketplace.visualstudio.com/items?itemName=sumneko.lua) (`sumneko.lua`): the Lua language server.
 - [Defold Kit](https://marketplace.visualstudio.com/items?itemName=astronachos.defold) (`astronachos.defold`): version-syncs the Defold Lua annotations, so `vmath`, `msg`, `go`, and friends resolve without manual globals config.
+- [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) (`tomblind.local-lua-debugger-vscode`): steps through your `.ts` source via the emitted source maps. See [Debugging](debugging.md) for the launch path.
 
 Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold project. It reports `Failed to load sourcemap.json` and bogus diagnostics, because it expects a Roblox/Rojo `sourcemap.json` — an artifact this toolchain never produces. The `*.ts.script.map` files next to your output are TSTL source maps, unrelated to Roblox's `sourcemap.json`.
 
@@ -31,8 +32,9 @@ Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold
 - `extensions.json` recommends sumneko Lua + Defold Kit and marks the Luau LSP as unwanted.
 - `settings.json` sets `Lua.workspace.ignoreDir: ["src"]` so sumneko does not lint the generated `*.ts.script` output (which would flag TSTL-emitted `self` parameters as unused). Hand-written Defold `.script` files under `main/` stay analyzed.
 - `defold-typescript.code-snippets` expands an empty script over the lifecycle factories (the TypeScript equivalent of the Defold editor's "new script" templates).
+- `launch.json` + `defold-debug.ts` set up a shell-free, Windows-native debug launch path. See [Debugging](debugging.md).
 
-All three files merge additively into any `.vscode/` config you already have, so your own recommendations, settings, and snippets are preserved.
+These files merge additively into any `.vscode/` config you already have, so your own recommendations, settings, snippets, and launch configs are preserved.
 
 ## Script snippets
 
