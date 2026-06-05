@@ -73,6 +73,7 @@ export interface DocCommentParts {
   params?: { name: string; doc: string }[];
   returns?: string;
   example?: string;
+  exampleLang?: "lua" | "ts";
 }
 
 /**
@@ -115,7 +116,7 @@ export function renderDocComment(parts: DocCommentParts): string[] {
   }
   if (example !== "") {
     lines.push(" * @example");
-    lines.push(" * ```lua");
+    lines.push(` * \`\`\`${parts.exampleLang ?? "lua"}`);
     for (const line of example.split("\n")) {
       lines.push(line === "" ? " *" : ` * ${line}`);
     }

@@ -13,6 +13,8 @@ import {
   htmlToDocText,
   renderDocComment,
 } from "./doc-comment";
+import type { TranslationStore } from "./example-store";
+import { hashExampleSource, lookupTranslation } from "./example-store";
 
 export interface EmitOptions {
   mapType?: (defoldType: string) => string;
@@ -21,6 +23,12 @@ export interface EmitOptions {
   // brands to the same FQN-keyed type its owning module's `const` emits,
   // instead of widening to `unknown`.
   knownConstantFqns?: ReadonlySet<string>;
+  // Hand-authored TypeScript `@example` translations keyed by element FQN.
+  // Defaults to an empty store (every example stays on its Lua fallback,
+  // byte-identical output); the build layer (`regen`) passes the loaded
+  // `examples/translations.json`. Loading lives in `scripts/example-store-io.ts`
+  // so this module stays node-free for downstream consumers.
+  translations?: TranslationStore;
 }
 
 export const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -427,6 +435,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
 
   const constantFqns = new Set(module.constants.map((c) => c.name));
   const knownConstantFqns = options?.knownConstantFqns;
+  const translations = options?.translations ?? {};
   const baseMapType = options?.mapType ?? defaultMapType;
   const mapType = (token: string): string =>
     constantFqns.has(token) || knownConstantFqns?.has(token)
@@ -502,7 +511,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   for (const fn of functions) {
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
-    for (const docLine of functionDocLines(fn.original)) lines.push(docLine);
+    for (const docLine of functionDocLines(fn.original, translations)) lines.push(docLine);
     const line = emitFunction(fn, emitName, mapType, resolver);
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
   }
@@ -614,18 +623,23 @@ function emitFunction(
 // fallback applies to non-identifier names, matching `emitParameter`) so the tag
 // resolves on hover; a single documented return becomes `@returns`. Returns `[]`
 // for a fully-undocumented function, leaving its emission byte-identical.
-function functionDocLines(fn: ApiFunction): string[] {
+function functionDocLines(fn: ApiFunction, translations: TranslationStore): string[] {
   const params = fn.parameters.map((p, index) => ({
     name: TS_IDENTIFIER.test(p.name) ? p.name : `arg${index}`,
     doc: htmlToDocText(p.doc),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
-  const example = htmlToCodeText(fn.examples ?? "");
+  const lua = htmlToCodeText(fn.examples ?? "");
+  // A hand-authored TS translation pinned to this exact Lua flips the fence to
+  // ```ts; any hash mismatch (or absent translation) keeps the Lua fallback.
+  const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
+  const exampleParts: Pick<DocCommentParts, "example" | "exampleLang"> =
+    ts !== null ? { example: ts, exampleLang: "ts" } : lua !== "" ? { example: lua } : {};
   const parts: DocCommentParts = {
     summary: htmlToDocText(summaryFor(fn.brief, fn.description)),
     params,
     ...(onlyReturn ? { returns: htmlToDocText(onlyReturn.doc) } : {}),
-    ...(example !== "" ? { example } : {}),
+    ...exampleParts,
   };
   return indentDocLines(parts, INDENT);
 }
