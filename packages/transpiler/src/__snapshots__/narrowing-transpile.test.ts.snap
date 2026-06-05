@@ -4,7 +4,7 @@ exports[`narrowing transpile snapshots how TS narrowing constructs lower to Lua 
 "local ____lualib = require("lualib_bundle")
 local __TS__TypeOf = ____lualib.__TS__TypeOf
 local ____exports = {}
-function ____exports.inspect(self, x)
+function ____exports.inspect(x)
     local out = ""
     if x then
         out = "truthy"

@@ -19,6 +19,9 @@ const COMPILER_OPTIONS: tstl.CompilerOptions = {
   // Don't cross-check the seeded ambient .d.ts surface against itself; only user
   // files matter (mirrors transpileProject and the editor's skipLibCheck).
   skipLibCheck: true,
+  // Defold scripts are not OO: free helper functions never receive a context,
+  // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
+  noImplicitSelf: true,
   luaPlugins: [{ plugin: lifecycleErasurePlugin }],
 };
 

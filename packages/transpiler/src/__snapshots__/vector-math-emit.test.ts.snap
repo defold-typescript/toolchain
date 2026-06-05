@@ -3,7 +3,7 @@
 exports[`vector math operator emit v.add(other) emits native Lua + (no userland helper) 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-function ____exports.go(self)
+function ____exports.go()
     local a = vmath.vector3(1, 2, 3)
     local b = vmath.vector3(4, 5, 6)
     return a + b
@@ -15,7 +15,7 @@ return ____exports
 exports[`vector math operator emit v.unm() emits Lua unary minus 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-function ____exports.go(self)
+function ____exports.go()
     local a = vmath.vector3(1, 2, 3)
     return -a
 end
@@ -26,7 +26,7 @@ return ____exports
 exports[`vector math operator emit m.mul(v4) emits Lua * 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-function ____exports.go(self)
+function ____exports.go()
     local m = vmath.matrix4()
     local v = vmath.vector4(1, 2, 3, 4)
     return m * v

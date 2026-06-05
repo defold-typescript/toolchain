@@ -3,7 +3,7 @@
 exports[`transpile snapshots a representative module with function and control flow 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-function ____exports.clamp(self, value, min, max)
+function ____exports.clamp(value, min, max)
     if value < min then
         return min
     end
@@ -12,7 +12,7 @@ function ____exports.clamp(self, value, min, max)
     end
     return value
 end
-____exports.limit = ____exports.clamp(_G, 42, 0, 100)
+____exports.limit = ____exports.clamp(42, 0, 100)
 return ____exports
 "
 `;
@@ -20,7 +20,7 @@ return ____exports
 exports[`transpile snapshots a Defold-shaped module using vmath and msg 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-function ____exports.move(self)
+function ____exports.move()
     local dir = vmath.vector3(1, 0, 0)
     local distance = vmath.length(dir)
     msg.post("main:/hero", "moved", {distance = distance})
@@ -36,14 +36,14 @@ exports[`transpileProject snapshots a two-file project's full lua map (sorted ke
 local ____exports = {}
 local ____util = require("util")
 local clamp = ____util.clamp
-____exports.limit = clamp(_G, 42, 0, 100)
+____exports.limit = clamp(42, 0, 100)
 return ____exports
 "
 ,
   "util.ts": 
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-function ____exports.clamp(self, v, lo, hi)
+function ____exports.clamp(v, lo, hi)
     if v < lo then
         return lo
     end
