@@ -646,7 +646,7 @@ function indentDocLines(parts: DocCommentParts, indent: string): string[] {
 // Prefer the full `description`; fall back to the one-line `brief` when prose is
 // absent. Shared by every documented member kind so the summary source is
 // consistent across functions, constants, variables, and properties.
-function summaryFor(brief: string, description: string): string {
+export function summaryFor(brief: string, description: string): string {
   return description.trim() !== "" ? description : brief;
 }
 
