@@ -1,0 +1,14 @@
+# managed by @defold-typescript
+[tasks."defold-typescript:build"]
+description = "Build the TypeScript sources with the installed defold-typescript CLI"
+run = "bunx --no-install defold-typescript build"
+
+# managed by @defold-typescript
+[tasks."defold-typescript:watch"]
+description = "Watch and rebuild the TypeScript sources with the installed defold-typescript CLI"
+run = "bunx --no-install defold-typescript watch"
+
+# managed by @defold-typescript
+[tasks."defold-typescript:upgrade"]
+description = "Upgrade the defold-typescript CLI to its latest release and re-pin the types dependency"
+run = ["bunx @defold-typescript/cli@latest init --force", "bun install"]
