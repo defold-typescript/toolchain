@@ -6,7 +6,7 @@ Step through your TypeScript with breakpoints set directly in the `.ts` source, 
 
 Running `bunx @defold-typescript/cli init` sets up the whole debug path:
 
-- `extensions.json` recommends `tomblind.local-lua-debugger-vscode` alongside sumneko Lua and Defold Kit.
+- `extensions.json` recommends `tomblind.local-lua-debugger-vscode` — the one required third-party extension for debugging. (Defold Kit is no longer recommended; sumneko Lua is an optional aid for reading generated Lua. See [editor setup](editor-setup.md).)
 - `launch.json` adds a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`. It also sets `scriptFiles` (`src/**/*.ts.script`) and `scriptRoots` (`.`, `src`). Local Lua Debugger (>=0.3.0) pre-scans `scriptFiles` for the emitted `--# sourceMappingURL=` trailers to resolve `.ts` breakpoints ahead of time — without it, no source-mapped breakpoint binds — and uses `scriptRoots` to resolve the running Defold chunk path and the map's bare `sources` entry back to files on disk.
 - `defold-debug.ts` is a self-contained Bun launcher that downloads and runs a stock `dmengine` (or your native-extension build engine) with its stdio inherited — the pipe Local Lua Debugger attaches over.
 
@@ -73,9 +73,19 @@ The manual walkthrough below remains the fallback and documents exactly what `se
 
 ## Launching a debug session
 
-1. Build your TypeScript so the `.ts.script` and `.ts.script.map` files are current (`bunx @defold-typescript/cli build`, or keep `watch` running).
-2. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
-3. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
+The launcher runs whatever already sits under `build/`; it does **not** compile the Defold project itself. The CLI build loop produces both artifacts headlessly — no editor required:
+
+1. Transpile your TypeScript so the `.ts.script` and `.ts.script.map` files are current (`bunx @defold-typescript/cli build`, or keep `watch` running).
+2. Compile the Defold project so `build/default/game.projectc` exists:
+
+   ```sh
+   bunx @defold-typescript/cli defold resolve   # first time / after editing dependencies
+   bunx @defold-typescript/cli defold build      # debug build into build/default
+   ```
+
+   `defold build` runs Defold's headless `bob` tool — see [Getting started](getting-started.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
+3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
+4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
 
 The launcher prefers the native-extension build engine at `build/<platform>/dmengine` when it exists and otherwise downloads a stock engine from `d.defold.com` next to the launcher. The download is a one-time fetch per platform.
 
@@ -83,9 +93,9 @@ The launcher prefers the native-extension build engine at `build/<platform>/dmen
 
 Native-extension builds on Windows need `OpenAL32.dll` and `wrap_oal.dll` next to the build engine. Set the two path constants at the top of `.vscode/defold-debug.ts` to the DLLs from your Defold SDK (`defoldsdk/ext/lib/x86_64-win32/`); the launcher copies them into the build folder when they are missing. Leave the constants empty on macOS and Linux.
 
-### Build-from-editor caveat
+### Building from the editor instead
 
-The launcher runs whatever is already under `build/`. It does not build the project for you — build from the Defold editor (or run a debug build) first so `build/default/game.projectc` and any native-extension engine exist before you launch from VS Code.
+The CLI build loop above is the primary path and needs no editor. If you prefer, you can still produce `build/default/game.projectc` (and any native-extension engine) by building from the Defold editor before launching from VS Code — the launcher runs whatever is already under `build/` either way.
 
 ## See also
 

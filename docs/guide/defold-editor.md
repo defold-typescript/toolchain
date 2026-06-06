@@ -2,6 +2,8 @@
 
 Install the Defold editor from [defold.com](https://defold.com/). The editor is the engine UI you use to open the project folder, inspect assets, and run the game.
 
+In the CLI-driven loop you author code in TypeScript and build from the command line (`defold build`, see [Getting started](getting-started.md#headless-builds-no-editor)) — so the editor is opened mainly for **visual assets**: collections, atlases, tilemaps, GUI scenes, and previewing the running game. Compiling and running can happen entirely from the CLI without it.
+
 ## Open the project
 
 1. Start Defold.

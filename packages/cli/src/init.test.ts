@@ -569,13 +569,13 @@ describe("runInit (.vscode editor config)", () => {
     return JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
   }
 
-  test("new-project mode recommends sumneko + Defold Kit and marks Luau LSP unwanted", () => {
+  test("new-project mode recommends only the Local Lua Debugger and marks Luau LSP unwanted", () => {
     runInit({ cwd });
 
     const ext = readJson(".vscode/extensions.json");
-    expect(ext.recommendations).toContain("sumneko.lua");
-    expect(ext.recommendations).toContain("astronachos.defold");
     expect(ext.recommendations).toContain("tomblind.local-lua-debugger-vscode");
+    expect(ext.recommendations).not.toContain("astronachos.defold");
+    expect(ext.recommendations).not.toContain("sumneko.lua");
     expect(ext.unwantedRecommendations).toContain("johnnymorganz.luau-lsp");
   });
 
@@ -611,8 +611,9 @@ describe("runInit (.vscode editor config)", () => {
 
     const ext = readJson(".vscode/extensions.json");
     expect(ext.recommendations).toContain("dbaeumer.vscode-eslint");
-    expect(ext.recommendations).toContain("sumneko.lua");
-    expect(ext.recommendations).toContain("astronachos.defold");
+    expect(ext.recommendations).toContain("tomblind.local-lua-debugger-vscode");
+    expect(ext.recommendations).not.toContain("astronachos.defold");
+    expect(ext.recommendations).not.toContain("sumneko.lua");
     expect(ext.someOtherKey).toBe(42);
     const recs = ext.recommendations as string[];
     expect(recs.length).toBe(new Set(recs).size);

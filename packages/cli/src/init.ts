@@ -76,7 +76,7 @@ const BIOME_JSON_CONTENT = {
 };
 
 const VSCODE_EXTENSIONS_CONTENT = {
-  recommendations: ["sumneko.lua", "astronachos.defold", "tomblind.local-lua-debugger-vscode"],
+  recommendations: ["tomblind.local-lua-debugger-vscode"],
   unwantedRecommendations: ["johnnymorganz.luau-lsp"],
 };
 
