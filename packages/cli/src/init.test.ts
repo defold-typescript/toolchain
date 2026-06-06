@@ -212,6 +212,24 @@ describe("runInit (add-TS mode)", () => {
     expect(gitignore).toMatch(/^src\/\*\*\/\*\.ts\.script\.map$/m);
   });
 
+  test("scaffolded .gitignore and biome.json exclude the gui/render-script suffixes too", () => {
+    touch("game.project", "[project]\n");
+
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    for (const suffix of ["gui_script", "render_script"]) {
+      expect(gitignore).toMatch(new RegExp(`^src/\\*\\*/\\*\\.ts\\.${suffix}$`, "m"));
+      expect(gitignore).toMatch(new RegExp(`^src/\\*\\*/\\*\\.ts\\.${suffix}\\.map$`, "m"));
+    }
+
+    const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
+      files: { includes: string[] };
+    };
+    expect(biome.files.includes).toContain("!**/*.ts.gui_script");
+    expect(biome.files.includes).toContain("!**/*.ts.render_script");
+  });
+
   test("appends ignore lines to an existing .gitignore without clobbering, idempotently", () => {
     touch("game.project", "[project]\n");
     touch(".gitignore", "node_modules\n*.log\n");

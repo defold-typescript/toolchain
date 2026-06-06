@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { computeScriptRel, isTranspilerSource, toPosix, writeScriptFile } from "./build-output";
+import {
+  computeScriptRel,
+  detectSourceScriptKind,
+  isTranspilerSource,
+  toPosix,
+  writeScriptFile,
+} from "./build-output";
 
 describe("toPosix separator injection", () => {
   test("normalizes a Windows-separator path when sep is backslash", () => {
@@ -59,6 +65,62 @@ describe("computeScriptRel", () => {
     const rel = toPosix("src\\game\\hero.ts", "\\");
     expect(computeScriptRel(rel, { outDir: "build/lua", include: ["src/**/*.ts"] })).toBe(
       "build/lua/game/hero.ts.script",
+    );
+  });
+});
+
+describe("detectSourceScriptKind", () => {
+  test("a defineGuiScript call is a gui-script", () => {
+    expect(detectSourceScriptKind("export default defineGuiScript({ init() {} });")).toBe(
+      "gui-script",
+    );
+  });
+
+  test("a defineRenderScript call is a render-script", () => {
+    expect(detectSourceScriptKind("export default defineRenderScript({});")).toBe("render-script");
+  });
+
+  test("a defineScript call is a script", () => {
+    expect(detectSourceScriptKind("export default defineScript({});")).toBe("script");
+  });
+
+  test("a source using no factory defaults to script", () => {
+    expect(detectSourceScriptKind("export function helper() { return 1; }")).toBe("script");
+  });
+
+  test("keys on the call, not the import: imports all but calls render", () => {
+    const source = [
+      'import { defineScript, defineGuiScript, defineRenderScript } from "@defold-typescript/types";',
+      "export default defineRenderScript({});",
+    ].join("\n");
+    expect(detectSourceScriptKind(source)).toBe("render-script");
+  });
+});
+
+describe("computeScriptRel kind suffix", () => {
+  const include = ["src/**/*.ts"];
+
+  test("gui-script emits a .ts.gui_script suffix", () => {
+    expect(computeScriptRel("src/hud.ts", { outDir: undefined, include }, "gui-script")).toBe(
+      "src/hud.ts.gui_script",
+    );
+  });
+
+  test("render-script emits a .ts.render_script suffix", () => {
+    expect(computeScriptRel("src/cam.ts", { outDir: undefined, include }, "render-script")).toBe(
+      "src/cam.ts.render_script",
+    );
+  });
+
+  test("script emits the .ts.script suffix", () => {
+    expect(computeScriptRel("src/main.ts", { outDir: undefined, include }, "script")).toBe(
+      "src/main.ts.script",
+    );
+  });
+
+  test("outDir mode re-roots and applies the kind suffix", () => {
+    expect(computeScriptRel("src/hud.ts", { outDir: "build", include }, "gui-script")).toBe(
+      "build/hud.ts.gui_script",
     );
   });
 });

@@ -154,6 +154,24 @@ describe("runBuild", () => {
     expect(lua.trimEnd().endsWith("--# sourceMappingURL=main.ts.script.map")).toBe(true);
   });
 
+  test("emits gui/render/script suffixes from the lifecycle factory each source calls", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/hud.ts",
+      'import { defineGuiScript } from "@defold-typescript/types";\nexport default defineGuiScript({});\n',
+    );
+    writeFile(
+      "src/main.ts",
+      'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({});\n',
+    );
+
+    const result = runBuild({ cwd });
+
+    expect(result.written.sort()).toEqual(["src/hud.ts.gui_script", "src/main.ts.script"]);
+    expect(existsSync(path.join(cwd, "src/hud.ts.gui_script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(true);
+  });
+
   test("aggregates diagnostics across multiple broken files", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/a.ts", 'const a: number = "bad";\n');

@@ -38,12 +38,26 @@ const TSCONFIG_COMPILER_OPTIONS = {
   skipLibCheck: true,
 };
 
-const GITIGNORE_LINES = ["src/**/*.ts.script", "src/**/*.ts.script.map"];
+const GITIGNORE_LINES = [
+  "src/**/*.ts.script",
+  "src/**/*.ts.script.map",
+  "src/**/*.ts.gui_script",
+  "src/**/*.ts.gui_script.map",
+  "src/**/*.ts.render_script",
+  "src/**/*.ts.render_script.map",
+];
 
 const BIOME_JSON_CONTENT = {
   $schema: "https://biomejs.dev/schemas/2.4.15/schema.json",
   files: {
-    includes: ["src/**/*.ts", "!**/dist", "!**/node_modules", "!**/*.ts.script"],
+    includes: [
+      "src/**/*.ts",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/*.ts.script",
+      "!**/*.ts.gui_script",
+      "!**/*.ts.render_script",
+    ],
   },
   formatter: {
     enabled: true,

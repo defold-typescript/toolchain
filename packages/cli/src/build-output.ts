@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { TranspileDiagnostic } from "@defold-typescript/transpiler";
+import type { ScriptKind } from "./script-kind";
 
 export interface BuildConfig {
   readonly outDir: string | undefined;
@@ -54,10 +55,41 @@ function stripIncludeBase(pattern: string): string {
   return lastSlash === -1 ? "" : upToWildcard.slice(0, lastSlash + 1);
 }
 
-export function computeScriptRel(rel: string, config: BuildConfig): string {
+const SCRIPT_SUFFIX_BY_KIND: Record<ScriptKind, string> = {
+  script: ".ts.script",
+  "gui-script": ".ts.gui_script",
+  "render-script": ".ts.render_script",
+};
+
+// A `.ts` source carries no Defold component kind of its own; the lifecycle
+// factory it calls is the signal. The call is matched (trailing `(`) so a bare
+// import of all three factories does not decide the kind. Precedence
+// render > gui > script; a source using no factory stays the universal `script`
+// (preserving the pre-kind behavior for helper modules).
+const FACTORY_KINDS: ReadonlyArray<readonly [ScriptKind, RegExp]> = [
+  ["render-script", /\bdefineRenderScript\s*\(/],
+  ["gui-script", /\bdefineGuiScript\s*\(/],
+  ["script", /\bdefineScript\s*\(/],
+];
+
+export function detectSourceScriptKind(source: string): ScriptKind {
+  for (const [kind, re] of FACTORY_KINDS) {
+    if (re.test(source)) {
+      return kind;
+    }
+  }
+  return "script";
+}
+
+export function computeScriptRel(
+  rel: string,
+  config: BuildConfig,
+  kind: ScriptKind = "script",
+): string {
   const { outDir, include } = config;
+  const suffix = SCRIPT_SUFFIX_BY_KIND[kind];
   if (outDir === undefined || outDir === "" || outDir === ".") {
-    return rel.replace(/\.ts$/, ".ts.script");
+    return rel.replace(/\.ts$/, suffix);
   }
   const includeBase =
     include
@@ -65,7 +97,7 @@ export function computeScriptRel(rel: string, config: BuildConfig): string {
       .filter((base) => rel.startsWith(base))
       .sort((a, b) => b.length - a.length)[0] ?? "";
   const relUnderBase = rel.slice(includeBase.length);
-  return path.posix.join(outDir, relUnderBase.replace(/\.ts$/, ".ts.script"));
+  return path.posix.join(outDir, relUnderBase.replace(/\.ts$/, suffix));
 }
 
 export function collectFailures(
