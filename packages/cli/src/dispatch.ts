@@ -209,6 +209,9 @@ export function dispatch(
                   written: result.written,
                   actions: result.actions,
                   manualSteps: result.manualSteps,
+                  ...(result.addedTo !== undefined ? { addedTo: result.addedTo } : {}),
+                  removedFrom: result.removedFrom ?? [],
+                  bootPath: result.bootPath ?? [],
                 }
               : { command: "setup-debug", error: result.error ?? "setup-debug failed" },
           ),
@@ -217,6 +220,15 @@ export function dispatch(
         io.stdout.write(
           `defold-typescript setup-debug: wrote ${result.written.length} files: ${result.written.join(", ")}\n`,
         );
+        if (result.addedTo !== undefined) {
+          io.stdout.write(`Debugger bootstrap added to: ${result.addedTo}\n`);
+        }
+        if (result.removedFrom !== undefined && result.removedFrom.length > 0) {
+          io.stdout.write(`Removed stale bootstrap from: ${result.removedFrom.join(", ")}\n`);
+        }
+        if (result.bootPath !== undefined && result.bootPath.length > 0) {
+          io.stdout.write(`Boot path: ${result.bootPath.join(" -> ")}\n`);
+        }
         io.stdout.write("Remaining manual steps:\n");
         for (const step of result.manualSteps) {
           io.stdout.write(`  - ${step}\n`);

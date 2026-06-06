@@ -882,6 +882,40 @@ describe("dispatch setup-debug", () => {
     expect(parsed.ok).toBe(false);
     expect(parsed.error).toContain("src/hud.ts");
   });
+
+  test("--json carries addedTo, removedFrom, and the boot-path trace", async () => {
+    writeFileSync(
+      path.join(cwd, "game.project"),
+      "[project]\ntitle = demo\n\n[bootstrap]\nmain_collection = /main.collectionc\n",
+    );
+    writeFileSync(
+      path.join(cwd, "main.collection"),
+      'name: "main"\nembedded_instances {\n  id: "player"\n  data: "components {\\n"\n  "  component: \\"/src/player.ts.script\\"\\n"\n  "}\\n"\n  ""\n}\n',
+    );
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "player.ts"), SETUP_DEBUG_SCRIPT);
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["setup-debug", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      command: string;
+      ok: boolean;
+      addedTo: string;
+      removedFrom: string[];
+      bootPath: string[];
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.addedTo).toBe("src/player.ts");
+    expect(parsed.removedFrom).toEqual([]);
+    expect(parsed.bootPath).toEqual([
+      "game.project",
+      "main.collection",
+      "player",
+      "/src/player.ts.script",
+    ]);
+  });
 });
 
 describe("dispatch defold", () => {

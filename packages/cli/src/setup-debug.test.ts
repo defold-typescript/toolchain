@@ -395,6 +395,151 @@ describe("runSetupDebug", () => {
   });
 });
 
+// An embedded game object whose escaped `data:` string names a `.ts.script`
+// component, mirroring the platformer's `player.collection` shape.
+function embeddedScript(id: string, component: string): string {
+  return `embedded_instances {
+  id: "${id}"
+  data: "components {\\n"
+  "  component: \\"${component}\\"\\n"
+  "}\\n"
+  ""
+}
+`;
+}
+
+// Boot project: `[project]` (so the dependency edit is legal) + a `[bootstrap]`
+// `main_collection` whose `main.collection` embeds each `{ id, src }` as a
+// `.ts.script` component; the matching `src/*.ts` factory files are written too.
+function writeBootProject(cwd: string, scripts: { id: string; src: string }[]): void {
+  writeFileSync(
+    path.join(cwd, "game.project"),
+    "[project]\ntitle = demo\n\n[bootstrap]\nmain_collection = /main.collectionc\n",
+  );
+  const blocks = scripts
+    .map((s) => embeddedScript(s.id, `/${s.src.replace(/\.ts$/, ".ts.script")}`))
+    .join("\n");
+  writeFileSync(path.join(cwd, "main.collection"), `name: "main"\n${blocks}`);
+  for (const s of scripts) {
+    const abs = path.join(cwd, s.src);
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, FACTORY_SCRIPT);
+  }
+}
+
+describe("runSetupDebug boot-path selection", () => {
+  test("auto-picks the sole boot-path script over an off-path factory file", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootProject(cwd, [{ id: "player", src: "src/player.ts" }]);
+      writeFileSync(path.join(cwd, "src", "decoy.ts"), FACTORY_SCRIPT);
+      const result = await runSetupDebug({
+        cwd,
+        chooseScript: async () => {
+          throw new Error("chooser must not run for a single boot-path candidate");
+        },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("src/player.ts");
+      expect(result.bootPath).toEqual([
+        "game.project",
+        "main.collection",
+        "player",
+        "/src/player.ts.script",
+      ]);
+      expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).toContain(BLOCK_BEGIN);
+      expect(readFileSync(path.join(cwd, "src", "decoy.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("several boot-path candidates use the injected chooser", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootProject(cwd, [
+        { id: "player", src: "src/player.ts" },
+        { id: "hud", src: "src/hud.ts" },
+      ]);
+      const result = await runSetupDebug({
+        cwd,
+        chooseScript: async (candidates) => {
+          expect([...candidates].sort()).toEqual(["src/hud.ts", "src/player.ts"]);
+          return "src/player.ts";
+        },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("src/player.ts");
+      expect(result.bootPath?.[result.bootPath.length - 1]).toBe("/src/player.ts.script");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("several boot-path candidates with --json error without mutating", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootProject(cwd, [
+        { id: "player", src: "src/player.ts" },
+        { id: "hud", src: "src/hud.ts" },
+      ]);
+      const result = await runSetupDebug({ cwd, json: true });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("src/hud.ts");
+      expect(result.error).toContain("src/player.ts");
+      expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).not.toContain(LLDEBUGGER_URL);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("falls back to the src scan when no boot-path script is reachable", async () => {
+    const cwd = tempProject();
+    try {
+      writeFileSync(
+        path.join(cwd, "game.project"),
+        "[project]\ntitle = demo\n\n[bootstrap]\nmain_collection = /main.collectionc\n",
+      );
+      writeFileSync(
+        path.join(cwd, "main.collection"),
+        embeddedScript("logic", "/main/main.script"),
+      );
+      mkdirSync(path.join(cwd, "src"), { recursive: true });
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("src/player.ts");
+      expect(result.bootPath).toEqual([]);
+      expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).toContain(BLOCK_BEGIN);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("strips the managed block from every non-target script, keeping exactly one", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootProject(cwd, [{ id: "player", src: "src/player.ts" }]);
+      for (const rel of ["src/player.ts", "src/old1.ts", "src/old2.ts"]) {
+        writeFileSync(path.join(cwd, rel), injectDebugBootstrap(FACTORY_SCRIPT));
+      }
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("src/player.ts");
+      expect([...(result.removedFrom ?? [])].sort()).toEqual(["src/old1.ts", "src/old2.ts"]);
+      expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).toContain(BLOCK_BEGIN);
+      expect(readFileSync(path.join(cwd, "src", "old1.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+      expect(readFileSync(path.join(cwd, "src", "old2.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+      // the stripped file is otherwise intact
+      expect(readFileSync(path.join(cwd, "src", "old1.ts"), "utf8")).toContain("defineScript({");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+});
+
 // The regression teeth for Bug 08: the wired project must type-check clean.
 function linkTypes(cwd: string): void {
   const scope = path.join(cwd, "node_modules", "@defold-typescript");

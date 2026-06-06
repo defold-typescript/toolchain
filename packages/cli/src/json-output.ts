@@ -11,6 +11,9 @@ export interface RenderResultInput {
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
+  readonly addedTo?: string;
+  readonly removedFrom?: readonly string[];
+  readonly bootPath?: readonly string[];
   readonly subcommand?: string;
   readonly exitCode?: number;
 }
@@ -37,8 +40,11 @@ export function renderResult(input: RenderResultInput): string {
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;
-  const withSub =
-    "subcommand" in input ? { ...withActions, subcommand: input.subcommand } : withActions;
+  const withAdded = "addedTo" in input ? { ...withActions, addedTo: input.addedTo } : withActions;
+  const withRemoved =
+    "removedFrom" in input ? { ...withAdded, removedFrom: input.removedFrom } : withAdded;
+  const withBoot = "bootPath" in input ? { ...withRemoved, bootPath: input.bootPath } : withRemoved;
+  const withSub = "subcommand" in input ? { ...withBoot, subcommand: input.subcommand } : withBoot;
   const payload = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
   return `${JSON.stringify(payload)}\n`;
 }

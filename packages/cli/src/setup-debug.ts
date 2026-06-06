@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+import { resolveBootPathScripts } from "./boot-path";
 import { scanFilesSync } from "./scan";
 import { isSkipped } from "./script-kind";
 
@@ -127,7 +128,7 @@ if (sys.get_engine_info().is_debug) {
 }
 `;
 
-export type FileAction = "injected" | "refreshed" | "unchanged";
+export type FileAction = "injected" | "refreshed" | "unchanged" | "removed";
 
 export interface UpsertResult {
   readonly text: string;
@@ -180,6 +181,40 @@ export function injectDebugBootstrap(source: string): string {
   return upsertManagedBlock(source).text;
 }
 
+export interface StripResult {
+  readonly text: string;
+  readonly removed: boolean;
+}
+
+// Remove the single managed BEGIN…END pair (and the blank lines the inject
+// prepended) so the block survives in exactly the chosen entry script. A file
+// with no block is left untouched; a malformed region is refused, mirroring
+// `upsertManagedBlock`, so the tool never guesses the extent and deletes code.
+export function stripManagedBlock(source: string): StripResult {
+  const begins = occurrences(source, BLOCK_BEGIN);
+  const ends = occurrences(source, BLOCK_END);
+
+  if (begins === 0 && ends === 0) {
+    return { text: source, removed: false };
+  }
+  if (begins !== ends || begins > 1) {
+    throw new Error(
+      "defold-typescript setup-debug: malformed managed block (mismatched, duplicate, or out-of-order sentinels); refusing to edit.",
+    );
+  }
+
+  const beginAt = source.indexOf(BLOCK_BEGIN);
+  const endAt = source.indexOf(BLOCK_END);
+  if (endAt < beginAt) {
+    throw new Error(
+      "defold-typescript setup-debug: malformed managed block (END before BEGIN); refusing to edit.",
+    );
+  }
+  const regionEnd = endAt + BLOCK_END.length;
+  const after = source.slice(regionEnd).replace(/^\n{1,2}/, "");
+  return { text: source.slice(0, beginAt) + after, removed: true };
+}
+
 function hasFactoryCall(text: string): boolean {
   return FACTORY_NAMES.some((name) => text.includes(`${name}(`));
 }
@@ -208,6 +243,14 @@ export interface SetupDebugResult {
   readonly actions: Record<string, FileAction>;
   readonly manualSteps: readonly string[];
   readonly error?: string;
+  readonly addedTo?: string;
+  readonly removedFrom?: string[];
+  readonly bootPath?: string[];
+}
+
+interface ResolvedTarget {
+  readonly target: string;
+  readonly bootPath: string[];
 }
 
 function failure(error: string): SetupDebugResult {
@@ -222,32 +265,65 @@ async function defaultChooseScript(candidates: string[]): Promise<string> {
   });
 }
 
-async function resolveTargetScript(opts: SetupDebugOptions): Promise<string | SetupDebugResult> {
-  const { cwd, script, json = false, chooseScript } = opts;
-  if (script !== undefined) {
-    if (!existsSync(path.join(cwd, script))) {
-      return failure(`defold-typescript setup-debug: script not found: ${script}`);
-    }
-    return script;
-  }
-
-  const candidates = findEntryScriptCandidates(cwd);
-  if (candidates.length === 0) {
-    return failure(
-      "defold-typescript setup-debug: no entry script with a lifecycle factory call found under src/.",
-    );
-  }
+async function pickCandidate(
+  candidates: string[],
+  opts: SetupDebugOptions,
+): Promise<string | SetupDebugResult> {
   if (candidates.length === 1) {
     return candidates[0] as string;
   }
-
-  const chooser = chooseScript ?? (json ? undefined : defaultChooseScript);
+  const chooser = opts.chooseScript ?? (opts.json ? undefined : defaultChooseScript);
   if (chooser === undefined) {
     return failure(
       `defold-typescript setup-debug: multiple entry scripts found (${candidates.join(", ")}); pass --script to choose one.`,
     );
   }
   return chooser(candidates);
+}
+
+// Prefer a script on the Defold boot path (game.project -> collections ->
+// `.ts.script`); fall back to today's `src/` factory-call scan only when the
+// boot path reaches no script. `--script` always wins, carrying the boot-path
+// trace for the report when the named file is itself on the path.
+async function resolveTargetScript(
+  opts: SetupDebugOptions,
+): Promise<ResolvedTarget | SetupDebugResult> {
+  const { cwd, script } = opts;
+  const bootCandidates = resolveBootPathScripts(cwd).filter((entry) =>
+    existsSync(path.join(cwd, entry.candidate)),
+  );
+
+  if (script !== undefined) {
+    if (!existsSync(path.join(cwd, script))) {
+      return failure(`defold-typescript setup-debug: script not found: ${script}`);
+    }
+    const onPath = bootCandidates.find((entry) => entry.candidate === script);
+    return { target: script, bootPath: onPath?.trace ?? [] };
+  }
+
+  if (bootCandidates.length > 0) {
+    const picked = await pickCandidate(
+      bootCandidates.map((entry) => entry.candidate),
+      opts,
+    );
+    if (typeof picked !== "string") {
+      return picked;
+    }
+    const onPath = bootCandidates.find((entry) => entry.candidate === picked);
+    return { target: picked, bootPath: onPath?.trace ?? [] };
+  }
+
+  const scanned = findEntryScriptCandidates(cwd);
+  if (scanned.length === 0) {
+    return failure(
+      "defold-typescript setup-debug: no entry script with a lifecycle factory call found under src/.",
+    );
+  }
+  const picked = await pickCandidate(scanned, opts);
+  if (typeof picked !== "string") {
+    return picked;
+  }
+  return { target: picked, bootPath: [] };
 }
 
 export async function runSetupDebug(opts: SetupDebugOptions): Promise<SetupDebugResult> {
@@ -259,10 +335,11 @@ export async function runSetupDebug(opts: SetupDebugOptions): Promise<SetupDebug
     );
   }
 
-  const target = await resolveTargetScript(opts);
-  if (typeof target !== "string") {
-    return target;
+  const resolved = await resolveTargetScript(opts);
+  if (!("target" in resolved)) {
+    return resolved;
   }
+  const { target, bootPath } = resolved;
 
   const written: string[] = [];
   const actions: Record<string, FileAction> = {};
@@ -300,5 +377,37 @@ export async function runSetupDebug(opts: SetupDebugOptions): Promise<SetupDebug
   }
   written.push("game.project");
 
-  return { ok: true, written, actions, manualSteps: MANUAL_STEPS };
+  // Keep the bootstrap in exactly one script: strip a stale managed block from
+  // every other `src/` script. A malformed block elsewhere is left alone (the
+  // strip refuses it) rather than aborting the wiring of the chosen target.
+  const removedFrom: string[] = [];
+  for (const rel of scanFilesSync(cwd, "src/**/*.ts")) {
+    if (isSkipped(rel) || rel === target) {
+      continue;
+    }
+    const otherPath = path.join(cwd, rel);
+    const otherSource = readFileSync(otherPath, "utf8");
+    let stripped: StripResult;
+    try {
+      stripped = stripManagedBlock(otherSource);
+    } catch {
+      continue;
+    }
+    if (stripped.removed) {
+      writeFileSync(otherPath, stripped.text);
+      actions[rel] = "removed";
+      removedFrom.push(rel);
+    }
+  }
+  removedFrom.sort();
+
+  return {
+    ok: true,
+    written,
+    actions,
+    manualSteps: MANUAL_STEPS,
+    addedTo: target,
+    removedFrom,
+    bootPath,
+  };
 }
