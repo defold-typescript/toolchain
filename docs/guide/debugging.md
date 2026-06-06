@@ -4,7 +4,7 @@ Step through your TypeScript with breakpoints set directly in the `.ts` source, 
 
 ## What `init` scaffolds
 
-Running `bunx @defold-typescript/cli init` sets up the whole debug path:
+Running `bunx @defold-typescript/cli@latest init` sets up the whole debug path:
 
 - `extensions.json` recommends `tomblind.local-lua-debugger-vscode` — the one required third-party extension for debugging. (Defold Kit is no longer recommended; sumneko Lua is an optional aid for reading generated Lua. See [editor setup](editor-setup.md).)
 - `launch.json` adds a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`. It also sets `scriptFiles` (`src/**/*.ts.script`) and `scriptRoots` (`.`, `src`). Local Lua Debugger (>=0.3.0) pre-scans `scriptFiles` for the emitted `--# sourceMappingURL=` trailers to resolve `.ts` breakpoints ahead of time — without it, no source-mapped breakpoint binds — and uses `scriptRoots` to resolve the running Defold chunk path and the map's bare `sources` entry back to files on disk.

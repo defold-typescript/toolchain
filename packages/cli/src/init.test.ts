@@ -326,10 +326,10 @@ describe("runInit (repairs stale managed devDeps)", () => {
 describe("scaffolded deps satisfy the managed mise tasks", () => {
   test("the package providing the defold-typescript bin is a scaffolded devDependency", () => {
     // The managed `defold-typescript:build`/`:watch` tasks run
-    // `bunx --no-install defold-typescript`, which only resolves a locally
-    // installed bin. That bin ships in `@defold-typescript/cli`, so the
-    // scaffold must always install it — guard against the dep ever dropping.
-    expect(MISE_TASKS_TOML).toContain("bunx --no-install defold-typescript");
+    // `bunx @defold-typescript/cli`. Inside an installed project bunx resolves
+    // the pinned local bin from `@defold-typescript/cli`, so the scaffold must
+    // always install it — guard against the dep ever dropping.
+    expect(MISE_TASKS_TOML).toContain("bunx @defold-typescript/cli");
     expect(SCAFFOLD_DEV_DEPS).toHaveProperty("@defold-typescript/cli");
   });
 });

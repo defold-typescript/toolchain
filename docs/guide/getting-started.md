@@ -22,6 +22,9 @@ The package is scoped, so run it through `bunx` by its full name — no install 
 bunx @defold-typescript/cli@latest init
 ```
 
+> `init` also generates a `mise.toml`. If you already have [mise](https://mise.jdx.dev) installed, it flags the new file as untrusted — run `mise trust` once to approve it.
+> After that, `mise run` (or its shorthand `mise r`) lets you pick one of the scaffolded tasks interactively.
+
 Use the `@latest` tag when you scaffold: `bunx` caches binaries, and `init` is
 what writes your `@defold-typescript/types` version pin, so a stale cache would
 pin an older release. `@latest` always scaffolds against the current version.
@@ -53,8 +56,9 @@ bun install
 
 Run `bun install` once after `init`. The scaffold only declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
-types, `@biomejs/biome` for lint and format) — `install` is what actually puts
-them in `node_modules`. Skip it and your editor reports the Defold globals as
+types, `@defold-typescript/cli` pinned to the same version so the build runs in
+lockstep with those types, and `@biomejs/biome` for lint and format) — `install`
+is what actually puts them in `node_modules`. Skip it and your editor reports the Defold globals as
 unresolved. `init` does not install for you (that keeps scaffolding offline), so
 it prints a `Next: run <pm> install` reminder once it finishes, picking the
 package manager from the runner that invoked it (`bun`/`npm`/`pnpm`/`yarn`,
@@ -70,15 +74,19 @@ If the scaffolded `@defold-typescript/types` pin still looks older than the CLI 
 Open `src/main.ts` and replace its body with:
 
 ```ts
-function init(this: unknown): void {
-  const start = vmath.vector3(0, 0, 0);
-  const offset = vmath.vector3(1, 1, 0);
-  const target = start.add(offset);
-  print(`target: ${target.x}, ${target.y}, ${target.z}`);
-}
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    const start = vmath.vector3(0, 0, 0);
+    const offset = vmath.vector3(1, 1, 0);
+    const target = start.add(offset);
+    print(`target: ${target.x}, ${target.y}, ${target.z}`);
+  },
+});
 ```
 
-`vmath`, `print`, and the `Vector3` shape are available as ambient globals — no imports needed.
+`defineScript` is the one import — it wires `init` (and the other lifecycle hooks) to Defold's script table. `vmath`, `print`, and the `Vector3` shape are ambient globals, so they need no import.
 
 ## Build to Lua
 
@@ -87,6 +95,8 @@ bunx @defold-typescript/cli build
 ```
 
 The build command transpiles every TypeScript file under `src/` to Lua and writes the output into the Defold project tree. Open the project in the [Defold editor](./defold-editor.md) (or run it from the command line) to play it.
+
+The everyday commands carry no version tag: inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the version locked alongside your `@defold-typescript/types`. Reserve `@latest` for `init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
 
 ## Iterate
 
@@ -105,7 +115,7 @@ itself from the command line — no editor — drive Defold's headless build too
 ```sh
 bunx @defold-typescript/cli defold resolve   # fetch library dependencies
 bunx @defold-typescript/cli defold build     # debug build into build/default
-bunx @defold-typescript/cli defold bundle     # bundle a platform target
+bunx @defold-typescript/cli defold bundle    # bundle a platform target
 ```
 
 The first run downloads a version-matched `bob.jar` into a cache dir

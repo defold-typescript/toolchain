@@ -9,13 +9,13 @@ describe("MISE_TASKS_TOML", () => {
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:setup-debug"]');
   });
 
-  test("setup-debug runs the installed CLI via bunx --no-install", () => {
-    expect(MISE_TASKS_TOML).toContain('run = "bunx --no-install defold-typescript setup-debug"');
+  test("setup-debug runs the CLI via bunx @defold-typescript/cli", () => {
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli setup-debug"');
   });
 
-  test("build and watch invoke the installed CLI via bunx --no-install", () => {
-    expect(MISE_TASKS_TOML).toContain('run = "bunx --no-install defold-typescript build"');
-    expect(MISE_TASKS_TOML).toContain('run = "bunx --no-install defold-typescript watch"');
+  test("build and watch invoke the CLI via bunx @defold-typescript/cli", () => {
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli build"');
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli watch"');
   });
 
   test("upgrade is the two-command @latest init --force then bun install array", () => {
@@ -71,7 +71,7 @@ describe("mergeMiseToml", () => {
     const stale = `[tasks.foo]\nrun = "echo hi"\n\n# managed by @defold-typescript\n[tasks."defold-typescript:build"]\nrun = "old"\n`;
     const merged = mergeMiseToml(stale);
 
-    expect(merged).toContain('run = "bunx --no-install defold-typescript build"');
+    expect(merged).toContain('run = "bunx @defold-typescript/cli build"');
     expect(merged).not.toContain('run = "old"');
     expect(merged).toContain('[tasks.foo]\nrun = "echo hi"');
   });

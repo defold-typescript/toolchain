@@ -1,12 +1,12 @@
 # managed by @defold-typescript
 [tasks."defold-typescript:build"]
-description = "Build the TypeScript sources with the installed defold-typescript CLI"
-run = "bunx --no-install defold-typescript build"
+description = "Build the TypeScript sources with the defold-typescript CLI"
+run = "bunx @defold-typescript/cli build"
 
 # managed by @defold-typescript
 [tasks."defold-typescript:watch"]
-description = "Watch and rebuild the TypeScript sources with the installed defold-typescript CLI"
-run = "bunx --no-install defold-typescript watch"
+description = "Watch and rebuild the TypeScript sources with the defold-typescript CLI"
+run = "bunx @defold-typescript/cli watch"
 
 # managed by @defold-typescript
 [tasks."defold-typescript:upgrade"]

@@ -270,8 +270,8 @@ function typesVersionSpec(): string {
 }
 
 // @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
-// (the local bin the managed `bunx --no-install defold-typescript` mise tasks
-// resolve) both ship into the consumer. The transpiler must NOT be a direct
+// (the local bin the managed `bunx @defold-typescript/cli` mise tasks resolve
+// inside an installed project) both ship into the consumer. The transpiler must NOT be a direct
 // consumer dep — it arrives transitively through the CLI. Pin both managed deps
 // to this CLI's own version so the coordinated-release set stays in lockstep.
 export const SCAFFOLD_DEV_DEPS: Record<string, string> = {

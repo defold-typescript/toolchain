@@ -5,7 +5,7 @@
 `init` **returns** the script's initial state — it does not receive and mutate `self`. That return is the single site TypeScript infers the `self` type (`TSelf`) from, so you write the field set once and every other hook's `self` is typed from it. No explicit type argument is needed:
 
 ```ts
-import { defineGuiScript, defineScript, type Hash } from "@defold-typescript/types";
+import { defineScript } from "@defold-typescript/types";
 
 export default defineScript({
   init: () => ({ speed: 120 }),
@@ -31,12 +31,18 @@ export default defineScript({
     }
   },
 });
+```
+
+Each source file is exactly one Defold script of one kind: you export a single factory call as `default`, never two in the same file, and a `.script` and a `.gui_script` are always separate files. A script with no `init` to infer `self` from — or one whose state you want to name up front — uses the explicit type-argument escape hatch instead, in its own file:
+
+```ts
+import { defineGuiScript, type Hash } from "@defold-typescript/types";
 
 type MenuSelf = {
   root: Hash;
 };
 
-export const menu = defineGuiScript<MenuSelf>({
+export default defineGuiScript<MenuSelf>({
   on_input(_self, action_id, action) {
     if (action_id === undefined) {
       return;
@@ -50,7 +56,7 @@ export const menu = defineGuiScript<MenuSelf>({
 });
 ```
 
-The `menu` script above shows the escape hatch: pass an explicit type argument (`defineGuiScript<MenuSelf>`) when a script has no `init` to infer from, or to pin `self` to a named interface. With an explicit argument, `init`'s return is checked against it rather than inferred from it.
+With an explicit type argument (`defineGuiScript<MenuSelf>`), `init`'s return is checked against `MenuSelf` rather than inferred from it.
 
 Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example.
 
@@ -153,4 +159,4 @@ The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, s
 
 Under that config `gui.*` and the universal namespaces type-check while `render.*` is a compile error. The default `@defold-typescript/types` keeps every namespace for back-compat, so existing projects need no change.
 
-`bunx @defold-typescript/cli init` auto-selects this entrypoint for you from the project's script kind(s). A single-kind project — including a fresh scaffold, whose lone `main.script` resolves to `@defold-typescript/types/script` — is walled automatically; a mixed-kind or kindless project keeps the full-surface default. `init --json` reports the chosen kind as `scriptKind` (`null` when the full surface is kept). `bunx @defold-typescript/cli build` re-detects the script kind and re-narrows the active surface, so adding a script kind after `init` is picked up on the next build — the materialized surface drops the forbidden restricted namespaces — while mixed-kind or kindless projects build against the full surface. `build --json` reports the re-detected kind as `scriptKind`. `bunx @defold-typescript/cli watch` re-detects the script kind too: it narrows the active surface at startup and re-narrows live whenever a `.script`/`.gui_script`/`.render_script` component file is added or removed, so the wall tracks the project without restarting the watcher. A ref-doc version pin keeps the full surface under `watch` (no on-the-fly materialization).
+`bunx @defold-typescript/cli@latest init` auto-selects this entrypoint for you from the project's script kind(s). A single-kind project — including a fresh scaffold, whose lone `main.script` resolves to `@defold-typescript/types/script` — is walled automatically; a mixed-kind or kindless project keeps the full-surface default. `init --json` reports the chosen kind as `scriptKind` (`null` when the full surface is kept). `bunx @defold-typescript/cli build` re-detects the script kind and re-narrows the active surface, so adding a script kind after `init` is picked up on the next build — the materialized surface drops the forbidden restricted namespaces — while mixed-kind or kindless projects build against the full surface. `build --json` reports the re-detected kind as `scriptKind`. `bunx @defold-typescript/cli watch` re-detects the script kind too: it narrows the active surface at startup and re-narrows live whenever a `.script`/`.gui_script`/`.render_script` component file is added or removed, so the wall tracks the project without restarting the watcher. A ref-doc version pin keeps the full surface under `watch` (no on-the-fly materialization).

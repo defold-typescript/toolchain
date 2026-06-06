@@ -54,7 +54,7 @@ not in editor metadata. You declare it in `package.json` under the
 }
 ```
 
-`bunx @defold-typescript/cli init` seeds this key with the current-stable version when it
+`bunx @defold-typescript/cli@latest init` seeds this key with the current-stable version when it
 creates or augments a `package.json`, and leaves an existing pin untouched.
 
 The active version resolves with this precedence:
