@@ -51,13 +51,13 @@ declare global {
      * @param srcoffset - the offset to start copying data from
      * @param count - the number of elements to copy
      * @example
-     * ```lua
-     * How to copy elements (e.g. vertices) from one buffer to another
-     * -- copy entire buffer
-     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, 0, #srcbuffer)
+     * ```ts
+     * // How to copy elements (e.g. vertices) from one buffer to another
+     * // copy entire buffer
+     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, 0, srcbuffer.length);
      *
-     * -- copy last 10 elements to the front of another buffer
-     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, #srcbuffer - 10, 10)
+     * // copy last 10 elements to the front of another buffer
+     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, srcbuffer.length - 10, 10);
      * ```
      */
     function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
@@ -72,12 +72,12 @@ declare global {
      * @param srcoffset - the offset to start copying data from (measured in value type)
      * @param count - the number of values to copy (measured in value type)
      * @example
-     * ```lua
-     * How to update a texture of a sprite:
-     * -- copy entire stream
-     * local srcstream = buffer.get_stream(srcbuffer, hash("xyz"))
-     * local dststream = buffer.get_stream(dstbuffer, hash("xyz"))
-     * buffer.copy_stream(dststream, 0, srcstream, 0, #srcstream)
+     * ```ts
+     * // How to update a texture of a sprite:
+     * // copy entire stream
+     * const srcstream = buffer.get_stream(srcbuffer, hash("xyz"));
+     * const dststream = buffer.get_stream(dstbuffer, hash("xyz"));
+     * buffer.copy_stream(dststream, 0, srcstream, 0, srcstream.length);
      * ```
      */
     function copy_stream(dst: Opaque<"bufferstream">, dstoffset: number, src: Opaque<"bufferstream">, srcoffset: number, count: number): void;
@@ -94,21 +94,24 @@ declare global {
      * - number `count`: The number of values each element should hold
      * @returns the new buffer
      * @example
-     * ```lua
-     * How to create and initialize a buffer
-     * function init(self)
-     *   local size = 128
-     *   self.image = buffer.create( size * size, { {name=hash("rgb"), type=buffer.VALUE_TYPE_UINT8, count=3 } })
-     *   self.imagestream = buffer.get_stream(self.image, hash("rgb"))
+     * ```ts
+     * // How to create and initialize a buffer
+     * export default defineScript({
+     *   init(self) {
+     *     const size = 128;
+     *     self.image = buffer.create(size * size, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+     *     self.imagestream = buffer.get_stream(self.image, hash("rgb"));
      *
-     *   for y=0,self.height-1 do
-     *      for x=0,self.width-1 do
-     *          local index = y * self.width * 3 + x * 3 + 1
-     *          self.imagestream[index + 0] = self.r
-     *          self.imagestream[index + 1] = self.g
-     *          self.imagestream[index + 2] = self.b
-     *      end
-     *   end
+     *     for (let y = 0; y < self.height; y++) {
+     *       for (let x = 0; x < self.width; x++) {
+     *         const index = y * self.width * 3 + x * 3;
+     *         self.imagestream[index + 0] = self.r;
+     *         self.imagestream[index + 1] = self.g;
+     *         self.imagestream[index + 2] = self.b;
+     *       }
+     *     }
+     *   },
+     * });
      * ```
      */
     function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<"constant">; count?: number }): Opaque<"buffer">;
@@ -126,11 +129,11 @@ declare global {
      * @param buf - the buffer to get the metadata from
      * @param metadata_name - name of the metadata entry
      * @example
-     * ```lua
-     * How to get a metadata entry from a buffer
-     * -- retrieve a metadata entry named "somefloats" and its nomeric type
-     * local values, type = buffer.get_metadata(buf, hash("somefloats"))
-     * if metadata then print(#metadata.." values in 'somefloats'") end
+     * ```ts
+     * // How to get a metadata entry from a buffer
+     * // retrieve a metadata entry named "somefloats" and its numeric type
+     * const [values, type] = buffer.get_metadata(buf, hash("somefloats"));
+     * if (values) print(`${values.length} values in 'somefloats'`);
      * ```
      */
     function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | unknown, Opaque<"constant"> | unknown]>;
@@ -151,13 +154,13 @@ declare global {
      * @param values - actual metadata, an array of numeric values
      * @param value_type - type of values when stored
      * @example
-     * ```lua
-     * How to set a metadata entry on a buffer
-     * -- create a new metadata entry with three floats
-     * buffer.set_metadata(buf, hash("somefloats"), {1.5, 3.2, 7.9}, buffer.VALUE_TYPE_FLOAT32)
-     * -- ...
-     * -- update to a new set of values
-     * buffer.set_metadata(buf, hash("somefloats"), {-2.5, 10.0, 32.2}, buffer.VALUE_TYPE_FLOAT32)
+     * ```ts
+     * // How to set a metadata entry on a buffer
+     * // create a new metadata entry with three floats
+     * buffer.set_metadata(buf, hash("somefloats"), [1.5, 3.2, 7.9], buffer.VALUE_TYPE_FLOAT32);
+     * // ...
+     * // update to a new set of values
+     * buffer.set_metadata(buf, hash("somefloats"), [-2.5, 10.0, 32.2], buffer.VALUE_TYPE_FLOAT32);
      * ```
      */
     function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: Opaque<"constant">): void;

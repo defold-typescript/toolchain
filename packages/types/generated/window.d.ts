@@ -114,24 +114,26 @@ declare global {
      * - number `width`: The width of a resize event. nil otherwise.
      * - number `height`: The height of a resize event. nil otherwise.
      * @example
-     * ```lua
-     * function window_callback(self, event, data)
-     *     if event == window.WINDOW_EVENT_FOCUS_LOST then
-     *         print("window.WINDOW_EVENT_FOCUS_LOST")
-     *     elseif event == window.WINDOW_EVENT_FOCUS_GAINED then
-     *         print("window.WINDOW_EVENT_FOCUS_GAINED")
-     *     elseif event == window.WINDOW_EVENT_ICONFIED then
-     *         print("window.WINDOW_EVENT_ICONFIED")
-     *     elseif event == window.WINDOW_EVENT_DEICONIFIED then
-     *         print("window.WINDOW_EVENT_DEICONIFIED")
-     *     elseif event == window.WINDOW_EVENT_RESIZED then
-     *         print("Window resized: ", data.width, data.height)
-     *     end
-     * end
+     * ```ts
+     * function window_callback(self, event, data) {
+     *   if (event === window.WINDOW_EVENT_FOCUS_LOST) {
+     *     print("window.WINDOW_EVENT_FOCUS_LOST");
+     *   } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {
+     *     print("window.WINDOW_EVENT_FOCUS_GAINED");
+     *   } else if (event === window.WINDOW_EVENT_ICONFIED) {
+     *     print("window.WINDOW_EVENT_ICONFIED");
+     *   } else if (event === window.WINDOW_EVENT_DEICONIFIED) {
+     *     print("window.WINDOW_EVENT_DEICONIFIED");
+     *   } else if (event === window.WINDOW_EVENT_RESIZED) {
+     *     print("Window resized: ", data.width, data.height);
+     *   }
+     * }
      *
-     * function init(self)
-     *     window.set_listener(window_callback)
-     * end
+     * export default defineScript({
+     *   init() {
+     *     window.set_listener(window_callback);
+     *   },
+     * });
      * ```
      */
     function set_listener(callback?: (self: unknown, event: unknown, data: unknown) => void): void;

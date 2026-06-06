@@ -570,5 +570,317 @@
   "timer.trigger": {
     "sourceHash": "3d4814c0a3380acf",
     "ts": "self.handle = timer.delay(1, true, () => print(\"print every second or manually by timer.trigger\"));\n// ...\nconst result = timer.trigger(self.handle);\nif (!result) {\n  print(\"the timer is already cancelled or complete\");\n}"
+  },
+  "buffer.create": {
+    "sourceHash": "d83315970921bbc7",
+    "ts": "// How to create and initialize a buffer\nexport default defineScript({\n  init(self) {\n    const size = 128;\n    self.image = buffer.create(size * size, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    self.imagestream = buffer.get_stream(self.image, hash(\"rgb\"));\n\n    for (let y = 0; y < self.height; y++) {\n      for (let x = 0; x < self.width; x++) {\n        const index = y * self.width * 3 + x * 3;\n        self.imagestream[index + 0] = self.r;\n        self.imagestream[index + 1] = self.g;\n        self.imagestream[index + 2] = self.b;\n      }\n    }\n  },\n});"
+  },
+  "buffer.copy_stream": {
+    "sourceHash": "359ea94639622db5",
+    "ts": "// How to update a texture of a sprite:\n// copy entire stream\nconst srcstream = buffer.get_stream(srcbuffer, hash(\"xyz\"));\nconst dststream = buffer.get_stream(dstbuffer, hash(\"xyz\"));\nbuffer.copy_stream(dststream, 0, srcstream, 0, srcstream.length);"
+  },
+  "buffer.copy_buffer": {
+    "sourceHash": "314e1246a630d761",
+    "ts": "// How to copy elements (e.g. vertices) from one buffer to another\n// copy entire buffer\nbuffer.copy_buffer(dstbuffer, 0, srcbuffer, 0, srcbuffer.length);\n\n// copy last 10 elements to the front of another buffer\nbuffer.copy_buffer(dstbuffer, 0, srcbuffer, srcbuffer.length - 10, 10);"
+  },
+  "buffer.set_metadata": {
+    "sourceHash": "d2835d9dc456523a",
+    "ts": "// How to set a metadata entry on a buffer\n// create a new metadata entry with three floats\nbuffer.set_metadata(buf, hash(\"somefloats\"), [1.5, 3.2, 7.9], buffer.VALUE_TYPE_FLOAT32);\n// ...\n// update to a new set of values\nbuffer.set_metadata(buf, hash(\"somefloats\"), [-2.5, 10.0, 32.2], buffer.VALUE_TYPE_FLOAT32);"
+  },
+  "buffer.get_metadata": {
+    "sourceHash": "fab020678d7483db",
+    "ts": "// How to get a metadata entry from a buffer\n// retrieve a metadata entry named \"somefloats\" and its numeric type\nconst [values, type] = buffer.get_metadata(buf, hash(\"somefloats\"));\nif (values) print(`${values.length} values in 'somefloats'`);"
+  },
+  "http.request": {
+    "sourceHash": "170c94c250c1ce49",
+    "ts": "// Basic HTTP-GET request. The callback receives a table with the response\n// in the fields status, the response (the data) and headers (a table).\nexport default defineScript({\n  init() {\n    http.request(\n      \"http://www.google.com\",\n      \"GET\",\n      (self, _id, response) => {\n        if (response.bytes_total !== undefined) {\n          update_my_progress_bar(self, response.bytes_received / response.bytes_total);\n        } else {\n          print(response.status);\n          print(response.response);\n          pprint(response.headers);\n        }\n      },\n      undefined,\n      undefined,\n      { report_progress: true },\n    );\n  },\n});"
+  },
+  "image.load": {
+    "sourceHash": "d7c6b4708bd86c99",
+    "ts": "// How to load an image from an URL and create a GUI texture from it:\nconst imgurl = \"http://www.site.com/image.png\";\nhttp.request(imgurl, \"GET\", (self, id, response) => {\n  const img = image.load(response.response);\n  const tx = gui.new_texture(\"image_node\", img.width, img.height, img.type, img.buffer);\n});"
+  },
+  "image.load_buffer": {
+    "sourceHash": "55649cadc660e25e",
+    "ts": "// Load an image from an URL as a buffer and create a texture resource from it:\nconst imgurl = \"http://www.site.com/image.png\";\nhttp.request(imgurl, \"GET\", (self, id, response) => {\n  const img = image.load_buffer(response.response, { flip_vertically: true });\n  const tparams = {\n    width: img.width,\n    height: img.height,\n    type: graphics.TEXTURE_TYPE_2D,\n    format: graphics.TEXTURE_FORMAT_RGBA,\n  };\n\n  const my_texture_id = resource.create_texture(\"/my_custom_texture.texturec\", tparams, img.buffer);\n  // Apply the texture to a model\n  go.set(\"/go1#model\", \"texture0\", my_texture_id);\n});"
+  },
+  "image.get_astc_header": {
+    "sourceHash": "adae89354a89050a",
+    "ts": "// How to get the block size and dimensions from a .astc file\nconst [s] = sys.load_resource(\"/assets/cat.astc\");\nconst header = image.get_astc_header(s);\npprint(s);"
+  },
+  "json.decode": {
+    "sourceHash": "a9970c96ca5954c6",
+    "ts": "// Converting a string containing JSON data into a table:\nexport default defineScript({\n  init() {\n    const jsonstring = '{\"persons\":[{\"name\":\"John Doe\"},{\"name\":\"Darth Vader\"}]}';\n    const data = json.decode(jsonstring);\n    pprint(data);\n  },\n});\n\n// Results in the following printout:\n// {\n//   persons = {\n//     1 = {\n//       name = John Doe,\n//     }\n//     2 = {\n//       name = Darth Vader,\n//     }\n//   }\n// }"
+  },
+  "json.encode": {
+    "sourceHash": "e87a21865ef89cd4",
+    "ts": "// Convert a table to a JSON string:\nexport default defineScript({\n  init() {\n    const tbl = {\n      persons: [{ name: \"John Doe\" }, { name: \"Darth Vader\" }],\n    };\n    const jsonstring = json.encode(tbl);\n    pprint(jsonstring);\n  },\n});\n\n// Results in the following printout:\n// {\"persons\":[{\"name\":\"John Doe\"},{\"name\":\"Darth Vader\"}]}"
+  },
+  "liveupdate.get_mounts": {
+    "sourceHash": "f79283b7edf516cf",
+    "ts": "// Output the current resource mounts\npprint(\"MOUNTS\", liveupdate.get_mounts());\n\n// Give an output like:\n// DEBUG:SCRIPT: MOUNTS,\n// {\n//   1 = {\n//     name = \"liveupdate\",\n//     uri = \"zip:/device/path/to/acchives/liveupdate.zip\",\n//     priority = 5\n//   },\n//   2 = {\n//     name = \"_base\",\n//     uri = \"archive:build/default/game.dmanifest\",\n//     priority = -10\n//   }\n// }"
+  },
+  "liveupdate.add_mount": {
+    "sourceHash": "71fa57cf1b09f936",
+    "ts": "// Add multiple mounts. Higher priority takes precedence.\nliveupdate.add_mount(\"common\", \"zip:/path/to/common_stuff.zip\", 10, (result) => {}); // base pack\nliveupdate.add_mount(\"levelpack_1\", \"zip:/path/to/levels_1_to_20.zip\", 20, (result) => {}); // level pack\nliveupdate.add_mount(\"season_pack_1\", \"zip:/path/to/easter_pack_1.zip\", 30, (result) => {}); // season pack, overriding content in the other packs"
+  },
+  "liveupdate.remove_mount": {
+    "sourceHash": "4cd05fc6a53a9964",
+    "ts": "// Add multiple mounts. Higher priority takes precedence.\nliveupdate.remove_mount(\"season_pack_1\");"
+  },
+  "profiler.get_memory_usage": {
+    "sourceHash": "5c8e91a11be9384c",
+    "ts": "// Get memory usage before and after loading a collection:\nprint(profiler.get_memory_usage());\nmsg.post(\"#collectionproxy\", \"load\");\n// ...\nprint(profiler.get_memory_usage()); // will report a higher number than the initial call"
+  },
+  "profiler.enable": {
+    "sourceHash": "e1bfae1cc8bfaedd",
+    "ts": "// Show the profiler UI\nprofiler.enable(true);"
+  },
+  "profiler.enable_ui": {
+    "sourceHash": "65b549b66a4b72c2",
+    "ts": "// Show the profiler UI\nprofiler.enable_ui(true);"
+  },
+  "profiler.set_ui_mode": {
+    "sourceHash": "0a22390ad4d7be84",
+    "ts": "function start_recording() {\n  profiler.set_ui_mode(profiler.MODE_RECORD);\n}\n\nfunction stop_recording() {\n  profiler.set_ui_mode(profiler.MODE_PAUSE);\n}"
+  },
+  "profiler.set_ui_view_mode": {
+    "sourceHash": "04c7cd061143b3b2",
+    "ts": "// Minimize the profiler view\nprofiler.set_ui_view_mode(profiler.VIEW_MODE_MINIMIZED);"
+  },
+  "profiler.set_ui_vsync_wait_visible": {
+    "sourceHash": "fa50cc9d8110ac3d",
+    "ts": "// Exclude frame wait time from the profiler ui\nprofiler.set_ui_vsync_wait_visible(false);"
+  },
+  "profiler.recorded_frame_count": {
+    "sourceHash": "9d55df4a00c36560",
+    "ts": "// Show the last recorded frame\nconst recorded_frame_count = profiler.recorded_frame_count();\nprofiler.view_recorded_frame(recorded_frame_count);"
+  },
+  "profiler.view_recorded_frame": {
+    "sourceHash": "3423bf00c5abd4cb",
+    "ts": "// Go back one frame\nprofiler.view_recorded_frame({ distance: -1 });"
+  },
+  "profiler.log_text": {
+    "sourceHash": "86c7e0a666f0147e",
+    "ts": "profiler.log_text(`Event: ${name}`);"
+  },
+  "profiler.dump_frame": {
+    "sourceHash": "54342e4fc710032d",
+    "ts": "profiler.dump_frame();"
+  },
+  "profiler.scope_begin": {
+    "sourceHash": "fa297bd541df8930",
+    "ts": "// Go back one frame\nprofiler.scope_begin(\"test_function\");\ntest_function();\nprofiler.scope_end();"
+  },
+  "resource.material": {
+    "sourceHash": "5bc0271405b04027",
+    "ts": "// Load a material and set it to a sprite:\ngo.property(\"my_material\", resource.material(\"/material.material\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#sprite\", \"material\", self.my_material);\n  },\n});\n\n// Load a material resource and update a named material with the resource:\ngo.property(\"my_material\", resource.material(\"/material.material\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#gui\", \"materials\", self.my_material, { key: \"my_material\" });\n  },\n});"
+  },
+  "resource.font": {
+    "sourceHash": "f6d4ca24e4f87bfe",
+    "ts": "// Load a font and set it to a label:\ngo.property(\"my_font\", resource.font(\"/font.font\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#label\", \"font\", self.my_font);\n  },\n});\n\n// Load a font and set it to a gui:\ngo.property(\"my_font\", resource.font(\"/font.font\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#gui\", \"fonts\", self.my_font, { key: \"my_font\" });\n  },\n});"
+  },
+  "resource.texture": {
+    "sourceHash": "8cd63a7393c8a799",
+    "ts": "// Load a texture and set it to a model:\ngo.property(\"my_texture\", resource.texture(\"/texture.png\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#model\", \"texture0\", self.my_texture);\n  },\n});"
+  },
+  "resource.atlas": {
+    "sourceHash": "ee6a5c4c09121554",
+    "ts": "// Load an atlas and set it to a sprite:\ngo.property(\"my_atlas\", resource.atlas(\"/atlas.atlas\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#sprite\", \"image\", self.my_atlas);\n  },\n});\n\n// Load an atlas and set it to a gui:\ngo.property(\"my_atlas\", resource.atlas(\"/atlas.atlas\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#gui\", \"textures\", self.my_atlas, { key: \"my_atlas\" });\n  },\n});"
+  },
+  "resource.buffer": {
+    "sourceHash": "4353a4d474ea70b6",
+    "ts": "// Set a unique buffer it to a sprite:\ngo.property(\"my_buffer\", resource.buffer(\"/cube.buffer\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#mesh\", \"vertices\", self.my_buffer);\n  },\n});"
+  },
+  "resource.tile_source": {
+    "sourceHash": "517b23c5ce0e56c6",
+    "ts": "// Load tile source and set it to a tile map:\ngo.property(\"my_tile_source\", resource.tile_source(\"/tilesource.tilesource\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#tilemap\", \"tile_source\", self.my_tile_source);\n  },\n});"
+  },
+  "resource.render_target": {
+    "sourceHash": "87231742204d2351",
+    "ts": "// Set a render target color attachment as a model texture:\ngo.property(\"my_render_target\", resource.render_target(\"/rt.render_target\"));\n\nexport default defineScript({\n  init(self) {\n    const rt_info = resource.get_render_target_info(self.my_render_target);\n    go.set(\"#model\", \"texture0\", rt_info.attachments[0].texture);\n  },\n});"
+  },
+  "resource.set": {
+    "sourceHash": "fd3445f93ecdd85e",
+    "ts": "// Assuming the folder \"/res\" is added to the project custom resources:\n// load a texture resource and set it on a sprite\nconst buffer = resource.load(\"/res/new.texturec\");\nresource.set(go.get(\"#sprite\", \"texture0\"), buffer);"
+  },
+  "resource.load": {
+    "sourceHash": "051230427173b08a",
+    "ts": "// read custom resource data into buffer\nconst buffer = resource.load(\"/resources/datafile\");\n\n// In order for the engine to include custom resources in the build process, you\n// need to specify them in the \"game.project\" settings file:\n// [project]\n// title = My project\n// version = 0.1\n// custom_resources = resources/,assets/level_data.json"
+  },
+  "resource.create_texture": {
+    "sourceHash": "41e0481ae55c393d",
+    "ts": "// How to create an 128x128 RGBA texture resource and assign it to a model\nexport default defineScript({\n  init() {\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n    const my_texture_id = resource.create_texture(\"/my_custom_texture.texturec\", tparams);\n    go.set(\"#model\", \"texture0\", my_texture_id);\n  },\n});\n\n// How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object\nexport default defineScript({\n  init() {\n    // Create a new buffer with 4 components and FLOAT32 type\n    const tbuffer = buffer.create(128 * 128, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < 128; y++) {\n      for (let x = 0; x < 128; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 999.0;\n        tstream[index + 1] = -1.0;\n        tstream[index + 2] = 0.5;\n        tstream[index + 3] = 1.0;\n      }\n    }\n\n    // Create a 2D Texture with a RGBA23F format\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA32F,\n    };\n\n    // Note that we pass the buffer as the last argument here!\n    const my_texture_id = resource.create_texture(\"/my_custom_texture.texturec\", tparams, tbuffer);\n\n    // assign the texture to a model\n    go.set(\"#model\", \"texture0\", my_texture_id);\n  },\n});\n\n// How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader\nexport default defineScript({\n  init() {\n    const t_volume = resource.create_texture(\"/my_backing_texture.texturec\", {\n      type: graphics.TEXTURE_TYPE_IMAGE_3D,\n      width: 32,\n      height: 32,\n      depth: 32,\n      format: resource.TEXTURE_FORMAT_RGBA32F,\n      flags: resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,\n    });\n\n    // pass the backing texture to the render script\n    msg.post(\"@render:\", \"add_textures\", [t_volume]);\n  },\n});\n\n// How to create 512x512 texture array with 5 pages.\nconst new_tex = resource.create_texture(\"/runtime/example_array.texturec\", {\n  type: graphics.TEXTURE_TYPE_2D_ARRAY,\n  width: 512,\n  height: 512,\n  page_count: 5,\n  format: graphics.TEXTURE_FORMAT_RGB,\n});"
+  },
+  "resource.create_texture_async": {
+    "sourceHash": "b90223f19d598eaa",
+    "ts": "// Create a texture resource asyncronously with a buffer and a callback\nfunction callback(self, request_id, resource) {\n  // The resource has been updated with a new texture,\n  // so we can update other systems with the new handle,\n  // or update components to use the resource if we want\n  const tinfo = resource.get_texture_info(resource);\n  msg.post(\"@render:\", \"set_backing_texture\", tinfo.handle);\n}\n\nexport default defineScript({\n  init() {\n    // Create a texture resource async\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n\n    // Create a new buffer with 4 components\n    const tbuffer = buffer.create(tparams.width * tparams.height, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_UINT8, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < tparams.width; y++) {\n      for (let x = 0; x < tparams.height; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 255;\n        tstream[index + 1] = 0;\n        tstream[index + 2] = 255;\n        tstream[index + 3] = 255;\n      }\n    }\n    // create the texture\n    const [tpath, request_id] = resource.create_texture_async(\"/my_texture.texturec\", tparams, tbuffer, callback);\n    // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture\n    // that will be removed once the new texture has been updated\n    go.set(\"#model\", \"texture0\", tpath);\n  },\n});\n\n// Create a texture resource asyncronously without a callback\nexport default defineScript({\n  init() {\n    // Create a texture resource async\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n\n    // Create a new buffer with 4 components\n    const tbuffer = buffer.create(tparams.width * tparams.height, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_UINT8, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < tparams.width; y++) {\n      for (let x = 0; x < tparams.height; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 255;\n        tstream[index + 1] = 0;\n        tstream[index + 2] = 255;\n        tstream[index + 3] = 255;\n      }\n    }\n    // create the texture\n    const [tpath, request_id] = resource.create_texture_async(\"/my_texture.texturec\", tparams, tbuffer);\n    // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture\n    // that will be removed once the new texture has been updated\n    go.set(\"#model\", \"texture0\", tpath);\n  },\n});"
+  },
+  "resource.set_texture": {
+    "sourceHash": "48a7f4c2c8433aed",
+    "ts": "// How to set all pixels of an atlas\nexport default defineScript({\n  init(self) {\n    self.height = 128;\n    self.width = 128;\n    self.buffer = buffer.create(self.width * self.height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    self.stream = buffer.get_stream(self.buffer, hash(\"rgb\"));\n\n    for (let y = 0; y < self.height; y++) {\n      for (let x = 0; x < self.width; x++) {\n        const index = y * self.width * 3 + x * 3;\n        self.stream[index + 0] = 0xff;\n        self.stream[index + 1] = 0x80;\n        self.stream[index + 2] = 0x10;\n      }\n    }\n\n    const resource_path = go.get(\"#model\", \"texture0\");\n    const args = { width: self.width, height: self.height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };\n    resource.set_texture(resource_path, args, self.buffer);\n  },\n});\n\n// How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.\nexport default defineScript({\n  init(self) {\n    self.x = 16;\n    self.y = 16;\n    self.height = 128 - self.x * 2;\n    self.width = 128 - self.y * 2;\n    self.buffer = buffer.create(self.width * self.height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    self.stream = buffer.get_stream(self.buffer, hash(\"rgb\"));\n\n    for (let y = 0; y < self.height; y++) {\n      for (let x = 0; x < self.width; x++) {\n        const index = y * self.width * 3 + x * 3;\n        self.stream[index + 0] = 0xff;\n        self.stream[index + 1] = 0x80;\n        self.stream[index + 2] = 0x10;\n      }\n    }\n\n    const resource_path = go.get(\"#model\", \"texture0\");\n    const args = { width: self.width, height: self.height, x: self.x, y: self.y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };\n    resource.set_texture(resource_path, args, self.buffer);\n  },\n});\n\n// Update a texture from a buffer resource\ngo.property(\"my_buffer\", resource.buffer(\"/my_default_buffer.buffer\"));\n\nexport default defineScript({\n  init(self) {\n    const resource_path = go.get(\"#model\", \"texture0\");\n    // the \"my_buffer\" resource is expected to hold 128 * 128 * 3 bytes!\n    const args = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGB,\n    };\n    // Note that the extra resource.get_buffer call is a requirement here\n    // since the \"self.my_buffer\" is just pointing to a buffer resource path\n    // and not an actual buffer object or buffer resource.\n    resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer));\n  },\n});\n\n// Update an existing 3D texture from a buffer\nexport default defineScript({\n  init() {\n    // create a buffer that can hold the data of a 8x8x8 texture\n    const tbuffer = buffer.create(8 * 8 * 8, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // populate the buffer with some data\n    let index = 0;\n    for (let z = 0; z < 8; z++) {\n      for (let y = 0; y < 8; y++) {\n        for (let x = 0; x < 8; x++) {\n          tstream[index + 0] = x;\n          tstream[index + 1] = y;\n          tstream[index + 2] = z;\n          tstream[index + 3] = 1.0;\n          index = index + 4;\n        }\n      }\n    }\n\n    const t_args = {\n      type: graphics.TEXTURE_TYPE_IMAGE_3D,\n      width: 8,\n      height: 8,\n      depth: 8,\n      format: resource.TEXTURE_FORMAT_RGBA32F,\n    };\n\n    // This expects that the texture resource \"/my_3d_texture.texturec\" already exists\n    // and is a 3D texture resource. To create a dynamic 3D texture resource\n    // use the \"resource.create_texture\" function.\n    resource.set_texture(\"/my_3d_texture.texturec\", t_args, tbuffer);\n  },\n});\n\n// Update texture 2nd array page with loaded texture from png\n// new_tex is resource handle of texture which was created via resource.create_resource\nconst tex_path = \"/bundle_resources/page_02.png\";\nconst [data] = sys.load_resource(tex_path);\nconst buf = image.load_buffer(data);\nresource.set_texture(\n  new_tex,\n  {\n    type: graphics.TEXTURE_TYPE_2D_ARRAY,\n    width: buf.width,\n    height: buf.height,\n    page: 1,\n    format: graphics.TEXTURE_FORMAT_RGB,\n  },\n  buf.buffer,\n);\ngo.set(\"#mesh\", \"texture0\", new_tex);"
+  },
+  "resource.get_texture_info": {
+    "sourceHash": "4164f100ea5a8c15",
+    "ts": "// Create a new texture and get the metadata from it\nexport default defineScript({\n  init() {\n    // create an empty texture\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n\n    const my_texture_path = resource.create_texture(\"/my_texture.texturec\", tparams);\n    const my_texture_info = resource.get_texture_info(my_texture_path);\n\n    // my_texture_info now contains\n    // {\n    //      handle = <the-numeric-handle>,\n    //      width = 128,\n    //      height = 128,\n    //      depth = 1\n    //      mipmaps = 1,\n    //      page_count = 1,\n    //      type = graphics.TEXTURE_TYPE_2D,\n    //      flags = graphics.TEXTURE_USAGE_FLAG_SAMPLE\n    // }\n  },\n});\n\n// Get the meta data from an atlas resource\nexport default defineScript({\n  init() {\n    const my_atlas_info = resource.get_atlas(\"/my_atlas.a.texturesetc\");\n    const my_texture_info = resource.get_texture_info(my_atlas_info.texture);\n\n    // my_texture_info now contains the information about the texture that is backing the atlas\n  },\n});"
+  },
+  "resource.get_render_target_info": {
+    "sourceHash": "5e526c539ed8ae25",
+    "ts": "// Get the metadata from a render target resource\nexport default defineScript({\n  init() {\n    const info = resource.get_render_target_info(\"/my_render_target.render_targetc\");\n    // the info table contains meta data about all the render target attachments\n    // so it's not necessary to use resource.get_texture here, but we do it here\n    // just to show that it's possible:\n    const info_attachment_1 = resource.get_texture_info(info.attachments[0].handle);\n  },\n});\n\n// Get a texture attachment from a render target and set it on a model component\nexport default defineScript({\n  init() {\n    const info = resource.get_render_target_info(\"/my_render_target.render_targetc\");\n    const attachment = info.attachments[0].texture;\n    // you can also get texture info from the 'texture' field, since it's a resource hash\n    const texture_info = resource.get_texture_info(attachment);\n    go.set(\"#model\", \"texture0\", attachment);\n  },\n});"
+  },
+  "resource.create_atlas": {
+    "sourceHash": "987cf3d09a4ce250",
+    "ts": "// Create a backing texture and an atlas\nexport default defineScript({\n  init() {\n    // create an empty texture\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n    const my_texture_id = resource.create_texture(\"/my_texture.texturec\", tparams);\n\n    // optionally use resource.set_texture to upload data to texture\n\n    // create an atlas with one animation and one square geometry\n    // note that the function doesn't support hashes for the texture,\n    // you need to use a string for the texture path here aswell\n    const aparams = {\n      texture: \"/my_texture.texturec\",\n      animations: [\n        {\n          id: \"my_animation\",\n          width: 128,\n          height: 128,\n          frames: [1],\n        },\n      ],\n      geometries: [\n        {\n          id: \"idle0\",\n          width: 128,\n          height: 128,\n          pivot_x: 0.5,\n          pivot_y: 0.5,\n          vertices: [0, 0, 0, 128, 128, 128, 128, 0],\n          uvs: [0, 0, 0, 128, 128, 128, 128, 0],\n          indices: [0, 1, 2, 0, 2, 3],\n        },\n      ],\n    };\n    const my_atlas_id = resource.create_atlas(\"/my_atlas.texturesetc\", aparams);\n\n    // assign the atlas to the 'sprite' component on the same go\n    go.set(\"#sprite\", \"image\", my_atlas_id);\n  },\n});"
+  },
+  "resource.set_atlas": {
+    "sourceHash": "349576ce8a915179",
+    "ts": "// Add a new animation to an existing atlas\nexport default defineScript({\n  init() {\n    const data = resource.get_atlas(\"/main/my_atlas.a.texturesetc\");\n    const my_animation = {\n      id: \"my_new_animation\",\n      width: 128,\n      height: 128,\n      frame_start: 1,\n      frame_end: 6,\n      playback: go.PLAYBACK_LOOP_PINGPONG,\n      fps: 8,\n    };\n    data.animations.push(my_animation);\n    resource.set_atlas(\"/main/my_atlas.a.texturesetc\", data);\n  },\n});\n\n// Sets atlas data for a 256x256 texture with a single animation being rendered as a quad\nexport default defineScript({\n  init() {\n    const params = {\n      texture: \"/main/my_256x256_texture.texturec\",\n      animations: [\n        {\n          id: \"my_animation\",\n          width: 256,\n          height: 256,\n          frames: [1],\n        },\n      ],\n      geometries: [\n        {\n          vertices: [0, 0, 0, 256, 256, 256, 256, 0],\n          uvs: [0, 0, 0, 256, 256, 256, 256, 0],\n          indices: [0, 1, 2, 0, 2, 3],\n        },\n      ],\n    };\n    resource.set_atlas(\"/main/test.a.texturesetc\", params);\n  },\n});"
+  },
+  "resource.create_sound_data": {
+    "sourceHash": "19e6f6ab7a317fa1",
+    "ts": "export default defineScript({\n  init() {\n    // create a new sound resource, given the initial chunk of the file\n    const relative_path = \"/a/unique/resource/name.oggc\";\n    const hash = resource.create_sound_data(relative_path, { data, filesize, partial: true });\n    go.set(\"#music\", \"sound\", hash); // override the previous sound resource\n    sound.play(\"#music\"); // start the playing\n  },\n});"
+  },
+  "resource.create_buffer": {
+    "sourceHash": "436c1c10688cba69",
+    "ts": "// Create a buffer object and bind it to a buffer resource\nexport default defineScript({\n  init() {\n    const size = 1;\n    const positions = [\n      // triangle 1\n      size, size, 0,\n      -size, -size, 0,\n      size, -size, 0,\n      // triangle 2\n      size, size, 0,\n      -size, size, 0,\n      -size, -size, 0,\n    ];\n\n    const buffer_handle = buffer.create(positions.length, [\n      {\n        name: hash(\"position\"),\n        type: buffer.VALUE_TYPE_FLOAT32,\n        count: 3,\n      },\n    ]);\n\n    const stream = buffer.get_stream(buffer_handle, hash(\"position\"));\n\n    // transfer vertex data to buffer\n    for (let k = 0; k < positions.length; k++) {\n      stream[k] = positions[k];\n    }\n\n    const my_buffer = resource.create_buffer(\"/my_buffer.bufferc\", { buffer: buffer_handle });\n    go.set(\"/go#mesh\", \"vertices\", my_buffer);\n  },\n});\n\n// Create a buffer resource from existing resource\nexport default defineScript({\n  init() {\n    const res = resource.get_buffer(\"/my_buffer_path.bufferc\");\n    // create a cloned buffer resource from another resource buffer\n    const buf = resource.create_buffer(\"/my_cloned_buffer.bufferc\", { buffer: res });\n    // assign cloned buffer to a mesh component\n    go.set(\"/go#mesh\", \"vertices\", buf);\n  },\n});"
+  },
+  "resource.get_buffer": {
+    "sourceHash": "ed7d361c7f5d2e35",
+    "ts": "// How to get the data from a buffer\nexport default defineScript({\n  init() {\n    const res_path = go.get(\"#mesh\", \"vertices\");\n    const buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    for (let i = 0; i < stream_positions.length; i++) {\n      print(i, stream_positions[i]);\n    }\n  },\n});"
+  },
+  "resource.set_buffer": {
+    "sourceHash": "a52fd8ac7453f601",
+    "ts": "// How to set the data from a buffer\nfunction fill_stream(stream, verts) {\n  verts.forEach((value, key) => {\n    stream[key] = verts[key];\n  });\n}\n\nexport default defineScript({\n  init() {\n    const res_path = go.get(\"#mesh\", \"vertices\");\n\n    const positions = [\n      1, -1, 0,\n      1, 1, 0,\n      -1, -1, 0,\n    ];\n\n    const num_verts = positions.length / 3;\n\n    // create a new buffer\n    let buf = buffer.create(num_verts, [{ name: hash(\"position\"), type: buffer.VALUE_TYPE_FLOAT32, count: 3 }]);\n\n    buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    fill_stream(stream_positions, positions);\n\n    resource.set_buffer(res_path, buf);\n  },\n});"
+  },
+  "resource.get_text_metrics": {
+    "sourceHash": "d63156dd59513358",
+    "ts": "export default defineScript({\n  init() {\n    const font = go.get(\"#label\", \"font\");\n    const metrics = resource.get_text_metrics(font, \"The quick brown fox\\n jumps over the lazy dog\");\n    pprint(metrics);\n  },\n});"
+  },
+  "socket.skip": {
+    "sourceHash": "3a75c35a80c48e9e",
+    "ts": "// Instead of doing the following with dummy variables:\n// get the status code and separator from SMTP server reply\nconst [dummy1, dummy2, code, sep] = string.find(line, \"^(%d%d%d)(.?)\");\n\n// You can skip a number of variables:\n// get the status code and separator from SMTP server reply\nconst [code, sep] = socket.skip(2, string.find(line, \"^(%d%d%d)(.?)\"));"
+  },
+  "socket.newtry": {
+    "sourceHash": "38a669dbf612b327",
+    "ts": "// Perform operations on an open socket c:\n// create a try function that closes 'c' on error\nconst try_ = socket.newtry(() => c.close());\n// do everything reassured c will be closed\ntry_(c.send(\"hello there?\\r\\n\"));\nconst answer = try_(c.receive());\n// ...\ntry_(c.send(\"good bye\\r\\n\"));\nc.close();"
+  },
+  "socket.protect": {
+    "sourceHash": "478d4974b491bda9",
+    "ts": "const dostuff = socket.protect(() => {\n  let try_ = socket.newtry();\n  const c = try_(socket.connect(\"myserver.com\", 80));\n  try_ = socket.newtry(() => c.close());\n  try_(c.send(\"hello?\\r\\n\"));\n  const answer = try_(c.receive());\n  c.close();\n});\n\nconst [n, error] = dostuff();"
+  },
+  "socket.gettime": {
+    "sourceHash": "184ed247033e9375",
+    "ts": "// How to use the gettime() function to measure running time:\nconst t = socket.gettime();\n// do stuff\nprint(`${socket.gettime() - t} seconds elapsed`);"
+  },
+  "sys.save": {
+    "sourceHash": "20939b04814e98af",
+    "ts": "// Save data:\nconst my_table = [];\nmy_table.push(\"my_value\");\nconst my_file_path = sys.get_save_file(\"my_game\", \"my_file\");\nsys.save(my_file_path, my_table);"
+  },
+  "sys.load": {
+    "sourceHash": "d3163ffbf2b24c09",
+    "ts": "// Load data that was previously saved, e.g. an earlier game session:\nconst my_file_path = sys.get_save_file(\"my_game\", \"my_file\");\nconst my_table = sys.load(my_file_path);\nif (!next(my_table)) {\n  // empty table\n}"
+  },
+  "sys.exists": {
+    "sourceHash": "7e98945102ff1ab7",
+    "ts": "// Load data but return nil if path didn't exist\nif (!sys.exists(path)) {\n  return undefined;\n}\nreturn sys.load(path); // returns {} if it failed"
+  },
+  "sys.get_host_path": {
+    "sourceHash": "a059ecb3d55d5c22",
+    "ts": "// Save data on the host\nconst host_path = sys.get_host_path(\"logs/test.txt\");\nsys.save(host_path, mytable);\n\n// Load data from the host\nconst host_path = sys.get_host_path(\"logs/test.txt\");\nconst table = sys.load(host_path);"
+  },
+  "sys.get_save_file": {
+    "sourceHash": "d936178efa7a38ee",
+    "ts": "// Find a path where we can store data:\nconst my_file_path = sys.get_save_file(\"my_game\", \"my_file\");\n// macOS: /Users/foobar/Library/Application Support/my_game/my_file\nprint(my_file_path); //> /Users/foobar/Library/Application Support/my_game/my_file\n\n// Windows: C:\\Users\\foobar\\AppData\\Roaming\\my_game\\my_file\nprint(my_file_path); //> C:\\Users\\foobar\\AppData\\Roaming\\my_game\\my_file\n\n// Linux: $XDG_DATA_HOME/my_game/my_file or /home/foobar/.my_game/my_file\n// Linux: Defaults to /home/foobar/.local/share/my_game/my_file if neither exist.\nprint(my_file_path); //> /home/foobar/.local/share/my_game/my_file\n\n// Android package name: com.foobar.packagename\nprint(my_file_path); //> /data/data/0/com.foobar.packagename/files/my_file\n\n// iOS: my_game.app\nprint(my_file_path); //> /var/mobile/Containers/Data/Application/123456AB-78CD-90DE-12345678ABCD/my_game/my_file\n\n// HTML5 path inside the IndexedDB: /data/.my_game/my_file or /.my_game/my_file\nprint(my_file_path); //> /data/.my_game/my_file"
+  },
+  "sys.get_application_path": {
+    "sourceHash": "69dd3a4397827973",
+    "ts": "// Find a path where we can store data (the example path is on the macOS platform):\n// macOS: /Applications/my_game.app\nconst application_path = sys.get_application_path();\nprint(application_path); //> /Applications/my_game.app\n\n// Windows: C:\\Program Files\\my_game\\my_game.exe\nprint(application_path); //> C:\\Program Files\\my_game\n\n// Linux: /home/foobar/my_game/my_game\nprint(application_path); //> /home/foobar/my_game\n\n// Android package name: com.foobar.my_game\nprint(application_path); //> /data/user/0/com.foobar.my_game\n\n// iOS: my_game.app\nprint(application_path); //> /var/containers/Bundle/Applications/123456AB-78CD-90DE-12345678ABCD/my_game.app\n\n// HTML5: http://www.foobar.com/my_game/\nprint(application_path); //> http://www.foobar.com/my_game"
+  },
+  "sys.get_config_string": {
+    "sourceHash": "4aeb12fca87c114c",
+    "ts": "// Get user config value\nconst text = sys.get_config_string(\"my_game.text\", \"default text\");\n\n// Start the engine with a bootstrap config override and add a custom config value\n// $ dmengine --config=bootstrap.main_collection=/mytest.collectionc --config=mygame.testmode=1\n\n// Read the custom config value from the command line\nconst testmode = sys.get_config_int(\"mygame.testmode\");"
+  },
+  "sys.get_config_int": {
+    "sourceHash": "f384eab53a7c1bda",
+    "ts": "// Get user config value\nconst speed = sys.get_config_int(\"my_game.speed\", 20); // with default value\n\nconst testmode = sys.get_config_int(\"my_game.testmode\"); // without default value\nif (testmode !== undefined) {\n  // do stuff\n}"
+  },
+  "sys.get_config_number": {
+    "sourceHash": "2649f9c4111009bd",
+    "ts": "// Get user config value\nconst speed = sys.get_config_number(\"my_game.speed\", 20.0);"
+  },
+  "sys.get_config_boolean": {
+    "sourceHash": "dfccc454c2bdb792",
+    "ts": "// Get user config value\nconst vsync = sys.get_config_boolean(\"display.vsync\", false);"
+  },
+  "sys.open_url": {
+    "sourceHash": "ca86f356d47ffba0",
+    "ts": "// Open an URL:\nconst success = sys.open_url(\"http://www.defold.com\", { target: \"_blank\" });\nif (!success) {\n  // could not open the url...\n}"
+  },
+  "sys.load_resource": {
+    "sourceHash": "6e77c0929b579d3c",
+    "ts": "// Load level data into a string\nconst [data, error] = sys.load_resource(\"/assets/level_data.json\");\n// Decode json string to a table\nif (data) {\n  const data_table = json.decode(data);\n  pprint(data_table);\n} else {\n  print(error);\n}"
+  },
+  "sys.get_sys_info": {
+    "sourceHash": "637e648646538721",
+    "ts": "// How to get system information:\nconst info = sys.get_sys_info();\nif (info.system_name === \"HTML5\") {\n  // We are running in a browser.\n}"
+  },
+  "sys.get_engine_info": {
+    "sourceHash": "d115807db2962da4",
+    "ts": "// How to retrieve engine information:\n// Update version text label so our testers know what version we're running\nconst engine_info = sys.get_engine_info();\nconst version_str = `Defold ${engine_info.version}\\n${engine_info.version_sha1}`;\ngui.set_text(gui.get_node(\"version\"), version_str);"
+  },
+  "sys.get_application_info": {
+    "sourceHash": "e13c2cc712709832",
+    "ts": "// Check if twitter is installed:\nconst sysinfo = sys.get_sys_info();\nlet twitter = {};\n\nif (sysinfo.system_name === \"Android\") {\n  twitter = sys.get_application_info(\"com.twitter.android\");\n} else if (sysinfo.system_name === \"iPhone OS\") {\n  twitter = sys.get_application_info(\"twitter:\");\n}\n\nif (twitter.installed) {\n  // twitter is installed!\n}\n\n// Info.plist for the iOS app needs to list the schemes that are queried:\n// ...\n// <key>LSApplicationQueriesSchemes</key>\n//  <array>\n//    <string>twitter</string>\n//  </array>\n// ..."
+  },
+  "sys.get_ifaddrs": {
+    "sourceHash": "3a90b39ee24bf77b",
+    "ts": "// How to get the IP address of interface \"en0\":\nconst ifaddrs = sys.get_ifaddrs();\nfor (const iface of ifaddrs) {\n  if (iface.name === \"en0\") {\n    const ip = iface.address;\n  }\n}"
+  },
+  "sys.set_error_handler": {
+    "sourceHash": "7346508f30f50bc9",
+    "ts": "// Install error handler that just prints the errors\nfunction my_error_handler(source, message, traceback) {\n  print(source); //> lua\n  print(message); //> main/my.script:10: attempt to perform arithmetic on a string value\n  print(traceback); //> stack traceback:\n  //>         main/test.script:10: in function 'boom'\n  //>         main/test.script:15: in function <main/my.script:13>\n}\n\nfunction boom() {\n  return 10 + \"string\";\n}\n\nexport default defineScript({\n  init() {\n    sys.set_error_handler(my_error_handler);\n    boom();\n  },\n});"
+  },
+  "sys.set_connectivity_host": {
+    "sourceHash": "b520f6352a5c8db1",
+    "ts": "sys.set_connectivity_host(\"www.google.com\");"
+  },
+  "sys.get_connectivity": {
+    "sourceHash": "fbc6587958ab4c81",
+    "ts": "// Check if we are connected through a cellular connection\nif (sys.NETWORK_CONNECTED_CELLULAR === sys.get_connectivity()) {\n  print(\"Connected via cellular, avoid downloading big files!\");\n}"
+  },
+  "sys.exit": {
+    "sourceHash": "c9d4d5d75509d158",
+    "ts": "// This example demonstrates how to exit the application when some kind of quit\n// message is received (maybe from gui or similar):\nexport default defineScript({\n  on_message(self, message_id, message, sender) {\n    if (message_id === hash(\"quit\")) {\n      sys.exit(0);\n    }\n  },\n});"
+  },
+  "sys.reboot": {
+    "sourceHash": "37fa088e5c449462",
+    "ts": "// How to reboot engine with a specific bootstrap collection.\nconst arg1 = \"--config=bootstrap.main_collection=/my.collectionc\";\nconst arg2 = \"build/game.projectc\";\nsys.reboot(arg1, arg2);"
+  },
+  "sys.set_vsync_swap_interval": {
+    "sourceHash": "95117be25e11bf9f",
+    "ts": "// Setting the swap intervall to swap every v-blank\nsys.set_vsync_swap_interval(1);"
+  },
+  "sys.set_update_frequency": {
+    "sourceHash": "5bb1f7705e3f0bb8",
+    "ts": "// Setting the update frequency to 60 frames per second\nsys.set_update_frequency(60);"
+  },
+  "sys.serialize": {
+    "sourceHash": "74b6fd38d9f6ea16",
+    "ts": "// Serialize table:\nconst my_table = [];\nmy_table.push(\"my_value\");\nconst buffer = sys.serialize(my_table);"
+  },
+  "sys.deserialize": {
+    "sourceHash": "3129688709daf585",
+    "ts": "// Deserialize a table that was previously serialized:\nconst buffer = sys.serialize(my_table);\nconst table = sys.deserialize(buffer);"
+  },
+  "window.set_listener": {
+    "sourceHash": "5075cb14faa9510b",
+    "ts": "function window_callback(self, event, data) {\n  if (event === window.WINDOW_EVENT_FOCUS_LOST) {\n    print(\"window.WINDOW_EVENT_FOCUS_LOST\");\n  } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {\n    print(\"window.WINDOW_EVENT_FOCUS_GAINED\");\n  } else if (event === window.WINDOW_EVENT_ICONFIED) {\n    print(\"window.WINDOW_EVENT_ICONFIED\");\n  } else if (event === window.WINDOW_EVENT_DEICONIFIED) {\n    print(\"window.WINDOW_EVENT_DEICONIFIED\");\n  } else if (event === window.WINDOW_EVENT_RESIZED) {\n    print(\"Window resized: \", data.width, data.height);\n  }\n}\n\nexport default defineScript({\n  init() {\n    window.set_listener(window_callback);\n  },\n});"
+  },
+  "zlib.inflate": {
+    "sourceHash": "6b8b8cc6d9afe679",
+    "ts": "const data = \"\\120\\94\\11\\201\\200\\44\\86\\0\\162\\68\\133\\226\\146\\162\\204\\188\\116\\133\\242\\204\\146\\12\\133\\210\\188\\228\\252\\220\\130\\162\\212\\226\\226\\212\\20\\133\\148\\196\\146\\68\\61\\0\\44\\67\\14\\201\";\nconst uncompressed_data = zlib.inflate(data);\nprint(uncompressed_data); //> This is a string with uncompressed data."
+  },
+  "zlib.deflate": {
+    "sourceHash": "dbfb4f8f6e58ec2c",
+    "ts": "const data = \"This is a string with uncompressed data.\";\nconst compressed_data = zlib.deflate(data);\nlet s = \"\";\nfor (const c of compressed_data) {\n  s = s + \"\\\\\" + c.charCodeAt(0);\n}\nprint(s); //> \\120\\94\\11\\201\\200\\44\\86\\0\\162\\68\\133\\226\\146\\162 ..."
   }
 }

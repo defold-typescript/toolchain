@@ -33,22 +33,29 @@ declare global {
      * - boolean `chunked_transfer`: use chunked transfer encoding for https requests larger than 16kb. Defaults to true. Not available in HTML5 build
      * - boolean `report_progress`: when it is true, the amount of bytes sent and/or received for a request will be passed into the callback function
      * @example
-     * ```lua
-     * Basic HTTP-GET request. The callback receives a table with the response
-     * in the fields status, the response (the data) and headers (a table).
-     * local function http_result(self, _, response)
-     *     if response.bytes_total ~= nil then
-     *         update_my_progress_bar(self, response.bytes_received / response.bytes_total)
-     *     else
-     *         print(response.status)
-     *         print(response.response)
-     *         pprint(response.headers)
-     *     end
-     * end
-     *
-     * function init(self)
-     *     http.request("http://www.google.com", "GET", http_result, nil, nil, { report_progress = true })
-     * end
+     * ```ts
+     * // Basic HTTP-GET request. The callback receives a table with the response
+     * // in the fields status, the response (the data) and headers (a table).
+     * export default defineScript({
+     *   init() {
+     *     http.request(
+     *       "http://www.google.com",
+     *       "GET",
+     *       (self, _id, response) => {
+     *         if (response.bytes_total !== undefined) {
+     *           update_my_progress_bar(self, response.bytes_received / response.bytes_total);
+     *         } else {
+     *           print(response.status);
+     *           print(response.response);
+     *           pprint(response.headers);
+     *         }
+     *       },
+     *       undefined,
+     *       undefined,
+     *       { report_progress: true },
+     *     );
+     *   },
+     * });
      * ```
      */
     function request(url: string, method: string, callback: (self: unknown, id: unknown, response: unknown) => void, headers?: Record<string | number, unknown>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;

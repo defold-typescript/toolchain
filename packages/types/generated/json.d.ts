@@ -14,25 +14,27 @@ declare global {
      * - boolean `decode_null_as_userdata`: wether to decode a JSON null value as json.null or nil (default is nil)
      * @returns decoded json
      * @example
-     * ```lua
-     * Converting a string containing JSON data into a Lua table:
-     * function init(self)
-     *     local jsonstring = '{"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}'
-     *     local data = json.decode(jsonstring)
-     *     pprint(data)
-     * end
+     * ```ts
+     * // Converting a string containing JSON data into a table:
+     * export default defineScript({
+     *   init() {
+     *     const jsonstring = '{"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}';
+     *     const data = json.decode(jsonstring);
+     *     pprint(data);
+     *   },
+     * });
      *
-     * Results in the following printout:
-     * {
-     *   persons = {
-     *     1 = {
-     *       name = John Doe,
-     *     }
-     *     2 = {
-     *       name = Darth Vader,
-     *     }
-     *   }
-     * }
+     * // Results in the following printout:
+     * // {
+     * //   persons = {
+     * //     1 = {
+     * //       name = John Doe,
+     * //     }
+     * //     2 = {
+     * //       name = Darth Vader,
+     * //     }
+     * //   }
+     * // }
      * ```
      */
     export function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;
@@ -45,21 +47,20 @@ declare global {
      * - string `encode_empty_table_as_object`: wether to encode an empty table as an JSON object or array (default is object)
      * @returns encoded json
      * @example
-     * ```lua
-     * Convert a lua table to a JSON string:
-     * function init(self)
-     *      local tbl = {
-     *           persons = {
-     *                { name = "John Doe"},
-     *                { name = "Darth Vader"}
-     *           }
-     *      }
-     *      local jsonstring = json.encode(tbl)
-     *      pprint(jsonstring)
-     * end
+     * ```ts
+     * // Convert a table to a JSON string:
+     * export default defineScript({
+     *   init() {
+     *     const tbl = {
+     *       persons: [{ name: "John Doe" }, { name: "Darth Vader" }],
+     *     };
+     *     const jsonstring = json.encode(tbl);
+     *     pprint(jsonstring);
+     *   },
+     * });
      *
-     * Results in the following printout:
-     * {"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}
+     * // Results in the following printout:
+     * // {"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}
      * ```
      */
     export function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string;

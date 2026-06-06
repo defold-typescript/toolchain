@@ -64,11 +64,11 @@ declare global {
      * @param callback - Callback after the asynchronous request completed
      * @returns The result of the request
      * @example
-     * ```lua
-     * Add multiple mounts. Higher priority takes precedence.
-     * liveupdate.add_mount("common", "zip:/path/to/common_stuff.zip", 10, function (result) end) -- base pack
-     * liveupdate.add_mount("levelpack_1", "zip:/path/to/levels_1_to_20.zip", 20, function (result) end) -- level pack
-     * liveupdate.add_mount("season_pack_1", "zip:/path/to/easter_pack_1.zip", 30, function (result) end) -- season pack, overriding content in the other packs
+     * ```ts
+     * // Add multiple mounts. Higher priority takes precedence.
+     * liveupdate.add_mount("common", "zip:/path/to/common_stuff.zip", 10, (result) => {}); // base pack
+     * liveupdate.add_mount("levelpack_1", "zip:/path/to/levels_1_to_20.zip", 20, (result) => {}); // level pack
+     * liveupdate.add_mount("season_pack_1", "zip:/path/to/easter_pack_1.zip", 30, (result) => {}); // season pack, overriding content in the other packs
      * ```
      */
     function add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number;
@@ -78,24 +78,24 @@ declare global {
      *
      * @returns Array of mounts
      * @example
-     * ```lua
-     * Output the current resource mounts
-     * pprint("MOUNTS", liveupdate.get_mounts())
+     * ```ts
+     * // Output the current resource mounts
+     * pprint("MOUNTS", liveupdate.get_mounts());
      *
-     * Give an output like:
-     * DEBUG:SCRIPT: MOUNTS,
-     * { --[[0x119667bf0]]
-     *   1 = { --[[0x119667c50]]
-     *     name = "liveupdate",
-     *     uri = "zip:/device/path/to/acchives/liveupdate.zip",
-     *     priority = 5
-     *   },
-     *   2 = { --[[0x119667d50]]
-     *     name = "_base",
-     *     uri = "archive:build/default/game.dmanifest",
-     *     priority = -10
-     *   }
-     * }
+     * // Give an output like:
+     * // DEBUG:SCRIPT: MOUNTS,
+     * // {
+     * //   1 = {
+     * //     name = "liveupdate",
+     * //     uri = "zip:/device/path/to/acchives/liveupdate.zip",
+     * //     priority = 5
+     * //   },
+     * //   2 = {
+     * //     name = "_base",
+     * //     uri = "archive:build/default/game.dmanifest",
+     * //     priority = -10
+     * //   }
+     * // }
      * ```
      */
     function get_mounts(): Record<string | number, unknown>;
@@ -107,9 +107,9 @@ declare global {
      * @param name - Unique name of the mount
      * @returns The result of the call
      * @example
-     * ```lua
-     * Add multiple mounts. Higher priority takes precedence.
-     * liveupdate.remove_mount("season_pack_1")
+     * ```ts
+     * // Add multiple mounts. Higher priority takes precedence.
+     * liveupdate.remove_mount("season_pack_1");
      * ```
      */
     function remove_mount(name: string): number;
