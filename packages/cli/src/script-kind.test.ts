@@ -6,8 +6,11 @@ import {
   DEFAULT_TYPES_ENTRYPOINT,
   detectScriptKinds,
   excludedModulesForKind,
+  groupScriptKindsByDirectory,
   isComponentPath,
   isSkipped,
+  type ScriptKind,
+  selectDirectoryWalls,
   selectScriptKind,
   selectScriptKindEntrypoint,
 } from "./script-kind";
@@ -75,6 +78,61 @@ describe("detectScriptKinds", () => {
     touch("src/main.ts.script");
     touch("ui/hud.gui_script");
     expect(detectScriptKinds(cwd)).toEqual(new Set(["gui-script"]));
+  });
+});
+
+describe("groupScriptKindsByDirectory", () => {
+  test("buckets each component file's kind by its immediate directory", () => {
+    touch("ui/hud.gui_script");
+    touch("render/cam.render_script");
+    expect(groupScriptKindsByDirectory(cwd)).toEqual(
+      new Map<string, Set<ScriptKind>>([
+        ["ui", new Set(["gui-script"])],
+        ["render", new Set(["render-script"])],
+      ]),
+    );
+  });
+
+  test("a root-level component is bucketed under the key '.'", () => {
+    touch("main.script");
+    expect(groupScriptKindsByDirectory(cwd)).toEqual(new Map([[".", new Set(["script"])]]));
+  });
+
+  test("a directory holding two kinds maps to a set containing both", () => {
+    touch("a/x.script");
+    touch("a/y.gui_script");
+    expect(groupScriptKindsByDirectory(cwd)).toEqual(
+      new Map([["a", new Set(["script", "gui-script"])]]),
+    );
+  });
+
+  test("excludes generated artifacts and node_modules/.defold-types/build segments", () => {
+    touch("src/main.ts.script");
+    touch("node_modules/dep/example.script");
+    touch(".defold-types/defold-1.12.4/something.script");
+    touch("build/default/copy.script");
+    touch("ui/hud.gui_script");
+    expect(groupScriptKindsByDirectory(cwd)).toEqual(new Map([["ui", new Set(["gui-script"])]]));
+  });
+});
+
+describe("selectDirectoryWalls", () => {
+  test("keeps only single-kind directories, each mapped to its lone kind", () => {
+    touch("ui/hud.gui_script");
+    touch("render/cam.render_script");
+    touch("mixed/x.script");
+    touch("mixed/y.gui_script");
+    expect(selectDirectoryWalls(cwd)).toEqual(
+      new Map<string, ScriptKind>([
+        ["ui", "gui-script"],
+        ["render", "render-script"],
+      ]),
+    );
+  });
+
+  test("an empty tree yields no walls", () => {
+    touch("readme.txt");
+    expect(selectDirectoryWalls(cwd)).toEqual(new Map());
   });
 });
 
