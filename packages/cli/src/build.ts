@@ -4,6 +4,7 @@ import { transpileProject } from "@defold-typescript/transpiler";
 import {
   collectFailures,
   computeScriptRel,
+  detectSourceScriptKind,
   readBuildConfig,
   throwIfFailures,
   toPosix,
@@ -52,7 +53,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     if (!lua) {
       continue;
     }
-    const scriptRel = computeScriptRel(rel, config);
+    const scriptRel = computeScriptRel(rel, config, detectSourceScriptKind(files[rel] ?? ""));
     writeScriptFile(cwd, scriptRel, lua, result.sourceMaps[rel]);
     written.push(scriptRel);
   }

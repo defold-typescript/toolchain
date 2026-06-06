@@ -9,6 +9,7 @@ import {
   type BuildConfig,
   collectFailures,
   computeScriptRel,
+  detectSourceScriptKind,
   isTranspilerSource,
   readBuildConfig,
   throwIfFailures,
@@ -16,6 +17,9 @@ import {
   writeScriptFile,
 } from "./build-output";
 import { scanFilesSync } from "./scan";
+import type { ScriptKind } from "./script-kind";
+
+const ALL_SCRIPT_KINDS: readonly ScriptKind[] = ["script", "gui-script", "render-script"];
 
 export interface CreateBuildSessionOptions {
   readonly cwd: string;
@@ -35,7 +39,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
   const config: BuildConfig = readBuildConfig(cwd);
   const session: TranspileSession = createTranspileSession();
 
-  function writeOutputs(result: TranspileProjectResult, keys: readonly string[]): BuildResult {
+  function writeOutputs(
+    result: TranspileProjectResult,
+    keys: readonly string[],
+    sources: Record<string, string>,
+  ): BuildResult {
     const failures = collectFailures(result.diagnostics);
     const written: string[] = [];
     for (const rel of keys) {
@@ -46,7 +54,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       if (lua === undefined) {
         continue;
       }
-      const scriptRel = computeScriptRel(rel, config);
+      const scriptRel = computeScriptRel(rel, config, detectSourceScriptKind(sources[rel] ?? ""));
       writeScriptFile(cwd, scriptRel, lua, result.sourceMaps[rel]);
       written.push(scriptRel);
     }
@@ -72,7 +80,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
 
     const result = session.update(files);
-    return writeOutputs(result, sources);
+    return writeOutputs(result, sources, files);
   }
 
   function applyEvents(changed: string[], removed: string[]): BuildResult {
@@ -88,13 +96,21 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
 
     const result = session.update(changes);
 
+    // The removed file is gone, so its prior factory-derived kind is unknown;
+    // sweep every candidate suffix to avoid orphaning an output.
     for (const rel of sourceRemoved) {
-      const scriptAbs = path.join(cwd, computeScriptRel(rel, config));
-      rmSync(scriptAbs, { force: true });
-      rmSync(`${scriptAbs}.map`, { force: true });
+      for (const kind of ALL_SCRIPT_KINDS) {
+        const scriptAbs = path.join(cwd, computeScriptRel(rel, config, kind));
+        rmSync(scriptAbs, { force: true });
+        rmSync(`${scriptAbs}.map`, { force: true });
+      }
     }
 
-    return writeOutputs(result, sourceChanged);
+    const changedSources: Record<string, string> = {};
+    for (const rel of sourceChanged) {
+      changedSources[rel] = changes[rel] ?? "";
+    }
+    return writeOutputs(result, sourceChanged, changedSources);
   }
 
   return { buildAll, applyEvents };
