@@ -96,6 +96,28 @@ bunx @defold-typescript/cli watch
 
 `watch` rebuilds incrementally on every TypeScript source change: it holds one long-lived transpile session and re-reads and rewrites only the files you actually edited, skipping the re-glob and re-read of unchanged sources. Use it while the Defold editor is open in the same project directory. See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
+## Headless builds (no editor)
+
+`build` transpiles TypeScript to Lua; to compile and run the Defold project
+itself from the command line — no editor — drive Defold's headless build tool
+(`bob`) through the `defold` subcommand:
+
+```sh
+bunx @defold-typescript/cli defold resolve   # fetch library dependencies
+bunx @defold-typescript/cli defold build     # debug build into build/default
+bunx @defold-typescript/cli defold bundle     # bundle a platform target
+```
+
+The first run downloads a version-matched `bob.jar` into a cache dir
+(`$DEFOLD_TYPESCRIPT_CACHE` or `~/.cache/defold-typescript/bob`) and reuses it
+afterward. `bob` needs a JVM: it uses `java` on your `PATH`, or pass `--java
+<path>` (or set `DEFOLD_JAVA`). Native-extension projects can pass
+`--build-server <url>`. `bob`'s exit code propagates, so a failed build fails the
+command.
+
+Like the engine launcher, the `bob` version tracks the latest stable Defold
+release. A project pinned to an older Defold version is a known limitation.
+
 ## Release smoke (maintainers)
 
 Before publishing, run the packed-artifact smoke check from the repo root:

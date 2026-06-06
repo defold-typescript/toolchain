@@ -2,6 +2,12 @@ import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import type { RegistryTarget } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
+import {
+  type DefoldIo,
+  defaultDefoldIo,
+  isDefoldSubcommand,
+  runDefoldCommand,
+} from "./bob-command";
 import { runBuild } from "./build";
 import { readCliVersion } from "./cli-version";
 import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
@@ -39,9 +45,11 @@ export interface DispatchInternals {
   readonly resolveOpts?: RefDocResolveOptions;
   readonly refDocRegistry?: readonly RegistryTarget[];
   readonly cliVersion?: string;
+  readonly defoldIo?: Partial<DefoldIo>;
 }
 
-const USAGE = "Usage: defold-typescript <init|build|watch|setup-debug> [path]\n";
+const USAGE = "Usage: defold-typescript <init|build|watch|setup-debug|defold> [path]\n";
+const DEFOLD_USAGE = "Usage: defold-typescript defold <resolve|build|bundle> [path]\n";
 
 function parseDefoldVersionFlag(argv: string[]): { flag: string | undefined; rest: string[] } {
   let flag: string | undefined;
@@ -77,6 +85,28 @@ function parseScriptFlag(argv: string[]): { script: string | undefined; rest: st
   return { script, rest };
 }
 
+function parseValueFlag(
+  argv: string[],
+  name: string,
+): { value: string | undefined; rest: string[] } {
+  const long = `--${name}`;
+  const eq = `${long}=`;
+  let value: string | undefined;
+  const rest: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === long) {
+      value = argv[i + 1];
+      i++;
+    } else if (arg?.startsWith(eq)) {
+      value = arg.slice(eq.length);
+    } else if (arg !== undefined) {
+      rest.push(arg);
+    }
+  }
+  return { value, rest };
+}
+
 function readProjectPin(cwd: string): string | undefined {
   const pkgPath = path.join(cwd, "package.json");
   if (!existsSync(pkgPath)) {
@@ -109,7 +139,12 @@ export function dispatch(
   const force = argv.includes("--force");
   const suppressInstallReminder = argv.includes("--suppress-install-reminder");
   const { flag: defoldVersionFlag, rest: afterVersionArgs } = parseDefoldVersionFlag(argv);
-  const { script: scriptFlag, rest: nonFlagArgs } = parseScriptFlag(afterVersionArgs);
+  const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterVersionArgs);
+  const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
+  const { value: buildServerFlag, rest: nonFlagArgs } = parseValueFlag(
+    afterJavaArgs,
+    "build-server",
+  );
   const positional = nonFlagArgs.filter(
     (a) => a !== "--json" && a !== "--force" && a !== "--suppress-install-reminder",
   );
@@ -341,6 +376,55 @@ export function dispatch(
     }
 
     return launchWatch();
+  }
+
+  if (command === "defold") {
+    const subcommand = rest[0];
+    const defoldCwd = rest[1] ? path.resolve(rest[1]) : process.cwd();
+    if (!isDefoldSubcommand(subcommand)) {
+      io.stderr.write(DEFOLD_USAGE);
+      return 1;
+    }
+    const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
+    const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
+    return (async (): Promise<number> => {
+      try {
+        const result = await runDefoldCommand({
+          cwd: defoldCwd,
+          subcommand,
+          ...(javaOverride !== undefined ? { java: javaOverride } : {}),
+          ...(buildServerFlag !== undefined ? { buildServer: buildServerFlag } : {}),
+          io: defoldIo,
+        });
+        if (json) {
+          io.stdout.write(
+            renderResult(
+              result.ok
+                ? { command: "defold", subcommand: result.subcommand, exitCode: result.exitCode }
+                : {
+                    command: "defold",
+                    subcommand: result.subcommand,
+                    exitCode: result.exitCode,
+                    error: `bob ${result.subcommand} exited with code ${result.exitCode}`,
+                  },
+            ),
+          );
+        } else if (!result.ok) {
+          io.stderr.write(
+            `defold-typescript defold ${result.subcommand}: bob exited with code ${result.exitCode}\n`,
+          );
+        }
+        return result.exitCode;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "defold", subcommand, error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
+      }
+    })();
   }
 
   io.stderr.write(USAGE);

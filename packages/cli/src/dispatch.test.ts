@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import type { DefoldIo } from "./bob-command";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
 import {
@@ -174,7 +175,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(1);
     expect(out()).toBe("");
-    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug> [path]\n");
+    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug|defold> [path]\n");
   });
 
   test("unknown command prints usage to stderr and returns 1", () => {
@@ -184,7 +185,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(1);
     expect(out()).toBe("");
-    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug> [path]\n");
+    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug|defold> [path]\n");
   });
 
   test("--version prints the CLI version to stdout and returns 0", () => {
@@ -880,5 +881,104 @@ describe("dispatch setup-debug", () => {
     expect(parsed.command).toBe("setup-debug");
     expect(parsed.ok).toBe(false);
     expect(parsed.error).toContain("src/hud.ts");
+  });
+});
+
+describe("dispatch defold", () => {
+  const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
+
+  function defoldInternals(overrides: Partial<DefoldIo> = {}): {
+    defoldIo: Partial<DefoldIo>;
+    spawned: string[][];
+  } {
+    const spawned: string[][] = [];
+    return {
+      spawned,
+      defoldIo: {
+        cacheDir: "/c",
+        fetchSha: async () => SHA,
+        probe: () => true,
+        javaProbe: () => true,
+        spawn: async (argv) => {
+          spawned.push(argv);
+          return 0;
+        },
+        download: async () => {},
+        ...overrides,
+      },
+    };
+  }
+
+  test("defold resolve spawns bob and returns 0", async () => {
+    const { io } = captureStreams();
+    const { defoldIo, spawned } = defoldInternals();
+
+    const code = await dispatch(["defold", "resolve", cwd], io, { defoldIo });
+
+    expect(code).toBe(0);
+    expect(spawned[0]).toContain("resolve");
+    expect(spawned[0]).toContain("-jar");
+  });
+
+  test("defold build composes a debug-variant build", async () => {
+    const { io } = captureStreams();
+    const { defoldIo, spawned } = defoldInternals();
+
+    await dispatch(["defold", "build", cwd], io, { defoldIo });
+
+    expect(spawned[0]).toContain("--variant");
+    expect(spawned[0]).toContain("debug");
+    expect(spawned[0]).toContain("build");
+  });
+
+  test("--build-server is threaded into bob's argv", async () => {
+    const { io } = captureStreams();
+    const { defoldIo, spawned } = defoldInternals();
+
+    await dispatch(["defold", "build", cwd, "--build-server", "https://build.example"], io, {
+      defoldIo,
+    });
+
+    expect(spawned[0]).toContain("--build-server");
+    expect(spawned[0]).toContain("https://build.example");
+  });
+
+  test("a non-zero bob exit becomes the CLI exit code", async () => {
+    const { io, err } = captureStreams();
+    const { defoldIo } = defoldInternals({ spawn: async () => 17 });
+
+    const code = await dispatch(["defold", "bundle", cwd], io, { defoldIo });
+
+    expect(code).toBe(17);
+    expect(err()).not.toContain("\n    at ");
+  });
+
+  test("--json emits a defold result via renderResult", async () => {
+    const { io, out } = captureStreams();
+    const { defoldIo } = defoldInternals();
+
+    const code = await dispatch(["defold", "resolve", cwd, "--json"], io, { defoldIo });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      command: string;
+      ok: boolean;
+      subcommand: string;
+      exitCode: number;
+    };
+    expect(parsed.command).toBe("defold");
+    expect(parsed.subcommand).toBe("resolve");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.exitCode).toBe(0);
+  });
+
+  test("unknown defold subcommand prints usage listing resolve|build|bundle", async () => {
+    const { io, err } = captureStreams();
+    const { defoldIo } = defoldInternals();
+
+    const code = await dispatch(["defold", "frobnicate", cwd], io, { defoldIo });
+
+    expect(code).toBe(1);
+    expect(err()).toMatch(/resolve\|build\|bundle/);
   });
 });

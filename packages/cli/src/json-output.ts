@@ -1,4 +1,4 @@
-export type CliCommand = "init" | "build" | "setup-debug";
+export type CliCommand = "init" | "build" | "setup-debug" | "defold";
 
 export interface RenderResultInput {
   readonly command: CliCommand;
@@ -11,6 +11,8 @@ export interface RenderResultInput {
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
+  readonly subcommand?: string;
+  readonly exitCode?: number;
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -34,6 +36,9 @@ export function renderResult(input: RenderResultInput): string {
       : withMaterialized;
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
-  const payload = "actions" in input ? { ...withManual, actions: input.actions } : withManual;
+  const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;
+  const withSub =
+    "subcommand" in input ? { ...withActions, subcommand: input.subcommand } : withActions;
+  const payload = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
   return `${JSON.stringify(payload)}\n`;
 }
