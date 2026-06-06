@@ -2,10 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { MISE_TASKS_TOML, mergeMiseToml } from "./mise-scaffold";
 
 describe("MISE_TASKS_TOML", () => {
-  test("declares the three quoted namespaced task headers", () => {
+  test("declares the four quoted namespaced task headers", () => {
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:build"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:watch"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:upgrade"]');
+    expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:setup-debug"]');
+  });
+
+  test("setup-debug runs the installed CLI via bunx --no-install", () => {
+    expect(MISE_TASKS_TOML).toContain('run = "bunx --no-install defold-typescript setup-debug"');
   });
 
   test("build and watch invoke the installed CLI via bunx --no-install", () => {
@@ -21,7 +26,7 @@ describe("MISE_TASKS_TOML", () => {
 
   test("each managed task is fronted by the managed marker", () => {
     const markers = MISE_TASKS_TOML.match(/# managed by @defold-typescript/g) ?? [];
-    expect(markers.length).toBe(3);
+    expect(markers.length).toBe(4);
   });
 });
 
@@ -30,7 +35,7 @@ describe("mergeMiseToml", () => {
     expect(mergeMiseToml(undefined)).toBe(MISE_TASKS_TOML);
   });
 
-  test("preserves user content verbatim and appends the three managed tasks once", () => {
+  test("preserves user content verbatim and appends the managed tasks once", () => {
     const existing = '[tools]\nbun = "1.3"\n\n[tasks.foo]\nrun = "echo hi"\n';
     const merged = mergeMiseToml(existing);
 

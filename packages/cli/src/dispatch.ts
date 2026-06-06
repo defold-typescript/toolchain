@@ -16,6 +16,7 @@ import {
   resolveCurrentSurfaceGeneratedDir,
 } from "./materialize";
 import { detectScriptKinds, selectScriptKind } from "./script-kind";
+import { runSetupDebug } from "./setup-debug";
 import {
   type RunWatchHandle,
   type RunWatchOptions,
@@ -40,7 +41,7 @@ export interface DispatchInternals {
   readonly cliVersion?: string;
 }
 
-const USAGE = "Usage: defold-typescript <init|build|watch> [path]\n";
+const USAGE = "Usage: defold-typescript <init|build|watch|setup-debug> [path]\n";
 
 function parseDefoldVersionFlag(argv: string[]): { flag: string | undefined; rest: string[] } {
   let flag: string | undefined;
@@ -57,6 +58,23 @@ function parseDefoldVersionFlag(argv: string[]): { flag: string | undefined; res
     }
   }
   return { flag, rest };
+}
+
+function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
+  let script: string | undefined;
+  const rest: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === "--script") {
+      script = argv[i + 1];
+      i++;
+    } else if (arg?.startsWith("--script=")) {
+      script = arg.slice("--script=".length);
+    } else if (arg !== undefined) {
+      rest.push(arg);
+    }
+  }
+  return { script, rest };
 }
 
 function readProjectPin(cwd: string): string | undefined {
@@ -90,7 +108,8 @@ export function dispatch(
 
   const force = argv.includes("--force");
   const suppressInstallReminder = argv.includes("--suppress-install-reminder");
-  const { flag: defoldVersionFlag, rest: nonFlagArgs } = parseDefoldVersionFlag(argv);
+  const { flag: defoldVersionFlag, rest: afterVersionArgs } = parseDefoldVersionFlag(argv);
+  const { script: scriptFlag, rest: nonFlagArgs } = parseScriptFlag(afterVersionArgs);
   const positional = nonFlagArgs.filter(
     (a) => a !== "--json" && a !== "--force" && a !== "--suppress-install-reminder",
   );
@@ -137,6 +156,40 @@ export function dispatch(
       }
       return 1;
     }
+  }
+
+  if (command === "setup-debug") {
+    return (async (): Promise<number> => {
+      const result = await runSetupDebug({
+        cwd,
+        json,
+        ...(scriptFlag !== undefined ? { script: scriptFlag } : {}),
+      });
+      if (json) {
+        io.stdout.write(
+          renderResult(
+            result.ok
+              ? {
+                  command: "setup-debug",
+                  written: result.written,
+                  manualSteps: result.manualSteps,
+                }
+              : { command: "setup-debug", error: result.error ?? "setup-debug failed" },
+          ),
+        );
+      } else if (result.ok) {
+        io.stdout.write(
+          `defold-typescript setup-debug: wrote ${result.written.length} files: ${result.written.join(", ")}\n`,
+        );
+        io.stdout.write("Remaining manual steps:\n");
+        for (const step of result.manualSteps) {
+          io.stdout.write(`  - ${step}\n`);
+        }
+      } else {
+        io.stderr.write(`${result.error}\n`);
+      }
+      return result.ok ? 0 : 1;
+    })();
   }
 
   if (command === "build") {

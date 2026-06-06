@@ -12,6 +12,28 @@ Running `bunx @defold-typescript/cli init` sets up the whole debug path:
 
 The launcher is **Bun, not a shell script**. The upstream `lua-local` template runs a `bash` script and, on Windows, routes it through Git Bash. This toolchain already mandates Bun and targets Windows, so the launcher uses `process.platform` for the OS, `fetch` for the engine download, and `Bun.spawn` for the run — no `bash`, no Git Bash dependency. All `.vscode` debug files merge additively into any config you already have.
 
+## Automated setup
+
+`init` scaffolds the `.vscode` debug files, but two steps touch your own project files and so are left to a dedicated command:
+
+```
+bunx @defold-typescript/cli setup-debug
+```
+
+`setup-debug` is idempotent and does two things `init` cannot:
+
+- Adds the `lldebugger` library dependency to `game.project` (at the next free `dependencies#N` index, skipped if already present).
+- Injects the gated `lldebugger.start()` bootstrap into your entry script, behind a stable marker comment so a re-run is a no-op.
+
+It selects the entry script automatically when exactly one `src/**/*.ts` file calls a lifecycle factory (`defineScript`/`defineGuiScript`/`defineRenderScript`). With several candidates, pass `--script <path>` to choose one; run interactively (without `--json`) to pick from a prompt. `--json` emits a machine-readable `{command, ok, written, manualSteps}` result. The same command is available as the `defold-typescript:setup-debug` mise task.
+
+Two steps still require the Defold editor and VS Code and are reported as remaining manual steps:
+
+- Install the *Local Lua Debugger* VS Code extension.
+- Run *Project -> Fetch Libraries* so the `lldebugger` module is downloaded.
+
+The manual walkthrough below remains the fallback and documents exactly what `setup-debug` automates.
+
 ## One-time setup
 
 1. **Install the recommended extension.** Open the project in VS Code and accept the *Local Lua Debugger* recommendation (or install `tomblind.local-lua-debugger-vscode` directly).

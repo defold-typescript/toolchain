@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@defold-typescript/transpiler": "workspace:*",
-    "@defold-typescript/types": "workspace:*"
+    "@defold-typescript/types": "workspace:*",
+    "@inquirer/prompts": "^7.0.0"
   }
 }

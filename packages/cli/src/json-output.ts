@@ -1,4 +1,4 @@
-export type CliCommand = "init" | "build";
+export type CliCommand = "init" | "build" | "setup-debug";
 
 export interface RenderResultInput {
   readonly command: CliCommand;
@@ -9,6 +9,7 @@ export interface RenderResultInput {
   readonly scriptKind?: string | null;
   readonly materializedSurface?: string | null;
   readonly installCommand?: string;
+  readonly manualSteps?: readonly string[];
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -26,9 +27,11 @@ export function renderResult(input: RenderResultInput): string {
     "materializedSurface" in input
       ? { ...withScriptKind, materializedSurface: input.materializedSurface }
       : withScriptKind;
-  const payload =
+  const withInstall =
     "installCommand" in input
       ? { ...withMaterialized, installCommand: input.installCommand }
       : withMaterialized;
+  const payload =
+    "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   return `${JSON.stringify(payload)}\n`;
 }

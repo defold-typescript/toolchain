@@ -174,7 +174,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(1);
     expect(out()).toBe("");
-    expect(err()).toBe("Usage: defold-typescript <init|build|watch> [path]\n");
+    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug> [path]\n");
   });
 
   test("unknown command prints usage to stderr and returns 1", () => {
@@ -184,7 +184,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(1);
     expect(out()).toBe("");
-    expect(err()).toBe("Usage: defold-typescript <init|build|watch> [path]\n");
+    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug> [path]\n");
   });
 
   test("--version prints the CLI version to stdout and returns 0", () => {
@@ -804,5 +804,81 @@ describe("dispatch", () => {
     expect(out()).toBe("");
     expect(err()).toMatch(/tsconfig\.json/);
     expect(opened).toBe(false);
+  });
+});
+
+const SETUP_DEBUG_SCRIPT = `import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {},
+});
+`;
+
+describe("dispatch setup-debug", () => {
+  test("routes to runSetupDebug, wiring the sole candidate and returning 0", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "player.ts"), SETUP_DEBUG_SCRIPT);
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["setup-debug", cwd], io);
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+    expect(out()).toContain("src/player.ts");
+    expect(out()).toMatch(/Fetch Libraries/i);
+    expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toContain("lldebugger");
+  });
+
+  test("--json emits the structured setup-debug result", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "player.ts"), SETUP_DEBUG_SCRIPT);
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["setup-debug", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      command: string;
+      ok: boolean;
+      written: string[];
+      manualSteps: string[];
+    };
+    expect(parsed.command).toBe("setup-debug");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.written).toContain("game.project");
+    expect(parsed.manualSteps.length).toBeGreaterThan(0);
+  });
+
+  test("--script targets the named file", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "player.ts"), SETUP_DEBUG_SCRIPT);
+    writeFileSync(path.join(cwd, "src", "hud.ts"), SETUP_DEBUG_SCRIPT);
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["setup-debug", cwd, "--script", "src/hud.ts"], io);
+
+    expect(code).toBe(0);
+    expect(out()).toContain("src/hud.ts");
+    expect(readFileSync(path.join(cwd, "src", "hud.ts"), "utf8")).toContain("lldebugger");
+    expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).not.toContain("lldebugger");
+  });
+
+  test("multiple candidates without --script in --json mode errors with exit 1", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "player.ts"), SETUP_DEBUG_SCRIPT);
+    writeFileSync(path.join(cwd, "src", "hud.ts"), SETUP_DEBUG_SCRIPT);
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["setup-debug", cwd, "--json"], io);
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as { command: string; ok: boolean; error: string };
+    expect(parsed.command).toBe("setup-debug");
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toContain("src/hud.ts");
   });
 });
