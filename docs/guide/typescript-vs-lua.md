@@ -47,6 +47,7 @@ methods. Pick the one that matches how you actually use the data:
 | Lua `table` used as… | TypeScript | Notes |
 | --- | --- | --- |
 | Record / struct | object literal `{ x: 1, y: 2 }` | fixed, named string keys |
+| Record with a computed key | object literal `{ [graphics.BUFFER_TYPE_COLOR0_BIT]: params }` | bracketed key from an expression — Lua's `[expr] = v` (e.g. `render.render_target` option tables keyed by engine enum constants) |
 | Sequence / list | array `[1, 2, 3]` | 0-based; `arr.length`, `arr.push(x)` |
 | Dictionary with arbitrary keys | `Map` | `new Map()`, `.set(k, v)`, `.get(k)`; non-string keys |
 

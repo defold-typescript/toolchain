@@ -638,11 +638,13 @@ declare global {
      *
      * @param self - reference to the script state to be used for storing data
      * @example
-     * ```lua
-     * function final(self)
-     *     -- report finalization
-     *     msg.post("my_friend_instance", "im_dead", {my_stats = self.some_value})
-     * end
+     * ```ts
+     * export default defineScript({
+     *   final(self) {
+     *     // report finalization
+     *     msg.post("my_friend_instance", "im_dead", { my_stats: self.some_value });
+     *   },
+     * });
      * ```
      */
     function final(self: Opaque<"userdata">): void;
@@ -1141,11 +1143,13 @@ declare global {
      *
      * @param self - reference to the script state to be used for storing data
      * @example
-     * ```lua
-     * function init(self)
-     *     -- set up useful data
-     *     self.my_value = 1
-     * end
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     // set up useful data
+     *     return { my_value: 1 };
+     *   },
+     * });
      * ```
      */
     function init(self: Opaque<"userdata">): void;

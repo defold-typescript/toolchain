@@ -322,11 +322,13 @@ declare global {
      *
      * @param self - reference to the script state to be used for storing data
      * @example
-     * ```lua
-     * function final(self)
-     *     -- report finalization
-     *     msg.post("my_friend_instance", "im_dead", {my_stats = self.some_value})
-     * end
+     * ```ts
+     * export default defineScript({
+     *   final(self) {
+     *     // report finalization
+     *     msg.post("my_friend_instance", "im_dead", { my_stats: self.some_value });
+     *   },
+     * });
      * ```
      */
     export function final(self: Opaque<"userdata">): void;
@@ -530,11 +532,13 @@ declare global {
      *
      * @param self - reference to the script state to be used for storing data
      * @example
-     * ```lua
-     * function init(self)
-     *     -- set up useful data
-     *     self.my_value = 1
-     * end
+     * ```ts
+     * export default defineScript({
+     *   init() {
+     *     // set up useful data
+     *     return { my_value: 1 };
+     *   },
+     * });
      * ```
      */
     export function init(self: Opaque<"userdata">): void;
@@ -646,32 +650,38 @@ declare global {
      * @param action - a table containing the input data, see above for a description
      * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
      * @example
-     * ```lua
-     * This example demonstrates how a game object instance can be moved as a response to user input.
-     * function init(self)
-     *     -- acquire input focus
-     *     msg.post(".", "acquire_input_focus")
-     *     -- maximum speed the instance can be moved
-     *     self.max_speed = 2
-     *     -- velocity of the instance, initially zero
-     *     self.velocity = vmath.vector3()
-     * end
+     * ```ts
+     * // This example demonstrates how a game object instance can be moved as a response to user input.
+     * export default defineScript({
+     *   init() {
+     *     // acquire input focus
+     *     msg.post(".", "acquire_input_focus");
+     *     return {
+     *       // maximum speed the instance can be moved
+     *       max_speed: 2,
+     *       // velocity of the instance, initially zero
+     *       velocity: vmath.vector3(),
+     *     };
+     *   },
      *
-     * function update(self, dt)
-     *     -- move the instance
-     *     go.set_position(go.get_position() + dt * self.velocity)
-     * end
+     *   update(self, dt) {
+     *     // move the instance
+     *     go.set_position(go.get_position().add(self.velocity.mul(dt)));
+     *   },
      *
-     * function on_input(self, action_id, action)
-     *     -- check for movement input
-     *     if action_id == hash("right") then
-     *         if action.released then -- reset velocity if input was released
-     *             self.velocity = vmath.vector3()
-     *         else -- update velocity
-     *             self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0)
-     *         end
-     *     end
-     * end
+     *   on_input(self, action_id, action) {
+     *     // check for movement input
+     *     if (action_id === hash("right")) {
+     *       if (action.released) {
+     *         // reset velocity if input was released
+     *         self.velocity = vmath.vector3();
+     *       } else {
+     *         // update velocity
+     *         self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0);
+     *       }
+     *     }
+     *   },
+     * });
      * ```
      */
     export function on_input(self: Opaque<"userdata">, action_id: Hash, action: Record<string | number, unknown>): boolean | unknown;
@@ -686,29 +696,34 @@ declare global {
      * @param message - a table containing the message data
      * @param sender - address of the sender
      * @example
-     * ```lua
-     * This example demonstrates how a game object instance, called "a", can communicate with another instance, called "b". It
-     * is assumed that both script components of the instances has id "script".
-     * Script of instance "a":
-     * function init(self)
-     *     -- let b know about some important data
-     *     msg.post("b#script", "my_data", {important_value = 1})
-     * end
+     * ```ts
+     * // This example demonstrates how a game object instance, called "a", can communicate with another instance, called "b". It
+     * // is assumed that both script components of the instances has id "script".
      *
-     * Script of instance "b":
-     * function init(self)
-     *     -- store the url of instance "a" for later use, by specifying nil as socket we
-     *     -- automatically use our own socket
-     *     self.a_url = msg.url(nil, go.get_id("a"), "script")
-     * end
+     * // a.script — Script of instance "a":
+     * export default defineScript({
+     *   init() {
+     *     // let b know about some important data
+     *     msg.post("b#script", "my_data", { important_value: 1 });
+     *   },
+     * });
      *
-     * function on_message(self, message_id, message, sender)
-     *     -- check message and sender
-     *     if message_id == hash("my_data") and sender == self.a_url then
-     *         -- use the data in some way
-     *         self.important_value = message.important_value
-     *     end
-     * end
+     * // b.script — Script of instance "b":
+     * export default defineScript({
+     *   init() {
+     *     // store the url of instance "a" for later use, by specifying undefined as socket we
+     *     // automatically use our own socket
+     *     return { a_url: msg.url(undefined, go.get_id("a"), "script") };
+     *   },
+     *
+     *   on_message(self, message_id, message, sender) {
+     *     // check message and sender
+     *     if (message_id === hash("my_data") && sender === self.a_url) {
+     *       // use the data in some way
+     *       self.important_value = message.important_value;
+     *     }
+     *   },
+     * });
      * ```
      */
     export function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;
@@ -718,37 +733,43 @@ declare global {
      *
      * @param self - reference to the script state to be used for storing data
      * @example
-     * ```lua
-     * This example demonstrates how to tweak the speed of a game object instance that is moved on user input.
-     * function init(self)
-     *     -- acquire input focus
-     *     msg.post(".", "acquire_input_focus")
-     *     -- maximum speed the instance can be moved, this value is tweaked in the on_reload function below
-     *     self.max_speed = 2
-     *     -- velocity of the instance, initially zero
-     *     self.velocity = vmath.vector3()
-     * end
+     * ```ts
+     * // This example demonstrates how to tweak the speed of a game object instance that is moved on user input.
+     * export default defineScript({
+     *   init() {
+     *     // acquire input focus
+     *     msg.post(".", "acquire_input_focus");
+     *     return {
+     *       // maximum speed the instance can be moved, this value is tweaked in the on_reload function below
+     *       max_speed: 2,
+     *       // velocity of the instance, initially zero
+     *       velocity: vmath.vector3(),
+     *     };
+     *   },
      *
-     * function update(self, dt)
-     *     -- move the instance
-     *     go.set_position(go.get_position() + dt * self.velocity)
-     * end
+     *   update(self, dt) {
+     *     // move the instance
+     *     go.set_position(go.get_position().add(self.velocity.mul(dt)));
+     *   },
      *
-     * function on_input(self, action_id, action)
-     *     -- check for movement input
-     *     if action_id == hash("right") then
-     *         if action.released then -- reset velocity if input was released
-     *             self.velocity = vmath.vector3()
-     *         else -- update velocity
-     *             self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0)
-     *         end
-     *     end
-     * end
+     *   on_input(self, action_id, action) {
+     *     // check for movement input
+     *     if (action_id === hash("right")) {
+     *       if (action.released) {
+     *         // reset velocity if input was released
+     *         self.velocity = vmath.vector3();
+     *       } else {
+     *         // update velocity
+     *         self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0);
+     *       }
+     *     }
+     *   },
      *
-     * function on_reload(self)
-     *     -- edit this value and reload the script component
-     *     self.max_speed = 100
-     * end
+     *   on_reload(self) {
+     *     // edit this value and reload the script component
+     *     self.max_speed = 100;
+     *   },
+     * });
      * ```
      */
     export function on_reload(self: Opaque<"userdata">): void;
@@ -884,17 +905,19 @@ declare global {
      * @param self - reference to the script state to be used for storing data
      * @param dt - the time-step of the frame update
      * @example
-     * ```lua
-     * This example demonstrates how to move a game object instance through the script component:
-     * function init(self)
-     *     -- set initial velocity to be 1 along world x-axis
-     *     self.my_velocity = vmath.vector3(1, 0, 0)
-     * end
+     * ```ts
+     * // This example demonstrates how to move a game object instance through the script component:
+     * export default defineScript({
+     *   init() {
+     *     // set initial velocity to be 1 along world x-axis
+     *     return { my_velocity: vmath.vector3(1, 0, 0) };
+     *   },
      *
-     * function update(self, dt)
-     *     -- move the game object instance
-     *     go.set_position(go.get_position() + dt * self.my_velocity)
-     * end
+     *   update(self, dt) {
+     *     // move the game object instance
+     *     go.set_position(go.get_position().add(self.my_velocity.mul(dt)));
+     *   },
+     * });
      * ```
      */
     export function update(self: Opaque<"userdata">, dt: number): void;

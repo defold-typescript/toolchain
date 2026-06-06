@@ -882,5 +882,177 @@
   "zlib.deflate": {
     "sourceHash": "dbfb4f8f6e58ec2c",
     "ts": "const data = \"This is a string with uncompressed data.\";\nconst compressed_data = zlib.deflate(data);\nlet s = \"\";\nfor (const c of compressed_data) {\n  s = s + \"\\\\\" + c.charCodeAt(0);\n}\nprint(s); //> \\120\\94\\11\\201\\200\\44\\86\\0\\162\\68\\133\\226\\146\\162 ..."
+  },
+  "render.clear": {
+    "sourceHash": "70406f065fc91216",
+    "ts": "// Clear the color buffer and the depth buffer.\nrender.clear({\n  [graphics.BUFFER_TYPE_COLOR0_BIT]: vmath.vector4(0, 0, 0, 0),\n  [graphics.BUFFER_TYPE_DEPTH_BIT]: 1,\n});"
+  },
+  "render.constant_buffer": {
+    "sourceHash": "851cc71b74ec904a",
+    "ts": "// Set a \"tint\" constant in a constant buffer in the render script:\nconst constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);\n\n// Then use the constant buffer when drawing a predicate:\nrender.draw(self.my_pred, { constants });\n\n// The constant buffer also supports array values by specifying constants in an array:\nconst constants2 = render.constant_buffer();\nconstants2.light_colors = [];\nconstants2.light_colors[0] = vmath.vector4(1, 0, 0, 1);\nconstants2.light_colors[1] = vmath.vector4(0, 1, 0, 1);\nconstants2.light_colors[2] = vmath.vector4(0, 0, 1, 1);\n\n// You can also create the array by passing the vectors directly:\nconst constants3 = render.constant_buffer();\nconstants3.light_colors = [\n  vmath.vector4(1, 0, 0, 1),\n  vmath.vector4(0, 1, 0, 1),\n  vmath.vector4(0, 0, 1, 1),\n];\n\n// Add more constants to the array\nconstants3.light_colors[3] = vmath.vector4(1, 1, 1, 1);"
+  },
+  "render.delete_render_target": {
+    "sourceHash": "e535502af5d49877",
+    "ts": "// How to delete a render target:\nrender.delete_render_target(self.my_render_target);"
+  },
+  "render.disable_material": {
+    "sourceHash": "256ae7b73905f4b2",
+    "ts": "// Enable material named \"glow\", then draw my_pred with it.\nrender.enable_material(\"glow\");\nrender.draw(self.my_pred);\nrender.disable_material();"
+  },
+  "render.disable_state": {
+    "sourceHash": "9ec916d3d474ace5",
+    "ts": "// Disable face culling when drawing the tile predicate:\nrender.disable_state(graphics.STATE_CULL_FACE);\nrender.draw(self.tile_pred);"
+  },
+  "render.disable_texture": {
+    "sourceHash": "77eefc5b608dd2e6",
+    "ts": "export default defineScript({\n  update(self, dt) {\n    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n    // done, disable the texture\n    render.disable_texture(0);\n  },\n});"
+  },
+  "render.dispatch_compute": {
+    "sourceHash": "af76607a05354da7",
+    "ts": "export default defineScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      scene_rt: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n    };\n  },\n\n  update(self, dt) {\n    render.set_compute(\"bloom\");\n    render.enable_texture(0, self.backing_texture);\n    render.enable_texture(1, self.scene_rt);\n    render.dispatch_compute(128, 128, 1);\n    render.set_compute();\n  },\n});\n\n// Dispatch a compute program with a constant buffer:\nconst constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);\nrender.dispatch_compute(32, 32, 32, { constants });"
+  },
+  "render.draw": {
+    "sourceHash": "47232b75e7b74189",
+    "ts": "export default defineScript({\n  init() {\n    // define a predicate matching anything with material tag \"my_tag\"\n    return { my_pred: render.predicate([hash(\"my_tag\")]) };\n  },\n\n  update(self, dt) {\n    // draw everything in the my_pred predicate\n    render.draw(self.my_pred);\n  },\n});\n\n// Draw predicate with constants:\nconst constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);\nrender.draw(self.my_pred, { constants });\n\n// Draw with predicate and frustum culling (without near+far planes):\nconst frustum = self.proj.mul(self.view);\nrender.draw(self.my_pred, { frustum });\n\n// Draw with predicate and frustum culling (with near+far planes):\nconst frustum2 = self.proj.mul(self.view);\nrender.draw(self.my_pred, { frustum: frustum2, frustum_planes: render.FRUSTUM_PLANES_ALL });"
+  },
+  "render.draw_debug3d": {
+    "sourceHash": "b200f780e2bf16f3",
+    "ts": "export default defineScript({\n  update(self, dt) {\n    // draw debug visualization\n    render.draw_debug3d();\n  },\n});"
+  },
+  "render.enable_material": {
+    "sourceHash": "256ae7b73905f4b2",
+    "ts": "// Enable material named \"glow\", then draw my_pred with it.\nrender.enable_material(\"glow\");\nrender.draw(self.my_pred);\nrender.disable_material();"
+  },
+  "render.enable_state": {
+    "sourceHash": "d08dd567d90c4036",
+    "ts": "// Enable stencil test when drawing the gui predicate, then disable it:\nrender.enable_state(graphics.STATE_STENCIL_TEST);\nrender.draw(self.gui_pred);\nrender.disable_state(graphics.STATE_STENCIL_TEST);"
+  },
+  "render.enable_texture": {
+    "sourceHash": "4dd1d2618c062e70",
+    "ts": "export default defineScript({\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // disable target\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n\n    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n  },\n});\n\n// Or enable a render target by resource id:\nexport default defineScript({\n  update(self, dt) {\n    render.set_render_target(\"my_rt_resource\");\n    render.draw(self.my_pred);\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n\n    render.enable_texture(0, \"my_rt_resource\", graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n  },\n});\n\n// Or bind a texture handle directly:\nexport default defineScript({\n  update(self, dt) {\n    // bind a texture to the texture unit 0\n    render.enable_texture(0, self.my_texture_handle);\n    // bind the same texture to a named sampler\n    render.enable_texture(\"my_texture_sampler\", self.my_texture_handle);\n  },\n});"
+  },
+  "render.get_height": {
+    "sourceHash": "a23f1ae69eff75c0",
+    "ts": "// Get the height of the window\nconst h = render.get_height();"
+  },
+  "render.get_render_target_height": {
+    "sourceHash": "f509a9b954573583",
+    "ts": "// get the height of the render target color buffer\nconst h = render.get_render_target_height(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);\n// get the height of a render target resource\nconst w = render.get_render_target_height(\"my_rt_resource\", graphics.BUFFER_TYPE_COLOR0_BIT);"
+  },
+  "render.get_render_target_width": {
+    "sourceHash": "25c6d828a4ae3706",
+    "ts": "// get the width of the render target color buffer\nconst w = render.get_render_target_width(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);\n// get the width of a render target resource\nconst w2 = render.get_render_target_width(\"my_rt_resource\", graphics.BUFFER_TYPE_COLOR0_BIT);"
+  },
+  "render.get_width": {
+    "sourceHash": "8d7965e500d69d03",
+    "ts": "// Get the width of the window.\nconst w = render.get_width();"
+  },
+  "render.get_window_height": {
+    "sourceHash": "0afddc76d47d533f",
+    "ts": "// Get the actual height of the window\nconst h = render.get_window_height();"
+  },
+  "render.get_window_width": {
+    "sourceHash": "034929ff14cf8dac",
+    "ts": "// Get the actual width of the window\nconst w = render.get_window_width();"
+  },
+  "render.predicate": {
+    "sourceHash": "886d641eaa12199e",
+    "ts": "// Create a new render predicate containing all visual objects that\n// have a material with material tags \"opaque\" AND \"smoke\".\nconst p = render.predicate([hash(\"opaque\"), hash(\"smoke\")]);"
+  },
+  "render.render_target": {
+    "sourceHash": "766fbfcc7bc21b4b",
+    "ts": "// How to create a new render target and draw to it:\nexport default defineScript({\n  init() {\n    // render target buffer parameters\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const depth_params = {\n      format: graphics.TEXTURE_FORMAT_DEPTH,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params,\n        [graphics.BUFFER_TYPE_DEPTH_BIT]: depth_params,\n      }),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});\n\n// How to create a render target with multiple outputs:\nexport default defineScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.enable_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
+  },
+  "render.set_blend_func": {
+    "sourceHash": "3c8b3570a329836b",
+    "ts": "// Set the blend func to the most common one:\nrender.set_blend_func(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);"
+  },
+  "render.set_camera": {
+    "sourceHash": "6ee012d07a0487a6",
+    "ts": "// Set the current camera to be used for rendering\nrender.set_camera(\"main:/my_go#camera\");\nrender.draw(self.my_pred);\nrender.set_camera(undefined);\n\n// Use the camera frustum for frustum culling together with a specific frustum plane option for the draw command\n// The camera frustum will take precedence over the frustum plane option in render.draw\nrender.set_camera(\"main:/my_go#camera\", { use_frustum: true });\n// However, we can still customize the frustum planes regardless of the camera option!\nrender.draw(self.my_pred, { frustum_planes: render.FRUSTUM_PLANES_ALL });\nrender.set_camera();"
+  },
+  "render.set_color_mask": {
+    "sourceHash": "760910f9fe70ace7",
+    "ts": "// alpha cannot be written to frame buffer\nrender.set_color_mask(true, true, true, false);"
+  },
+  "render.set_compute": {
+    "sourceHash": "5e76b88c05d9f3f7",
+    "ts": "// Enable compute program named \"fractals\", then dispatch it.\nrender.set_compute(\"fractals\");\nrender.enable_texture(0, self.backing_texture);\nrender.dispatch_compute(128, 128, 1);\nrender.set_compute();"
+  },
+  "render.set_cull_face": {
+    "sourceHash": "3ac86c74ed257860",
+    "ts": "// How to enable polygon culling and set front face culling:\nrender.enable_state(graphics.STATE_CULL_FACE);\nrender.set_cull_face(graphics.FACE_TYPE_FRONT);"
+  },
+  "render.set_depth_func": {
+    "sourceHash": "3b3f38f0739a92b6",
+    "ts": "// Enable depth test and set the depth test function to \"not equal\".\nrender.enable_state(graphics.STATE_DEPTH_TEST);\nrender.set_depth_func(graphics.COMPARE_FUNC_NOTEQUAL);"
+  },
+  "render.set_depth_mask": {
+    "sourceHash": "6713731143e36de2",
+    "ts": "// How to turn off writing to the depth buffer:\nrender.set_depth_mask(false);"
+  },
+  "render.set_listener": {
+    "sourceHash": "6fc340897eeb1ab9",
+    "ts": "// Set listener and handle render context events.\n// custom.render_script\nexport default defineScript({\n  init() {\n    render.set_listener((self, event_type) => {\n      if (event_type === render.CONTEXT_EVENT_CONTEXT_LOST) {\n        // Some stuff when rendering context is lost\n      } else if (event_type === render.CONTEXT_EVENT_CONTEXT_RESTORED) {\n        // Start reload resources, reload game, etc.\n      }\n    });\n  },\n});"
+  },
+  "render.set_polygon_offset": {
+    "sourceHash": "c8aa9b10abbb6154",
+    "ts": "render.enable_state(graphics.STATE_POLYGON_OFFSET_FILL);\nrender.set_polygon_offset(1.0, 1.0);"
+  },
+  "render.set_projection": {
+    "sourceHash": "b0155866d7b9eae0",
+    "ts": "// How to set the projection to orthographic with world origo at lower left,\n// width and height as set in project settings and depth (z) between -1 and 1:\nrender.set_projection(vmath.matrix4_orthographic(0, render.get_width(), 0, render.get_height(), -1, 1));"
+  },
+  "render.set_render_target": {
+    "sourceHash": "b30691f486beb1fa",
+    "ts": "// How to set a render target and draw to it and then switch back to the default render target\n// The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support\nexport default defineScript({\n  update(self, dt) {\n    // set render target so all drawing is done to it\n    render.set_render_target(self.my_render_target, {\n      transient: [graphics.BUFFER_TYPE_DEPTH_BIT, graphics.BUFFER_TYPE_STENCIL_BIT],\n    });\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // set default render target. This also invalidates the depth and stencil buffers of the current target (self.my_render_target)\n    //  which can be an optimisation on some hardware\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n  },\n});\n\n// Or set the render target by a render target resource identifier:\nexport default defineScript({\n  update(self, dt) {\n    render.set_render_target(\"my_rt_resource\");\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // reset the render target to the default backbuffer\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n  },\n});"
+  },
+  "render.set_render_target_size": {
+    "sourceHash": "00274352e6327274",
+    "ts": "// Resize render targets to the current window size:\nrender.set_render_target_size(self.my_render_target, render.get_window_width(), render.get_window_height());\nrender.set_render_target_size(\"my_rt_resource\", render.get_window_width(), render.get_window_height());"
+  },
+  "render.set_stencil_func": {
+    "sourceHash": "855e83671907ce10",
+    "ts": "// let only 0's pass the stencil test\nrender.set_stencil_func(graphics.COMPARE_FUNC_EQUAL, 0, 1);"
+  },
+  "render.set_stencil_mask": {
+    "sourceHash": "8f3e5667355445c5",
+    "ts": "// set the stencil mask to all 1:s\nrender.set_stencil_mask(0xff);"
+  },
+  "render.set_stencil_op": {
+    "sourceHash": "33e5e22efb9275ea",
+    "ts": "// Set the stencil function to never pass and operator to always draw 1's\n// on test fail.\nrender.set_stencil_func(graphics.COMPARE_FUNC_NEVER, 1, 0xFF);\n// always draw 1's on test fail\nrender.set_stencil_op(graphics.STENCIL_OP_REPLACE, graphics.STENCIL_OP_KEEP, graphics.STENCIL_OP_KEEP);"
+  },
+  "render.set_view": {
+    "sourceHash": "7a30b4955abb3844",
+    "ts": "// How to set the view and projection matrices according to\n// the values supplied by a camera.\nexport default defineScript({\n  init() {\n    return {\n      view: vmath.matrix4(),\n      projection: vmath.matrix4(),\n    };\n  },\n\n  update(self, dt) {\n    // set the view to the stored view value\n    render.set_view(self.view);\n    // now we can draw with this view\n  },\n\n  on_message(self, message_id, message) {\n    if (message_id === hash(\"set_view_projection\")) {\n      // camera view and projection arrives here.\n      self.view = message.view;\n      self.projection = message.projection;\n    }\n  },\n});"
+  },
+  "render.set_viewport": {
+    "sourceHash": "2fb80af31ed168b8",
+    "ts": "// Set the viewport to the window dimensions.\nrender.set_viewport(0, 0, render.get_window_width(), render.get_window_height());"
+  },
+  "final": {
+    "sourceHash": "ebc3cae218af001a",
+    "ts": "export default defineScript({\n  final(self) {\n    // report finalization\n    msg.post(\"my_friend_instance\", \"im_dead\", { my_stats: self.some_value });\n  },\n});"
+  },
+  "init": {
+    "sourceHash": "70267e467e6e247e",
+    "ts": "export default defineScript({\n  init() {\n    // set up useful data\n    return { my_value: 1 };\n  },\n});"
+  },
+  "on_input": {
+    "sourceHash": "86c70cf4ccb7381e",
+    "ts": "// This example demonstrates how a game object instance can be moved as a response to user input.\nexport default defineScript({\n  init() {\n    // acquire input focus\n    msg.post(\".\", \"acquire_input_focus\");\n    return {\n      // maximum speed the instance can be moved\n      max_speed: 2,\n      // velocity of the instance, initially zero\n      velocity: vmath.vector3(),\n    };\n  },\n\n  update(self, dt) {\n    // move the instance\n    go.set_position(go.get_position().add(self.velocity.mul(dt)));\n  },\n\n  on_input(self, action_id, action) {\n    // check for movement input\n    if (action_id === hash(\"right\")) {\n      if (action.released) {\n        // reset velocity if input was released\n        self.velocity = vmath.vector3();\n      } else {\n        // update velocity\n        self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0);\n      }\n    }\n  },\n});"
+  },
+  "on_message": {
+    "sourceHash": "bfed6bd72e3242e2",
+    "ts": "// This example demonstrates how a game object instance, called \"a\", can communicate with another instance, called \"b\". It\n// is assumed that both script components of the instances has id \"script\".\n\n// a.script — Script of instance \"a\":\nexport default defineScript({\n  init() {\n    // let b know about some important data\n    msg.post(\"b#script\", \"my_data\", { important_value: 1 });\n  },\n});\n\n// b.script — Script of instance \"b\":\nexport default defineScript({\n  init() {\n    // store the url of instance \"a\" for later use, by specifying undefined as socket we\n    // automatically use our own socket\n    return { a_url: msg.url(undefined, go.get_id(\"a\"), \"script\") };\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check message and sender\n    if (message_id === hash(\"my_data\") && sender === self.a_url) {\n      // use the data in some way\n      self.important_value = message.important_value;\n    }\n  },\n});"
+  },
+  "on_reload": {
+    "sourceHash": "ba39c0b0d5170ccb",
+    "ts": "// This example demonstrates how to tweak the speed of a game object instance that is moved on user input.\nexport default defineScript({\n  init() {\n    // acquire input focus\n    msg.post(\".\", \"acquire_input_focus\");\n    return {\n      // maximum speed the instance can be moved, this value is tweaked in the on_reload function below\n      max_speed: 2,\n      // velocity of the instance, initially zero\n      velocity: vmath.vector3(),\n    };\n  },\n\n  update(self, dt) {\n    // move the instance\n    go.set_position(go.get_position().add(self.velocity.mul(dt)));\n  },\n\n  on_input(self, action_id, action) {\n    // check for movement input\n    if (action_id === hash(\"right\")) {\n      if (action.released) {\n        // reset velocity if input was released\n        self.velocity = vmath.vector3();\n      } else {\n        // update velocity\n        self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0);\n      }\n    }\n  },\n\n  on_reload(self) {\n    // edit this value and reload the script component\n    self.max_speed = 100;\n  },\n});"
+  },
+  "update": {
+    "sourceHash": "1019c7620d797753",
+    "ts": "// This example demonstrates how to move a game object instance through the script component:\nexport default defineScript({\n  init() {\n    // set initial velocity to be 1 along world x-axis\n    return { my_velocity: vmath.vector3(1, 0, 0) };\n  },\n\n  update(self, dt) {\n    // move the game object instance\n    go.set_position(go.get_position().add(self.my_velocity.mul(dt)));\n  },\n});"
   }
 }
