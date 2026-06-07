@@ -106,12 +106,12 @@ The `.defold-types/` directory is generated output, so build adds it to the
 project `.gitignore`. The materialized directory is reported in `--json` output
 as `materializedSurface`. Re-running build is idempotent.
 
-A single detected script kind narrows the pinned versioned surface exactly as it
-narrows the default surface — `build` and `watch` drop the forbidden restricted
-namespaces (`gui` for a render-script project, `render` for a gui-script
-project, both for a plain `.script` project) from `.defold-types/<version>/`,
-while a mixed or empty project keeps the full surface. See the per-kind API wall
-in [script-lifecycle.md](script-lifecycle.md).
+The pinned versioned surface is materialized in full — `build` and `watch` never
+narrow it by script kind. Narrowing a directory to one kind is opt-in via the
+`wall` command; see [Advanced CLI](advanced-cli.md) and the per-kind API wall in
+[script-lifecycle.md](script-lifecycle.md). (Walls today narrow against the
+installed `@defold-typescript/types` subpaths, not the pinned
+`.defold-types/<version>/` surface.)
 
 If a pinned version cannot be generated — an unknown version, or no network on
 first use — the build does **not** fail. It reports `materializedSurface: null`,
