@@ -323,7 +323,7 @@ describe("materializeRefDocSurface consumer proof", () => {
 
     writeFileSync(
       path.join(cwd, "proof.ts"),
-      'export {};\nconst _t: string = label.get_text("score");\nvoid _t;\n',
+      'export {};\nconst _t: string = label.get_text("score");\nconst _h: Hash = hash("score");\nvoid _t;\nvoid _h;\n',
     );
 
     const { exitCode, output } = typecheck(path.join(cwd, "tsconfig.json"));

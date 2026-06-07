@@ -127,21 +127,14 @@ which is **not stable**, unlike JavaScript's guaranteed-stable sort. If element
 order among equal keys matters, sort on a tiebreaker.
 
 The raw Lua globals (`print`, the `string` / `table` / `math` tables, `pairs`,
-`ipairs`, and Defold's own `hash`) still exist at runtime, but
-`@defold-typescript/types` does **not** declare them today — they are known gaps,
-not part of the ambient surface. If you call one directly, the editor will not
-know its type. Declare what you need locally; the platformer example does exactly
-this in `docs/examples/platformer/src/env.d.ts`:
-
-```ts
-declare global {
-  function hash(s: string): import("@defold-typescript/types").Hash;
-}
-```
+and `ipairs`) still exist at runtime, but `@defold-typescript/types` does **not**
+declare them today — they are known gaps, not part of the ambient surface. If you
+call one directly, the editor will not know its type. Defold's own `hash()` is
+part of the ambient surface and returns `Hash`.
 
 Prefer the idiomatic-TypeScript column above wherever it exists, and reach for a
-local `declare global` only for the genuinely Lua/Defold-specific globals it does
-not cover.
+local `declare global` only for genuinely Lua/Defold-specific globals the type
+package does not cover.
 
 ## Libraries
 

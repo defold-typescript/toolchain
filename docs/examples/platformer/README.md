@@ -25,8 +25,8 @@ TypeScript conversion of the upstream `game/player.script` (preserved at
   `src/player.ts` (run `mise run example-build` before opening in Defold — the
   `.ts.script` is gitignored build output).
 - `src/player.ts` — the converted player logic, written with `defineScript`.
-- `src/env.d.ts` — ambient shims for Defold globals the type package does not
-  declare yet (currently only `hash()`); each line is a tracked upstream gap.
+- `src/env.d.ts` — import-only shim that pulls in the script subpath for the
+  standalone editor/tsc path; it declares no extra globals.
 - `tsconfig.json` — type-checks against the working-tree types via `paths`
   (no install needed).
 
@@ -65,5 +65,3 @@ Open gaps surfaced by the conversion (each a tracked follow-up):
 - **`contact_point_response.group`.** The generated payload exposes
   `own_group`/`other_group` but not the `group` field the platformer reads — a
   builtin-messages fidelity gap, covered by the same cast.
-- **`hash()` global.** Not declared in `@defold-typescript/types`; shimmed in
-  `env.d.ts` until it lands upstream.
