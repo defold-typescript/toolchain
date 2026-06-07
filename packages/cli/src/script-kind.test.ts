@@ -5,7 +5,6 @@ import * as path from "node:path";
 import {
   DEFAULT_TYPES_ENTRYPOINT,
   detectScriptKinds,
-  excludedModulesForKind,
   groupScriptKindsByDirectory,
   isComponentPath,
   isSkipped,
@@ -214,23 +213,5 @@ describe("selectScriptKind", () => {
 
   test("multiple kinds -> null", () => {
     expect(selectScriptKind(new Set(["script", "gui-script"]))).toBeNull();
-  });
-});
-
-describe("excludedModulesForKind", () => {
-  test("script forbids both restricted namespaces", () => {
-    expect(excludedModulesForKind("script")).toEqual(new Set(["gui", "render"]));
-  });
-
-  test("gui-script keeps gui, forbids render", () => {
-    expect(excludedModulesForKind("gui-script")).toEqual(new Set(["render"]));
-  });
-
-  test("render-script keeps render, forbids gui", () => {
-    expect(excludedModulesForKind("render-script")).toEqual(new Set(["gui"]));
-  });
-
-  test("null (mixed/zero) forbids nothing", () => {
-    expect(excludedModulesForKind(null)).toEqual(new Set());
   });
 });

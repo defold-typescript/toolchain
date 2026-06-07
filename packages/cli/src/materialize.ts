@@ -14,7 +14,6 @@ import {
   resolveTypesPackageRoot,
 } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
-import { excludedModulesForKind, type ScriptKind } from "./script-kind";
 
 const MATERIALIZED_ROOT = ".defold-types";
 
@@ -22,7 +21,6 @@ export interface MaterializeApiSurfaceOptions {
   readonly cwd: string;
   readonly surface: SelectedApiSurface;
   readonly sourceGeneratedDir: string | null;
-  readonly scriptKind?: ScriptKind | null;
 }
 
 export interface MaterializeApiSurfaceResult {
@@ -53,10 +51,7 @@ export function materializeApiSurface(
   const absDir = path.join(cwd, MATERIALIZED_ROOT, surfaceId);
   mkdirSync(absDir, { recursive: true });
 
-  const excluded = excludedModulesForKind(opts.scriptKind ?? null);
-  const sources = listDts(sourceGeneratedDir)
-    .filter((file) => file !== "index.d.ts")
-    .filter((file) => !excluded.has(file.replace(/\.d\.ts$/, "")));
+  const sources = listDts(sourceGeneratedDir).filter((file) => file !== "index.d.ts");
 
   // The `*-overloads` augmentations and the `core-types` they import live in the
   // types package `src/` (sibling of `generated/`), not among the generated
@@ -194,10 +189,9 @@ export interface MaterializeRefDocSurfaceOptions {
   readonly cwd: string;
   readonly surfaceId: string;
   readonly resolveOpts?: RefDocResolveOptions;
-  readonly scriptKind?: ScriptKind | null;
   // Registry override (defaults to the installed types package's
   // api-targets.json). Injected only by tests that need a multi-module ref-doc
-  // target to observe kind narrowing.
+  // target.
   readonly registry?: readonly RegistryTarget[];
 }
 
@@ -221,7 +215,6 @@ export async function materializeRefDocSurface(
   if (target?.source?.kind !== "ref-doc") {
     return { materializedDir: null, active: null };
   }
-  const excludeModules = [...excludedModulesForKind(opts.scriptKind ?? null)];
 
   const relDir = path.posix.join(MATERIALIZED_ROOT, surfaceId);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, surfaceId);
@@ -233,7 +226,6 @@ export async function materializeRefDocSurface(
     await mod.materializeVersionedSurface(selfContained, {
       destDir: absDir,
       ...(resolveOpts ? { resolveOpts } : {}),
-      ...(excludeModules.length > 0 ? { excludeModules } : {}),
     });
     copyFileSync(path.join(root, "src", "core-types.ts"), path.join(absDir, "core-types.d.ts"));
     copyFileSync(

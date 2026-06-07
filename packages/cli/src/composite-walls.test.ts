@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { dispatch } from "./dispatch";
+import {
+  planSourceDirectoryWalls,
+  wireWallReferences,
+  writeDirectoryWallTsconfigs,
+} from "./directory-walls";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
@@ -70,36 +74,13 @@ function scaffold(cwd: string, guiBody: string): void {
   );
 }
 
-function captureWrite(append: (chunk: string) => void): NodeJS.WritableStream {
-  return {
-    write(chunk: string): boolean {
-      append(chunk);
-      return true;
-    },
-  } as NodeJS.WritableStream;
-}
-
-function build(cwd: string): void {
-  let stdout = "";
-  let stderr = "";
-  const code = dispatch(
-    ["build", cwd],
-    {
-      stdout: captureWrite((chunk) => {
-        stdout += chunk;
-      }),
-      stderr: captureWrite((chunk) => {
-        stderr += chunk;
-      }),
-    },
-    { sourceGeneratedDir: path.join(TYPES_PKG, "generated") },
-  );
-  if (typeof code !== "number") {
-    throw new Error("expected synchronous build");
-  }
-  if (code !== 0) {
-    throw new Error(`build failed:\n${stdout}${stderr}`);
-  }
+// Walls are now opt-in (the `wall` command writes them); auto-emit was removed
+// from `build`. Drive the wall graph directly so this `tsc -b` enforcement proof
+// survives that removal — the same primitives the `wall` command consumes.
+function wall(cwd: string): void {
+  const walls = planSourceDirectoryWalls(cwd);
+  writeDirectoryWallTsconfigs(cwd, walls);
+  wireWallReferences(cwd, walls);
 }
 
 function typecheckBuild(cwd: string): { code: number; output: string } {
@@ -117,7 +98,7 @@ describe("composite directory walls", () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-composite-walls-"));
     try {
       scaffold(cwd, '    gui.get_node("x");');
-      build(cwd);
+      wall(cwd);
 
       const { code, output } = typecheckBuild(cwd);
 
@@ -134,7 +115,7 @@ describe("composite directory walls", () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-composite-walls-"));
     try {
       scaffold(cwd, "    render.clear({});");
-      build(cwd);
+      wall(cwd);
 
       const { code } = typecheckBuild(cwd);
 

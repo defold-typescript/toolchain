@@ -90,22 +90,3 @@ export function selectScriptKindEntrypoint(kinds: Set<ScriptKind>): string {
   const kind = selectScriptKind(kinds);
   return kind === null ? DEFAULT_TYPES_ENTRYPOINT : `${DEFAULT_TYPES_ENTRYPOINT}/${kind}`;
 }
-
-// The one restricted namespace each kind allows; mirrors `regen.ts`'s
-// RESTRICTED_NAMESPACES (gui -> gui_script, render -> render_script). `script`
-// allows neither.
-const RESTRICTED_MODULES: Record<ScriptKind, string> = {
-  script: "",
-  "gui-script": "gui",
-  "render-script": "render",
-};
-
-const ALL_RESTRICTED_MODULES: readonly string[] = ["gui", "render"];
-
-export function excludedModulesForKind(kind: ScriptKind | null): Set<string> {
-  if (kind === null) {
-    return new Set();
-  }
-  const allowed = RESTRICTED_MODULES[kind];
-  return new Set(ALL_RESTRICTED_MODULES.filter((mod) => mod !== allowed));
-}

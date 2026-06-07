@@ -6,9 +6,7 @@ export interface RenderResultInput {
   readonly error?: string;
   readonly defoldVersion?: string;
   readonly apiSurface?: string | null;
-  readonly scriptKind?: string | null;
   readonly materializedSurface?: string | null;
-  readonly directoryWalls?: readonly { readonly dir: string; readonly kind: string }[];
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
@@ -28,18 +26,14 @@ export function renderResult(input: RenderResultInput): string {
     input.defoldVersion === undefined ? base : { ...base, defoldVersion: input.defoldVersion };
   const withSurface =
     "apiSurface" in input ? { ...withVersion, apiSurface: input.apiSurface } : withVersion;
-  const withScriptKind =
-    "scriptKind" in input ? { ...withSurface, scriptKind: input.scriptKind } : withSurface;
   const withMaterialized =
     "materializedSurface" in input
-      ? { ...withScriptKind, materializedSurface: input.materializedSurface }
-      : withScriptKind;
-  const withWalls =
-    "directoryWalls" in input
-      ? { ...withMaterialized, directoryWalls: input.directoryWalls }
-      : withMaterialized;
+      ? { ...withSurface, materializedSurface: input.materializedSurface }
+      : withSurface;
   const withInstall =
-    "installCommand" in input ? { ...withWalls, installCommand: input.installCommand } : withWalls;
+    "installCommand" in input
+      ? { ...withMaterialized, installCommand: input.installCommand }
+      : withMaterialized;
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;

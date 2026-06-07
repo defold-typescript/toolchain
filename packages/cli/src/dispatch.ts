@@ -11,7 +11,6 @@ import {
 import { runBuild } from "./build";
 import { readCliVersion } from "./cli-version";
 import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
-import { syncDirectoryWalls } from "./directory-walls";
 import { runInit } from "./init";
 import { installHint } from "./install-reminder";
 import { renderResult } from "./json-output";
@@ -22,7 +21,6 @@ import {
   type RefDocResolveOptions,
   resolveCurrentSurfaceGeneratedDir,
 } from "./materialize";
-import { detectScriptKinds, selectScriptKind } from "./script-kind";
 import { runSetupDebug } from "./setup-debug";
 import {
   type RunWatchHandle,
@@ -162,7 +160,7 @@ export function dispatch(
 
   if (command === "init") {
     try {
-      const { written, scriptKind } = runInit({ cwd, force });
+      const { written } = runInit({ cwd, force });
       if (json) {
         io.stdout.write(
           renderResult({
@@ -170,7 +168,6 @@ export function dispatch(
             written,
             defoldVersion: resolvedVersion,
             apiSurface,
-            scriptKind,
             installCommand: installHint(),
           }),
         );
@@ -242,10 +239,9 @@ export function dispatch(
   }
 
   if (command === "build") {
-    const scriptKind = selectScriptKind(detectScriptKinds(cwd));
     const reportBuild = (written: readonly string[], materializedDir: string | null): number => {
       ensureMaterializedReference(cwd, materializedDir);
-      const walls = syncDirectoryWalls(cwd, scriptKind);
+      // walls are opt-in via the wall command
       if (json) {
         io.stdout.write(
           renderResult({
@@ -253,9 +249,7 @@ export function dispatch(
             written,
             defoldVersion: resolvedVersion,
             apiSurface,
-            scriptKind,
             materializedSurface: materializedDir,
-            directoryWalls: walls.map((w) => ({ dir: w.dir, kind: w.kind })),
           }),
         );
       } else {
@@ -288,7 +282,6 @@ export function dispatch(
           const { materializedDir } = await materializeRefDocSurface({
             cwd,
             surfaceId,
-            scriptKind,
             ...(internals?.resolveOpts ? { resolveOpts: internals.resolveOpts } : {}),
             ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
           });
@@ -312,7 +305,6 @@ export function dispatch(
         cwd,
         surface,
         sourceGeneratedDir,
-        scriptKind,
       });
       return reportBuild(written, materializedDir);
     } catch (err) {
@@ -332,15 +324,13 @@ export function dispatch(
       const sourceGeneratedDir =
         internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
       syncSurface = (): void => {
-        const scriptKind = selectScriptKind(detectScriptKinds(cwd));
         const { materializedDir } = materializeApiSurface({
           cwd,
           surface,
           sourceGeneratedDir,
-          scriptKind,
         });
         ensureMaterializedReference(cwd, materializedDir);
-        syncDirectoryWalls(cwd, scriptKind);
+        // walls are opt-in via the wall command
       };
       componentWatcherFactory = internals
         ? internals.componentWatcherFactory
@@ -372,18 +362,15 @@ export function dispatch(
     };
 
     // A pinned ref-doc surface is generated on the fly, so it has no
-    // `syncSurface`; narrow it once at startup the same way `build` does, then
-    // start the watcher. A single detected kind drops the forbidden restricted
-    // namespaces; mixed/none keeps the full surface. Live re-narrowing of
-    // ref-doc surfaces stays deferred.
+    // `syncSurface`; generate it once at startup the same way `build` does, then
+    // start the watcher. The full surface materializes; walls are opt-in via the
+    // wall command.
     if (isRefDocSurface) {
       const surfaceId = surface.surfaceId as string;
-      const scriptKind = selectScriptKind(detectScriptKinds(cwd));
       return (async (): Promise<number> => {
         const { materializedDir } = await materializeRefDocSurface({
           cwd,
           surfaceId,
-          scriptKind,
           ...(internals?.resolveOpts ? { resolveOpts: internals.resolveOpts } : {}),
           ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
         });
