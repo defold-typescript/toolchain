@@ -15,6 +15,7 @@ End-user documentation for `defold-typescript`: how to scaffold a project, write
 - [Script lifecycle](./script-lifecycle.md) — type `self`, `on_message`, and `on_input` payloads with `defineScript`, `defineGuiScript`, and `defineRenderScript`.
 - [Debugging](./debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
 - [API docs vs. ts-defold-types](./api-docs-vs-ts-defold.md) — how the emitted JSDoc compares with the incumbent type package: where it is strictly cleaner (Markdown conversion, dash params, grid-aligned multi-line docs, branded constants) and the one deliberate `@example` trade-off.
+- [Advanced CLI](./advanced-cli.md) — opt-in per-directory API walls with the `wall` command (interactive checkbox and flag forms), the full-surface-by-default policy, and the import-from-subpath rule a wall depends on.
 
 ## Coming later
 
