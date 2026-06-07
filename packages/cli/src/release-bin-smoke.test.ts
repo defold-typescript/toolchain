@@ -75,8 +75,10 @@ describe("published bin scaffolds from dist", () => {
 });
 
 describe("release smoke harness is discoverable", () => {
-  test("scripts/release-smoke.ts exists", () => {
-    expect(existsSync(path.join(REPO_ROOT, "scripts", "release-smoke.ts"))).toBe(true);
+  test("scripts/release-smoke.ts expects the TypeScript script artifact", () => {
+    const script = readFileSync(path.join(REPO_ROOT, "scripts", "release-smoke.ts"), "utf8");
+    expect(script).toContain('STARTER_ARTIFACT_REL = "src/main.ts.script"');
+    expect(script).not.toContain('"src/main.lua"');
   });
 
   test("root package.json exposes a smoke script", () => {

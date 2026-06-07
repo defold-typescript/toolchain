@@ -230,23 +230,21 @@ const VSCODE_SNIPPETS_CONTENT: Record<string, VscodeSnippet> = {
   },
 };
 
-const MAIN_TS_CONTENT = `export function init(): void {
-  const start = vmath.vector3(0, 0, 0);
-  msg.post("main:/hero", "spawn", { start });
-}
-`;
+const MAIN_TS_CONTENT = `import { defineScript } from "@defold-typescript/types";
 
-const MAIN_SCRIPT_CONTENT = `function init(self) end
-function update(self, dt) end
-function on_message(self, message_id, message, sender) end
-function final(self) end
+export default defineScript({
+  init() {
+    const start = vmath.vector3(0, 0, 0);
+    return { start };
+  },
+});
 `;
 
 const MAIN_COLLECTION_CONTENT = `name: "main"
 scale_along_z: 0
 embedded_instances {
   id: "main"
-  data: "components {\\n  id: \\"main\\"\\n  component: \\"/main/main.script\\"\\n}\\n"
+  data: "components {\\n  id: \\"main\\"\\n  component: \\"/src/main.ts.script\\"\\n}\\n"
   position { x: 0.0 y: 0.0 z: 0.0 }
   rotation { x: 0.0 y: 0.0 z: 0.0 w: 1.0 }
   scale3 { x: 1.0 y: 1.0 z: 1.0 }
@@ -590,8 +588,6 @@ export function runNewProjectInit(cwd: string, force = false): RunInitResult {
   mkdirSync(path.join(cwd, "main"), { recursive: true });
   writeFileSync(path.join(cwd, "main", "main.collection"), MAIN_COLLECTION_CONTENT);
   written.push("main/main.collection");
-  writeFileSync(path.join(cwd, "main", "main.script"), MAIN_SCRIPT_CONTENT);
-  written.push("main/main.script");
 
   writeTsSurface(cwd, written, force);
 

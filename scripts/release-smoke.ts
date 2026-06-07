@@ -16,6 +16,7 @@ import * as path from "node:path";
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const PACKAGES = ["types", "transpiler", "cli"] as const;
 const RUNTIMES = ["node", "bun"] as const;
+export const STARTER_ARTIFACT_REL = "src/main.ts.script";
 
 interface StepResult {
   readonly name: string;
@@ -138,8 +139,8 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
 
     const build = spawn([runtime, bin, "build", app], app);
     record(
-      `${runtime} build emits lua`,
-      build.code === 0 && existsSync(path.join(app, "src", "main.lua")),
+      `${runtime} build emits starter script`,
+      build.code === 0 && existsSync(path.join(app, STARTER_ARTIFACT_REL)),
       build.code === 0 ? "" : build.output.slice(-300),
     );
 
@@ -180,18 +181,18 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
 }
 
 async function boundedWatch(runtime: string, bin: string, proj: string): Promise<void> {
-  const lua = path.join(proj, "src", "main.lua");
-  rmSync(lua, { force: true });
+  const artifact = path.join(proj, STARTER_ARTIFACT_REL);
+  rmSync(artifact, { force: true });
   const proc = Bun.spawn([runtime, bin, "watch", proj], {
     cwd: proj,
     stdout: "pipe",
     stderr: "pipe",
   });
   const deadline = Date.now() + 10_000;
-  while (Date.now() < deadline && !existsSync(lua)) {
+  while (Date.now() < deadline && !existsSync(artifact)) {
     await Bun.sleep(100);
   }
-  const sawArtifact = existsSync(lua);
+  const sawArtifact = existsSync(artifact);
   proc.kill("SIGINT");
   const code = await proc.exited;
   const cleanExit = code === 0 || code === null;

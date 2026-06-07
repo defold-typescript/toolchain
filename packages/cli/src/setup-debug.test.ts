@@ -231,6 +231,17 @@ describe("findEntryScriptCandidates", () => {
       rmSync(cwd, { recursive: true, force: true });
     }
   });
+
+  test("normalizes Windows-shaped scan results before reading and reporting candidates", () => {
+    const cwd = tempProject();
+    try {
+      mkdirSync(path.join(cwd, "src"), { recursive: true });
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      expect(findEntryScriptCandidates(cwd, () => ["src\\player.ts"])).toEqual(["src/player.ts"]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
 });
 
 function writeBaseProject(cwd: string): void {
@@ -330,6 +341,21 @@ describe("runSetupDebug", () => {
         },
       });
       expect(result.ok).toBe(true);
+      expect(result.written).toContain("src/player.ts");
+      expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).toContain(BLOCK_BEGIN);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("uses normalized scan candidates for setup-debug reports", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      const result = await runSetupDebug({ cwd, scanFiles: () => ["src\\player.ts"] });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("src/player.ts");
       expect(result.written).toContain("src/player.ts");
       expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).toContain(BLOCK_BEGIN);
     } finally {

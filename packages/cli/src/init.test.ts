@@ -11,6 +11,7 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
+import { runBuild } from "./build";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { runInit, SCAFFOLD_DEV_DEPS } from "./init";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
@@ -188,7 +189,7 @@ describe("runInit (add-TS mode)", () => {
     expect(pkg["defold-typescript"]).toEqual({ "defold-version": "1.9.8" });
   });
 
-  test("emitted tsconfig.json references @defold-typescript/types and main.ts uses vmath and msg", () => {
+  test("emitted tsconfig.json references @defold-typescript/types and main.ts uses defineScript", () => {
     touch("game.project", "[project]\n");
 
     runInit({ cwd });
@@ -198,8 +199,9 @@ describe("runInit (add-TS mode)", () => {
     expect(tsconfig.compilerOptions.outDir).toBeUndefined();
 
     const main = readFileSync(path.join(cwd, "src", "main.ts"), "utf8");
-    expect(main).toMatch(/vmath/);
-    expect(main).toMatch(/msg/);
+    expect(main).toContain('import { defineScript } from "@defold-typescript/types";');
+    expect(main).toContain("export default defineScript({");
+    expect(main).not.toContain("export function init");
   });
 
   test("scaffolded .gitignore ignores generated Lua next to source", () => {
@@ -356,7 +358,6 @@ describe("runInit (new-project mode)", () => {
   const NEW_PROJECT_FILES = [
     "game.project",
     "main/main.collection",
-    "main/main.script",
     "src/main.ts",
     "tsconfig.json",
     "package.json",
@@ -399,20 +400,24 @@ describe("runInit (new-project mode)", () => {
     expect(content).toMatch(/main_collection\s*=\s*\/main\/main\.collectionc/);
   });
 
-  test("emitted main/main.collection has name and component reference", () => {
+  test("emitted main/main.collection points at the TypeScript build artifact only", () => {
     runInit({ cwd });
     const content = readFileSync(path.join(cwd, "main", "main.collection"), "utf8");
     expect(content).toMatch(/name:\s*"main"/);
-    expect(content).toMatch(/component:.*\/main\/main\.script/);
+    expect(content).toContain("/src/main.ts.script");
+    expect(content).not.toContain("/main/main.script");
+    expect(existsSync(path.join(cwd, "main", "main.script"))).toBe(false);
   });
 
-  test("emitted main/main.script defines the four lifecycle hooks", () => {
+  test("new-project init followed by build writes the collection's referenced script", () => {
     runInit({ cwd });
-    const content = readFileSync(path.join(cwd, "main", "main.script"), "utf8");
-    expect(content).toMatch(/function init\b/);
-    expect(content).toMatch(/function update\b/);
-    expect(content).toMatch(/function on_message\b/);
-    expect(content).toMatch(/function final\b/);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("src/main.ts.script");
+    expect(existsSync(path.join(cwd, "src", "main.ts.script"))).toBe(true);
+    const collection = readFileSync(path.join(cwd, "main", "main.collection"), "utf8");
+    expect(collection).toContain("/src/main.ts.script");
   });
 
   test("scaffolds mise.toml with the three managed tasks", () => {

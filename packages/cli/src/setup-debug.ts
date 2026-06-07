@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { resolveBootPathScripts } from "./boot-path";
-import { scanFilesSync } from "./scan";
+import { normalizeScannedPath, scanFilesSync } from "./scan";
 import { isSkipped } from "./script-kind";
 
 // Our pinned release URL, mirrored from `docs/guide/debugging.md`. The
@@ -219,12 +219,18 @@ function hasFactoryCall(text: string): boolean {
   return FACTORY_NAMES.some((name) => text.includes(`${name}(`));
 }
 
-export function findEntryScriptCandidates(cwd: string): string[] {
+type ProjectScanner = (cwd: string, pattern: string) => string[];
+
+export function findEntryScriptCandidates(
+  cwd: string,
+  scanner: ProjectScanner = scanFilesSync,
+): string[] {
   const srcDir = path.join(cwd, "src");
   if (!existsSync(srcDir)) {
     return [];
   }
-  return scanFilesSync(cwd, "src/**/*.ts")
+  return scanner(cwd, "src/**/*.ts")
+    .map(normalizeScannedPath)
     .filter((rel) => !isSkipped(rel))
     .filter((rel) => hasFactoryCall(readFileSync(path.join(cwd, rel), "utf8")))
     .sort();
@@ -235,6 +241,7 @@ export interface SetupDebugOptions {
   readonly script?: string;
   readonly json?: boolean;
   readonly chooseScript?: (candidates: string[]) => Promise<string>;
+  readonly scanFiles?: ProjectScanner;
 }
 
 export interface SetupDebugResult {
@@ -288,7 +295,8 @@ async function pickCandidate(
 async function resolveTargetScript(
   opts: SetupDebugOptions,
 ): Promise<ResolvedTarget | SetupDebugResult> {
-  const { cwd, script } = opts;
+  const { cwd } = opts;
+  const script = opts.script === undefined ? undefined : normalizeScannedPath(opts.script);
   const bootCandidates = resolveBootPathScripts(cwd).filter((entry) =>
     existsSync(path.join(cwd, entry.candidate)),
   );
@@ -313,7 +321,7 @@ async function resolveTargetScript(
     return { target: picked, bootPath: onPath?.trace ?? [] };
   }
 
-  const scanned = findEntryScriptCandidates(cwd);
+  const scanned = findEntryScriptCandidates(cwd, opts.scanFiles);
   if (scanned.length === 0) {
     return failure(
       "defold-typescript setup-debug: no entry script with a lifecycle factory call found under src/.",
@@ -381,7 +389,8 @@ export async function runSetupDebug(opts: SetupDebugOptions): Promise<SetupDebug
   // every other `src/` script. A malformed block elsewhere is left alone (the
   // strip refuses it) rather than aborting the wiring of the chosen target.
   const removedFrom: string[] = [];
-  for (const rel of scanFilesSync(cwd, "src/**/*.ts")) {
+  for (const scannedRel of (opts.scanFiles ?? scanFilesSync)(cwd, "src/**/*.ts")) {
+    const rel = normalizeScannedPath(scannedRel);
     if (isSkipped(rel) || rel === target) {
       continue;
     }

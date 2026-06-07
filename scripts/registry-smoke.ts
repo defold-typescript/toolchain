@@ -19,6 +19,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 const RUNTIMES = ["node", "bun"] as const;
+export const STARTER_ARTIFACT_REL = "src/main.ts.script";
 
 interface StepResult {
   readonly name: string;
@@ -148,8 +149,8 @@ function runtimeFlow(runtime: string, spec: string): void {
 
     const build = spawn([runtime, bin, "build", app], app);
     record(
-      `${runtime} build emits lua`,
-      build.code === 0 && existsSync(path.join(app, "src", "main.lua")),
+      `${runtime} build emits starter script`,
+      build.code === 0 && existsSync(path.join(app, STARTER_ARTIFACT_REL)),
       build.code === 0 ? "" : build.output.slice(-300),
     );
 

@@ -52,7 +52,7 @@ bunx @defold-typescript/cli@latest init
 bun install
 ```
 
-`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `main/main.script`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). The Defold files are real engine inputs; the TypeScript files are what you edit.
+`init` writes a minimal Defold project (`game.project`, `main/main.collection`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
 
 Run `bun install` once after `init`. The scaffold only declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold

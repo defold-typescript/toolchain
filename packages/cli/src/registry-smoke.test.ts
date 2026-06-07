@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 
 const PKG_DIR = path.resolve(import.meta.dir, "..");
@@ -17,8 +17,10 @@ function miseTaskBody(toml: string, task: string): string | null {
 }
 
 describe("registry smoke harness is discoverable", () => {
-  test("scripts/registry-smoke.ts exists", () => {
-    expect(existsSync(path.join(REPO_ROOT, "scripts", "registry-smoke.ts"))).toBe(true);
+  test("scripts/registry-smoke.ts expects the TypeScript script artifact", () => {
+    const script = readFileSync(path.join(REPO_ROOT, "scripts", "registry-smoke.ts"), "utf8");
+    expect(script).toContain('STARTER_ARTIFACT_REL = "src/main.ts.script"');
+    expect(script).not.toContain('"src/main.lua"');
   });
 
   test("root package.json exposes a registry-smoke script", () => {
