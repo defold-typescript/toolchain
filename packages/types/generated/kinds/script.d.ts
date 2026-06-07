@@ -36,4 +36,4 @@ import "../webview";
 import "../window";
 import "../zlib";
 
-export {};
+export { defineScript } from "../../src/lifecycle";

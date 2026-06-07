@@ -37,4 +37,4 @@ import "../window";
 import "../zlib";
 import "../render";
 
-export {};
+export { defineRenderScript } from "../../src/lifecycle";

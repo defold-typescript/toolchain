@@ -156,6 +156,40 @@ describe("per-kind regen drift guard", () => {
   });
 });
 
+describe("per-kind factory re-export", () => {
+  const KIND_FACTORY: Readonly<Record<string, string>> = {
+    script: "defineScript",
+    "gui-script": "defineGuiScript",
+    "render-script": "defineRenderScript",
+  };
+  const ALL_FACTORIES = ["defineScript", "defineGuiScript", "defineRenderScript"] as const;
+
+  test.each(
+    KIND_MODULE_MANIFEST.map((entry) => [entry.kind] as const),
+  )("%s: generateKindIndex ends with a single matching-factory re-export", (kind) => {
+    const factory = KIND_FACTORY[kind];
+    if (!factory) throw new Error(`no expected factory for kind ${kind}`);
+    const fresh = generateKindIndex(kind);
+    const reexport = `export { ${factory} } from "../../src/lifecycle";`;
+    expect(fresh.trimEnd().endsWith(reexport)).toBe(true);
+    const occurrences = fresh.split(reexport).length - 1;
+    expect(occurrences).toBe(1);
+    expect(fresh).not.toContain("export {};");
+  });
+
+  test.each(
+    KIND_MODULE_MANIFEST.map((entry) => [entry.kind] as const),
+  )("%s: generateKindIndex re-exports neither non-matching factory", (kind) => {
+    const factory = KIND_FACTORY[kind];
+    if (!factory) throw new Error(`no expected factory for kind ${kind}`);
+    const fresh = generateKindIndex(kind);
+    for (const other of ALL_FACTORIES) {
+      if (other === factory) continue;
+      expect(fresh).not.toContain(other);
+    }
+  });
+});
+
 describe("regen drift guard — builtin messages", () => {
   test("committed builtin-messages.d.ts matches a fresh pipeline run byte-for-byte", async () => {
     const fresh = generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST);

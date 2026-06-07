@@ -37,4 +37,4 @@ import "../window";
 import "../zlib";
 import "../gui";
 
-export {};
+export { defineGuiScript } from "../../src/lifecycle";

@@ -220,12 +220,13 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
 export interface KindManifestEntry {
   readonly kind: string;
   readonly restricted?: string;
+  readonly factory: string;
 }
 
 export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
-  { kind: "script" },
-  { kind: "gui-script", restricted: "gui" },
-  { kind: "render-script", restricted: "render" },
+  { kind: "script", factory: "defineScript" },
+  { kind: "gui-script", restricted: "gui", factory: "defineGuiScript" },
+  { kind: "render-script", restricted: "render", factory: "defineRenderScript" },
 ];
 
 export function generateKindIndex(kind: string): string {
@@ -238,7 +239,7 @@ export function generateKindIndex(kind: string): string {
     .sort()
     .map((path) => `import "${path}";`);
   if (entry.restricted) lines.push(`import "../${entry.restricted}";`);
-  return `${lines.join("\n")}\n\nexport {};\n`;
+  return `${lines.join("\n")}\n\nexport { ${entry.factory} } from "../../src/lifecycle";\n`;
 }
 
 export function generateVersionIndex(
