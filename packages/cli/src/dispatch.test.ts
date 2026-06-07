@@ -184,7 +184,9 @@ describe("dispatch", () => {
 
     expect(code).toBe(1);
     expect(out()).toBe("");
-    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug|defold> [path]\n");
+    expect(err()).toBe(
+      "Usage: defold-typescript <init|build|watch|wall|setup-debug|defold> [path]\n",
+    );
   });
 
   test("unknown command prints usage to stderr and returns 1", () => {
@@ -194,7 +196,9 @@ describe("dispatch", () => {
 
     expect(code).toBe(1);
     expect(out()).toBe("");
-    expect(err()).toBe("Usage: defold-typescript <init|build|watch|setup-debug|defold> [path]\n");
+    expect(err()).toBe(
+      "Usage: defold-typescript <init|build|watch|wall|setup-debug|defold> [path]\n",
+    );
   });
 
   test("--version prints the CLI version to stdout and returns 0", () => {
@@ -990,6 +994,121 @@ describe("dispatch", () => {
     expect(out()).toBe("");
     expect(err()).toMatch(/tsconfig\.json/);
     expect(opened).toBe(false);
+  });
+});
+
+describe("dispatch wall command", () => {
+  function scaffoldWallProject(): void {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2)}\n`,
+    );
+    mkdirSync(path.join(cwd, "src", "ui"), { recursive: true });
+    mkdirSync(path.join(cwd, "src", "render"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "src", "ui", "hud.ts"),
+      'import { defineGuiScript } from "@defold-typescript/types/gui-script";\nexport default defineGuiScript({});\n',
+    );
+    writeFileSync(
+      path.join(cwd, "src", "render", "cam.ts"),
+      'import { defineRenderScript } from "@defold-typescript/types/render-script";\nexport default defineRenderScript({});\n',
+    );
+  }
+
+  function readRoot(): { exclude?: string[]; references?: { path: string }[] } {
+    return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
+  }
+
+  test("wall <dir...> walls exactly those and --json reports directoryWalls", () => {
+    scaffoldWallProject();
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["wall", "src/ui", "src/render", "--json"], io, { cwd });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      directoryWalls: { dir: string; kind: string }[];
+    };
+    expect(parsed.directoryWalls).toEqual([
+      { dir: "src/render", kind: "render-script" },
+      { dir: "src/ui", kind: "gui-script" },
+    ]);
+    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(true);
+    expect(readRoot().references).toEqual([{ path: "src/render" }, { path: "src/ui" }]);
+  });
+
+  test("wall --remove drops that wall and leaves others intact", () => {
+    scaffoldWallProject();
+    const { io } = captureStreams();
+    dispatch(["wall", "src/ui", "src/render"], io, { cwd });
+
+    const { io: io2, out } = captureStreams();
+    const code = dispatch(["wall", "--remove", "src/ui", "--json"], io2, { cwd });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { directoryWalls: { dir: string; kind: string }[] };
+    expect(parsed.directoryWalls).toEqual([{ dir: "src/render", kind: "render-script" }]);
+    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
+    expect(readRoot().references).toEqual([{ path: "src/render" }]);
+  });
+
+  test("wall --list --json reports current and eligible walls and writes nothing", () => {
+    scaffoldWallProject();
+    const { io } = captureStreams();
+    dispatch(["wall", "src/ui"], io, { cwd });
+    const renderTsconfigBefore = existsSync(path.join(cwd, "src/render/tsconfig.json"));
+
+    const { io: io2, out } = captureStreams();
+    const code = dispatch(["wall", "--list", "--json"], io2, { cwd });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      directoryWalls: { dir: string; kind: string }[];
+      eligible: { dir: string; kind: string }[];
+    };
+    expect(parsed.directoryWalls).toEqual([{ dir: "src/ui", kind: "gui-script" }]);
+    expect(parsed.eligible).toEqual([
+      { dir: "src/render", kind: "render-script" },
+      { dir: "src/ui", kind: "gui-script" },
+    ]);
+    expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(renderTsconfigBefore);
+  });
+
+  test("wall with no dir and no TTY exits non-zero and writes nothing", () => {
+    scaffoldWallProject();
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["wall"], io, { cwd, isTty: false });
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain("no directory given");
+    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
+  });
+
+  test("wall on a mixed-kind directory errors and writes nothing", () => {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ include: ["src/**/*.ts"] }, null, 2)}\n`,
+    );
+    mkdirSync(path.join(cwd, "src", "mix"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "src", "mix", "a.ts"),
+      'import { defineScript } from "@defold-typescript/types/script";\nexport default defineScript({});\n',
+    );
+    writeFileSync(
+      path.join(cwd, "src", "mix", "b.ts"),
+      'import { defineGuiScript } from "@defold-typescript/types/gui-script";\nexport default defineGuiScript({});\n',
+    );
+    const { io, err } = captureStreams();
+
+    const code = dispatch(["wall", "src/mix"], io, { cwd });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("single-kind source directory");
+    expect(existsSync(path.join(cwd, "src/mix/tsconfig.json"))).toBe(false);
+    expect("references" in readRoot()).toBe(false);
   });
 });
 

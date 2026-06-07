@@ -22,6 +22,7 @@ import {
   resolveCurrentSurfaceGeneratedDir,
 } from "./materialize";
 import { runSetupDebug } from "./setup-debug";
+import { applyWallSelection, currentWalledDirs, eligibleWalls, runWallInteractive } from "./wall";
 import {
   type RunWatchHandle,
   type RunWatchOptions,
@@ -45,9 +46,13 @@ export interface DispatchInternals {
   readonly refDocRegistry?: readonly RegistryTarget[];
   readonly cliVersion?: string;
   readonly defoldIo?: Partial<DefoldIo>;
+  // `wall` takes its target directories as positionals (not a cwd path arg like
+  // the other commands), so tests inject the project root and TTY state here.
+  readonly cwd?: string;
+  readonly isTty?: boolean;
 }
 
-const USAGE = "Usage: defold-typescript <init|build|watch|setup-debug|defold> [path]\n";
+const USAGE = "Usage: defold-typescript <init|build|watch|wall|setup-debug|defold> [path]\n";
 const DEFOLD_USAGE = "Usage: defold-typescript defold <resolve|build|bundle> [path]\n";
 
 function parseDefoldVersionFlag(argv: string[]): { flag: string | undefined; rest: string[] } {
@@ -137,6 +142,8 @@ export function dispatch(
 
   const force = argv.includes("--force");
   const suppressInstallReminder = argv.includes("--suppress-install-reminder");
+  const wallRemove = argv.includes("--remove");
+  const wallList = argv.includes("--list");
   const { flag: defoldVersionFlag, rest: afterVersionArgs } = parseDefoldVersionFlag(argv);
   const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterVersionArgs);
   const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
@@ -145,7 +152,12 @@ export function dispatch(
     "build-server",
   );
   const positional = nonFlagArgs.filter(
-    (a) => a !== "--json" && a !== "--force" && a !== "--suppress-install-reminder",
+    (a) =>
+      a !== "--json" &&
+      a !== "--force" &&
+      a !== "--suppress-install-reminder" &&
+      a !== "--remove" &&
+      a !== "--list",
   );
   const [command, ...rest] = positional;
   const cwd = rest[0] ? path.resolve(rest[0]) : process.cwd();
@@ -380,6 +392,82 @@ export function dispatch(
     }
 
     return launchWatch();
+  }
+
+  if (command === "wall") {
+    const wallCwd = internals?.cwd ?? process.cwd();
+    const dirs = rest;
+    const toJsonWall = (w: { dir: string; kind: string }): { dir: string; kind: string } => ({
+      dir: w.dir,
+      kind: w.kind,
+    });
+    const reportWalls = (walls: { dir: string; kind: string }[]): void => {
+      if (json) {
+        io.stdout.write(renderResult({ command: "wall", directoryWalls: walls.map(toJsonWall) }));
+      } else if (walls.length === 0) {
+        io.stdout.write("defold-typescript wall: no directories walled\n");
+      } else {
+        io.stdout.write(`defold-typescript wall: walled ${walls.map((w) => w.dir).join(", ")}\n`);
+      }
+    };
+
+    if (wallList) {
+      const current = currentWalledDirs(wallCwd);
+      const eligible = eligibleWalls(wallCwd);
+      const currentWalls = eligible.filter((w) => current.includes(w.dir));
+      if (json) {
+        io.stdout.write(
+          renderResult({
+            command: "wall",
+            directoryWalls: currentWalls.map(toJsonWall),
+            eligible: eligible.map(toJsonWall),
+          }),
+        );
+      } else {
+        io.stdout.write(
+          `defold-typescript wall: walled [${current.join(", ")}]; eligible [${eligible
+            .map((w) => w.dir)
+            .join(", ")}]\n`,
+        );
+      }
+      return 0;
+    }
+
+    if (dirs.length > 0) {
+      try {
+        const current = currentWalledDirs(wallCwd);
+        const desired = wallRemove
+          ? current.filter((d) => !dirs.includes(d))
+          : [...current, ...dirs];
+        reportWalls(applyWallSelection(wallCwd, desired));
+        return 0;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "wall", error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
+      }
+    }
+
+    const interactive = internals?.isTty ?? Boolean(process.stdout.isTTY);
+    if (!interactive) {
+      io.stderr.write(
+        "defold-typescript wall: no directory given; pass <dir> or run in a terminal for the interactive menu\n",
+      );
+      return 1;
+    }
+    return (async (): Promise<number> => {
+      try {
+        reportWalls(await runWallInteractive(wallCwd));
+        return 0;
+      } catch (err) {
+        io.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
+        return 1;
+      }
+    })();
   }
 
   if (command === "defold") {

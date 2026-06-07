@@ -1,4 +1,4 @@
-export type CliCommand = "init" | "build" | "setup-debug" | "defold";
+export type CliCommand = "init" | "build" | "setup-debug" | "defold" | "wall";
 
 export interface RenderResultInput {
   readonly command: CliCommand;
@@ -7,6 +7,8 @@ export interface RenderResultInput {
   readonly defoldVersion?: string;
   readonly apiSurface?: string | null;
   readonly materializedSurface?: string | null;
+  readonly directoryWalls?: readonly { readonly dir: string; readonly kind: string }[];
+  readonly eligible?: readonly { readonly dir: string; readonly kind: string }[];
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
@@ -30,10 +32,15 @@ export function renderResult(input: RenderResultInput): string {
     "materializedSurface" in input
       ? { ...withSurface, materializedSurface: input.materializedSurface }
       : withSurface;
+  const withWalls =
+    "directoryWalls" in input
+      ? { ...withMaterialized, directoryWalls: input.directoryWalls }
+      : withMaterialized;
+  const withEligible = "eligible" in input ? { ...withWalls, eligible: input.eligible } : withWalls;
   const withInstall =
     "installCommand" in input
-      ? { ...withMaterialized, installCommand: input.installCommand }
-      : withMaterialized;
+      ? { ...withEligible, installCommand: input.installCommand }
+      : withEligible;
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;
