@@ -8,6 +8,7 @@ export interface RenderResultInput {
   readonly apiSurface?: string | null;
   readonly scriptKind?: string | null;
   readonly materializedSurface?: string | null;
+  readonly directoryWalls?: readonly { readonly dir: string; readonly kind: string }[];
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
@@ -33,10 +34,12 @@ export function renderResult(input: RenderResultInput): string {
     "materializedSurface" in input
       ? { ...withScriptKind, materializedSurface: input.materializedSurface }
       : withScriptKind;
-  const withInstall =
-    "installCommand" in input
-      ? { ...withMaterialized, installCommand: input.installCommand }
+  const withWalls =
+    "directoryWalls" in input
+      ? { ...withMaterialized, directoryWalls: input.directoryWalls }
       : withMaterialized;
+  const withInstall =
+    "installCommand" in input ? { ...withWalls, installCommand: input.installCommand } : withWalls;
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;

@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
   type DirectoryWall,
+  directoryWallTsconfig,
   groupSourceScriptKindsByDirectory,
   planDirectoryWalls,
   planSourceDirectoryWalls,
+  writeDirectoryWallTsconfigs,
 } from "./directory-walls";
-import type { ScriptKind } from "./script-kind";
+import { excludedModulesForKind, type ScriptKind } from "./script-kind";
 
 let cwd: string;
 
@@ -151,5 +153,85 @@ describe("planSourceDirectoryWalls", () => {
     writeTsconfig(["src/**/*.ts"]);
     touch("src/.gitkeep");
     expect(planSourceDirectoryWalls(cwd)).toEqual([]);
+  });
+});
+
+function wall(dir: string, kind: ScriptKind, typesEntrypoint: string): DirectoryWall {
+  return { dir, kind, excludedModules: excludedModulesForKind(kind), typesEntrypoint };
+}
+
+describe("directoryWallTsconfig", () => {
+  test("a nested gui-script wall extends up to the root tsconfig and narrows types", () => {
+    expect(
+      directoryWallTsconfig(wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")),
+    ).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: { types: ["@defold-typescript/types/gui-script"] },
+    });
+  });
+
+  test("a depth-1 render-script wall extends one level up", () => {
+    expect(
+      directoryWallTsconfig(
+        wall("render", "render-script", "@defold-typescript/types/render-script"),
+      ),
+    ).toEqual({
+      extends: "../tsconfig.json",
+      compilerOptions: { types: ["@defold-typescript/types/render-script"] },
+    });
+  });
+});
+
+describe("writeDirectoryWallTsconfigs", () => {
+  test("writes a tsconfig per wall and returns the rel paths sorted", () => {
+    const walls = [
+      wall("src/render", "render-script", "@defold-typescript/types/render-script"),
+      wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
+    ];
+    expect(writeDirectoryWallTsconfigs(cwd, walls)).toEqual([
+      "src/render/tsconfig.json",
+      "src/ui/tsconfig.json",
+    ]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
+      directoryWallTsconfig(walls[1] as DirectoryWall),
+    );
+  });
+
+  test("skips a '.' wall so the root tsconfig is never overwritten", () => {
+    touch("tsconfig.json", JSON.stringify({ include: ["**/*.ts"] }));
+    expect(
+      writeDirectoryWallTsconfigs(cwd, [wall(".", "script", "@defold-typescript/types/script")]),
+    ).toEqual([]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"))).toEqual({
+      include: ["**/*.ts"],
+    });
+  });
+
+  test("does not rewrite a wall tsconfig already set to the same entrypoint", () => {
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    writeDirectoryWallTsconfigs(cwd, walls);
+    const target = path.join(cwd, "src/ui/tsconfig.json");
+    const before = statSync(target).mtimeMs;
+    expect(writeDirectoryWallTsconfigs(cwd, walls)).toEqual([]);
+    expect(statSync(target).mtimeMs).toBe(before);
+  });
+
+  test("merges into an existing child tsconfig, preserving other keys", () => {
+    touch(
+      "src/ui/tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["*.ts"] }),
+    );
+    writeDirectoryWallTsconfigs(cwd, [
+      wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
+    ]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: { strict: true, types: ["@defold-typescript/types/gui-script"] },
+      include: ["*.ts"],
+    });
+  });
+
+  test("writes nothing for an empty wall list", () => {
+    expect(writeDirectoryWallTsconfigs(cwd, [])).toEqual([]);
   });
 });
