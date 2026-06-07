@@ -356,6 +356,7 @@ export function dispatch(
         ...(internals?.debounceMs !== undefined ? { debounceMs: internals.debounceMs } : {}),
         ...(syncSurface ? { syncSurface } : {}),
         ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
+        ...(json ? { json: true } : {}),
       };
       const handle = runWatch(watchOpts);
       if (internals) {

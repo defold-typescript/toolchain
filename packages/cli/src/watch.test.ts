@@ -422,4 +422,96 @@ describe("runWatch", () => {
     handle.stop();
     await handle.done;
   });
+
+  test("json mode emits a single build NDJSON line at startup and no human line", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", "export const a = 1;\n");
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, json: true, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    const lines = out().trimEnd().split("\n");
+    expect(lines.length).toBe(1);
+    const parsed = JSON.parse(lines[0] as string) as Record<string, unknown>;
+    expect(parsed.command).toBe("watch");
+    expect(parsed.event).toBe("build");
+    expect(parsed.ok).toBe(true);
+    expect(out()).not.toMatch(/wrote \d+ files/);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("json mode emits a rebuild event carrying changed and removed src keys", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", "export const a = 1;\n");
+    writeProjectFile("src/gone.ts", "export const b = 2;\n");
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, json: true, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", "export const a = 2;\n");
+    rmSync(path.join(cwd, "src/gone.ts"));
+    factory.trigger("change", "main.ts");
+    factory.trigger("rename", "gone.ts");
+    await handle.waitForIdle();
+
+    const lines = out().trimEnd().split("\n");
+    const rebuild = JSON.parse(lines[lines.length - 1] as string) as Record<string, unknown>;
+    expect(rebuild.event).toBe("rebuild");
+    expect(rebuild.ok).toBe(true);
+    expect(rebuild.changed).toContain("src/main.ts");
+    expect(rebuild.removed).toContain("src/gone.ts");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("json mode writes a failing rebuild as an ok:false line to stdout, nothing to stderr", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", "export const a = 1;\n");
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, json: true, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", 'const x: number = "oops";\n');
+    factory.trigger("change", "main.ts");
+    await handle.waitForIdle();
+
+    const lines = out().trimEnd().split("\n");
+    const last = JSON.parse(lines[lines.length - 1] as string) as Record<string, unknown>;
+    expect(last.event).toBe("rebuild");
+    expect(last.ok).toBe(false);
+    expect(typeof last.error).toBe("string");
+    expect(err()).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("without json, startup and rebuild keep the human formatBuildLine output", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", "export const a = 1;\n");
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", "export const a = 2;\n");
+    factory.trigger("change", "main.ts");
+    await handle.waitForIdle();
+
+    expect(countMatches(out(), /wrote 1 files/g)).toBe(2);
+    expect(out()).not.toContain('"event"');
+
+    handle.stop();
+    await handle.done;
+  });
 });

@@ -2,6 +2,7 @@ import { existsSync, watch as fsWatch } from "node:fs";
 import * as path from "node:path";
 import { isTranspilerSource, toPosix } from "./build-output";
 import { type BuildSession, createBuildSession } from "./build-session";
+import { renderWatchEvent } from "./json-output";
 import { isComponentPath, isSkipped } from "./script-kind";
 
 export interface WatchEvent {
@@ -23,6 +24,7 @@ export interface RunWatchOptions {
   readonly watcherFactory?: WatcherFactory;
   readonly syncSurface?: () => void;
   readonly componentWatcherFactory?: WatcherFactory;
+  readonly json?: boolean;
 }
 
 export interface RunWatchHandle {
@@ -69,7 +71,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     opts.syncSurface?.();
     session = createBuildSession({ cwd });
     const { written } = session.buildAll();
-    stdout.write(formatBuildLine(written));
+    stdout.write(
+      opts.json ? renderWatchEvent({ event: "build", written }) : formatBuildLine(written),
+    );
   } catch (err) {
     rejectDone(rewrapInitError(err));
     return {
@@ -112,10 +116,18 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
     try {
       const { written } = session.applyEvents(changed, removed);
-      stdout.write(formatBuildLine(written));
+      stdout.write(
+        opts.json
+          ? renderWatchEvent({ event: "rebuild", written, changed, removed })
+          : formatBuildLine(written),
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      stderr.write(`${message}\n`);
+      if (opts.json) {
+        stdout.write(renderWatchEvent({ event: "rebuild", error: message }));
+      } else {
+        stderr.write(`${message}\n`);
+      }
     }
     rebuildBusy = false;
     notifyIdle();

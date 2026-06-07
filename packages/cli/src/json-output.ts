@@ -51,3 +51,23 @@ export function renderResult(input: RenderResultInput): string {
   const payload = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
   return `${JSON.stringify(payload)}\n`;
 }
+
+export type WatchEventName = "build" | "rebuild";
+
+export interface RenderWatchEventInput {
+  readonly event: WatchEventName;
+  readonly written?: readonly string[];
+  readonly changed?: readonly string[];
+  readonly removed?: readonly string[];
+  readonly error?: string;
+}
+
+export function renderWatchEvent(input: RenderWatchEventInput): string {
+  const ok = input.error === undefined;
+  const base = ok
+    ? { command: "watch" as const, event: input.event, ok, written: input.written ?? [] }
+    : { command: "watch" as const, event: input.event, ok, error: input.error };
+  const withChanged = "changed" in input ? { ...base, changed: input.changed } : base;
+  const withRemoved = "removed" in input ? { ...withChanged, removed: input.removed } : withChanged;
+  return `${JSON.stringify(withRemoved)}\n`;
+}

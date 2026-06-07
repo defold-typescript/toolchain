@@ -753,6 +753,43 @@ describe("dispatch", () => {
     expect(out()).toMatch(/wrote 1 files/);
   });
 
+  test("watch --json threads json into runWatch and streams a build NDJSON line", async () => {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    const srcDir = path.join(cwd, "src");
+    mkdirSync(srcDir, { recursive: true });
+    writeFileSync(path.join(srcDir, "main.ts"), "export const a = 1;\n");
+
+    const { io, out, err } = captureStreams();
+
+    const factory: WatcherFactory = (_srcDir, _onEvent): Watcher => ({
+      close() {},
+    });
+
+    let captured: RunWatchHandle | undefined;
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      watcherFactory: factory,
+      onWatchStart: (h) => {
+        captured = h;
+      },
+    });
+
+    await captured?.waitForIdle();
+    captured?.stop();
+    await result;
+
+    expect(err()).toBe("");
+    const lines = out().trimEnd().split("\n");
+    const build = JSON.parse(lines[0] as string) as Record<string, unknown>;
+    expect(build.command).toBe("watch");
+    expect(build.event).toBe("build");
+    expect(build.ok).toBe(true);
+  });
+
   test("watch narrows the materialized surface at startup for a single-.script project", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },

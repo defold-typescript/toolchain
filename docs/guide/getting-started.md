@@ -106,6 +106,40 @@ bunx @defold-typescript/cli watch
 
 `watch` rebuilds incrementally on every TypeScript source change: it holds one long-lived transpile session and re-reads and rewrites only the files you actually edited, skipping the re-glob and re-read of unchanged sources. Use it while the Defold editor is open in the same project directory. See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
+## Machine-readable output (`--json`)
+
+Every command accepts `--json` for agents and scripts that want to parse the
+result instead of scraping the human lines.
+
+The one-shot commands (`init`, `build`, `setup-debug`, `defold`) print a single
+JSON object to stdout, terminated by a newline:
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":["src/main.ts.script", ...]}
+```
+
+A failure flips `ok` to `false` and carries an `error` string instead of
+`written`. Optional fields (`defoldVersion`, `apiSurface`, `scriptKind`,
+`directoryWalls`, …) appear only when they apply.
+
+`watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
+one object per line, one line per build:
+
+```sh
+bunx @defold-typescript/cli watch --json
+# {"command":"watch","event":"build","ok":true,"written":[...]}
+# {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[]}
+# {"command":"watch","event":"rebuild","ok":false,"error":"..."}
+```
+
+The first line is the startup full build (`event: "build"`); each later line is
+an incremental `rebuild` carrying the `changed` and `removed` `src/<rel>` keys.
+A rebuild that fails emits an `ok: false` line **to stdout too**, so a
+line-reader sees one uninterrupted stream — failures never split off to stderr.
+Read each line as it arrives and react per event. Without `--json`, stdout stays
+the human `wrote N files: …` output and rebuild errors stay on stderr.
+
 ## Headless builds (no editor)
 
 `build` transpiles TypeScript to Lua; to compile and run the Defold project
