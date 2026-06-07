@@ -42,6 +42,15 @@ describe("transpile", () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  test("resolves ambient hash without a consumer shim", () => {
+    const result = transpile(
+      'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({\n  init() {\n    const id: Hash = hash("left");\n    void id;\n  },\n});\n',
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toContain('hash("left")');
+    expect(result.lua).not.toContain("require");
+  });
+
   test("resolves the defineScript factory import with zero diagnostics", () => {
     const result = transpile('import { defineScript } from "@defold-typescript/types";\n');
     expect(result.diagnostics).toEqual([]);

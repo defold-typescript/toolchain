@@ -56,6 +56,8 @@ function buildAmbientFiles(): Record<string, string> {
       "utf8",
     ),
     "node_modules/@defold-typescript/types/src/core-types.ts": readAmbient("src/core-types.ts"),
+    "node_modules/@defold-typescript/types/src/engine-globals.d.ts":
+      readAmbient("src/engine-globals.d.ts"),
     "node_modules/@defold-typescript/types/src/msg-overloads.d.ts":
       readAmbient("src/msg-overloads.d.ts"),
     "node_modules/@defold-typescript/types/src/message-guard.d.ts":
