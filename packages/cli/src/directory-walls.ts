@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { detectSourceScriptKind, isTranspilerSource, readBuildConfig } from "./build-output";
 import { scanFilesSync } from "./scan";
@@ -65,4 +65,59 @@ export function planSourceDirectoryWalls(cwd: string): DirectoryWall[] {
     }
   }
   return walls.sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
+}
+
+interface WallTsconfig {
+  readonly extends: string;
+  readonly compilerOptions: { readonly types: string[] };
+}
+
+export function directoryWallTsconfig(wall: DirectoryWall): WallTsconfig {
+  const depth = wall.dir.split("/").length;
+  return {
+    extends: `${"../".repeat(depth)}tsconfig.json`,
+    compilerOptions: { types: [wall.typesEntrypoint] },
+  };
+}
+
+function writeJson(filePath: string, value: unknown): void {
+  mkdirSync(path.dirname(filePath), { recursive: true });
+  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+export function writeDirectoryWallTsconfigs(cwd: string, walls: DirectoryWall[]): string[] {
+  const written: string[] = [];
+  for (const w of walls) {
+    if (w.dir === ".") {
+      continue;
+    }
+    const rel = `${w.dir}/tsconfig.json`;
+    const target = path.join(cwd, w.dir, "tsconfig.json");
+    const desired = directoryWallTsconfig(w);
+    if (existsSync(target)) {
+      const current = JSON.parse(readFileSync(target, "utf8")) as {
+        extends?: string;
+        compilerOptions?: Record<string, unknown>;
+        [key: string]: unknown;
+      };
+      const options = current.compilerOptions ?? {};
+      // Skip the write when already narrowed so a consumer's formatting is not
+      // churned to JSON.stringify's layout on every build.
+      const alreadyNarrowed =
+        current.extends === desired.extends &&
+        JSON.stringify(options.types) === JSON.stringify(desired.compilerOptions.types);
+      if (!alreadyNarrowed) {
+        writeJson(target, {
+          ...current,
+          extends: desired.extends,
+          compilerOptions: { ...options, types: desired.compilerOptions.types },
+        });
+        written.push(rel);
+      }
+    } else {
+      writeJson(target, desired);
+      written.push(rel);
+    }
+  }
+  return written.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
