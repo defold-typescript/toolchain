@@ -11,7 +11,7 @@ import {
 import { runBuild } from "./build";
 import { readCliVersion } from "./cli-version";
 import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
-import { planSourceDirectoryWalls, writeDirectoryWallTsconfigs } from "./directory-walls";
+import { syncDirectoryWalls } from "./directory-walls";
 import { runInit } from "./init";
 import { installHint } from "./install-reminder";
 import { renderResult } from "./json-output";
@@ -245,10 +245,7 @@ export function dispatch(
     const scriptKind = selectScriptKind(detectScriptKinds(cwd));
     const reportBuild = (written: readonly string[], materializedDir: string | null): number => {
       ensureMaterializedReference(cwd, materializedDir);
-      // A mixed-kind project keeps the full surface project-wide, but its
-      // single-kind source directories can still be narrowed per-directory.
-      const walls = scriptKind === null ? planSourceDirectoryWalls(cwd) : [];
-      writeDirectoryWallTsconfigs(cwd, walls);
+      const walls = syncDirectoryWalls(cwd, scriptKind);
       if (json) {
         io.stdout.write(
           renderResult({
@@ -343,6 +340,7 @@ export function dispatch(
           scriptKind,
         });
         ensureMaterializedReference(cwd, materializedDir);
+        syncDirectoryWalls(cwd, scriptKind);
       };
       componentWatcherFactory = internals
         ? internals.componentWatcherFactory

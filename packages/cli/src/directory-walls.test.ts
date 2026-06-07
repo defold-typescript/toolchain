@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
@@ -8,6 +16,7 @@ import {
   groupSourceScriptKindsByDirectory,
   planDirectoryWalls,
   planSourceDirectoryWalls,
+  syncDirectoryWalls,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
 import { excludedModulesForKind, type ScriptKind } from "./script-kind";
@@ -233,5 +242,36 @@ describe("writeDirectoryWallTsconfigs", () => {
 
   test("writes nothing for an empty wall list", () => {
     expect(writeDirectoryWallTsconfigs(cwd, [])).toEqual([]);
+  });
+});
+
+describe("syncDirectoryWalls", () => {
+  test("over a mixed-kind source tree writes each single-kind wall tsconfig and returns the walls", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/ui/hud.ts", "export default defineGuiScript({});");
+    touch("src/render/cam.ts", "export default defineRenderScript({});");
+
+    const walls = syncDirectoryWalls(cwd, null);
+
+    expect(walls).toEqual(planSourceDirectoryWalls(cwd));
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: { types: ["@defold-typescript/types/gui-script"] },
+    });
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/render/tsconfig.json"), "utf8"))).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: { types: ["@defold-typescript/types/render-script"] },
+    });
+  });
+
+  test("a non-null whole-project kind writes nothing and returns [] even with single-kind subdirs", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/ui/hud.ts", "export default defineGuiScript({});");
+    touch("src/render/cam.ts", "export default defineRenderScript({});");
+
+    expect(syncDirectoryWalls(cwd, "script")).toEqual([]);
+    expect(statSync(path.join(cwd, "src/ui"), { throwIfNoEntry: false })?.isDirectory()).toBe(true);
+    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(false);
   });
 });

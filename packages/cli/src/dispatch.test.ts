@@ -863,6 +863,135 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
+  test("watch on a mixed-kind project emits per-directory wall tsconfigs at startup", async () => {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    const srcDir = path.join(cwd, "src");
+    mkdirSync(path.join(srcDir, "ui"), { recursive: true });
+    mkdirSync(path.join(srcDir, "render"), { recursive: true });
+    writeFileSync(
+      path.join(srcDir, "ui", "hud.ts"),
+      'import { defineGuiScript } from "@defold-typescript/types";\nexport default defineGuiScript({});\n',
+    );
+    writeFileSync(
+      path.join(srcDir, "render", "cam.ts"),
+      'import { defineRenderScript } from "@defold-typescript/types";\nexport default defineRenderScript({});\n',
+    );
+
+    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    for (const mod of ["label", "gui", "render"]) {
+      writeFileSync(
+        path.join(sourceGeneratedDir, `${mod}.d.ts`),
+        `declare const __${mod}: unknown;\n`,
+      );
+    }
+
+    const { io } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    let handle: RunWatchHandle | undefined;
+    const result = dispatch(["watch", cwd], io, {
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      onWatchStart: (h) => {
+        handle = h;
+      },
+    });
+
+    await handle?.waitForIdle();
+
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: { types: ["@defold-typescript/types/gui-script"] },
+    });
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/render/tsconfig.json"), "utf8"))).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: { types: ["@defold-typescript/types/render-script"] },
+    });
+
+    handle?.stop();
+    const code = await result;
+    expect(code).toBe(0);
+
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
+  test("watch re-emits a new wall live when a directory becomes single-kind mid-session", async () => {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    const srcDir = path.join(cwd, "src");
+    mkdirSync(path.join(srcDir, "ui"), { recursive: true });
+    mkdirSync(path.join(srcDir, "render"), { recursive: true });
+    writeFileSync(
+      path.join(srcDir, "ui", "hud.ts"),
+      'import { defineGuiScript } from "@defold-typescript/types";\nexport default defineGuiScript({});\n',
+    );
+    writeFileSync(
+      path.join(srcDir, "render", "cam.ts"),
+      'import { defineRenderScript } from "@defold-typescript/types";\nexport default defineRenderScript({});\n',
+    );
+
+    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    for (const mod of ["label", "gui", "render"]) {
+      writeFileSync(
+        path.join(sourceGeneratedDir, `${mod}.d.ts`),
+        `declare const __${mod}: unknown;\n`,
+      );
+    }
+
+    const { io } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    let triggerComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const component: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerComponent = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+
+    let handle: RunWatchHandle | undefined;
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      onWatchStart: (h) => {
+        handle = h;
+      },
+    });
+
+    await handle?.waitForIdle();
+    expect(existsSync(path.join(cwd, "src/menu/tsconfig.json"))).toBe(false);
+
+    mkdirSync(path.join(srcDir, "menu"), { recursive: true });
+    writeFileSync(
+      path.join(srcDir, "menu", "start.ts"),
+      'import { defineGuiScript } from "@defold-typescript/types";\nexport default defineGuiScript({});\n',
+    );
+    writeFileSync(path.join(cwd, "hud.gui_script"), "");
+    triggerComponent?.("rename", "hud.gui_script");
+    await handle?.waitForIdle();
+
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/menu/tsconfig.json"), "utf8"))).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: { types: ["@defold-typescript/types/gui-script"] },
+    });
+
+    handle?.stop();
+    const code = await result;
+    expect(code).toBe(0);
+
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
   test("watch resolves to 1 and writes stderr when the initial build throws", async () => {
     const { io, out, err } = captureStreams();
     let opened = false;

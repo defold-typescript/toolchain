@@ -85,6 +85,15 @@ function writeJson(filePath: string, value: unknown): void {
   writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+export function syncDirectoryWalls(cwd: string, scriptKind: ScriptKind | null): DirectoryWall[] {
+  // A mixed-kind project keeps the full surface project-wide, but its
+  // single-kind source directories are narrowed per-directory; a non-null kind
+  // means whole-project narrowing already applies, so no per-directory walls.
+  const walls = scriptKind === null ? planSourceDirectoryWalls(cwd) : [];
+  writeDirectoryWallTsconfigs(cwd, walls);
+  return walls;
+}
+
 export function writeDirectoryWallTsconfigs(cwd: string, walls: DirectoryWall[]): string[] {
   const written: string[] = [];
   for (const w of walls) {
