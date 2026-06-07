@@ -420,7 +420,7 @@ describe("dispatch", () => {
     expect(parsed.apiSurface).toBe("defold-1.12.4");
   });
 
-  test("init --json reports scriptKind gui-script for a single-gui_script project", () => {
+  test("init --json carries no scriptKind field even for a single-gui_script project", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     writeFileSync(path.join(cwd, "hud.gui_script"), "");
     const { io, out } = captureStreams();
@@ -428,8 +428,8 @@ describe("dispatch", () => {
     const code = dispatch(["init", cwd, "--json"], io);
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { scriptKind: string | null };
-    expect(parsed.scriptKind).toBe("gui-script");
+    const parsed = JSON.parse(out()) as Record<string, unknown>;
+    expect("scriptKind" in parsed).toBe(false);
   });
 
   test("build --json materializes the selected surface and reports the dir", () => {
@@ -464,7 +464,7 @@ describe("dispatch", () => {
     rmSync(pkgRoot, { recursive: true, force: true });
   });
 
-  test("build --json on a single-.script project narrows to scriptKind script", () => {
+  test("build --json on a single-.script project keeps the full surface and no scriptKind", () => {
     scaffoldBuildProject();
     writeFileSync(path.join(cwd, "main.script"), "");
     const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
@@ -479,21 +479,21 @@ describe("dispatch", () => {
     const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { scriptKind: string | null };
-    expect(parsed.scriptKind).toBe("script");
+    const parsed = JSON.parse(out()) as Record<string, unknown>;
+    expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
       path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"),
       "utf8",
     );
-    expect(index).not.toContain('"./gui"');
-    expect(index).not.toContain('"./render"');
+    expect(index).toContain('"./gui"');
+    expect(index).toContain('"./render"');
     expect(index).toContain('"./label"');
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("build --json on a mixed-kind project keeps the full surface (scriptKind null)", () => {
+  test("build --json on a mixed-kind project keeps the full surface and no scriptKind", () => {
     scaffoldBuildProject();
     writeFileSync(path.join(cwd, "main.script"), "");
     writeFileSync(path.join(cwd, "hud.gui_script"), "");
@@ -509,8 +509,8 @@ describe("dispatch", () => {
     const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { scriptKind: string | null };
-    expect(parsed.scriptKind).toBeNull();
+    const parsed = JSON.parse(out()) as Record<string, unknown>;
+    expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
       path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"),
@@ -523,7 +523,7 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("build --json on a mixed-kind project emits per-directory wall tsconfigs", () => {
+  test("build --json on a mixed-kind project writes no per-directory wall tsconfigs", () => {
     scaffoldBuildProject();
     rmSync(path.join(cwd, "src", "main.ts"));
     mkdirSync(path.join(cwd, "src", "ui"), { recursive: true });
@@ -548,31 +548,39 @@ describe("dispatch", () => {
     const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as {
-      scriptKind: string | null;
-      directoryWalls: { dir: string; kind: string }[];
-    };
-    expect(parsed.scriptKind).toBeNull();
-    expect(parsed.directoryWalls).toEqual([
-      { dir: "src/render", kind: "render-script" },
-      { dir: "src/ui", kind: "gui-script" },
-    ]);
-    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
-      expectedWallTsconfig("@defold-typescript/types/gui-script"),
-    );
-    expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(true);
+    const parsed = JSON.parse(out()) as Record<string, unknown>;
+    expect("scriptKind" in parsed).toBe(false);
+    expect("directoryWalls" in parsed).toBe(false);
+    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(false);
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("build --json on a single-kind project emits no per-directory wall tsconfigs", () => {
+  test("build does not mutate root tsconfig wall wiring written by hand", () => {
     scaffoldBuildProject();
-    writeFileSync(path.join(cwd, "main.script"), "");
+    rmSync(path.join(cwd, "src", "main.ts"));
     mkdirSync(path.join(cwd, "src", "ui"), { recursive: true });
     writeFileSync(
       path.join(cwd, "src", "ui", "hud.ts"),
-      'import { defineGuiScript } from "@defold-typescript/types";\nexport default defineGuiScript({});\n',
+      'import { defineGuiScript } from "@defold-typescript/types/gui-script";\nexport default defineGuiScript({});\n',
     );
+    // A manually-written wall: root tsconfig carries references/exclude/files and
+    // src/ui has its own composite tsconfig. A build must leave all of it intact.
+    const rootTsconfig = {
+      compilerOptions: { strict: true, types: ["@defold-typescript/types"] },
+      include: ["src/**/*.ts"],
+      exclude: ["src/ui"],
+      files: [],
+      references: [{ path: "src/ui" }],
+    };
+    writeFileSync(path.join(cwd, "tsconfig.json"), `${JSON.stringify(rootTsconfig, null, 2)}\n`);
+    const wallTsconfig = expectedWallTsconfig("@defold-typescript/types/gui-script");
+    writeFileSync(
+      path.join(cwd, "src", "ui", "tsconfig.json"),
+      `${JSON.stringify(wallTsconfig, null, 2)}\n`,
+    );
+
     const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
     for (const mod of ["label", "gui", "render"]) {
       writeFileSync(
@@ -581,17 +589,21 @@ describe("dispatch", () => {
       );
     }
 
-    const { io, out } = captureStreams();
+    const { io } = captureStreams();
     const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as {
-      scriptKind: string | null;
-      directoryWalls: { dir: string; kind: string }[];
+    const root = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      exclude?: string[];
+      files?: string[];
+      references?: { path: string }[];
     };
-    expect(parsed.scriptKind).toBe("script");
-    expect(parsed.directoryWalls).toEqual([]);
-    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
+    expect(root.references).toEqual([{ path: "src/ui" }]);
+    expect(root.exclude).toEqual(["src/ui"]);
+    expect(root.files).toEqual([]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
+      wallTsconfig,
+    );
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
@@ -679,7 +691,7 @@ describe("dispatch", () => {
     rmSync(emptyCache, { recursive: true, force: true });
   });
 
-  test("build narrows the pinned ref-doc surface for a single-.script project", async () => {
+  test("build keeps the full pinned ref-doc surface for a single-.script project", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
     writeFileSync(path.join(cwd, "main.script"), "");
     const resolveOpts = multiKindRefDocResolveOpts();
@@ -693,13 +705,13 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
-    expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(false);
-    expect(existsSync(path.join(dir, "render.d.ts"))).toBe(false);
+    expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(true);
+    expect(existsSync(path.join(dir, "render.d.ts"))).toBe(true);
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
-  test("watch narrows the pinned ref-doc surface at startup for a single-.script project", async () => {
+  test("watch keeps the full pinned ref-doc surface at startup for a single-.script project", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
     writeFileSync(path.join(cwd, "main.script"), "");
     const resolveOpts = multiKindRefDocResolveOpts();
@@ -720,8 +732,8 @@ describe("dispatch", () => {
 
     const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
-    expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(false);
-    expect(existsSync(path.join(dir, "render.d.ts"))).toBe(false);
+    expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(true);
+    expect(existsSync(path.join(dir, "render.d.ts"))).toBe(true);
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
@@ -798,7 +810,7 @@ describe("dispatch", () => {
     expect(build.ok).toBe(true);
   });
 
-  test("watch narrows the materialized surface at startup for a single-.script project", async () => {
+  test("watch keeps the full materialized surface at startup for a single-.script project", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
       null,
@@ -838,8 +850,8 @@ describe("dispatch", () => {
       path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"),
       "utf8",
     );
-    expect(index).not.toContain('"./gui"');
-    expect(index).not.toContain('"./render"');
+    expect(index).toContain('"./gui"');
+    expect(index).toContain('"./render"');
     expect(index).toContain('"./label"');
 
     handle?.stop();
@@ -850,7 +862,7 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("watch re-narrows live when a .gui_script is added mid-session", async () => {
+  test("watch keeps the full surface when a .gui_script is added mid-session", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
       null,
@@ -899,7 +911,8 @@ describe("dispatch", () => {
 
     const index = readFileSync(indexPath, "utf8");
     expect(index).toContain('"./gui"');
-    expect(index).not.toContain('"./render"');
+    expect(index).toContain('"./render"');
+    expect(index).toContain('"./label"');
 
     handle?.stop();
     const code = await result;
@@ -908,7 +921,7 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("watch on a mixed-kind project emits per-directory wall tsconfigs at startup", async () => {
+  test("watch on a mixed-kind project writes no per-directory wall tsconfigs", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
       null,
@@ -951,81 +964,8 @@ describe("dispatch", () => {
 
     await handle?.waitForIdle();
 
-    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
-      expectedWallTsconfig("@defold-typescript/types/gui-script"),
-    );
-    expect(JSON.parse(readFileSync(path.join(cwd, "src/render/tsconfig.json"), "utf8"))).toEqual(
-      expectedWallTsconfig("@defold-typescript/types/render-script"),
-    );
-
-    handle?.stop();
-    const code = await result;
-    expect(code).toBe(0);
-
-    rmSync(sourceGeneratedDir, { recursive: true, force: true });
-  });
-
-  test("watch re-emits a new wall live when a directory becomes single-kind mid-session", async () => {
-    const tsconfig = JSON.stringify(
-      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
-      null,
-      2,
-    );
-    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
-    const srcDir = path.join(cwd, "src");
-    mkdirSync(path.join(srcDir, "ui"), { recursive: true });
-    mkdirSync(path.join(srcDir, "render"), { recursive: true });
-    writeFileSync(
-      path.join(srcDir, "ui", "hud.ts"),
-      'import { defineGuiScript } from "@defold-typescript/types";\nexport default defineGuiScript({});\n',
-    );
-    writeFileSync(
-      path.join(srcDir, "render", "cam.ts"),
-      'import { defineRenderScript } from "@defold-typescript/types";\nexport default defineRenderScript({});\n',
-    );
-
-    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
-    for (const mod of ["label", "gui", "render"]) {
-      writeFileSync(
-        path.join(sourceGeneratedDir, `${mod}.d.ts`),
-        `declare const __${mod}: unknown;\n`,
-      );
-    }
-
-    const { io } = captureStreams();
-    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
-    let triggerComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
-    const component: WatcherFactory = (_dir, onEvent): Watcher => {
-      triggerComponent = (kind, rel) => onEvent({ kind, path: rel });
-      return { close() {} };
-    };
-
-    let handle: RunWatchHandle | undefined;
-    const result = dispatch(["watch", cwd], io, {
-      debounceMs: 5,
-      watcherFactory: main,
-      componentWatcherFactory: component,
-      sourceGeneratedDir,
-      onWatchStart: (h) => {
-        handle = h;
-      },
-    });
-
-    await handle?.waitForIdle();
-    expect(existsSync(path.join(cwd, "src/menu/tsconfig.json"))).toBe(false);
-
-    mkdirSync(path.join(srcDir, "menu"), { recursive: true });
-    writeFileSync(
-      path.join(srcDir, "menu", "start.ts"),
-      'import { defineGuiScript } from "@defold-typescript/types";\nexport default defineGuiScript({});\n',
-    );
-    writeFileSync(path.join(cwd, "hud.gui_script"), "");
-    triggerComponent?.("rename", "hud.gui_script");
-    await handle?.waitForIdle();
-
-    expect(JSON.parse(readFileSync(path.join(cwd, "src/menu/tsconfig.json"), "utf8"))).toEqual(
-      expectedWallTsconfig("@defold-typescript/types/gui-script"),
-    );
+    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(false);
 
     handle?.stop();
     const code = await result;

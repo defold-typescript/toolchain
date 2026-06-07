@@ -490,49 +490,46 @@ describe("runInit (new-project mode)", () => {
   });
 });
 
-describe("runInit (script-kind auto-selection)", () => {
+describe("runInit (full-surface entrypoint)", () => {
   function tsconfigTypes(dir: string): string[] {
     return JSON.parse(readFileSync(path.join(dir, "tsconfig.json"), "utf8")).compilerOptions.types;
   }
 
-  test("new-project synthesis narrows to the per-kind script entrypoint", () => {
+  test("new-project synthesis scaffolds the full-surface entrypoint", () => {
     const result = runInit({ cwd });
 
-    expect(tsconfigTypes(cwd)).toEqual(["@defold-typescript/types/script"]);
-    expect(result.scriptKind).toBe("script");
+    expect(tsconfigTypes(cwd)).toEqual(["@defold-typescript/types"]);
+    expect("scriptKind" in result).toBe(false);
   });
 
-  test("add-TS mode in a *.gui_script project narrows to the gui-script entrypoint", () => {
+  test("a single-kind *.gui_script project still scaffolds the full surface", () => {
     touch("game.project", "[project]\n");
     mkdirSync(path.join(cwd, "ui"), { recursive: true });
     writeFileSync(path.join(cwd, "ui", "hud.gui_script"), "");
 
-    const result = runInit({ cwd });
+    runInit({ cwd });
 
-    expect(tsconfigTypes(cwd)).toEqual(["@defold-typescript/types/gui-script"]);
-    expect(result.scriptKind).toBe("gui-script");
+    expect(tsconfigTypes(cwd)).toEqual(["@defold-typescript/types"]);
   });
 
-  test("add-TS mode in a mixed-kind project keeps the full-surface default", () => {
+  test("a mixed-kind project scaffolds the full surface", () => {
     touch("game.project", "[project]\n");
     mkdirSync(path.join(cwd, "main"), { recursive: true });
     writeFileSync(path.join(cwd, "main", "main.script"), "");
     mkdirSync(path.join(cwd, "ui"), { recursive: true });
     writeFileSync(path.join(cwd, "ui", "hud.gui_script"), "");
 
-    const result = runInit({ cwd });
+    runInit({ cwd });
 
     expect(tsconfigTypes(cwd)).toEqual(["@defold-typescript/types"]);
-    expect(result.scriptKind).toBeNull();
   });
 
-  test("add-TS mode in a kindless project keeps the full-surface default", () => {
+  test("a kindless project scaffolds the full surface", () => {
     touch("game.project", "[project]\n");
 
-    const result = runInit({ cwd });
+    runInit({ cwd });
 
     expect(tsconfigTypes(cwd)).toEqual(["@defold-typescript/types"]);
-    expect(result.scriptKind).toBeNull();
   });
 });
 

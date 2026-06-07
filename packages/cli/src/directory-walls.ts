@@ -3,7 +3,6 @@ import * as path from "node:path";
 import { detectSourceScriptKind, isTranspilerSource, readBuildConfig } from "./build-output";
 import { scanFilesSync } from "./scan";
 import {
-  excludedModulesForKind,
   isSkipped,
   type ScriptKind,
   selectDirectoryWalls,
@@ -14,7 +13,6 @@ import {
 export interface DirectoryWall {
   readonly dir: string;
   readonly kind: ScriptKind;
-  readonly excludedModules: Set<string>;
   readonly typesEntrypoint: string;
 }
 
@@ -22,7 +20,6 @@ function describeWall(dir: string, kind: ScriptKind): DirectoryWall {
   return {
     dir,
     kind,
-    excludedModules: excludedModulesForKind(kind),
     typesEntrypoint: selectScriptKindEntrypoint(new Set([kind])),
   };
 }
@@ -163,16 +160,6 @@ export function wireWallReferences(cwd: string, walls: readonly DirectoryWall[])
   if (JSON.stringify(next) !== JSON.stringify(current)) {
     writeJson(rootPath, next);
   }
-}
-
-export function syncDirectoryWalls(cwd: string, scriptKind: ScriptKind | null): DirectoryWall[] {
-  // A mixed-kind project keeps the full surface project-wide, but its
-  // single-kind source directories are narrowed per-directory; a non-null kind
-  // means whole-project narrowing already applies, so no per-directory walls.
-  const walls = scriptKind === null ? planSourceDirectoryWalls(cwd) : [];
-  writeDirectoryWallTsconfigs(cwd, walls);
-  wireWallReferences(cwd, walls);
-  return walls;
 }
 
 export function writeDirectoryWallTsconfigs(cwd: string, walls: DirectoryWall[]): string[] {

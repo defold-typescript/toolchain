@@ -1,13 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
@@ -16,11 +8,10 @@ import {
   groupSourceScriptKindsByDirectory,
   planDirectoryWalls,
   planSourceDirectoryWalls,
-  syncDirectoryWalls,
   wireWallReferences,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
-import { excludedModulesForKind, type ScriptKind } from "./script-kind";
+import type { ScriptKind } from "./script-kind";
 
 let cwd: string;
 
@@ -50,25 +41,22 @@ describe("planDirectoryWalls", () => {
       {
         dir: "render",
         kind: "render-script",
-        excludedModules: new Set(["gui"]),
         typesEntrypoint: "@defold-typescript/types/render-script",
       },
       {
         dir: "ui",
         kind: "gui-script",
-        excludedModules: new Set(["render"]),
         typesEntrypoint: "@defold-typescript/types/gui-script",
       },
     ] satisfies DirectoryWall[]);
   });
 
-  test("a root-level single-kind component yields a '.' descriptor forbidding both", () => {
+  test("a root-level single-kind component yields a '.' descriptor", () => {
     touch("main.script");
     expect(planDirectoryWalls(cwd)).toEqual([
       {
         dir: ".",
         kind: "script",
-        excludedModules: new Set(["gui", "render"]),
         typesEntrypoint: "@defold-typescript/types/script",
       },
     ]);
@@ -140,13 +128,11 @@ describe("planSourceDirectoryWalls", () => {
       {
         dir: "src/render",
         kind: "render-script",
-        excludedModules: new Set(["gui"]),
         typesEntrypoint: "@defold-typescript/types/render-script",
       },
       {
         dir: "src/ui",
         kind: "gui-script",
-        excludedModules: new Set(["render"]),
         typesEntrypoint: "@defold-typescript/types/gui-script",
       },
     ] satisfies DirectoryWall[]);
@@ -167,7 +153,7 @@ describe("planSourceDirectoryWalls", () => {
 });
 
 function wall(dir: string, kind: ScriptKind, typesEntrypoint: string): DirectoryWall {
-  return { dir, kind, excludedModules: excludedModulesForKind(kind), typesEntrypoint };
+  return { dir, kind, typesEntrypoint };
 }
 
 describe("directoryWallTsconfig", () => {
@@ -337,52 +323,5 @@ describe("wireWallReferences", () => {
     expect(JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"))).toEqual({
       include: ["src/**/*.ts"],
     });
-  });
-});
-
-describe("syncDirectoryWalls", () => {
-  test("over a mixed-kind source tree writes each single-kind wall tsconfig and returns the walls", () => {
-    writeTsconfig(["src/**/*.ts"]);
-    touch("src/ui/hud.ts", "export default defineGuiScript({});");
-    touch("src/render/cam.ts", "export default defineRenderScript({});");
-
-    const walls = syncDirectoryWalls(cwd, null);
-
-    expect(walls).toEqual(planSourceDirectoryWalls(cwd));
-    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual({
-      extends: "../../tsconfig.json",
-      compilerOptions: {
-        composite: true,
-        typeRoots: null,
-        types: ["@defold-typescript/types/gui-script"],
-      },
-      include: ["**/*.ts"],
-      exclude: [],
-    });
-    expect(JSON.parse(readFileSync(path.join(cwd, "src/render/tsconfig.json"), "utf8"))).toEqual({
-      extends: "../../tsconfig.json",
-      compilerOptions: {
-        composite: true,
-        typeRoots: null,
-        types: ["@defold-typescript/types/render-script"],
-      },
-      include: ["**/*.ts"],
-      exclude: [],
-    });
-    expect(JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"))).toMatchObject({
-      references: [{ path: "src/render" }, { path: "src/ui" }],
-      exclude: ["src/render", "src/ui"],
-    });
-  });
-
-  test("a non-null whole-project kind writes nothing and returns [] even with single-kind subdirs", () => {
-    writeTsconfig(["src/**/*.ts"]);
-    touch("src/ui/hud.ts", "export default defineGuiScript({});");
-    touch("src/render/cam.ts", "export default defineRenderScript({});");
-
-    expect(syncDirectoryWalls(cwd, "script")).toEqual([]);
-    expect(statSync(path.join(cwd, "src/ui"), { throwIfNoEntry: false })?.isDirectory()).toBe(true);
-    expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
-    expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(false);
   });
 });

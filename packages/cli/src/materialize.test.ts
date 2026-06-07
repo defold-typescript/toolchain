@@ -157,7 +157,7 @@ describe("materializeApiSurface", () => {
   });
 });
 
-describe("materializeApiSurface kind-aware narrowing", () => {
+describe("materializeApiSurface full surface (no kind narrowing)", () => {
   function materializedNames(): string[] {
     const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
     return readdirSync(dir).filter((file) => file.endsWith(".d.ts") && file !== "index.d.ts");
@@ -167,86 +167,26 @@ describe("materializeApiSurface kind-aware narrowing", () => {
     return readFileSync(path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"), "utf8");
   }
 
-  test("scriptKind script drops gui and render, keeps universal modules", () => {
+  test("copies every module — gui and render are never dropped", () => {
     seedSource(["label", "gui", "render"]);
 
-    materializeApiSurface({
-      cwd,
-      surface: CURRENT,
-      sourceGeneratedDir: sourceDir,
-      scriptKind: "script",
-    });
+    materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
 
-    expect(materializedNames().sort()).toEqual(["label.d.ts"]);
-    expect(indexContents()).toBe('import "./label";\n\nexport {};\n');
+    expect(materializedNames().sort()).toEqual(["gui.d.ts", "label.d.ts", "render.d.ts"]);
+    expect(indexContents()).toBe(
+      'import "./gui";\nimport "./label";\nimport "./render";\n\nexport {};\n',
+    );
   });
 
-  test("scriptKind gui-script keeps gui, drops render", () => {
-    seedSource(["label", "gui", "render"]);
-
-    materializeApiSurface({
-      cwd,
-      surface: CURRENT,
-      sourceGeneratedDir: sourceDir,
-      scriptKind: "gui-script",
-    });
-
-    expect(materializedNames().sort()).toEqual(["gui.d.ts", "label.d.ts"]);
-    expect(indexContents()).toBe('import "./gui";\nimport "./label";\n\nexport {};\n');
-  });
-
-  test("scriptKind render-script keeps render, drops gui", () => {
-    seedSource(["label", "gui", "render"]);
-
-    materializeApiSurface({
-      cwd,
-      surface: CURRENT,
-      sourceGeneratedDir: sourceDir,
-      scriptKind: "render-script",
-    });
-
-    expect(materializedNames().sort()).toEqual(["label.d.ts", "render.d.ts"]);
-    expect(indexContents()).toBe('import "./label";\nimport "./render";\n\nexport {};\n');
-  });
-
-  test("omitting scriptKind (and null) copies every module — byte-identical to today", () => {
+  test("re-materializing is stable and keeps the full surface", () => {
     seedSource(["label", "gui", "render"]);
     const expectedIndex = 'import "./gui";\nimport "./label";\nimport "./render";\n\nexport {};\n';
 
     materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
+    materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
+
     expect(materializedNames().sort()).toEqual(["gui.d.ts", "label.d.ts", "render.d.ts"]);
     expect(indexContents()).toBe(expectedIndex);
-
-    materializeApiSurface({
-      cwd,
-      surface: CURRENT,
-      sourceGeneratedDir: sourceDir,
-      scriptKind: null,
-    });
-    expect(materializedNames().sort()).toEqual(["gui.d.ts", "label.d.ts", "render.d.ts"]);
-    expect(indexContents()).toBe(expectedIndex);
-  });
-
-  test("re-narrowing removes a stale module dropped by a tighter kind", () => {
-    seedSource(["label", "gui", "render"]);
-
-    materializeApiSurface({
-      cwd,
-      surface: CURRENT,
-      sourceGeneratedDir: sourceDir,
-      scriptKind: null,
-    });
-    expect(materializedNames()).toContain("render.d.ts");
-
-    materializeApiSurface({
-      cwd,
-      surface: CURRENT,
-      sourceGeneratedDir: sourceDir,
-      scriptKind: "gui-script",
-    });
-
-    expect(materializedNames().sort()).toEqual(["gui.d.ts", "label.d.ts"]);
-    expect(existsSync(path.join(cwd, ".defold-types", "defold-1.12.4", "render.d.ts"))).toBe(false);
   });
 });
 
@@ -325,57 +265,17 @@ describe("ensureMaterializedReference", () => {
   });
 });
 
-describe("materializeRefDocSurface kind-aware narrowing", () => {
-  test("scriptKind render-script keeps render, drops gui from the ref-doc surface", async () => {
+describe("materializeRefDocSurface full surface (no kind narrowing)", () => {
+  test("keeps every module — gui and render are never dropped", async () => {
     const resolveOpts = multiKindRefDocResolveOpts();
 
     const { materializedDir } = await materializeRefDocSurface({
       cwd,
       surfaceId: "defold-1.9.8",
-      scriptKind: "render-script",
       resolveOpts,
       registry: [multiKindRefDocTarget()],
     });
     expect(materializedDir).toBe(".defold-types/defold-1.9.8");
-
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
-    expect(existsSync(path.join(dir, "render.d.ts"))).toBe(true);
-    expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
-    expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(false);
-    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).not.toContain('import "./gui";');
-
-    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
-  });
-
-  test("scriptKind script drops both gui and render", async () => {
-    const resolveOpts = multiKindRefDocResolveOpts();
-
-    await materializeRefDocSurface({
-      cwd,
-      surfaceId: "defold-1.9.8",
-      scriptKind: "script",
-      resolveOpts,
-      registry: [multiKindRefDocTarget()],
-    });
-
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
-    expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(false);
-    expect(existsSync(path.join(dir, "render.d.ts"))).toBe(false);
-    expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
-
-    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
-  });
-
-  test("scriptKind null keeps every module — current behavior preserved", async () => {
-    const resolveOpts = multiKindRefDocResolveOpts();
-
-    await materializeRefDocSurface({
-      cwd,
-      surfaceId: "defold-1.9.8",
-      scriptKind: null,
-      resolveOpts,
-      registry: [multiKindRefDocTarget()],
-    });
 
     const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
     expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(true);

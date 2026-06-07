@@ -5,12 +5,7 @@ import type { ScriptHookName } from "@defold-typescript/types";
 import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { mergeMiseToml } from "./mise-scaffold";
-import {
-  detectScriptKinds,
-  type ScriptKind,
-  selectScriptKind,
-  selectScriptKindEntrypoint,
-} from "./script-kind";
+import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 
 export interface RunInitOptions {
   readonly cwd: string;
@@ -19,7 +14,6 @@ export interface RunInitOptions {
 
 export interface RunInitResult {
   readonly written: string[];
-  readonly scriptKind: ScriptKind | null;
 }
 
 const CONFLICTING_TS_CONFIGS = [
@@ -523,16 +517,15 @@ function writeVscodeDebugLauncher(cwd: string, written: string[]): void {
   written.push(".vscode/defold-debug.ts");
 }
 
-function writeTsSurface(cwd: string, written: string[], force = false): ScriptKind | null {
+function writeTsSurface(cwd: string, written: string[], force = false): void {
   mkdirSync(path.join(cwd, "src"), { recursive: true });
   writeFileSync(path.join(cwd, "src", "main.ts"), MAIN_TS_CONTENT);
   written.push("src/main.ts");
 
-  const kinds = detectScriptKinds(cwd);
   const tsconfig = {
     compilerOptions: {
       ...TSCONFIG_COMPILER_OPTIONS,
-      types: [selectScriptKindEntrypoint(kinds)],
+      types: [DEFAULT_TYPES_ENTRYPOINT],
     },
     include: ["src/**/*.ts"],
   };
@@ -575,8 +568,6 @@ function writeTsSurface(cwd: string, written: string[], force = false): ScriptKi
   writeVscodeSnippets(cwd, written);
   writeVscodeLaunch(cwd, written);
   writeVscodeDebugLauncher(cwd, written);
-
-  return selectScriptKind(kinds);
 }
 
 export function runNewProjectInit(cwd: string, force = false): RunInitResult {
@@ -602,9 +593,9 @@ export function runNewProjectInit(cwd: string, force = false): RunInitResult {
   writeFileSync(path.join(cwd, "main", "main.script"), MAIN_SCRIPT_CONTENT);
   written.push("main/main.script");
 
-  const scriptKind = writeTsSurface(cwd, written, force);
+  writeTsSurface(cwd, written, force);
 
-  return { written, scriptKind };
+  return { written };
 }
 
 export function runInit(opts: RunInitOptions): RunInitResult {
@@ -625,6 +616,6 @@ export function runInit(opts: RunInitOptions): RunInitResult {
   }
 
   const written: string[] = [];
-  const scriptKind = writeTsSurface(cwd, written, force);
-  return { written, scriptKind };
+  writeTsSurface(cwd, written, force);
+  return { written };
 }

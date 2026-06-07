@@ -40,20 +40,7 @@ describe("renderResult", () => {
     expect("apiSurface" in parsed).toBe(false);
   });
 
-  test("includes scriptKind when present", () => {
-    const out = renderResult({ command: "init", written: [], scriptKind: "gui-script" });
-    const parsed = JSON.parse(out) as Record<string, unknown>;
-    expect(parsed.scriptKind).toBe("gui-script");
-  });
-
-  test("emits an explicit null scriptKind when present", () => {
-    const out = renderResult({ command: "init", written: [], scriptKind: null });
-    const parsed = JSON.parse(out) as Record<string, unknown>;
-    expect("scriptKind" in parsed).toBe(true);
-    expect(parsed.scriptKind).toBeNull();
-  });
-
-  test("omits scriptKind when undefined", () => {
+  test("never emits a scriptKind key", () => {
     const out = renderResult({ command: "init", written: [] });
     const parsed = JSON.parse(out) as Record<string, unknown>;
     expect("scriptKind" in parsed).toBe(false);
