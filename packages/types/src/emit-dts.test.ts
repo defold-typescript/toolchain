@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import physicsDoc from "../fixtures/physics_doc.json" with { type: "json" };
@@ -16,6 +17,7 @@ import {
   parseTableFields,
   recoverCallbackSignature,
   SLOT_LEVEL_LIST_PROSE,
+  TABLE_SLOT_CURATIONS,
 } from "./emit-dts";
 
 function requireFunction(module: ApiModule, name: string): ApiFunction {
@@ -1662,6 +1664,47 @@ describe("MAPPING_TABLE_SLOTS", () => {
       ]),
     );
     expect(out).toContain("function get_unmapped(): Record<string | number, unknown>;");
+  });
+});
+
+describe("TABLE_SLOT_CURATIONS", () => {
+  test("holds exactly the mixed-slot table recoveries", () => {
+    expect([...TABLE_SLOT_CURATIONS]).toEqual([
+      ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
+      ["physics.raycast:param:groups", { kind: "array", element: "hash" }],
+      ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
+    ]);
+    expect(MAPPING_TABLE_SLOTS.size).toBe(3);
+    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(6);
+  });
+
+  test("collectionfactory.create recovers only the ids return", () => {
+    const module = parseDefoldApiDoc(collectionfactoryDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "collectionfactory.create")],
+    });
+    expect(out).toContain("properties?: Record<string | number, unknown>");
+    expect(out).toContain(
+      "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+    );
+  });
+
+  test("physics raycast groups recover while raycast result remains open", () => {
+    const module = parseDefoldApiDoc(physicsDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "physics.raycast"),
+        requireFunction(module, "physics.raycast_async"),
+      ],
+    });
+    expect(out).toContain(
+      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Record<string | number, unknown> | unknown;",
+    );
+    expect(out).toContain(
+      "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
+    );
   });
 });
 

@@ -7,6 +7,8 @@ import {
   MAPPING_TABLE_SLOTS,
   parseTableFields,
   recoverCallbackSignature,
+  TABLE_SLOT_CURATIONS,
+  type TableSlotCuration,
   TS_IDENTIFIER,
 } from "../src/emit-dts";
 import { parseMessagesDoc } from "../src/emit-messages";
@@ -113,6 +115,7 @@ function auditEntry(
     arbitraryTable = false,
     mappingSlot?: { key: string; value: string },
     homogeneousElement?: string | readonly string[],
+    tableSlotCuration?: TableSlotCuration,
   ) => {
     for (const token of types) {
       // A `table` slot whose doc carries a parseable `<dl>` field list is
@@ -127,6 +130,10 @@ function auditEntry(
         // the curated key/value tokens — not a `Record`, so don't count it.
         // Feed the curated tokens back through considerTypes so an unmapped one
         // still surfaces under unknownTokens (none today: hash/node/vector3 map).
+        if (tableSlotCuration?.kind === "mapping") {
+          considerTypes([tableSlotCuration.key, tableSlotCuration.value]);
+          continue;
+        }
         if (mappingSlot !== undefined) {
           considerTypes([mappingSlot.key, mappingSlot.value]);
           continue;
@@ -136,6 +143,14 @@ function auditEntry(
         // `Record`, so don't count it. Feed the curated token(s) back through
         // considerTypes so an unmapped one still surfaces under unknownTokens
         // (none today: number/hash/string/url map).
+        if (tableSlotCuration?.kind === "array") {
+          considerTypes(
+            typeof tableSlotCuration.element === "string"
+              ? [tableSlotCuration.element]
+              : tableSlotCuration.element,
+          );
+          continue;
+        }
         if (homogeneousElement !== undefined) {
           considerTypes(
             typeof homogeneousElement === "string" ? [homogeneousElement] : homogeneousElement,
@@ -236,26 +251,37 @@ function auditEntry(
     const homogeneousElement =
       typeof element.name === "string" ? HOMOGENEOUS_ARRAY_SLOTS.get(element.name) : undefined;
     params.forEach((param, index) => {
+      const tableSlotCuration =
+        typeof element.name === "string" && typeof param.name === "string"
+          ? TABLE_SLOT_CURATIONS.get(tableSlotKey(element.name, "param", param.name))
+          : undefined;
       considerTypes(
         stringArray(param.types),
         docString(param.doc),
         arbitraryTable,
         mappingSlot,
         homogeneousElement,
+        tableSlotCuration,
       );
       // Residual: a doc-optional param the emitter cannot mark `?` because a
       // required param follows it. The trailing-run cutoff must match
       // emit-dts so the gate and the emitted surface agree.
       if (isDocOptional(param) && index < cutoff) optionalAsRequired += 1;
     });
-    for (const ret of returns)
+    for (const ret of returns) {
+      const tableSlotCuration =
+        typeof element.name === "string" && typeof ret.name === "string"
+          ? TABLE_SLOT_CURATIONS.get(tableSlotKey(element.name, "return", ret.name))
+          : undefined;
       considerTypes(
         stringArray(ret.types),
         docString(ret.doc),
         arbitraryTable,
         mappingSlot,
         homogeneousElement,
+        tableSlotCuration,
       );
+    }
   }
 
   return {
@@ -272,6 +298,10 @@ function auditEntry(
 function stripNamespace(name: string): string {
   const index = name.lastIndexOf(".");
   return index === -1 ? name : name.slice(index + 1);
+}
+
+function tableSlotKey(elementName: string, slotKind: "param" | "return", slotName: string): string {
+  return `${elementName}:${slotKind}:${slotName}`;
 }
 
 export function buildFidelityReport(

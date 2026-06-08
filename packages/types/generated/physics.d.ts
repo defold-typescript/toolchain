@@ -200,7 +200,7 @@ declare global {
      * });
      * ```
      */
-    function raycast(from: Vector3, to: Vector3, groups: Record<string | number, unknown>, options?: { all?: boolean }): Record<string | number, unknown> | unknown;
+    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Record<string | number, unknown> | unknown;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -240,7 +240,7 @@ declare global {
      * });
      * ```
      */
-    function raycast_async(from: Vector3, to: Vector3, groups: Record<string | number, unknown>, request_id?: number): void;
+    function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;
     /**
      * Only one physics world event listener can be set at a time.
      *

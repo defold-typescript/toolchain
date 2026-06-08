@@ -26,7 +26,7 @@
   "collectionfactory": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 2,
+    "recordTables": 1,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -162,7 +162,7 @@
   "physics": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 5,
+    "recordTables": 3,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0

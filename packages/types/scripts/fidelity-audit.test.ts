@@ -319,6 +319,31 @@ describe("id-array slot recovery", () => {
   });
 });
 
+describe("slot-scoped table curation recovery", () => {
+  test("collectionfactory and physics recordTables drop by exactly three with no other category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    expect(requireEntry(report, "collectionfactory").recordTables).toBe(1);
+    expect(requireEntry(report, "physics").recordTables).toBe(3);
+    expect(
+      2 -
+        requireEntry(report, "collectionfactory").recordTables +
+        5 -
+        requireEntry(report, "physics").recordTables,
+    ).toBe(3);
+
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      if (namespace === "collectionfactory" || namespace === "physics") {
+        expect({ ...entry, recordTables: 0 }).toEqual({ ...base, recordTables: 0 });
+      } else {
+        expect(entry).toEqual(base);
+      }
+    }
+  });
+});
+
 describe("slot-level array-of-object recovery", () => {
   test("sys.recordTables stays 0 and the full report equals the committed baseline", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
@@ -504,11 +529,9 @@ describe("code-dash option table recovery", () => {
 });
 
 describe("cross-reference table recovery", () => {
-  test("physics.recordTables drops by one and no other namespace or category moves", () => {
+  test("physics.set_shape stays recovered and no other namespace or category moves", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
-    // Pre-recovery baseline physics.recordTables is 6; recovering set_shape's
-    // cross-reference to get_shape's already-typed fields drops it to 5.
-    expect(requireEntry(report, "physics").recordTables).toBe(5);
+    expect(requireEntry(report, "physics").recordTables).toBe(3);
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
       const base = baselineMap[namespace];

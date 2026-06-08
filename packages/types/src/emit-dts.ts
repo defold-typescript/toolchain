@@ -133,6 +133,16 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
   ["go.delete", ["string", "hash", "url"]],
 ]);
 
+export type TableSlotCuration =
+  | { kind: "mapping"; key: string; value: string }
+  | { kind: "array"; element: string | readonly string[] };
+
+export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
+  ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
+  ["physics.raycast:param:groups", { kind: "array", element: "hash" }],
+  ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
+]);
+
 /**
  * Recover a Defold `function(...)` callback-signature token into a TypeScript
  * function type. The token carries parameter names but no inner types, so each
@@ -690,7 +700,7 @@ function emitParameter(
   const concrete = p.types.filter((t) => t !== "nil");
   const ts =
     concrete.length > 0
-      ? mapSlotUnion(concrete, p.doc, mapType, true, resolver, elementName)
+      ? mapSlotUnion(concrete, p.doc, mapType, true, resolver, elementName, "param", p.name)
       : "unknown";
   return `${name}${optional ? "?" : ""}: ${ts}`;
 }
@@ -708,7 +718,7 @@ function emitReturn(
     // typescript-to-lua erases to `local a, b = fn()`.
     const slots = returnValues.map((rv) =>
       rv.types.length > 0
-        ? mapSlotUnion(rv.types, rv.doc, mapType, false, resolver, elementName)
+        ? mapSlotUnion(rv.types, rv.doc, mapType, false, resolver, elementName, "return", rv.name)
         : "unknown",
     );
     return { type: `LuaMultiReturn<[${slots.join(", ")}]>`, trailing: "" };
@@ -717,7 +727,16 @@ function emitReturn(
   if (!first) return { type: "void", trailing: "" };
   const ts =
     first.types.length > 0
-      ? mapSlotUnion(first.types, first.doc, mapType, false, resolver, elementName)
+      ? mapSlotUnion(
+          first.types,
+          first.doc,
+          mapType,
+          false,
+          resolver,
+          elementName,
+          "return",
+          first.name,
+        )
       : "unknown";
   return { type: ts, trailing: "" };
 }
@@ -742,22 +761,26 @@ function mapSlotUnion(
   optionalFields: boolean,
   resolver: TableDocResolver,
   elementName: string,
+  slotKind?: "param" | "return",
+  slotName?: string,
 ): string {
   const mapped: string[] = [];
   const seen = new Set<string>();
   for (const token of types) {
     let ts: string;
     if (token === "table") {
-      const mapping = MAPPING_TABLE_SLOTS.get(elementName);
-      const element = HOMOGENEOUS_ARRAY_SLOTS.get(elementName);
+      const curation =
+        slotKind !== undefined && slotName !== undefined
+          ? TABLE_SLOT_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
+          : undefined;
+      const mapping =
+        curation?.kind === "mapping" ? curation : MAPPING_TABLE_SLOTS.get(elementName);
+      const element =
+        curation?.kind === "array" ? curation.element : HOMOGENEOUS_ARRAY_SLOTS.get(elementName);
       if (mapping !== undefined) {
         ts = `LuaMap<${mapType(mapping.key)}, ${mapType(mapping.value)}>`;
       } else if (element !== undefined) {
-        const tokens = typeof element === "string" ? [element] : element;
-        ts =
-          tokens.length > 1
-            ? `(${unionFromTokens(tokens, mapType)})[]`
-            : `${mapType(tokens[0] as string)}[]`;
+        ts = arrayTypeFromTokens(element, mapType);
       } else {
         const fields = parseTableFields(doc, resolver);
         if (fields !== null) {
@@ -775,6 +798,20 @@ function mapSlotUnion(
     mapped.push(ts);
   }
   return mapped.join(" | ");
+}
+
+function tableSlotKey(elementName: string, slotKind: "param" | "return", slotName: string): string {
+  return `${elementName}:${slotKind}:${slotName}`;
+}
+
+function arrayTypeFromTokens(
+  element: string | readonly string[],
+  mapType: (t: string) => string,
+): string {
+  const tokens = typeof element === "string" ? [element] : element;
+  return tokens.length > 1
+    ? `(${unionFromTokens(tokens, mapType)})[]`
+    : `${mapType(tokens[0] as string)}[]`;
 }
 
 export function inlineTableType(

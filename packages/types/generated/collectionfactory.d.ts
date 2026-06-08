@@ -74,7 +74,7 @@ declare global {
      * go.delete(self.enemy_ids);
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Record<string | number, unknown>;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;
     /**
      * This returns status of the collection factory.
      * Calling this function when the factory is not marked as dynamic loading always returns COMP_COLLECTION_FACTORY_STATUS_LOADED.
