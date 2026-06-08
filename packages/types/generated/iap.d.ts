@@ -2,6 +2,9 @@
 import type { Opaque } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and constants for doing in-app purchases. Supported on iOS, Android (Google Play and Amazon) and Facebook Canvas platforms. [icon:ios] [icon:googleplay] [icon:amazon] [icon:facebook]
+   */
   namespace iap {
     /**
      * Acknowledge a transaction. [icon:attention] Calling iap.acknowledge is required on a successful transaction on Google Play unless iap.finish is called. The transaction.state field must equal iap.TRANS_STATE_PURCHASED.

@@ -1,5 +1,8 @@
 /** @noSelfInFile */
 declare global {
+  /**
+   * Manipulation of JSON data strings.
+   */
   namespace json {
     /**
      * Represents the null primitive from a json file

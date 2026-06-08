@@ -2,6 +2,9 @@
 import type { Hash, Opaque } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and constants to access resources.
+   */
   namespace resource {
     /**
      * Constructor-like function with two purposes:

@@ -2,6 +2,10 @@
 import type { Opaque } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and messages for using system resources, controlling the engine,
+   * error handling and debugging.
+   */
   namespace sys {
     /**
      * network connected through other, non cellular, connection

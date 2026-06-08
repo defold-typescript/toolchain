@@ -34,6 +34,18 @@ describe("regen drift guard", () => {
     expect(() => transpiler.scan(content)).not.toThrow();
   });
 
+  test.each(
+    MODULE_MANIFEST.map((entry) => [entry.outFile, entry] as const),
+  )("%s: committed generated namespace has a JSDoc block", async (_outFile, entry) => {
+    const content = await Bun.file(resolve(GENERATED, entry.outFile)).text();
+    expect(content).toContain(`  namespace ${entry.namespace} {`);
+    expect(content).toMatch(
+      new RegExp(
+        `declare global \\{\\n(?:[\\s\\S]*?\\n)?  /\\*\\*[\\s\\S]*?\\n  namespace ${entry.namespace} \\{`,
+      ),
+    );
+  });
+
   test("every MODULE_MANIFEST entry has a committed generated file", () => {
     for (const entry of MODULE_MANIFEST) {
       const path = resolve(GENERATED, entry.outFile);

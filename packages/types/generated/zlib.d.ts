@@ -1,5 +1,8 @@
 /** @noSelfInFile */
 declare global {
+  /**
+   * Functions for compression and decompression of string buffers.
+   */
   namespace zlib {
     /**
      * A lua error is raised is on error

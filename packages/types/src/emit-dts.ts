@@ -498,6 +498,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   const decl = hasAliases ? "export " : "";
 
   const lines: string[] = [];
+  for (const docLine of namespaceDocLines(module)) lines.push(docLine);
   lines.push(`declare namespace ${module.namespace} {`);
 
   for (const t of typedefs) {
@@ -667,6 +668,15 @@ function functionDocLines(fn: ApiFunction, translations: TranslationStore): stri
 // indentation depth (one level inside the namespace, two inside `properties`).
 function summaryDocLines(brief: string, description: string, indent: string): string[] {
   return indentDocLines({ summary: htmlToDocText(summaryFor(brief, description)) }, indent);
+}
+
+function namespaceDocLines(module: ApiModule): string[] {
+  const official = summaryFor(module.brief, module.description).trim();
+  const summary =
+    official.length > 0
+      ? htmlToDocText(official)
+      : `(synthesized)\nDefold \`${module.namespace}\` API namespace.`;
+  return indentDocLines({ summary }, "");
 }
 
 function indentDocLines(parts: DocCommentParts, indent: string): string[] {

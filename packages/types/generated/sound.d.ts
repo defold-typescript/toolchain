@@ -2,6 +2,10 @@
 import type { Hash, Url } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and messages for controlling sound components and
+   * mixer groups.
+   */
   namespace sound {
     /**
      * Get mixer group gain

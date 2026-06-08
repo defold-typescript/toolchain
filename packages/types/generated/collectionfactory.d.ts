@@ -2,6 +2,10 @@
 import type { Hash, Opaque, Quaternion, Url, Vector3 } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions for controlling collection factory components which are
+   * used to dynamically spawn collections into the runtime.
+   */
   namespace collectionfactory {
     /**
      * loaded

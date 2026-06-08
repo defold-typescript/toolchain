@@ -2,6 +2,15 @@
 import type { Hash, Matrix4, Opaque, Url } from "../src/core-types";
 
 declare global {
+  /**
+   * Rendering functions, messages and constants. The "render" namespace is
+   * accessible only from render scripts.
+   * The rendering API was originally built on top of OpenGL ES 2.0, and it uses a subset of the
+   * OpenGL computer graphics rendering API for rendering 2D and 3D computer
+   * graphics. Our current target is OpenGLES 3.0 with fallbacks to 2.0 on some platforms.
+   * [icon:attention] It is possible to create materials and write shaders that
+   * require features not in OpenGL ES 2.0, but those will not work cross platform.
+   */
   namespace render {
     type constant_buffer = Opaque<"constant_buffer">;
     type render_target = Opaque<"render_target">;

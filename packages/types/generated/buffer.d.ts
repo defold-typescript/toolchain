@@ -2,6 +2,9 @@
 import type { Hash, Opaque } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions for manipulating buffers and streams
+   */
   namespace buffer {
     /**
      * Float, single precision, 4 bytes

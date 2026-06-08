@@ -1,5 +1,8 @@
 /** @noSelfInFile */
 declare global {
+  /**
+   * Native crash logging functions and constants.
+   */
   namespace crash {
     /**
      * android build fingerprint

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
@@ -28,7 +29,16 @@ function requireFunction(module: ApiModule, name: string): ApiFunction {
 }
 
 describe("emitDeclarations", () => {
-  test("empty module emits a bare namespace block with a trailing newline", () => {
+  test("module metadata emits namespace JSDoc before the declaration", () => {
+    const module = parseDefoldApiDoc(bufferDoc);
+    const out = emitDeclarations(module);
+    const block = jsdocBefore(out, "declare namespace buffer {");
+    expect(block.startsWith("/**")).toBe(true);
+    expect(block).toContain(" * Functions for manipulating buffers and streams");
+    expect(block).not.toContain("(synthesized)");
+  });
+
+  test("undocumented module emits a synthesized namespace JSDoc marker", () => {
     const empty: ApiModule = {
       namespace: "foo",
       brief: "",
@@ -39,7 +49,30 @@ describe("emitDeclarations", () => {
       properties: [],
       typedefs: [],
     };
-    expect(emitDeclarations(empty)).toBe("declare namespace foo {\n}\n");
+    const out = emitDeclarations(empty);
+    const block = jsdocBefore(out, "declare namespace foo {");
+    expect(block).toBe("/**\n * (synthesized)\n * Defold `foo` API namespace.\n */");
+  });
+
+  test("empty module emits synthesized namespace docs with a trailing newline", () => {
+    const empty: ApiModule = {
+      namespace: "foo",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    expect(emitDeclarations(empty)).toBe(
+      "/**\n" +
+        " * (synthesized)\n" +
+        " * Defold `foo` API namespace.\n" +
+        " */\n" +
+        "declare namespace foo {\n" +
+        "}\n",
+    );
   });
 
   test("vmath emit contains the namespace header and key signatures", () => {
@@ -1003,7 +1036,7 @@ describe("function JSDoc emission", () => {
     expect(out).toContain("export { _delete as delete };");
   });
 
-  test("an undocumented function emits no comment — byte-identical to the pre-change line", () => {
+  test("an undocumented function emits no member comment beyond namespace docs", () => {
     const module: ApiModule = {
       namespace: "ns",
       brief: "",
@@ -1014,7 +1047,15 @@ describe("function JSDoc emission", () => {
       properties: [],
       typedefs: [],
     };
-    expect(emitDeclarations(module)).toBe("declare namespace ns {\n  function run(): void;\n}\n");
+    expect(emitDeclarations(module)).toBe(
+      "/**\n" +
+        " * (synthesized)\n" +
+        " * Defold `ns` API namespace.\n" +
+        " */\n" +
+        "declare namespace ns {\n" +
+        "  function run(): void;\n" +
+        "}\n",
+    );
   });
 
   test("HTML in a description is rendered — no raw <code>/<a> tags survive", () => {
@@ -1127,7 +1168,7 @@ describe("constant, variable, and property JSDoc emission", () => {
     expect(block).toContain("     * The color of the label.");
   });
 
-  test("an undocumented constant, variable, and property emit no comment — byte-identical", () => {
+  test("undocumented constants, variables, and properties emit no member comments beyond namespace docs", () => {
     const module: ApiModule = {
       namespace: "ns",
       brief: "",
@@ -1139,7 +1180,11 @@ describe("constant, variable, and property JSDoc emission", () => {
       typedefs: [],
     };
     expect(emitDeclarations(module)).toBe(
-      "declare namespace ns {\n" +
+      "/**\n" +
+        " * (synthesized)\n" +
+        " * Defold `ns` API namespace.\n" +
+        " */\n" +
+        "declare namespace ns {\n" +
         '  const FOO: number & { readonly __brand: "ns.FOO" };\n' +
         "  const PI: number;\n" +
         "  interface properties {\n" +

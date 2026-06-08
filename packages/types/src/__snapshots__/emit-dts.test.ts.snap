@@ -1,7 +1,29 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`emitDeclarations vmath emit matches the committed snapshot 1`] = `
-"declare namespace vmath {
+"/**
+ * Functions for mathematical operations on vectors, matrices and quaternions.
+ * - The vector types (\`vmath.vector3\` and \`vmath.vector4\`) supports addition and subtraction
+ * with vectors of the same type. Vectors can be negated and multiplied (scaled) or divided by numbers.
+ * - The quaternion type (\`vmath.quat\`) supports multiplication with other quaternions.
+ * - The matrix type (\`vmath.matrix4\`) can be multiplied with numbers, other matrices
+ * and \`vmath.vector4\` values.
+ * - All types performs equality comparison by each component value.
+ * The following components are available for the various types:
+ * vector3
+ * : \`x\`, \`y\` and \`z\`. Example: \`v.y\`
+ * vector4
+ * : \`x\`, \`y\`, \`z\`, and \`w\`. Example: \`v.w\`
+ * quaternion
+ * : \`x\`, \`y\`, \`z\`, and \`w\`. Example: \`q.w\`
+ * matrix4
+ * : \`m00\` to \`m33\` where the first number is the row (starting from 0) and the second
+ * number is the column. Columns can be accessed with \`c0\` to \`c3\`, returning a \`vector4\`.
+ * Example: \`m.m21\` which is equal to \`m.c1.z\`
+ * vector
+ * : indexed by number 1 to the vector length. Example: \`v[3]\`
+ */
+declare namespace vmath {
   /**
    * Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type
    * return new vector3|vector4 with clamped value at every vector's element.

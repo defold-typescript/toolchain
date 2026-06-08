@@ -2,6 +2,9 @@
 import type { Hash, Url } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions for passing messages and constructing URL objects.
+   */
   namespace msg {
     /**
      * This is equivalent to `msg.url(nil)` or `msg.url("#")`, which creates an url to the current
