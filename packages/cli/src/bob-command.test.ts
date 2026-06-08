@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 import { composeBobArgv, type DefoldIo, runDefoldCommand } from "./bob-command";
 
 const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
@@ -70,7 +71,7 @@ function fakeIo(overrides: Partial<DefoldIo> = {}): DefoldIo & {
 }
 
 describe("runDefoldCommand", () => {
-  const jar = `/c/${SHA}/bob.jar`;
+  const jar = join("/c", SHA, "bob.jar");
 
   test("spawns the composed argv and reports ok on a zero exit", async () => {
     const io = fakeIo();
