@@ -2,6 +2,11 @@
 import type { Hash, Url, Vector3 } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and messages for collision object physics interaction
+   * with other objects (collisions and ray-casting) and control of
+   * physical behaviors.
+   */
   namespace physics {
     /**
      * The following properties are available when connecting a joint of `JOINT_TYPE_FIXED` type:

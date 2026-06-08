@@ -2,6 +2,10 @@
 import type { Opaque } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and constants to access the window, window event listeners
+   * and screen dimming.
+   */
   namespace window {
     /**
      * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.

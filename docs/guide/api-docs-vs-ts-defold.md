@@ -17,6 +17,7 @@ types are out of scope here).
 | Dimension | ts-defold-types | `@defold-typescript/types` |
 | --- | --- | --- |
 | Description coverage | Most functions/constants carry a summary | Same source, same coverage; every shared symbol we keep documents at least as well |
+| Namespace hover | Module namespaces are not consistently documented | Generated namespaces use Defold module metadata; `(synthesized)` marks fallback prose only when the ref-doc has no module summary |
 | `@param` style | `@param <name> <desc>` (no separator) | `@param <name> - <desc>` (dash-separated, the JSDoc convention editors render as a definition list) |
 | Description markup | Raw ref-doc text | `htmlToDocText` converts HTML to Markdown: `<code>`→`` `code` ``, `<ul><li>`→`- ` bullets, `<a>`→link text, entities decoded |
 | Multi-line `@param`/`@returns` | Continuation lines escape the ` * ` grid | Every continuation line carries ` * ` (see [the well-formedness gate](#well-formedness)) |

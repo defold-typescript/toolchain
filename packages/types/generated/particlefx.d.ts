@@ -2,6 +2,10 @@
 import type { Hash, Url, Vector4 } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and properties for controlling particle effect component playback and
+   * shader constants.
+   */
   namespace particlefx {
     /**
      * The emitter is not spawning any particles, but has particles that are still alive.

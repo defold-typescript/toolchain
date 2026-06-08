@@ -2,6 +2,9 @@
 import type { Hash, Url } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and messages used to manipulate tile map components.
+   */
   namespace tilemap {
     /**
      * flip tile horizontally

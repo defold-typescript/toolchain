@@ -2,6 +2,9 @@
 import type { Hash, Url, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions, messages and properties used to manipulate sprite components.
+   */
   namespace sprite {
     /**
      * Play an animation on a sprite component from its tile set

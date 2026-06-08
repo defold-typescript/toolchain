@@ -20,7 +20,7 @@ export function wrapAsAmbientGlobal(opts: WrapOptions): string {
   const used = collectEngineTypes(opts.emitted);
   const importLine =
     used.length === 0 ? "" : `import type { ${used.join(", ")} } from "${opts.importsFrom}";\n\n`;
-  const inner = opts.emitted.replace(/^declare\s+namespace\s+/, "namespace ").trimEnd();
+  const inner = opts.emitted.replace(/(^|\n)declare\s+namespace\s+/, "$1namespace ").trimEnd();
   const indented = inner
     .split("\n")
     .map((l) => (l.length === 0 ? l : `  ${l}`))

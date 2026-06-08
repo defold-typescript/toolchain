@@ -1,5 +1,8 @@
 /** @noSelfInFile */
 declare global {
+  /**
+   * Functions and constants to access resources.
+   */
   namespace liveupdate {
     /**
      * Mismatch between between expected bundled resources and actual bundled resources. The manifest expects a resource to be in the bundle, but it was not found in the bundle. This is typically the case when a non-excluded resource was modified between publishing the bundle and publishing the manifest.

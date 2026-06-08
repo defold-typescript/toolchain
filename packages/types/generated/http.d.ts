@@ -1,5 +1,8 @@
 /** @noSelfInFile */
 declare global {
+  /**
+   * Functions for performing HTTP and HTTPS requests.
+   */
   namespace http {
     /**
      * Perform a HTTP/HTTPS request.

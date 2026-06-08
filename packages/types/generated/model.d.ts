@@ -2,6 +2,9 @@
 import type { Hash, Opaque, Url } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions and messages for interacting with model components.
+   */
   namespace model {
     /**
      * Cancels all animation on a model component.

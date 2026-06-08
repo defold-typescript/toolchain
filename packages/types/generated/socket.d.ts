@@ -2,6 +2,22 @@
 import type { Opaque } from "../src/core-types";
 
 declare global {
+  /**
+   * [LuaSocket](https://github.com/diegonehab/luasocket) is a Lua extension library that provides
+   * support for the TCP and UDP transport layers. Defold provides the "socket" namespace in
+   * runtime, which contain the core C functionality. Additional LuaSocket support modules for
+   * SMTP, HTTP, FTP etc are not part of the core included, but can be easily added to a project
+   * and used.
+   * [icon:html5] On HTML5, the non-network helpers remain available, but TCP, UDP and
+   * `socket.select()` are not supported.
+   * Note the included helper module "socket.lua" in "builtins/scripts/socket.lua". Require this
+   * module to add some additional functions and shortcuts to the namespace:
+   * ```lua
+   * require "builtins.scripts.socket"
+   * ```
+   * LuaSocket is Copyright &copy; 2004-2007 Diego Nehab. All rights reserved.
+   * LuaSocket is free software, released under the MIT license (same license as the Lua core).
+   */
   namespace socket {
     type client = Opaque<"client">;
     type master = Opaque<"master">;

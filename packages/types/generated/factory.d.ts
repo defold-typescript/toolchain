@@ -2,6 +2,10 @@
 import type { Hash, Opaque, Quaternion, Url, Vector3 } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions for controlling factory components which are used to
+   * dynamically spawn game objects into the runtime.
+   */
   namespace factory {
     /**
      * loaded

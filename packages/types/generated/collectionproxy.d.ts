@@ -2,6 +2,10 @@
 import type { Hash, Url } from "../src/core-types";
 
 declare global {
+  /**
+   * Messages for controlling and interacting with collection proxies
+   * which are used to dynamically load collections into the runtime.
+   */
   namespace collectionproxy {
     /**
      * It's impossible to change the collection if the collection is already loaded.

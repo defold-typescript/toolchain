@@ -2,6 +2,9 @@
 import type { Opaque } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions for creating image objects.
+   */
   namespace image {
     /**
      * luminance image type

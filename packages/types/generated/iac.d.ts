@@ -1,5 +1,8 @@
 /** @noSelfInFile */
 declare global {
+  /**
+   * Functions and constants for doing inter-app communication. Supported on iOS and Android. [icon:ios] [icon:android]
+   */
   namespace iac {
     /**
      * Sets the listener function for inter-app communication events.

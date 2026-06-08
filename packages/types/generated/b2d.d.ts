@@ -2,6 +2,9 @@
 import type { Hash, Opaque, Url } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions for interacting with Box2D.
+   */
   namespace b2d {
     type b2Body = Opaque<"b2Body">;
     type b2World = Opaque<"b2World">;

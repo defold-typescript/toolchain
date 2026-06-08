@@ -2,6 +2,11 @@
 import type { Hash, Matrix4, Opaque, Quaternion, Url, Vector, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
+  /**
+   * Functions, core hooks, messages and constants for manipulation of
+   * game objects. The "go" namespace is accessible from game object script
+   * files.
+   */
   namespace go {
     /**
      * in-back

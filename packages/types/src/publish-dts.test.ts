@@ -2,6 +2,27 @@ import { describe, expect, test } from "bun:test";
 import { wrapAsAmbientGlobal } from "./publish-dts";
 
 describe("wrapAsAmbientGlobal", () => {
+  test("preserves leading namespace JSDoc while rewriting declare namespace", () => {
+    const out = wrapAsAmbientGlobal({
+      namespace: "buffer",
+      emitted:
+        "/**\n" +
+        " * Functions for manipulating buffers and streams\n" +
+        " */\n" +
+        "declare namespace buffer {\n" +
+        "}\n",
+      importsFrom: "../src/core-types",
+    });
+    expect(out).toContain(
+      "declare global {\n" +
+        "  /**\n" +
+        "   * Functions for manipulating buffers and streams\n" +
+        "   */\n" +
+        "  namespace buffer {",
+    );
+    expect(out).not.toContain("declare namespace");
+  });
+
   test("empty namespace produces no engine-type import line", () => {
     const out = wrapAsAmbientGlobal({
       namespace: "vmath",

@@ -2,6 +2,11 @@
 import type { Hash, Opaque, Quaternion, Url, Vector, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
+  /**
+   * GUI core hooks, functions, messages, properties and constants for
+   * creation and manipulation of GUI nodes. The "gui" namespace is
+   * accessible only from gui scripts.
+   */
   namespace gui {
     /**
      * Adjust mode is used when the screen resolution differs from the project settings.
