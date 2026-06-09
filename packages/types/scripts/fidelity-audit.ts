@@ -131,7 +131,21 @@ function auditEntry(
         // Feed the curated tokens back through considerTypes so an unmapped one
         // still surfaces under unknownTokens (none today: hash/node/vector3 map).
         if (tableSlotCuration?.kind === "mapping") {
-          considerTypes([tableSlotCuration.key, tableSlotCuration.value]);
+          // A single-token value feeds straight back; an object-valued mapping
+          // (`LuaMap<K, { … }>`) feeds the key plus each curated field type, the
+          // same way the object branch does, so an unmapped token still surfaces.
+          if (typeof tableSlotCuration.value === "string") {
+            considerTypes([tableSlotCuration.key, tableSlotCuration.value]);
+          } else {
+            considerTypes([tableSlotCuration.key]);
+            for (const field of tableSlotCuration.value) {
+              if (field.fields !== undefined) {
+                for (const nested of field.fields) considerTypes(nested.types);
+              } else if (field.numberList !== true) {
+                considerTypes(field.types);
+              }
+            }
+          }
           continue;
         }
         if (mappingSlot !== undefined) {

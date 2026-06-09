@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque, Url } from "../src/core-types";
+import type { Hash, Opaque, Url, Vector3 } from "../src/core-types";
 
 declare global {
   /**
@@ -24,7 +24,7 @@ declare global {
      * model.get_aabb("#empty"); // => { min = vmath.vector3(0, 0, 0), max = vmath.vector3(0, 0, 0) }
      * ```
      */
-    function get_aabb(url: string | Hash | Url): Record<string | number, unknown>;
+    function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };
     /**
      * Gets the id of the game object that corresponds to a model skeleton bone.
      * The returned game object can be used for parenting and transform queries.
@@ -59,7 +59,7 @@ declare global {
      * model.get_mesh_aabb("#model"); // => { hash("Sword") = { min = vmath.vector3(-0.5, -0.5, 0), max = vmath.vector3(0.5, 0.5, 0) }, hash("Shield") = { min = vmath.vector3(-0.5, -0.5, -0.5), max = vmath.vector3(0.5, 0.5, 0.5) } }
      * ```
      */
-    function get_mesh_aabb(url: string | Hash | Url): Record<string | number, unknown>;
+    function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
     /**
      * Get the enabled state of a mesh
      *

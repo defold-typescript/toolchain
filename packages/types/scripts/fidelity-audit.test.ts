@@ -359,6 +359,23 @@ describe("slot-scoped table curation recovery", () => {
   });
 });
 
+describe("model AABB table curation recovery", () => {
+  test("model.recordTables drops to 0 and no other namespace or category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // Pre-recovery baseline: model 2 (get_aabb object, get_mesh_aabb
+    // object-valued mapping). Recovering both ratchets the namespace to 0.
+    expect(requireEntry(report, "model").recordTables).toBe(0);
+    // The committed baseline reflects the recovered count, so the full report
+    // equals it on every namespace and category — proving model is the only move.
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      expect(entry).toEqual(base);
+    }
+  });
+});
+
 describe("slot-level array-of-object recovery", () => {
   test("sys.recordTables stays 0 and the full report equals the committed baseline", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);

@@ -4,6 +4,7 @@ import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with {
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import liveupdateDoc from "../fixtures/liveupdate_doc.json" with { type: "json" };
+import modelDoc from "../fixtures/model_doc.json" with { type: "json" };
 import physicsDoc from "../fixtures/physics_doc.json" with { type: "json" };
 import resourceDoc from "../fixtures/resource_doc.json" with { type: "json" };
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
@@ -1730,6 +1731,27 @@ describe("TABLE_SLOT_CURATIONS", () => {
           ],
         },
       ],
+      [
+        "model.get_aabb:return:aabb",
+        {
+          kind: "object",
+          fields: [
+            { name: "min", types: ["vector3"] },
+            { name: "max", types: ["vector3"] },
+          ],
+        },
+      ],
+      [
+        "model.get_mesh_aabb:return:aabb",
+        {
+          kind: "mapping",
+          key: "hash",
+          value: [
+            { name: "min", types: ["vector3"] },
+            { name: "max", types: ["vector3"] },
+          ],
+        },
+      ],
       ["physics.raycast:param:groups", { kind: "array", element: "hash" }],
       ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
       [
@@ -1831,6 +1853,23 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
     expect(out).toContain(
       "function get_tiles(url: string | Hash | Url, layer: string | Hash): Record<string | number, unknown>;",
+    );
+  });
+
+  test("model AABB returns recover an object and an object-valued mapping", () => {
+    const module = parseDefoldApiDoc(modelDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "model.get_aabb"),
+        requireFunction(module, "model.get_mesh_aabb"),
+      ],
+    });
+    expect(out).toContain(
+      "function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };",
+    );
+    expect(out).toContain(
+      "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;",
     );
   });
 });

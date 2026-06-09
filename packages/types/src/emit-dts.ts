@@ -134,7 +134,7 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
 ]);
 
 export type TableSlotCuration =
-  | { kind: "mapping"; key: string; value: string }
+  | { kind: "mapping"; key: string; value: string | readonly TableField[] }
   | { kind: "array"; element: string | readonly string[] }
   | { kind: "object"; fields: readonly TableField[] }
   | { kind: "array-object"; fields: readonly TableField[] };
@@ -151,6 +151,27 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
         { name: "name", types: ["string"] },
         { name: "uri", types: ["string"] },
         { name: "priority", types: ["number"] },
+      ],
+    },
+  ],
+  [
+    "model.get_aabb:return:aabb",
+    {
+      kind: "object",
+      fields: [
+        { name: "min", types: ["vector3"] },
+        { name: "max", types: ["vector3"] },
+      ],
+    },
+  ],
+  [
+    "model.get_mesh_aabb:return:aabb",
+    {
+      kind: "mapping",
+      key: "hash",
+      value: [
+        { name: "min", types: ["vector3"] },
+        { name: "max", types: ["vector3"] },
       ],
     },
   ],
@@ -819,7 +840,11 @@ function mapSlotUnion(
       const element =
         curation?.kind === "array" ? curation.element : HOMOGENEOUS_ARRAY_SLOTS.get(elementName);
       if (mapping !== undefined) {
-        ts = `LuaMap<${mapType(mapping.key)}, ${mapType(mapping.value)}>`;
+        const value =
+          typeof mapping.value === "string"
+            ? mapType(mapping.value)
+            : inlineTableType(mapping.value, mapType, optionalFields);
+        ts = `LuaMap<${mapType(mapping.key)}, ${value}>`;
       } else if (element !== undefined) {
         ts = arrayTypeFromTokens(element, mapType);
       } else if (curation?.kind === "object" || curation?.kind === "array-object") {
