@@ -13,7 +13,7 @@ import * as path from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { runBuild } from "./build";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
-import { runInit, SCAFFOLD_DEV_DEPS } from "./init";
+import { reconcileManagedList, runInit, SCAFFOLD_DEV_DEPS } from "./init";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
 
 const CLI_VERSION = (
@@ -644,6 +644,104 @@ describe("runInit (.vscode editor config)", () => {
     const recs = ext.recommendations as string[];
     expect(recs.length).toBe(new Set(recs).size);
     expect(result.written).not.toContain(".vscode/extensions.json");
+  });
+
+  test("prunes dropped managed recommendations from an existing extensions.json", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    touch(
+      ".vscode/extensions.json",
+      `${JSON.stringify(
+        {
+          recommendations: [
+            "sumneko.lua",
+            "astronachos.defold",
+            "tomblind.local-lua-debugger-vscode",
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    runInit({ cwd });
+
+    const ext = readJson(".vscode/extensions.json");
+    expect(ext.recommendations).toEqual(["tomblind.local-lua-debugger-vscode"]);
+  });
+
+  test("preserves consumer recommendations while pruning dropped managed entries", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    touch(
+      ".vscode/extensions.json",
+      `${JSON.stringify(
+        { recommendations: ["dbaeumer.vscode-eslint", "sumneko.lua"] },
+        null,
+        2,
+      )}\n`,
+    );
+
+    runInit({ cwd });
+
+    const ext = readJson(".vscode/extensions.json");
+    expect(ext.recommendations).toEqual([
+      "dbaeumer.vscode-eslint",
+      "tomblind.local-lua-debugger-vscode",
+    ]);
+  });
+
+  test("leaves an already-canonical extensions.json unchanged", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const canonical = `${JSON.stringify(
+      {
+        recommendations: ["tomblind.local-lua-debugger-vscode"],
+        unwantedRecommendations: ["johnnymorganz.luau-lsp"],
+      },
+      null,
+      2,
+    )}\n`;
+    touch(".vscode/extensions.json", canonical);
+
+    const result = runInit({ cwd });
+
+    expect(readFileSync(path.join(cwd, ".vscode", "extensions.json"), "utf8")).toBe(canonical);
+    expect(result.written).not.toContain(".vscode/extensions.json");
+  });
+
+  test("reconciles unwanted recommendations without pruning consumer entries", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    touch(
+      ".vscode/extensions.json",
+      `${JSON.stringify(
+        { unwantedRecommendations: ["user.unwanted-extension", "johnnymorganz.luau-lsp"] },
+        null,
+        2,
+      )}\n`,
+    );
+
+    runInit({ cwd });
+
+    const ext = readJson(".vscode/extensions.json");
+    expect(ext.unwantedRecommendations).toEqual([
+      "user.unwanted-extension",
+      "johnnymorganz.luau-lsp",
+    ]);
+  });
+
+  test("reconcileManagedList prunes historical entries and appends canonical entries", () => {
+    expect(
+      reconcileManagedList(
+        ["user.entry", "old.managed", "kept.managed", "user.entry"],
+        ["old.managed", "kept.managed"],
+        ["kept.managed", "new.managed"],
+      ),
+    ).toEqual(["user.entry", "kept.managed", "new.managed"]);
+    expect(reconcileManagedList("garbage", ["old.managed"], ["new.managed"])).toEqual([
+      "new.managed",
+    ]);
   });
 
   test("merges into a JSONC settings.json with comments, keeping unrelated settings", () => {
