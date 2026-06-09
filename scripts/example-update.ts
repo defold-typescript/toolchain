@@ -31,8 +31,8 @@ export function buildUpdateSteps(exampleDir: string, binPath: string): string[][
 
 export function expectedFreshArtifacts(exampleDir: string): string[] {
   return [
-    path.join(exampleDir, "src", "player.ts.script"),
-    path.join(exampleDir, ".defold-types", `defold-${CURRENT_STABLE_DEFOLD_VERSION}`),
+    path.posix.join(exampleDir, "src", "player.ts.script"),
+    path.posix.join(exampleDir, ".defold-types", `defold-${CURRENT_STABLE_DEFOLD_VERSION}`),
   ];
 }
 
