@@ -79,6 +79,12 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("## Routing many messages with `onMessage`");
   });
 
+  test("docs/guide/script-lifecycle.md documents module-scope script properties", async () => {
+    const body = await readGuide("script-lifecycle.md");
+    expect(body).toContain("## Script properties on `self`");
+    expect(body).toContain("go.property()` runs at module scope");
+  });
+
   test("docs/guide/README.md links to script lifecycle", async () => {
     const body = await readGuide("README.md");
     expect(body).toContain("script-lifecycle.md");

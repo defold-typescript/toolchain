@@ -1,10 +1,5 @@
-import "../../src/engine-globals";
-import "../../src/go-overloads";
-import "../../src/message-guard";
-import "../../src/msg-overloads";
 import "../b2d";
 import "../buffer";
-import "../builtin-messages";
 import "../camera";
 import "../collectionfactory";
 import "../collectionproxy";
@@ -36,5 +31,11 @@ import "../vmath";
 import "../webview";
 import "../window";
 import "../zlib";
+import "../../src/engine-globals";
+import "../../src/go-overloads";
+import "../../src/message-guard";
+import "../../src/msg-overloads";
+import "../builtin-messages";
 
 export { defineScript } from "../../src/lifecycle";
+export type { ScriptProperties, ScriptProperty } from "../../src/lifecycle";

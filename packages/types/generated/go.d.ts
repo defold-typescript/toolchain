@@ -779,35 +779,6 @@ declare global {
      */
     export function on_reload(self: Opaque<"userdata">): void;
     /**
-     * This function defines a property which can then be used in the script through the self-reference.
-     * The properties defined this way are automatically exposed in the editor in game objects and collections which use the script.
-     * Note that you can only use this function outside any callback-functions like init and update.
-     *
-     * @param name - the id of the property
-     * @param value - default value of the property. In the case of a url, only the empty constructor msg.url() is allowed. In the case of a resource one of the resource constructors (eg resource.atlas(), resource.font() etc) is expected.
-     * @example
-     * ```ts
-     * // This example defines a property "health" in a script. The health is decreased
-     * // whenever someone sends a "take_damage" message to the script.
-     * go.property("health", 100);
-     *
-     * export default defineScript({
-     *   init(self) {
-     *     // prints 100 to the output
-     *     print(self.health);
-     *   },
-     *
-     *   on_message(self, message_id, message) {
-     *     if (message_id === hash("take_damage")) {
-     *       self.health = self.health - message.damage;
-     *       print(`Ouch! My health is now: ${self.health}`);
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    export function property(name: string, value: number | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource"> | boolean): void;
-    /**
      * Sets the parent for a game object instance. This means that the instance will exist in the geometrical space of its parent,
      * like a basic transformation hierarchy or scene graph. If no parent is specified, the instance will be detached from any parent and exist in world
      * space.

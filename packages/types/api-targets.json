@@ -27,7 +27,7 @@
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
-          "skipFunctions": ["get", "set"]
+          "skipFunctions": ["get", "set", "property"]
         },
         { "namespace": "graphics", "fixture": "graphics_doc.json", "outFile": "graphics.d.ts" },
         { "namespace": "gui", "fixture": "gui_doc.json", "outFile": "gui.d.ts" },

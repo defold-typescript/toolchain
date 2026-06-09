@@ -23,5 +23,7 @@ export {
   SCRIPT_HOOK_NAMES,
   type ScriptHookName,
   type ScriptHooks,
+  type ScriptProperties,
+  type ScriptProperty,
 } from "./lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./publish-dts";

@@ -58,6 +58,8 @@ function buildAmbientFiles(): Record<string, string> {
     "node_modules/@defold-typescript/types/src/core-types.ts": readAmbient("src/core-types.ts"),
     "node_modules/@defold-typescript/types/src/engine-globals.d.ts":
       readAmbient("src/engine-globals.d.ts"),
+    "node_modules/@defold-typescript/types/src/go-overloads.d.ts":
+      readAmbient("src/go-overloads.d.ts"),
     "node_modules/@defold-typescript/types/src/msg-overloads.d.ts":
       readAmbient("src/msg-overloads.d.ts"),
     "node_modules/@defold-typescript/types/src/message-guard.d.ts":
@@ -70,7 +72,7 @@ function buildAmbientFiles(): Record<string, string> {
     // file can `import { defineScript }` and `import type { Hash, Vector3 }`.
     "node_modules/@defold-typescript/types/index.ts": [
       'export { defineGuiScript, defineRenderScript, defineScript } from "./src/lifecycle";',
-      'export type { GuiScriptHooks, InputAction, InputTouch, RenderScriptHooks, ScriptHooks } from "./src/lifecycle";',
+      'export type { GuiScriptHooks, InputAction, InputTouch, RenderScriptHooks, ScriptHooks, ScriptProperties, ScriptProperty } from "./src/lifecycle";',
       'export type { Hash, Matrix4, Quaternion, Url, Vector, Vector3, Vector4 } from "./src/core-types";',
       "",
     ].join("\n"),
@@ -81,11 +83,11 @@ function buildAmbientFiles(): Record<string, string> {
     // call-site erasure fires (otherwise the import lowers to a broken
     // `require("@defold-typescript/types/gui-script")`).
     "node_modules/@defold-typescript/types/script.d.ts":
-      'export { defineScript } from "./src/lifecycle";\n',
+      'export { defineScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
     "node_modules/@defold-typescript/types/gui-script.d.ts":
-      'export { defineGuiScript } from "./src/lifecycle";\n',
+      'export { defineGuiScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
     "node_modules/@defold-typescript/types/render-script.d.ts":
-      'export { defineRenderScript } from "./src/lifecycle";\n',
+      'export { defineRenderScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
   };
   // Seed every generated namespace so real multi-namespace user code (sprite,
   // physics, label, ...) resolves — not just the historical vmath/msg/go subset.

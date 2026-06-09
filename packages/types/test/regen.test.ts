@@ -75,18 +75,19 @@ describe("regen drift guard", () => {
   });
 });
 
-describe("go get/set skip", () => {
-  test("generated go.d.ts declares neither `function get(` nor `function set(`, but keeps animate/property and the properties interface", () => {
+describe("go facade skip", () => {
+  test("generated go.d.ts declares neither facade-owned get/set/property nor drops animate/properties", () => {
     const go = MODULE_MANIFEST.find((e) => e.namespace === "go");
     if (!go) throw new Error("go manifest entry missing");
     const { contents, dropped } = generateModuleDeclaration(go);
     expect(contents).not.toContain("function get(");
     expect(contents).not.toContain("function set(");
+    expect(contents).not.toContain("function property(");
     expect(contents).toContain("function animate(");
-    expect(contents).toContain("function property(");
     expect(contents).toContain("interface properties {");
     expect(dropped).toContain("go.get");
     expect(dropped).toContain("go.set");
+    expect(dropped).toContain("go.property");
   });
 });
 
@@ -98,6 +99,7 @@ describe("reserved-name member recovery", () => {
     expect(dropped).not.toContain("go.delete");
     expect(dropped).toContain("go.get");
     expect(dropped).toContain("go.set");
+    expect(dropped).toContain("go.property");
     expect(contents).toContain("function _delete(");
     expect(contents).toContain("export { _delete as delete };");
   });
@@ -178,12 +180,14 @@ describe("per-kind factory re-export", () => {
 
   test.each(
     KIND_MODULE_MANIFEST.map((entry) => [entry.kind] as const),
-  )("%s: generateKindIndex ends with a single matching-factory re-export", (kind) => {
+  )("%s: generateKindIndex re-exports the matching factory and property helper types", (kind) => {
     const factory = KIND_FACTORY[kind];
     if (!factory) throw new Error(`no expected factory for kind ${kind}`);
     const fresh = generateKindIndex(kind);
     const reexport = `export { ${factory} } from "../../src/lifecycle";`;
-    expect(fresh.trimEnd().endsWith(reexport)).toBe(true);
+    expect(fresh).toContain(
+      `${reexport}\nexport type { ScriptProperties, ScriptProperty } from "../../src/lifecycle";`,
+    );
     const occurrences = fresh.split(reexport).length - 1;
     expect(occurrences).toBe(1);
     expect(fresh).not.toContain("export {};");

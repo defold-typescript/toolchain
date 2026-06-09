@@ -2,7 +2,6 @@ import "./generated/builtin-messages";
 import "./src/msg-overloads";
 import "./src/message-guard";
 import "./src/message-dispatch";
-import "./src/go-overloads";
 import "./src/engine-globals";
 import "./generated/b2d";
 import "./generated/buffer";
@@ -12,6 +11,7 @@ import "./generated/collectionproxy";
 import "./generated/crash";
 import "./generated/factory";
 import "./generated/go";
+import "./src/go-overloads";
 import "./generated/graphics";
 import "./generated/gui";
 import "./generated/http";
@@ -64,5 +64,7 @@ export {
   SCRIPT_HOOK_NAMES,
   type ScriptHookName,
   type ScriptHooks,
+  type ScriptProperties,
+  type ScriptProperty,
 } from "./src/lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./src/publish-dts";

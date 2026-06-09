@@ -58,6 +58,39 @@ export default defineGuiScript<MenuSelf>({
 
 With an explicit type argument (`defineGuiScript<MenuSelf>`), `init`'s return is checked against `MenuSelf` rather than inferred from it.
 
+## Script properties on `self`
+
+`go.property()` runs at module scope. Putting it inside `init` or returning it from `init` does not register an editor property in Defold. Keep script properties in a descriptor object, derive their runtime `self` shape with `ScriptProperties`, and keep `init` for state created when the component starts:
+
+```ts
+import {
+  defineScript,
+  type Hash,
+  type ScriptProperties,
+  type Vector3,
+} from "@defold-typescript/types";
+
+const properties = {
+  name: go.property("name", hash("initial value")),
+};
+
+type Props = ScriptProperties<typeof properties>;
+type State = { velocity: Vector3 };
+
+export default defineScript<Props, State>({
+  init() {
+    return { velocity: vmath.vector3(0, 0, 0) };
+  },
+  update(self) {
+    const name: Hash = self.name;
+    self.velocity = self.velocity.add(vmath.vector3(1, 0, 0));
+    void name;
+  },
+});
+```
+
+`Props` fields are present on `self` before `init` runs. `State` is still checked against the object returned by `init`, so an omitted state field remains a compile error while omitted property-backed fields are correct.
+
 Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example.
 
 At runtime Defold owns `self` (a userdata-backed table) and a script can populate but not replace it, so the transpiler can't emit a returning `init` verbatim. It wraps the body in a builder and merges the returned table onto the engine `self`; a `nil`/stateless return merges nothing. The hooks you write stay in terms of a typed `self`.

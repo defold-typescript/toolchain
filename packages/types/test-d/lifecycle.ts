@@ -1,6 +1,6 @@
 /// <reference path="../index.d.ts" />
 
-import type { Hash, Url } from "../src/core-types";
+import type { Hash, Url, Vector3 } from "../src/core-types";
 import {
   defineGuiScript,
   defineRenderScript,
@@ -9,6 +9,8 @@ import {
   type InputAction,
   type RenderScriptHooks,
   type ScriptHooks,
+  type ScriptProperties,
+  type ScriptProperty,
 } from "../src/lifecycle";
 
 const _hash = null as unknown as Hash;
@@ -106,6 +108,47 @@ hooks.on_message?.(self, "set_parent", { anything: 1 }, _url);
 hooks.on_input?.(self, undefined, {});
 
 defineScript<Self>({});
+
+const scriptProperties = {
+  speed: go.property("speed", 450),
+  enabled: go.property("enabled", true),
+  name: go.property("name", hash("initial value")),
+};
+
+type ScriptProps = ScriptProperties<typeof scriptProperties>;
+type ScriptState = { velocity: Vector3 };
+
+const propertyHooks: ScriptHooks<ScriptProps & ScriptState, ScriptState> = defineScript<
+  ScriptProps,
+  ScriptState
+>({
+  init: () => ({ velocity: vmath.vector3(0, 0, 0) }),
+  update(self) {
+    const _speed: number = self.speed;
+    const _enabled: boolean = self.enabled;
+    const _name: Hash = self.name;
+    const _velocity: Vector3 = self.velocity;
+    void _speed;
+    void _enabled;
+    void _name;
+    void _velocity;
+  },
+});
+void propertyHooks;
+
+defineScript<ScriptProps, ScriptState>({
+  init: () => ({ velocity: vmath.vector3(0, 0, 0) }),
+});
+
+// @ts-expect-error explicit init state still requires init-created fields
+defineScript<ScriptProps, ScriptState>({ init: () => ({}) });
+
+declare function expectScriptProperties<T extends Record<string, ScriptProperty<unknown>>>(
+  props: T,
+): ScriptProperties<T>;
+
+// @ts-expect-error descriptor objects must contain only go.property results
+expectScriptProperties({ speed: go.property("speed", 450), bad: 1 });
 
 // Explicit `<Self>` keeps checking `init`'s return against the named type.
 defineScript<Self>({

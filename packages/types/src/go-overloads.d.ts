@@ -1,5 +1,10 @@
 /** @noSelfInFile */
+
 import type { Hash, Opaque, Quaternion, Url, Vector3, Vector4 } from "./core-types";
+
+interface ScriptProperty<TValue> {
+  readonly __defoldScriptProperty: TValue;
+}
 
 declare global {
   namespace go {
@@ -61,5 +66,33 @@ declare global {
       value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">,
       options?: GoPropertyOptions,
     ): void;
+    /**
+     * Declares a Defold editor script property at module scope and carries its
+     * value type into `ScriptProperties<typeof properties>`.
+     *
+     * @param name - editor property id to register.
+     * @param value - default value for the registered property.
+     * @returns a phantom descriptor used only for TypeScript self typing.
+     * @example
+     * ```ts
+     * const properties = { speed: go.property("speed", 450) };
+     * type Props = ScriptProperties<typeof properties>;
+     * ```
+     */
+    function property(name: string, value: number): ScriptProperty<number>;
+    /** Declares a boolean Defold editor script property. */
+    function property(name: string, value: boolean): ScriptProperty<boolean>;
+    /** Declares a hash Defold editor script property. */
+    function property(name: string, value: Hash): ScriptProperty<Hash>;
+    /** Declares a URL Defold editor script property. */
+    function property(name: string, value: Url): ScriptProperty<Url>;
+    /** Declares a vector3 Defold editor script property. */
+    function property(name: string, value: Vector3): ScriptProperty<Vector3>;
+    /** Declares a vector4 Defold editor script property. */
+    function property(name: string, value: Vector4): ScriptProperty<Vector4>;
+    /** Declares a quaternion Defold editor script property. */
+    function property(name: string, value: Quaternion): ScriptProperty<Quaternion>;
+    /** Declares a resource Defold editor script property. */
+    function property(name: string, value: Opaque<"resource">): ScriptProperty<Opaque<"resource">>;
   }
 }

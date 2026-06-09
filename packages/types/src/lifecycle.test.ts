@@ -10,6 +10,18 @@ describe("defineScript", () => {
     expect(defineScript<{ counter: number }>(hooks)).toBe(hooks);
   });
 
+  test("returns property-and-state hook objects by identity", () => {
+    type Props = { name: string };
+    type State = { counter: number };
+    const hooks = {
+      init: () => ({ counter: 0 }),
+      update(self: Props & State) {
+        self.counter += 1;
+      },
+    };
+    expect(defineScript<Props, State>(hooks)).toBe(hooks);
+  });
+
   test("accepts an empty hooks object", () => {
     const hooks = {};
     expect(defineScript<Record<string, never>>(hooks)).toBe(hooks);

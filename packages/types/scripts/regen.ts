@@ -243,11 +243,11 @@ export function generateKindIndex(kind: string): string {
   const universalNamespaces = MODULE_MANIFEST.filter(
     (m) => !Object.hasOwn(RESTRICTED_NAMESPACES, m.namespace),
   ).map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
-  const lines = [...UNIVERSAL_EXTRA_IMPORTS, ...universalNamespaces]
-    .sort()
-    .map((path) => `import "${path}";`);
+  const lines = [
+    ...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()]),
+  ].map((path) => `import "${path}";`);
   if (entry.restricted) lines.push(`import "../${entry.restricted}";`);
-  return `${lines.join("\n")}\n\nexport { ${entry.factory} } from "../../src/lifecycle";\n`;
+  return `${lines.join("\n")}\n\nexport { ${entry.factory} } from "../../src/lifecycle";\nexport type { ScriptProperties, ScriptProperty } from "../../src/lifecycle";\n`;
 }
 
 export function generateVersionIndex(

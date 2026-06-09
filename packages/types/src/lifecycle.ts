@@ -39,12 +39,21 @@ export interface InputAction {
   marked_text?: string;
 }
 
-export interface ScriptHooks<TSelf> {
+/** Phantom type carried by `go.property()` descriptors. */
+export interface ScriptProperty<TValue> {
+  readonly __defoldScriptProperty: TValue;
+}
+
+export type ScriptProperties<T extends Record<string, ScriptProperty<unknown>>> = {
+  [K in keyof T]: T[K] extends ScriptProperty<infer TValue> ? TValue : never;
+};
+
+export interface ScriptHooks<TSelf, TInitState = TSelf> {
   // `init` returns the script's initial state; it is the sole site TypeScript
-  // solves `TSelf` from. The engine owns `self` (a userdata-backed table), so
-  // every other hook wraps it in `NoInfer<TSelf>` — otherwise their `self`
+  // solves `TInitState` from. The engine owns `self` (a userdata-backed table),
+  // so every other hook wraps it in `NoInfer<TSelf>` — otherwise their `self`
   // competes as a second inference site and `TSelf` collapses to `{}`.
-  init?(): TSelf;
+  init?(): TInitState;
   update?(self: NoInfer<TSelf>, dt: number): void;
   fixed_update?(self: NoInfer<TSelf>, dt: number): void;
   late_update?(self: NoInfer<TSelf>, dt: number): void;
@@ -84,17 +93,23 @@ type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 // drift-pin: SCRIPT_HOOK_NAMES must list exactly the ScriptHooks members
-const _hookNamesPinnedToInterface: Equal<ScriptHookName, keyof ScriptHooks<unknown>> = true;
+const _hookNamesPinnedToInterface: Equal<ScriptHookName, keyof ScriptHooks<unknown, unknown>> =
+  true;
 void _hookNamesPinnedToInterface;
 
-export type GuiScriptHooks<TSelf> = ScriptHooks<TSelf>;
+export type GuiScriptHooks<TSelf, TInitState = TSelf> = ScriptHooks<TSelf, TInitState>;
 
-export type RenderScriptHooks<TSelf> = Omit<ScriptHooks<TSelf>, "on_input">;
+export type RenderScriptHooks<TSelf, TInitState = TSelf> = Omit<
+  ScriptHooks<TSelf, TInitState>,
+  "on_input"
+>;
 
 /**
  * Type a `.script` component's hook table. At runtime this is an identity
  * function — it returns `hooks` unchanged; its only job is typing. It infers
- * `TSelf` from `init`'s return so every other hook's `self` is typed, and the
+ * `TSelf` from `init`'s return so every other hook's `self` is typed. When
+ * script properties are declared at module scope, pass `<Props, State>` so
+ * non-init hooks see both sources while `init` returns only `State`. The
  * transpiler's `lifecycle-erasure` pass rewrites the top-level call into the
  * flat `function init(self) … end` Defold chunk shape — zero runtime cost,
  * nothing the engine sees changes.
@@ -120,16 +135,17 @@ export type RenderScriptHooks<TSelf> = Omit<ScriptHooks<TSelf>, "on_input">;
  * });
  * ```
  */
-export function defineScript<TSelf = Record<never, never>>(
-  hooks: ScriptHooks<TSelf>,
-): ScriptHooks<TSelf> {
+export function defineScript<TProperties = Record<never, never>, TInitState = TProperties>(
+  hooks: ScriptHooks<TProperties & TInitState, TInitState>,
+): ScriptHooks<TProperties & TInitState, TInitState> {
   return hooks;
 }
 
 /**
  * Type a `.gui_script` component's hook table. Like {@link defineScript} it is
- * an identity function at runtime, infers `TSelf` from `init`'s return, and is
- * erased by the transpiler's `lifecycle-erasure` pass into the flat Defold
+ * an identity function at runtime, infers `TSelf` from `init`'s return by
+ * default, accepts the same `<Props, State>` split as {@link defineScript}, and
+ * is erased by the transpiler's `lifecycle-erasure` pass into the flat Defold
  * chunk shape.
  *
  * `GuiScriptHooks` is an alias of the `.script` hook set, so it accepts the same
@@ -153,15 +169,16 @@ export function defineScript<TSelf = Record<never, never>>(
  * });
  * ```
  */
-export function defineGuiScript<TSelf = Record<never, never>>(
-  hooks: GuiScriptHooks<TSelf>,
-): GuiScriptHooks<TSelf> {
+export function defineGuiScript<TProperties = Record<never, never>, TInitState = TProperties>(
+  hooks: GuiScriptHooks<TProperties & TInitState, TInitState>,
+): GuiScriptHooks<TProperties & TInitState, TInitState> {
   return hooks;
 }
 
 /**
  * Type a `.render_script` component's hook table. Like {@link defineScript} it
- * is an identity function at runtime, infers `TSelf` from `init`'s return, and
+ * is an identity function at runtime, infers `TSelf` from `init`'s return by
+ * default, accepts the same `<Props, State>` split as {@link defineScript}, and
  * is erased by the transpiler's `lifecycle-erasure` pass into the flat Defold
  * chunk shape.
  *
@@ -186,8 +203,8 @@ export function defineGuiScript<TSelf = Record<never, never>>(
  * });
  * ```
  */
-export function defineRenderScript<TSelf = Record<never, never>>(
-  hooks: RenderScriptHooks<TSelf>,
-): RenderScriptHooks<TSelf> {
+export function defineRenderScript<TProperties = Record<never, never>, TInitState = TProperties>(
+  hooks: RenderScriptHooks<TProperties & TInitState, TInitState>,
+): RenderScriptHooks<TProperties & TInitState, TInitState> {
   return hooks;
 }
