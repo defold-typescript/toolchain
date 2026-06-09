@@ -1,3 +1,4 @@
+import "../../src/engine-globals";
 import "../../src/go-overloads";
 import "../../src/message-guard";
 import "../../src/msg-overloads";

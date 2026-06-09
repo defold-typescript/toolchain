@@ -10,9 +10,7 @@
     "paths": {
       "@defold-typescript/types": ["../../../packages/types/src/index.ts"],
       "@defold-typescript/types/script": ["../../../packages/types/generated/kinds/script.d.ts"]
-    },
-    "typeRoots": [".defold-types"],
-    "types": ["defold-1.12.4"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }

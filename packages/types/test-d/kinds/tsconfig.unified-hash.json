@@ -1,0 +1,12 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [],
+    "paths": {
+      "@defold-typescript/types": ["../../src/index.ts"],
+      "@defold-typescript/types/script": ["../../generated/kinds/script.d.ts"]
+    }
+  },
+  "include": ["script-unified-hash-proof.ts"]
+}

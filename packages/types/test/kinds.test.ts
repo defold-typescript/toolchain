@@ -49,6 +49,17 @@ describe("per-kind ambient API wall — consumer tsconfig proof", () => {
     expect(exitCode).toBe(0);
   });
 
+  test("script surface ships ambient hash() unified with the imported branded Hash", () => {
+    const { exitCode, output } = typecheck("tsconfig.unified-hash.json");
+    if (exitCode !== 0) {
+      throw new Error(
+        `unified-Hash proof failed — either /script omits ambient hash()/Hash ` +
+          `(engine-globals missing from the kind subpath) or the two Hash brands did not unify:\n${output}`,
+      );
+    }
+    expect(exitCode).toBe(0);
+  });
+
   test("harness can fail: script surface gui.* call without @ts-expect-error errors", () => {
     const { exitCode } = typecheck("tsconfig.script-neg.json");
     expect(exitCode).not.toBe(0);
