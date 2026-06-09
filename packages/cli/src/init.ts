@@ -92,6 +92,13 @@ const VSCODE_EXTENSIONS_CONTENT = {
   unwantedRecommendations: ["johnnymorganz.luau-lsp"],
 };
 
+const MANAGED_RECOMMENDATIONS = [
+  "tomblind.local-lua-debugger-vscode",
+  "sumneko.lua",
+  "astronachos.defold",
+];
+const MANAGED_UNWANTED = ["johnnymorganz.luau-lsp"];
+
 const VSCODE_SETTINGS_CONTENT = {
   "Lua.workspace.ignoreDir": ["src"],
 };
@@ -410,6 +417,34 @@ function unionStrings(existing: unknown, additions: readonly string[]): string[]
   return out;
 }
 
+export function reconcileManagedList(
+  existing: unknown,
+  managed: readonly string[],
+  canonical: readonly string[],
+): string[] {
+  const managedSet = new Set(managed);
+  const canonicalSet = new Set(canonical);
+  const out: string[] = [];
+  const values = Array.isArray(existing)
+    ? existing.filter((value): value is string => typeof value === "string")
+    : [];
+  for (const value of values) {
+    if (out.includes(value)) {
+      continue;
+    }
+    if (managedSet.has(value) && !canonicalSet.has(value)) {
+      continue;
+    }
+    out.push(value);
+  }
+  for (const value of canonical) {
+    if (!out.includes(value)) {
+      out.push(value);
+    }
+  }
+  return out;
+}
+
 function readVscodeJson(filePath: string): Record<string, unknown> | null {
   try {
     const parsed = parseJsonc(readFileSync(filePath, "utf8"));
@@ -427,15 +462,20 @@ function writeVscodeExtensions(cwd: string, written: string[]): void {
     if (existing === null) {
       return;
     }
-    existing.recommendations = unionStrings(
+    const before = JSON.stringify(existing);
+    existing.recommendations = reconcileManagedList(
       existing.recommendations,
+      MANAGED_RECOMMENDATIONS,
       VSCODE_EXTENSIONS_CONTENT.recommendations,
     );
-    existing.unwantedRecommendations = unionStrings(
+    existing.unwantedRecommendations = reconcileManagedList(
       existing.unwantedRecommendations,
+      MANAGED_UNWANTED,
       VSCODE_EXTENSIONS_CONTENT.unwantedRecommendations,
     );
-    writeJson(filePath, existing);
+    if (JSON.stringify(existing) !== before) {
+      writeJson(filePath, existing);
+    }
     return;
   }
   mkdirSync(dir, { recursive: true });
