@@ -67,32 +67,42 @@ declare global {
       options?: GoPropertyOptions,
     ): void;
     /**
-     * Declares a Defold editor script property at module scope and carries its
-     * value type into `ScriptProperties<typeof properties>`.
+     * Registers a Defold editor script property (deprecated escape hatch).
+     *
+     * @deprecated Don't call `go.property` yourself. Declare the property in
+     * `defineScript({ properties })` — that is the only form that types it onto
+     * `self`; the transpiler emits the `go.property(...)` registration for you.
+     * A direct call still registers, but `self.<name>` stays untyped.
      *
      * @param name - editor property id to register.
      * @param value - default value for the registered property.
      * @returns a phantom descriptor used only for TypeScript self typing.
      * @example
      * ```ts
-     * const properties = { speed: go.property("speed", 450) };
-     * type Props = ScriptProperties<typeof properties>;
+     * // Declare it as a field — the key is the name, the value is the default:
+     * export default defineScript({
+     *   properties: { speed: 450 },
+     *   update(self) {
+     *     self.speed; // number
+     *   },
+     * });
+     * // The transpiler emits, at chunk scope:  go.property("speed", 450)
      * ```
      */
     function property(name: string, value: number): ScriptProperty<number>;
-    /** Declares a boolean Defold editor script property. */
+    /** @deprecated Declare booleans via the `defineScript({ properties })` field. */
     function property(name: string, value: boolean): ScriptProperty<boolean>;
-    /** Declares a hash Defold editor script property. */
+    /** @deprecated Declare hashes via the `defineScript({ properties })` field. */
     function property(name: string, value: Hash): ScriptProperty<Hash>;
-    /** Declares a URL Defold editor script property. */
+    /** @deprecated Declare URLs via the `defineScript({ properties })` field. */
     function property(name: string, value: Url): ScriptProperty<Url>;
-    /** Declares a vector3 Defold editor script property. */
+    /** @deprecated Declare vector3s via the `defineScript({ properties })` field. */
     function property(name: string, value: Vector3): ScriptProperty<Vector3>;
-    /** Declares a vector4 Defold editor script property. */
+    /** @deprecated Declare vector4s via the `defineScript({ properties })` field. */
     function property(name: string, value: Vector4): ScriptProperty<Vector4>;
-    /** Declares a quaternion Defold editor script property. */
+    /** @deprecated Declare quaternions via the `defineScript({ properties })` field. */
     function property(name: string, value: Quaternion): ScriptProperty<Quaternion>;
-    /** Declares a resource Defold editor script property. */
+    /** @deprecated Declare resources via the `defineScript({ properties })` field. */
     function property(name: string, value: Opaque<"resource">): ScriptProperty<Opaque<"resource">>;
   }
 }

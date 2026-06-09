@@ -133,6 +133,14 @@ function walk(self: PlayerSelf, direction: number): void {
 }
 
 export default defineScript({
+  // Editor script properties: the key is the name (written once) and the value
+  // is the default, so its type flows onto `self`. The transpiler emits the
+  // `go.property("adj", …)` / `go.property("name", …)` registrations for us.
+  properties: {
+    adj: vmath.vector3(0, 0, 0),
+    name: hash("initial value"),
+  },
+
   init() {
     // This lets us handle input in this script. `init` returns the initial
     // state; the transpiler merges it onto the engine-owned `self`.
@@ -144,8 +152,8 @@ export default defineScript({
     // Apply gravity.
     self.velocity.y = self.velocity.y + gravity * dt;
 
-    // Move player.
-    const pos = go.get_position().add(self.velocity.mul(dt));
+    // Move player, applying the editor-tunable `adj` offset property.
+    const pos = go.get_position().add(self.velocity.mul(dt)).add(self.adj);
     go.set_position(pos);
 
     // Update animations based on state (ground, air, move and idle).

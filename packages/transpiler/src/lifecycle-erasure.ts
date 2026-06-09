@@ -11,6 +11,7 @@ import {
   createIfStatement,
   createNilLiteral,
   createReturnStatement,
+  createStringLiteral,
   createTableIndexExpression,
   createVariableDeclarationStatement,
   type Identifier,
@@ -194,6 +195,38 @@ function emitInitMerge(
   return [builderDecl, createAssignmentStatement(createIdentifier("init"), initFn, property)];
 }
 
+// The value-keyed `properties` field maps each `key: default` to a chunk-scope
+// `go.property("key", default)` the editor reads. Emitted before the hook
+// assignments and after the source's `local` consts, so a default referencing a
+// module const resolves.
+function emitPropertyRegistrations(
+  property: ts.ObjectLiteralElementLike,
+  context: TransformationContext,
+): Statement[] {
+  if (!ts.isPropertyAssignment(property) || !ts.isObjectLiteralExpression(property.initializer)) {
+    return [];
+  }
+  const registrations: Statement[] = [];
+  for (const member of property.initializer.properties) {
+    if (!ts.isPropertyAssignment(member)) {
+      continue;
+    }
+    const key = member.name;
+    if (!ts.isIdentifier(key) && !ts.isStringLiteral(key)) {
+      continue;
+    }
+    registrations.push(
+      createExpressionStatement(
+        createCallExpression(
+          createTableIndexExpression(createIdentifier("go"), createStringLiteral("property")),
+          [createStringLiteral(key.text), context.transformExpression(member.initializer)],
+        ),
+      ),
+    );
+  }
+  return registrations;
+}
+
 function eraseFactoryCall(
   expression: ts.Expression,
   context: TransformationContext,
@@ -208,10 +241,15 @@ function eraseFactoryCall(
   if (hooks === undefined || !ts.isObjectLiteralExpression(hooks)) {
     return undefined;
   }
+  const registrations: Statement[] = [];
   const statements: Statement[] = [];
   for (const property of hooks.properties) {
     const name = hookName(property);
     if (name === undefined) {
+      continue;
+    }
+    if (name === "properties") {
+      registrations.push(...emitPropertyRegistrations(property, context));
       continue;
     }
     const fn = hookFunction(property);
@@ -247,7 +285,7 @@ function eraseFactoryCall(
     );
     statements.push(createAssignmentStatement(createIdentifier(name), fnExpression, property));
   }
-  return statements;
+  return [...registrations, ...statements];
 }
 
 export function isFactoryOnlyImport(node: ts.ImportDeclaration): boolean {

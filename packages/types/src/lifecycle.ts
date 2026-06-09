@@ -39,11 +39,22 @@ export interface InputAction {
   marked_text?: string;
 }
 
-/** Phantom type carried by `go.property()` descriptors. */
+/**
+ * Phantom type carried by `go.property()` descriptors.
+ *
+ * @deprecated Declare properties with the value-keyed `properties` field inside
+ * `defineScript({ properties })` — that form types them onto `self` directly and
+ * needs no descriptor. The `go.property` escape hatch still returns this for
+ * backward compatibility.
+ */
 export interface ScriptProperty<TValue> {
   readonly __defoldScriptProperty: TValue;
 }
 
+/**
+ * @deprecated Use the value-keyed `properties` field of `defineScript`; the
+ * descriptor-plus-`ScriptProperties` extraction is no longer needed.
+ */
 export type ScriptProperties<T extends Record<string, ScriptProperty<unknown>>> = {
   [K in keyof T]: T[K] extends ScriptProperty<infer TValue> ? TValue : never;
 };
@@ -104,15 +115,42 @@ export type RenderScriptHooks<TSelf, TInitState = TSelf> = Omit<
   "on_input"
 >;
 
+// The factory hook table plus the value-keyed `properties` field. `TProps` is
+// the property channel (raw default values), `TSelf` the merged `self` the
+// callbacks see (`NoInfer`-wrapped inside the hook set), and `TInitState` what
+// `init` returns. `ScriptHooks` itself stays callback-only so the
+// `SCRIPT_HOOK_NAMES` drift pin remains valid.
+export type ScriptHooksWithProperties<TProps, TSelf, TInitState> = ScriptHooks<
+  TSelf,
+  TInitState
+> & {
+  properties?: TProps;
+};
+
+export type GuiScriptHooksWithProperties<TProps, TSelf, TInitState> = GuiScriptHooks<
+  TSelf,
+  TInitState
+> & {
+  properties?: TProps;
+};
+
+export type RenderScriptHooksWithProperties<TProps, TSelf, TInitState> = RenderScriptHooks<
+  TSelf,
+  TInitState
+> & {
+  properties?: TProps;
+};
+
 /**
  * Type a `.script` component's hook table. At runtime this is an identity
  * function — it returns `hooks` unchanged; its only job is typing. It infers
- * `TSelf` from `init`'s return so every other hook's `self` is typed. When
- * script properties are declared at module scope, pass `<Props, State>` so
- * non-init hooks see both sources while `init` returns only `State`. The
- * transpiler's `lifecycle-erasure` pass rewrites the top-level call into the
- * flat `function init(self) … end` Defold chunk shape — zero runtime cost,
- * nothing the engine sees changes.
+ * `TSelf` from `init`'s return so every other hook's `self` is typed. Declare
+ * editor properties with the value-keyed `properties` field — the key is the
+ * property name and the value its default, so the value's type threads onto
+ * `self` alongside `init`'s state. The transpiler's `lifecycle-erasure` pass
+ * rewrites the top-level call into the flat `function init(self) … end` Defold
+ * chunk shape and synthesizes the `go.property(...)` registrations — zero
+ * runtime cost, nothing the engine sees changes.
  *
  * Accepts the full `ScriptHooks` set, all optional: `init`, `update`,
  * `fixed_update`, `late_update`, `on_message`, `on_input`, `final`,
@@ -135,18 +173,18 @@ export type RenderScriptHooks<TSelf, TInitState = TSelf> = Omit<
  * });
  * ```
  */
-export function defineScript<TProperties = Record<never, never>, TInitState = TProperties>(
-  hooks: ScriptHooks<TProperties & TInitState, TInitState>,
-): ScriptHooks<TProperties & TInitState, TInitState> {
+export function defineScript<TProps extends object = Record<never, never>, TInitState = TProps>(
+  hooks: ScriptHooksWithProperties<TProps, TProps & TInitState, TInitState>,
+): ScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> {
   return hooks;
 }
 
 /**
  * Type a `.gui_script` component's hook table. Like {@link defineScript} it is
  * an identity function at runtime, infers `TSelf` from `init`'s return by
- * default, accepts the same `<Props, State>` split as {@link defineScript}, and
- * is erased by the transpiler's `lifecycle-erasure` pass into the flat Defold
- * chunk shape.
+ * default, accepts the same value-keyed `properties` field as
+ * {@link defineScript}, and is erased by the transpiler's `lifecycle-erasure`
+ * pass into the flat Defold chunk shape.
  *
  * `GuiScriptHooks` is an alias of the `.script` hook set, so it accepts the same
  * full set, all optional: `init`, `update`, `fixed_update`, `late_update`,
@@ -169,18 +207,18 @@ export function defineScript<TProperties = Record<never, never>, TInitState = TP
  * });
  * ```
  */
-export function defineGuiScript<TProperties = Record<never, never>, TInitState = TProperties>(
-  hooks: GuiScriptHooks<TProperties & TInitState, TInitState>,
-): GuiScriptHooks<TProperties & TInitState, TInitState> {
+export function defineGuiScript<TProps extends object = Record<never, never>, TInitState = TProps>(
+  hooks: GuiScriptHooksWithProperties<TProps, TProps & TInitState, TInitState>,
+): GuiScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> {
   return hooks;
 }
 
 /**
  * Type a `.render_script` component's hook table. Like {@link defineScript} it
  * is an identity function at runtime, infers `TSelf` from `init`'s return by
- * default, accepts the same `<Props, State>` split as {@link defineScript}, and
- * is erased by the transpiler's `lifecycle-erasure` pass into the flat Defold
- * chunk shape.
+ * default, accepts the same value-keyed `properties` field as
+ * {@link defineScript}, and is erased by the transpiler's `lifecycle-erasure`
+ * pass into the flat Defold chunk shape.
  *
  * `RenderScriptHooks` is `Omit<ScriptHooks, "on_input">` — render scripts do not
  * receive input. It accepts the rest of the set, all optional: `init`,
@@ -203,8 +241,11 @@ export function defineGuiScript<TProperties = Record<never, never>, TInitState =
  * });
  * ```
  */
-export function defineRenderScript<TProperties = Record<never, never>, TInitState = TProperties>(
-  hooks: RenderScriptHooks<TProperties & TInitState, TInitState>,
-): RenderScriptHooks<TProperties & TInitState, TInitState> {
+export function defineRenderScript<
+  TProps extends object = Record<never, never>,
+  TInitState = TProps,
+>(
+  hooks: RenderScriptHooksWithProperties<TProps, TProps & TInitState, TInitState>,
+): RenderScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> {
   return hooks;
 }

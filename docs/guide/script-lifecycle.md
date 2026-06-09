@@ -60,36 +60,30 @@ With an explicit type argument (`defineGuiScript<MenuSelf>`), `init`'s return is
 
 ## Script properties on `self`
 
-`go.property()` runs at module scope. Putting it inside `init` or returning it from `init` does not register an editor property in Defold. Keep script properties in a descriptor object, derive their runtime `self` shape with `ScriptProperties`, and keep `init` for state created when the component starts:
+Declare editor script properties with the value-keyed `properties` field of `defineScript`. The key is the property name (written once) and the value is its default, so the value's type flows onto `self` alongside the state `init` returns. You never call `go.property` yourself — the transpiler synthesizes the chunk-scope `go.property(...)` registrations Defold needs:
 
 ```ts
-import {
-  defineScript,
-  type Hash,
-  type ScriptProperties,
-  type Vector3,
-} from "@defold-typescript/types";
+import { defineScript, type Hash } from "@defold-typescript/types";
 
-const properties = {
-  name: go.property("name", hash("initial value")),
-};
-
-type Props = ScriptProperties<typeof properties>;
-type State = { velocity: Vector3 };
-
-export default defineScript<Props, State>({
+export default defineScript({
+  properties: {
+    adj: vmath.vector3(0, 0, 0), // self.adj: Vector3
+    name: hash("initial value"), // self.name: Hash
+  },
   init() {
     return { velocity: vmath.vector3(0, 0, 0) };
   },
   update(self) {
     const name: Hash = self.name;
-    self.velocity = self.velocity.add(vmath.vector3(1, 0, 0));
+    self.velocity = self.velocity.add(self.adj);
     void name;
   },
 });
 ```
 
-`Props` fields are present on `self` before `init` runs. `State` is still checked against the object returned by `init`, so an omitted state field remains a compile error while omitted property-backed fields are correct.
+Property-backed fields are present on `self` before `init` runs, so they need not appear in `init`'s return. The state `init` returns is still checked on its own — an omitted state field remains a compile error, while omitted property-backed fields are correct.
+
+Calling `go.property(...)` directly is deprecated: it still registers the property at runtime, but `self.<name>` stays untyped and the transpiler emits a build warning pointing you at the `properties` field.
 
 Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example.
 

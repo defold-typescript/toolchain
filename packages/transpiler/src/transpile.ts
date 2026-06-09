@@ -3,6 +3,10 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import type * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import {
+  findDirectGoPropertyCalls,
+  GO_PROPERTY_DIRECT_CALL_MESSAGE,
+} from "./go-property-direct-call";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
@@ -16,6 +20,10 @@ export interface TranspileResult {
 export interface TranspileDiagnostic {
   readonly file?: string;
   readonly message: string;
+  // Present only on advisory diagnostics (e.g. the deprecated direct
+  // `go.property` call). Absent means a hard failure, so `collectFailures`
+  // keeps treating uncategorized diagnostics as fatal.
+  readonly category?: "warning";
 }
 
 export interface TranspileProjectInput {
@@ -134,6 +142,26 @@ export function collectOutputs(
       ? { file: fileName, message }
       : { message };
   });
+
+  // Advisory scan of the user TypeScript AST for the deprecated direct
+  // `go.property` call. Run here (shared by transpileProject and the watch
+  // session) so both paths report it identically.
+  const scanned = new Set<string>();
+  for (const file of transpiledFiles) {
+    for (const sourceFile of file.sourceFiles) {
+      if (!userKeys.has(sourceFile.fileName) || scanned.has(sourceFile.fileName)) {
+        continue;
+      }
+      scanned.add(sourceFile.fileName);
+      if (findDirectGoPropertyCalls(sourceFile).length > 0) {
+        collectedDiagnostics.push({
+          file: sourceFile.fileName,
+          message: GO_PROPERTY_DIRECT_CALL_MESSAGE,
+          category: "warning",
+        });
+      }
+    }
+  }
 
   return { lua, sourceMaps, diagnostics: collectedDiagnostics };
 }

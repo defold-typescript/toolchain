@@ -206,6 +206,64 @@ describe("lifecycle erasure", () => {
     expect(result.lua).toContain("____self.speed = ____self.speed + dt");
   });
 
+  test("synthesizes top-level go.property registrations from the properties field", () => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "defineScript({",
+      "  properties: { adj: vmath.vector3(0, 0, 0), name: hash('initial value') },",
+      "  init: () => ({ velocity: vmath.vector3(0, 0, 0) }),",
+      "  fixed_update(self, dt) {",
+      "    go.set_position(go.get_position().add(self.adj));",
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    // TSTL wraps a call argument that is itself a call (vmath.vector3 / hash)
+    // onto its own lines — the same shape any hand-written `go.property(...,
+    // someCall())` emits.
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      go.property(
+          "adj",
+          vmath.vector3(0, 0, 0)
+      )
+      go.property(
+          "name",
+          hash("initial value")
+      )
+      local function ____init()
+          return {velocity = vmath.vector3(0, 0, 0)}
+      end
+      function init(self)
+          local ____s = ____init()
+          if ____s ~= nil then
+              for ____k, ____v in pairs(____s) do
+                  self[____k] = ____v
+              end
+          end
+      end
+      function fixed_update(____self, dt)
+          go.set_position(go.get_position() + ____self.adj)
+      end
+      return ____exports
+      "
+    `);
+    // The property name is the object key; the value is preserved verbatim.
+    expect(result.lua).toContain("go.property(");
+    expect(result.lua).toContain('"adj"');
+    expect(result.lua).toContain("vmath.vector3(0, 0, 0)");
+    expect(result.lua).toContain('"name"');
+    expect(result.lua).toContain('hash("initial value")');
+    // Registrations read before the hooks they back.
+    expect(result.lua.indexOf("go.property(")).toBeLessThan(result.lua.indexOf("function init"));
+    expect(result.lua).not.toContain("defineScript");
+    expect(result.lua).not.toContain("properties");
+  });
+
   test("erases defineRenderScript identically", () => {
     const source = [
       'import { defineRenderScript } from "@defold-typescript/types";',

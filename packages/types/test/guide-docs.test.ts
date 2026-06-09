@@ -79,10 +79,12 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("## Routing many messages with `onMessage`");
   });
 
-  test("docs/guide/script-lifecycle.md documents module-scope script properties", async () => {
+  test("docs/guide/script-lifecycle.md documents the value-keyed properties field", async () => {
     const body = await readGuide("script-lifecycle.md");
     expect(body).toContain("## Script properties on `self`");
-    expect(body).toContain("go.property()` runs at module scope");
+    // The value-keyed `properties` field replaces the descriptor idiom.
+    expect(body).toContain("properties: {");
+    expect(body).not.toContain("ScriptProperties");
   });
 
   test("docs/guide/README.md links to script lifecycle", async () => {

@@ -132,6 +132,11 @@ export function collectFailures(
 ): Map<string, string[]> {
   const failures = new Map<string, string[]>();
   for (const diag of diagnostics) {
+    // Advisory diagnostics (e.g. the deprecated direct `go.property` call) warn
+    // but never fail the build — the call still registers at runtime.
+    if (diag.category === "warning") {
+      continue;
+    }
     const bucket = diag.file ?? PROJECT_BUCKET;
     const list = failures.get(bucket);
     if (list) {

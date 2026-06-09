@@ -158,6 +158,86 @@ defineScript<Self>({
 // @ts-expect-error init's return must satisfy the explicit Self
 defineScript<Self>({ init: () => ({ counter: "not-a-number" }) });
 
+// Value-keyed `properties` field: the key is the property name (written once)
+// and the value is the default, so its type is the property type. It threads
+// onto `self` alongside `init`'s returned state — no descriptor, no second
+// generic, no `ScriptProperties` extraction.
+const keyedProps = defineScript({
+  properties: {
+    adj: vmath.vector3(0, 0, 0),
+    name: hash("initial value"),
+  },
+  init: () => ({ velocity: vmath.vector3(0, 0, 0) }),
+  update(self) {
+    const _adj: Vector3 = self.adj;
+    const _name: Hash = self.name;
+    const _velocity: Vector3 = self.velocity;
+    void _adj;
+    void _name;
+    void _velocity;
+    // @ts-expect-error a field that is neither a declared property nor init state
+    void self.missing;
+  },
+});
+void keyedProps;
+
+// `init` is checked against init state only: a property-backed field need not
+// appear in init's return, yet reading it on `self` is still allowed.
+defineScript({
+  properties: { adj: vmath.vector3(0, 0, 0) },
+  init: () => ({ velocity: vmath.vector3(0, 0, 0) }),
+  update(self) {
+    const _adj: Vector3 = self.adj;
+    const _velocity: Vector3 = self.velocity;
+    void _adj;
+    void _velocity;
+  },
+});
+
+// Omitting an init-state field is still rejected under the value-keyed form.
+defineScript<{ adj: Vector3 }, { velocity: Vector3 }>({
+  properties: { adj: vmath.vector3(0, 0, 0) },
+  // @ts-expect-error init must return every explicit init-state field
+  init: () => ({}),
+});
+
+// The value type is the property type: `0` -> number, `true` -> boolean,
+// `hash(...)` -> Hash.
+defineScript({
+  properties: { count: 0, enabled: true, name: hash("x") },
+  update(self) {
+    const _count: number = self.count;
+    const _enabled: boolean = self.enabled;
+    const _name: Hash = self.name;
+    void _count;
+    void _enabled;
+    void _name;
+  },
+});
+
+// The `properties` field is available on the gui/render factories too.
+defineGuiScript({
+  properties: { root: _hash },
+  init: () => ({ frames: 0 }),
+  update(self) {
+    const _root: Hash = self.root;
+    const _frames: number = self.frames;
+    void _root;
+    void _frames;
+  },
+});
+
+defineRenderScript({
+  properties: { layers: 0 },
+  init: () => ({ frames: 0 }),
+  update(self) {
+    const _layers: number = self.layers;
+    const _frames: number = self.frames;
+    void _layers;
+    void _frames;
+  },
+});
+
 void hooks;
 
 // No explicit type argument: `TSelf` is solved from `init`'s return alone and
