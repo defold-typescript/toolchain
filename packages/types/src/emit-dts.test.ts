@@ -3,6 +3,7 @@ import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
+import iapDoc from "../fixtures/iap_doc.json" with { type: "json" };
 import liveupdateDoc from "../fixtures/liveupdate_doc.json" with { type: "json" };
 import modelDoc from "../fixtures/model_doc.json" with { type: "json" };
 import physicsDoc from "../fixtures/physics_doc.json" with { type: "json" };
@@ -1724,6 +1725,38 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect([...TABLE_SLOT_CURATIONS]).toEqual([
       ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
       [
+        "iap.finish:param:transaction",
+        {
+          kind: "object",
+          fields: [
+            { name: "ident", types: ["string"] },
+            { name: "state", types: ["number"] },
+            { name: "trans_ident", types: ["string"] },
+            { name: "date", types: ["string"] },
+            { name: "original_trans", types: ["string"] },
+            { name: "receipt", types: ["string"] },
+            { name: "signature", types: ["string"] },
+            { name: "user_id", types: ["string"] },
+          ],
+        },
+      ],
+      [
+        "iap.acknowledge:param:transaction",
+        {
+          kind: "object",
+          fields: [
+            { name: "ident", types: ["string"] },
+            { name: "state", types: ["number"] },
+            { name: "trans_ident", types: ["string"] },
+            { name: "date", types: ["string"] },
+            { name: "original_trans", types: ["string"] },
+            { name: "receipt", types: ["string"] },
+            { name: "signature", types: ["string"] },
+            { name: "user_id", types: ["string"] },
+          ],
+        },
+      ],
+      [
         "liveupdate.get_mounts:return:mounts",
         {
           kind: "array-object",
@@ -1873,6 +1906,25 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
     expect(out).toContain(
       "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;",
+    );
+  });
+
+  test("iap finish/acknowledge recover the shared transaction object while buy stays Record", () => {
+    const module = parseDefoldApiDoc(iapDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "iap.finish"),
+        requireFunction(module, "iap.acknowledge"),
+        requireFunction(module, "iap.buy"),
+      ],
+    });
+    const transaction =
+      "{ ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }";
+    expect(out).toContain(`function finish(transaction: ${transaction}): void;`);
+    expect(out).toContain(`function acknowledge(transaction: ${transaction}): void;`);
+    expect(out).toContain(
+      "function buy(id: string, options: Record<string | number, unknown>): void;",
     );
   });
 });

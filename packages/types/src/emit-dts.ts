@@ -149,6 +149,43 @@ const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const;
 
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
+  // iap.finish and iap.acknowledge take the same Defold IAP transaction object —
+  // the table handed to the iap.set_listener callback. The ref-doc fixture
+  // describes it in prose only (no field list), so the shape is curated from the
+  // Defold iap reference. As a param-side object curation every field emits `?`,
+  // which is faithful: original_trans/signature/user_id are platform-specific.
+  [
+    "iap.finish:param:transaction",
+    {
+      kind: "object",
+      fields: [
+        { name: "ident", types: ["string"] },
+        { name: "state", types: ["number"] },
+        { name: "trans_ident", types: ["string"] },
+        { name: "date", types: ["string"] },
+        { name: "original_trans", types: ["string"] },
+        { name: "receipt", types: ["string"] },
+        { name: "signature", types: ["string"] },
+        { name: "user_id", types: ["string"] },
+      ],
+    },
+  ],
+  [
+    "iap.acknowledge:param:transaction",
+    {
+      kind: "object",
+      fields: [
+        { name: "ident", types: ["string"] },
+        { name: "state", types: ["number"] },
+        { name: "trans_ident", types: ["string"] },
+        { name: "date", types: ["string"] },
+        { name: "original_trans", types: ["string"] },
+        { name: "receipt", types: ["string"] },
+        { name: "signature", types: ["string"] },
+        { name: "user_id", types: ["string"] },
+      ],
+    },
+  ],
   [
     "liveupdate.get_mounts:return:mounts",
     {

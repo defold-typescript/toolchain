@@ -11,7 +11,7 @@ declare global {
      *
      * @param transaction - transaction table parameter as supplied in listener callback
      */
-    function acknowledge(transaction: Record<string | number, unknown>): void;
+    function acknowledge(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
     /**
      * Purchase a product.
      *
@@ -24,7 +24,7 @@ declare global {
      *
      * @param transaction - transaction table parameter as supplied in listener callback
      */
-    function finish(transaction: Record<string | number, unknown>): void;
+    function finish(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
     /**
      * Get current iap provider
      *

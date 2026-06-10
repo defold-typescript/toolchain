@@ -304,8 +304,9 @@ describe("id-array slot recovery", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
     // Pre-recovery baseline: iap 4, go 3 (sum 7). Recovering the two prose-only
     // "table (array) of id(s)" slots (iap.list.ids, go.delete.id) into arrays
-    // drops each by one (sum 5) — project-wide -2.
-    expect(requireEntry(report, "iap").recordTables).toBe(3);
+    // drops each by one — go settles at 2. The live report is cumulative, so iap
+    // reads 1 here after the later transaction-table curation ratchets it 3 -> 1.
+    expect(requireEntry(report, "iap").recordTables).toBe(1);
     expect(requireEntry(report, "go").recordTables).toBe(2);
     // Every namespace and category equals the committed baseline (which reflects
     // the recovered counts) — proving no other recordTables count and no other
@@ -377,18 +378,38 @@ describe("model AABB table curation recovery", () => {
 });
 
 describe("platform-opaque passthrough reclassification", () => {
-  test("iac.recordTables drops 1 -> 0 and push.recordTables drops 4 -> 2; iap stays 3; no other namespace or category moves", () => {
+  test("iac.recordTables drops 1 -> 0 and push.recordTables drops 4 -> 2; no other namespace or category moves", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
     // The three OS/platform-sourced opaque-table slots (iac.set_listener,
     // push.get_scheduled, push.get_all_scheduled) are reclassified out of
-    // recordTables: iac 1 -> 0, push 4 -> 2 (project-wide -3). iap stays a
-    // visible signal at 3 (Defold-documented option bags, not arbitrary).
+    // recordTables: iac 1 -> 0, push 4 -> 2 (project-wide -3). This slice left
+    // iap's documented option bags visible; the later transaction-table curation
+    // ratchets iap to 1, so the cumulative live report reads 1 here.
     expect(requireEntry(report, "iac").recordTables).toBe(0);
     expect(requireEntry(report, "push").recordTables).toBe(2);
-    expect(requireEntry(report, "iap").recordTables).toBe(3);
+    expect(requireEntry(report, "iap").recordTables).toBe(1);
     // The committed baseline reflects the reclassified counts, so the full
     // report equals it on every namespace and category — proving iac/push are
     // the only moves.
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      expect(entry).toEqual(base);
+    }
+  });
+});
+
+describe("iap transaction table curation recovery", () => {
+  test("iap.recordTables drops 3 -> 1 (project-wide -2) and no other namespace or category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // The shared Defold IAP transaction object is curated onto
+    // iap.finish/iap.acknowledge's `transaction` param, recovering both slots and
+    // ratcheting iap 3 -> 1 (project-wide -2). iap.buy's looser option bag stays
+    // visible under recordTables.
+    expect(requireEntry(report, "iap").recordTables).toBe(1);
+    // The committed baseline reflects the recovered count, so the full report
+    // equals it on every namespace and category — proving iap is the only move.
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
       const base = baselineMap[namespace];
