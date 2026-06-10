@@ -11,7 +11,7 @@ void _restored;
 
 iac.set_listener({}, 1);
 
-push.register({}, () => {});
+push.register([], () => {});
 const [_scheduleId, _scheduleErr] = push.schedule(10, "title", "alert", "payload", {});
 void _scheduleId;
 void _scheduleErr;

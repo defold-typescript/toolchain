@@ -137,6 +137,12 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
   ["sound.get_groups", "hash"],
   ["iap.list", "string"],
   ["go.delete", ["string", "hash", "url"]],
+  // push.register's `notifications` is a prose-only array of push.NOTIFICATION_*
+  // bitmask constants (the ref example sums NOTIFICATION_BADGE/SOUND/ALERT). The
+  // vendored push_doc.json fixture declares no NOTIFICATION_* constant elements, so
+  // no brand exists to reference; `number` is the faithful element token for these
+  // numeric constants, mirroring the vmath.vector/buffer.* number entries.
+  ["push.register", "number"],
 ]);
 
 export type TableSlotCuration =

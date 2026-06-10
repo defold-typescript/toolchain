@@ -36,7 +36,7 @@ declare global {
      * @param notifications - The types of notifications to listen to. [icon:ios]
      * @param callback - Register callback function.
      */
-    function register(notifications: Record<string | number, unknown>, callback: (...args: unknown[]) => unknown): void;
+    function register(notifications: number[], callback: (...args: unknown[]) => unknown): void;
     /**
      * Local push notifications are scheduled with this function.
      * The returned `id` value is uniquely identifying the scheduled notification and can be stored for later reference.

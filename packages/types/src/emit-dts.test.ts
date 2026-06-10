@@ -1842,7 +1842,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ],
     ]);
     expect(MAPPING_TABLE_SLOTS.size).toBe(3);
-    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(6);
+    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
   });
 
   test("collectionfactory.create recovers only the ids return", () => {
@@ -1950,7 +1950,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
   });
 
-  test("push.schedule recovers its notification_settings bag while register stays Record", () => {
+  test("push.schedule recovers its notification_settings bag while register recovers a number[]", () => {
     const module = parseDefoldApiDoc(pushDoc);
     const out = emitDeclarations({
       ...module,
@@ -1962,19 +1962,20 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).toContain(
       "notification_settings: { action?: string; badge_count?: number; priority?: number }",
     );
-    expect(out).toContain("notifications: Record<string | number, unknown>");
+    expect(out).toContain("notifications: number[]");
   });
 });
 
 describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
-  test("maps the four primitive slots unchanged and adds the two id-array slots", () => {
+  test("maps the four primitive slots unchanged, the two id-array slots, and the push.register constant array", () => {
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("buffer.set_metadata")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("buffer.get_metadata")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("vmath.vector")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("sound.get_groups")).toBe("hash");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("iap.list")).toBe("string");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("go.delete")).toEqual(["string", "hash", "url"]);
-    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(6);
+    expect(HOMOGENEOUS_ARRAY_SLOTS.get("push.register")).toBe("number");
+    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
   });
 
   function moduleOf(namespace: string, functions: ApiFunction[]): ApiModule {

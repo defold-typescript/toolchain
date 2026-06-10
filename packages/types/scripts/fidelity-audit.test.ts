@@ -385,10 +385,10 @@ describe("platform-opaque passthrough reclassification", () => {
     // push.get_scheduled, push.get_all_scheduled) are reclassified out of
     // recordTables: iac 1 -> 0, push 4 -> 2 (project-wide -3). Later slices ratchet
     // these namespaces further: the transaction + option-bag curations take iap to
-    // 0, and the notification_settings curation takes push to 1, so the cumulative
-    // live report reads 1 (push) and 0 (iap) here.
+    // 0, and the notification_settings + notifications-array curations take push to
+    // 0, so the cumulative live report reads 0 (push) and 0 (iap) here.
     expect(requireEntry(report, "iac").recordTables).toBe(0);
-    expect(requireEntry(report, "push").recordTables).toBe(1);
+    expect(requireEntry(report, "push").recordTables).toBe(0);
     expect(requireEntry(report, "iap").recordTables).toBe(0);
     // The committed baseline reflects the reclassified counts, so the full
     // report equals it on every namespace and category — proving iac/push are
@@ -427,13 +427,33 @@ describe("option-bag table curation recovery", () => {
     // The two documented object-shaped option bags are curated onto their params:
     // iap.buy's `options` (request_id/token) and push.schedule's
     // `notification_settings` (action/badge_count/priority). Recovering both
-    // ratchets iap 1 -> 0 and push 2 -> 1 (project-wide -2). push.register's
-    // bitmask-constant `notifications` array stays visible under recordTables.
+    // ratchets iap 1 -> 0 and push 2 -> 1 (project-wide -2). The later
+    // notifications-array curation takes push to 0, so the cumulative live report
+    // reads 0 (push) here.
     expect(requireEntry(report, "iap").recordTables).toBe(0);
-    expect(requireEntry(report, "push").recordTables).toBe(1);
+    expect(requireEntry(report, "push").recordTables).toBe(0);
     // The committed baseline reflects the recovered counts, so the full report
     // equals it on every namespace and category — proving iap/push are the only
     // moves.
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      expect(entry).toEqual(base);
+    }
+  });
+});
+
+describe("push.register notifications constant-array recovery", () => {
+  test("push.recordTables drops 1 -> 0 (project-wide -1) and no other namespace or category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // push.register's `notifications` (an array of push.NOTIFICATION_* bitmask
+    // constants) is the last push `table` slot; the HOMOGENEOUS_ARRAY_SLOTS
+    // ["push.register", "number"] entry recovers it as number[], ratcheting push
+    // 1 -> 0 (project-wide -1). After this slice push owns zero recordTables.
+    expect(requireEntry(report, "push").recordTables).toBe(0);
+    // The committed baseline reflects the recovered count, so the full report
+    // equals it on every namespace and category — proving push is the only move.
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
       const base = baselineMap[namespace];
