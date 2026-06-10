@@ -18,7 +18,7 @@ declare global {
      * @param id - product to buy
      * @param options - optional parameters as properties. The following parameters can be set
      */
-    function buy(id: string, options: Record<string | number, unknown>): void;
+    function buy(id: string, options: { request_id?: string; token?: string }): void;
     /**
      * Explicitly finish a product transaction. [icon:attention] Calling iap.finish is required on a successful transaction if `auto_finish_transactions` is disabled in project settings. Calling this function with `auto_finish_transactions` set will be ignored and a warning is printed. The `transaction.state` field must equal `iap.TRANS_STATE_PURCHASED`.
      *

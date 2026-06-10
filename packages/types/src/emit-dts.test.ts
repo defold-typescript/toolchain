@@ -7,6 +7,7 @@ import iapDoc from "../fixtures/iap_doc.json" with { type: "json" };
 import liveupdateDoc from "../fixtures/liveupdate_doc.json" with { type: "json" };
 import modelDoc from "../fixtures/model_doc.json" with { type: "json" };
 import physicsDoc from "../fixtures/physics_doc.json" with { type: "json" };
+import pushDoc from "../fixtures/push_doc.json" with { type: "json" };
 import resourceDoc from "../fixtures/resource_doc.json" with { type: "json" };
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
 import sysDoc from "../fixtures/sys_doc.json" with { type: "json" };
@@ -1757,6 +1758,16 @@ describe("TABLE_SLOT_CURATIONS", () => {
         },
       ],
       [
+        "iap.buy:param:options",
+        {
+          kind: "object",
+          fields: [
+            { name: "request_id", types: ["string"] },
+            { name: "token", types: ["string"] },
+          ],
+        },
+      ],
+      [
         "liveupdate.get_mounts:return:mounts",
         {
           kind: "array-object",
@@ -1790,6 +1801,17 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ],
       ["physics.raycast:param:groups", { kind: "array", element: "hash" }],
       ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
+      [
+        "push.schedule:param:notification_settings",
+        {
+          kind: "object",
+          fields: [
+            { name: "action", types: ["string"] },
+            { name: "badge_count", types: ["number"] },
+            { name: "priority", types: ["number"] },
+          ],
+        },
+      ],
       [
         "socket.select:param:recvt",
         { kind: "array", element: ["client", "master", "unconnected"] },
@@ -1909,7 +1931,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
   });
 
-  test("iap finish/acknowledge recover the shared transaction object while buy stays Record", () => {
+  test("iap finish/acknowledge recover the shared transaction object and buy recovers its options bag", () => {
     const module = parseDefoldApiDoc(iapDoc);
     const out = emitDeclarations({
       ...module,
@@ -1924,8 +1946,23 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).toContain(`function finish(transaction: ${transaction}): void;`);
     expect(out).toContain(`function acknowledge(transaction: ${transaction}): void;`);
     expect(out).toContain(
-      "function buy(id: string, options: Record<string | number, unknown>): void;",
+      "function buy(id: string, options: { request_id?: string; token?: string }): void;",
     );
+  });
+
+  test("push.schedule recovers its notification_settings bag while register stays Record", () => {
+    const module = parseDefoldApiDoc(pushDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "push.schedule"),
+        requireFunction(module, "push.register"),
+      ],
+    });
+    expect(out).toContain(
+      "notification_settings: { action?: string; badge_count?: number; priority?: number }",
+    );
+    expect(out).toContain("notifications: Record<string | number, unknown>");
   });
 });
 

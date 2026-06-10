@@ -47,7 +47,7 @@ declare global {
      * @param payload - JSON string to be passed to the registered listener function.
      * @param notification_settings - Table with notification and platform specific fields
      */
-    function schedule(time: number, title: string, alert: string, payload: string, notification_settings: Record<string | number, unknown>): LuaMultiReturn<[number, string]>;
+    function schedule(time: number, title: string, alert: string, payload: string, notification_settings: { action?: string; badge_count?: number; priority?: number }): LuaMultiReturn<[number, string]>;
     /**
      * Set the badge count for application icon. This function is only available on iOS. [icon:ios]
      *

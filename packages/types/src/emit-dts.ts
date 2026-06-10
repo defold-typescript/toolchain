@@ -186,6 +186,21 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
+  // iap.buy's `options` is documented in the fixture as prose only ("optional
+  // parameters as properties"), so the field set is curated from the Defold iap
+  // reference: a Facebook-only custom `request_id` and a Google-Play-only
+  // subscription-offer `token`. Both are platform-specific, hence param-side
+  // optional fields.
+  [
+    "iap.buy:param:options",
+    {
+      kind: "object",
+      fields: [
+        { name: "request_id", types: ["string"] },
+        { name: "token", types: ["string"] },
+      ],
+    },
+  ],
   [
     "liveupdate.get_mounts:return:mounts",
     {
@@ -220,6 +235,22 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   ["physics.raycast:param:groups", { kind: "array", element: "hash" }],
   ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
+  // push.schedule's `notification_settings` is documented in the fixture as prose
+  // only ("Table with notification and platform specific fields"), so the field
+  // set is curated from the Defold push reference: an iOS `action`, an iOS
+  // `badge_count`, and an Android `priority`. Each is platform-specific, hence
+  // param-side optional fields.
+  [
+    "push.schedule:param:notification_settings",
+    {
+      kind: "object",
+      fields: [
+        { name: "action", types: ["string"] },
+        { name: "badge_count", types: ["number"] },
+        { name: "priority", types: ["number"] },
+      ],
+    },
+  ],
   ["socket.select:param:recvt", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
   ["socket.select:param:sendt", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
   ["socket.select:return:sockets_r", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
