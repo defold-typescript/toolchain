@@ -69,6 +69,21 @@ The scaffold also ships an opinionated `biome.json`, so the project lints and fo
 
 If the scaffolded `@defold-typescript/types` pin still looks older than the CLI you expect, your `bunx` cache is stale — `@latest` above already forces the current release, which is more reliable than clearing the cache with `bun pm cache rm`.
 
+## Add TypeScript to an existing project
+
+`init` is not just for fresh directories. Run it inside an existing Defold project to drop in the TypeScript infrastructure (`package.json`, `tsconfig.json`, `.gitignore`, `biome.json`, editor settings, and managed tasks) without touching `.script`, `.collection`, `.gui_script`, `.render_script`, `game.project`, or other engine assets.
+
+1. `cd` into the project, such as a clone of [`defold/template-platformer`](https://github.com/defold/template-platformer).
+2. Run `bunx @defold-typescript/cli@latest init`.
+3. Run `bun install`, matching the install reminder printed by `init`.
+4. Hand-convert your Lua scripts to TypeScript; see [Convert a Lua script](#convert-a-lua-script).
+5. Run `bunx @defold-typescript/cli build` to transpile the converted sources.
+6. Open the project in the Defold editor and Build-and-Run.
+
+### Convert a Lua script
+
+Move each Defold lifecycle hook into a method on `defineScript({...})`, keep module-level constants at the top of the file, and use Defold APIs directly: vector math, `msg.post`, `go.set`, `sprite.play_flipbook`, `hash("...")`, and engine types are ambient globals with no import. The platformer example is a worked conversion of a real Lua project: [`docs/examples/platformer/`](../examples/platformer/).
+
 ## Write a script
 
 Open `src/main.ts` and replace its body with:
