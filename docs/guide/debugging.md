@@ -42,7 +42,7 @@ The manual walkthrough below remains the fallback and documents exactly what `se
 2. **Add the `lldebugger` library to Defold.** In `game.project`, add the dependency:
 
    ```
-   https://github.com/king8fisher/defold-typescript/releases/download/lldebugger-v1/lldebugger.zip
+   https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip
    ```
 
    This is our vendored, MIT-licensed snapshot of `ts-defold/defold-lldebugger`, hosted from this repo's releases — that is why the URL differs from the upstream docs. Then run *Project -> Fetch Libraries* in the Defold editor so the `lldebugger` Lua module is available to `require`.

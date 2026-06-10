@@ -51,5 +51,5 @@ jobs:
           fi
           gh release create "$TAG" dist/lldebugger.zip \
             --title "lldebugger $TAG" \
-            --notes "Vendored Defold lldebugger library archive. Fetch Libraries URL: https://github.com/king8fisher/defold-typescript/releases/download/$TAG/lldebugger.zip" \
+            --notes "Vendored Defold lldebugger library archive. Fetch Libraries URL: https://github.com/defold-typescript/toolchain/releases/download/$TAG/lldebugger.zip" \
             || gh release upload "$TAG" dist/lldebugger.zip --clobber

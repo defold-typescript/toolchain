@@ -22,8 +22,8 @@ the shorter `defold-typescript` binary on your `PATH` and pin the version:
 npm i -D @defold-typescript/cli   # then: bunx defold-typescript <command>
 ```
 
-See the repository [README](https://github.com/king8fisher/defold-typescript#readme)
-and [`docs/guide/`](https://github.com/king8fisher/defold-typescript/tree/main/docs/guide)
+See the repository [README](https://github.com/defold-typescript/toolchain#readme)
+and [`docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/docs/guide)
 for the full workflow.
 
 ## License

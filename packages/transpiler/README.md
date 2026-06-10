@@ -12,8 +12,8 @@ Most users do not depend on this directly — the
 [`defold-typescript`](https://www.npmjs.com/package/@defold-typescript/cli) CLI
 drives it for you.
 
-See the repository [README](https://github.com/king8fisher/defold-typescript#readme)
-and [`docs/guide/`](https://github.com/king8fisher/defold-typescript/tree/main/docs/guide)
+See the repository [README](https://github.com/defold-typescript/toolchain#readme)
+and [`docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/docs/guide)
 for the full workflow.
 
 ## License

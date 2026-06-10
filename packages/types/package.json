@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "description": "TypeScript types for the Defold engine's Lua APIs.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/defold-typescript/toolchain.git",
+    "directory": "packages/types"
+  },
+  "homepage": "https://github.com/defold-typescript/toolchain#readme",
+  "bugs": "https://github.com/defold-typescript/toolchain/issues",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./index.d.ts",

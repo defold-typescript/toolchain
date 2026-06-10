@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "description": "TypeScript-to-Lua build pipeline tuned for Defold's runtime.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/defold-typescript/toolchain.git",
+    "directory": "packages/transpiler"
+  },
+  "homepage": "https://github.com/defold-typescript/toolchain#readme",
+  "bugs": "https://github.com/defold-typescript/toolchain/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "description": "End-user CLI for scaffolding and building Defold projects written in TypeScript.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/defold-typescript/toolchain.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/defold-typescript/toolchain#readme",
+  "bugs": "https://github.com/defold-typescript/toolchain/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

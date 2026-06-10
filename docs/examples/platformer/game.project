@@ -1,6 +1,6 @@
 [project]
 title = Platformer
-dependencies#0 = https://github.com/king8fisher/defold-typescript/releases/download/lldebugger-v1/lldebugger.zip
+dependencies#0 = https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip
 
 [bootstrap]
 main_collection = /game/game.collectionc

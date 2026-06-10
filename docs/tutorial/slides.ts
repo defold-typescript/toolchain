@@ -79,7 +79,7 @@ export const slides: Slide[] = [
       },
       {
         kind: "sidenote",
-        text: "This slide is a one-page on-ramp. The full toolchain loop (Defold editor install, code editor setup, debug launch) lives in [docs/guide/getting-started.md](https://github.com/king8fisher/defold-typescript/blob/main/docs/guide/getting-started.md).",
+        text: "This slide is a one-page on-ramp. The full toolchain loop (Defold editor install, code editor setup, debug launch) lives in [docs/guide/getting-started.md](https://github.com/defold-typescript/toolchain/blob/main/docs/guide/getting-started.md).",
       },
     ],
   },
@@ -302,7 +302,7 @@ export const slides: Slide[] = [
         items: [
           "Module-level constants for tweaks, replacing Lua's `local` at chunk scope.",
           "`defineScript({...})` replaces bare `function init(self)` / `function on_input(self, ...)` globals.",
-          "Vector math uses methods: `v.add(other)`, `v.mul(scalar)`, `v.unm()` — see the [vector math guide](https://github.com/king8fisher/defold-typescript/blob/main/docs/guide/vector-math.md).",
+          "Vector math uses methods: `v.add(other)`, `v.mul(scalar)`, `v.unm()` — see the [vector math guide](https://github.com/defold-typescript/toolchain/blob/main/docs/guide/vector-math.md).",
           '`isMessage(message_id, message, "contact_point_response")` narrows `message` to the typed payload — no manual cast.',
           "`init` returns the initial state; the transpiler merges it onto the engine-owned `self`.",
         ],

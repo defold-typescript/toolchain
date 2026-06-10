@@ -8,7 +8,7 @@ import { isSkipped } from "./script-kind";
 // `lldebugger-url` leak guard forbids the upstream ts-defold URL, so this must
 // stay equal to the guide's snapshot URL.
 export const LLDEBUGGER_URL =
-  "https://github.com/king8fisher/defold-typescript/releases/download/lldebugger-v1/lldebugger.zip";
+  "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip";
 
 // The prior step shipped a single skip-marker block with the `declare module`
 // inline. That form fails `tsc` under `moduleResolution: Bundler` (Bug 08), so
