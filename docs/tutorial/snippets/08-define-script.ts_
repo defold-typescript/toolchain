@@ -15,6 +15,15 @@ export default defineScript({
   },
 
   fixed_update(self, dt) {
+    // Apply horizontal acceleration. Air is damped by `air_acceleration_factor`.
+    const accel = self.ground_contact
+      ? move_acceleration
+      : move_acceleration * air_acceleration_factor;
+    self.velocity.x = self.velocity.x + accel * self.input_direction * dt;
+    // Clamp to ±max_speed so the player cannot accelerate past top speed.
+    if (self.velocity.x > max_speed) self.velocity.x = max_speed;
+    if (self.velocity.x < -max_speed) self.velocity.x = -max_speed;
+
     // Apply gravity.
     self.velocity.y = self.velocity.y + gravity * dt;
 

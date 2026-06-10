@@ -1,8 +1,12 @@
 import type { Hash, Vector3 } from "@defold-typescript/types";
 import { defineScript } from "@defold-typescript/types";
 
-// Tweakables — module-level constants, exactly as in the original .script.
-// Acceleration factor to use when air-borne.
+// Tweakables — module-level constants. The TS player is a hand-conversion;
+// `move_acceleration` and `air_acceleration_factor` are not in the upstream Lua
+// template but make movement acceleration-based, matching the article's prose.
+// Horizontal acceleration in pixel units per second squared.
+const move_acceleration = 1500;
+// Acceleration factor to use when air-borne (multiplies move_acceleration).
 const air_acceleration_factor = 0.8;
 // Max speed right/left.
 const max_speed = 450;
@@ -30,6 +34,7 @@ const anim_fall = hash("fall");
 function createPlayerSelf() {
   return {
     velocity: vmath.vector3(0, 0, 0),
+    input_direction: 0,
     facing_direction: 0,
     correction: vmath.vector3(),
     ground_contact: false,
@@ -115,12 +120,9 @@ function walk(self: PlayerSelf, direction: number): void {
   if (direction !== 0) {
     self.facing_direction = direction;
   }
-  // Use a different velocity on ground and in air.
-  if (self.ground_contact) {
-    self.velocity.x = max_speed * direction;
-  } else {
-    self.velocity.x = max_speed * air_acceleration_factor * direction;
-  }
+  // Store the input direction; fixed_update integrates it into velocity.x
+  // over the physics step (acceleration-based, per the article's prose).
+  self.input_direction = direction;
 }
 
 export default defineScript({
@@ -140,6 +142,15 @@ export default defineScript({
   },
 
   fixed_update(self, dt) {
+    // Apply horizontal acceleration. Air is damped by `air_acceleration_factor`.
+    const accel = self.ground_contact
+      ? move_acceleration
+      : move_acceleration * air_acceleration_factor;
+    self.velocity.x = self.velocity.x + accel * self.input_direction * dt;
+    // Clamp to ±max_speed so the player cannot accelerate past top speed.
+    if (self.velocity.x > max_speed) self.velocity.x = max_speed;
+    if (self.velocity.x < -max_speed) self.velocity.x = -max_speed;
+
     // Apply gravity.
     self.velocity.y = self.velocity.y + gravity * dt;
 

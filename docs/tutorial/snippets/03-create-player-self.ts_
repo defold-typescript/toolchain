@@ -4,6 +4,7 @@
 function createPlayerSelf() {
   return {
     velocity: vmath.vector3(0, 0, 0),
+    input_direction: 0,
     facing_direction: 0,
     correction: vmath.vector3(),
     ground_contact: false,

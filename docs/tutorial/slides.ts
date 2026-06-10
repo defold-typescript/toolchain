@@ -150,12 +150,12 @@ export const slides: Slide[] = [
       },
       {
         kind: "paragraph",
-        text: "This is how we integrate the acceleration and velocity to move the character in the update-loop. We keep the four tweakable numbers as module-level constants — easy to scan at the top of the file, easy to retune for a different feel.",
+        text: "This is how we integrate the acceleration and velocity to move the character in the update-loop. We keep the five tweakable numbers as module-level constants — easy to scan at the top of the file, easy to retune for a different feel.",
       },
       { kind: "snippet", file: "01-tweaks.ts_" },
       {
         kind: "paragraph",
-        text: "Then in `fixed_update` (which runs on the fixed physics step) we apply gravity, move the player by `velocity × dt`, and add the editor-tunable `adj` offset property so the position can be nudged in the editor:",
+        text: "Then in `fixed_update` (which runs on the fixed physics step) we integrate horizontal velocity from the stored `input_direction` (clamped to `±max_speed`), apply gravity, move the player by `velocity × dt`, and add the editor-tunable `adj` offset property so the position can be nudged in the editor:",
       },
       { kind: "snippet", file: "08-define-script.ts_" },
     ],

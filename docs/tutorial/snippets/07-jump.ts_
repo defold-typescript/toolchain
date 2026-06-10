@@ -19,10 +19,7 @@ function walk(self: PlayerSelf, direction: number): void {
   if (direction !== 0) {
     self.facing_direction = direction;
   }
-  // Use a different velocity on ground and in air.
-  if (self.ground_contact) {
-    self.velocity.x = max_speed * direction;
-  } else {
-    self.velocity.x = max_speed * air_acceleration_factor * direction;
-  }
+  // Store the input direction; fixed_update integrates it into velocity.x
+  // over the physics step (acceleration-based, per the article's prose).
+  self.input_direction = direction;
 }
