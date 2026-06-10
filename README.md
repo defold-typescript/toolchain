@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo-ver-classic.png" alt="defold-typescript logo" width="128" height="128">
+</p>
+
 # defold-typescript
 
 [![npm](https://img.shields.io/npm/v/@defold-typescript/cli)](https://www.npmjs.com/package/@defold-typescript/cli)
