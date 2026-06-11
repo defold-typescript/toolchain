@@ -123,6 +123,9 @@ export function parseChecklistNamespaces(visionMarkdown: string): string[] {
 export interface ZipAccessor {
   has(entry: string): boolean;
   read(entry: string): string;
+  // Surfaces the same entry set `has` is built from, so the extension-archive
+  // resolver can hand the list to the pure `locateScriptApis` / `classifyExtension`.
+  entries(): string[];
 }
 
 export function readZip(path: string): ZipAccessor {
@@ -133,6 +136,7 @@ export function readZip(path: string): ZipAccessor {
   const entries = new Set(list.stdout.toString().split("\n").filter(Boolean));
   return {
     has: (name) => entries.has(name),
+    entries: () => [...entries],
     read: (name) => {
       const out = Bun.spawnSync(["unzip", "-p", path, name]);
       if (out.exitCode !== 0) {

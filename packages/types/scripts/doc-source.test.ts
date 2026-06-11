@@ -13,6 +13,7 @@ import type { ZipAccessor } from "./sync-api-docs";
 function fakeReadZip(path: string): ZipAccessor {
   return {
     has: () => true,
+    entries: () => [],
     read: () => readFileSync(path, "utf8"),
   };
 }

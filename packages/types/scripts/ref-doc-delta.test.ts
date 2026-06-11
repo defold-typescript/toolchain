@@ -51,6 +51,7 @@ function fakeResolveOpts(doc: unknown): {
     cacheDir,
     readZip: () => ({
       has: (entry) => entry === "label.json",
+      entries: () => ["label.json"],
       read: (entry) => {
         if (entry !== "label.json") throw new Error(`unexpected entry ${entry}`);
         return JSON.stringify(doc);

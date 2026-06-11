@@ -24,6 +24,7 @@ function labelRefDocZip(opts: { dropSetText?: boolean } = {}): {
   const json = JSON.stringify(doc);
   const fakeZip: ZipAccessor = {
     has: (e) => e === labelEntry.zipEntry,
+    entries: () => [labelEntry.zipEntry],
     read: (e) => {
       if (e !== labelEntry.zipEntry) throw new Error(`unexpected zip entry ${e}`);
       return json;
@@ -63,6 +64,7 @@ function multiKindRefDocZip(): { fakeZip: ZipAccessor; cacheDir: string } {
   }
   const fakeZip: ZipAccessor = {
     has: (e) => e in docs,
+    entries: () => Object.keys(docs),
     read: (e) => {
       const doc = docs[e];
       if (doc === undefined) throw new Error(`unexpected zip entry ${e}`);

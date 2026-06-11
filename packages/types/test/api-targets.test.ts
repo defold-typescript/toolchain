@@ -23,6 +23,7 @@ function labelRefDocZip(): { fakeZip: ZipAccessor; cacheDir: string; version: st
   const labelDoc = readFileSync(resolve(PACKAGE_ROOT, "fixtures", "label_doc.json"), "utf8");
   const fakeZip: ZipAccessor = {
     has: (e) => e === labelEntry.zipEntry,
+    entries: () => [labelEntry.zipEntry],
     read: (e) => {
       if (e !== labelEntry.zipEntry) throw new Error(`unexpected zip entry ${e}`);
       return labelDoc;

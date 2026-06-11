@@ -40,6 +40,7 @@ function labelRefDocZip(opts: { dropSetText?: boolean } = {}): {
   const json = JSON.stringify(doc);
   const fakeZip: ZipAccessor = {
     has: (e) => e === labelEntry.zipEntry,
+    entries: () => [labelEntry.zipEntry],
     read: (e) => {
       if (e !== labelEntry.zipEntry) throw new Error(`unexpected zip entry ${e}`);
       return json;

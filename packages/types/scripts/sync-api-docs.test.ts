@@ -8,6 +8,7 @@ import {
   buildCoverageReport,
   EXTENSION_MANIFEST,
   parseChecklistNamespaces,
+  readZip,
   SYNC_MANIFEST,
   scriptApiToFixtureJson,
   syncFixtures,
@@ -20,6 +21,7 @@ const VISION = resolve(import.meta.dir, "..", "..", "..", "docs", "prd", "vision
 function fakeZip(entries: Record<string, string>): ZipAccessor {
   return {
     has: (entry) => Object.hasOwn(entries, entry),
+    entries: () => Object.keys(entries),
     read: (entry) => {
       if (!Object.hasOwn(entries, entry)) throw new Error(`fake zip missing entry: ${entry}`);
       return entries[entry] as string;
@@ -232,4 +234,33 @@ describe("syncFixtures --check", () => {
     });
     expect(rechecked[0]?.status).toBe("clean");
   });
+});
+
+function zipToolsAvailable(): boolean {
+  return (
+    Bun.spawnSync(["zip", "-h"]).exitCode === 0 && Bun.spawnSync(["unzip", "-v"]).exitCode === 0
+  );
+}
+
+describe("readZip entries", () => {
+  test.skipIf(!zipToolsAvailable())(
+    "surfaces every archive entry path, agreeing with has()",
+    () => {
+      const dir = mkdtempSync(join(tmpdir(), "readzip-entries-"));
+      mkdirSync(join(dir, "api"), { recursive: true });
+      writeFileSync(join(dir, "api", "ext.script_api"), "- name: ext\n");
+      writeFileSync(join(dir, "ext.txt"), "asset");
+      const zipPath = join(dir, "archive.zip");
+      const zipped = Bun.spawnSync(["zip", "-r", zipPath, "api", "ext.txt"], { cwd: dir });
+      expect(zipped.exitCode).toBe(0);
+
+      const zip = readZip(zipPath);
+      const entries = zip.entries();
+      expect(entries).toContain("api/ext.script_api");
+      expect(entries).toContain("ext.txt");
+      for (const entry of entries) {
+        expect(zip.has(entry)).toBe(true);
+      }
+    },
+  );
 });
