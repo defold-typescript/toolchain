@@ -19,6 +19,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
+- [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 
 ## Unary minus on Vector3 / Vector4 silently produces `number`
 
@@ -272,3 +273,72 @@ info.not_a_field;
 **Typed alternative.** Read the members directly — `sys.get_sys_info().system_name`, `liveupdate.get_mounts()[0].uri`, `tilemap.get_tile_info(url, layer, x, y).index` — instead of indexing an opaque record and casting. For an options argument, pass only the fields you need (`image.load(data, { flip_vertically: true })`); omitted fields and `{}` still type-check.
 
 **How we pin this in the type tests.** `packages/types/test-d/sys-info-table-fields.ts` asserts `sys.get_sys_info().system_name` is assignable to `string` and that a bogus field carries `@ts-expect-error`; `packages/types/test-d/example-shaped-table-curations.ts` pins the example-proven `liveupdate.get_mounts()` and `tilemap.get_tile_info()` shapes. The fidelity audit and the emitter share the table recovery and curation data (`packages/types/src/emit-dts.ts`), so the `recordTables` loss gate and the emitted surface cannot drift; if a recovered field's type regressed to `unknown` the audit's `unknownTokens` would surface it.
+
+## `async`/`await` work but there is no event loop
+
+**Symptom.** You can write `async` functions, `await`, and `Promise` (the `Promise` type ships in the ES2022 lib), and it type-checks and transpiles. What does **not** exist is a JavaScript event loop: there is no `setTimeout`, no I/O microtask queue, and no scheduler that drains pending promises between frames. A promise advances only when something resolves it synchronously on the current call stack.
+
+```ts
+async function rollLater(): Promise<number> {
+  return 42; // resolves synchronously
+}
+
+export async function main(): Promise<void> {
+  const r = await rollLater(); // runs to completion in the same call
+  print(r);
+}
+```
+
+**Why.** TypeScriptToLua implements `async`/`await` itself, on top of Lua coroutines:
+
+- An `async function` is lowered to `__TS__AsyncAwaiter(generator)`, which returns a `__TS__Promise` and runs the function body inside a Lua **coroutine**.
+- `await x` is lowered to `coroutine.yield(x)`. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
+- `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
+
+These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module does `require("lualib_bundle")` to pull them in. No setup or polyfill is needed.
+
+The consequences are where it bites:
+
+- Awaiting an already-resolved or synchronously-resolving promise runs to completion in the same frame — fine, and reads well.
+- There is no timer or I/O integration. `await new Promise((r) => setTimeout(r, 1000))` cannot be written — `setTimeout` does not exist. A promise that nobody resolves leaves the async function suspended **forever**, with no error and no warning.
+- A rejected promise with no `.catch` is silently dropped; there is no Node-style "unhandled rejection" report.
+
+**The engine scheduler bridge.** What the JS runtime lacks — a thing that advances pending work between frames — Defold supplies as `timer.delay`: a frame-driven scheduler that fires a callback on a later frame. That callback is the hook. Resolve a `Promise` from inside a `timer.delay` callback and the `await` waiting on it resumes when the engine fires the timer, not before. Bridge it by hand by stashing the promise's `resolve` and calling it from the callback:
+
+```ts
+function waitSeconds(seconds: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    timer.delay(seconds, false, () => resolve()); // engine callback drives the promise
+  });
+}
+```
+
+**Importable polyfills.** You do not have to hand-roll that bridge. The first timer-polyfills slice ships it as named module exports:
+
+```ts
+import { setTimeout, setInterval, clearTimeout, clearInterval, wait } from "@defold-typescript/types/timers";
+```
+
+`setTimeout`/`setInterval` take **milliseconds** (the web-familiar unit) and return a numeric `timer` handle; pass that handle to `clearTimeout`/`clearInterval` — or to Defold's own `timer.cancel`, which is the same handle. `wait` takes **Defold-native seconds** and returns a `Promise<void>` you can `await`:
+
+```ts
+import { wait } from "@defold-typescript/types/timers";
+
+export async function main(): Promise<void> {
+  await wait(1); // resumes when the engine timer fires, not before
+  print("one second later");
+}
+```
+
+These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root (the same mechanism as `lualib_bundle`).
+
+**Caveats.** The polyfills are timer-backed, not a drop-in `setTimeout`. Four differences bite:
+
+- **Context-bound lifetime.** A `timer.delay` timer is owned by the script that created it and is auto-cancelled when that game object is deleted. A `wait` straddling the deletion of its own object never resolves.
+- **One-frame minimum resolution.** Even `setTimeout(cb, 0)` / `wait(0)` fires on the *next* frame, never the same one — the scheduler is frame-driven, so sub-frame delays round up to one frame.
+- **No microtask queue.** `Promise.resolve().then(...)` still runs synchronously on the current call stack; there is no microtask drain. Only a *timer-backed* promise crosses a frame boundary.
+- **Leaked suspended coroutines.** A promise that nobody ever resolves leaves its `async` function suspended forever as a parked Lua coroutine — no error, no warning, no timeout.
+
+**ts-defold contrast.** ts-defold ships no `setTimeout` polyfill of its own — its only `settimeout` is LuaSocket's per-socket I/O timeout method, not a scheduler. The `@defold-typescript/types/timers` module is specific to this toolchain.
+
+**How we pin this in the type tests.** `packages/transpiler/src/transpile.test.ts` transpiles an `async`/`await` sample and asserts the lowering (`__TS__AsyncAwaiter` for the function, `__TS__Await` for the await) with zero diagnostics, and that the Promise runtime (`__TS__Promise`) is present in the emitted `lualib_bundle`. If TSTL changed the async lowering or stopped bundling the Promise helpers, the assertions would fail.
