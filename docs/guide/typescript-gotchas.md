@@ -236,7 +236,24 @@ go.get<sprite.properties>()("#sprite", "nope");                       // type er
 
 The form is curried — `go.get<P>()(url, property)` — on purpose. TypeScript has no partial type-argument inference: if `P` and the property key were both type parameters on one call, supplying `<sprite.properties>` would force the key to its default and collapse the return to the component's whole value union. The empty `()` fixes `P`, then the inner call infers the key from the `"animation"` argument, recovering the exact field type. You are naming the component yourself — nothing checks that `"#sprite"` actually resolves to a sprite — so this is a typed convenience over an unverified url, not a correctness guarantee. The bare direct call (`go.get("#go", "position")`) is unchanged for the transform default, and a fully dynamic key still falls through to the wide union.
 
-**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number`, a wrong-typed `go.set` value and a wrong-typed `go.get` assignment carry `@ts-expect-error`, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.properties>()("#sprite", "animation")` is `Hash`, a wrong key and a wrong value type carry `@ts-expect-error`, and the bare transform call still resolves. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
+**Name the script to read or tune another object's declared properties.** The same generic also types the *cross-script* channel — reading or writing a property a *different* script declared, addressed by its script-component url (`go.get("/enemy#controller", "speed")`). This is distinct from a component property and from the `self`-side access inside the owning script: it is how one object tunes another object's declared state. A script declares its editor properties with the value-keyed `properties` field of `defineScript`, and exports that shape as a nameable type with `ScriptPropertiesOf<typeof script>`; another script names it as the `P` generic to get a typed read and a value-gated write:
+
+```ts
+// enemy.ts — the owning script declares its properties
+export default defineScript({
+  properties: { speed: 100, target: vmath.vector3() },
+});
+export type EnemyProps = ScriptPropertiesOf<typeof import("./enemy").default>;
+
+// elsewhere — another object reads and tunes them by url
+const speed = go.get<EnemyProps>()("/enemy#controller", "speed");  // number
+go.set<EnemyProps>()("/enemy#controller", "speed", 250);           // value gated to number
+go.get<EnemyProps>()("/enemy#controller", "missing");              // type error — not declared
+```
+
+`ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script.
+
+**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number`, a wrong-typed `go.set` value and a wrong-typed `go.get` assignment carry `@ts-expect-error`, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.properties>()("#sprite", "animation")` is `Hash`, a wrong key and a wrong value type carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
 
 ## Field-documented tables are typed object shapes, not opaque records
 

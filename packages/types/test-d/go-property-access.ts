@@ -1,5 +1,6 @@
 /// <reference path="../index.d.ts" />
 import type { Hash, Vector3 } from "../src/core-types";
+import { defineScript, type ScriptPropertiesOf } from "../src/lifecycle";
 
 // Caller-named component: the explicit `P` generic keys go.get/go.set to that
 // component's property catalogue, beyond the transform-only default. The caller
@@ -35,3 +36,33 @@ go.set<sprite.properties>()("#sprite", "cursor", hash("x"));
 // field is plain-mutable (no readonly modifier), so set stays permissive
 // (decision a) — this checks rather than erroring.
 go.set<sprite.properties>()("#sprite", "animation", hash("x"));
+
+// Cross-script script properties: a script declares its editor properties via
+// `defineScript({ properties })`; that module exports its declared shape with
+// `ScriptPropertiesOf<typeof script>`, and another script names it as the `P`
+// generic to read or tune those properties across the object boundary by URL.
+// It is the same caller-named curried mechanism as component properties, with
+// `P` being the script's declared property channel (`TProps`) rather than a
+// component catalogue — so a cross-script read is typed and a write is gated to
+// the declared property type, both with no cast.
+const enemyScript = defineScript({
+  properties: { speed: 100, target: vmath.vector3() },
+});
+type EnemyProps = ScriptPropertiesOf<typeof enemyScript>;
+
+const _speed: number = go.get<EnemyProps>()("/enemy#controller", "speed");
+const _target: Vector3 = go.get<EnemyProps>()("/enemy#controller", "target");
+void _speed;
+void _target;
+
+// @ts-expect-error key not among the declared script properties
+go.get<EnemyProps>()("/enemy#controller", "missing");
+
+// cross-script write: a valid value checks, gated to the declared property type.
+go.set<EnemyProps>()("/enemy#controller", "speed", 250);
+
+// @ts-expect-error speed is number, not a Hash — value is gated to the property type
+go.set<EnemyProps>()("/enemy#controller", "speed", hash("x"));
+
+// @ts-expect-error key not among the declared script properties
+go.set<EnemyProps>()("/enemy#controller", "missing", 1);
