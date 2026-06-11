@@ -32,6 +32,16 @@
         "typescript-to-lua": "^1.36.0",
       },
     },
+    "packages/tstl-plugin": {
+      "name": "@defold-typescript/tstl-plugin",
+      "version": "0.0.0",
+      "dependencies": {
+        "@defold-typescript/transpiler": "workspace:*",
+      },
+      "peerDependencies": {
+        "typescript": ">=5.0.0",
+      },
+    },
     "packages/types": {
       "name": "@defold-typescript/types",
       "version": "0.0.0",
@@ -65,6 +75,8 @@
     "@defold-typescript/cli": ["@defold-typescript/cli@workspace:packages/cli"],
 
     "@defold-typescript/transpiler": ["@defold-typescript/transpiler@workspace:packages/transpiler"],
+
+    "@defold-typescript/tstl-plugin": ["@defold-typescript/tstl-plugin@workspace:packages/tstl-plugin"],
 
     "@defold-typescript/types": ["@defold-typescript/types@workspace:packages/types"],
 

@@ -1,3 +1,4 @@
+export { getProgramDiagnostics } from "./program-diagnostics";
 export type { TranspileSession } from "./session";
 export { createTranspileSession } from "./session";
 export type {
