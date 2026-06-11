@@ -60,6 +60,18 @@ describe("per-kind ambient API wall — consumer tsconfig proof", () => {
     expect(exitCode).toBe(0);
   });
 
+  test("script surface ships the Lua stdlib (math/os) alongside the wall", () => {
+    const { exitCode, output } = typecheck("tsconfig.script-stdlib.json");
+    if (exitCode !== 0) {
+      throw new Error(
+        `script-stdlib proof failed — either the stdlib (math/os/string/table) is absent ` +
+          `from the /script subpath (lua-types reference missing from the kind index) ` +
+          `or the gui/render wall leaked:\n${output}`,
+      );
+    }
+    expect(exitCode).toBe(0);
+  });
+
   test("harness can fail: script surface gui.* call without @ts-expect-error errors", () => {
     const { exitCode } = typecheck("tsconfig.script-neg.json");
     expect(exitCode).not.toBe(0);

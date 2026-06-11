@@ -217,6 +217,12 @@ export const RESTRICTED_NAMESPACES: Readonly<Record<string, string>> = {
   render: "render_script",
 };
 
+// The Lua standard library rides every per-kind subpath the same as the full
+// entrypoint. Triple-slash directives must precede the first statement, so they
+// lead the generated kind index.
+const LUA_STDLIB_REFERENCES =
+  '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
+
 const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../builtin-messages",
   "../../src/engine-globals",
@@ -247,7 +253,7 @@ export function generateKindIndex(kind: string): string {
     ...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()]),
   ].map((path) => `import "${path}";`);
   if (entry.restricted) lines.push(`import "../${entry.restricted}";`);
-  return `${lines.join("\n")}\n\nexport { ${entry.factory} } from "../../src/lifecycle";\nexport type { ScriptProperties, ScriptProperty } from "../../src/lifecycle";\n`;
+  return `${LUA_STDLIB_REFERENCES}${lines.join("\n")}\n\nexport { ${entry.factory} } from "../../src/lifecycle";\nexport type { ScriptProperties, ScriptProperty } from "../../src/lifecycle";\n`;
 }
 
 export function generateVersionIndex(

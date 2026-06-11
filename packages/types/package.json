@@ -52,6 +52,9 @@
     "sync-api-docs": "bun scripts/sync-api-docs.ts",
     "ref-doc-delta": "bun scripts/ref-doc-delta.ts --target defold-1.9.8 --namespace label --present label.get_text --absent label.set_text"
   },
+  "dependencies": {
+    "lua-types": "^2.13.1"
+  },
   "devDependencies": {
     "@typescript-to-lua/language-extensions": "1.19.0"
   }

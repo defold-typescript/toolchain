@@ -56,6 +56,13 @@ describe("transpile", () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  test("resolves the Lua stdlib (math/os) from the seeded lua-types ambients", () => {
+    const result = transpile("math.randomseed(os.time());\nexport const r = math.random(1, 6);\n");
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toContain("math.randomseed(os.time())");
+    expect(result.lua).toContain("math.random(1, 6)");
+  });
+
   test("type-checks against the ambient surface, not just erases it", () => {
     const result = transpile("export const v = vmath.does_not_exist();");
     expect(result.diagnostics.length).toBeGreaterThan(0);

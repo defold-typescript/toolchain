@@ -62,6 +62,36 @@ function readAmbient(rel: string): string {
   return readFileSync(path.join(TYPES_PKG_ROOT, rel), "utf8");
 }
 
+// lua-types is a dependency of @defold-typescript/types, not the transpiler, so
+// resolve it from the types package root where it is installed.
+const LUA_TYPES_ROOT = path.dirname(
+  createRequire(path.join(TYPES_PKG_ROOT, "package.json")).resolve("lua-types/package.json"),
+);
+
+// Follow the triple-slash `path` reference graph from the 5.1 + LuaJIT entry
+// files so the virtual program sees exactly the Lua 5.1 surface (single-arg
+// `randomseed`) and never the conflicting 5.2–5.5 global declarations.
+const LUA_TYPES_ENTRY_FILES = ["5.1.d.ts", "special/jit-only.d.ts"];
+const REFERENCE_PATH_RE = /\/\/\/\s*<reference\s+path="([^"]+)"\s*\/>/g;
+
+function collectLuaTypesClosure(): Record<string, string> {
+  const files: Record<string, string> = {};
+  const visit = (rel: string): void => {
+    const key = `node_modules/lua-types/${rel}`;
+    if (key in files) return;
+    const source = readFileSync(path.join(LUA_TYPES_ROOT, rel), "utf8");
+    files[key] = source;
+    const dir = path.posix.dirname(rel);
+    for (const match of source.matchAll(REFERENCE_PATH_RE)) {
+      const ref = match[1];
+      if (!ref) continue;
+      visit(path.posix.normalize(path.posix.join(dir, ref)));
+    }
+  };
+  for (const entry of LUA_TYPES_ENTRY_FILES) visit(entry);
+  return files;
+}
+
 function buildAmbientFiles(): Record<string, string> {
   const files: Record<string, string> = {
     "node_modules/@typescript-to-lua/language-extensions/index.d.ts": readFileSync(
@@ -102,6 +132,9 @@ function buildAmbientFiles(): Record<string, string> {
     "node_modules/@defold-typescript/types/render-script.d.ts":
       'export { defineRenderScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
   };
+  // Seed the Lua 5.1 standard library (math/os/string/table/coroutine + base
+  // globals) so user code can call e.g. `math.randomseed(os.time())`.
+  Object.assign(files, collectLuaTypesClosure());
   // Seed every generated namespace so real multi-namespace user code (sprite,
   // physics, label, ...) resolves — not just the historical vmath/msg/go subset.
   for (const entry of readdirSync(path.join(TYPES_PKG_ROOT, "generated"))) {

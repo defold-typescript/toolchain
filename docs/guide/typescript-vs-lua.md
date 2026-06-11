@@ -126,20 +126,46 @@ A caveat worth knowing: `Array.prototype.sort` lowers to Lua's `table.sort`,
 which is **not stable**, unlike JavaScript's guaranteed-stable sort. If element
 order among equal keys matters, sort on a tiebreaker.
 
-The raw Lua globals (`print`, the `string` / `table` / `math` tables, `pairs`,
-and `ipairs`) still exist at runtime, but `@defold-typescript/types` does **not**
-declare them today — they are known gaps, not part of the ambient surface. If you
-call one directly, the editor will not know its type. Defold's own `hash()` is
-part of the ambient surface and returns `Hash`.
+The raw Lua standard library — the `math`, `os`, `string`, `table`, and
+`coroutine` tables plus base globals like `pairs`, `ipairs`, `pcall`, `print`,
+`tostring`, `type`, `assert`, and `setmetatable` — **is** part of the ambient
+surface: `@defold-typescript/types` references the `lua-types` package, so these
+type-check and autocomplete with no import. Defold's own `hash()` is ambient too
+and returns `Hash`. Reach for a local `declare global` only for genuinely
+Lua/Defold-specific globals the type package does not cover.
 
-Prefer the idiomatic-TypeScript column above wherever it exists, and reach for a
-local `declare global` only for genuinely Lua/Defold-specific globals the type
-package does not cover.
+Two of Lua's basic types deserve a note because Defold leans on them. **Userdata**
+is arbitrary C data stored in a Lua variable — Defold uses it for hashes, URLs, the
+math objects (`vector3`, `vector4`, `matrix4`, `quaternion`), game objects, GUI
+nodes, render predicates, render targets, and constant buffers. You never name
+`userdata` in TypeScript: each one surfaces as a distinct branded type (`Hash`,
+`Url`, `Vector3`, `Vector4`, `Matrix4`, `Quaternion`, …) so the compiler stops you
+mixing a hash with a vector or a plain table. **Threads** are independent execution
+contexts and back Lua coroutines; the ambient `coroutine` table (from `lua-types`)
+creates and resumes them and returns a `LuaThread`. Coroutines work, but for
+frame-paced waiting prefer Defold's own `timer.*` / `go.animate` scheduling.
+
+Prefer the idiomatic-TypeScript column above wherever it exists. The case where
+you must reach for the Lua global is **random numbers**. Defold's RNG is
+deterministic until seeded, and the only way to seed it is the Lua call:
+
+```ts
+math.randomseed(os.time());
+const roll = math.random(1, 6); // integer in [1, 6]
+```
+
+`Math.random()` and `math.random(m, n)` are not interchangeable. `Math.random()`
+returns a `[0, 1)` float (TSTL lowers it to a Lua runtime helper) and cannot be
+seeded; `math.random(m, n)` returns an integer in `[m, n]` from the seedable
+engine RNG. Use the Lua form whenever you need a reproducible or integer-ranged
+result.
 
 The transpiler targets **Lua 5.1** to match Defold's runtime (LuaJIT on native and
 desktop, a 5.1 VM on HTML5). That keeps the emitted code clear of 5.4-only
 constructs — integer division `//`, bitwise operators, `goto`, the two-argument
-`math.randomseed` — which the engine would reject.
+`math.randomseed` — which the engine would reject. The ambient `math.randomseed`
+is correspondingly single-argument, so the two-argument form is a type error, not
+a runtime surprise.
 
 ## Libraries
 
