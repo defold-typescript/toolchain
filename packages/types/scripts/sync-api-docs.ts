@@ -51,6 +51,7 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
   entry("sys", "doc/src-script_sys.cpp_doc.json"),
   entry("tilemap", "doc/scripts-script_tilemap.cpp_doc.json"),
   entry("timer", "doc/src-script_timer.cpp_doc.json"),
+  entry("types", "doc/src-script_types.cpp_doc.json"),
   entry("vmath", "doc/src-script_vmath.cpp_doc.json"),
   entry("window", "doc/scripts-script_window.cpp_doc.json"),
   entry("zlib", "doc/src-script_zlib.cpp_doc.json"),

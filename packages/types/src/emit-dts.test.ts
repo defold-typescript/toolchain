@@ -887,6 +887,34 @@ describe("emitDeclarations", () => {
     expect(out).not.toContain("function delete(");
   });
 
+  test("a reserved-word parameter name takes the trailing-underscore escape", () => {
+    const module: ApiModule = {
+      namespace: "types",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "types.is_vector3",
+          brief: "",
+          description: "",
+          parameters: [
+            { name: "var", doc: "Variable to check type", types: ["any"], isOptional: false },
+          ],
+          returnValues: [{ name: "", doc: "", types: ["boolean"], isOptional: false }],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain("function is_vector3(var_: unknown): boolean;");
+    expect(out).not.toContain("var: unknown");
+    // the @param tag uses the same emitted name so the hover doc still resolves
+    expect(out).toContain("@param var_ - Variable to check type");
+  });
+
   test("a reserved-name variable emits an internal _name plus an export alias", () => {
     const module: ApiModule = {
       namespace: "json",

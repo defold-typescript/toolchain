@@ -30,6 +30,7 @@ import "../sprite";
 import "../sys";
 import "../tilemap";
 import "../timer";
+import "../types";
 import "../vmath";
 import "../webview";
 import "../window";

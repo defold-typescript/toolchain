@@ -38,6 +38,7 @@ import "./generated/sprite";
 import "./generated/sys";
 import "./generated/tilemap";
 import "./generated/timer";
+import "./generated/types";
 import "./generated/vmath";
 import "./generated/webview";
 import "./generated/window";

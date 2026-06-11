@@ -66,6 +66,7 @@
         { "namespace": "sys", "fixture": "sys_doc.json", "outFile": "sys.d.ts" },
         { "namespace": "tilemap", "fixture": "tilemap_doc.json", "outFile": "tilemap.d.ts" },
         { "namespace": "timer", "fixture": "timer_doc.json", "outFile": "timer.d.ts" },
+        { "namespace": "types", "fixture": "types_doc.json", "outFile": "types.d.ts" },
         { "namespace": "vmath", "fixture": "vmath_doc.json", "outFile": "vmath.d.ts" },
         { "namespace": "webview", "fixture": "webview_doc.json", "outFile": "webview.d.ts" },
         { "namespace": "window", "fixture": "window_doc.json", "outFile": "window.d.ts" },

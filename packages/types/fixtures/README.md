@@ -266,6 +266,19 @@ generated `.d.ts`.
   ```
   Bump the version pin above when refreshing against a newer Defold release.
 
+## types_doc.json
+
+- **Defold version**: 1.12.4 (stable)
+- **Source**: `doc/src-script_types.cpp_doc.json` inside the `ref-doc.zip` release artifact
+  at <https://github.com/defold/defold/releases/download/1.12.4/ref-doc.zip>. The file's
+  `info.namespace` is `"types"` even though the source path does not match the namespace.
+- **How to refresh**:
+  ```sh
+  curl -L https://github.com/defold/defold/releases/download/1.12.4/ref-doc.zip -o /tmp/ref-doc.zip
+  unzip -p /tmp/ref-doc.zip doc/src-script_types.cpp_doc.json > packages/types/fixtures/types_doc.json
+  ```
+  Bump the version pin above when refreshing against a newer Defold release.
+
 ## previous/label_doc.json
 
 - **Defold version**: fabricated — **not** a real Defold release.

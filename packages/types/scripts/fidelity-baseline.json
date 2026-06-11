@@ -255,6 +255,14 @@
     "droppedMembers": 0,
     "optionalAsRequired": 0
   },
+  "types": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
   "vmath": {
     "droppedElements": 0,
     "unknownTokens": [],

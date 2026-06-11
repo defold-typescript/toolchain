@@ -82,6 +82,20 @@ export const TS_RESERVED_NAMES = new Set([
   "extends",
 ]);
 
+// A parameter name that clears `TS_IDENTIFIER` but is a TS reserved word (e.g.
+// `var` on the `types.is_*` guards) is illegal in parameter position (TS1390),
+// unlike a member name which `TS_RESERVED_NAMES` recovers via an export alias.
+// Parameter names in a `.d.ts` are non-binding, so a reserved word takes the
+// idiomatic trailing-underscore escape (`var` -> `var_`, matching
+// ts-defold-types so the parity audit stays a superset); a genuinely
+// non-identifier token still falls back to the positional `arg<index>` form.
+// The emitted signature and its `@param` tag share this name so the tag stays
+// resolvable on hover.
+function safeParamName(name: string, index: number): string {
+  if (!TS_IDENTIFIER.test(name)) return `arg${index}`;
+  return TS_RESERVED_NAMES.has(name) ? `${name}_` : name;
+}
+
 // Element names whose `table` slot is a genuinely-arbitrary lua table by design.
 // Two kinds: the serialization/JSON passthrough functions (Defold-internal — the
 // engine round-trips an arbitrary lua value), and the platform/OS-sourced opaque
@@ -792,7 +806,7 @@ function emitFunction(
 // for a fully-undocumented function, leaving its emission byte-identical.
 function functionDocLines(fn: ApiFunction, translations: TranslationStore): string[] {
   const params = fn.parameters.map((p, index) => ({
-    name: TS_IDENTIFIER.test(p.name) ? p.name : `arg${index}`,
+    name: safeParamName(p.name, index),
     doc: htmlToDocText(p.doc),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
@@ -862,7 +876,7 @@ function emitParameter(
   resolver: TableDocResolver,
   elementName: string,
 ): string {
-  const name = TS_IDENTIFIER.test(p.name) ? p.name : `arg${index}`;
+  const name = safeParamName(p.name, index);
   const concrete = p.types.filter((t) => t !== "nil");
   const ts =
     concrete.length > 0

@@ -255,3 +255,16 @@ const _badHtml5: number = html5.run("1 + 1");
 
 void _html5Out;
 void _badHtml5;
+
+const _isV3: boolean = types.is_vector3(vmath.vector3());
+const _isHashV: boolean = types.is_hash(hash("x"));
+
+// @ts-expect-error types.is_vector3 requires one argument
+types.is_vector3();
+
+// @ts-expect-error types.is_hash returns boolean, not string
+const _badType: string = types.is_hash(hash("x"));
+
+void _isV3;
+void _isHashV;
+void _badType;
