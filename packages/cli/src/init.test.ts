@@ -135,6 +135,7 @@ describe("runInit (add-TS mode)", () => {
       "some-other-dep": "^1.0.0",
       "@defold-typescript/types": TYPES_SPEC,
       "@defold-typescript/cli": TYPES_SPEC,
+      "@defold-typescript/tstl-plugin": TYPES_SPEC,
       "@biomejs/biome": "^2.2.0",
     });
   });
@@ -357,6 +358,53 @@ describe("scaffolded deps satisfy the managed mise tasks", () => {
     // always install it — guard against the dep ever dropping.
     expect(MISE_TASKS_TOML).toContain("bunx @defold-typescript/cli");
     expect(SCAFFOLD_DEV_DEPS).toHaveProperty("@defold-typescript/cli");
+  });
+});
+
+describe("runInit (scaffolds the tstl language-service plugin)", () => {
+  const PLUGIN = "@defold-typescript/tstl-plugin";
+
+  function tsconfigPlugins(dir: string): Array<{ name: string }> {
+    return JSON.parse(readFileSync(path.join(dir, "tsconfig.json"), "utf8")).compilerOptions
+      .plugins;
+  }
+
+  function devDeps(dir: string): Record<string, string> {
+    return JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")).devDependencies;
+  }
+
+  test("new-project init wires the plugin into tsconfig plugins and the devDep", () => {
+    runInit({ cwd });
+
+    expect(tsconfigPlugins(cwd)).toContainEqual({ name: PLUGIN });
+    expect(devDeps(cwd)[PLUGIN]).toBe(TYPES_SPEC);
+    expect(devDeps(cwd)[PLUGIN]).not.toBe("workspace:*");
+  });
+
+  test("add-TS mode wires the plugin into tsconfig plugins and the merged devDep", () => {
+    touch("game.project", "[project]\n");
+    const original = { name: "user-project", version: "1.2.3", devDependencies: {} };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd });
+
+    expect(tsconfigPlugins(cwd)).toContainEqual({ name: PLUGIN });
+    expect(devDeps(cwd)[PLUGIN]).toBe(TYPES_SPEC);
+  });
+
+  test("--force rewrites a stale workspace:* plugin pin to the published CLI version", () => {
+    touch("game.project", "[project]\n");
+    const original = {
+      name: "user-project",
+      version: "1.2.3",
+      devDependencies: { [PLUGIN]: "workspace:*" },
+    };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd, force: true });
+
+    expect(devDeps(cwd)[PLUGIN]).toBe(TYPES_SPEC);
+    expect(devDeps(cwd)[PLUGIN]).not.toBe("workspace:*");
   });
 });
 

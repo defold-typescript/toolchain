@@ -161,4 +161,19 @@ describe("docs/guide scaffold", () => {
     const body = await readGuide("debugging.md");
     expect(body).toContain("releases/download/lldebugger-v1/lldebugger.zip");
   });
+
+  test("docs/guide/transpile-diagnostics.md exists and states the advisory contract", async () => {
+    const f = Bun.file(resolve(GUIDE, "transpile-diagnostics.md"));
+    expect(await f.exists()).toBe(true);
+    const body = await readGuide("transpile-diagnostics.md");
+    expect(body).toContain("@defold-typescript/tstl-plugin");
+    expect(body).toContain("Suggestion");
+    expect(body).toContain("tsc --noEmit");
+    expect(body).toContain("typescript-gotchas.md");
+  });
+
+  test("docs/guide/README.md links the transpile-diagnostics page", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("transpile-diagnostics.md");
+  });
 });

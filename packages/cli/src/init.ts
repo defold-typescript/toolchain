@@ -296,6 +296,7 @@ function typesVersionSpec(): string {
 export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@defold-typescript/types": typesVersionSpec(),
   "@defold-typescript/cli": typesVersionSpec(),
+  "@defold-typescript/tstl-plugin": typesVersionSpec(),
   "@biomejs/biome": "^2.2.0",
 };
 
@@ -309,7 +310,11 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
 // opt-in to refresh the managed pins (and only those) to the CLI's version.
 function repairManagedDevDeps(devDeps: Record<string, string>, force = false): void {
   delete devDeps["@defold-typescript/transpiler"];
-  for (const name of ["@defold-typescript/types", "@defold-typescript/cli"]) {
+  for (const name of [
+    "@defold-typescript/types",
+    "@defold-typescript/cli",
+    "@defold-typescript/tstl-plugin",
+  ]) {
     if (force || devDeps[name]?.startsWith("workspace:")) {
       devDeps[name] = typesVersionSpec();
     }
@@ -570,6 +575,7 @@ function writeTsSurface(cwd: string, written: string[], force = false): void {
     compilerOptions: {
       ...TSCONFIG_COMPILER_OPTIONS,
       types: [DEFAULT_TYPES_ENTRYPOINT],
+      plugins: [{ name: "@defold-typescript/tstl-plugin" }],
     },
     include: ["src/**/*.ts"],
   };
