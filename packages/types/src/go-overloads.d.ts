@@ -27,8 +27,16 @@ declare global {
      * @example
      * ```ts
      * const position = go.get("#sprite", "position");
+     * // Name the target component to read its catalogued property type. The
+     * // empty call applies the type argument, then the inner call infers the key:
+     * const animation = go.get<sprite.properties>()("#sprite", "animation"); // Hash
      * ```
      */
+    function get<P>(): <K extends keyof P>(
+      url: string | Hash | Url,
+      property: K,
+      options?: GoPropertyOptions,
+    ) => P[K];
     function get<K extends keyof go.properties>(
       url: string | Hash | Url,
       property: K,
@@ -52,8 +60,17 @@ declare global {
      * @example
      * ```ts
      * go.set("#sprite", "tint", vmath.vector4(1, 0, 0, 1));
+     * // Name the target component to gate the value to its property type. The
+     * // empty call applies the type argument, then the inner call infers the key:
+     * go.set<sprite.properties>()("#sprite", "playback_rate", 2);
      * ```
      */
+    function set<P>(): <K extends keyof P>(
+      url: string | Hash | Url,
+      property: K,
+      value: P[K],
+      options?: GoPropertyOptions,
+    ) => void;
     function set<K extends keyof go.properties>(
       url: string | Hash | Url,
       property: K,
