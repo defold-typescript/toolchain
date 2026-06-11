@@ -136,6 +136,11 @@ Prefer the idiomatic-TypeScript column above wherever it exists, and reach for a
 local `declare global` only for genuinely Lua/Defold-specific globals the type
 package does not cover.
 
+The transpiler targets **Lua 5.1** to match Defold's runtime (LuaJIT on native and
+desktop, a 5.1 VM on HTML5). That keeps the emitted code clear of 5.4-only
+constructs — integer division `//`, bitwise operators, `goto`, the two-argument
+`math.randomseed` — which the engine would reject.
+
 ## Libraries
 
 - **Your own code** is just more TypeScript files — `import` them by relative

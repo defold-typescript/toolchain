@@ -171,7 +171,7 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
   const merged: Record<string, string> = { ...AMBIENT_FILES, ...input.files };
 
   const result = tstl.transpileVirtualProject(merged, {
-    luaTarget: tstl.LuaTarget.Lua54,
+    luaTarget: tstl.LuaTarget.Lua51,
     sourceMap: true,
     // Don't cross-check the seeded ambient .d.ts surface against itself; we only
     // care about diagnostics on user files (mirrors the editor's skipLibCheck).

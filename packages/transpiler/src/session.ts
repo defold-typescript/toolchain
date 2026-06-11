@@ -16,7 +16,7 @@ export interface TranspileSession {
 const requireFromHere = createRequire(import.meta.url);
 
 const COMPILER_OPTIONS: tstl.CompilerOptions = {
-  luaTarget: tstl.LuaTarget.Lua54,
+  luaTarget: tstl.LuaTarget.Lua51,
   sourceMap: true,
   // Don't cross-check the seeded ambient .d.ts surface against itself; only user
   // files matter (mirrors transpileProject and the editor's skipLibCheck).
