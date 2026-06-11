@@ -11,6 +11,7 @@ import {
   computeOutputRel,
   detectSourceOutputKind,
   isTranspilerSource,
+  lualibBundleRel,
   outputRelsForSource,
   readBuildConfig,
   throwIfFailures,
@@ -67,6 +68,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       }
       writeScriptFile(cwd, outputRel, lua, result.sourceMaps[rel]);
       written.push(outputRel);
+    }
+    if (result.lualib !== undefined) {
+      const bundleRel = lualibBundleRel(config);
+      writeScriptFile(cwd, bundleRel, result.lualib, undefined);
+      written.push(bundleRel);
     }
     throwIfFailures(failures);
     return { written: written.sort() };

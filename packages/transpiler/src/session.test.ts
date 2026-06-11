@@ -83,4 +83,16 @@ describe("createTranspileSession", () => {
     expect(removed.lua["newmod.ts"]?.length ?? 0).toBeGreaterThan(0);
     expect(session.getProgram()?.getSourceFile("util.ts")).toBeUndefined();
   });
+
+  test("surfaces the lualib bundle on the incremental update path", () => {
+    const files = { "main.ts": "export const ks = Object.keys({ a: 1, b: 2 });\n" };
+    const session = createTranspileSession();
+
+    const sessionResult = session.update(files);
+    const projectResult = transpileProject({ files });
+
+    expect(sessionResult.lua["main.ts"]).toContain('require("lualib_bundle")');
+    expect(sessionResult.lualib).toBe(projectResult.lualib);
+    expect(sessionResult.lualib ?? "").toContain("__TS__ObjectKeys");
+  });
 });

@@ -5,6 +5,7 @@ import {
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
+  lualibBundleRel,
   readBuildConfig,
   throwIfFailures,
   toPosix,
@@ -56,6 +57,12 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
     writeScriptFile(cwd, outputRel, lua, result.sourceMaps[rel]);
     written.push(outputRel);
+  }
+
+  if (result.lualib !== undefined) {
+    const bundleRel = lualibBundleRel(config);
+    writeScriptFile(cwd, bundleRel, result.lualib, undefined);
+    written.push(bundleRel);
   }
 
   throwIfFailures(failures);

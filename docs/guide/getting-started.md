@@ -111,6 +111,8 @@ bunx @defold-typescript/cli build
 
 The build command transpiles every TypeScript file under `src/` to Lua and writes the output into the Defold project tree. Lifecycle-factory files become Defold components such as `src/main.ts.script`; helper-only files become Lua modules such as `src/util.lua` for TypeScript imports to `require`. Open the project in the [Defold editor](./defold-editor.md) (or run it from the command line) to play it.
 
+When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`, object spread, and similar), the build also writes a `lualib_bundle.lua` at the output root automatically; the generated Lua's `require("lualib_bundle")` resolves against it.
+
 The everyday commands carry no version tag: inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the version locked alongside your `@defold-typescript/types`. Reserve `@latest` for `init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
 
 ## Iterate

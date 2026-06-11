@@ -188,6 +188,48 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(true);
   });
 
+  test("writes lualib_bundle.lua at the output root when a source uses a lualib feature", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");
+
+    const result = runBuild({ cwd });
+
+    const bundlePath = path.join(cwd, "lualib_bundle.lua");
+    expect(existsSync(bundlePath)).toBe(true);
+    expect(readFileSync(bundlePath, "utf8")).toContain("__TS__ObjectKeys");
+    expect(result.written).toContain("lualib_bundle.lua");
+
+    const lua = readFileSync(path.join(cwd, "src/main.lua"), "utf8");
+    expect(lua).toContain('require("lualib_bundle")');
+  });
+
+  test("writes lualib_bundle.lua under outDir when one is configured", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify(
+        { compilerOptions: { outDir: "out/lua", strict: true }, include: ["src/**/*.ts"] },
+        null,
+        2,
+      ),
+    );
+    writeFile("src/main.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");
+
+    const result = runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, "out/lua/lualib_bundle.lua"))).toBe(true);
+    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(false);
+    expect(result.written).toContain("out/lua/lualib_bundle.lua");
+  });
+
+  test("does not write a lualib bundle when no source uses a lualib feature", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", MAIN_SCRIPT);
+
+    runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(false);
+  });
+
   test("aggregates diagnostics across multiple broken files", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/a.ts", 'const a: number = "bad";\n');

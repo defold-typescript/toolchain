@@ -34,6 +34,11 @@ export interface TranspileProjectResult {
   readonly lua: Readonly<Record<string, string>>;
   readonly sourceMaps: Readonly<Record<string, string>>;
   readonly diagnostics: readonly TranspileDiagnostic[];
+  // TSTL synthesizes this bundle (no user source) whenever a lualib feature
+  // (`Object.keys`, spread, `__TS__TypeOf`, ...) is used; the emitted
+  // `require("lualib_bundle")` only resolves in Defold if the CLI writes it to
+  // the output root. Absent when no feature pulls it in.
+  readonly lualib?: string;
 }
 
 function flattenDiagnosticMessage(
@@ -112,9 +117,16 @@ function buildAmbientFiles(): Record<string, string> {
 export const AMBIENT_FILES: Readonly<Record<string, string>> = buildAmbientFiles();
 
 interface CollectableFile {
+  readonly outPath: string;
   readonly sourceFiles: readonly ts.SourceFile[];
   readonly lua?: string;
   readonly luaSourceMap?: string;
+}
+
+const LUALIB_BUNDLE_NAME = "lualib_bundle.lua";
+
+function isLualibBundle(file: CollectableFile): boolean {
+  return file.sourceFiles.length === 0 && file.outPath.endsWith(LUALIB_BUNDLE_NAME);
 }
 
 export function collectOutputs(
@@ -124,7 +136,12 @@ export function collectOutputs(
 ): TranspileProjectResult {
   const lua: Record<string, string> = {};
   const sourceMaps: Record<string, string> = {};
+  let lualib: string | undefined;
   for (const file of transpiledFiles) {
+    if (isLualibBundle(file) && typeof file.lua === "string") {
+      lualib = file.lua;
+      continue;
+    }
     const userSource = file.sourceFiles.find((s) => userKeys.has(s.fileName));
     if (!userSource || typeof file.lua !== "string") {
       continue;
@@ -163,7 +180,12 @@ export function collectOutputs(
     }
   }
 
-  return { lua, sourceMaps, diagnostics: collectedDiagnostics };
+  return {
+    lua,
+    sourceMaps,
+    diagnostics: collectedDiagnostics,
+    ...(lualib !== undefined ? { lualib } : {}),
+  };
 }
 
 export function transpileProject(input: TranspileProjectInput): TranspileProjectResult {

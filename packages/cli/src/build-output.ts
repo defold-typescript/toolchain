@@ -143,6 +143,17 @@ export function computeOutputRel(rel: string, config: BuildConfig, kind: SourceO
   return baseRel.replace(/\.ts$/, SCRIPT_SUFFIX_BY_KIND[kind]);
 }
 
+// Defold resolves `require("lualib_bundle")` to `lualib_bundle.lua` at the
+// project/output root, so the synthesized bundle lands once there regardless of
+// which subfolder a script lives in.
+export function lualibBundleRel(config: BuildConfig): string {
+  const { outDir } = config;
+  if (outDir === undefined || outDir === "" || outDir === ".") {
+    return "lualib_bundle.lua";
+  }
+  return path.posix.join(outDir, "lualib_bundle.lua");
+}
+
 export function computeScriptRel(
   rel: string,
   config: BuildConfig,

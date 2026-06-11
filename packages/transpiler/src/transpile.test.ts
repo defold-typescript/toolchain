@@ -196,3 +196,23 @@ describe("transpileProject", () => {
     expect(result.lua["main.ts"]).not.toContain("sourceMappingURL");
   });
 });
+
+describe("lualib bundle", () => {
+  const LUALIB_SOURCE = "export const ks = Object.keys({ a: 1, b: 2 });\n";
+
+  test("surfaces the generated lualib bundle when a feature requires it", () => {
+    const result = transpileProject({ files: { "main.ts": LUALIB_SOURCE } });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua["main.ts"]).toContain('require("lualib_bundle")');
+    expect(typeof result.lualib).toBe("string");
+    expect(result.lualib ?? "").toContain("__TS__ObjectKeys");
+    // The bundle is surfaced separately, not smuggled into the user-file lua map.
+    expect(Object.keys(result.lua)).toEqual(["main.ts"]);
+  });
+
+  test("omits the bundle when no lualib feature is used", () => {
+    const result = transpileProject({ files: { "main.ts": "export const x = 1;\n" } });
+    expect(result.lua["main.ts"]).not.toContain("lualib_bundle");
+    expect(result.lualib).toBeUndefined();
+  });
+});
