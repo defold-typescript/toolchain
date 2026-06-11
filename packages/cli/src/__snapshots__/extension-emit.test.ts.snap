@@ -1,0 +1,22 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`emitExtensionDeclaration reads the namespace from the doc and emits an ambient namespace declaration 1`] = `
+"/** @noSelfInFile */
+declare global {
+  /**
+   * A sample native extension.
+   */
+  namespace myext {
+    /**
+     * Does a thing.
+     *
+     * @param count - how many times
+     * @returns whether it worked
+     */
+    function do_thing(count: number): boolean;
+  }
+}
+
+export {};
+"
+`;
