@@ -10,6 +10,7 @@ import {
   type RenderScriptHooks,
   type ScriptHooks,
   type ScriptProperties,
+  type ScriptPropertiesOf,
   type ScriptProperty,
 } from "../src/lifecycle";
 
@@ -283,6 +284,31 @@ defineRenderScript({
     return { frames: 0 };
   },
 });
+
+// `ScriptPropertiesOf<typeof script>` extracts a `defineScript` module's
+// declared property channel (`TProps`) as a nameable type, so a cross-script
+// `go.get`/`go.set` caller names exactly what the owning script's `self`
+// exposes — one source of truth, no second hand-maintained interface. The
+// extracted shape is the same property channel `self` carries inside the script.
+const propsScript = defineScript({
+  properties: { speed: 100, target: vmath.vector3(0, 0, 0) },
+  update(self) {
+    const _speed: number = self.speed;
+    const _target: Vector3 = self.target;
+    void _speed;
+    void _target;
+  },
+});
+void propsScript;
+type PropsScriptProps = ScriptPropertiesOf<typeof propsScript>;
+const _extractedProps: PropsScriptProps = { speed: 1, target: vmath.vector3(0, 0, 0) };
+void _extractedProps;
+// @ts-expect-error the extracted shape carries only the declared properties
+const _excessProps: PropsScriptProps = { speed: 1, target: vmath.vector3(0, 0, 0), extra: 1 };
+void _excessProps;
+// @ts-expect-error speed is number, not a string, in the extracted shape
+const _wrongType: PropsScriptProps = { speed: "x", target: vmath.vector3(0, 0, 0) };
+void _wrongType;
 
 void hooks;
 

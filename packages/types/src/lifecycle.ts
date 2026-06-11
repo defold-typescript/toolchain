@@ -153,6 +153,20 @@ export type RenderScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
 };
 
 /**
+ * Extract a script module's declared property channel (`TProps`) as a nameable
+ * type. A script declares its editor properties with the value-keyed
+ * `properties` field of `defineScript`; another module reads that shape with
+ * `ScriptPropertiesOf<typeof script>` and names it as the `P` generic of
+ * `go.get`/`go.set` to read or tune those properties cross-script by URL (e.g.
+ * `go.get<ScriptPropertiesOf<typeof enemy>>()("/enemy#controller", "speed")`).
+ *
+ * It keeps one source of truth: the extracted shape is the same `TProps` the
+ * owning script's `self` exposes, so there is no second hand-maintained
+ * interface to drift.
+ */
+export type ScriptPropertiesOf<T extends { properties?: object }> = NonNullable<T["properties"]>;
+
+/**
  * Type a `.script` component's hook table. At runtime this is an identity
  * function — it returns `hooks` unchanged; its only job is typing. It infers
  * `TSelf` from `init`'s return so every other hook's `self` is typed. Declare
