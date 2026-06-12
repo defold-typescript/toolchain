@@ -47,6 +47,23 @@ const m2: Matrix4 = m.mul(m);
 const transformed: Vector4 = m.mul(vmath.vector4(0, 0, 0, 1));
 ```
 
+## A worked example: the platformer
+
+The eight engine types (`Vector3`, `Hash`, `Url`, `Quaternion`, `Matrix4`, `Vector`, `Vector4`, `Opaque<…>`) are **ambient globals — no import needed**, mirroring the namespace ergonomics (`vmath`, `go`, `sprite`, …). The committed [`docs/examples/platformer/src/player.ts`](../../examples/platformer/src/player.ts) puts the whole pattern on one screen: the `update` body uses the chained method form for whole-vector arithmetic, plain `+`/`*` on `number` fields for component access, and a `vmath.project` namespace function that returns a scalar with a method-form argument.
+
+```ts
+// docs/examples/platformer/src/player.ts — `update(self, dt)`
+self.velocity.x = self.velocity.x + accel * self.input_direction * dt; // component access: plain TS arithmetic on number
+self.velocity.y = self.velocity.y + gravity * dt;
+
+const pos = go.get_position().add(self.velocity.mul(dt)).add(self.adj);
+go.set_position(pos);
+
+const proj = vmath.project(self.correction, normal.mul(distance));
+```
+
+Whole-vector operations read left-to-right as a chain of `Vector3` methods (`go.get_position().add(self.velocity.mul(dt))`); per-component reads and writes (`self.velocity.x = self.velocity.x + accel * …`) stay plain TS because each component is a `number`.
+
 ## Why not `v3 + v3`?
 
 TypeScript's binary `+`, `-`, `*`, `/` operators require both operands to be `number` (or `+` accepts `string`). The type-checker rejects `v3a + v3b` with TS2362/TS2365 because `Vector3` is not assignable to either, so writing the operator form fails to compile and you cannot ship code that would crash at runtime.

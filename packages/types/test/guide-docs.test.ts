@@ -207,3 +207,26 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("](./extensions.md)");
   });
 });
+
+describe("docs/guide/vector-math.md worked example", () => {
+  test("contains the worked-example heading", async () => {
+    const body = await readGuide("vector-math.md");
+    expect(body).toContain("## A worked example: the platformer");
+  });
+
+  test("makes the ambient-globals point", async () => {
+    const body = await readGuide("vector-math.md");
+    expect(body).toContain("ambient global");
+    expect(body).toContain("no import");
+  });
+
+  test("quotes the real method chain from the platformer", async () => {
+    const body = await readGuide("vector-math.md");
+    expect(body).toContain("go.get_position().add(self.velocity.mul(dt)).add(self.adj)");
+  });
+
+  test("contrasts component access with whole-vector arithmetic", async () => {
+    const body = await readGuide("vector-math.md");
+    expect(body).toContain("self.velocity.x");
+  });
+});
