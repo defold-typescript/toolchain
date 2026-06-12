@@ -34,7 +34,7 @@
   "collectionproxy": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 1,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -90,7 +90,7 @@
   "http": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 1,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -178,7 +178,7 @@
   "profiler": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 1,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -194,7 +194,7 @@
   "render": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 4,
+    "recordTables": 2,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0

@@ -496,14 +496,15 @@ describe("runtime-owned passthrough reclassification", () => {
     // tables; ARBITRARY_TABLE_SLOTS reclassifies them out of recordTables:
     // factory 1 -> 0, collectionfactory 1 -> 0, go 2 -> 1, gui 2 -> 1 — the
     // project-wide recordTables total drops 26 -> 22. The live report is
-    // cumulative, so the total reads 19 here (cumulative, after get_text_metrics
-    // ratchets resource 1 -> 0 on top of the atlas-geometries resource 3 -> 1).
+    // cumulative, so the total reads 14 here (cumulative, after the record-table
+    // batch slice closes profiler/http/collectionproxy and ratchets render 4 ->
+    // 2 on top of the earlier resource recoveries).
     expect(requireEntry(report, "factory").recordTables).toBe(0);
     expect(requireEntry(report, "collectionfactory").recordTables).toBe(0);
     expect(requireEntry(report, "go").recordTables).toBe(1);
     expect(requireEntry(report, "gui").recordTables).toBe(1);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(19);
+    expect(total).toBe(14);
     // The committed baseline reflects the reclassified counts, so the full
     // report equals it on every namespace and category — proving these four are
     // the only moves and no other category shifted anywhere.
@@ -629,10 +630,38 @@ describe("get_text_metrics return-bag recovery", () => {
     // resource 1 -> 0, after which resource owns zero recordTables.
     expect(requireEntry(report, "resource").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(19);
+    // The live report is cumulative; the later record-table batch slice lowers
+    // the project-wide total to 14.
+    expect(total).toBe(14);
     // The committed baseline reflects the recovered count, so the full report
     // equals it on every namespace and category — proving resource is the only
     // namespace whose recordTables moved and no other category shifted anywhere.
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      expect(entry).toEqual(base);
+    }
+  });
+});
+
+describe("record-table batch recovery", () => {
+  test("profiler/http/collectionproxy reach 0 and render drops 4 -> 2 (project-wide 19 -> 14); no other namespace or category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // Five TABLE_SLOT_CURATIONS entries recover one slot each:
+    // profiler.view_recorded_frame's option bag, http.request's headers map,
+    // collectionproxy.get_resources's Hash[], render.predicate's tags array, and
+    // render.clear's number-keyed clear-value map — closing profiler, http, and
+    // collectionproxy and ratcheting render 4 -> 2.
+    expect(requireEntry(report, "profiler").recordTables).toBe(0);
+    expect(requireEntry(report, "http").recordTables).toBe(0);
+    expect(requireEntry(report, "collectionproxy").recordTables).toBe(0);
+    expect(requireEntry(report, "render").recordTables).toBe(2);
+    const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
+    expect(total).toBe(14);
+    // The committed baseline reflects the recovered counts, so the full report
+    // equals it on every namespace and category — proving these four namespaces
+    // are the only recordTables movers and no other category shifted anywhere.
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
       const base = baselineMap[namespace];

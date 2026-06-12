@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Matrix4, Opaque, Url } from "../src/core-types";
+import type { Hash, Matrix4, Opaque, Url, Vector4 } from "../src/core-types";
 
 declare global {
   /**
@@ -47,7 +47,7 @@ declare global {
      * });
      * ```
      */
-    function clear(buffers: Record<string | number, unknown>): void;
+    function clear(buffers: LuaMap<number, number | Vector4>): void;
     /**
      * Constant buffers are used to set shader program variables and are optionally passed to the `render.draw()` function.
      * The buffer's constant elements can be indexed like an ordinary Lua table, but you can't iterate over them with pairs() or ipairs().
@@ -468,7 +468,7 @@ declare global {
      * const p = render.predicate([hash("opaque"), hash("smoke")]);
      * ```
      */
-    function predicate(tags: Record<string | number, unknown>): number;
+    function predicate(tags: (string | Hash)[]): number;
     /**
      * Creates a new render target according to the supplied
      * specification table.

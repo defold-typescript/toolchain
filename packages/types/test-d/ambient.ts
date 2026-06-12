@@ -51,7 +51,7 @@ const _badGp: string = gui.get_position(gui.get_node("foo"));
 
 render.set_view(vmath.matrix4());
 render.set_projection(vmath.matrix4());
-const _pred = render.predicate({});
+const _pred = render.predicate(["opaque", hash("smoke")]);
 render.draw(_pred, {});
 
 // @ts-expect-error render.set_view requires a Matrix4, not a string
@@ -114,7 +114,7 @@ const _badCf: string = collectionfactory.create(
 );
 void _badCf;
 
-const _cpRes: Record<string | number, unknown> = collectionproxy.get_resources(msg.url());
+const _cpRes: Hash[] = collectionproxy.get_resources(msg.url());
 collectionproxy.set_collection(msg.url(), "/main.collectionc");
 collectionproxy.set_collection(msg.url());
 

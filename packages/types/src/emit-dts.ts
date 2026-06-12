@@ -328,6 +328,36 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
+  // profiler.view_recorded_frame's `frame_index` is a typed `<ul>` "specify one
+  // of the following": `distance` and `frame`, both numeric frame offsets. The
+  // <li> items carry no `<span class="type">`, so parseTableFields recovers
+  // nothing and the slot collapses to Record. As a param option bag both fields
+  // are optional (the caller supplies one), which the param-side `?` flag emits.
+  [
+    "profiler.view_recorded_frame:param:frame_index",
+    {
+      kind: "object",
+      fields: [
+        { name: "distance", types: ["number"] },
+        { name: "frame", types: ["number"] },
+      ],
+    },
+  ],
+  // http.request's `headers` is "optional table with custom headers", a
+  // string-keyed string map (no field list). Slot-path keying targets only
+  // `headers`; the sibling `options` table stays parser-recovered.
+  ["http.request:param:headers", { kind: "mapping", key: "string", value: "string" }],
+  // collectionproxy.get_resources returns "the resources, or an empty list", a
+  // homogeneous list of resource-path hashes (prose only, no field list).
+  ["collectionproxy.get_resources:return:resources", { kind: "array", element: "hash" }],
+  // render.predicate's `tags` is "table of tags ... can be of either hash or
+  // string type", a homogeneous array whose element is the string|hash union.
+  ["render.predicate:param:tags", { kind: "array", element: ["string", "hash"] }],
+  // render.clear's `buffers` maps the numeric graphics.BUFFER_* constants to
+  // their clear value: vector4 for the color buffer, number for depth/stencil.
+  // The mapping value is the `number | vector4` union; the mapping string branch
+  // splits the union token, so the value emits `number | Vector4`.
+  ["render.clear:param:buffers", { kind: "mapping", key: "number", value: "number | vector4" }],
 ]);
 
 // resource.set_atlas's `table` param and resource.get_atlas's `data` return are
@@ -1000,7 +1030,13 @@ function mapSlotUnion(
       if (mapping !== undefined) {
         let value: string;
         if (typeof mapping.value === "string") {
-          value = mapType(mapping.value);
+          // A mapping value may be a `T | U` union token (render.clear's
+          // `number | vector4` clear value); split on `|` so each token maps
+          // individually. A single-token value (no `|`) is unaffected.
+          value = unionFromTokens(
+            mapping.value.split("|").map((token) => token.trim()),
+            mapType,
+          );
         } else if (Array.isArray(mapping.value)) {
           value = inlineTableType(mapping.value, mapType, optionalFields);
         } else {

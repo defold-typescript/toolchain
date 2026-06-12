@@ -1,13 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
+import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
+import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
 import iapDoc from "../fixtures/iap_doc.json" with { type: "json" };
 import liveupdateDoc from "../fixtures/liveupdate_doc.json" with { type: "json" };
 import modelDoc from "../fixtures/model_doc.json" with { type: "json" };
 import physicsDoc from "../fixtures/physics_doc.json" with { type: "json" };
+import profilerDoc from "../fixtures/profiler_doc.json" with { type: "json" };
 import pushDoc from "../fixtures/push_doc.json" with { type: "json" };
+import renderDoc from "../fixtures/render_doc.json" with { type: "json" };
 import resourceDoc from "../fixtures/resource_doc.json" with { type: "json" };
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
 import sysDoc from "../fixtures/sys_doc.json" with { type: "json" };
@@ -1899,6 +1903,20 @@ describe("TABLE_SLOT_CURATIONS", () => {
           ],
         },
       ],
+      [
+        "profiler.view_recorded_frame:param:frame_index",
+        {
+          kind: "object",
+          fields: [
+            { name: "distance", types: ["number"] },
+            { name: "frame", types: ["number"] },
+          ],
+        },
+      ],
+      ["http.request:param:headers", { kind: "mapping", key: "string", value: "string" }],
+      ["collectionproxy.get_resources:return:resources", { kind: "array", element: "hash" }],
+      ["render.predicate:param:tags", { kind: "array", element: ["string", "hash"] }],
+      ["render.clear:param:buffers", { kind: "mapping", key: "number", value: "number | vector4" }],
     ]);
     expect(MAPPING_TABLE_SLOTS.size).toBe(3);
     expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
@@ -2048,6 +2066,62 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "notification_settings: { action?: string; badge_count?: number; priority?: number }",
     );
     expect(out).toContain("notifications: number[]");
+  });
+
+  test("profiler.view_recorded_frame recovers its frame_index option bag", () => {
+    const module = parseDefoldApiDoc(profilerDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "profiler.view_recorded_frame")],
+    });
+    expect(out).toContain(
+      "function view_recorded_frame(frame_index: { distance?: number; frame?: number }): void;",
+    );
+    expect(out).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("http.request recovers its headers map while the options bag stays parser-recovered", () => {
+    const module = parseDefoldApiDoc(httpDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "http.request")],
+    });
+    const line = out.split("\n").find((l) => l.includes("function request(")) ?? "";
+    expect(line).toContain("headers?: LuaMap<string, string>");
+    expect(line).toContain(
+      "options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }",
+    );
+    expect(line).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("collectionproxy.get_resources recovers a Hash[] return", () => {
+    const module = parseDefoldApiDoc(collectionproxyDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "collectionproxy.get_resources")],
+    });
+    expect(out).toContain("function get_resources(collectionproxy: Url): Hash[];");
+    expect(out).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("render.predicate recovers a (string | Hash)[] tags param", () => {
+    const module = parseDefoldApiDoc(renderDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "render.predicate")],
+    });
+    expect(out).toContain("function predicate(tags: (string | Hash)[]): number;");
+    expect(out).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("render.clear recovers a number-keyed map to the number | Vector4 clear-value union", () => {
+    const module = parseDefoldApiDoc(renderDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "render.clear")],
+    });
+    expect(out).toContain("function clear(buffers: LuaMap<number, number | Vector4>): void;");
+    expect(out).not.toContain("Record<string | number, unknown>");
   });
 });
 

@@ -213,7 +213,7 @@ declare global {
      * profiler.view_recorded_frame({ distance: -1 });
      * ```
      */
-    function view_recorded_frame(frame_index: Record<string | number, unknown>): void;
+    function view_recorded_frame(frame_index: { distance?: number; frame?: number }): void;
   }
 }
 

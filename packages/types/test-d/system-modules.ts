@@ -27,8 +27,10 @@ const _cfg: string = sys.get_config_string("display.width", "960");
 void _cfg;
 
 // http.request takes the callback argument (callbacks map to the wide `unknown`
-// fallback). All positional params emit as required.
-http.request("https://example.com", "GET", () => {}, {}, "", {});
+// fallback). url/method/callback are required; headers (a recovered
+// string->string map), post_data, and options are optional.
+const _headers: LuaMap<string, string> = {} as LuaMap<string, string>;
+http.request("https://example.com", "GET", () => {}, _headers, "", {});
 
 // One representative call per remaining namespace, no deep coverage.
 const _buf = buffer.create(1, {});

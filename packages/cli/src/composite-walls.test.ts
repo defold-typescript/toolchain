@@ -47,7 +47,7 @@ function scaffold(cwd: string, guiBody: string): void {
       'import { defineRenderScript } from "@defold-typescript/types/render-script";',
       "defineRenderScript({",
       "  update() {",
-      "    render.clear({});",
+      "    render.set_depth_mask(true);",
       "  },",
       "});",
     ].join("\n"),
@@ -114,7 +114,7 @@ describe("composite directory walls", () => {
   test("tsc -b rejects render namespace access inside a gui wall", () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-composite-walls-"));
     try {
-      scaffold(cwd, "    render.clear({});");
+      scaffold(cwd, "    render.set_depth_mask(true);");
       wall(cwd);
 
       const { code } = typecheckBuild(cwd);

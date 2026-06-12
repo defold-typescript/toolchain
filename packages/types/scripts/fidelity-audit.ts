@@ -140,7 +140,14 @@ function auditEntry(
           // (`LuaMap<K, LuaMap<K, V>>`) feeds the outer key plus the inner
           // key/value tokens — so an unmapped token in any arm still surfaces.
           if (typeof tableSlotCuration.value === "string") {
-            considerTypes([tableSlotCuration.key, tableSlotCuration.value]);
+            // The value may be a `T | U` union token (render.clear's
+            // `number | vector4`); split on `|` exactly as the emit branch does
+            // so each token is checked against DEFOLD_TYPE_MAP individually and a
+            // single-token value is unaffected.
+            considerTypes([
+              tableSlotCuration.key,
+              ...tableSlotCuration.value.split("|").map((token) => token.trim()),
+            ]);
           } else if (Array.isArray(tableSlotCuration.value)) {
             considerTypes([tableSlotCuration.key]);
             for (const field of tableSlotCuration.value) {
