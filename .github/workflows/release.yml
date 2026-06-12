@@ -1,95 +1,90 @@
-# PARKED — this workflow must not publish in its current form.
+# Release workflow.
 #
-# Why: the gate installs with `--frozen-lockfile` (lockfile pinned at 0.0.0),
-# stamps the manifests with `jq`, then packs. But `bun pm pack` rewrites
-# `workspace:*` deps from the lockfile snapshot, NOT the live stamped manifest,
-# so a release would publish e.g. `transpiler@<v>` depending on a nonexistent
-# `types@0.0.0` — breaking every consumer install.
-#
-# Re-enable condition: regenerate the lockfile after the version stamp (so the
-# pack picks up the coordinated sibling versions), then restore the real
-# triggers and the `if: vars.ENABLE_NPM_PUBLISH == 'true'` publish step. Until
-# then this is dispatch-only and fails loudly. The original job body is kept
-# below as commented reference.
+# Ordering matters: install (frozen) -> gate -> `jq` stamp -> regenerate the
+# lockfile -> pack/publish. The regen after the stamp is load-bearing: `bun pm
+# pack`/`bun publish` rewrite `workspace:*` deps from the lockfile snapshot, not
+# the live manifest, so without it a release would publish e.g. `transpiler@<v>`
+# depending on a nonexistent `types@0.0.0`. The dry-run publish runs on every
+# release; the real publish stays fenced behind the `ENABLE_NPM_PUBLISH` repo
+# variable (a deliberate human opt-in).
 
 name: Release
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver to publish (without leading v)"
+        required: true
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: Parked
-        run: |
-          echo "release.yml is PARKED — see the top-of-file comment." >&2
-          echo "It cannot publish until the post-stamp lockfile is regenerated" >&2
-          echo "and ENABLE_NPM_PUBLISH is intentionally flipped." >&2
-          exit 1
+      - uses: actions/checkout@v6
 
-# --- Original job body (reference only; do not re-enable without the fix) ---
-#
-#   publish:
-#     runs-on: ubuntu-latest
-#     permissions:
-#       id-token: write
-#       contents: read
-#     steps:
-#       - uses: actions/checkout@v6
-#
-#       - name: Setup Bun
-#         uses: oven-sh/setup-bun@v2
-#         with:
-#           bun-version: "1.3"
-#
-#       - name: Resolve version
-#         shell: bash
-#         env:
-#           INPUT_VERSION: ${{ inputs.version }}
-#           REF_NAME: ${{ github.ref_name }}
-#           EVENT_NAME: ${{ github.event_name }}
-#         run: |
-#           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-#             VERSION="$INPUT_VERSION"
-#           else
-#             VERSION="$REF_NAME"
-#           fi
-#           VERSION="${VERSION#v}"
-#           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-#             echo "Invalid semver: $VERSION" >&2
-#             exit 1
-#           fi
-#           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-#
-#       - name: Install dependencies
-#         run: bun install --frozen-lockfile
-#
-#       - name: Gate — typecheck, lint, test
-#         run: |
-#           bun run typecheck
-#           bun run lint
-#           bun test
-#
-#       - name: Stamp version across workspace
-#         shell: bash
-#         run: |
-#           for manifest in package.json packages/*/package.json; do
-#             jq --arg v "$VERSION" '.version = $v' "$manifest" > "$manifest.tmp"
-#             mv "$manifest.tmp" "$manifest"
-#           done
-#
-#       - name: Publish (dry-run)
-#         run: |
-#           for pkg in types transpiler cli; do
-#             ( cd "packages/$pkg" && bun publish --dry-run --access public )
-#           done
-#
-#       - name: Publish to npm
-#         if: ${{ vars.ENABLE_NPM_PUBLISH == 'true' }}
-#         env:
-#           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-#         run: |
-#           for pkg in types transpiler cli; do
-#             ( cd "packages/$pkg" && bun publish --access public )
-#           done
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3"
+
+      - name: Resolve version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="$REF_NAME"
+          fi
+          VERSION="${VERSION#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid semver: $VERSION" >&2
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Gate — typecheck, lint, test
+        run: |
+          bun run typecheck
+          bun run lint
+          bun test
+
+      - name: Stamp version across workspace
+        shell: bash
+        run: |
+          for manifest in package.json packages/*/package.json; do
+            jq --arg v "$VERSION" '.version = $v' "$manifest" > "$manifest.tmp"
+            mv "$manifest.tmp" "$manifest"
+          done
+
+      - name: Regenerate lockfile after stamp
+        run: |
+          rm -f bun.lock && bun install
+
+      - name: Publish (dry-run)
+        run: |
+          for pkg in types transpiler cli; do
+            ( cd "packages/$pkg" && bun publish --dry-run --access public )
+          done
+
+      - name: Publish to npm
+        if: ${{ vars.ENABLE_NPM_PUBLISH == 'true' }}
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for pkg in types transpiler cli; do
+            ( cd "packages/$pkg" && bun publish --access public )
+          done
