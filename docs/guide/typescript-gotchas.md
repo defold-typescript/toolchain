@@ -300,7 +300,7 @@ These helpers ship in `lualib_bundle.lua`, which the build writes to the output 
 The consequences are where it bites:
 
 - Awaiting an already-resolved or synchronously-resolving promise runs to completion in the same frame — fine, and reads well.
-- There is no timer or I/O integration. `await new Promise((r) => setTimeout(r, 1000))` cannot be written — `setTimeout` does not exist. A promise that nobody resolves leaves the async function suspended **forever**, with no error and no warning.
+- There is no timer or I/O integration. `await new Promise((r) => setTimeout(r, 1000))` cannot be written with a *global* `setTimeout` — there is none, so a bare call is a compile error (TS2304, *Cannot find name 'setTimeout'*), not a silent runtime failure. Import one from `@defold-typescript/types/timers` instead (see **Importable polyfills** below). A promise that nobody resolves leaves the async function suspended **forever**, with no error and no warning.
 - A rejected promise with no `.catch` is silently dropped; there is no Node-style "unhandled rejection" report.
 
 **The engine scheduler bridge.** What the JS runtime lacks — a thing that advances pending work between frames — Defold supplies as `timer.delay`: a frame-driven scheduler that fires a callback on a later frame. That callback is the hook. Resolve a `Promise` from inside a `timer.delay` callback and the `await` waiting on it resumes when the engine fires the timer, not before. Bridge it by hand by stashing the promise's `resolve` and calling it from the callback:
@@ -330,7 +330,7 @@ export async function main(): Promise<void> {
 }
 ```
 
-These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root (the same mechanism as `lualib_bundle`).
+These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root (the same mechanism as `lualib_bundle`). Because there is no global, a bare `setTimeout(...)`/`setInterval(...)` (the muscle-memory web form) is a **compile error** — `TS2304: Cannot find name 'setTimeout'` — under the scaffolded `lib: ["ES2022"]` surface (no DOM/Node globals). That error is the warning: add the `import { setTimeout, … } from "@defold-typescript/types/timers"` line and it resolves. Your editor does this for you — tsserver lists the timers module in autocomplete and offers an *Add import from "@defold-typescript/types/timers"* quick-fix on the `TS2304` squiggle, so the fix is one keystroke (works in any tsserver-backed editor; no extension needed). Do not "fix" it by widening `lib` to `"DOM"` or adding `@types/node` — that would restore a global `setTimeout` declaration that type-checks but has no runtime behind it in Defold, turning the honest compile error into a silent forever-suspended `await`.
 
 **Caveats.** The polyfills are timer-backed, not a drop-in `setTimeout`. Four differences bite:
 
