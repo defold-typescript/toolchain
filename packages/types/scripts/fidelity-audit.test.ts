@@ -496,14 +496,14 @@ describe("runtime-owned passthrough reclassification", () => {
     // tables; ARBITRARY_TABLE_SLOTS reclassifies them out of recordTables:
     // factory 1 -> 0, collectionfactory 1 -> 0, go 2 -> 1, gui 2 -> 1 — the
     // project-wide recordTables total drops 26 -> 22. The live report is
-    // cumulative, so the total reads 20 here after the later atlas-geometries
-    // curation ratchets resource 3 -> 1.
+    // cumulative, so the total reads 19 here (cumulative, after get_text_metrics
+    // ratchets resource 1 -> 0 on top of the atlas-geometries resource 3 -> 1).
     expect(requireEntry(report, "factory").recordTables).toBe(0);
     expect(requireEntry(report, "collectionfactory").recordTables).toBe(0);
     expect(requireEntry(report, "go").recordTables).toBe(1);
     expect(requireEntry(report, "gui").recordTables).toBe(1);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(20);
+    expect(total).toBe(19);
     // The committed baseline reflects the reclassified counts, so the full
     // report equals it on every namespace and category — proving these four are
     // the only moves and no other category shifted anywhere.
@@ -571,10 +571,10 @@ describe("table-field recovery", () => {
 describe("number-list table-field recovery", () => {
   test("resource.recordTables drops 9 -> 3 and no other namespace or category moves", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
-    // The live report is cumulative, so resource reads 1 here after the later
-    // atlas-geometries nested-field curation ratchets set_atlas/get_atlas's
-    // geometries 3 -> 1.
-    expect(requireEntry(report, "resource").recordTables).toBe(1);
+    // The live report is cumulative, so resource reads 0 here (cumulative, after
+    // get_text_metrics ratchets resource 1 -> 0 on top of the atlas-geometries
+    // nested-field curation's set_atlas/get_atlas geometries 3 -> 1).
+    expect(requireEntry(report, "resource").recordTables).toBe(0);
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
       const base = baselineMap[namespace];
@@ -593,8 +593,10 @@ describe("atlas geometries nested-field recovery", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
     // The NESTED_FIELD_CURATIONS atlas-geometries members are injected onto
     // set_atlas's `table` param and get_atlas's `data` return, recovering both
-    // geometries Records — ratcheting resource 3 -> 1 (project-wide -2).
-    expect(requireEntry(report, "resource").recordTables).toBe(1);
+    // geometries Records — ratcheting resource 3 -> 1 (project-wide -2). The live
+    // report is cumulative, so resource reads 0 here (cumulative, after
+    // get_text_metrics ratchets resource 1 -> 0).
+    expect(requireEntry(report, "resource").recordTables).toBe(0);
     // The committed baseline reflects the recovered count, so the full report
     // equals it on every namespace and category — proving resource is the only
     // namespace whose recordTables moved and no other category shifted anywhere.
@@ -615,6 +617,28 @@ describe("atlas geometries nested-field recovery", () => {
     expect(requireEntry(report, "resource").recordTables).toBe(
       requireEntry(baselineMap, "resource").recordTables,
     );
+  });
+});
+
+describe("get_text_metrics return-bag recovery", () => {
+  test("resource.recordTables drops 1 -> 0 (project-wide -1) and no other namespace or category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // get_text_metrics's metrics return is an untyped name-only <ul>, so the
+    // whole slot collapsed to Record; the TABLE_SLOT_CURATIONS object curation
+    // recovers it as { width; height; max_ascent; max_descent } — ratcheting
+    // resource 1 -> 0, after which resource owns zero recordTables.
+    expect(requireEntry(report, "resource").recordTables).toBe(0);
+    const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
+    expect(total).toBe(19);
+    // The committed baseline reflects the recovered count, so the full report
+    // equals it on every namespace and category — proving resource is the only
+    // namespace whose recordTables moved and no other category shifted anywhere.
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      expect(entry).toEqual(base);
+    }
   });
 });
 

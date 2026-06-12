@@ -739,7 +739,7 @@ declare global {
      * });
      * ```
      */
-    function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): Record<string | number, unknown>;
+    function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
     /**
      * Gets texture info from a texture resource path or a texture handle
      *

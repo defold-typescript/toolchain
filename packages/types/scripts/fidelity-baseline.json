@@ -202,7 +202,7 @@
   "resource": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 1,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0

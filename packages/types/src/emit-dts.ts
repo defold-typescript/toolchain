@@ -311,6 +311,23 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     "tilemap.get_tiles:return:tiles",
     { kind: "mapping", key: "number", value: { key: "number", value: "number" } },
   ],
+  // resource.get_text_metrics's `metrics` return is an untyped name-only <ul>
+  // (width/height/max_ascent/max_descent, no <span class="type"> and no See
+  // cross-reference), so parseTableFields recovers nothing and the whole slot
+  // collapses to Record. The four fields are font metrics in pixels, i.e.
+  // `number`; as a return-table object curation they are required.
+  [
+    "resource.get_text_metrics:return:metrics",
+    {
+      kind: "object",
+      fields: [
+        { name: "width", types: ["number"] },
+        { name: "height", types: ["number"] },
+        { name: "max_ascent", types: ["number"] },
+        { name: "max_descent", types: ["number"] },
+      ],
+    },
+  ],
 ]);
 
 // resource.set_atlas's `table` param and resource.get_atlas's `data` return are

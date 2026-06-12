@@ -1887,6 +1887,18 @@ describe("TABLE_SLOT_CURATIONS", () => {
         "tilemap.get_tiles:return:tiles",
         { kind: "mapping", key: "number", value: { key: "number", value: "number" } },
       ],
+      [
+        "resource.get_text_metrics:return:metrics",
+        {
+          kind: "object",
+          fields: [
+            { name: "width", types: ["number"] },
+            { name: "height", types: ["number"] },
+            { name: "max_ascent", types: ["number"] },
+            { name: "max_descent", types: ["number"] },
+          ],
+        },
+      ],
     ]);
     expect(MAPPING_TABLE_SLOTS.size).toBe(3);
     expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
@@ -1985,6 +1997,22 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
     expect(out).toContain(
       "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;",
+    );
+  });
+
+  test("get_text_metrics recovers its return as a metrics object while the options param stays parser-recovered", () => {
+    const module = parseDefoldApiDoc(resourceDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "resource.get_text_metrics")],
+    });
+    const line = out.split("\n").find((l) => l.includes("function get_text_metrics(")) ?? "";
+    expect(line).toContain(
+      "{ width: number; height: number; max_ascent: number; max_descent: number }",
+    );
+    expect(line).not.toContain("Record<string | number, unknown>");
+    expect(line).toContain(
+      "options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }",
     );
   });
 
