@@ -229,4 +229,20 @@ describe("docs/guide/vector-math.md worked example", () => {
     const body = await readGuide("vector-math.md");
     expect(body).toContain("self.velocity.x");
   });
+
+  test("labels the entrypoint fixed_update", async () => {
+    const body = await readGuide("vector-math.md");
+    expect(body).toContain("fixed_update(self, dt)");
+  });
+
+  test("prose names the corrected hook and drops the stale one", async () => {
+    const body = await readGuide("vector-math.md");
+    expect(body).toContain("`fixed_update` body");
+    expect(body).not.toContain("`update` body");
+  });
+
+  test("attributes the projection line to the collision helper", async () => {
+    const body = await readGuide("vector-math.md");
+    expect(body).toContain("handle_obstacle_contact");
+  });
 });
