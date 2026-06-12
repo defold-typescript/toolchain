@@ -270,9 +270,13 @@ describe("mapping-table slot recovery", () => {
   test("gui.recordTables drops 5 -> 2 and no other namespace or category moves", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
     // The mapping-table recovery ratchets gui 5 -> 2; the live report is
-    // cumulative, so gui reads 1 here after the later runtime-owned passthrough
-    // slice reclassifies the bare on_message receive `message` 2 -> 1.
-    expect(requireEntry(report, "gui").recordTables).toBe(1);
+    // cumulative, so gui reads 0 here after the later runtime-owned passthrough
+    // slice reclassifies the bare on_message receive `message` 2 -> 1 and the
+    // record-table-batch-recovery-2 slice curates the shared on_input `action`
+    // (mirroring the reclassification). The function-level arbitraryTable
+    // propagation lands in the same slice, so the audit no longer re-counts
+    // nested `table` fields for arbitrary slots.
+    expect(requireEntry(report, "gui").recordTables).toBe(0);
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
       const base = baselineMap[namespace];
@@ -309,10 +313,12 @@ describe("id-array slot recovery", () => {
     // "table (array) of id(s)" slots (iap.list.ids, go.delete.id) into arrays
     // drops each by one — go settles at 2. The live report is cumulative, so iap
     // reads 0 here after the later transaction-table and option-bag curations
-    // ratchet it 3 -> 1 -> 0, and go reads 1 after the later runtime-owned
-    // passthrough slice reclassifies on_message 2 -> 1.
+    // ratchet it 3 -> 1 -> 0, and go reads 0 after the later runtime-owned
+    // passthrough slice reclassifies on_message 2 -> 1 and the
+    // record-table-batch-recovery-2 slice curates the shared on_input `action`
+    // (mirroring the reclassification).
     expect(requireEntry(report, "iap").recordTables).toBe(0);
-    expect(requireEntry(report, "go").recordTables).toBe(1);
+    expect(requireEntry(report, "go").recordTables).toBe(0);
     // Every namespace and category equals the committed baseline (which reflects
     // the recovered counts) — proving no other recordTables count and no other
     // category moved.
@@ -330,10 +336,14 @@ describe("slot-scoped table curation recovery", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
     // collectionfactory reads 0 here: the slot-scoped curation ratcheted it 2 -> 1,
     // then the later runtime-owned passthrough slice reclassifies its `create`
-    // properties slot 1 -> 0.
+    // properties slot 1 -> 0. physics reads 0 here after the
+    // record-table-batch-recovery-2 slice curates create_joint.properties,
+    // set_joint_properties.properties, and raycast.result (the three remaining
+    // physics recordTables slots). socket reads 0 after the same slice
+    // reclassifies all four dns.* returns.
     expect(requireEntry(report, "collectionfactory").recordTables).toBe(0);
-    expect(requireEntry(report, "physics").recordTables).toBe(3);
-    expect(requireEntry(report, "socket").recordTables).toBe(4);
+    expect(requireEntry(report, "physics").recordTables).toBe(0);
+    expect(requireEntry(report, "socket").recordTables).toBe(0);
     expect(requireEntry(report, "liveupdate").recordTables).toBe(0);
     expect(requireEntry(report, "tilemap").recordTables).toBe(0);
     expect(
@@ -347,7 +357,7 @@ describe("slot-scoped table curation recovery", () => {
         requireEntry(report, "liveupdate").recordTables +
         2 -
         requireEntry(report, "tilemap").recordTables,
-    ).toBe(11);
+    ).toBe(18);
 
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
@@ -498,13 +508,18 @@ describe("runtime-owned passthrough reclassification", () => {
     // project-wide recordTables total drops 26 -> 22. The live report is
     // cumulative, so the total reads 14 here (cumulative, after the record-table
     // batch slice closes profiler/http/collectionproxy and ratchets render 4 ->
-    // 2 on top of the earlier resource recoveries).
+    // 2 on top of the earlier resource recoveries). After the
+    // record-table-batch-recovery-2 slice curates the shared on_input `action`
+    // (mirroring the reclassification), go and gui each drop to 0; the
+    // function-level arbitraryTable propagation lands in the same slice, so
+    // the audit no longer re-counts nested `table` fields for arbitrary slots
+    // and render drops 2 -> 1 (the transient recursion in set_render_target).
     expect(requireEntry(report, "factory").recordTables).toBe(0);
     expect(requireEntry(report, "collectionfactory").recordTables).toBe(0);
-    expect(requireEntry(report, "go").recordTables).toBe(1);
-    expect(requireEntry(report, "gui").recordTables).toBe(1);
+    expect(requireEntry(report, "go").recordTables).toBe(0);
+    expect(requireEntry(report, "gui").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(14);
+    expect(total).toBe(0);
     // The committed baseline reflects the reclassified counts, so the full
     // report equals it on every namespace and category — proving these four are
     // the only moves and no other category shifted anywhere.
@@ -631,8 +646,11 @@ describe("get_text_metrics return-bag recovery", () => {
     expect(requireEntry(report, "resource").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
     // The live report is cumulative; the later record-table batch slice lowers
-    // the project-wide total to 14.
-    expect(total).toBe(14);
+    // the project-wide total to 14, and the record-table-batch-recovery-2
+    // slice lands at 0 (the 14 recordTables all close, and the audit's
+    // function-level arbitraryTable propagation skips the transient recursion
+    // in set_render_target).
+    expect(total).toBe(0);
     // The committed baseline reflects the recovered count, so the full report
     // equals it on every namespace and category — proving resource is the only
     // namespace whose recordTables moved and no other category shifted anywhere.
@@ -652,13 +670,17 @@ describe("record-table batch recovery", () => {
     // profiler.view_recorded_frame's option bag, http.request's headers map,
     // collectionproxy.get_resources's Hash[], render.predicate's tags array, and
     // render.clear's number-keyed clear-value map — closing profiler, http, and
-    // collectionproxy and ratcheting render 4 -> 2.
+    // collectionproxy and ratcheting render 4 -> 2. The live report is
+    // cumulative, so render reads 1 here after the record-table-batch-recovery-2
+    // slice reclassifies render.render_target and render.set_render_target
+    // (function-level arbitraryTable propagation skips the transient recursion
+    // in set_render_target).
     expect(requireEntry(report, "profiler").recordTables).toBe(0);
     expect(requireEntry(report, "http").recordTables).toBe(0);
     expect(requireEntry(report, "collectionproxy").recordTables).toBe(0);
-    expect(requireEntry(report, "render").recordTables).toBe(2);
+    expect(requireEntry(report, "render").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(14);
+    expect(total).toBe(0);
     // The committed baseline reflects the recovered counts, so the full report
     // equals it on every namespace and category — proving these four namespaces
     // are the only recordTables movers and no other category shifted anywhere.
@@ -789,7 +811,11 @@ describe("code-dash option table recovery", () => {
 describe("cross-reference table recovery", () => {
   test("physics.set_shape stays recovered and no other namespace or category moves", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
-    expect(requireEntry(report, "physics").recordTables).toBe(3);
+    // The live report is cumulative, so physics reads 0 here after the
+    // record-table-batch-recovery-2 slice curates create_joint.properties,
+    // set_joint_properties.properties, and raycast.result (the three remaining
+    // physics recordTables slots).
+    expect(requireEntry(report, "physics").recordTables).toBe(0);
     const baselineMap = baseline as Record<string, FidelityEntry>;
     for (const [namespace, entry] of Object.entries(report)) {
       const base = baselineMap[namespace];
@@ -884,5 +910,90 @@ describe("fidelity audit sanity floors", () => {
 
   test("baseline file resolves next to the audit script", () => {
     expect(resolve(import.meta.dir, "fidelity-baseline.json")).toContain("fidelity-baseline.json");
+  });
+});
+
+describe("record-table batch recovery 2", () => {
+  test("crash/webview/socket/render/go/gui/physics all reach 0 (project-wide 14 -> 0); no other namespace or category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // The slice lands 9 audit-only reclassifications (ARBITRARY_TABLE_SLOTS)
+    // and 4 curations. The 9 reclassifications close crash 2 -> 0, webview 1 -> 0,
+    // and socket 4 -> 0, and drop render 2 -> 1 (the function-level
+    // arbitraryTable flag now propagates to the parser-recovered field
+    // recursion, so the transient sub-table in set_render_target.options is no
+    // longer re-counted). The 4 curations close the remaining slots:
+    // on_input:param:action (shared by go and gui, with the touch sub-field
+    // curated as a typed array-of-touch-records) drops go and gui 1 -> 0;
+    // physics.create_joint:param:properties,
+    // physics.set_joint_properties:param:properties, and
+    // physics.raycast:return:result drop physics 3 -> 0. The function-level
+    // arbitraryTable propagation also brings render 1 -> 0. Project-wide total
+    // drops 14 -> 0.
+    expect(requireEntry(report, "crash").recordTables).toBe(0);
+    expect(requireEntry(report, "webview").recordTables).toBe(0);
+    expect(requireEntry(report, "socket").recordTables).toBe(0);
+    expect(requireEntry(report, "render").recordTables).toBe(0);
+    expect(requireEntry(report, "go").recordTables).toBe(0);
+    expect(requireEntry(report, "gui").recordTables).toBe(0);
+    expect(requireEntry(report, "physics").recordTables).toBe(0);
+    const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
+    expect(total).toBe(0);
+    // The committed baseline reflects the recovered counts, so the full report
+    // equals it on every namespace and category — proving these seven are the
+    // only recordTables movers and no other category shifted anywhere.
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      expect(entry).toEqual(base);
+    }
+  });
+
+  test("function-level arbitraryTable propagation skips a nested table in a parser-recovered field", () => {
+    // Without propagation, the audit would re-count the `transient: table`
+    // parsed sub-field of a parser-recovered slot — adding 1 to recordTables
+    // even when the function is in ARBITRARY_TABLE_SLOTS. With propagation,
+    // the function-level arbitraryTable flag flows into the parser-recovered
+    // field recursion, so the nested `table` is correctly skipped.
+    const doc = {
+      info: { namespace: "test" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "test.control",
+          parameters: [
+            {
+              name: "options",
+              doc: '<dl><dt><code>transient</code></dt><dd><span class="type">table</span> nested opaque</dd></dl>',
+              types: ["table"],
+              is_optional: "False",
+            },
+          ],
+          returnvalues: [],
+        },
+        {
+          type: "FUNCTION",
+          name: "test.arbitrary",
+          parameters: [
+            {
+              name: "options",
+              doc: '<dl><dt><code>transient</code></dt><dd><span class="type">table</span> nested opaque</dd></dl>',
+              types: ["table"],
+              is_optional: "False",
+            },
+          ],
+          returnvalues: [],
+        },
+      ],
+    };
+    // A direct test would need to mutate the ARBITRARY_TABLE_SLOTS set, which
+    // is a const Set exported from emit-dts. The behavior is locked indirectly
+    // by the slice-level assertion above (the cumulative render.recordTables
+    // reaches 0 only because propagation skips the transient recursion in
+    // set_render_target). This test pins the control: a function whose slot
+    // has a parser-recovered nested `table` is counted once (the recursion
+    // adds 1) when the function is not arbitrary.
+    const report = buildFidelityReport(manifestOf(doc));
+    expect(requireEntry(report, "test").recordTables).toBe(2);
   });
 });

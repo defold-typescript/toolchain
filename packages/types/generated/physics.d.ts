@@ -50,7 +50,7 @@ declare global {
      * See each joint type for possible properties field. The one field that is accepted for all joint types is:
      * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
      */
-    function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: Record<string | number, unknown>): void;
+    function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean }): void;
     /**
      * Destroy an already physics joint. The joint has to be created before a
      * destroy can be issued.
@@ -205,7 +205,7 @@ declare global {
      * });
      * ```
      */
-    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Record<string | number, unknown> | unknown;
+    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | unknown;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -400,7 +400,7 @@ declare global {
      * @param properties - joint specific properties table
      * Note: The `collide_connected` field cannot be updated/changed after a connection has been made.
      */
-    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: Record<string | number, unknown>): void;
+    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean }): void;
     /**
      * Sets or clears the masking of a group (maskbit) in a collision object.
      *

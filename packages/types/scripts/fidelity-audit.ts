@@ -213,18 +213,24 @@ function auditEntry(
           // not a `Record` — recurse into the nested field types instead of
           // counting the nested `table`. A nested number-list member is recovered
           // as `number[]`, so skip it the same way the top-level branch does.
+          // The function-level arbitraryTable / mappingSlot / homogeneousElement
+          // flags propagate to the recursion so a slot on an ARBITRARY_TABLE_SLOTS
+          // element (or any other function-level reclassification) does not
+          // re-count its parsed sub-tables. The parser-recovered field has no
+          // tableSlotCuration, so the per-slot curation lookup is irrelevant
+          // here.
           for (const field of fields) {
             if (field.fields !== undefined) {
               for (const nested of field.fields) {
                 if (nested.numberList === true) continue;
-                considerTypes(nested.types);
+                considerTypes(nested.types, undefined, arbitraryTable);
               }
             } else if (field.numberList === true) {
               // Recovered as `number[]` by inlineTableType — no longer a
               // `Record`, so skip it. Re-counting its `table` token here would
               // double-count a slot the emitted surface no longer loses.
             } else {
-              considerTypes(field.types);
+              considerTypes(field.types, undefined, arbitraryTable);
             }
           }
           continue;

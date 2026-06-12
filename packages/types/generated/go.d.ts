@@ -689,7 +689,7 @@ declare global {
      * });
      * ```
      */
-    export function on_input(self: Opaque<"userdata">, action_id: Hash, action: Record<string | number, unknown>): boolean | unknown;
+    export function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | unknown;
     /**
      * This is a callback-function, which is called by the engine whenever a message has been sent to the script component.
      * It can be used to take action on the message, e.g. send a response back to the sender of the message.

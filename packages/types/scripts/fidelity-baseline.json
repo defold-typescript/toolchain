@@ -42,7 +42,7 @@
   "crash": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 2,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -58,7 +58,7 @@
   "go": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 1,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 3,
     "optionalAsRequired": 0
@@ -74,7 +74,7 @@
   "gui": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 1,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -170,7 +170,7 @@
   "physics": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 3,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -194,7 +194,7 @@
   "render": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 2,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -210,7 +210,7 @@
   "socket": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 4,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0
@@ -274,7 +274,7 @@
   "webview": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 1,
+    "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0

@@ -124,6 +124,30 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   "factory.create",
   "collectionfactory.create",
   "on_message",
+  // engine-formatted blob: the engine produces the value at runtime and no
+  // field list is documented, so the whole-slot `Record` is faithful, not a
+  // loss. crash.get_backtrace is "table containing the backtrace",
+  // crash.get_modules is "module table".
+  "crash.get_backtrace",
+  "crash.get_modules",
+  // platform-specific options: the doc is a dead backtick-prose cross-ref to a
+  // sibling whose function is absent from the fixture (webview.open is not
+  // documented), so no machine-readable shape exists.
+  "webview.open_raw",
+  // OS-resolver returns: the shape is set by the host resolver, not Defold's
+  // API contract; each fixture doc reads "a table with all information
+  // returned by the resolver". Mirrors the iac.set_listener / push.* platform-
+  // opaque precedent.
+  "socket.dns.tohostname",
+  "socket.dns.toip",
+  "socket.dns.getaddrinfo",
+  "socket.dns.getnameinfo",
+  // engine-built render-target tables: the "see the description" cross-refs
+  // are dead (the function's own description is empty) or carry a typed
+  // `transient: table` field whose sub-doc is prose-only, so the nested table
+  // is opaque to the field-list parser and the whole-slot `Record` is faithful.
+  "render.render_target",
+  "render.set_render_target",
 ]);
 
 // Element names whose `table` slot is a prose-only `a table mapping X to Y`
@@ -358,6 +382,105 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // The mapping value is the `number | vector4` union; the mapping string branch
   // splits the union token, so the value emits `number | Vector4`.
   ["render.clear:param:buffers", { kind: "mapping", key: "number", value: "number | vector4" }],
+  // go.on_input and gui.on_input share the same well-known InputAction shape
+  // (the on_input function description lists the well-known fields: value,
+  // pressed, released, repeated, x/y/screen_x/screen_y/dx/dy/screen_dx/screen_dy,
+  // plus gamepad/touch/text multi-touch fields). The doc markup carries no
+  // field list of its own, so the shape is curated verbatim from the prose.
+  // Param-side optional fields: each input kind (mouse/key/text/gamepad) sets a
+  // different subset, so the call site always sees an `?` on every field.
+  // `touch` stays `table` (the nested multi-touch table has no machine-readable
+  // field list; mirrors the render.set_render_target.transient recursive case).
+  // The element is the bare `on_input` script hook (no namespace prefix), the
+  // same form the `on_message` arbitrary-table entry uses. The doc carries a
+  // well-formed touch input table, so `touch` is curated as a nested
+  // array-of-touch-records (the field has its own `<table>` listing id,
+  // pressed, released, tap_count, x, y, dx, dy, acc_x/y/z).
+  [
+    "on_input:param:action",
+    {
+      kind: "object",
+      fields: [
+        { name: "value", types: ["number"], optional: true },
+        { name: "pressed", types: ["boolean"], optional: true },
+        { name: "released", types: ["boolean"], optional: true },
+        { name: "repeated", types: ["boolean"], optional: true },
+        { name: "x", types: ["number"], optional: true },
+        { name: "y", types: ["number"], optional: true },
+        { name: "screen_x", types: ["number"], optional: true },
+        { name: "screen_y", types: ["number"], optional: true },
+        { name: "dx", types: ["number"], optional: true },
+        { name: "dy", types: ["number"], optional: true },
+        { name: "screen_dx", types: ["number"], optional: true },
+        { name: "screen_dy", types: ["number"], optional: true },
+        { name: "gamepad", types: ["number"], optional: true },
+        { name: "gamepad_axis", types: ["vector3"], optional: true },
+        {
+          name: "touch",
+          types: ["table"],
+          optional: true,
+          isList: true,
+          fields: [
+            { name: "id", types: ["number"] },
+            { name: "pressed", types: ["boolean"] },
+            { name: "released", types: ["boolean"] },
+            { name: "tap_count", types: ["number"] },
+            { name: "x", types: ["number"] },
+            { name: "y", types: ["number"] },
+            { name: "dx", types: ["number"] },
+            { name: "dy", types: ["number"] },
+            { name: "acc_x", types: ["number"] },
+            { name: "acc_y", types: ["number"] },
+            { name: "acc_z", types: ["number"] },
+          ],
+        },
+        { name: "text", types: ["string"], optional: true },
+      ],
+    },
+  ],
+  // physics.create_joint and physics.set_joint_properties both declare
+  // `properties` as a joint-type-specific table; the only universal field is
+  // `collide_connected` (parseTableFields already recovers it from the
+  // <span class="type">+<code> shape in the create_joint doc and the bare
+  // <code> shape in the set_joint_properties doc). Joint-type-specific fields
+  // stay deferred — they live in joint-type-specific docs the parser cannot
+  // see from a top-level param doc.
+  [
+    "physics.create_joint:param:properties",
+    {
+      kind: "object",
+      fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
+    },
+  ],
+  [
+    "physics.set_joint_properties:param:properties",
+    {
+      kind: "object",
+      fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
+    },
+  ],
+  // physics.raycast's `result` is "a list … see ray_cast_response for details";
+  // buildTableDocResolver resolves only FUNCTION elements so the cross-ref
+  // cannot fire (the message payload lives in messages_doc.json, not the
+  // FUNCTION slot pool). The shape is curated directly from the message
+  // catalog (the six ray_cast_response payload fields). The doc declares a
+  // `nil` branch ("If missed it returns <code>nil</code>"), so the existing
+  // nil-aware emit already projects the curated array onto the
+  // `array-object | nil` return type — no curation change needed there.
+  [
+    "physics.raycast:return:result",
+    {
+      kind: "array-object",
+      fields: [
+        { name: "fraction", types: ["number"] },
+        { name: "position", types: ["vector3"] },
+        { name: "normal", types: ["vector3"] },
+        { name: "id", types: ["hash"] },
+        { name: "group", types: ["hash"] },
+        { name: "request_id", types: ["number"] },
+      ],
+    },
+  ],
 ]);
 
 // resource.set_atlas's `table` param and resource.get_atlas's `data` return are
@@ -508,6 +631,7 @@ export interface TableField {
   fields?: TableField[];
   isList?: boolean;
   numberList?: boolean;
+  optional?: boolean;
 }
 
 function parseUlFields(doc: string): TableField[] {

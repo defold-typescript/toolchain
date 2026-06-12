@@ -1654,9 +1654,11 @@ describe("recoverCallbackSignature", () => {
 });
 
 describe("ARBITRARY_TABLE_SLOTS", () => {
-  test("holds the serialization/JSON passthrough, platform-opaque, plus runtime-owned passthrough element names", () => {
+  test("holds the serialization/JSON passthrough, platform-opaque, runtime-owned passthrough, engine-formatted blob, dead cross-ref, OS-resolver, and engine-built render-target element names", () => {
     expect([...ARBITRARY_TABLE_SLOTS].sort()).toEqual([
       "collectionfactory.create",
+      "crash.get_backtrace",
+      "crash.get_modules",
       "factory.create",
       "iac.set_listener",
       "json.decode",
@@ -1664,10 +1666,17 @@ describe("ARBITRARY_TABLE_SLOTS", () => {
       "on_message",
       "push.get_all_scheduled",
       "push.get_scheduled",
+      "render.render_target",
+      "render.set_render_target",
+      "socket.dns.getaddrinfo",
+      "socket.dns.getnameinfo",
+      "socket.dns.tohostname",
+      "socket.dns.toip",
       "sys.deserialize",
       "sys.load",
       "sys.save",
       "sys.serialize",
+      "webview.open_raw",
     ]);
   });
 });
@@ -1917,6 +1926,76 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ["collectionproxy.get_resources:return:resources", { kind: "array", element: "hash" }],
       ["render.predicate:param:tags", { kind: "array", element: ["string", "hash"] }],
       ["render.clear:param:buffers", { kind: "mapping", key: "number", value: "number | vector4" }],
+      [
+        "on_input:param:action",
+        {
+          kind: "object",
+          fields: [
+            { name: "value", types: ["number"], optional: true },
+            { name: "pressed", types: ["boolean"], optional: true },
+            { name: "released", types: ["boolean"], optional: true },
+            { name: "repeated", types: ["boolean"], optional: true },
+            { name: "x", types: ["number"], optional: true },
+            { name: "y", types: ["number"], optional: true },
+            { name: "screen_x", types: ["number"], optional: true },
+            { name: "screen_y", types: ["number"], optional: true },
+            { name: "dx", types: ["number"], optional: true },
+            { name: "dy", types: ["number"], optional: true },
+            { name: "screen_dx", types: ["number"], optional: true },
+            { name: "screen_dy", types: ["number"], optional: true },
+            { name: "gamepad", types: ["number"], optional: true },
+            { name: "gamepad_axis", types: ["vector3"], optional: true },
+            {
+              name: "touch",
+              types: ["table"],
+              optional: true,
+              isList: true,
+              fields: [
+                { name: "id", types: ["number"] },
+                { name: "pressed", types: ["boolean"] },
+                { name: "released", types: ["boolean"] },
+                { name: "tap_count", types: ["number"] },
+                { name: "x", types: ["number"] },
+                { name: "y", types: ["number"] },
+                { name: "dx", types: ["number"] },
+                { name: "dy", types: ["number"] },
+                { name: "acc_x", types: ["number"] },
+                { name: "acc_y", types: ["number"] },
+                { name: "acc_z", types: ["number"] },
+              ],
+            },
+            { name: "text", types: ["string"], optional: true },
+          ],
+        },
+      ],
+      [
+        "physics.create_joint:param:properties",
+        {
+          kind: "object",
+          fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
+        },
+      ],
+      [
+        "physics.set_joint_properties:param:properties",
+        {
+          kind: "object",
+          fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
+        },
+      ],
+      [
+        "physics.raycast:return:result",
+        {
+          kind: "array-object",
+          fields: [
+            { name: "fraction", types: ["number"] },
+            { name: "position", types: ["vector3"] },
+            { name: "normal", types: ["vector3"] },
+            { name: "id", types: ["hash"] },
+            { name: "group", types: ["hash"] },
+            { name: "request_id", types: ["number"] },
+          ],
+        },
+      ],
     ]);
     expect(MAPPING_TABLE_SLOTS.size).toBe(3);
     expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
@@ -1934,7 +2013,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
   });
 
-  test("physics raycast groups recover while raycast result remains open", () => {
+  test("physics raycast groups recover and raycast result recovers the ray_cast_response array-object", () => {
     const module = parseDefoldApiDoc(physicsDoc);
     const out = emitDeclarations({
       ...module,
@@ -1944,7 +2023,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ],
     });
     expect(out).toContain(
-      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Record<string | number, unknown> | unknown;",
+      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | unknown;",
     );
     expect(out).toContain(
       "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
@@ -2122,6 +2201,42 @@ describe("TABLE_SLOT_CURATIONS", () => {
     });
     expect(out).toContain("function clear(buffers: LuaMap<number, number | Vector4>): void;");
     expect(out).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("go.on_input and gui.on_input recover the shared InputAction object (all fields optional)", () => {
+    // The doc carries a well-formed touch input table, so `touch` is curated
+    // as a nested array-of-touch-records (each record lists id, pressed,
+    // released, tap_count, x, y, dx, dy, acc_x/y/z). The nested fields inherit
+    // the parent's `?` via inlineTableType, which is the same trade-off every
+    // object curation makes.
+    const inputAction =
+      "action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }";
+    const goModule = parseDefoldApiDoc(goDoc);
+    const goOut = emitDeclarations({
+      ...goModule,
+      functions: [requireFunction(goModule, "on_input")],
+    });
+    expect(goOut).toContain(inputAction);
+    const guiModule = parseDefoldApiDoc(guiDoc);
+    const guiOut = emitDeclarations({
+      ...guiModule,
+      functions: [requireFunction(guiModule, "on_input")],
+    });
+    expect(guiOut).toContain(inputAction);
+  });
+
+  test("physics create_joint and set_joint_properties recover the universal collide_connected field", () => {
+    const module = parseDefoldApiDoc(physicsDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "physics.create_joint"),
+        requireFunction(module, "physics.set_joint_properties"),
+      ],
+    });
+    const properties = "{ collide_connected?: boolean }";
+    expect(out).toContain(`properties: ${properties}`);
+    expect(out).toContain(`properties: ${properties}`);
   });
 });
 
