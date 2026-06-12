@@ -27,6 +27,7 @@ import {
   inlineTableType,
   MAPPING_TABLE_SLOTS,
   NESTED_FIELD_CURATIONS,
+  OVERLOAD_COVERED_SKIPS,
   parseTableFields,
   recoverCallbackSignature,
   SLOT_LEVEL_LIST_PROSE,
@@ -1650,6 +1651,17 @@ describe("recoverCallbackSignature", () => {
   test("returns null for non-callback tokens (scope boundary)", () => {
     expect(recoverCallbackSignature("node")).toBeNull();
     expect(recoverCallbackSignature("any")).toBeNull();
+  });
+});
+
+describe("OVERLOAD_COVERED_SKIPS", () => {
+  test("is exactly the four FQNs served by the hand-written go/msg overloads, in sort order", () => {
+    expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
+      "go.get",
+      "go.property",
+      "go.set",
+      "msg.post",
+    ]);
   });
 });
 

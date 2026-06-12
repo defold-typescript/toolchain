@@ -997,3 +997,66 @@ describe("record-table batch recovery 2", () => {
     expect(requireEntry(report, "test").recordTables).toBe(2);
   });
 });
+
+describe("overload-covered skip reclassification", () => {
+  test("a skip whose FQN is in OVERLOAD_COVERED_SKIPS drops to 0; an uncovered skip still counts", () => {
+    // Mirror the skipFunctions test above (line 77) but use a `go`-shaped
+    // namespace so the covered FQNs (go.get / go.set) hit OVERLOAD_COVERED_SKIPS.
+    const coveredDoc = {
+      info: { namespace: "go" },
+      elements: [
+        { type: "FUNCTION", name: "go.get", parameters: [], returnvalues: [] },
+        { type: "FUNCTION", name: "go.set", parameters: [], returnvalues: [] },
+        { type: "FUNCTION", name: "go.keep", parameters: [], returnvalues: [] },
+      ],
+    };
+    const coveredManifest: readonly ModuleManifestEntry[] = [
+      { namespace: "go", doc: coveredDoc, outFile: "go.d.ts", skipFunctions: ["get", "set"] },
+    ];
+    const coveredEntry = requireEntry(buildFidelityReport(coveredManifest), "go");
+    expect(coveredEntry.droppedMembers).toBe(0);
+    expect(coveredEntry.droppedElements).toBe(0);
+    expect(coveredEntry.recordTables).toBe(0);
+    expect(coveredEntry.optionalAsRequired).toBe(0);
+    expect(coveredEntry.unknownTokens).toEqual([]);
+
+    // Control: a skip whose FQN is NOT in OVERLOAD_COVERED_SKIPS still counts,
+    // keeping the gate honest. This re-runs the synthetic `test` manifest from
+    // the line-77 test; the 2 stays.
+    const uncoveredDoc = {
+      info: { namespace: "test" },
+      elements: [
+        { type: "FUNCTION", name: "test.get", parameters: [], returnvalues: [] },
+        { type: "FUNCTION", name: "test.set", parameters: [], returnvalues: [] },
+        { type: "FUNCTION", name: "test.keep", parameters: [], returnvalues: [] },
+      ],
+    };
+    const uncoveredManifest: readonly ModuleManifestEntry[] = [
+      { namespace: "test", doc: uncoveredDoc, outFile: "test.d.ts", skipFunctions: ["get", "set"] },
+    ];
+    const uncoveredEntry = requireEntry(buildFidelityReport(uncoveredManifest), "test");
+    expect(uncoveredEntry.droppedMembers).toBe(2);
+  });
+
+  test("go.droppedMembers 3 -> 0 and msg.droppedMembers 1 -> 0 (project-wide 4 -> 0); no other namespace or category moves", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // The four residual droppedMembers are the `go` (`get`/`set`/`property`) and
+    // `msg` (`post`) skipFunctions; each is replaced by a hand-written overload
+    // in src/{go,msg}-overloads.d.ts. OVERLOAD_COVERED_SKIPS reclassifies
+    // them out of the dropped count, so go 3 -> 0 and msg 1 -> 0. After this
+    // slice every type-fidelity category is zero across every namespace.
+    expect(requireEntry(report, "go").droppedMembers).toBe(0);
+    expect(requireEntry(report, "msg").droppedMembers).toBe(0);
+    const total = Object.values(report).reduce((sum, e) => sum + e.droppedMembers, 0);
+    expect(total).toBe(0);
+    // The committed baseline reflects the reclassified counts, so the full
+    // report equals it on every namespace and category — proving go/msg are
+    // the only moves and no other category shifted anywhere.
+    const baselineMap = baseline as Record<string, FidelityEntry>;
+    for (const [namespace, entry] of Object.entries(report)) {
+      const base = baselineMap[namespace];
+      if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
+      expect(entry).toEqual(base);
+    }
+  });
+});

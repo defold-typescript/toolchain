@@ -150,6 +150,22 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   "render.set_render_target",
 ]);
 
+// skipFunction FQNs (see `api-targets.json`'s `skipFunctions`) whose absence
+// from the generated surface is *not* a fidelity loss — each is replaced by a
+// hand-written, better-typed overload in the cited `*-overloads.d.ts`, so the
+// final surface still ships the symbol, fully typed. The audit consults this
+// set to keep the `droppedMembers` count honest; an uncovered skip (e.g. a new
+// `skipFunctions` entry with no matching overload) still counts, so the gate
+// stays a real signal. Mirrors the ARBITRARY_TABLE_SLOTS audit-honesty pattern.
+export const OVERLOAD_COVERED_SKIPS = new Set([
+  // go-overloads.d.ts supplies the typed go.get / go.set / go.property shapes.
+  "go.get",
+  "go.set",
+  "go.property",
+  // msg-overloads.d.ts supplies the typed msg.post shape.
+  "msg.post",
+]);
+
 // Element names whose `table` slot is a prose-only `a table mapping X to Y`
 // shape the field-list parser cannot read, but whose key/value a human curated
 // from the doc. Emitted as `LuaMap<K, V>` because the key is a branded `Hash`,

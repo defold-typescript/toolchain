@@ -60,7 +60,7 @@
     "unknownTokens": [],
     "recordTables": 0,
     "multiReturn": 0,
-    "droppedMembers": 3,
+    "droppedMembers": 0,
     "optionalAsRequired": 0
   },
   "graphics": {
@@ -156,7 +156,7 @@
     "unknownTokens": [],
     "recordTables": 0,
     "multiReturn": 0,
-    "droppedMembers": 1,
+    "droppedMembers": 0,
     "optionalAsRequired": 0
   },
   "particlefx": {

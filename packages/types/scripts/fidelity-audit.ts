@@ -7,6 +7,7 @@ import {
   HOMOGENEOUS_ARRAY_SLOTS,
   MAPPING_TABLE_SLOTS,
   type NestedMapping,
+  OVERLOAD_COVERED_SKIPS,
   parseTableFields,
   recoverCallbackSignature,
   TABLE_SLOT_CURATIONS,
@@ -355,8 +356,9 @@ function auditEntry(
     unknownTokens: [...unknown].sort(),
     recordTables,
     multiReturn,
-    droppedMembers: generateModuleDeclaration(entry, { knownConstantFqns: NO_KNOWN_CONSTANTS })
-      .dropped.length,
+    droppedMembers: generateModuleDeclaration(entry, {
+      knownConstantFqns: NO_KNOWN_CONSTANTS,
+    }).dropped.filter((name) => !OVERLOAD_COVERED_SKIPS.has(name)).length,
     optionalAsRequired,
   };
 }
