@@ -176,4 +176,34 @@ describe("docs/guide scaffold", () => {
     const body = await readGuide("README.md");
     expect(body).toContain("transpile-diagnostics.md");
   });
+
+  test("docs/guide/extensions.md exists", async () => {
+    const f = Bun.file(resolve(GUIDE, "extensions.md"));
+    expect(await f.exists()).toBe(true);
+  });
+
+  test("docs/guide/extensions.md documents the resolve verb", async () => {
+    const body = await readGuide("extensions.md");
+    expect(body).toContain("defold-typescript resolve");
+  });
+
+  test("docs/guide/extensions.md documents declaring a dependency", async () => {
+    const body = await readGuide("extensions.md");
+    expect(body).toContain("[dependencies]");
+  });
+
+  test("docs/guide/extensions.md notes the asset-only case", async () => {
+    const body = await readGuide("extensions.md");
+    expect(body).toContain("asset-only");
+  });
+
+  test("docs/guide/extensions.md names the cache override env var", async () => {
+    const body = await readGuide("extensions.md");
+    expect(body).toContain("DEFOLD_TYPESCRIPT_CACHE");
+  });
+
+  test("docs/guide/README.md links the extensions page", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("](./extensions.md)");
+  });
 });
