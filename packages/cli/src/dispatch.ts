@@ -10,6 +10,7 @@ import {
 } from "./bob-command";
 import { runBuild } from "./build";
 import { readCliVersion } from "./cli-version";
+import { type DefoldChannel, readDefoldChannelPin, resolveDefoldChannel } from "./defold-channel";
 import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { runInit } from "./init";
@@ -133,6 +134,18 @@ function readProjectPin(cwd: string): string | undefined {
   }
 }
 
+function readProjectChannelPin(cwd: string): DefoldChannel | undefined {
+  const pkgPath = path.join(cwd, "package.json");
+  if (!existsSync(pkgPath)) {
+    return undefined;
+  }
+  try {
+    return readDefoldChannelPin(JSON.parse(readFileSync(pkgPath, "utf8")));
+  } catch {
+    return undefined;
+  }
+}
+
 export function dispatch(
   argv: string[],
   io: DispatchIo,
@@ -157,10 +170,11 @@ export function dispatch(
   const { flag: defoldVersionFlag, rest: afterVersionArgs } = parseDefoldVersionFlag(argv);
   const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterVersionArgs);
   const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
-  const { value: buildServerFlag, rest: nonFlagArgs } = parseValueFlag(
+  const { value: buildServerFlag, rest: afterBuildServerArgs } = parseValueFlag(
     afterJavaArgs,
     "build-server",
   );
+  const { value: channelFlag, rest: nonFlagArgs } = parseValueFlag(afterBuildServerArgs, "channel");
   const positional = nonFlagArgs.filter(
     (a) =>
       a !== "--json" &&
@@ -177,6 +191,11 @@ export function dispatch(
     ...(defoldVersionFlag !== undefined ? { flag: defoldVersionFlag } : {}),
     ...(pin !== undefined ? { pin } : {}),
   }).version;
+  const channelPin = readProjectChannelPin(cwd);
+  const resolvedChannel = resolveDefoldChannel({
+    ...(channelFlag !== undefined ? { flag: channelFlag } : {}),
+    ...(channelPin !== undefined ? { pin: channelPin } : {}),
+  }).channel;
   const surface = selectApiSurface(resolvedVersion);
   const apiSurface = surface.surfaceId;
 
@@ -189,6 +208,7 @@ export function dispatch(
             command: "init",
             written,
             defoldVersion: resolvedVersion,
+            defoldChannel: resolvedChannel,
             apiSurface,
             installCommand: installHint(),
           }),
@@ -270,6 +290,7 @@ export function dispatch(
             command: "build",
             written,
             defoldVersion: resolvedVersion,
+            defoldChannel: resolvedChannel,
             apiSurface,
             materializedSurface: materializedDir,
           }),

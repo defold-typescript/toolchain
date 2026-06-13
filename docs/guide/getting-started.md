@@ -145,8 +145,8 @@ bunx @defold-typescript/cli build --json
 ```
 
 A failure flips `ok` to `false` and carries an `error` string instead of
-`written`. Optional fields (`defoldVersion`, `apiSurface`, `materializedSurface`,
-…) appear only when they apply.
+`written`. Optional fields (`defoldVersion`, `defoldChannel`, `apiSurface`,
+`materializedSurface`, …) appear only when they apply.
 
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads

@@ -387,6 +387,69 @@ describe("dispatch", () => {
     expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
   });
 
+  test("build --json reports the package.json channel pin as defoldChannel", () => {
+    scaffoldBuildProject({ "defold-typescript": { channel: "beta" } });
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["build", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldChannel: string };
+    expect(parsed.defoldChannel).toBe("beta");
+  });
+
+  test("build --channel overrides the pin", () => {
+    scaffoldBuildProject({ "defold-typescript": { channel: "beta" } });
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["build", cwd, "--channel", "alpha", "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldChannel: string };
+    expect(parsed.defoldChannel).toBe("alpha");
+  });
+
+  test("build --json with no channel reports stable", () => {
+    scaffoldBuildProject();
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["build", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldChannel: string };
+    expect(parsed.defoldChannel).toBe("stable");
+  });
+
+  test("build --json with no channel still reports defoldVersion alongside defoldChannel", () => {
+    scaffoldBuildProject();
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["build", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldChannel: string };
+    expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
+    expect(parsed.defoldChannel).toBe("stable");
+  });
+
+  test("init --json reports the default stable channel without seeding it", () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["init", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldChannel: string };
+    expect(parsed.defoldChannel).toBe("stable");
+    const pkgPath = path.join(cwd, "package.json");
+    if (existsSync(pkgPath)) {
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+        "defold-typescript"?: Record<string, unknown>;
+      };
+      expect(pkg["defold-typescript"]?.channel).toBeUndefined();
+    }
+  });
+
   test("init --json reports the seeded current-stable defoldVersion", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();

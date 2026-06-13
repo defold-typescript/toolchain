@@ -139,6 +139,7 @@ context fields:
   "ok": true,
   "written": ["build/<script>.lua", "..."],
   "defoldVersion": "<version>",
+  "defoldChannel": "<stable | beta | alpha>",
   "apiSurface": "<surface id>",
   "materializedSurface": "<path | null>"
 }
@@ -152,7 +153,9 @@ On failure:
 
 **Reading `ok`:** if `ok` is `true`, the script transpiled — read `written` for
 the emitted `.lua` path to add as a `.script` component in the editor;
-`defoldVersion` and `apiSurface` record which API surface it was built against.
+`defoldVersion` and `apiSurface` record which API surface it was built against;
+`defoldChannel` records the resolved release channel (`stable` unless pinned or
+passed via `--channel`; it does not yet change which surface is fetched).
 If `ok` is `false`, the build failed — surface `error` and follow
 [Fix the Lua output](#fix-the-lua-output).
 
