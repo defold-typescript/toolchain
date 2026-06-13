@@ -91,7 +91,7 @@ The launcher prefers the native-extension build engine at `build/<platform>/dmen
 
 ### Windows: OpenAL DLLs
 
-Native-extension builds on Windows need `OpenAL32.dll` and `wrap_oal.dll` next to the build engine. Set the two path constants at the top of `.vscode/defold-debug.ts` to the DLLs from your Defold SDK (`defoldsdk/ext/lib/x86_64-win32/`); the launcher copies them into the build folder when they are missing. Leave the constants empty on macOS and Linux.
+Native-extension builds on Windows need `OpenAL32.dll` and `wrap_oal.dll` placed by hand next to the build engine (in `build/x86_64-win32/`). The Defold build server does not ship these runtime DLLs and no Defold-hosted archive serves them, so the launcher cannot fetch them; the copy fix is tracked upstream at [defold/defold#11860](https://github.com/defold/defold/issues/11860). When they are missing on a Windows build-engine run the launcher prints a one-line reminder and continues. macOS and Linux resolve OpenAL from the system and need nothing placed.
 
 ### Building from the editor instead
 

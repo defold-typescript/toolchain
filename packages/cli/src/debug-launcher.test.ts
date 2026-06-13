@@ -5,6 +5,7 @@ import {
   DEBUG_LAUNCHER_SOURCE,
   debugLaunchConfig,
   engineDownloadUrl,
+  openalDownloadUrl,
   resolveEnginePath,
   targetPlatform,
   VSCODE_LAUNCH_CONTENT,
@@ -16,6 +17,7 @@ describe("targetPlatform", () => {
       enginePlatform: "arm64-macos",
       buildFolder: "arm64-macos",
       executable: "dmengine",
+      openalLibraries: [],
     });
   });
 
@@ -24,6 +26,7 @@ describe("targetPlatform", () => {
       enginePlatform: "x86_64-macos",
       buildFolder: "x86_64-macos",
       executable: "dmengine",
+      openalLibraries: [],
     });
   });
 
@@ -32,6 +35,7 @@ describe("targetPlatform", () => {
       enginePlatform: "x86_64-linux",
       buildFolder: "x86_64-linux",
       executable: "dmengine",
+      openalLibraries: [],
     });
   });
 
@@ -40,6 +44,7 @@ describe("targetPlatform", () => {
       enginePlatform: "x86_64-win32",
       buildFolder: "x86_64-win32",
       executable: "dmengine.exe",
+      openalLibraries: ["OpenAL32.dll", "wrap_oal.dll"],
     });
   });
 
@@ -59,6 +64,29 @@ describe("engineDownloadUrl", () => {
     );
     expect(engineDownloadUrl("def456", "x86_64-win32", "dmengine.exe")).toBe(
       "https://d.defold.com/archive/stable/def456/engine/x86_64-win32/dmengine.exe",
+    );
+  });
+});
+
+describe("openalLibraries", () => {
+  test("win32 lists exactly the two OpenAL runtime DLLs", () => {
+    expect(targetPlatform("win32", "x64").openalLibraries).toEqual([
+      "OpenAL32.dll",
+      "wrap_oal.dll",
+    ]);
+  });
+
+  test("macOS and linux resolve OpenAL from the system (empty list)", () => {
+    expect(targetPlatform("darwin", "arm64").openalLibraries).toEqual([]);
+    expect(targetPlatform("darwin", "x64").openalLibraries).toEqual([]);
+    expect(targetPlatform("linux", "x64").openalLibraries).toEqual([]);
+  });
+});
+
+describe("openalDownloadUrl", () => {
+  test("builds the archive URL with the same base and shape as engineDownloadUrl", () => {
+    expect(openalDownloadUrl("abc123", "x86_64-win32", "OpenAL32.dll")).toBe(
+      "https://d.defold.com/archive/stable/abc123/engine/x86_64-win32/OpenAL32.dll",
     );
   });
 });
@@ -128,5 +156,19 @@ describe("debugLaunchConfig / scaffolded artifacts", () => {
       expect(DEBUG_LAUNCHER_SOURCE).toContain(enginePlatform);
       expect(DEBUG_LAUNCHER_SOURCE).toContain(buildFolder);
     }
+  });
+
+  test("the launcher no longer carries the no-op manual OpenAL copy block", () => {
+    expect(DEBUG_LAUNCHER_SOURCE).not.toContain("WINDOWS_OPENAL32_PATH");
+    expect(DEBUG_LAUNCHER_SOURCE).not.toContain("WINDOWS_WRAPOAL_PATH");
+    expect(DEBUG_LAUNCHER_SOURCE).not.toMatch(/copyFileSync\([^)]*OpenAL/i);
+    expect(DEBUG_LAUNCHER_SOURCE).not.toMatch(/copyFileSync\([^)]*wrap_oal/i);
+  });
+
+  test("the launcher warns and continues on the Windows build-engine OpenAL gap", () => {
+    expect(DEBUG_LAUNCHER_SOURCE).toContain("openalLibraries");
+    expect(DEBUG_LAUNCHER_SOURCE).toMatch(/OpenAL32\.dll/);
+    expect(DEBUG_LAUNCHER_SOURCE).toMatch(/by hand|manually|place/i);
+    expect(DEBUG_LAUNCHER_SOURCE).toContain("defold/defold#11860");
   });
 });
