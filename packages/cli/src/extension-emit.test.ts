@@ -63,6 +63,87 @@ const CONSTANTS_ONLY = `
     desc: the beta constant
 `;
 
+const HANDLES = `
+- name: handles
+  type: table
+  desc: An extension exposing engine handle types.
+  members:
+  - name: get_node
+    type: function
+    desc: Returns a gui node handle.
+    parameters:
+      - name: self
+        type: object
+        desc: the script self
+    returns:
+      - name: n
+        type: node
+        desc: a gui node
+  - name: fill
+    type: function
+    desc: Fills a buffer handle.
+    parameters:
+      - name: self
+        type: object
+        desc: the script self
+      - name: buf
+        type: buffer
+        desc: the buffer to fill
+  - name: get_texture
+    type: function
+    desc: Returns a texture handle.
+    parameters:
+      - name: self
+        type: object
+        desc: the script self
+    returns:
+      - name: t
+        type: texture
+        desc: a texture
+  - name: get_custom
+    type: function
+    desc: Returns a non-engine token.
+    parameters:
+      - name: self
+        type: object
+        desc: the script self
+    returns:
+      - name: c
+        type: somecustomhandle
+        desc: a token no brand maps
+`;
+
+describe("extension handle-type brands", () => {
+  test('a function returning type: node emits Opaque<"node">', async () => {
+    const { contents } = await emitExtensionDeclaration(HANDLES);
+    expect(contents).toContain(': Opaque<"node">');
+  });
+
+  test('a function parameter of type: buffer emits Opaque<"buffer">', async () => {
+    const { contents } = await emitExtensionDeclaration(HANDLES);
+    expect(contents).toContain('Opaque<"buffer">');
+  });
+
+  test("a type: texture token emits a third distinct brand from the shared map", async () => {
+    const { contents } = await emitExtensionDeclaration(HANDLES);
+    expect(contents).toContain('Opaque<"texture">');
+  });
+
+  test("imports the Opaque brand exactly once", async () => {
+    const { contents } = await emitExtensionDeclaration(HANDLES);
+    const occurrences =
+      contents.split('import type { Opaque } from "../src/core-types";').length - 1;
+    expect(occurrences).toBe(1);
+  });
+
+  test("a genuinely non-engine token degrades to unknown, not a fabricated brand", async () => {
+    const { contents } = await emitExtensionDeclaration(HANDLES);
+    expect(contents).toContain("function get_custom(): unknown;");
+    expect(contents).not.toContain("somecustomhandle");
+    expect(contents).not.toContain('Opaque<"somecustomhandle">');
+  });
+});
+
 describe("emitExtensionDeclaration", () => {
   test("reads the namespace from the doc and emits an ambient namespace declaration", async () => {
     const result = await emitExtensionDeclaration(PRIMARY);
