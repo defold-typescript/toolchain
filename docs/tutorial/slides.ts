@@ -310,4 +310,63 @@ export const slides: Slide[] = [
       { kind: "snippet", file: "09-full-player.ts_", caption: "src/player.ts" },
     ],
   },
+  {
+    id: "debugging",
+    title: "Debugging",
+    elements: [
+      {
+        kind: "paragraph",
+        text: "You can step through the `.ts` source with breakpoints even though Defold runs the transpiled Lua — every build emits a source map the [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) reads. Run `setup-debug` once to wire the `lldebugger.start()` bootstrap into your entry script and write the `.vscode` launch config, then drive a session from a stock engine through the Bun launcher — no editor required.",
+      },
+      {
+        kind: "bullets",
+        items: [
+          "`bunx @defold-typescript/cli defold setup-debug` (wire the debug bootstrap + `.vscode` config, once per project)",
+          "`bunx @defold-typescript/cli build` (or keep `watch` running) so the `.ts.script.map` files are current",
+          "`bunx @defold-typescript/cli defold build` so `build/default/game.projectc` exists",
+          "In VS Code, pick **Defold: Debug (TypeScript)** and press F5 — set breakpoints in your `.ts` files",
+        ],
+      },
+      {
+        kind: "sidenote",
+        text: "Full walkthrough — `setup-debug`, the source-map wiring, and the Windows OpenAL step — in [docs/guide/debugging.md](https://github.com/defold-typescript/toolchain/blob/main/docs/guide/debugging.md).",
+      },
+    ],
+  },
+  {
+    id: "headless-builds",
+    title: "Headless Builds",
+    elements: [
+      {
+        kind: "paragraph",
+        text: "On CI, or any time you want to build without opening the editor, drive Defold's headless `bob` tool through the `defold` subcommand. The first run downloads a version-matched `bob.jar` into a cache dir and reuses it afterward; `bob` needs a JVM on your `PATH`. The exit code propagates, so a failed build fails the command.",
+      },
+      {
+        kind: "bullets",
+        items: [
+          "`bunx @defold-typescript/cli defold resolve` (fetch library dependencies)",
+          "`bunx @defold-typescript/cli defold build` (debug build into `build/default`)",
+          "`bunx @defold-typescript/cli defold bundle` (bundle a platform target)",
+        ],
+      },
+      {
+        kind: "sidenote",
+        text: "JVM, cache, and `--build-server` details in the [Headless builds section of the getting-started guide](https://github.com/defold-typescript/toolchain/blob/main/docs/guide/getting-started.md#headless-builds-no-editor).",
+      },
+    ],
+  },
+  {
+    id: "deployment",
+    title: "Deployment",
+    elements: [
+      {
+        kind: "paragraph",
+        text: "When the game is ready to ship, `defold bundle` turns the same TypeScript-authored project into a distributable for your chosen platform target — the transpiled Lua, assets, and a platform-matched engine, packaged headlessly. The build loop above runs unchanged from a CI job, so a tagged release can produce its bundle without a human ever opening the editor.",
+      },
+      {
+        kind: "sidenote",
+        text: "Bundle targets and the `bob` toolchain are documented in the [Headless builds section of the getting-started guide](https://github.com/defold-typescript/toolchain/blob/main/docs/guide/getting-started.md#headless-builds-no-editor).",
+      },
+    ],
+  },
 ];
