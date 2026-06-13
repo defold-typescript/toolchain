@@ -1247,6 +1247,85 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
     rmSync(cacheDir, { recursive: true, force: true });
   });
+
+  test("watch builds resolveSurface without injected resolveInternals and emits a --json resolve line on game.project change", async () => {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    const srcDir = path.join(cwd, "src");
+    mkdirSync(srcDir, { recursive: true });
+    writeFileSync(path.join(srcDir, "main.ts"), "export const a = 1;\n");
+    writeFileSync(path.join(cwd, "main.script"), "");
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+
+    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    writeFileSync(path.join(sourceGeneratedDir, "label.d.ts"), `declare const __label: unknown;\n`);
+
+    const { io, out, err } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const main: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    let handle: RunWatchHandle | undefined;
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      // No `resolveInternals` — production wiring must still build the
+      // resolveSurface closure and run it on a game.project change.
+      onWatchStart: (h) => {
+        handle = h;
+      },
+    });
+
+    await handle?.waitForIdle();
+
+    triggerMain?.("change", "game.project");
+    await handle?.waitForIdle();
+
+    const lines = out()
+      .split("\n")
+      .filter((l) => l.length > 0);
+    const resolveLines = lines.filter((l) => {
+      try {
+        return (JSON.parse(l) as { command?: string }).command === "resolve";
+      } catch {
+        return false;
+      }
+    });
+    expect(resolveLines).toHaveLength(1);
+    const parsed = JSON.parse(resolveLines[0] as string) as {
+      command: string;
+      ok: boolean;
+      written: string[];
+      materializedSurface: string | null;
+      extensions: unknown[];
+    };
+    expect(parsed).toEqual({
+      command: "resolve",
+      ok: true,
+      written: [],
+      materializedSurface: null,
+      extensions: [],
+    });
+
+    const extDir = path.join(cwd, ".defold-types", "extensions");
+    expect(existsSync(extDir)).toBe(false);
+    expect(err()).toBe("");
+
+    handle?.stop();
+    const code = await result;
+    expect(code).toBe(0);
+
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
 });
 
 describe("dispatch wall command", () => {

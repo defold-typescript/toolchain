@@ -386,33 +386,31 @@ export function dispatch(
         ? internals.componentWatcherFactory
         : recursiveWatcherFactory;
       const resolveSeams = internals?.resolveInternals;
-      if (resolveSeams) {
-        resolveSurface = async (): Promise<void> => {
-          const result = await runResolve({
-            cwd,
-            ...(resolveSeams.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
-            ...(resolveSeams.download ? { download: resolveSeams.download } : {}),
-            ...(resolveSeams.readZip ? { readZip: resolveSeams.readZip } : {}),
-          });
-          if (json) {
-            io.stdout.write(
-              renderResult(
-                result.ok
-                  ? {
-                      command: "resolve",
-                      materializedSurface: result.materializedSurface,
-                      extensions: result.extensions,
-                    }
-                  : { command: "resolve", error: result.error ?? "resolve failed" },
-              ),
-            );
-          } else if (!result.ok) {
-            io.stderr.write(`${result.error ?? "resolve failed"}\n`);
-          } else if (result.materializedSurface !== null) {
-            io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
-          }
-        };
-      }
+      resolveSurface = async (): Promise<void> => {
+        const result = await runResolve({
+          cwd,
+          ...(resolveSeams?.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
+          ...(resolveSeams?.download ? { download: resolveSeams.download } : {}),
+          ...(resolveSeams?.readZip ? { readZip: resolveSeams.readZip } : {}),
+        });
+        if (json) {
+          io.stdout.write(
+            renderResult(
+              result.ok
+                ? {
+                    command: "resolve",
+                    materializedSurface: result.materializedSurface,
+                    extensions: result.extensions,
+                  }
+                : { command: "resolve", error: result.error ?? "resolve failed" },
+            ),
+          );
+        } else if (!result.ok) {
+          io.stderr.write(`${result.error ?? "resolve failed"}\n`);
+        } else if (result.materializedSurface !== null) {
+          io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
+        }
+      };
     }
 
     const launchWatch = (): Promise<number> => {
