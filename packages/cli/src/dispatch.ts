@@ -14,6 +14,7 @@ import { type DefoldChannel, readDefoldChannelPin, resolveDefoldChannel } from "
 import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { runInit } from "./init";
+import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
 import { detectInstalledEditorVersion } from "./installed-editor-version";
 import { renderResult } from "./json-output";
@@ -70,7 +71,7 @@ export interface DispatchInternals {
 }
 
 const USAGE =
-  "Usage: defold-typescript <init|build|watch|wall|setup-debug|resolve|defold> [path]\n";
+  "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|defold> [path]\n";
 const DEFOLD_USAGE = "Usage: defold-typescript defold <resolve|build|bundle> [path]\n";
 
 function parseDefoldVersionFlag(argv: string[]): { flag: string | undefined; rest: string[] } {
@@ -252,6 +253,28 @@ export function dispatch(
       const message = err instanceof Error ? err.message : String(err);
       if (json) {
         io.stdout.write(renderResult({ command: "init", error: message }));
+      } else {
+        io.stderr.write(`${message}\n`);
+      }
+      return 1;
+    }
+  }
+
+  if (command === "init-agents") {
+    try {
+      const { written } = runInitAgents({ cwd });
+      if (json) {
+        io.stdout.write(renderResult({ command: "init-agents", written }));
+      } else {
+        io.stdout.write(
+          `defold-typescript init-agents: wrote ${written.length} files: ${written.join(", ")}\n`,
+        );
+      }
+      return 0;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (json) {
+        io.stdout.write(renderResult({ command: "init-agents", error: message }));
       } else {
         io.stderr.write(`${message}\n`);
       }

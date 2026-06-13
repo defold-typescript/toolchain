@@ -194,6 +194,29 @@ describe("dispatch", () => {
     expect(out()).not.toContain("main/main.script");
   });
 
+  test("init-agents writes both files and returns 0", () => {
+    const { io, err } = captureStreams();
+
+    const code = dispatch(["init-agents", cwd], io);
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+    expect(existsSync(path.join(cwd, "AGENTS.md"))).toBe(true);
+    expect(existsSync(path.join(cwd, "CLAUDE.md"))).toBe(true);
+  });
+
+  test("init-agents --json emits the written envelope", () => {
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["init-agents", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { command: string; ok: boolean; written: string[] };
+    expect(parsed.command).toBe("init-agents");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.written).toEqual(["AGENTS.md", "CLAUDE.md"]);
+  });
+
   test("empty argv prints usage to stderr and returns 1", () => {
     const { io, out, err } = captureStreams();
 
@@ -202,7 +225,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|build|watch|wall|setup-debug|resolve|defold> [path]\n",
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|defold> [path]\n",
     );
   });
 
@@ -214,7 +237,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|build|watch|wall|setup-debug|resolve|defold> [path]\n",
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|defold> [path]\n",
     );
   });
 

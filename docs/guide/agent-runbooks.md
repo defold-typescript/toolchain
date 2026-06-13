@@ -61,6 +61,43 @@ On failure:
 every file created or modified — use it to know what to open next. If `ok` is
 `false`, stop and surface `error`; nothing was scaffolded.
 
+## Install the agent contract
+
+**Goal:** drop an agent contract at the project root so any harness (or human)
+opening the repo finds the conventions and a pointer to the installed guide.
+
+**Command:**
+
+```sh
+bunx @defold-typescript/cli@latest init-agents --json
+```
+
+This writes two files. `AGENTS.md` carries a managed block delimited by HTML
+comment markers; `CLAUDE.md` is the single line `@AGENTS.md`, re-exporting it.
+Only the content **between** the markers is ever rewritten, so any notes you add
+above or below the block survive re-runs untouched. If `AGENTS.md` already exists
+without the markers, the block is appended after one blank line and your prior
+content is left intact; a `CLAUDE.md` that already equals `@AGENTS.md` is left
+byte-for-byte unchanged. The block is versionless — its guide pointer resolves to
+`node_modules/@defold-typescript/cli/docs/guide/README.md`, which the install
+swaps under the same path — so the verb is safe to re-run any time.
+
+**Returns:**
+
+```json
+{ "command": "init-agents", "ok": true, "written": ["AGENTS.md", "CLAUDE.md"] }
+```
+
+On failure:
+
+```json
+{ "command": "init-agents", "ok": false, "error": "<message>" }
+```
+
+**Reading `ok`:** if `ok` is `true`, `written` lists the files touched in order;
+a re-run that changes nothing omits the untouched file. If `ok` is `false`, stop
+and surface `error`; nothing was written.
+
 ## Regenerate extension types
 
 **Goal:** refresh the ambient TypeScript surface for native extensions after a

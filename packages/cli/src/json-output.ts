@@ -1,4 +1,11 @@
-export type CliCommand = "init" | "build" | "setup-debug" | "defold" | "wall" | "resolve";
+export type CliCommand =
+  | "init"
+  | "init-agents"
+  | "build"
+  | "setup-debug"
+  | "defold"
+  | "wall"
+  | "resolve";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;
