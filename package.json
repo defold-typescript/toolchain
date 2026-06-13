@@ -17,6 +17,7 @@
     "typecheck": "bun run --filter '*' typecheck",
     "smoke": "bun scripts/release-smoke.ts",
     "registry-smoke": "bun scripts/registry-smoke.ts",
+    "pack-proof": "bun scripts/release-pack-proof.ts",
     "example-smoke": "bun scripts/example-smoke.ts",
     "build:lldebugger": "bun scripts/build-lldebugger-zip.ts",
     "ref-doc-delta": "bun --cwd packages/types run ref-doc-delta"
