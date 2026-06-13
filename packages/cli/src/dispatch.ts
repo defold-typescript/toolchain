@@ -15,6 +15,7 @@ import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { runInit } from "./init";
 import { installHint } from "./install-reminder";
+import { detectInstalledEditorVersion } from "./installed-editor-version";
 import { renderResult } from "./json-output";
 import {
   ensureMaterializedReference,
@@ -55,6 +56,12 @@ export interface DispatchInternals {
     readonly readZip?: ReadExtensionZip;
     readonly cacheDir?: string;
   };
+  // Reads the installed Defold editor's `config` and returns its `version` key,
+  // or null when no installed editor is detected. The default is the live
+  // filesystem probe; tests inject a fixed value to keep the dispatch path
+  // deterministic. Detection is the lowest-precedence Defold version source
+  // (below the package.json pin, above the hardcoded default).
+  readonly detectEditorVersion?: () => string | null;
   // `wall` takes its target directories as positionals (not a cwd path arg like
   // the other commands), so tests inject the project root and TTY state here.
   readonly cwd?: string;
@@ -189,10 +196,20 @@ export function dispatch(
   const cwd = rest[0] ? path.resolve(rest[0]) : process.cwd();
 
   const pin = readProjectPin(cwd);
-  const resolvedVersion = resolveDefoldVersion({
+  let detected: string | undefined;
+  if (defoldVersionFlag === undefined && pin === undefined) {
+    const result = (internals?.detectEditorVersion ?? detectInstalledEditorVersion)();
+    if (result !== null) {
+      detected = result;
+    }
+  }
+  const resolved = resolveDefoldVersion({
     ...(defoldVersionFlag !== undefined ? { flag: defoldVersionFlag } : {}),
     ...(pin !== undefined ? { pin } : {}),
-  }).version;
+    ...(detected !== undefined ? { detected } : {}),
+  });
+  const resolvedVersion = resolved.version;
+  const resolvedVersionSource = resolved.source;
   const channelPin = readProjectChannelPin(cwd);
   const resolvedChannel = resolveDefoldChannel({
     ...(channelFlag !== undefined ? { flag: channelFlag } : {}),
@@ -216,6 +233,7 @@ export function dispatch(
             command: "init",
             written,
             defoldVersion: resolvedVersion,
+            defoldVersionSource: resolvedVersionSource,
             defoldChannel: resolvedChannel,
             apiSurface,
             installCommand: installHint(),
@@ -298,6 +316,7 @@ export function dispatch(
             command: "build",
             written,
             defoldVersion: resolvedVersion,
+            defoldVersionSource: resolvedVersionSource,
             defoldChannel: resolvedChannel,
             apiSurface,
             materializedSurface: materializedDir,

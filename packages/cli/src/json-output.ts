@@ -16,6 +16,7 @@ export interface RenderResultInput {
   readonly written?: readonly string[];
   readonly error?: string;
   readonly defoldVersion?: string;
+  readonly defoldVersionSource?: string;
   readonly defoldChannel?: string;
   readonly apiSurface?: string | null;
   readonly materializedSurface?: string | null;
@@ -39,8 +40,14 @@ export function renderResult(input: RenderResultInput): string {
     : { command: input.command, ok, error: input.error };
   const withVersion =
     input.defoldVersion === undefined ? base : { ...base, defoldVersion: input.defoldVersion };
+  const withVersionSource =
+    "defoldVersionSource" in input
+      ? { ...withVersion, defoldVersionSource: input.defoldVersionSource }
+      : withVersion;
   const withChannel =
-    "defoldChannel" in input ? { ...withVersion, defoldChannel: input.defoldChannel } : withVersion;
+    "defoldChannel" in input
+      ? { ...withVersionSource, defoldChannel: input.defoldChannel }
+      : withVersionSource;
   const withSurface =
     "apiSurface" in input ? { ...withChannel, apiSurface: input.apiSurface } : withChannel;
   const withMaterialized =

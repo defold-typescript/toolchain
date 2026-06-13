@@ -277,3 +277,32 @@ describe("docs/guide/pinning-defold-version.md release-channel section", () => {
     expect(body).toContain("experimental");
   });
 });
+
+describe("docs/guide/pinning-defold-version.md installed-editor detection tier", () => {
+  test("names the installed-editor detection as a pin-tier between pin and default", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("installed Defold editor");
+    // Precedence chain has four tiers, with detection the lowest-precedence
+    // fallback.
+    expect(body).toMatch(/1\..*--defold-version/);
+    expect(body).toMatch(/2\..*`package\.json` pin/);
+    expect(body).toMatch(/3\..*installed Defold editor/);
+    expect(body).toMatch(/4\..*current-stable default/);
+  });
+
+  test("names the per-OS candidate paths the probe checks", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("Defold.app/Contents/Resources/config");
+    expect(body).toContain("~/Defold/config");
+    expect(body).toContain("%LOCALAPPDATA%");
+  });
+
+  test("reports defoldVersionSource in --json with the four source values", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("defoldVersionSource");
+    expect(body).toContain("`flag`");
+    expect(body).toContain("`pin`");
+    expect(body).toContain("`detected`");
+    expect(body).toContain("`default`");
+  });
+});

@@ -28,6 +28,24 @@ describe("resolveDefoldVersion", () => {
       source: "default",
     });
   });
+
+  test("detected wins over default but loses to pin", () => {
+    expect(resolveDefoldVersion({ detected: "1.9.8" })).toEqual({
+      version: "1.9.8",
+      source: "detected",
+    });
+    expect(resolveDefoldVersion({ pin: "1.10.0", detected: "1.9.8" })).toEqual({
+      version: "1.10.0",
+      source: "pin",
+    });
+  });
+
+  test("flag still wins over detected", () => {
+    expect(resolveDefoldVersion({ flag: "1.11.0", detected: "1.9.8" })).toEqual({
+      version: "1.11.0",
+      source: "flag",
+    });
+  });
 });
 
 describe("readDefoldVersionPin", () => {

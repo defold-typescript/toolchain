@@ -476,6 +476,66 @@ describe("dispatch", () => {
     expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
   });
 
+  test("build --json with no pin reports the installed-editor detection when no flag/pin", async () => {
+    scaffoldBuildProject();
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      detectEditorVersion: () => "1.9.8",
+      resolveOpts,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldVersionSource: string };
+    expect(parsed.defoldVersion).toBe("1.9.8");
+    expect(parsed.defoldVersionSource).toBe("detected");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("init --json with no pin reports the installed-editor detection when no flag/pin", () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["init", cwd, "--json"], io, {
+      detectEditorVersion: () => "1.9.8",
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldVersionSource: string };
+    expect(parsed.defoldVersion).toBe("1.9.8");
+    expect(parsed.defoldVersionSource).toBe("detected");
+  });
+
+  test("build --defold-version overrides the installed-editor detection (source: flag)", () => {
+    scaffoldBuildProject();
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["build", cwd, "--defold-version", "1.11.0", "--json"], io, {
+      detectEditorVersion: () => "1.9.8",
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldVersionSource: string };
+    expect(parsed.defoldVersion).toBe("1.11.0");
+    expect(parsed.defoldVersionSource).toBe("flag");
+  });
+
+  test("build --json with no pin and no detection reports source: default", () => {
+    scaffoldBuildProject();
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["build", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldVersionSource: string };
+    expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
+    expect(parsed.defoldVersionSource).toBe("default");
+  });
+
   test("build --json with no pin reports apiSurface defold-1.12.4", () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();

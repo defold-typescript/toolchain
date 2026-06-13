@@ -61,14 +61,30 @@ The active version resolves with this precedence:
 
 1. `--defold-version <version>` on the command line (highest),
 2. the `package.json` pin,
-3. the current-stable default.
+3. the **installed Defold editor's `version`** (lowest-precedence fallback),
+4. the current-stable default.
+
+The installed-editor detection reads the editor bundle's `config` file from
+its conventional per-OS location (for example
+`/Applications/Defold.app/Contents/Resources/config` on macOS,
+`~/Defold/config` on Linux, `%LOCALAPPDATA%\Defold\config` or
+`%PROGRAMFILES%\Defold\config` on Windows), parses the `version = ...` line,
+and uses that value when no flag or pin is present. The first candidate that
+parses wins, and an unknown platform — or no editor installed — reports
+`detected: null` and falls through to the current-stable default. The exact
+bundle paths are pinned for live verification against a real install; the
+probe mechanics (per-OS candidate order, parse, hit/miss) are unit-tested
+synthetically and the production reader is an injectable seam.
 
 The resolved version is reported in `--json` output as `defoldVersion`, and the
 surface it maps to is reported alongside it as `apiSurface`. The current-stable
 version maps to the default surface (`apiSurface: "defold-1.12.4"`); a version with a
 registered reference-doc target maps to `apiSurface: "defold-<version>"` (for
 example `defold-1.9.8`); a version with no matching target reports
-`apiSurface: null`.
+`apiSurface: null`. The source that resolved the version is reported as
+`defoldVersionSource` (`flag` / `pin` / `detected` / `default`), so an agent
+script can tell whether the version came from the command line, the
+`package.json` pin, the installed editor, or the hardcoded default.
 
 ## Materializing the pinned surface
 
