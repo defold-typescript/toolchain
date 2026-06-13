@@ -18,7 +18,7 @@ End-user documentation for `defold-typescript`: how to scaffold a project, write
 - [API docs vs. ts-defold-types](./api-docs-vs-ts-defold.md) — how the emitted JSDoc compares with the incumbent type package: where it is strictly cleaner (Markdown conversion, dash params, grid-aligned multi-line docs, branded constants) and the one deliberate `@example` trade-off.
 - [Advanced CLI](./advanced-cli.md) — opt-in per-directory API walls with the `wall` command (interactive checkbox and flag forms), the full-surface-by-default policy, and the import-from-subpath rule a wall depends on.
 - [Live transpile diagnostics](./transpile-diagnostics.md) — the scaffolded `@defold-typescript/tstl-plugin` language-service plugin that surfaces TypeScript-to-Lua transpile errors live in the editor, advisory-only and never blocking `tsc --noEmit`.
-- [Agent runbooks](./agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project and regenerate extension types over the `--json` envelope, gating on `ok`.
+- [Agent runbooks](./agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, regenerate extension types, add a script, and fix the Lua output over the `--json` envelope, gating on `ok`.
 
 ## Coming later
 
