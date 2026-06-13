@@ -26,6 +26,7 @@
   "files": [
     "dist",
     "src",
+    "docs",
     "!src/**/*.test.ts",
     "!src/**/__snapshots__"
   ],
@@ -33,7 +34,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rm -rf dist && bun build src/index.ts src/bin.ts --target=node --format=esm --packages=external --outdir=dist && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build": "rm -rf dist && bun build src/index.ts src/bin.ts --target=node --format=esm --packages=external --outdir=dist && tsc -p tsconfig.build.json --emitDeclarationOnly && bun scripts/copy-guide-docs.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test"
   },

@@ -10,6 +10,9 @@ build/
 out/
 lib/
 *.tsbuildinfo
+
+# Guide docs staged into the cli package at build time (source lives at repo-root docs/guide)
+packages/cli/docs/
 .turbo/
 .next/
 .nuxt/
