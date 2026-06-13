@@ -3,12 +3,16 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  channelArchiveUrl,
+  channelInfoUrl,
+  createFetchChannelInfo,
   defaultDistributionRoots,
   localRefDocLocator,
   refDocCacheDir,
+  resolveDownloadPlan,
   resolveRefDoc,
 } from "./doc-source";
-import type { ZipAccessor } from "./sync-api-docs";
+import { refDocUrl, type ZipAccessor } from "./sync-api-docs";
 
 function fakeReadZip(path: string): ZipAccessor {
   return {
@@ -130,9 +134,9 @@ describe("resolveRefDoc", () => {
   test("cache miss: downloads once, persists archive, provenance download", async () => {
     const cacheDir = tmp();
     let calls = 0;
-    const download = async (version: string) => {
+    const download = async (_url: string) => {
       calls++;
-      return new TextEncoder().encode(`zip-bytes-${version}`);
+      return new TextEncoder().encode("zip-bytes-1.2.3");
     };
     const result = await resolveRefDoc({
       version: "1.2.3",
@@ -281,14 +285,142 @@ describe("resolveRefDoc", () => {
     const result = await resolveRefDoc({
       version: "1.2.3",
       cacheDir,
-      download: async (version) => {
+      download: async () => {
         downloads++;
-        return new TextEncoder().encode(`zip-${version}`);
+        return new TextEncoder().encode("zip-bytes");
       },
       locate: () => null,
       readZip: fakeReadZip,
     });
     expect(downloads).toBe(1);
     expect(result.provenance).toBe("download");
+  });
+
+  test("beta: cache miss downloads the channel-head archive, caches it channel-scoped", async () => {
+    const cacheDir = tmp();
+    let downloadedUrl: string | undefined;
+    const result = await resolveRefDoc({
+      version: "1.12.4",
+      channel: "beta",
+      cacheDir,
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "deadbeef" }),
+      download: async (url) => {
+        downloadedUrl = url;
+        return new TextEncoder().encode("beta-bytes");
+      },
+      locate: () => null,
+      readZip: fakeReadZip,
+    });
+    expect(downloadedUrl).toBe(channelArchiveUrl("beta", "deadbeef"));
+    expect(result.provenance).toBe("download");
+    const zipPath = join(cacheDir, "beta", "deadbeef", "ref-doc.zip");
+    expect(result.zipPath).toBe(zipPath);
+    expect(readFileSync(zipPath, "utf8")).toBe("beta-bytes");
+
+    const second = await resolveRefDoc({
+      version: "1.12.4",
+      channel: "beta",
+      cacheDir,
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "deadbeef" }),
+      download: async () => {
+        throw new Error("download should not run on a channel-scoped cache hit");
+      },
+      locate: () => null,
+      readZip: fakeReadZip,
+    });
+    expect(second.provenance).toBe("cache");
+    expect(second.zipPath).toBe(zipPath);
+  });
+
+  test("stable: channel-scoped path and fetchChannelInfo are not used", async () => {
+    const cacheDir = tmp();
+    let infoCalls = 0;
+    const result = await resolveRefDoc({
+      version: "1.12.4",
+      channel: "stable",
+      cacheDir,
+      fetchChannelInfo: async () => {
+        infoCalls++;
+        return { version: "1.12.4", sha1: "irrelevant" };
+      },
+      download: async () => new TextEncoder().encode("stable-bytes"),
+      locate: () => null,
+      readZip: fakeReadZip,
+    });
+    expect(infoCalls).toBe(0);
+    expect(result.zipPath).toBe(join(cacheDir, "1.12.4", "ref-doc.zip"));
+  });
+});
+
+describe("channel URL builders", () => {
+  test("channelInfoUrl points at the per-channel info.json", () => {
+    expect(channelInfoUrl("beta")).toBe("https://d.defold.com/beta/info.json");
+  });
+
+  test("channelArchiveUrl points at the channel-scoped ref-doc.zip", () => {
+    expect(channelArchiveUrl("alpha", "abc123")).toBe(
+      "https://d.defold.com/archive/alpha/abc123/engine/share/ref-doc.zip",
+    );
+  });
+});
+
+describe("resolveDownloadPlan", () => {
+  test("stable uses the GitHub release URL and version cache subdir, no info fetch", async () => {
+    let infoCalls = 0;
+    const plan = await resolveDownloadPlan({
+      version: "1.12.4",
+      channel: "stable",
+      fetchChannelInfo: async () => {
+        infoCalls++;
+        return { version: "1.12.4", sha1: "x" };
+      },
+    });
+    expect(plan.url).toBe(refDocUrl("1.12.4"));
+    expect(plan.cacheSubdir).toBe("1.12.4");
+    expect(infoCalls).toBe(0);
+  });
+
+  test("omitted channel defaults to stable", async () => {
+    const plan = await resolveDownloadPlan({ version: "1.12.4" });
+    expect(plan.url).toBe(refDocUrl("1.12.4"));
+    expect(plan.cacheSubdir).toBe("1.12.4");
+  });
+
+  test("beta resolves the channel head and scopes the cache subdir by sha", async () => {
+    let seenChannel: string | undefined;
+    const plan = await resolveDownloadPlan({
+      version: "1.12.4",
+      channel: "beta",
+      fetchChannelInfo: async (channel) => {
+        seenChannel = channel;
+        return { version: "1.13.0", sha1: "deadbeef" };
+      },
+    });
+    expect(seenChannel).toBe("beta");
+    expect(plan.url).toBe(channelArchiveUrl("beta", "deadbeef"));
+    expect(plan.cacheSubdir).toBe(join("beta", "deadbeef"));
+  });
+});
+
+describe("createFetchChannelInfo", () => {
+  test("parses version and sha1 from a 200 info.json", async () => {
+    const fetchInfo = createFetchChannelInfo((async () => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ version: "1.13.0", sha1: "deadbeef" }),
+    })) as unknown as typeof fetch);
+    expect(await fetchInfo("beta")).toEqual({ version: "1.13.0", sha1: "deadbeef" });
+  });
+
+  test("a non-ok response throws an error naming the channel and the info.json URL", async () => {
+    const fetchInfo = createFetchChannelInfo((async () => ({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({}),
+    })) as unknown as typeof fetch);
+    await expect(fetchInfo("beta")).rejects.toThrow(/beta/);
+    await expect(fetchInfo("beta")).rejects.toThrow(channelInfoUrl("beta"));
   });
 });

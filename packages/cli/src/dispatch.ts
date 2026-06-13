@@ -196,6 +196,12 @@ export function dispatch(
     ...(channelFlag !== undefined ? { flag: channelFlag } : {}),
     ...(channelPin !== undefined ? { pin: channelPin } : {}),
   }).channel;
+  // Thread the resolved channel into ref-doc resolution; any test-injected
+  // download/readZip/fetchChannelInfo still wins (spread after).
+  const refDocResolveOpts: RefDocResolveOptions = {
+    channel: resolvedChannel,
+    ...internals?.resolveOpts,
+  };
   const surface = selectApiSurface(resolvedVersion);
   const apiSurface = surface.surfaceId;
 
@@ -325,7 +331,7 @@ export function dispatch(
           const { materializedDir } = await materializeRefDocSurface({
             cwd,
             surfaceId,
-            ...(internals?.resolveOpts ? { resolveOpts: internals.resolveOpts } : {}),
+            resolveOpts: refDocResolveOpts,
             ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
           });
           if (!json && materializedDir === null) {
@@ -414,7 +420,7 @@ export function dispatch(
         const { materializedDir } = await materializeRefDocSurface({
           cwd,
           surfaceId,
-          ...(internals?.resolveOpts ? { resolveOpts: internals.resolveOpts } : {}),
+          resolveOpts: refDocResolveOpts,
           ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
         });
         ensureMaterializedReference(cwd, materializedDir);

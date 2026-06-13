@@ -9,6 +9,8 @@ import { wrapAsAmbientGlobal } from "../src/publish-dts";
 import {
   type DocSourceProvenance,
   type DownloadRefDoc,
+  type FetchChannelInfo,
+  type RefDocChannel,
   refDocCacheDir,
   resolveRefDoc,
 } from "./doc-source";
@@ -89,6 +91,8 @@ export interface ResolveTargetOptions {
   readonly readZip?: typeof readZip;
   readonly syncManifest?: readonly SyncManifestEntry[];
   readonly packageRoot?: string;
+  readonly channel?: RefDocChannel;
+  readonly fetchChannelInfo?: FetchChannelInfo;
 }
 
 // Source-aware module resolution: a `null`-source target reads committed
@@ -106,8 +110,10 @@ export async function resolveTargetModules(
   const { zip, provenance } = await resolveRefDoc({
     version: source.version,
     cacheDir: opts.cacheDir ?? refDocCacheDir(),
+    ...(opts.channel ? { channel: opts.channel } : {}),
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
+    ...(opts.fetchChannelInfo ? { fetchChannelInfo: opts.fetchChannelInfo } : {}),
   });
   const syncManifest = opts.syncManifest ?? SYNC_MANIFEST;
   return target.modules.map((module) => {

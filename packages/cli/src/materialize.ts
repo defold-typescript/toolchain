@@ -14,6 +14,7 @@ import {
   resolveTypesPackageRoot,
 } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
+import type { DefoldChannel } from "./defold-channel";
 
 export const MATERIALIZED_ROOT = ".defold-types";
 
@@ -187,8 +188,12 @@ export function resolveCurrentSurfaceGeneratedDir(): string | null {
 
 export interface RefDocResolveOptions {
   readonly cacheDir?: string;
-  readonly download?: (version: string) => Promise<Uint8Array>;
+  readonly download?: (url: string) => Promise<Uint8Array>;
   readonly readZip?: (zipPath: string) => unknown;
+  readonly channel?: DefoldChannel;
+  readonly fetchChannelInfo?: (
+    channel: DefoldChannel,
+  ) => Promise<{ version: string; sha1: string }>;
 }
 
 interface MaterializeVersionedSurfaceModule {

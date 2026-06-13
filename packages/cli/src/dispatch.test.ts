@@ -724,6 +724,36 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
+  test("build --channel beta materializes the ref-doc surface from the beta channel archive", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+    const base = labelRefDocResolveOpts();
+    let downloadedUrl: string | undefined;
+    let infoChannel: string | undefined;
+    const resolveOpts = {
+      cacheDir: base.cacheDir,
+      readZip: base.readZip,
+      fetchChannelInfo: async (channel: "stable" | "beta" | "alpha") => {
+        infoChannel = channel;
+        return { version: "1.13.0", sha1: "deadbeef" };
+      },
+      download: async (url: string): Promise<Uint8Array> => {
+        downloadedUrl = url;
+        return new TextEncoder().encode("beta-bytes");
+      },
+    };
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--channel", "beta", "--json"], io, { resolveOpts });
+
+    expect(code).toBe(0);
+    expect(infoChannel).toBe("beta");
+    expect(downloadedUrl).toContain("/archive/beta/deadbeef/");
+    const parsed = JSON.parse(out()) as { materializedSurface: string | null };
+    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.9.8");
+
+    rmSync(base.cacheDir, { recursive: true, force: true });
+  });
+
   test("build --json at current-stable still uses the pre-baked copy path", async () => {
     scaffoldBuildProject();
     const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));

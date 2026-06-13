@@ -11,9 +11,69 @@ export interface ResolvedRefDoc {
   provenance: DocSourceProvenance;
 }
 
-export type DownloadRefDoc = (version: string) => Promise<Uint8Array>;
+// Download by the *resolved* URL (channel-aware), not by re-deriving it from the
+// version: stable is the GitHub release URL, beta/alpha are the channel-head
+// archive on d.defold.com.
+export type DownloadRefDoc = (url: string) => Promise<Uint8Array>;
 
 export type LocateLocalRefDoc = (version: string) => string | null;
+
+export type RefDocChannel = "stable" | "beta" | "alpha";
+
+export const DEFAULT_REF_DOC_CHANNEL: RefDocChannel = "stable";
+
+export const channelInfoUrl = (channel: RefDocChannel): string =>
+  `https://d.defold.com/${channel}/info.json`;
+
+// The channel segment is canonical; the bare `archive/<sha>/...` form
+// 301-redirects to `archive/<channel>/<sha>/...`.
+export const channelArchiveUrl = (channel: RefDocChannel, sha1: string): string =>
+  `https://d.defold.com/archive/${channel}/${sha1}/engine/share/ref-doc.zip`;
+
+export interface ChannelInfo {
+  readonly version: string;
+  readonly sha1: string;
+}
+
+export type FetchChannelInfo = (channel: RefDocChannel) => Promise<ChannelInfo>;
+
+export function createFetchChannelInfo(fetchImpl: typeof fetch = fetch): FetchChannelInfo {
+  return async (channel) => {
+    const url = channelInfoUrl(channel);
+    const res = await fetchImpl(url);
+    if (!res.ok) {
+      throw new Error(
+        `channel info fetch failed for '${channel}': ${url} -> ${res.status} ${res.statusText}`,
+      );
+    }
+    const data = (await res.json()) as ChannelInfo;
+    return { version: data.version, sha1: data.sha1 };
+  };
+}
+
+const defaultFetchChannelInfo: FetchChannelInfo = createFetchChannelInfo();
+
+export interface RefDocDownloadPlan {
+  readonly url: string;
+  readonly cacheSubdir: string;
+}
+
+// Where the ref-doc bytes live and where they cache. Stable is version-addressed
+// (GitHub release, `<version>` subdir) with no network probe; beta/alpha are
+// channel-head-addressed, so the channel head sha is read from info.json and the
+// cache is scoped `<channel>/<sha1>`.
+export async function resolveDownloadPlan(opts: {
+  version: string;
+  channel?: RefDocChannel;
+  fetchChannelInfo?: FetchChannelInfo;
+}): Promise<RefDocDownloadPlan> {
+  const channel = opts.channel ?? DEFAULT_REF_DOC_CHANNEL;
+  if (channel === "stable") {
+    return { url: refDocUrl(opts.version), cacheSubdir: opts.version };
+  }
+  const info = await (opts.fetchChannelInfo ?? defaultFetchChannelInfo)(channel);
+  return { url: channelArchiveUrl(channel, info.sha1), cacheSubdir: join(channel, info.sha1) };
+}
 
 export function defaultDistributionRoots(
   platform: NodeJS.Platform,
@@ -64,8 +124,7 @@ export function refDocCacheDir(
   return join(env.XDG_CACHE_HOME ?? join(home(), ".cache"), "defold-typescript", "ref-doc");
 }
 
-const fetchRefDoc: DownloadRefDoc = async (version) => {
-  const url = refDocUrl(version);
+const fetchRefDoc: DownloadRefDoc = async (url) => {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`download failed: ${url} -> ${res.status} ${res.statusText}`);
@@ -76,12 +135,19 @@ const fetchRefDoc: DownloadRefDoc = async (version) => {
 export async function resolveRefDoc(opts: {
   version: string;
   cacheDir: string;
+  channel?: RefDocChannel;
   download?: DownloadRefDoc;
   locate?: LocateLocalRefDoc;
   readZip?: typeof readZip;
+  fetchChannelInfo?: FetchChannelInfo;
 }): Promise<ResolvedRefDoc> {
   const open = opts.readZip ?? readZip;
-  const zipPath = join(opts.cacheDir, opts.version, "ref-doc.zip");
+  const plan = await resolveDownloadPlan({
+    version: opts.version,
+    ...(opts.channel ? { channel: opts.channel } : {}),
+    ...(opts.fetchChannelInfo ? { fetchChannelInfo: opts.fetchChannelInfo } : {}),
+  });
+  const zipPath = join(opts.cacheDir, plan.cacheSubdir, "ref-doc.zip");
   if (existsSync(zipPath)) {
     return { zip: open(zipPath), zipPath, provenance: "cache" };
   }
@@ -93,7 +159,7 @@ export async function resolveRefDoc(opts: {
     return { zip: open(zipPath), zipPath, provenance: "local" };
   }
   const download = opts.download ?? fetchRefDoc;
-  const bytes = await download(opts.version);
+  const bytes = await download(plan.url);
   mkdirSync(dirname(zipPath), { recursive: true });
   writeFileSync(zipPath, bytes);
   return { zip: open(zipPath), zipPath, provenance: "download" };
