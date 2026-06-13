@@ -6,6 +6,7 @@ import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from 
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { mergeMiseToml } from "./mise-scaffold";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
+import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
 
 export interface RunInitOptions {
   readonly cwd: string;
@@ -555,6 +556,22 @@ function writeVscodeLaunch(cwd: string, written: string[]): void {
   written.push(".vscode/launch.json");
 }
 
+function writeVscodeTasks(cwd: string, written: string[]): void {
+  const dir = path.join(cwd, ".vscode");
+  const filePath = path.join(dir, "tasks.json");
+  if (existsSync(filePath)) {
+    const existing = readVscodeJson(filePath);
+    if (existing === null) {
+      return;
+    }
+    writeJson(filePath, mergeVscodeTasks(existing));
+    return;
+  }
+  mkdirSync(dir, { recursive: true });
+  writeJson(filePath, VSCODE_TASKS_CONTENT);
+  written.push(".vscode/tasks.json");
+}
+
 function writeVscodeDebugLauncher(cwd: string, written: string[]): void {
   const dir = path.join(cwd, ".vscode");
   const filePath = path.join(dir, "defold-debug.ts");
@@ -617,6 +634,7 @@ function writeTsSurface(cwd: string, written: string[], force = false): void {
   writeVscodeSettings(cwd, written);
   writeVscodeSnippets(cwd, written);
   writeVscodeLaunch(cwd, written);
+  writeVscodeTasks(cwd, written);
   writeVscodeDebugLauncher(cwd, written);
 }
 

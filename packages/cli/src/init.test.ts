@@ -51,6 +51,7 @@ describe("runInit (add-TS mode)", () => {
         ".vscode/extensions.json",
         ".vscode/launch.json",
         ".vscode/settings.json",
+        ".vscode/tasks.json",
         "biome.json",
         "mise.toml",
         "package.json",
@@ -94,6 +95,7 @@ describe("runInit (add-TS mode)", () => {
         ".vscode/extensions.json",
         ".vscode/launch.json",
         ".vscode/settings.json",
+        ".vscode/tasks.json",
         "biome.json",
         "mise.toml",
         "package.json",
@@ -421,6 +423,7 @@ describe("runInit (new-project mode)", () => {
     ".vscode/settings.json",
     ".vscode/defold-typescript.code-snippets",
     ".vscode/launch.json",
+    ".vscode/tasks.json",
     ".vscode/defold-debug.ts",
     "mise.toml",
   ];
@@ -1147,5 +1150,50 @@ describe("runInit (.vscode script snippets)", () => {
         }
       });
     }
+  });
+});
+
+describe("runInit (scaffolds .vscode/tasks.json build/watch tasks)", () => {
+  function readTasks(dir: string): Record<string, unknown> {
+    return JSON.parse(readFileSync(path.join(dir, ".vscode", "tasks.json"), "utf8"));
+  }
+
+  function labelsOf(tasks: Record<string, unknown>): string[] {
+    return (tasks.tasks as Record<string, unknown>[]).map((t) => String(t.label));
+  }
+
+  test("a fresh new-project init writes both managed tasks and the problem matcher", () => {
+    runInit({ cwd });
+    const tasks = readTasks(cwd);
+    expect(labelsOf(tasks)).toEqual(
+      expect.arrayContaining(["defold-typescript: build", "defold-typescript: watch"]),
+    );
+    const build = (tasks.tasks as Record<string, unknown>[]).find(
+      (t) => t.label === "defold-typescript: build",
+    );
+    const matcher = (build as Record<string, unknown>).problemMatcher as Record<string, unknown>;
+    expect((matcher.pattern as Record<string, unknown>).regexp).toBeTruthy();
+  });
+
+  test("preserves an existing user deploy task and merges in the managed tasks", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, ".vscode", "tasks.json"),
+      '{\n  // user task\n  "version": "2.0.0",\n  "tasks": [{ "label": "deploy" }]\n}\n',
+    );
+    runInit({ cwd });
+    const labels = labelsOf(readTasks(cwd));
+    expect(labels).toContain("deploy");
+    expect(labels).toContain("defold-typescript: build");
+    expect(labels).toContain("defold-typescript: watch");
+  });
+
+  test("a second init does not duplicate the managed tasks", () => {
+    runInit({ cwd });
+    runInit({ cwd, force: true });
+    const labels = labelsOf(readTasks(cwd));
+    expect(labels.filter((l) => l === "defold-typescript: build")).toHaveLength(1);
+    expect(labels.filter((l) => l === "defold-typescript: watch")).toHaveLength(1);
   });
 });

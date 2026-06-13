@@ -24,3 +24,11 @@ Every diagnostic the plugin appends carries the `Suggestion` category, never `Er
 ## How it relates to the gotchas guide
 
 This plugin catches constructs the *transpiler* rejects. It does not catch the runtime-semantics traps where valid TypeScript compiles but behaves unexpectedly under Lua — truthiness, `typeof` on engine values, `nil` collapsing, and the rest. Those live in [TypeScript gotchas](./typescript-gotchas.md). The two complement each other: the plugin flags what will not transpile, the gotchas page explains what transpiles but surprises you.
+
+## Build-time diagnostics in the editor
+
+`init` also scaffolds a `.vscode/tasks.json` carrying two managed tasks — `defold-typescript: build` and `defold-typescript: watch` — that invoke the CLI via `bunx @defold-typescript/cli build` / `… watch`. Run them from the command palette (`Tasks: Run Task`, or `Tasks: Run Build Task` for the build task), and a shared `problemMatcher` routes any `build` failure into VS Code's Problems panel.
+
+This is the build-time complement to the live `tstl-plugin` squiggles above: the plugin flags unsupported constructs as you type, while the task surfaces whatever the actual `build` rejects. No editor extension is required — the matcher is wired entirely in `tasks.json`.
+
+The honest limitation: a build `TranspileDiagnostic` carries only a file and a message, with no line or column, so each problem lands at the **head of the offending file**, not a precise span. A column-precise matcher is blocked on positional diagnostics from the transpiler. The merge is additive — your own tasks are preserved; only the two managed labels are reconciled.

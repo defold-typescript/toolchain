@@ -188,7 +188,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     expect(err()).toBe("");
-    expect(out()).toMatch(/wrote 13 files/);
+    expect(out()).toMatch(/wrote 14 files/);
     expect(out()).toContain("game.project");
     expect(out()).toContain("main/main.collection");
     expect(out()).not.toContain("main/main.script");
