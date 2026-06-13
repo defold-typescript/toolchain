@@ -92,5 +92,7 @@ import { defineGuiScript } from "@defold-typescript/types";
 ```
 
 The interactive snippets scaffolded by `init` already import from the kind
-subpaths. There is no build-time guardrail against the wrong import yet, so this is
-the one rule to keep in mind when walling by hand.
+subpaths. `build` enforces this: a walled source that imports a lifecycle factory
+from the main entry fails the build before transpile, naming the file and the kind
+subpath it should import from instead. (`watch` does not enforce it yet — its
+session path is a separate slice.)
