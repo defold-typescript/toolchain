@@ -22,3 +22,7 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 - `bun test` runs the full suite from the repo root.
 - Co-locate unit tests next to the source: `foo.ts` ↔ `foo.test.ts`.
 - Snapshot transpiler output for representative inputs; do not assert on Lua substrings.
+
+## Agent runbooks
+
+- Procedures for driving the CLI from an automated agent live in [`docs/guide/agent-runbooks.md`](docs/guide/agent-runbooks.md).
