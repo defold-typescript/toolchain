@@ -25,6 +25,10 @@ run = "bun scripts/release-smoke.ts"
 description = "Advisory registry-install smoke — pulls the published @defold-typescript/cli from npm (network-touching, not a CI gate)"
 run = "bun scripts/registry-smoke.ts"
 
+[tasks.pack-proof]
+description = "Advisory live stamped-pack proof — packs the three tarballs in throwaway worktrees at a synthetic version with a no-regen control (slow, not a CI gate)"
+run = "bun scripts/release-pack-proof.ts"
+
 [tasks.ref-doc-delta]
 description = "Advisory live ref-doc delta verifier — network-touching, not a CI gate"
 run = "bun run ref-doc-delta"
