@@ -4,6 +4,10 @@ export interface EngineTarget {
   readonly enginePlatform: string;
   readonly buildFolder: string;
   readonly executable: string;
+  // Runtime libraries the build engine needs placed beside it. An empty list
+  // means "system-resolved, nothing to place" (macOS/Linux resolve OpenAL from
+  // the OS); only Windows native-extension builds need the DLLs supplied.
+  readonly openalLibraries: readonly string[];
 }
 
 // `enginePlatform` keys the d.defold.com download path; `buildFolder` keys the
@@ -16,21 +20,25 @@ const PLATFORM_TARGETS: Record<string, EngineTarget> = {
     enginePlatform: "arm64-macos",
     buildFolder: "arm64-macos",
     executable: "dmengine",
+    openalLibraries: [],
   },
   "darwin-x64": {
     enginePlatform: "x86_64-macos",
     buildFolder: "x86_64-macos",
     executable: "dmengine",
+    openalLibraries: [],
   },
   "linux-x64": {
     enginePlatform: "x86_64-linux",
     buildFolder: "x86_64-linux",
     executable: "dmengine",
+    openalLibraries: [],
   },
   "win32-x64": {
     enginePlatform: "x86_64-win32",
     buildFolder: "x86_64-win32",
     executable: "dmengine.exe",
+    openalLibraries: ["OpenAL32.dll", "wrap_oal.dll"],
   },
 };
 
@@ -58,6 +66,14 @@ export function engineDownloadUrl(
   executable: string,
 ): string {
   return `${ENGINE_ARCHIVE_BASE}/${sha1}/engine/${enginePlatform}/${executable}`;
+}
+
+// Pinned seam for a future auto-fetch slice, re-enabled once the upstream fix
+// (defold/defold#11860) ships the Windows OpenAL runtime DLLs in the stable
+// archive. Unused by the launcher today: no Defold-hosted archive currently
+// serves these files, so the launcher only warns (see renderDebugLauncher).
+export function openalDownloadUrl(sha1: string, enginePlatform: string, libName: string): string {
+  return `${ENGINE_ARCHIVE_BASE}/${sha1}/engine/${enginePlatform}/${libName}`;
 }
 
 export interface ResolveEngineOptions {
@@ -111,15 +127,11 @@ function renderDebugLauncher(): string {
   return `import { chmodSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
 import * as path from "node:path";
 
-// Windows only: paths to OpenAL32.dll and wrap_oal.dll from your Defold SDK
-// (defoldsdk/ext/lib/x86_64-win32/). Leave empty on macOS/Linux.
-const WINDOWS_OPENAL32_PATH = "";
-const WINDOWS_WRAPOAL_PATH = "";
-
 interface EngineTarget {
   enginePlatform: string;
   buildFolder: string;
   executable: string;
+  openalLibraries: string[];
 }
 
 const PLATFORM_TARGETS: Record<string, EngineTarget> = ${targets};
@@ -152,15 +164,20 @@ const buildFolder = path.join("build", target.buildFolder);
 const buildEnginePath = path.join(buildFolder, target.executable);
 let enginePath = existsSync(buildEnginePath) ? buildEnginePath : stockEnginePath;
 
+// Windows native-extension build engines link the OpenAL runtime DLLs, but no
+// Defold-hosted archive currently ships them and the upstream copy fix
+// (defold/defold#11860) is closed unmerged. Warn once on the real gap and
+// continue the launch; placing the DLLs by hand is the only fix today.
 if (process.platform === "win32" && enginePath === buildEnginePath) {
-  for (const [src, name] of [
-    [WINDOWS_OPENAL32_PATH, "OpenAL32.dll"],
-    [WINDOWS_WRAPOAL_PATH, "wrap_oal.dll"],
-  ] as const) {
-    const dest = path.join(buildFolder, name);
-    if (src && !existsSync(dest)) {
-      copyFileSync(src, dest);
-    }
+  const missing = target.openalLibraries.filter(
+    (lib) => !existsSync(path.join(buildFolder, lib)),
+  );
+  if (missing.length) {
+    console.warn(
+      \`Place \${missing.join(" and ")} by hand next to the build engine (\${buildFolder}); \` +
+        "the Defold build server does not yet ship them. Tracking: defold/defold#11860 " +
+        "(https://github.com/defold/defold/issues/11860).",
+    );
   }
 }
 
