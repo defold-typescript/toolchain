@@ -13,6 +13,23 @@ import {
   writeScriptFile,
 } from "./build-output";
 import { scanFilesSync } from "./scan";
+import { findWallImportViolations } from "./wall-import-guardrail";
+
+function throwOnWallImportViolations(cwd: string, files: Record<string, string>): void {
+  const violations = findWallImportViolations(cwd, files);
+  if (violations.length === 0) {
+    return;
+  }
+  const lines = violations.map(
+    (v) =>
+      `  ${v.file}: imports ${v.factory} from "@defold-typescript/types" — a walled ${v.kind} source must import it from "${v.expected}"`,
+  );
+  throw new Error(
+    `defold-typescript build: wall bypass — a walled source imports a lifecycle factory off the main entry, which re-pulls the cross-kind ambient globals the wall removes:\n${lines.join(
+      "\n",
+    )}`,
+  );
+}
 
 export interface RunBuildOptions {
   readonly cwd: string;
@@ -42,6 +59,8 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   for (const rel of sources) {
     files[rel] = readFileSync(path.join(cwd, rel), "utf8");
   }
+
+  throwOnWallImportViolations(cwd, files);
 
   const result = transpileProject({ files });
   const failures = collectFailures(result.diagnostics);

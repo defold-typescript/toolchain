@@ -23,8 +23,8 @@ import {
 } from "typescript-to-lua";
 import { resolvesToDispatchExport } from "./message-dispatch-lowering";
 
-const FACTORY_MODULE = "@defold-typescript/types";
-const FACTORY_NAMES = new Set(["defineScript", "defineGuiScript", "defineRenderScript"]);
+export const FACTORY_MODULE = "@defold-typescript/types";
+export const FACTORY_NAMES = new Set(["defineScript", "defineGuiScript", "defineRenderScript"]);
 // A walled source imports its factory from the matching kind subpath
 // (`@defold-typescript/types/gui-script`) to avoid pulling the cross-kind
 // `declare global` namespaces; those imports erase exactly like the bare one.
