@@ -167,6 +167,7 @@ export function dispatch(
   const suppressInstallReminder = argv.includes("--suppress-install-reminder");
   const wallRemove = argv.includes("--remove");
   const wallList = argv.includes("--list");
+  const frozen = argv.includes("--frozen");
   const { flag: defoldVersionFlag, rest: afterVersionArgs } = parseDefoldVersionFlag(argv);
   const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterVersionArgs);
   const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
@@ -181,7 +182,8 @@ export function dispatch(
       a !== "--force" &&
       a !== "--suppress-install-reminder" &&
       a !== "--remove" &&
-      a !== "--list",
+      a !== "--list" &&
+      a !== "--frozen",
   );
   const [command, ...rest] = positional;
   const cwd = rest[0] ? path.resolve(rest[0]) : process.cwd();
@@ -549,6 +551,7 @@ export function dispatch(
         ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
         ...(seams?.download ? { download: seams.download } : {}),
         ...(seams?.readZip ? { readZip: seams.readZip } : {}),
+        ...(frozen ? { freeze: true } : {}),
       });
       if (json) {
         io.stdout.write(
@@ -562,6 +565,19 @@ export function dispatch(
               : { command: "resolve", error: result.error ?? "resolve failed" },
           ),
         );
+        if (frozen && result.ok) {
+          const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
+          if (drifted.length > 0) {
+            io.stderr.write(
+              `defold-typescript resolve: ${drifted.length} extension pin(s) drifted:\n`,
+            );
+            for (const ext of drifted) {
+              io.stderr.write(
+                `  ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
+              );
+            }
+          }
+        }
       } else if (result.ok) {
         if (result.extensions.length === 0) {
           io.stdout.write("defold-typescript resolve: no extension dependencies declared\n");
@@ -579,10 +595,20 @@ export function dispatch(
             io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
           }
         }
+        const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
+        for (const ext of drifted) {
+          io.stderr.write(
+            `defold-typescript resolve: pin drift for ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
+          );
+        }
       } else {
         io.stderr.write(`${result.error}\n`);
       }
-      return result.ok ? 0 : 1;
+      if (!result.ok) {
+        return 1;
+      }
+      const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
+      return frozen && drifted.length > 0 ? 1 : 0;
     })();
   }
 

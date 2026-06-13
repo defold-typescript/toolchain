@@ -8,6 +8,7 @@ export interface ResolvedExtensionReportJson {
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
   readonly pinnedVersion?: string;
+  readonly pinStatus: "unpinned" | "match" | "drift";
 }
 
 export interface RenderResultInput {

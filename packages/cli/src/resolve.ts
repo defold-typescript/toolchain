@@ -32,6 +32,7 @@ export interface ResolvedExtensionReport {
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
   readonly pinnedVersion?: string;
+  readonly pinStatus: "unpinned" | "match" | "drift";
 }
 
 export interface RunResolveOptions {
@@ -39,6 +40,9 @@ export interface RunResolveOptions {
   readonly cacheDir?: string;
   readonly download?: DownloadExtensionArchive;
   readonly readZip?: ReadExtensionZip;
+  // When true, skip writing newly-resolved pins into `package.json`. Used by
+  // `--frozen` to verify the committed pin set without mutating it.
+  readonly freeze?: boolean;
 }
 
 export interface RunResolveResult {
@@ -113,11 +117,14 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       resolvedForSeed[bundle.url] = bundle.resolvedVersion;
     }
   }
-  if (Object.keys(resolvedForSeed).length > 0 && existingPkg.writable) {
+  if (!opts.freeze && Object.keys(resolvedForSeed).length > 0 && existingPkg.writable) {
     seedExtensionPins(cwd, existingPkg.value, resolvedForSeed);
   }
 
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {
+    const pin = pins[bundle.url];
+    const pinStatus: "unpinned" | "match" | "drift" =
+      pin === undefined ? "unpinned" : pin === bundle.resolvedVersion ? "match" : "drift";
     const report: {
       url: string;
       provenance: ExtensionArchiveProvenance;
@@ -126,6 +133,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       assetOnly: boolean;
       resolvedVersion: string;
       pinnedVersion?: string;
+      pinStatus: "unpinned" | "match" | "drift";
     } = {
       url: bundle.url,
       provenance: bundle.provenance,
@@ -133,8 +141,8 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       scriptApiCount: bundle.declarations.length,
       assetOnly: bundle.assetOnly,
       resolvedVersion: bundle.resolvedVersion,
+      pinStatus,
     };
-    const pin = pins[bundle.url];
     if (pin !== undefined) {
       report.pinnedVersion = pin;
     }

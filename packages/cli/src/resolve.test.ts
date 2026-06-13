@@ -93,6 +93,7 @@ describe("runResolve", () => {
         scriptApiCount: 1,
         assetOnly: false,
         resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
+        pinStatus: "unpinned",
       },
     ]);
   });
@@ -123,6 +124,7 @@ describe("runResolve", () => {
         scriptApiCount: 0,
         assetOnly: true,
         resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
+        pinStatus: "unpinned",
       },
     ]);
   });
@@ -158,9 +160,52 @@ describe("runResolve", () => {
     const report = result.extensions[0] as {
       resolvedVersion: string;
       pinnedVersion?: string;
+      pinStatus: "unpinned" | "match" | "drift";
     };
     expect(report.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(report.pinnedVersion).toBe("sha256:pinned");
+    expect(report.pinStatus).toBe("drift");
+  });
+
+  test("reports pinStatus:match when the pin equals the resolved archive digest", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+    const first = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+    });
+    expect(first.ok).toBe(true);
+    const matchingDigest = first.extensions[0]?.resolvedVersion as string;
+    expect(matchingDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+
+    // Re-run with a package.json that pins the same digest
+    writeFileSync(
+      join(cwd, "package.json"),
+      `${JSON.stringify(
+        { "defold-typescript": { extensions: { [url]: matchingDigest } } },
+        null,
+        2,
+      )}\n`,
+    );
+    const second = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+    });
+    expect(second.ok).toBe(true);
+    const report = second.extensions[0] as { pinStatus: string; pinnedVersion?: string };
+    expect(report.pinStatus).toBe("match");
+    expect(report.pinnedVersion).toBe(matchingDigest);
   });
 
   test("omits pinnedVersion when the project has no pin for the url", async () => {
@@ -182,9 +227,14 @@ describe("runResolve", () => {
     });
 
     expect(result.ok).toBe(true);
-    const report = result.extensions[0] as { resolvedVersion: string; pinnedVersion?: string };
+    const report = result.extensions[0] as {
+      resolvedVersion: string;
+      pinnedVersion?: string;
+      pinStatus: string;
+    };
     expect(report.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(report.pinnedVersion).toBeUndefined();
+    expect(report.pinStatus).toBe("unpinned");
   });
 
   test("seeds an absent pin into package.json from the resolved archive digest", async () => {
@@ -245,6 +295,69 @@ describe("runResolve", () => {
       "defold-typescript"?: { extensions?: Record<string, string> };
     };
     expect(pkg["defold-typescript"]?.extensions?.[url]).toBe("sha256:kept");
+  });
+
+  test("freeze:true skips seeding absent pins but still computes pinStatus", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = join(cwd, "package.json");
+    const original = "{}\n";
+    writeFileSync(pkgPath, original);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      freeze: true,
+    });
+
+    expect(result.ok).toBe(true);
+    // package.json is byte-unchanged — no pin seeded
+    expect(readFileSync(pkgPath, "utf8")).toBe(original);
+    // report still carries pinStatus
+    const report = result.extensions[0] as { pinStatus: string };
+    expect(report.pinStatus).toBe("unpinned");
+  });
+
+  test("freeze:true leaves drift detection intact (pinStatus:drift is reported)", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = join(cwd, "package.json");
+    const original = `${JSON.stringify(
+      { "defold-typescript": { extensions: { [url]: "sha256:stale" } } },
+      null,
+      2,
+    )}\n`;
+    writeFileSync(pkgPath, original);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      freeze: true,
+    });
+
+    expect(result.ok).toBe(true);
+    // file is byte-unchanged even when drift would have seeded otherwise
+    expect(readFileSync(pkgPath, "utf8")).toBe(original);
+    const report = result.extensions[0] as { pinStatus: string };
+    expect(report.pinStatus).toBe("drift");
   });
 
   test("a project with no [dependencies] resolves clean with no writes", async () => {

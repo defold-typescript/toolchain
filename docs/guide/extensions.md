@@ -92,7 +92,8 @@ do carry docs.
 materialized) and, per extension, the `url`, the generated `namespaces`, the
 `scriptApiCount`, the `provenance` (`cache` or `download`), whether it was
 `assetOnly`, the `resolvedVersion` (sha256 digest of the resolved archive
-bytes), and — when the project pins that url — the `pinnedVersion`:
+bytes), — when the project pins that url — the `pinnedVersion`, and the
+`pinStatus` (`unpinned` / `match` / `drift`):
 
 ```jsonc
 {
@@ -106,14 +107,18 @@ bytes), and — when the project pins that url — the `pinnedVersion`:
       "provenance": "download",
       "assetOnly": false,
       "resolvedVersion": "sha256:ab12…",
-      "pinnedVersion": "sha256:ab12…"
+      "pinnedVersion": "sha256:ab12…",
+      "pinStatus": "match"
     }
   ]
 }
 ```
 
 A `pinnedVersion` field is only present when the project's `package.json`
-records a pin for that `url`.
+records a pin for that `url`. The `pinStatus` is always present: `unpinned`
+means the project has no committed pin, `match` means the pin equals
+`resolvedVersion`, and `drift` means the pin exists but no longer matches
+the resolved archive bytes — the explicit upgrade signal.
 
 ## Pinning extension versions
 
@@ -135,12 +140,24 @@ version and seeds it into the project's `package.json` when absent
 
 A committed pin is human-owned intent. When the URL later yields different
 bytes, the freshly-resolved digest no longer matches the pinned one — the
-`resolvedVersion` and `pinnedVersion` in `--json` differ, which is the
-explicit, visible upgrade signal: bump the pin, commit it, done.
+`resolvedVersion` and `pinnedVersion` in `--json` differ, and the
+`pinStatus` reports `drift`. The visible signal is the upgrade prompt; the
+enforcement is two layered knobs:
 
-This slice is **recorded and reported only**. `resolve` does not fail or warn
-when `resolvedVersion` and `pinnedVersion` differ; the mismatch is meant to
-be visible to a human, not enforced. Enforcement is a follow-up.
+- The **human-readable** `resolve` (no flag) **warns on drift** by default,
+  writing one line per drifted url to `stderr` (e.g. `pin drift for
+  https://...: sha256:pinned -> sha256:fresh`). Exit code is `0` — drift
+  still surfaces loudly on a developer's machine without breaking
+  non-frozen scripted runs.
+- The opt-in `--frozen` flag treats the committed pin set as a lockfile: it
+  **exits non-zero on drift** (so CI gates the upgrade) and **writes
+  nothing** — no absent-pin seeding, no clobbering. An unpinned extension
+  under `--frozen` passes and stays unseeded; failing on unpinned is a
+  stricter mode and out of scope for this knob.
+
+The default behavior — seed absent pins, never clobber, exit `0` — is
+unchanged. `resolve` materializes the surface for the drifted extensions
+either way; only the `package.json` write and the exit code are gated.
 
 ## Cache location
 

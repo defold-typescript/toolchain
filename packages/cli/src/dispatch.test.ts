@@ -13,6 +13,7 @@ import {
   multiKindRefDocTarget,
   noDownload,
 } from "./ref-doc-test-fixture";
+import { runResolve } from "./resolve";
 import type { RunWatchHandle, Watcher, WatcherFactory } from "./watch";
 
 function captureStreams(): {
@@ -1743,6 +1744,7 @@ describe("dispatch resolve", () => {
         scriptApiCount: number;
         resolvedVersion?: string;
         pinnedVersion?: string;
+        pinStatus?: "unpinned" | "match" | "drift";
       }[];
     };
     expect(parsed.command).toBe("resolve");
@@ -1755,6 +1757,7 @@ describe("dispatch resolve", () => {
         scriptApiCount: 1,
         assetOnly: false,
         resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
+        pinStatus: "unpinned",
       },
     ] as unknown as typeof parsed.extensions);
   });
@@ -1797,5 +1800,154 @@ describe("dispatch resolve", () => {
     expect(parsed.command).toBe("resolve");
     expect(parsed.ok).toBe(false);
     expect(parsed.error).toBeDefined();
+  });
+
+  test("the human path warns on drift without a flag and exits 0", async () => {
+    const { io, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify(
+        { "defold-typescript": { extensions: { [url]: "sha256:pinned" } } },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const code = await dispatch(["resolve", cwd], io, resolveInternals(url));
+
+    expect(code).toBe(0);
+    const warning = err();
+    expect(warning).toContain(url);
+    expect(warning).toContain("sha256:pinned");
+    expect(warning).toMatch(/drift/);
+  });
+
+  test("--frozen fails on drift and does not seed absent pins", async () => {
+    const { io, err } = captureStreams();
+    const driftedUrl = "https://example.com/drifted.zip";
+    const freshUrl = "https://example.com/fresh.zip";
+    writeProject(`[project]\ndependencies#0 = ${driftedUrl}\ndependencies#1 = ${freshUrl}\n`);
+    const pkgPath = path.join(cwd, "package.json");
+    writeFileSync(
+      pkgPath,
+      `${JSON.stringify(
+        { "defold-typescript": { extensions: { [driftedUrl]: "sha256:stale" } } },
+        null,
+        2,
+      )}\n`,
+    );
+    const originalPkg = readFileSync(pkgPath, "utf8");
+
+    // Custom readZip that returns ALPHA for the drifted url and a no-op archive
+    // for the fresh one (no entries -> asset-only branch).
+    const internals = (() => {
+      const base = resolveInternals(driftedUrl);
+      const cacheDir = base.resolveInternals.cacheDir;
+      const freshKey = extensionArchiveKey(freshUrl);
+      return {
+        resolveInternals: {
+          cacheDir,
+          download: base.resolveInternals.download,
+          readZip: (zipPath: string) => {
+            const key = path.basename(path.dirname(zipPath));
+            if (key === extensionArchiveKey(driftedUrl)) {
+              return base.resolveInternals.readZip(zipPath);
+            }
+            if (key === freshKey) {
+              return { entries: () => ["asset/foo.png"], read: () => "" };
+            }
+            throw new Error(`unexpected readZip for ${zipPath}`);
+          },
+        },
+      };
+    })();
+
+    const code = await dispatch(["resolve", cwd, "--frozen"], io, internals);
+
+    expect(code).toBe(1);
+    const warning = err();
+    expect(warning).toContain(driftedUrl);
+    expect(warning).toContain("sha256:stale");
+    // package.json byte-unchanged: no drift clobber, no absent-pinned seed
+    expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
+  });
+
+  test("--frozen passes when all pins match", async () => {
+    const { io, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    // Resolve once to learn the real digest, then pin it
+    const first = await runResolve({
+      cwd,
+      cacheDir: mkdtempSync(path.join(os.tmpdir(), "frozen-precache-")),
+      download: async () => new TextEncoder().encode("z"),
+      readZip: resolveInternals(url).resolveInternals.readZip,
+    });
+    expect(first.ok).toBe(true);
+    const matchingDigest = first.extensions[0]?.resolvedVersion as string;
+    expect(matchingDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify(
+        { "defold-typescript": { extensions: { [url]: matchingDigest } } },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const code = await dispatch(["resolve", cwd, "--frozen"], io, resolveInternals(url));
+
+    expect(code).toBe(0);
+    // No drift warning expected
+    expect(err()).not.toContain("drift");
+  });
+
+  test("--frozen passes when all extensions are unpinned and seeds nothing", async () => {
+    const { io, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = path.join(cwd, "package.json");
+    const originalPkg = "{}\n";
+    writeFileSync(pkgPath, originalPkg);
+
+    const code = await dispatch(["resolve", cwd, "--frozen"], io, resolveInternals(url));
+
+    expect(code).toBe(0);
+    // No drift warning (unpinned passes under --frozen)
+    expect(err()).not.toContain("drift");
+    // No pin seeded
+    expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
+  });
+
+  test("--json carries pinStatus and --frozen still exits 1 on drift", async () => {
+    const { io, out, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify(
+        { "defold-typescript": { extensions: { [url]: "sha256:stale" } } },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const code = await dispatch(["resolve", cwd, "--json", "--frozen"], io, resolveInternals(url));
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as {
+      command: string;
+      ok: boolean;
+      extensions: { url: string; pinStatus: string }[];
+    };
+    expect(parsed.command).toBe("resolve");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.extensions).toHaveLength(1);
+    expect(parsed.extensions[0]?.url).toBe(url);
+    expect(parsed.extensions[0]?.pinStatus).toBe("drift");
+    expect(err()).toContain("drift");
   });
 });
