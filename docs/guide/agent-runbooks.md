@@ -110,8 +110,83 @@ came from (`provenance`) and how many `.script_api` files it contributed
 (`scriptApiCount`); an `assetOnly` dependency contributes no types. If `ok` is
 `false`, surface `error`; the existing surface is left untouched.
 
----
+## Add a script
 
-More runbooks — `add script` and `fix Lua output`, both multi-step loops over the
-`watch` NDJSON event stream — are coming in a follow-up slice. This page is not
-yet the complete set.
+**Goal:** add a new gameplay script to a TypeScript Defold project. There is no
+`add` verb — the workflow composes ordinary file creation with the shipped
+`build` verb.
+
+**Command (from the project root, after writing the `.ts` file under `src/`):**
+
+```sh
+bunx @defold-typescript/cli@latest build --json
+```
+
+Write the source first — one Defold script per file, exporting a single
+lifecycle factory (`defineScript` / `defineGuiScript` / `defineRenderScript`) as
+`default`. Which hooks the file should export (`init`, `update`, `fixed_update`,
+`on_message`, `on_input`, `final`, …) and how `self` is typed are covered in
+[Script lifecycle](./script-lifecycle.md). Then build — or, if a
+[`watch --json`](#fix-the-lua-output) is already running, just save the file and
+read its `rebuild` event instead of invoking `build`.
+
+**Returns** the one-shot envelope keyed `command: "build"`, plus the build
+context fields:
+
+```json
+{
+  "command": "build",
+  "ok": true,
+  "written": ["build/<script>.lua", "..."],
+  "defoldVersion": "<version>",
+  "apiSurface": "<surface id>",
+  "materializedSurface": "<path | null>"
+}
+```
+
+On failure:
+
+```json
+{ "command": "build", "ok": false, "error": "<message>" }
+```
+
+**Reading `ok`:** if `ok` is `true`, the script transpiled — read `written` for
+the emitted `.lua` path to add as a `.script` component in the editor;
+`defoldVersion` and `apiSurface` record which API surface it was built against.
+If `ok` is `false`, the build failed — surface `error` and follow
+[Fix the Lua output](#fix-the-lua-output).
+
+## Fix the Lua output
+
+**Goal:** recover from a transpile failure reported by `build` or `watch`.
+
+**Command (re-run after each source fix):**
+
+```sh
+bunx @defold-typescript/cli@latest build --json
+```
+
+On a transpile failure the one-shot `build --json` envelope carries the message:
+
+```json
+{ "command": "build", "ok": false, "error": "<message>" }
+```
+
+Under a long-lived `watch --json`, the same failure arrives as an NDJSON event on
+stdout (one JSON object per line) keyed `command: "watch"`:
+
+```json
+{ "command": "watch", "event": "rebuild", "ok": false, "error": "<message>" }
+```
+
+The first build emits `event: "build"`; each later rebuild emits
+`event: "rebuild"`. `build` and the transpile-diagnostics pass share one
+diagnostic run, so the `error` names the offending source span.
+
+**Reading `ok`:** while `ok` is `false`, read `error` for the failing span,
+then fix the source and rebuild. Two pages route the fix:
+[TypeScript gotchas](./typescript-gotchas.md) for the runtime-semantics traps
+that compile clean but surprise under Lua, and
+[Transpile diagnostics](./transpile-diagnostics.md) for what the diagnostic pass
+surfaces. Repeat until `ok` is `true`, then read `written` as in
+[Add a script](#add-a-script).
