@@ -246,3 +246,34 @@ describe("docs/guide/vector-math.md worked example", () => {
     expect(body).toContain("handle_obstacle_contact");
   });
 });
+
+describe("docs/guide/pinning-defold-version.md release-channel section", () => {
+  test("contains the channel section heading", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("## Pinning a release channel");
+  });
+
+  test("names all three channels and the stable default", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("stable");
+    expect(body).toContain("beta");
+    expect(body).toContain("alpha");
+    expect(body).toContain("default stays `stable`");
+  });
+
+  test("documents the --channel flag and the package.json channel pin precedence", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("--channel");
+    expect(body).toContain('"channel"');
+  });
+
+  test("documents --json reporting the channel", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("defoldChannel");
+  });
+
+  test("states beta/alpha are experimental pre-release surfaces", async () => {
+    const body = await readGuide("pinning-defold-version.md");
+    expect(body).toContain("experimental");
+  });
+});

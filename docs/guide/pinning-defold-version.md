@@ -118,6 +118,50 @@ first use — the build does **not** fail. It reports `materializedSurface: null
 warns on stderr, leaves `tsconfig.json` untouched, and exits `0`; the default
 committed surface stays usable. Having Bun is enough to compile your project.
 
+## Pinning a release channel
+
+A Defold release channel picks which build of the engine the reference docs
+are fetched from. Three channels are supported — `stable` (the default),
+`beta`, and `alpha`. The `stable` channel is the production release line; the
+`beta` and `alpha` channels are experimental pre-release surfaces that track
+in-development builds and may break at any time. If you do nothing, the
+default stays `stable`; existing projects with no channel pin are unchanged.
+
+You select a channel the same way you select a version — by name — and the
+channel rides the same precedence chain. The `--channel` flag overrides the
+`package.json` pin, and the pin overrides the `stable` default:
+
+1. `--channel <channel>` on the command line (highest),
+2. the `package.json` `defold-typescript.channel` pin,
+3. the `stable` default.
+
+```jsonc
+// package.json
+{
+  "defold-typescript": {
+    "defold-version": "1.12.4",
+    "channel": "stable"
+  }
+}
+```
+
+`bunx @defold-typescript/cli@latest init` does not seed a `channel` key, so a
+project with no pin behaves exactly as today. The resolved channel is reported
+in `--json` output as `defoldChannel` on `init` and `build`. `init` reports the
+default `stable` without writing the key, so the key stays absent unless you
+pin it yourself.
+
+How the channel affects the doc-source fetch:
+
+- **`stable`** uses the GitHub release URL for the pinned `defold-version` and
+  downloads `engine/share/ref-doc.zip` from that release's archive. This is
+  the only path that touches the GitHub archive directly.
+- **`beta`** and **`alpha`** resolve the channel head via
+  `d.defold.com/<channel>/info.json` and download
+  `archive/<channel>/<sha1>/engine/share/ref-doc.zip`, cached channel-scoped.
+  Each channel's cache directory is independent, so switching channels does
+  not invalidate the `stable` cache.
+
 ## Maintainer verification
 
 The public `defold-1.9.8` example target is periodically checked with the
