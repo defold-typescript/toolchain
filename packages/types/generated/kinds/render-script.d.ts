@@ -39,6 +39,7 @@ import "../../src/engine-globals";
 import "../../src/go-overloads";
 import "../../src/message-guard";
 import "../../src/msg-overloads";
+import "../../src/window-event-guard";
 import "../builtin-messages";
 import "../render";
 

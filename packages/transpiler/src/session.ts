@@ -8,6 +8,7 @@ import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { timersLoweringPlugin } from "./timers-lowering";
 import { AMBIENT_FILES, collectOutputs, type TranspileProjectResult } from "./transpile";
+import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
 export interface TranspileSession {
   update(changes: Readonly<Record<string, string | null>>): TranspileProjectResult;
@@ -32,6 +33,7 @@ const COMPILER_OPTIONS: tstl.CompilerOptions = {
   luaPlugins: [
     { plugin: lifecycleErasurePlugin },
     { plugin: messageGuardLoweringPlugin },
+    { plugin: windowEventGuardLoweringPlugin },
     { plugin: messageDispatchLoweringPlugin },
     { plugin: timersLoweringPlugin },
   ],

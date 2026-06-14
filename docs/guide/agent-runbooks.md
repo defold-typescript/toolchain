@@ -275,6 +275,49 @@ A `.ts.gui_script` is referenced by a `.gui` scene's **Script** property and a
   asset-derived resources — embedded game objects, components, textures — never
   referenced script files, which keep their source path.)
 
+## Narrow engine callback payloads
+
+**Goal:** type an engine callback's untyped payload without hand-rolling `typeof`/`in`/`as`.
+
+**Rule for clankers:** when an engine callback hands back an untyped or `unknown`
+payload that is discriminated by a *separate* id/event argument, reach for the
+**provided declaration-only guard** before reaching for `typeof`/`in`/`as`.
+TypeScript cannot correlate two independent parameters, and Defold's ids/event
+constants are pre-hashed `Hash` values or branded numbers — neither works as a
+discriminated-union tag. Each guard below re-introduces the discriminant at the
+use site. They are all **declaration-only**: the transpiler lowers each call to
+its runtime comparison, so there is no runtime Lua symbol and **no import to
+add**.
+
+`on_message` — narrow one message with `isMessage`, or route many with `onMessage`:
+
+```ts
+export default defineScript({
+  on_message(self, message_id, message) {
+    if (isMessage(message_id, message, "contact_point_response")) {
+      // message narrowed to the contact_point_response payload — no cast.
+      print(message.distance);
+    }
+  },
+});
+```
+
+`window.set_listener` — narrow the callback's `data` with `isWindowEvent`:
+
+```ts
+window.set_listener((self, event, data) => {
+  if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
+    // data narrowed to { width: number; height: number } — no cast.
+    print(data.width, data.height);
+  }
+});
+```
+
+An unknown id/event constant is a compile error, so the guard also catches typos.
+The full narrowing reference, including `onMessage`'s multi-message dispatcher,
+lives in [Script lifecycle](./script-lifecycle.md#receiving-messages-with-type-narrowing)
+and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params).
+
 ## Fix the Lua output
 
 **Goal:** recover from a transpile failure reported by `build` or `watch`.
