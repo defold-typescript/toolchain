@@ -80,10 +80,11 @@ If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` (below) give
 
 ## Opinionated `mise.toml`
 
-`init` scaffolds (or additively merges into) an opinionated `mise.toml` with three tasks. The block is marker-fronted, so re-running `init` refreshes the managed tasks without disturbing your own `[tools]` or `[tasks.*]` entries.
+`init` scaffolds (or additively merges into) an opinionated `mise.toml` with the following tasks. The block is marker-fronted, so re-running `init` refreshes the managed tasks without disturbing your own `[tools]` or `[tasks.*]` entries.
 
 - **`defold-typescript:build`** — `bunx @defold-typescript/cli build`. Builds once with the project's CLI.
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
+- **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
 - **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init --force` then `bun install`. The deliberate upgrade path.
 
 Build and watch carry no version tag, so inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` scaffolds as a pinned devDependency — the build runs the version locked alongside the pinned `@defold-typescript/types`. Upgrade is the one task that intentionally pulls `@latest`: `init --force` re-pins both managed deps to the new CLI's version, and `bun install` reinstalls.

@@ -4,7 +4,7 @@
 // the block without disturbing user-authored `[tools]`/`[tasks.*]` content.
 const MANAGED_MARKER = "# managed by @defold-typescript";
 
-// Build/watch/setup-debug run `bunx @defold-typescript/cli <cmd>`: inside an
+// Build/watch/setup-debug/init-agents run `bunx @defold-typescript/cli <cmd>`: inside an
 // installed project bunx resolves the `@defold-typescript/cli` pinned in
 // `SCAFFOLD_DEV_DEPS`, so the task runs the version locked alongside
 // `@defold-typescript/types`. `:upgrade` is the deliberate `@latest` pull that
@@ -24,6 +24,11 @@ ${MANAGED_MARKER}
 [tasks."defold-typescript:setup-debug"]
 description = "Wire the lldebugger game.project dependency and entry-script bootstrap with the defold-typescript CLI"
 run = "bunx @defold-typescript/cli setup-debug"
+
+${MANAGED_MARKER}
+[tasks."defold-typescript:init-agents"]
+description = "Materialize or refresh the AGENTS.md / CLAUDE.md AI-harness contract with the defold-typescript CLI"
+run = "bunx @defold-typescript/cli init-agents"
 
 ${MANAGED_MARKER}
 [tasks."defold-typescript:upgrade"]

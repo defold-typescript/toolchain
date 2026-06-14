@@ -2,15 +2,20 @@ import { describe, expect, test } from "bun:test";
 import { MISE_TASKS_TOML, mergeMiseToml } from "./mise-scaffold";
 
 describe("MISE_TASKS_TOML", () => {
-  test("declares the four quoted namespaced task headers", () => {
+  test("declares the five quoted namespaced task headers", () => {
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:build"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:watch"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:upgrade"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:setup-debug"]');
+    expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:init-agents"]');
   });
 
   test("setup-debug runs the CLI via bunx @defold-typescript/cli", () => {
     expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli setup-debug"');
+  });
+
+  test("init-agents runs the installed CLI via bunx @defold-typescript/cli", () => {
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli init-agents"');
   });
 
   test("build and watch invoke the CLI via bunx @defold-typescript/cli", () => {
@@ -26,7 +31,7 @@ describe("MISE_TASKS_TOML", () => {
 
   test("each managed task is fronted by the managed marker", () => {
     const markers = MISE_TASKS_TOML.match(/# managed by @defold-typescript/g) ?? [];
-    expect(markers.length).toBe(4);
+    expect(markers.length).toBe(5);
   });
 });
 
@@ -44,9 +49,12 @@ describe("mergeMiseToml", () => {
     expect(merged).toContain('[tasks."defold-typescript:build"]');
     expect(merged).toContain('[tasks."defold-typescript:watch"]');
     expect(merged).toContain('[tasks."defold-typescript:upgrade"]');
+    expect(merged).toContain('[tasks."defold-typescript:init-agents"]');
 
     const buildHeaders = merged.match(/\[tasks\."defold-typescript:build"\]/g) ?? [];
     expect(buildHeaders.length).toBe(1);
+    const initAgentsHeaders = merged.match(/\[tasks\."defold-typescript:init-agents"\]/g) ?? [];
+    expect(initAgentsHeaders.length).toBe(1);
   });
 
   test("is idempotent: re-merging an already-merged file changes nothing", () => {

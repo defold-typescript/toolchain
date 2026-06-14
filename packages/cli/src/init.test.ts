@@ -477,12 +477,13 @@ describe("runInit (new-project mode)", () => {
     expect(collection).toContain("/src/main.ts.script");
   });
 
-  test("scaffolds mise.toml with the three managed tasks", () => {
+  test("scaffolds mise.toml with the managed tasks", () => {
     runInit({ cwd });
     const content = readFileSync(path.join(cwd, "mise.toml"), "utf8");
     expect(content).toContain('[tasks."defold-typescript:build"]');
     expect(content).toContain('[tasks."defold-typescript:watch"]');
     expect(content).toContain('[tasks."defold-typescript:upgrade"]');
+    expect(content).toContain('[tasks."defold-typescript:init-agents"]');
   });
 
   test("merges into an existing user mise.toml additively, preserving user content", () => {
