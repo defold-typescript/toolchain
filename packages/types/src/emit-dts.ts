@@ -499,6 +499,21 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
 ]);
 
+// Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements
+// for a callback parameter's recovered signature, used where the generic
+// `recoverCallbackSignature` `unknown`-everywhere form leaves real engine type
+// information on the table. The value is the full emitted function type. Honest
+// only: `window.set_listener` discriminates `event` by a known constant union and
+// its `data` is a bare record (only resize carries fields — `isWindowEvent` is the
+// path to typed `data`), mirroring the `msg.post` (send, typed) / `isMessage`
+// (receive, narrow) split.
+export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, string> = new Map([
+  [
+    "window.set_listener:param:callback",
+    "(self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void",
+  ],
+]);
+
 // resource.set_atlas's `table` param and resource.get_atlas's `data` return are
 // flattened `<li><dl>` field lists whose `geometries` header is followed by the
 // `table`-typed siblings `vertices`/`uvs`/`indices` — the grouping heuristic
@@ -1200,7 +1215,11 @@ function mapSlotUnion(
         }
       }
     } else {
-      ts = mapType(token);
+      const curated =
+        slotKind !== undefined && slotName !== undefined
+          ? CALLBACK_SIGNATURE_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
+          : undefined;
+      ts = curated ?? mapType(token);
     }
     if (seen.has(ts)) continue;
     seen.add(ts);

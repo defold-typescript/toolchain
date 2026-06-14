@@ -16,6 +16,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`if (x)` truthiness differs in Lua](#if-x-truthiness-differs--0-and--are-truthy-in-lua) — `0` and `""` are **truthy** once transpiled; test the value explicitly.
 - [`typeof` cannot narrow engine values](#typeof-cannot-narrow-engine-values--they-are-lua-userdata) — Defold handles are Lua `userdata`, so `typeof x === "object"` is `false` for them at runtime.
 - [`on_message` ids are hashes, not strings](#on_message-ids-are-hashes-not-strings) — compare `message_id` against a `hash("…")` constant; a string literal never matches at runtime.
+- [`window.set_listener` hands `event` and `data` separately](#windowset_listener-hands-event-and-data-as-separate-params) — TS can't auto-narrow `data` from an `event` check; use the `isWindowEvent` guard.
 - [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
@@ -183,6 +184,32 @@ on_message(self, message_id, message) {
 The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the messages guide), not on the handler.
 
 **How we pin this in the type tests.** `packages/types/test-d/lifecycle.ts` binds `message_id` to a `Hash` inside the handler and asserts a string-literal `message_id` at the call site carries `@ts-expect-error`. If `on_message` ever re-typed the id as a string, the expected error would disappear and the typecheck gate would fail.
+
+## `window.set_listener` hands `event` and `data` as separate params
+
+**Symptom.** A `window.set_listener` callback reads the resize dimensions off `data`, but `data.width` does not type-check (or is `unknown`) even after checking `event === window.WINDOW_EVENT_RESIZED`:
+
+```ts
+window.set_listener((self, event, data) => {
+  if (event === window.WINDOW_EVENT_RESIZED) {
+    print(data.width, data.height);  // data stays a record — width/height not known
+  }
+});
+```
+
+**Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event === …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ===` narrowing) and `data` as a bare `Record<string | number, unknown>` (only a resize carries fields, so the record is the honest default).
+
+**Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](script-lifecycle.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
+
+```ts
+window.set_listener((self, event, data) => {
+  if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
+    print("resized:", data.width, data.height);  // data: { width: number; height: number }
+  }
+});
+```
+
+`isWindowEvent` is declaration-only: the transpiler lowers the call to a bare `event == window.WINDOW_EVENT_RESIZED`, so there is no runtime function and no import to add. Only `WINDOW_EVENT_RESIZED` carries fields; every other event narrows `data` to `undefined`. This is the same wall — and the same fix — as [`on_message` ids](#on_message-ids-are-hashes-not-strings): the engine hands back an untyped payload discriminated by a separate id/event argument, and a declaration-only guard is the path to a typed payload.
 
 ## `null`, `undefined`, and `== null` all collapse to `nil`
 

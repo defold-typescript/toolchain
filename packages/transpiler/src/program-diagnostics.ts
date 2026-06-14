@@ -4,12 +4,14 @@ import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { timersLoweringPlugin } from "./timers-lowering";
+import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
-// The same four lua plugins the build path lists (transpile.ts / session.ts),
-// so the editor and the build agree on what is unsupported.
+// The same lua plugins the build path lists (transpile.ts / session.ts), so the
+// editor and the build agree on what is unsupported.
 const LUA_PLUGINS: tstl.Plugin[] = [
   lifecycleErasurePlugin,
   messageGuardLoweringPlugin,
+  windowEventGuardLoweringPlugin,
   messageDispatchLoweringPlugin,
   timersLoweringPlugin,
 ];

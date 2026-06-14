@@ -12,6 +12,7 @@ import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { importsTimersModule, timersLoweringPlugin } from "./timers-lowering";
 import { TIMERS_RUNTIME } from "./timers-runtime";
+import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
 export interface TranspileResult {
   readonly lua: string;
@@ -115,6 +116,9 @@ function buildAmbientFiles(): Record<string, string> {
       readAmbient("src/msg-overloads.d.ts"),
     "node_modules/@defold-typescript/types/src/message-guard.d.ts":
       readAmbient("src/message-guard.d.ts"),
+    "node_modules/@defold-typescript/types/src/window-event-guard.d.ts": readAmbient(
+      "src/window-event-guard.d.ts",
+    ),
     "node_modules/@defold-typescript/types/src/message-dispatch.d.ts": readAmbient(
       "src/message-dispatch.d.ts",
     ),
@@ -259,6 +263,7 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
     luaPlugins: [
       { plugin: lifecycleErasurePlugin },
       { plugin: messageGuardLoweringPlugin },
+      { plugin: windowEventGuardLoweringPlugin },
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
     ],

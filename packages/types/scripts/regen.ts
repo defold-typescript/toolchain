@@ -234,6 +234,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../../src/engine-globals",
   "../../src/msg-overloads",
   "../../src/message-guard",
+  "../../src/window-event-guard",
   "../../src/go-overloads",
 ];
 

@@ -196,6 +196,56 @@ describe("emitDeclarations", () => {
     );
   });
 
+  test("window.set_listener's callback is curated with a typed event union and record data", () => {
+    const module: ApiModule = {
+      namespace: "window",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "window.set_listener",
+          brief: "",
+          description: "",
+          parameters: [
+            {
+              name: "callback",
+              doc: "",
+              types: ["function(self, event, data)"],
+              isOptional: false,
+            },
+          ],
+          returnValues: [],
+        },
+        {
+          name: "window.other",
+          brief: "",
+          description: "",
+          parameters: [
+            {
+              name: "callback",
+              doc: "",
+              types: ["function(self, event, data)"],
+              isOptional: false,
+            },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain(
+      "function set_listener(callback: (self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void): void;",
+    );
+    // A non-keyed callback param still widens to the recoverCallbackSignature form.
+    expect(out).toContain(
+      "function other(callback: (self: unknown, event: unknown, data: unknown) => void): void;",
+    );
+  });
+
   test("an out-of-scope token still emits unknown — the callback scope boundary holds", () => {
     const module: ApiModule = {
       namespace: "socket",

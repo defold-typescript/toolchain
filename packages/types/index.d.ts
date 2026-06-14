@@ -3,6 +3,7 @@
 import "./generated/builtin-messages";
 import "./src/msg-overloads";
 import "./src/message-guard";
+import "./src/window-event-guard";
 import "./src/message-dispatch";
 import "./src/engine-globals";
 import "./generated/b2d";
