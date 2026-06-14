@@ -12,6 +12,7 @@ import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
 export interface RunInitOptions {
   readonly cwd: string;
   readonly force?: boolean;
+  readonly template?: string;
 }
 
 export interface RunInitResult {
@@ -254,6 +255,38 @@ export default defineScript({
   },
 });
 `;
+
+const MAIN_TS_MINIMAL = `import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    return {};
+  },
+});
+`;
+
+export const INIT_TEMPLATE_NAMES = ["default", "minimal"] as const;
+export type InitTemplate = (typeof INIT_TEMPLATE_NAMES)[number];
+const DEFAULT_INIT_TEMPLATE: InitTemplate = "default";
+
+// A template varies only the synthesized entry script; the shared TS surface
+// (tsconfig, package.json, .vscode, …) is template-independent.
+const TEMPLATE_MAIN_TS: Record<InitTemplate, string> = {
+  default: MAIN_TS_CONTENT,
+  minimal: MAIN_TS_MINIMAL,
+};
+
+function resolveTemplate(template: string | undefined): InitTemplate {
+  if (template === undefined) {
+    return DEFAULT_INIT_TEMPLATE;
+  }
+  if ((INIT_TEMPLATE_NAMES as readonly string[]).includes(template)) {
+    return template as InitTemplate;
+  }
+  throw new Error(
+    `defold-typescript init: unknown template "${template}". Valid templates: ${INIT_TEMPLATE_NAMES.join(", ")}.`,
+  );
+}
 
 const MAIN_COLLECTION_CONTENT = `name: "main"
 scale_along_z: 0
@@ -584,11 +617,16 @@ function writeVscodeDebugLauncher(cwd: string, written: string[]): void {
   written.push(".vscode/defold-debug.ts");
 }
 
-function writeTsSurface(cwd: string, written: string[], force = false): void {
+function writeTsSurface(
+  cwd: string,
+  written: string[],
+  force = false,
+  mainTs: string = MAIN_TS_CONTENT,
+): void {
   mkdirSync(path.join(cwd, "src"), { recursive: true });
   const mainPath = path.join(cwd, "src", "main.ts");
   if (!existsSync(mainPath)) {
-    writeFileSync(mainPath, MAIN_TS_CONTENT);
+    writeFileSync(mainPath, mainTs);
     written.push("src/main.ts");
   }
 
@@ -642,7 +680,11 @@ function writeTsSurface(cwd: string, written: string[], force = false): void {
   writeVscodeDebugLauncher(cwd, written);
 }
 
-export function runNewProjectInit(cwd: string, force = false): RunInitResult {
+export function runNewProjectInit(
+  cwd: string,
+  force = false,
+  mainTs: string = MAIN_TS_CONTENT,
+): RunInitResult {
   if (!existsSync(cwd)) {
     mkdirSync(cwd, { recursive: true });
   } else if (readdirSync(cwd).length > 0 && !force) {
@@ -663,16 +705,24 @@ export function runNewProjectInit(cwd: string, force = false): RunInitResult {
   writeFileSync(path.join(cwd, "main", "main.collection"), MAIN_COLLECTION_CONTENT);
   written.push("main/main.collection");
 
-  writeTsSurface(cwd, written, force);
+  writeTsSurface(cwd, written, force, mainTs);
 
   return { written };
 }
 
 export function runInit(opts: RunInitOptions): RunInitResult {
-  const { cwd, force = false } = opts;
+  const { cwd, force = false, template } = opts;
+  const resolvedTemplate = resolveTemplate(template);
+  const hasGameProject = existsSync(path.join(cwd, "game.project"));
 
-  if (!existsSync(path.join(cwd, "game.project"))) {
-    return runNewProjectInit(cwd, force);
+  if (hasGameProject && resolvedTemplate !== DEFAULT_INIT_TEMPLATE) {
+    throw new Error(
+      `defold-typescript init: --template applies only when creating a new project; ${cwd} already contains a Defold project.`,
+    );
+  }
+
+  if (!hasGameProject) {
+    return runNewProjectInit(cwd, force, TEMPLATE_MAIN_TS[resolvedTemplate]);
   }
 
   if (!force) {
