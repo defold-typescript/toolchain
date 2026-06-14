@@ -1,0 +1,6 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "defold-typescript-docs",
+  "compatibility_date": "2025-06-01",
+  "pages_build_output_dir": "dist"
+}

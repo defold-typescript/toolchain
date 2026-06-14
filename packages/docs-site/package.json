@@ -1,0 +1,26 @@
+{
+  "name": "@defold-typescript/docs-site",
+  "version": "0.0.0",
+  "description": "Static documentation site for defold-typescript, rendering the guide to HTML.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@shikijs/markdown-it": "^4.2.0",
+    "hono": "^4.12.25",
+    "honox": "^0.1.56",
+    "markdown-it": "^14.2.0",
+    "shiki": "^4.2.0"
+  },
+  "devDependencies": {
+    "@hono/vite-ssg": "^0.3.3",
+    "@types/markdown-it": "^14.1.2",
+    "vite": "^8.0.16"
+  }
+}
