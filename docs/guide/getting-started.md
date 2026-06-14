@@ -4,6 +4,8 @@ Scaffold a Defold project with TypeScript sources, write a script, and build to 
 
 Coming from Lua? See [TypeScript vs Lua](./typescript-vs-lua.md) for a translation cheat-sheet.
 
+Coming from ts-defold? See [Migrating from ts-defold](./migrating-from-ts-defold.md).
+
 ## Install Bun
 
 Follow the official instructions at [bun.sh](https://bun.sh/). Verify:
