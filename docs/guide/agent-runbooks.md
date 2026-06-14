@@ -149,23 +149,34 @@ came from (`provenance`) and how many `.script_api` files it contributed
 
 ## Add a script
 
-**Goal:** add a new gameplay script to a TypeScript Defold project. There is no
-`add` verb — the workflow composes ordinary file creation with the shipped
-`build` verb.
+**Goal:** add a new gameplay script to a TypeScript Defold project and attach it
+so it runs. There is no `add` verb — the workflow composes ordinary file
+creation with the shipped `build` verb, then a scene-file edit to wire the
+compiled component.
 
-**Command (from the project root, after writing the `.ts` file under `src/`):**
+**1. Write the source.** One Defold script per file under `src/`, exporting a
+single lifecycle factory as `default` (never two in one file). The factory
+decides the compiled kind:
+
+| Source factory | Compiled artifact | Referenced by |
+| -------------- | ----------------- | ------------- |
+| `defineScript` | `<name>.ts.script` | a game object (`.go` / `.collection`) as a component |
+| `defineGuiScript` | `<name>.ts.gui_script` | a GUI scene (`.gui`), as its **Script** property |
+| `defineRenderScript` | `<name>.ts.render_script` | the render pipeline (a `.render` file, set via `game.project`) |
+
+A source that calls no factory emits a plain `<name>.lua` module to `import`
+instead. Which hooks to export (`init`, `update`, `fixed_update`, `on_message`,
+`on_input`, `final`, …) and how `self` is typed are covered in
+[Script lifecycle](./script-lifecycle.md).
+
+**2. Build** (from the project root):
 
 ```sh
 bunx @defold-typescript/cli@latest build --json
 ```
 
-Write the source first — one Defold script per file, exporting a single
-lifecycle factory (`defineScript` / `defineGuiScript` / `defineRenderScript`) as
-`default`. Which hooks the file should export (`init`, `update`, `fixed_update`,
-`on_message`, `on_input`, `final`, …) and how `self` is typed are covered in
-[Script lifecycle](./script-lifecycle.md). Then build — or, if a
-[`watch --json`](#fix-the-lua-output) is already running, just save the file and
-read its `rebuild` event instead of invoking `build`.
+Or, if a [`watch --json`](#fix-the-lua-output) is already running, just save the
+file and read its `rebuild` event instead of invoking `build`.
 
 **Returns** the one-shot envelope keyed `command: "build"`, plus the build
 context fields:
@@ -174,7 +185,7 @@ context fields:
 {
   "command": "build",
   "ok": true,
-  "written": ["build/<script>.lua", "..."],
+  "written": ["src/<name>.ts.script", "..."],
   "defoldVersion": "<version>",
   "defoldChannel": "<stable | beta | alpha>",
   "apiSurface": "<surface id>",
@@ -188,13 +199,81 @@ On failure:
 { "command": "build", "ok": false, "error": "<message>" }
 ```
 
-**Reading `ok`:** if `ok` is `true`, the script transpiled — read `written` for
-the emitted `.lua` path to add as a `.script` component in the editor;
-`defoldVersion` and `apiSurface` record which API surface it was built against;
-`defoldChannel` records the resolved release channel (`stable` unless pinned or
-passed via `--channel`; it does not yet change which surface is fetched).
-If `ok` is `false`, the build failed — surface `error` and follow
+**Reading `ok`:** if `ok` is `true`, the script transpiled — `written` lists the
+emitted artifact (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to
+attach next; `defoldVersion` and `apiSurface` record which API surface it was
+built against; `defoldChannel` records the resolved release channel (`stable`
+unless pinned or passed via `--channel`; it does not yet change which surface is
+fetched). If `ok` is `false`, the build failed — surface `error` and follow
 [Fix the Lua output](#fix-the-lua-output).
+
+**What `build` writes.** Each `.ts` source under `src/` produces exactly one
+output in the Defold project tree — a script component or a `<name>.lua` module,
+per the table above. `import` is rewritten to `require("<module>")` resolving
+against the emitted `.lua`, so a shared module must be built for its require to
+resolve at runtime. Two runtime modules are synthesized at the output root on
+demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
+`Object.keys` or spread) and `defold_typescript_timers.lua` (when timers are
+used).
+
+Who creates these: typescript-to-lua (TSTL) produces the Lua *content* in
+memory; the CLI writes the *files*, choosing the `.ts.script` / `.ts.gui_script`
+/ `.ts.render_script` / `.lua` name and location. TSTL never touches disk — that
+is why the outputs carry Defold-correct extensions instead of plain `.lua`.
+Treat the `--json` `written` array as the authoritative list of what landed; do
+not infer paths.
+
+**3. Attach the compiled script.** Building only produces the artifact; nothing
+runs until a scene references it as a component. Scene files (`.go`,
+`.collection`, `.gui`, `.render`) reference the **compiled** artifact, never the
+`.ts` source. A game object references a `.ts.script` through a `components { … }`
+entry naming its project-root-absolute path:
+
+```
+components {
+  id: "player"
+  component: "/src/player.ts.script"
+}
+```
+
+In a standalone `.go` the block appears verbatim. When the game object is
+embedded in a `.collection`, Defold stores the same block as an escaped string
+inside an `embedded_instances { data: "…" }` entry — the form to write when
+editing the file directly. The platformer example shows this in
+[`game/player.collection`](../examples/platformer/game/player.collection):
+
+```
+embedded_instances {
+  id: "player"
+  data: "components {\n"
+  "  id: \"player\"\n"
+  "  component: \"/src/player.ts.script\"\n"
+  ...
+  "}\n"
+  ...
+}
+```
+
+A `.ts.gui_script` is referenced by a `.gui` scene's **Script** property and a
+`.ts.render_script` by the render pipeline, the same compiled-artifact rule.
+
+**4. Verify the attachment.** Two checks confirm the script is wired in:
+
+- Grep the scene files for the compiled name:
+
+  ```sh
+  grep -rl "player.ts.script" --include="*.go" --include="*.collection" --include="*.gui" .
+  ```
+
+  A hit means a scene references it; no hit means it is orphaned and will not
+  run.
+
+- Defold compiles only **reachable** resources, so after a Defold build
+  (the CLI's `defold build` subcommand) an attached script produces `build/default/src/player.ts.scriptc`
+  — the path mirrors the source — while an orphaned script never appears under
+  `build/default/` at all. (The `_generated_*` artifacts there are inlined or
+  asset-derived resources — embedded game objects, components, textures — never
+  referenced script files, which keep their source path.)
 
 ## Fix the Lua output
 

@@ -114,10 +114,13 @@ export default defineScript({
 ## Build to Lua
 
 ```sh
+# one-time build
 bunx @defold-typescript/cli build
+# build and watch for changes
+bunx @defold-typescript/cli watch
 ```
 
-The build command transpiles every TypeScript file under `src/` to Lua and writes the output into the Defold project tree. Lifecycle-factory files become Defold components such as `src/main.ts.script`; helper-only files become Lua modules such as `src/util.lua` for TypeScript imports to `require`. Open the project in the [Defold editor](./defold-editor.md) (or run it from the command line) to play it.
+The build command transpiles every TypeScript file under `src/` to Lua and writes the result into the Defold project tree — each source becomes exactly one output. A file that had `export default defineScript({...})` lifecycle factory becomes a Defold script component (`src/main.ts` -> `src/main.ts.script`); a plain module with no factory becomes a Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you never edit or reference by hand, only ever the `src/util.ts` you author. Your `import` becomes a Lua `require` that resolves against that emitted module, so a shared module must be built before the script importing it will run. Open the project in the [Defold editor](./defold-editor.md) (or run it from the command line) to play it.
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`, object spread, and similar), the build also writes a `lualib_bundle.lua` at the output root automatically; the generated Lua's `require("lualib_bundle")` resolves against it.
 

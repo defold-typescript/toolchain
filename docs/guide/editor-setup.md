@@ -25,9 +25,13 @@ You edit TypeScript, not Lua, and the build runs from the CLI — so the require
 - TypeScript support: built into VSCode. This is what type-checks `src/*.ts` against `@defold-typescript/types`; no extra extension needed.
 - [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) (`tomblind.local-lua-debugger-vscode`) — **required for debugging**: steps through your `.ts` source via the emitted source maps. See [Debugging](debugging.md) for the launch path.
 
-**Defold Kit (`astronachos.defold`) is not needed.** This toolchain ships its own ambient Defold types and a CLI build loop, so the Kit's annotation sync is redundant — and its setup wizard overwrites files this toolchain manages. `init` no longer recommends it.
+> [!WARNING]
+> **Defold Kit (`astronachos.defold`) is not needed.** This toolchain ships its own ambient Defold types and a CLI build loop, so the Kit's annotation sync is redundant — and its setup wizard overwrites files this toolchain manages. `init` no longer recommends it.
 
-Defold runs standard Lua 5.1 (LuaJIT), **not** Luau. If you want to read the *generated* Lua, [sumneko Lua](https://marketplace.visualstudio.com/items?itemName=sumneko.lua) (`sumneko.lua`) adds a Lua language server — optional, and no longer auto-recommended, since you author in TypeScript. Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold project: it reports `Failed to load sourcemap.json` and bogus diagnostics, because it expects a Roblox/Rojo `sourcemap.json` — an artifact this toolchain never produces. The `*.ts.script.map` files next to your output are TSTL source maps, unrelated to Roblox's `sourcemap.json`.
+Defold runs standard Lua 5.1 (LuaJIT), **not** Luau. If you want to read the *generated* Lua, [sumneko Lua](https://marketplace.visualstudio.com/items?itemName=sumneko.lua) (`sumneko.lua`) adds a Lua language server — optional, and no longer auto-recommended, since you author in TypeScript.
+
+> [!WARNING]
+> Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold project: it reports `Failed to load sourcemap.json` and bogus diagnostics, because it expects a Roblox/Rojo `sourcemap.json` — an artifact this toolchain never produces. The `*.ts.script.map` files next to your output are TSTL source maps, unrelated to Roblox's `sourcemap.json`.
 
 `init` scaffolds a `.vscode/` folder that encodes this:
 
@@ -42,14 +46,14 @@ These files merge additively into any `.vscode/` config you already have, so you
 
 In any `.ts` file, type one of these prefixes and accept the completion to scaffold a whole empty script over `defineScript` / `defineGuiScript` / `defineRenderScript`:
 
-| Prefix | Scaffolds |
-| --- | --- |
-| `defold-script` | script, state inferred from `init` |
-| `defold-script-typed` | script, explicit `Self` type |
-| `defold-gui` | GUI script, state inferred from `init` |
-| `defold-gui-typed` | GUI script, explicit `Self` type |
-| `defold-render` | render script, state inferred from `init` |
-| `defold-render-typed` | render script, explicit `Self` type |
+| Prefix                | Scaffolds                                 |
+| --------------------- | ----------------------------------------- |
+| `defold-script`       | script, state inferred from `init`        |
+| `defold-script-typed` | script, explicit `Self` type              |
+| `defold-gui`          | GUI script, state inferred from `init`    |
+| `defold-gui-typed`    | GUI script, explicit `Self` type          |
+| `defold-render`       | render script, state inferred from `init` |
+| `defold-render-typed` | render script, explicit `Self` type       |
 
 The two variants mirror the two self-typing idioms (see [Script lifecycle](script-lifecycle.md)). The inferred variant returns an inline object from `init`, and `TSelf` follows that return — the documented default. The typed variant declares a named `Self` type and passes it explicitly as `defineScript<Self>(…)`, the escape hatch for when you want to name the state shape up front. Render snippets omit `on_input`, which `RenderScriptHooks` does not expose.
 
