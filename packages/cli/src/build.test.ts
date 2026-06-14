@@ -294,3 +294,61 @@ describe("runBuild", () => {
     expect(caught?.message).toContain("src/b.ts");
   });
 });
+
+describe("runBuild outDir tree mirroring", () => {
+  const OUTDIR_TSCONFIG = JSON.stringify(
+    { compilerOptions: { outDir: "build/lua", strict: true }, include: ["src/**/*.ts"] },
+    null,
+    2,
+  );
+  const NESTED_SCRIPT =
+    'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() {} });\n';
+
+  test("mirrors a nested source tree under a configured outDir", () => {
+    writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+    writeFile("src/util.ts", "export const u = 1;\n");
+    writeFile("src/world/player.ts", NESTED_SCRIPT);
+    writeFile("src/world/ui/hud.ts", NESTED_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    const mirrored = [
+      "build/lua/util.lua",
+      "build/lua/world/player.ts.script",
+      "build/lua/world/ui/hud.ts.script",
+    ];
+    for (const rel of mirrored) {
+      expect(existsSync(path.join(cwd, rel))).toBe(true);
+      expect(result.written).toContain(rel);
+    }
+
+    // Output must not also land alongside the source under src/.
+    expect(existsSync(path.join(cwd, "src/util.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/world/player.ts.script"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/world/ui/hud.ts.script"))).toBe(false);
+
+    // The returned manifest matches what actually landed on disk.
+    for (const rel of result.written) {
+      expect(existsSync(path.join(cwd, rel))).toBe(true);
+    }
+  });
+
+  test("lualib bundle and timers runtime, when emitted, land at the outDir root", () => {
+    writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+    writeFile("src/world/player.ts", NESTED_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    for (const rootFile of [
+      "build/lua/lualib_bundle.lua",
+      "build/lua/defold_typescript_timers.lua",
+    ]) {
+      if (result.written.includes(rootFile)) {
+        expect(existsSync(path.join(cwd, rootFile))).toBe(true);
+      }
+    }
+    // Never re-rooted under the source subtree.
+    expect(result.written).not.toContain("build/lua/world/lualib_bundle.lua");
+    expect(result.written).not.toContain("build/lua/world/defold_typescript_timers.lua");
+  });
+});
