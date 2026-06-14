@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { detectSourceOutputKind, isTranspilerSource, readBuildConfig } from "./build-output";
+import { formatJsonLikeBiome } from "./format-json";
 import { scanFilesSync } from "./scan";
 import {
   isSkipped,
@@ -90,7 +91,7 @@ export function directoryWallTsconfig(wall: DirectoryWall): WallTsconfig {
 
 function writeJson(filePath: string, value: unknown): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
-  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+  writeFileSync(filePath, `${formatJsonLikeBiome(value)}\n`);
 }
 
 interface RootTsconfig {

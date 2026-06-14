@@ -15,6 +15,7 @@ import {
 } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
 import type { DefoldChannel } from "./defold-channel";
+import { formatJsonLikeBiome } from "./format-json";
 
 export const MATERIALIZED_ROOT = ".defold-types";
 
@@ -40,7 +41,7 @@ export interface MaterializeApiSurfaceResult {
 }
 
 function writeJson(filePath: string, value: unknown): void {
-  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+  writeFileSync(filePath, `${formatJsonLikeBiome(value)}\n`);
 }
 
 function listDts(dir: string): string[] {

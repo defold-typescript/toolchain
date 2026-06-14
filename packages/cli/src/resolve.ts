@@ -23,6 +23,7 @@ import {
   materializeExtensionDeclarations,
 } from "./extension-materialize";
 import { mergeResolvedVersionPins, readExtensionVersionPins } from "./extension-version";
+import { formatJsonLikeBiome } from "./format-json";
 
 export interface ResolvedExtensionReport {
   readonly url: string;
@@ -70,7 +71,7 @@ function readExistingPackageJson(cwd: string): { value: unknown; writable: boole
 
 function seedExtensionPins(cwd: string, existing: unknown, resolved: Record<string, string>): void {
   const merged = mergeResolvedVersionPins(existing, resolved);
-  writeFileSync(join(cwd, "package.json"), `${JSON.stringify(merged, null, 2)}\n`);
+  writeFileSync(join(cwd, "package.json"), `${formatJsonLikeBiome(merged)}\n`);
 }
 
 export async function runResolve(opts: RunResolveOptions): Promise<RunResolveResult> {

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { ScriptHookName } from "@defold-typescript/types";
 import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
+import { formatJsonLikeBiome } from "./format-json";
 import { mergeMiseToml } from "./mise-scaffold";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
@@ -44,7 +45,7 @@ const GITIGNORE_LINES = [
   "src/**/*.lua.map",
 ];
 
-const BIOME_JSON_CONTENT = {
+export const BIOME_JSON_CONTENT = {
   $schema: "https://biomejs.dev/schemas/2.4.15/schema.json",
   files: {
     includes: [
@@ -323,7 +324,7 @@ function repairManagedDevDeps(devDeps: Record<string, string>, force = false): v
 }
 
 function writeJson(filePath: string, value: unknown): void {
-  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+  writeFileSync(filePath, `${formatJsonLikeBiome(value)}\n`);
 }
 
 function writeGitignore(cwd: string): void {

@@ -11,6 +11,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { ExtensionDeclarations } from "./extension-declarations";
+import { formatJsonLikeBiome } from "./format-json";
 import { ensureGitignoreLine, MATERIALIZED_ROOT } from "./materialize";
 
 const EXTENSIONS_DIR = "extensions";
@@ -63,11 +64,10 @@ export function materializeExtensionDeclarations(
 
   writeFileSync(
     path.join(absDir, "package.json"),
-    `${JSON.stringify(
-      { name: "@defold-typescript/materialized-extensions", types: "index.d.ts" },
-      null,
-      2,
-    )}\n`,
+    `${formatJsonLikeBiome({
+      name: "@defold-typescript/materialized-extensions",
+      types: "index.d.ts",
+    })}\n`,
   );
 
   return { materializedDir: relDir, namespaces };
@@ -103,7 +103,7 @@ export function ensureExtensionTypesReference(cwd: string, materializedDir: stri
         typeRoots.push(MATERIALIZED_ROOT);
       }
       tsconfig.compilerOptions = { ...current, typeRoots, types };
-      writeFileSync(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
+      writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
     }
   }
 
