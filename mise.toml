@@ -60,3 +60,7 @@ run = "bun packages/cli/src/bin.ts watch docs/examples/platformer"
 [tasks."example:setup-debug"]
 description = "Executes setup-debug cli command for the platformer example"
 run = "bun packages/cli/src/bin.ts setup-debug docs/examples/platformer"
+
+[tasks."dev:site-docs"]
+description = "Live dev server (hot reload)"
+run = "bun run --filter @defold-typescript/docs-site dev"
