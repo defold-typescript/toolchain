@@ -29,7 +29,7 @@ import * as path from "node:path";
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
 // Publish order: a dependency is published before its dependents.
-const PACKAGES = ["types", "transpiler", "tstl-plugin", "cli"] as const;
+export const PACKAGES = ["types", "transpiler", "tstl-plugin", "cli"] as const;
 const SCOPED = PACKAGES.map((p) => `@defold-typescript/${p}`);
 
 const MANIFESTS = [

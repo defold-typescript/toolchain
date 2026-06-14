@@ -76,7 +76,7 @@ jobs:
 
       - name: Publish (dry-run)
         run: |
-          for pkg in types transpiler cli; do
+          for pkg in types transpiler tstl-plugin cli; do
             ( cd "packages/$pkg" && bun publish --dry-run --access public )
           done
 
@@ -85,6 +85,6 @@ jobs:
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          for pkg in types transpiler cli; do
+          for pkg in types transpiler tstl-plugin cli; do
             ( cd "packages/$pkg" && bun publish --access public )
           done
