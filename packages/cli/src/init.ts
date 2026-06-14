@@ -586,8 +586,11 @@ function writeVscodeDebugLauncher(cwd: string, written: string[]): void {
 
 function writeTsSurface(cwd: string, written: string[], force = false): void {
   mkdirSync(path.join(cwd, "src"), { recursive: true });
-  writeFileSync(path.join(cwd, "src", "main.ts"), MAIN_TS_CONTENT);
-  written.push("src/main.ts");
+  const mainPath = path.join(cwd, "src", "main.ts");
+  if (!existsSync(mainPath)) {
+    writeFileSync(mainPath, MAIN_TS_CONTENT);
+    written.push("src/main.ts");
+  }
 
   const tsconfig = {
     compilerOptions: {

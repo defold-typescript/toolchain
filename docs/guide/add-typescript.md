@@ -19,7 +19,7 @@ you have already installed `@defold-typescript/cli` locally.
 
 When `game.project` exists, `init` does not synthesize a new Defold project. It only writes the TypeScript surface:
 
-- `src/main.ts`
+- `src/main.ts` — a starter entry script, written only when absent. `main.ts` is your source, not managed config, so an existing one is left untouched (and omitted from the reported `written` list) even under `--force`.
 - `tsconfig.json`
 - `package.json`
 
@@ -41,7 +41,7 @@ Conflicts today are:
 - `defold-typescript.config.mts`
 - `defold-typescript.config.js`
 
-Pass `--force` to overwrite a conflicting TS config (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` overwrites the config wholesale; it does not merge fields, so any settings you had in `tsconfig.json` are replaced by the scaffold config.
+Pass `--force` to overwrite a conflicting TS config (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` overwrites the config wholesale; it does not merge fields, so any settings you had in `tsconfig.json` are replaced by the scaffold config. `--force` refreshes managed config only — it never overwrites `src/main.ts`, since that file is your source.
 
 ## Build the Lua output
 
