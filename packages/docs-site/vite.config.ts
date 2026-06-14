@@ -4,6 +4,16 @@ import { defineConfig } from "vite";
 
 const entry = "./app/server.ts";
 
-export default defineConfig({
-  plugins: [honox(), ssg({ entry })],
+export default defineConfig(({ mode }) => {
+  // Pass 1 (`--mode client`): honox bundles the client entry + islands and
+  // writes the Vite manifest, emptying dist first. Pass 2 (SSG) renders the
+  // HTML and must NOT empty dist, so the client assets + manifest survive for
+  // the `<Script>` manifest lookup.
+  if (mode === "client") {
+    return { plugins: [honox()] };
+  }
+  return {
+    plugins: [honox(), ssg({ entry })],
+    build: { emptyOutDir: false },
+  };
 });
