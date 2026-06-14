@@ -2034,3 +2034,62 @@ describe("dispatch resolve", () => {
     expect(err()).toContain("drift");
   });
 });
+
+describe("dispatch init --template", () => {
+  test("--template minimal writes the minimal scaffold and returns 0", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["init", cwd, "--template", "minimal"], io);
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+    expect(out()).toMatch(/defold-typescript init: wrote/);
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+    expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).not.toContain("vmath");
+  });
+
+  test("--template=minimal behaves identically to the spaced form", () => {
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["init", cwd, "--template=minimal"], io);
+
+    expect(code).toBe(0);
+    expect(out()).toMatch(/defold-typescript init: wrote/);
+    expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).not.toContain("vmath");
+  });
+
+  test("an unknown template returns 1 and names the valid templates on stderr", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["init", cwd, "--template", "nope"], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toMatch(/default/);
+    expect(err()).toMatch(/minimal/);
+  });
+
+  test("an unknown template under --json emits the init error result shape", () => {
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["init", cwd, "--template", "nope", "--json"], io);
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as { command: string; ok: boolean; error?: string };
+    expect(parsed.command).toBe("init");
+    expect(parsed.ok).toBe(false);
+    expect(typeof parsed.error).toBe("string");
+  });
+
+  test("--template value is consumed and never leaks into the positional path", () => {
+    const target = path.join(cwd, "fresh");
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["init", target, "--template", "minimal"], io);
+
+    expect(code).toBe(0);
+    expect(out()).toMatch(/defold-typescript init: wrote/);
+    expect(existsSync(path.join(target, "game.project"))).toBe(true);
+    expect(existsSync(path.join(cwd, "minimal"))).toBe(false);
+  });
+});

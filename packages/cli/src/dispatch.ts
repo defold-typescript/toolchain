@@ -183,7 +183,11 @@ export function dispatch(
     afterJavaArgs,
     "build-server",
   );
-  const { value: channelFlag, rest: nonFlagArgs } = parseValueFlag(afterBuildServerArgs, "channel");
+  const { value: channelFlag, rest: afterChannelArgs } = parseValueFlag(
+    afterBuildServerArgs,
+    "channel",
+  );
+  const { value: templateFlag, rest: nonFlagArgs } = parseValueFlag(afterChannelArgs, "template");
   const positional = nonFlagArgs.filter(
     (a) =>
       a !== "--json" &&
@@ -227,7 +231,11 @@ export function dispatch(
 
   if (command === "init") {
     try {
-      const { written } = runInit({ cwd, force });
+      const { written } = runInit({
+        cwd,
+        force,
+        ...(templateFlag !== undefined ? { template: templateFlag } : {}),
+      });
       if (json) {
         io.stdout.write(
           renderResult({
