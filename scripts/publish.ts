@@ -1,11 +1,11 @@
-// Local, coordinated npm publish for the three workspace packages.
+// Local, coordinated npm publish for the four workspace packages.
 //
 // The repo's manifests and lockfile stay pinned at 0.0.0 with `workspace:*`
 // inter-package deps for the dev loop. Publishing is a transient stamp: this
-// script bumps all four manifests to the target version, REGENERATES the
+// script bumps all five manifests to the target version, REGENERATES the
 // lockfile (delete bun.lock + `bun install`) so the snapshot carries the
 // stamped versions, packs to verify the inter-package deps resolved to concrete
-// coordinated versions, then publishes types -> transpiler -> cli in dependency
+// coordinated versions, then publishes types -> transpiler -> tstl-plugin -> cli in dependency
 // order. On a successful --publish it tags and pushes v<version> (non-fatal —
 // the packages are already live). The working tree is always restored to 0.0.0
 // afterward (including on failure and Ctrl-C).
@@ -29,7 +29,7 @@ import * as path from "node:path";
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
 // Publish order: a dependency is published before its dependents.
-const PACKAGES = ["types", "transpiler", "cli"] as const;
+const PACKAGES = ["types", "transpiler", "tstl-plugin", "cli"] as const;
 const SCOPED = PACKAGES.map((p) => `@defold-typescript/${p}`);
 
 const MANIFESTS = [
@@ -48,7 +48,7 @@ export interface Args {
   readonly skipCiCheck: boolean;
 }
 
-export const HELP = `Coordinated local npm publish for the three @defold-typescript packages.
+export const HELP = `Coordinated local npm publish for the four @defold-typescript packages.
 
 Usage:
   mise run publish [<version>|patch|minor|major] [--publish]
@@ -56,7 +56,7 @@ Usage:
 
 Bumps every workspace manifest to one coordinated version, regenerates the
 lockfile so packed inter-package deps resolve to that version, runs the full
-gate, then publishes types -> transpiler -> cli. On a successful --publish it
+gate, then publishes types -> transpiler -> tstl-plugin -> cli. On a successful --publish it
 also tags and pushes v<version>. The working tree is restored to its committed
 0.0.0 state afterward. Dry-run by default.
 
