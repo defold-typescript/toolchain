@@ -306,3 +306,22 @@ describe("docs/guide/pinning-defold-version.md installed-editor detection tier",
     expect(body).toContain("`default`");
   });
 });
+
+describe("docs/guide/migrating-from-ts-defold.md", () => {
+  test("exists", async () => {
+    const f = Bun.file(resolve(GUIDE, "migrating-from-ts-defold.md"));
+    expect(await f.exists()).toBe(true);
+  });
+
+  test("carries the package-map, step-by-step, and provenance marker headings", async () => {
+    const body = await readGuide("migrating-from-ts-defold.md");
+    expect(body).toContain("## Package and tooling map");
+    expect(body).toContain("## Step-by-step migration");
+    expect(body).toContain("## What this guide verified");
+  });
+
+  test("docs/guide/README.md Contents links the migration guide", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("./migrating-from-ts-defold.md");
+  });
+});
