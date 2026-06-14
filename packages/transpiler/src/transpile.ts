@@ -246,6 +246,10 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
   const result = tstl.transpileVirtualProject(merged, {
     luaTarget: tstl.LuaTarget.Lua51,
     sourceMap: true,
+    // Already-resolved CompilerOptions, so the value is the lib file name, not
+    // the tsconfig spelling "ES2022". Drops the default `lib.dom`, whose
+    // `declare var window` shadows Defold's `window` namespace.
+    lib: ["lib.es2022.d.ts"],
     // Don't cross-check the seeded ambient .d.ts surface against itself; we only
     // care about diagnostics on user files (mirrors the editor's skipLibCheck).
     skipLibCheck: true,
