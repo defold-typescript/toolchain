@@ -17,7 +17,7 @@
 // co-located `scripts/example-smoke.test.ts`.
 
 import * as path from "node:path";
-import { buildUpdateSteps, EXAMPLE_DIR } from "./example-update.ts";
+import { buildUpdateSteps, EXAMPLE_DIR, preserveExampleIdentity } from "./example-update.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
@@ -39,18 +39,44 @@ export function buildSmokeSteps(exampleDir: string, binPath: string): string[][]
   return [...buildUpdateSteps(exampleDir, binPath), verifyStep(exampleDir)];
 }
 
+// The convert steps clobber the example's hand-kept `tsconfig.json` / `mise.toml`
+// and scaffold files the example omits, so `restore` must run between convert and
+// verify (and even after a failed convert) or `tsc` checks the clobbered config
+// and leaves the clobber in the tree. The effects are injectable so the order is
+// testable without spawning.
+export function runSmokeSequence(opts: {
+  exampleDir: string;
+  binPath: string;
+  run: (step: string[]) => boolean;
+  restore: () => void;
+}): boolean {
+  let allOk = true;
+  for (const step of buildUpdateSteps(opts.exampleDir, opts.binPath)) {
+    if (!opts.run(step)) {
+      allOk = false;
+    }
+  }
+  opts.restore();
+  if (!opts.run(verifyStep(opts.exampleDir))) {
+    allOk = false;
+  }
+  return allOk;
+}
+
 function main(): void {
   process.stdout.write(
     "example:smoke — convert + verify the platformer against the working-tree library\n",
   );
-  let allOk = true;
-  for (const step of buildSmokeSteps(EXAMPLE_DIR, "packages/cli/src/bin.ts")) {
-    const ok = run(step);
-    process.stdout.write(`${ok ? "PASS" : "FAIL"}  ${step.join(" ")}\n`);
-    if (!ok) {
-      allOk = false;
-    }
-  }
+  const allOk = runSmokeSequence({
+    exampleDir: EXAMPLE_DIR,
+    binPath: "packages/cli/src/bin.ts",
+    run: (step) => {
+      const ok = run(step);
+      process.stdout.write(`${ok ? "PASS" : "FAIL"}  ${step.join(" ")}\n`);
+      return ok;
+    },
+    restore: preserveExampleIdentity,
+  });
   if (!allOk) {
     process.exit(1);
   }

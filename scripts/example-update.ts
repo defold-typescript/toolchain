@@ -102,7 +102,7 @@ function git(args: string[]): string {
 // form), but this in-repo example is pinned to working-tree source and must run
 // the working-tree bin, so its committed `mise.toml` points at
 // `packages/cli/src/bin.ts` instead.
-function preserveExampleIdentity(): void {
+export function preserveExampleIdentity(): void {
   git(["checkout", "--", path.join(EXAMPLE_DIR, "tsconfig.json")]);
   git(["checkout", "--", path.join(EXAMPLE_DIR, "mise.toml")]);
 

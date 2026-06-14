@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { buildSmokeSteps } from "./example-smoke.ts";
-import { buildUpdateSteps } from "./example-update.ts";
+import { buildSmokeSteps, runSmokeSequence, verifyStep } from "./example-smoke.ts";
+import { buildUpdateSteps, preserveExampleIdentity } from "./example-update.ts";
 
 const EXAMPLE = "docs/examples/platformer";
 const BIN = "packages/cli/src/bin.ts";
@@ -35,6 +35,50 @@ describe("buildSmokeSteps", () => {
       expect(joined).not.toContain("@latest");
       expect(joined).not.toContain("@defold-typescript/cli@");
     }
+  });
+});
+
+describe("runSmokeSequence", () => {
+  test("example-update exports preserveExampleIdentity as the single restore authority", () => {
+    expect(typeof preserveExampleIdentity).toBe("function");
+  });
+
+  test("runs convert steps, then restore, then verify", () => {
+    const order: string[] = [];
+    const ok = runSmokeSequence({
+      exampleDir: EXAMPLE,
+      binPath: BIN,
+      run: (step) => {
+        order.push(step.join(" "));
+        return true;
+      },
+      restore: () => {
+        order.push("RESTORE");
+      },
+    });
+    const convert = buildUpdateSteps(EXAMPLE, BIN).map((step) => step.join(" "));
+    expect(order).toEqual([...convert, "RESTORE", verifyStep(EXAMPLE).join(" ")]);
+    expect(ok).toBe(true);
+  });
+
+  test("restore still runs and verify is still attempted when a convert step fails", () => {
+    const order: string[] = [];
+    const buildStep = buildUpdateSteps(EXAMPLE, BIN)[1]?.join(" ");
+    const ok = runSmokeSequence({
+      exampleDir: EXAMPLE,
+      binPath: BIN,
+      run: (step) => {
+        const joined = step.join(" ");
+        order.push(joined);
+        return joined !== buildStep;
+      },
+      restore: () => {
+        order.push("RESTORE");
+      },
+    });
+    const convert = buildUpdateSteps(EXAMPLE, BIN).map((step) => step.join(" "));
+    expect(order).toEqual([...convert, "RESTORE", verifyStep(EXAMPLE).join(" ")]);
+    expect(ok).toBe(false);
   });
 });
 
