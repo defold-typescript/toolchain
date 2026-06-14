@@ -1,4 +1,6 @@
 import { jsxRenderer } from "hono/jsx-renderer";
+import { Script } from "honox/server";
+import Search from "../islands/search";
 import { guidePages } from "../lib/content";
 
 declare module "hono" {
@@ -23,6 +25,12 @@ body { margin: 0; font: 16px/1.6 -apple-system, system-ui, sans-serif; color: #2
 .prose pre.shiki { padding: 1rem; border-radius: 6px; overflow-x: auto; }
 .prose code { font-family: ui-monospace, monospace; }
 .prose h1 { border-bottom: 1px solid #e1e4e8; padding-bottom: 0.3rem; }
+.search { position: relative; margin-bottom: 1rem; }
+.search-input { width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #e1e4e8; border-radius: 6px; font: inherit; }
+.search-results { position: absolute; z-index: 1; left: 0; right: 0; margin: 0.25rem 0 0; padding: 0.25rem 0; list-style: none; background: #fff; border: 1px solid #e1e4e8; border-radius: 6px; box-shadow: 0 4px 12px rgba(27, 31, 35, 0.1); }
+.search-results li { margin: 0; }
+.search-results a { display: block; padding: 0.3rem 0.6rem; color: #0366d6; text-decoration: none; }
+.search-results a:hover { background: #f6f8fa; }
 `;
 
 function humanize(slug: string): string {
@@ -38,12 +46,14 @@ export default jsxRenderer(({ children, title }) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title ? `${title} — defold-typescript` : "defold-typescript docs"}</title>
         <style dangerouslySetInnerHTML={{ __html: STYLES }} />
+        <Script src="/app/client.ts" async />
       </head>
       <body>
         <nav class="sidebar">
           <a class="brand" href="/">
             defold-typescript
           </a>
+          <Search />
           <ul>
             {pages.map((page) => (
               <li>

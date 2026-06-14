@@ -7,11 +7,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "bun scripts/build-search-index.ts && vite build --mode client && vite build",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "dependencies": {
+    "@orama/orama": "^3.1.18",
     "@shikijs/markdown-it": "^4.2.0",
     "hono": "^4.12.25",
     "honox": "^0.1.56",
