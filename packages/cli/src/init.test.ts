@@ -107,6 +107,34 @@ describe("runInit (add-TS mode)", () => {
     expect(tsconfig.compilerOptions.types).toContain("@defold-typescript/types");
   });
 
+  test("preserves a pre-existing user src/main.ts on plain init", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    const sentinel = "// user code\n";
+    writeFileSync(path.join(cwd, "src", "main.ts"), sentinel);
+
+    const result = runInit({ cwd });
+
+    expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).toBe(sentinel);
+    expect(result.written).not.toContain("src/main.ts");
+  });
+
+  test("preserves a user-edited src/main.ts under --force while still refreshing managed config", () => {
+    touch("game.project", "[project]\n");
+    runInit({ cwd });
+
+    const sentinel = "// user code\n";
+    writeFileSync(path.join(cwd, "src", "main.ts"), sentinel);
+    writeFileSync(path.join(cwd, "tsconfig.json"), "{}\n");
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).toBe(sentinel);
+    expect(result.written).not.toContain("src/main.ts");
+    const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
+    expect(tsconfig.compilerOptions.types).toContain("@defold-typescript/types");
+  });
+
   test("refuses on existing defold-typescript.config.* and lists the new config family", () => {
     touch("game.project", "[project]\n");
     touch("defold-typescript.config.ts", "");
