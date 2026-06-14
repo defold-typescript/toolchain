@@ -84,4 +84,17 @@ describe("release workflow is re-enabled and safe", () => {
     expect(dryRun).toBeDefined();
     expect(dryRun?.if).toBeUndefined();
   });
+
+  test("both publish loops enumerate tstl-plugin in dependency order", () => {
+    const loopSteps = publishSteps().filter((step) => /for pkg in /.test(step.run ?? ""));
+    expect(loopSteps.length).toBeGreaterThanOrEqual(2);
+    for (const step of loopSteps) {
+      const list = (step.run ?? "").match(/for pkg in ([^\n;]+?)\s*;?\s*do/)?.[1];
+      expect(list).toBeDefined();
+      const pkgs = (list ?? "").trim().split(/\s+/);
+      expect(pkgs).toContain("tstl-plugin");
+      expect(pkgs.indexOf("tstl-plugin")).toBeGreaterThan(pkgs.indexOf("transpiler"));
+      expect(pkgs.indexOf("tstl-plugin")).toBeLessThan(pkgs.indexOf("cli"));
+    }
+  });
 });

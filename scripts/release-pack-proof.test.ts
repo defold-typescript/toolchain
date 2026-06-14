@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { checkCoordinatedDeps } from "./release-pack-proof.ts";
+import { PACKAGES as PUBLISH_PACKAGES } from "./publish.ts";
+import { checkCoordinatedDeps, PACKAGES } from "./release-pack-proof.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
@@ -71,5 +72,17 @@ describe("release pack proof harness is discoverable", () => {
     const body = miseTaskBody(toml, "pack-proof");
     expect(body).not.toBeNull();
     expect(body).toContain("scripts/release-pack-proof.ts");
+  });
+});
+
+describe("pack-proof covers the coordinated release set", () => {
+  test("PACKAGES includes tstl-plugin in dependency order", () => {
+    expect(PACKAGES).toContain("tstl-plugin");
+    expect(PACKAGES.indexOf("tstl-plugin")).toBeGreaterThan(PACKAGES.indexOf("transpiler"));
+    expect(PACKAGES.indexOf("tstl-plugin")).toBeLessThan(PACKAGES.indexOf("cli"));
+  });
+
+  test("PACKAGES equals the coordinated set in publish.ts (drift guard)", () => {
+    expect([...PACKAGES]).toEqual([...PUBLISH_PACKAGES]);
   });
 });
