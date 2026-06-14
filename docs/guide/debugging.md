@@ -89,9 +89,9 @@ The launcher runs whatever already sits under `build/`; it does **not** compile 
 
 The launcher prefers the native-extension build engine at `build/<platform>/dmengine` when it exists and otherwise downloads a stock engine from `d.defold.com` next to the launcher. The download is a one-time fetch per platform.
 
-### Windows: OpenAL DLLs
+### Native-extension runtime libraries
 
-Native-extension builds on Windows need `OpenAL32.dll` and `wrap_oal.dll` placed by hand next to the build engine (in `build/x86_64-win32/`). The Defold build server does not ship these runtime DLLs and no Defold-hosted archive serves them, so the launcher cannot fetch them; the copy fix is tracked upstream at [defold/defold#11860](https://github.com/defold/defold/issues/11860). When they are missing on a Windows build-engine run the launcher prints a one-line reminder and continues. macOS and Linux resolve OpenAL from the system and need nothing placed.
+On a build-engine run the launcher checks each supported native extension's declared runtime libraries and warns-and-continues if any are missing — it never fetches them, because no extension has a fetchable source yet. OpenAL on Windows is currently the only declared extension: native-extension builds need `OpenAL32.dll` and `wrap_oal.dll` placed by hand next to the build engine (in `build/x86_64-win32/`). The Defold build server does not ship these runtime DLLs and no Defold-hosted archive serves them, so the launcher cannot fetch them; the copy fix is tracked upstream at [defold/defold#11860](https://github.com/defold/defold/issues/11860). When they are missing on a Windows build-engine run the launcher prints a one-line reminder and continues. macOS and Linux declare no native-extension runtime libraries and resolve OpenAL from the system, so nothing needs placing.
 
 ### Building from the editor instead
 

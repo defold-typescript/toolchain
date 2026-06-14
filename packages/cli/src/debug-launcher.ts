@@ -1,14 +1,26 @@
 import * as path from "node:path";
 
+// One native extension whose build engine links platform runtime libraries the
+// Defold build server does not (yet) ship. `tracking` is the upstream note/URL
+// surfaced in the warn-and-continue message; adding an extension is data-only.
+export interface NativeExtensionRuntime {
+  readonly extension: string;
+  readonly libraries: readonly string[];
+  readonly tracking?: string;
+}
+
 export interface EngineTarget {
   readonly enginePlatform: string;
   readonly buildFolder: string;
   readonly executable: string;
-  // Runtime libraries the build engine needs placed beside it. An empty list
-  // means "system-resolved, nothing to place" (macOS/Linux resolve OpenAL from
-  // the OS); only Windows native-extension builds need the DLLs supplied.
-  readonly openalLibraries: readonly string[];
+  // Native extensions whose runtime libraries the build engine needs placed
+  // beside it. An empty list means "no extension runtime libs to place on this
+  // platform" (macOS/Linux resolve OpenAL from the OS); only Windows
+  // native-extension builds currently declare any.
+  readonly nativeExtensions: readonly NativeExtensionRuntime[];
 }
+
+const OPENAL_TRACKING = "defold/defold#11860 (https://github.com/defold/defold/issues/11860)";
 
 // `enginePlatform` keys the d.defold.com download path; `buildFolder` keys the
 // native-extension build output. Current Defold uses the same `-macos` identifier
@@ -20,25 +32,31 @@ const PLATFORM_TARGETS: Record<string, EngineTarget> = {
     enginePlatform: "arm64-macos",
     buildFolder: "arm64-macos",
     executable: "dmengine",
-    openalLibraries: [],
+    nativeExtensions: [],
   },
   "darwin-x64": {
     enginePlatform: "x86_64-macos",
     buildFolder: "x86_64-macos",
     executable: "dmengine",
-    openalLibraries: [],
+    nativeExtensions: [],
   },
   "linux-x64": {
     enginePlatform: "x86_64-linux",
     buildFolder: "x86_64-linux",
     executable: "dmengine",
-    openalLibraries: [],
+    nativeExtensions: [],
   },
   "win32-x64": {
     enginePlatform: "x86_64-win32",
     buildFolder: "x86_64-win32",
     executable: "dmengine.exe",
-    openalLibraries: ["OpenAL32.dll", "wrap_oal.dll"],
+    nativeExtensions: [
+      {
+        extension: "openal",
+        libraries: ["OpenAL32.dll", "wrap_oal.dll"],
+        tracking: OPENAL_TRACKING,
+      },
+    ],
   },
 };
 
@@ -68,12 +86,48 @@ export function engineDownloadUrl(
   return `${ENGINE_ARCHIVE_BASE}/${sha1}/engine/${enginePlatform}/${executable}`;
 }
 
-// Pinned seam for a future auto-fetch slice, re-enabled once the upstream fix
-// (defold/defold#11860) ships the Windows OpenAL runtime DLLs in the stable
-// archive. Unused by the launcher today: no Defold-hosted archive currently
-// serves these files, so the launcher only warns (see renderDebugLauncher).
-export function openalDownloadUrl(sha1: string, enginePlatform: string, libName: string): string {
+// Pinned seam for a future auto-fetch slice covering any native extension's
+// runtime libraries. Unused by the launcher today: no native extension has a
+// durable archive source yet (OpenAL is blocked upstream at defold/defold#11860;
+// others are unknown), so the launcher only warns (see renderDebugLauncher).
+export function nativeExtensionRuntimeDownloadUrl(
+  sha1: string,
+  enginePlatform: string,
+  libName: string,
+): string {
   return `${ENGINE_ARCHIVE_BASE}/${sha1}/engine/${enginePlatform}/${libName}`;
+}
+
+export interface NativeExtensionRuntimeWarningOptions {
+  readonly target: EngineTarget;
+  readonly buildFolder: string;
+  readonly exists: (candidate: string) => boolean;
+}
+
+// Pure resolver: for each declared native extension, collect the runtime
+// libraries missing from `buildFolder` and emit one warn-and-continue message
+// per extension naming it, the missing libraries, the folder, and the tracking
+// note. Empty result means nothing to warn about. The embedded launcher mirrors
+// this logic under the lockstep contract.
+export function nativeExtensionRuntimeWarnings(
+  opts: NativeExtensionRuntimeWarningOptions,
+): string[] {
+  const { target, buildFolder, exists } = opts;
+  const warnings: string[] = [];
+  for (const ext of target.nativeExtensions) {
+    const missing = ext.libraries.filter((lib) => !exists(path.join(buildFolder, lib)));
+    if (missing.length === 0) {
+      continue;
+    }
+    let warning =
+      `Place ${missing.join(" and ")} by hand next to the ${ext.extension} build engine ` +
+      `(${buildFolder}); the Defold build server does not yet ship them.`;
+    if (ext.tracking) {
+      warning += ` Tracking: ${ext.tracking}`;
+    }
+    warnings.push(warning);
+  }
+  return warnings;
 }
 
 export interface ResolveEngineOptions {
@@ -127,11 +181,17 @@ function renderDebugLauncher(): string {
   return `import { chmodSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
 import * as path from "node:path";
 
+interface NativeExtensionRuntime {
+  extension: string;
+  libraries: string[];
+  tracking?: string;
+}
+
 interface EngineTarget {
   enginePlatform: string;
   buildFolder: string;
   executable: string;
-  openalLibraries: string[];
+  nativeExtensions: NativeExtensionRuntime[];
 }
 
 const PLATFORM_TARGETS: Record<string, EngineTarget> = ${targets};
@@ -164,20 +224,25 @@ const buildFolder = path.join("build", target.buildFolder);
 const buildEnginePath = path.join(buildFolder, target.executable);
 let enginePath = existsSync(buildEnginePath) ? buildEnginePath : stockEnginePath;
 
-// Windows native-extension build engines link the OpenAL runtime DLLs, but no
-// Defold-hosted archive currently ships them and the upstream copy fix
-// (defold/defold#11860) is closed unmerged. Warn once on the real gap and
-// continue the launch; placing the DLLs by hand is the only fix today.
-if (process.platform === "win32" && enginePath === buildEnginePath) {
-  const missing = target.openalLibraries.filter(
-    (lib) => !existsSync(path.join(buildFolder, lib)),
-  );
-  if (missing.length) {
-    console.warn(
-      \`Place \${missing.join(" and ")} by hand next to the build engine (\${buildFolder}); \` +
-        "the Defold build server does not yet ship them. Tracking: defold/defold#11860 " +
-        "(https://github.com/defold/defold/issues/11860).",
+// A build engine links each declared native extension's runtime libraries, but
+// no Defold-hosted archive currently ships them (OpenAL is blocked on the
+// upstream copy fix, defold/defold#11860). Warn once per extension on the real
+// gap and continue the launch; placing the libraries by hand is the only fix
+// today. The declared set is empty off Windows, so this is a no-op there.
+if (enginePath === buildEnginePath) {
+  for (const ext of target.nativeExtensions) {
+    const missing = ext.libraries.filter(
+      (lib) => !existsSync(path.join(buildFolder, lib)),
     );
+    if (missing.length) {
+      let warning =
+        \`Place \${missing.join(" and ")} by hand next to the \${ext.extension} build engine \` +
+        \`(\${buildFolder}); the Defold build server does not yet ship them.\`;
+      if (ext.tracking) {
+        warning += \` Tracking: \${ext.tracking}\`;
+      }
+      console.warn(warning);
+    }
   }
 }
 

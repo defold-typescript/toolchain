@@ -5,7 +5,8 @@ import {
   DEBUG_LAUNCHER_SOURCE,
   debugLaunchConfig,
   engineDownloadUrl,
-  openalDownloadUrl,
+  nativeExtensionRuntimeDownloadUrl,
+  nativeExtensionRuntimeWarnings,
   resolveEnginePath,
   targetPlatform,
   VSCODE_LAUNCH_CONTENT,
@@ -17,7 +18,7 @@ describe("targetPlatform", () => {
       enginePlatform: "arm64-macos",
       buildFolder: "arm64-macos",
       executable: "dmengine",
-      openalLibraries: [],
+      nativeExtensions: [],
     });
   });
 
@@ -26,7 +27,7 @@ describe("targetPlatform", () => {
       enginePlatform: "x86_64-macos",
       buildFolder: "x86_64-macos",
       executable: "dmengine",
-      openalLibraries: [],
+      nativeExtensions: [],
     });
   });
 
@@ -35,17 +36,15 @@ describe("targetPlatform", () => {
       enginePlatform: "x86_64-linux",
       buildFolder: "x86_64-linux",
       executable: "dmengine",
-      openalLibraries: [],
+      nativeExtensions: [],
     });
   });
 
   test("maps win32 x64 to the win32 engine with the .exe executable", () => {
-    expect(targetPlatform("win32", "x64")).toEqual({
-      enginePlatform: "x86_64-win32",
-      buildFolder: "x86_64-win32",
-      executable: "dmengine.exe",
-      openalLibraries: ["OpenAL32.dll", "wrap_oal.dll"],
-    });
+    const target = targetPlatform("win32", "x64");
+    expect(target.enginePlatform).toBe("x86_64-win32");
+    expect(target.buildFolder).toBe("x86_64-win32");
+    expect(target.executable).toBe("dmengine.exe");
   });
 
   test("throws on an unknown platform", () => {
@@ -68,24 +67,64 @@ describe("engineDownloadUrl", () => {
   });
 });
 
-describe("openalLibraries", () => {
-  test("win32 lists exactly the two OpenAL runtime DLLs", () => {
-    expect(targetPlatform("win32", "x64").openalLibraries).toEqual([
-      "OpenAL32.dll",
-      "wrap_oal.dll",
-    ]);
+describe("nativeExtensions", () => {
+  test("win32 declares exactly the OpenAL runtime extension", () => {
+    const exts = targetPlatform("win32", "x64").nativeExtensions;
+    expect(exts).toHaveLength(1);
+    const [openal] = exts;
+    expect(openal?.extension).toBe("openal");
+    expect(openal?.libraries).toEqual(["OpenAL32.dll", "wrap_oal.dll"]);
+    expect(openal?.tracking).toContain("defold/defold#11860");
   });
 
-  test("macOS and linux resolve OpenAL from the system (empty list)", () => {
-    expect(targetPlatform("darwin", "arm64").openalLibraries).toEqual([]);
-    expect(targetPlatform("darwin", "x64").openalLibraries).toEqual([]);
-    expect(targetPlatform("linux", "x64").openalLibraries).toEqual([]);
+  test("macOS and linux declare no native-extension runtime libs (empty list)", () => {
+    expect(targetPlatform("darwin", "arm64").nativeExtensions).toEqual([]);
+    expect(targetPlatform("darwin", "x64").nativeExtensions).toEqual([]);
+    expect(targetPlatform("linux", "x64").nativeExtensions).toEqual([]);
   });
 });
 
-describe("openalDownloadUrl", () => {
+describe("nativeExtensionRuntimeWarnings", () => {
+  test("warns once on the win32 target when both DLLs are absent", () => {
+    const target = targetPlatform("win32", "x64");
+    const buildFolder = path.join("build", target.buildFolder);
+    const warnings = nativeExtensionRuntimeWarnings({
+      target,
+      buildFolder,
+      exists: () => false,
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("openal");
+    expect(warnings[0]).toContain("OpenAL32.dll");
+    expect(warnings[0]).toContain("wrap_oal.dll");
+    expect(warnings[0]).toContain(buildFolder);
+    expect(warnings[0]).toContain("defold/defold#11860");
+  });
+
+  test("emits no warning when the declared libraries are present", () => {
+    const target = targetPlatform("win32", "x64");
+    expect(
+      nativeExtensionRuntimeWarnings({
+        target,
+        buildFolder: path.join("build", target.buildFolder),
+        exists: () => true,
+      }),
+    ).toEqual([]);
+  });
+
+  test("returns no warnings for a target with no declared extensions", () => {
+    const target = targetPlatform("linux", "x64");
+    const buildFolder = path.join("build", target.buildFolder);
+    expect(nativeExtensionRuntimeWarnings({ target, buildFolder, exists: () => false })).toEqual(
+      [],
+    );
+    expect(nativeExtensionRuntimeWarnings({ target, buildFolder, exists: () => true })).toEqual([]);
+  });
+});
+
+describe("nativeExtensionRuntimeDownloadUrl", () => {
   test("builds the archive URL with the same base and shape as engineDownloadUrl", () => {
-    expect(openalDownloadUrl("abc123", "x86_64-win32", "OpenAL32.dll")).toBe(
+    expect(nativeExtensionRuntimeDownloadUrl("abc123", "x86_64-win32", "OpenAL32.dll")).toBe(
       "https://d.defold.com/archive/stable/abc123/engine/x86_64-win32/OpenAL32.dll",
     );
   });
@@ -165,8 +204,14 @@ describe("debugLaunchConfig / scaffolded artifacts", () => {
     expect(DEBUG_LAUNCHER_SOURCE).not.toMatch(/copyFileSync\([^)]*wrap_oal/i);
   });
 
-  test("the launcher warns and continues on the Windows build-engine OpenAL gap", () => {
-    expect(DEBUG_LAUNCHER_SOURCE).toContain("openalLibraries");
+  test("the launcher iterates the generalized nativeExtensions set, not the old field", () => {
+    expect(DEBUG_LAUNCHER_SOURCE).toContain("nativeExtensions");
+    expect(DEBUG_LAUNCHER_SOURCE).toContain(".libraries");
+    expect(DEBUG_LAUNCHER_SOURCE).toContain(".extension");
+    expect(DEBUG_LAUNCHER_SOURCE).not.toContain("openalLibraries");
+  });
+
+  test("the launcher still surfaces OpenAL through the generalized loop", () => {
     expect(DEBUG_LAUNCHER_SOURCE).toMatch(/OpenAL32\.dll/);
     expect(DEBUG_LAUNCHER_SOURCE).toMatch(/by hand|manually|place/i);
     expect(DEBUG_LAUNCHER_SOURCE).toContain("defold/defold#11860");
