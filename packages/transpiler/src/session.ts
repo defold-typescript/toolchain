@@ -19,6 +19,10 @@ const requireFromHere = createRequire(import.meta.url);
 const COMPILER_OPTIONS: tstl.CompilerOptions = {
   luaTarget: tstl.LuaTarget.Lua51,
   sourceMap: true,
+  // Already-resolved CompilerOptions, so the value is the lib file name, not the
+  // tsconfig spelling "ES2022". Drops the default `lib.dom`, whose `declare var
+  // window` shadows Defold's `window` namespace. Keep in lockstep with transpile.ts.
+  lib: ["lib.es2022.d.ts"],
   // Don't cross-check the seeded ambient .d.ts surface against itself; only user
   // files matter (mirrors transpileProject and the editor's skipLibCheck).
   skipLibCheck: true,

@@ -9,6 +9,22 @@ import { transpileProject } from "./transpile";
 // type error — exactly the editor-only signal this pass exists to surface.
 const UNSUPPORTED_SOURCE = "export const x: number = 1; export const y = x & 2;";
 
+// Defold's `window` namespace collides with `lib.dom`'s `declare var window`
+// (a namespace cannot merge with a `var`). Exercising the real seeded namespace
+// pins that the emit config drops `lib.dom`.
+const WINDOW_SOURCE = [
+  "window.set_listener((self, event, data) => {",
+  "  if (event === window.WINDOW_EVENT_RESIZED) {",
+  "  }",
+  "});",
+  "export const size = window.get_size();",
+].join("\n");
+
+// A DOM-only global with no Defold counterpart: present iff `lib.dom` is in the
+// lib set, so an unresolved `document` proves the lib was removed (not merely
+// shadowed by added Defold types).
+const DOM_ONLY_SOURCE = "export const t = document.title;";
+
 function programFor(source: string): ts.Program {
   const session = createTranspileSession();
   session.update({ "main.ts": source });
@@ -56,5 +72,30 @@ describe("getProgramDiagnostics", () => {
     for (const message of buildMessages) {
       expect(editorMessages).toContain(message);
     }
+  });
+
+  test("Defold `window` namespace resolves on the build path", () => {
+    const diagnostics = transpileProject({ files: { "main.ts": WINDOW_SOURCE } }).diagnostics;
+    expect(diagnostics).toEqual([]);
+  });
+
+  // The editor/watch path surfaces semantic errors through `session.update()`
+  // (it merges `ts.getPreEmitDiagnostics`); `getProgramDiagnostics` runs only
+  // the TSTL transform pass and would miss a `window`-resolution failure, so it
+  // is the wrong probe for this regression.
+  test("Defold `window` namespace resolves on the editor/watch path", () => {
+    const diagnostics = createTranspileSession().update({ "main.ts": WINDOW_SOURCE }).diagnostics;
+    expect(diagnostics).toEqual([]);
+  });
+
+  test("DOM-only globals are excluded on both paths", () => {
+    const editorMessages = createTranspileSession()
+      .update({ "main.ts": DOM_ONLY_SOURCE })
+      .diagnostics.map((d) => d.message);
+    const buildMessages = transpileProject({
+      files: { "main.ts": DOM_ONLY_SOURCE },
+    }).diagnostics.map((d) => d.message);
+    expect(editorMessages.some((m) => m.includes("Cannot find name 'document'"))).toBe(true);
+    expect(buildMessages.some((m) => m.includes("Cannot find name 'document'"))).toBe(true);
   });
 });
