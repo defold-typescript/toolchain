@@ -1,4 +1,6 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parseFrontmatter } from "./frontmatter";
 
 export interface GuidePage {
   /** Source filename, e.g. `getting-started.md`. */
@@ -9,6 +11,8 @@ export interface GuidePage {
   route: string;
   /** True for `README.md`, which maps to the site index. */
   isIndex: boolean;
+  /** Left-sidebar label override from the file's `toc-title` frontmatter. */
+  tocTitle?: string;
 }
 
 export function listGuidePages(dir: string): GuidePage[] {
@@ -18,6 +22,10 @@ export function listGuidePages(dir: string): GuidePage[] {
     .map((file) => {
       const isIndex = file === "README.md";
       const slug = isIndex ? "" : file.replace(/\.md$/, "");
-      return { file, slug, route: isIndex ? "/" : `/${slug}`, isIndex };
+      const { data } = parseFrontmatter(readFileSync(join(dir, file), "utf8"));
+      const raw = data["toc-title"];
+      const page: GuidePage = { file, slug, route: isIndex ? "/" : `/${slug}`, isIndex };
+      if (typeof raw === "string" && raw.length > 0) page.tocTitle = raw;
+      return page;
     });
 }

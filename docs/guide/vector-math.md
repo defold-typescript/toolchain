@@ -1,3 +1,6 @@
+---
+toc-title: Vector math
+---
 # Vector math
 
 Defold exposes vector arithmetic through Lua metamethods on `vector3`, `vector4`, `quaternion`, and `matrix4`. In TypeScript the same operations are typed as **methods**, not operators: `a.add(b)` instead of `a + b`. The TypeScript-to-Lua transpiler turns these calls into the underlying metamethod invocations at build time, so the runtime cost is identical.

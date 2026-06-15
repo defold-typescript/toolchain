@@ -1,3 +1,6 @@
+---
+toc-title: Native extensions
+---
 # Typing native extensions
 
 Defold native extensions ship their own Lua API alongside the engine's. When a
