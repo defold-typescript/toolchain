@@ -204,7 +204,7 @@
     border-bottom-color: var(--color-accent);
   }
 
-  .heading-anchor {
+  .prose a.heading-anchor {
     position: absolute;
     left: -1.25em;
     display: inline-flex;
@@ -226,7 +226,8 @@
   }
 
   .prose :is(h2, h3)[data-current] .heading-anchor {
-    opacity: 0.2;
+    opacity: 0.9;
+    color: var(--color-accent-strong);
   }
 
   .prose :is(h2, h3):hover .heading-anchor,

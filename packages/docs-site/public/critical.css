@@ -103,6 +103,9 @@ header.topbar-critical .logo-mark {
 .prose a:hover {
   border-bottom-color: var(--color-accent);
 }
+.prose a.heading-anchor {
+  border-bottom: none;
+}
 .prose strong {
   font-weight: 600;
   color: var(--color-text);
