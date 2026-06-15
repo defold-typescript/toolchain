@@ -1,0 +1,19 @@
+{
+  "targets": [
+    {
+      "id": "old",
+      "default": false,
+      "fixturesDir": "old-fixtures",
+      "modules": [{ "namespace": "wmath", "fixture": "wmath_doc.json" }]
+    },
+    {
+      "id": "cur",
+      "default": true,
+      "fixturesDir": "cur-fixtures",
+      "modules": [
+        { "namespace": "camera", "fixture": "camera_doc.json" },
+        { "namespace": "alpha", "fixture": "alpha_doc.json" }
+      ]
+    }
+  ]
+}
