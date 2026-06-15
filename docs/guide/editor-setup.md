@@ -1,3 +1,6 @@
+---
+toc-title: Editor setup
+---
 # Code editor setup
 
 Open the Defold project folder in VSCode or any editor with TypeScript support. Use the folder that contains `game.project`, `src/`, and `tsconfig.json`.

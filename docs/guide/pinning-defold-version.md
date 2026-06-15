@@ -1,3 +1,6 @@
+---
+toc-title: Pinning the Defold version
+---
 # Pinning the Defold API version
 
 `@defold-typescript/types` ships the **latest/current** Defold API surface

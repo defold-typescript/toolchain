@@ -1,3 +1,6 @@
+---
+toc-title: TypeScript gotchas
+---
 # TypeScript gotchas
 
 Sharp edges where TypeScript, the TypeScriptToLua transpiler, or the Defold runtime behave in ways the type system cannot fully express. Each entry names the symptom, explains why it happens, and gives the recommended workaround.

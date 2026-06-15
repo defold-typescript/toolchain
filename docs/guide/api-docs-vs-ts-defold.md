@@ -1,3 +1,6 @@
+---
+toc-title: API docs vs `ts-defold-types`
+---
 # API docs vs. ts-defold-types
 
 How the JSDoc that `@defold-typescript/types` emits compares with the incumbent

@@ -1,3 +1,6 @@
+---
+toc-title: Migrating from `ts-defold`
+---
 # Migrating from ts-defold
 
 Moving a Defold + TypeScript project from the [ts-defold](https://github.com/ts-defold)

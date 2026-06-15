@@ -251,9 +251,8 @@ function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
         "block rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
         (active ? "bg-accent-soft font-semibold text-accent" : "")
       }
-    >
-      {link.label}
-    </a>
+      dangerouslySetInnerHTML={{ __html: link.labelHtml }}
+    />
   );
 }
 

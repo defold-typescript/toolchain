@@ -1,3 +1,6 @@
+---
+toc-title: Defold editor
+---
 # Defold editor
 
 Install the Defold editor from [defold.com](https://defold.com/). The editor is the engine UI you use to open the project folder, inspect assets, and run the game.
