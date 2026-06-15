@@ -66,6 +66,52 @@ function rewriteGuideHref(href: string): string {
   return `${name === "README" ? "/" : `/${name}`}${fragment}`;
 }
 
+// GitHub's five alert kinds. A `> [!NOTE]` blockquote (case-insensitive marker)
+// becomes a styled callout; every other blockquote passes through unchanged.
+const ALERT_TYPES = ["note", "tip", "important", "warning", "caution"] as const;
+type AlertType = (typeof ALERT_TYPES)[number];
+const ALERT_MARKER = /^\[!(note|tip|important|warning|caution)\]/i;
+
+const ALERT_LABELS: Record<AlertType, string> = {
+  note: "Note",
+  tip: "Tip",
+  important: "Important",
+  warning: "Warning",
+  caution: "Caution",
+};
+
+function alertIcon(inner: string): string {
+  return (
+    '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    `${inner}</svg>`
+  );
+}
+
+const ALERT_ICONS: Record<AlertType, string> = {
+  note: alertIcon('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'),
+  tip: alertIcon(
+    '<path d="M9 18h6"/><path d="M10 22h4"/>' +
+      '<path d="M12 2a7 7 0 0 0-4 12.7c.5.4.8 1 .9 1.6h6.2c.1-.6.4-1.2.9-1.6A7 7 0 0 0 12 2z"/>',
+  ),
+  important: alertIcon(
+    '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
+      '<path d="M12 7v4"/><path d="M12 15h.01"/>',
+  ),
+  warning: alertIcon(
+    '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>' +
+      '<path d="M12 9v4"/><path d="M12 17h.01"/>',
+  ),
+  caution: alertIcon(
+    '<path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z"/>' +
+      '<path d="M12 8v4"/><path d="M12 16h.01"/>',
+  ),
+};
+
+function admonitionTitle(type: AlertType): string {
+  return `<p class="admonition-title">${ALERT_ICONS[type]}<span>${ALERT_LABELS[type]}</span></p>\n`;
+}
+
 export async function renderMarkdown(markdown: string): Promise<string> {
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
@@ -100,6 +146,49 @@ export async function renderMarkdown(markdown: string): Promise<string> {
         const href = child.attrGet("href");
         if (href) child.attrSet("href", rewriteGuideHref(href));
       }
+    }
+  });
+  // Retag `> [!NOTE]`-style blockquotes as `.admonition` callout divs. A div
+  // (not a classed blockquote) dodges the unlayered `.prose blockquote` rule in
+  // critical.css; markdown-it has no native GitHub-alert support.
+  md.core.ruler.push("github-alerts", (state) => {
+    const tokens = state.tokens;
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i]?.type !== "blockquote_open") continue;
+      const inline = tokens[i + 2];
+      if (inline?.type !== "inline") continue;
+      const match = ALERT_MARKER.exec(inline.content);
+      if (!match?.[1]) continue;
+      const type = match[1].toLowerCase() as AlertType;
+
+      const open = tokens[i];
+      if (!open) continue;
+      open.tag = "div";
+      open.attrSet("class", `admonition admonition-${type}`);
+      for (let j = i, depth = 0; j < tokens.length; j++) {
+        const t = tokens[j];
+        if (t?.type === "blockquote_open") depth++;
+        else if (t?.type === "blockquote_close") {
+          depth--;
+          if (depth === 0) {
+            t.tag = "div";
+            break;
+          }
+        }
+      }
+
+      inline.content = inline.content.replace(/^\[!\w+\]\s*\n?/i, "");
+      const children = inline.children;
+      if (children?.[0]?.type === "text" && ALERT_MARKER.test(children[0].content)) {
+        children.shift();
+        const next: string | undefined = children[0]?.type;
+        if (next === "softbreak" || next === "hardbreak") children.shift();
+      }
+
+      const title = new state.Token("html_block", "", 0);
+      title.content = admonitionTitle(type);
+      tokens.splice(i + 1, 0, title);
+      i++;
     }
   });
   // "text" is a Shiki special language (always available) that Shiki's
