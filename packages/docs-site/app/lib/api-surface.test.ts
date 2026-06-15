@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { type ApiPage, apiModuleMarkdown, loadApiSurface } from "./api-surface";
+import { type ApiPage, apiModuleMarkdown, apiModuleSymbols, loadApiSurface } from "./api-surface";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 
@@ -63,5 +63,94 @@ describe("apiModuleMarkdown", () => {
     expect(md).not.toContain("codehilite");
     expect(md).not.toContain("<div");
     expect(md).not.toContain("<span");
+  });
+});
+
+describe("apiModuleSymbols", () => {
+  function pageWith(module: Partial<ApiPage["module"]>): ApiPage {
+    return {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo brief",
+      module: {
+        namespace: "demo",
+        brief: "Demo brief",
+        description: "Demo module.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+        ...module,
+      },
+    };
+  }
+
+  test("extracts a function symbol with signature, doc, and example", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.run",
+            brief: "run it",
+            description: "Runs the demo.",
+            parameters: [{ name: "loop", doc: "", types: ["boolean"], isOptional: true }],
+            returnValues: [{ name: "", doc: "", types: ["number"], isOptional: false }],
+            examples:
+              '<div class="codehilite"><pre><code><span class="n">demo</span><span class="p">.</span><span class="n">run</span><span class="p">()</span></code></pre></div>',
+          },
+        ],
+      }),
+    );
+    expect(symbols).toHaveLength(1);
+    const sym = symbols[0];
+    expect(sym?.kind).toBe("function");
+    expect(sym?.name).toBe("demo.run");
+    expect(sym?.signature).toBe("demo.run(loop?: boolean): number");
+    expect(sym?.docMarkdown).toBe("Runs the demo.");
+    expect(sym?.exampleMarkdown).toContain("```lua");
+    expect(sym?.exampleMarkdown).toContain("demo.run()");
+  });
+
+  test("a function with no examples yields exampleMarkdown undefined", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          { name: "demo.tick", brief: "", description: "Tick.", parameters: [], returnValues: [] },
+        ],
+      }),
+    );
+    expect(symbols[0]?.signature).toBe("demo.tick()");
+    expect(symbols[0]?.exampleMarkdown).toBeUndefined();
+  });
+
+  test("yields the correct kind and signature for variables, constants, and properties", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        variables: [{ name: "demo.SPEED", brief: "", description: "Speed.", types: ["number"] }],
+        constants: [{ name: "demo.MAX", brief: "", description: "Max." }],
+        properties: [{ name: "position", brief: "", description: "Pos.", types: ["vector3"] }],
+      }),
+    );
+    expect(symbols.map((s) => [s.kind, s.signature])).toEqual([
+      ["variable", "demo.SPEED: number"],
+      ["constant", "demo.MAX"],
+      ["property", "position: vector3"],
+    ]);
+    expect(symbols.every((s) => s.exampleMarkdown === undefined)).toBe(true);
+  });
+
+  test("order and signatures match the headings apiModuleMarkdown emits", () => {
+    const page = pageWith({
+      functions: [
+        { name: "demo.a", brief: "", description: "A.", parameters: [], returnValues: [] },
+      ],
+      variables: [{ name: "demo.V", brief: "", description: "V.", types: ["number"] }],
+      constants: [{ name: "demo.C", brief: "", description: "C." }],
+      properties: [{ name: "p", brief: "", description: "P.", types: ["number"] }],
+    });
+    const md = apiModuleMarkdown(page);
+    const headingOrder = [...md.matchAll(/^### `([^`]+)`/gm)].map((m) => m[1] ?? "");
+    expect(apiModuleSymbols(page).map((s) => s.signature)).toEqual(headingOrder);
   });
 });
