@@ -48,4 +48,30 @@ describe("renderMarkdown", () => {
     const html = await renderMarkdown("### Sub one\n");
     expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#sub-one"/);
   });
+
+  test("rewrites a relative .md cross-link to its site route", async () => {
+    const html = await renderMarkdown("[gs](getting-started.md)\n");
+    expect(html).toMatch(/href="\/getting-started"/);
+  });
+
+  test("rewrites a ./-prefixed .md cross-link to its site route", async () => {
+    const html = await renderMarkdown("[vm](./vector-math.md)\n");
+    expect(html).toMatch(/href="\/vector-math"/);
+  });
+
+  test("preserves the fragment when rewriting a .md cross-link", async () => {
+    const html = await renderMarkdown("[sl](./script-lifecycle.md#receiving-messages)\n");
+    expect(html).toMatch(/href="\/script-lifecycle#receiving-messages"/);
+  });
+
+  test("maps a README.md link to the site index", async () => {
+    const html = await renderMarkdown("[home](README.md)\n");
+    expect(html).toMatch(/href="\/"/);
+  });
+
+  test("leaves external and fragment-only links untouched", async () => {
+    const html = await renderMarkdown("[ext](https://example.com/a.md) [frag](#section)\n");
+    expect(html).toContain('href="https://example.com/a.md"');
+    expect(html).toContain('href="#section"');
+  });
 });

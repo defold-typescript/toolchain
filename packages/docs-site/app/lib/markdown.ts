@@ -51,6 +51,21 @@ function headingAnchor(id: string, text: string): string {
   );
 }
 
+// Guide pages cross-link with relative `.md` paths (`./foo.md`, `foo.md#anchor`),
+// but the site routes each file at its slug (`README.md` -> `/`, `foo.md` -> `/foo`),
+// so the raw hrefs would 404. Rewrite local `.md` links to their route; leave
+// external URLs, root-absolute paths, and bare fragments untouched.
+function rewriteGuideHref(href: string): string {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("/") || href.startsWith("#")) {
+    return href;
+  }
+  const [path, ...fragmentParts] = href.split("#");
+  if (!path?.endsWith(".md")) return href;
+  const fragment = fragmentParts.length > 0 ? `#${fragmentParts.join("#")}` : "";
+  const name = path.replace(/.*\//, "").replace(/\.md$/, "");
+  return `${name === "README" ? "/" : `/${name}`}${fragment}`;
+}
+
 export async function renderMarkdown(markdown: string): Promise<string> {
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
@@ -74,6 +89,17 @@ export async function renderMarkdown(markdown: string): Promise<string> {
       const anchor = new state.Token("html_inline", "", 0);
       anchor.content = headingAnchor(id, text);
       inline.children.push(anchor);
+    }
+  });
+  // Rewrite relative `.md` cross-links to their site routes (see rewriteGuideHref).
+  md.core.ruler.push("rewrite-md-links", (state) => {
+    for (const token of state.tokens) {
+      if (token.type !== "inline" || !token.children) continue;
+      for (const child of token.children) {
+        if (child.type !== "link_open") continue;
+        const href = child.attrGet("href");
+        if (href) child.attrSet("href", rewriteGuideHref(href));
+      }
     }
   });
   // "text" is a Shiki special language (always available) that Shiki's
