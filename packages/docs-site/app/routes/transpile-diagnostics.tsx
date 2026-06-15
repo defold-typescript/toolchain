@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/transpile-diagnostics",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "transpile-diagnostics", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "transpile-diagnostics",
+    headings: pageHeadings(html),
+  });
 });

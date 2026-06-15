@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/typescript-vs-lua",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "typescript-vs-lua", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "typescript-vs-lua",
+    headings: pageHeadings(html),
+  });
 });

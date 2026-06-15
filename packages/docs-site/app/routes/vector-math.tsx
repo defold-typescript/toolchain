@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/vector-math",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "vector-math", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "vector-math",
+    headings: pageHeadings(html),
+  });
 });

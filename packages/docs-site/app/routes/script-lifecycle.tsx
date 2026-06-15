@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/script-lifecycle",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "script-lifecycle", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "script-lifecycle",
+    headings: pageHeadings(html),
+  });
 });

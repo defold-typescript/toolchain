@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/add-typescript",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "add-typescript", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "add-typescript",
+    headings: pageHeadings(html),
+  });
 });

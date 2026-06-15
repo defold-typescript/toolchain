@@ -48,7 +48,12 @@ for (const slug of slugs) {
 
 // Trim any generated route whose slug is no longer in the guide dir.
 const existing = readdirSync(ROUTES_DIR).filter(
-  (file) => file.endsWith(".tsx") && !file.startsWith("_") && !file.startsWith("index") && file !== "[slug].tsx" && !file.includes("/"),
+  (file) =>
+    file.endsWith(".tsx") &&
+    !file.startsWith("_") &&
+    !file.startsWith("index") &&
+    file !== "[slug].tsx" &&
+    !file.includes("/"),
 );
 let removed = 0;
 for (const file of existing) {

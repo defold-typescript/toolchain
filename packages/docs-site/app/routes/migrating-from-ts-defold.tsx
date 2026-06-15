@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/migrating-from-ts-defold",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "migrating-from-ts-defold", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "migrating-from-ts-defold",
+    headings: pageHeadings(html),
+  });
 });
