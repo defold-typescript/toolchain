@@ -2,9 +2,16 @@ import { type ApiModule, htmlToDocText } from "@defold-typescript/types";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { apiPages } from "../../lib/api-content";
-import { apiModuleMarkdown } from "../../lib/api-surface";
+import { type ApiPage, type ApiSymbol, apiModuleSymbols } from "../../lib/api-surface";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
+
+const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
+  { kind: "function", label: "Functions" },
+  { kind: "variable", label: "Variables" },
+  { kind: "constant", label: "Constants" },
+  { kind: "property", label: "Properties" },
+];
 
 function isEmptyModule(m: ApiModule): boolean {
   return (
@@ -15,6 +22,47 @@ function isEmptyModule(m: ApiModule): boolean {
   );
 }
 
+// One `.api-symbol` grid row: the `### signature` heading + prose on the left,
+// the highlighted signature and example fences on the right. The blank lines
+// around the markdown let markdown-it parse it inside the raw HTML wrappers.
+function symbolRow(symbol: ApiSymbol): string {
+  const doc = [`### \`${symbol.signature}\``, "", symbol.docMarkdown].join("\n");
+  const code = ["```ts", symbol.signature, "```"];
+  if (symbol.exampleMarkdown) code.push("", symbol.exampleMarkdown);
+  return [
+    '<div class="api-symbol">',
+    '<div class="api-symbol-doc">',
+    "",
+    doc,
+    "",
+    "</div>",
+    '<div class="api-symbol-code">',
+    "",
+    code.join("\n"),
+    "",
+    "</div>",
+    "</div>",
+  ].join("\n");
+}
+
+// Render the module intro full-width, then each kind's symbols as two-column
+// rows. A single combined string keeps Shiki and the heading-id slugger to one
+// pass, so per-symbol headings stay uniquely id'd for the "On this page" TOC.
+function apiPageMarkdown(page: Pick<ApiPage, "module">): string {
+  const m = page.module;
+  const symbols = apiModuleSymbols(page);
+  const lines: string[] = [`# ${m.namespace}`, ""];
+  const intro = htmlToDocText(m.description || m.brief);
+  if (intro) lines.push(intro, "");
+  for (const { kind, label } of KIND_SECTIONS) {
+    const group = symbols.filter((s) => s.kind === kind);
+    if (group.length === 0) continue;
+    lines.push(`## ${label}`, "");
+    for (const symbol of group) lines.push(symbolRow(symbol), "");
+  }
+  return lines.join("\n");
+}
+
 export default createRoute(
   ssgParams(() => apiPages().map((page) => ({ namespace: page.namespace }))),
   async (c) => {
@@ -22,7 +70,6 @@ export default createRoute(
     const page = apiPages().find((entry) => entry.namespace === namespace);
     if (!page) return c.notFound();
 
-    const body = apiModuleMarkdown(page);
     if (isEmptyModule(page.module)) {
       // Honest empty state: the namespace exists, the fixture for it just
       // hasn't been populated with elements yet. Don't pretend there's
@@ -44,7 +91,7 @@ export default createRoute(
       );
     }
 
-    const html = await renderMarkdown(body);
+    const html = await renderMarkdown(apiPageMarkdown(page));
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${page.module.namespace} API`,
       headings: pageHeadings(html),
