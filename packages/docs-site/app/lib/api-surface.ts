@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { type ApiModule, htmlToDocText, parseDefoldApiDoc } from "@defold-typescript/types";
+import {
+  type ApiModule,
+  examplesHtmlToMarkdown,
+  htmlToDocText,
+  parseDefoldApiDoc,
+} from "@defold-typescript/types";
 
 export interface ApiPage {
   namespace: string;
@@ -29,7 +34,10 @@ export function apiModuleMarkdown(page: Pick<ApiPage, "namespace" | "module">): 
       lines.push(`### \`${fn.name}(${params})${ret ? `: ${ret}` : ""}\``, "");
       const doc = htmlToDocText(fn.description || fn.brief);
       if (doc) lines.push(doc, "");
-      if (fn.examples) lines.push("```lua", fn.examples, "```", "");
+      if (fn.examples) {
+        const converted = examplesHtmlToMarkdown(fn.examples);
+        if (converted) lines.push(converted, "");
+      }
     }
   }
 
