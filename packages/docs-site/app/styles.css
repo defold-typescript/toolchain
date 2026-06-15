@@ -406,4 +406,11 @@
     max-width: 100%;
     border-radius: 8px;
   }
+
+  .search-snippet mark {
+    background: var(--color-accent-soft);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 2px;
+  }
 }

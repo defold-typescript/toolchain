@@ -15,6 +15,10 @@ import { dirname, join } from "node:path";
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
 const ROUTES_DIR = join(import.meta.dir, "../app/routes");
 
+// Hand-authored top-level routes that are not guide pages and must survive the
+// trim sweep below (the homepage and the client-rendered search results page).
+const PRESERVED_ROUTES = new Set(["index.tsx", "search.tsx"]);
+
 const TEMPLATE = (slug: string) => `import { createRoute } from "honox/factory";
 import { renderGuide } from "../lib/content";
 import { pageHeadings } from "../lib/headings";
@@ -51,7 +55,7 @@ const existing = readdirSync(ROUTES_DIR).filter(
   (file) =>
     file.endsWith(".tsx") &&
     !file.startsWith("_") &&
-    !file.startsWith("index") &&
+    !PRESERVED_ROUTES.has(file) &&
     file !== "[slug].tsx" &&
     !file.includes("/"),
 );
