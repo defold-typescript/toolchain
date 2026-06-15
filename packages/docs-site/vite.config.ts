@@ -1,4 +1,5 @@
 import ssg from "@hono/vite-ssg";
+import tailwindcss from "@tailwindcss/vite";
 import honox from "honox/vite";
 import { defineConfig } from "vite";
 
@@ -10,10 +11,10 @@ export default defineConfig(({ mode }) => {
   // HTML and must NOT empty dist, so the client assets + manifest survive for
   // the `<Script>` manifest lookup.
   if (mode === "client") {
-    return { plugins: [honox()] };
+    return { plugins: [honox(), tailwindcss()] };
   }
   return {
-    plugins: [honox(), ssg({ entry })],
+    plugins: [honox(), tailwindcss(), ssg({ entry })],
     build: { emptyOutDir: false },
   };
 });

@@ -9,6 +9,7 @@ type Hit = { route: string; title: string };
 export default function Search() {
   const [db, setDb] = useState<SearchDb | null>(null);
   const [hits, setHits] = useState<Hit[]>([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -28,6 +29,7 @@ export default function Search() {
     const term = (event.target as HTMLInputElement).value.trim();
     if (!db || term.length < 2) {
       setHits([]);
+      setOpen(false);
       return;
     }
     const results = await search(db, {
@@ -36,27 +38,39 @@ export default function Search() {
       properties: ["title", "text"],
       limit: 8,
     });
-    setHits(results.hits.map((hit) => ({ route: hit.document.route, title: hit.document.title })));
+    const next: Hit[] = results.hits.map((hit) => ({
+      route: hit.document.route,
+      title: hit.document.title,
+    }));
+    setHits(next);
+    setOpen(next.length > 0);
   };
 
   return (
-    <div class="search">
+    <div class="relative">
       <input
         type="search"
-        class="search-input"
         placeholder="Search docs…"
         aria-label="Search documentation"
         onInput={onInput}
+        onFocus={() => hits.length > 0 && setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        class="h-9 w-56 max-w-[40vw] rounded-md border border-border bg-surface px-3 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none"
       />
-      {hits.length > 0 && (
-        <ul class="search-results">
+      {open && hits.length > 0 ? (
+        <ul class="absolute right-0 z-40 mt-1 w-72 overflow-hidden rounded-md border border-border bg-bg shadow-lg">
           {hits.map((hit) => (
             <li>
-              <a href={hit.route}>{hit.title}</a>
+              <a
+                href={hit.route}
+                class="block px-3 py-2 text-sm text-text transition hover:bg-surface"
+              >
+                {hit.title}
+              </a>
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </div>
   );
 }
