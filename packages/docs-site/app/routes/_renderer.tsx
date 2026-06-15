@@ -29,26 +29,6 @@ declare module "hono" {
  */
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='light';}})();`;
 
-/**
- * A tiny critical-CSS block applied synchronously before the full Tailwind
- * stylesheet arrives. Without it, the unstyled HTML briefly renders the
- * logo SVG and the top bar at intrinsic sizes — that "huge W" splash
- * users see on first paint. The block only covers the bare layout that
- * matters before paint: html/body backgrounds, the topbar flex row, the
- * logo's hard size, and the main grid. Tailwind overrides these
- * specificities once it loads.
- */
-const CRITICAL_CSS = `
-html,body{margin:0;background:#fff;color:#1c1c1f;font-family:"Inter Variable",system-ui,sans-serif;}
-html[data-theme="dark"],html[data-theme="dark"] body{background:#0e0e10;color:#ececef;}
-header.topbar-critical{display:flex;align-items:center;gap:1.5rem;height:56px;padding:0 1.5rem;border-bottom:1px solid #e6e6e9;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);position:sticky;top:0;z-index:30;}
-html[data-theme="dark"] header.topbar-critical{border-bottom-color:#2a2a2e;background:rgba(14,14,16,.85);}
-header.topbar-critical .logo-box{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;background:#1c1c1f;color:#fff;flex:none;}
-html[data-theme="dark"] header.topbar-critical .logo-box{background:#ececef;color:#0e0e10;}
-header.topbar-critical .logo-box svg{width:16px;height:16px;flex:none;display:block;}
-.shiki span{background-color:transparent !important;}
-`;
-
 interface RendererProps {
   children?: unknown;
   title?: string;
@@ -73,7 +53,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title ? `${title} — defold-typescript` : "defold-typescript docs"}</title>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
-        <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
+        <link rel="stylesheet" href="/critical.css" />
         <Script src="/app/client.ts" async />
       </head>
       <body class="min-h-screen bg-bg text-text antialiased">
