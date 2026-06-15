@@ -420,4 +420,26 @@
     text-decoration-color: var(--color-border-strong);
     cursor: help;
   }
+
+  .prose .api-symbol {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: start;
+    margin-top: 2rem;
+  }
+
+  @media (min-width: 1024px) {
+    .prose .api-symbol {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 2.5rem;
+    }
+  }
+
+  /* Both columns' first child carries no extra top gap so the heading and the
+     code rail align to the top of the row. */
+  .prose .api-symbol-doc > :first-child,
+  .prose .api-symbol-code > :first-child {
+    margin-top: 0;
+  }
 }
