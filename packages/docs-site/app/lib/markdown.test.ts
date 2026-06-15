@@ -74,4 +74,62 @@ describe("renderMarkdown", () => {
     expect(html).toContain('href="https://example.com/a.md"');
     expect(html).toContain('href="#section"');
   });
+
+  test("renders a [!NOTE] blockquote as a note admonition", async () => {
+    const html = await renderMarkdown("> [!NOTE]\n> Body.\n");
+    expect(html).toMatch(/<div class="admonition admonition-note"/);
+    expect(html).toMatch(/<[^>]*class="admonition-title"[^>]*>[\s\S]*Note[\s\S]*<\/[^>]+>/);
+    expect(html).not.toContain("[!NOTE]");
+  });
+
+  test("renders a [!TIP] blockquote as a tip admonition", async () => {
+    const html = await renderMarkdown("> [!TIP]\n> Body.\n");
+    expect(html).toMatch(/<div class="admonition admonition-tip"/);
+    expect(html).toContain("Tip");
+    expect(html).not.toContain("[!TIP]");
+  });
+
+  test("renders an [!IMPORTANT] blockquote as an important admonition", async () => {
+    const html = await renderMarkdown("> [!IMPORTANT]\n> Body.\n");
+    expect(html).toMatch(/<div class="admonition admonition-important"/);
+    expect(html).toContain("Important");
+    expect(html).not.toContain("[!IMPORTANT]");
+  });
+
+  test("renders a [!WARNING] blockquote as a warning admonition", async () => {
+    const html = await renderMarkdown("> [!WARNING]\n> Body.\n");
+    expect(html).toMatch(/<div class="admonition admonition-warning"/);
+    expect(html).toContain("Warning");
+    expect(html).not.toContain("[!WARNING]");
+  });
+
+  test("renders a [!CAUTION] blockquote as a caution admonition", async () => {
+    const html = await renderMarkdown("> [!CAUTION]\n> Body.\n");
+    expect(html).toMatch(/<div class="admonition admonition-caution"/);
+    expect(html).toContain("Caution");
+    expect(html).not.toContain("[!CAUTION]");
+  });
+
+  test("matches the alert marker case-insensitively", async () => {
+    const html = await renderMarkdown("> [!warning]\n> x\n");
+    expect(html).toMatch(/<div class="admonition admonition-warning"/);
+    expect(html).toContain("Warning");
+  });
+
+  test("leaves a plain blockquote untouched", async () => {
+    const html = await renderMarkdown("> Just a quote.\n");
+    expect(html).toContain("<blockquote>");
+    expect(html).not.toContain("admonition");
+  });
+
+  test("leaves an unknown [!FOO] marker as a plain blockquote", async () => {
+    const html = await renderMarkdown("> [!FOO]\n> x\n");
+    expect(html).toContain("<blockquote>");
+    expect(html).not.toContain("admonition");
+  });
+
+  test("renders the admonition body as markdown", async () => {
+    const html = await renderMarkdown("> [!NOTE]\n> Use `go.property`.\n");
+    expect(html).toContain("<code>go.property</code>");
+  });
 });
