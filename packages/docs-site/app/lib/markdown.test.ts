@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
 
 describe("renderMarkdown", () => {
@@ -24,5 +25,27 @@ describe("renderMarkdown", () => {
     expect(html).toContain('class="shiki');
     expect(html).toContain("--shiki-light:");
     expect(html).toContain("--shiki-dark:");
+  });
+
+  test("injects a heading-anchor permalink into h2 headings", async () => {
+    const html = await renderMarkdown("## Hello world\n");
+    expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#hello-world"/);
+  });
+
+  test("the injected anchor does not pollute the extracted TOC text", async () => {
+    const html = await renderMarkdown("## Hello world\n");
+    const headings = pageHeadings(html);
+    expect(headings).toHaveLength(1);
+    expect(headings[0]?.text).toBe("Hello world");
+  });
+
+  test("leaves h1 untouched (no heading-anchor)", async () => {
+    const html = await renderMarkdown("# Title\n");
+    expect(html).not.toContain("heading-anchor");
+  });
+
+  test("injects a heading-anchor permalink into h3 headings", async () => {
+    const html = await renderMarkdown("### Sub one\n");
+    expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#sub-one"/);
   });
 });
