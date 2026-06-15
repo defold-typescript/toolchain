@@ -43,8 +43,8 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='
  */
 const THEME_TOKENS = `
 :root {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace, SFMono-Regular, Menlo, monospace;
   --color-bg: #ffffff;
   --color-surface: #f7f7f8;
   --color-surface-2: #f0f0f2;
@@ -74,6 +74,46 @@ const THEME_TOKENS = `
 }
 `;
 
+interface ViteManifestEntry {
+  file: string;
+  css?: string[];
+}
+type ViteManifest = Record<string, ViteManifestEntry>;
+
+/**
+ * The Vite manifest, loaded at build time so the compiled client assets can be
+ * resolved to their hashed filenames. The glob matches nothing in dev (no
+ * manifest yet), and the PROD guard keeps a stale manifest from a previous
+ * build from leaking hashed links into the dev server.
+ */
+const CLIENT_MANIFEST = import.meta.env.PROD
+  ? import.meta.glob<{ default: ViteManifest }>("/dist/.vite/manifest.json", { eager: true })
+  : {};
+
+/**
+ * The compiled stylesheet and primary font files for `app/client.ts`.
+ *
+ * The Tailwind bundle and every `@font-face` rule are imported through
+ * `app/client.ts`, so without an explicit `<link>` they only take effect once
+ * the async client script executes. Each navigation would then paint first with
+ * `critical.css`, then reflow (and swap fonts) when the bundle arrives — the
+ * layout shift / blink. Emitting the bundle as a render-blocking `<link>` and
+ * preloading the Latin font subsets makes the full stylesheet and font faces
+ * present at first paint, so navigation no longer flashes.
+ */
+function clientStyles(): { stylesheets: string[]; fonts: string[] } {
+  for (const mod of Object.values(CLIENT_MANIFEST)) {
+    const manifest = mod.default;
+    if (!manifest) continue;
+    const stylesheets = (manifest["app/client.ts"]?.css ?? []).map((file) => `/${file}`);
+    const fonts = Object.entries(manifest)
+      .filter(([key]) => /(?:inter|jetbrains-mono)-latin-wght-normal\.woff2$/.test(key))
+      .map(([, entry]) => `/${entry.file}`);
+    return { stylesheets, fonts };
+  }
+  return { stylesheets: [], fonts: [] };
+}
+
 interface RendererProps {
   children?: unknown;
   title?: string;
@@ -90,6 +130,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
+  const styles = clientStyles();
 
   return (
     <html lang="en">
@@ -99,16 +140,25 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <title>{title ? `${title} — defold-typescript` : "defold-typescript docs"}</title>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <style dangerouslySetInnerHTML={{ __html: THEME_TOKENS }} />
+        {styles.fonts.map((href) => (
+          <link key={href} rel="preload" as="font" type="font/woff2" href={href} crossorigin="" />
+        ))}
         <link rel="stylesheet" href="/critical.css" />
+        {/* Dev has no built bundle: link the source stylesheet so vite serves the
+            full Tailwind CSS render-blocking, instead of letting the async client
+            script inject it after first paint (which snapped the unstyled layout
+            into place — a full-viewport shift on every navigation). */}
+        {import.meta.env.DEV ? <link rel="stylesheet" href="/app/styles.css" /> : null}
+        {styles.stylesheets.map((href) => (
+          <link key={href} rel="stylesheet" href={href} />
+        ))}
         <Script src="/app/client.ts" async />
       </head>
       <body class="min-h-screen bg-bg text-text antialiased">
         <header class="topbar-critical sticky top-0 z-30 flex h-14 items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur">
           <div class="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-6">
             <a class="flex items-center gap-2 text-[15px] font-semibold tracking-tight" href="/">
-              <span class="logo-box">
-                <Logo />
-              </span>
+              <img src="/logo-ver-classic.svg" alt="" width="24" height="24" class="logo-mark h-6 w-6" />
               <span>defold-typescript</span>
             </a>
             <nav class="flex flex-1 items-center gap-1 text-sm">
@@ -194,14 +244,6 @@ function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
     >
       {link.label}
     </a>
-  );
-}
-
-function Logo() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;display:block">
-      <path d="M5 6l4 12 3-7 3 7 4-12" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
   );
 }
 
