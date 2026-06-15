@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
+import { type ApiPage, loadApiSurface } from "./api-surface";
 import type { GuidePage } from "./guide";
-import { buildSearchIndex } from "./search-index";
+import { apiSearchRecords, buildSearchIndex } from "./search-index";
+
+const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 
 const page = (file: string, isIndex = false): GuidePage => {
   const slug = isIndex ? "" : file.replace(/\.md$/, "");
@@ -67,6 +71,68 @@ describe("buildSearchIndex", () => {
   test("returns records in stable sorted order regardless of input order", () => {
     const pages = [page("getting-started.md"), page("README.md", true), page("no-heading.md")];
     const records = buildSearchIndex(pages, read);
+    const routes = records.map((r) => r.route);
+    expect(routes).toEqual([...routes].sort());
+  });
+});
+
+describe("apiSearchRecords", () => {
+  test("returns one record per ApiPage with the page route and a `<namespace> API` title", () => {
+    const pages = loadApiSurface(API_FIXTURE_DIR);
+    const records = apiSearchRecords(pages);
+    expect(records).toHaveLength(pages.length);
+    for (const page of pages) {
+      const record = records.find((r) => r.route === page.route);
+      expect(record).toBeDefined();
+      expect(record?.title).toBe(`${page.namespace} API`);
+    }
+  });
+
+  test("indexes the namespace plus a symbol name and its brief into text", () => {
+    const camera = loadApiSurface(API_FIXTURE_DIR).find((p) => p.namespace === "camera");
+    if (!camera) throw new Error("expected a camera fixture page");
+    const fn = camera.module.functions[0];
+    if (!fn) throw new Error("expected the camera fixture to carry a function");
+    const [record] = apiSearchRecords([camera]);
+    expect(record?.text).toContain("camera");
+    expect(record?.text).toContain(fn.name);
+    // the page renders `description || brief`; assert whichever it emits is indexed
+    expect(record?.text).toContain(fn.description || fn.brief);
+  });
+
+  test("excludes Lua example fenced blocks from text", () => {
+    const page: ApiPage = {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo brief",
+      module: {
+        namespace: "demo",
+        brief: "Demo brief",
+        description: "Demo module.",
+        functions: [
+          {
+            name: "demo.run",
+            brief: "run it",
+            description: "Runs the demo.",
+            parameters: [],
+            returnValues: [],
+            examples: "local secretExampleToken = demo.run()",
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+    };
+    const [record] = apiSearchRecords([page]);
+    expect(record?.text).toContain("demo.run");
+    expect(record?.text).not.toContain("secretExampleToken");
+  });
+
+  test("returns records in stable route-sorted order regardless of input order", () => {
+    const pages = loadApiSurface(API_FIXTURE_DIR);
+    const records = apiSearchRecords([...pages].reverse());
     const routes = records.map((r) => r.route);
     expect(routes).toEqual([...routes].sort());
   });
