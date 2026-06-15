@@ -29,6 +29,51 @@ declare module "hono" {
  */
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='light';}})();`;
 
+/**
+ * The design tokens, inlined so they are available before the Tailwind
+ * stylesheet (and `public/critical.css`) load. Without this, `var(--color-text)`
+ * in critical.css would be undefined at first paint and the body would briefly
+ * render with the wrong color. Tailwind v4's `@theme` block in
+ * `app/styles.css` redefines the same tokens; that later definition
+ * supersedes these because the cascade is per-property and the @theme
+ * block is a higher-specificity origin.
+ *
+ * Keep this list in sync with the `@theme` block in `app/styles.css` and
+ * the dark override below it.
+ */
+const THEME_TOKENS = `
+:root {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-bg: #ffffff;
+  --color-surface: #f7f7f8;
+  --color-surface-2: #f0f0f2;
+  --color-border: #e6e6e9;
+  --color-border-strong: #d0d0d5;
+  --color-text: #1c1c1f;
+  --color-text-muted: #5b5b62;
+  --color-text-faint: #8a8a92;
+  --color-accent: #1f6feb;
+  --color-accent-soft: rgba(31, 111, 235, 0.08);
+  --color-accent-strong: #1858c4;
+  --color-code-bg: #f6f6f7;
+}
+[data-theme="dark"] {
+  --color-bg: #0e0e10;
+  --color-surface: #161618;
+  --color-surface-2: #1d1d20;
+  --color-border: #2a2a2e;
+  --color-border-strong: #3a3a40;
+  --color-text: #ececef;
+  --color-text-muted: #a4a4ad;
+  --color-text-faint: #6f6f78;
+  --color-accent: #79a8ff;
+  --color-accent-soft: rgba(121, 168, 255, 0.12);
+  --color-accent-strong: #a9c4ff;
+  --color-code-bg: #161618;
+}
+`;
+
 interface RendererProps {
   children?: unknown;
   title?: string;
@@ -53,6 +98,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title ? `${title} — defold-typescript` : "defold-typescript docs"}</title>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        <style dangerouslySetInnerHTML={{ __html: THEME_TOKENS }} />
         <link rel="stylesheet" href="/critical.css" />
         <Script src="/app/client.ts" async />
       </head>

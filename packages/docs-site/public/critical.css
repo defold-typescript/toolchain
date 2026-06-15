@@ -8,19 +8,23 @@
  *
  * If you change a value here, change the matching rule in styles.css.
  * If you only change a value in styles.css, also update this file.
+ *
+ * IMPORTANT: this file must reference the SAME CSS variable names as
+ * `app/styles.css` (`--color-text`, `--color-bg`, `--color-code-bg`,
+ * etc.). Earlier this file used a different prefix (`--c-text`) with
+ * hardcoded light fallbacks, which broke dark mode — the fallbacks
+ * fired and the prose rendered with the light-theme color in dark
+ * mode. Now both files read from the same `--color-*` tokens.
  */
 
 html,
 body {
   margin: 0;
-  background: #fff;
-  color: #1c1c1f;
-  font-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-}
-html[data-theme="dark"],
-html[data-theme="dark"] body {
-  background: #0e0e10;
-  color: #ececef;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 header.topbar-critical {
@@ -29,17 +33,13 @@ header.topbar-critical {
   gap: 1.5rem;
   height: 56px;
   padding: 0 1.5rem;
-  border-bottom: 1px solid #e6e6e9;
-  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 30;
-}
-html[data-theme="dark"] header.topbar-critical {
-  border-bottom-color: #2a2a2e;
-  background: rgba(14, 14, 16, 0.85);
 }
 header.topbar-critical .logo-box {
   width: 24px;
@@ -48,13 +48,9 @@ header.topbar-critical .logo-box {
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  background: #1c1c1f;
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-bg);
   flex: none;
-}
-html[data-theme="dark"] header.topbar-critical .logo-box {
-  background: #ececef;
-  color: #0e0e10;
 }
 header.topbar-critical .logo-box svg {
   width: 16px;
@@ -65,7 +61,7 @@ header.topbar-critical .logo-box svg {
 
 .prose {
   max-width: 760px;
-  color: var(--c-text, #1c1c1f);
+  color: var(--color-text);
   font-size: 15px;
   line-height: 1.7;
 }
@@ -78,7 +74,7 @@ header.topbar-critical .logo-box svg {
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0 0 0.6em;
-  color: var(--c-text, #1c1c1f);
+  color: var(--color-text);
 }
 .prose h2 {
   font-size: 1.4rem;
@@ -87,50 +83,56 @@ header.topbar-critical .logo-box svg {
   letter-spacing: -0.015em;
   margin: 2em 0 0.6em;
   padding-top: 0.4em;
-  color: var(--c-text, #1c1c1f);
+  color: var(--color-text);
+  scroll-margin-top: 5rem;
 }
 .prose h3 {
   font-size: 1.1rem;
   line-height: 1.4;
   font-weight: 600;
   margin: 1.6em 0 0.4em;
-  color: var(--c-text, #1c1c1f);
+  color: var(--color-text);
+  scroll-margin-top: 5rem;
 }
 .prose h4 {
   font-size: 0.95rem;
   line-height: 1.4;
   font-weight: 600;
   margin: 1.4em 0 0.4em;
-  color: var(--c-text, #1c1c1f);
+  color: var(--color-text);
 }
 .prose p {
   margin: 0;
 }
 .prose a {
-  color: var(--c-accent, #1f6feb);
+  color: var(--color-accent);
   text-decoration: none;
   font-weight: 500;
-  border-bottom: 1px solid rgba(31, 111, 235, 0.3);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  transition: border-color 0.15s ease;
+}
+.prose a:hover {
+  border-bottom-color: var(--color-accent);
 }
 .prose strong {
   font-weight: 600;
-  color: var(--c-text, #1c1c1f);
+  color: var(--color-text);
 }
 .prose code {
-  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.875em;
-  background: var(--c-code-bg, #f6f6f7);
-  border: 1px solid var(--c-border, #e6e6e9);
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 0.1em 0.35em;
-  color: var(--c-text, #1c1c1f);
+  color: var(--color-text);
 }
 .prose pre {
-  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.55;
-  background: var(--c-code-bg, #f6f6f7);
-  border: 1px solid var(--c-border, #e6e6e9);
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 14px 16px;
   overflow-x: auto;
@@ -157,16 +159,19 @@ header.topbar-critical .logo-box svg {
 .prose li {
   margin-top: 0.35em;
 }
+.prose li::marker {
+  color: var(--color-text-faint);
+}
 .prose blockquote {
   margin: 0;
   padding: 0.4em 1em;
-  border-left: 3px solid var(--c-border-strong, #d0d0d5);
-  color: var(--c-text-muted, #5b5b62);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-text-muted);
   font-style: italic;
 }
 .prose hr {
   border: 0;
-  border-top: 1px solid var(--c-border, #e6e6e9);
+  border-top: 1px solid var(--color-border);
   margin: 2em 0;
 }
 .prose table {
@@ -179,12 +184,12 @@ header.topbar-critical .logo-box svg {
 .prose td {
   text-align: left;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--c-border, #e6e6e9);
+  border-bottom: 1px solid var(--color-border);
 }
 .prose th {
   font-weight: 600;
-  color: var(--c-text, #1c1c1f);
-  background: var(--c-surface, #f7f7f8);
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 .prose img {
   max-width: 100%;
