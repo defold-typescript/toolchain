@@ -22,8 +22,8 @@ tooling and configuration, not a rewrite.
   `lua-types/special/jit-only`.)
 - **Ambient engine globals.** In both stacks the Defold API arrives as ambient
   declarations — you call `go`, `msg`, `vmath`, etc. without importing them.
-  ts-defold ships this as a `@noSelfInFile` ambient `index.d.ts`; we ship it as
-  the ambient `@defold-typescript/types`.
+  ts-defold ships this as a `@noSelfInFile` ambient `index.d.ts`;
+  `@defold-typescript` ships it as the ambient `@defold-typescript/types`.
 - **Same Defold surface.** Both type sets are generated from the same Defold
   reference docs, so symbol coverage is at parity by construction. The
   documentation-quality differences are catalogued separately in
@@ -49,19 +49,19 @@ The full `defold-typescript` command surface is
 These steps run against an **existing** ts-defold project (a directory that
 already has a `game.project`).
 
-1. **Add our toolchain in place.** From the project root, run
+1. **Add the defold-typescript toolchain in place.** From the project root, run
    `bunx @defold-typescript/cli@latest init`. With a `game.project` present,
    `init` runs in *add-TypeScript mode*: it writes only the TypeScript surface
    (a `tsconfig.json`, dev-deps merged into `package.json`, and a `src/main.ts`
    only if one does not already exist) and refuses to overwrite a conflicting
    TS config unless you pass `--force`. Your existing `src/*.ts` and
    `game.project` are left alone.
-2. **Reconcile `tsconfig.json`.** Our scaffold sets `target: ES2022`,
+2. **Reconcile `tsconfig.json`.** The defold-typescript scaffold sets `target: ES2022`,
    `module: ESNext`, `moduleResolution: Bundler`, `types: ["@defold-typescript/types"]`,
    and `plugins: [{ name: "@defold-typescript/tstl-plugin" }]`. Point the
    `types` array at `@defold-typescript/types` (replacing `@ts-defold/types`)
    and add the `tstl-plugin` entry to keep live editor diagnostics.
-3. **Build with our CLI.** Run `defold-typescript build` (or
+3. **Build with the defold-typescript CLI.** Run `defold-typescript build` (or
    `defold-typescript watch` for the save-loop). The transpiler targets
    **Lua 5.1**. Compiled output is written **beside the source** as
    `src/**/*.ts.script`, `*.ts.gui_script`, `*.ts.render_script` (plus `*.lua`
@@ -76,31 +76,32 @@ already has a `game.project`).
 > Your ts-defold project's own `tsconfig.json` (its TSTL `luaTarget`,
 > `luaLibImport`, `outDir`, and plugin list) is the other half of this
 > reconcile. Those values are project-specific and are **not** asserted here —
-> open your template's `tsconfig.json` and map each key to our scaffold above.
+> open your template's `tsconfig.json` and map each key to the defold-typescript
+> scaffold above.
 
 ## Type-surface differences you will hit
 
-Symbol coverage is at parity, but our surface shapes a few things differently.
+Symbol coverage is at parity, but the `@defold-typescript` surface shapes a few things differently.
 These are the porting touch-points; the deep comparison lives in
 [API docs vs. ts-defold-types](./api-docs-vs-ts-defold.md) and the runtime
 narrowing traps in [TypeScript gotchas](./typescript-gotchas.md).
 
 - **Branded constants.** Where ts-defold types a constant as `const X: number`,
-  ours brands it (`number & { readonly __brand: "ns.X" }`) so distinct
+  `@defold-typescript/types` brands it (`number & { readonly __brand: "ns.X" }`) so distinct
   constants stay nominally distinct. Code that passed a raw `number` where a
   branded constant is expected may need the constant itself, not a literal.
 - **Multi-value returns are typed tuples.** Functions whose Lua API returns
   several values are typed as `LuaMultiReturn<[…]>` (each value named in the
   type), not collapsed to one return.
 - **Per-kind ambient API walls.** Beyond the bare `@defold-typescript/types`
-  entry, we expose per-script-kind surfaces — `@defold-typescript/types/script`,
+  entry, `@defold-typescript` exposes per-script-kind surfaces — `@defold-typescript/types/script`,
   `/gui-script`, `/render-script` — so a GUI script only sees the GUI-legal API.
 - **Opaque handles.** Engine handles are branded opaque types rather than bare
   aliases; `typeof`-narrowing cannot see them (they are Lua `userdata`).
 
 ## What this guide verified
 
-**Our side** (this repository): packages and the `defold-typescript` command
+**@defold-typescript side** (this repository): packages and the `defold-typescript` command
 surface from `packages/cli/src/dispatch.ts`; the `init` add-TS mode and scaffold
 `tsconfig.json` from `packages/cli/src/init.ts`; the Lua 5.1 transpiler target
 from `packages/transpiler/src/session.ts` and `transpile.ts`; the compiled-output

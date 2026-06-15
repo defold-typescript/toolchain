@@ -45,7 +45,7 @@ describe("api-doc parity — coverage superset over pinned ts-defold-types", () 
     expect(sample?.hasReturns).toBe(true);
   });
 
-  test("for every shared symbol, our docs are a superset of theirs", async () => {
+  test("@defold-typescript/types docs are a superset of ts-defold-types for every shared symbol", async () => {
     const theirs = extractSurface(await Bun.file(FIXTURE).text());
     const ours = await loadOurSurface();
 
