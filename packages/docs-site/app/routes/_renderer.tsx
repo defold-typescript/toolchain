@@ -156,7 +156,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
       </head>
       <body class="min-h-screen bg-bg text-text antialiased">
         <header class="topbar-critical sticky top-0 z-30 flex h-14 items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur">
-          <div class="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-6">
+          <div class="mx-auto flex h-14 w-full items-center gap-6">
             <a class="flex items-center gap-2 text-[15px] font-semibold tracking-tight" href="/">
               <img
                 src="/logo-ver-classic.svg"
@@ -183,7 +183,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           </div>
         </header>
 
-        <div class="mx-auto flex w-full max-w-[1400px] gap-10 px-6">
+        <div class="mx-auto flex w-full gap-10 px-6">
           <aside class="hidden w-60 shrink-0 lg:block">
             <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto py-8 pr-2">
               <SidebarNav category={activeCategory} path={path} />
