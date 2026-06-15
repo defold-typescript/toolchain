@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/advanced-cli",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "advanced-cli", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "advanced-cli",
+    headings: pageHeadings(html),
+  });
 });

@@ -25,9 +25,7 @@ export default createRoute((c) => {
             >
               <span class="font-mono text-[13px] font-semibold text-accent">{page.namespace}</span>
               {page.brief ? (
-                <span class="mt-1 block text-sm text-text-muted">
-                  {htmlToDocText(page.brief)}
-                </span>
+                <span class="mt-1 block text-sm text-text-muted">{htmlToDocText(page.brief)}</span>
               ) : null}
             </a>
           </li>

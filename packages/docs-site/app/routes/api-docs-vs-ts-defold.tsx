@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/api-docs-vs-ts-defold",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "api-docs-vs-ts-defold", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "api-docs-vs-ts-defold",
+    headings: pageHeadings(html),
+  });
 });

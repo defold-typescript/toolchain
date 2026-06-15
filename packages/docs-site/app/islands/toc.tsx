@@ -49,9 +49,7 @@ export default function Toc({ headings }: { headings: Heading[] }) {
               class={
                 "-ml-px block border-l py-1 text-text-muted transition hover:text-text " +
                 (h.level === 3 ? "pl-6" : "pl-3 ") +
-                (activeId === h.id
-                  ? "border-accent font-medium text-accent"
-                  : "border-transparent")
+                (activeId === h.id ? "border-accent font-medium text-accent" : "border-transparent")
               }
             >
               {h.text}

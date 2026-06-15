@@ -4,8 +4,8 @@ import Search from "../islands/search";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import { guidePages } from "../lib/content";
-import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
 import type { Heading } from "../lib/headings";
+import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
 
 declare module "hono" {
   // Must stay an interface: module augmentation merges into hono's ContextRenderer.
@@ -158,12 +158,22 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <header class="topbar-critical sticky top-0 z-30 flex h-14 items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur">
           <div class="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-6">
             <a class="flex items-center gap-2 text-[15px] font-semibold tracking-tight" href="/">
-              <img src="/logo-ver-classic.svg" alt="" width="24" height="24" class="logo-mark h-6 w-6" />
+              <img
+                src="/logo-ver-classic.svg"
+                alt=""
+                width="24"
+                height="24"
+                class="logo-mark h-6 w-6"
+              />
               <span>defold-typescript</span>
             </a>
             <nav class="flex flex-1 items-center gap-1 text-sm">
               {nav.map((category) => (
-                <CategoryLink key={category.id} category={category} active={category.id === activeId} />
+                <CategoryLink
+                  key={category.id}
+                  category={category}
+                  active={category.id === activeId}
+                />
               ))}
             </nav>
             <div class="flex items-center gap-2">

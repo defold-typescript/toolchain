@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/debugging",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "debugging", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "debugging",
+    headings: pageHeadings(html),
+  });
 });

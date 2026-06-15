@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/defold-editor",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "defold-editor", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "defold-editor",
+    headings: pageHeadings(html),
+  });
 });

@@ -98,9 +98,9 @@ export default createRoute(
     }
 
     const html = await renderMarkdown(body);
-    return c.render(
-      <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-      { title: `${page.module.namespace} API`, headings: pageHeadings(html) },
-    );
+    return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+      title: `${page.module.namespace} API`,
+      headings: pageHeadings(html),
+    });
   },
 );

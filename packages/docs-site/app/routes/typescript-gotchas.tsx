@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/typescript-gotchas",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "typescript-gotchas", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "typescript-gotchas",
+    headings: pageHeadings(html),
+  });
 });

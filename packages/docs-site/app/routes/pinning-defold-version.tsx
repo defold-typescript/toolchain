@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/pinning-defold-version",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "pinning-defold-version", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "pinning-defold-version",
+    headings: pageHeadings(html),
+  });
 });

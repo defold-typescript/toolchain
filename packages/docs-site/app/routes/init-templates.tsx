@@ -9,8 +9,8 @@ export default createRoute(async (c) => {
     route: "/init-templates",
     isIndex: false,
   });
-  return c.render(
-    <article class="prose" dangerouslySetInnerHTML={{ __html: html }} />,
-    { title: "init-templates", headings: pageHeadings(html) },
-  );
+  return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+    title: "init-templates",
+    headings: pageHeadings(html),
+  });
 });

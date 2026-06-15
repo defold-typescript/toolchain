@@ -40,11 +40,11 @@ export async function renderMarkdown(markdown: string): Promise<string> {
   md.core.ruler.push("slugify-headings", (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
-      if (!token || token.type !== "heading_open") continue;
+      if (token?.type !== "heading_open") continue;
       const level = Number(token.tag.slice(1));
       if (level < 2 || level > 3) continue;
       const inline = state.tokens[i + 1];
-      if (!inline || inline.type !== "inline" || !inline.children) continue;
+      if (inline?.type !== "inline" || !inline.children) continue;
       const text = inline.content;
       const base = slugify(text);
       const n = slugCounts.get(base) ?? 0;
