@@ -156,6 +156,7 @@
   }
 
   .prose h2 {
+    position: relative;
     font-size: 1.4rem;
     line-height: 1.3;
     font-weight: 600;
@@ -168,6 +169,7 @@
   }
 
   .prose h3 {
+    position: relative;
     font-size: 1.1rem;
     line-height: 1.4;
     font-weight: 600;
@@ -200,6 +202,37 @@
 
   .prose a:hover {
     border-bottom-color: var(--color-accent);
+  }
+
+  .heading-anchor {
+    position: absolute;
+    left: -1.25em;
+    display: inline-flex;
+    align-items: center;
+    height: 1em;
+    opacity: 0;
+    color: var(--color-text-faint);
+    border-bottom: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .heading-anchor svg {
+    width: 0.85em;
+    height: 0.85em;
+  }
+
+  .prose :is(h2, h3)[data-current] {
+    color: var(--color-accent-strong);
+  }
+
+  .prose :is(h2, h3)[data-current] .heading-anchor {
+    opacity: 0.2;
+  }
+
+  .prose :is(h2, h3):hover .heading-anchor,
+  .heading-anchor:focus-visible {
+    opacity: 1;
+    color: var(--color-accent);
   }
 
   .prose strong {

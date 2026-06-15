@@ -31,6 +31,26 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function escapeAttr(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// SVG-only anchor (no text node) so headings.ts' tag-strip leaves the TOC text clean.
+function headingAnchor(id: string, text: string): string {
+  return (
+    `<a class="heading-anchor" href="#${id}" aria-label="Permalink to ${escapeAttr(text)}">` +
+    '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>' +
+    '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>' +
+    "</svg></a>"
+  );
+}
+
 export async function renderMarkdown(markdown: string): Promise<string> {
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
@@ -51,6 +71,9 @@ export async function renderMarkdown(markdown: string): Promise<string> {
       slugCounts.set(base, n + 1);
       const id = n === 0 ? base : `${base}-${n}`;
       token.attrSet("id", id);
+      const anchor = new state.Token("html_inline", "", 0);
+      anchor.content = headingAnchor(id, text);
+      inline.children.push(anchor);
     }
   });
   // "text" is a Shiki special language (always available) that Shiki's

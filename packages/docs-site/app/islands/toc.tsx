@@ -38,6 +38,24 @@ export default function Toc({ headings }: { headings: Heading[] }) {
     return () => observer.disconnect();
   }, [headings]);
 
+  // The clicked entry owns the current-location cue; with nothing clicked it
+  // falls back to the first on-screen heading.
+  const currentId = clickedId ?? visibleIds[0] ?? null;
+
+  // Mirror the current heading onto a `data-current` attribute on the in-body
+  // heading element so its permalink icon and title highlight stay in sync with
+  // this outline — one source of truth, no second observer.
+  useEffect(() => {
+    const els = headings
+      .map((h) => document.getElementById(h.id))
+      .filter((el): el is HTMLElement => el !== null);
+    for (const el of els) el.removeAttribute("data-current");
+    if (currentId) document.getElementById(currentId)?.setAttribute("data-current", "");
+    return () => {
+      for (const el of els) el.removeAttribute("data-current");
+    };
+  }, [currentId, headings]);
+
   if (headings.length === 0) return null;
 
   const showTip = (event: Event, text: string) => {
@@ -45,10 +63,6 @@ export default function Toc({ headings }: { headings: Heading[] }) {
     setTip({ text, top: rect.top + rect.height / 2, left: rect.left });
   };
   const hideTip = () => setTip(null);
-
-  // The clicked entry owns the current-location cue; with nothing clicked it
-  // falls back to the first on-screen heading.
-  const currentId = clickedId ?? visibleIds[0] ?? null;
 
   return (
     <nav aria-label="On this page" class="text-sm">
