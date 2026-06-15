@@ -16,7 +16,7 @@ export default createRoute((c) => {
           {namespaces.length} namespace{namespaces.length === 1 ? "" : "s"} documented.
         </span>
       </p>
-      <ul class="not-prose mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <ul class="not-prose mt-8 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
         {pages.map((page) => (
           <li>
             <a
