@@ -215,8 +215,8 @@ function CategoryLink({ category, active }: { category: NavCategory; active: boo
       href={href}
       aria-current={active ? "page" : undefined}
       class={
-        "rounded-md px-3 py-1.5 text-text-muted transition hover:text-text " +
-        (active ? "font-semibold text-text" : "")
+        "-mb-px inline-flex h-14 items-center border-b-2 px-3 text-text-muted transition hover:text-text " +
+        (active ? "border-accent text-text" : "border-transparent")
       }
     >
       {category.label}
@@ -249,7 +249,7 @@ function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
       aria-current={active ? "page" : undefined}
       class={
         "block rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
-        (active ? "bg-accent-soft font-semibold text-accent" : "")
+        (active ? "bg-accent-soft text-accent" : "")
       }
       dangerouslySetInnerHTML={{ __html: link.labelHtml }}
     />

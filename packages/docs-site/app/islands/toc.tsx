@@ -38,9 +38,25 @@ export default function Toc({ headings }: { headings: Heading[] }) {
     return () => observer.disconnect();
   }, [headings]);
 
-  // The clicked entry owns the current-location cue; with nothing clicked it
-  // falls back to the first on-screen heading.
-  const currentId = clickedId ?? visibleIds[0] ?? null;
+  // Keep the location cue in sync when the hash changes outside this outline —
+  // clicking an in-body heading permalink, a deep-link on load, or browser
+  // back/forward. This mirrors what a TOC click does, from the other direction.
+  useEffect(() => {
+    const ids = new Set(headings.map((h) => h.id));
+    const syncFromHash = () => {
+      const id = decodeURIComponent(location.hash.replace(/^#/, ""));
+      if (id && ids.has(id)) setClickedId(id);
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, [headings]);
+
+  // The current-location cue tracks only an explicit selection — a TOC click or
+  // a URL hash. It never falls back to the scroll position, so a fresh load with
+  // no hash anchors nothing. Scrollspy visibility (`visibleIds`) is a separate,
+  // lighter cue handled in the link styling below.
+  const currentId = clickedId;
 
   // Mirror the current heading onto a `data-current` attribute on the in-body
   // heading element so its permalink icon and title highlight stay in sync with

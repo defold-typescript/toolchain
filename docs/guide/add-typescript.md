@@ -1,5 +1,5 @@
 ---
-toc-title: Add TypeScript
+toc-title: Existing project
 ---
 # Add TypeScript to an existing Defold project
 
