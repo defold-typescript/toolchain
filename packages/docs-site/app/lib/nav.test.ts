@@ -54,6 +54,36 @@ describe("buildNav", () => {
   });
 });
 
+describe("buildNav API namespace children", () => {
+  function apiLink(nav: ReturnType<typeof buildNav>): NavLink | undefined {
+    return nav.find((c) => c.id === "reference")?.links.find((l) => l.route === "/api");
+  }
+
+  test("attaches namespace children to the API link in the given order", () => {
+    const nav = buildNav(realPages(), [
+      { label: "camera", route: "/api/camera" },
+      { label: "go", route: "/api/go" },
+    ]);
+    const children = apiLink(nav)?.children;
+    expect(children?.length).toBe(2);
+    expect(children?.map((c) => c.route)).toEqual(["/api/camera", "/api/go"]);
+    expect(children?.map((c) => c.label)).toEqual(["camera", "go"]);
+    expect(children?.every((c) => typeof c.labelHtml === "string")).toBe(true);
+  });
+
+  test("leaves the API link without children when no namespaces are passed", () => {
+    const nav = buildNav(realPages());
+    expect(apiLink(nav)?.children).toBeUndefined();
+  });
+
+  test("renders namespace labelHtml through renderNavLabel (plain name stays plain)", () => {
+    const nav = buildNav(realPages(), [{ label: "camera", route: "/api/camera" }]);
+    const child = apiLink(nav)?.children?.[0];
+    expect(child?.label).toBe("camera");
+    expect(child?.labelHtml).toBe("camera");
+  });
+});
+
 describe("linkFor toc-title rendering", () => {
   function navLinkFor(page: GuidePage): NavLink | undefined {
     const nav = buildNav([...realPages(), page]);

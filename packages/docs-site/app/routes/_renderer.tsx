@@ -3,6 +3,7 @@ import { Script } from "honox/server";
 import Search from "../islands/search";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
+import { apiPages } from "../lib/api-content";
 import { guidePages } from "../lib/content";
 import type { Heading } from "../lib/headings";
 import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
@@ -125,7 +126,10 @@ interface RendererProps {
 
 export default jsxRenderer(({ children, title, headings, contentClass }: RendererProps, c) => {
   const path = c.req.path;
-  const nav = buildNav(guidePages());
+  const nav = buildNav(
+    guidePages(),
+    apiPages().map((p) => ({ label: p.namespace, route: p.route })),
+  );
   const activeId = activeCategoryId(path, nav) ?? nav[0]?.id;
   const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];
   const tocHeadings = headings ?? [];
@@ -235,6 +239,15 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
         {category.links.map((link) => (
           <li key={link.route}>
             <SidebarLink link={link} active={path === link.route} />
+            {link.children && link.children.length > 0 ? (
+              <ul class="mt-0.5 ml-3 space-y-0.5 border-l border-border pl-2">
+                {link.children.map((child) => (
+                  <li key={child.route}>
+                    <SidebarLink link={child} active={path === child.route} />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </li>
         ))}
       </ul>
