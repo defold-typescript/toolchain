@@ -1,3 +1,6 @@
+---
+toc-title: Starter templates
+---
 # Starter templates
 
 `defold-typescript init` synthesizes a new Defold project from a starter template. Pick one with `--template <name>`:

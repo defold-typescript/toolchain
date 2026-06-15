@@ -1,3 +1,6 @@
+---
+toc-title: Getting started
+---
 # Getting started
 
 Scaffold a Defold project with TypeScript sources, write a script, and build to Lua. The whole loop runs on Bun — no `npm` or `node`.

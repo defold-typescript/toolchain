@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { type GuidePage, listGuidePages } from "./guide";
-import { activeCategoryId, buildNav } from "./nav";
+import { activeCategoryId, buildNav, type NavLink } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../docs/guide");
 
@@ -50,7 +50,68 @@ describe("buildNav", () => {
   test("carries the fixed /api link under Reference even with no backing guide page", () => {
     const nav = buildNav(realPages());
     const reference = nav.find((c) => c.id === "reference");
-    expect(reference?.links).toEqual([{ label: "API", route: "/api" }]);
+    expect(reference?.links).toEqual([{ label: "API", route: "/api", labelHtml: "API" }]);
+  });
+});
+
+describe("linkFor toc-title rendering", () => {
+  function navLinkFor(page: GuidePage): NavLink | undefined {
+    const nav = buildNav([...realPages(), page]);
+    for (const category of nav) {
+      const hit = category.links.find((l) => l.route === page.route);
+      if (hit) return hit;
+    }
+    return undefined;
+  }
+
+  test("uses a plain tocTitle verbatim for both label and labelHtml", () => {
+    const page: GuidePage = {
+      file: "add-typescript.md",
+      slug: "add-typescript",
+      route: "/add-typescript",
+      isIndex: false,
+      tocTitle: "Add TypeScript",
+    };
+    const link = navLinkFor(page);
+    expect(link?.label).toBe("Add TypeScript");
+    expect(link?.labelHtml).toBe("Add TypeScript");
+  });
+
+  test("strips backticks for label and renders inline code for labelHtml", () => {
+    const page: GuidePage = {
+      file: "x.md",
+      slug: "x",
+      route: "/x",
+      isIndex: false,
+      tocTitle: "API docs vs `ts-defold-types`",
+    };
+    const link = navLinkFor(page);
+    expect(link?.label).toBe("API docs vs ts-defold-types");
+    expect(link?.labelHtml).toContain("<code>ts-defold-types</code>");
+  });
+
+  test("falls back to humanize / Overview when tocTitle is absent", () => {
+    const page: GuidePage = {
+      file: "brand-new-topic.md",
+      slug: "brand-new-topic",
+      route: "/brand-new-topic",
+      isIndex: false,
+    };
+    const link = navLinkFor(page);
+    expect(link?.label).toBe("Brand New Topic");
+    expect(link?.labelHtml).toBe("Brand New Topic");
+
+    const nav = buildNav(realPages());
+    const overview = nav.flatMap((c) => c.links).find((l) => l.route === "/");
+    expect(overview?.label).toBe("Overview");
+    expect(overview?.labelHtml).toBe("Overview");
+  });
+
+  test("gives the fixed /api link a matching labelHtml", () => {
+    const nav = buildNav(realPages());
+    const api = nav.flatMap((c) => c.links).find((l) => l.route === "/api");
+    expect(api?.label).toBe("API");
+    expect(api?.labelHtml).toBe("API");
   });
 });
 

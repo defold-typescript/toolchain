@@ -1,3 +1,6 @@
+---
+toc-title: Debugging
+---
 # Debugging TypeScript in Defold
 
 Step through your TypeScript with breakpoints set directly in the `.ts` source, even though Defold runs the transpiled Lua. The toolchain already emits the load-bearing piece: every build writes a `<name>.ts.script.map` source map next to the chunk and appends a `--# sourceMappingURL=` trailer. The [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) extension reads that map, so a breakpoint in a `.ts` file resolves to the right generated line with no extra wiring.

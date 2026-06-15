@@ -1,3 +1,6 @@
+---
+toc-title: Add TypeScript
+---
 # Add TypeScript to an existing Defold project
 
 Use `bunx @defold-typescript/cli@latest init` inside a Defold project that already has `game.project`.
