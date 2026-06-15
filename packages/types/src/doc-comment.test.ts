@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { htmlToCodeText, htmlToDocText, renderDocComment } from "./doc-comment";
+import {
+  examplesHtmlToMarkdown,
+  htmlToCodeText,
+  htmlToDocText,
+  renderDocComment,
+} from "./doc-comment";
 
 describe("htmlToDocText", () => {
   test("returns plain text unchanged", () => {
@@ -69,6 +74,50 @@ describe("htmlToCodeText", () => {
   test("empty / whitespace-only input returns empty string", () => {
     expect(htmlToCodeText("")).toBe("");
     expect(htmlToCodeText("   \n\t ")).toBe("");
+  });
+});
+
+describe("examplesHtmlToMarkdown", () => {
+  const block = (inner: string) => `<div class="codehilite"><pre><code>${inner}</code></pre></div>`;
+
+  test("prose plus one codehilite block yields the prose, a lua fence, and the decoded code", () => {
+    const html = `Query a position:\n${block('<span class="n">go</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;player&quot;</span><span class="p">,</span> <span class="s2">&quot;position&quot;</span><span class="p">)</span>')}`;
+    const out = examplesHtmlToMarkdown(html);
+    expect(out).toContain("Query a position:");
+    expect(out).toContain("```lua");
+    expect(out).toContain('go.get("player", "position")');
+    expect(out).not.toContain("<div");
+    expect(out).not.toContain("<span");
+    expect(out).not.toContain("codehilite");
+    expect(out).not.toContain("&quot;");
+  });
+
+  test("two codehilite blocks separated by prose keep the middle prose between two fences", () => {
+    const html = `${block('<span class="n">a</span>')}between<br>${block('<span class="n">b</span>')}`;
+    const out = examplesHtmlToMarkdown(html);
+    expect(out.match(/```lua/g)?.length).toBe(2);
+    expect(out).toContain("between");
+    const firstFenceEnd = out.indexOf("```", out.indexOf("```lua") + 6);
+    const secondFenceStart = out.indexOf("```lua", firstFenceEnd);
+    expect(out.indexOf("between")).toBeGreaterThan(firstFenceEnd);
+    expect(out.indexOf("between")).toBeLessThan(secondFenceStart);
+  });
+
+  test("codehilite only, no surrounding prose, is a single lua fence with no stray prose line", () => {
+    const html = block('<span class="n">solo</span>');
+    const out = examplesHtmlToMarkdown(html);
+    expect(out.match(/```lua/g)?.length).toBe(1);
+    expect(out).toBe("```lua\nsolo\n```");
+  });
+
+  test("plain code with no codehilite is wrapped as one lua fence (back-compat)", () => {
+    const out = examplesHtmlToMarkdown('go.get(<span class="s2">&quot;x&quot;</span>)');
+    expect(out).toBe('```lua\ngo.get("x")\n```');
+  });
+
+  test("empty / whitespace-only input returns empty string", () => {
+    expect(examplesHtmlToMarkdown("")).toBe("");
+    expect(examplesHtmlToMarkdown("   \n\t ")).toBe("");
   });
 });
 

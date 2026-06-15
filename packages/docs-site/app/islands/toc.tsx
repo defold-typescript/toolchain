@@ -37,7 +37,7 @@ export default function Toc({ headings }: { headings: Heading[] }) {
 
   return (
     <nav aria-label="On this page" class="text-sm">
-      <p class="mb-3 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
+      <p class="mb-3 pl-4 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
         On this page
       </p>
       <ul class="space-y-1.5 border-l border-border">
@@ -48,7 +48,7 @@ export default function Toc({ headings }: { headings: Heading[] }) {
               aria-current={activeId === h.id ? "location" : undefined}
               class={
                 "-ml-px block border-l py-1 text-text-muted transition hover:text-text " +
-                (h.level === 3 ? "pl-6" : "pl-3 ") +
+                (h.level === 3 ? "pl-7" : "pl-4 ") +
                 (activeId === h.id ? "border-accent font-medium text-accent" : "border-transparent")
               }
             >
