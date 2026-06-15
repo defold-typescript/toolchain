@@ -307,6 +307,31 @@ describe("docs/guide/pinning-defold-version.md installed-editor detection tier",
   });
 });
 
+describe("docs/guide/api-docs-vs-ts-defold.md", () => {
+  test("keeps the dimension comparison naming both surfaces as columns", async () => {
+    const body = await readGuide("api-docs-vs-ts-defold.md");
+    expect(body).toContain("## Dimension comparison");
+    expect(body).toContain("| ts-defold-types |");
+    expect(body).toContain("@defold-typescript/types");
+  });
+
+  test("renames the partisan cleaner heading to name the surface", async () => {
+    const body = await readGuide("api-docs-vs-ts-defold.md");
+    expect(body).toContain("## Where ts-defold-types is arguably cleaner");
+    expect(body).not.toContain("## Where they are arguably cleaner");
+  });
+
+  test("carries the neutral picker section", async () => {
+    const body = await readGuide("api-docs-vs-ts-defold.md");
+    expect(body).toContain("## Which surface fits your project");
+  });
+
+  test("drops the partisan superset phrasing", async () => {
+    const body = await readGuide("api-docs-vs-ts-defold.md");
+    expect(body).not.toContain("our docs are a superset");
+  });
+});
+
 describe("docs/guide/migrating-from-ts-defold.md", () => {
   test("exists", async () => {
     const f = Bun.file(resolve(GUIDE, "migrating-from-ts-defold.md"));
@@ -318,6 +343,18 @@ describe("docs/guide/migrating-from-ts-defold.md", () => {
     expect(body).toContain("## Package and tooling map");
     expect(body).toContain("## Step-by-step migration");
     expect(body).toContain("## What this guide verified");
+  });
+
+  test("names the provenance label instead of the in-group voice", async () => {
+    const body = await readGuide("migrating-from-ts-defold.md");
+    expect(body).toContain("**@defold-typescript side**");
+    expect(body).not.toContain("**Our side**");
+  });
+
+  test("names the toolchain in the step-1 heading instead of the in-group voice", async () => {
+    const body = await readGuide("migrating-from-ts-defold.md");
+    expect(body).toContain("Add the defold-typescript toolchain");
+    expect(body).not.toContain("Add our toolchain");
   });
 
   test("docs/guide/README.md Contents links the migration guide", async () => {
