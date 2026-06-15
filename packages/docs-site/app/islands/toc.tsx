@@ -10,7 +10,8 @@ type ActiveTip = { text: string; top: number; left: number } | null;
  * intersection observer only re-lights the active link.
  */
 export default function Toc({ headings }: { headings: Heading[] }) {
-  const [activeId, setActiveId] = useState<string | null>(headings[0]?.id ?? null);
+  const [visibleIds, setVisibleIds] = useState<string[]>([]);
+  const [clickedId, setClickedId] = useState<string | null>(null);
   // Full-text tooltip for truncated entries. Positioned `fixed` to the viewport
   // so it is not clipped by the TOC column's overflow-x-hidden/overflow-y-auto.
   const [tip, setTip] = useState<ActiveTip>(null);
@@ -22,17 +23,16 @@ export default function Toc({ headings }: { headings: Heading[] }) {
       .filter((el): el is HTMLElement => el !== null);
     if (targets.length === 0) return;
 
+    // The observer reports only headings whose intersection changed, so
+    // accumulate per-heading visibility across callbacks rather than reading a
+    // single batch.
+    const onScreen = new Map<string, boolean>();
     const observer = new IntersectionObserver(
       (entries) => {
-        // Pick the topmost intersecting heading as the active one.
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length > 0) {
-          setActiveId(visible[0]?.target.id ?? null);
-        }
+        for (const entry of entries) onScreen.set(entry.target.id, entry.isIntersecting);
+        setVisibleIds(headings.filter((h) => onScreen.get(h.id)).map((h) => h.id));
       },
-      { rootMargin: "-80px 0px -75% 0px", threshold: [0, 1] },
+      { rootMargin: "-80px 0px 0px 0px", threshold: 0 },
     );
     for (const t of targets) observer.observe(t);
     return () => observer.disconnect();
@@ -46,6 +46,10 @@ export default function Toc({ headings }: { headings: Heading[] }) {
   };
   const hideTip = () => setTip(null);
 
+  // The clicked entry owns the current-location cue; with nothing clicked it
+  // falls back to the first on-screen heading.
+  const currentId = clickedId ?? visibleIds[0] ?? null;
+
   return (
     <nav aria-label="On this page" class="text-sm">
       <p class="mb-3 pl-4 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
@@ -56,7 +60,8 @@ export default function Toc({ headings }: { headings: Heading[] }) {
           <li key={h.id}>
             <a
               href={`#${h.id}`}
-              aria-current={activeId === h.id ? "location" : undefined}
+              aria-current={currentId === h.id ? "location" : undefined}
+              onClick={() => setClickedId(h.id)}
               onMouseEnter={(e) => showTip(e, h.text)}
               onMouseLeave={hideTip}
               onFocus={(e) => showTip(e, h.text)}
@@ -64,7 +69,11 @@ export default function Toc({ headings }: { headings: Heading[] }) {
               class={
                 "-ml-px block truncate border-l py-1 text-text-muted transition hover:text-text " +
                 (h.level === 3 ? "pl-7 " : "pl-4 ") +
-                (activeId === h.id ? "border-accent font-medium text-accent" : "border-transparent")
+                (h.id === clickedId
+                  ? "border-accent-strong font-medium text-accent-strong"
+                  : visibleIds.includes(h.id)
+                    ? "border-accent text-accent"
+                    : "border-transparent")
               }
             >
               {h.text}
