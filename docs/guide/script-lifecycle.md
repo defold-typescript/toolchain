@@ -110,9 +110,8 @@ export default defineScript({
 
 Inside `init`, `self` is **only** the property values — reading a field that is neither a declared property nor yet returned is a compile error. The return is still the sole state channel, and every other hook sees the merged properties-plus-state `self`.
 
-> **Breaking change.** `init` previously took no parameter. Existing scripts whose `init` ignores `self` keep compiling unchanged — the parameter is optional. Code that annotated a factory result as the bare `ScriptHooks`/`GuiScriptHooks`/`RenderScriptHooks` type must drop that annotation (or use the factory's own return type): the property-aware `init(self)` is no longer assignable to those callback-only base interfaces.
-
-Calling `go.property(...)` directly is deprecated: it still registers the property at runtime, but `self.<name>` stays untyped and the transpiler emits a build warning pointing you at the `properties` field.
+> [!NOTE]
+> Calling `go.property(...)` directly is deprecated. It still registers the property at runtime, but `self.<name>` stays untyped and the transpiler emits a build warning pointing you at the `properties` field — a reminder to move the property there.
 
 Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example.
 

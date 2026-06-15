@@ -440,9 +440,8 @@ void renderHooks;
 // The callback-only base interfaces stay no-`self`-init (the `SCRIPT_HOOK_NAMES`
 // drift pin keys on them): a hook table whose `init` takes no argument still
 // conforms. The `…WithProperties` factory output deliberately does *not* — its
-// `init(self)` reads the property channel — which is the breaking change this
-// slice introduces, so the factory results above are no longer annotated as the
-// base type.
+// `init(self)` reads the property channel, so the factory results above are no
+// longer annotated as the base type.
 const baseHooks: ScriptHooks<Self> = {
   init: () => ({ counter: 0 }),
 };
