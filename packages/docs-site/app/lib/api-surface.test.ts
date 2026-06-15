@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { loadApiSurface } from "./api-surface";
+import { type ApiPage, apiModuleMarkdown, loadApiSurface } from "./api-surface";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 
@@ -27,5 +27,41 @@ describe("loadApiSurface", () => {
     expect(alpha).toBeDefined();
     expect(alpha?.module.functions).toHaveLength(0);
     expect(alpha?.module.variables).toHaveLength(0);
+  });
+});
+
+describe("apiModuleMarkdown", () => {
+  test("renders a codehilite examples fragment as a lua fence with no raw HTML", () => {
+    const page: ApiPage = {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo brief",
+      module: {
+        namespace: "demo",
+        brief: "Demo brief",
+        description: "Demo module.",
+        functions: [
+          {
+            name: "demo.run",
+            brief: "run it",
+            description: "Runs the demo.",
+            parameters: [],
+            returnValues: [],
+            examples:
+              'Call it:\n<div class="codehilite"><pre><code><span class="n">demo</span><span class="p">.</span><span class="n">run</span><span class="p">()</span></code></pre></div>',
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+    };
+    const md = apiModuleMarkdown(page);
+    expect(md).toContain("```lua");
+    expect(md).toContain("demo.run()");
+    expect(md).not.toContain("codehilite");
+    expect(md).not.toContain("<div");
+    expect(md).not.toContain("<span");
   });
 });

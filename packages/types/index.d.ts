@@ -57,7 +57,7 @@ export {
   type Vector3,
   type Vector4,
 } from "./src/core-types";
-export { htmlToDocText } from "./src/doc-comment";
+export { examplesHtmlToMarkdown, htmlToCodeText, htmlToDocText } from "./src/doc-comment";
 export { type EmitOptions, emitDeclarations } from "./src/emit-dts";
 export {
   defineGuiScript,
