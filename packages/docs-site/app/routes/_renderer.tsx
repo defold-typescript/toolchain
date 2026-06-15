@@ -195,7 +195,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               <article class={`min-w-0 flex-1 ${contentClass ?? ""}`}>{children}</article>
               {showToc ? (
                 <aside class="hidden xl:block">
-                  <div class="sticky top-20 w-56">
+                  <div class="sticky top-20 max-h-[calc(100vh-6rem)] w-56 overflow-y-auto overflow-x-hidden">
                     <Toc headings={tocHeadings} />
                   </div>
                 </aside>
