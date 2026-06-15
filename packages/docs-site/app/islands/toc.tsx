@@ -46,9 +46,10 @@ export default function Toc({ headings }: { headings: Heading[] }) {
             <a
               href={`#${h.id}`}
               aria-current={activeId === h.id ? "location" : undefined}
+              title={h.text}
               class={
-                "-ml-px block border-l py-1 text-text-muted transition hover:text-text " +
-                (h.level === 3 ? "pl-7" : "pl-4 ") +
+                "-ml-px block truncate border-l py-1 text-text-muted transition hover:whitespace-normal hover:text-text " +
+                (h.level === 3 ? "pl-7 " : "pl-4 ") +
                 (activeId === h.id ? "border-accent font-medium text-accent" : "border-transparent")
               }
             >
