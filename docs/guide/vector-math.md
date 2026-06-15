@@ -71,4 +71,4 @@ Whole-vector operations read left-to-right as a chain of `Vector3` methods (`go.
 
 TypeScript's binary `+`, `-`, `*`, `/` operators require both operands to be `number` (or `+` accepts `string`). The type-checker rejects `v3a + v3b` with TS2362/TS2365 because `Vector3` is not assignable to either, so writing the operator form fails to compile and you cannot ship code that would crash at runtime.
 
-There is **one** exception: **unary minus**. TypeScript does not flag `-v3a`; it silently produces `number`. This is a TS-level gap the toolchain cannot close with types alone. The typed alternative is `v.unm()`. See [unary minus on Vector3 silently produces number](./typescript-gotchas.md#unary-minus-on-vector3--vector4-silently-produces-number) on the gotchas page for the full story.
+There is **one** exception: **unary minus**. TypeScript does not flag `-v3a`; it silently produces `number`. This is a TS-level gap the toolchain cannot close with types alone. The typed alternative is `v.unm()`. See [unary minus on Vector3 silently produces number](./typescript-gotchas.md#unary-minus-on-vector3-vector4-silently-produces-number) on the gotchas page for the full story.
