@@ -1,3 +1,6 @@
+---
+toc-title: Script lifecycle
+---
 # Script lifecycle helpers
 
 `@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters.

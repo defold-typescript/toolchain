@@ -1,3 +1,6 @@
+---
+toc-title: Advanced CLI
+---
 # Advanced CLI
 
 This page covers `wall`, the opt-in command for narrowing the API surface of a

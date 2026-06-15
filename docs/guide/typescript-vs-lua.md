@@ -1,3 +1,6 @@
+---
+toc-title: TypeScript vs Lua
+---
 # TypeScript vs Lua
 
 A translation cheat sheet for Defold developers who already know Lua. Lua on the

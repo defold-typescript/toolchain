@@ -1,3 +1,6 @@
+---
+toc-title: Overview
+---
 # Guide
 
 End-user documentation for `defold-typescript`: how to scaffold a project, write TypeScript that the toolchain compiles to Lua, and look up the language-and-toolchain quirks you will hit along the way. The repository's `README.md` covers why this project exists and the planning workflow; this folder covers how to use the toolchain.

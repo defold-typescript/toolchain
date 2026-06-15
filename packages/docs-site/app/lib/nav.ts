@@ -2,6 +2,7 @@ import type { GuidePage } from "./guide";
 
 export interface NavLink {
   label: string;
+  labelHtml: string;
   route: string;
 }
 
@@ -15,7 +16,7 @@ interface CategorySpec {
   id: string;
   label: string;
   slugs?: string[];
-  links?: NavLink[];
+  links?: { label: string; route: string }[];
 }
 
 const FALLBACK_CATEGORY_ID = "guides";
@@ -68,8 +69,29 @@ export function humanize(slug: string): string {
   return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function renderNavLabel(text: string): string {
+  return escapeHtml(text).replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
+function stripBackticks(text: string): string {
+  return text.replace(/`/g, "");
+}
+
+function toNavLink(label: string, route: string): NavLink {
+  return { label: stripBackticks(label), labelHtml: renderNavLabel(label), route };
+}
+
 function linkFor(page: GuidePage): NavLink {
-  return { label: page.isIndex ? "Overview" : humanize(page.slug), route: page.route };
+  const base = page.tocTitle ?? (page.isIndex ? "Overview" : humanize(page.slug));
+  return toNavLink(base, page.route);
 }
 
 export function buildNav(pages: GuidePage[]): NavCategory[] {
@@ -86,7 +108,7 @@ export function buildNav(pages: GuidePage[]): NavCategory[] {
         links.push(linkFor(page));
       }
     }
-    if (spec.links) links.push(...spec.links);
+    if (spec.links) links.push(...spec.links.map((link) => toNavLink(link.label, link.route)));
     return { id: spec.id, label: spec.label, links };
   });
 
