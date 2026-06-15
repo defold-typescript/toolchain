@@ -41,20 +41,9 @@ header.topbar-critical {
   top: 0;
   z-index: 30;
 }
-header.topbar-critical .logo-box {
+header.topbar-critical .logo-mark {
   width: 24px;
   height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: var(--color-text);
-  color: var(--color-bg);
-  flex: none;
-}
-header.topbar-critical .logo-box svg {
-  width: 16px;
-  height: 16px;
   flex: none;
   display: block;
 }

@@ -1,6 +1,43 @@
 @import "tailwindcss";
 
 /*
+ * Font faces live here (not in the JS client entry) so they ship in the
+ * render-blocking stylesheet — both the dev `<link>` to this file and the
+ * production bundle. Importing them through `app/client.ts` registered the
+ * @font-face only after the async script ran, so text first painted in the
+ * fallback font and reflowed when the web font finally loaded (a shift on
+ * every navigation).
+ */
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/jetbrains-mono/index.css";
+
+/*
+ * Metric-matched fallback faces. `font-display: swap` paints the local
+ * fallback first and swaps to the web font once it loads; if the fallback's
+ * line metrics differ, that swap reflows the text (a per-navigation shift).
+ * These faces remap a local system font (Arial / Courier New) onto the web
+ * font's ascent/descent/advance via overrides, so the swap changes glyph
+ * shapes but never layout. Overrides are derived from @capsizecss/metrics
+ * (web-font xWidthAvg / fallback xWidthAvg, then ascent ÷ (em × size-adjust)).
+ */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
+  size-adjust: 107.3%;
+  ascent-override: 90.28%;
+  descent-override: 22.48%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Courier New"), local("Courier");
+  size-adjust: 100%;
+  ascent-override: 102.0%;
+  descent-override: 30.0%;
+  line-gap-override: 0%;
+}
+
+/*
  * Design tokens — the Claude docs look is calm, low-contrast, with a hair of
  * blue for links and a single warm accent. We define them once here so every
  * utility below resolves to the same scale.
@@ -10,8 +47,8 @@
  * `rounded-*` utilities automatically.
  */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-bg: #ffffff;
   --color-surface: #f7f7f8;
