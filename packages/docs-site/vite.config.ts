@@ -20,7 +20,11 @@ const entry = "./app/server.ts";
 const SOURCEMAP_NOISE = /Sourcemap for .* (points to missing source|points to a source)/;
 
 function makeQuietLogger(): Logger {
-  const base = createLogger("warn");
+  // The base logger is created with the default "info" level so the
+  // startup banner and connection messages still flow through. We rely
+  // on the `warn` / `warnOnce` filters below — not the level — to
+  // drop the orama/entities sourcemap noise.
+  const base = createLogger("info");
   return {
     info: (msg, options) => base.info(msg, options),
     warn: (msg, options) => {
