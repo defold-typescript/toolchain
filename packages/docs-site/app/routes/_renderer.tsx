@@ -1,6 +1,7 @@
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
 import Search from "../islands/search";
+import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import { apiPages } from "../lib/api-content";
@@ -207,6 +208,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
             </div>
           </main>
         </div>
+        <SymbolTooltip />
       </body>
     </html>
   );
