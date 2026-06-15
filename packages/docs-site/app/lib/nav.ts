@@ -4,6 +4,7 @@ export interface NavLink {
   label: string;
   labelHtml: string;
   route: string;
+  children?: NavLink[];
 }
 
 export interface NavCategory {
@@ -94,7 +95,10 @@ function linkFor(page: GuidePage): NavLink {
   return toNavLink(base, page.route);
 }
 
-export function buildNav(pages: GuidePage[]): NavCategory[] {
+export function buildNav(
+  pages: GuidePage[],
+  apiNamespaces: { label: string; route: string }[] = [],
+): NavCategory[] {
   const bySlug = new Map(pages.map((page) => [page.slug, page]));
   const claimed = new Set<string>();
 
@@ -108,7 +112,15 @@ export function buildNav(pages: GuidePage[]): NavCategory[] {
         links.push(linkFor(page));
       }
     }
-    if (spec.links) links.push(...spec.links.map((link) => toNavLink(link.label, link.route)));
+    if (spec.links) {
+      for (const link of spec.links) {
+        const navLink = toNavLink(link.label, link.route);
+        if (link.route === "/api" && apiNamespaces.length > 0) {
+          navLink.children = apiNamespaces.map(({ label, route }) => toNavLink(label, route));
+        }
+        links.push(navLink);
+      }
+    }
     return { id: spec.id, label: spec.label, links };
   });
 
