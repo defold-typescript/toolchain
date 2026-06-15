@@ -413,4 +413,11 @@
     border-radius: 3px;
     padding: 0 2px;
   }
+
+  code.symbol-link {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-border-strong);
+    cursor: help;
+  }
 }
