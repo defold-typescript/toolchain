@@ -7,15 +7,22 @@ describe("renderMarkdown", () => {
     expect(html).toMatch(/<h1[^>]*>Title<\/h1>/);
   });
 
-  test("highlights a fenced ts block via Shiki", async () => {
-    const html = await renderMarkdown("```ts\nconst x: number = 1;\n```\n");
-    expect(html).toContain('class="shiki');
-    expect(html).toContain('<span style="color:');
+  test("assigns a slug id to h2 headings for the TOC to link to", async () => {
+    const html = await renderMarkdown("## Hello world\n");
+    expect(html).toMatch(/<h2[^>]*id="hello-world"/);
   });
 
-  test("highlights a fenced lua block via Shiki", async () => {
-    const html = await renderMarkdown("```lua\nlocal x = 1\n```\n");
+  test("deduplicates repeated heading slugs with a numeric suffix", async () => {
+    const html = await renderMarkdown("## Same\n\n## Same\n\n## Same\n");
+    expect(html).toMatch(/<h2[^>]*id="same"/);
+    expect(html).toMatch(/<h2[^>]*id="same-1"/);
+    expect(html).toMatch(/<h2[^>]*id="same-2"/);
+  });
+
+  test("emits both light and dark shiki variables on a fenced code block", async () => {
+    const html = await renderMarkdown("```ts\nconst x: number = 1;\n```\n");
     expect(html).toContain('class="shiki');
-    expect(html).toContain('<span style="color:');
+    expect(html).toContain("--shiki-light:");
+    expect(html).toContain("--shiki-dark:");
   });
 });
