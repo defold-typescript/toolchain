@@ -1,3 +1,4 @@
+import { type ApiPage, apiModuleMarkdown } from "./api-surface";
 import type { GuidePage } from "./guide";
 
 export interface SearchRecord {
@@ -29,7 +30,9 @@ function toPlainText(markdown: string): string {
       .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
       // inline code, emphasis, heading and list markers
       .replace(/`+/g, "")
-      .replace(/[*_~]+/g, "")
+      .replace(/[*~]+/g, "")
+      // underscores only as emphasis delimiters, never intra-word (keeps snake_case symbols searchable)
+      .replace(/(?<![A-Za-z0-9])_+|_+(?![A-Za-z0-9])/g, "")
       .replace(/^\s{0,3}#{1,6}\s+/gm, "")
       .replace(/^\s{0,3}[-+*]\s+/gm, "")
       .replace(/^\s{0,3}>\s?/gm, "")
@@ -49,5 +52,15 @@ export function buildSearchIndex(
       const title = heading ?? humanize(page.isIndex ? "overview" : page.slug);
       return { route: page.route, title, text: toPlainText(markdown) };
     })
+    .sort((a, b) => a.route.localeCompare(b.route));
+}
+
+export function apiSearchRecords(pages: ApiPage[]): SearchRecord[] {
+  return pages
+    .map((page) => ({
+      route: page.route,
+      title: `${page.namespace} API`,
+      text: toPlainText(apiModuleMarkdown(page)),
+    }))
     .sort((a, b) => a.route.localeCompare(b.route));
 }
