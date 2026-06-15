@@ -1,2 +1,5 @@
 # Generated at build time from docs/guide by scripts/build-search-index.ts
 public/search-index.json
+
+# Generated at build time from the API surface by scripts/build-symbol-index.ts
+public/symbol-index.json
