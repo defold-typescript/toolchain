@@ -1,0 +1,8 @@
+{
+  "info": {
+    "namespace": "wmath",
+    "brief": "Old-version-only namespace",
+    "description": "Belongs to the non-default target; must not be loaded."
+  },
+  "elements": []
+}

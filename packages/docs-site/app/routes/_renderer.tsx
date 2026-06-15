@@ -31,6 +31,11 @@ body { margin: 0; font: 16px/1.6 -apple-system, system-ui, sans-serif; color: #2
 .search-results li { margin: 0; }
 .search-results a { display: block; padding: 0.3rem 0.6rem; color: #0366d6; text-decoration: none; }
 .search-results a:hover { background: #f6f8fa; }
+.sidebar .nav-divider { margin: 0.75rem 0 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6a737d; }
+.api-index { list-style: none; padding: 0; }
+.api-index li { margin: 0.35rem 0; }
+.api-index a { font-family: ui-monospace, monospace; }
+.api-brief { color: #6a737d; }
 `;
 
 function humanize(slug: string): string {
@@ -60,6 +65,12 @@ export default jsxRenderer(({ children, title }) => {
                 <a href={page.route}>{page.isIndex ? "Overview" : humanize(page.slug)}</a>
               </li>
             ))}
+          </ul>
+          <p class="nav-divider">Reference</p>
+          <ul>
+            <li>
+              <a href="/api">API</a>
+            </li>
           </ul>
         </nav>
         <main class="content">{children}</main>

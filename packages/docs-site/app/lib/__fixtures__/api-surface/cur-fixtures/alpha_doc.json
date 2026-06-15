@@ -1,0 +1,8 @@
+{
+  "info": {
+    "namespace": "alpha",
+    "brief": "Alpha brief",
+    "description": "Alpha module with no functions or variables."
+  },
+  "elements": []
+}
