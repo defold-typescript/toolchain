@@ -61,9 +61,9 @@ function symbolBlock(symbol: ApiSymbol): string {
 // Render the module intro, then each kind's symbols stacked in one column. A
 // single combined string keeps Shiki and the heading-id slugger to one pass, so
 // per-symbol headings stay uniquely id'd for the "On this page" TOC.
-function apiPageMarkdown(page: Pick<ApiPage, "module">): string {
+function apiPageMarkdown(page: Pick<ApiPage, "module" | "translations">): string {
   const m = page.module;
-  const symbols = apiModuleSymbols(page);
+  const symbols = apiModuleSymbols(page, page.translations);
   const lines: string[] = [`# ${m.namespace}`, ""];
   const intro = htmlToDocText(m.description || m.brief);
   if (intro) lines.push(intro, "");

@@ -60,7 +60,7 @@ export function apiSearchRecords(pages: ApiPage[]): SearchRecord[] {
     .map((page) => ({
       route: page.route,
       title: `${page.namespace} API`,
-      text: toPlainText(apiModuleMarkdown(page)),
+      text: toPlainText(apiModuleMarkdown(page, page.translations)),
     }))
     .sort((a, b) => a.route.localeCompare(b.route));
 }
