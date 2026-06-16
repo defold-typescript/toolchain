@@ -121,6 +121,10 @@ export default createRoute(
       );
     }
 
+    // Build the linkify registry from the full surface. `linkifySymbolMentions`
+    // itself drops bare-namespace keys (no `.`) — pointing a prose mention at
+    // `/api/camera` is too broad; only qualified member keys like
+    // `camera.screen_to_world` (with the heading-slug anchor) are linked.
     const linkRegistry = new Map(
       Object.entries(buildSymbolIndex(apiPages())).map(([k, v]) => [k, v.route]),
     );

@@ -44,7 +44,10 @@ describe("buildSymbolIndex", () => {
       }),
     ]);
     expect(index.go).toEqual({ brief: "Game object namespace", route: "/api/go" });
-    expect(index["go.get_position"]).toEqual({ brief: "Gets the position", route: "/api/go" });
+    expect(index["go.get_position"]).toEqual({
+      brief: "Gets the position",
+      route: "/api/go#getposition",
+    });
   });
 
   test("does not double-qualify an already-namespaced member name", () => {
@@ -76,6 +79,7 @@ describe("buildSymbolIndex", () => {
     expect(index["msg.post"]?.brief).not.toContain("<");
     expect(index["msg.post"]?.brief).not.toContain(">");
     expect(index["msg.post"]?.brief).toContain("Post");
+    expect(index["msg.post"]?.route).toBe("/api/msg#post");
   });
 
   test("contributes a key for variables, constants, and properties", () => {
@@ -86,9 +90,9 @@ describe("buildSymbolIndex", () => {
         properties: [{ name: "position", brief: "p", description: "", types: [] }],
       }),
     ]);
-    expect(index["go.var_a"]).toBeDefined();
-    expect(index["go.CONST_B"]).toBeDefined();
-    expect(index["go.position"]).toBeDefined();
+    expect(index["go.var_a"]?.route).toBe("/api/go#vara-any");
+    expect(index["go.CONST_B"]?.route).toBe("/api/go#goconstb");
+    expect(index["go.position"]?.route).toBe("/api/go#position-any");
   });
 
   test("prefers description over brief for the entry text", () => {
@@ -98,6 +102,7 @@ describe("buildSymbolIndex", () => {
       }),
     ]);
     expect(index["go.X"]?.brief).toBe("full description");
+    expect(index["go.X"]?.route).toBe("/api/go#x");
   });
 
   test("includes the namespace key even when the module is otherwise empty", () => {
@@ -119,7 +124,7 @@ describe("buildSymbolIndex", () => {
         ],
       }),
     ]);
-    expect(index.hash).toEqual({ brief: "Hashes a string", route: "/api/globals" });
+    expect(index.hash).toEqual({ brief: "Hashes a string", route: "/api/globals#hash" });
     expect(index["globals.hash"]).toBeUndefined();
   });
 });
