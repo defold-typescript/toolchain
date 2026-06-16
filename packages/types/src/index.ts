@@ -19,6 +19,12 @@ export {
 } from "./doc-comment";
 export { type EmitOptions, emitDeclarations } from "./emit-dts";
 export {
+  hashExampleSource,
+  lookupTranslation,
+  type Translation,
+  type TranslationStore,
+} from "./example-store";
+export {
   defineGuiScript,
   defineRenderScript,
   defineScript,
