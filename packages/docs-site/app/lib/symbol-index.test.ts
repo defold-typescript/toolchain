@@ -98,4 +98,22 @@ describe("buildSymbolIndex", () => {
     const index = buildSymbolIndex([page("empty", { brief: "Empty ns brief" })]);
     expect(index.empty).toEqual({ brief: "Empty ns brief", route: "/api/empty" });
   });
+
+  test("keys prefixless globals members bare, routed to /api/globals", () => {
+    const index = buildSymbolIndex([
+      page("globals", {
+        functions: [
+          {
+            name: "hash",
+            brief: "Hashes a string",
+            description: "",
+            parameters: [],
+            returnValues: [],
+          },
+        ],
+      }),
+    ]);
+    expect(index.hash).toEqual({ brief: "Hashes a string", route: "/api/globals" });
+    expect(index["globals.hash"]).toBeUndefined();
+  });
 });

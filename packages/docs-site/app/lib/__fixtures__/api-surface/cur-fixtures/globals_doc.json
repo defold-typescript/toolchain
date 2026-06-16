@@ -1,0 +1,17 @@
+{
+  "info": {
+    "namespace": "globals",
+    "brief": "Globals brief",
+    "description": "Prefixless global symbols."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "hash",
+      "brief": "hash a string",
+      "description": "Hashes a string into a hash value.",
+      "parameters": [{ "name": "s", "doc": "string to hash", "types": ["string"] }],
+      "returnvalues": [{ "name": "hash", "doc": "the hash value", "types": ["hash"] }]
+    }
+  ]
+}
