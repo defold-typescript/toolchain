@@ -7,8 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "bun scripts/sync-guide-routes.ts && bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && vite build --mode client && vite build",
-    "sync-routes": "bun scripts/sync-guide-routes.ts",
+    "build": "bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && vite build --mode client && vite build",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },

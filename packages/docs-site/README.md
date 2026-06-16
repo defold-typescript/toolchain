@@ -24,12 +24,14 @@ bun --filter @defold-typescript/docs-site run dev
 bun --filter @defold-typescript/docs-site run build
 ```
 
-`bun run build` first calls `scripts/sync-guide-routes.ts` to generate one static
-HonoX route file per guide slug under `app/routes/`, then `scripts/build-search-index.ts`
-to materialise the prose search index, and finally the two-pass Vite build
+`bun run build` first calls `scripts/build-search-index.ts` to materialise the prose
+search index, then `scripts/build-symbol-index.ts`, and finally the two-pass Vite build
 (`--mode client` + SSG). The static site is prerendered to `dist/`, one HTML file per
 guide page (`dist/getting-started.html`, `dist/index.html` from the guide `README.md`,
 ...), the API index (`dist/api.html`), and one per API namespace under `dist/api/`.
+Guide pages are served by the single dynamic `app/routes/[slug].tsx` route, whose
+`ssgParams` enumerates every non-index `docs/guide/*.md` slug so each prerenders to
+`dist/<slug>.html` — no per-slug route files to keep in sync.
 
 ## Deploy (Cloudflare Pages)
 
@@ -58,9 +60,9 @@ CI automation for deploys is a later slice.
 - `app/routes/_renderer.tsx` — the page shell: top bar, left sidebar, main content,
   right TOC. Ships a tiny critical-CSS block in `<head>` so the page is laid out
   correctly before the Tailwind stylesheet arrives (no FOUC logo splash).
-- `app/routes/index.tsx` and the generated `app/routes/<slug>.tsx` files — the guide
-  pages.
-- `app/routes/api/index.tsx` and `app/routes/api/[namespace].tsx` — the API index
+- `app/routes/index.tsx` (the guide `README.md` homepage) and `app/routes/[slug].tsx`
+  (one dynamic route prerendering every other guide page via `ssgParams`).
+- `app/routes/api.tsx` and `app/routes/api/[namespace].tsx` — the API index
   and per-namespace reference pages.
 - `app/islands/theme-toggle.tsx` — the hydrated dark/light switch (system fallback,
   localStorage, no flash on reload).
@@ -68,6 +70,5 @@ CI automation for deploys is a later slice.
 - `app/islands/toc.tsx` — the right-side table of contents with scroll-spy.
 - `app/styles.css` — Tailwind v4 entry plus the custom `.prose` styles, design
   tokens, and Shiki theme variables.
-- `scripts/sync-guide-routes.ts` — generates one static route file per guide slug
-  (the `build` script calls this; run it manually with `bun run sync-routes` after
-  adding or renaming a guide file).
+- `scripts/build-search-index.ts` / `scripts/build-symbol-index.ts` — materialise the
+  prose search index and the API symbol index the `build` script consumes.

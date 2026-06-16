@@ -1,6 +1,6 @@
 import { htmlToDocText } from "@defold-typescript/types";
 import { createRoute } from "honox/factory";
-import { apiPages } from "../../lib/api-content";
+import { apiPages } from "../lib/api-content";
 
 export default createRoute((c) => {
   const pages = apiPages();
