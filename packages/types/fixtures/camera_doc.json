@@ -1,11 +1,662 @@
 {
-  "elements": [],
+  "elements": [
+    {
+      "type": "CONSTANT",
+      "name": "camera.ORTHO_MODE_FIXED",
+      "brief": "fixed orthographic zoom mode",
+      "description": "Uses the manually set orthographic zoom value (camera.set_orthographic_zoom).",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.ORTHO_MODE_AUTO_FIT",
+      "brief": "auto-fit orthographic zoom mode",
+      "description": "Computes zoom so the original display area (game.project width/height) fits inside the window\nwhile preserving aspect ratio. Equivalent to using min(window_width/width, window_height/height).",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.ORTHO_MODE_AUTO_COVER",
+      "brief": "auto-cover orthographic zoom mode",
+      "description": "Computes zoom so the original display area covers the entire window while preserving aspect ratio.\nEquivalent to using max(window_width/width, window_height/height).",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.screen_xy_to_world",
+      "brief": "Convert screen XY to world point at near plane",
+      "description": "Converts 2D screen coordinates (x,y) to the 3D world-space point on the camera's near plane for that pixel.\nIf a camera isn't specified, the last enabled camera is used.",
+      "returnvalues": [
+        {
+          "name": "world_pos",
+          "doc": "the world coordinate on the camera near plane",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "X coordinate on screen.",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Y coordinate on screen.",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "camera",
+          "doc": "optional camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Place objects at the touch point.\n<div class=\"codehilite\"><pre><span></span><code> <span class=\"kr\">function</span> <span class=\"nf\">on_input</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">action_id</span><span class=\"p\">,</span> <span class=\"n\">action</span><span class=\"p\">)</span>\n     <span class=\"kr\">if</span> <span class=\"n\">action_id</span> <span class=\"o\">==</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;touch&quot;</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n         <span class=\"kr\">if</span> <span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">pressed</span> <span class=\"kr\">then</span>\n             <span class=\"kd\">local</span> <span class=\"n\">world_position</span> <span class=\"o\">=</span> <span class=\"n\">camera</span><span class=\"p\">.</span><span class=\"n\">screen_xy_to_world</span><span class=\"p\">(</span><span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">screen_x</span><span class=\"p\">,</span> <span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">screen_y</span><span class=\"p\">)</span>\n             <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_position</span><span class=\"p\">(</span><span class=\"n\">world_position</span><span class=\"p\">,</span> <span class=\"s2\">&quot;/go1&quot;</span><span class=\"p\">)</span>\n         <span class=\"kr\">end</span>\n     <span class=\"kr\">end</span>\n <span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.screen_to_world",
+      "brief": "Convert screen vector3 position to world",
+      "description": "Converts a screen-space 2D point with view depth to a 3D world point.\nz is the view depth in world units measured from the camera plane along the camera forward axis.\nIf a camera isn't specified, the last enabled camera is used.",
+      "returnvalues": [
+        {
+          "name": "world_pos",
+          "doc": "the world coordinate",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "pos",
+          "doc": "Screen-space position (x, y) with z as view depth in world units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "camera",
+          "doc": "optional camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Place objects at the touch point with a random Z position, keeping them within the visible view zone.\n<div class=\"codehilite\"><pre><span></span><code> <span class=\"kr\">function</span> <span class=\"nf\">on_input</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">action_id</span><span class=\"p\">,</span> <span class=\"n\">action</span><span class=\"p\">)</span>\n     <span class=\"kr\">if</span> <span class=\"n\">action_id</span> <span class=\"o\">==</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;touch&quot;</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n         <span class=\"kr\">if</span> <span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">pressed</span> <span class=\"kr\">then</span>\n             <span class=\"kd\">local</span> <span class=\"n\">percpective_camera</span> <span class=\"o\">=</span> <span class=\"n\">msg</span><span class=\"p\">.</span><span class=\"n\">url</span><span class=\"p\">(</span><span class=\"s2\">&quot;#perspective_camera&quot;</span><span class=\"p\">)</span>\n             <span class=\"kd\">local</span> <span class=\"n\">random_z</span> <span class=\"o\">=</span> <span class=\"nb\">math.random</span><span class=\"p\">(</span><span class=\"n\">camera</span><span class=\"p\">.</span><span class=\"n\">get_near_z</span><span class=\"p\">(</span><span class=\"n\">percpective_camera</span><span class=\"p\">)</span> <span class=\"o\">+</span> <span class=\"mf\">0.01</span><span class=\"p\">,</span> <span class=\"n\">camera</span><span class=\"p\">.</span><span class=\"n\">get_far_z</span><span class=\"p\">(</span><span class=\"n\">percpective_camera</span><span class=\"p\">)</span> <span class=\"o\">-</span> <span class=\"mf\">0.01</span><span class=\"p\">)</span>\n             <span class=\"kd\">local</span> <span class=\"n\">world_position</span> <span class=\"o\">=</span> <span class=\"n\">camera</span><span class=\"p\">.</span><span class=\"n\">screen_to_world</span><span class=\"p\">(</span><span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">screen_x</span><span class=\"p\">,</span> <span class=\"n\">action</span><span class=\"p\">.</span><span class=\"n\">screen_y</span><span class=\"p\">,</span> <span class=\"n\">random_z</span><span class=\"p\">),</span> <span class=\"n\">percpective_camera</span><span class=\"p\">)</span>\n             <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set_position</span><span class=\"p\">(</span><span class=\"n\">world_position</span><span class=\"p\">,</span> <span class=\"s2\">&quot;/go1&quot;</span><span class=\"p\">)</span>\n         <span class=\"kr\">end</span>\n     <span class=\"kr\">end</span>\n <span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.world_to_screen",
+      "brief": "Convert world vector3 position to screen",
+      "description": "Converts a 3D world position to screen-space coordinates with view depth.\nReturns a vector3 where x and y are in screen pixels and z is the view depth in world units\nmeasured from the camera plane along the camera forward axis. The returned z can be used with\ncamera.screen_to_world to reconstruct the world position on the same pixel ray.\nIf a camera isn't specified, the last enabled camera is used.",
+      "returnvalues": [
+        {
+          "name": "screen_pos",
+          "doc": "Screen position (x,y in pixels, z is view depth)",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "world_pos",
+          "doc": "World-space position",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "camera",
+          "doc": "optional camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Convert go position into screen pisition\n<div class=\"codehilite\"><pre><span></span><code> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">update_world_transform</span><span class=\"p\">(</span><span class=\"s2\">&quot;/go1&quot;</span><span class=\"p\">)</span>\n <span class=\"kd\">local</span> <span class=\"n\">world_pos</span> <span class=\"o\">=</span> <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">get_world_position</span><span class=\"p\">(</span><span class=\"s2\">&quot;/go1&quot;</span><span class=\"p\">)</span>\n <span class=\"kd\">local</span> <span class=\"n\">screen_pos</span> <span class=\"o\">=</span> <span class=\"n\">camera</span><span class=\"p\">.</span><span class=\"n\">world_to_screen</span><span class=\"p\">(</span><span class=\"n\">world_pos</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_cameras",
+      "brief": "get all camera URLs",
+      "description": "This function returns a table with all the camera URLs that have been\nregistered in the render context.",
+      "returnvalues": [
+        {
+          "name": "cameras",
+          "doc": "a table with all camera URLs",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">for</span> <span class=\"n\">k</span><span class=\"p\">,</span><span class=\"n\">v</span> <span class=\"kr\">in</span> <span class=\"nb\">pairs</span><span class=\"p\">(</span><span class=\"n\">camera</span><span class=\"p\">.</span><span class=\"n\">get_cameras</span><span class=\"p\">())</span> <span class=\"kr\">do</span>\n    <span class=\"n\">render</span><span class=\"p\">.</span><span class=\"n\">set_camera</span><span class=\"p\">(</span><span class=\"n\">v</span><span class=\"p\">)</span>\n    <span class=\"n\">render</span><span class=\"p\">.</span><span class=\"n\">draw</span><span class=\"p\">(...)</span>\n    <span class=\"n\">render</span><span class=\"p\">.</span><span class=\"n\">set_camera</span><span class=\"p\">()</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_enabled",
+      "brief": "get enabled",
+      "description": "get enabled",
+      "returnvalues": [
+        {
+          "name": "flag",
+          "doc": "true if the camera is enabled",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_projection",
+      "brief": "get projection matrix",
+      "description": "get projection matrix",
+      "returnvalues": [
+        {
+          "name": "projection",
+          "doc": "the projection matrix.",
+          "types": ["matrix4"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_view",
+      "brief": "get view matrix",
+      "description": "get view matrix",
+      "returnvalues": [
+        {
+          "name": "view",
+          "doc": "the view matrix.",
+          "types": ["matrix4"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_aspect_ratio",
+      "brief": "get aspect ratio",
+      "description": "Gets the effective aspect ratio of the camera. If auto aspect ratio is enabled,\nreturns the aspect ratio calculated from the current render target dimensions.\nOtherwise returns the manually set aspect ratio.",
+      "returnvalues": [
+        {
+          "name": "aspect_ratio",
+          "doc": "the effective aspect ratio.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_far_z",
+      "brief": "get far z",
+      "description": "get far z",
+      "returnvalues": [
+        {
+          "name": "far_z",
+          "doc": "the far z.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_fov",
+      "brief": "get field of view",
+      "description": "get field of view",
+      "returnvalues": [
+        {
+          "name": "fov",
+          "doc": "the field of view.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_near_z",
+      "brief": "get near z",
+      "description": "get near z",
+      "returnvalues": [
+        {
+          "name": "near_z",
+          "doc": "the near z.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_orthographic_zoom",
+      "brief": "get orthographic zoom",
+      "description": "get orthographic zoom",
+      "returnvalues": [
+        {
+          "name": "orthographic_zoom",
+          "doc": "the zoom level when the camera uses orthographic projection.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.set_aspect_ratio",
+      "brief": "set aspect ratio",
+      "description": "Sets the manual aspect ratio for the camera. This value is only used when\nauto aspect ratio is disabled. To disable auto aspect ratio and use this\nmanual value, call camera.set_auto_aspect_ratio(camera, false).",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "aspect_ratio",
+          "doc": "the manual aspect ratio value.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.set_far_z",
+      "brief": "set far z",
+      "description": "set far z",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "far_z",
+          "doc": "the far z.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.set_fov",
+      "brief": "set field of view",
+      "description": "set field of view",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fov",
+          "doc": "the field of view.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.set_near_z",
+      "brief": "set near z",
+      "description": "set near z",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "near_z",
+          "doc": "the near z.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.set_orthographic_zoom",
+      "brief": "set orthographic zoom",
+      "description": "set orthographic zoom",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "orthographic_zoom",
+          "doc": "the zoom level when the camera uses orthographic projection.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_orthographic_mode",
+      "brief": "get orthographic zoom mode",
+      "description": "get orthographic zoom mode",
+      "returnvalues": [
+        {
+          "name": "mode",
+          "doc": "one of camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or\ncamera.ORTHO_MODE_AUTO_COVER",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.set_orthographic_mode",
+      "brief": "set orthographic zoom mode",
+      "description": "set orthographic zoom mode",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "mode",
+          "doc": "camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or camera.ORTHO_MODE_AUTO_COVER",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_auto_aspect_ratio",
+      "brief": "get auto aspect ratio",
+      "description": "Returns whether auto aspect ratio is enabled. When enabled, the camera automatically\ncalculates aspect ratio from render target dimensions. When disabled, uses the\nmanually set aspect ratio value.",
+      "returnvalues": [
+        {
+          "name": "auto_aspect_ratio",
+          "doc": "true if auto aspect ratio is enabled",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.set_auto_aspect_ratio",
+      "brief": "set auto aspect ratio",
+      "description": "Enables or disables automatic aspect ratio calculation. When enabled (true),\nthe camera automatically calculates aspect ratio from render target dimensions.\nWhen disabled (false), uses the manually set aspect ratio value.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "camera",
+          "doc": "camera id",
+          "types": ["url", "number", "nil"],
+          "is_optional": "False"
+        },
+        {
+          "name": "auto_aspect_ratio",
+          "doc": "true to enable auto aspect ratio",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
   "info": {
     "namespace": "camera",
     "name": "Camera",
     "brief": "Camera API documentation",
-    "description": "Functions for interacting with camera components.",
-    "path": "engine/gamesys/src/gamesys/scripts/script_camera.cpp",
+    "description": "Camera functions, messages and constants.",
+    "path": "engine/render/src/render/render_script_camera.cpp",
     "file": "",
     "notes": [],
     "language": "Lua"

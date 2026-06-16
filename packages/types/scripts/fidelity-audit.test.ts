@@ -519,7 +519,9 @@ describe("runtime-owned passthrough reclassification", () => {
     expect(requireEntry(report, "go").recordTables).toBe(0);
     expect(requireEntry(report, "gui").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(0);
+    // camera.get_cameras returns a `table` (the cameras array) that collapses to
+    // Record — the sole project-wide record-table now that camera carries members.
+    expect(total).toBe(1);
     // The committed baseline reflects the reclassified counts, so the full
     // report equals it on every namespace and category — proving these four are
     // the only moves and no other category shifted anywhere.
@@ -649,8 +651,9 @@ describe("get_text_metrics return-bag recovery", () => {
     // the project-wide total to 14, and the record-table-batch-recovery-2
     // slice lands at 0 (the 14 recordTables all close, and the audit's
     // function-level arbitraryTable propagation skips the transient recursion
-    // in set_render_target).
-    expect(total).toBe(0);
+    // in set_render_target). camera.get_cameras then adds the one remaining
+    // record-table once camera carries members, so the live total is 1.
+    expect(total).toBe(1);
     // The committed baseline reflects the recovered count, so the full report
     // equals it on every namespace and category — proving resource is the only
     // namespace whose recordTables moved and no other category shifted anywhere.
@@ -680,7 +683,9 @@ describe("record-table batch recovery", () => {
     expect(requireEntry(report, "collectionproxy").recordTables).toBe(0);
     expect(requireEntry(report, "render").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(0);
+    // camera.get_cameras contributes the one remaining record-table now that
+    // camera carries members, so the cumulative live total is 1.
+    expect(total).toBe(1);
     // The committed baseline reflects the recovered counts, so the full report
     // equals it on every namespace and category — proving these four namespaces
     // are the only recordTables movers and no other category shifted anywhere.
@@ -937,7 +942,9 @@ describe("record-table batch recovery 2", () => {
     expect(requireEntry(report, "gui").recordTables).toBe(0);
     expect(requireEntry(report, "physics").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    expect(total).toBe(0);
+    // The ratchet work closes the original 14 to 0; camera.get_cameras then adds
+    // the one record-table camera carries, so the live project-wide total is 1.
+    expect(total).toBe(1);
     // The committed baseline reflects the recovered counts, so the full report
     // equals it on every namespace and category — proving these seven are the
     // only recordTables movers and no other category shifted anywhere.
