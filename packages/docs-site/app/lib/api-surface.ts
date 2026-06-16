@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   type ApiFunction,
   type ApiModule,
+  type ApiParameter,
   type ApiVariable,
   examplesHtmlToMarkdown,
   htmlToDocText,
@@ -16,6 +17,13 @@ export interface ApiPage {
   module: ApiModule;
 }
 
+export interface ApiSymbolParam {
+  name: string;
+  doc: string;
+  types: string[];
+  isOptional: boolean;
+}
+
 export interface ApiSymbol {
   kind: "function" | "variable" | "constant" | "property";
   name: string;
@@ -25,10 +33,23 @@ export interface ApiSymbol {
   docMarkdown: string;
   /** Converted Lua example markdown (right rail), absent when the symbol has none. */
   exampleMarkdown?: string;
+  /** Structured parameters; always present, empty for non-functions. */
+  parameters: ApiSymbolParam[];
+  /** Structured return values; always present, empty for non-functions. */
+  returnValues: ApiSymbolParam[];
 }
 
 function typeList(types: string[]): string {
   return types.length > 0 ? types.join(" | ") : "any";
+}
+
+function projectParams(list: ApiParameter[]): ApiSymbolParam[] {
+  return list.map((p) => ({
+    name: p.name,
+    doc: htmlToDocText(p.doc),
+    types: p.types,
+    isOptional: p.isOptional,
+  }));
 }
 
 function functionSignature(fn: ApiFunction): string {
@@ -118,6 +139,8 @@ export function apiModuleSymbols(page: Pick<ApiPage, "module">): ApiSymbol[] {
       name: fn.name,
       signature: functionSignature(fn),
       docMarkdown: htmlToDocText(fn.description || fn.brief),
+      parameters: projectParams(fn.parameters),
+      returnValues: projectParams(fn.returnValues),
     };
     if (fn.examples) {
       const converted = examplesHtmlToMarkdown(fn.examples);
@@ -132,6 +155,8 @@ export function apiModuleSymbols(page: Pick<ApiPage, "module">): ApiSymbol[] {
       name: v.name,
       signature: variableSignature(v),
       docMarkdown: htmlToDocText(v.description || v.brief),
+      parameters: [],
+      returnValues: [],
     });
   }
 
@@ -141,6 +166,8 @@ export function apiModuleSymbols(page: Pick<ApiPage, "module">): ApiSymbol[] {
       name: cst.name,
       signature: constantSignature(cst),
       docMarkdown: htmlToDocText(cst.description || cst.brief),
+      parameters: [],
+      returnValues: [],
     });
   }
 
@@ -150,6 +177,8 @@ export function apiModuleSymbols(page: Pick<ApiPage, "module">): ApiSymbol[] {
       name: prop.name,
       signature: propertySignature(prop),
       docMarkdown: htmlToDocText(prop.description || prop.brief),
+      parameters: [],
+      returnValues: [],
     });
   }
 
