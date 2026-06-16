@@ -283,7 +283,7 @@ describe("exampleMarkdownFor", () => {
   const sourceHash = hashExampleSource(htmlToCodeText(luaExample));
 
   test("a matched FQN and hash render the authored TypeScript as a ```ts fence", () => {
-    const md = exampleMarkdownFor(fn, { "demo.run": { sourceHash, ts: "demo.run(); // ts" } });
+    const md = exampleMarkdownFor(fn, { "demo.run": [{ sourceHash, ts: "demo.run(); // ts" }] });
     expect(md).toContain("```ts");
     expect(md).toContain("demo.run(); // ts");
     expect(md).not.toContain("```lua");
@@ -291,7 +291,7 @@ describe("exampleMarkdownFor", () => {
 
   test("an FQN present with a mismatched hash falls back to the Lua fence", () => {
     const md = exampleMarkdownFor(fn, {
-      "demo.run": { sourceHash: "deadbeefdeadbeef", ts: "should not appear" },
+      "demo.run": [{ sourceHash: "deadbeefdeadbeef", ts: "should not appear" }],
     });
     expect(md).toContain("```lua");
     expect(md).not.toContain("```ts");
@@ -337,12 +337,12 @@ describe("loadApiSurface translations and /api rendering", () => {
     expect(md).not.toContain("codehilite");
   });
 
-  test("camera.get_cameras has no translation and renders the clean Lua fallback", () => {
+  test("camera.get_cameras renders the authored TypeScript, not raw Lua or HTML", () => {
     const fn = cameraPage?.module.functions.find((f) => f.name === "camera.get_cameras");
     expect(fn).toBeDefined();
     const md = fn ? exampleMarkdownFor(fn, cameraPage?.translations) : undefined;
-    expect(md).toContain("```lua");
-    expect(md).not.toContain("```ts");
+    expect(md).toContain("```ts");
+    expect(md).not.toContain("```lua");
     expect(md).not.toContain("<span");
   });
 

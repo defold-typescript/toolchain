@@ -13,11 +13,11 @@ declare global {
      * @param code - Javascript code to run
      * @returns result as string
      * @example
-     * ```lua
-     * local res = html5.run("10 + 20") -- returns the string "30"
-     * print(res)
-     * local res_num = tonumber(res) -- convert to number
-     * print(res_num - 20) -- prints 10
+     * ```ts
+     * const res = html5.run("10 + 20"); // returns the string "30"
+     * print(res);
+     * const res_num = tonumber(res); // convert to number
+     * print(res_num - 20); // prints 10
      * ```
      */
     function run(code: string): string;
@@ -31,15 +31,17 @@ declare global {
      * `self`
      * object The calling script
      * @example
-     * ```lua
-     * local function on_interaction(self)
-     *     print("on_interaction called")
-     *     html5.set_interaction_listener(nil)
-     * end
+     * ```ts
+     * function on_interaction(self) {
+     *   print("on_interaction called");
+     *   html5.set_interaction_listener(undefined);
+     * }
      *
-     * function init(self)
-     *     html5.set_interaction_listener(on_interaction)
-     * end
+     * export default defineScript({
+     *   init() {
+     *     html5.set_interaction_listener(on_interaction);
+     *   },
+     * });
      * ```
      */
     function set_interaction_listener(callback?: (self: unknown) => void): void;

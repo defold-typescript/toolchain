@@ -1369,16 +1369,18 @@ declare global {
      * @param action - a table containing the input data, see above for a description
      * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
      * @example
-     * ```lua
-     * function on_input(self, action_id, action)
-     *     -- check for input
-     *     if action_id == hash("my_action") then
-     *         -- take appropritate action
-     *         self.my_value = action.value
-     *     end
-     *     -- consume input
-     *     return true
-     * end
+     * ```ts
+     * export default defineScript({
+     *   on_input(self, action_id, action) {
+     *     // check for input
+     *     if (action_id === hash("my_action")) {
+     *       // take appropriate action
+     *       self.my_value = action.value;
+     *     }
+     *     // consume input
+     *     return true;
+     *   },
+     * });
      * ```
      */
     function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | unknown;
@@ -1400,11 +1402,13 @@ declare global {
      *
      * @param self - reference to the script state to be used for storing data
      * @example
-     * ```lua
-     * function on_reload(self)
-     *     -- restore some color (or similar)
-     *     gui.set_color(gui.get_node("my_node"), self.my_original_color)
-     * end
+     * ```ts
+     * export default defineGuiScript({
+     *   on_reload(self) {
+     *     // restore some color (or similar)
+     *     gui.set_color(gui.get_node("my_node"), self.my_original_color);
+     *   },
+     * });
      * ```
      */
     function on_reload(self: Opaque<"userdata">): void;
@@ -2093,40 +2097,43 @@ declare global {
      * @param self - reference to the script state to be used for storing data
      * @param dt - the time-step of the frame update
      * @example
-     * ```lua
-     * This example demonstrates how to update a text node that displays game score in a counting fashion.
-     * It is assumed that the gui component receives messages from the game when a new score is to be shown.
-     * function init(self)
-     *     -- fetch the score text node for later use (assumes it is called "score")
-     *     self.score_node = gui.get_node("score")
-     *     -- keep track of the current score counted up so far
-     *     self.current_score = 0
-     *     -- keep track of the target score we should count up to
-     *     self.target_score = 0
-     *     -- how fast we will update the score, in score/second
-     *     self.score_update_speed = 1
-     * end
+     * ```ts
+     * // This example demonstrates how to update a text node that displays game score
+     * // in a counting fashion. It is assumed that the gui component receives messages
+     * // from the game when a new score is to be shown.
+     * export default defineGuiScript({
+     *   init(self) {
+     *     // fetch the score text node for later use (assumes it is called "score")
+     *     self.score_node = gui.get_node("score");
+     *     // keep track of the current score counted up so far
+     *     self.current_score = 0;
+     *     // keep track of the target score we should count up to
+     *     self.target_score = 0;
+     *     // how fast we will update the score, in score/second
+     *     self.score_update_speed = 1;
+     *   },
      *
-     * function update(self, dt)
-     *     -- check if target score is more than current score
-     *     if self.current_score < self.target_score
-     *         -- increment current score according to the speed
-     *         self.current_score = self.current_score + dt * self.score_update_speed
-     *         -- check if we went past the target score, clamp current score in that case
-     *         if self.current_score > self.target_score then
-     *             self.current_score = self.target_score
-     *         end
-     *         -- update the score text node
-     *         gui.set_text(self.score_node, "" .. math.floor(self.current_score))
-     *     end
-     * end
+     *   update(self, dt) {
+     *     // check if target score is more than current score
+     *     if (self.current_score < self.target_score) {
+     *       // increment current score according to the speed
+     *       self.current_score = self.current_score + dt * self.score_update_speed;
+     *       // check if we went past the target score, clamp current score in that case
+     *       if (self.current_score > self.target_score) {
+     *         self.current_score = self.target_score;
+     *       }
+     *       // update the score text node
+     *       gui.set_text(self.score_node, "" + math.floor(self.current_score));
+     *     }
+     *   },
      *
-     * function on_message(self, message_id, message, sender)
-     *     -- check the message
-     *     if message_id == hash("set_score") then
-     *         self.target_score = message.score
-     *     end
-     * end
+     *   on_message(self, message_id, message) {
+     *     // check the message
+     *     if (message_id === hash("set_score")) {
+     *       self.target_score = message.score;
+     *     }
+     *   },
+     * });
      * ```
      */
     function update(self: Opaque<"userdata">, dt: number): void;

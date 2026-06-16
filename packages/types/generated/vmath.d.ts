@@ -218,20 +218,22 @@ declare global {
      * @param q2 - quaternion to lerp to
      * @returns the lerped quaternion
      * @example
-     * ```lua
-     * function init(self)
-     *     self.t = 0
-     * end
+     * ```ts
+     * export default defineScript({
+     *   init(self) {
+     *     self.t = 0;
+     *   },
      *
-     * function update(self, dt)
-     *     self.t = self.t + dt
-     *     if self.t <= 1 then
-     *         local startrot = vmath.quat_rotation_z(0)
-     *         local endrot = vmath.quat_rotation_z(3.141592653)
-     *         local rot = vmath.lerp(self.t, startrot, endrot)
-     *         go.set_rotation(rot, "go")
-     *     end
-     * end
+     *   update(self, dt) {
+     *     self.t = self.t + dt;
+     *     if (self.t <= 1) {
+     *       const startrot = vmath.quat_rotation_z(0);
+     *       const endrot = vmath.quat_rotation_z(3.141592653);
+     *       const rot = vmath.lerp(self.t, startrot, endrot);
+     *       go.set_rotation(rot, "go");
+     *     }
+     *   },
+     * });
      * ```
      */
     function lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;
@@ -245,20 +247,22 @@ declare global {
      * @param n2 - number to lerp to
      * @returns the lerped number
      * @example
-     * ```lua
-     * function init(self)
-     *     self.t = 0
-     * end
+     * ```ts
+     * export default defineScript({
+     *   init(self) {
+     *     self.t = 0;
+     *   },
      *
-     * function update(self, dt)
-     *     self.t = self.t + dt
-     *     if self.t <= 1 then
-     *         local startx = 0
-     *         local endx = 600
-     *         local x = vmath.lerp(self.t, startx, endx)
-     *         go.set_position(vmath.vector3(x, 100, 0), "go")
-     *     end
-     * end
+     *   update(self, dt) {
+     *     self.t = self.t + dt;
+     *     if (self.t <= 1) {
+     *       const startx = 0;
+     *       const endx = 600;
+     *       const x = vmath.lerp(self.t, startx, endx);
+     *       go.set_position(vmath.vector3(x, 100, 0), "go");
+     *     }
+     *   },
+     * });
      * ```
      */
     function lerp(t: number, n1: number, n2: number): number;
@@ -286,13 +290,13 @@ declare global {
      * @param m1 - existing matrix
      * @returns matrix which is a copy of the specified matrix
      * @example
-     * ```lua
-     * local mat1 = vmath.matrix4_rotation_x(3.141592653)
-     * local mat2 = vmath.matrix4(mat1)
-     * if mat1 == mat2 then
-     *     -- yes, they are equal
-     *     print(mat2) --> vmath.matrix4(1, 0, 0, 0, 0, -1, 8.7422776573476e-08, 0, 0, -8.7422776573476e-08, -1, 0, 0, 0, 0, 1)
-     * end
+     * ```ts
+     * const mat1 = vmath.matrix4_rotation_x(3.141592653);
+     * const mat2 = vmath.matrix4(mat1);
+     * if (mat1 === mat2) {
+     *   // yes, they are equal
+     *   print(mat2); // => vmath.matrix4(1, 0, 0, 0, 0, -1, 8.7422776573476e-08, 0, 0, -8.7422776573476e-08, -1, 0, 0, 0, 0, 1)
+     * }
      * ```
      */
     function matrix4(m1: Matrix4): Matrix4;
@@ -492,9 +496,9 @@ declare global {
      * @param scale - scale
      * @returns new matrix4
      * @example
-     * ```lua
-     * local result = vmath.matrix4_scale(0.5)
-     * print(result) --> vmath.matrix4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
+     * ```ts
+     * const result = vmath.matrix4_scale(0.5);
+     * print(result); // => vmath.matrix4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
      * ```
      */
     function matrix4_scale(scale: number): Matrix4;
@@ -506,9 +510,9 @@ declare global {
      * @param scale_z - scale along Z asis
      * @returns new matrix4
      * @example
-     * ```lua
-     * local result = vmath.matrix4_scale(1, 0.5, 0.5)
-     * print(result) --> vmath.matrix4(1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
+     * ```ts
+     * const result = vmath.matrix4_scale(1, 0.5, 0.5);
+     * print(result); // => vmath.matrix4(1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
      * ```
      */
     function matrix4_scale(scale_x: number, scale_y: number, scale_z: number): Matrix4;
@@ -600,10 +604,10 @@ declare global {
      *
      * @returns new identity quaternion
      * @example
-     * ```lua
-     * local quat = vmath.quat()
-     * print(quat) --> vmath.quat(0, 0, 0, 1)
-     * print(quat.w) --> 1
+     * ```ts
+     * const quat = vmath.quat();
+     * print(quat); // => vmath.quat(0, 0, 0, 1)
+     * print(quat.w); // => 1
      * ```
      */
     function quat(): Quaternion;
@@ -615,13 +619,13 @@ declare global {
      * @param q1 - existing quaternion
      * @returns new quaternion
      * @example
-     * ```lua
-     * local quat1 = vmath.quat(1, 2, 3, 4)
-     * local quat2 = vmath.quat(quat1)
-     * if quat1 == quat2 then
-     *     -- yes, they are equal
-     *     print(quat2) --> vmath.quat(1, 2, 3, 4)
-     * end
+     * ```ts
+     * const quat1 = vmath.quat(1, 2, 3, 4);
+     * const quat2 = vmath.quat(quat1);
+     * if (quat1 === quat2) {
+     *   // yes, they are equal
+     *   print(quat2); // => vmath.quat(1, 2, 3, 4)
+     * }
      * ```
      */
     function quat(q1: Quaternion): Quaternion;
@@ -833,20 +837,22 @@ declare global {
      * @param q2 - quaternion to slerp to
      * @returns the slerped quaternion
      * @example
-     * ```lua
-     * function init(self)
-     *     self.t = 0
-     * end
+     * ```ts
+     * export default defineScript({
+     *   init(self) {
+     *     self.t = 0;
+     *   },
      *
-     * function update(self, dt)
-     *     self.t = self.t + dt
-     *     if self.t <= 1 then
-     *         local startrot = vmath.quat_rotation_z(0)
-     *         local endrot = vmath.quat_rotation_z(3.141592653)
-     *         local rot = vmath.slerp(self.t, startrot, endrot)
-     *         go.set_rotation(rot, "go")
-     *     end
-     * end
+     *   update(self, dt) {
+     *     self.t = self.t + dt;
+     *     if (self.t <= 1) {
+     *       const startrot = vmath.quat_rotation_z(0);
+     *       const endrot = vmath.quat_rotation_z(3.141592653);
+     *       const rot = vmath.slerp(self.t, startrot, endrot);
+     *       go.set_rotation(rot, "go");
+     *     }
+     *   },
+     * });
      * ```
      */
     function slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;
@@ -874,10 +880,10 @@ declare global {
      *
      * @returns new zero vector
      * @example
-     * ```lua
-     * local vec = vmath.vector3()
-     * pprint(vec) --> vmath.vector3(0, 0, 0)
-     * print(vec.x) --> 0
+     * ```ts
+     * const vec = vmath.vector3();
+     * pprint(vec); // => vmath.vector3(0, 0, 0)
+     * print(vec.x); // => 0
      * ```
      */
     function vector3(): Vector3;
@@ -888,10 +894,10 @@ declare global {
      * @param n - scalar value to splat
      * @returns new vector
      * @example
-     * ```lua
-     * local vec = vmath.vector3(1.0)
-     * print(vec) --> vmath.vector3(1, 1, 1)
-     * print(vec.x) --> 1
+     * ```ts
+     * const vec = vmath.vector3(1.0);
+     * print(vec); // => vmath.vector3(1, 1, 1)
+     * print(vec.x); // => 1
      * ```
      */
     function vector3(n: number): Vector3;
@@ -903,13 +909,13 @@ declare global {
      * @param v1 - existing vector
      * @returns new vector
      * @example
-     * ```lua
-     * local vec1 = vmath.vector3(1.0)
-     * local vec2 = vmath.vector3(vec1)
-     * if vec1 == vec2 then
-     *     -- yes, they are equal
-     *     print(vec2) --> vmath.vector3(1, 1, 1)
-     * end
+     * ```ts
+     * const vec1 = vmath.vector3(1.0);
+     * const vec2 = vmath.vector3(vec1);
+     * if (vec1 === vec2) {
+     *   // yes, they are equal
+     *   print(vec2); // => vmath.vector3(1, 1, 1)
+     * }
      * ```
      */
     function vector3(v1: Vector3): Vector3;
@@ -937,10 +943,10 @@ declare global {
      *
      * @returns new zero vector
      * @example
-     * ```lua
-     * local vec = vmath.vector4()
-     * print(vec) --> vmath.vector4(0, 0, 0, 0)
-     * print(vec.w) --> 0
+     * ```ts
+     * const vec = vmath.vector4();
+     * print(vec); // => vmath.vector4(0, 0, 0, 0)
+     * print(vec.w); // => 0
      * ```
      */
     function vector4(): Vector4;
@@ -951,10 +957,10 @@ declare global {
      * @param n - scalar value to splat
      * @returns new vector
      * @example
-     * ```lua
-     * local vec = vmath.vector4(1.0)
-     * print(vec) --> vmath.vector4(1, 1, 1, 1)
-     * print(vec.w) --> 1
+     * ```ts
+     * const vec = vmath.vector4(1.0);
+     * print(vec); // => vmath.vector4(1, 1, 1, 1)
+     * print(vec.w); // => 1
      * ```
      */
     function vector4(n: number): Vector4;
@@ -966,13 +972,13 @@ declare global {
      * @param v1 - existing vector
      * @returns new vector
      * @example
-     * ```lua
-     * local vect1 = vmath.vector4(1.0)
-     * local vect2 = vmath.vector4(vec1)
-     * if vec1 == vec2 then
-     *     -- yes, they are equal
-     *     print(vec2) --> vmath.vector4(1, 1, 1, 1)
-     * end
+     * ```ts
+     * const vec1 = vmath.vector4(1.0);
+     * const vec2 = vmath.vector4(vec1);
+     * if (vec1 === vec2) {
+     *   // yes, they are equal
+     *   print(vec2); // => vmath.vector4(1, 1, 1, 1)
+     * }
      * ```
      */
     function vector4(v1: Vector4): Vector4;
