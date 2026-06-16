@@ -32,6 +32,20 @@ declare module "hono" {
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='light';}})();`;
 
 /**
+ * The pre-paint script that scrolls the sidebar's active entry into view before
+ * first paint. The site is statically generated with no client router, so every
+ * navigation is a full load that starts the sidebar at scrollTop 0; in long
+ * categories the active entry sits below the fold and stays hidden. Running
+ * synchronously after the sidebar DOM is parsed (and assigning scrollTop on the
+ * container, not the window) avoids any flash or window-scroll side effect.
+ *
+ * The arithmetic mirrors `sidebarScrollTop` in `app/lib/sidebar-scroll.ts` —
+ * keep the two in sync; the helper's unit tests are the source of truth. A
+ * pre-paint inline script cannot import a module, hence the duplication.
+ */
+const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-sidebar-scroll]');if(!c)return;var a=c.querySelector('[aria-current="page"]');if(!a)return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect();var tt=ar.top-cr.top+c.scrollTop,th=ar.height,vt=c.scrollTop,vh=c.clientHeight,ms=c.scrollHeight-c.clientHeight;if(tt>=vt&&tt+th<=vt+vh)return;c.scrollTop=Math.max(0,Math.min(tt-vh/2+th/2,ms));}catch(e){}})();`;
+
+/**
  * The design tokens, inlined so they are available before the Tailwind
  * stylesheet (and `public/critical.css`) load. Without this, `var(--color-text)`
  * in critical.css would be undefined at first paint and the body would briefly
@@ -193,7 +207,10 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
 
         <div class="mx-auto flex w-full gap-10 px-6">
           <aside class="hidden w-60 shrink-0 lg:block">
-            <div class="sticky top-14 max-h-[calc(100vh-4.5rem)] overflow-y-auto py-8 pr-2">
+            <div
+              data-sidebar-scroll
+              class="sticky top-14 max-h-[calc(100vh-4.5rem)] overflow-y-auto py-8 pr-2"
+            >
               <SidebarNav category={activeCategory} path={path} />
             </div>
           </aside>
@@ -212,6 +229,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           </main>
         </div>
         {onApiPage ? null : <SymbolTooltip />}
+        <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
       </body>
     </html>
   );
