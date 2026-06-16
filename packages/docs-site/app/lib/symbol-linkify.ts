@@ -26,9 +26,14 @@ function isWordChar(ch: string | undefined): boolean {
 
 // Sort longest first, then alphabetical — the longest match claims a starting
 // position; a boundary failure on the longest key rejects that position rather
-// than falling through to a shorter key.
+// than falling through to a shorter key. Bare-namespace keys (no `.`) are
+// filtered out: pointing `camera` at `/api/camera` is too broad a destination
+// for an inline mention, and the function exists to land readers on a specific
+// symbol, not a page.
 function sortKeys(links: Map<string, string>): string[] {
-  return [...links.keys()].sort((a, b) => b.length - a.length || a.localeCompare(b));
+  return [...links.keys()]
+    .filter((key) => key.includes("."))
+    .sort((a, b) => b.length - a.length || a.localeCompare(b));
 }
 
 // Walk a non-code region position by position. At each position, try each
