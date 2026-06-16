@@ -1,0 +1,18 @@
+{
+  "info": {
+    "namespace": "globals",
+    "version": "1.12.4",
+    "brief": "Prefixless global symbols available to every Defold script.",
+    "description": "Hand-vendored catalog of the ambient symbols Defold scripts reach with no namespace prefix (declared in src/engine-globals.d.ts). Upstream has no machine-readable export for this surface; refresh by reading the Defold API reference and editing this file. Documents callable/global-value symbols only; the ambient engine types are out of scope."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "hash",
+      "brief": "hash a string into a hash value",
+      "description": "Hashes a string into a hash value. The hash can be used to reference resources and identifiers in the Defold engine without carrying the original string around.",
+      "parameters": [{ "name": "s", "doc": "the string to hash", "types": ["string"] }],
+      "returnvalues": [{ "name": "hash", "doc": "the hash value", "types": ["hash"] }]
+    }
+  ]
+}

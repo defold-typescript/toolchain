@@ -3,11 +3,24 @@ import { join } from "node:path";
 import { type ApiPage, apiModuleMarkdown, apiModuleSymbols, loadApiSurface } from "./api-surface";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
+const NO_GLOBALS_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface-no-globals");
 
 describe("loadApiSurface", () => {
-  test("returns one ApiPage per module of the default target, sorted by namespace", () => {
+  test("returns one ApiPage per module of the default target, globals first then alphabetical", () => {
     const pages = loadApiSurface(FIXTURE_DIR);
-    expect(pages.map((p) => p.namespace)).toEqual(["alpha", "camera"]);
+    expect(pages.map((p) => p.namespace)).toEqual(["globals", "alpha", "camera"]);
+  });
+
+  test("prepends the synthetic globals page from globals_doc.json as pages[0]", () => {
+    const pages = loadApiSurface(FIXTURE_DIR);
+    expect(pages[0]?.namespace).toBe("globals");
+    expect(pages[0]?.route).toBe("/api/globals");
+    expect(pages[0]?.module.functions.map((f) => f.name)).toContain("hash");
+  });
+
+  test("omits the globals page when no globals_doc.json exists in the fixtures dir", () => {
+    const pages = loadApiSurface(NO_GLOBALS_FIXTURE_DIR);
+    expect(pages.map((p) => p.namespace)).toEqual(["camera"]);
   });
 
   test("derives the route and carries the brief plus the parsed module", () => {

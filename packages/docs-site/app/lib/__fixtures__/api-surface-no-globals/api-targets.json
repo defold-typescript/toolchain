@@ -1,0 +1,10 @@
+{
+  "targets": [
+    {
+      "id": "cur",
+      "default": true,
+      "fixturesDir": "cur-fixtures",
+      "modules": [{ "namespace": "camera", "fixture": "camera_doc.json" }]
+    }
+  ]
+}

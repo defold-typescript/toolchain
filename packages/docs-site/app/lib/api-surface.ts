@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiFunction,
@@ -201,16 +201,29 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
     throw new Error("loadApiSurface: no target marked default: true in api-targets.json");
   }
 
-  return target.modules
-    .map((mod): ApiPage => {
-      const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
-      const module = parseDefoldApiDoc(raw);
-      return {
-        namespace: mod.namespace,
-        route: `/api/${mod.namespace}`,
-        brief: module.brief,
-        module,
-      };
-    })
-    .sort((a, b) => a.namespace.localeCompare(b.namespace));
+  const pages = target.modules.map((mod): ApiPage => {
+    const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
+    const module = parseDefoldApiDoc(raw);
+    return {
+      namespace: mod.namespace,
+      route: `/api/${mod.namespace}`,
+      brief: module.brief,
+      module,
+    };
+  });
+
+  // Hand-vendored, presence-gated: the prefixless global symbols (`hash`, …)
+  // have no api-targets module, so they never reach regen/generated output.
+  const globalsPath = join(typesDir, target.fixturesDir, "globals_doc.json");
+  if (existsSync(globalsPath)) {
+    const module = parseDefoldApiDoc(JSON.parse(readFileSync(globalsPath, "utf8")));
+    pages.push({ namespace: "globals", route: "/api/globals", brief: module.brief, module });
+  }
+
+  return pages.sort((a, b) => {
+    if (a.namespace === b.namespace) return 0;
+    if (a.namespace === "globals") return -1;
+    if (b.namespace === "globals") return 1;
+    return a.namespace.localeCompare(b.namespace);
+  });
 }
