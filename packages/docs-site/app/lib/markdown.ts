@@ -1,6 +1,7 @@
 import { fromHighlighter } from "@shikijs/markdown-it/core";
 import MarkdownIt from "markdown-it";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
+import { withBase } from "./base";
 
 /**
  * Two Shiki themes paired to the page's light/dark data-theme. Shiki emits
@@ -64,6 +65,14 @@ function rewriteGuideHref(href: string): string {
   const fragment = fragmentParts.length > 0 ? `#${fragmentParts.join("#")}` : "";
   const name = path.replace(/.*\//, "").replace(/\.md$/, "");
   return `${name === "README" ? "/" : `/${name}`}${fragment}`;
+}
+
+// Prepend the deploy base to an in-site root-absolute URL (`/api` -> `/toolchain/api`)
+// while leaving external (`https:`), protocol-relative (`//cdn`), and fragment
+// (`#anchor`) targets alone. At the domain root the base is empty, so this is an
+// identity. Applied to both `.md`-rewritten links and links authored root-absolute.
+function withDeployBase(href: string): string {
+  return href.startsWith("/") && !href.startsWith("//") ? withBase(href) : href;
 }
 
 // GitHub's five alert kinds. A `> [!NOTE]` blockquote (case-insensitive marker)
@@ -145,9 +154,13 @@ export async function renderMarkdown(
     for (const token of state.tokens) {
       if (token.type !== "inline" || !token.children) continue;
       for (const child of token.children) {
-        if (child.type !== "link_open") continue;
-        const href = child.attrGet("href");
-        if (href) child.attrSet("href", rewriteGuideHref(href));
+        if (child.type === "link_open") {
+          const href = child.attrGet("href");
+          if (href) child.attrSet("href", withDeployBase(rewriteGuideHref(href)));
+        } else if (child.type === "image") {
+          const src = child.attrGet("src");
+          if (src) child.attrSet("src", withDeployBase(src));
+        }
       }
     }
   });

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "hono/jsx";
+import { withBase } from "../lib/base";
 import type { SymbolEntry } from "../lib/symbol-index";
 
 type ActiveTip = { brief: string; route: string; top: number; left: number } | null;
@@ -28,7 +29,7 @@ export default function SymbolTooltip() {
     let active = true;
     const cleanups: (() => void)[] = [];
     (async () => {
-      const response = await fetch("/symbol-index.json");
+      const response = await fetch(withBase("/symbol-index.json"));
       const index = (await response.json()) as Record<string, SymbolEntry>;
       if (!active) return;
       const codes = document.querySelectorAll<HTMLElement>("article code");
@@ -75,7 +76,7 @@ export default function SymbolTooltip() {
       style={{ top: `${tip.top}px`, left: `${tip.left}px` }}
     >
       {tip.brief ? <p class="text-text-muted">{tip.brief}</p> : null}
-      <a href={tip.route} class="mt-1 block font-medium text-accent hover:underline">
+      <a href={withBase(tip.route)} class="mt-1 block font-medium text-accent hover:underline">
         View reference →
       </a>
     </div>

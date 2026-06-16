@@ -5,6 +5,7 @@ import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import { apiPages } from "../lib/api-content";
+import { withBase } from "../lib/base";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
@@ -33,18 +34,25 @@ declare module "hono" {
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='light';}})();`;
 
 /**
- * The pre-paint script that scrolls the sidebar's active entry into view before
- * first paint. The site is statically generated with no client router, so every
- * navigation is a full load that starts the sidebar at scrollTop 0; in long
- * categories the active entry sits below the fold and stays hidden. Running
- * synchronously after the sidebar DOM is parsed (and assigning scrollTop on the
- * container, not the window) avoids any flash or window-scroll side effect.
+ * The script that scrolls the sidebar's active entry into view on load. The
+ * site is statically generated with no client router, so every navigation is a
+ * full load that starts the sidebar at scrollTop 0; in long categories the
+ * active entry sits below the fold and stays hidden. The script runs after the
+ * sidebar DOM is parsed and scrolls the container (never the window) to center
+ * the active entry; already-visible entries (top-of-list pages) are a no-op.
+ *
+ * Direct loads — a fresh URL, a refresh, or back/forward — position instantly
+ * before first paint, so there is no flash. Only an in-sidebar link click
+ * animates: the click handler flags the (one-shot) `sidebar-nav-click`
+ * sessionStorage key before the browser unloads, and the next load reads it to
+ * scroll smoothly, then clears it. `prefers-reduced-motion: reduce` forces the
+ * instant path either way.
  *
  * The arithmetic mirrors `sidebarScrollTop` in `app/lib/sidebar-scroll.ts` —
- * keep the two in sync; the helper's unit tests are the source of truth. A
- * pre-paint inline script cannot import a module, hence the duplication.
+ * keep the two in sync; the helper's unit tests are the source of truth. An
+ * inline script cannot import a module, hence the duplication.
  */
-const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-sidebar-scroll]');if(!c)return;var a=c.querySelector('[aria-current="page"]');if(!a)return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect();var tt=ar.top-cr.top+c.scrollTop,th=ar.height,vt=c.scrollTop,vh=c.clientHeight,ms=c.scrollHeight-c.clientHeight;if(tt>=vt&&tt+th<=vt+vh)return;c.scrollTop=Math.max(0,Math.min(tt-vh/2+th/2,ms));}catch(e){}})();`;
+const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-sidebar-scroll]');if(!c)return;c.addEventListener('click',function(e){var l=e.target&&e.target.closest&&e.target.closest('a');if(l){try{sessionStorage.setItem('sidebar-nav-click','1');}catch(_){}}});var a=c.querySelector('[aria-current="page"]');if(!a)return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect();var tt=ar.top-cr.top+c.scrollTop,th=ar.height,vt=c.scrollTop,vh=c.clientHeight,ms=c.scrollHeight-c.clientHeight;var clicked='1'===sessionStorage.getItem('sidebar-nav-click');try{sessionStorage.removeItem('sidebar-nav-click');}catch(_){}if(tt>=vt&&tt+th<=vt+vh)return;var top=Math.max(0,Math.min(tt-vh/2+th/2,ms));var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(clicked&&!reduce){c.scrollTo({top:top,behavior:'smooth'});}else{c.scrollTop=top;}}catch(e){}})();`;
 
 /**
  * The design tokens, inlined so they are available before the Tailwind
@@ -118,15 +126,24 @@ const CLIENT_MANIFEST = import.meta.env.PROD
  * preloading the Latin font subsets makes the full stylesheet and font faces
  * present at first paint, so navigation no longer flashes.
  */
-function clientStyles(): { stylesheets: string[]; fonts: string[] } {
+function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: string } {
   for (const mod of Object.values(CLIENT_MANIFEST)) {
     const manifest = mod.default;
     if (!manifest) continue;
-    const stylesheets = (manifest["app/client.ts"]?.css ?? []).map((file) => `/${file}`);
+    const entry = manifest["app/client.ts"];
+    const stylesheets = (entry?.css ?? []).map((file) => withBase(file));
     const fonts = Object.entries(manifest)
       .filter(([key]) => /(?:inter|jetbrains-mono)-latin-wght-normal\.woff2$/.test(key))
-      .map(([, entry]) => `/${entry.file}`);
-    return { stylesheets, fonts };
+      .map(([, e]) => withBase(e.file));
+    // honox's <Script> resolves the hashed entry but does not apply the deploy
+    // base (the server bundle never sees Vite's base), so under a subpath the
+    // client script would 404. Emit a base-aware tag from the manifest instead.
+    const result: { stylesheets: string[]; fonts: string[]; script?: string } = {
+      stylesheets,
+      fonts,
+    };
+    if (entry) result.script = withBase(entry.file);
+    return result;
   }
   return { stylesheets: [], fonts: [] };
 }
@@ -162,30 +179,43 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title ? `${title} — defold-typescript` : "defold-typescript docs"}</title>
         {faviconLinks().map((l) => (
-          <link key={l.rel + l.href} rel={l.rel} type={l.type} sizes={l.sizes} href={l.href} />
+          <link
+            key={l.rel + l.href}
+            rel={l.rel}
+            type={l.type}
+            sizes={l.sizes}
+            href={withBase(l.href)}
+          />
         ))}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <style dangerouslySetInnerHTML={{ __html: THEME_TOKENS }} />
         {styles.fonts.map((href) => (
           <link key={href} rel="preload" as="font" type="font/woff2" href={href} crossorigin="" />
         ))}
-        <link rel="stylesheet" href="/critical.css" />
+        <link rel="stylesheet" href={withBase("/critical.css")} />
         {/* Dev has no built bundle: link the source stylesheet so vite serves the
             full Tailwind CSS render-blocking, instead of letting the async client
             script inject it after first paint (which snapped the unstyled layout
             into place — a full-viewport shift on every navigation). */}
-        {import.meta.env.DEV ? <link rel="stylesheet" href="/app/styles.css" /> : null}
+        {import.meta.env.DEV ? <link rel="stylesheet" href={withBase("/app/styles.css")} /> : null}
         {styles.stylesheets.map((href) => (
           <link key={href} rel="stylesheet" href={href} />
         ))}
-        <Script src="/app/client.ts" async />
+        {import.meta.env.DEV ? (
+          <Script src="/app/client.ts" async />
+        ) : styles.script ? (
+          <script type="module" async src={styles.script} />
+        ) : null}
       </head>
       <body class="min-h-screen bg-bg text-text antialiased">
         <header class="topbar-critical sticky top-0 z-30 flex h-14 items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur">
           <div class="mx-auto flex h-14 w-full items-center gap-6">
-            <a class="flex items-center gap-2 text-[15px] font-semibold tracking-tight" href="/">
+            <a
+              class="flex items-center gap-2 text-[15px] font-semibold tracking-tight"
+              href={withBase("/")}
+            >
               <img
-                src="/logo-ver-classic.svg"
+                src={withBase("/logo-ver-classic.svg")}
                 alt=""
                 width="24"
                 height="24"
@@ -243,7 +273,7 @@ function CategoryLink({ category, active }: { category: NavCategory; active: boo
   const href = category.links[0]?.route ?? "/";
   return (
     <a
-      href={href}
+      href={withBase(href)}
       aria-current={active ? "page" : undefined}
       class={
         "-mb-px inline-flex h-14 items-center border-b-2 px-3 text-text-muted transition hover:text-text " +
@@ -285,7 +315,7 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
 function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
   return (
     <a
-      href={link.route}
+      href={withBase(link.route)}
       aria-current={active ? "page" : undefined}
       class={
         "block rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
