@@ -14,7 +14,7 @@ describe("@defold-typescript/types public surface", () => {
 
   test("re-exports the Translation and TranslationStore types", () => {
     const translation: Translation = { sourceHash: "abc", ts: "go.get()" };
-    const store: TranslationStore = { "go.get": translation };
+    const store: TranslationStore = { "go.get": [translation] };
     expect(lookupTranslation(store, "go.get", "abc")).toBe("go.get()");
   });
 });

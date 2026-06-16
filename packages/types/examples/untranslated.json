@@ -1,8 +1,1 @@
-[
-  "camera.get_cameras",
-  "camera.screen_to_world",
-  "camera.screen_xy_to_world",
-  "camera.world_to_screen",
-  "html5.run",
-  "html5.set_interaction_listener"
-]
+[]

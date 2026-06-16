@@ -7,7 +7,10 @@ export interface Translation {
   ts: string;
 }
 
-export type TranslationStore = Record<string, Translation>;
+// An FQN maps to one translation per distinct example body it carries: an
+// overloaded element (same name, differing `@example` source) contributes one
+// array entry per body, each pinned by its own `sourceHash`.
+export type TranslationStore = Record<string, Translation[]>;
 
 const FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
 const FNV_PRIME = 0x100000001b3n;
@@ -30,15 +33,16 @@ export function hashExampleSource(source: string): string {
   return hash.toString(16).padStart(16, "0");
 }
 
-// Return the stored TypeScript body only when the FQN exists and its pinned
-// `sourceHash` matches the source we are about to emit; any mismatch returns
-// `null` so the caller keeps the Lua fallback.
+// Return the stored TypeScript body only when the FQN exists and one of its
+// pinned `sourceHash`es matches the source we are about to emit; any mismatch
+// returns `null` so the caller keeps the Lua fallback.
 export function lookupTranslation(
   store: TranslationStore,
   fqn: string,
   sourceHash: string,
 ): string | null {
-  const entry = store[fqn];
-  if (!entry || entry.sourceHash !== sourceHash) return null;
-  return entry.ts;
+  const entries = store[fqn];
+  if (!entries) return null;
+  const match = entries.find((entry) => entry.sourceHash === sourceHash);
+  return match ? match.ts : null;
 }

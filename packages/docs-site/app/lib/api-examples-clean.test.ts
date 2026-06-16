@@ -47,4 +47,19 @@ describe("no malformed example reaches /api", () => {
     expect(checked).toBeGreaterThan(0);
     expect(offenders).toEqual([]);
   });
+
+  test("every rendered example is TypeScript — no ```lua fallback survives", () => {
+    const luaFallbacks: string[] = [];
+    let rendered = 0;
+    for (const page of pages) {
+      for (const fn of page.module.functions) {
+        const md = exampleMarkdownFor(fn, page.translations);
+        if (md === undefined) continue;
+        rendered++;
+        if (md.includes("```lua")) luaFallbacks.push(fn.name);
+      }
+    }
+    expect(rendered).toBeGreaterThan(0);
+    expect(luaFallbacks).toEqual([]);
+  });
 });

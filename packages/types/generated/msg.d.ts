@@ -12,10 +12,10 @@ declare global {
      *
      * @returns a new URL
      * @example
-     * ```lua
-     * Create a new URL which will address the current script:
-     * local my_url = msg.url()
-     * print(my_url) --> url: [current_collection:/my_instance#my_component]
+     * ```ts
+     * // Create a new URL which will address the current script:
+     * const my_url = msg.url();
+     * print(my_url); // => url: [current_collection:/my_instance#my_component]
      * ```
      */
     function url(): Url;
@@ -32,15 +32,15 @@ declare global {
      * @param urlstring - string to create the url from
      * @returns a new URL
      * @example
-     * ```lua
-     * local my_url = msg.url("#my_component")
-     * print(my_url) --> url: [current_collection:/my_instance#my_component]
+     * ```ts
+     * const my_url = msg.url("#my_component");
+     * print(my_url); // => url: [current_collection:/my_instance#my_component]
      *
-     * local my_url = msg.url("my_collection:/my_sub_collection/my_instance#my_component")
-     * print(my_url) --> url: [my_collection:/my_sub_collection/my_instance#my_component]
+     * const my_collection_url = msg.url("my_collection:/my_sub_collection/my_instance#my_component");
+     * print(my_collection_url); // => url: [my_collection:/my_sub_collection/my_instance#my_component]
      *
-     * local my_url = msg.url("my_socket:")
-     * print(my_url) --> url: [my_collection:]
+     * const my_socket_url = msg.url("my_socket:");
+     * print(my_socket_url); // => url: [my_collection:]
      * ```
      */
     function url(urlstring: string): Url;
