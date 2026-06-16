@@ -18,7 +18,13 @@ function emptyModule(namespace: string): ApiModule {
 
 function page(namespace: string, module: Partial<ApiModule>): ApiPage {
   const full = { ...emptyModule(namespace), ...module, namespace };
-  return { namespace, route: `/api/${namespace}`, brief: full.brief, module: full };
+  return {
+    namespace,
+    route: `/api/${namespace}`,
+    brief: full.brief,
+    module: full,
+    translations: {},
+  };
 }
 
 describe("buildSymbolIndex", () => {
