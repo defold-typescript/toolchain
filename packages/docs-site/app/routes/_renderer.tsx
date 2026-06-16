@@ -193,7 +193,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
 
         <div class="mx-auto flex w-full gap-10 px-6">
           <aside class="hidden w-60 shrink-0 lg:block">
-            <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto py-8 pr-2">
+            <div class="sticky top-14 max-h-[calc(100vh-4.5rem)] overflow-y-auto py-8 pr-2">
               <SidebarNav category={activeCategory} path={path} />
             </div>
           </aside>
