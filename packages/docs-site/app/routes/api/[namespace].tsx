@@ -10,6 +10,8 @@ import {
 } from "../../lib/api-surface";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
+import { buildSymbolIndex } from "../../lib/symbol-index";
+import { linkifySymbolMentions } from "../../lib/symbol-linkify";
 
 const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "function", label: "Functions" },
@@ -60,18 +62,33 @@ function symbolBlock(symbol: ApiSymbol): string {
 
 // Render the module intro, then each kind's symbols stacked in one column. A
 // single combined string keeps Shiki and the heading-id slugger to one pass, so
-// per-symbol headings stay uniquely id'd for the "On this page" TOC.
-function apiPageMarkdown(page: Pick<ApiPage, "module" | "translations">): string {
+// per-symbol headings stay uniquely id'd for the "On this page" TOC. The
+// `linkify` callback rewrites bare symbol mentions in the prose to local
+// `/api/<namespace>` links (example code fences and signature headings are
+// skipped — `linkify` is plain-text only and the route never hands it the
+// example or signature fields).
+function apiPageMarkdown(
+  page: Pick<ApiPage, "module" | "translations">,
+  linkify: (text: string) => string,
+): string {
   const m = page.module;
   const symbols = apiModuleSymbols(page, page.translations);
   const lines: string[] = [`# ${m.namespace}`, ""];
   const intro = htmlToDocText(m.description || m.brief);
-  if (intro) lines.push(intro, "");
+  if (intro) lines.push(linkify(intro), "");
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);
     if (group.length === 0) continue;
     lines.push(`## ${label}`, "");
-    for (const symbol of group) lines.push(symbolBlock(symbol), "");
+    for (const symbol of group) {
+      const linkified: ApiSymbol = {
+        ...symbol,
+        docMarkdown: linkify(symbol.docMarkdown),
+        parameters: symbol.parameters.map((p) => ({ ...p, doc: linkify(p.doc) })),
+        returnValues: symbol.returnValues.map((r) => ({ ...r, doc: linkify(r.doc) })),
+      };
+      lines.push(symbolBlock(linkified), "");
+    }
   }
   return lines.join("\n");
 }
@@ -104,7 +121,13 @@ export default createRoute(
       );
     }
 
-    const html = await renderMarkdown(apiPageMarkdown(page), { highlightSignatureHeadings: true });
+    const linkRegistry = new Map(
+      Object.entries(buildSymbolIndex(apiPages())).map(([k, v]) => [k, v.route]),
+    );
+    const linkify = (text: string) => linkifySymbolMentions(text, linkRegistry);
+    const html = await renderMarkdown(apiPageMarkdown(page, linkify), {
+      highlightSignatureHeadings: true,
+    });
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${page.module.namespace} API`,
       headings: pageHeadings(html),
