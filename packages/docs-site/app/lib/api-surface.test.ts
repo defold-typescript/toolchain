@@ -1,9 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { type ApiPage, apiModuleMarkdown, apiModuleSymbols, loadApiSurface } from "./api-surface";
+import { type ApiFunction, hashExampleSource, htmlToCodeText } from "@defold-typescript/types";
+import {
+  type ApiPage,
+  apiModuleMarkdown,
+  apiModuleSymbols,
+  exampleMarkdownFor,
+  loadApiSurface,
+} from "./api-surface";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const NO_GLOBALS_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface-no-globals");
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 describe("loadApiSurface", () => {
   test("returns one ApiPage per module of the default target, globals first then alphabetical", () => {
@@ -69,6 +77,7 @@ describe("apiModuleMarkdown", () => {
         properties: [],
         typedefs: [],
       },
+      translations: {},
     };
     const md = apiModuleMarkdown(page);
     expect(md).toContain("```lua");
@@ -96,6 +105,7 @@ describe("apiModuleSymbols", () => {
         typedefs: [],
         ...module,
       },
+      translations: {},
     };
   }
 
@@ -256,5 +266,92 @@ describe("apiModuleSymbols", () => {
     const md = apiModuleMarkdown(page);
     const headingOrder = [...md.matchAll(/^### `([^`]+)`/gm)].map((m) => m[1] ?? "");
     expect(apiModuleSymbols(page).map((s) => s.signature)).toEqual(headingOrder);
+  });
+});
+
+describe("exampleMarkdownFor", () => {
+  const luaExample =
+    '<div class="codehilite"><pre><code><span class="n">demo</span><span class="p">.</span><span class="n">run</span><span class="p">()</span></code></pre></div>';
+  const fn: ApiFunction = {
+    name: "demo.run",
+    brief: "",
+    description: "",
+    parameters: [],
+    returnValues: [],
+    examples: luaExample,
+  };
+  const sourceHash = hashExampleSource(htmlToCodeText(luaExample));
+
+  test("a matched FQN and hash render the authored TypeScript as a ```ts fence", () => {
+    const md = exampleMarkdownFor(fn, { "demo.run": { sourceHash, ts: "demo.run(); // ts" } });
+    expect(md).toContain("```ts");
+    expect(md).toContain("demo.run(); // ts");
+    expect(md).not.toContain("```lua");
+  });
+
+  test("an FQN present with a mismatched hash falls back to the Lua fence", () => {
+    const md = exampleMarkdownFor(fn, {
+      "demo.run": { sourceHash: "deadbeefdeadbeef", ts: "should not appear" },
+    });
+    expect(md).toContain("```lua");
+    expect(md).not.toContain("```ts");
+    expect(md).not.toContain("should not appear");
+  });
+
+  test("an absent FQN falls back to the Lua fence", () => {
+    const md = exampleMarkdownFor(fn, {});
+    expect(md).toContain("```lua");
+    expect(md).not.toContain("```ts");
+  });
+
+  test("a function with no examples yields undefined", () => {
+    const noExamples: ApiFunction = {
+      name: "demo.silent",
+      brief: "",
+      description: "",
+      parameters: [],
+      returnValues: [],
+    };
+    expect(exampleMarkdownFor(noExamples, {})).toBeUndefined();
+  });
+});
+
+describe("loadApiSurface translations and /api rendering", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR);
+  const goPage = pages.find((p) => p.namespace === "go");
+  const cameraPage = pages.find((p) => p.namespace === "camera");
+
+  test("attaches a non-empty translation store to the loaded surface", () => {
+    expect(goPage?.translations).toBeDefined();
+    expect(Object.keys(goPage?.translations ?? {}).length).toBeGreaterThan(0);
+  });
+
+  test("go.get renders the authored TypeScript, not raw Lua or HTML", () => {
+    const fn = goPage?.module.functions.find((f) => f.name === "go.get");
+    expect(fn).toBeDefined();
+    const md = fn ? exampleMarkdownFor(fn, goPage?.translations) : undefined;
+    expect(md).toContain("```ts");
+    expect(md).not.toContain("```lua");
+    expect(md).not.toContain("<div");
+    expect(md).not.toContain("<span");
+    expect(md).not.toContain("codehilite");
+  });
+
+  test("camera.get_cameras has no translation and renders the clean Lua fallback", () => {
+    const fn = cameraPage?.module.functions.find((f) => f.name === "camera.get_cameras");
+    expect(fn).toBeDefined();
+    const md = fn ? exampleMarkdownFor(fn, cameraPage?.translations) : undefined;
+    expect(md).toContain("```lua");
+    expect(md).not.toContain("```ts");
+    expect(md).not.toContain("<span");
+  });
+
+  test("apiModuleMarkdown and apiModuleSymbols are identical with an absent vs empty store", () => {
+    expect(cameraPage).toBeDefined();
+    if (!cameraPage) return;
+    expect(apiModuleMarkdown(cameraPage)).toBe(apiModuleMarkdown(cameraPage, {}));
+    expect(JSON.stringify(apiModuleSymbols(cameraPage))).toBe(
+      JSON.stringify(apiModuleSymbols(cameraPage, {})),
+    );
   });
 });

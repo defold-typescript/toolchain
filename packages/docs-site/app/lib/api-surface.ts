@@ -6,8 +6,12 @@ import {
   type ApiParameter,
   type ApiVariable,
   examplesHtmlToMarkdown,
+  hashExampleSource,
+  htmlToCodeText,
   htmlToDocText,
+  lookupTranslation,
   parseDefoldApiDoc,
+  type TranslationStore,
 } from "@defold-typescript/types";
 
 export interface ApiPage {
@@ -15,6 +19,8 @@ export interface ApiPage {
   route: string;
   brief: string;
   module: ApiModule;
+  /** Hand-authored TypeScript `@example` translations, shared across the surface. */
+  translations: TranslationStore;
 }
 
 export interface ApiSymbolParam {
@@ -74,7 +80,27 @@ function propertySignature(prop: { name: string; types: string[] }): string {
   return `${prop.name}: ${typeList(prop.types)}`;
 }
 
-export function apiModuleMarkdown(page: Pick<ApiPage, "namespace" | "module">): string {
+// Resolve a function's example to rendered markdown, matching the `.d.ts` emit
+// (`emit-dts.ts` `functionDocLines`) exactly so `/api` and the typings agree: a
+// hand-authored TypeScript translation pinned to this exact Lua source flips the
+// fence to ```ts; any hash mismatch or absent translation keeps the clean Lua
+// fallback. Returns `undefined` when the function carries no example at all.
+export function exampleMarkdownFor(
+  fn: ApiFunction,
+  translations: TranslationStore = {},
+): string | undefined {
+  if (!fn.examples) return undefined;
+  const lua = htmlToCodeText(fn.examples);
+  const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
+  if (ts !== null) return `\`\`\`ts\n${ts.replace(/\n+$/, "")}\n\`\`\``;
+  const converted = examplesHtmlToMarkdown(fn.examples);
+  return converted === "" ? undefined : converted;
+}
+
+export function apiModuleMarkdown(
+  page: Pick<ApiPage, "namespace" | "module">,
+  translations: TranslationStore = {},
+): string {
   const m = page.module;
   const lines: string[] = [`# ${m.namespace}`, ""];
   const intro = htmlToDocText(m.description || m.brief);
@@ -86,10 +112,8 @@ export function apiModuleMarkdown(page: Pick<ApiPage, "namespace" | "module">): 
       lines.push(`### \`${functionSignature(fn)}\``, "");
       const doc = htmlToDocText(fn.description || fn.brief);
       if (doc) lines.push(doc, "");
-      if (fn.examples) {
-        const converted = examplesHtmlToMarkdown(fn.examples);
-        if (converted) lines.push(converted, "");
-      }
+      const example = exampleMarkdownFor(fn, translations);
+      if (example) lines.push(example, "");
     }
   }
 
@@ -129,7 +153,10 @@ export function apiModuleMarkdown(page: Pick<ApiPage, "namespace" | "module">): 
  * exampleMarkdown }` records the API route lays out as prose-left / code-right
  * rows. `apiModuleMarkdown` stays the flat search/index projection.
  */
-export function apiModuleSymbols(page: Pick<ApiPage, "module">): ApiSymbol[] {
+export function apiModuleSymbols(
+  page: Pick<ApiPage, "module">,
+  translations: TranslationStore = {},
+): ApiSymbol[] {
   const m = page.module;
   const symbols: ApiSymbol[] = [];
 
@@ -142,10 +169,8 @@ export function apiModuleSymbols(page: Pick<ApiPage, "module">): ApiSymbol[] {
       parameters: projectParams(fn.parameters),
       returnValues: projectParams(fn.returnValues),
     };
-    if (fn.examples) {
-      const converted = examplesHtmlToMarkdown(fn.examples);
-      if (converted) symbol.exampleMarkdown = converted;
-    }
+    const example = exampleMarkdownFor(fn, translations);
+    if (example) symbol.exampleMarkdown = example;
     symbols.push(symbol);
   }
 
@@ -191,6 +216,16 @@ interface ApiTarget {
   modules: { namespace: string; fixture: string }[];
 }
 
+// The same `examples/translations.json` the `.d.ts` emit consumes; a missing
+// file degrades gracefully to an empty store (every example renders its Lua
+// fallback). The shipped `src/example-store.ts` stays node-free, so the file
+// read lives here in the docs-site rather than in the types entry graph.
+function loadTranslationStore(typesDir: string): TranslationStore {
+  const path = join(typesDir, "examples", "translations.json");
+  if (!existsSync(path)) return {};
+  return JSON.parse(readFileSync(path, "utf8")) as TranslationStore;
+}
+
 export function loadApiSurface(typesDir: string): ApiPage[] {
   const { targets } = JSON.parse(readFileSync(join(typesDir, "api-targets.json"), "utf8")) as {
     targets: ApiTarget[];
@@ -201,6 +236,8 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
     throw new Error("loadApiSurface: no target marked default: true in api-targets.json");
   }
 
+  const translations = loadTranslationStore(typesDir);
+
   const pages = target.modules.map((mod): ApiPage => {
     const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
     const module = parseDefoldApiDoc(raw);
@@ -209,6 +246,7 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
       route: `/api/${mod.namespace}`,
       brief: module.brief,
       module,
+      translations,
     };
   });
 
@@ -217,7 +255,13 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
   const globalsPath = join(typesDir, target.fixturesDir, "globals_doc.json");
   if (existsSync(globalsPath)) {
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(globalsPath, "utf8")));
-    pages.push({ namespace: "globals", route: "/api/globals", brief: module.brief, module });
+    pages.push({
+      namespace: "globals",
+      route: "/api/globals",
+      brief: module.brief,
+      module,
+      translations,
+    });
   }
 
   return pages.sort((a, b) => {

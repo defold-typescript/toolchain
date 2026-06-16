@@ -60,6 +60,12 @@ export {
 export { examplesHtmlToMarkdown, htmlToCodeText, htmlToDocText } from "./src/doc-comment";
 export { type EmitOptions, emitDeclarations } from "./src/emit-dts";
 export {
+  hashExampleSource,
+  lookupTranslation,
+  type Translation,
+  type TranslationStore,
+} from "./src/example-store";
+export {
   defineGuiScript,
   defineRenderScript,
   defineScript,
