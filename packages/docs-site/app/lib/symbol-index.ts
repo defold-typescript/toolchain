@@ -10,7 +10,10 @@ export interface SymbolEntry {
 
 // Functions/constants come namespace-qualified (`go.get_position`), properties
 // come bare (`position`); only prefix when the name is not already qualified.
+// The synthetic `globals` page documents prefixless ambient symbols (`hash`),
+// so its members are keyed bare.
 function qualify(namespace: string, name: string): string {
+  if (namespace === "globals") return name;
   return name.startsWith(`${namespace}.`) ? name : `${namespace}.${name}`;
 }
 

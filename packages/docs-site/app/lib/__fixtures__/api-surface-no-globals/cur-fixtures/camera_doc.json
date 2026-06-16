@@ -1,0 +1,19 @@
+{
+  "info": {
+    "namespace": "camera",
+    "brief": "Camera brief",
+    "description": "Camera module fixture."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_projection",
+      "brief": "get the projection matrix",
+      "description": "Returns the projection matrix.",
+      "parameters": [
+        { "name": "camera", "doc": "camera id", "types": ["url"], "is_optional": "False" }
+      ],
+      "returnvalues": [{ "name": "projection", "doc": "the matrix", "types": ["matrix4"] }]
+    }
+  ]
+}
