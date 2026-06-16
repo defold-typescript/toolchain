@@ -135,6 +135,9 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
+  // The API reference pages already show each symbol's definition inline, so the
+  // symbol tooltip (dotted underline + hover) is redundant noise there.
+  const onApiPage = path === "/api" || path.startsWith("/api/");
   const styles = clientStyles();
 
   return (
@@ -196,7 +199,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           </aside>
 
           <main class="min-w-0 flex-1">
-            <div class={`flex gap-10 py-10 ${showToc ? "xl:pr-64" : ""}`}>
+            <div class="flex gap-10 py-10">
               <article class={`min-w-0 flex-1 ${contentClass ?? ""}`}>{children}</article>
               {showToc ? (
                 <aside class="hidden xl:block">
@@ -208,7 +211,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
             </div>
           </main>
         </div>
-        <SymbolTooltip />
+        {onApiPage ? null : <SymbolTooltip />}
       </body>
     </html>
   );

@@ -22,32 +22,25 @@ function isEmptyModule(m: ApiModule): boolean {
   );
 }
 
-// One `.api-symbol` grid row: the `### signature` heading + prose on the left,
-// the highlighted signature and example fences on the right. The blank lines
-// around the markdown let markdown-it parse it inside the raw HTML wrappers.
-function symbolRow(symbol: ApiSymbol): string {
-  const doc = [`### \`${symbol.signature}\``, "", symbol.docMarkdown].join("\n");
-  const code = ["```ts", symbol.signature, "```"];
-  if (symbol.exampleMarkdown) code.push("", symbol.exampleMarkdown);
-  return [
-    '<div class="api-symbol">',
-    '<div class="api-symbol-doc">',
-    "",
-    doc,
-    "",
-    "</div>",
-    '<div class="api-symbol-code">',
-    "",
-    code.join("\n"),
-    "",
-    "</div>",
-    "</div>",
-  ].join("\n");
+// One symbol, single column: the `### signature` heading is the title, and the
+// description + example are wrapped in an indented `.api-symbol-body` so the body
+// reads as subordinate to the title. The signature is not repeated as a code
+// block — the heading already shows it. The blank lines around the inner markdown
+// let markdown-it parse it inside the raw HTML wrapper.
+function symbolBlock(symbol: ApiSymbol): string {
+  const heading = `### \`${symbol.signature}\``;
+  const body: string[] = [];
+  if (symbol.docMarkdown) body.push(symbol.docMarkdown);
+  if (symbol.exampleMarkdown) body.push(symbol.exampleMarkdown);
+  if (body.length === 0) return heading;
+  return [heading, "", '<div class="api-symbol-body">', "", body.join("\n\n"), "", "</div>"].join(
+    "\n",
+  );
 }
 
-// Render the module intro full-width, then each kind's symbols as two-column
-// rows. A single combined string keeps Shiki and the heading-id slugger to one
-// pass, so per-symbol headings stay uniquely id'd for the "On this page" TOC.
+// Render the module intro, then each kind's symbols stacked in one column. A
+// single combined string keeps Shiki and the heading-id slugger to one pass, so
+// per-symbol headings stay uniquely id'd for the "On this page" TOC.
 function apiPageMarkdown(page: Pick<ApiPage, "module">): string {
   const m = page.module;
   const symbols = apiModuleSymbols(page);
@@ -58,7 +51,7 @@ function apiPageMarkdown(page: Pick<ApiPage, "module">): string {
     const group = symbols.filter((s) => s.kind === kind);
     if (group.length === 0) continue;
     lines.push(`## ${label}`, "");
-    for (const symbol of group) lines.push(symbolRow(symbol), "");
+    for (const symbol of group) lines.push(symbolBlock(symbol), "");
   }
   return lines.join("\n");
 }

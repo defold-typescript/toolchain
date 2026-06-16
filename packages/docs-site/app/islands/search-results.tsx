@@ -71,7 +71,7 @@ export default function SearchResults() {
         {results.length} result{results.length === 1 ? "" : "s"} for{" "}
         <span class="font-medium text-text">{query}</span>
       </p>
-      <ul class="not-prose mt-6 space-y-4">
+      <ul class="not-prose mt-6 list-none space-y-4 p-0">
         {results.map((result) => (
           <li class="rounded-lg border border-border bg-surface p-4">
             <a href={result.route} class="text-base font-semibold text-accent hover:underline">
