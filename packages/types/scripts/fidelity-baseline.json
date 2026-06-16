@@ -18,10 +18,10 @@
   "camera": {
     "droppedElements": 0,
     "unknownTokens": [],
-    "recordTables": 0,
+    "recordTables": 1,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 7
   },
   "collectionfactory": {
     "droppedElements": 0,

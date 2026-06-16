@@ -22,7 +22,9 @@ export interface SyncManifestEntry {
 export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
   entry("b2d", "doc/scripts-box2d-script_box2d.cpp_doc.json"),
   entry("buffer", "doc/scripts-script_buffer.cpp_doc.json"),
-  entry("camera", "doc/scripts-script_camera.cpp_doc.json"),
+  // camera's Lua surface lives in the render-script doc, not the scripts-script
+  // one (`doc/scripts-script_camera.cpp_doc.json` is empty upstream in 1.12.4).
+  entry("camera", "doc/render-render_script_camera.cpp_doc.json"),
   entry("collectionfactory", "doc/scripts-script_collection_factory.cpp_doc.json"),
   entry("collectionproxy", "doc/scripts-script_collectionproxy.cpp_doc.json"),
   entry("crash", "doc/script_crash.cpp_doc.json"),
