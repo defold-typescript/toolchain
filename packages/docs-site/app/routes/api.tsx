@@ -1,6 +1,7 @@
 import { htmlToDocText } from "@defold-typescript/types";
 import { createRoute } from "honox/factory";
 import { apiPages } from "../lib/api-content";
+import { withBase } from "../lib/base";
 
 export default createRoute((c) => {
   const pages = apiPages();
@@ -20,7 +21,7 @@ export default createRoute((c) => {
         {pages.map((page) => (
           <li>
             <a
-              href={page.route}
+              href={withBase(page.route)}
               class="block rounded-lg border border-border bg-surface px-4 py-3 transition hover:border-border-strong hover:bg-surface-2"
             >
               <span class="font-mono text-[13px] font-semibold text-accent">{page.namespace}</span>

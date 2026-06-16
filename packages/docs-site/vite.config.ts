@@ -46,15 +46,44 @@ function makeQuietLogger(): Logger {
 
 const quietLogger = makeQuietLogger();
 
+// Subpath hosting (GitHub Pages project sites serve at `/<repo>/`) is opt-in via
+// DOCS_BASE; unset means the domain root `/` (dev, tests, Cloudflare Pages).
+//
+// `base` drives Vite's own asset URLs (hashed chunks, CSS `url()` rewrites). The
+// honox SSR render, though, does NOT receive Vite's `import.meta.env.BASE_URL`
+// (it stays "" in the server bundle), so the value is also injected as the
+// `__DOCS_BASE__` compile-time constant via `define` — applied to both the
+// client and server builds — which `app/lib/base.ts` reads. Keeping the two in
+// lockstep makes the server-rendered HTML and the hydrated client agree.
+const base = process.env.DOCS_BASE ?? "/";
+const define = { __DOCS_BASE__: JSON.stringify(base) };
+
+// Vite 8 does not prefix CSS `url()` asset references with `base` (the bundled
+// stylesheet is byte-identical at any base), so `@font-face` sources would 404
+// under a subpath. `renderBuiltUrl` is the documented hook to author every
+// built asset URL ourselves — `static/x.woff2` -> `/toolchain/static/x.woff2`
+// (an identity at the `/` root). `filename` arrives without a leading slash and
+// `base` is always trailing-slashed, so the join needs no separator.
+const experimental = { renderBuiltUrl: (filename: string) => base + filename };
+
 export default defineConfig(({ mode }) => {
   // Pass 1 (`--mode client`): honox bundles the client entry + islands and
   // writes the Vite manifest, emptying dist first. Pass 2 (SSG) renders the
   // HTML and must NOT empty dist, so the client assets + manifest survive for
   // the `<Script>` manifest lookup.
   if (mode === "client") {
-    return { plugins: [honox(), tailwindcss()], customLogger: quietLogger };
+    return {
+      base,
+      define,
+      experimental,
+      plugins: [honox(), tailwindcss()],
+      customLogger: quietLogger,
+    };
   }
   return {
+    base,
+    define,
+    experimental,
     plugins: [honox(), tailwindcss(), ssg({ entry })],
     build: { emptyOutDir: false },
     customLogger: quietLogger,

@@ -1,0 +1,56 @@
+name: Deploy docs
+
+# Publishes packages/docs-site to GitHub Pages. Pages must be enabled with
+# "GitHub Actions" as the source (Settings -> Pages -> Build and deployment).
+# The site is served from the project subpath https://<owner>.github.io/<repo>/,
+# so DOCS_BASE is set to `/<repo>/`; app/lib/base.ts threads it through every
+# asset and link. Serving from a domain root instead (custom domain or a
+# <owner>.github.io repo) means dropping DOCS_BASE so the base is `/`.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One in-flight Pages deploy at a time; let a newer push supersede an older run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Build docs site for the project Pages subpath
+        run: bun run --filter '@defold-typescript/docs-site' build
+        env:
+          DOCS_BASE: /${{ github.event.repository.name }}/
+      # Served straight by deploy-pages (no Jekyll pass), but the marker keeps a
+      # future branch-based deploy from running Jekyll over the asset tree.
+      - run: touch packages/docs-site/dist/.nojekyll
+      # enablement: true turns Pages on (Actions source) via the API on the
+      # first run, so no manual Settings -> Pages step is required.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/docs-site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

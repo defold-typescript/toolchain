@@ -1,5 +1,6 @@
 import { create, insertMultiple, type Orama, search } from "@orama/orama";
 import { useEffect, useState } from "hono/jsx";
+import { withBase } from "../lib/base";
 import type { SearchRecord } from "../lib/search-index";
 import { buildSnippet } from "../lib/snippet";
 
@@ -16,7 +17,7 @@ export default function Search() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const response = await fetch("/search-index.json");
+      const response = await fetch(withBase("/search-index.json"));
       const records = (await response.json()) as SearchRecord[];
       const instance = create({ schema: SCHEMA }) as SearchDb;
       await insertMultiple(instance, records);
@@ -53,7 +54,7 @@ export default function Search() {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key !== "Enter" || term.length < 2) return;
     event.preventDefault();
-    window.location.href = `/search?q=${encodeURIComponent(term)}`;
+    window.location.href = `${withBase("/search")}?q=${encodeURIComponent(term)}`;
   };
 
   return (
@@ -72,7 +73,7 @@ export default function Search() {
         <ul class="absolute right-0 z-40 mt-1 w-80 overflow-hidden rounded-md border border-border bg-bg shadow-lg">
           {hits.map((hit) => (
             <li>
-              <a href={hit.route} class="block px-3 py-2 transition hover:bg-surface">
+              <a href={withBase(hit.route)} class="block px-3 py-2 transition hover:bg-surface">
                 <span class="block text-sm font-medium text-text">{hit.title}</span>
                 <span
                   class="search-snippet mt-0.5 line-clamp-2 block text-xs text-text-muted"

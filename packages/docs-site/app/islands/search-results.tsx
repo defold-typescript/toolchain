@@ -1,5 +1,6 @@
 import { create, insertMultiple, type Orama, search } from "@orama/orama";
 import { useEffect, useState } from "hono/jsx";
+import { withBase } from "../lib/base";
 import type { SearchRecord } from "../lib/search-index";
 import { buildSnippet } from "../lib/snippet";
 
@@ -20,7 +21,7 @@ export default function SearchResults() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const response = await fetch("/search-index.json");
+      const response = await fetch(withBase("/search-index.json"));
       const records = (await response.json()) as SearchRecord[];
       const instance = create({ schema: SCHEMA }) as SearchDb;
       await insertMultiple(instance, records);
@@ -74,7 +75,10 @@ export default function SearchResults() {
       <ul class="not-prose mt-6 list-none space-y-4 p-0">
         {results.map((result) => (
           <li class="rounded-lg border border-border bg-surface p-4">
-            <a href={result.route} class="text-base font-semibold text-accent hover:underline">
+            <a
+              href={withBase(result.route)}
+              class="text-base font-semibold text-accent hover:underline"
+            >
               {result.title}
             </a>
             <p
