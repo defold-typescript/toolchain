@@ -44,12 +44,12 @@ declare global {
      *
      * @returns a table with all camera URLs
      * @example
-     * ```lua
-     * for k,v in pairs(camera.get_cameras()) do
-     *     render.set_camera(v)
-     *     render.draw(...)
-     *     render.set_camera()
-     * end
+     * ```ts
+     * for (const camera_id of camera.get_cameras()) {
+     *   render.set_camera(camera_id);
+     *   render.draw(predicate);
+     *   render.set_camera();
+     * }
      * ```
      */
     function get_cameras(): Record<string | number, unknown>;
@@ -119,18 +119,27 @@ declare global {
      * @param camera - optional camera id
      * @returns the world coordinate
      * @example
-     * ```lua
-     * Place objects at the touch point with a random Z position, keeping them within the visible view zone.
-     *  function on_input(self, action_id, action)
-     *      if action_id == hash("touch") then
-     *          if action.pressed then
-     *              local percpective_camera = msg.url("#perspective_camera")
-     *              local random_z = math.random(camera.get_near_z(percpective_camera) + 0.01, camera.get_far_z(percpective_camera) - 0.01)
-     *              local world_position = camera.screen_to_world(vmath.vector3(action.screen_x, action.screen_y, random_z), percpective_camera)
-     *              go.set_position(world_position, "/go1")
-     *          end
-     *      end
-     *  end
+     * ```ts
+     * // Place objects at the touch point with a random Z position, keeping them
+     * // within the visible view zone.
+     * export default defineScript({
+     *   on_input(self, action_id, action) {
+     *     if (action_id === hash("touch")) {
+     *       if (action.pressed) {
+     *         const perspective_camera = msg.url("#perspective_camera");
+     *         const random_z = math.random(
+     *           camera.get_near_z(perspective_camera) + 0.01,
+     *           camera.get_far_z(perspective_camera) - 0.01,
+     *         );
+     *         const world_position = camera.screen_to_world(
+     *           vmath.vector3(action.screen_x, action.screen_y, random_z),
+     *           perspective_camera,
+     *         );
+     *         go.set_position(world_position, "/go1");
+     *       }
+     *     }
+     *   },
+     * });
      * ```
      */
     function screen_to_world(pos: Vector3, camera?: Url | number): Vector3;
@@ -143,16 +152,18 @@ declare global {
      * @param camera - optional camera id
      * @returns the world coordinate on the camera near plane
      * @example
-     * ```lua
-     * Place objects at the touch point.
-     *  function on_input(self, action_id, action)
-     *      if action_id == hash("touch") then
-     *          if action.pressed then
-     *              local world_position = camera.screen_xy_to_world(action.screen_x, action.screen_y)
-     *              go.set_position(world_position, "/go1")
-     *          end
-     *      end
-     *  end
+     * ```ts
+     * // Place objects at the touch point.
+     * export default defineScript({
+     *   on_input(self, action_id, action) {
+     *     if (action_id === hash("touch")) {
+     *       if (action.pressed) {
+     *         const world_position = camera.screen_xy_to_world(action.screen_x, action.screen_y);
+     *         go.set_position(world_position, "/go1");
+     *       }
+     *     }
+     *   },
+     * });
      * ```
      */
     function screen_xy_to_world(x: number, y: number, camera?: Url | number): Vector3;
@@ -220,11 +231,11 @@ declare global {
      * @param camera - optional camera id
      * @returns Screen position (x,y in pixels, z is view depth)
      * @example
-     * ```lua
-     * Convert go position into screen pisition
-     *  go.update_world_transform("/go1")
-     *  local world_pos = go.get_world_position("/go1")
-     *  local screen_pos = camera.world_to_screen(world_pos)
+     * ```ts
+     * // Convert a game object position into a screen position.
+     * go.update_world_transform("/go1");
+     * const world_pos = go.get_world_position("/go1");
+     * const screen_pos = camera.world_to_screen(world_pos);
      * ```
      */
     function world_to_screen(world_pos: Vector3, camera?: Url | number): Vector3;
