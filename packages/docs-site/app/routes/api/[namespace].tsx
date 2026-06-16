@@ -2,7 +2,12 @@ import { type ApiModule, htmlToDocText } from "@defold-typescript/types";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { apiPages } from "../../lib/api-content";
-import { type ApiPage, type ApiSymbol, apiModuleSymbols } from "../../lib/api-surface";
+import {
+  type ApiPage,
+  type ApiSymbol,
+  type ApiSymbolParam,
+  apiModuleSymbols,
+} from "../../lib/api-surface";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
 
@@ -22,6 +27,19 @@ function isEmptyModule(m: ApiModule): boolean {
   );
 }
 
+function paramBullet(p: ApiSymbolParam): string {
+  const parts: string[] = [];
+  if (p.name) parts.push(`\`${p.name}\`${p.isOptional ? "?" : ""}`);
+  if (p.types.length > 0) parts.push(`*${p.types.join(" | ")}*`);
+  let bullet = `- ${parts.join(" ")}`;
+  if (p.doc) bullet += ` — ${p.doc}`;
+  return bullet;
+}
+
+function paramSection(label: string, params: ApiSymbolParam[]): string {
+  return [`**${label}**`, "", ...params.map(paramBullet)].join("\n");
+}
+
 // One symbol, single column: the `### signature` heading is the title, and the
 // description + example are wrapped in an indented `.api-symbol-body` so the body
 // reads as subordinate to the title. The signature is not repeated as a code
@@ -32,6 +50,8 @@ function symbolBlock(symbol: ApiSymbol): string {
   const body: string[] = [];
   if (symbol.docMarkdown) body.push(symbol.docMarkdown);
   if (symbol.exampleMarkdown) body.push(symbol.exampleMarkdown);
+  if (symbol.parameters.length > 0) body.push(paramSection("Parameters", symbol.parameters));
+  if (symbol.returnValues.length > 0) body.push(paramSection("Returns", symbol.returnValues));
   if (body.length === 0) return heading;
   return [heading, "", '<div class="api-symbol-body">', "", body.join("\n\n"), "", "</div>"].join(
     "\n",
