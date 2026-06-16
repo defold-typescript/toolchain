@@ -156,6 +156,10 @@ header.topbar-critical .logo-mark {
 .prose li::marker {
   color: var(--color-text-faint);
 }
+.prose ul.not-prose {
+  list-style: none;
+  padding-left: 0;
+}
 .prose blockquote {
   margin: 0;
   padding: 0.4em 1em;

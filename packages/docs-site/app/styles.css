@@ -303,6 +303,15 @@
     color: var(--color-text-faint);
   }
 
+  /* This project hand-rolls `.prose` (no Tailwind typography plugin), so the
+     `not-prose` utility is inert and the `list-none`/`p-0` utilities lose to the
+     `.prose ul` rule above. Give card grids/lists an explicit, higher-specificity
+     opt-out so their `<li>`s carry no marker or gutter. */
+  .prose ul.not-prose {
+    list-style: none;
+    padding-left: 0;
+  }
+
   .prose blockquote {
     margin: 0;
     padding: 0.4em 1em;
@@ -421,25 +430,17 @@
     cursor: help;
   }
 
-  .prose .api-symbol {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    align-items: start;
-    margin-top: 2rem;
+  /* Each API symbol's body (description + example) is indented under its
+     signature heading so the title reads as the row's anchor and the content
+     hangs beneath it. */
+  .prose .api-symbol-body {
+    margin-top: 0.6em;
+    margin-left: 0.25rem;
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--color-border);
   }
 
-  @media (min-width: 1024px) {
-    .prose .api-symbol {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 2.5rem;
-    }
-  }
-
-  /* Both columns' first child carries no extra top gap so the heading and the
-     code rail align to the top of the row. */
-  .prose .api-symbol-doc > :first-child,
-  .prose .api-symbol-code > :first-child {
+  .prose .api-symbol-body > :first-child {
     margin-top: 0;
   }
 }
