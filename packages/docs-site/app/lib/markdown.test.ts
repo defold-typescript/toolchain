@@ -132,4 +132,40 @@ describe("renderMarkdown", () => {
     const html = await renderMarkdown("> [!NOTE]\n> Use `go.property`.\n");
     expect(html).toContain("<code>go.property</code>");
   });
+
+  const SIGNATURE = "foo.bar(x: string): number";
+
+  test("inline-highlights an h3 signature when highlightSignatureHeadings is set", async () => {
+    const html = await renderMarkdown(`### \`${SIGNATURE}\`\n`, {
+      highlightSignatureHeadings: true,
+    });
+    const h3 = html.slice(html.indexOf("<h3"), html.indexOf("</h3>") + "</h3>".length);
+    expect(h3).toContain('<code class="api-signature');
+    expect(h3).toContain("--shiki-light:");
+    expect(h3).not.toContain("<pre");
+    expect(h3).not.toContain("\n");
+  });
+
+  test("keeps the heading id stable whether or not the signature is highlighted", async () => {
+    const idOf = (html: string) => html.match(/<h3[^>]*\sid="([^"]+)"/)?.[1];
+    const off = await renderMarkdown(`### \`${SIGNATURE}\`\n`);
+    const on = await renderMarkdown(`### \`${SIGNATURE}\`\n`, { highlightSignatureHeadings: true });
+    expect(idOf(on)).toBeTruthy();
+    expect(idOf(on)).toBe(idOf(off));
+  });
+
+  test("leaves h3 inline code plain when the highlight option is off", async () => {
+    const html = await renderMarkdown(`### \`${SIGNATURE}\`\n`);
+    expect(html).not.toContain("api-signature");
+    expect(html).not.toContain("--shiki-light:");
+  });
+
+  test("extracts clean signature text from a highlighted heading for the TOC", async () => {
+    const html = await renderMarkdown(`### \`${SIGNATURE}\`\n`, {
+      highlightSignatureHeadings: true,
+    });
+    const headings = pageHeadings(html);
+    expect(headings).toHaveLength(1);
+    expect(headings[0]?.text).toBe(SIGNATURE);
+  });
 });
