@@ -112,7 +112,10 @@ function admonitionTitle(type: AlertType): string {
   return `<p class="admonition-title">${ALERT_ICONS[type]}<span>${ALERT_LABELS[type]}</span></p>\n`;
 }
 
-export async function renderMarkdown(markdown: string): Promise<string> {
+export async function renderMarkdown(
+  markdown: string,
+  opts: { highlightSignatureHeadings?: boolean } = {},
+): Promise<string> {
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
   // Slugify heading ids so the right-side TOC can link to them deterministically.
@@ -191,6 +194,33 @@ export async function renderMarkdown(markdown: string): Promise<string> {
       i++;
     }
   });
+  // API-page signatures are h3 inline-code (`### `ns.fn(...)``). Recolor them
+  // with the same Shiki dual-theme machinery as fenced blocks, but emit inline
+  // spans (no `<pre>`) so the heading stays one wrapping line. Runs after the
+  // rules above so the slug is already computed from the original heading text;
+  // the API route opts in, guide rendering stays plain.
+  if (opts.highlightSignatureHeadings) {
+    md.core.ruler.push("highlight-signature-headings", (state) => {
+      for (let i = 0; i < state.tokens.length; i++) {
+        const token = state.tokens[i];
+        if (token?.type !== "heading_open" || token.tag !== "h3") continue;
+        const inline = state.tokens[i + 1];
+        if (inline?.type !== "inline" || !inline.children) continue;
+        const idx = inline.children.findIndex((c) => c.type === "code_inline");
+        const child = inline.children[idx];
+        if (!child) continue;
+        const spans = highlighter.codeToHtml(child.content, {
+          lang: "ts",
+          themes: { light: LIGHT_THEME, dark: DARK_THEME },
+          defaultColor: false,
+          structure: "inline",
+        });
+        const replacement = new state.Token("html_inline", "", 0);
+        replacement.content = `<code class="api-signature shiki">${spans}</code>`;
+        inline.children[idx] = replacement;
+      }
+    });
+  }
   // "text" is a Shiki special language (always available) that Shiki's
   // fallbackLanguage type narrows to BundledLanguage and so omits.
   md.use(

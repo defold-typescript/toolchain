@@ -104,7 +104,7 @@ export default createRoute(
       );
     }
 
-    const html = await renderMarkdown(apiPageMarkdown(page));
+    const html = await renderMarkdown(apiPageMarkdown(page), { highlightSignatureHeadings: true });
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${page.module.namespace} API`,
       headings: pageHeadings(html),
