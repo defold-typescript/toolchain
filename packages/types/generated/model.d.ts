@@ -88,21 +88,31 @@ declare global {
      * The callback is not called (or message sent) if the animation is
      * cancelled with model.cancel. The callback is called (or message sent) only for
      * animations that play with the following playback modes:
+     *
      * - `go.PLAYBACK_ONCE_FORWARD`
+     *
      * - `go.PLAYBACK_ONCE_BACKWARD`
+     *
      * - `go.PLAYBACK_ONCE_PINGPONG`
      *
      * @param url - the model for which to play the animation
      * @param anim_id - id of the animation to play
      * @param playback - playback mode of the animation
+     *
      * - `go.PLAYBACK_ONCE_FORWARD`
+     *
      * - `go.PLAYBACK_ONCE_BACKWARD`
+     *
      * - `go.PLAYBACK_ONCE_PINGPONG`
+     *
      * - `go.PLAYBACK_LOOP_FORWARD`
+     *
      * - `go.PLAYBACK_LOOP_BACKWARD`
+     *
      * - `go.PLAYBACK_LOOP_PINGPONG`
      * @param play_properties - optional table with properties
      * Play properties table:
+     *
      * `blend_duration`
      * number Duration of a linear blend between the current and new animation.
      * `offset`
@@ -110,14 +120,18 @@ declare global {
      * `playback_rate`
      * number The rate with which the animation will be played. Must be positive.
      * @param complete_function - function to call when the animation has completed.
+     *
      * `self`
      * object The current object.
      * `message_id`
      * hash The name of the completion message, `"model_animation_done"`.
      * `message`
      * table Information about the completion:
+     *
      * - hash `animation_id` - the animation that was completed.
+     *
      * - constant `playback` - the playback mode for the animation.
+     *
      * `sender`
      * url The invoker of the callback: the model component.
      * @example

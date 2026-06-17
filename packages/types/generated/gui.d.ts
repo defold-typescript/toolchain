@@ -448,32 +448,59 @@ declare global {
      *
      * @param node - node to animate
      * @param property - property to animate
+     *
      * - `"position"`
+     *
      * - `"rotation"`
+     *
      * - `"euler"`
+     *
      * - `"scale"`
+     *
      * - `"color"`
+     *
      * - `"outline"`
+     *
      * - `"shadow"`
+     *
      * - `"size"`
+     *
      * - `"fill_angle"` (pie)
+     *
      * - `"inner_radius"` (pie)
+     *
      * - `"leading"` (text)
+     *
      * - `"tracking"` (text)
+     *
      * - `"slice9"` (slice9)
+     *
      * The following property constants are defined equaling the corresponding property string names.
+     *
      * - `gui.PROP_POSITION`
+     *
      * - `gui.PROP_ROTATION`
+     *
      * - `gui.PROP_EULER`
+     *
      * - `gui.PROP_SCALE`
+     *
      * - `gui.PROP_COLOR`
+     *
      * - `gui.PROP_OUTLINE`
+     *
      * - `gui.PROP_SHADOW`
+     *
      * - `gui.PROP_SIZE`
+     *
      * - `gui.PROP_FILL_ANGLE`
+     *
      * - `gui.PROP_INNER_RADIUS`
+     *
      * - `gui.PROP_LEADING`
+     *
      * - `gui.PROP_TRACKING`
+     *
      * - `gui.PROP_SLICE9`
      * @param to - target property value
      * @param easing - easing to use during animation.
@@ -484,11 +511,17 @@ declare global {
      * @param complete_function - function to call when the
      * animation has completed
      * @param playback - playback mode
+     *
      * - `gui.PLAYBACK_ONCE_FORWARD`
+     *
      * - `gui.PLAYBACK_ONCE_BACKWARD`
+     *
      * - `gui.PLAYBACK_ONCE_PINGPONG`
+     *
      * - `gui.PLAYBACK_LOOP_FORWARD`
+     *
      * - `gui.PLAYBACK_LOOP_BACKWARD`
+     *
      * - `gui.PLAYBACK_LOOP_PINGPONG`
      * @example
      * ```ts
@@ -536,18 +569,31 @@ declare global {
      *
      * @param node - node that should have its animation canceled
      * @param property - optional property for which the animation should be canceled
+     *
      * - `"position"`
+     *
      * - `"rotation"`
+     *
      * - `"euler"`
+     *
      * - `"scale"`
+     *
      * - `"color"`
+     *
      * - `"outline"`
+     *
      * - `"shadow"`
+     *
      * - `"size"`
+     *
      * - `"fill_angle"` (pie)
+     *
      * - `"inner_radius"` (pie)
+     *
      * - `"leading"` (text)
+     *
      * - `"tracking"` (text)
+     *
      * - `"slice9"` (slice9)
      * @example
      * ```ts
@@ -658,19 +704,33 @@ declare global {
      * you can use gui.get instead and supply the property as a string or a hash.
      * While this function is similar to go.get, there are a few more restrictions
      * when operating in the gui namespace. Most notably, only these explicitly named properties are supported:
+     *
      * - `"position"`
+     *
      * - `"rotation"`
+     *
      * - `"euler"`
+     *
      * - `"scale"`
+     *
      * - `"color"`
+     *
      * - `"outline"`
+     *
      * - `"shadow"`
+     *
      * - `"size"`
+     *
      * - `"fill_angle"` (pie)
+     *
      * - `"inner_radius"` (pie)
+     *
      * - `"leading"` (text)
+     *
      * - `"tracking"` (text)
+     *
      * - `"slice9"` (slice9)
+     *
      * The value returned will either be a vmath.vector4 or a single number, i.e getting the "position"
      * property will return a vec4 while getting the "position.x" property will return a single value.
      * You can also use this function to get material constants.
@@ -694,8 +754,11 @@ declare global {
      *
      * @param node - node from which to get the adjust mode (node)
      * @returns the current adjust mode
+     *
      * - `gui.ADJUST_FIT`
+     *
      * - `gui.ADJUST_ZOOM`
+     *
      * - `gui.ADJUST_STRETCH`
      */
     function get_adjust_mode(node: Opaque<"node">): Opaque<"constant">;
@@ -712,10 +775,15 @@ declare global {
      *
      * @param node - node from which to get the blend mode
      * @returns blend mode
+     *
      * - `gui.BLEND_ALPHA`
+     *
      * - `gui.BLEND_ADD`
+     *
      * - `gui.BLEND_ADD_ALPHA`
+     *
      * - `gui.BLEND_MULT`
+     *
      * - `gui.BLEND_SCREEN`
      */
     function get_blend_mode(node: Opaque<"node">): Opaque<"constant">;
@@ -731,7 +799,9 @@ declare global {
      *
      * @param node - node from which to get the clipping mode
      * @returns clipping mode
+     *
      * - `gui.CLIPPING_MODE_NONE`
+     *
      * - `gui.CLIPPING_MODE_STENCIL`
      */
     function get_clipping_mode(node: Opaque<"node">): Opaque<"constant">;
@@ -745,14 +815,19 @@ declare global {
     /**
      * Returns the color of the supplied node. The components
      * of the returned vector4 contains the color channel values:
+     *
      * Component
      * Color value
+     *
      * x
      * Red value
+     *
      * y
      * Green value
+     *
      * z
      * Blue value
+     *
      * w
      * Alpha value
      *
@@ -950,7 +1025,9 @@ declare global {
      *
      * @param node - node from where to get the outer bounds mode
      * @returns the outer bounds mode of the pie node:
+     *
      * - `gui.PIEBOUNDS_RECTANGLE`
+     *
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
     function get_outer_bounds(node: Opaque<"node">): Opaque<"constant">;
@@ -990,14 +1067,23 @@ declare global {
      *
      * @param node - node to get pivot from
      * @returns pivot constant
+     *
      * - `gui.PIVOT_CENTER`
+     *
      * - `gui.PIVOT_N`
+     *
      * - `gui.PIVOT_NE`
+     *
      * - `gui.PIVOT_E`
+     *
      * - `gui.PIVOT_SE`
+     *
      * - `gui.PIVOT_S`
+     *
      * - `gui.PIVOT_SW`
+     *
      * - `gui.PIVOT_W`
+     *
      * - `gui.PIVOT_NW`
      */
     function get_pivot(node: Opaque<"node">): Opaque<"constant">;
@@ -1057,7 +1143,9 @@ declare global {
      *
      * @param node - node from which to get the size mode (node)
      * @returns the current size mode
+     *
      * - `gui.SIZE_MODE_MANUAL`
+     *
      * - `gui.SIZE_MODE_AUTO`
      */
     function get_size_mode(node: Opaque<"node">): Opaque<"constant">;
@@ -1123,8 +1211,11 @@ declare global {
      *
      * @param node - node to get x-anchor from
      * @returns anchor constant
+     *
      * - `gui.ANCHOR_NONE`
+     *
      * - `gui.ANCHOR_LEFT`
+     *
      * - `gui.ANCHOR_RIGHT`
      */
     function get_xanchor(node: Opaque<"node">): Opaque<"constant">;
@@ -1133,8 +1224,11 @@ declare global {
      *
      * @param node - node to get y-anchor from
      * @returns anchor constant
+     *
      * - `gui.ANCHOR_NONE`
+     *
      * - `gui.ANCHOR_TOP`
+     *
      * - `gui.ANCHOR_BOTTOM`
      */
     function get_yanchor(node: Opaque<"node">): Opaque<"constant">;
@@ -1224,9 +1318,13 @@ declare global {
      * @param width - texture width
      * @param height - texture height
      * @param type - texture type
+     *
      * - `"rgb"` - RGB
+     *
      * - `"rgba"` - RGBA
+     *
      * - `"l"` - LUMINANCE
+     *
      * - `"astc"` - ASTC compressed format
      * @param buffer - texture data
      * @param flip - flip texture vertically
@@ -1287,80 +1385,119 @@ declare global {
      * Mouse movement is specifically handled and uses `nil` as its `action_id`.
      * The `action` only contains positional parameters in this case, such as x and y of the pointer.
      * Here is a brief description of the available table fields:
+     *
      * Field
      * Description
+     *
      * `value`
      * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
+     *
      * `pressed`
      * If the input was pressed this frame. This is not present for mouse movement and text input.
+     *
      * `released`
      * If the input was released this frame. This is not present for mouse movement and text input.
+     *
      * `repeated`
      * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
+     *
      * `x`
      * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `y`
      * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_x`
      * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_y`
      * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `dx`
      * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `dy`
      * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_dx`
      * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_dy`
      * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `gamepad`
      * The index of the gamepad device that provided the input. See table below about gamepad input.
+     *
      * `touch`
      * List of touch input, one element per finger, if present. See table below about touch input
+     *
      * `text`
      * Text input from a (virtual) keyboard or similar.
+     *
      * `marked_text`
      * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
+     *
      * Gamepad specific fields:
+     *
      * Field
      * Description
+     *
      * `gamepad`
      * The index of the gamepad device that provided the input.
+     *
      * `userid`
      * Id of the user associated with the controller. Usually only relevant on consoles.
+     *
      * `gamepad_unknown`
      * True if the inout originated from an unknown/unmapped gamepad.
+     *
      * `gamepad_name`
      * Name of the gamepad
+     *
      * `gamepad_axis`
      * List of gamepad axis values. For raw gamepad input only.
+     *
      * `gamepadhats`
      * List of gamepad hat values. For raw gamepad input only.
+     *
      * `gamepad_buttons`
      * List of gamepad button values. For raw gamepad input only.
+     *
      * Touch input table:
+     *
      * Field
      * Description
+     *
      * `id`
      * A number identifying the touch input during its duration.
+     *
      * `pressed`
      * True if the finger was pressed this frame.
+     *
      * `released`
      * True if the finger was released this frame.
+     *
      * `tap_count`
      * Number of taps, one for single, two for double-tap, etc
+     *
      * `x`
      * The x touch location.
+     *
      * `y`
      * The y touch location.
+     *
      * `dx`
      * The change in x value.
+     *
      * `dy`
      * The change in y value.
+     *
      * `acc_x`
      * Accelerometer x value (if present).
+     *
      * `acc_y`
      * Accelerometer y value (if present).
+     *
      * `acc_z`
      * Accelerometer z value (if present).
      *
@@ -1430,11 +1567,16 @@ declare global {
      * @param node - node to set animation for
      * @param animation - animation id
      * @param complete_function - optional function to call when the animation has completed
+     *
      * `self`
+     *
      * object The current object.
+     *
      * `node`
+     *
      * node The node that is animated.
      * @param play_properties - optional table with properties
+     *
      * `offset`
      * number The normalized initial value of the animation cursor when the animation starts playing
      * `playback_rate`
@@ -1468,6 +1610,7 @@ declare global {
      *
      * @param node - node to play particle fx for
      * @param emitter_state_function - optional callback function that will be called when an emitter attached to this particlefx changes state.
+     *
      * `self`
      * object The current object
      * `node`
@@ -1476,9 +1619,13 @@ declare global {
      * hash The id of the emitter
      * `state`
      * constant the new state of the emitter:
+     *
      * - `particlefx.EMITTER_STATE_SLEEPING`
+     *
      * - `particlefx.EMITTER_STATE_PRESPAWN`
+     *
      * - `particlefx.EMITTER_STATE_SPAWNING`
+     *
      * - `particlefx.EMITTER_STATE_POSTSPAWN`
      * @example
      * ```ts
@@ -1534,19 +1681,33 @@ declare global {
      * you can use gui.set instead and supply the property as a string or a hash.
      * While this function is similar to go.get and go.set, there are a few more restrictions
      * when operating in the gui namespace. Most notably, only these named properties identifiers are supported:
+     *
      * - `"position"`
+     *
      * - `"rotation"`
+     *
      * - `"euler"`
+     *
      * - `"scale"`
+     *
      * - `"color"`
+     *
      * - `"outline"`
+     *
      * - `"shadow"`
+     *
      * - `"size"`
+     *
      * - `"fill_angle"` (pie)
+     *
      * - `"inner_radius"` (pie)
+     *
      * - `"leading"` (text)
+     *
      * - `"tracking"` (text)
+     *
      * - `"slice9"` (slice9)
+     *
      * The value to set must either be a vmath.vector4, vmath.vector3, vmath.quat or a single number and depends on the property name you want to set.
      * I.e when setting the "position" property, you need to use a vmath.vector4 and when setting a single component of the property,
      * such as "position.x", you need to use a single value.
@@ -1618,8 +1779,11 @@ declare global {
      *
      * @param node - node to set adjust mode for
      * @param adjust_mode - adjust mode to set
+     *
      * - `gui.ADJUST_FIT`
+     *
      * - `gui.ADJUST_ZOOM`
+     *
      * - `gui.ADJUST_STRETCH`
      */
     function set_adjust_mode(node: Opaque<"node">, adjust_mode: Opaque<"constant">): void;
@@ -1636,10 +1800,15 @@ declare global {
      *
      * @param node - node to set blend mode for
      * @param blend_mode - blend mode to set
+     *
      * - `gui.BLEND_ALPHA`
+     *
      * - `gui.BLEND_ADD`
+     *
      * - `gui.BLEND_ADD_ALPHA`
+     *
      * - `gui.BLEND_MULT`
+     *
      * - `gui.BLEND_SCREEN`
      */
     function set_blend_mode(node: Opaque<"node">, blend_mode: Opaque<"constant">): void;
@@ -1655,7 +1824,9 @@ declare global {
      *
      * @param node - node to set clipping mode for
      * @param clipping_mode - clipping mode to set
+     *
      * - `gui.CLIPPING_MODE_NONE`
+     *
      * - `gui.CLIPPING_MODE_STENCIL`
      */
     function set_clipping_mode(node: Opaque<"node">, clipping_mode: Opaque<"constant">): void;
@@ -1669,14 +1840,19 @@ declare global {
     /**
      * Sets the color of the supplied node. The components
      * of the supplied vector3 or vector4 should contain the color channel values:
+     *
      * Component
      * Color value
+     *
      * x
      * Red value
+     *
      * y
      * Green value
+     *
      * z
      * Blue value
+     *
      * w vector4
      * Alpha value
      *
@@ -1816,7 +1992,9 @@ declare global {
      *
      * @param node - node for which to set the outer bounds mode
      * @param bounds_mode - the outer bounds mode of the pie node:
+     *
      * - `gui.PIEBOUNDS_RECTANGLE`
+     *
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
     function set_outer_bounds(node: Opaque<"node">, bounds_mode: Opaque<"constant">): void;
@@ -1855,14 +2033,23 @@ declare global {
      *
      * @param node - node to set pivot for
      * @param pivot - pivot constant
+     *
      * - `gui.PIVOT_CENTER`
+     *
      * - `gui.PIVOT_N`
+     *
      * - `gui.PIVOT_NE`
+     *
      * - `gui.PIVOT_E`
+     *
      * - `gui.PIVOT_SE`
+     *
      * - `gui.PIVOT_S`
+     *
      * - `gui.PIVOT_SW`
+     *
      * - `gui.PIVOT_W`
+     *
      * - `gui.PIVOT_NW`
      */
     function set_pivot(node: Opaque<"node">, pivot: Opaque<"constant">): void;
@@ -1895,9 +2082,13 @@ declare global {
      * Sets how the safe area is applied to this gui scene.
      *
      * @param mode - safe area mode
+     *
      * - `gui.SAFE_AREA_NONE`
+     *
      * - `gui.SAFE_AREA_LONG`
+     *
      * - `gui.SAFE_AREA_SHORT`
+     *
      * - `gui.SAFE_AREA_BOTH`
      */
     function set_safe_area_mode(mode: Opaque<"constant">): void;
@@ -1941,7 +2132,9 @@ declare global {
      *
      * @param node - node to set size mode for
      * @param size_mode - size mode to set
+     *
      * - `gui.SIZE_MODE_MANUAL`
+     *
      * - `gui.SIZE_MODE_AUTO`
      */
     function set_size_mode(node: Opaque<"node">, size_mode: Opaque<"constant">): void;
@@ -1996,9 +2189,13 @@ declare global {
      * @param width - texture width
      * @param height - texture height
      * @param type - texture type
+     *
      * - `"rgb"` - RGB
+     *
      * - `"rgba"` - RGBA
+     *
      * - `"l"` - LUMINANCE
+     *
      * - `"astc"` - ASTC compressed format
      * @param buffer - texture data
      * @param flip - flip texture vertically
@@ -2053,8 +2250,11 @@ declare global {
      *
      * @param node - node to set x-anchor for
      * @param anchor - anchor constant
+     *
      * - `gui.ANCHOR_NONE`
+     *
      * - `gui.ANCHOR_LEFT`
+     *
      * - `gui.ANCHOR_RIGHT`
      */
     function set_xanchor(node: Opaque<"node">, anchor: Opaque<"constant">): void;
@@ -2063,8 +2263,11 @@ declare global {
      *
      * @param node - node to set y-anchor for
      * @param anchor - anchor constant
+     *
      * - `gui.ANCHOR_NONE`
+     *
      * - `gui.ANCHOR_TOP`
+     *
      * - `gui.ANCHOR_BOTTOM`
      */
     function set_yanchor(node: Opaque<"node">, anchor: Opaque<"constant">): void;
@@ -2075,9 +2278,13 @@ declare global {
      * This function is only available on iOS and Android. .
      *
      * @param type - keyboard type
+     *
      * - `gui.KEYBOARD_TYPE_DEFAULT`
+     *
      * - `gui.KEYBOARD_TYPE_EMAIL`
+     *
      * - `gui.KEYBOARD_TYPE_NUMBER_PAD`
+     *
      * - `gui.KEYBOARD_TYPE_PASSWORD`
      * @param autoclose - if the keyboard should automatically close when clicking outside
      */
@@ -2087,6 +2294,7 @@ declare global {
      *
      * @param node - node to stop particle fx for
      * @param options - options when stopping the particle fx. Supported options:
+     *
      * - boolean `clear`: instantly clear spawned particles
      */
     function stop_particlefx(node: Opaque<"node">, options?: { clear?: boolean }): void;

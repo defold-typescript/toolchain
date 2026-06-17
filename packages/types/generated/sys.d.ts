@@ -87,6 +87,7 @@ declare global {
      *
      * @param app_string - platform specific string with application package or query, see above for details.
      * @returns table with application information in the following fields:
+     *
      * `installed`
      * boolean `true` if the application is installed, `false` otherwise.
      * @example
@@ -213,8 +214,11 @@ declare global {
      * On desktop, this function always return `sys.NETWORK_CONNECTED`.
      *
      * @returns network connectivity status:
+     *
      * - `sys.NETWORK_DISCONNECTED` (no network connection is found)
+     *
      * - `sys.NETWORK_CONNECTED_CELLULAR` (connected through mobile cellular)
+     *
      * - `sys.NETWORK_CONNECTED` (otherwise, Wifi)
      * @example
      * ```ts
@@ -229,6 +233,7 @@ declare global {
      * Returns a table with engine information.
      *
      * @returns table with engine information in the following fields:
+     *
      * `version`
      * string The current Defold engine version, i.e. "1.2.96"
      * `version_sha1`
@@ -267,6 +272,7 @@ declare global {
      * Returns an array of tables with information on network interfaces.
      *
      * @returns an array of tables. Each table entry contain the following fields:
+     *
      * `name`
      * string Interface name
      * `address`
@@ -327,6 +333,7 @@ declare global {
      * @param options - optional options table
      * - ignore_secure boolean this flag ignores values might be secured by OS e.g. `device_ident`
      * @returns table with system information in the following fields:
+     *
      * `device_model`
      * string Only available on iOS and Android.
      * `manufacturer`
@@ -420,11 +427,16 @@ declare global {
      *
      * @param path - the path to load the buffer from
      * @param status_callback - A status callback that will be invoked when a request has been handled, or an error occured. The result is a table containing:
+     *
      * `status`
      * number The status of the request, supported values are:
+     *
      * - `resource.REQUEST_STATUS_FINISHED`
+     *
      * - `resource.REQUEST_STATUS_ERROR_IO_ERROR`
+     *
      * - `resource.REQUEST_STATUS_ERROR_NOT_FOUND`
+     *
      * `buffer`
      * buffer If the request was successfull, this will contain the request payload in a buffer object, and nil otherwise. Make sure to check the status before doing anything with the buffer value!
      * @returns a handle to the request
@@ -601,6 +613,7 @@ declare global {
      * The error handler is a function which is called whenever a lua runtime error occurs.
      *
      * @param error_handler - the function to be called on error
+     *
      * `source`
      * string The runtime context of the error. Currently, this is always `"lua"`.
      * `message`

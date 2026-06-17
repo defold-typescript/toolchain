@@ -213,22 +213,34 @@ declare global {
      * @param url - url of the game object or component having the property
      * @param property - id of the property to animate
      * @param playback - playback mode of the animation
+     *
      * - `go.PLAYBACK_ONCE_FORWARD`
+     *
      * - `go.PLAYBACK_ONCE_BACKWARD`
+     *
      * - `go.PLAYBACK_ONCE_PINGPONG`
+     *
      * - `go.PLAYBACK_LOOP_FORWARD`
+     *
      * - `go.PLAYBACK_LOOP_BACKWARD`
+     *
      * - `go.PLAYBACK_LOOP_PINGPONG`
      * @param to - target property value
      * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
      * @param duration - duration of the animation in seconds
      * @param delay - delay before the animation starts in seconds
      * @param complete_function - optional function to call when the animation has completed
+     *
      * `self`
+     *
      * object The current object.
+     *
      * `url`
+     *
      * url The game object or component instance for which the property is animated.
+     *
      * `property`
+     *
      * hash The id of the animated property.
      * @example
      * ```ts
@@ -350,7 +362,9 @@ declare global {
     /**
      * Returns or constructs an instance identifier. The instance id is a hash
      * of the absolute path to the instance.
+     *
      * - If `path` is specified, it can either be absolute or relative to the instance of the calling script.
+     *
      * - If `path` is not specified, the id of the game object instance the script is attached to will be returned.
      *
      * @param path - path of the instance for which to return the id
@@ -573,80 +587,119 @@ declare global {
      * Mouse movement is specifically handled and uses `nil` as its `action_id`.
      * The `action` only contains positional parameters in this case, such as x and y of the pointer.
      * Here is a brief description of the available table fields:
+     *
      * Field
      * Description
+     *
      * `value`
      * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
+     *
      * `pressed`
      * If the input was pressed this frame. This is not present for mouse movement and text input.
+     *
      * `released`
      * If the input was released this frame. This is not present for mouse movement and text input.
+     *
      * `repeated`
      * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
+     *
      * `x`
      * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `y`
      * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_x`
      * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_y`
      * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `dx`
      * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `dy`
      * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_dx`
      * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `screen_dy`
      * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+     *
      * `gamepad`
      * The index of the gamepad device that provided the input. See table below about gamepad input.
+     *
      * `touch`
      * List of touch input, one element per finger, if present. See table below about touch input
+     *
      * `text`
      * Text input from a (virtual) keyboard or similar.
+     *
      * `marked_text`
      * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
+     *
      * Gamepad specific fields:
+     *
      * Field
      * Description
+     *
      * `gamepad`
      * The index of the gamepad device that provided the input.
+     *
      * `userid`
      * Id of the user associated with the controller. Usually only relevant on consoles.
+     *
      * `gamepad_unknown`
      * True if the inout originated from an unknown/unmapped gamepad.
+     *
      * `gamepad_name`
      * Name of the gamepad
+     *
      * `gamepad_axis`
      * List of gamepad axis values. For raw gamepad input only.
+     *
      * `gamepadhats`
      * List of gamepad hat values. For raw gamepad input only.
+     *
      * `gamepad_buttons`
      * List of gamepad button values. For raw gamepad input only.
+     *
      * Touch input table:
+     *
      * Field
      * Description
+     *
      * `id`
      * A number identifying the touch input during its duration.
+     *
      * `pressed`
      * True if the finger was pressed this frame.
+     *
      * `released`
      * True if the finger was released this frame.
+     *
      * `tap_count`
      * Number of taps, one for single, two for double-tap, etc
+     *
      * `x`
      * The x touch location.
+     *
      * `y`
      * The y touch location.
+     *
      * `dx`
      * The change in x value.
+     *
      * `dy`
      * The change in y value.
+     *
      * `acc_x`
      * Accelerometer x value (if present).
+     *
      * `acc_y`
      * Accelerometer y value (if present).
+     *
      * `acc_z`
      * Accelerometer z value (if present).
      *
