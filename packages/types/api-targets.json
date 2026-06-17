@@ -80,7 +80,12 @@
       ],
       "luaStdlib": [
         { "namespace": "base", "fixture": "base_doc.json" },
-        { "namespace": "bit", "fixture": "bit_doc.json" }
+        { "namespace": "bit", "fixture": "bit_doc.json" },
+        { "namespace": "math", "fixture": "math_doc.json" },
+        { "namespace": "os", "fixture": "os_doc.json" },
+        { "namespace": "string", "fixture": "string_doc.json" },
+        { "namespace": "table", "fixture": "table_doc.json" },
+        { "namespace": "coroutine", "fixture": "coroutine_doc.json" }
       ]
     },
     {
