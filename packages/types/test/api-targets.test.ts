@@ -62,6 +62,20 @@ describe("api-targets registry", () => {
     }
   });
 
+  test("b2d.body module references fixtures/b2d_body_doc.json and its committed .d.ts byte-matches regen", async () => {
+    const target = loadApiTargets().find((t) => t.default === true);
+    if (!target) throw new Error("no default target");
+    const module = target.modules.find((m) => m.namespace === "b2d.body");
+    if (!module) throw new Error("no b2d.body module in default target");
+    const fixturePath = resolve(PACKAGE_ROOT, target.fixturesDir, module.fixture);
+    expect(existsSync(fixturePath)).toBe(true);
+    const entry = loadTargetModules(target).find((e) => e.namespace === "b2d.body");
+    if (!entry) throw new Error("no b2d.body entry from loadTargetModules");
+    const { contents: fresh } = generateModuleDeclaration(entry);
+    const committed = await Bun.file(resolve(GENERATED, entry.outFile)).text();
+    expect(committed).toBe(fresh);
+  });
+
   test("every registry module regenerates byte-for-byte", async () => {
     for (const target of loadApiTargets().filter((t) => t.source == null)) {
       for (const entry of loadTargetModules(target)) {
