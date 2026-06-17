@@ -56,15 +56,20 @@ export interface ApiSymbol {
   returnValues: ApiSymbolParam[];
 }
 
+function normalizeTypes(types: string[]): string[] {
+  return types.map((t) => t.trim()).filter((t) => t.length > 0);
+}
+
 function typeList(types: string[]): string {
-  return types.length > 0 ? types.join(" | ") : "unknown";
+  const real = normalizeTypes(types);
+  return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
 function projectParams(list: ApiParameter[]): ApiSymbolParam[] {
   return list.map((p) => ({
     name: p.name,
     doc: htmlToDocText(p.doc),
-    types: p.types,
+    types: normalizeTypes(p.types),
     isOptional: p.isOptional,
   }));
 }
