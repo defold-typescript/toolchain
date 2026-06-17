@@ -1389,6 +1389,30 @@
       "ts": "// Deserialize a table that was previously serialized:\nconst buffer = sys.serialize(my_table);\nconst table = sys.deserialize(buffer);"
     }
   ],
+  "sys.load_buffer": [
+    {
+      "sourceHash": "106462121a6dfc78",
+      "ts": "// Load binary data from a custom project resource:\nconst my_buffer = sys.load_buffer(\"/assets/my_level_data.bin\");\nconst data_str = buffer.get_bytes(my_buffer, \"data\");\nconst has_my_header = data_str.slice(0, 6) === \"D3F0LD\";\n\n// Load binary data from non-custom resource files on disk:\nconst asset_1 = sys.load_buffer(\"folder_next_to_binary/my_level_asset.txt\");\nconst asset_2 = sys.load_buffer(\"/my/absolute/path\");"
+    }
+  ],
+  "sys.load_buffer_async": [
+    {
+      "sourceHash": "6a383bca91cf11eb",
+      "ts": "// Load binary data from a custom project resource and update a texture resource:\nfunction my_callback(self, request_id, result) {\n  if (result.status === resource.REQUEST_STATUS_FINISHED) {\n    resource.set_texture(\"/my_texture\", {}, result.buf); // texture args\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);\n\n// Load binary data from non-custom resource files on disk:\nfunction my_callback(self, request_id, result) {\n  if (result.status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === self.first_asset) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === self.second_asset) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init(self) {\n    self.first_asset = hash(\"folder_next_to_binary/my_level_asset.bin\");\n    self.second_asset = hash(\"/some_absolute_path/my_level.bin\");\n    self.first_request = sys.load_buffer_async(self.first_asset, my_callback);\n    self.second_request = sys.load_buffer_async(self.second_asset, my_callback);\n  },\n});"
+    }
+  ],
+  "sys.set_engine_throttle": [
+    {
+      "sourceHash": "66eae5cfa23de217",
+      "ts": "// Disable throttling\nsys.set_engine_throttle(false);\n\n// Enable throttling\nsys.set_engine_throttle(true, 1.5);"
+    }
+  ],
+  "sys.set_render_enable": [
+    {
+      "sourceHash": "aa4a8e62d5eddb0b",
+      "ts": "// Disable rendering\nsys.set_render_enable(false);"
+    }
+  ],
   "window.set_listener": [
     {
       "sourceHash": "5075cb14faa9510b",
