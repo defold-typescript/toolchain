@@ -18,10 +18,15 @@
         "defold-typescript": "./dist/bin.js",
       },
       "dependencies": {
+        "@defold-typescript/docs": "workspace:*",
         "@defold-typescript/transpiler": "workspace:*",
         "@defold-typescript/types": "workspace:*",
         "@inquirer/prompts": "^7.0.0",
       },
+    },
+    "packages/docs": {
+      "name": "@defold-typescript/docs",
+      "version": "0.0.0",
     },
     "packages/docs-site": {
       "name": "@defold-typescript/docs-site",
@@ -113,6 +118,8 @@
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.16", "", { "os": "win32", "cpu": "x64" }, "sha512-Kp85jgoBHa05gix6UIRjfCDiUV3w/8VIdZ247VyyO2gEjaw12WEVhdIjlxp/AMzXxqxQwbxNTDVZ3Mwd2RG5rw=="],
 
     "@defold-typescript/cli": ["@defold-typescript/cli@workspace:packages/cli"],
+
+    "@defold-typescript/docs": ["@defold-typescript/docs@workspace:packages/docs"],
 
     "@defold-typescript/docs-site": ["@defold-typescript/docs-site@workspace:packages/docs-site"],
 

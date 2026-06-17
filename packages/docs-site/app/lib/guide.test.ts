@@ -3,7 +3,7 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { listGuidePages } from "./guide";
 
-const GUIDE_DIR = join(import.meta.dir, "../../../../docs/guide");
+const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
 describe("listGuidePages", () => {
   test("returns one entry per docs/guide/*.md", () => {

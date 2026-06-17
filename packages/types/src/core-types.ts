@@ -17,7 +17,7 @@ export interface Vector3 {
    * @remarks
    * Prefer `v.unm()` over `-v` — TypeScript does not flag unary `-` on object
    * types and silently produces `number`. See
-   * `docs/guide/typescript-gotchas.md` for the full story.
+   * `packages/docs/guide/typescript-gotchas.md` for the full story.
    */
   unm: LuaNegationMethod<Vector3>;
 }
@@ -35,7 +35,7 @@ export interface Vector4 {
    * @remarks
    * Prefer `v.unm()` over `-v` — TypeScript does not flag unary `-` on object
    * types and silently produces `number`. See
-   * `docs/guide/typescript-gotchas.md` for the full story.
+   * `packages/docs/guide/typescript-gotchas.md` for the full story.
    */
   unm: LuaNegationMethod<Vector4>;
 }
