@@ -91,9 +91,9 @@ describe("buildSymbolIndex", () => {
         properties: [{ name: "position", brief: "p", description: "", types: [] }],
       }),
     ]);
-    expect(index["go.var_a"]?.route).toBe("/api/go#vara-any");
+    expect(index["go.var_a"]?.route).toBe("/api/go#vara-unknown");
     expect(index["go.CONST_B"]?.route).toBe("/api/go#goconstb");
-    expect(index["go.position"]?.route).toBe("/api/go#position-any");
+    expect(index["go.position"]?.route).toBe("/api/go#position-unknown");
   });
 
   test("prefers description over brief for the entry text", () => {
