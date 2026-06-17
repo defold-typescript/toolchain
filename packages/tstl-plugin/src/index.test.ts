@@ -55,4 +55,23 @@ describe("tstl-plugin", () => {
     const { service, base } = decoratedService("export const x = 1;");
     expect(service.getSemanticDiagnostics("main.ts")).toEqual(base);
   });
+
+  test("forwards a non-overridden member to the base, preserving `this` and arguments", () => {
+    const calls: { thisArg: unknown; args: unknown[] }[] = [];
+    const base = {
+      getProgram: () => undefined,
+      getSemanticDiagnostics: () => [],
+      getCompletionsAtPosition(this: unknown, fileName: string, position: number) {
+        calls.push({ thisArg: this, args: [fileName, position] });
+        return { entries: [fileName, position] };
+      },
+    } as unknown as ts.LanguageService;
+    const info = { languageService: base } as unknown as ts.server.PluginCreateInfo;
+    const proxy = init({ typescript: ts }).create(info);
+    const result = proxy.getCompletionsAtPosition("main.ts", 7, undefined, undefined);
+    expect(result).toEqual({ entries: ["main.ts", 7] } as unknown as typeof result);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.thisArg).toBe(base);
+    expect(calls[0]?.args).toEqual(["main.ts", 7]);
+  });
 });
