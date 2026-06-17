@@ -104,9 +104,6 @@ export const IGNORED_UPSTREAM: ReadonlyMap<string, string> = new Map([
     "builtins",
     "global Defold builtins (hash/pprint/…) typed as ambient globals, not a `builtins.*` namespace",
   ],
-  ["debug", "Lua standard library, typed by the lua-types dependency"],
-  ["io", "Lua standard library, typed by the lua-types dependency"],
-  ["package", "Lua standard library, typed by the lua-types dependency"],
 ]);
 
 // Pure-Lua / LuaJIT surfaces Defold documents (https://defold.com/ref/stable/base-lua/,
@@ -129,6 +126,12 @@ export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
   entry("string", "doc/lua_string.doc_h_doc.json"),
   entry("table", "doc/lua_table.doc_h_doc.json"),
   entry("coroutine", "doc/lua_coroutine.doc_h_doc.json"),
+  // Sandboxed-runtime stdlib surfaces. Defold sandboxes the Lua VM, but the pinned
+  // 1.12.4 ref-doc.zip documents all three with real function elements; types stay
+  // owned by lua-types (core/{debug,io}.d.ts + core/modules.d.ts for `package`).
+  entry("debug", "doc/lua_debug.doc_h_doc.json"),
+  entry("io", "doc/lua_io.doc_h_doc.json"),
+  entry("package", "doc/lua_package.doc_h_doc.json"),
 ];
 
 function entry(

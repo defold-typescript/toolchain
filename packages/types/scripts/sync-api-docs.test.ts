@@ -102,9 +102,15 @@ const CORE_FIVE_STDLIB: ReadonlyArray<[string, string]> = [
   ["coroutine", "doc/lua_coroutine.doc_h_doc.json"],
 ];
 
+const SANDBOXED_THREE: ReadonlyArray<[string, string]> = [
+  ["debug", "doc/lua_debug.doc_h_doc.json"],
+  ["io", "doc/lua_io.doc_h_doc.json"],
+  ["package", "doc/lua_package.doc_h_doc.json"],
+];
+
 describe("LUA_STDLIB_MANIFEST", () => {
   test("maps base and bit to their ref-doc.zip entries with the standard fixture path", () => {
-    expect(LUA_STDLIB_MANIFEST).toHaveLength(7);
+    expect(LUA_STDLIB_MANIFEST).toHaveLength(10);
     const base = LUA_STDLIB_MANIFEST.find((e) => e.namespace === "base");
     expect(base?.zipEntry).toBe("doc/lua_base.doc_h_doc.json");
     expect(base?.fixture).toBe("fixtures/base_doc.json");
@@ -121,12 +127,20 @@ describe("LUA_STDLIB_MANIFEST", () => {
     }
   });
 
-  test("extractFixtures resolves all seven entries from a fake zip", () => {
+  test("maps the sandboxed debug/io/package namespaces to their confirmed 1.12.4 zip entries", () => {
+    for (const [namespace, zipEntry] of SANDBOXED_THREE) {
+      const found = LUA_STDLIB_MANIFEST.find((e) => e.namespace === namespace);
+      expect(found?.zipEntry).toBe(zipEntry);
+      expect(found?.fixture).toBe(`fixtures/${namespace}_doc.json`);
+    }
+  });
+
+  test("extractFixtures resolves all ten entries from a fake zip", () => {
     const entries: Record<string, string> = {
       "doc/lua_base.doc_h_doc.json": '{"info":{"namespace":"base"}}\n',
       "doc/src-script_bitop.cpp_doc.json": '{"info":{"namespace":"bit"}}\n',
     };
-    for (const [namespace, zipEntry] of CORE_FIVE_STDLIB) {
+    for (const [namespace, zipEntry] of [...CORE_FIVE_STDLIB, ...SANDBOXED_THREE]) {
       entries[zipEntry] = `{"info":{"namespace":"${namespace}"}}\n`;
     }
     const zip = fakeZip(entries);
@@ -135,12 +149,15 @@ describe("LUA_STDLIB_MANIFEST", () => {
       "base",
       "bit",
       "coroutine",
+      "debug",
+      "io",
       "math",
       "os",
+      "package",
       "string",
       "table",
     ]);
-    for (const [namespace, zipEntry] of CORE_FIVE_STDLIB) {
+    for (const [namespace, zipEntry] of [...CORE_FIVE_STDLIB, ...SANDBOXED_THREE]) {
       expect(fixtures.find((f) => f.namespace === namespace)?.contents).toBe(entries[zipEntry]);
     }
   });
@@ -151,13 +168,11 @@ describe("LUA_STDLIB_MANIFEST", () => {
     }
   });
 
-  test("IGNORED_UPSTREAM drops the five wired stdlib namespaces but keeps the sandboxed set", () => {
-    for (const [namespace] of CORE_FIVE_STDLIB) {
+  test("IGNORED_UPSTREAM drops every wired stdlib namespace, leaving only the non-runtime surfaces", () => {
+    for (const [namespace] of [...CORE_FIVE_STDLIB, ...SANDBOXED_THREE]) {
       expect(IGNORED_UPSTREAM.has(namespace)).toBe(false);
     }
-    for (const namespace of ["debug", "io", "package"]) {
-      expect(IGNORED_UPSTREAM.has(namespace)).toBe(true);
-    }
+    expect([...IGNORED_UPSTREAM.keys()].sort()).toEqual(["builtins", "editor", "engine"]);
   });
 });
 

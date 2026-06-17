@@ -84,10 +84,12 @@ as documented-by-type, not as a `@returns` regression.
 The `/api` reference browser surfaces the Defold-engine namespaces plus a
 separate **Lua standard library** category for the pure-Lua / LuaJIT surfaces
 Defold documents (`base`, `bit`, `math`, `os`, `string`, `table`,
-`coroutine`). Their TypeScript types come from the
+`coroutine`, `debug`, `io`, `package`). Their TypeScript types come from the
 `lua-types` dependency the `lua-stdlib-globals` goal adopted
 (`lua-types/special/jit-only.d.ts` for `bit`, `lua-types/core/global.d.ts` for
-the base globals) and are wired into every script kind via the
+the base globals, `lua-types/core/debug.d.ts` and `lua-types/core/io.d.ts` for
+`debug`/`io`, and `lua-types/core/modules.d.ts` for `package`) and are wired
+into every script kind via the
 `LUA_STDLIB_REFERENCES` triple-slash directives in `regen.ts` — `@defold-typescript/types`
 does **not** re-emit them as generated namespaces (a duplicate `declare
 namespace bit` would collide, and the base globals are top-level globals, not a
