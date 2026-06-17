@@ -56,7 +56,7 @@ function linkifyRegion(region: string, sortedKeys: string[], links: Map<string, 
       } else {
         const route = links.get(key);
         if (route !== undefined) {
-          result += `<a href="${escapeAttr(route)}">${escapeText(key)}</a>`;
+          result += `<a href="${escapeAttr(route)}" class="symbol-xref">${escapeText(key)}</a>`;
         } else {
           result += key;
         }

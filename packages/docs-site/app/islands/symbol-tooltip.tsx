@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "hono/jsx";
 import { withBase } from "../lib/base";
 import type { SymbolEntry } from "../lib/symbol-index";
+import { isSymbolOnCurrentPage } from "../lib/symbol-target";
 
 type ActiveTip = { brief: string; route: string; top: number; left: number } | null;
 
@@ -48,16 +49,25 @@ export default function SymbolTooltip() {
         }
         const index = (await response.json()) as Record<string, SymbolEntry>;
         if (!active) return;
-        const codes = document.querySelectorAll<HTMLElement>("article code");
-        for (const code of codes) {
-          if (code.closest("pre")) continue;
-          const entry = index[normalizeKey(code.textContent ?? "")];
-          if (!entry) continue;
-          code.classList.add("symbol-link");
-          code.setAttribute("tabindex", "0");
+        // The popup only helps when it points the reader *elsewhere*. Compute the
+        // current page once, then suppress the card on any symbol documented on
+        // this very page (its own `### signature` heading and same-page sibling
+        // mentions) while keeping it on cross-references to other `/api/*` pages.
+        const here = location.pathname;
+
+        // `isLink` candidates are already-styled `<a>` cross-references, so they
+        // skip the `.symbol-link` dotted underline and tabindex; inline `<code>`
+        // gets both. Everything else (hover/focus card, cleanup discipline) is
+        // shared.
+        const bind = (el: HTMLElement, brief: string, route: string, isLink: boolean) => {
+          if (isSymbolOnCurrentPage(withBase(route), here)) return;
+          if (!isLink) {
+            el.classList.add("symbol-link");
+            el.setAttribute("tabindex", "0");
+          }
           const show = () => {
             cancelHide();
-            const rect = code.getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
             // The card is `position: fixed` at most `max-w-xs` (320px) wide. Anchoring
             // it to the symbol's left clips it off the viewport's right edge for
             // symbols near the right side, so clamp the left into [margin, innerWidth -
@@ -67,20 +77,38 @@ export default function SymbolTooltip() {
             const MARGIN = 8;
             const maxLeft = window.innerWidth - CARD_MAX_W - MARGIN;
             const left = Math.max(MARGIN, Math.min(rect.left, maxLeft));
-            setTip({ brief: entry.brief, route: entry.route, top: rect.bottom + 8, left });
+            setTip({ brief, route, top: rect.bottom + 8, left });
           };
-          code.addEventListener("pointerenter", show);
-          code.addEventListener("focus", show);
-          code.addEventListener("pointerleave", scheduleHide);
-          code.addEventListener("blur", scheduleHide);
+          el.addEventListener("pointerenter", show);
+          el.addEventListener("focus", show);
+          el.addEventListener("pointerleave", scheduleHide);
+          el.addEventListener("blur", scheduleHide);
           cleanups.push(() => {
-            code.classList.remove("symbol-link");
-            code.removeAttribute("tabindex");
-            code.removeEventListener("pointerenter", show);
-            code.removeEventListener("focus", show);
-            code.removeEventListener("pointerleave", scheduleHide);
-            code.removeEventListener("blur", scheduleHide);
+            if (!isLink) {
+              el.classList.remove("symbol-link");
+              el.removeAttribute("tabindex");
+            }
+            el.removeEventListener("pointerenter", show);
+            el.removeEventListener("focus", show);
+            el.removeEventListener("pointerleave", scheduleHide);
+            el.removeEventListener("blur", scheduleHide);
           });
+        };
+
+        const codes = document.querySelectorAll<HTMLElement>("article code");
+        for (const code of codes) {
+          if (code.closest("pre")) continue;
+          const entry = index[normalizeKey(code.textContent ?? "")];
+          if (!entry) continue;
+          bind(code, entry.brief, entry.route, false);
+        }
+
+        const xrefs = document.querySelectorAll<HTMLAnchorElement>("a.symbol-xref");
+        for (const link of xrefs) {
+          const entry = index[normalizeKey(link.textContent ?? "")];
+          const route = entry?.route ?? link.getAttribute("href") ?? "";
+          if (!route) continue;
+          bind(link, entry?.brief ?? "", route, true);
         }
       } catch (err) {
         // Without this catch, any rejection (network, MIME, JSON parse) is
