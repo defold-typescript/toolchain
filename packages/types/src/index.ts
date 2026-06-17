@@ -42,3 +42,8 @@ export {
   type ScriptProperty,
 } from "./lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./publish-dts";
+export {
+  lookupSignature,
+  type SignatureOverride,
+  type SignatureStore,
+} from "./signature-store";
