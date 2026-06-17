@@ -56,6 +56,45 @@ export interface ApiSymbol {
   returnValues: ApiSymbolParam[];
 }
 
+export interface ApiSymbolGroup {
+  label: string;
+  symbols: ApiSymbol[];
+}
+
+/**
+ * Partition a namespace's `function` symbols for `/api` rendering: module
+ * functions (no colon in `name`) lead under a single `Functions` group,
+ * followed by one group per `<receiver>:<method>` receiver in first-appearance
+ * order. Handle methods like `file:read` or `client:send` thus render apart
+ * from the module table rather than interleaved as if `io.file:read` were
+ * callable. The `Functions` group is emitted only when non-empty; input order
+ * is preserved within every group. Presentation-only — does not feed the
+ * search index or `apiModuleSymbols`.
+ */
+export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
+  const moduleFns: ApiSymbol[] = [];
+  const byReceiver = new Map<string, ApiSymbol[]>();
+
+  for (const fn of functions) {
+    const colon = fn.name.indexOf(":");
+    if (colon === -1) {
+      moduleFns.push(fn);
+      continue;
+    }
+    const receiver = fn.name.slice(0, colon);
+    const bucket = byReceiver.get(receiver);
+    if (bucket) bucket.push(fn);
+    else byReceiver.set(receiver, [fn]);
+  }
+
+  const groups: ApiSymbolGroup[] = [];
+  if (moduleFns.length > 0) groups.push({ label: "Functions", symbols: moduleFns });
+  for (const [receiver, symbols] of byReceiver) {
+    groups.push({ label: `\`${receiver}\` methods`, symbols });
+  }
+  return groups;
+}
+
 function normalizeTypes(types: string[]): string[] {
   return types.map((t) => t.trim()).filter((t) => t.length > 0);
 }
