@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { type GuidePage, listGuidePages } from "./guide";
 import { activeCategoryId, buildNav, type NavLink } from "./nav";
 
-const GUIDE_DIR = join(import.meta.dir, "../../../../docs/guide");
+const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
 function realPages(): GuidePage[] {
   return listGuidePages(GUIDE_DIR);

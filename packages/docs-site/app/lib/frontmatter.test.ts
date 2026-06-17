@@ -6,7 +6,7 @@ import { type GuidePage, listGuidePages } from "./guide";
 import { renderMarkdown } from "./markdown";
 import { buildNav } from "./nav";
 
-const GUIDE_DIR = join(import.meta.dir, "../../../../docs/guide");
+const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
 function realPages(): GuidePage[] {
   return listGuidePages(GUIDE_DIR);

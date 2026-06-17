@@ -79,13 +79,15 @@ describe("@defold-typescript/cli publish surface", () => {
     expect(paths).toContain("LICENSE");
   });
 
-  test("ships the guide index the init-agents block points at", () => {
-    expect(paths).toContain("docs/guide/README.md");
+  test("no longer copies or packs the guide (it ships from @defold-typescript/docs)", () => {
+    for (const path of paths) {
+      expect(path).not.toMatch(/^docs\/guide\//);
+    }
   });
 
-  test("ships the whole guide, not a hand-picked subset", () => {
-    expect(paths).toContain("docs/guide/agent-runbooks.md");
-    expect(paths).toContain("docs/guide/script-lifecycle.md");
+  test("depends on the docs package the init-agents block points at", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    expect(manifest.dependencies["@defold-typescript/docs"]).toBe("workspace:*");
   });
 
   test("declares the MIT license", async () => {

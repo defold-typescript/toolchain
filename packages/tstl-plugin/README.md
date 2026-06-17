@@ -15,7 +15,7 @@ Most users get this wired in automatically by the
 `plugins` array.
 
 See the repository [README](https://github.com/defold-typescript/toolchain#readme)
-and [`docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/docs/guide)
+and [`packages/docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/packages/docs/guide)
 for the full workflow.
 
 ## License

@@ -1,0 +1,20 @@
+{
+  "name": "@defold-typescript/docs",
+  "version": "0.0.0",
+  "description": "Human-facing guide for the defold-typescript toolchain.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/defold-typescript/toolchain.git",
+    "directory": "packages/docs"
+  },
+  "homepage": "https://github.com/defold-typescript/toolchain#readme",
+  "bugs": "https://github.com/defold-typescript/toolchain/issues",
+  "type": "module",
+  "files": [
+    "guide"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

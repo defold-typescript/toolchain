@@ -13,7 +13,7 @@ Most users do not depend on this directly — the
 drives it for you.
 
 See the repository [README](https://github.com/defold-typescript/toolchain#readme)
-and [`docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/docs/guide)
+and [`packages/docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/packages/docs/guide)
 for the full workflow.
 
 ## License

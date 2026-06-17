@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { findDanglingReferences } from "./reference-audit";
 
 const REPO_ROOT = join(import.meta.dir, "../../../..");
-const GUIDE_DIR = join(REPO_ROOT, "docs/guide");
+const GUIDE_DIR = join(REPO_ROOT, "packages/docs/guide");
 
 const fixtureDir = mkdtempSync(join(tmpdir(), "reference-audit-"));
 afterAll(() => rmSync(fixtureDir, { recursive: true, force: true }));
