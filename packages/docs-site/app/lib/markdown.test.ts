@@ -168,22 +168,4 @@ describe("renderMarkdown", () => {
     expect(headings).toHaveLength(1);
     expect(headings[0]?.text).toBe(SIGNATURE);
   });
-
-  test("renders a single newline as a line break when breaks is set", async () => {
-    const html = await renderMarkdown("line one\nline two\n", { breaks: true });
-    expect(html).toMatch(/<br\s*\/?>/);
-  });
-
-  test("leaves a single newline as a soft break by default", async () => {
-    const html = await renderMarkdown("line one\nline two\n");
-    expect(html).not.toMatch(/<br\s*\/?>/);
-  });
-
-  test("does not inject a break inside a list when breaks is set", async () => {
-    const html = await renderMarkdown("intro\n- a\n- b\n", { breaks: true });
-    expect(html).toContain("<li>a</li>");
-    expect(html).toContain("<li>b</li>");
-    const list = html.slice(html.indexOf("<ul>"), html.indexOf("</ul>"));
-    expect(list).not.toMatch(/<br\s*\/?>/);
-  });
 });

@@ -131,7 +131,6 @@ export default createRoute(
     const linkify = (text: string) => linkifySymbolMentions(text, linkRegistry);
     const html = await renderMarkdown(apiPageMarkdown(page, linkify), {
       highlightSignatureHeadings: true,
-      breaks: true,
     });
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${page.module.namespace} API`,

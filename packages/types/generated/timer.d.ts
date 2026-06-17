@@ -2,6 +2,7 @@
 declare global {
   /**
    * Timers allow you to set a delay and a callback to be called when the timer completes.
+   *
    * The timers created with this API are updated with the collection timer where they
    * are created. If you pause or speed up the collection (using `set_time_step`) it will
    * also affect the new timer.
@@ -39,6 +40,7 @@ declare global {
      * @param delay - time interval in seconds
      * @param repeating - true = repeat timer until cancel, false = one-shot timer
      * @param callback - timer callback function
+     *
      * `self`
      * object The current object
      * `handle`
@@ -70,6 +72,7 @@ declare global {
      *
      * @param handle - the timer handle returned by timer.delay()
      * @returns table or `nil` if timer is cancelled/completed. table with data in the following fields:
+     *
      * `time_remaining`
      * number Time remaining until the next time a timer.delay() fires.
      * `delay`

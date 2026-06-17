@@ -121,16 +121,12 @@ function admonitionTitle(type: AlertType): string {
   return `<p class="admonition-title">${ALERT_ICONS[type]}<span>${ALERT_LABELS[type]}</span></p>\n`;
 }
 
-// `breaks` turns a single `\n` in inline content into a `<br>`; only the
-// `/api/<namespace>` route opts in (its prose comes from htmlToDocText, which
-// collapses blank lines to single `\n`). Guide pages are authored markdown and
-// keep the default soft-break behavior.
 export async function renderMarkdown(
   markdown: string,
-  opts: { highlightSignatureHeadings?: boolean; breaks?: boolean } = {},
+  opts: { highlightSignatureHeadings?: boolean } = {},
 ): Promise<string> {
   const highlighter = await getHighlighter();
-  const md = MarkdownIt({ html: true, linkify: true, breaks: opts.breaks ?? false });
+  const md = MarkdownIt({ html: true, linkify: true });
   // Slugify heading ids so the right-side TOC can link to them deterministically.
   // Duplicates get a `-2`, `-3` suffix the same way GitHub does.
   const slugCounts = new Map<string, number>();

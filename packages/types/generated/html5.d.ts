@@ -2,6 +2,7 @@
 declare global {
   /**
    * HTML5 platform specific functions.
+   *
    * [icon:html5] The following functions are only available on HTML5 builds, the `html5.*` Lua namespace will not be available on other platforms.
    */
   namespace html5 {
@@ -28,6 +29,7 @@ declare global {
      * or start playing sounds the first time the callback is invoked.
      *
      * @param callback - The interaction callback. Pass an empty function or `nil` if you no longer wish to receive callbacks.
+     *
      * `self`
      * object The calling script
      * @example
