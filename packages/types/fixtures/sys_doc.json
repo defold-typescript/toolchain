@@ -13,12 +13,7 @@
           "types": ["string"],
           "is_optional": "False"
         },
-        {
-          "name": "table",
-          "doc": "lua table to save",
-          "types": ["table"],
-          "is_optional": "False"
-        }
+        { "name": "table", "doc": "lua table to save", "types": ["table"], "is_optional": "False" }
       ],
       "examples": "Save data:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">my_table</span> <span class=\"o\">=</span> <span class=\"p\">{}</span>\n<span class=\"nb\">table.insert</span><span class=\"p\">(</span><span class=\"n\">my_table</span><span class=\"p\">,</span> <span class=\"s2\">&quot;my_value&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">my_file_path</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">get_save_file</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_game&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;my_file&quot;</span><span class=\"p\">)</span>\n<span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">save</span><span class=\"p\">(</span><span class=\"n\">my_file_path</span><span class=\"p\">,</span> <span class=\"n\">my_table</span><span class=\"p\">)</span>\n</code></pre></div>",
       "replaces": "",
@@ -69,12 +64,7 @@
         }
       ],
       "parameters": [
-        {
-          "name": "path",
-          "doc": "path to check",
-          "types": ["string"],
-          "is_optional": "False"
-        }
+        { "name": "path", "doc": "path to check", "types": ["string"], "is_optional": "False" }
       ],
       "examples": "Load data but return nil if path didn't exist\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">if</span> <span class=\"ow\">not</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">exists</span><span class=\"p\">(</span><span class=\"n\">path</span><span class=\"p\">)</span> <span class=\"kr\">then</span>\n    <span class=\"kr\">return</span> <span class=\"kc\">nil</span>\n<span class=\"kr\">end</span>\n<span class=\"kr\">return</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load</span><span class=\"p\">(</span><span class=\"n\">path</span><span class=\"p\">)</span> <span class=\"c1\">-- returns {} if it failed</span>\n</code></pre></div>",
       "replaces": "",
@@ -117,13 +107,7 @@
       "name": "sys.get_save_file",
       "brief": "gets the save-file path",
       "description": "The save-file path is operating system specific and is typically located under the user's home directory.\nThis function will raise a Lua error if unable to get the save file path.",
-      "returnvalues": [
-        {
-          "name": "path",
-          "doc": "path to save-file",
-          "types": ["string"]
-        }
-      ],
+      "returnvalues": [{ "name": "path", "doc": "path to save-file", "types": ["string"] }],
       "parameters": [
         {
           "name": "application_id",
@@ -154,11 +138,7 @@
       "brief": "gets the application path",
       "description": "The path from which the application is run.\nThis function will raise a Lua error if unable to get the application support path.",
       "returnvalues": [
-        {
-          "name": "path",
-          "doc": "path to application executable",
-          "types": ["string"]
-        }
+        { "name": "path", "doc": "path to application executable", "types": ["string"] }
       ],
       "parameters": [],
       "examples": "Find a path where we can store data (the example path is on the macOS platform):\n<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- macOS: /Applications/my_game.app</span>\n<span class=\"kd\">local</span> <span class=\"n\">application_path</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">get_application_path</span><span class=\"p\">()</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">application_path</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; /Applications/my_game.app</span>\n\n<span class=\"c1\">-- Windows: C:\\Program Files\\my_game\\my_game.exe</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">application_path</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; C:\\Program Files\\my_game</span>\n\n<span class=\"c1\">-- Linux: /home/foobar/my_game/my_game</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">application_path</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; /home/foobar/my_game</span>\n\n<span class=\"c1\">-- Android package name: com.foobar.my_game</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">application_path</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; /data/user/0/com.foobar.my_game</span>\n\n<span class=\"c1\">-- iOS: my_game.app</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">application_path</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; /var/containers/Bundle/Applications/123456AB-78CD-90DE-12345678ABCD/my_game.app</span>\n\n<span class=\"c1\">-- HTML5: http://www.foobar.com/my_game/</span>\n<span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">application_path</span><span class=\"p\">)</span> <span class=\"c1\">--&gt; http://www.foobar.com/my_game</span>\n</code></pre></div>",
@@ -318,12 +298,7 @@
         }
       ],
       "parameters": [
-        {
-          "name": "url",
-          "doc": "url to open",
-          "types": ["string"],
-          "is_optional": "False"
-        },
+        { "name": "url", "doc": "url to open", "types": ["string"], "is_optional": "False" },
         {
           "name": "attributes",
           "doc": "table with attributes\n<code>target</code>\n- <span class=\"type\">string</span> <span class=\"icon-html5\"></span>: Optional. Specifies the target attribute or the name of the window. The following values are supported:\n- <code>_self</code> - (default value) URL replaces the current page.\n- <code>_blank</code> - URL is loaded into a new window, or tab.\n- <code>_parent</code> - URL is loaded into the parent frame.\n- <code>_top</code> - URL replaces any framesets that may be loaded.\n- <code>name</code> - The name of the window (Note: the name does not specify the title of the new window).",
@@ -564,42 +539,12 @@
       "description": "Reboots the game engine with a specified set of arguments.\nArguments will be translated into command line arguments. Calling reboot\nfunction is equivalent to starting the engine with the same arguments.\nOn startup the engine reads configuration from \"game.project\" in the\nproject root.",
       "returnvalues": [],
       "parameters": [
-        {
-          "name": "arg1",
-          "doc": "argument 1",
-          "types": ["string"],
-          "is_optional": "True"
-        },
-        {
-          "name": "arg2",
-          "doc": "argument 2",
-          "types": ["string"],
-          "is_optional": "True"
-        },
-        {
-          "name": "arg3",
-          "doc": "argument 3",
-          "types": ["string"],
-          "is_optional": "True"
-        },
-        {
-          "name": "arg4",
-          "doc": "argument 4",
-          "types": ["string"],
-          "is_optional": "True"
-        },
-        {
-          "name": "arg5",
-          "doc": "argument 5",
-          "types": ["string"],
-          "is_optional": "True"
-        },
-        {
-          "name": "arg6",
-          "doc": "argument 6",
-          "types": ["string"],
-          "is_optional": "True"
-        }
+        { "name": "arg1", "doc": "argument 1", "types": ["string"], "is_optional": "True" },
+        { "name": "arg2", "doc": "argument 2", "types": ["string"], "is_optional": "True" },
+        { "name": "arg3", "doc": "argument 3", "types": ["string"], "is_optional": "True" },
+        { "name": "arg4", "doc": "argument 4", "types": ["string"], "is_optional": "True" },
+        { "name": "arg5", "doc": "argument 5", "types": ["string"], "is_optional": "True" },
+        { "name": "arg6", "doc": "argument 6", "types": ["string"], "is_optional": "True" }
       ],
       "examples": "How to reboot engine with a specific bootstrap collection.\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">arg1</span> <span class=\"o\">=</span> <span class=\"s1\">&#39;--config=bootstrap.main_collection=/my.collectionc&#39;</span>\n<span class=\"kd\">local</span> <span class=\"n\">arg2</span> <span class=\"o\">=</span> <span class=\"s1\">&#39;build/game.projectc&#39;</span>\n<span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">reboot</span><span class=\"p\">(</span><span class=\"n\">arg1</span><span class=\"p\">,</span> <span class=\"n\">arg2</span><span class=\"p\">)</span>\n</code></pre></div>",
       "replaces": "",
@@ -658,13 +603,7 @@
       "name": "sys.serialize",
       "brief": "serializes a lua table to a buffer and returns it",
       "description": "The buffer can later deserialized by <code>sys.deserialize</code>.\nThis function has all the same limitations as <code>sys.save</code>.\nThis function will raise a Lua error if an error occurs while serializing the table.",
-      "returnvalues": [
-        {
-          "name": "buffer",
-          "doc": "serialized data buffer",
-          "types": ["string"]
-        }
-      ],
+      "returnvalues": [{ "name": "buffer", "doc": "serialized data buffer", "types": ["string"] }],
       "parameters": [
         {
           "name": "table",
@@ -687,11 +626,7 @@
       "brief": "deserializes buffer into a lua table",
       "description": "This function will raise a Lua error if an error occurs while deserializing the buffer.",
       "returnvalues": [
-        {
-          "name": "table",
-          "doc": "lua table with deserialized data",
-          "types": ["table"]
-        }
+        { "name": "table", "doc": "lua table with deserialized data", "types": ["table"] }
       ],
       "parameters": [
         {
@@ -752,6 +687,156 @@
       "tparams": [],
       "members": [],
       "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sys.load_buffer",
+      "brief": "loads a buffer from a resource or disk path",
+      "description": "The sys.load_buffer function will first try to load the resource\nfrom any of the mounted resource locations and return the data if\nany matching entries found. If not, the path will be tried\nas is from the primary disk on the device.\nIn order for the engine to include custom resources in the build process, you need\nto specify them in the \"custom_resources\" key in your \"game.project\" settings file.\nYou can specify single resource files or directories. If a directory is included\nin the resource list, all files and directories in that directory is recursively\nincluded:\nFor example \"main/data/,assets/level_data.json\".",
+      "returnvalues": [{ "name": "buffer", "doc": "the buffer with data", "types": ["buffer"] }],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "the path to load the buffer from",
+          "types": ["string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Load binary data from a custom project resource:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">my_buffer</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load_buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;/assets/my_level_data.bin&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">data_str</span> <span class=\"o\">=</span> <span class=\"n\">buffer</span><span class=\"p\">.</span><span class=\"n\">get_bytes</span><span class=\"p\">(</span><span class=\"n\">my_buffer</span><span class=\"p\">,</span> <span class=\"s2\">&quot;data&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">has_my_header</span> <span class=\"o\">=</span> <span class=\"nb\">string.sub</span><span class=\"p\">(</span><span class=\"n\">data_str</span><span class=\"p\">,</span><span class=\"mi\">1</span><span class=\"p\">,</span><span class=\"mi\">6</span><span class=\"p\">)</span> <span class=\"o\">==</span> <span class=\"s2\">&quot;D3F0LD&quot;</span>\n</code></pre></div>\n\nLoad binary data from non-custom resource files on disk:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">asset_1</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load_buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;folder_next_to_binary/my_level_asset.txt&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">asset_2</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load_buffer</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my/absolute/path&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sys.load_buffer_async",
+      "brief": "loads a buffer from a resource or disk path asynchronously",
+      "description": "The sys.load_buffer function will first try to load the resource\nfrom any of the mounted resource locations and return the data if\nany matching entries found. If not, the path will be tried\nas is from the primary disk on the device.\nIn order for the engine to include custom resources in the build process, you need\nto specify them in the \"custom_resources\" key in your \"game.project\" settings file.\nYou can specify single resource files or directories. If a directory is included\nin the resource list, all files and directories in that directory is recursively\nincluded:\nFor example \"main/data/,assets/level_data.json\".\nNote that issuing multiple requests of the same resource will yield\nindividual buffers per request. There is no implic caching of the buffers\nbased on request path.",
+      "returnvalues": [{ "name": "handle", "doc": "a handle to the request", "types": ["number"] }],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "the path to load the buffer from",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "status_callback",
+          "doc": "A status callback that will be invoked when a request has been handled, or an error occured. The result is a table containing:\n<dl>\n<dt><code>status</code></dt>\n<dd><span class=\"type\">number</span> The status of the request, supported values are:</dd>\n</dl>\n<ul>\n<li><code>resource.REQUEST_STATUS_FINISHED</code></li>\n<li><code>resource.REQUEST_STATUS_ERROR_IO_ERROR</code></li>\n<li><code>resource.REQUEST_STATUS_ERROR_NOT_FOUND</code></li>\n</ul>\n<dl>\n<dt><code>buffer</code></dt>\n<dd><span class=\"type\">buffer</span> If the request was successfull, this will contain the request payload in a buffer object, and nil otherwise. Make sure to check the status before doing anything with the buffer value!</dd>\n</dl>",
+          "types": ["function(self, request_id, result)"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Load binary data from a custom project resource and update a texture resource:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">my_callback</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">request_id</span><span class=\"p\">,</span> <span class=\"n\">result</span><span class=\"p\">)</span>\n  <span class=\"kr\">if</span> <span class=\"n\">result</span><span class=\"p\">.</span><span class=\"n\">status</span> <span class=\"o\">==</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">REQUEST_STATUS_FINISHED</span> <span class=\"kr\">then</span>\n     <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">set_texture</span><span class=\"p\">(</span><span class=\"s2\">&quot;/my_texture&quot;</span><span class=\"p\">,</span> <span class=\"p\">{</span> <span class=\"p\">...</span> <span class=\"p\">},</span> <span class=\"n\">result</span><span class=\"p\">.</span><span class=\"n\">buf</span><span class=\"p\">)</span>\n  <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kd\">local</span> <span class=\"n\">my_request</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load_buffer_async</span><span class=\"p\">(</span><span class=\"s2\">&quot;/assets/my_level_data.bin&quot;</span><span class=\"p\">,</span> <span class=\"n\">my_callback</span><span class=\"p\">)</span>\n</code></pre></div>\n\nLoad binary data from non-custom resource files on disk:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">my_callback</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">request_id</span><span class=\"p\">,</span> <span class=\"n\">result</span><span class=\"p\">)</span>\n  <span class=\"kr\">if</span> <span class=\"n\">result</span><span class=\"p\">.</span><span class=\"n\">status</span> <span class=\"o\">~=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">REQUEST_STATUS_FINISHED</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- uh oh! File could not be found, do something graceful</span>\n  <span class=\"kr\">elseif</span> <span class=\"n\">request_id</span> <span class=\"o\">==</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">first_asset</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- result.buffer contains data from my_level_asset.bin</span>\n  <span class=\"n\">elif</span> <span class=\"n\">request_id</span> <span class=\"o\">==</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">second_asset</span> <span class=\"kr\">then</span>\n    <span class=\"c1\">-- result.buffer contains data from &#39;my_level.bin&#39;</span>\n  <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">first_asset</span> <span class=\"o\">=</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;folder_next_to_binary/my_level_asset.bin&quot;</span><span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">second_asset</span> <span class=\"o\">=</span> <span class=\"n\">hash</span><span class=\"p\">(</span><span class=\"s2\">&quot;/some_absolute_path/my_level.bin&quot;</span><span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">first_request</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load_buffer_async</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">first_asset</span><span class=\"p\">,</span> <span class=\"n\">my_callback</span><span class=\"p\">)</span>\n  <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">second_request</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">load_buffer_async</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">second_asset</span><span class=\"p\">,</span> <span class=\"n\">my_callback</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "sys.REQUEST_STATUS_FINISHED",
+      "brief": "an asyncronous request has finished successfully",
+      "description": "an asyncronous request has finished successfully",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "sys.REQUEST_STATUS_ERROR_IO_ERROR",
+      "brief": "an asyncronous request is unable to read the resource",
+      "description": "an asyncronous request is unable to read the resource",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "sys.REQUEST_STATUS_ERROR_NOT_FOUND",
+      "brief": "an asyncronous request is unable to locate the resource",
+      "description": "an asyncronous request is unable to locate the resource",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sys.set_engine_throttle",
+      "brief": "Enables engine throttling.",
+      "description": "Enables engine throttling.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "true if throttling should be enabled",
+          "types": ["boolean"],
+          "is_optional": "False"
+        },
+        {
+          "name": "cooldown",
+          "doc": "the time period to do update + render for (seconds)",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Disable throttling\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">set_engine_throttle</span><span class=\"p\">(</span><span class=\"kc\">false</span><span class=\"p\">)</span>\n</code></pre></div>\n\nEnable throttling\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">set_engine_throttle</span><span class=\"p\">(</span><span class=\"kc\">true</span><span class=\"p\">,</span> <span class=\"mf\">1.5</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [
+        "It will automatically wake up on input events",
+        "It will automatically throttle again after the cooldown period",
+        "It skips entire update+render loop on the main thread. E.g loading of assets, callbacks from threads (http)",
+        "On threaded systems, Sound will continue to play any started non-streaming sounds. (e.g. looping background music)"
+      ],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sys.set_render_enable",
+      "brief": "Disables rendering",
+      "description": "Disables rendering",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "true if throttling should be enabled",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Disable rendering\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">set_render_enable</span><span class=\"p\">(</span><span class=\"kc\">false</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": ["It will will leave the back buffer as-is"],
       "language": ""
     }
   ],
