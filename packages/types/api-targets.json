@@ -28,6 +28,7 @@
         },
         { "namespace": "crash", "fixture": "crash_doc.json", "outFile": "crash.d.ts" },
         { "namespace": "factory", "fixture": "factory_doc.json", "outFile": "factory.d.ts" },
+        { "namespace": "font", "fixture": "font_doc.json", "outFile": "font.d.ts" },
         {
           "namespace": "go",
           "fixture": "go_doc.json",

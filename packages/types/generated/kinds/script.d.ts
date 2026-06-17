@@ -8,6 +8,7 @@ import "../collectionfactory";
 import "../collectionproxy";
 import "../crash";
 import "../factory";
+import "../font";
 import "../go";
 import "../graphics";
 import "../html5";
