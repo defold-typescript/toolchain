@@ -1,0 +1,71 @@
+{
+  "io.close": {
+    "signatures": ["io.close(file?: LuaFile): boolean"]
+  },
+  "io.flush": {
+    "signatures": ["io.flush(): boolean"]
+  },
+  "io.input": {
+    "signatures": ["io.input(file?: string | LuaFile): LuaFile"]
+  },
+  "io.lines": {
+    "signatures": [
+      "io.lines(filename?: string, ...formats: (\"*n\" | \"*l\" | \"*a\" | number)[]): LuaIterable<string | number>"
+    ]
+  },
+  "io.open": {
+    "signatures": ["io.open(filename: string, mode?: string): LuaFile | undefined"]
+  },
+  "io.output": {
+    "signatures": ["io.output(file?: string | LuaFile): LuaFile"]
+  },
+  "io.popen": {
+    "signatures": ["io.popen(prog: string, mode?: \"r\" | \"w\"): LuaFile | undefined"]
+  },
+  "io.read": {
+    "signatures": [
+      "io.read(): string | undefined",
+      "io.read(format: \"*n\" | \"*l\" | \"*a\" | number): string | number | undefined",
+      "io.read(...formats: (\"*n\" | \"*l\" | \"*a\" | number)[]): (string | number | undefined)[]"
+    ]
+  },
+  "io.tmpfile": {
+    "signatures": ["io.tmpfile(): LuaFile"]
+  },
+  "io.type": {
+    "signatures": ["io.type(obj: unknown): \"file\" | \"closed file\" | undefined"]
+  },
+  "io.write": {
+    "signatures": ["io.write(...args: (string | number)[]): LuaFile | undefined"]
+  },
+  "file:close": {
+    "signatures": ["file:close(): boolean"]
+  },
+  "file:flush": {
+    "signatures": ["file:flush(): boolean"]
+  },
+  "file:lines": {
+    "signatures": [
+      "file:lines(): LuaIterable<string>",
+      "file:lines(...formats: (\"*n\" | \"*l\" | \"*a\" | number)[]): LuaIterable<string | number>"
+    ]
+  },
+  "file:read": {
+    "signatures": [
+      "file:read(): string | undefined",
+      "file:read(format: \"*n\" | \"*l\" | \"*a\" | number): string | number | undefined",
+      "file:read(...formats: (\"*n\" | \"*l\" | \"*a\" | number)[]): (string | number | undefined)[]"
+    ]
+  },
+  "file:seek": {
+    "signatures": [
+      "file:seek(whence?: \"set\" | \"cur\" | \"end\", offset?: number): number | undefined"
+    ]
+  },
+  "file:setvbuf": {
+    "signatures": ["file:setvbuf(mode: \"no\" | \"full\" | \"line\", size?: number): void"]
+  },
+  "file:write": {
+    "signatures": ["file:write(...args: (string | number)[]): LuaFile | undefined"]
+  }
+}
