@@ -32,7 +32,8 @@ function isEmptyModule(m: ApiModule): boolean {
 function paramBullet(p: ApiSymbolParam): string {
   const parts: string[] = [];
   if (p.name) parts.push(`\`${p.name}\`${p.isOptional ? "?" : ""}`);
-  if (p.types.length > 0) parts.push(`*${p.types.join(" | ")}*`);
+  const types = p.types.join(" | ");
+  if (types) parts.push(`*${types}*`);
   let bullet = `- ${parts.join(" ")}`;
   if (p.doc) bullet += ` — ${p.doc}`;
   return bullet;
