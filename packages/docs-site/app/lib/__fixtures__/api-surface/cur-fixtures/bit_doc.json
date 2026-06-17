@@ -1,0 +1,16 @@
+{
+  "info": {
+    "namespace": "bit",
+    "brief": "LuaJIT bit operations."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "bit.tobit",
+      "brief": "normalize number",
+      "description": "tobit(x)",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

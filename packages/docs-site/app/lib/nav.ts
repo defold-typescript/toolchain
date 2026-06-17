@@ -64,6 +64,10 @@ const CATEGORY_MAP: CategorySpec[] = [
     label: "Reference",
     links: [{ label: "API", route: "/api" }],
   },
+  {
+    id: "lua-stdlib",
+    label: "Lua standard library",
+  },
 ];
 
 export function humanize(slug: string): string {
@@ -98,6 +102,7 @@ function linkFor(page: GuidePage): NavLink {
 export function buildNav(
   pages: GuidePage[],
   apiNamespaces: { label: string; route: string }[] = [],
+  luaStdlibNamespaces: { label: string; route: string }[] = [],
 ): NavCategory[] {
   const bySlug = new Map(pages.map((page) => [page.slug, page]));
   const claimed = new Set<string>();
@@ -119,6 +124,11 @@ export function buildNav(
           navLink.children = apiNamespaces.map(({ label, route }) => toNavLink(label, route));
         }
         links.push(navLink);
+      }
+    }
+    if (spec.id === "lua-stdlib" && luaStdlibNamespaces.length > 0) {
+      for (const ns of luaStdlibNamespaces) {
+        links.push(toNavLink(ns.label, ns.route));
       }
     }
     return { id: spec.id, label: spec.label, links };

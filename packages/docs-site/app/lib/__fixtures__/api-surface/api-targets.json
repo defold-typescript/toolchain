@@ -13,6 +13,10 @@
       "modules": [
         { "namespace": "camera", "fixture": "camera_doc.json" },
         { "namespace": "alpha", "fixture": "alpha_doc.json" }
+      ],
+      "luaStdlib": [
+        { "namespace": "base", "fixture": "base_doc.json" },
+        { "namespace": "bit", "fixture": "bit_doc.json" }
       ]
     }
   ]
