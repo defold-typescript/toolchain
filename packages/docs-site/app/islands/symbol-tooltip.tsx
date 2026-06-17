@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "hono/jsx";
 import { withBase } from "../lib/base";
 import type { SymbolEntry } from "../lib/symbol-index";
-import { isSymbolOnCurrentPage } from "../lib/symbol-target";
 
 type ActiveTip = { brief: string; route: string; top: number; left: number } | null;
 
@@ -49,18 +48,15 @@ export default function SymbolTooltip() {
         }
         const index = (await response.json()) as Record<string, SymbolEntry>;
         if (!active) return;
-        // The popup only helps when it points the reader *elsewhere*. Compute the
-        // current page once, then suppress the card on any symbol documented on
-        // this very page (its own `### signature` heading and same-page sibling
-        // mentions) while keeping it on cross-references to other `/api/*` pages.
-        const here = location.pathname;
 
         // `isLink` candidates are already-styled `<a>` cross-references, so they
         // skip the `.symbol-link` dotted underline and tabindex; inline `<code>`
         // gets both. Everything else (hover/focus card, cleanup discipline) is
-        // shared.
+        // shared. Every candidate that reaches `bind` gets the popup — a
+        // cross-reference is navigational and earns a preview whether or not its
+        // target lives on this page; the only suppression is the signature
+        // heading, filtered out structurally at the inline-code loop below.
         const bind = (el: HTMLElement, brief: string, route: string, isLink: boolean) => {
-          if (isSymbolOnCurrentPage(withBase(route), here)) return;
           if (!isLink) {
             el.classList.add("symbol-link");
             el.setAttribute("tabindex", "0");
@@ -98,6 +94,10 @@ export default function SymbolTooltip() {
         const codes = document.querySelectorAll<HTMLElement>("article code");
         for (const code of codes) {
           if (code.closest("pre")) continue;
+          // The symbol's own `### signature` heading renders as
+          // `code.api-signature` — the definition the reader is already on, the
+          // one genuinely redundant popup.
+          if (code.matches(".api-signature")) continue;
           const entry = index[normalizeKey(code.textContent ?? "")];
           if (!entry) continue;
           bind(code, entry.brief, entry.route, false);
