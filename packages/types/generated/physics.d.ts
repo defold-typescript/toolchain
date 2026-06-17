@@ -84,6 +84,7 @@ declare global {
      *
      * @param url - the collision object to return the group of.
      * @returns hash value of the group.
+     *
      * `local function check_is_enemy()
      * local group = physics.get_group("#collisionobject")
      * return group == hash("enemy")
@@ -99,6 +100,7 @@ declare global {
      * @param collisionobject - collision object where the joint exist
      * @param joint_id - id of the joint
      * @returns properties table. See the joint types for what fields are available, the only field available for all types is:
+     *
      * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
      */
     function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): { collide_connected: boolean };
@@ -129,6 +131,7 @@ declare global {
      * @param url - the collision object to check the mask of.
      * @param group - the name of the group to check for.
      * @returns boolean value of the maskbit. 'true' if present, 'false' otherwise.
+     *
      * `local function is_invincible()
      * -- check if the collisionobject would collide with the "bullet" group
      * local invincible = physics.get_maskbit("#collisionobject", "bullet")
@@ -143,24 +146,36 @@ declare global {
      * @param url - the collision object.
      * @param shape - the name of the shape to get data for.
      * @returns A table containing meta data about the physics shape
+     *
      * `type`
      * number The shape type. Supported values:
+     *
      * - `physics.SHAPE_TYPE_SPHERE`
+     *
      * - `physics.SHAPE_TYPE_BOX`
+     *
      * - `physics.SHAPE_TYPE_CAPSULE` *Only supported for 3D physics*
+     *
      * - `physics.SHAPE_TYPE_HULL`
+     *
      * The returned table contains different fields depending on which type the shape is.
      * If the shape is a sphere:
+     *
      * `diameter`
      * number the diameter of the sphere shape
+     *
      * If the shape is a box:
+     *
      * `dimensions`
      * vector3 a `vmath.vector3` of the box dimensions
+     *
      * If the shape is a capsule:
+     *
      * `diameter`
      * number the diameter of the capsule poles
      * `height`
      * number the height of the capsule
+     *
      * `local function get_shape_meta()
      * local sphere = physics.get_shape("#collisionobject", "my_sphere_shape")
      * -- returns a table with sphere.diameter
@@ -181,6 +196,7 @@ declare global {
      * @param to - the world position of the end of the ray
      * @param groups - a lua table containing the hashed groups for which to test collisions against
      * @param options - a lua table containing options for the raycast.
+     *
      * `all`
      * boolean Set to `true` to return all ray cast hits. If `false`, it will only return the closest hit.
      * @returns It returns a list. If missed it returns `nil`. See ray_cast_response for details on the returned values.
@@ -213,8 +229,11 @@ declare global {
      * Which collision objects to hit is filtered by their collision groups and can be configured
      * through `groups`.
      * The actual ray cast will be performed during the physics-update.
+     *
      * - If an object is hit, the result will be reported via a ray_cast_response message.
+     *
      * - If there is no object hit, the result will be reported via a ray_cast_missed message.
+     *
      * NOTE: Ray casts will ignore collision objects that contain the starting point of the ray. This is a limitation in Box2D.
      *
      * @param from - the world position of the start of the ray
@@ -250,15 +269,22 @@ declare global {
      * Only one physics world event listener can be set at a time.
      *
      * @param callback - A callback that receives an information about all the physics interactions in this physics world.
+     *
      * `self`
      * object The calling script
      * `event`
      * constant The type of event. Can be one of these messages:
+     *
      * - contact_point_event
+     *
      * - collision_event
+     *
      * - trigger_event
+     *
      * - ray_cast_response
+     *
      * - ray_cast_missed
+     *
      * `data`
      * table The callback value data is a table that contains event-related data. See the documentation for details on the messages.
      * @example
@@ -368,6 +394,7 @@ declare global {
      *
      * @param url - the collision object affected.
      * @param group - the new group name to be assigned.
+     *
      * `local function change_collision_group()
      * physics.set_group("#collisionobject", "enemy")
      * end
@@ -407,6 +434,7 @@ declare global {
      * @param url - the collision object to change the mask of.
      * @param group - the name of the group (maskbit) to modify in the mask.
      * @param maskbit - boolean value of the new maskbit. 'true' to enable, 'false' to disable.
+     *
      * `local function make_invincible()
      * -- no longer collide with the "bullet" group
      * physics.set_maskbit("#collisionobject", "bullet", false)
@@ -423,6 +451,7 @@ declare global {
      * @param shape - the name of the shape to get data for.
      * @param table - the shape data to update the shape with.
      * See physics.get_shape for a detailed description of each field in the data table.
+     *
      * `local function set_shape_data()
      * -- set capsule shape data
      * local data = {}
@@ -430,11 +459,13 @@ declare global {
      * data.diameter = 10
      * data.height = 20
      * physics.set_shape("#collisionobject", "my_capsule_shape", data)
+     *
      * -- set sphere shape data
      * data = {}
      * data.type = physics.SHAPE_TYPE_SPHERE
      * data.diameter = 10
      * physics.set_shape("#collisionobject", "my_sphere_shape", data)
+     *
      * -- set box shape data
      * data = {}
      * data.type = physics.SHAPE_TYPE_BOX
@@ -477,6 +508,7 @@ declare global {
      * efficiency reasons. This function wakes them up.
      *
      * @param url - the collision object to wake.
+     *
      * `function on_input(self, action_id, action)
      * if action_id == hash("test") and action.pressed then
      * physics.wakeup("#collisionobject")

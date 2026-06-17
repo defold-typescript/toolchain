@@ -15,17 +15,22 @@ declare global {
      * @param url - the sprite that should play the animation
      * @param id - hashed id of the animation to play
      * @param complete_function - function to call when the animation has completed.
+     *
      * `self`
      * object The current object.
      * `message_id`
      * hash The name of the completion message, `"animation_done"`.
      * `message`
      * table Information about the completion:
+     *
      * - number `current_tile` - the current tile of the sprite.
+     *
      * - hash `id` - id of the animation that was completed.
+     *
      * `sender`
      * url The invoker of the callback: the sprite component.
      * @param play_properties - optional table with properties:
+     *
      * `offset`
      * number the normalized initial value of the animation cursor when the animation starts playing.
      * `playback_rate`

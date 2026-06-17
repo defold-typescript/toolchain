@@ -106,8 +106,11 @@ declare global {
      * in the Android SDK. If your game is playing any sounds, *even with a gain of zero*, this
      * function will return `false`.
      * The best time to call this function is:
+     *
      * - In the `init` function of your main collection script before any sounds are triggered
+     *
      * - In a window listener callback when the window.WINDOW_EVENT_FOCUS_GAINED event is received
+     *
      * Both those times will give you a correct reading of the state even when your application is
      * swapped out and in while playing sounds and it works equally well on Android and iOS.
      *
@@ -170,13 +173,16 @@ declare global {
      * `start_frame`
      * number start playback offset (frames/samples). Optional, mutually exclusive with `start_time`. If both are provided, `start_frame` is used.
      * @param complete_function - function to call when the sound has finished playing or stopped manually via sound.stop.
+     *
      * `self`
      * object The current object.
      * `message_id`
      * hash The name of the completion message, which can be either `"sound_done"` if the sound has finished playing, or `"sound_stopped"` if it was stopped manually.
      * `message`
      * table Information about the completion:
+     *
      * - number `play_id` - the sequential play identifier that was given by the sound.play function.
+     *
      * `sender`
      * url The invoker of the callback: the sound component.
      * @returns The identifier for the sound voice

@@ -115,6 +115,7 @@ declare global {
      * The coordinates of the tiles are indexed so that the "first" tile just
      * above and to the right of origin has coordinates 1,1.
      * Tiles to the left of and below origin are indexed 0, -1, -2 and so forth.
+     *
      * +-------+-------+------+------+
      * | 0,3 | 1,3 | 2,3 | 3,3 |
      * +-------+-------+------+------+
@@ -124,6 +125,7 @@ declare global {
      * +-------O-------+------+------+
      * | 0,0 | 1,0 | 2,0 | 3,0 |
      * +-------+-------+------+------+
+     *
      * The coordinates must be within the bounds of the tile map as it were created.
      * That is, it is not possible to extend the size of a tile map by setting tiles outside the edges.
      * To clear a tile, set the tile to number 0. Which tile map and layer to manipulate is identified by the URL and the layer name parameters.

@@ -5,9 +5,11 @@ declare global {
   /**
    * Rendering functions, messages and constants. The "render" namespace is
    * accessible only from render scripts.
+   *
    * The rendering API was originally built on top of OpenGL ES 2.0, and it uses a subset of the
    * OpenGL computer graphics rendering API for rendering 2D and 3D computer
    * graphics. Our current target is OpenGLES 3.0 with fallbacks to 2.0 on some platforms.
+   *
    * [icon:attention] It is possible to create materials and write shaders that
    * require features not in OpenGL ES 2.0, but those will not work cross platform.
    */
@@ -35,8 +37,11 @@ declare global {
      * color attachments, all buffers will be cleared with the same value.
      *
      * @param buffers - table with keys specifying which buffers to clear and values set to clear values. Available keys are:
+     *
      * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     *
      * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     *
      * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @example
      * ```ts
@@ -112,11 +117,17 @@ declare global {
      * Disables a render state.
      *
      * @param state - state to disable
+     *
      * - `graphics.STATE_DEPTH_TEST`
+     *
      * - `graphics.STATE_STENCIL_TEST`
+     *
      * - `graphics.STATE_BLEND`
+     *
      * - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
+     *
      * - `graphics.STATE_CULL_FACE`
+     *
      * - `graphics.STATE_POLYGON_OFFSET_FILL`
      * @example
      * ```ts
@@ -156,6 +167,7 @@ declare global {
      * @param y - global work group size Y
      * @param z - global work group size Z
      * @param options - optional table with properties:
+     *
      * `constants`
      * constant_buffer optional constants to use while rendering
      * @example
@@ -196,12 +208,16 @@ declare global {
      *
      * @param predicate - predicate to draw for
      * @param options - optional table with properties:
+     *
      * `frustum`
      * matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). default=nil
      * `frustum_planes`
      * int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
+     *
      * - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
+     *
      * - render.FRUSTUM_PLANES_ALL : All 6 sides of the frustum.
+     *
      * `constants`
      * constant_buffer optional constants to use while rendering
      * `sort_order`
@@ -239,11 +255,14 @@ declare global {
      * Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
      *
      * @param options - optional table with properties:
+     *
      * `frustum`
      * matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). May be nil.
      * `frustum_planes`
      * int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
+     *
      * - render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
+     *
      * - render.FRUSTUM_PLANES_ALL : All sides of the frustum.
      * @example
      * ```ts
@@ -276,11 +295,17 @@ declare global {
      * Enables a particular render state. The state will be enabled until disabled.
      *
      * @param state - state to enable
+     *
      * - `graphics.STATE_DEPTH_TEST`
+     *
      * - `graphics.STATE_STENCIL_TEST`
+     *
      * - `graphics.STATE_BLEND`
+     *
      * - `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
+     *
      * - `graphics.STATE_CULL_FACE`
+     *
      * - `graphics.STATE_POLYGON_OFFSET_FILL`
      * @example
      * ```ts
@@ -307,15 +332,24 @@ declare global {
      * @param binding - texture binding, either by texture unit, string or hash for the sampler name that the texture should be bound to
      * @param handle_or_name - render target or texture handle that should be bound, or a named resource in the "Render Resource" table in the currently assigned .render file
      * @param buffer_type - optional buffer type from which to enable the texture. Note that this argument only applies to render targets. Defaults to `graphics.BUFFER_TYPE_COLOR0_BIT`. These values are supported:
+     *
      * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     *
      * If The render target has been created as depth and/or stencil textures, these buffer types can be used:
+     *
      * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     *
      * - `graphics.BUFFER_TYPE_STENCIL_BIT`
+     *
      * If the render target has been created with multiple color attachments, these buffer types can be used
      * to enable those textures as well. Currently 4 color attachments are supported:
+     *
      * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     *
      * - `graphics.BUFFER_TYPE_COLOR1_BIT`
+     *
      * - `graphics.BUFFER_TYPE_COLOR2_BIT`
+     *
      * - `graphics.BUFFER_TYPE_COLOR3_BIT`
      * @example
      * ```ts
@@ -381,8 +415,11 @@ declare global {
      *
      * @param render_target - render target from which to retrieve the buffer height
      * @param buffer_type - which type of buffer to retrieve the height from
+     *
      * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     *
      * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     *
      * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @returns the height of the render target buffer texture
      * @example
@@ -399,9 +436,13 @@ declare global {
      *
      * @param render_target - render target from which to retrieve the buffer width
      * @param buffer_type - which type of buffer to retrieve the width from
+     *
      * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     *
      * - `graphics.BUFFER_TYPE_COLOR[x]_BIT` (x: [0..3], if supported!)
+     *
      * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     *
      * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @returns the width of the render target buffer texture
      * @example
@@ -475,8 +516,10 @@ declare global {
      * The table should contain keys specifying which buffers should be created
      * with what parameters. Each buffer key should have a table value consisting
      * of parameters. The following parameter keys are available:
+     *
      * Key
      * Values
+     *
      * `format`
      * `graphics.TEXTURE_FORMAT_LUMINANCE`
      * `graphics.TEXTURE_FORMAT_RGB`
@@ -485,33 +528,42 @@ declare global {
      * `graphics.TEXTURE_FORMAT_STENCIL`
      * `graphics.TEXTURE_FORMAT_RGBA32F`
      * `graphics.TEXTURE_FORMAT_RGBA16F`
+     *
      * `width`
      * number
+     *
      * `height`
      * number
+     *
      * `min_filter` (optional)
      * `graphics.TEXTURE_FILTER_LINEAR`
      * `graphics.TEXTURE_FILTER_NEAREST`
+     *
      * `mag_filter` (optional)
      * `graphics.TEXTURE_FILTER_LINEAR`
      * `graphics.TEXTURE_FILTER_NEAREST`
+     *
      * `u_wrap` (optional)
      * `graphics.TEXTURE_WRAP_CLAMP_TO_BORDER`
      * `graphics.TEXTURE_WRAP_CLAMP_TO_EDGE`
      * `graphics.TEXTURE_WRAP_MIRRORED_REPEAT`
      * `graphics.TEXTURE_WRAP_REPEAT`
+     *
      * `v_wrap` (optional)
      * `graphics.TEXTURE_WRAP_CLAMP_TO_BORDER`
      * `graphics.TEXTURE_WRAP_CLAMP_TO_EDGE`
      * `graphics.TEXTURE_WRAP_MIRRORED_REPEAT`
      * `graphics.TEXTURE_WRAP_REPEAT`
+     *
      * `flags` (optional)
      * `render.TEXTURE_BIT` (only applicable to depth and stencil buffers)
+     *
      * The render target can be created to support multiple color attachments. Each attachment can have different format settings and texture filters,
      * but attachments must be added in sequence, meaning you cannot create a render target at slot 0 and 3.
      * Instead it has to be created with all four buffer types ranging from [0..3] (as denoted by graphics.BUFFER_TYPE_COLORX_BIT where 'X' is the attachment you want to create).
      * It is not guaranteed that the device running the script can support creating render targets with multiple color attachments. To check if the device can support multiple attachments,
      * you can check if the `render` table contains any of the `BUFFER_TYPE_COLOR1_BIT`, `BUFFER_TYPE_COLOR2_BIT` or `BUFFER_TYPE_COLOR3_BIT` constants:
+     *
      * `function init(self)
      * if graphics.BUFFER_TYPE_COLOR1_BIT == nil then
      * -- this devices does not support multiple color attachments
@@ -621,43 +673,65 @@ declare global {
      * The destination scale factor is referred to as (dR,dG,dB,dA).
      * The color values have integer values between 0 and (kR,kG,kB,kA), where kc = 2mc - 1 and mc is the number of bitplanes for that color. I.e for 8 bit color depth, color values are between `0` and `255`.
      * Available factor constants and corresponding scale factors:
+     *
      * Factor constant
      * Scale factor (fR,fG,fB,fA)
+     *
      * `graphics.BLEND_FACTOR_ZERO`
      * (0,0,0,0)
+     *
      * `graphics.BLEND_FACTOR_ONE`
      * (1,1,1,1)
+     *
      * `graphics.BLEND_FACTOR_SRC_COLOR`
      * (Rs/kR,Gs/kG,Bs/kB,As/kA)
+     *
      * `graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR`
      * (1,1,1,1) - (Rs/kR,Gs/kG,Bs/kB,As/kA)
+     *
      * `graphics.BLEND_FACTOR_DST_COLOR`
      * (Rd/kR,Gd/kG,Bd/kB,Ad/kA)
+     *
      * `graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR`
      * (1,1,1,1) - (Rd/kR,Gd/kG,Bd/kB,Ad/kA)
+     *
      * `graphics.BLEND_FACTOR_SRC_ALPHA`
      * (As/kA,As/kA,As/kA,As/kA)
+     *
      * `graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA`
      * (1,1,1,1) - (As/kA,As/kA,As/kA,As/kA)
+     *
      * `graphics.BLEND_FACTOR_DST_ALPHA`
      * (Ad/kA,Ad/kA,Ad/kA,Ad/kA)
+     *
      * `graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA`
      * (1,1,1,1) - (Ad/kA,Ad/kA,Ad/kA,Ad/kA)
+     *
      * `graphics.BLEND_FACTOR_CONSTANT_COLOR`
      * (Rc,Gc,Bc,Ac)
+     *
      * `graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR`
      * (1,1,1,1) - (Rc,Gc,Bc,Ac)
+     *
      * `graphics.BLEND_FACTOR_CONSTANT_ALPHA`
      * (Ac,Ac,Ac,Ac)
+     *
      * `graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA`
      * (1,1,1,1) - (Ac,Ac,Ac,Ac)
+     *
      * `graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE`
      * (i,i,i,1) where i = min(As, kA - Ad) /kA
+     *
      * The blended RGBA values of a pixel comes from the following equations:
+     *
      * - Rd = min(kR, Rs * sR + Rd * dR)
+     *
      * - Gd = min(kG, Gs * sG + Gd * dG)
+     *
      * - Bd = min(kB, Bs * sB + Bd * dB)
+     *
      * - Ad = min(kA, As * sA + Ad * dA)
+     *
      * Blend function `(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)` is useful for
      * drawing with transparency when the drawn objects are sorted from farthest to nearest.
      * It is also useful for drawing antialiased points and lines in arbitrary order.
@@ -682,6 +756,7 @@ declare global {
      *
      * @param camera - camera id to use, or nil to reset
      * @param options - optional table with properties:
+     *
      * `use_frustum`
      * boolean If true, the renderer will use the cameras view-projection matrix for frustum culling (default: false)
      * @example
@@ -739,8 +814,11 @@ declare global {
      * `face_type` is `graphics.FACE_TYPE_BACK`.
      *
      * @param face_type - face type
+     *
      * - `graphics.FACE_TYPE_FRONT`
+     *
      * - `graphics.FACE_TYPE_BACK`
+     *
      * - `graphics.FACE_TYPE_FRONT_AND_BACK`
      * @example
      * ```ts
@@ -756,14 +834,23 @@ declare global {
      * The comparison is performed only if depth testing is enabled and specifies
      * the conditions under which a pixel will be drawn.
      * Function constants:
+     *
      * - `graphics.COMPARE_FUNC_NEVER` (never passes)
+     *
      * - `graphics.COMPARE_FUNC_LESS` (passes if the incoming depth value is less than the stored value)
+     *
      * - `graphics.COMPARE_FUNC_LEQUAL` (passes if the incoming depth value is less than or equal to the stored value)
+     *
      * - `graphics.COMPARE_FUNC_GREATER` (passes if the incoming depth value is greater than the stored value)
+     *
      * - `graphics.COMPARE_FUNC_GEQUAL` (passes if the incoming depth value is greater than or equal to the stored value)
+     *
      * - `graphics.COMPARE_FUNC_EQUAL` (passes if the incoming depth value is equal to the stored value)
+     *
      * - `graphics.COMPARE_FUNC_NOTEQUAL` (passes if the incoming depth value is not equal to the stored value)
+     *
      * - `graphics.COMPARE_FUNC_ALWAYS` (always passes)
+     *
      * The depth function is initially set to `graphics.COMPARE_FUNC_LESS`.
      *
      * @param func - depth test function, see the description for available values
@@ -796,6 +883,7 @@ declare global {
      *
      * @param callback - A callback that receives all render related events.
      * Pass `nil` if want to remove listener.
+     *
      * `self`
      * object The render script
      * `event_type`
@@ -865,12 +953,16 @@ declare global {
      *
      * @param render_target - render target to set. render.RENDER_TARGET_DEFAULT to set the default render target
      * @param options - optional table with behaviour parameters
+     *
      * `transient`
      * table Transient frame buffer types are only valid while the render target is active, i.e becomes undefined when a new target is set by a subsequent call to set_render_target.
      * Default is all non-transient. Be aware that some hardware uses a combined depth stencil buffer and when this is the case both are considered non-transient if exclusively selected!
      * A buffer type defined that doesn't exist in the render target is silently ignored.
+     *
      * - `graphics.BUFFER_TYPE_COLOR0_BIT`
+     *
      * - `graphics.BUFFER_TYPE_DEPTH_BIT`
+     *
      * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @example
      * ```ts
@@ -937,13 +1029,21 @@ declare global {
      * `mask` is ANDed with both the reference value and the stored stencil value when the test
      * is done. The initial value is all `1`'s.
      * Function constant:
+     *
      * - `graphics.COMPARE_FUNC_NEVER` (never passes)
+     *
      * - `graphics.COMPARE_FUNC_LESS` (passes if (ref & mask) < (stencil & mask))
+     *
      * - `graphics.COMPARE_FUNC_LEQUAL` (passes if (ref & mask) <= (stencil & mask))
+     *
      * - `graphics.COMPARE_FUNC_GREATER` (passes if (ref & mask) > (stencil & mask))
+     *
      * - `graphics.COMPARE_FUNC_GEQUAL` (passes if (ref & mask) >= (stencil & mask))
+     *
      * - `graphics.COMPARE_FUNC_EQUAL` (passes if (ref & mask) = (stencil & mask))
+     *
      * - `graphics.COMPARE_FUNC_NOTEQUAL` (passes if (ref & mask) != (stencil & mask))
+     *
      * - `graphics.COMPARE_FUNC_ALWAYS` (always passes)
      *
      * @param func - stencil test function, see the description for available values
@@ -982,14 +1082,23 @@ declare global {
      * pixel's color or depth buffers, and `sfail` specifies what happens to the stencil buffer
      * contents.
      * Operator constants:
+     *
      * - `graphics.STENCIL_OP_KEEP` (keeps the current value)
+     *
      * - `graphics.STENCIL_OP_ZERO` (sets the stencil buffer value to 0)
+     *
      * - `graphics.STENCIL_OP_REPLACE` (sets the stencil buffer value to `ref`, as specified by render.set_stencil_func)
+     *
      * - `graphics.STENCIL_OP_INCR` (increments the stencil buffer value and clamp to the maximum representable unsigned value)
+     *
      * - `graphics.STENCIL_OP_INCR_WRAP` (increments the stencil buffer value and wrap to zero when incrementing the maximum representable unsigned value)
+     *
      * - `graphics.STENCIL_OP_DECR` (decrements the current stencil buffer value and clamp to 0)
+     *
      * - `graphics.STENCIL_OP_DECR_WRAP` (decrements the current stencil buffer value and wrap to the maximum representable unsigned value when decrementing zero)
+     *
      * - `graphics.STENCIL_OP_INVERT` (bitwise inverts the current stencil buffer value)
+     *
      * `dppass` and `dpfail` specify the stencil buffer actions depending on whether subsequent
      * depth buffer tests succeed (dppass) or fail (dpfail).
      * The initial value for all operators is `graphics.STENCIL_OP_KEEP`.

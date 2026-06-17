@@ -31,6 +31,20 @@ describe("htmlToDocText", () => {
     expect(htmlToDocText("line one<br>line two")).toBe("line one\nline two");
   });
 
+  test("adjacent paragraphs gain a blank-line separator", () => {
+    expect(htmlToDocText("<p>A</p><p>B</p>")).toBe("A\n\nB");
+  });
+
+  test("a <br> inside a paragraph stays a single newline; the boundary is a blank line", () => {
+    expect(htmlToDocText("<p>line one<br>line two</p><p>next</p>")).toBe(
+      "line one\nline two\n\nnext",
+    );
+  });
+
+  test("runaway blank runs collapse to a single blank line", () => {
+    expect(htmlToDocText("<p>A</p><p></p><p>B</p>")).toBe("A\n\nB");
+  });
+
   test("consecutive whitespace collapses and ends trim", () => {
     expect(htmlToDocText("  foo   bar  ")).toBe("foo bar");
   });
@@ -143,6 +157,16 @@ describe("renderDocComment", () => {
     expect(renderDocComment({ summary: "Just a summary." })).toEqual([
       "/**",
       " * Just a summary.",
+      " */",
+    ]);
+  });
+
+  test("a blank line in the summary emits ` *` without a trailing space", () => {
+    expect(renderDocComment({ summary: "First paragraph.\n\nSecond paragraph." })).toEqual([
+      "/**",
+      " * First paragraph.",
+      " *",
+      " * Second paragraph.",
       " */",
     ]);
   });

@@ -31,6 +31,7 @@ declare global {
      *
      * @param url - the particle fx that should start playing.
      * @param emitter_state_function - optional callback function that will be called when an emitter attached to this particlefx changes state.
+     *
      * `self`
      * object The current object
      * `id`
@@ -39,9 +40,13 @@ declare global {
      * hash The id of the emitter
      * `state`
      * constant the new state of the emitter:
+     *
      * - `particlefx.EMITTER_STATE_SLEEPING`
+     *
      * - `particlefx.EMITTER_STATE_PRESPAWN`
+     *
      * - `particlefx.EMITTER_STATE_SPAWNING`
+     *
      * - `particlefx.EMITTER_STATE_POSTSPAWN`
      * @example
      * ```ts
@@ -121,6 +126,7 @@ declare global {
      *
      * @param url - the particle fx that should stop playing
      * @param options - Options when stopping the particle fx. Supported options:
+     *
      * - boolean `clear`: instantly clear spawned particles
      * @example
      * ```ts
