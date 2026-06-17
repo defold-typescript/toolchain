@@ -1,0 +1,16 @@
+{
+  "info": {
+    "namespace": "base",
+    "brief": "Lua base library."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "assert",
+      "brief": "assert condition",
+      "description": "assert(v, message)",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

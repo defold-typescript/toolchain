@@ -14,9 +14,9 @@ const NO_GLOBALS_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface-n
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 describe("loadApiSurface", () => {
-  test("returns one ApiPage per module of the default target, globals first then alphabetical", () => {
+  test("returns one ApiPage per module of the default target (engine then lua-stdlib), globals first then alphabetical", () => {
     const pages = loadApiSurface(FIXTURE_DIR);
-    expect(pages.map((p) => p.namespace)).toEqual(["globals", "alpha", "camera"]);
+    expect(pages.map((p) => p.namespace)).toEqual(["globals", "alpha", "camera", "base", "bit"]);
   });
 
   test("prepends the synthetic globals page from globals_doc.json as pages[0]", () => {
@@ -49,6 +49,24 @@ describe("loadApiSurface", () => {
     expect(alpha?.module.functions).toHaveLength(0);
     expect(alpha?.module.variables).toHaveLength(0);
   });
+
+  test("tags base and bit pages with category 'lua-stdlib' from target.luaStdlib", () => {
+    const pages = loadApiSurface(FIXTURE_DIR);
+    const base = pages.find((p) => p.namespace === "base");
+    const bit = pages.find((p) => p.namespace === "bit");
+    expect(base?.category).toBe("lua-stdlib");
+    expect(bit?.category).toBe("lua-stdlib");
+    expect(base?.route).toBe("/api/base");
+    expect(bit?.route).toBe("/api/bit");
+  });
+
+  test("tags engine pages (modules, globals) with category 'engine', distinct from lua-stdlib", () => {
+    const pages = loadApiSurface(FIXTURE_DIR);
+    for (const namespace of ["globals", "alpha", "camera"]) {
+      const page = pages.find((p) => p.namespace === namespace);
+      expect(page?.category).toBe("engine");
+    }
+  });
 });
 
 describe("apiModuleMarkdown", () => {
@@ -78,6 +96,7 @@ describe("apiModuleMarkdown", () => {
         typedefs: [],
       },
       translations: {},
+      category: "engine",
     };
     const md = apiModuleMarkdown(page);
     expect(md).toContain("```lua");
@@ -106,6 +125,7 @@ describe("apiModuleSymbols", () => {
         ...module,
       },
       translations: {},
+      category: "engine",
     };
   }
 

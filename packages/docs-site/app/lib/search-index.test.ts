@@ -125,6 +125,7 @@ describe("apiSearchRecords", () => {
         typedefs: [],
       },
       translations: {},
+      category: "engine",
     };
     const [record] = apiSearchRecords([page]);
     expect(record?.text).toContain("demo.run");

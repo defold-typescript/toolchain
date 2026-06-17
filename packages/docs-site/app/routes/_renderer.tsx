@@ -159,9 +159,13 @@ interface RendererProps {
 
 export default jsxRenderer(({ children, title, headings, contentClass }: RendererProps, c) => {
   const path = c.req.path;
+  const allApiPages = apiPages();
+  const engineApiPages = allApiPages.filter((p) => p.category === "engine");
+  const luaStdlibApiPages = allApiPages.filter((p) => p.category === "lua-stdlib");
   const nav = buildNav(
     guidePages(),
-    apiPages().map((p) => ({ label: p.namespace, route: p.route })),
+    engineApiPages.map((p) => ({ label: p.namespace, route: p.route })),
+    luaStdlibApiPages.map((p) => ({ label: p.namespace, route: p.route })),
   );
   const activeId = activeCategoryId(path, nav) ?? nav[0]?.id;
   const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];

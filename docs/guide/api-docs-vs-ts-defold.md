@@ -79,6 +79,24 @@ instead types the return as a `LuaMultiReturn<[…]>` tuple, so each returned va
 is named in the type itself rather than in prose. The coverage test treats these
 as documented-by-type, not as a `@returns` regression.
 
+## Lua standard library reference category
+
+The `/api` reference browser surfaces the Defold-engine namespaces plus a
+separate **Lua standard library** category for the pure-Lua / LuaJIT surfaces
+Defold documents (`base`, `bit`, …). Their TypeScript types come from the
+`lua-types` dependency the `lua-stdlib-globals` goal adopted
+(`lua-types/special/jit-only.d.ts` for `bit`, `lua-types/core/global.d.ts` for
+the base globals) and are wired into every script kind via the
+`LUA_STDLIB_REFERENCES` triple-slash directives in `regen.ts` — `@defold-typescript/types`
+does **not** re-emit them as generated namespaces (a duplicate `declare
+namespace bit` would collide, and the base globals are top-level globals, not a
+`base.*` namespace). The category is docs-only: a dedicated
+`LUA_STDLIB_MANIFEST` vendors the same ref-doc JSON `SYNC_MANIFEST` carries,
+but the docs-site is the only consumer; `regen.ts` / `MODULE_MANIFEST` never
+read it, so no `generated/<ns>.d.ts` is produced. The topbar's "Lua standard
+library" link leads to `/api/base`; the per-namespace page leads with a
+`lua-types` provenance note.
+
 ## Where ts-defold-types is arguably cleaner
 
 One deliberate trade-off runs the other way. The `@defold-typescript/types`
