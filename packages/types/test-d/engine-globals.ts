@@ -9,6 +9,8 @@ const _eg_h: Hash = go.get_id("/my_object");
 const _eg_hash: Hash = hash("player");
 const _eg_u: Url = msg.url();
 const _eg_n: Opaque<"node"> = gui.get_node("foo");
+const _eg_hex: string = hash_to_hex(hash("player"));
+pprint({ a: 1 });
 
 void _eg_v;
 void _eg_v4;
@@ -19,3 +21,4 @@ void _eg_h;
 void _eg_hash;
 void _eg_u;
 void _eg_n;
+void _eg_hex;

@@ -3,7 +3,7 @@
     "namespace": "globals",
     "version": "1.12.4",
     "brief": "Prefixless global symbols available to every Defold script.",
-    "description": "Hand-vendored catalog of the ambient symbols Defold scripts reach with no namespace prefix (declared in src/engine-globals.d.ts). Upstream has no machine-readable export for this surface; refresh by reading the Defold API reference and editing this file. Documents callable/global-value symbols only; the ambient engine types are out of scope."
+    "description": "Hand-vendored catalog of the ambient symbols Defold scripts reach with no namespace prefix (declared in src/engine-globals.d.ts). Upstream has no machine-readable export for this surface; refresh by reading the Defold API reference and editing this file. Documents callable/global-value symbols only; the ambient engine types are out of scope. The Lua base globals (print, pcall, pairs, assert, ...) are owned by the lua-types dependency and documented on the base reference page; they are not duplicated here."
   },
   "elements": [
     {
@@ -13,6 +13,24 @@
       "description": "Hashes a string into a hash value. The hash can be used to reference resources and identifiers in the Defold engine without carrying the original string around.",
       "parameters": [{ "name": "s", "doc": "the string to hash", "types": ["string"] }],
       "returnvalues": [{ "name": "hash", "doc": "the hash value", "types": ["hash"] }]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hash_to_hex",
+      "brief": "get hex representation of a hash value as a string",
+      "description": "Returns a hexadecimal representation of a hash value. The returned string is always padded with leading zeros.",
+      "parameters": [{ "name": "h", "doc": "hash value to get hex string for", "types": ["hash"] }],
+      "returnvalues": [
+        { "name": "hex", "doc": "hex representation of the hash", "types": ["string"] }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pprint",
+      "brief": "pretty printing",
+      "description": "Pretty printing of Lua values. This function prints Lua values in a manner similar to +print()+, but will also recurse into tables and pretty print their contents.",
+      "parameters": [{ "name": "v", "doc": "value to print", "types": ["any"] }],
+      "returnvalues": []
     }
   ]
 }
