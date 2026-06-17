@@ -1,6 +1,6 @@
 # @defold-typescript/docs-site
 
-Private documentation site for defold-typescript. It renders every `docs/guide/*.md`
+Private documentation site for defold-typescript. It renders every `packages/docs/guide/*.md`
 to a Shiki-highlighted static HTML page using [HonoX](https://github.com/honojs/honox)
 and `@hono/vite-ssg`, deployable to Cloudflare Pages.
 
@@ -30,7 +30,7 @@ search index, then `scripts/build-symbol-index.ts`, and finally the two-pass Vit
 guide page (`dist/getting-started.html`, `dist/index.html` from the guide `README.md`,
 ...), the API index (`dist/api.html`), and one per API namespace under `dist/api/`.
 Guide pages are served by the single dynamic `app/routes/[slug].tsx` route, whose
-`ssgParams` enumerates every non-index `docs/guide/*.md` slug so each prerenders to
+`ssgParams` enumerates every non-index `packages/docs/guide/*.md` slug so each prerenders to
 `dist/<slug>.html` — no per-slug route files to keep in sync.
 
 ## Deploy (Cloudflare Pages)
@@ -49,7 +49,7 @@ CI automation for deploys is a later slice.
   highlighter. Emits the **dual** `github-light` / `github-dark` themes so code blocks
   re-theme cleanly when the page switches themes.
 - `app/lib/guide.ts` — `listGuidePages`: enumerate the guide files and their routes.
-- `app/lib/content.ts` — bridges the libs to the repo-root `docs/guide/` directory.
+- `app/lib/content.ts` — bridges the libs to the `packages/docs/guide/` directory.
 - `app/lib/nav.ts` — `buildNav` / `activeCategoryId`: group the guide pages plus
   `/api` into the four nav categories.
 - `app/lib/headings.ts` — `pageHeadings`: extract h2/h3 headings with slugs from a

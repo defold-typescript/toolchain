@@ -4,7 +4,7 @@ import { resolveBootPathScripts } from "./boot-path";
 import { normalizeScannedPath, scanFilesSync } from "./scan";
 import { isSkipped } from "./script-kind";
 
-// Our pinned release URL, mirrored from `docs/guide/debugging.md`. The
+// Our pinned release URL, mirrored from `packages/docs/guide/debugging.md`. The
 // `lldebugger-url` leak guard forbids the upstream ts-defold URL, so this must
 // stay equal to the guide's snapshot URL.
 export const LLDEBUGGER_URL =
@@ -38,7 +38,7 @@ export const BLOCK_END = "// defold-typescript:setup-debug END";
 
 // The canonical managed block: import + gated start, marker-free, no
 // `declare module` (that lives in the ambient `.d.ts`). Mirrors the snippet in
-// `docs/guide/debugging.md` exactly; a guide-comparison test locks the two.
+// `packages/docs/guide/debugging.md` exactly; a guide-comparison test locks the two.
 // The blank line before END keeps Biome's organizeImports assist from gluing
 // the END comment onto a following import as its leading comment (which would
 // then demand a blank line before the whole group). With blank lines on both

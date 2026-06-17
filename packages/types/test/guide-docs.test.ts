@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..", "..");
-const GUIDE = resolve(REPO_ROOT, "docs", "guide");
+const GUIDE = resolve(REPO_ROOT, "packages", "docs", "guide");
 
 async function readGuide(relPath: string): Promise<string> {
   return Bun.file(resolve(GUIDE, relPath)).text();
@@ -99,9 +99,9 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("editor-setup.md");
   });
 
-  test("root README.md links to docs/guide/README.md", async () => {
+  test("root README.md links to the guide README", async () => {
     const body = await Bun.file(resolve(REPO_ROOT, "README.md")).text();
-    expect(body).toContain("docs/guide/README.md");
+    expect(body).toContain("packages/docs/guide/README.md");
   });
 
   test("typescript-gotchas.md carries the front skim digest", async () => {

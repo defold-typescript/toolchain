@@ -174,7 +174,7 @@ ${FACTORY_SCRIPT}`;
 
   test("mirrors the bootstrap snippet in the debugging guide exactly", () => {
     const guide = readFileSync(
-      path.join(__dirname, "..", "..", "..", "docs", "guide", "debugging.md"),
+      path.join(__dirname, "..", "..", "..", "packages", "docs", "guide", "debugging.md"),
       "utf8",
     );
     // Every line the tool emits (ambient declaration + managed block) appears

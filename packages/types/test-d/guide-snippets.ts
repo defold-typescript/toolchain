@@ -8,7 +8,7 @@ declare const v4b: Vector4;
 declare const q: Quaternion;
 declare const m: Matrix4;
 
-// docs/guide/vector-math.md positives — method-form arithmetic
+// packages/docs/guide/vector-math.md positives — method-form arithmetic
 const _v3add: Vector3 = v3a.add(v3b);
 const _v3mul2: Vector3 = v3a.mul(2);
 const _v3unm: Vector3 = v3a.unm();
@@ -16,7 +16,7 @@ const _v4add: Vector4 = v4a.add(v4b);
 const _qmulq: Quaternion = q.mul(q);
 const _mmulv4: Vector4 = m.mul(v4a);
 
-// docs/guide/vector-math.md "Why not v3 + v3?" negatives
+// packages/docs/guide/vector-math.md "Why not v3 + v3?" negatives
 // @ts-expect-error binary + on Vector3 is not type-checked away by the toolchain
 const _v3plus = v3a + v3b;
 // @ts-expect-error binary * on Vector3 with a scalar is not the method form
@@ -24,16 +24,16 @@ const _v3star = v3a * 2;
 // @ts-expect-error Vector3.add requires a Vector3, not a number
 const _v3addBadArg: Vector3 = v3a.add(2);
 
-// docs/guide/typescript-gotchas.md — unary-minus silently produces number
+// packages/docs/guide/typescript-gotchas.md — unary-minus silently produces number
 // Symmetric pin: the positive assignment must compile, the Vector3 assignment must not.
 const _negIsNumber: number = -v3a;
 // @ts-expect-error -v3a is not Vector3 — it silently produces number
 const _negIsVector3: Vector3 = -v3a;
 
-// docs/guide/getting-started.md — vmath.vector3(...).add(vmath.vector3(...)) chain
+// packages/docs/guide/getting-started.md — vmath.vector3(...).add(vmath.vector3(...)) chain
 const _gettingStartedChain: Vector3 = vmath.vector3(1, 2, 3).add(vmath.vector3(0, 1, 0));
 
-// docs/guide/typescript-gotchas.md — enum constants are branded numbers
+// packages/docs/guide/typescript-gotchas.md — enum constants are branded numbers
 // A branded constant stays assignable to plain number (backward compatible)
 // and to its own brand, but a bare number lacks the brand.
 const _pbIsNumber: number = go.PLAYBACK_ONCE_FORWARD;
@@ -42,7 +42,7 @@ const _pbBrand: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } =
 // @ts-expect-error a plain number lacks the enum brand
 const _pbBad: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } = 0;
 
-// docs/guide/typescript-gotchas.md — component property catalog
+// packages/docs/guide/typescript-gotchas.md — component property catalog
 // The per-namespace `interface properties` records each property's type.
 declare const _labelProps: label.properties;
 const _labelColor: Vector4 = _labelProps.color;

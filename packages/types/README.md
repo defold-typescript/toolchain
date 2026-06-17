@@ -13,7 +13,7 @@ Most users get these wired in automatically by the
 (`bunx @defold-typescript/cli init`), which points `tsconfig.json` at the right surface.
 
 See the repository [README](https://github.com/defold-typescript/toolchain#readme)
-and [`docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/docs/guide)
+and [`packages/docs/guide/`](https://github.com/defold-typescript/toolchain/tree/main/packages/docs/guide)
 for the full workflow.
 
 ## License
