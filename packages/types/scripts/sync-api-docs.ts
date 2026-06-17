@@ -104,11 +104,6 @@ export const IGNORED_UPSTREAM: ReadonlyMap<string, string> = new Map([
     "builtins",
     "global Defold builtins (hash/pprint/…) typed as ambient globals, not a `builtins.*` namespace",
   ],
-  ["math", "Lua standard library, typed by the lua-types dependency"],
-  ["os", "Lua standard library, typed by the lua-types dependency"],
-  ["string", "Lua standard library, typed by the lua-types dependency"],
-  ["table", "Lua standard library, typed by the lua-types dependency"],
-  ["coroutine", "Lua standard library, typed by the lua-types dependency"],
   ["debug", "Lua standard library, typed by the lua-types dependency"],
   ["io", "Lua standard library, typed by the lua-types dependency"],
   ["package", "Lua standard library, typed by the lua-types dependency"],
@@ -126,6 +121,14 @@ export const IGNORED_UPSTREAM: ReadonlyMap<string, string> = new Map([
 export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
   entry("base", "doc/lua_base.doc_h_doc.json"),
   entry("bit", "doc/src-script_bitop.cpp_doc.json"),
+  // Core Lua stdlib docs. The 1.12.4 release names these `doc/lua_<ns>.doc_h_doc.json`
+  // (confirmed against the pinned ref-doc.zip, not derived — the naming drifted from
+  // the 1.9.8 `doc/<ns>_doc.json` form). Typed by the lua-types dependency, so docs-only.
+  entry("math", "doc/lua_math.doc_h_doc.json"),
+  entry("os", "doc/lua_os.doc_h_doc.json"),
+  entry("string", "doc/lua_string.doc_h_doc.json"),
+  entry("table", "doc/lua_table.doc_h_doc.json"),
+  entry("coroutine", "doc/lua_coroutine.doc_h_doc.json"),
 ];
 
 function entry(

@@ -36,6 +36,10 @@ export interface ApiTarget {
   readonly coreTypesImport: string;
   readonly source?: ApiTargetSource;
   readonly modules: readonly ApiTargetModule[];
+  // Docs-only Lua stdlib pages (no generated `.d.ts`): vendored fixtures the
+  // docs-site pages under the "Lua standard library" category. Never read by
+  // regen/MODULE_MANIFEST; surfaced here so the registry stays type-honest.
+  readonly luaStdlib?: readonly { readonly namespace: string; readonly fixture: string }[];
 }
 
 const REGISTRY_PATH = resolve(import.meta.dir, "..", "api-targets.json");
