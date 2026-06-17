@@ -3,7 +3,7 @@ import type { GuidePage } from "./guide";
 export interface NavLink {
   label: string;
   labelHtml: string;
-  route: string;
+  route?: string;
   children?: NavLink[];
 }
 
@@ -16,8 +16,18 @@ export interface NavCategory {
 interface CategorySpec {
   id: string;
   label: string;
-  slugs?: string[];
-  links?: { label: string; route: string }[];
+  slugs: string[];
+}
+
+export interface Namespace {
+  label: string;
+  route: string;
+}
+
+export interface ReferenceGroups {
+  globals: Namespace[];
+  luaStdlib: Namespace[];
+  engine: Namespace[];
 }
 
 const FALLBACK_CATEGORY_ID = "guides";
@@ -59,15 +69,6 @@ const CATEGORY_MAP: CategorySpec[] = [
       "migrating-from-ts-defold",
     ],
   },
-  {
-    id: "reference",
-    label: "Reference",
-    links: [{ label: "API", route: "/api" }],
-  },
-  {
-    id: "lua-stdlib",
-    label: "Lua standard library",
-  },
 ];
 
 export function humanize(slug: string): string {
@@ -94,6 +95,10 @@ function toNavLink(label: string, route: string): NavLink {
   return { label: stripBackticks(label), labelHtml: renderNavLabel(label), route };
 }
 
+function toNavGroup(label: string, children: NavLink[]): NavLink {
+  return { label, labelHtml: renderNavLabel(label), children };
+}
+
 function linkFor(page: GuidePage): NavLink {
   const base = page.tocTitle ?? (page.isIndex ? "Overview" : humanize(page.slug));
   return toNavLink(base, page.route);
@@ -101,35 +106,18 @@ function linkFor(page: GuidePage): NavLink {
 
 export function buildNav(
   pages: GuidePage[],
-  apiNamespaces: { label: string; route: string }[] = [],
-  luaStdlibNamespaces: { label: string; route: string }[] = [],
+  reference: ReferenceGroups = { globals: [], luaStdlib: [], engine: [] },
 ): NavCategory[] {
   const bySlug = new Map(pages.map((page) => [page.slug, page]));
   const claimed = new Set<string>();
 
   const categories: NavCategory[] = CATEGORY_MAP.map((spec) => {
     const links: NavLink[] = [];
-    if (spec.slugs) {
-      for (const slug of spec.slugs) {
-        const page = bySlug.get(slug);
-        if (!page) continue;
-        claimed.add(slug);
-        links.push(linkFor(page));
-      }
-    }
-    if (spec.links) {
-      for (const link of spec.links) {
-        const navLink = toNavLink(link.label, link.route);
-        if (link.route === "/api" && apiNamespaces.length > 0) {
-          navLink.children = apiNamespaces.map(({ label, route }) => toNavLink(label, route));
-        }
-        links.push(navLink);
-      }
-    }
-    if (spec.id === "lua-stdlib" && luaStdlibNamespaces.length > 0) {
-      for (const ns of luaStdlibNamespaces) {
-        links.push(toNavLink(ns.label, ns.route));
-      }
+    for (const slug of spec.slugs) {
+      const page = bySlug.get(slug);
+      if (!page) continue;
+      claimed.add(slug);
+      links.push(linkFor(page));
     }
     return { id: spec.id, label: spec.label, links };
   });
@@ -142,17 +130,38 @@ export function buildNav(
     }
   }
 
+  const groupSpecs: [string, Namespace[]][] = [
+    ["Globals", reference.globals],
+    ["Lua Standard", reference.luaStdlib],
+    ["Defold", reference.engine],
+  ];
+  const referenceLinks = groupSpecs
+    .filter(([, namespaces]) => namespaces.length > 0)
+    .map(([label, namespaces]) =>
+      toNavGroup(
+        label,
+        namespaces.map(({ label, route }) => toNavLink(label, route)),
+      ),
+    );
+  categories.push({ id: "reference", label: "Reference", links: referenceLinks });
+
   return categories;
 }
 
 export function activeCategoryId(route: string, nav: NavCategory[]): string | undefined {
   let best: { id: string; length: number } | undefined;
+  const consider = (id: string, candidate: string | undefined) => {
+    if (!candidate) return;
+    const matches = route === candidate || (candidate !== "/" && route.startsWith(`${candidate}/`));
+    if (matches && (!best || candidate.length > best.length)) {
+      best = { id, length: candidate.length };
+    }
+  };
   for (const category of nav) {
     for (const link of category.links) {
-      const matches =
-        route === link.route || (link.route !== "/" && route.startsWith(`${link.route}/`));
-      if (matches && (!best || link.route.length > best.length)) {
-        best = { id: category.id, length: link.route.length };
+      consider(category.id, link.route);
+      for (const child of link.children ?? []) {
+        consider(category.id, child.route);
       }
     }
   }
