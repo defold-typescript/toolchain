@@ -5,6 +5,10 @@ import { GUIDE_DIR, guidePages } from "../app/lib/content";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import { apiSearchRecords, buildSearchIndex } from "../app/lib/search-index";
 
+// Served from public/ at a stable path. The search islands append a `?t=`
+// query in dev to defeat Safari's aggressive dev caching — a generated-asset
+// `?url` import 404s in honox's dev server, so plain public/ + fetch is the
+// reliable path.
 const OUTPUT = join(import.meta.dir, "../public/search-index.json");
 
 const guideRecords = buildSearchIndex(

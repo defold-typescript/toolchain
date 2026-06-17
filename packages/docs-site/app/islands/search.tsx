@@ -17,7 +17,10 @@ export default function Search() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const response = await fetch(withBase("/search-index.json"));
+      // Dev appends a per-load `?t=` so Safari can't serve a stale index after
+      // a regen; prod uses the stable cached path.
+      const base = withBase("/search-index.json");
+      const response = await fetch(import.meta.env.DEV ? `${base}?t=${Date.now()}` : base);
       const records = (await response.json()) as SearchRecord[];
       const instance = create({ schema: SCHEMA }) as SearchDb;
       await insertMultiple(instance, records);
