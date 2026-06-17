@@ -63,9 +63,13 @@ describe("SYNC_MANIFEST coverage", () => {
     }
   });
 
-  test("every entry's fixture path is fixtures/<namespace>_doc.json and zipEntry is non-empty", () => {
+  test("every entry's fixture is a fixtures/*_doc.json path and zipEntry is non-empty", () => {
     for (const entry of SYNC_MANIFEST) {
-      expect(entry.fixture).toBe(`fixtures/${entry.namespace}_doc.json`);
+      // Dotted namespaces (e.g. `b2d.body`) override the default `fixtures/<ns>_doc.json`
+      // pattern with an underscore-joined form (`fixtures/b2d_body_doc.json`); the on-disk
+      // filename must never carry dots because the dot is a route separator on the docs site.
+      const expected = `fixtures/${entry.namespace.replace(/\./g, "_")}_doc.json`;
+      expect(entry.fixture).toBe(expected);
       expect(entry.zipEntry.length).toBeGreaterThan(0);
     }
   });
@@ -75,6 +79,24 @@ describe("SYNC_MANIFEST coverage", () => {
     for (const entry of MODULE_MANIFEST) {
       expect(mapped.has(entry.namespace)).toBe(true);
     }
+  });
+});
+
+describe("parseChecklistNamespaces", () => {
+  test("extracts a dotted sub-namespace token (b2d.body)", () => {
+    const markdown = [
+      "Concrete breadth checklist (one module fixture + one generated `.d.ts` per entry, driven by `MODULE_MANIFEST`):",
+      "`go`, `b2d.body`, `vmath`.",
+    ].join(" ");
+    expect(parseChecklistNamespaces(markdown)).toEqual(["go", "b2d.body", "vmath"]);
+  });
+
+  test("rejects tokens with non-identifier segments", () => {
+    const markdown = [
+      "Concrete breadth checklist (one module fixture + one generated `.d.ts` per entry, driven by `MODULE_MANIFEST`):",
+      "`go`, `bad-token`, `also.bad..name`, `1abc`, `ok`.",
+    ].join(" ");
+    expect(parseChecklistNamespaces(markdown)).toEqual(["go", "ok"]);
   });
 });
 
