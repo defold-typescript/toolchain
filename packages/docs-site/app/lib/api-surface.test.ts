@@ -3,11 +3,24 @@ import { join } from "node:path";
 import { type ApiFunction, hashExampleSource, htmlToCodeText } from "@defold-typescript/types";
 import {
   type ApiPage,
+  type ApiSymbol,
   apiModuleMarkdown,
   apiModuleSymbols,
   exampleMarkdownFor,
+  groupFunctionSymbols,
   loadApiSurface,
 } from "./api-surface";
+
+function fnSymbol(name: string): ApiSymbol {
+  return {
+    kind: "function",
+    name,
+    signature: `${name}()`,
+    docMarkdown: "",
+    parameters: [],
+    returnValues: [],
+  };
+}
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const NO_GLOBALS_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface-no-globals");
@@ -471,5 +484,52 @@ describe("loadApiSurface translations and /api rendering", () => {
     expect(JSON.stringify(apiModuleSymbols(cameraPage))).toBe(
       JSON.stringify(apiModuleSymbols(cameraPage, {})),
     );
+  });
+});
+
+describe("groupFunctionSymbols", () => {
+  test("puts module functions first, then one receiver group, preserving input order", () => {
+    const groups = groupFunctionSymbols([
+      fnSymbol("io.read"),
+      fnSymbol("io.write"),
+      fnSymbol("file:close"),
+      fnSymbol("file:read"),
+    ]);
+    expect(groups).toEqual([
+      { label: "Functions", symbols: [fnSymbol("io.read"), fnSymbol("io.write")] },
+      { label: "`file` methods", symbols: [fnSymbol("file:close"), fnSymbol("file:read")] },
+    ]);
+  });
+
+  test("orders receiver groups by first appearance and routes each method to its receiver", () => {
+    const groups = groupFunctionSymbols([
+      fnSymbol("socket.dns"),
+      fnSymbol("client:receive"),
+      fnSymbol("master:listen"),
+      fnSymbol("client:send"),
+    ]);
+    expect(groups).toEqual([
+      { label: "Functions", symbols: [fnSymbol("socket.dns")] },
+      { label: "`client` methods", symbols: [fnSymbol("client:receive"), fnSymbol("client:send")] },
+      { label: "`master` methods", symbols: [fnSymbol("master:listen")] },
+    ]);
+  });
+
+  test("returns a single Functions group when no name carries a colon", () => {
+    const groups = groupFunctionSymbols([fnSymbol("go.get"), fnSymbol("go.set")]);
+    expect(groups).toEqual([
+      { label: "Functions", symbols: [fnSymbol("go.get"), fnSymbol("go.set")] },
+    ]);
+  });
+
+  test("omits the Functions group when every name is a colon method", () => {
+    const groups = groupFunctionSymbols([fnSymbol("file:close"), fnSymbol("file:read")]);
+    expect(groups).toEqual([
+      { label: "`file` methods", symbols: [fnSymbol("file:close"), fnSymbol("file:read")] },
+    ]);
+  });
+
+  test("yields an empty array for empty input", () => {
+    expect(groupFunctionSymbols([])).toEqual([]);
   });
 });
