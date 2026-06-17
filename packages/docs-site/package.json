@@ -6,8 +6,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && vite build --mode client && vite build",
+    "build-indexes": "bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts",
+    "dev": "bun run build-indexes && vite",
+    "build": "bun run build-indexes && vite build --mode client && vite build",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
