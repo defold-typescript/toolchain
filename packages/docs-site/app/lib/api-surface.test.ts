@@ -306,6 +306,85 @@ describe("apiModuleSymbols", () => {
     const headingOrder = [...md.matchAll(/^### `([^`]+)`/gm)].map((m) => m[1] ?? "");
     expect(apiModuleSymbols(page).map((s) => s.signature)).toEqual(headingOrder);
   });
+
+  test("a blank-but-present parameter type array renders `unknown`, not a dangling colon", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "io.read",
+            brief: "",
+            description: "Reads.",
+            parameters: [{ name: "...", doc: "", types: [""], isOptional: false }],
+            returnValues: [],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.signature).toContain("...: unknown");
+    expect(symbols[0]?.signature).not.toContain("...: )");
+  });
+
+  test("a blank-but-present parameter type array projects to an empty types array", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "io.read",
+            brief: "",
+            description: "Reads.",
+            parameters: [{ name: "...", doc: "", types: [""], isOptional: false }],
+            returnValues: [],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.parameters[0]?.types).toEqual([]);
+  });
+
+  test("a mixed type array drops blank entries in both projection and signature", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.f",
+            brief: "",
+            description: "F.",
+            parameters: [{ name: "x", doc: "", types: ["string", "", "  "], isOptional: false }],
+            returnValues: [],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.parameters[0]?.types).toEqual(["string"]);
+    expect(symbols[0]?.signature).toBe("demo.f(x: string)");
+  });
+
+  test("a blank-but-present return type array renders `unknown` in the return position", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.g",
+            brief: "",
+            description: "G.",
+            parameters: [],
+            returnValues: [{ name: "", doc: "", types: [""], isOptional: false }],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.signature).toBe("demo.g(): unknown");
+  });
+
+  test("a blank-but-present variable type array renders `unknown`", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        variables: [{ name: "demo.V", brief: "", description: "V.", types: [""] }],
+      }),
+    );
+    expect(symbols[0]?.signature).toBe("demo.V: unknown");
+  });
 });
 
 describe("exampleMarkdownFor", () => {
