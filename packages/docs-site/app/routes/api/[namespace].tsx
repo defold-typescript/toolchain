@@ -7,6 +7,7 @@ import {
   type ApiSymbol,
   type ApiSymbolParam,
   apiModuleSymbols,
+  groupFunctionSymbols,
 } from "../../lib/api-surface";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
@@ -77,19 +78,29 @@ function apiPageMarkdown(
   const lines: string[] = [`# ${m.namespace}`, ""];
   const intro = htmlToDocText(m.description || m.brief);
   if (intro) lines.push(linkify(intro), "");
+  const emitSymbol = (symbol: ApiSymbol) => {
+    const linkified: ApiSymbol = {
+      ...symbol,
+      docMarkdown: linkify(symbol.docMarkdown),
+      parameters: symbol.parameters.map((p) => ({ ...p, doc: linkify(p.doc) })),
+      returnValues: symbol.returnValues.map((r) => ({ ...r, doc: linkify(r.doc) })),
+    };
+    lines.push(symbolBlock(linkified), "");
+  };
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);
     if (group.length === 0) continue;
-    lines.push(`## ${label}`, "");
-    for (const symbol of group) {
-      const linkified: ApiSymbol = {
-        ...symbol,
-        docMarkdown: linkify(symbol.docMarkdown),
-        parameters: symbol.parameters.map((p) => ({ ...p, doc: linkify(p.doc) })),
-        returnValues: symbol.returnValues.map((r) => ({ ...r, doc: linkify(r.doc) })),
-      };
-      lines.push(symbolBlock(linkified), "");
+    // Colon-named handle methods (`file:read`, `client:send`) get their own
+    // `<receiver> methods` heading so they read apart from the module table.
+    if (kind === "function") {
+      for (const fnGroup of groupFunctionSymbols(group)) {
+        lines.push(`## ${fnGroup.label}`, "");
+        for (const symbol of fnGroup.symbols) emitSymbol(symbol);
+      }
+      continue;
     }
+    lines.push(`## ${label}`, "");
+    for (const symbol of group) emitSymbol(symbol);
   }
   return lines.join("\n");
 }
