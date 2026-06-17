@@ -94,9 +94,17 @@ describe("SYNC_MANIFEST coverage", () => {
   });
 });
 
+const CORE_FIVE_STDLIB: ReadonlyArray<[string, string]> = [
+  ["math", "doc/lua_math.doc_h_doc.json"],
+  ["os", "doc/lua_os.doc_h_doc.json"],
+  ["string", "doc/lua_string.doc_h_doc.json"],
+  ["table", "doc/lua_table.doc_h_doc.json"],
+  ["coroutine", "doc/lua_coroutine.doc_h_doc.json"],
+];
+
 describe("LUA_STDLIB_MANIFEST", () => {
   test("maps base and bit to their ref-doc.zip entries with the standard fixture path", () => {
-    expect(LUA_STDLIB_MANIFEST).toHaveLength(2);
+    expect(LUA_STDLIB_MANIFEST).toHaveLength(7);
     const base = LUA_STDLIB_MANIFEST.find((e) => e.namespace === "base");
     expect(base?.zipEntry).toBe("doc/lua_base.doc_h_doc.json");
     expect(base?.fixture).toBe("fixtures/base_doc.json");
@@ -105,22 +113,50 @@ describe("LUA_STDLIB_MANIFEST", () => {
     expect(bit?.fixture).toBe("fixtures/bit_doc.json");
   });
 
-  test("extractFixtures resolves both entries from a fake zip", () => {
-    const baseContents = '{"info":{"namespace":"base"}}\n';
-    const bitContents = '{"info":{"namespace":"bit"}}\n';
-    const zip = fakeZip({
-      "doc/lua_base.doc_h_doc.json": baseContents,
-      "doc/src-script_bitop.cpp_doc.json": bitContents,
-    });
-    const fixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
-    expect(fixtures.map((f) => f.namespace).sort()).toEqual(["base", "bit"]);
-    expect(fixtures.find((f) => f.namespace === "base")?.contents).toBe(baseContents);
-    expect(fixtures.find((f) => f.namespace === "bit")?.contents).toBe(bitContents);
+  test("maps the five core stdlib namespaces to their confirmed 1.12.4 zip entries", () => {
+    for (const [namespace, zipEntry] of CORE_FIVE_STDLIB) {
+      const found = LUA_STDLIB_MANIFEST.find((e) => e.namespace === namespace);
+      expect(found?.zipEntry).toBe(zipEntry);
+      expect(found?.fixture).toBe(`fixtures/${namespace}_doc.json`);
+    }
   });
 
-  test("neither base nor bit appears in MODULE_MANIFEST (docs-only, no generated .d.ts)", () => {
+  test("extractFixtures resolves all seven entries from a fake zip", () => {
+    const entries: Record<string, string> = {
+      "doc/lua_base.doc_h_doc.json": '{"info":{"namespace":"base"}}\n',
+      "doc/src-script_bitop.cpp_doc.json": '{"info":{"namespace":"bit"}}\n',
+    };
+    for (const [namespace, zipEntry] of CORE_FIVE_STDLIB) {
+      entries[zipEntry] = `{"info":{"namespace":"${namespace}"}}\n`;
+    }
+    const zip = fakeZip(entries);
+    const fixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
+    expect(fixtures.map((f) => f.namespace).sort()).toEqual([
+      "base",
+      "bit",
+      "coroutine",
+      "math",
+      "os",
+      "string",
+      "table",
+    ]);
+    for (const [namespace, zipEntry] of CORE_FIVE_STDLIB) {
+      expect(fixtures.find((f) => f.namespace === namespace)?.contents).toBe(entries[zipEntry]);
+    }
+  });
+
+  test("no LUA_STDLIB_MANIFEST namespace appears in MODULE_MANIFEST (docs-only, no generated .d.ts)", () => {
     for (const entry of LUA_STDLIB_MANIFEST) {
       expect(MODULE_MANIFEST.some((m) => m.namespace === entry.namespace)).toBe(false);
+    }
+  });
+
+  test("IGNORED_UPSTREAM drops the five wired stdlib namespaces but keeps the sandboxed set", () => {
+    for (const [namespace] of CORE_FIVE_STDLIB) {
+      expect(IGNORED_UPSTREAM.has(namespace)).toBe(false);
+    }
+    for (const namespace of ["debug", "io", "package"]) {
+      expect(IGNORED_UPSTREAM.has(namespace)).toBe(true);
     }
   });
 });
