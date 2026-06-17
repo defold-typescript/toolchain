@@ -128,6 +128,8 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   resource: 'Opaque<"resource">',
   b2World: 'Opaque<"b2World">',
   b2Body: 'Opaque<"b2Body">',
+  b2BodyType:
+    '(number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })',
   client: 'Opaque<"client">',
   master: 'Opaque<"master">',
   unconnected: 'Opaque<"unconnected">',

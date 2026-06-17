@@ -1,6 +1,7 @@
 /// <reference types="lua-types/5.1" />
 /// <reference types="lua-types/special/jit-only" />
 import "../b2d";
+import "../b2d_body";
 import "../buffer";
 import "../camera";
 import "../collectionfactory";

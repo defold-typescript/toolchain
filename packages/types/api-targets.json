@@ -9,6 +9,11 @@
       "source": null,
       "modules": [
         { "namespace": "b2d", "fixture": "b2d_doc.json", "outFile": "b2d.d.ts" },
+        {
+          "namespace": "b2d.body",
+          "fixture": "b2d_body_doc.json",
+          "outFile": "b2d_body.d.ts"
+        },
         { "namespace": "buffer", "fixture": "buffer_doc.json", "outFile": "buffer.d.ts" },
         { "namespace": "camera", "fixture": "camera_doc.json", "outFile": "camera.d.ts" },
         {

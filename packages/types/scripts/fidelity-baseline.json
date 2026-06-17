@@ -7,6 +7,14 @@
     "droppedMembers": 0,
     "optionalAsRequired": 0
   },
+  "b2d.body": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
   "buffer": {
     "droppedElements": 0,
     "unknownTokens": [],

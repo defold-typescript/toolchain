@@ -21,6 +21,15 @@ export interface SyncManifestEntry {
 // so each path is confirmed against the pinned release artifact, not derived.
 export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
   entry("b2d", "doc/scripts-box2d-script_box2d.cpp_doc.json"),
+  // On-disk name uses underscores to avoid a double-dotted filename; the namespace
+  // string stays `b2d.body` so /api/b2d.body routes correctly and the emitter
+  // produces `declare global { namespace b2d.body { ... } }`. Use the non-`_defold`
+  // variant — the `_defold` variant has duplicate `get_world_center` elements.
+  entry(
+    "b2d.body",
+    "doc/scripts-box2d-script_box2d_body.cpp_doc.json",
+    "fixtures/b2d_body_doc.json",
+  ),
   entry("buffer", "doc/scripts-script_buffer.cpp_doc.json"),
   // camera's Lua surface lives in the render-script doc, not the scripts-script
   // one (`doc/scripts-script_camera.cpp_doc.json` is empty upstream in 1.12.4).
@@ -64,8 +73,12 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
 // four extension-only surfaces are wired via EXTENSION_MANIFEST below.
 export const UNMAPPED: ReadonlyMap<string, string> = new Map();
 
-function entry(namespace: string, zipEntry: string): SyncManifestEntry {
-  return { namespace, zipEntry, fixture: `fixtures/${namespace}_doc.json` };
+function entry(
+  namespace: string,
+  zipEntry: string,
+  fixture: string = `fixtures/${namespace}_doc.json`,
+): SyncManifestEntry {
+  return { namespace, zipEntry, fixture };
 }
 
 export interface ExtensionManifestEntry {
@@ -117,7 +130,7 @@ export function parseChecklistNamespaces(visionMarkdown: string): string[] {
   const seen = new Set<string>();
   for (const match of segment.matchAll(/`([^`]+)`/g)) {
     const token = match[1] as string;
-    if (!/^[a-z][a-z0-9]*$/.test(token) || seen.has(token)) continue;
+    if (!/^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/.test(token) || seen.has(token)) continue;
     seen.add(token);
     namespaces.push(token);
   }
