@@ -76,6 +76,10 @@
         { "namespace": "webview", "fixture": "webview_doc.json", "outFile": "webview.d.ts" },
         { "namespace": "window", "fixture": "window_doc.json", "outFile": "window.d.ts" },
         { "namespace": "zlib", "fixture": "zlib_doc.json", "outFile": "zlib.d.ts" }
+      ],
+      "luaStdlib": [
+        { "namespace": "base", "fixture": "base_doc.json" },
+        { "namespace": "bit", "fixture": "bit_doc.json" }
       ]
     },
     {

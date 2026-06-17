@@ -52,6 +52,10 @@ describe("no malformed example reaches /api", () => {
     const luaFallbacks: string[] = [];
     let rendered = 0;
     for (const page of pages) {
+      // Lua-stdlib pages (`base`, `bit`, …) are pure-Lua surfaces whose types
+      // come from `lua-types`; they are intentionally rendered with the Lua
+      // fence because no hand-authored TypeScript translation exists for them.
+      if (page.category === "lua-stdlib") continue;
       for (const fn of page.module.functions) {
         const md = exampleMarkdownFor(fn, page.translations);
         if (md === undefined) continue;
