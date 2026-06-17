@@ -14,6 +14,9 @@ const ENGINE_TYPES = [
 ] as const;
 
 const source = readFileSync(path.join(import.meta.dir, "engine-globals.d.ts"), "utf8");
+const globalsDoc = JSON.parse(
+  readFileSync(path.join(import.meta.dir, "../fixtures/globals_doc.json"), "utf8"),
+) as { elements: Array<{ type: string; name: string }> };
 
 describe("engine-globals.d.ts", () => {
   test("keeps the no-self ambient banner", () => {
@@ -37,5 +40,15 @@ describe("engine-globals.d.ts", () => {
       expect(block).toContain(decl);
     }
     expect(block).toContain("function hash(s: string): Core.Hash");
+    expect(block).toContain("function hash_to_hex(");
+    expect(block).toContain("function pprint(");
+  });
+
+  test("globals_doc.json and engine-globals.d.ts agree on the set of global functions", () => {
+    const declared = new Set([...source.matchAll(/function (\w+)\(/g)].map((m) => m[1] as string));
+    const documented = new Set(
+      globalsDoc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name),
+    );
+    expect([...documented].sort()).toEqual([...declared].sort());
   });
 });
