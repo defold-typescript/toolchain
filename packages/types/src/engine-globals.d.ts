@@ -4,6 +4,8 @@ import type * as Core from "./core-types";
 declare global {
   type Hash = Core.Hash;
   function hash(s: string): Core.Hash;
+  function hash_to_hex(h: Core.Hash): string;
+  function pprint(v: unknown): void;
   type Opaque<Name extends string> = Core.Opaque<Name>;
   type Url = Core.Url;
   type Vector = Core.Vector;
