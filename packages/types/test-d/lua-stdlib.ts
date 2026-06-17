@@ -12,6 +12,18 @@ pcall(() => {});
 void roll;
 void formatted;
 
+// Sandboxed-runtime stdlib surfaces resolve via lua-types, no first-party .d.ts.
+// `package` is a strict-mode reserved word as a bare identifier, so its declared
+// namespace is reached through globalThis; the property name itself is allowed.
+const trace: string = debug.traceback();
+const [handle] = io.open("save.json", "r");
+const line: string | undefined = handle?.read("*l");
+const searchPath: string = globalThis.package.path;
+
+void trace;
+void line;
+void searchPath;
+
 // @ts-expect-error randomseed takes a number, not a string.
 math.randomseed("x");
 

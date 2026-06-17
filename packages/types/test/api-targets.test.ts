@@ -243,11 +243,22 @@ describe("api-targets registry", () => {
     expect(existsSync(resolve(GENERATED, "versions", "defold-1.9.8"))).toBe(false);
   });
 
-  test("default target's luaStdlib carries the core five plus base and bit", () => {
+  test("default target's luaStdlib carries the core five plus base, bit, and the sandboxed three", () => {
     const target = loadApiTargets().find((t) => t.default === true);
     if (!target) throw new Error("no default target");
     const namespaces = (target.luaStdlib ?? []).map((m) => m.namespace).sort();
-    expect(namespaces).toEqual(["base", "bit", "coroutine", "math", "os", "string", "table"]);
+    expect(namespaces).toEqual([
+      "base",
+      "bit",
+      "coroutine",
+      "debug",
+      "io",
+      "math",
+      "os",
+      "package",
+      "string",
+      "table",
+    ]);
   });
 
   test("every luaStdlib fixture referenced by the default target exists on disk", () => {

@@ -85,7 +85,10 @@
         { "namespace": "os", "fixture": "os_doc.json" },
         { "namespace": "string", "fixture": "string_doc.json" },
         { "namespace": "table", "fixture": "table_doc.json" },
-        { "namespace": "coroutine", "fixture": "coroutine_doc.json" }
+        { "namespace": "coroutine", "fixture": "coroutine_doc.json" },
+        { "namespace": "debug", "fixture": "debug_doc.json" },
+        { "namespace": "io", "fixture": "io_doc.json" },
+        { "namespace": "package", "fixture": "package_doc.json" }
       ]
     },
     {
