@@ -160,13 +160,14 @@ interface RendererProps {
 export default jsxRenderer(({ children, title, headings, contentClass }: RendererProps, c) => {
   const path = c.req.path;
   const allApiPages = apiPages();
-  const engineApiPages = allApiPages.filter((p) => p.category === "engine");
-  const luaStdlibApiPages = allApiPages.filter((p) => p.category === "lua-stdlib");
-  const nav = buildNav(
-    guidePages(),
-    engineApiPages.map((p) => ({ label: p.namespace, route: p.route })),
-    luaStdlibApiPages.map((p) => ({ label: p.namespace, route: p.route })),
-  );
+  const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
+  const nav = buildNav(guidePages(), {
+    globals: allApiPages.filter((p) => p.namespace === "globals").map(toNamespace),
+    luaStdlib: allApiPages.filter((p) => p.category === "lua-stdlib").map(toNamespace),
+    engine: allApiPages
+      .filter((p) => p.category === "engine" && p.namespace !== "globals")
+      .map(toNamespace),
+  });
   const activeId = activeCategoryId(path, nav) ?? nav[0]?.id;
   const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];
   const tocHeadings = headings ?? [];
@@ -271,7 +272,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
 });
 
 function CategoryLink({ category, active }: { category: NavCategory; active: boolean }) {
-  const href = category.links[0]?.route ?? "/";
+  const href = category.links[0]?.route ?? category.links[0]?.children?.[0]?.route ?? "/";
   return (
     <a
       href={withBase(href)}
@@ -295,8 +296,14 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
       </p>
       <ul class="space-y-0.5 text-sm">
         {category.links.map((link) => (
-          <li key={link.route}>
-            <SidebarLink link={link} active={path === link.route} />
+          <li key={link.route ?? link.label}>
+            {link.route ? (
+              <SidebarLink link={link} active={path === link.route} />
+            ) : (
+              <p class="mt-3 mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
+                {link.label}
+              </p>
+            )}
             {link.children && link.children.length > 0 ? (
               <ul class="mt-0.5 ml-3 space-y-0.5 border-l border-border pl-2">
                 {link.children.map((child) => (
@@ -314,6 +321,7 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
 }
 
 function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
+  if (!link.route) return null;
   return (
     <a
       href={withBase(link.route)}
