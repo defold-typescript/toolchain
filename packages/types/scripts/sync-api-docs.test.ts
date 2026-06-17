@@ -52,6 +52,12 @@ describe("SYNC_MANIFEST coverage", () => {
     expect(graphics?.fixture).toBe("fixtures/graphics_doc.json");
   });
 
+  test("maps font to its scripts-script ref-doc entry", () => {
+    const font = SYNC_MANIFEST.find((e) => e.namespace === "font");
+    expect(font?.zipEntry).toBe("doc/scripts-script_font.cpp_doc.json");
+    expect(font?.fixture).toBe("fixtures/font_doc.json");
+  });
+
   test("every UNMAPPED entry carries a non-empty reason", () => {
     for (const [namespace, reason] of UNMAPPED) {
       expect(reason.length).toBeGreaterThan(0);

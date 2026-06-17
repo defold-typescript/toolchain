@@ -38,6 +38,7 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
   entry("collectionproxy", "doc/scripts-script_collectionproxy.cpp_doc.json"),
   entry("crash", "doc/script_crash.cpp_doc.json"),
   entry("factory", "doc/scripts-script_factory.cpp_doc.json"),
+  entry("font", "doc/scripts-script_font.cpp_doc.json"),
   entry("go", "doc/gameobject_script.cpp_doc.json"),
   entry("graphics", "doc/src-script_graphics.cpp_doc.json"),
   entry("gui", "doc/gui_script.cpp_doc.json"),

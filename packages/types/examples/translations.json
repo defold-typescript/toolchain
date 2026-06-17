@@ -1,4 +1,22 @@
 {
+  "font.add_font": [
+    {
+      "sourceHash": "eb23e196a4edbd74",
+      "ts": "const font_hash = hash(\"/assets/fonts/roboto.fontc\");\nconst ttf_hash = hash(\"/assets/fonts/Roboto/Roboto-Bold.ttf\");\nfont.add_font(font_hash, ttf_hash);"
+    }
+  ],
+  "font.prewarm_text": [
+    {
+      "sourceHash": "f16bb17432638957",
+      "ts": "const font_hash = hash(\"/assets/fonts/roboto.fontc\");\nfont.prewarm_text(font_hash, \"Some text\", (self, request_id, result, errstring) => {\n  // cache is warm, show the text!\n});"
+    }
+  ],
+  "font.remove_font": [
+    {
+      "sourceHash": "a3686e94e8a0a9d5",
+      "ts": "const font_hash = hash(\"/assets/fonts/roboto.fontc\");\nconst ttf_hash = hash(\"/assets/fonts/Roboto/Roboto-Bold.ttf\");\nfont.remove_font(font_hash, ttf_hash);"
+    }
+  ],
   "go.animate": [
     {
       "sourceHash": "ec6a31d150125e06",
