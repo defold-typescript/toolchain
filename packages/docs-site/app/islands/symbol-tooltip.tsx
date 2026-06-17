@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "hono/jsx";
 import { withBase } from "../lib/base";
 import type { SymbolEntry } from "../lib/symbol-index";
+import { isSelfReference, normalizeSymbolKey } from "../lib/symbol-self";
 
 type ActiveTip = { brief: string; route: string; top: number; left: number } | null;
 
-// Inline code may write a symbol as `go.get_position()` or `msg.post(url, m)`;
-// the registry keys are call-free, so drop the argument list before lookup.
-function normalizeKey(text: string): string {
-  return text.replace(/\(.*$/s, "").trim();
+// The symbol an element's prose belongs to: an `.api-symbol-body` is rendered
+// right after its `### signature` heading, so the owning symbol is that
+// heading's `code.api-signature`. Mentions outside any symbol body (the module
+// intro) have no owner and so are never self-references.
+function ownerSignature(el: Element): string {
+  const heading = el.closest(".api-symbol-body")?.previousElementSibling;
+  return heading?.querySelector(".api-signature")?.textContent ?? "";
 }
 
 export default function SymbolTooltip() {
@@ -54,8 +58,10 @@ export default function SymbolTooltip() {
         // gets both. Everything else (hover/focus card, cleanup discipline) is
         // shared. Every candidate that reaches `bind` gets the popup — a
         // cross-reference is navigational and earns a preview whether or not its
-        // target lives on this page; the only suppression is the signature
-        // heading, filtered out structurally at the inline-code loop below.
+        // target lives on this page. The two cases that never reach `bind`: the
+        // symbol's own signature heading (filtered structurally below), and a
+        // self-reference — a mention of the symbol whose own body it sits in,
+        // whose popup would point the reader back to where they already are.
         const bind = (el: HTMLElement, brief: string, route: string, isLink: boolean) => {
           if (!isLink) {
             el.classList.add("symbol-link");
@@ -91,6 +97,14 @@ export default function SymbolTooltip() {
           });
         };
 
+        // A self-reference earns no popup — it points the reader to the symbol
+        // they are already reading. Mark it with a gentle underline so the term
+        // still reads as "the current symbol" rather than plain prose.
+        const markSelf = (el: HTMLElement) => {
+          el.classList.add("symbol-self");
+          cleanups.push(() => el.classList.remove("symbol-self"));
+        };
+
         const codes = document.querySelectorAll<HTMLElement>("article code");
         for (const code of codes) {
           if (code.closest("pre")) continue;
@@ -98,16 +112,26 @@ export default function SymbolTooltip() {
           // `code.api-signature` — the definition the reader is already on, the
           // one genuinely redundant popup.
           if (code.matches(".api-signature")) continue;
-          const entry = index[normalizeKey(code.textContent ?? "")];
+          const key = normalizeSymbolKey(code.textContent ?? "");
+          const entry = index[key];
           if (!entry) continue;
+          if (isSelfReference(key, ownerSignature(code))) {
+            markSelf(code);
+            continue;
+          }
           bind(code, entry.brief, entry.route, false);
         }
 
         const xrefs = document.querySelectorAll<HTMLAnchorElement>("a.symbol-xref");
         for (const link of xrefs) {
-          const entry = index[normalizeKey(link.textContent ?? "")];
+          const key = normalizeSymbolKey(link.textContent ?? "");
+          const entry = index[key];
           const route = entry?.route ?? link.getAttribute("href") ?? "";
           if (!route) continue;
+          if (isSelfReference(key, ownerSignature(link))) {
+            markSelf(link);
+            continue;
+          }
           bind(link, entry?.brief ?? "", route, true);
         }
       } catch (err) {

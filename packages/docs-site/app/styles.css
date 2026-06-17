@@ -430,6 +430,18 @@
     cursor: help;
   }
 
+  /* A self-reference names the symbol whose own body it sits in. It gets no
+     popup — gently underline it so it reads as "the current symbol" without the
+     navigational affordance of a cross-reference link. */
+  code.symbol-self,
+  a.symbol-self {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-border-strong);
+    color: inherit;
+    cursor: default;
+  }
+
   /* Each API symbol's body (description + example) is indented under its
      signature heading so the title reads as the row's anchor and the content
      hangs beneath it. */
