@@ -20,6 +20,18 @@ declare global {
      */
     const NETWORK_DISCONNECTED: number & { readonly __brand: "sys.NETWORK_DISCONNECTED" };
     /**
+     * an asyncronous request is unable to read the resource
+     */
+    const REQUEST_STATUS_ERROR_IO_ERROR: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_IO_ERROR" };
+    /**
+     * an asyncronous request is unable to locate the resource
+     */
+    const REQUEST_STATUS_ERROR_NOT_FOUND: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_NOT_FOUND" };
+    /**
+     * an asyncronous request has finished successfully
+     */
+    const REQUEST_STATUS_FINISHED: number & { readonly __brand: "sys.REQUEST_STATUS_FINISHED" };
+    /**
      * This function will raise a Lua error if an error occurs while deserializing the buffer.
      *
      * @param buffer - buffer to deserialize from
@@ -365,6 +377,91 @@ declare global {
      */
     function load(filename: string): Record<string | number, unknown>;
     /**
+     * The sys.load_buffer function will first try to load the resource
+     * from any of the mounted resource locations and return the data if
+     * any matching entries found. If not, the path will be tried
+     * as is from the primary disk on the device.
+     * In order for the engine to include custom resources in the build process, you need
+     * to specify them in the "custom_resources" key in your "game.project" settings file.
+     * You can specify single resource files or directories. If a directory is included
+     * in the resource list, all files and directories in that directory is recursively
+     * included:
+     * For example "main/data/,assets/level_data.json".
+     *
+     * @param path - the path to load the buffer from
+     * @returns the buffer with data
+     * @example
+     * ```ts
+     * // Load binary data from a custom project resource:
+     * const my_buffer = sys.load_buffer("/assets/my_level_data.bin");
+     * const data_str = buffer.get_bytes(my_buffer, "data");
+     * const has_my_header = data_str.slice(0, 6) === "D3F0LD";
+     *
+     * // Load binary data from non-custom resource files on disk:
+     * const asset_1 = sys.load_buffer("folder_next_to_binary/my_level_asset.txt");
+     * const asset_2 = sys.load_buffer("/my/absolute/path");
+     * ```
+     */
+    function load_buffer(path: string): Opaque<"buffer">;
+    /**
+     * The sys.load_buffer function will first try to load the resource
+     * from any of the mounted resource locations and return the data if
+     * any matching entries found. If not, the path will be tried
+     * as is from the primary disk on the device.
+     * In order for the engine to include custom resources in the build process, you need
+     * to specify them in the "custom_resources" key in your "game.project" settings file.
+     * You can specify single resource files or directories. If a directory is included
+     * in the resource list, all files and directories in that directory is recursively
+     * included:
+     * For example "main/data/,assets/level_data.json".
+     * Note that issuing multiple requests of the same resource will yield
+     * individual buffers per request. There is no implic caching of the buffers
+     * based on request path.
+     *
+     * @param path - the path to load the buffer from
+     * @param status_callback - A status callback that will be invoked when a request has been handled, or an error occured. The result is a table containing:
+     * `status`
+     * number The status of the request, supported values are:
+     * - `resource.REQUEST_STATUS_FINISHED`
+     * - `resource.REQUEST_STATUS_ERROR_IO_ERROR`
+     * - `resource.REQUEST_STATUS_ERROR_NOT_FOUND`
+     * `buffer`
+     * buffer If the request was successfull, this will contain the request payload in a buffer object, and nil otherwise. Make sure to check the status before doing anything with the buffer value!
+     * @returns a handle to the request
+     * @example
+     * ```ts
+     * // Load binary data from a custom project resource and update a texture resource:
+     * function my_callback(self, request_id, result) {
+     *   if (result.status === resource.REQUEST_STATUS_FINISHED) {
+     *     resource.set_texture("/my_texture", {}, result.buf); // texture args
+     *   }
+     * }
+     *
+     * const my_request = sys.load_buffer_async("/assets/my_level_data.bin", my_callback);
+     *
+     * // Load binary data from non-custom resource files on disk:
+     * function my_callback(self, request_id, result) {
+     *   if (result.status !== sys.REQUEST_STATUS_FINISHED) {
+     *     // uh oh! File could not be found, do something graceful
+     *   } else if (request_id === self.first_asset) {
+     *     // result.buffer contains data from my_level_asset.bin
+     *   } else if (request_id === self.second_asset) {
+     *     // result.buffer contains data from 'my_level.bin'
+     *   }
+     * }
+     *
+     * export default defineScript({
+     *   init(self) {
+     *     self.first_asset = hash("folder_next_to_binary/my_level_asset.bin");
+     *     self.second_asset = hash("/some_absolute_path/my_level.bin");
+     *     self.first_request = sys.load_buffer_async(self.first_asset, my_callback);
+     *     self.second_request = sys.load_buffer_async(self.second_asset, my_callback);
+     *   },
+     * });
+     * ```
+     */
+    function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;
+    /**
      * Loads a custom resource. Specify the full filename of the resource that you want
      * to load. When loaded, the file data is returned as a string.
      * If loading fails, the function returns `nil` plus the error message.
@@ -485,6 +582,21 @@ declare global {
      */
     function set_connectivity_host(host: string): void;
     /**
+     * Enables engine throttling.
+     *
+     * @param enable - true if throttling should be enabled
+     * @param cooldown - the time period to do update + render for (seconds)
+     * @example
+     * ```ts
+     * // Disable throttling
+     * sys.set_engine_throttle(false);
+     *
+     * // Enable throttling
+     * sys.set_engine_throttle(true, 1.5);
+     * ```
+     */
+    function set_engine_throttle(enable: boolean, cooldown: number): void;
+    /**
      * Set the Lua error handler function.
      * The error handler is a function which is called whenever a lua runtime error occurs.
      *
@@ -519,6 +631,17 @@ declare global {
      * ```
      */
     function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;
+    /**
+     * Disables rendering
+     *
+     * @param enable - true if throttling should be enabled
+     * @example
+     * ```ts
+     * // Disable rendering
+     * sys.set_render_enable(false);
+     * ```
+     */
+    function set_render_enable(enable: boolean): void;
     /**
      * Set game update-frequency (frame cap). This option is equivalent to `display.update_frequency` in
      * the "game.project" settings but set in run-time. If `Vsync` checked in "game.project", the rate will

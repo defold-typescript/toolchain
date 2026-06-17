@@ -14,6 +14,11 @@ export interface SyncManifestEntry {
   readonly namespace: string;
   readonly zipEntry: string;
   readonly fixture: string;
+  // Extra ref-doc.zip entries whose elements are merged into this namespace at
+  // sync time. A namespace whose Lua surface is split across several upstream
+  // docs (e.g. `sys`) is reassembled before parse, so the emitter still sees one
+  // fixture, one namespace.
+  readonly mergeEntries?: readonly string[];
 }
 
 // namespace -> ref-doc.zip entry. Entry paths do not match the namespace (gui ->
@@ -58,9 +63,16 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
   entry("socket", "doc/luasocket-luasocket.doc_h_doc.json"),
   entry("sound", "doc/scripts-script_sound.cpp_doc.json"),
   entry("sprite", "doc/scripts-script_sprite.cpp_doc.json"),
-  // The `sys` surface is split across two docs in ref-doc.zip; this is the core
-  // (src-script_sys) doc — the larger gamesys subset is folded in when wired.
-  entry("sys", "doc/src-script_sys.cpp_doc.json"),
+  // The `sys` Lua surface is split across three docs in ref-doc.zip: the core
+  // (src-script_sys), the gamesys subset (`load_buffer`/`load_buffer_async` plus
+  // the `REQUEST_STATUS_*` constants), and the engine doc (`set_engine_throttle`/
+  // `set_render_enable`). `mergeEntries` folds all three into one fixture at sync
+  // time. The `*_ddf.proto` doc is deliberately excluded — it is message-shaped
+  // and owned by the builtin-messages catalog.
+  entry("sys", "doc/src-script_sys.cpp_doc.json", "fixtures/sys_doc.json", [
+    "doc/scripts-script_sys_gamesys.cpp_doc.json",
+    "doc/script-script_engine.cpp_doc.json",
+  ]),
   entry("tilemap", "doc/scripts-script_tilemap.cpp_doc.json"),
   entry("timer", "doc/src-script_timer.cpp_doc.json"),
   entry("types", "doc/src-script_types.cpp_doc.json"),
@@ -73,6 +85,34 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
 // ref-doc.zip nor a published extension `.script_api`). Currently empty: the
 // four extension-only surfaces are wired via EXTENSION_MANIFEST below.
 export const UNMAPPED: ReadonlyMap<string, string> = new Map();
+
+// A Lua script namespace is a lowercase, dot-separated identifier (`sys`,
+// `b2d.body`). The native C/C++ SDK docs (`dmGraphics`, …), the C# bindings
+// (`cs-*`), and the struct-only docs (empty `info.namespace`) fail this shape,
+// so the upstream-coverage guard skips them structurally rather than listing
+// each by hand — that keeps the guard self-maintaining as the SDK grows.
+const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
+
+// Lowercase-identifier namespaces that pass LUA_NAMESPACE but are intentionally
+// not wired through SYNC_MANIFEST, each with a sourced reason (mirrors the
+// `EMPTY_BY_UPSTREAM` allowlist shape). The upstream-coverage guard treats these
+// as covered. Adding a namespace here is a deliberate, reviewed act.
+export const IGNORED_UPSTREAM: ReadonlyMap<string, string> = new Map([
+  ["editor", "editor-scripting API (editor.apidoc), not a runtime game namespace"],
+  ["engine", "CLI/engine env doc, not a runtime Lua namespace"],
+  [
+    "builtins",
+    "global Defold builtins (hash/pprint/…) typed as ambient globals, not a `builtins.*` namespace",
+  ],
+  ["math", "Lua standard library, typed by the lua-types dependency"],
+  ["os", "Lua standard library, typed by the lua-types dependency"],
+  ["string", "Lua standard library, typed by the lua-types dependency"],
+  ["table", "Lua standard library, typed by the lua-types dependency"],
+  ["coroutine", "Lua standard library, typed by the lua-types dependency"],
+  ["debug", "Lua standard library, typed by the lua-types dependency"],
+  ["io", "Lua standard library, typed by the lua-types dependency"],
+  ["package", "Lua standard library, typed by the lua-types dependency"],
+]);
 
 // Pure-Lua / LuaJIT surfaces Defold documents (https://defold.com/ref/stable/base-lua/,
 // `bit-lua`) whose TypeScript types are owned by the `lua-types` dependency the
@@ -92,8 +132,9 @@ function entry(
   namespace: string,
   zipEntry: string,
   fixture: string = `fixtures/${namespace}_doc.json`,
+  mergeEntries?: readonly string[],
 ): SyncManifestEntry {
-  return { namespace, zipEntry, fixture };
+  return { namespace, zipEntry, fixture, ...(mergeEntries ? { mergeEntries } : {}) };
 }
 
 export interface ExtensionManifestEntry {
@@ -198,15 +239,52 @@ export interface ExtractedFixture {
   contents: string;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// Concatenate the `elements` of every doc into the first doc, deduping by
+// (name, type) with first occurrence winning, and keep the first doc's `info`.
+// First-wins guards the `b2d.body` `_defold` duplicate-`get_world_center`
+// hazard. Operates on the raw ref-doc JSON shape (`{ info, elements }`), so the
+// result is still parseable by `parseDefoldApiDoc`.
+export function mergeApiDocs(docs: readonly unknown[]): unknown {
+  const first = docs[0];
+  const seen = new Set<string>();
+  const elements: unknown[] = [];
+  for (const doc of docs) {
+    if (!isRecord(doc) || !Array.isArray(doc.elements)) continue;
+    for (const element of doc.elements) {
+      const key =
+        isRecord(element) && typeof element.name === "string" && typeof element.type === "string"
+          ? `${element.type} ${element.name}`
+          : null;
+      if (key !== null) {
+        if (seen.has(key)) continue;
+        seen.add(key);
+      }
+      elements.push(element);
+    }
+  }
+  return isRecord(first) ? { ...first, elements } : { elements };
+}
+
 export function extractFixtures(
   zip: ZipAccessor,
   manifest: readonly SyncManifestEntry[] = SYNC_MANIFEST,
 ): ExtractedFixture[] {
   return manifest.map((item) => {
-    if (!zip.has(item.zipEntry)) {
-      throw new Error(`zip is missing entry ${item.zipEntry} for namespace ${item.namespace}`);
+    const sources = [item.zipEntry, ...(item.mergeEntries ?? [])];
+    for (const source of sources) {
+      if (!zip.has(source)) {
+        throw new Error(`zip is missing entry ${source} for namespace ${item.namespace}`);
+      }
     }
-    return { namespace: item.namespace, fixture: item.fixture, contents: zip.read(item.zipEntry) };
+    const contents =
+      item.mergeEntries === undefined
+        ? zip.read(item.zipEntry)
+        : JSON.stringify(mergeApiDocs(sources.map((source) => JSON.parse(zip.read(source)))));
+    return { namespace: item.namespace, fixture: item.fixture, contents };
   });
 }
 
@@ -306,11 +384,26 @@ export interface SyncedDoc {
   doc: unknown;
 }
 
+export interface UpstreamNamespace {
+  namespace: string;
+  functionCount: number;
+  zipEntry: string;
+}
+
+export interface UnmappedUpstreamNamespace {
+  namespace: string;
+  zipEntry: string;
+}
+
 export interface CoverageReport {
   wired: string[];
   fixtureOnly: string[];
   missingMapping: string[];
   unknownTypeTokens: { namespace: string; tokens: string[] }[];
+  // Function-bearing Lua namespaces present in the zip but neither mapped nor
+  // allowlisted — the next `font`-style miss. The `--check` path fails when this
+  // is non-empty.
+  unmappedUpstream: UnmappedUpstreamNamespace[];
 }
 
 export interface CoverageInput {
@@ -318,6 +411,38 @@ export interface CoverageInput {
   moduleManifest: readonly { namespace: string }[];
   unmapped: ReadonlyMap<string, string>;
   syncedDocs: readonly SyncedDoc[];
+  // Every function-bearing namespace the zip itself exposes (from
+  // collectUpstreamNamespaces). Absent in pure-fixture callers that don't audit
+  // upstream coverage, in which case unmappedUpstream is empty.
+  upstream?: readonly UpstreamNamespace[];
+  upstreamMapped?: ReadonlySet<string>;
+  ignoredUpstream?: ReadonlyMap<string, string>;
+}
+
+// Enumerate every `doc/*.json` zip entry, reading its `info.namespace` and the
+// count of FUNCTION elements. Only function-bearing docs are returned, so
+// message-only / struct-only docs never reach the coverage guard.
+export function collectUpstreamNamespaces(zip: ZipAccessor): UpstreamNamespace[] {
+  const out: UpstreamNamespace[] = [];
+  for (const zipEntry of zip.entries()) {
+    if (!/^doc\/.*\.json$/.test(zipEntry)) continue;
+    let doc: unknown;
+    try {
+      doc = JSON.parse(zip.read(zipEntry));
+    } catch {
+      continue;
+    }
+    if (!isRecord(doc)) continue;
+    const info = doc.info;
+    const namespace = isRecord(info) && typeof info.namespace === "string" ? info.namespace : "";
+    const elements = Array.isArray(doc.elements) ? doc.elements : [];
+    let functionCount = 0;
+    for (const element of elements) {
+      if (isRecord(element) && element.type === "FUNCTION") functionCount += 1;
+    }
+    if (functionCount > 0) out.push({ namespace, functionCount, zipEntry });
+  }
+  return out;
 }
 
 export function buildCoverageReport(input: CoverageInput): CoverageReport {
@@ -337,7 +462,26 @@ export function buildCoverageReport(input: CoverageInput): CoverageReport {
       unknownTypeTokens.push({ namespace: synced.namespace, tokens });
     }
   }
-  return { wired, fixtureOnly, missingMapping, unknownTypeTokens };
+
+  const mapped = input.upstreamMapped ?? new Set<string>();
+  const ignored = input.ignoredUpstream ?? new Map<string, string>();
+  const flagged = new Map<string, string>();
+  for (const item of input.upstream ?? []) {
+    if (
+      !LUA_NAMESPACE.test(item.namespace) ||
+      mapped.has(item.namespace) ||
+      ignored.has(item.namespace) ||
+      flagged.has(item.namespace)
+    ) {
+      continue;
+    }
+    flagged.set(item.namespace, item.zipEntry);
+  }
+  const unmappedUpstream = [...flagged]
+    .map(([namespace, zipEntry]) => ({ namespace, zipEntry }))
+    .sort((a, b) => a.namespace.localeCompare(b.namespace));
+
+  return { wired, fixtureOnly, missingMapping, unknownTypeTokens, unmappedUpstream };
 }
 
 function collectUnknownTokens(module: ApiModule): string[] {
@@ -379,6 +523,15 @@ function printReport(results: FixtureSyncResult[], report: CoverageReport, check
       console.log(`  ${namespace}: ${tokens.join(", ")}`);
     }
   }
+
+  if (report.unmappedUpstream.length > 0) {
+    console.log(
+      "\nunmapped upstream namespaces (function-bearing, neither mapped nor allowlisted)",
+    );
+    for (const { namespace, zipEntry } of report.unmappedUpstream) {
+      console.log(`  ${namespace}: ${zipEntry}`);
+    }
+  }
 }
 
 if (import.meta.main) {
@@ -404,10 +557,15 @@ if (import.meta.main) {
     moduleManifest: MODULE_MANIFEST,
     unmapped: UNMAPPED,
     syncedDocs,
+    upstream: collectUpstreamNamespaces(zip),
+    upstreamMapped: new Set(
+      [...SYNC_MANIFEST, ...EXTENSION_MANIFEST, ...LUA_STDLIB_MANIFEST].map((e) => e.namespace),
+    ),
+    ignoredUpstream: IGNORED_UPSTREAM,
   });
   printReport(results, report, check);
 
-  if (check && results.some((r) => r.status === "drift")) {
+  if (check && (results.some((r) => r.status === "drift") || report.unmappedUpstream.length > 0)) {
     process.exitCode = 1;
   }
 }
