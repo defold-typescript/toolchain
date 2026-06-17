@@ -13,7 +13,7 @@ export interface RunInitAgentsResult {
 }
 
 // Versionless on purpose: every pointer resolves to the installed guide under
-// `node_modules/@defold-typescript/cli/docs/guide/`, which `bun install` swaps
+// `node_modules/@defold-typescript/docs/guide/`, which `bun install` swaps
 // under the same path, so re-runs stay byte-identical and nothing drifts.
 export function renderAgentsBlock(): string {
   return [
@@ -21,7 +21,7 @@ export function renderAgentsBlock(): string {
     "toolchain transpiles it to Lua for Defold.",
     "",
     "Full agent and CLI guide (refreshed on every install):",
-    "node_modules/@defold-typescript/cli/docs/guide/README.md",
+    "node_modules/@defold-typescript/docs/guide/README.md",
     "If that path is absent, run the project's install command first.",
     "",
     "Hard rules:",
