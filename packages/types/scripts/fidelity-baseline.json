@@ -63,6 +63,14 @@
     "droppedMembers": 0,
     "optionalAsRequired": 0
   },
+  "font": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 1,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
   "go": {
     "droppedElements": 0,
     "unknownTokens": [],
