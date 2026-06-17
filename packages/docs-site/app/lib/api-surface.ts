@@ -57,7 +57,7 @@ export interface ApiSymbol {
 }
 
 function typeList(types: string[]): string {
-  return types.length > 0 ? types.join(" | ") : "any";
+  return types.length > 0 ? types.join(" | ") : "unknown";
 }
 
 function projectParams(list: ApiParameter[]): ApiSymbolParam[] {

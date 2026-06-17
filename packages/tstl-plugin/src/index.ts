@@ -11,12 +11,13 @@ export default function init(modules: { typescript: typeof import("typescript") 
 
   function create(info: ts.server.PluginCreateInfo): ts.LanguageService {
     const proxy = Object.create(null) as ts.LanguageService;
+    const writable = proxy as unknown as Record<string, unknown>;
     const base = info.languageService;
     for (const key of Object.keys(base) as Array<keyof ts.LanguageService>) {
       const member = base[key];
       if (typeof member === "function") {
-        // biome-ignore lint/suspicious/noExplicitAny: opaque LS member forwarding.
-        (proxy as any)[key] = (...args: unknown[]) => (member as any).apply(base, args);
+        const fn = member as (...args: unknown[]) => unknown;
+        writable[key] = (...args: unknown[]) => fn.apply(base, args);
       }
     }
 

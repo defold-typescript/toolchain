@@ -249,6 +249,25 @@ describe("apiModuleSymbols", () => {
     expect(symbols[0]?.parameters[0]?.doc).not.toContain("<span");
   });
 
+  test("renders an empty types array as `unknown`, matching the emitted .d.ts", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.f",
+            brief: "",
+            description: "F.",
+            parameters: [{ name: "x", doc: "", types: [], isOptional: false }],
+            returnValues: [{ name: "", doc: "", types: [], isOptional: false }],
+          },
+        ],
+        variables: [{ name: "demo.V", brief: "", description: "V.", types: [] }],
+      }),
+    );
+    expect(symbols[0]?.signature).toBe("demo.f(x: unknown): unknown");
+    expect(symbols[1]?.signature).toBe("demo.V: unknown");
+  });
+
   test("projects empty parameters and returnValues to empty arrays", () => {
     const symbols = apiModuleSymbols(
       pageWith({
