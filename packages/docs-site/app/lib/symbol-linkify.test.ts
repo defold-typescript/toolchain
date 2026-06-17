@@ -5,7 +5,9 @@ describe("linkifySymbolMentions", () => {
   test("longest match wins: links go.set_position, leaves the bare 'go' substring inside the longer key alone", () => {
     const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
     const out = linkifySymbolMentions("use go.set_position to move it", links);
-    expect(out).toBe('use <a href="/api/go#gogetposition">go.set_position</a> to move it');
+    expect(out).toBe(
+      'use <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a> to move it',
+    );
   });
 
   test("word boundary rejects the suffix: go.set_position_something is not linkified", () => {
@@ -28,8 +30,8 @@ describe("linkifySymbolMentions", () => {
     ]);
     const out = linkifySymbolMentions("go.set_position and go.get_position", links);
     expect(out).toBe(
-      '<a href="/api/go#gogetposition">go.set_position</a> and ' +
-        '<a href="/api/world#gogetworldposition">go.get_position</a>',
+      '<a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a> and ' +
+        '<a href="/api/world#gogetworldposition" class="symbol-xref">go.get_position</a>',
     );
   });
 
@@ -47,7 +49,7 @@ describe("linkifySymbolMentions", () => {
   test("preserves surrounding markdown syntax and rewrites only the bare mention", () => {
     const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
     expect(linkifySymbolMentions("*emphasized* go.set_position", links)).toBe(
-      '*emphasized* <a href="/api/go#gogetposition">go.set_position</a>',
+      '*emphasized* <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a>',
     );
     expect(linkifySymbolMentions("see `go.set_position` in code", links)).toBe(
       "see `go.set_position` in code",
@@ -60,12 +62,20 @@ describe("linkifySymbolMentions", () => {
       ["go.set_position", "/api/go#gogetposition"],
     ]);
     const out = linkifySymbolMentions("see the go module for go.set_position", links);
-    expect(out).toBe('see the go module for <a href="/api/go#gogetposition">go.set_position</a>');
+    expect(out).toBe(
+      'see the go module for <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a>',
+    );
   });
 
   test("ignores bare-global keys (no `.`): a `hash` mention is not linkified", () => {
     const links = new Map([["hash", "/api/globals#hash"]]);
     const out = linkifySymbolMentions('use hash("foo")', links);
     expect(out).toBe('use hash("foo")');
+  });
+
+  test("the rewritten link carries class=symbol-xref so the island can bind to it", () => {
+    const links = new Map([["go.set_position", "/api/go"]]);
+    const out = linkifySymbolMentions("use go.set_position", links);
+    expect(out).toBe('use <a href="/api/go" class="symbol-xref">go.set_position</a>');
   });
 });
