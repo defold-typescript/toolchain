@@ -1,5 +1,58 @@
 import { describe, expect, test } from "bun:test";
-import { bumpVersion, compareVersions, maxVersion, parseArgs, resolveTarget } from "./publish.ts";
+import { readdirSync, readFileSync } from "node:fs";
+import * as path from "node:path";
+import {
+  bumpVersion,
+  compareVersions,
+  maxVersion,
+  PACKAGES,
+  parseArgs,
+  resolveTarget,
+} from "./publish.ts";
+
+const REPO_ROOT = path.resolve(import.meta.dir, "..");
+const PACKAGES_DIR = path.join(REPO_ROOT, "packages");
+
+interface Manifest {
+  readonly name?: string;
+  readonly private?: boolean;
+  readonly dependencies?: Record<string, string>;
+}
+
+function readManifest(dir: string): Manifest {
+  return JSON.parse(readFileSync(path.join(PACKAGES_DIR, dir, "package.json"), "utf8"));
+}
+
+describe("PACKAGES publish set tracks the workspace", () => {
+  // Without this guard, extracting a new publishable package (as `docs` was)
+  // leaves it out of the stamp/publish set: its workspace:* deps resolve to
+  // 0.0.0 and `verifyCoordinated` rejects the dependent tarball at publish time.
+  test("lists exactly the publishable packages/* dirs", () => {
+    const publishable = readdirSync(PACKAGES_DIR, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .filter((dir) => readManifest(dir).private !== true)
+      .sort();
+    expect([...PACKAGES].sort()).toEqual(publishable);
+  });
+
+  test("each dir maps to its @defold-typescript/<dir> package name", () => {
+    for (const dir of PACKAGES) {
+      expect(readManifest(dir).name).toBe(`@defold-typescript/${dir}`);
+    }
+  });
+
+  test("publishes every inter-package dependency before its dependents", () => {
+    PACKAGES.forEach((dir, index) => {
+      const deps = readManifest(dir).dependencies ?? {};
+      for (const name of Object.keys(deps)) {
+        if (!name.startsWith("@defold-typescript/")) continue;
+        const depDir = name.slice("@defold-typescript/".length);
+        expect(PACKAGES.indexOf(depDir as (typeof PACKAGES)[number])).toBeLessThan(index);
+      }
+    });
+  });
+});
 
 describe("parseArgs", () => {
   test("defaults to a dry-run patch bump", () => {
