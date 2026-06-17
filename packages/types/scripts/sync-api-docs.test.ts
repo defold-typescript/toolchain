@@ -7,6 +7,8 @@ import { MODULE_MANIFEST } from "./regen";
 import {
   buildCoverageReport,
   EXTENSION_MANIFEST,
+  extractFixtures,
+  LUA_STDLIB_MANIFEST,
   parseChecklistNamespaces,
   readZip,
   SYNC_MANIFEST,
@@ -78,6 +80,37 @@ describe("SYNC_MANIFEST coverage", () => {
     const mapped = new Set([...SYNC_MANIFEST, ...EXTENSION_MANIFEST].map((e) => e.namespace));
     for (const entry of MODULE_MANIFEST) {
       expect(mapped.has(entry.namespace)).toBe(true);
+    }
+  });
+});
+
+describe("LUA_STDLIB_MANIFEST", () => {
+  test("maps base and bit to their ref-doc.zip entries with the standard fixture path", () => {
+    expect(LUA_STDLIB_MANIFEST).toHaveLength(2);
+    const base = LUA_STDLIB_MANIFEST.find((e) => e.namespace === "base");
+    expect(base?.zipEntry).toBe("doc/lua_base.doc_h_doc.json");
+    expect(base?.fixture).toBe("fixtures/base_doc.json");
+    const bit = LUA_STDLIB_MANIFEST.find((e) => e.namespace === "bit");
+    expect(bit?.zipEntry).toBe("doc/src-script_bitop.cpp_doc.json");
+    expect(bit?.fixture).toBe("fixtures/bit_doc.json");
+  });
+
+  test("extractFixtures resolves both entries from a fake zip", () => {
+    const baseContents = '{"info":{"namespace":"base"}}\n';
+    const bitContents = '{"info":{"namespace":"bit"}}\n';
+    const zip = fakeZip({
+      "doc/lua_base.doc_h_doc.json": baseContents,
+      "doc/src-script_bitop.cpp_doc.json": bitContents,
+    });
+    const fixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
+    expect(fixtures.map((f) => f.namespace).sort()).toEqual(["base", "bit"]);
+    expect(fixtures.find((f) => f.namespace === "base")?.contents).toBe(baseContents);
+    expect(fixtures.find((f) => f.namespace === "bit")?.contents).toBe(bitContents);
+  });
+
+  test("neither base nor bit appears in MODULE_MANIFEST (docs-only, no generated .d.ts)", () => {
+    for (const entry of LUA_STDLIB_MANIFEST) {
+      expect(MODULE_MANIFEST.some((m) => m.namespace === entry.namespace)).toBe(false);
     }
   });
 });

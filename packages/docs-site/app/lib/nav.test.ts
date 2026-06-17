@@ -10,10 +10,22 @@ function realPages(): GuidePage[] {
 }
 
 describe("buildNav", () => {
-  test("returns the four categories in declared order with declared labels", () => {
+  test("returns the five categories in declared order with declared labels", () => {
     const nav = buildNav(realPages());
-    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "language", "reference"]);
-    expect(nav.map((c) => c.label)).toEqual(["Get started", "Guides", "Language", "Reference"]);
+    expect(nav.map((c) => c.id)).toEqual([
+      "get-started",
+      "guides",
+      "language",
+      "reference",
+      "lua-stdlib",
+    ]);
+    expect(nav.map((c) => c.label)).toEqual([
+      "Get started",
+      "Guides",
+      "Language",
+      "Reference",
+      "Lua standard library",
+    ]);
   });
 
   test("places every page route in exactly one category, plus the fixed /api link", () => {
@@ -81,6 +93,35 @@ describe("buildNav API namespace children", () => {
     const child = apiLink(nav)?.children?.[0];
     expect(child?.label).toBe("camera");
     expect(child?.labelHtml).toBe("camera");
+  });
+});
+
+describe("buildNav Lua standard library category", () => {
+  test("places luaStdlib namespaces in a separate 'Lua standard library' category, not under engine /api children", () => {
+    const nav = buildNav(
+      realPages(),
+      [{ label: "camera", route: "/api/camera" }],
+      [
+        { label: "base", route: "/api/base" },
+        { label: "bit", route: "/api/bit" },
+      ],
+    );
+    const luaStdlib = nav.find((c) => c.id === "lua-stdlib");
+    expect(luaStdlib).toBeDefined();
+    expect(luaStdlib?.label).toBe("Lua standard library");
+    expect(luaStdlib?.links.map((l) => l.route)).toEqual(["/api/base", "/api/bit"]);
+
+    const reference = nav.find((c) => c.id === "reference");
+    const apiLink = reference?.links.find((l) => l.route === "/api");
+    expect(apiLink?.children?.map((c) => c.route)).toEqual(["/api/camera"]);
+  });
+
+  test("leaves the lua-stdlib category empty when no luaStdlib namespaces are passed", () => {
+    const nav = buildNav(realPages(), [{ label: "camera", route: "/api/camera" }]);
+    const luaStdlib = nav.find((c) => c.id === "lua-stdlib");
+    expect(luaStdlib).toBeDefined();
+    expect(luaStdlib?.label).toBe("Lua standard library");
+    expect(luaStdlib?.links).toEqual([]);
   });
 });
 
@@ -154,6 +195,16 @@ describe("activeCategoryId", () => {
 
   test("resolves an API subpath to reference via prefix match", () => {
     expect(activeCategoryId("/api/foo", nav)).toBe("reference");
+  });
+
+  test("resolves a lua-stdlib API subpath to lua-stdlib via longest-prefix match", () => {
+    const navWithStdlib = buildNav(
+      realPages(),
+      [{ label: "camera", route: "/api/camera" }],
+      [{ label: "base", route: "/api/base" }],
+    );
+    expect(activeCategoryId("/api/base", navWithStdlib)).toBe("lua-stdlib");
+    expect(activeCategoryId("/api/camera", navWithStdlib)).toBe("reference");
   });
 
   test("resolves the index route to get-started by exact match", () => {

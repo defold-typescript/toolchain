@@ -44,6 +44,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 ## Reference
 
 - [API](/api) — the generated `@defold-typescript/types` reference: every documented Defold namespace, grouped alphabetically as cards (site-only; built from the typed surface the toolchain ships).
+- [Lua standard library](/api/base) — the pure-Lua / LuaJIT reference category (`base`, `bit`, …). Types are owned by the `lua-types` dependency the `lua-stdlib-globals` goal adopted; `@defold-typescript/types` does not re-emit them as generated namespaces.
 
 ## Coming later
 

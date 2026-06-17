@@ -73,6 +73,20 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
 // four extension-only surfaces are wired via EXTENSION_MANIFEST below.
 export const UNMAPPED: ReadonlyMap<string, string> = new Map();
 
+// Pure-Lua / LuaJIT surfaces Defold documents (https://defold.com/ref/stable/base-lua/,
+// `bit-lua`) whose TypeScript types are owned by the `lua-types` dependency the
+// `lua-stdlib-globals` goal adopted — `lua-types/special/jit-only.d.ts` declares
+// `declare namespace bit { ... }` and `lua-types/core/global.d.ts` carries the
+// base globals. Re-emitting them as generated Defold namespaces would collide
+// (`declare namespace bit` duplicates; base globals are top-level globals, not
+// a `base.*` namespace). LUA_STDLIB_MANIFEST vendors the same ref-doc JSON
+// `SYNC_MANIFEST` carries, but the docs-site is the only consumer — `regen.ts`
+// / `MODULE_MANIFEST` never read it, so no `generated/<ns>.d.ts` is produced.
+export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
+  entry("base", "doc/lua_base.doc_h_doc.json"),
+  entry("bit", "doc/src-script_bitop.cpp_doc.json"),
+];
+
 function entry(
   namespace: string,
   zipEntry: string,
@@ -374,9 +388,11 @@ if (import.meta.main) {
 
   const coreFixtures = extractFixtures(zip);
   const extensionFixtures = await downloadExtensionFixtures();
+  const luaStdlibFixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
   const results = [
     ...syncExtractedFixtures(coreFixtures, { check }),
     ...syncExtractedFixtures(extensionFixtures, { check }),
+    ...syncExtractedFixtures(luaStdlibFixtures, { check }),
   ];
   const syncedDocs = [...coreFixtures, ...extensionFixtures].map((f) => ({
     namespace: f.namespace,
