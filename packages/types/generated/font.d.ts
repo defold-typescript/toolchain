@@ -24,10 +24,13 @@ declare global {
      *
      * @param fontc - The path to the .fontc resource
      * @returns the information table contains these fields:
+     *
      * `path`
      * hash The path hash of the current file.
      * `fonts`
+     *
      * table An array of associated font (e.g. .ttf) files. Each item is a table that contains:
+     *
      * `path`
      * string The path of the font file
      * `path_hash`
@@ -40,6 +43,7 @@ declare global {
      * @param fontc - The path to the .fontc resource
      * @param text - The text to layout
      * @param callback - (optional) A callback function that is called after the request is finished
+     *
      * `self`
      * object The current object.
      * `request_id`

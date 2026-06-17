@@ -85,8 +85,11 @@ declare global {
      *
      * @param url - the collection factory component to get status from
      * @returns status of the collection factory component
+     *
      * - `collectionfactory.STATUS_UNLOADED`
+     *
      * - `collectionfactory.STATUS_LOADING`
+     *
      * - `collectionfactory.STATUS_LOADED`
      */
     function get_status(url?: string | Hash | Url): Opaque<"constant">;
@@ -96,6 +99,7 @@ declare global {
      *
      * @param url - the collection factory component to load
      * @param complete_function - function to call when resources are loaded.
+     *
      * `self`
      * object The current object.
      * `url`

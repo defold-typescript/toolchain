@@ -12,8 +12,11 @@ declare global {
      * to a component. If the component part of the receiver is omitted, the message
      * is broadcast to all components in the game object.
      * The following receiver shorthands are available:
+     *
      * - `"."` the current game object
+     *
      * - `"#"` the current component
+     *
      * There is a 2 kilobyte limit to the message parameter table size.
      *
      * @param receiver - The receiver must be a string in URL-format, a URL object or a hashed string.

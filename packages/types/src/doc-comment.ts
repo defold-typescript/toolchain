@@ -29,18 +29,20 @@ export function htmlToDocText(html: string): string {
     .replace(/<li>/gi, "\n- ")
     .replace(/<\/li>/gi, "")
     .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
     .replace(/<\/?pre>/gi, "\n")
     .replace(/<[^>]+>/g, "");
 
   text = decodeEntities(text);
 
-  // Collapse horizontal whitespace runs, trim around newlines, drop blank
-  // runs, then trim the whole string — preserving single newlines from lists
-  // and `<br>`.
+  // Collapse horizontal whitespace runs, trim around newlines, fold runaway
+  // blank runs to one blank line, then trim the whole string — preserving
+  // single newlines from lists and `<br>`, and the paragraph-break blank line
+  // from `</p>`.
   text = text
     .replace(/[ \t]+/g, " ")
     .replace(/ *\n */g, "\n")
-    .replace(/\n{2,}/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 
   // A literal `*/` would close the JSDoc comment early; escape it.
@@ -127,7 +129,7 @@ export function renderDocComment(parts: DocCommentParts): string[] {
 
   const lines = ["/**"];
   for (const line of summaryLines) {
-    lines.push(` * ${line}`);
+    lines.push(line === "" ? " *" : ` * ${line}`);
   }
 
   const hasTags = params.length > 0 || returns !== "" || example !== "";

@@ -92,8 +92,11 @@ declare global {
      *
      * @param element_count - The number of elements the buffer should hold
      * @param declaration - A table where each entry (table) describes a stream
+     *
      * - hash | string `name`: The name of the stream
+     *
      * - constant `type`: The data type of the stream
+     *
      * - number `count`: The number of values each element should hold
      * @returns the new buffer
      * @example
