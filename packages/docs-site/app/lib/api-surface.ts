@@ -195,6 +195,11 @@ export function apiModuleMarkdown(
       if (doc) lines.push(doc, "");
       const example = exampleMarkdownFor(fn, translations);
       if (example) lines.push(example, "");
+      for (const p of [...fn.parameters, ...fn.returnValues]) {
+        const pdoc = htmlToDocText(p.doc);
+        if (!pdoc) continue;
+        lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
+      }
     }
   }
 

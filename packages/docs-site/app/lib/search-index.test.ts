@@ -138,4 +138,51 @@ describe("apiSearchRecords", () => {
     const routes = records.map((r) => r.route);
     expect(routes).toEqual([...routes].sort());
   });
+
+  test("indexes parameter and return doc prose into text while preserving the schema", () => {
+    const page: ApiPage = {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo brief",
+      module: {
+        namespace: "demo",
+        brief: "Demo brief",
+        description: "Demo module.",
+        functions: [
+          {
+            name: "demo.run",
+            brief: "run it",
+            description: "Runs the demo.",
+            parameters: [
+              {
+                name: "loop",
+                doc: "<p>keepLoopingDocToken</p>",
+                types: ["boolean"],
+                isOptional: true,
+              },
+            ],
+            returnValues: [
+              {
+                name: "",
+                doc: "<p>frameCounterDocToken</p>",
+                types: ["number"],
+                isOptional: false,
+              },
+            ],
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      category: "engine",
+    };
+    const [record] = apiSearchRecords([page]);
+    expect(record?.text).toContain("keepLoopingDocToken");
+    expect(record?.text).toContain("frameCounterDocToken");
+    expect(Object.keys(record ?? {}).sort()).toEqual(["route", "text", "title"]);
+    expect(record?.title).toBe("demo API");
+  });
 });
