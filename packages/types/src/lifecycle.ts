@@ -453,7 +453,10 @@ const _hookNamesPinnedToInterface: Equal<ScriptHookName, keyof ScriptHooks<unkno
   true;
 void _hookNamesPinnedToInterface;
 
-export type GuiScriptHooks<TSelf, TInitState = TSelf> = ScriptHooks<TSelf, TInitState>;
+export type GuiScriptHooks<TSelf, TInitState = TSelf> = Omit<
+  ScriptHooks<TSelf, TInitState>,
+  "fixed_update" | "late_update"
+>;
 
 export type RenderScriptHooks<TSelf, TInitState = TSelf> = Omit<
   ScriptHooks<TSelf, TInitState>,
@@ -586,9 +589,10 @@ export function defineScript<TProps extends object = Record<never, never>, TInit
  * {@link defineScript}, and is erased by the transpiler's `lifecycle-erasure`
  * pass into the flat Defold chunk shape.
  *
- * `GuiScriptHooks` is an alias of the `.script` hook set, so it accepts the same
- * full set, all optional: `init`, `update`, `fixed_update`, `late_update`,
- * `on_message`, `on_input`, `final`, `on_reload`.
+ * `GuiScriptHooks` is `Omit<ScriptHooks, "fixed_update" | "late_update">` — gui
+ * scripts are not driven by the fixed-timestep or late-update passes. It accepts
+ * the rest, all optional: `init`, `update`, `on_message`, `on_input`, `final`,
+ * `on_reload`.
  *
  * Scaffold it with the `defold-gui` / `defold-gui-typed` VSCode snippets from
  * `defold-typescript init`.
