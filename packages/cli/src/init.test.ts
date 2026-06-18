@@ -1134,20 +1134,28 @@ describe("runInit (.vscode script snippets)", () => {
     expect(readFileSync(path.join(cwd, SNIPPETS_REL), "utf8")).toBe(garbage);
   });
 
-  test("script and gui snippets emit every lifecycle hook; render omits only on_input", () => {
+  test("script snippets emit every lifecycle hook; gui omits fixed/late_update; render omits only on_input", () => {
     runInit({ cwd });
     const snippets = readSnippets();
 
-    for (const key of [
-      "Defold script (inferred self)",
-      "Defold script (typed self)",
-      "Defold GUI script (inferred self)",
-      "Defold GUI script (typed self)",
-    ]) {
+    for (const key of ["Defold script (inferred self)", "Defold script (typed self)"]) {
       const body = snippetOf(snippets, key).body.join("\n");
       for (const hook of SCRIPT_HOOK_NAMES) {
         expect(body).toContain(`${hook}(`);
       }
+    }
+
+    const guiOmitted = new Set(["fixed_update", "late_update"]);
+    for (const key of ["Defold GUI script (inferred self)", "Defold GUI script (typed self)"]) {
+      const body = snippetOf(snippets, key).body.join("\n");
+      for (const hook of SCRIPT_HOOK_NAMES) {
+        if (guiOmitted.has(hook)) {
+          expect(body).not.toContain(`${hook}(`);
+        } else {
+          expect(body).toContain(`${hook}(`);
+        }
+      }
+      expect(body).toContain("on_input(");
     }
 
     for (const key of [
@@ -1162,6 +1170,18 @@ describe("runInit (.vscode script snippets)", () => {
           expect(body).toContain(`${hook}(`);
         }
       }
+    }
+  });
+
+  test("gui snippets omit fixed_update and late_update but keep on_input", () => {
+    runInit({ cwd });
+    const snippets = readSnippets();
+
+    for (const key of ["Defold GUI script (inferred self)", "Defold GUI script (typed self)"]) {
+      const body = snippetOf(snippets, key).body.join("\n");
+      expect(body).not.toContain("fixed_update(");
+      expect(body).not.toContain("late_update(");
+      expect(body).toContain("on_input(");
     }
   });
 
