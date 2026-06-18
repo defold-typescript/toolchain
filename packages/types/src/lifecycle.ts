@@ -64,26 +64,265 @@ export interface ScriptHooks<TSelf, TInitState = TSelf> {
   // solves `TInitState` from. The engine owns `self` (a userdata-backed table),
   // so every other hook wraps it in `NoInfer<TSelf>` — otherwise their `self`
   // competes as a second inference site and `TSelf` collapses to `{}`.
+  /**
+   * This is a callback-function, which is called by the engine when a script component is initialized. It can be used
+   * to set the initial state of the script.
+   *
+   * @example
+   * ```ts
+   * init() {
+   *   return { hits: 0 };
+   * },
+   * ```
+   */
   init?(): TInitState;
+  /**
+   * This is a callback-function, which is called by the engine every frame to update the state of a script component.
+   * It can be used to perform any kind of game related tasks, e.g. moving the game object instance.
+   *
+   * @param self - reference to the script state to be used for storing data
+   * @param dt - the time-step of the frame update
+   * @example
+   * ```ts
+   * update(self, dt) {
+   *   self.hits += 1;
+   * },
+   * ```
+   */
   update?(self: NoInfer<TSelf>, dt: number): void;
+  /**
+   * This is a callback-function, which is called by the engine at fixed intervals to update the state of a script
+   * component. The function will be called if 'Fixed Update Frequency' is enabled in the Engine section of game.project.
+   * It can for instance be used to update game logic with the physics simulation if using a fixed timestep for the
+   * physics (enabled by ticking 'Use Fixed Timestep' in the Physics section of game.project).
+   *
+   * @param self - reference to the script state to be used for storing data
+   * @param dt - the time-step of the frame update
+   * @example
+   * ```ts
+   * fixed_update(self, dt) {
+   *   self.vel.y -= 9.8 * dt;
+   * },
+   * ```
+   */
   fixed_update?(self: NoInfer<TSelf>, dt: number): void;
+  /**
+   * This is a callback-function, which is called by the engine at the end of the frame to update the state of a script
+   * component. Use it to make final adjustments to the game object instance.
+   *
+   * @param self - reference to the script state to be used for storing data
+   * @param dt - the time-step of the frame update
+   * @example
+   * ```ts
+   * late_update(self, dt) {
+   *   self.camera = self.target;
+   * },
+   * ```
+   */
   late_update?(self: NoInfer<TSelf>, dt: number): void;
   // Defold delivers message_id as a pre-hashed `hash`, so handlers must compare
   // it against `hash("...")` constants — a string literal never matches. Sender-
   // side payload narrowing by message id lives on `msg.post` (msg-overloads.d.ts).
+  /**
+   * This is a callback-function, which is called by the engine whenever a message has been sent to the script component.
+   * It can be used to take action on the message, e.g. send a response back to the sender of the message.
+   * The `message` parameter is a table containing the message data. If the message is sent from the engine, the
+   * documentation of the message specifies which data is supplied.
+   *
+   * @param self - reference to the script state to be used for storing data
+   * @param message_id - id of the received message
+   * @param message - a table containing the message data
+   * @param sender - address of the sender
+   * @example
+   * ```ts
+   * on_message(self, message_id, message, sender) {
+   *   if (message_id === hash("hit")) self.hits += 1;
+   * },
+   * ```
+   */
   on_message?(
     self: NoInfer<TSelf>,
     message_id: Hash,
     message: Record<string | number, unknown>,
     sender: Url,
   ): void;
+  /**
+   * This is a callback-function, which is called by the engine when user input is sent to the game object instance of the script.
+   * It can be used to take action on the input, e.g. move the instance according to the input.
+   * For an instance to obtain user input, it must first acquire input focus
+   * through the message `acquire_input_focus`.
+   * Any instance that has obtained input will be put on top of an
+   * input stack. Input is sent to all listeners on the stack until the
+   * end of stack is reached, or a listener returns `true`
+   * to signal that it wants input to be consumed.
+   * See the documentation of acquire_input_focus for more
+   * information.
+   * The `action` parameter is a table containing data about the input mapped to the
+   * `action_id`.
+   * For mapped actions it specifies the value of the input and if it was just pressed or released.
+   * Actions are mapped to input in an input_binding-file.
+   * Mouse movement is specifically handled and uses `nil` as its `action_id`.
+   * The `action` only contains positional parameters in this case, such as x and y of the pointer.
+   * Here is a brief description of the available table fields:
+   *
+   * Field
+   * Description
+   *
+   * `value`
+   * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
+   *
+   * `pressed`
+   * If the input was pressed this frame. This is not present for mouse movement and text input.
+   *
+   * `released`
+   * If the input was released this frame. This is not present for mouse movement and text input.
+   *
+   * `repeated`
+   * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
+   *
+   * `x`
+   * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `y`
+   * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `screen_x`
+   * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `screen_y`
+   * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `dx`
+   * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `dy`
+   * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `screen_dx`
+   * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `screen_dy`
+   * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   *
+   * `gamepad`
+   * The index of the gamepad device that provided the input. See table below about gamepad input.
+   *
+   * `touch`
+   * List of touch input, one element per finger, if present. See table below about touch input
+   *
+   * `text`
+   * Text input from a (virtual) keyboard or similar.
+   *
+   * `marked_text`
+   * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
+   *
+   * Gamepad specific fields:
+   *
+   * Field
+   * Description
+   *
+   * `gamepad`
+   * The index of the gamepad device that provided the input.
+   *
+   * `userid`
+   * Id of the user associated with the controller. Usually only relevant on consoles.
+   *
+   * `gamepad_unknown`
+   * True if the inout originated from an unknown/unmapped gamepad.
+   *
+   * `gamepad_name`
+   * Name of the gamepad
+   *
+   * `gamepad_axis`
+   * List of gamepad axis values. For raw gamepad input only.
+   *
+   * `gamepadhats`
+   * List of gamepad hat values. For raw gamepad input only.
+   *
+   * `gamepad_buttons`
+   * List of gamepad button values. For raw gamepad input only.
+   *
+   * Touch input table:
+   *
+   * Field
+   * Description
+   *
+   * `id`
+   * A number identifying the touch input during its duration.
+   *
+   * `pressed`
+   * True if the finger was pressed this frame.
+   *
+   * `released`
+   * True if the finger was released this frame.
+   *
+   * `tap_count`
+   * Number of taps, one for single, two for double-tap, etc
+   *
+   * `x`
+   * The x touch location.
+   *
+   * `y`
+   * The y touch location.
+   *
+   * `dx`
+   * The change in x value.
+   *
+   * `dy`
+   * The change in y value.
+   *
+   * `acc_x`
+   * Accelerometer x value (if present).
+   *
+   * `acc_y`
+   * Accelerometer y value (if present).
+   *
+   * `acc_z`
+   * Accelerometer z value (if present).
+   *
+   * @param self - reference to the script state to be used for storing data
+   * @param action_id - id of the received input action, as mapped in the input_binding-file
+   * @param action - a table containing the input data, see above for a description
+   * @example
+   * ```ts
+   * on_input(self, action_id, action) {
+   *   if (action_id === hash("left") && action.pressed) self.dir = -1;
+   *   return false;
+   * },
+   * ```
+   */
   on_input?(
     self: NoInfer<TSelf>,
     action_id: Hash | undefined,
     action: InputAction,
     // biome-ignore lint/suspicious/noConfusingVoidType: Defold lets handlers omit the return; `void` is the right shape for "may return boolean or nothing".
   ): boolean | void;
+  /**
+   * This is a callback-function, which is called by the engine when a script component is finalized (destroyed). It can
+   * be used to e.g. take some last action, report the finalization to other game object instances, delete spawned objects
+   * or release user input focus (see release_input_focus).
+   *
+   * @param self - reference to the script state to be used for storing data
+   * @example
+   * ```ts
+   * final(self) {
+   *   msg.post("#", "done");
+   * },
+   * ```
+   */
   final?(self: NoInfer<TSelf>): void;
+  /**
+   * This is a callback-function, which is called by the engine when the script component is reloaded, e.g. from the editor.
+   * It can be used for live development, e.g. to tweak constants or set up the state properly for the instance.
+   *
+   * @param self - reference to the script state to be used for storing data
+   * @example
+   * ```ts
+   * on_reload(self) {
+   *   self.speed = 200;
+   * },
+   * ```
+   */
   on_reload?(self: NoInfer<TSelf>): void;
 }
 
@@ -132,7 +371,17 @@ export type ScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
   ScriptHooks<TSelf, TInitState>,
   "init"
 > & {
+  /**
+   * Receives `self` pre-populated with the declared `properties` before the
+   * engine runs init, so init-time setup can read those default values. The
+   * returned object still seeds the inferred script state.
+   */
   init?(self: NoInfer<TProps>): TInitState;
+  /**
+   * Value-keyed editor properties: each key is a property name and its value
+   * the default, so the value's type threads onto `self` alongside init's
+   * returned state.
+   */
   properties?: TProps;
 };
 
@@ -140,7 +389,17 @@ export type GuiScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
   GuiScriptHooks<TSelf, TInitState>,
   "init"
 > & {
+  /**
+   * Receives `self` pre-populated with the declared `properties` before the
+   * engine runs init, so init-time setup can read those default values. The
+   * returned object still seeds the inferred script state.
+   */
   init?(self: NoInfer<TProps>): TInitState;
+  /**
+   * Value-keyed editor properties: each key is a property name and its value
+   * the default, so the value's type threads onto `self` alongside init's
+   * returned state.
+   */
   properties?: TProps;
 };
 
@@ -148,7 +407,17 @@ export type RenderScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
   RenderScriptHooks<TSelf, TInitState>,
   "init"
 > & {
+  /**
+   * Receives `self` pre-populated with the declared `properties` before the
+   * engine runs init, so init-time setup can read those default values. The
+   * returned object still seeds the inferred script state.
+   */
   init?(self: NoInfer<TProps>): TInitState;
+  /**
+   * Value-keyed editor properties: each key is a property name and its value
+   * the default, so the value's type threads onto `self` alongside init's
+   * returned state.
+   */
   properties?: TProps;
 };
 

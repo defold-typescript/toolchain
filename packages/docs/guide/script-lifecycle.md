@@ -116,7 +116,7 @@ Inside `init`, `self` is **only** the property values — reading a field that i
 > [!NOTE]
 > Calling `go.property(...)` directly is deprecated. It still registers the property at runtime, but `self.<name>` stays untyped and the transpiler emits a build warning pointing you at the `properties` field — a reminder to move the property there.
 
-Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example.
+Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts omit `on_input`), and a TypeScript example. Hovering an individual callback inside the hook table — `init`, `update`, `fixed_update`, `late_update`, `on_message`, `on_input`, `final`, `on_reload` — now shows that hook's Defold description and parameter docs as well.
 
 At runtime Defold owns `self` (a userdata-backed table) and a script can populate but not replace it, so the transpiler can't emit a returning `init` verbatim. It wraps the body in a builder and merges the returned table onto the engine `self`; a `nil`/stateless return merges nothing. When `init` takes a `self` parameter the builder receives the engine `self` (so a property read resolves to the real table), and the parameter keeps your name even if it is not literally `self`. The hooks you write stay in terms of a typed `self`.
 
