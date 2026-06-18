@@ -122,6 +122,78 @@ describe("apiModuleMarkdown", () => {
     expect(md).not.toContain("<div");
     expect(md).not.toContain("<span");
   });
+
+  function paramDocPage(
+    parameters: { name: string; doc: string; types: string[]; isOptional: boolean }[],
+    returnValues: { name: string; doc: string; types: string[]; isOptional: boolean }[],
+  ): ApiPage {
+    return {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo brief",
+      module: {
+        namespace: "demo",
+        brief: "Demo brief",
+        description: "Demo module.",
+        functions: [
+          {
+            name: "demo.run",
+            brief: "run it",
+            description: "Runs the demo.",
+            parameters,
+            returnValues,
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      category: "engine",
+    };
+  }
+
+  test("folds parameter and return doc prose into the text", () => {
+    const md = apiModuleMarkdown(
+      paramDocPage(
+        [
+          {
+            name: "loop",
+            doc: "<p>whether to keep looping</p>",
+            types: ["boolean"],
+            isOptional: true,
+          },
+        ],
+        [{ name: "", doc: "<p>the frame counter value</p>", types: ["number"], isOptional: false }],
+      ),
+    );
+    expect(md).toContain("whether to keep looping");
+    expect(md).toContain("the frame counter value");
+  });
+
+  test("strips HTML from param/return docs sourced from <p> markup", () => {
+    const md = apiModuleMarkdown(
+      paramDocPage(
+        [
+          {
+            name: "loop",
+            doc: "<p>whether to keep looping</p>",
+            types: ["boolean"],
+            isOptional: true,
+          },
+        ],
+        [{ name: "", doc: "<p>the frame counter value</p>", types: ["number"], isOptional: false }],
+      ),
+    );
+    expect(md).not.toContain("<");
+  });
+
+  test("emits no param/return scaffolding when both lists are empty", () => {
+    const md = apiModuleMarkdown(paramDocPage([], []));
+    expect(md).toContain("Runs the demo.");
+    expect(md).toContain("### `demo.run()`");
+  });
 });
 
 describe("apiModuleSymbols", () => {
