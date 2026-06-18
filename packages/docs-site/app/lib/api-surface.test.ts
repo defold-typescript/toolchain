@@ -7,11 +7,14 @@ import {
   apiModuleMarkdown,
   apiModuleSymbols,
   exampleMarkdownFor,
+  functionSummaryTable,
   groupFunctionSymbols,
   loadApiSurface,
 } from "./api-surface";
+import { pageHeadings } from "./headings";
+import { renderMarkdown } from "./markdown";
 
-function fnSymbol(name: string): ApiSymbol {
+function fnSymbol(name: string, overrides: Partial<ApiSymbol> = {}): ApiSymbol {
   return {
     kind: "function",
     name,
@@ -19,6 +22,7 @@ function fnSymbol(name: string): ApiSymbol {
     docMarkdown: "",
     parameters: [],
     returnValues: [],
+    ...overrides,
   };
 }
 
@@ -531,5 +535,77 @@ describe("groupFunctionSymbols", () => {
 
   test("yields an empty array for empty input", () => {
     expect(groupFunctionSymbols([])).toEqual([]);
+  });
+});
+
+describe("functionSummaryTable", () => {
+  async function renderedHeadingId(signature: string): Promise<string> {
+    const html = await renderMarkdown(`### \`${signature}\``);
+    const heading = pageHeadings(html)[0];
+    if (!heading) throw new Error(`no heading rendered for ${signature}`);
+    return heading.id;
+  }
+
+  test("emits a GitHub table with a header row and one anchor-linked row per symbol", () => {
+    const table = functionSummaryTable([
+      fnSymbol("go.get_position", { signature: "go.get_position(): vector3" }),
+      fnSymbol("go.set_position", { signature: "go.set_position(position: vector3): void" }),
+    ]);
+    expect(table).toBe(
+      [
+        "| Function | Summary |",
+        "| --- | --- |",
+        "| [`go.get_position`](#gogetposition-vector3) |  |",
+        "| [`go.set_position`](#gosetpositionposition-vector3-void) |  |",
+      ].join("\n"),
+    );
+  });
+
+  test("summary cell is the first sentence of docMarkdown, newline-collapsed and pipe-escaped", () => {
+    const table = functionSummaryTable([
+      fnSymbol("go.get_position", {
+        signature: "go.get_position(): vector3",
+        docMarkdown: "Gets the world position.\nReturns a | vector3. More prose here.",
+      }),
+    ]);
+    expect(table).toBe(
+      [
+        "| Function | Summary |",
+        "| --- | --- |",
+        "| [`go.get_position`](#gogetposition-vector3) | Gets the world position. Returns a \\| vector3. |",
+      ].join("\n"),
+    );
+  });
+
+  test("empty docMarkdown yields an empty summary cell", () => {
+    const table = functionSummaryTable([
+      fnSymbol("go.get_position", { signature: "go.get_position(): vector3", docMarkdown: "" }),
+    ]);
+    expect(table).toBe(
+      [
+        "| Function | Summary |",
+        "| --- | --- |",
+        "| [`go.get_position`](#gogetposition-vector3) |  |",
+      ].join("\n"),
+    );
+  });
+
+  test("anchors match the id the slugify-headings rule actually assigns", async () => {
+    const signature = "go.set_position(position: vector3): void";
+    const table = functionSummaryTable([fnSymbol("go.set_position", { signature })]);
+    const id = await renderedHeadingId(signature);
+    expect(table).toContain(`(#${id})`);
+  });
+
+  test("an empty symbol list yields an empty string", () => {
+    expect(functionSummaryTable([])).toBe("");
+  });
+
+  test("colon-named receiver methods produce a valid row whose anchor matches the heading id", async () => {
+    const signature = "file:read(): string";
+    const table = functionSummaryTable([fnSymbol("file:read", { signature })]);
+    const id = await renderedHeadingId(signature);
+    expect(table).toContain(`[\`file:read\`](#${id})`);
+    expect(table).toContain("(#fileread-string)");
   });
 });
