@@ -180,6 +180,14 @@ export const MAPPING_TABLE_SLOTS: ReadonlyMap<string, { key: string; value: stri
   ["gui.get_layouts", { key: "hash", value: "vector3" }],
 ]);
 
+// FQN-keyed return-type overrides for functions whose doc `returnvalues` are
+// empty yet the engine returns a value. `gui.get`'s doc lists no return, but it
+// yields the property value (a vmath.vector4 or a number); `unknown` is the
+// honest, ts-defold-matching shape. Per-FQN, not a blanket "empty returnvalues
+// -> unknown" rule: `gui.set` also has empty returnvalues and `void` is correct
+// there.
+export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([["gui.get", "unknown"]]);
+
 // Element names whose `table` slot is a prose-only `array/list/table of <T>` shape
 // the field-list parser cannot read, but whose element type a human curated from
 // the doc. The value is a single element token (`T[]`) or a token list when the
@@ -1160,6 +1168,8 @@ function emitReturn(
   resolver: TableDocResolver,
   elementName: string,
 ): { type: string; trailing: string } {
+  const override = RETURN_TYPE_OVERRIDES.get(elementName);
+  if (override !== undefined) return { type: override, trailing: "" };
   if (returnValues.length === 0) return { type: "void", trailing: "" };
   if (returnValues.length > 1) {
     // Defold multi-returns are positional and always present; each slot maps

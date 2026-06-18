@@ -746,7 +746,7 @@ declare global {
      * const node_position = gui.get(node, "position");
      * ```
      */
-    function get(node: Opaque<"node">, property: string | Hash | Opaque<"constant">, options?: { index?: number }): void;
+    function get(node: Opaque<"node">, property: string | Hash | Opaque<"constant">, options?: { index?: number }): unknown;
     /**
      * Returns the adjust mode of a node.
      * The adjust mode defines how the node will adjust itself to screen

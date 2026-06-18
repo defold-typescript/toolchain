@@ -165,6 +165,59 @@ describe("emitDeclarations", () => {
     expect(out).toContain('function get_parent(node: Opaque<"node">): Opaque<"node">;');
   });
 
+  test("a return-type override forces unknown despite empty doc returnvalues", () => {
+    const module: ApiModule = {
+      namespace: "gui",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "gui.get",
+          brief: "",
+          description: "",
+          parameters: [
+            { name: "node", doc: "", types: ["node"], isOptional: false },
+            { name: "property", doc: "", types: ["string"], isOptional: false },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain('function get(node: Opaque<"node">, property: string): unknown;');
+    expect(out).not.toContain('function get(node: Opaque<"node">, property: string): void;');
+  });
+
+  test("an empty-returnvalues function not in the override map still emits void", () => {
+    const module: ApiModule = {
+      namespace: "gui",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "gui.set",
+          brief: "",
+          description: "",
+          parameters: [
+            { name: "node", doc: "", types: ["node"], isOptional: false },
+            { name: "property", doc: "", types: ["string"], isOptional: false },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain('function set(node: Opaque<"node">, property: string): void;');
+  });
+
   test("a callback-signature token emits an arity-preserving typed function", () => {
     const module: ApiModule = {
       namespace: "timer",
