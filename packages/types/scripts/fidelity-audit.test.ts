@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
-import { buildFidelityReport, type FidelityEntry } from "./fidelity-audit";
+import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
+import {
+  buildFidelityReport,
+  countDroppedHandleMethods,
+  type FidelityEntry,
+} from "./fidelity-audit";
 import baseline from "./fidelity-baseline.json" with { type: "json" };
 import type { ModuleManifestEntry } from "./regen";
 import { MODULE_MANIFEST } from "./regen";
@@ -1069,5 +1074,19 @@ describe("overload-covered skip reclassification", () => {
       if (!base) throw new Error(`baseline is missing namespace ${namespace}`);
       expect(entry).toEqual(base);
     }
+  });
+});
+
+describe("socket handle methods are accounted for as members", () => {
+  test("socket.droppedMembers is 0 once the receiver interfaces are emitted", () => {
+    const entry = MODULE_MANIFEST.find((e) => e.namespace === "socket");
+    if (!entry) throw new Error("socket manifest entry missing");
+    const report = buildFidelityReport([entry]);
+    expect(report.socket?.droppedMembers).toBe(0);
+  });
+
+  test("the audit counts colon methods: 55 dropped with emission off, 0 with emission on", () => {
+    expect(countDroppedHandleMethods(socketDoc, "socket", false)).toBe(55);
+    expect(countDroppedHandleMethods(socketDoc, "socket", true)).toBe(0);
   });
 });

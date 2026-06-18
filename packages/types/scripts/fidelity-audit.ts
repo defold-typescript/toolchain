@@ -4,6 +4,7 @@ import {
   ARBITRARY_TABLE_SLOTS,
   applyNestedFieldCurations,
   buildTableDocResolver,
+  HANDLE_METHOD_LOCAL,
   HOMOGENEOUS_ARRAY_SLOTS,
   MAPPING_TABLE_SLOTS,
   type NestedMapping,
@@ -74,6 +75,26 @@ function trailingOptionalCutoff(params: readonly Record<string, unknown>[]): num
     else break;
   }
   return cutoff;
+}
+
+// Colon `<receiver>:<method>` FUNCTION elements are emitted as method-bearing
+// interfaces (see emit-dts collectHandleMethodGroups). Before that recovery they
+// emitted nothing yet were never counted as a droppedMembers loss — a blind spot
+// that let `socket` read `droppedMembers: 0` over an incomplete surface. Count
+// them honestly: with emission on, only a malformed colon name (non-identifier
+// segment) is still a loss; with emission off, every colon method is dropped.
+export function countDroppedHandleMethods(doc: unknown, namespace: string, emit = true): number {
+  const prefix = `${namespace}.`;
+  let dropped = 0;
+  for (const element of elementsOf(doc)) {
+    if (element.type !== "FUNCTION" || typeof element.name !== "string") continue;
+    const local = element.name.startsWith(prefix)
+      ? element.name.slice(prefix.length)
+      : element.name;
+    if (!local.includes(":")) continue;
+    if (!emit || !HANDLE_METHOD_LOCAL.test(local)) dropped += 1;
+  }
+  return dropped;
 }
 
 function auditEntry(
@@ -356,9 +377,11 @@ function auditEntry(
     unknownTokens: [...unknown].sort(),
     recordTables,
     multiReturn,
-    droppedMembers: generateModuleDeclaration(entry, {
-      knownConstantFqns: NO_KNOWN_CONSTANTS,
-    }).dropped.filter((name) => !OVERLOAD_COVERED_SKIPS.has(name)).length,
+    droppedMembers:
+      generateModuleDeclaration(entry, {
+        knownConstantFqns: NO_KNOWN_CONSTANTS,
+      }).dropped.filter((name) => !OVERLOAD_COVERED_SKIPS.has(name)).length +
+      countDroppedHandleMethods(entry.doc, entry.namespace),
     optionalAsRequired,
   };
 }
