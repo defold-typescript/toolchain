@@ -866,6 +866,33 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
         : a.name.localeCompare(b.name),
     );
 
+  // One-level nested functions (`socket.dns.toip`) fail the flat-identifier test
+  // in `prepareFunction` above (the stripped `dns.toip` has a dot), so they are
+  // absent from `functions`. Re-collect them grouped by their single leading
+  // segment, re-stripping against `<namespace>.<segment>.` so the emitted
+  // identifier is the final segment. Only exactly-one-dot, both-sides-identifier
+  // locals qualify; deeper nesting and non-identifier segments stay dropped.
+  const nestedFunctionLocal = /^[A-Za-z_$][\w$]*\.[A-Za-z_$][\w$]*$/;
+  const nestedGroups = new Map<string, PreparedFunction[]>();
+  for (const fn of module.functions) {
+    const local = stripPrefix(fn.name, prefix);
+    if (!nestedFunctionLocal.test(local)) continue;
+    const segment = local.slice(0, local.indexOf("."));
+    const prepared = prepareFunction(fn, `${module.namespace}.${segment}.`);
+    if (prepared === null) continue;
+    const group = nestedGroups.get(segment) ?? [];
+    group.push(prepared);
+    nestedGroups.set(segment, group);
+  }
+  for (const group of nestedGroups.values()) {
+    group.sort((a, b) =>
+      a.name === b.name
+        ? a.original.parameters.length - b.original.parameters.length
+        : a.name.localeCompare(b.name),
+    );
+  }
+  const nestedSegments = [...nestedGroups.keys()].sort((a, b) => a.localeCompare(b));
+
   const resolver = buildTableDocResolver(
     module.functions.map((fn) => ({
       name: fn.name,
@@ -924,6 +951,19 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
 
   for (const alias of [...aliases].sort((a, b) => a.public.localeCompare(b.public))) {
     lines.push(`${INDENT}export { ${alias.internal} as ${alias.public} };`);
+  }
+
+  const nestedIndent = `${INDENT}${INDENT}`;
+  for (const segment of nestedSegments) {
+    const group = nestedGroups.get(segment) ?? [];
+    lines.push(`${INDENT}${decl}namespace ${segment} {`);
+    for (const fn of group) {
+      for (const docLine of functionDocLines(fn.original, translations, nestedIndent)) {
+        lines.push(docLine);
+      }
+      lines.push(`${nestedIndent}${decl}${emitFunction(fn, fn.name, mapType, resolver)}`);
+    }
+    lines.push(`${INDENT}}`);
   }
 
   if (module.properties.length > 0) {
@@ -1029,7 +1069,11 @@ function emitFunction(
 // fallback applies to non-identifier names, matching `emitParameter`) so the tag
 // resolves on hover; a single documented return becomes `@returns`. Returns `[]`
 // for a fully-undocumented function, leaving its emission byte-identical.
-function functionDocLines(fn: ApiFunction, translations: TranslationStore): string[] {
+function functionDocLines(
+  fn: ApiFunction,
+  translations: TranslationStore,
+  indent: string = INDENT,
+): string[] {
   const params = fn.parameters.map((p, index) => ({
     name: safeParamName(p.name, index),
     doc: htmlToDocText(p.doc),
@@ -1047,7 +1091,7 @@ function functionDocLines(fn: ApiFunction, translations: TranslationStore): stri
     ...(onlyReturn ? { returns: htmlToDocText(onlyReturn.doc) } : {}),
     ...exampleParts,
   };
-  return indentDocLines(parts, INDENT);
+  return indentDocLines(parts, indent);
 }
 
 // Summary-only doc lines for a member that carries no params or returns

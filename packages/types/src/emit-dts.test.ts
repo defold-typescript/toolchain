@@ -2627,4 +2627,83 @@ describe("slot-level array-of-object recovery", () => {
       "function get_ifaddrs(): { name: string; address: string; mac: string; up: boolean; running: boolean }[];",
     );
   });
+
+  test("a one-level nested function emits a namespace block keyed by its final segment", () => {
+    const module: ApiModule = {
+      namespace: "sock",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "sock.gettime",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [{ name: "", doc: "", types: ["number"], isOptional: false }],
+        },
+        {
+          name: "sock.dns.toip",
+          brief: "",
+          description: "",
+          parameters: [{ name: "address", doc: "", types: ["string"], isOptional: false }],
+          returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain("  function gettime(): number;");
+    expect(out).toContain("  namespace dns {");
+    expect(out).toContain("    function toip(address: string): string;");
+    expect(out).not.toContain("function dns.toip");
+  });
+
+  test("a function with two dots or a non-identifier segment after stripping is still dropped", () => {
+    const module: ApiModule = {
+      namespace: "sock",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "sock.a.b.c",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [],
+        },
+        {
+          name: "sock.9bad.x",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).not.toContain("namespace a ");
+    expect(out).not.toContain("namespace 9bad");
+    expect(out).not.toContain("function c(");
+    expect(out).not.toContain("function x(");
+  });
+
+  test("socket.dns.toip emits under a nested namespace with its FQN-resolved multi-return", () => {
+    const module = parseDefoldApiDoc(socketDoc);
+    const out = emitDeclarations(module);
+    expect(out).toContain("  namespace dns {");
+    const toipLine = out.split("\n").find((line) => line.includes("function toip("));
+    expect(toipLine).toBeDefined();
+    // toip documents two returns; the return resolves through the full
+    // `socket.dns.toip` element name, so it emits the same multi-return tuple it
+    // would at the top level rather than a dropped/void signature.
+    expect(toipLine).toContain("LuaMultiReturn<[");
+    expect(toipLine).not.toContain(": void");
+  });
 });

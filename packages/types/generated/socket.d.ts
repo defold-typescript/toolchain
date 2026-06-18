@@ -164,6 +164,67 @@ declare global {
      * Note: The UDP object returned will have the option "ipv6-v6only" set to true.
      */
     function udp6(): LuaMultiReturn<[Opaque<"unconnected"> | unknown, string | unknown]>;
+    namespace dns {
+      /**
+       * This function converts a host name to IPv4 or IPv6 address.
+       * The supplied address can be an IPv4 or IPv6 address or host name.
+       * The function returns a table with all information returned by the resolver:
+       *
+       * `{
+       * [1] = {
+       * family = family-name-1,
+       * addr = address-1
+       * },
+       * ...
+       * [n] = {
+       * family = family-name-n,
+       * addr = address-n
+       * }
+       * }
+       * `
+       *
+       * Here, family contains the string `"inet"` for IPv4 addresses, and `"inet6"` for IPv6 addresses.
+       * In case of error, the function returns nil followed by an error message.
+       *
+       * @param address - a hostname or an IPv4 or IPv6 address.
+       */
+      function getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>;
+      /**
+       * Returns the standard host name for the machine as a string.
+       *
+       * @returns the host name for the machine.
+       */
+      function gethostname(): string;
+      /**
+       * This function converts an address to host name.
+       * The supplied address can be an IPv4 or IPv6 address or host name.
+       * The function returns a table with all information returned by the resolver:
+       *
+       * `{
+       * [1] = host-name-1,
+       * ...
+       * [n] = host-name-n,
+       * }
+       * `
+       *
+       * @param address - a hostname or an IPv4 or IPv6 address.
+       */
+      function getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>;
+      /**
+       * This function converts from an IPv4 address to host name.
+       * The address can be an IPv4 address or a host name.
+       *
+       * @param address - an IPv4 address or host name.
+       */
+      function tohostname(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>;
+      /**
+       * This function converts a host name to IPv4 address.
+       * The address can be an IP address or a host name.
+       *
+       * @param address - a hostname or an IP address.
+       */
+      function toip(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>;
+    }
   }
 }
 
