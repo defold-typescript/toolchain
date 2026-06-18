@@ -7,6 +7,7 @@ import {
   type ApiSymbol,
   type ApiSymbolParam,
   apiModuleSymbols,
+  functionSummaryTable,
   groupFunctionSymbols,
 } from "../../lib/api-surface";
 import { pageHeadings } from "../../lib/headings";
@@ -95,6 +96,7 @@ function apiPageMarkdown(
     if (kind === "function") {
       for (const fnGroup of groupFunctionSymbols(group)) {
         lines.push(`## ${fnGroup.label}`, "");
+        lines.push(functionSummaryTable(fnGroup.symbols), "");
         for (const symbol of fnGroup.symbols) emitSymbol(symbol);
       }
       continue;

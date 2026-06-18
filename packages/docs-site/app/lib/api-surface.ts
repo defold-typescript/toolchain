@@ -13,6 +13,7 @@ import {
   parseDefoldApiDoc,
   type TranslationStore,
 } from "@defold-typescript/types";
+import { slugify } from "./headings";
 
 export type ApiPageCategory = "engine" | "lua-stdlib";
 
@@ -93,6 +94,31 @@ export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
     groups.push({ label: `\`${receiver}\` methods`, symbols });
   }
   return groups;
+}
+
+// First sentence of a description, table-cell-safe: cut at the first `. `
+// (keeping the period), collapse all whitespace runs to single spaces, trim,
+// and escape `|` so it can't break the markdown table. Empty in -> empty out.
+function summaryCell(text: string): string {
+  const boundary = text.indexOf(". ");
+  const sentence = boundary === -1 ? text : text.slice(0, boundary + 1);
+  return sentence.replace(/\s+/g, " ").trim().replace(/\|/g, "\\|");
+}
+
+/**
+ * Compact per-group function index for the top of an `/api/<namespace>` page:
+ * a GitHub markdown table whose rows link each function `name` down to its
+ * detailed `### \`signature\`` block (anchor = `slugify(signature)`, matching
+ * the `slugify-headings` markdown-it rule) and carry its first-sentence
+ * summary. Presentation-only — no new heading, so the "On this page" TOC is
+ * unchanged. Returns `""` for an empty list so the caller emits nothing.
+ */
+export function functionSummaryTable(symbols: ApiSymbol[]): string {
+  if (symbols.length === 0) return "";
+  const rows = symbols.map(
+    (s) => `| [\`${s.name}\`](#${slugify(s.signature)}) | ${summaryCell(s.docMarkdown)} |`,
+  );
+  return ["| Function | Summary |", "| --- | --- |", ...rows].join("\n");
 }
 
 function normalizeTypes(types: string[]): string[] {
