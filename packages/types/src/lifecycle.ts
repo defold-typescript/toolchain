@@ -1,41 +1,147 @@
 import type { Hash, Url } from "./core-types";
 
+// Field docs are hand-reconciled from the `on_input` description's "Touch input
+// table:" prose (not structured ref-doc data); a future ref-doc re-pin is
+// reconciled by hand, drift-guarded against that prose in lifecycle-member-docs.
 export interface InputTouch {
+  /**
+   * A number identifying the touch input during its duration.
+   */
   id?: number;
+  /**
+   * True if the finger was pressed this frame.
+   */
   pressed?: boolean;
+  /**
+   * True if the finger was released this frame.
+   */
   released?: boolean;
+  /**
+   * Number of taps, one for single, two for double-tap, etc
+   */
   tap_count?: number;
+  /**
+   * The x touch location.
+   */
   x?: number;
+  /**
+   * The y touch location.
+   */
   y?: number;
+  /**
+   * The change in x value.
+   */
   dx?: number;
+  /**
+   * The change in y value.
+   */
   dy?: number;
+  /**
+   * Accelerometer x value (if present).
+   */
   acc_x?: number;
+  /**
+   * Accelerometer y value (if present).
+   */
   acc_y?: number;
+  /**
+   * Accelerometer z value (if present).
+   */
   acc_z?: number;
 }
 
+// Field docs are hand-reconciled from the `on_input` description's main action
+// and "Gamepad specific fields:" prose (not structured ref-doc data); a future
+// ref-doc re-pin is reconciled by hand, drift-guarded against that prose in
+// lifecycle-member-docs.
 export interface InputAction {
+  /**
+   * The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement and text input.
+   */
   value?: number;
+  /**
+   * If the input was pressed this frame. This is not present for mouse movement and text input.
+   */
   pressed?: boolean;
+  /**
+   * If the input was released this frame. This is not present for mouse movement and text input.
+   */
   released?: boolean;
+  /**
+   * If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement and text input.
+   */
   repeated?: boolean;
+  /**
+   * The x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   x?: number;
+  /**
+   * The y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   y?: number;
+  /**
+   * The screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   screen_x?: number;
+  /**
+   * The screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   screen_y?: number;
+  /**
+   * The change in x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   dx?: number;
+  /**
+   * The change in y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   dy?: number;
+  /**
+   * The change in screen space x value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   screen_dx?: number;
+  /**
+   * The change in screen space y value of a pointer device, if present. This is not present for gamepad, key and text input.
+   */
   screen_dy?: number;
+  /**
+   * The index of the gamepad device that provided the input. See table below about gamepad input.
+   */
   gamepad?: number;
+  /**
+   * Id of the user associated with the controller. Usually only relevant on consoles.
+   */
   userid?: number;
+  /**
+   * True if the inout originated from an unknown/unmapped gamepad.
+   */
   gamepad_unknown?: boolean;
+  /**
+   * Name of the gamepad
+   */
   gamepad_name?: string;
+  /**
+   * List of gamepad axis values. For raw gamepad input only.
+   */
   gamepad_axis?: number[];
+  /**
+   * List of gamepad hat values. For raw gamepad input only.
+   */
   gamepadhats?: number[];
+  /**
+   * List of gamepad button values. For raw gamepad input only.
+   */
   gamepad_buttons?: number[];
+  /**
+   * List of touch input, one element per finger, if present. See table below about touch input
+   */
   touch?: InputTouch[];
+  /**
+   * Text input from a (virtual) keyboard or similar.
+   */
   text?: string;
+  /**
+   * Sequence of entered symbols while entering a symbol combination, for example Japanese Kana.
+   */
   marked_text?: string;
 }
 
