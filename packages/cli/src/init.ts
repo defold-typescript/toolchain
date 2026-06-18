@@ -149,17 +149,15 @@ const HOOK_SIGNATURES = {
 const SNIPPET_HOOK_ORDER = Object.keys(HOOK_SIGNATURES) as ScriptHookName[];
 
 // Emit every hook except `init` (the caller writes it with its return
-// placeholder) as a commented `name(sig) {$N},` line. Render scripts pass
-// includeOnInput=false because `RenderScriptHooks` omits `on_input`. Tab stops
-// run sequentially from `startTabStop` across the hooks actually emitted.
-function hookLines(includeOnInput: boolean, startTabStop: number): string[] {
+// placeholder) and any hook in `omit` as a commented `name(sig) {$N},` line.
+// `omit` tracks each kind's narrowed hook type: render omits `on_input`
+// (`RenderScriptHooks`), gui omits `fixed_update`/`late_update` (`GuiScriptHooks`).
+// Tab stops run sequentially from `startTabStop` across the hooks actually emitted.
+function hookLines(omit: ReadonlySet<ScriptHookName>, startTabStop: number): string[] {
   const lines: string[] = [];
   let tabStop = startTabStop;
   for (const hook of SNIPPET_HOOK_ORDER) {
-    if (hook === "init") {
-      continue;
-    }
-    if (hook === "on_input" && !includeOnInput) {
+    if (hook === "init" || omit.has(hook)) {
       continue;
     }
     lines.push(`  // ${HOOK_COMMENTS[hook]}`);
@@ -172,9 +170,10 @@ function hookLines(includeOnInput: boolean, startTabStop: number): string[] {
 // Whole-file TS scaffolds mirroring the Defold editor's empty script/gui/render
 // templates over the lifecycle factories. Two self-typing variants per kind:
 // inline-self (TSelf inferred from `init`'s return) and typed-self (an explicit
-// dummy `Self` placeholder). Hook order mirrors the Lua templates; render omits
-// `on_input` because `RenderScriptHooks` does. The final `$0` lands inside `init`.
-function inlineSnippetBody(factory: string, includeOnInput: boolean): string[] {
+// dummy `Self` placeholder). Hook order mirrors the Lua templates; each kind's
+// `omit` set drops the hooks its narrowed type rejects (render `on_input`, gui
+// `fixed_update`/`late_update`). The final `$0` lands inside `init`.
+function inlineSnippetBody(factory: string, omit: ReadonlySet<ScriptHookName>): string[] {
   return [
     `import { ${factory} } from "@defold-typescript/types";`,
     "",
@@ -183,12 +182,12 @@ function inlineSnippetBody(factory: string, includeOnInput: boolean): string[] {
     "  init(self) {",
     "    return { $0 };",
     "  },",
-    ...hookLines(includeOnInput, 1),
+    ...hookLines(omit, 1),
     "});",
   ];
 }
 
-function typedSnippetBody(factory: string, includeOnInput: boolean): string[] {
+function typedSnippetBody(factory: string, omit: ReadonlySet<ScriptHookName>): string[] {
   return [
     `import { ${factory} } from "@defold-typescript/types";`,
     "",
@@ -202,46 +201,50 @@ function typedSnippetBody(factory: string, includeOnInput: boolean): string[] {
     "  init(self): Self {",
     "    return { $0 };",
     "  },",
-    ...hookLines(includeOnInput, 2),
+    ...hookLines(omit, 2),
     "});",
   ];
 }
+
+const NO_OMIT: ReadonlySet<ScriptHookName> = new Set();
+const GUI_OMIT: ReadonlySet<ScriptHookName> = new Set(["fixed_update", "late_update"]);
+const RENDER_OMIT: ReadonlySet<ScriptHookName> = new Set(["on_input"]);
 
 const VSCODE_SNIPPETS_CONTENT: Record<string, VscodeSnippet> = {
   "Defold script (inferred self)": {
     scope: "typescript",
     prefix: "defold-script",
-    body: inlineSnippetBody("defineScript", true),
+    body: inlineSnippetBody("defineScript", NO_OMIT),
     description: "Empty Defold script; state inferred from init's return.",
   },
   "Defold script (typed self)": {
     scope: "typescript",
     prefix: "defold-script-typed",
-    body: typedSnippetBody("defineScript", true),
+    body: typedSnippetBody("defineScript", NO_OMIT),
     description: "Empty Defold script with an explicit Self type.",
   },
   "Defold GUI script (inferred self)": {
     scope: "typescript",
     prefix: "defold-gui",
-    body: inlineSnippetBody("defineGuiScript", true),
+    body: inlineSnippetBody("defineGuiScript", GUI_OMIT),
     description: "Empty Defold GUI script; state inferred from init's return.",
   },
   "Defold GUI script (typed self)": {
     scope: "typescript",
     prefix: "defold-gui-typed",
-    body: typedSnippetBody("defineGuiScript", true),
+    body: typedSnippetBody("defineGuiScript", GUI_OMIT),
     description: "Empty Defold GUI script with an explicit Self type.",
   },
   "Defold render script (inferred self)": {
     scope: "typescript",
     prefix: "defold-render",
-    body: inlineSnippetBody("defineRenderScript", false),
+    body: inlineSnippetBody("defineRenderScript", RENDER_OMIT),
     description: "Empty Defold render script; state inferred from init's return.",
   },
   "Defold render script (typed self)": {
     scope: "typescript",
     prefix: "defold-render-typed",
-    body: typedSnippetBody("defineRenderScript", false),
+    body: typedSnippetBody("defineRenderScript", RENDER_OMIT),
     description: "Empty Defold render script with an explicit Self type.",
   },
 };
