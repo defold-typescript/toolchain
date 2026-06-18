@@ -130,8 +130,13 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   b2Body: 'Opaque<"b2Body">',
   b2BodyType:
     '(number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })',
-  client: 'Opaque<"client">',
-  master: 'Opaque<"master">',
-  unconnected: 'Opaque<"unconnected">',
+  // socket handle types resolve to the method-bearing `interface <receiver>`
+  // emitted inside `namespace socket`, not opaque brands — the documented
+  // colon methods (`client:send`, …) make each handle structurally distinct.
+  client: "client",
+  connected: "connected",
+  master: "master",
+  server: "server",
+  unconnected: "unconnected",
   any: "unknown",
 } as const;

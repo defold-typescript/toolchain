@@ -22,6 +22,7 @@ import {
   ARBITRARY_TABLE_SLOTS,
   applyNestedFieldCurations,
   buildTableDocResolver,
+  collectHandleMethodGroups,
   emitDeclarations,
   HOMOGENEOUS_ARRAY_SLOTS,
   inlineTableType,
@@ -2151,7 +2152,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "socket.select")],
     });
-    const socketHandles = '(Opaque<"client"> | Opaque<"master"> | Opaque<"unconnected">)[]';
+    const socketHandles = "(client | master | unconnected)[]";
     expect(out).toContain(
       `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | unknown]>;`,
     );
@@ -2352,6 +2353,86 @@ describe("TABLE_SLOT_CURATIONS", () => {
     const properties = "{ collide_connected?: boolean }";
     expect(out).toContain(`properties: ${properties}`);
     expect(out).toContain(`properties: ${properties}`);
+  });
+});
+
+describe("socket handle method interfaces", () => {
+  test("emits a method-bearing interface per receiver, replacing the Opaque handle brands", () => {
+    const module = parseDefoldApiDoc(socketDoc);
+    const out = emitDeclarations(module);
+
+    // client/master/unconnected are now interfaces, not Opaque typedef aliases.
+    expect(out).toContain("interface client {");
+    expect(out).not.toContain('type client = Opaque<"client">');
+    expect(out).not.toContain('type master = Opaque<"master">');
+    expect(out).not.toContain('type unconnected = Opaque<"unconnected">');
+
+    // The interface carries its documented methods; the final colon segment is
+    // the emitted member name (no `function` keyword inside an interface).
+    expect(out).toMatch(/interface client \{[\s\S]*?\n {4}send\(/);
+    expect(out).toMatch(/interface client \{[\s\S]*?\n {4}close\(\): void;/);
+
+    // server and connected exist only via colon methods (no TYPEDEF element), yet
+    // are still emitted as interfaces.
+    expect(out).toContain("interface server {");
+    expect(out).toContain("interface connected {");
+
+    // No leftover socket handle brands anywhere in the module.
+    expect(out).not.toContain('Opaque<"client">');
+    expect(out).not.toContain('Opaque<"master">');
+    expect(out).not.toContain('Opaque<"server">');
+    expect(out).not.toContain('Opaque<"connected">');
+    expect(out).not.toContain('Opaque<"unconnected">');
+  });
+
+  test("factory returns and socket.select reference the receiver interfaces", () => {
+    const module = parseDefoldApiDoc(socketDoc);
+    const out = emitDeclarations(module);
+    expect(out).toContain(
+      "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | unknown, string | unknown]>;",
+    );
+    expect(out).toContain("function tcp(): LuaMultiReturn<[master | unknown, string | unknown]>;");
+    const socketHandles = "(client | master | unconnected)[]";
+    expect(out).toContain(
+      `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | unknown]>;`,
+    );
+  });
+
+  test("collectHandleMethodGroups groups every well-formed colon method by receiver", () => {
+    const module = parseDefoldApiDoc(socketDoc);
+    const groups = collectHandleMethodGroups(module);
+    expect([...groups.keys()].sort()).toEqual([
+      "client",
+      "connected",
+      "master",
+      "server",
+      "unconnected",
+    ]);
+    const total = [...groups.values()].reduce((n, g) => n + g.length, 0);
+    expect(total).toBe(55);
+  });
+
+  test("a colon function with a non-identifier segment stays dropped", () => {
+    const groups = collectHandleMethodGroups({
+      namespace: "socket",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "client:send-now",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [],
+          examples: "",
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    });
+    expect(groups.size).toBe(0);
   });
 });
 

@@ -901,6 +901,15 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   }
   const nestedSegments = [...nestedGroups.keys()].sort((a, b) => a.localeCompare(b));
 
+  // Colon methods (`client:send`) are FUNCTION elements named `<receiver>:<method>`
+  // and are NOT namespace-prefixed, so they fail the flat-identifier test in
+  // prepareFunction (the colon) and are absent from `functions`. A returned handle
+  // is defined entirely by these methods; emit each receiver as a method-bearing
+  // interface, the same non-flat recovery the dns nested-namespace pass does one
+  // container shape shallower.
+  const handleGroups = collectHandleMethodGroups(module);
+  const handleReceivers = [...handleGroups.keys()].sort((a, b) => a.localeCompare(b));
+
   const resolver = buildTableDocResolver(
     module.functions.map((fn) => ({
       name: fn.name,
@@ -926,7 +935,22 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   lines.push(`declare namespace ${module.namespace} {`);
 
   for (const t of typedefs) {
+    // A typedef that also has colon methods is emitted as a method-bearing
+    // interface below, not an opaque brand alias.
+    if (handleGroups.has(t.name)) continue;
     lines.push(`${INDENT}${decl}type ${t.name} = Opaque<"${t.name}">;`);
+  }
+  const handleIndent = `${INDENT}${INDENT}`;
+  for (const receiver of handleReceivers) {
+    const group = handleGroups.get(receiver) ?? [];
+    lines.push(`${INDENT}${decl}interface ${receiver} {`);
+    for (const fn of group) {
+      for (const docLine of functionDocLines(fn.original, translations, handleIndent)) {
+        lines.push(docLine);
+      }
+      lines.push(`${handleIndent}${emitMethod(fn, mapType, resolver)}`);
+    }
+    lines.push(`${INDENT}}`);
   }
   for (const c of constants) {
     for (const docLine of summaryDocLines(c.original.brief, c.original.description, INDENT)) {
@@ -1012,6 +1036,37 @@ function prepareFunction(fn: ApiFunction, prefix: string): PreparedFunction | nu
   return { name: stripped, original: fn };
 }
 
+// A `<receiver>:<method>` handle method, both segments bare identifiers. Deeper
+// shapes and non-identifier segments do not match and stay dropped.
+export const HANDLE_METHOD_LOCAL = /^[A-Za-z_$][\w$]*:[A-Za-z_$][\w$]*$/;
+
+// Group a module's colon-method FUNCTION elements (`client:send`) by their
+// receiver segment, each method prepared so its emitted name is the final
+// segment. Receivers (and the methods within each) are returned unsorted; the
+// emitter sorts for a stable surface. A non-identifier segment yields no group.
+export function collectHandleMethodGroups(module: ApiModule): Map<string, PreparedFunction[]> {
+  const prefix = `${module.namespace}.`;
+  const groups = new Map<string, PreparedFunction[]>();
+  for (const fn of module.functions) {
+    const local = stripPrefix(fn.name, prefix);
+    if (!HANDLE_METHOD_LOCAL.test(local)) continue;
+    const receiver = local.slice(0, local.indexOf(":"));
+    const prepared = prepareFunction(fn, fn.name.slice(0, fn.name.lastIndexOf(":") + 1));
+    if (prepared === null) continue;
+    const group = groups.get(receiver) ?? [];
+    group.push(prepared);
+    groups.set(receiver, group);
+  }
+  for (const group of groups.values()) {
+    group.sort((a, b) =>
+      a.name === b.name
+        ? a.original.parameters.length - b.original.parameters.length
+        : a.name.localeCompare(b.name),
+    );
+  }
+  return groups;
+}
+
 function prepareConstant(c: ApiConstant, prefix: string): PreparedConstant | null {
   const stripped = stripPrefix(c.name, prefix);
   if (!TS_IDENTIFIER.test(stripped)) return null;
@@ -1055,7 +1110,7 @@ function emitVariable(
   return `const ${name}: ${ts};`;
 }
 
-function emitFunction(
+function memberSignature(
   prepared: PreparedFunction,
   name: string,
   mapType: (t: string) => string,
@@ -1068,7 +1123,27 @@ function emitFunction(
     .map((p, i) => emitParameter(p, i, i >= cutoff, mapType, resolver, elementName))
     .join(", ");
   const ret = emitReturn(prepared.original.returnValues, mapType, resolver, elementName);
-  return `function ${name}(${params}): ${ret.type};${ret.trailing}`;
+  return `${name}(${params}): ${ret.type};${ret.trailing}`;
+}
+
+function emitFunction(
+  prepared: PreparedFunction,
+  name: string,
+  mapType: (t: string) => string,
+  resolver: TableDocResolver,
+): string {
+  return `function ${memberSignature(prepared, name, mapType, resolver)}`;
+}
+
+// A colon-method member of a handle interface: identical signature machinery to a
+// free function, but without the `function` keyword. `@noSelfInFile` means the
+// member carries no `self` parameter.
+function emitMethod(
+  prepared: PreparedFunction,
+  mapType: (t: string) => string,
+  resolver: TableDocResolver,
+): string {
+  return memberSignature(prepared, prepared.name, mapType, resolver);
 }
 
 // Build the indented JSDoc lines for a function from its ref-doc prose. The
