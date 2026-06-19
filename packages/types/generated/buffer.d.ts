@@ -83,7 +83,7 @@ declare global {
      * buffer.copy_stream(dststream, 0, srcstream, 0, srcstream.length);
      * ```
      */
-    function copy_stream(dst: Opaque<"bufferstream">, dstoffset: number, src: Opaque<"bufferstream">, srcoffset: number, count: number): void;
+    function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number }, srcoffset: number, count: number): void;
     /**
      * Create a new data buffer containing a specified set of streams. A data buffer
      * can contain one or more streams with typed data. This is useful for managing
@@ -150,7 +150,7 @@ declare global {
      * @param stream_name - the stream name
      * @returns the data stream
      */
-    function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream">;
+    function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number };
     /**
      * Creates or updates a metadata array entry on a buffer.
      * The value type and count given when updating the entry should match those used when first creating it.

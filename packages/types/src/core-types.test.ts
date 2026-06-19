@@ -80,6 +80,17 @@ describe("core-types", () => {
     expect(typeof useTexture).toBe("function");
   });
 
+  test("bufferstream handle is index-mutable yet still nominally branded (compile-only)", () => {
+    const stream = {} as Opaque<"bufferstream"> & { [i: number]: number };
+    const n: number | undefined = stream[0];
+    stream[0] = 1;
+    void n;
+    const usesStream = (_: Opaque<"bufferstream"> & { [i: number]: number }) => 0;
+    // @ts-expect-error a plain number array lacks the bufferstream brand symbol
+    usesStream([1, 2, 3]);
+    expect(typeof usesStream).toBe("function");
+  });
+
   test("DEFOLD_TYPE_MAP maps the expected Defold tokens to the expected TS identifiers", () => {
     const rows: ReadonlyArray<readonly [string, string]> = [
       ["number", "number"],
@@ -102,7 +113,7 @@ describe("core-types", () => {
       ["constant", 'Opaque<"constant">'],
       ["constant_buffer", 'Opaque<"constant_buffer">'],
       ["buffer", 'Opaque<"buffer">'],
-      ["bufferstream", 'Opaque<"bufferstream">'],
+      ["bufferstream", 'Opaque<"bufferstream"> & { [index: number]: number }'],
       ["userdata", 'Opaque<"userdata">'],
       ["resource", 'Opaque<"resource">'],
       ["b2World", 'Opaque<"b2World">'],
