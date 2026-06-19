@@ -197,6 +197,12 @@ export interface RefDocResolveOptions {
   ) => Promise<{ version: string; sha1: string }>;
 }
 
+interface KindManifestEntry {
+  readonly kind: string;
+  readonly restricted?: string;
+  readonly factory: string;
+}
+
 interface MaterializeVersionedSurfaceModule {
   readonly materializeVersionedSurface: (
     target: unknown,
@@ -206,7 +212,17 @@ interface MaterializeVersionedSurfaceModule {
       excludeModules?: readonly string[];
     },
   ) => Promise<void>;
+  readonly renderMaterializedKindIndex: (opts: {
+    kind: string;
+    universalModules: readonly string[];
+    restrictedModule: string | null;
+  }) => string;
+  readonly KIND_MODULE_MANIFEST: readonly KindManifestEntry[];
 }
+
+// gui/render are the only kind-restricted namespaces; every other module is
+// universal and rides all three kind subpaths.
+const RESTRICTED_NAMESPACES = new Set(["gui", "render"]);
 
 export interface MaterializeRefDocSurfaceOptions {
   readonly cwd: string;
@@ -257,6 +273,35 @@ export async function materializeRefDocSurface(
     );
     const indexPath = path.join(absDir, "index.d.ts");
     writeFileSync(indexPath, `import "./engine-globals";\n${readFileSync(indexPath, "utf8")}`);
+
+    const surfaceModules = listDts(absDir)
+      .map((file) => file.replace(/\.d\.ts$/, ""))
+      .filter((base) => base !== "index" && base !== "core-types" && base !== "engine-globals");
+    const universalModules = surfaceModules.filter((base) => !RESTRICTED_NAMESPACES.has(base));
+    const kindsDir = path.join(absDir, "kinds");
+    mkdirSync(kindsDir, { recursive: true });
+    for (const entry of mod.KIND_MODULE_MANIFEST) {
+      const restrictedModule =
+        entry.restricted && surfaceModules.includes(entry.restricted) ? entry.restricted : null;
+      writeFileSync(
+        path.join(kindsDir, `${entry.kind}.d.ts`),
+        mod.renderMaterializedKindIndex({ kind: entry.kind, universalModules, restrictedModule }),
+      );
+    }
+
+    const pkgPath = path.join(absDir, "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Record<string, unknown>;
+    pkg.exports = {
+      ".": { types: "./index.d.ts" },
+      ...Object.fromEntries(
+        mod.KIND_MODULE_MANIFEST.map((entry) => [
+          `./${entry.kind}`,
+          { types: `./kinds/${entry.kind}.d.ts` },
+        ]),
+      ),
+      "./core-types": { types: "./core-types.d.ts" },
+    };
+    writeJson(pkgPath, pkg);
   } catch {
     rmSync(absDir, { recursive: true, force: true });
     return { materializedDir: null, active: null };
