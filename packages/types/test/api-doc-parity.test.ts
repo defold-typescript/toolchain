@@ -2,8 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { extractSurface, type SymbolDoc } from "./doc-surface-extract";
+import { type DeclaredSymbol, enumerateDeclaredSymbols } from "./fixture-surface-enumerate";
+import { PARITY_ALLOWLIST, parityPatternMatches } from "./ts-defold-parity-allowlist";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
+const SRC = resolve(import.meta.dir, "..", "src");
+const INDEX = resolve(import.meta.dir, "..", "index.d.ts");
 const FIXTURE = resolve(import.meta.dir, "fixtures", "ts-defold-types.index.d.ts");
 
 async function loadOurSurface(): Promise<Map<string, SymbolDoc>> {
@@ -99,5 +103,81 @@ describe("api-doc parity — coverage superset over pinned ts-defold-types", () 
       );
     }
     expect(regressions).toEqual([]);
+  });
+});
+
+async function loadFixturePresence(): Promise<Map<string, DeclaredSymbol>> {
+  return enumerateDeclaredSymbols(await Bun.file(FIXTURE).text(), "ts-defold-types.index.d.ts");
+}
+
+async function loadOurPresence(): Promise<Map<string, DeclaredSymbol>> {
+  const merged = new Map<string, DeclaredSymbol>();
+  const add = (source: string, fileName: string) => {
+    for (const [key, sym] of enumerateDeclaredSymbols(source, fileName)) {
+      if (!merged.has(key)) merged.set(key, sym);
+    }
+  };
+  for (const file of readdirSync(GENERATED).filter((f) => f.endsWith(".d.ts"))) {
+    add(await Bun.file(resolve(GENERATED, file)).text(), file);
+  }
+  const indexSrc = await Bun.file(INDEX).text();
+  for (const match of indexSrc.matchAll(/^import "\.\/src\/([\w-]+)";/gm)) {
+    const name = match[1];
+    add(await Bun.file(resolve(SRC, `${name}.d.ts`)).text(), `${name}.d.ts`);
+  }
+  return merged;
+}
+
+function theirsOnlyKeys(
+  theirs: Map<string, DeclaredSymbol>,
+  ours: Map<string, DeclaredSymbol>,
+): string[] {
+  return [...theirs.keys()].filter((k) => !ours.has(k)).sort();
+}
+
+describe("api-doc parity — presence parity over the pinned ts-defold-types surface", () => {
+  test("every theirs-only symbol is present in our surface or covered by the allowlist", async () => {
+    const [theirs, ours] = await Promise.all([loadFixturePresence(), loadOurPresence()]);
+    const theirsOnly = theirsOnlyKeys(theirs, ours);
+    expect(theirsOnly.length).toBeGreaterThan(0);
+
+    const unlisted = theirsOnly.filter(
+      (key) => !PARITY_ALLOWLIST.some((entry) => parityPatternMatches(entry.pattern, key)),
+    );
+    if (unlisted.length > 0) {
+      throw new Error(
+        `${unlisted.length} theirs-only symbol(s) neither emitted nor allowlisted ` +
+          `(add a reviewed entry to ts-defold-parity-allowlist.ts or emit them):\n` +
+          unlisted.map((k) => `  - ${k} [${theirs.get(k)?.kind}]`).join("\n"),
+      );
+    }
+    expect(unlisted).toEqual([]);
+  });
+
+  test("allowlist hygiene — every entry still matches at least one current theirs-only symbol", async () => {
+    const [theirs, ours] = await Promise.all([loadFixturePresence(), loadOurPresence()]);
+    const theirsOnly = theirsOnlyKeys(theirs, ours);
+
+    const stale = PARITY_ALLOWLIST.filter(
+      (entry) => !theirsOnly.some((key) => parityPatternMatches(entry.pattern, key)),
+    ).map((entry) => entry.pattern);
+    if (stale.length > 0) {
+      throw new Error(
+        `${stale.length} stale allowlist entry(ies) matching no current theirs-only symbol ` +
+          `(prune them from ts-defold-parity-allowlist.ts):\n` +
+          stale.map((p) => `  - ${p}`).join("\n"),
+      );
+    }
+    expect(stale).toEqual([]);
+  });
+
+  test("the gate can fail — a synthetic unlisted theirs-only symbol is caught", async () => {
+    const ours = await loadOurPresence();
+    const synthetic = "synthetic_namespace.unlisted_symbol";
+    expect(ours.has(synthetic)).toBe(false);
+    const allowlisted = PARITY_ALLOWLIST.some((entry) =>
+      parityPatternMatches(entry.pattern, synthetic),
+    );
+    expect(allowlisted).toBe(false);
   });
 });
