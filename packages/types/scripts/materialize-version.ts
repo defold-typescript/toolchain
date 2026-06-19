@@ -4,9 +4,32 @@ import {
   type ApiTarget,
   generateModuleDeclaration,
   generateVersionIndex,
+  KIND_MODULE_MANIFEST,
+  LUA_STDLIB_REFERENCES,
   type ResolveTargetOptions,
   resolveTargetModules,
 } from "./regen";
+
+export { KIND_MODULE_MANIFEST } from "./regen";
+
+export interface RenderMaterializedKindIndexOptions {
+  readonly kind: string;
+  readonly universalModules: readonly string[];
+  readonly restrictedModule: string | null;
+}
+
+// Render one per-kind subpath for the materialized surface, mirroring
+// `generateKindIndex` but re-exporting the factory from the installed
+// `@defold-typescript/types/lifecycle` subpath (the materialized surface has no
+// relative `src/lifecycle` to reach). Pure: returns a string, no FS.
+export function renderMaterializedKindIndex(opts: RenderMaterializedKindIndexOptions): string {
+  const entry = KIND_MODULE_MANIFEST.find((e) => e.kind === opts.kind);
+  if (!entry) throw new Error(`unknown script kind: ${opts.kind}`);
+  const universal = [...new Set(["engine-globals", ...opts.universalModules])].sort();
+  const lines = universal.map((mod) => `import "../${mod}";`);
+  if (opts.restrictedModule) lines.push(`import "../${opts.restrictedModule}";`);
+  return `${LUA_STDLIB_REFERENCES}${lines.join("\n")}\n\nexport { ${entry.factory} } from "@defold-typescript/types/lifecycle";\nexport type { ScriptProperties, ScriptProperty } from "@defold-typescript/types/lifecycle";\n`;
+}
 
 export interface MaterializeVersionedSurfaceOptions {
   readonly destDir: string;

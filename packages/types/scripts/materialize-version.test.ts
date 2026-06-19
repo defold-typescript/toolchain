@@ -2,9 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { materializeVersionedSurface } from "./materialize-version";
+import { materializeVersionedSurface, renderMaterializedKindIndex } from "./materialize-version";
 import { type ApiTarget, loadApiTargets } from "./regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "./sync-api-docs";
+
+const LUA_STDLIB_LEAD =
+  '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -92,6 +95,69 @@ function multiKindTarget(): ApiTarget {
     })),
   };
 }
+
+describe("renderMaterializedKindIndex", () => {
+  test("gui-script imports the universal modules plus the restricted gui, never render", () => {
+    const out = renderMaterializedKindIndex({
+      kind: "gui-script",
+      universalModules: ["go", "msg"],
+      restrictedModule: "gui",
+    });
+    expect(out).toContain('import "../engine-globals";');
+    expect(out).toContain('import "../go";');
+    expect(out).toContain('import "../msg";');
+    expect(out).toContain('import "../gui";');
+    expect(out).not.toContain('import "../render";');
+    expect(out).toContain('export { defineGuiScript } from "@defold-typescript/types/lifecycle";');
+    expect(out).toContain(
+      'export type { ScriptProperties, ScriptProperty } from "@defold-typescript/types/lifecycle";',
+    );
+  });
+
+  test("script imports neither restricted namespace", () => {
+    const out = renderMaterializedKindIndex({
+      kind: "script",
+      universalModules: ["go", "msg"],
+      restrictedModule: null,
+    });
+    expect(out).not.toContain('import "../gui";');
+    expect(out).not.toContain('import "../render";');
+    expect(out).toContain('export { defineScript } from "@defold-typescript/types/lifecycle";');
+  });
+
+  test("render-script imports render and excludes gui", () => {
+    const out = renderMaterializedKindIndex({
+      kind: "render-script",
+      universalModules: ["go"],
+      restrictedModule: "render",
+    });
+    expect(out).toContain('import "../render";');
+    expect(out).not.toContain('import "../gui";');
+    expect(out).toContain(
+      'export { defineRenderScript } from "@defold-typescript/types/lifecycle";',
+    );
+  });
+
+  test("the Lua stdlib triple-slash references lead the output, before the first import", () => {
+    const out = renderMaterializedKindIndex({
+      kind: "script",
+      universalModules: ["go"],
+      restrictedModule: null,
+    });
+    expect(out.startsWith(LUA_STDLIB_LEAD)).toBe(true);
+    expect(out.indexOf("///")).toBeLessThan(out.indexOf("import "));
+  });
+
+  test("an unknown kind throws", () => {
+    expect(() =>
+      renderMaterializedKindIndex({
+        kind: "no-such-script",
+        universalModules: ["go"],
+        restrictedModule: null,
+      }),
+    ).toThrow();
+  });
+});
 
 describe("materializeVersionedSurface", () => {
   test("writes a self-contained faux @types package from a cached ref-doc, offline", async () => {

@@ -374,6 +374,74 @@ describe("materializeRefDocSurface full surface (no kind narrowing)", () => {
   });
 });
 
+describe("materializeRefDocSurface per-kind subpaths", () => {
+  test("emits kinds/<kind>.d.ts for all three kinds plus an exports-bearing package.json", async () => {
+    const resolveOpts = multiKindRefDocResolveOpts();
+
+    const { materializedDir } = await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+      registry: [multiKindRefDocTarget()],
+    });
+    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+
+    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const kinds = path.join(dir, "kinds");
+    expect(existsSync(path.join(kinds, "script.d.ts"))).toBe(true);
+    expect(existsSync(path.join(kinds, "gui-script.d.ts"))).toBe(true);
+    expect(existsSync(path.join(kinds, "render-script.d.ts"))).toBe(true);
+
+    const gui = readFileSync(path.join(kinds, "gui-script.d.ts"), "utf8");
+    expect(gui).toContain('import "../gui";');
+    expect(gui).not.toContain('import "../render";');
+
+    const render = readFileSync(path.join(kinds, "render-script.d.ts"), "utf8");
+    expect(render).toContain('import "../render";');
+    expect(render).not.toContain('import "../gui";');
+
+    const script = readFileSync(path.join(kinds, "script.d.ts"), "utf8");
+    expect(script).not.toContain('import "../gui";');
+    expect(script).not.toContain('import "../render";');
+
+    const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect(Object.keys(pkg.exports).sort()).toEqual(
+      [".", "./core-types", "./gui-script", "./render-script", "./script"].sort(),
+    );
+
+    const index = readFileSync(path.join(dir, "index.d.ts"), "utf8");
+    expect(index).toContain('import "./gui";');
+    expect(index).toContain('import "./render";');
+    expect(index).toContain('import "./sprite";');
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("a surface without gui or render still emits all three kinds", async () => {
+    const resolveOpts = labelRefDocResolveOpts();
+
+    const { materializedDir } = await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+    });
+    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+
+    const kinds = path.join(cwd, ".defold-types", "defold-1.9.8", "kinds");
+    for (const kind of ["script", "gui-script", "render-script"]) {
+      expect(existsSync(path.join(kinds, `${kind}.d.ts`))).toBe(true);
+    }
+    const gui = readFileSync(path.join(kinds, "gui-script.d.ts"), "utf8");
+    expect(gui).not.toContain('import "../gui";');
+    const render = readFileSync(path.join(kinds, "render-script.d.ts"), "utf8");
+    expect(render).not.toContain('import "../render";');
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+});
+
 describe("materializeRefDocSurface consumer proof", () => {
   test("a generated .defold-types/<id>/ surface type-checks via tsc", async () => {
     const resolveOpts = labelRefDocResolveOpts();
