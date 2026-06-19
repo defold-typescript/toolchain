@@ -123,7 +123,7 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   constant: 'Opaque<"constant">',
   constant_buffer: 'Opaque<"constant_buffer">',
   buffer: 'Opaque<"buffer">',
-  bufferstream: 'Opaque<"bufferstream">',
+  bufferstream: 'Opaque<"bufferstream"> & { [index: number]: number }',
   userdata: 'Opaque<"userdata">',
   resource: 'Opaque<"resource">',
   b2World: 'Opaque<"b2World">',
