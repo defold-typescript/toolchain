@@ -34,6 +34,7 @@ import "./generated/push";
 import "./generated/render";
 import "./generated/resource";
 import "./generated/socket";
+import "./src/socket-types";
 import "./generated/sound";
 import "./generated/sprite";
 import "./generated/sys";
