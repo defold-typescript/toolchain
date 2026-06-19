@@ -227,7 +227,7 @@ export type TableSlotCuration =
   | { kind: "object"; fields: readonly TableField[] }
   | { kind: "array-object"; fields: readonly TableField[] };
 
-const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const;
+export const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const;
 
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],

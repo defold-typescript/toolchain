@@ -1,9 +1,18 @@
 /** @noSelfInFile */
 
-// LuaSocket-domain aliases mirroring ts-defold-types fixture commit 4f0672a
-// (lines 11124-11148). They live only in consumer code — the socket methods keep
-// their string/number params — so they are hand-augmented here rather than
-// recovered from Defold's ref-doc JSON by the regen pipeline.
+// `socket-types.d.ts` ships the standalone type aliases the pinned
+// ts-defold-types fixture (commit 4f0672a, Defold 1.12.4) declares inside
+// its second `namespace socket` block (fixture lines 11124-11148). The
+// receiver-interface methods in `generated/socket.d.ts` keep their fixture-
+// equivalent `string` / `number` parameter types — these aliases exist for
+// consumer code to spell out the literal sets explicitly:
+//
+//   const opt: socket.TCPOptions = 'keepalive';
+//   // TCP/UDP are convenience intersections for consumer annotations;
+//   // no socket.* function returns them (tcp() yields a `master` handle).
+//
+// The literal unions are LuaSocket-domain, not engine-ref-doc, so they live
+// here rather than in the regen pipeline.
 
 declare global {
   namespace socket {

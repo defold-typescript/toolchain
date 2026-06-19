@@ -99,8 +99,11 @@ narrowing traps in [TypeScript gotchas](./typescript-gotchas.md).
 - **Per-kind ambient API walls.** Beyond the bare `@defold-typescript/types`
   entry, `@defold-typescript` exposes per-script-kind surfaces — `@defold-typescript/types/script`,
   `/gui-script`, `/render-script` — so a GUI script only sees the GUI-legal API.
-- **Opaque handles.** Engine handles are branded opaque types rather than bare
-  aliases; `typeof`-narrowing cannot see them (they are Lua `userdata`).
+- **Opaque handles.** Most engine handles are branded opaque types rather than
+  bare aliases; `typeof`-narrowing cannot see them (they are Lua `userdata`). The
+  exception is socket handles (`client`, `master`, `server`, `connected`,
+  `unconnected`), emitted as method-bearing interfaces so their documented colon
+  methods (`client:send`, …) are reachable and the receivers stay distinct.
 
 ## What this guide verified
 
