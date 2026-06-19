@@ -30,6 +30,9 @@
     "./core-types": {
       "types": "./src/core-types.ts"
     },
+    "./lifecycle": {
+      "types": "./src/lifecycle.ts"
+    },
     "./timers": {
       "types": "./src/timers.d.ts"
     },
