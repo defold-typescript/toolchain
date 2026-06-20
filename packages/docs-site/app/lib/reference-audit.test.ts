@@ -37,10 +37,24 @@ describe("findDanglingReferences — relative .md links", () => {
     expect(out[0]?.reason).toContain("no-such-heading");
   });
 
-  test("external, root-absolute, and bare-fragment links are ignored", () => {
-    const text =
-      "[ext](https://example.com/x.md) [abs](/foo.md) [frag](#first-section) [code](`x`)";
+  test("external and root-absolute links are ignored", () => {
+    const text = "[ext](https://example.com/x.md) [abs](/foo.md) [code](`x`)";
     expect(findDanglingReferences(text, fixtureDir, REPO_ROOT)).toEqual([]);
+  });
+});
+
+describe("findDanglingReferences — same-page fragments", () => {
+  test("a fragment matching a heading in the same text is clean", () => {
+    const text = "## First Section\n\nbody [jump](#first-section)";
+    expect(findDanglingReferences(text, fixtureDir, REPO_ROOT)).toEqual([]);
+  });
+
+  test("a fragment with no matching heading in the same text is reported", () => {
+    const text = "## First Section\n\nbody [gone](#no-such-section)";
+    const out = findDanglingReferences(text, fixtureDir, REPO_ROOT);
+    expect(out.length).toBe(1);
+    expect(out[0]?.reference).toBe("#no-such-section");
+    expect(out[0]?.reason).toBe("missing anchor: #no-such-section");
   });
 });
 

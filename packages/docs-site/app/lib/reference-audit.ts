@@ -68,12 +68,20 @@ export function findDanglingReferences(
 ): DanglingRef[] {
   const out: DanglingRef[] = [];
   const prose = stripCodeFences(text);
+  const ownAnchors = anchorsFor(text);
   const anchorCache = new Map<string, Set<string>>();
 
   for (const match of prose.matchAll(MD_LINK_RE)) {
     const href = match[1];
     if (!href) continue;
-    if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("/") || href.startsWith("#")) continue;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("/")) continue;
+    if (href.startsWith("#")) {
+      const fragment = href.slice(1);
+      if (fragment && !ownAnchors.has(fragment)) {
+        out.push({ source: fileDir, reference: href, reason: `missing anchor: ${href}` });
+      }
+      continue;
+    }
     const [path, ...fragmentParts] = href.split("#");
     if (!path?.endsWith(".md")) continue;
     const target = resolve(fileDir, path);
