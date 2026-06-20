@@ -1,12 +1,29 @@
 # Release workflow.
 #
-# Ordering matters: install (frozen) -> gate -> `jq` stamp -> regenerate the
-# lockfile -> pack/publish. The regen after the stamp is load-bearing: `bun pm
-# pack`/`bun publish` rewrite `workspace:*` deps from the lockfile snapshot, not
-# the live manifest, so without it a release would publish e.g. `transpiler@<v>`
-# depending on a nonexistent `types@0.0.0`. The dry-run publish runs on every
-# release; the real publish stays fenced behind the `ENABLE_NPM_PUBLISH` repo
-# variable (a deliberate human opt-in).
+# Tag-driven (`v*`) publish to npm via OIDC trusted publishing — no tokens.
+# Publishing uses `npm` because `bun publish` has no OIDC path
+# (oven-sh/bun#15601); npm (Node 24 ships a new enough version) does the OIDC
+# token exchange automatically given `id-token: write`.
+#
+# CI is the sole publish path (the local bun-publish script was retired).
+# Re-running the workflow on an existing tag is safe: the real publish step is
+# idempotent — it skips any package whose target version is already on npm.
+#
+# Ordering: install (frozen) -> build -> gate -> jq stamp (version + workspace
+# dep rewrite) -> dry-run -> publish.
+#   - Build is load-bearing: cli/tstl-plugin resolve
+#     @defold-typescript/transpiler through its built dist/ (its `types`
+#     export). Mirrors ci.yml.
+#   - The jq stamp rewrites every internal `workspace:*` dep to the concrete
+#     version; npm publish does not resolve the workspace protocol the way bun
+#     does. (The repo manifests stay pinned at 0.0.0; the tag drives the
+#     published version.)
+#
+# The real publish is fenced behind the ENABLE_NPM_PUBLISH repo variable for a
+# safe cutover (the dry-run always runs). One-time npm setup: configure a
+# Trusted Publisher for each of
+# @defold-typescript/{types,transpiler,tstl-plugin,docs,cli} -> repo
+# defold-typescript/toolchain, workflow release.yml.
 
 name: Release
 
@@ -34,6 +51,14 @@ jobs:
         with:
           bun-version: "1.3"
 
+      # npm performs the OIDC publish (bun cannot). Node 24 ships npm new enough
+      # for trusted publishing; registry-url + no token is the OIDC setup.
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
       - name: Resolve version
         shell: bash
         env:
@@ -56,35 +81,57 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Build first: cli/tstl-plugin resolve @defold-typescript/transpiler
+      # through its built dist/ (its `types` export), so a clean checkout cannot
+      # typecheck until the workspace is built. Mirrors ci.yml.
+      - name: Build
+        run: bun run build
+
       - name: Gate — typecheck, lint, test
         run: |
           bun run typecheck
           bun run lint
           bun test
 
-      - name: Stamp version across workspace
+      - name: Stamp version and rewrite workspace deps
         shell: bash
         run: |
+          # Set .version and rewrite every internal workspace:* dependency to the
+          # concrete version. `npm publish` does not understand the workspace
+          # protocol, so the rewrite must happen in the manifest before packing.
+          JQ='.version = $v
+            | to_entries
+            | map(
+                if (.key | IN("dependencies","devDependencies","peerDependencies","optionalDependencies"))
+                   and (.value | type == "object")
+                then .value |= with_entries(
+                       if (.value | type) == "string" and (.value | startswith("workspace:"))
+                       then .value = $v else . end)
+                else . end)
+            | from_entries'
           for manifest in package.json packages/*/package.json; do
-            jq --arg v "$VERSION" '.version = $v' "$manifest" > "$manifest.tmp"
+            jq --arg v "$VERSION" "$JQ" "$manifest" > "$manifest.tmp"
             mv "$manifest.tmp" "$manifest"
           done
 
-      - name: Regenerate lockfile after stamp
-        run: |
-          rm -f bun.lock && bun install
-
+      # Dependency order: deps before dependents (docs has no internal deps and
+      # is consumed by cli). Dry-run needs no auth and runs on every tag.
       - name: Publish (dry-run)
         run: |
-          for pkg in types transpiler tstl-plugin cli; do
-            ( cd "packages/$pkg" && bun publish --dry-run --access public )
+          for pkg in types transpiler tstl-plugin docs cli; do
+            ( cd "packages/$pkg" && npm publish --dry-run --access public )
           done
 
-      - name: Publish to npm
+      - name: Publish to npm (OIDC, idempotent)
         if: ${{ vars.ENABLE_NPM_PUBLISH == 'true' }}
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          for pkg in types transpiler tstl-plugin cli; do
-            ( cd "packages/$pkg" && bun publish --access public )
+          # Idempotent: skip any package whose target version is already on npm,
+          # so re-running the workflow on an existing tag is safe.
+          for pkg in types transpiler tstl-plugin docs cli; do
+            name="@defold-typescript/$pkg"
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "$name@$VERSION already on npm — skipping"
+            else
+              ( cd "packages/$pkg" && npm publish --access public )
+            fi
           done
