@@ -78,6 +78,12 @@ coverage/
 junit.xml
 .vitest-cache/
 
+# Playwright (docs-site responsive e2e)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # Editor / IDE
 .vscode/
 .idea/
