@@ -16,6 +16,35 @@ async function boxOf(locator: ReturnType<typeof topicNav>) {
   return box;
 }
 
+const topbarHeightRaw = (page: import("@playwright/test").Page) =>
+  page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue("--topbar-height").trim(),
+  );
+
+const headerOffsetHeight = (page: import("@playwright/test").Page) =>
+  page.locator("[data-topbar]").evaluate((el) => (el as HTMLElement).offsetHeight);
+
+async function firstHeadingScrollMargin(page: import("@playwright/test").Page) {
+  const link = sidebar(page).getByRole("link").first();
+  const href = await link.getAttribute("href");
+  await link.click();
+  await page.waitForURL(`**${href}`);
+  const heading = page.locator(".prose h2, .prose h3").first();
+  await expect(heading).toBeVisible();
+  return heading.evaluate((el) => Number.parseFloat(getComputedStyle(el).scrollMarginTop));
+}
+
+// Opening the drawer needs the SidebarToggle island hydrated; on a cold dev
+// server the click can land before the handler is attached, leaving it shut.
+// Retry until it actually opens, clicking only while closed so a late-arriving
+// click is never toggled back off.
+async function openDrawer(page: import("@playwright/test").Page) {
+  await expect(async () => {
+    if (!(await sidebar(page).isVisible())) await toggle(page).click();
+    await expect(sidebar(page)).toBeVisible({ timeout: 500 });
+  }).toPass({ timeout: 15_000 });
+}
+
 test.describe("wide viewport (lg and up)", () => {
   test.use({ viewport: WIDE });
 
@@ -28,6 +57,24 @@ test.describe("wide viewport (lg and up)", () => {
 
     await expect(sidebar(page)).toBeVisible();
     await expect(toggle(page)).toBeHidden();
+  });
+
+  test("--topbar-height tracks the real header (≈56px)", async ({ page }) => {
+    await page.goto("/");
+    const raw = await topbarHeightRaw(page);
+    expect(raw).not.toBe("");
+    const varPx = Number.parseFloat(raw);
+    const offset = await headerOffsetHeight(page);
+    expect(Math.abs(varPx - offset)).toBeLessThanOrEqual(1);
+    expect(Math.abs(varPx - 56)).toBeLessThanOrEqual(1);
+  });
+
+  test("prose heading scroll-margin-top follows --topbar-height (≈80px)", async ({ page }) => {
+    await page.goto("/");
+    const margin = await firstHeadingScrollMargin(page);
+    const varPx = Number.parseFloat(await topbarHeightRaw(page));
+    expect(Math.abs(margin - (varPx + 24))).toBeLessThanOrEqual(1);
+    expect(Math.abs(margin - 80)).toBeLessThanOrEqual(1);
   });
 });
 
@@ -50,9 +97,8 @@ test.describe("narrow viewport (below lg)", () => {
 
   test("toggle opens the drawer and backdrop, setting data-sidebar", async ({ page }) => {
     await page.goto("/");
-    await toggle(page).click();
+    await openDrawer(page);
 
-    await expect(sidebar(page)).toBeVisible();
     await expect(backdrop(page)).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("data-sidebar", "open");
   });
@@ -60,14 +106,12 @@ test.describe("narrow viewport (below lg)", () => {
   test("backdrop click and Escape both dismiss the drawer", async ({ page }) => {
     await page.goto("/");
 
-    await toggle(page).click();
-    await expect(sidebar(page)).toBeVisible();
+    await openDrawer(page);
     await backdrop(page).click();
     await expect(sidebar(page)).toBeHidden();
     await expect(page.locator("html")).not.toHaveAttribute("data-sidebar", "open");
 
-    await toggle(page).click();
-    await expect(sidebar(page)).toBeVisible();
+    await openDrawer(page);
     await page.keyboard.press("Escape");
     await expect(sidebar(page)).toBeHidden();
     await expect(page.locator("html")).not.toHaveAttribute("data-sidebar", "open");
@@ -75,8 +119,7 @@ test.describe("narrow viewport (below lg)", () => {
 
   test("clicking a sidebar link navigates and leaves the drawer closed", async ({ page }) => {
     await page.goto("/");
-    await toggle(page).click();
-    await expect(sidebar(page)).toBeVisible();
+    await openDrawer(page);
 
     const link = sidebar(page).getByRole("link").first();
     const href = await link.getAttribute("href");
@@ -86,5 +129,24 @@ test.describe("narrow viewport (below lg)", () => {
     await expect(sidebar(page)).toBeHidden();
     await expect(toggle(page)).toBeVisible();
     await expect(page.locator("html")).not.toHaveAttribute("data-sidebar", "open");
+  });
+
+  test("--topbar-height tracks the taller wrapped header", async ({ page }) => {
+    await page.goto("/");
+    const raw = await topbarHeightRaw(page);
+    expect(raw).not.toBe("");
+    const varPx = Number.parseFloat(raw);
+    const offset = await headerOffsetHeight(page);
+    expect(Math.abs(varPx - offset)).toBeLessThanOrEqual(1);
+    expect(varPx).toBeGreaterThan(80);
+  });
+
+  test("prose heading scroll-margin-top follows the taller bar", async ({ page }) => {
+    await page.goto("/");
+    await openDrawer(page);
+    const margin = await firstHeadingScrollMargin(page);
+    const varPx = Number.parseFloat(await topbarHeightRaw(page));
+    expect(Math.abs(margin - (varPx + 24))).toBeLessThanOrEqual(1);
+    expect(varPx).toBeGreaterThan(80);
   });
 });
