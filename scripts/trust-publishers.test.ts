@@ -40,7 +40,7 @@ describe("trustCommand", () => {
       "github",
       "@defold-typescript/cli",
       "--file",
-      ".github/workflows/release.yml",
+      "release.yml",
       "--repo",
       "defold-typescript/toolchain",
       "--allow-publish",
@@ -52,7 +52,7 @@ describe("trustCommand", () => {
     for (const pkg of PACKAGES) {
       const cmd = trustCommand(pkg, "defold-typescript/toolchain");
       expect(cmd).toContain(`@defold-typescript/${pkg}`);
-      expect(cmd).toContain(".github/workflows/release.yml");
+      expect(cmd).toContain("release.yml");
       expect(cmd.at(-1)).toBe("--yes");
     }
   });
