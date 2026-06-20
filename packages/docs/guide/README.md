@@ -3,6 +3,10 @@ toc-title: Overview
 ---
 # Overview
 
+[![npm](https://img.shields.io/npm/v/@defold-typescript/cli)](https://www.npmjs.com/package/@defold-typescript/cli)
+[![CI](https://img.shields.io/github/actions/workflow/status/defold-typescript/toolchain/ci.yml?branch=main)](https://github.com/defold-typescript/toolchain/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-defold--typescript.github.io-1f6feb)](https://defold-typescript.github.io/toolchain/)
+
 Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
 - **The full Defold API, typed** — every module and namespace is typed from the official reference, so `go`, `gui`, `vmath`, `msg`, and the rest autocomplete and type-check as you write.
@@ -17,9 +21,9 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 ## Get started
 
-- [Getting started](./getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
-- [Starter templates](./init-templates.md) — pick a new-project layout with `init --template <name>`: the opinionated `default` or a blank-script `minimal`.
-- [Existing project](./add-typescript.md) — run `bunx @defold-typescript/cli@latest init` in a folder with `game.project` to add the TypeScript surface without replacing the Defold project.
+- [Getting started](./getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init my-game`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
+- [Starter templates](./init-templates.md) — pick a new-project layout with `init my-game --template <name>`: the opinionated `default` or a blank-script `minimal`.
+- [Existing project](./add-typescript.md) — run `bunx @defold-typescript/cli@latest init .` in a folder with `game.project` to add the TypeScript surface without replacing the Defold project.
 - [Editor setup](./editor-setup.md) — open the project in VSCode, use the generated `tsconfig.json`, and run `bunx @defold-typescript/cli watch` beside the Defold editor.
 - [Defold editor](./defold-editor.md) — install Defold, open the generated project folder, attach a compiled script (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to its game object, GUI scene, or render pipeline, and run the game (TypeScript is transpiled to Lua by the CLI, not the editor).
 

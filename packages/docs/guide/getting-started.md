@@ -24,8 +24,10 @@ You need Bun `>= 1.3`.
 The package is scoped, so run it through `bunx` by its full name — no install required:
 
 ```sh
-bunx @defold-typescript/cli@latest init
+bunx @defold-typescript/cli@latest init my-game
 ```
+
+`init` requires an explicit destination — there is no implicit "current folder" default, so it never scaffolds where you did not mean to. Pass a path to create (or add to) that folder, or `.` to target the folder you are already in. The same rule applies to [`init-agents`](./agent-runbooks.md).
 
 > `init` also generates a `mise.toml`. If you already have [mise](https://mise.jdx.dev) installed, it flags the new file as untrusted — run `mise trust` once to approve it.
 > After that, `mise run` (or its shorthand `mise r`) lets you pick one of the scaffolded tasks interactively.
@@ -52,8 +54,8 @@ bunx @defold-typescript/cli --version
 ## Scaffold a project
 
 ```sh
-mkdir my-game && cd my-game
-bunx @defold-typescript/cli@latest init
+bunx @defold-typescript/cli@latest init my-game
+cd my-game
 bun install
 ```
 
@@ -79,7 +81,7 @@ If the scaffolded `@defold-typescript/types` pin still looks older than the CLI 
 `init` is not just for fresh directories. Run it inside an existing Defold project to drop in the TypeScript infrastructure (`package.json`, `tsconfig.json`, `.gitignore`, `biome.json`, editor settings, and managed tasks) without touching `.script`, `.collection`, `.gui_script`, `.render_script`, `game.project`, or other engine assets.
 
 1. `cd` into the project, such as a clone of [`defold/template-platformer`](https://github.com/defold/template-platformer).
-2. Run `bunx @defold-typescript/cli@latest init`.
+2. Run `bunx @defold-typescript/cli@latest init .` (the `.` targets the current folder).
 3. Run `bun install`, matching the install reminder printed by `init`.
 4. Hand-convert your Lua scripts to TypeScript; see [Convert a Lua script](#convert-a-lua-script).
 5. Run `bunx @defold-typescript/cli build` to transpile the converted sources.

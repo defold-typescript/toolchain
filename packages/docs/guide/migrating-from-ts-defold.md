@@ -38,7 +38,7 @@ tooling and configuration, not a rewrite.
 | --- | --- |
 | `@ts-defold/types` — Defold TypeScript definitions | `@defold-typescript/types` — ambient, type-only engine surface |
 | `@ts-defold/type-gen` — dev-dep that generates those types | type generation is internal to `@defold-typescript/types`; it is never a consumer dependency |
-| `@ts-defold/create` — `npm init @ts-defold my-game` (resolves GitHub `tsd-template-*` templates, or a local/remote zip) | `bunx @defold-typescript/cli@latest init` — built-in templates via `init --template <name>` (`default` / `minimal`) |
+| `@ts-defold/create` — `npm init @ts-defold my-game` (resolves GitHub `tsd-template-*` templates, or a local/remote zip) | `bunx @defold-typescript/cli@latest init my-game` — built-in templates via `init my-game --template <name>` (`default` / `minimal`) |
 | template `npm run build` (compile, no watcher) | `defold-typescript build` |
 | template `npm run dev` (watch: compile + emit lua/script on save) | `defold-typescript watch` |
 | — (no first-party editor-diagnostics package verified) | `@defold-typescript/tstl-plugin` — live transpile diagnostics in the editor |
@@ -53,7 +53,8 @@ These steps run against an **existing** ts-defold project (a directory that
 already has a `game.project`).
 
 1. **Add the defold-typescript toolchain in place.** From the project root, run
-   `bunx @defold-typescript/cli@latest init`. With a `game.project` present,
+   `bunx @defold-typescript/cli@latest init .` (the `.` targets the current
+   folder; `init` requires an explicit destination). With a `game.project` present,
    `init` runs in *add-TypeScript mode*: it writes only the TypeScript surface
    (a `tsconfig.json`, dev-deps merged into `package.json`, and a `src/main.ts`
    only if one does not already exist) and refuses to overwrite a conflicting

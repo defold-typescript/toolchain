@@ -15,7 +15,7 @@ describe("MISE_TASKS_TOML", () => {
   });
 
   test("init-agents runs the installed CLI via bunx @defold-typescript/cli", () => {
-    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli init-agents"');
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli init-agents ."');
   });
 
   test("build and watch invoke the CLI via bunx @defold-typescript/cli", () => {
@@ -25,7 +25,7 @@ describe("MISE_TASKS_TOML", () => {
 
   test("upgrade is the two-command @latest init --force then bun install array", () => {
     expect(MISE_TASKS_TOML).toContain(
-      'run = ["bunx @defold-typescript/cli@latest init --force --suppress-install-reminder", "bun install"]',
+      'run = ["bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder", "bun install"]',
     );
   });
 
@@ -73,6 +73,37 @@ describe("mergeMiseToml", () => {
     expect(refreshed).toContain('[tasks.foo]\nrun = "echo hi"');
     const upgradeHeaders = refreshed.match(/\[tasks\."defold-typescript:upgrade"\]/g) ?? [];
     expect(upgradeHeaders.length).toBe(1);
+  });
+
+  test("upgrades a previous-version mise.toml: bare init/init-agents run strings become dotted", () => {
+    // A mise.toml scaffolded before `init` required an explicit destination: the
+    // managed blocks carry no-path run strings. Re-merging (what every `init`
+    // does) must strip them and re-append the dotted current strings so the
+    // `:upgrade` task heals on disk.
+    const previousVersion = [
+      '[tools]\nnode = "22"\n',
+      "# managed by @defold-typescript",
+      '[tasks."defold-typescript:init-agents"]',
+      'run = "bunx @defold-typescript/cli init-agents"\n',
+      "# managed by @defold-typescript",
+      '[tasks."defold-typescript:upgrade"]',
+      'run = ["bunx @defold-typescript/cli@latest init --force --suppress-install-reminder", "bun install"]\n',
+      '[tasks."my-custom-task"]\nrun = "echo hello"\n',
+    ].join("\n");
+
+    const merged = mergeMiseToml(previousVersion);
+
+    expect(merged).toContain('run = "bunx @defold-typescript/cli init-agents ."');
+    expect(merged).not.toContain('run = "bunx @defold-typescript/cli init-agents"');
+    expect(merged).toContain(
+      'run = ["bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder", "bun install"]',
+    );
+    expect(merged).not.toContain("@latest init --force");
+    expect(merged).toContain('node = "22"');
+    expect(merged).toContain('[tasks."my-custom-task"]\nrun = "echo hello"');
+
+    const markers = merged.match(/# managed by @defold-typescript/g) ?? [];
+    expect(markers.length).toBe(5);
   });
 
   test("strips a stale managed block before re-appending the fresh one", () => {

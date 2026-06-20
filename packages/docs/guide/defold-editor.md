@@ -13,7 +13,7 @@ In the CLI-driven loop you author code in TypeScript and build from the command 
 2. Choose **Open Project**.
 3. Select the folder that contains `game.project`.
 
-For a project created with `bunx @defold-typescript/cli@latest init`, that is the same folder where you run the CLI commands.
+For a project created with `bunx @defold-typescript/cli@latest init my-game`, that is the destination folder you named — the same folder where you run the CLI commands.
 
 ## Build before running
 

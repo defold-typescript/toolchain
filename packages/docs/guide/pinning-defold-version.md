@@ -57,7 +57,7 @@ not in editor metadata. You declare it in `package.json` under the
 }
 ```
 
-`bunx @defold-typescript/cli@latest init` seeds this key with the current-stable version when it
+`bunx @defold-typescript/cli@latest init <folder>` seeds this key with the current-stable version when it
 creates or augments a `package.json`, and leaves an existing pin untouched.
 
 The active version resolves with this precedence:
@@ -164,7 +164,7 @@ channel rides the same precedence chain. The `--channel` flag overrides the
 }
 ```
 
-`bunx @defold-typescript/cli@latest init` does not seed a `channel` key, so a
+`bunx @defold-typescript/cli@latest init <folder>` does not seed a `channel` key, so a
 project with no pin behaves exactly as today. The resolved channel is reported
 in `--json` output as `defoldChannel` on `init` and `build`. `init` reports the
 default `stable` without writing the key, so the key stays absent unless you

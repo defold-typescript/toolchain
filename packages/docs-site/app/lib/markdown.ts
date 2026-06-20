@@ -1,7 +1,26 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fromHighlighter } from "@shikijs/markdown-it/core";
 import MarkdownIt from "markdown-it";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { withBase } from "./base";
+
+const nodeRequire = createRequire(import.meta.url);
+
+// Load a Phosphor duotone glyph from `@phosphor-icons/core` as the source of
+// truth (no hand-copied path data), then decorate the bare asset: size it to
+// the surrounding text, mark it decorative, and add a class hook. The asset
+// already carries `fill="currentColor"`, so the glyph tracks the link colour.
+function phosphorDuotone(name: string, className: string): string {
+  const raw = readFileSync(
+    nodeRequire.resolve(`@phosphor-icons/core/duotone/${name}-duotone.svg`),
+    "utf8",
+  );
+  return raw.replace(
+    "<svg ",
+    `<svg class="${className}" aria-hidden="true" width="0.9em" height="0.9em" `,
+  );
+}
 
 /**
  * Two Shiki themes paired to the page's light/dark data-theme. Shiki emits
@@ -51,6 +70,10 @@ function headingAnchor(id: string, text: string): string {
     "</svg></a>"
   );
 }
+
+// Phosphor `arrow-square-out` (duotone), appended inside external links by the
+// link-rewrite ruler to mark destinations that leave the docs site.
+const EXTERNAL_LINK_ICON = phosphorDuotone("arrow-square-out", "external-icon");
 
 // Guide pages cross-link with relative `.md` paths (`./foo.md`, `foo.md#anchor`),
 // but the site routes each file at its slug (`README.md` -> `/`, `foo.md` -> `/foo`),
@@ -153,15 +176,40 @@ export async function renderMarkdown(
   md.core.ruler.push("rewrite-md-links", (state) => {
     for (const token of state.tokens) {
       if (token.type !== "inline" || !token.children) continue;
-      for (const child of token.children) {
+      const children = token.children;
+      // Links never nest, so a single flag tracks whether the currently-open
+      // link earned the external-out icon, appended just before its link_close.
+      let appendExternalIcon = false;
+      const out: typeof children = [];
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (!child) continue;
         if (child.type === "link_open") {
           const href = child.attrGet("href");
+          const isBadge = children[i + 1]?.type === "image";
+          const isExternal = href != null && /^https?:\/\//i.test(href);
           if (href) child.attrSet("href", withDeployBase(rewriteGuideHref(href)));
+          // A link wrapping an image is a badge/icon, not a prose link — tag it
+          // so the stylesheet can drop the `.prose a` underline without a
+          // parent-selector (`:has`) the build pipeline may not preserve.
+          if (isBadge) {
+            child.attrJoin("class", "badge-link");
+          } else if (isExternal) {
+            child.attrJoin("class", "external");
+            appendExternalIcon = true;
+          }
+        } else if (child.type === "link_close" && appendExternalIcon) {
+          const icon = new state.Token("html_inline", "", 0);
+          icon.content = EXTERNAL_LINK_ICON;
+          out.push(icon);
+          appendExternalIcon = false;
         } else if (child.type === "image") {
           const src = child.attrGet("src");
           if (src) child.attrSet("src", withDeployBase(src));
         }
+        out.push(child);
       }
+      token.children = out;
     }
   });
   // Retag `> [!NOTE]`-style blockquotes as `.admonition` callout divs. A div

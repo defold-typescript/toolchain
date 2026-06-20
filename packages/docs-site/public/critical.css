@@ -108,6 +108,9 @@ header.topbar-critical .logo-mark {
 .prose a.heading-anchor {
   border-bottom: none;
 }
+.prose a.badge-link {
+  border-bottom: none;
+}
 .prose strong {
   font-weight: 600;
   color: var(--color-text);
