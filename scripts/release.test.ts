@@ -3,12 +3,17 @@ import { bumpVersion, compareVersions, maxVersion, parseArgs, resolveTarget } fr
 
 describe("parseArgs", () => {
   test("defaults to a patch bump", () => {
-    expect(parseArgs([])).toEqual({ spec: "patch", help: false });
+    expect(parseArgs([])).toEqual({ spec: "patch", help: false, skipCiCheck: false });
   });
 
   test("reads a bump keyword or explicit version", () => {
     expect(parseArgs(["minor"]).spec).toBe("minor");
     expect(parseArgs(["1.2.3"]).spec).toBe("1.2.3");
+  });
+
+  test("reads the --skip-ci-check flag", () => {
+    expect(parseArgs(["--skip-ci-check"]).skipCiCheck).toBe(true);
+    expect(parseArgs([]).skipCiCheck).toBe(false);
   });
 
   test("recognizes --help and -h", () => {

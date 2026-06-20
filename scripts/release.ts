@@ -21,6 +21,7 @@ export type Bump = "patch" | "minor" | "major";
 export interface Args {
   readonly spec: string;
   readonly help: boolean;
+  readonly skipCiCheck: boolean;
 }
 
 export const HELP = `Cut a release: bump the version and push the v<version> tag.
@@ -29,23 +30,27 @@ Usage:
   mise run release [<version>|patch|minor|major]
   bun scripts/release.ts [<version>|patch|minor|major]
 
-Reads the highest version live on npm, resolves the target, then creates and
-pushes the v<target> tag. The Release workflow publishes from the tag via OIDC;
-nothing is published locally.
+Reads the highest version live on npm, resolves the target, waits for the
+commit's CI run to pass, then creates and pushes the v<target> tag. The Release
+workflow publishes from the tag via OIDC; nothing is published locally.
 
 Arguments:
   patch | minor | major   bump from the highest published version (default: patch)
   <x.y.z>                  explicit version; must be greater than current
 
 Flags:
+  --skip-ci-check         tag without waiting for the commit's CI run to pass
   -h, --help              show this help`;
 
 export function parseArgs(argv: readonly string[]): Args {
   const positional: string[] = [];
   let help = false;
+  let skipCiCheck = false;
   for (const arg of argv) {
     if (arg === "--help" || arg === "-h") {
       help = true;
+    } else if (arg === "--skip-ci-check") {
+      skipCiCheck = true;
     } else if (arg.startsWith("-")) {
       throw new Error(`unknown flag: ${arg}`);
     } else {
@@ -55,7 +60,7 @@ export function parseArgs(argv: readonly string[]): Args {
   if (positional.length > 1) {
     throw new Error(`expected one version/bump argument, got: ${positional.join(", ")}`);
   }
-  return { spec: positional[0] ?? "patch", help };
+  return { spec: positional[0] ?? "patch", help, skipCiCheck };
 }
 
 function parseSemver(v: string): [number, number, number] {
@@ -124,6 +129,54 @@ function publishedBase(): string {
   return maxVersion(versions);
 }
 
+// Wait for the commit's CI run (ci.yml) to finish and require success before
+// tagging — a tag whose CI is still running or red would publish unvalidated
+// code. `gh run watch` blocks until the run concludes; --exit-status makes it
+// non-zero unless the conclusion was success.
+function waitForGreenCI(sha: string): void {
+  let runId = "";
+  for (let attempt = 0; attempt < 6 && !runId; attempt++) {
+    const probe = run([
+      "gh",
+      "run",
+      "list",
+      "--commit",
+      sha,
+      "--workflow",
+      "ci.yml",
+      "--json",
+      "databaseId",
+      "--limit",
+      "10",
+    ]);
+    if (probe.code !== 0) {
+      die(
+        `could not query CI via gh (${probe.output.trim() || "command failed"}); ` +
+          "is gh installed and authenticated? (or pass --skip-ci-check)",
+      );
+    }
+    try {
+      const runs = JSON.parse(probe.output) as Array<{ databaseId: number }>;
+      if (runs[0]) runId = String(runs[0].databaseId);
+    } catch {
+      // not yet queued; retry below
+    }
+    if (!runId) run(["sleep", "10"]);
+  }
+  if (!runId) {
+    die(
+      `no ci.yml run found for ${sha.slice(0, 9)}; wait for CI to start, then re-run (or --skip-ci-check)`,
+    );
+  }
+  process.stdout.write(`waiting for CI run ${runId} on ${sha.slice(0, 9)} to finish...\n`);
+  const watch = run(["gh", "run", "watch", runId, "--exit-status", "--interval", "20"], {
+    inherit: true,
+  });
+  if (watch.code !== 0) {
+    die(`CI run ${runId} did not pass; fix CI before releasing (or --skip-ci-check)`);
+  }
+}
+
 function main(): void {
   let args: Args;
   try {
@@ -163,6 +216,12 @@ function main(): void {
   process.stdout.write(
     `current published: ${base}\ntarget version:    ${target}\ntag:               ${tag}\n\n`,
   );
+
+  if (args.skipCiCheck) {
+    process.stdout.write("warning: --skip-ci-check set; tagging without waiting for CI\n");
+  } else {
+    waitForGreenCI(head);
+  }
 
   if (run(["git", "rev-parse", "--verify", "--quiet", `refs/tags/${tag}`]).code === 0) {
     die(`tag ${tag} already exists locally; delete it or pick another version`);
