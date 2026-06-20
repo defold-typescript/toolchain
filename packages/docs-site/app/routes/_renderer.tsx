@@ -227,7 +227,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               />
               <span>defold-typescript</span>
             </a>
-            <nav class="order-last flex w-full basis-full items-center gap-1 overflow-x-auto text-sm lg:order-none lg:w-auto lg:flex-1 lg:basis-auto lg:overflow-visible">
+            <nav class="order-last flex w-full basis-full items-center gap-1 overflow-x-auto overflow-y-hidden text-sm lg:order-none lg:w-auto lg:flex-1 lg:basis-auto lg:overflow-visible">
               {nav.map((category) => (
                 <CategoryLink
                   key={category.id}

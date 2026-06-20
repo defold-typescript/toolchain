@@ -40,6 +40,9 @@ test.describe("narrow viewport (below lg)", () => {
     const navBox = await boxOf(topicNav(page));
     // Second row: the nav sits entirely below the logo's bottom edge.
     expect(navBox.y).toBeGreaterThanOrEqual(logoBox.y + logoBox.height);
+    // The wrapped topic row never scrolls vertically (the active tab's -mb-px
+    // bleed is clipped, not turned into an implicit overflow-y: auto scrollbar).
+    await expect(topicNav(page)).toHaveCSS("overflow-y", "hidden");
 
     await expect(sidebar(page)).toBeHidden();
     await expect(toggle(page)).toBeVisible();
