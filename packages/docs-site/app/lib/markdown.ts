@@ -158,7 +158,7 @@ export async function renderMarkdown(
       const token = state.tokens[i];
       if (token?.type !== "heading_open") continue;
       const level = Number(token.tag.slice(1));
-      if (level < 2 || level > 3) continue;
+      if (level < 1 || level > 3) continue;
       const inline = state.tokens[i + 1];
       if (inline?.type !== "inline" || !inline.children) continue;
       const text = inline.content;

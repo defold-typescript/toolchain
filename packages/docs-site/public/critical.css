@@ -66,6 +66,7 @@ header.topbar-critical .logo-mark {
   letter-spacing: -0.02em;
   margin: 0 0 0.6em;
   color: var(--color-text);
+  scroll-margin-top: 5rem;
 }
 .prose h2 {
   font-size: 1.4rem;
