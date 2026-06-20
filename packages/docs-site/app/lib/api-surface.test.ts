@@ -9,8 +9,8 @@ import {
   exampleMarkdownFor,
   functionSummaryTable,
   groupFunctionSymbols,
-  loadApiSurface,
 } from "./api-surface";
+import { loadApiSurface } from "./api-surface-loader";
 import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
 

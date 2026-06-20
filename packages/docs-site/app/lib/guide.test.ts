@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { listGuidePages } from "./guide";
+import { listGuidePages } from "./guide-loader";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 

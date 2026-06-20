@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { exampleMarkdownFor, loadApiSurface } from "./api-surface";
+import { exampleMarkdownFor } from "./api-surface";
+import { loadApiSurface } from "./api-surface-loader";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
