@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
+import { PACKAGES } from "../scripts/release-pack-proof.ts";
 
 const workflowPath = join(import.meta.dir, "..", ".github", "workflows", "release.yml");
 
@@ -15,21 +16,55 @@ function loadWorkflow(): Record<string, unknown> {
 
 interface Step {
   name?: string;
+  uses?: string;
   run?: string;
   if?: string;
 }
 
-function publishSteps(): Step[] {
-  const wf = loadWorkflow();
-  const jobs = wf.jobs as Record<string, { steps?: Step[] }>;
-  return Object.values(jobs).flatMap((job) => job.steps ?? []);
+interface Job {
+  steps?: Step[];
+  permissions?: Record<string, string>;
 }
 
-function indexWhere(steps: Step[], pred: (run: string) => boolean): number {
-  return steps.findIndex((step) => pred(step.run ?? ""));
+function publishJob(): Job {
+  const jobs = loadWorkflow().jobs as Record<string, Job>;
+  const job = Object.values(jobs)[0];
+  if (!job) throw new Error("release workflow has no jobs");
+  return job;
 }
 
-describe("release workflow is re-enabled and safe", () => {
+function steps(): Step[] {
+  return publishJob().steps ?? [];
+}
+
+// A step's run with comment-only lines stripped, so a comment that mentions a
+// command (e.g. "npm publish" in a rationale) is not mistaken for the command.
+function runCmd(s: Step): string {
+  return (s.run ?? "")
+    .split("\n")
+    .filter((l) => !/^\s*#/.test(l))
+    .join("\n");
+}
+
+function stepIndex(pred: (s: Step) => boolean): number {
+  return steps().findIndex(pred);
+}
+
+function publishIndices(): number[] {
+  return steps()
+    .map((s, i) => ({ cmd: runCmd(s), i }))
+    .filter(({ cmd }) => /npm publish/.test(cmd))
+    .map(({ i }) => i);
+}
+
+// Pull the package list out of a `for pkg in <list>; do` loop. Tolerant of list
+// tokens that embed keywords (e.g. "docs" contains "do").
+function loopPackages(run: string): string[] | null {
+  const m = run.match(/for pkg in\s+([a-z0-9 -]+?);\s*do/);
+  return m?.[1] ? m[1].trim().split(/\s+/) : null;
+}
+
+describe("release workflow publishes via OIDC on tags", () => {
   test("fires on a tag push for v* tags", () => {
     const wf = loadWorkflow();
     // YAML parses the bare `on:` key as boolean true, so read it back tolerantly.
@@ -40,61 +75,62 @@ describe("release workflow is re-enabled and safe", () => {
     expect(push.tags).toContain("v*");
   });
 
-  test("regenerates the lockfile in a dedicated step", () => {
-    const steps = publishSteps();
-    const regen = steps.find((step) => {
-      const run = step.run ?? "";
-      return (
-        /rm -f bun\.lock/.test(run) && /bun install/.test(run) && !/--frozen-lockfile/.test(run)
-      );
-    });
-    expect(regen).toBeDefined();
+  test("requests an OIDC id token and carries no npm token (trusted publishing)", () => {
+    expect(publishJob().permissions?.["id-token"]).toBe("write");
+    // OIDC trusted publishing uses no long-lived token; classic tokens are dead.
+    expect(rawWorkflow()).not.toMatch(/NPM_TOKEN|NODE_AUTH_TOKEN|_authToken/);
   });
 
-  test("regen lands after the stamp and before any pack/publish", () => {
-    const steps = publishSteps();
-    const stampIdx = indexWhere(steps, (run) => /jq /.test(run) && /\.version/.test(run));
-    const regenIdx = indexWhere(steps, (run) => /rm -f bun\.lock/.test(run));
-    expect(stampIdx).toBeGreaterThanOrEqual(0);
-    expect(regenIdx).toBeGreaterThan(stampIdx);
+  test("publishes with npm, not bun (bun has no OIDC path)", () => {
+    const publishing = steps().filter((s) => /npm publish/.test(runCmd(s)));
+    expect(publishing.length).toBeGreaterThan(0);
+    for (const s of publishing) {
+      expect(runCmd(s)).not.toContain("bun publish");
+    }
+  });
 
-    const packPublishIndices = steps
-      .map((step, i) => ({ run: step.run ?? "", i }))
-      .filter(({ run }) => /bun pm pack/.test(run) || /bun publish/.test(run))
-      .map(({ i }) => i);
-    expect(packPublishIndices.length).toBeGreaterThan(0);
-    for (const idx of packPublishIndices) {
-      expect(regenIdx).toBeLessThan(idx);
+  test("builds before the gate (transpiler dist must exist to typecheck)", () => {
+    const buildIdx = stepIndex((s) => /^bun run build\b/.test((s.run ?? "").trim()));
+    const gateIdx = stepIndex((s) => /bun run typecheck/.test(s.run ?? ""));
+    expect(buildIdx).toBeGreaterThanOrEqual(0);
+    expect(gateIdx).toBeGreaterThan(buildIdx);
+  });
+
+  test("stamps the version and rewrites workspace deps before any publish", () => {
+    const stampIdx = stepIndex(
+      (s) =>
+        /jq /.test(s.run ?? "") && /\.version/.test(s.run ?? "") && /workspace:/.test(s.run ?? ""),
+    );
+    expect(stampIdx).toBeGreaterThanOrEqual(0);
+    const indices = publishIndices();
+    expect(indices.length).toBeGreaterThan(0);
+    for (const idx of indices) {
+      expect(idx).toBeGreaterThan(stampIdx);
     }
   });
 
   test("the real publish stays fenced behind ENABLE_NPM_PUBLISH", () => {
-    for (const step of publishSteps()) {
-      const run = step.run ?? "";
-      if (run.includes("bun publish") && !run.includes("--dry-run")) {
-        expect(step.if).toContain("vars.ENABLE_NPM_PUBLISH == 'true'");
+    for (const s of steps()) {
+      const cmd = runCmd(s);
+      if (cmd.includes("npm publish") && !cmd.includes("--dry-run")) {
+        expect(s.if).toContain("vars.ENABLE_NPM_PUBLISH == 'true'");
       }
     }
   });
 
   test("the dry-run publish is present and unfenced", () => {
-    const dryRun = publishSteps().find(
-      (step) => (step.run ?? "").includes("bun publish") && (step.run ?? "").includes("--dry-run"),
+    const dryRun = steps().find(
+      (s) => runCmd(s).includes("npm publish") && runCmd(s).includes("--dry-run"),
     );
     expect(dryRun).toBeDefined();
     expect(dryRun?.if).toBeUndefined();
   });
 
-  test("both publish loops enumerate tstl-plugin in dependency order", () => {
-    const loopSteps = publishSteps().filter((step) => /for pkg in /.test(step.run ?? ""));
-    expect(loopSteps.length).toBeGreaterThanOrEqual(2);
-    for (const step of loopSteps) {
-      const list = (step.run ?? "").match(/for pkg in ([^\n;]+?)\s*;?\s*do/)?.[1];
-      expect(list).toBeDefined();
-      const pkgs = (list ?? "").trim().split(/\s+/);
-      expect(pkgs).toContain("tstl-plugin");
-      expect(pkgs.indexOf("tstl-plugin")).toBeGreaterThan(pkgs.indexOf("transpiler"));
-      expect(pkgs.indexOf("tstl-plugin")).toBeLessThan(pkgs.indexOf("cli"));
+  test("both publish loops enumerate the canonical PACKAGES in dependency order", () => {
+    const loops = steps().filter((s) => /for pkg in /.test(runCmd(s)));
+    expect(loops.length).toBeGreaterThanOrEqual(2);
+    for (const s of loops) {
+      expect(loopPackages(runCmd(s))).toEqual([...PACKAGES]);
     }
   });
 });
