@@ -56,6 +56,21 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='
 const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-sidebar-scroll]');if(!c)return;c.addEventListener('click',function(e){var l=e.target&&e.target.closest&&e.target.closest('a');if(l){try{sessionStorage.setItem('sidebar-nav-click','1');}catch(_){}}});var a=c.querySelector('[aria-current="page"]');if(!a)return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect();var tt=ar.top-cr.top+c.scrollTop,th=ar.height,vt=c.scrollTop,vh=c.clientHeight,ms=c.scrollHeight-c.clientHeight;var clicked='1'===sessionStorage.getItem('sidebar-nav-click');try{sessionStorage.removeItem('sidebar-nav-click');}catch(_){}if(tt>=vt&&tt+th<=vt+vh)return;var top=Math.max(0,Math.min(tt-vh/2+th/2,ms));var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(clicked&&!reduce){c.scrollTo({top:top,behavior:'smooth'});}else{c.scrollTop=top;}}catch(e){}})();`;
 
 /**
+ * The script that publishes the real header height as the `--topbar-height`
+ * custom property, so anchored-heading `scroll-margin-top` and the sticky
+ * sidebar/TOC offsets track the bar instead of a baked 56px constant. Below
+ * `lg` the topbar wraps onto a second row and grows taller; the fixed offsets
+ * would let headings land behind it.
+ *
+ * It runs at the end of `<body>` — the header is already parsed and the
+ * critical + render-blocking Tailwind CSS have settled, so the first
+ * measurement is the painted height. A `ResizeObserver` keeps the value current
+ * across font swap, viewport resize, and `lg` breakpoint crossings. The
+ * observer lives for the page's lifetime; there is nothing to disconnect.
+ */
+const TOPBAR_HEIGHT_INIT = `(function(){try{var h=document.querySelector('[data-topbar]');if(!h)return;var set=function(){document.documentElement.style.setProperty('--topbar-height',h.offsetHeight+'px');};set();if(typeof ResizeObserver==='function'){new ResizeObserver(set).observe(h);}}catch(_){}})();`;
+
+/**
  * The design tokens, inlined so they are available before the Tailwind
  * stylesheet (and `public/critical.css`) load. Without this, `var(--color-text)`
  * in critical.css would be undefined at first paint and the body would briefly
@@ -211,7 +226,10 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         ) : null}
       </head>
       <body class="min-h-screen bg-bg text-text antialiased">
-        <header class="topbar-critical sticky top-0 z-30 flex items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur">
+        <header
+          data-topbar
+          class="topbar-critical sticky top-0 z-30 flex items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur"
+        >
           <div class="mx-auto flex w-full flex-wrap items-center gap-x-6 gap-y-2 py-2 lg:h-14 lg:flex-nowrap lg:gap-y-0 lg:py-0">
             <SidebarToggle />
             <a
@@ -247,7 +265,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           <aside id="sidebar" data-testid="sidebar" class="sidebar-drawer w-60 shrink-0">
             <div
               data-sidebar-scroll
-              class="sticky top-14 max-h-[calc(100vh-4.5rem)] overflow-y-auto py-8 pr-2"
+              class="sticky top-[var(--topbar-height,3.5rem)] max-h-[calc(100vh-var(--topbar-height,3.5rem)-1rem)] overflow-y-auto py-8 pr-2"
             >
               <SidebarNav category={activeCategory} path={path} />
             </div>
@@ -259,7 +277,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               <article class={`min-w-0 flex-1 ${contentClass ?? ""}`}>{children}</article>
               {showToc ? (
                 <aside class="hidden xl:block">
-                  <div class="sticky top-20 max-h-[calc(100vh-6rem)] w-56 overflow-y-auto overflow-x-hidden">
+                  <div class="sticky top-[calc(var(--topbar-height,3.5rem)+1.5rem)] max-h-[calc(100vh-var(--topbar-height,3.5rem)-2.5rem)] w-56 overflow-y-auto overflow-x-hidden">
                     <Toc headings={tocHeadings} />
                   </div>
                 </aside>
@@ -269,6 +287,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         </div>
         <SymbolTooltip />
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
+        <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />
       </body>
     </html>
   );
