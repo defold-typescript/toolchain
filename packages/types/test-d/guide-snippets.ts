@@ -1,5 +1,6 @@
 /// <reference path="../index.d.ts" />
-import type { Matrix4, Quaternion, Vector3, Vector4 } from "../src/core-types";
+import type { Hash, Matrix4, Quaternion, Vector3, Vector4 } from "../src/core-types";
+import { defineScript } from "../src/lifecycle";
 
 declare const v3a: Vector3;
 declare const v3b: Vector3;
@@ -49,6 +50,50 @@ const _labelColor: Vector4 = _labelProps.color;
 // @ts-expect-error a property member carries its catalogued type, not an arbitrary one
 const _labelColorBad: string = _labelProps.color;
 
+// packages/docs/guide/agent-runbooks.md "Combine components on a game object" —
+// on_input hands action_id as a Hash, comparable to hash(...); a "#id" receiver
+// reaches a sibling component on the same object.
+defineScript({
+  on_input(self, action_id) {
+    void self;
+    if (action_id === hash("jump")) {
+      msg.post("#animator", "play_animation", { id: hash("jump") });
+    }
+  },
+});
+
+// packages/docs/guide/agent-runbooks.md "Spawn objects with a factory" —
+// factory.create(...) returns the spawned object's id as a Hash.
+const _spawned: Hash = factory.create("#enemyfactory", undefined, undefined, {
+  health: 100,
+});
+
+// packages/docs/guide/agent-runbooks.md "Spawn a hierarchy with a collection factory" —
+// collectionfactory.create(...) returns a LuaMap<Hash, Hash>; .get(id) may miss.
+const _spawnedSet: LuaMap<Hash, Hash> = collectionfactory.create("#levelfactory");
+const _onePlayer: Hash | undefined = _spawnedSet.get(hash("/player"));
+// @ts-expect-error LuaMap.get returns Hash | undefined — a bare Hash ignores the miss
+const _onePlayerBad: Hash = _spawnedSet.get(hash("/player"));
+
+// packages/docs/guide/agent-runbooks.md "Pass messages between components" —
+// msg.post addresses a "#sibling" or "/object#component"; the payload is optional.
+msg.post("#health", "damage", { amount: 10 });
+msg.post("/enemy#ai", "alert");
+
+// packages/docs/guide/agent-runbooks.md "Where script state lives" —
+// init's returned object is inferred onto self; a field init never returned is rejected.
+defineScript({
+  init() {
+    return { health: 100 };
+  },
+  update(self) {
+    const _health: number = self.health;
+    void _health;
+    // @ts-expect-error self carries only init's returned fields — `mana` is not one
+    void self.mana;
+  },
+});
+
 void _v3add;
 void _v3mul2;
 void _v3unm;
@@ -66,3 +111,7 @@ void _pbBrand;
 void _pbBad;
 void _labelColor;
 void _labelColorBad;
+void _spawned;
+void _spawnedSet;
+void _onePlayer;
+void _onePlayerBad;
