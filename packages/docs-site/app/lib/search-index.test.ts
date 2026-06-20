@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { type ApiPage, loadApiSurface } from "./api-surface";
+import type { ApiPage } from "./api-surface";
+import { loadApiSurface } from "./api-surface-loader";
 import type { GuidePage } from "./guide";
 import { apiSearchRecords, buildSearchIndex } from "./search-index";
 

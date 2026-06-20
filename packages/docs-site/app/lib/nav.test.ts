@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { type GuidePage, listGuidePages } from "./guide";
+import type { GuidePage } from "./guide";
+import { listGuidePages } from "./guide-loader";
 import { activeCategoryId, buildNav, type NavLink } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
