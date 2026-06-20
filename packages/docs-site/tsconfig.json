@@ -6,5 +6,5 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "noEmit": true
   },
-  "include": ["app", "scripts", "vite.config.ts"]
+  "include": ["app", "scripts", "e2e", "playwright.config.ts", "vite.config.ts"]
 }
