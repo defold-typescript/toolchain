@@ -1,0 +1,13 @@
+{
+  // Type-checks the repo-root scripts/ tree, which no package tsconfig covers
+  // (the workspace typechecks only see packages/*). A standard `tsconfig.json`
+  // name so editors auto-discover it for these files. allowImportingTsExtensions
+  // is required because these run under bun and import with explicit .ts paths.
+  // Wired into the root `typecheck` script.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["**/*.ts"]
+}
