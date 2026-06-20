@@ -35,11 +35,13 @@ export function pageHeadings(html: string): Heading[] {
   return out;
 }
 
+// GitHub parity: keep word characters (including `_`), strip the rest, and emit
+// one hyphen per space with no collapse or trim. Guide `.md` files render on both
+// the site and github.com, so the site's heading ids must match GitHub's or the
+// authored same-page anchors (`#on_message-…`, `#vector3--vector4`) break here.
 export function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^\w -]/g, "")
+    .replace(/ /g, "-");
 }
