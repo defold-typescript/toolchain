@@ -32,21 +32,25 @@ either `written` or `error` are always present.
 **Goal:** create a new TypeScript surface — either a fresh project, or the
 TypeScript layer added to an existing Defold project.
 
-**Command (fresh project, empty folder):**
+**Command (fresh project, new folder):**
 
 ```sh
-bunx @defold-typescript/cli@latest init --json
+bunx @defold-typescript/cli@latest init my-game --json
 ```
 
 **Command (existing Defold project — run inside the folder that holds
 `game.project`):**
 
 ```sh
-bunx @defold-typescript/cli@latest init --json
+bunx @defold-typescript/cli@latest init . --json
 ```
 
-`init` detects whether a `game.project` is already present and either scaffolds a
-whole new project or adds the TypeScript surface alongside the existing one.
+`init` requires an explicit destination folder — pass a path to create it, or `.`
+for the current folder. There is no implicit current-folder default, so an
+invocation with no path fails fast (`ok: false`) rather than scaffolding into the
+working directory by accident. `init` then detects whether a `game.project` is
+already present at the destination and either scaffolds a whole new project or
+adds the TypeScript surface alongside the existing one.
 
 **Returns:**
 
@@ -72,10 +76,11 @@ opening the repo finds the conventions and a pointer to the installed guide.
 **Command:**
 
 ```sh
-bunx @defold-typescript/cli@latest init-agents --json
+bunx @defold-typescript/cli@latest init-agents . --json
 ```
 
-This writes two files. `AGENTS.md` carries a managed block delimited by HTML
+Like `init`, `init-agents` requires an explicit destination — pass a path or `.`
+for the current folder; a missing path fails fast (`ok: false`). This writes two files. `AGENTS.md` carries a managed block delimited by HTML
 comment markers; `CLAUDE.md` is the single line `@AGENTS.md`, re-exporting it.
 Only the content **between** the markers is ever rewritten, so any notes you add
 above or below the block survive re-runs untouched. If `AGENTS.md` already exists

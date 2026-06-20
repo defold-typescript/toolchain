@@ -66,8 +66,7 @@ export const slides: Slide[] = [
       {
         kind: "bullets",
         items: [
-          "`mkdir my-game && cd my-game`",
-          "`bunx @defold-typescript/cli@latest init`",
+          "`bunx @defold-typescript/cli@latest init my-game && cd my-game`",
           "`bun install` (the `init` install reminder tells you to run it)",
           "`bunx @defold-typescript/cli build` (one-shot transpile to Lua)",
           "`bunx @defold-typescript/cli watch` (rebuild on save while you iterate)",
@@ -79,7 +78,7 @@ export const slides: Slide[] = [
       },
       {
         kind: "sidenote",
-        text: "This slide is a one-page on-ramp. The full toolchain loop (Defold editor install, code editor setup, debug launch) lives in [packages/docs/guide/getting-started.md](https://github.com/defold-typescript/toolchain/blob/main/packages/docs/guide/getting-started.md).",
+        text: "This slide is a one-page on-ramp. The full toolchain loop (Defold editor install, code editor setup, debug launch) lives in the [getting-started guide](https://defold-typescript.github.io/toolchain/getting-started).",
       },
     ],
   },
@@ -302,7 +301,7 @@ export const slides: Slide[] = [
         items: [
           "Module-level constants for tweaks, replacing Lua's `local` at chunk scope.",
           "`defineScript({...})` replaces bare `function init(self)` / `function on_input(self, ...)` globals.",
-          "Vector math uses methods: `v.add(other)`, `v.mul(scalar)`, `v.unm()` — see the [vector math guide](https://github.com/defold-typescript/toolchain/blob/main/packages/docs/guide/vector-math.md).",
+          "Vector math uses methods: `v.add(other)`, `v.mul(scalar)`, `v.unm()` — see the [vector math guide](https://defold-typescript.github.io/toolchain/vector-math).",
           '`isMessage(message_id, message, "contact_point_response")` narrows `message` to the typed payload — no manual cast.',
           "`init` returns the initial state; the transpiler merges it onto the engine-owned `self`.",
         ],
@@ -329,7 +328,7 @@ export const slides: Slide[] = [
       },
       {
         kind: "sidenote",
-        text: "Full walkthrough — `setup-debug`, the source-map wiring, and the Windows OpenAL step — in [packages/docs/guide/debugging.md](https://github.com/defold-typescript/toolchain/blob/main/packages/docs/guide/debugging.md).",
+        text: "Full walkthrough — `setup-debug`, the source-map wiring, and the Windows OpenAL step — in the [debugging guide](https://defold-typescript.github.io/toolchain/debugging).",
       },
     ],
   },
@@ -351,7 +350,7 @@ export const slides: Slide[] = [
       },
       {
         kind: "sidenote",
-        text: "JVM, cache, and `--build-server` details in the [Headless builds section of the getting-started guide](https://github.com/defold-typescript/toolchain/blob/main/packages/docs/guide/getting-started.md#headless-builds-no-editor).",
+        text: "JVM, cache, and `--build-server` details in the [Headless builds section of the getting-started guide](https://defold-typescript.github.io/toolchain/getting-started#headless-builds-no-editor).",
       },
     ],
   },
@@ -365,7 +364,7 @@ export const slides: Slide[] = [
       },
       {
         kind: "sidenote",
-        text: "Bundle targets and the `bob` toolchain are documented in the [Headless builds section of the getting-started guide](https://github.com/defold-typescript/toolchain/blob/main/packages/docs/guide/getting-started.md#headless-builds-no-editor).",
+        text: "Bundle targets and the `bob` toolchain are documented in the [Headless builds section of the getting-started guide](https://defold-typescript.github.io/toolchain/getting-started#headless-builds-no-editor).",
       },
     ],
   },

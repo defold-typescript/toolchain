@@ -65,7 +65,7 @@ The two variants mirror the two self-typing idioms (see [Script lifecycle](scrip
 An expanded snippet emits every lifecycle hook the installed `@defold-typescript/types` declares. If your editor reports `<hook> does not exist in type 'ScriptHooks'` (and the parameters of that method turn implicitly `any`), work through it in this order:
 
 1. **Restart the TypeScript server first.** A stale language-server process keeps the old type surface in memory after a dependency upgrade, so the error survives even once the right types are on disk. In VS Code, run *TypeScript: Restart TS Server* from the command palette. This clears most false positives.
-2. **Then check the types version.** `fixed_update` and `late_update` need `@defold-typescript/types >= 0.5.0`; a project whose resolved types lag the CLI that wrote the snippets genuinely lacks those hooks. Upgrade the dependency. `bunx @defold-typescript/cli@latest init --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
+2. **Then check the types version.** `fixed_update` and `late_update` need `@defold-typescript/types >= 0.5.0`; a project whose resolved types lag the CLI that wrote the snippets genuinely lacks those hooks. Upgrade the dependency. `bunx @defold-typescript/cli@latest init . --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
 
 Edit TypeScript under `src/`. Treat generated `.ts.script`/`.ts.gui_script`/`.ts.render_script` component files, helper `.lua` modules, and their `.map` siblings next to your sources as build output; the scaffolded `.gitignore` keeps them out of version control.
 
@@ -87,7 +87,9 @@ If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` (below) give
 
 - **`defold-typescript:build`** — `bunx @defold-typescript/cli build`. Builds once with the project's CLI.
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
-- **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
-- **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init --force` then `bun install`. The deliberate upgrade path.
+- **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents .`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
+- **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init . --force` then `bun install`. The deliberate upgrade path.
 
-Build and watch carry no version tag, so inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` scaffolds as a pinned devDependency — the build runs the version locked alongside the pinned `@defold-typescript/types`. Upgrade is the one task that intentionally pulls `@latest`: `init --force` re-pins both managed deps to the new CLI's version, and `bun install` reinstalls.
+Build and watch carry no version tag, so inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` scaffolds as a pinned devDependency — the build runs the version locked alongside the pinned `@defold-typescript/types`. Upgrade is the one task that intentionally pulls `@latest`: `init . --force` re-pins both managed deps to the new CLI's version, and `bun install` reinstalls.
+
+> **Upgrading from a pre-`init .` project.** `init` now requires an explicit destination, but a `mise.toml` scaffolded by an older CLI carries a `:upgrade` task that calls `init --force` with no path. The first `mise run defold-typescript:upgrade` therefore fails with `a destination folder is required`. Run `bunx @defold-typescript/cli@latest init . --force` once by hand: it rewrites the managed `mise.toml` blocks (the refresh runs on every `init`, not just `--force`) so the dotted `:upgrade` task lands on disk and the task works from then on.

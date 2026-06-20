@@ -3,11 +3,11 @@ toc-title: Existing project
 ---
 # Add TypeScript to an existing Defold project
 
-Use `bunx @defold-typescript/cli@latest init` inside a Defold project that already has `game.project`.
+Use `bunx @defold-typescript/cli@latest init .` inside a Defold project that already has `game.project`. The `.` names the current folder as the destination — `init` requires an explicit target and has no implicit current-folder default.
 
 ```sh
 cd my-existing-defold-game
-bunx @defold-typescript/cli@latest init
+bunx @defold-typescript/cli@latest init .
 bun install
 ```
 

@@ -3,7 +3,7 @@ toc-title: Transpile diagnostics
 ---
 # Live transpile diagnostics
 
-`bunx @defold-typescript/cli@latest init` scaffolds a TypeScript language-service plugin, `@defold-typescript/tstl-plugin`, into the generated `tsconfig.json`:
+`bunx @defold-typescript/cli@latest init .` scaffolds a TypeScript language-service plugin, `@defold-typescript/tstl-plugin`, into the generated `tsconfig.json`:
 
 ```jsonc
 {

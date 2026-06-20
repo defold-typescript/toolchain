@@ -231,6 +231,11 @@ export function dispatch(
 
   if (command === "init") {
     try {
+      if (rest[0] === undefined) {
+        throw new Error(
+          'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
+        );
+      }
       const { written } = runInit({
         cwd,
         force,
@@ -270,6 +275,11 @@ export function dispatch(
 
   if (command === "init-agents") {
     try {
+      if (rest[0] === undefined) {
+        throw new Error(
+          'defold-typescript init-agents: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
+        );
+      }
       const { written } = runInitAgents({ cwd });
       if (json) {
         io.stdout.write(renderResult({ command: "init-agents", written }));

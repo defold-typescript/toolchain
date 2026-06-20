@@ -28,12 +28,12 @@ run = "bunx @defold-typescript/cli setup-debug"
 ${MANAGED_MARKER}
 [tasks."defold-typescript:init-agents"]
 description = "Materialize or refresh the AGENTS.md / CLAUDE.md AI-harness contract with the defold-typescript CLI"
-run = "bunx @defold-typescript/cli init-agents"
+run = "bunx @defold-typescript/cli init-agents ."
 
 ${MANAGED_MARKER}
 [tasks."defold-typescript:upgrade"]
 description = "Upgrade the defold-typescript CLI to its latest release and re-pin the types dependency"
-run = ["bunx @defold-typescript/cli@latest init --force --suppress-install-reminder", "bun install"]
+run = ["bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder", "bun install"]
 `;
 
 // Drop every managed block (marker line through the next blank line or EOF),

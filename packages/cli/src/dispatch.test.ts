@@ -194,6 +194,44 @@ describe("dispatch", () => {
     expect(out()).not.toContain("main/main.script");
   });
 
+  test("init with no destination folder returns 1 and writes nothing", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["init"], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain("a destination folder is required");
+    expect(existsSync(path.join(cwd, "game.project"))).toBe(false);
+  });
+
+  test("init with no destination folder --json emits an error envelope", () => {
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["init", "--json"], io);
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as { command: string; ok: boolean; error: string };
+    expect(parsed.command).toBe("init");
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toContain("a destination folder is required");
+  });
+
+  test('init "." scaffolds into the current folder', () => {
+    const { io, err } = captureStreams();
+    const previous = process.cwd();
+    process.chdir(cwd);
+    try {
+      const code = dispatch(["init", "."], io);
+
+      expect(code).toBe(0);
+      expect(err()).toBe("");
+      expect(existsSync(path.join(cwd, "game.project"))).toBe(true);
+    } finally {
+      process.chdir(previous);
+    }
+  });
+
   test("init-agents writes both files and returns 0", () => {
     const { io, err } = captureStreams();
 
@@ -215,6 +253,17 @@ describe("dispatch", () => {
     expect(parsed.command).toBe("init-agents");
     expect(parsed.ok).toBe(true);
     expect(parsed.written).toEqual(["AGENTS.md", "CLAUDE.md"]);
+  });
+
+  test("init-agents with no destination folder returns 1 and writes nothing", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["init-agents"], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain("a destination folder is required");
+    expect(existsSync(path.join(cwd, "AGENTS.md"))).toBe(false);
   });
 
   test("empty argv prints usage to stderr and returns 1", () => {

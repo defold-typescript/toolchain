@@ -32,8 +32,8 @@
   font-family: "JetBrains Mono Fallback";
   src: local("Courier New"), local("Courier");
   size-adjust: 100%;
-  ascent-override: 102.0%;
-  descent-override: 30.0%;
+  ascent-override: 102%;
+  descent-override: 30%;
   line-gap-override: 0%;
 }
 
@@ -47,8 +47,11 @@
  * `rounded-*` utilities automatically.
  */
 @theme {
-  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans:
+    "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace,
+    SFMono-Regular, Menlo, monospace;
 
   --color-bg: #ffffff;
   --color-surface: #f7f7f8;
@@ -206,7 +209,8 @@
     color: var(--color-accent);
     text-decoration: none;
     font-weight: 500;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-accent) 30%, transparent);
     transition: border-color 0.15s ease;
   }
 
@@ -414,6 +418,37 @@
   .prose img {
     max-width: 100%;
     border-radius: 8px;
+  }
+
+  /* Tailwind Preflight resets `img` to `display: block`, which stacks
+     consecutive badge images vertically. Shields badges read as inline chips
+     (as they do on GitHub, where images are not reset), so flow them inline
+     with a small gap and crisp corners. Scoped to badge sources so content
+     images (screenshots) keep their block layout. */
+  .prose img[src*="shields.io"] {
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 3px;
+    margin-right: 0.25rem;
+  }
+
+  /* Badge links are chips, not prose links — drop the `.prose a` underline.
+     The `.badge-link` class is added in markdown.ts to any link wrapping an
+     image. The matching override must ALSO live (unlayered) in critical.css:
+     its unlayered `.prose a` outranks this layered rule regardless of
+     specificity, exactly as for `.prose a.heading-anchor`. */
+  .prose a.badge-link {
+    border-bottom: none;
+  }
+
+  /* External-link out icon (Phosphor duotone), appended inside `a.external` by
+     markdown.ts. Tailwind Preflight resets `svg` to `display: block`, so flow
+     it inline with a hair of space; opacity softens it against the link text. */
+  .prose a.external .external-icon {
+    display: inline-block;
+    vertical-align: -0.1em;
+    margin-left: 0.15em;
+    opacity: 0.7;
   }
 
   .search-snippet mark {
