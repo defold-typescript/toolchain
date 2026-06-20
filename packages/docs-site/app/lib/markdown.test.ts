@@ -5,7 +5,7 @@ import { renderMarkdown } from "./markdown";
 describe("renderMarkdown", () => {
   test("renders a heading to <h1>", async () => {
     const html = await renderMarkdown("# Title\n");
-    expect(html).toMatch(/<h1[^>]*>Title<\/h1>/);
+    expect(html).toMatch(/<h1[^>]*>Title/);
   });
 
   test("assigns a slug id to h2 headings for the TOC to link to", async () => {
@@ -39,9 +39,10 @@ describe("renderMarkdown", () => {
     expect(headings[0]?.text).toBe("Hello world");
   });
 
-  test("leaves h1 untouched (no heading-anchor)", async () => {
-    const html = await renderMarkdown("# Title\n");
-    expect(html).not.toContain("heading-anchor");
+  test("anchors h1 headings with a slug id and a heading-anchor permalink", async () => {
+    const html = await renderMarkdown("# Hello World\n");
+    expect(html).toMatch(/<h1[^>]*id="hello-world"/);
+    expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#hello-world"/);
   });
 
   test("injects a heading-anchor permalink into h3 headings", async () => {
