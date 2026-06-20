@@ -7,7 +7,7 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 - Use Bun for everything: install, run, test. Never invoke `npm` or `node` directly.
 - Lint and format with Biome (`bun run lint`, `bun run lint:fix`). Do not introduce ESLint or Prettier.
 - Do not add comments unless the *why* is non-obvious. Names should carry intent.
-- Keep `docs/guide/` current as features land; a user-visible command, flag, type, or workflow change updates the relevant guide page in the same body of work.
+- Keep `packages/docs/guide/` current as features land; a user-visible command, flag, type, or workflow change updates the relevant guide page in the same body of work.
 - Never commit without an explicit human request, unless the active skill workflow calls for it.
 
 ## Layout invariants
@@ -26,4 +26,4 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 
 ## Agent runbooks
 
-- Procedures for driving the CLI from an automated agent live in [`docs/guide/agent-runbooks.md`](docs/guide/agent-runbooks.md).
+- Procedures for driving the CLI from an automated agent live in [`packages/docs/guide/agent-runbooks.md`](packages/docs/guide/agent-runbooks.md).
