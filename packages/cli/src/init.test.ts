@@ -167,6 +167,7 @@ describe("runInit (add-TS mode)", () => {
       "@defold-typescript/cli": TYPES_SPEC,
       "@defold-typescript/tstl-plugin": TYPES_SPEC,
       "@biomejs/biome": "^2.2.0",
+      "@types/bun": "latest",
     });
   });
 
@@ -181,6 +182,15 @@ describe("runInit (add-TS mode)", () => {
     expect(pkg.devDependencies["@defold-typescript/cli"]).toBe(TYPES_SPEC);
     expect(pkg.devDependencies["@defold-typescript/cli"]).not.toBe("workspace:*");
     expect(pkg.devDependencies["@defold-typescript/transpiler"]).toBeUndefined();
+  });
+
+  test("adds @types/bun so the .vscode/defold-debug.ts launcher's node/Bun imports resolve", () => {
+    touch("game.project", "[project]\n");
+
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg.devDependencies["@types/bun"]).toBe("latest");
   });
 
   test("seeds the defold-version pin with current-stable in a fresh package.json", () => {
@@ -245,6 +255,24 @@ describe("runInit (add-TS mode)", () => {
     expect(gitignore).toMatch(/^src\/\*\*\/\*\.ts\.script\.map$/m);
     expect(gitignore).toMatch(/^src\/\*\*\/\*\.lua$/m);
     expect(gitignore).toMatch(/^src\/\*\*\/\*\.lua\.map$/m);
+  });
+
+  test("scaffolded .gitignore ignores node_modules", () => {
+    touch("game.project", "[project]\n");
+
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    expect(gitignore).toMatch(/^node_modules$/m);
+  });
+
+  test("scaffolded .gitignore ignores the engine binary the debug launcher downloads", () => {
+    touch("game.project", "[project]\n");
+
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    expect(gitignore).toMatch(/^\.vscode\/dmengine\*$/m);
   });
 
   test("scaffolded .gitignore and biome.json exclude the gui/render-script suffixes too", () => {
