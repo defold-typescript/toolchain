@@ -33,13 +33,9 @@ run = "bun scripts/release-pack-proof.ts"
 description = "Advisory live ref-doc delta verifier — network-touching, not a CI gate"
 run = "bun run ref-doc-delta"
 
-[tasks.publish]
-description = "Coordinated local npm publish (tags v<version> on success). Usage: mise run publish [<version>|patch|minor|major] [--publish] (dry-run without --publish)"
-run = "bun scripts/publish.ts"
-
-[tasks.push-tag]
-description = "Fallback: manually tag a version already published by `mise run publish`. Usage: mise run push-tag <version>"
-run = "bun scripts/push-tag.ts"
+[tasks.trust-publishers]
+description = "One-time npm OIDC trusted-publisher setup for all workspace packages (needs npm >= 11.10.0 + npm login). Usage: mise run trust-publishers [--list]"
+run = "bun scripts/trust-publishers.ts"
 
 [tasks."example:build"]
 description = "Compile the platformer example (docs/examples/platformer) once with the local working-tree CLI"

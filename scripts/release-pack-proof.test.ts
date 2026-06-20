@@ -1,10 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { PACKAGES as PUBLISH_PACKAGES } from "./publish.ts";
 import { checkCoordinatedDeps, PACKAGES } from "./release-pack-proof.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
+const PACKAGES_DIR = path.join(REPO_ROOT, "packages");
+
+interface Manifest {
+  readonly name?: string;
+  readonly private?: boolean;
+  readonly dependencies?: Record<string, string>;
+}
+
+function readManifest(dir: string): Manifest {
+  return JSON.parse(readFileSync(path.join(PACKAGES_DIR, dir, "package.json"), "utf8"));
+}
 
 function miseTaskBody(toml: string, task: string): string | null {
   const lines = toml.split("\n");
@@ -82,7 +92,21 @@ describe("pack-proof covers the coordinated release set", () => {
     expect(PACKAGES.indexOf("tstl-plugin")).toBeLessThan(PACKAGES.indexOf("cli"));
   });
 
-  test("PACKAGES equals the coordinated set in publish.ts (drift guard)", () => {
-    expect([...PACKAGES]).toEqual([...PUBLISH_PACKAGES]);
+  // Workspace-parity guard (relocated from the retired publish.ts test): without
+  // it, extracting a new publishable package (as `docs` was) silently leaves it
+  // out of the release set — its workspace:* deps would never resolve.
+  test("PACKAGES lists exactly the publishable packages/* dirs", () => {
+    const publishable = readdirSync(PACKAGES_DIR, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .filter((dir) => readManifest(dir).private !== true)
+      .sort();
+    expect([...PACKAGES].sort()).toEqual(publishable);
+  });
+
+  test("each PACKAGES dir maps to its @defold-typescript/<dir> package name", () => {
+    for (const dir of PACKAGES) {
+      expect(readManifest(dir).name).toBe(`@defold-typescript/${dir}`);
+    }
   });
 });
