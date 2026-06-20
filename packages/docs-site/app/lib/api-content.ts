@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { type ApiPage, loadApiSurface } from "./api-surface";
+import type { ApiPage } from "./api-surface";
+import { loadApiSurface } from "./api-surface-loader";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
 
