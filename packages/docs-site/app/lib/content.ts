@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseFrontmatter } from "./frontmatter";
-import { type GuidePage, listGuidePages } from "./guide";
+import type { GuidePage } from "./guide";
+import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";
 
 // process.cwd()-relative on purpose: under the Vite/rolldown SSG build the module
