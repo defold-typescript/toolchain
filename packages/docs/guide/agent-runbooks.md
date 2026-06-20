@@ -27,6 +27,84 @@ created or updated; on `false`, read `error` for the failure reason. Some verbs
 add fields to the success envelope (noted per runbook), but `command`, `ok`, and
 either `written` or `error` are always present.
 
+## Verify against the real API surface
+
+This section governs every runbook below it. Before answering any "how do I…"
+question about a Defold symbol, **confirm the symbol against the installed
+surface** — that it exists, its namespace, and its exact signature. An agent's
+default instinct is wrong here: the Lua-first manuals at defold.com and the
+`ts-defold` (`@ts-defold/types`) lore baked into training both describe surfaces
+that **diverge** from this toolchain's. Never emit a signature from training,
+from `ts-defold`, or from a raw Lua doc without first checking it exists in the
+materialized `.defold-types/` surface or the installed `@defold-typescript/types`
+package. When recollection and the on-disk surface disagree, the surface wins.
+
+### Where the truth lives (reachable-surface map)
+
+In a consumer project an agent can read only these; everything else (the
+generation pipeline, fixtures, monorepo planning docs) is contributor-only and
+absent from an install:
+
+| Location | What it holds | When it exists |
+| -------- | ------------- | -------------- |
+| `.defold-types/<surfaceId>/*.d.ts` | the pinned ambient engine surface (e.g. `.defold-types/defold-1.12.4/`) | after `build`; gitignored but on disk |
+| `node_modules/@defold-typescript/types/generated/*.d.ts` | namespace signatures (`go`, `vmath`, `factory`, …) | always, once installed |
+| `node_modules/@defold-typescript/types/src/` | the three factories (`lifecycle.ts`) and the narrowing guards (`message-guard.d.ts`, `message-dispatch.d.ts`, `window-event-guard.d.ts`) | always, once installed |
+| `node_modules/@defold-typescript/docs/guide/*.md` | this guide, refreshed on every install | always, once installed |
+| `packages/types/generated`, `packages/types/fixtures`, `packages/types/scripts` | generator inputs and outputs — **contributor-only** | only in a clone of this monorepo |
+
+The installed-guide pointer is the one the `init-agents` managed block writes:
+`node_modules/@defold-typescript/docs/guide/README.md`.
+
+### Confirm a signature
+
+Read the signature from the namespace declaration instead of recalling it. Grep
+the generated `.d.ts` for the function:
+
+```sh
+grep -rn "function create" node_modules/@defold-typescript/types/generated/
+```
+
+Quote what the surface declares as authoritative — for `factory.create` it is
+`factory.create(url, position?, rotation?, properties?, scale?): Hash`. If the
+grep returns nothing, the symbol does not exist on this surface; do not invent
+it.
+
+### Reach upstream Lua docs and convert
+
+Defold's own manuals and API reference are Lua-first. When the mechanic you need
+is only documented there, run the conversion loop: **locate the mechanic** in
+the Lua docs -> **find its namespace** in the generated `.d.ts` -> **confirm the
+signature** as above -> **translate the idioms** to the TypeScript surface.
+
+| Lua idiom | TypeScript surface |
+| --------- | ------------------ |
+| `function init(self) … end` | `defineScript({ init() { … } })` |
+| `obj:method(a)` | `obj.method(a)` (method form) |
+| `local x, y = f()` (multi-return) | `const [x, y] = f()` / `LuaMultiReturn` |
+| `hash("player")` | `hash("player")`, or a pre-hashed `Hash` id |
+| `msg.post("#comp", "msg", {})` | `msg.post("#comp", "msg", {})` |
+
+### Fetch upstream on demand (gitignored, not a submodule)
+
+When you need the engine's own API data or source, pull it on demand into a
+gitignored path — **do not add a `defold/defold` git submodule**. A submodule is
+a multi-GB tree pinned to one engine SHA that every clone then carries; the API
+data you actually need is the few-hundred-KB `ref-doc.zip` the type generator
+already consumes, cached at `~/.cache/defold-typescript/ref-doc/<version>/`
+(`DEFOLD_TYPESCRIPT_CACHE` overrides the cache root). Read the cached
+`ref-doc.zip` there, or for the rare source-reading case shallow-clone
+`defold/defold` into a gitignored dir. This is a cached download, **not a
+submodule** — the on-demand fetch keeps the repo small.
+
+### The verification loop
+
+Once converted, prove it compiles before handing it back: write the snippet, run
+`build --json`, and on `ok: false` read the `error` span, fix the source, and
+rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
+[script lifecycle](./script-lifecycle.md) page covers which hooks and which
+`self` typing each script kind exposes.
+
 ## Scaffold a project
 
 **Goal:** create a new TypeScript surface — either a fresh project, or the
@@ -87,7 +165,7 @@ above or below the block survive re-runs untouched. If `AGENTS.md` already exist
 without the markers, the block is appended after one blank line and your prior
 content is left intact; a `CLAUDE.md` that already equals `@AGENTS.md` is left
 byte-for-byte unchanged. The block is versionless — its guide pointer resolves to
-`node_modules/@defold-typescript/cli/docs/guide/README.md`, which the install
+`node_modules/@defold-typescript/docs/guide/README.md`, which the install
 swaps under the same path — so the verb is safe to re-run any time.
 
 **Returns:**
