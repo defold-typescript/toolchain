@@ -10,7 +10,8 @@
     "dev": "bun run build-indexes && vite",
     "build": "bun run build-indexes && vite build --mode client && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@hono/vite-ssg": "^0.3.3",
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4",
     "@types/markdown-it": "^14.1.2",
     "tailwindcss": "^4",

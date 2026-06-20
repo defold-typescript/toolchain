@@ -1,6 +1,7 @@
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
 import Search from "../islands/search";
+import SidebarToggle from "../islands/sidebar-toggle";
 import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
@@ -210,8 +211,9 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         ) : null}
       </head>
       <body class="min-h-screen bg-bg text-text antialiased">
-        <header class="topbar-critical sticky top-0 z-30 flex h-14 items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur">
-          <div class="mx-auto flex h-14 w-full items-center gap-6">
+        <header class="topbar-critical sticky top-0 z-30 flex items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur">
+          <div class="mx-auto flex w-full flex-wrap items-center gap-x-6 gap-y-2 py-2 lg:h-14 lg:flex-nowrap lg:gap-y-0 lg:py-0">
+            <SidebarToggle />
             <a
               class="flex items-center gap-2 text-[15px] font-semibold tracking-tight"
               href={withBase("/")}
@@ -225,7 +227,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               />
               <span>defold-typescript</span>
             </a>
-            <nav class="flex flex-1 items-center gap-1 text-sm">
+            <nav class="order-last flex w-full basis-full items-center gap-1 overflow-x-auto text-sm lg:order-none lg:w-auto lg:flex-1 lg:basis-auto lg:overflow-visible">
               {nav.map((category) => (
                 <CategoryLink
                   key={category.id}
@@ -234,7 +236,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
                 />
               ))}
             </nav>
-            <div class="flex items-center gap-2">
+            <div class="ml-auto flex items-center gap-2 lg:ml-0">
               <Search />
               <ThemeToggle />
             </div>
@@ -242,7 +244,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         </header>
 
         <div class="mx-auto flex w-full gap-10 px-6">
-          <aside class="hidden w-60 shrink-0 lg:block">
+          <aside id="sidebar" data-testid="sidebar" class="sidebar-drawer w-60 shrink-0">
             <div
               data-sidebar-scroll
               class="sticky top-14 max-h-[calc(100vh-4.5rem)] overflow-y-auto py-8 pr-2"
@@ -250,6 +252,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               <SidebarNav category={activeCategory} path={path} />
             </div>
           </aside>
+          <div data-testid="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true" />
 
           <main class="min-w-0 flex-1">
             <div class="flex gap-10 py-10">

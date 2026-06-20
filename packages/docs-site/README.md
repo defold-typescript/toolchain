@@ -33,6 +33,26 @@ Guide pages are served by the single dynamic `app/routes/[slug].tsx` route, whos
 `ssgParams` enumerates every non-index `packages/docs/guide/*.md` slug so each prerenders to
 `dist/<slug>.html` — no per-slug route files to keep in sync.
 
+## Test the responsive chrome (Playwright)
+
+The narrow-screen chrome — the topic nav wrapping to a second row and the left
+sidebar collapsing into an off-canvas drawer — is the one surface a real browser
+must assert, so it lives in an opt-in Playwright spec kept out of root `ci`
+(which stays browser-free). The spec is named `*.e2e.ts` so Bun's `bun test`
+runner never picks it up.
+
+One-time, install the chromium browser binary:
+
+```sh
+bunx playwright install chromium
+```
+
+Then run the responsive spec (it boots `bun run dev` on port 5173 automatically):
+
+```sh
+bun --filter @defold-typescript/docs-site run test:e2e
+```
+
 ## Deploy (Cloudflare Pages)
 
 `wrangler.jsonc` sets `pages_build_output_dir` to `dist`. After a build:
@@ -66,6 +86,10 @@ CI automation for deploys is a later slice.
   and per-namespace reference pages.
 - `app/islands/theme-toggle.tsx` — the hydrated dark/light switch (system fallback,
   localStorage, no flash on reload).
+- `app/islands/sidebar-toggle.tsx` + `app/islands/sidebar-state.ts` — the `<lg`
+  sidebar-drawer toggle. The island flips `html[data-sidebar]` (the `data-theme`
+  cross-island precedent) and CSS in `styles.css` reveals the off-canvas drawer;
+  the pure open/close helpers live in `sidebar-state.ts` and are unit-tested.
 - `app/islands/search.tsx` — the client-side prose search.
 - `app/islands/toc.tsx` — the right-side table of contents with scroll-spy.
 - `app/styles.css` — Tailwind v4 entry plus the custom `.prose` styles, design

@@ -22,6 +22,7 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 - `bun test` runs the full suite from the repo root.
 - Co-locate unit tests next to the source: `foo.ts` ↔ `foo.test.ts`.
 - Snapshot transpiler output for representative inputs; do not assert on Lua substrings.
+- Browser end-to-end specs use the `*.e2e.ts` suffix so root `bun test` (which auto-discovers `*.test.ts`/`*.spec.ts`) skips them; run them via a package-local opt-in command (docs-site `test:e2e`, Playwright), never in `ci`.
 
 ## Agent runbooks
 
