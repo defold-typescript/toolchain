@@ -14,7 +14,7 @@
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "bun run --filter '*' typecheck && tsc -p scripts/tsconfig.json && tsc -p test/tsconfig.json",
     "smoke": "bun scripts/release-smoke.ts",
     "registry-smoke": "bun scripts/registry-smoke.ts",
     "pack-proof": "bun scripts/release-pack-proof.ts",

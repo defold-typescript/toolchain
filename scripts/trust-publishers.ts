@@ -73,8 +73,8 @@ function requireNpmVersion(): void {
   const { code, output } = run(["npm", "-v"]);
   if (code !== 0) die("npm not found on PATH");
   const v = output.trim();
-  const [major, minor] = v.split(".").map(Number);
-  if (major < 11 || (major === 11 && (minor ?? 0) < 10)) {
+  const [major = 0, minor = 0] = v.split(".").map(Number);
+  if (major < 11 || (major === 11 && minor < 10)) {
     die(`npm ${v} is too old for \`npm trust\` (need >= 11.10.0). Run: npm install -g npm@latest`);
   }
 }

@@ -101,7 +101,9 @@ describe("pack-proof covers the coordinated release set", () => {
       .map((e) => e.name)
       .filter((dir) => readManifest(dir).private !== true)
       .sort();
-    expect([...PACKAGES].sort()).toEqual(publishable);
+    // publishable (string[]) as the received value so the literal PACKAGES
+    // tuple-union widens to it rather than the reverse (which tsc rejects).
+    expect(publishable).toEqual([...PACKAGES].sort());
   });
 
   test("each PACKAGES dir maps to its @defold-typescript/<dir> package name", () => {
