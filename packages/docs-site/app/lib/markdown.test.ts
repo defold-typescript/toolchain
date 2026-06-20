@@ -5,7 +5,7 @@ import { renderMarkdown } from "./markdown";
 describe("renderMarkdown", () => {
   test("renders a heading to <h1>", async () => {
     const html = await renderMarkdown("# Title\n");
-    expect(html).toMatch(/<h1[^>]*>Title/);
+    expect(html).toMatch(/<h1[^>]*>.*Title.*<\/h1>/);
   });
 
   test("assigns a slug id to h2 headings for the TOC to link to", async () => {
@@ -30,6 +30,11 @@ describe("renderMarkdown", () => {
   test("injects a heading-anchor permalink into h2 headings", async () => {
     const html = await renderMarkdown("## Hello world\n");
     expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#hello-world"/);
+  });
+
+  test("wraps the heading text in the permalink anchor so the whole title is clickable", async () => {
+    const html = await renderMarkdown("## Hello world\n");
+    expect(html).toMatch(/<a class="heading-anchor" href="#hello-world"[^>]*>Hello world/);
   });
 
   test("the injected anchor does not pollute the extracted TOC text", async () => {
