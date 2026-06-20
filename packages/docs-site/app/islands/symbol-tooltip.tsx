@@ -2,8 +2,15 @@ import { useEffect, useRef, useState } from "hono/jsx";
 import { withBase } from "../lib/base";
 import type { SymbolEntry } from "../lib/symbol-index";
 import { isSelfReference, normalizeSymbolKey } from "../lib/symbol-self";
+import { tooltipPosition } from "../lib/tooltip-position";
 
-type ActiveTip = { brief: string; route: string; top: number; left: number } | null;
+type ActiveTip = {
+  brief: string;
+  route: string;
+  top: number;
+  left: number;
+  maxHeight: number;
+} | null;
 
 // The symbol an element's prose belongs to: an `.api-symbol-body` is rendered
 // right after its `### signature` heading, so the owning symbol is that
@@ -70,16 +77,13 @@ export default function SymbolTooltip() {
           const show = () => {
             cancelHide();
             const rect = el.getBoundingClientRect();
-            // The card is `position: fixed` at most `max-w-xs` (320px) wide. Anchoring
-            // it to the symbol's left clips it off the viewport's right edge for
-            // symbols near the right side, so clamp the left into [margin, innerWidth -
-            // cardWidth - margin] — the card right-aligns near the edge instead of
-            // overflowing.
-            const CARD_MAX_W = 320;
-            const MARGIN = 8;
-            const maxLeft = window.innerWidth - CARD_MAX_W - MARGIN;
-            const left = Math.max(MARGIN, Math.min(rect.left, maxLeft));
-            setTip({ brief, route, top: rect.bottom + 8, left });
+            const { top, left, maxHeight } = tooltipPosition({
+              rectLeft: rect.left,
+              rectBottom: rect.bottom,
+              innerWidth: window.innerWidth,
+              innerHeight: window.innerHeight,
+            });
+            setTip({ brief, route, top, left, maxHeight });
           };
           el.addEventListener("pointerenter", show);
           el.addEventListener("focus", show);
@@ -159,13 +163,20 @@ export default function SymbolTooltip() {
           role="tooltip"
           onPointerEnter={cancelHide}
           onPointerLeave={scheduleHide}
-          class="fixed z-50 max-w-xs rounded-md border border-border-strong bg-surface px-3 py-2 text-sm leading-relaxed text-text shadow-lg"
-          style={{ top: `${tip.top}px`, left: `${tip.left}px` }}
+          class="fixed z-50 flex max-w-xs flex-col rounded-md border border-border-strong bg-surface px-3 py-2 text-sm leading-relaxed text-text shadow-lg"
+          style={{ top: `${tip.top}px`, left: `${tip.left}px`, maxHeight: `${tip.maxHeight}px` }}
         >
-          {tip.brief ? <p class="text-text-muted">{tip.brief}</p> : null}
-          <a href={withBase(tip.route)} class="mt-1 block font-medium text-accent hover:underline">
+          <a
+            href={withBase(tip.route)}
+            class="block shrink-0 font-medium text-accent hover:underline"
+          >
             View reference →
           </a>
+          {tip.brief ? (
+            <div class="mt-1 min-h-0 overflow-y-auto">
+              <p class="text-text-muted">{tip.brief}</p>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
