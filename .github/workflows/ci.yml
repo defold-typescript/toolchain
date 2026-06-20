@@ -1,7 +1,12 @@
 name: CI
 
 on:
+  # Branch pushes and PRs only — NOT tag pushes. A v* tag is handled by
+  # release.yml (which runs its own gate before publishing) and always points
+  # at an already-CI-green main commit, so running CI here would just burn a
+  # full matrix re-running the same commit.
   push:
+    branches: ["**"]
   pull_request:
 
 jobs:
