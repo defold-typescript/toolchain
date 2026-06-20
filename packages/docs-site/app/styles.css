@@ -159,6 +159,7 @@
   }
 
   .prose h1 {
+    position: relative;
     font-size: 2rem;
     line-height: 1.2;
     font-weight: 700;
@@ -166,6 +167,7 @@
     margin-top: 0;
     margin-bottom: 0.6em;
     color: var(--color-text);
+    scroll-margin-top: 5rem;
   }
 
   .prose h2 {
@@ -192,8 +194,8 @@
     scroll-margin-top: 5rem;
   }
 
-  .prose :is(h2, h3) {
-    --heading-anchor-shift: 1.4em;
+  .prose :is(h1, h2, h3) {
+    --heading-anchor-shift: 1.1em;
     padding-left: 0;
     transition: padding-left 0.2s ease-in-out;
   }
@@ -233,7 +235,8 @@
     opacity: 0;
     color: var(--color-text-faint);
     border-bottom: none;
-    transition: opacity 0.2s ease-in-out;
+    transform: translateX(-0.5em);
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   }
 
   .heading-anchor svg {
@@ -245,20 +248,22 @@
     color: var(--color-accent-strong);
   }
 
-  .prose :is(h2, h3):hover,
-  .prose :is(h2, h3)[data-current] {
+  .prose :is(h1, h2, h3):hover,
+  .prose :is(h1, h2, h3)[data-current] {
     padding-left: var(--heading-anchor-shift);
   }
 
   .prose :is(h2, h3)[data-current] .heading-anchor {
     opacity: 0.9;
     color: var(--color-accent-strong);
+    transform: translateX(0);
   }
 
-  .prose :is(h2, h3):hover .heading-anchor,
+  .prose :is(h1, h2, h3):hover .heading-anchor,
   .heading-anchor:focus-visible {
     opacity: 1;
     color: var(--color-accent);
+    transform: translateX(0);
   }
 
   .prose strong {
@@ -575,7 +580,12 @@
     transition: none;
   }
 
-  .prose :is(h2, h3) {
+  .prose :is(h1, h2, h3) {
     transition: none;
+  }
+
+  .prose a.heading-anchor {
+    transition: none;
+    transform: none;
   }
 }
