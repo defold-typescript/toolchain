@@ -438,3 +438,163 @@ that compile clean but surprise under Lua, and
 [Transpile diagnostics](./transpile-diagnostics.md) for what the diagnostic pass
 surfaces. Repeat until `ok` is `true`, then read `written` as in
 [Add a script](#add-a-script).
+
+## Combine components on a game object
+
+**Goal:** put several components — scripts, a sprite, a collision object — on one
+game object and let them cooperate.
+
+One `.go` (or an `embedded_instances` block inside a `.collection`) lists each
+component under its own `id`. A script reaches a *sibling* component on the same
+object by that `#`-prefixed id — no path is needed because they share the object.
+The platformer's [`game/player.collection`](../examples/platformer/game/player.collection)
+embeds the player script next to its sprite and collision object exactly this
+way; the [Add a script](#add-a-script) runbook shows the `embedded_instances`
+form to write when editing the scene file directly.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  on_input(self, action_id) {
+    if (action_id === hash("jump")) {
+      // "#" addresses a sibling component on this same game object.
+      msg.post("#animator", "play_animation", { id: hash("jump") });
+    }
+  },
+});
+```
+
+Confirm each id names a real component and the snippet builds — see
+[Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Spawn objects with a factory
+
+**Goal:** create new game objects at runtime from a prototype.
+
+Add a `.factory` component to a game object and point it at the prototype `.go`.
+At runtime, `factory.create(url, position?, rotation?, properties?, scale?)`
+returns the spawned object's id as a `Hash`. The fourth argument, `properties`,
+seeds the new script's `self` before its `init` runs, so each spawned instance
+can start with its own state.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    // properties (4th arg) seed the spawned script's self before its init runs.
+    const enemy = factory.create("#enemyfactory", undefined, undefined, {
+      health: 100,
+    });
+    return { lastSpawned: enemy };
+  },
+});
+```
+
+Confirm `factory.create` against
+`node_modules/@defold-typescript/types/generated/factory.d.ts` and build the
+snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Spawn a hierarchy with a collection factory
+
+**Goal:** spawn a whole tree of game objects in one call.
+
+A `.collectionfactory` component points at a `.collection`. Unlike `factory`,
+`collectionfactory.create(url, position?, rotation?, properties?, scale?)` returns
+a `LuaMap<Hash, Hash>` mapping each prototype id in the collection to the runtime
+id it was spawned as. Read one spawned object out of the map with
+`.get(prototypeId)`, keyed by the `/`-prefixed path the collection gives it.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    const ids = collectionfactory.create("#levelfactory");
+    // Read one spawned object out of the map by its prototype id.
+    const player = ids.get(hash("/player"));
+    return { player };
+  },
+});
+```
+
+Confirm `collectionfactory.create` against
+`node_modules/@defold-typescript/types/generated/collectionfactory.d.ts` and build
+the snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Pass messages between components
+
+**Goal:** send a message from one component to another and receive it typed.
+
+`msg.post(receiver, message_id, message?)` addresses the receiver by a URL
+string. Two forms cover most cases: `"#component"` reaches a sibling component on
+the *same* game object, and `"/object#component"` reaches a named component on a
+*different* object. The receiver handles it in `on_message`; to narrow the
+untyped payload by `message_id` without `typeof`/`as`, reuse the guard from
+[Narrow engine callback payloads](#narrow-engine-callback-payloads) rather than
+re-deriving it here.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  update(self) {
+    // "#…" → sibling on this object; "/path#…" → a component on another object.
+    msg.post("#health", "damage", { amount: 10 });
+    msg.post("/enemy#ai", "alert");
+  },
+});
+```
+
+Confirm each address resolves and the snippet builds — see
+[Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Where script state lives
+
+**Goal:** decide whether a piece of mutable state belongs on `self` or in a
+module.
+
+Per-instance state belongs on the typed `self`: `init`'s returned object is
+copied onto `self` for *that* component instance, so two objects running the same
+script keep independent values. A module-level `let`/`const` behaves differently,
+and the build shows how — this source:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+// Module-level: one value, not per-instance.
+let spawnCount = 0;
+
+export default defineScript({
+  init() {
+    // Per-instance: copied onto this component's self.
+    return { health: 100 };
+  },
+  update(self) {
+    self.health -= 1;
+    spawnCount += 1;
+  },
+});
+```
+
+compiles `spawnCount` to a single Lua **module local** evaluated once, while
+`health` is assigned onto each instance's `self`:
+
+```lua
+local spawnCount = 0
+function init(self)
+    -- self.health is set per instance
+end
+function update(____self)
+    ____self.health = ____self.health - 1
+    spawnCount = spawnCount + 1
+end
+```
+
+Because Defold loads each module once via `require` and caches it, that module
+local is **shared by every component instance that requires the module** — it is
+not per-instance state. Reach for a module local only for constants or a
+deliberately-shared singleton; keep anything each instance must own its own copy
+of on `self`. The full `self` typing model — how `init` infers it and how
+`properties` seed it — is in [Script lifecycle](./script-lifecycle.md).

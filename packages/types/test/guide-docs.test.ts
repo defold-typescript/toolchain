@@ -401,3 +401,65 @@ describe("docs/guide/agent-runbooks.md verify-against-real-api section", () => {
     expect(body).toContain("not a submodule");
   });
 });
+
+describe("docs/guide/agent-runbooks.md topical runbooks", () => {
+  function section(body: string, heading: string, next?: string): string {
+    const start = body.indexOf(heading);
+    expect(start).toBeGreaterThan(-1);
+    const end = next ? body.indexOf(next, start + heading.length) : body.length;
+    return body.slice(start, end === -1 ? body.length : end);
+  }
+
+  test("carries all five topical runbook headings", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    expect(body).toContain("## Combine components on a game object");
+    expect(body).toContain("## Spawn objects with a factory");
+    expect(body).toContain("## Spawn a hierarchy with a collection factory");
+    expect(body).toContain("## Pass messages between components");
+    expect(body).toContain("## Where script state lives");
+  });
+
+  test("the factory section names factory.create and the collection-factory section names collectionfactory.create", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const factory = section(
+      body,
+      "## Spawn objects with a factory",
+      "## Spawn a hierarchy with a collection factory",
+    );
+    expect(factory).toContain("factory.create");
+    const collectionFactory = section(
+      body,
+      "## Spawn a hierarchy with a collection factory",
+      "## Pass messages between components",
+    );
+    expect(collectionFactory).toContain("collectionfactory.create");
+  });
+
+  test("the messaging section links the narrowing runbook without duplicating the guard docs", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const messaging = section(
+      body,
+      "## Pass messages between components",
+      "## Where script state lives",
+    );
+    expect(messaging).toContain("#narrow-engine-callback-payloads");
+    // The guard runbook stays singular — messaging links it, never re-derives it.
+    const guardHeadings = body.split("## Narrow engine callback payloads").length - 1;
+    expect(guardHeadings).toBe(1);
+  });
+
+  test("the state section cross-links script-lifecycle.md and that target resolves", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const state = section(body, "## Where script state lives");
+    expect(state).toContain("script-lifecycle.md");
+    expect(await Bun.file(resolve(GUIDE, "script-lifecycle.md")).exists()).toBe(true);
+  });
+
+  test("the state section contrasts per-instance self with a shared module global", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const state = section(body, "## Where script state lives");
+    expect(state).toContain("self");
+    expect(state).toContain("module local");
+    expect(state).toContain("shared");
+  });
+});
