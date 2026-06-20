@@ -9,6 +9,10 @@ const topicNav = (page: import("@playwright/test").Page) => page.locator("header
 const sidebar = (page: import("@playwright/test").Page) => page.getByTestId("sidebar");
 const toggle = (page: import("@playwright/test").Page) => page.getByTestId("sidebar-toggle");
 const backdrop = (page: import("@playwright/test").Page) => page.getByTestId("sidebar-backdrop");
+const logoTitle = (page: import("@playwright/test").Page) => page.getByTestId("logo-title");
+const logoIcon = (page: import("@playwright/test").Page) => page.locator("header .logo-mark");
+const githubLink = (page: import("@playwright/test").Page) =>
+  page.getByRole("link", { name: "GitHub repository" });
 
 async function boxOf(locator: ReturnType<typeof topicNav>) {
   const box = await locator.boundingBox();
@@ -59,6 +63,19 @@ test.describe("wide viewport (lg and up)", () => {
     await expect(toggle(page)).toBeHidden();
   });
 
+  test("logo shows the title alongside the mark", async ({ page }) => {
+    await page.goto("/");
+    await expect(logoIcon(page)).toBeVisible();
+    await expect(logoTitle(page)).toBeVisible();
+  });
+
+  test("topbar links to the GitHub repository, opening in a new tab", async ({ page }) => {
+    await page.goto("/");
+    await expect(githubLink(page)).toBeVisible();
+    await expect(githubLink(page)).toHaveAttribute("href", /^https:\/\/github\.com\//);
+    await expect(githubLink(page)).toHaveAttribute("target", "_blank");
+  });
+
   test("--topbar-height tracks the real header (≈56px)", async ({ page }) => {
     await page.goto("/");
     const raw = await topbarHeightRaw(page);
@@ -93,6 +110,14 @@ test.describe("narrow viewport (below lg)", () => {
 
     await expect(sidebar(page)).toBeHidden();
     await expect(toggle(page)).toBeVisible();
+  });
+
+  test("logo collapses to the mark, hiding the title", async ({ page }) => {
+    await page.goto("/");
+    await expect(logoIcon(page)).toBeVisible();
+    await expect(logoTitle(page)).toBeHidden();
+    // The link keeps its accessible name via aria-label even with the title hidden.
+    await expect(logo(page)).toBeVisible();
   });
 
   test("toggle opens the drawer and backdrop, setting data-sidebar", async ({ page }) => {

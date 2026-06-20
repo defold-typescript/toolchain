@@ -1,3 +1,4 @@
+import githubIconRaw from "@phosphor-icons/core/duotone/github-logo-duotone.svg?raw";
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
 import Search from "../islands/search";
@@ -235,6 +236,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
             <a
               class="flex items-center gap-2 text-[15px] font-semibold tracking-tight"
               href={withBase("/")}
+              aria-label="defold-typescript"
             >
               <img
                 src={withBase("/logo-ver-classic.svg")}
@@ -243,7 +245,11 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
                 height="24"
                 class="logo-mark h-6 w-6"
               />
-              <span>defold-typescript</span>
+              {/* Title hides below sm so very narrow viewports show only the mark;
+                  the aria-label above keeps the link named for assistive tech. */}
+              <span data-testid="logo-title" class="hidden sm:inline">
+                defold-typescript
+              </span>
             </a>
             <nav class="order-last flex w-full basis-full items-center gap-1 overflow-x-auto overflow-y-hidden text-sm lg:order-none lg:w-auto lg:flex-1 lg:basis-auto lg:overflow-visible">
               {nav.map((category) => (
@@ -256,6 +262,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
             </nav>
             <div class="ml-auto flex items-center gap-2 lg:ml-0">
               <Search />
+              <GithubLink />
               <ThemeToggle />
             </div>
           </div>
@@ -292,6 +299,27 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     </html>
   );
 });
+
+const REPO_URL = "https://github.com/defold-typescript/toolchain";
+
+function GithubLink() {
+  return (
+    <a
+      href={REPO_URL}
+      target="_blank"
+      rel="noreferrer"
+      title="GitHub repository"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-text-muted transition hover:border-border-strong hover:text-text [&_svg]:size-5"
+    >
+      <span class="sr-only">GitHub repository</span>
+      <span
+        aria-hidden="true"
+        class="inline-flex"
+        dangerouslySetInnerHTML={{ __html: githubIconRaw }}
+      />
+    </a>
+  );
+}
 
 function CategoryLink({ category, active }: { category: NavCategory; active: boolean }) {
   const href = category.links[0]?.route ?? category.links[0]?.children?.[0]?.route ?? "/";
