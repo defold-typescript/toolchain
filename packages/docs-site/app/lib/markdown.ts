@@ -51,17 +51,22 @@ function escapeAttr(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// SVG-only anchor (no text node) so headings.ts' tag-strip leaves the TOC text clean.
-function headingAnchor(id: string, text: string): string {
-  return (
-    `<a class="heading-anchor" href="#${id}" aria-label="Permalink to ${escapeAttr(text)}">` +
-    '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
-    'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>' +
-    '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>' +
-    "</svg></a>"
-  );
+// The heading-anchor wraps the heading's text so the whole title is a clickable
+// permalink (not just the icon). The trailing icon lives in a span that carries
+// no text node, so headings.ts' tag-strip still leaves the TOC text clean.
+function headingLinkOpen(id: string, text: string): string {
+  return `<a class="heading-anchor" href="#${id}" aria-label="Permalink to ${escapeAttr(text)}">`;
 }
+
+const HEADING_ANCHOR_ICON =
+  '<span class="heading-anchor-icon">' +
+  '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
+  'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>' +
+  '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>' +
+  "</svg></span>";
+
+const HEADING_ANCHOR_CLOSE = `${HEADING_ANCHOR_ICON}</a>`;
 
 // Phosphor `arrow-square-out` (duotone), appended inside external links by the
 // link-rewrite ruler to mark destinations that leave the docs site.
@@ -159,9 +164,12 @@ export async function renderMarkdown(
       slugCounts.set(base, n + 1);
       const id = n === 0 ? base : `${base}-${n}`;
       token.attrSet("id", id);
-      const anchor = new state.Token("html_inline", "", 0);
-      anchor.content = headingAnchor(id, text);
-      inline.children.push(anchor);
+      const open = new state.Token("html_inline", "", 0);
+      open.content = headingLinkOpen(id, text);
+      const close = new state.Token("html_inline", "", 0);
+      close.content = HEADING_ANCHOR_CLOSE;
+      inline.children.unshift(open);
+      inline.children.push(close);
     }
   });
   // Rewrite relative `.md` cross-links to their site routes (see rewriteGuideHref).

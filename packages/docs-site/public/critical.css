@@ -107,6 +107,8 @@ header.topbar-critical .logo-mark {
   border-bottom-color: var(--color-accent);
 }
 .prose a.heading-anchor {
+  color: inherit;
+  font-weight: inherit;
   border-bottom: none;
 }
 .prose a.badge-link {

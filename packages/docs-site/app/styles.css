@@ -227,6 +227,16 @@
   }
 
   .prose a.heading-anchor {
+    color: inherit;
+    font-weight: inherit;
+    border-bottom: none;
+  }
+
+  .prose a.heading-anchor:hover {
+    color: var(--color-accent);
+  }
+
+  .heading-anchor-icon {
     position: absolute;
     left: 0;
     display: inline-flex;
@@ -234,12 +244,11 @@
     height: 1em;
     opacity: 0;
     color: var(--color-text-faint);
-    border-bottom: none;
     transform: translateX(-0.5em);
     transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   }
 
-  .heading-anchor svg {
+  .heading-anchor-icon svg {
     width: 0.85em;
     height: 0.85em;
   }
@@ -253,14 +262,14 @@
     padding-left: var(--heading-anchor-shift);
   }
 
-  .prose :is(h2, h3)[data-current] .heading-anchor {
+  .prose :is(h2, h3)[data-current] .heading-anchor-icon {
     opacity: 0.9;
     color: var(--color-accent-strong);
     transform: translateX(0);
   }
 
-  .prose :is(h1, h2, h3):hover .heading-anchor,
-  .heading-anchor:focus-visible {
+  .prose :is(h1, h2, h3):hover .heading-anchor-icon,
+  .heading-anchor:focus-visible .heading-anchor-icon {
     opacity: 1;
     color: var(--color-accent);
     transform: translateX(0);
@@ -584,7 +593,7 @@
     transition: none;
   }
 
-  .prose a.heading-anchor {
+  .heading-anchor-icon {
     transition: none;
     transform: none;
   }
