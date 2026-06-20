@@ -627,8 +627,8 @@ describe("functionSummaryTable", () => {
       [
         "| Function | Summary |",
         "| --- | --- |",
-        "| [`go.get_position`](#gogetposition-vector3) |  |",
-        "| [`go.set_position`](#gosetpositionposition-vector3-void) |  |",
+        "| [`go.get_position`](#goget_position-vector3) |  |",
+        "| [`go.set_position`](#goset_positionposition-vector3-void) |  |",
       ].join("\n"),
     );
   });
@@ -644,7 +644,7 @@ describe("functionSummaryTable", () => {
       [
         "| Function | Summary |",
         "| --- | --- |",
-        "| [`go.get_position`](#gogetposition-vector3) | Gets the world position. Returns a \\| vector3. |",
+        "| [`go.get_position`](#goget_position-vector3) | Gets the world position. Returns a \\| vector3. |",
       ].join("\n"),
     );
   });
@@ -657,7 +657,7 @@ describe("functionSummaryTable", () => {
       [
         "| Function | Summary |",
         "| --- | --- |",
-        "| [`go.get_position`](#gogetposition-vector3) |  |",
+        "| [`go.get_position`](#goget_position-vector3) |  |",
       ].join("\n"),
     );
   });
