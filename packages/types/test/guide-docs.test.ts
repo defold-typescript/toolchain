@@ -362,3 +362,42 @@ describe("docs/guide/migrating-from-ts-defold.md", () => {
     expect(body).toContain("./migrating-from-ts-defold.md");
   });
 });
+
+describe("docs/guide/agent-runbooks.md verify-against-real-api section", () => {
+  test("carries the verification-discipline heading", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    expect(body).toContain("## Verify against the real API surface");
+  });
+
+  test("governs the CLI runbooks by sitting before the first one", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const verifyAt = body.indexOf("## Verify against the real API surface");
+    const scaffoldAt = body.indexOf("## Scaffold a project");
+    expect(verifyAt).toBeGreaterThan(-1);
+    expect(verifyAt).toBeLessThan(scaffoldAt);
+  });
+
+  test("names the authority order: trust the installed surface, distrust ts-defold", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    expect(body).toContain(".defold-types/");
+    expect(body).toContain("@defold-typescript/types");
+    expect(body).toContain("ts-defold");
+  });
+
+  test("cross-links script lifecycle and the Fix the Lua output verification loop", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    expect(body).toContain("script-lifecycle.md");
+    expect(body).toContain("#fix-the-lua-output");
+    // Both cross-link targets resolve: the sibling page exists on disk and the
+    // in-file runbook anchor has a real heading.
+    expect(await Bun.file(resolve(GUIDE, "script-lifecycle.md")).exists()).toBe(true);
+    expect(body).toContain("## Fix the Lua output");
+  });
+
+  test("documents the on-demand gitignored fetch and refuses a submodule", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    expect(body).toContain("ref-doc.zip");
+    expect(body).toContain("~/.cache/defold-typescript/ref-doc");
+    expect(body).toContain("not a submodule");
+  });
+});
