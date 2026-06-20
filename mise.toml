@@ -37,6 +37,10 @@ run = "bun run ref-doc-delta"
 description = "One-time npm OIDC trusted-publisher setup for all workspace packages (needs npm >= 11.10.0 + npm login). Usage: mise run trust-publishers [--list]"
 run = "bun scripts/trust-publishers.ts"
 
+[tasks.release]
+description = "Cut a release: bump from the live npm version and push the v<version> tag (CI publishes via OIDC). Usage: mise run release [<version>|patch|minor|major] (default: patch)"
+run = "bun scripts/release.ts"
+
 [tasks."example:build"]
 description = "Compile the platformer example (docs/examples/platformer) once with the local working-tree CLI"
 run = "bun packages/cli/src/bin.ts build docs/examples/platformer"
