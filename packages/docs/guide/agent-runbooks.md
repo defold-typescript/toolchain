@@ -194,7 +194,7 @@ the declared archives. This automates the workflow described in
 **Command (run from the project root, after editing `[dependencies]`):**
 
 ```sh
-defold-typescript resolve --json
+bunx @defold-typescript/cli resolve --json
 ```
 
 `resolve` reads each declared extension's `.script_api`, regenerates the
@@ -258,7 +258,7 @@ instead. Which hooks to export (`init`, `update`, `fixed_update`, `on_message`,
 **2. Build** (from the project root):
 
 ```sh
-bunx @defold-typescript/cli@latest build --json
+bunx @defold-typescript/cli build --json
 ```
 
 Or, if a [`watch --json`](#fix-the-lua-output) is already running, just save the
@@ -411,7 +411,7 @@ and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listene
 **Command (re-run after each source fix):**
 
 ```sh
-bunx @defold-typescript/cli@latest build --json
+bunx @defold-typescript/cli build --json
 ```
 
 On a transpile failure the one-shot `build --json` envelope carries the message:
