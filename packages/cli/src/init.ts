@@ -36,6 +36,10 @@ const TSCONFIG_COMPILER_OPTIONS = {
 };
 
 const GITIGNORE_LINES = [
+  "node_modules",
+  // `.vscode/defold-debug.ts` downloads the Defold engine binary beside itself
+  // (`.vscode/dmengine`, `.vscode/dmengine.exe`); keep the multi-MB binary out of git.
+  ".vscode/dmengine*",
   "src/**/*.ts.script",
   "src/**/*.ts.script.map",
   "src/**/*.ts.gui_script",
@@ -336,6 +340,11 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@defold-typescript/cli": typesVersionSpec(),
   "@defold-typescript/tstl-plugin": typesVersionSpec(),
   "@biomejs/biome": "^2.2.0",
+  // The `.vscode/defold-debug.ts` launcher is a Bun script importing `node:fs`/
+  // `node:path` and using `Bun.*`/`process`/`fetch`; `@types/bun` resolves those
+  // (it pulls in `@types/node`). The project tsconfig pins `types` to
+  // `@defold-typescript/types`, so these never leak into the `src/` Defold compile.
+  "@types/bun": "latest",
 };
 
 // Older scaffolds wrote the managed `@defold-typescript/*` devDeps as

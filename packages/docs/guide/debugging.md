@@ -90,7 +90,7 @@ The launcher runs whatever already sits under `build/`; it does **not** compile 
 3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
 4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
 
-The launcher prefers the native-extension build engine at `build/<platform>/dmengine` when it exists and otherwise downloads a stock engine from `d.defold.com` next to the launcher. The download is a one-time fetch per platform.
+The launcher prefers the native-extension build engine at `build/<platform>/dmengine` when it exists and otherwise downloads a stock engine from `d.defold.com` next to the launcher (`.vscode/dmengine`). The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps that binary out of version control.
 
 ### Native-extension runtime libraries
 
