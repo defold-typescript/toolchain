@@ -4,6 +4,7 @@ import { fromHighlighter } from "@shikijs/markdown-it/core";
 import MarkdownIt from "markdown-it";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { withBase } from "./base";
+import { slugify } from "./headings";
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -40,15 +41,6 @@ let highlighterPromise: Promise<Highlighter> | undefined;
 function getHighlighter(): Promise<Highlighter> {
   highlighterPromise ??= createHighlighter({ themes: [LIGHT_THEME, DARK_THEME], langs: LANGS });
   return highlighterPromise;
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 function escapeAttr(text: string): string {
