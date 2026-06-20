@@ -224,7 +224,17 @@ function main(): void {
   }
 
   if (run(["git", "rev-parse", "--verify", "--quiet", `refs/tags/${tag}`]).code === 0) {
-    die(`tag ${tag} already exists locally; delete it or pick another version`);
+    die(
+      `tag ${tag} already exists locally; ${target} was already cut — delete the tag or pick another version`,
+    );
+  }
+  // Double-run guard: a tag already on origin means this version was released
+  // (or its publish is still in flight, before npm — and thus the computed bump
+  // base — has updated). Refuse here, before creating a local tag.
+  if (run(["git", "ls-remote", "--tags", "origin", tag]).output.trim() !== "") {
+    die(
+      `tag ${tag} already exists on origin; ${target} was already released (or its publish is in flight)`,
+    );
   }
   if (run(["git", "tag", "-a", tag, "-m", `Release ${tag}`], { inherit: true }).code !== 0) {
     die(`could not create tag ${tag}`);
