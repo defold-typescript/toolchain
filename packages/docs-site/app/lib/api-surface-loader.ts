@@ -145,10 +145,28 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
   return loadApiSurfaceForVersion(typesDir, target.id);
 }
 
-export function listApiVersions(typesDir: string): ApiVersion[] {
-  const targets = readTargets(typesDir);
-  const ordered = [...targets].sort(
+function orderedTargets(typesDir: string): ApiTarget[] {
+  return [...readTargets(typesDir)].sort(
     (a, b) => Number(b.default === true) - Number(a.default === true),
   );
-  return ordered.map((t) => ({ id: t.id, isDefault: t.default === true }));
+}
+
+export function listApiVersions(typesDir: string): ApiVersion[] {
+  return orderedTargets(typesDir).map((t) => ({ id: t.id, isDefault: t.default === true }));
+}
+
+// Enumeration guard for routing / version chrome: the default target is always
+// kept (it is the canonical surface), but a non-default target whose declared
+// module fixtures are not on disk is dropped rather than allowed to ENOENT at
+// build time. A ref-doc-sourced target (resolved on demand, materialization
+// deferred to a future Worker) therefore stays invisible until its fixtures are
+// committed — direct `loadApiSurfaceForVersion` by id still throws for unknowns.
+function targetIsMaterialized(typesDir: string, target: ApiTarget): boolean {
+  return target.modules.every((mod) => existsSync(join(typesDir, target.fixturesDir, mod.fixture)));
+}
+
+export function versionsWithDiskFixtures(typesDir: string): ApiVersion[] {
+  return orderedTargets(typesDir)
+    .filter((t) => t.default === true || targetIsMaterialized(typesDir, t))
+    .map((t) => ({ id: t.id, isDefault: t.default === true }));
 }
