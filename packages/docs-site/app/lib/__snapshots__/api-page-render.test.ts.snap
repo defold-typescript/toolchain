@@ -1,0 +1,30 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`apiPageMarkdown renders the camera fixture page unchanged by the lift (snapshot) 1`] = `
+"# camera
+
+Camera module fixture.
+
+## Functions
+
+| Function | Summary |
+| --- | --- |
+| [\`camera.get_projection(camera: Url): Matrix4\`](#cameraget_projectioncamera-url-matrix4) | Returns the projection matrix. |
+
+### \`camera.get_projection(camera: Url): Matrix4\`
+
+<div class="api-symbol-body">
+
+Returns the projection matrix.
+
+**Parameters**
+
+- \`camera\` *Url* — camera id
+
+**Returns**
+
+- \`projection\` *Matrix4* — the matrix
+
+</div>
+"
+`;
