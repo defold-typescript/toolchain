@@ -3,6 +3,7 @@ import {
   type ApiModule,
   type ApiParameter,
   type ApiVariable,
+  DEFOLD_TYPE_MAP,
   examplesHtmlToMarkdown,
   hashExampleSource,
   htmlToCodeText,
@@ -122,8 +123,19 @@ function normalizeTypes(types: string[]): string[] {
   return types.map((t) => t.trim()).filter((t) => t.length > 0);
 }
 
+/**
+ * Render a single Defold ref-doc type token as the TypeScript type the `.d.ts`
+ * emitter produces, reusing the authoritative `DEFOLD_TYPE_MAP` so `/api`
+ * signatures can't drift from the generated typings. Unmapped tokens (doc-only
+ * names with no engine type, e.g. `playback`) pass through verbatim — unlike
+ * `emit-dts.ts` `defaultMapType`, which falls back to `unknown`.
+ */
+export function mapDocType(token: string): string {
+  return Object.hasOwn(DEFOLD_TYPE_MAP, token) ? (DEFOLD_TYPE_MAP[token] as string) : token;
+}
+
 function typeList(types: string[]): string {
-  const real = normalizeTypes(types);
+  const real = normalizeTypes(types).map(mapDocType);
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
@@ -131,7 +143,7 @@ function projectParams(list: ApiParameter[]): ApiSymbolParam[] {
   return list.map((p) => ({
     name: p.name,
     doc: htmlToDocText(p.doc),
-    types: normalizeTypes(p.types),
+    types: normalizeTypes(p.types).map(mapDocType),
     isOptional: p.isOptional,
   }));
 }
