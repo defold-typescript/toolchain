@@ -11,7 +11,12 @@ import {
   groupFunctionSymbols,
   mapDocType,
 } from "./api-surface";
-import { listApiVersions, loadApiSurface, loadApiSurfaceForVersion } from "./api-surface-loader";
+import {
+  listApiVersions,
+  loadApiSurface,
+  loadApiSurfaceForVersion,
+  versionsWithDiskFixtures,
+} from "./api-surface-loader";
 import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
 
@@ -29,6 +34,10 @@ function fnSymbol(name: string, overrides: Partial<ApiSymbol> = {}): ApiSymbol {
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const NO_GLOBALS_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface-no-globals");
+const MISSING_VERSION_FIXTURE_DIR = join(
+  import.meta.dir,
+  "__fixtures__/api-surface-missing-version",
+);
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 describe("loadApiSurface", () => {
@@ -93,6 +102,27 @@ describe("listApiVersions", () => {
       { id: "cur", isDefault: true },
       { id: "old", isDefault: false },
     ]);
+  });
+});
+
+describe("versionsWithDiskFixtures", () => {
+  test("includes a non-default version whose module fixtures exist on disk", () => {
+    expect(versionsWithDiskFixtures(FIXTURE_DIR)).toEqual([
+      { id: "cur", isDefault: true },
+      { id: "old", isDefault: false },
+    ]);
+  });
+
+  test("skips a non-default version whose fixturesDir has no readable module fixture (no throw)", () => {
+    expect(versionsWithDiskFixtures(MISSING_VERSION_FIXTURE_DIR)).toEqual([
+      { id: "cur", isDefault: true },
+    ]);
+  });
+
+  test("keeps the default version even when only the default has on-disk fixtures", () => {
+    const versions = versionsWithDiskFixtures(MISSING_VERSION_FIXTURE_DIR);
+    expect(versions.some((v) => v.isDefault)).toBe(true);
+    expect(versions.some((v) => v.id === "ghost")).toBe(false);
   });
 });
 
