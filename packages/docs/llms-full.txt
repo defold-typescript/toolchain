@@ -2865,72 +2865,72 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### globals
 
-- hash(s: string): hash
-- hash_to_hex(h: hash): string
-- pprint(v: any)
+- hash(s: string): Hash
+- hash_to_hex(h: Hash): string
+- pprint(v: unknown)
 
 ### b2d
 
-- b2d.get_world(): b2World
-- b2d.get_body(url: string | hash | url): b2Body
+- b2d.get_world(): Opaque<"b2World">
+- b2d.get_body(url: string | Hash | Url): Opaque<"b2Body">
 
 ### b2d.body
 
-- b2d.body.set_transform(body: b2Body, position: vector3, angle: number)
-- b2d.body.get_position(body: b2Body): vector3
-- b2d.body.get_angle(body: b2Body): number
-- b2d.body.get_world_center_of_mass(body: b2Body): vector3
-- b2d.body.get_local_center_of_mass(body: b2Body): vector3
-- b2d.body.set_linear_velocity(body: b2Body, velocity: vector3)
-- b2d.body.get_linear_velocity(body: b2Body): vector3
-- b2d.body.set_angular_velocity(body: b2Body, omega: number)
-- b2d.body.get_angular_velocity(body: b2Body): number
-- b2d.body.apply_force(body: b2Body, force: vector3, point: vector3)
-- b2d.body.apply_force_to_center(body: b2Body, force: vector3)
-- b2d.body.apply_torque(body: b2Body, torque: number)
-- b2d.body.apply_linear_impulse(body: b2Body, impulse: vector3, point: vector3)
-- b2d.body.apply_angular_impulse(body: b2Body, impulse: number)
-- b2d.body.get_mass(body: b2Body): number
-- b2d.body.get_rotational_inertia(body: b2Body): number
-- b2d.body.reset_mass_data(body: b2Body)
-- b2d.body.get_world_point(body: b2Body, local_vector: vector3): vector3
-- b2d.body.get_world_vector(body: b2Body, local_vector: vector3): vector3
-- b2d.body.get_local_point(body: b2Body, world_point: vector3): vector3
-- b2d.body.get_local_vector(body: b2Body, world_vector: vector3): vector3
-- b2d.body.get_linear_velocity_from_world_point(body: b2Body, world_point: vector3): vector3
-- b2d.body.get_linear_velocity_from_local_point(body: b2Body, local_point: vector3): vector3
-- b2d.body.set_linear_damping(body: b2Body, damping: number)
-- b2d.body.get_linear_damping(body: b2Body): number
-- b2d.body.set_angular_damping(body: b2Body, damping: number)
-- b2d.body.get_angular_damping(body: b2Body): number
-- b2d.body.set_gravity_scale(body: b2Body, scale: number)
-- b2d.body.get_gravity_scale(body: b2Body): number
-- b2d.body.set_type(body: b2Body, type: b2BodyType)
-- b2d.body.get_type(body: b2Body): b2BodyType
-- b2d.body.set_bullet(body: b2Body, enable: boolean)
-- b2d.body.is_bullet(body: b2Body): boolean
-- b2d.body.enable_sleep(body: b2Body, enable: boolean)
-- b2d.body.is_sleeping_enabled(body: b2Body): boolean
-- b2d.body.set_awake(body: b2Body, enable: boolean)
-- b2d.body.is_awake(body: b2Body): boolean
-- b2d.body.set_active(body: b2Body, enable: boolean)
-- b2d.body.is_active(body: b2Body): boolean
-- b2d.body.set_fixed_rotation(body: b2Body, enable: boolean)
-- b2d.body.is_fixed_rotation(body: b2Body): boolean
-- b2d.body.get_world(body: b2Body): b2World
+- b2d.body.set_transform(body: Opaque<"b2Body">, position: Vector3, angle: number)
+- b2d.body.get_position(body: Opaque<"b2Body">): Vector3
+- b2d.body.get_angle(body: Opaque<"b2Body">): number
+- b2d.body.get_world_center_of_mass(body: Opaque<"b2Body">): Vector3
+- b2d.body.get_local_center_of_mass(body: Opaque<"b2Body">): Vector3
+- b2d.body.set_linear_velocity(body: Opaque<"b2Body">, velocity: Vector3)
+- b2d.body.get_linear_velocity(body: Opaque<"b2Body">): Vector3
+- b2d.body.set_angular_velocity(body: Opaque<"b2Body">, omega: number)
+- b2d.body.get_angular_velocity(body: Opaque<"b2Body">): number
+- b2d.body.apply_force(body: Opaque<"b2Body">, force: Vector3, point: Vector3)
+- b2d.body.apply_force_to_center(body: Opaque<"b2Body">, force: Vector3)
+- b2d.body.apply_torque(body: Opaque<"b2Body">, torque: number)
+- b2d.body.apply_linear_impulse(body: Opaque<"b2Body">, impulse: Vector3, point: Vector3)
+- b2d.body.apply_angular_impulse(body: Opaque<"b2Body">, impulse: number)
+- b2d.body.get_mass(body: Opaque<"b2Body">): number
+- b2d.body.get_rotational_inertia(body: Opaque<"b2Body">): number
+- b2d.body.reset_mass_data(body: Opaque<"b2Body">)
+- b2d.body.get_world_point(body: Opaque<"b2Body">, local_vector: Vector3): Vector3
+- b2d.body.get_world_vector(body: Opaque<"b2Body">, local_vector: Vector3): Vector3
+- b2d.body.get_local_point(body: Opaque<"b2Body">, world_point: Vector3): Vector3
+- b2d.body.get_local_vector(body: Opaque<"b2Body">, world_vector: Vector3): Vector3
+- b2d.body.get_linear_velocity_from_world_point(body: Opaque<"b2Body">, world_point: Vector3): Vector3
+- b2d.body.get_linear_velocity_from_local_point(body: Opaque<"b2Body">, local_point: Vector3): Vector3
+- b2d.body.set_linear_damping(body: Opaque<"b2Body">, damping: number)
+- b2d.body.get_linear_damping(body: Opaque<"b2Body">): number
+- b2d.body.set_angular_damping(body: Opaque<"b2Body">, damping: number)
+- b2d.body.get_angular_damping(body: Opaque<"b2Body">): number
+- b2d.body.set_gravity_scale(body: Opaque<"b2Body">, scale: number)
+- b2d.body.get_gravity_scale(body: Opaque<"b2Body">): number
+- b2d.body.set_type(body: Opaque<"b2Body">, type: (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" }))
+- b2d.body.get_type(body: Opaque<"b2Body">): (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })
+- b2d.body.set_bullet(body: Opaque<"b2Body">, enable: boolean)
+- b2d.body.is_bullet(body: Opaque<"b2Body">): boolean
+- b2d.body.enable_sleep(body: Opaque<"b2Body">, enable: boolean)
+- b2d.body.is_sleeping_enabled(body: Opaque<"b2Body">): boolean
+- b2d.body.set_awake(body: Opaque<"b2Body">, enable: boolean)
+- b2d.body.is_awake(body: Opaque<"b2Body">): boolean
+- b2d.body.set_active(body: Opaque<"b2Body">, enable: boolean)
+- b2d.body.is_active(body: Opaque<"b2Body">): boolean
+- b2d.body.set_fixed_rotation(body: Opaque<"b2Body">, enable: boolean)
+- b2d.body.is_fixed_rotation(body: Opaque<"b2Body">): boolean
+- b2d.body.get_world(body: Opaque<"b2Body">): Opaque<"b2World">
 - b2d.body.B2_STATIC_BODY
 - b2d.body.B2_KINEMATIC_BODY
 - b2d.body.B2_DYNAMIC_BODY
 
 ### buffer
 
-- buffer.create(element_count: number, declaration: table): buffer
-- buffer.get_stream(buffer: buffer, stream_name: hash | string): bufferstream
-- buffer.copy_stream(dst: bufferstream, dstoffset: number, src: bufferstream, srcoffset: number, count: number)
-- buffer.copy_buffer(dst: buffer, dstoffset: number, src: buffer, srcoffset: number, count: number)
-- buffer.get_bytes(buffer: buffer, stream_name: hash): string
-- buffer.set_metadata(buf: buffer, metadata_name: hash | string, values: table, value_type: constant)
-- buffer.get_metadata(buf: buffer, metadata_name: hash | string): table | nil, constant | nil
+- buffer.create(element_count: number, declaration: Record<string | number, unknown>): Opaque<"buffer">
+- buffer.get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number }
+- buffer.copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number }, srcoffset: number, count: number)
+- buffer.copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number)
+- buffer.get_bytes(buffer: Opaque<"buffer">, stream_name: Hash): string
+- buffer.set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: Record<string | number, unknown>, value_type: Opaque<"constant">)
+- buffer.get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): Record<string | number, unknown> | nil, Opaque<"constant"> | nil
 - buffer.VALUE_TYPE_UINT8
 - buffer.VALUE_TYPE_UINT16
 - buffer.VALUE_TYPE_UINT32
@@ -2943,46 +2943,46 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### camera
 
-- camera.screen_xy_to_world(x: number, y: number, camera?: url | number | nil): vector3
-- camera.screen_to_world(pos: vector3, camera?: url | number | nil): vector3
-- camera.world_to_screen(world_pos: vector3, camera?: url | number | nil): vector3
-- camera.get_cameras(): table
-- camera.get_enabled(camera: url | number | nil): boolean
-- camera.get_projection(camera: url | number | nil): matrix4
-- camera.get_view(camera: url | number | nil): matrix4
-- camera.get_aspect_ratio(camera: url | number | nil): number
-- camera.get_far_z(camera: url | number | nil): number
-- camera.get_fov(camera: url | number | nil): number
-- camera.get_near_z(camera: url | number | nil): number
-- camera.get_orthographic_zoom(camera: url | number | nil): number
-- camera.set_aspect_ratio(camera: url | number | nil, aspect_ratio: number)
-- camera.set_far_z(camera: url | number | nil, far_z: number)
-- camera.set_fov(camera: url | number | nil, fov: number)
-- camera.set_near_z(camera: url | number | nil, near_z: number)
-- camera.set_orthographic_zoom(camera: url | number | nil, orthographic_zoom: number)
-- camera.get_orthographic_mode(camera: url | number | nil): number
-- camera.set_orthographic_mode(camera: url | number | nil, mode: number)
-- camera.get_auto_aspect_ratio(camera: url | number | nil): boolean
-- camera.set_auto_aspect_ratio(camera: url | number | nil, auto_aspect_ratio: boolean)
+- camera.screen_xy_to_world(x: number, y: number, camera?: Url | number | nil): Vector3
+- camera.screen_to_world(pos: Vector3, camera?: Url | number | nil): Vector3
+- camera.world_to_screen(world_pos: Vector3, camera?: Url | number | nil): Vector3
+- camera.get_cameras(): Record<string | number, unknown>
+- camera.get_enabled(camera: Url | number | nil): boolean
+- camera.get_projection(camera: Url | number | nil): Matrix4
+- camera.get_view(camera: Url | number | nil): Matrix4
+- camera.get_aspect_ratio(camera: Url | number | nil): number
+- camera.get_far_z(camera: Url | number | nil): number
+- camera.get_fov(camera: Url | number | nil): number
+- camera.get_near_z(camera: Url | number | nil): number
+- camera.get_orthographic_zoom(camera: Url | number | nil): number
+- camera.set_aspect_ratio(camera: Url | number | nil, aspect_ratio: number)
+- camera.set_far_z(camera: Url | number | nil, far_z: number)
+- camera.set_fov(camera: Url | number | nil, fov: number)
+- camera.set_near_z(camera: Url | number | nil, near_z: number)
+- camera.set_orthographic_zoom(camera: Url | number | nil, orthographic_zoom: number)
+- camera.get_orthographic_mode(camera: Url | number | nil): number
+- camera.set_orthographic_mode(camera: Url | number | nil, mode: number)
+- camera.get_auto_aspect_ratio(camera: Url | number | nil): boolean
+- camera.set_auto_aspect_ratio(camera: Url | number | nil, auto_aspect_ratio: boolean)
 - camera.ORTHO_MODE_FIXED
 - camera.ORTHO_MODE_AUTO_FIT
 - camera.ORTHO_MODE_AUTO_COVER
 
 ### collectionfactory
 
-- collectionfactory.get_status(url?: string | hash | url): constant
-- collectionfactory.unload(url?: string | hash | url)
-- collectionfactory.load(url?: string | hash | url, complete_function?: function(self, url, result))
-- collectionfactory.create(url: string | hash | url, position?: vector3, rotation?: quaternion, properties?: table, scale?: number | vector3): table
-- collectionfactory.set_prototype(url?: string | hash | url, prototype?: string | nil)
+- collectionfactory.get_status(url?: string | Hash | Url): Opaque<"constant">
+- collectionfactory.unload(url?: string | Hash | Url)
+- collectionfactory.load(url?: string | Hash | Url, complete_function?: function(self, url, result))
+- collectionfactory.create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Record<string | number, unknown>
+- collectionfactory.set_prototype(url?: string | Hash | Url, prototype?: string | nil)
 - collectionfactory.STATUS_UNLOADED
 - collectionfactory.STATUS_LOADING
 - collectionfactory.STATUS_LOADED
 
 ### collectionproxy
 
-- collectionproxy.set_collection(url?: string | hash | url, prototype?: string | nil): boolean, number
-- collectionproxy.get_resources(collectionproxy: url): table
+- collectionproxy.set_collection(url?: string | Hash | Url, prototype?: string | nil): boolean, number
+- collectionproxy.get_resources(collectionproxy: Url): Record<string | number, unknown>
 - collectionproxy.RESULT_LOADING
 - collectionproxy.RESULT_ALREADY_LOADED
 - collectionproxy.RESULT_NOT_EXCLUDED
@@ -2994,11 +2994,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - crash.load_previous(): number | nil
 - crash.release(handle: number)
 - crash.set_user_field(index: number, value: string)
-- crash.get_modules(handle: number): table
+- crash.get_modules(handle: number): Record<string | number, unknown>
 - crash.get_user_field(handle: number, index: number): string
 - crash.get_sys_field(handle: number, index: number): string | nil
 - crash.get_signum(handle: number): number
-- crash.get_backtrace(handle: number): table
+- crash.get_backtrace(handle: number): Record<string | number, unknown>
 - crash.get_extra_data(handle: number): string
 - crash.SYSFIELD_ENGINE_VERSION
 - crash.SYSFIELD_ENGINE_HASH
@@ -3016,58 +3016,58 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### factory
 
-- factory.get_status(url?: string | hash | url): constant
-- factory.unload(url?: string | hash | url)
-- factory.load(url?: string | hash | url, complete_function?: function(self, url, result))
-- factory.create(url: string | hash | url, position?: vector3, rotation?: quaternion, properties?: table, scale?: number | vector3): hash
-- factory.set_prototype(url?: string | hash | url, prototype?: string | nil)
+- factory.get_status(url?: string | Hash | Url): Opaque<"constant">
+- factory.unload(url?: string | Hash | Url)
+- factory.load(url?: string | Hash | Url, complete_function?: function(self, url, result))
+- factory.create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash
+- factory.set_prototype(url?: string | Hash | Url, prototype?: string | nil)
 - factory.STATUS_UNLOADED
 - factory.STATUS_LOADING
 - factory.STATUS_LOADED
 
 ### font
 
-- font.add_font(fontc: string | hash, ttf: string | hash)
-- font.remove_font(fontc: string | hash, ttf: string | hash)
-- font.prewarm_text(fontc: string | hash, text: string, callback?: function(self, request_id, result, errstring)): number
-- font.get_info(fontc: string | hash): table
+- font.add_font(fontc: string | Hash, ttf: string | Hash)
+- font.remove_font(fontc: string | Hash, ttf: string | Hash)
+- font.prewarm_text(fontc: string | Hash, text: string, callback?: function(self, request_id, result, errstring)): number
+- font.get_info(fontc: string | Hash): Record<string | number, unknown>
 
 ### go
 
-- go.get(url: string | hash | url, property: string | hash, options?: table): number | boolean | hash | url | vector3 | vector4 | quaternion | resource
-- go.set(url: string | hash | url, property: string | hash, value: number | boolean | hash | url | vector3 | vector4 | quaternion | resource, options?: table)
-- go.get_position(id?: string | hash | url): vector3
-- go.get_rotation(id?: string | hash | url): quaternion
-- go.get_scale(id?: string | hash | url): vector3
-- go.get_scale_uniform(id?: string | hash | url): number
-- go.set_position(position: vector3, id?: string | hash | url)
-- go.set_rotation(rotation: quaternion, id?: string | hash | url)
-- go.set_scale(scale: number | vector3, id?: string | hash | url)
-- go.set_scale_xy(scale: number | vector3, id?: string | hash | url)
-- go.set_parent(id?: string | hash | url, parent_id?: string | hash | url, keep_world_transform?: boolean)
-- go.get_parent(id?: string | hash | url): hash | nil
-- go.get_world_position(id?: string | hash | url): vector3
-- go.get_world_rotation(id?: string | hash | url): quaternion
-- go.get_world_scale(id?: string | hash | url): vector3
-- go.get_world_scale_uniform(id?: string | hash | url): number
-- go.get_world_transform(id?: string | hash | url): matrix4
-- go.update_world_transform(id?: string | hash | url)
-- go.get_id(path?: string): hash
-- go.animate(url: string | hash | url, property: string | hash, playback: go.PLAYBACK_ONCE_FORWARD | go.PLAYBACK_ONCE_BACKWARD | go.PLAYBACK_ONCE_PINGPONG | go.PLAYBACK_LOOP_FORWARD | go.PLAYBACK_LOOP_BACKWARD | go.PLAYBACK_LOOP_PINGPONG, to: number | vector3 | vector4 | quaternion, easing: vector | go.EASING_INBACK | go.EASING_INBOUNCE | go.EASING_INCIRC | go.EASING_INCUBIC | go.EASING_INELASTIC | go.EASING_INEXPO | go.EASING_INOUTBACK | go.EASING_INOUTBOUNCE | go.EASING_INOUTCIRC | go.EASING_INOUTCUBIC | go.EASING_INOUTELASTIC | go.EASING_INOUTEXPO | go.EASING_INOUTQUAD | go.EASING_INOUTQUART | go.EASING_INOUTQUINT | go.EASING_INOUTSINE | go.EASING_INQUAD | go.EASING_INQUART | go.EASING_INQUINT | go.EASING_INSINE | go.EASING_LINEAR | go.EASING_OUTBACK | go.EASING_OUTBOUNCE | go.EASING_OUTCIRC | go.EASING_OUTCUBIC | go.EASING_OUTELASTIC | go.EASING_OUTEXPO | go.EASING_OUTINBACK | go.EASING_OUTINBOUNCE | go.EASING_OUTINCIRC | go.EASING_OUTINCUBIC | go.EASING_OUTINELASTIC | go.EASING_OUTINEXPO | go.EASING_OUTINQUAD | go.EASING_OUTINQUART | go.EASING_OUTINQUINT | go.EASING_OUTINSINE | go.EASING_OUTQUAD | go.EASING_OUTQUART | go.EASING_OUTQUINT | go.EASING_OUTSINE, duration: number, delay?: number, complete_function?: function(self, url, property))
-- go.cancel_animations(url: string | hash | url, property?: string | hash)
-- go.delete(id?: string | hash | url | table, recursive?: boolean)
-- go.property(name: string, value: number | hash | url | vector3 | vector4 | quaternion | resource | boolean)
-- go.exists(url: string | hash | url): boolean
-- go.world_to_local_position(position: vector3, url: string | hash | url): vector3
-- go.world_to_local_transform(transformation: matrix4, url: string | hash | url): matrix4
-- init(self: userdata)
-- final(self: userdata)
-- update(self: userdata, dt: number)
-- fixed_update(self: userdata, dt: number)
-- late_update(self: userdata, dt: number)
-- on_message(self: userdata, message_id: hash, message: table, sender: url)
-- on_input(self: userdata, action_id: hash, action: table): boolean | nil
-- on_reload(self: userdata)
+- go.get(url: string | Hash | Url, property: string | Hash, options?: Record<string | number, unknown>): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">
+- go.set(url: string | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">, options?: Record<string | number, unknown>)
+- go.get_position(id?: string | Hash | Url): Vector3
+- go.get_rotation(id?: string | Hash | Url): Quaternion
+- go.get_scale(id?: string | Hash | Url): Vector3
+- go.get_scale_uniform(id?: string | Hash | Url): number
+- go.set_position(position: Vector3, id?: string | Hash | Url)
+- go.set_rotation(rotation: Quaternion, id?: string | Hash | Url)
+- go.set_scale(scale: number | Vector3, id?: string | Hash | Url)
+- go.set_scale_xy(scale: number | Vector3, id?: string | Hash | Url)
+- go.set_parent(id?: string | Hash | Url, parent_id?: string | Hash | Url, keep_world_transform?: boolean)
+- go.get_parent(id?: string | Hash | Url): Hash | nil
+- go.get_world_position(id?: string | Hash | Url): Vector3
+- go.get_world_rotation(id?: string | Hash | Url): Quaternion
+- go.get_world_scale(id?: string | Hash | Url): Vector3
+- go.get_world_scale_uniform(id?: string | Hash | Url): number
+- go.get_world_transform(id?: string | Hash | Url): Matrix4
+- go.update_world_transform(id?: string | Hash | Url)
+- go.get_id(path?: string): Hash
+- go.animate(url: string | Hash | Url, property: string | Hash, playback: go.PLAYBACK_ONCE_FORWARD | go.PLAYBACK_ONCE_BACKWARD | go.PLAYBACK_ONCE_PINGPONG | go.PLAYBACK_LOOP_FORWARD | go.PLAYBACK_LOOP_BACKWARD | go.PLAYBACK_LOOP_PINGPONG, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING_INBACK | go.EASING_INBOUNCE | go.EASING_INCIRC | go.EASING_INCUBIC | go.EASING_INELASTIC | go.EASING_INEXPO | go.EASING_INOUTBACK | go.EASING_INOUTBOUNCE | go.EASING_INOUTCIRC | go.EASING_INOUTCUBIC | go.EASING_INOUTELASTIC | go.EASING_INOUTEXPO | go.EASING_INOUTQUAD | go.EASING_INOUTQUART | go.EASING_INOUTQUINT | go.EASING_INOUTSINE | go.EASING_INQUAD | go.EASING_INQUART | go.EASING_INQUINT | go.EASING_INSINE | go.EASING_LINEAR | go.EASING_OUTBACK | go.EASING_OUTBOUNCE | go.EASING_OUTCIRC | go.EASING_OUTCUBIC | go.EASING_OUTELASTIC | go.EASING_OUTEXPO | go.EASING_OUTINBACK | go.EASING_OUTINBOUNCE | go.EASING_OUTINCIRC | go.EASING_OUTINCUBIC | go.EASING_OUTINELASTIC | go.EASING_OUTINEXPO | go.EASING_OUTINQUAD | go.EASING_OUTINQUART | go.EASING_OUTINQUINT | go.EASING_OUTINSINE | go.EASING_OUTQUAD | go.EASING_OUTQUART | go.EASING_OUTQUINT | go.EASING_OUTSINE, duration: number, delay?: number, complete_function?: function(self, url, property))
+- go.cancel_animations(url: string | Hash | Url, property?: string | Hash)
+- go.delete(id?: string | Hash | Url | Record<string | number, unknown>, recursive?: boolean)
+- go.property(name: string, value: number | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource"> | boolean)
+- go.exists(url: string | Hash | Url): boolean
+- go.world_to_local_position(position: Vector3, url: string | Hash | Url): Vector3
+- go.world_to_local_transform(transformation: Matrix4, url: string | Hash | Url): Matrix4
+- init(self: Opaque<"userdata">)
+- final(self: Opaque<"userdata">)
+- update(self: Opaque<"userdata">, dt: number)
+- fixed_update(self: Opaque<"userdata">, dt: number)
+- late_update(self: Opaque<"userdata">, dt: number)
+- on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>, sender: Url)
+- on_input(self: Opaque<"userdata">, action_id: Hash, action: Record<string | number, unknown>): boolean | nil
+- on_reload(self: Opaque<"userdata">)
 - go.PLAYBACK_NONE
 - go.PLAYBACK_ONCE_FORWARD
 - go.PLAYBACK_ONCE_BACKWARD
@@ -3116,9 +3116,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.EASING_OUTBOUNCE
 - go.EASING_INOUTBOUNCE
 - go.EASING_OUTINBOUNCE
-- position: vector3
-- rotation: quaternion
-- euler: vector3
+- position: Vector3
+- rotation: Quaternion
+- euler: Vector3
 - scale: number
 
 ### graphics
@@ -3234,132 +3234,132 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### gui
 
-- gui.get_node(id: string | hash): node
-- gui.get_id(node: node): hash
-- gui.get_type(node: node): constant, number | nil
-- gui.set_id(node: node, id: string | hash)
-- gui.get(node: node, property: string | hash | constant, options?: table)
-- gui.set(node: node | url, property: string | hash | constant, value: number | vector4 | vector3 | quaternion, options?: table)
-- gui.get_index(node: node): number
-- gui.delete_node(node: node)
-- gui.animate(node: node, property: string | constant, to: number | vector3 | vector4 | quaternion, easing: constant | vector, duration: number, delay?: number, complete_function?: function(self, node), playback?: constant)
-- gui.cancel_animations(node: node, property?: nil | string | constant)
-- gui.new_box_node(pos: vector3 | vector4, size: vector3): node
-- gui.new_text_node(pos: vector3 | vector4, text: string): node
-- gui.new_pie_node(pos: vector3 | vector4, size: vector3): node
-- gui.get_text(node: node): string
-- gui.set_text(node: node, text: string | number)
-- gui.get_line_break(node: node): boolean
-- gui.set_line_break(node: node, line_break: boolean)
-- gui.get_blend_mode(node: node): constant
-- gui.set_blend_mode(node: node, blend_mode: constant)
-- gui.get_texture(node: node): hash
-- gui.set_texture(node: node, texture: string | hash)
-- gui.get_flipbook(node: node): hash
-- gui.play_flipbook(node: node, animation: string | hash, complete_function?: function(self, node), play_properties?: table)
-- gui.cancel_flipbook(node: node)
-- gui.new_texture(texture_id: string | hash, width: number, height: number, type: string | constant, buffer: string, flip: boolean): boolean, number
-- gui.delete_texture(texture: string | hash)
-- gui.set_texture_data(texture: string | hash, width: number, height: number, type: string | constant, buffer: string, flip: boolean): boolean
-- gui.get_material(node: node): hash
-- gui.set_material(node: node, material: string | hash)
-- gui.reset_material(node: node)
-- gui.get_font(node: node): hash
-- gui.get_font_resource(font_name: hash | string): hash
-- gui.set_font(node: node, font: string | hash)
-- gui.get_layer(node: node): hash
-- gui.set_layer(node: node, layer: string | hash)
-- gui.get_layout(): hash
-- gui.set_layout(layout: string | hash): boolean
-- gui.get_layouts(): table
-- gui.get_clipping_mode(node: node): constant
-- gui.set_clipping_mode(node: node, clipping_mode: constant)
-- gui.get_clipping_visible(node: node): boolean
-- gui.set_clipping_visible(node: node, visible: boolean)
-- gui.get_clipping_inverted(node: node): boolean
-- gui.set_clipping_inverted(node: node, inverted: boolean)
-- gui.get_xanchor(node: node): constant
-- gui.set_xanchor(node: node, anchor: constant)
-- gui.get_yanchor(node: node): constant
-- gui.set_yanchor(node: node, anchor: constant)
-- gui.get_pivot(node: node): constant
-- gui.set_pivot(node: node, pivot: constant)
+- gui.get_node(id: string | Hash): Opaque<"node">
+- gui.get_id(node: Opaque<"node">): Hash
+- gui.get_type(node: Opaque<"node">): Opaque<"constant">, number | nil
+- gui.set_id(node: Opaque<"node">, id: string | Hash)
+- gui.get(node: Opaque<"node">, property: string | Hash | Opaque<"constant">, options?: Record<string | number, unknown>)
+- gui.set(node: Opaque<"node"> | Url, property: string | Hash | Opaque<"constant">, value: number | Vector4 | Vector3 | Quaternion, options?: Record<string | number, unknown>)
+- gui.get_index(node: Opaque<"node">): number
+- gui.delete_node(node: Opaque<"node">)
+- gui.animate(node: Opaque<"node">, property: string | Opaque<"constant">, to: number | Vector3 | Vector4 | Quaternion, easing: Opaque<"constant"> | Vector, duration: number, delay?: number, complete_function?: function(self, node), playback?: Opaque<"constant">)
+- gui.cancel_animations(node: Opaque<"node">, property?: nil | string | Opaque<"constant">)
+- gui.new_box_node(pos: Vector3 | Vector4, size: Vector3): Opaque<"node">
+- gui.new_text_node(pos: Vector3 | Vector4, text: string): Opaque<"node">
+- gui.new_pie_node(pos: Vector3 | Vector4, size: Vector3): Opaque<"node">
+- gui.get_text(node: Opaque<"node">): string
+- gui.set_text(node: Opaque<"node">, text: string | number)
+- gui.get_line_break(node: Opaque<"node">): boolean
+- gui.set_line_break(node: Opaque<"node">, line_break: boolean)
+- gui.get_blend_mode(node: Opaque<"node">): Opaque<"constant">
+- gui.set_blend_mode(node: Opaque<"node">, blend_mode: Opaque<"constant">)
+- gui.get_texture(node: Opaque<"node">): Hash
+- gui.set_texture(node: Opaque<"node">, texture: string | Hash)
+- gui.get_flipbook(node: Opaque<"node">): Hash
+- gui.play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: function(self, node), play_properties?: Record<string | number, unknown>)
+- gui.cancel_flipbook(node: Opaque<"node">)
+- gui.new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): boolean, number
+- gui.delete_texture(texture: string | Hash)
+- gui.set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): boolean
+- gui.get_material(node: Opaque<"node">): Hash
+- gui.set_material(node: Opaque<"node">, material: string | Hash)
+- gui.reset_material(node: Opaque<"node">)
+- gui.get_font(node: Opaque<"node">): Hash
+- gui.get_font_resource(font_name: Hash | string): Hash
+- gui.set_font(node: Opaque<"node">, font: string | Hash)
+- gui.get_layer(node: Opaque<"node">): Hash
+- gui.set_layer(node: Opaque<"node">, layer: string | Hash)
+- gui.get_layout(): Hash
+- gui.set_layout(layout: string | Hash): boolean
+- gui.get_layouts(): Record<string | number, unknown>
+- gui.get_clipping_mode(node: Opaque<"node">): Opaque<"constant">
+- gui.set_clipping_mode(node: Opaque<"node">, clipping_mode: Opaque<"constant">)
+- gui.get_clipping_visible(node: Opaque<"node">): boolean
+- gui.set_clipping_visible(node: Opaque<"node">, visible: boolean)
+- gui.get_clipping_inverted(node: Opaque<"node">): boolean
+- gui.set_clipping_inverted(node: Opaque<"node">, inverted: boolean)
+- gui.get_xanchor(node: Opaque<"node">): Opaque<"constant">
+- gui.set_xanchor(node: Opaque<"node">, anchor: Opaque<"constant">)
+- gui.get_yanchor(node: Opaque<"node">): Opaque<"constant">
+- gui.set_yanchor(node: Opaque<"node">, anchor: Opaque<"constant">)
+- gui.get_pivot(node: Opaque<"node">): Opaque<"constant">
+- gui.set_pivot(node: Opaque<"node">, pivot: Opaque<"constant">)
 - gui.get_width(): number
 - gui.get_height(): number
-- gui.set_slice9(node: node, values: vector4)
-- gui.get_slice9(node: node): vector4
-- gui.set_perimeter_vertices(node: node, vertices: number)
-- gui.get_perimeter_vertices(node: node): number
-- gui.set_fill_angle(node: node, angle: number)
-- gui.get_fill_angle(node: node): number
-- gui.set_inner_radius(node: node, radius: number)
-- gui.get_inner_radius(node: node): number
-- gui.set_outer_bounds(node: node, bounds_mode: constant)
-- gui.get_outer_bounds(node: node): constant
-- gui.set_leading(node: node, leading: number)
-- gui.get_leading(node: node): number
-- gui.set_tracking(node: node, tracking: number)
-- gui.get_tracking(node: node): number
-- gui.pick_node(node: node, x: number, y: number): boolean
-- gui.is_enabled(node: node, recursive?: boolean): boolean
-- gui.set_enabled(node: node, enabled: boolean)
-- gui.get_visible(node: node): boolean
-- gui.set_visible(node: node, visible: boolean)
-- gui.get_adjust_mode(node: node): constant
-- gui.set_adjust_mode(node: node, adjust_mode: constant)
-- gui.set_safe_area_mode(mode: constant)
-- gui.get_size_mode(node: node): constant
-- gui.set_size_mode(node: node, size_mode: constant)
-- gui.move_above(node: node, reference: node | nil)
-- gui.move_below(node: node, reference: node | nil)
-- gui.get_parent(node: node): node | nil
-- gui.set_parent(node: node, parent?: node, keep_scene_transform?: boolean)
-- gui.clone(node: node): node
-- gui.clone_tree(node: node): table
-- gui.get_tree(node: node): table
+- gui.set_slice9(node: Opaque<"node">, values: Vector4)
+- gui.get_slice9(node: Opaque<"node">): Vector4
+- gui.set_perimeter_vertices(node: Opaque<"node">, vertices: number)
+- gui.get_perimeter_vertices(node: Opaque<"node">): number
+- gui.set_fill_angle(node: Opaque<"node">, angle: number)
+- gui.get_fill_angle(node: Opaque<"node">): number
+- gui.set_inner_radius(node: Opaque<"node">, radius: number)
+- gui.get_inner_radius(node: Opaque<"node">): number
+- gui.set_outer_bounds(node: Opaque<"node">, bounds_mode: Opaque<"constant">)
+- gui.get_outer_bounds(node: Opaque<"node">): Opaque<"constant">
+- gui.set_leading(node: Opaque<"node">, leading: number)
+- gui.get_leading(node: Opaque<"node">): number
+- gui.set_tracking(node: Opaque<"node">, tracking: number)
+- gui.get_tracking(node: Opaque<"node">): number
+- gui.pick_node(node: Opaque<"node">, x: number, y: number): boolean
+- gui.is_enabled(node: Opaque<"node">, recursive?: boolean): boolean
+- gui.set_enabled(node: Opaque<"node">, enabled: boolean)
+- gui.get_visible(node: Opaque<"node">): boolean
+- gui.set_visible(node: Opaque<"node">, visible: boolean)
+- gui.get_adjust_mode(node: Opaque<"node">): Opaque<"constant">
+- gui.set_adjust_mode(node: Opaque<"node">, adjust_mode: Opaque<"constant">)
+- gui.set_safe_area_mode(mode: Opaque<"constant">)
+- gui.get_size_mode(node: Opaque<"node">): Opaque<"constant">
+- gui.set_size_mode(node: Opaque<"node">, size_mode: Opaque<"constant">)
+- gui.move_above(node: Opaque<"node">, reference: Opaque<"node"> | nil)
+- gui.move_below(node: Opaque<"node">, reference: Opaque<"node"> | nil)
+- gui.get_parent(node: Opaque<"node">): Opaque<"node"> | nil
+- gui.set_parent(node: Opaque<"node">, parent?: Opaque<"node">, keep_scene_transform?: boolean)
+- gui.clone(node: Opaque<"node">): Opaque<"node">
+- gui.clone_tree(node: Opaque<"node">): Record<string | number, unknown>
+- gui.get_tree(node: Opaque<"node">): Record<string | number, unknown>
 - gui.reset_nodes()
 - gui.set_render_order(order: number)
-- gui.show_keyboard(type: constant, autoclose: boolean)
+- gui.show_keyboard(type: Opaque<"constant">, autoclose: boolean)
 - gui.hide_keyboard()
 - gui.reset_keyboard()
-- gui.get_position(node: node): vector3
-- gui.set_position(node: node, position: vector3 | vector4)
-- gui.get_rotation(node: node): quaternion
-- gui.set_rotation(node: node, rotation: quaternion | vector4)
-- gui.get_euler(node: node): vector3
-- gui.set_euler(node: node, rotation: vector3 | vector4)
-- gui.get_scale(node: node): vector3
-- gui.set_scale(node: node, scale: vector3 | vector4)
-- gui.get_color(node: node): vector4
-- gui.set_color(node: node, color: vector3 | vector4)
-- gui.get_outline(node: node): vector4
-- gui.set_outline(node: node, color: vector3 | vector4)
-- gui.get_shadow(node: node): vector4
-- gui.set_shadow(node: node, color: vector3 | vector4)
-- gui.set_size(node: node, size: vector3 | vector4)
-- gui.get_size(node: node): vector3
-- gui.get_screen_position(node: node): vector3
-- gui.set_screen_position(node: node, screen_position: vector3)
-- gui.screen_to_local(node: node, screen_position: vector3): vector3
-- gui.get_flipbook_cursor(node: node): number
-- gui.set_flipbook_cursor(node: node, cursor: number)
-- gui.get_flipbook_playback_rate(node: node): number
-- gui.set_flipbook_playback_rate(node: node, playback_rate: number)
-- gui.new_particlefx_node(pos: vector3 | vector4, particlefx: hash | string): node
-- gui.play_particlefx(node: node, emitter_state_function?: function(self, node, emitter, state))
-- gui.stop_particlefx(node: node, options?: table)
-- gui.set_particlefx(node: node, particlefx: hash | string)
-- gui.get_particlefx(node: node): hash
-- gui.get_inherit_alpha(node: node): boolean
-- gui.set_inherit_alpha(node: node, inherit_alpha: boolean)
-- gui.get_alpha(node: node): number
-- gui.set_alpha(node: node, alpha: number)
-- init(self: userdata)
-- final(self: userdata)
-- update(self: userdata, dt: number)
-- on_message(self: userdata, message_id: hash, message: table)
-- on_input(self: userdata, action_id: hash, action: table): boolean | nil
-- on_reload(self: userdata)
+- gui.get_position(node: Opaque<"node">): Vector3
+- gui.set_position(node: Opaque<"node">, position: Vector3 | Vector4)
+- gui.get_rotation(node: Opaque<"node">): Quaternion
+- gui.set_rotation(node: Opaque<"node">, rotation: Quaternion | Vector4)
+- gui.get_euler(node: Opaque<"node">): Vector3
+- gui.set_euler(node: Opaque<"node">, rotation: Vector3 | Vector4)
+- gui.get_scale(node: Opaque<"node">): Vector3
+- gui.set_scale(node: Opaque<"node">, scale: Vector3 | Vector4)
+- gui.get_color(node: Opaque<"node">): Vector4
+- gui.set_color(node: Opaque<"node">, color: Vector3 | Vector4)
+- gui.get_outline(node: Opaque<"node">): Vector4
+- gui.set_outline(node: Opaque<"node">, color: Vector3 | Vector4)
+- gui.get_shadow(node: Opaque<"node">): Vector4
+- gui.set_shadow(node: Opaque<"node">, color: Vector3 | Vector4)
+- gui.set_size(node: Opaque<"node">, size: Vector3 | Vector4)
+- gui.get_size(node: Opaque<"node">): Vector3
+- gui.get_screen_position(node: Opaque<"node">): Vector3
+- gui.set_screen_position(node: Opaque<"node">, screen_position: Vector3)
+- gui.screen_to_local(node: Opaque<"node">, screen_position: Vector3): Vector3
+- gui.get_flipbook_cursor(node: Opaque<"node">): number
+- gui.set_flipbook_cursor(node: Opaque<"node">, cursor: number)
+- gui.get_flipbook_playback_rate(node: Opaque<"node">): number
+- gui.set_flipbook_playback_rate(node: Opaque<"node">, playback_rate: number)
+- gui.new_particlefx_node(pos: Vector3 | Vector4, particlefx: Hash | string): Opaque<"node">
+- gui.play_particlefx(node: Opaque<"node">, emitter_state_function?: function(self, node, emitter, state))
+- gui.stop_particlefx(node: Opaque<"node">, options?: Record<string | number, unknown>)
+- gui.set_particlefx(node: Opaque<"node">, particlefx: Hash | string)
+- gui.get_particlefx(node: Opaque<"node">): Hash
+- gui.get_inherit_alpha(node: Opaque<"node">): boolean
+- gui.set_inherit_alpha(node: Opaque<"node">, inherit_alpha: boolean)
+- gui.get_alpha(node: Opaque<"node">): number
+- gui.set_alpha(node: Opaque<"node">, alpha: number)
+- init(self: Opaque<"userdata">)
+- final(self: Opaque<"userdata">)
+- update(self: Opaque<"userdata">, dt: number)
+- on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>)
+- on_input(self: Opaque<"userdata">, action_id: Hash, action: Record<string | number, unknown>): boolean | nil
+- on_reload(self: Opaque<"userdata">)
 - gui.PLAYBACK_ONCE_FORWARD
 - gui.PLAYBACK_ONCE_BACKWARD
 - gui.PLAYBACK_ONCE_PINGPONG
@@ -3464,10 +3464,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - gui.RESULT_TEXTURE_ALREADY_EXISTS
 - gui.RESULT_OUT_OF_RESOURCES
 - gui.RESULT_DATA_ERROR
-- material: hash
-- materials: hash
-- textures: hash
-- fonts: hash
+- material: Hash
+- materials: Hash
+- textures: Hash
+- fonts: Hash
 
 ### html5
 
@@ -3476,27 +3476,27 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### http
 
-- http.request(url: string, method: string, callback: function(self, id, response), headers?: table, post_data?: string, options?: table)
+- http.request(url: string, method: string, callback: function(self, id, response), headers?: Record<string | number, unknown>, post_data?: string, options?: Record<string | number, unknown>)
 
 ### iac
 
-- iac.set_listener(payload: table, type: number)
+- iac.set_listener(payload: Record<string | number, unknown>, type: number)
 
 ### iap
 
-- iap.buy(id: string, options: table)
-- iap.finish(transaction: table)
-- iap.acknowledge(transaction: table)
-- iap.get_provider_id(): constant
-- iap.list(ids: table, callback: function)
+- iap.buy(id: string, options: Record<string | number, unknown>)
+- iap.finish(transaction: Record<string | number, unknown>)
+- iap.acknowledge(transaction: Record<string | number, unknown>)
+- iap.get_provider_id(): Opaque<"constant">
+- iap.list(ids: Record<string | number, unknown>, callback: (...args: unknown[]) => unknown)
 - iap.restore(): boolean
-- iap.set_listener(listener: function)
+- iap.set_listener(listener: (...args: unknown[]) => unknown)
 
 ### image
 
-- image.load(buffer: string, options?: table): table | nil
-- image.load_buffer(buffer: string, options?: table): table | nil
-- image.get_astc_header(buffer: string): table | nil
+- image.load(buffer: string, options?: Record<string | number, unknown>): Record<string | number, unknown> | nil
+- image.load_buffer(buffer: string, options?: Record<string | number, unknown>): Record<string | number, unknown> | nil
+- image.get_astc_header(buffer: string): Record<string | number, unknown> | nil
 - image.TYPE_RGB
 - image.TYPE_RGBA
 - image.TYPE_LUMINANCE
@@ -3504,29 +3504,29 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### json
 
-- json.decode(json: string, options?: table): table
-- json.encode(tbl: table, options?: table): string
+- json.decode(json: string, options?: Record<string | number, unknown>): Record<string | number, unknown>
+- json.encode(tbl: Record<string | number, unknown>, options?: Record<string | number, unknown>): string
 - json.null: unknown
 
 ### label
 
-- label.set_text(url: string | hash | url, text: string | number)
-- label.get_text(url: string | hash | url): string
-- color: vector4
-- outline: vector4
-- shadow: vector4
-- scale: number | vector3
-- size: vector3
-- material: hash
-- font: hash
+- label.set_text(url: string | Hash | Url, text: string | number)
+- label.get_text(url: string | Hash | Url): string
+- color: Vector4
+- outline: Vector4
+- shadow: Vector4
+- scale: number | Vector3
+- size: Vector3
+- material: Hash
+- font: Hash
 - leading: number
 - tracking: number
 - line_break: boolean
 
 ### liveupdate
 
-- liveupdate.get_mounts(): table
-- liveupdate.add_mount(name: string, uri: string, priority: number, callback: function): number
+- liveupdate.get_mounts(): Record<string | number, unknown>
+- liveupdate.add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number
 - liveupdate.remove_mount(name: string): number
 - liveupdate.LIVEUPDATE_OK
 - liveupdate.LIVEUPDATE_INVALID_HEADER
@@ -3544,63 +3544,63 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### model
 
-- model.play_anim(url: string | hash | url, anim_id: string | hash, playback: constant, play_properties?: table, complete_function?: function(self, message_id, message, sender))
-- model.cancel(url: string | hash | url)
-- model.get_go(url: string | hash | url, bone_id: string | hash): hash
-- model.set_mesh_enabled(url: string | hash | url, mesh_id: string | hash | url, enabled: boolean)
-- model.get_mesh_enabled(url: string | hash | url, mesh_id: string | hash | url): boolean
-- model.get_aabb(url: string | hash | url): table
-- model.get_mesh_aabb(url: string | hash | url): table
+- model.play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Opaque<"constant">, play_properties?: Record<string | number, unknown>, complete_function?: function(self, message_id, message, sender))
+- model.cancel(url: string | Hash | Url)
+- model.get_go(url: string | Hash | Url, bone_id: string | Hash): Hash
+- model.set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean)
+- model.get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean
+- model.get_aabb(url: string | Hash | Url): Record<string | number, unknown>
+- model.get_mesh_aabb(url: string | Hash | Url): Record<string | number, unknown>
 - cursor: number
 - playback_rate: number
-- animation: hash
-- textureN: hash
-- material: hash
+- animation: Hash
+- textureN: Hash
+- material: Hash
 
 ### msg
 
-- msg.url(): url
-- msg.url(urlstring: string): url
-- msg.url(socket?: string | hash, path?: string | hash, fragment?: string | hash): url
-- msg.post(receiver: string | url | hash, message_id: string | hash, message?: table | nil)
+- msg.url(): Url
+- msg.url(urlstring: string): Url
+- msg.url(socket?: string | Hash, path?: string | Hash, fragment?: string | Hash): Url
+- msg.post(receiver: string | Url | Hash, message_id: string | Hash, message?: Record<string | number, unknown> | nil)
 
 ### particlefx
 
-- particlefx.play(url: string | hash | url, emitter_state_function?: function(self, id, emitter, state))
-- particlefx.stop(url: string | hash | url, options?: table)
-- particlefx.set_constant(url: string | hash | url, emitter: string | hash, constant: string | hash, value: vector4)
-- particlefx.reset_constant(url: string | hash | url, emitter: string | hash, constant: string | hash)
+- particlefx.play(url: string | Hash | Url, emitter_state_function?: function(self, id, emitter, state))
+- particlefx.stop(url: string | Hash | Url, options?: Record<string | number, unknown>)
+- particlefx.set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4)
+- particlefx.reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash)
 - particlefx.EMITTER_STATE_SLEEPING
 - particlefx.EMITTER_STATE_PRESPAWN
 - particlefx.EMITTER_STATE_SPAWNING
 - particlefx.EMITTER_STATE_POSTSPAWN
-- material: hash
-- image: hash
-- animation: hash
+- material: Hash
+- image: Hash
+- animation: Hash
 
 ### physics
 
-- physics.raycast_async(from: vector3, to: vector3, groups: table, request_id?: number)
-- physics.raycast(from: vector3, to: vector3, groups: table, options?: table): table | nil
-- physics.create_joint(joint_type: number, collisionobject_a: string | hash | url, joint_id: string | hash, position_a: vector3, collisionobject_b: string | hash | url, position_b: vector3, properties?: table)
-- physics.destroy_joint(collisionobject: string | hash | url, joint_id: string | hash)
-- physics.get_joint_properties(collisionobject: string | hash | url, joint_id: string | hash): table
-- physics.set_joint_properties(collisionobject: string | hash | url, joint_id: string | hash, properties: table)
-- physics.get_joint_reaction_force(collisionobject: string | hash | url, joint_id: string | hash): vector3
-- physics.get_joint_reaction_torque(collisionobject: string | hash | url, joint_id: string | hash): number
-- physics.set_gravity(gravity: vector3)
-- physics.get_gravity(): vector3
-- physics.set_hflip(url: string | hash | url, flip: boolean)
-- physics.set_vflip(url: string | hash | url, flip: boolean)
-- physics.wakeup(url: string | hash | url)
-- physics.set_group(url: string | hash | url, group: string)
-- physics.get_group(url: string | hash | url): hash
-- physics.set_maskbit(url: string | hash | url, group: string, maskbit: boolean)
-- physics.get_maskbit(url: string | hash | url, group: string): boolean
-- physics.get_shape(url: string | hash | url, shape: string | hash): table
-- physics.set_shape(url: string | hash | url, shape: string | hash, table: table)
+- physics.raycast_async(from: Vector3, to: Vector3, groups: Record<string | number, unknown>, request_id?: number)
+- physics.raycast(from: Vector3, to: Vector3, groups: Record<string | number, unknown>, options?: Record<string | number, unknown>): Record<string | number, unknown> | nil
+- physics.create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: Record<string | number, unknown>)
+- physics.destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash)
+- physics.get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): Record<string | number, unknown>
+- physics.set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: Record<string | number, unknown>)
+- physics.get_joint_reaction_force(collisionobject: string | Hash | Url, joint_id: string | Hash): Vector3
+- physics.get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number
+- physics.set_gravity(gravity: Vector3)
+- physics.get_gravity(): Vector3
+- physics.set_hflip(url: string | Hash | Url, flip: boolean)
+- physics.set_vflip(url: string | Hash | Url, flip: boolean)
+- physics.wakeup(url: string | Hash | Url)
+- physics.set_group(url: string | Hash | Url, group: string)
+- physics.get_group(url: string | Hash | Url): Hash
+- physics.set_maskbit(url: string | Hash | Url, group: string, maskbit: boolean)
+- physics.get_maskbit(url: string | Hash | Url, group: string): boolean
+- physics.get_shape(url: string | Hash | Url, shape: string | Hash): Record<string | number, unknown>
+- physics.set_shape(url: string | Hash | Url, shape: string | Hash, table: Record<string | number, unknown>)
 - physics.set_event_listener(callback: function(self, events) | nil)
-- physics.update_mass(collisionobject: string | hash | url, mass: number)
+- physics.update_mass(collisionobject: string | Hash | Url, mass: number)
 - physics.JOINT_TYPE_SPRING
 - physics.JOINT_TYPE_FIXED
 - physics.JOINT_TYPE_HINGE
@@ -3612,8 +3612,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - physics.SHAPE_TYPE_CAPSULE
 - physics.SHAPE_TYPE_HULL
 - mass: number
-- linear_velocity: vector3
-- angular_velocity: vector3
+- linear_velocity: Vector3
+- angular_velocity: Vector3
 - linear_damping: number
 - angular_damping: number
 
@@ -3623,11 +3623,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - profiler.get_cpu_usage(): number
 - profiler.enable(enabled: boolean)
 - profiler.enable_ui(enabled: boolean)
-- profiler.set_ui_mode(mode: constant)
-- profiler.set_ui_view_mode(mode: constant)
+- profiler.set_ui_mode(mode: Opaque<"constant">)
+- profiler.set_ui_view_mode(mode: Opaque<"constant">)
 - profiler.set_ui_vsync_wait_visible(visible: boolean)
 - profiler.recorded_frame_count(): number
-- profiler.view_recorded_frame(frame_index: table)
+- profiler.view_recorded_frame(frame_index: Record<string | number, unknown>)
 - profiler.log_text(text: string)
 - profiler.dump_frame()
 - profiler.scope_begin(name: string)
@@ -3641,34 +3641,34 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### push
 
-- push.register(notifications: table, callback: function)
-- push.set_listener(listener: function)
+- push.register(notifications: Record<string | number, unknown>, callback: (...args: unknown[]) => unknown)
+- push.set_listener(listener: (...args: unknown[]) => unknown)
 - push.set_badge_count(count: number)
-- push.schedule(time: number, title: string, alert: string, payload: string, notification_settings: table): number, string
+- push.schedule(time: number, title: string, alert: string, payload: string, notification_settings: Record<string | number, unknown>): number, string
 - push.cancel(id: number)
 - push.cancel_all_issued()
-- push.get_scheduled(id: number): table
-- push.get_all_scheduled(): table
+- push.get_scheduled(id: number): Record<string | number, unknown>
+- push.get_all_scheduled(): Record<string | number, unknown>
 
 ### render
 
-- render.constant_buffer(): constant_buffer
-- render.enable_state(state: constant)
-- render.disable_state(state: constant)
+- render.constant_buffer(): Opaque<"constant_buffer">
+- render.enable_state(state: Opaque<"constant">)
+- render.disable_state(state: Opaque<"constant">)
 - render.set_viewport(x: number, y: number, width: number, height: number)
-- render.render_target(name: string, parameters: table): render_target
-- render.delete_render_target(render_target: render_target)
-- render.set_render_target(render_target: render_target, options?: table)
-- render.set_render_target_size(render_target: render_target, width: number, height: number)
-- render.enable_texture(binding: number | string | hash, handle_or_name: texture | string | hash, buffer_type?: graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_COLOR1_BIT | graphics.BUFFER_TYPE_COLOR2_BIT | graphics.BUFFER_TYPE_COLOR3_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT)
-- render.disable_texture(binding: texture | string | hash)
-- render.get_render_target_width(render_target: render_target, buffer_type: graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_COLOR1_BIT | graphics.BUFFER_TYPE_COLOR2_BIT | graphics.BUFFER_TYPE_COLOR3_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT): number
-- render.get_render_target_height(render_target: render_target, buffer_type: graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_COLOR1_BIT | graphics.BUFFER_TYPE_COLOR2_BIT | graphics.BUFFER_TYPE_COLOR3_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT): number
-- render.clear(buffers: table)
-- render.draw(predicate: number, options?: table)
-- render.draw_debug3d(options?: table)
-- render.set_view(matrix: matrix4)
-- render.set_projection(matrix: matrix4)
+- render.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">
+- render.delete_render_target(render_target: Opaque<"render_target">)
+- render.set_render_target(render_target: Opaque<"render_target">, options?: Record<string | number, unknown>)
+- render.set_render_target_size(render_target: Opaque<"render_target">, width: number, height: number)
+- render.enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash, buffer_type?: graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_COLOR1_BIT | graphics.BUFFER_TYPE_COLOR2_BIT | graphics.BUFFER_TYPE_COLOR3_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT)
+- render.disable_texture(binding: Opaque<"texture"> | string | Hash)
+- render.get_render_target_width(render_target: Opaque<"render_target">, buffer_type: graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_COLOR1_BIT | graphics.BUFFER_TYPE_COLOR2_BIT | graphics.BUFFER_TYPE_COLOR3_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT): number
+- render.get_render_target_height(render_target: Opaque<"render_target">, buffer_type: graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_COLOR1_BIT | graphics.BUFFER_TYPE_COLOR2_BIT | graphics.BUFFER_TYPE_COLOR3_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT): number
+- render.clear(buffers: Record<string | number, unknown>)
+- render.draw(predicate: number, options?: Record<string | number, unknown>)
+- render.draw_debug3d(options?: Record<string | number, unknown>)
+- render.set_view(matrix: Matrix4)
+- render.set_projection(matrix: Matrix4)
 - render.set_blend_func(source_factor: number, destination_factor: number)
 - render.set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean)
 - render.set_depth_mask(depth: boolean)
@@ -3682,12 +3682,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - render.get_height(): number
 - render.get_window_width(): number
 - render.get_window_height(): number
-- render.predicate(tags: table): number
-- render.enable_material(material_id: string | hash)
+- render.predicate(tags: Record<string | number, unknown>): number
+- render.enable_material(material_id: string | Hash)
 - render.disable_material()
-- render.set_camera(camera: url | number | nil, options?: table)
-- render.set_compute(compute: string | hash | nil)
-- render.dispatch_compute(x: number, y: number, z: number, options?: table)
+- render.set_camera(camera: Url | number | nil, options?: Record<string | number, unknown>)
+- render.set_compute(compute: string | Hash | nil)
+- render.dispatch_compute(x: number, y: number, z: number, options?: Record<string | number, unknown>)
 - render.set_listener(callback: function(self, event_type) | nil)
 - render.RENDER_TARGET_DEFAULT
 - render.FRUSTUM_PLANES_SIDES
@@ -3698,47 +3698,47 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### resource
 
-- resource.material(path?: string): hash
-- resource.font(path?: string): hash
-- resource.texture(path?: string): hash
-- resource.atlas(path?: string): hash
-- resource.buffer(path?: string): hash
-- resource.tile_source(path?: string): hash
-- resource.render_target(path?: string): hash
-- resource.set(path: string | hash, buffer: buffer)
-- resource.load(path: string): buffer
-- resource.create_texture(path: string, table: table, buffer: buffer): hash
-- resource.create_texture_async(path: string | hash, table: table, buffer: buffer, callback: function): hash, number
-- resource.release(path: hash | string)
-- resource.set_texture(path: hash | string, table: table, buffer: buffer)
-- resource.get_texture_info(path: hash | string | number): table
-- resource.get_render_target_info(path: hash | string | number): table
-- resource.create_atlas(path: string, table: table): hash
-- resource.set_atlas(path: hash | string, table: table)
-- resource.get_atlas(path: hash | string): table
-- resource.set_sound(path: hash | string, buffer: string)
-- resource.create_sound_data(path: string, options?: table): hash
-- resource.create_buffer(path: string, table?: table): hash
-- resource.get_buffer(path: hash | string): buffer
-- resource.set_buffer(path: hash | string, buffer: buffer, table?: table)
-- resource.get_text_metrics(url: hash, text: string, options?: table): table
+- resource.material(path?: string): Hash
+- resource.font(path?: string): Hash
+- resource.texture(path?: string): Hash
+- resource.atlas(path?: string): Hash
+- resource.buffer(path?: string): Hash
+- resource.tile_source(path?: string): Hash
+- resource.render_target(path?: string): Hash
+- resource.set(path: string | Hash, buffer: Opaque<"buffer">)
+- resource.load(path: string): Opaque<"buffer">
+- resource.create_texture(path: string, table: Record<string | number, unknown>, buffer: Opaque<"buffer">): Hash
+- resource.create_texture_async(path: string | Hash, table: Record<string | number, unknown>, buffer: Opaque<"buffer">, callback: (...args: unknown[]) => unknown): Hash, number
+- resource.release(path: Hash | string)
+- resource.set_texture(path: Hash | string, table: Record<string | number, unknown>, buffer: Opaque<"buffer">)
+- resource.get_texture_info(path: Hash | string | number): Record<string | number, unknown>
+- resource.get_render_target_info(path: Hash | string | number): Record<string | number, unknown>
+- resource.create_atlas(path: string, table: Record<string | number, unknown>): Hash
+- resource.set_atlas(path: Hash | string, table: Record<string | number, unknown>)
+- resource.get_atlas(path: Hash | string): Record<string | number, unknown>
+- resource.set_sound(path: Hash | string, buffer: string)
+- resource.create_sound_data(path: string, options?: Record<string | number, unknown>): Hash
+- resource.create_buffer(path: string, table?: Record<string | number, unknown>): Hash
+- resource.get_buffer(path: Hash | string): Opaque<"buffer">
+- resource.set_buffer(path: Hash | string, buffer: Opaque<"buffer">, table?: Record<string | number, unknown>)
+- resource.get_text_metrics(url: Hash, text: string, options?: Record<string | number, unknown>): Record<string | number, unknown>
 
 ### socket
 
-- socket.select(recvt: table, sendt: table, timeout?: number): table, table, string | nil
+- socket.select(recvt: Record<string | number, unknown>, sendt: Record<string | number, unknown>, timeout?: number): Record<string | number, unknown>, Record<string | number, unknown>, string | nil
 - socket.tcp6(): master | nil, string | nil
 - socket.udp6(): unconnected | nil, string | nil
-- socket.dns.tohostname(address: string): string | nil, table | string
-- socket.dns.toip(address: string): string | nil, table | string
+- socket.dns.tohostname(address: string): string | nil, Record<string | number, unknown> | string
+- socket.dns.toip(address: string): string | nil, Record<string | number, unknown> | string
 - socket.dns.gethostname(): string
-- socket.dns.getaddrinfo(address: string): table | nil, string | nil
-- socket.dns.getnameinfo(address: string): table | nil, string | nil
+- socket.dns.getaddrinfo(address: string): Record<string | number, unknown> | nil, string | nil
+- socket.dns.getnameinfo(address: string): Record<string | number, unknown> | nil, string | nil
 - socket.connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): client | nil, string | nil
 - socket.udp(): unconnected | nil, string | nil
-- socket.skip(d: number, ret1?: any, ret2?: any, retN?: any): any | nil, any | nil, any | nil
+- socket.skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): unknown | nil, unknown | nil, unknown | nil
 - socket.tcp(): master | nil, string | nil
-- socket.newtry(finalizer: function()): function
-- socket.protect(func: function): function(function())
+- socket.newtry(finalizer: function()): (...args: unknown[]) => unknown
+- socket.protect(func: (...args: unknown[]) => unknown): function(function())
 - socket.gettime(): number
 - socket.sleep(time: number)
 - server:accept(): client | nil, string | nil
@@ -3757,10 +3757,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - master:listen(backlog: number): number | nil, string | nil
 - client:receive(pattern?: string | number, prefix?: string): string | nil, string | nil, string | nil
 - client:send(data: string, i?: number, j?: number): number | nil, string | nil, number | nil
-- client:setoption(option: string, value?: any): number | nil, string | nil
-- server:setoption(option: string, value?: any): number | nil, string | nil
-- client:getoption(option: string): any | nil, string | nil
-- server:getoption(option: string): any | nil, string | nil
+- client:setoption(option: string, value?: unknown): number | nil, string | nil
+- server:setoption(option: string, value?: unknown): number | nil, string | nil
+- client:getoption(option: string): unknown | nil, string | nil
+- server:getoption(option: string): unknown | nil, string | nil
 - master:setstats(received: number, sent: number, age: number): number | nil
 - client:setstats(received: number, sent: number, age: number): number | nil
 - server:setstats(received: number, sent: number, age: number): number | nil
@@ -3785,15 +3785,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - connected:receive(size?: number): string | nil, string | nil
 - unconnected:receive(size?: number): string | nil, string | nil
 - unconnected:receivefrom(size?: number): string | nil, string, number | nil
-- connected:getoption(option: string): any | nil, string | nil
-- unconnected:getoption(option: string): any | nil, string | nil
+- connected:getoption(option: string): unknown | nil, string | nil
+- unconnected:getoption(option: string): unknown | nil, string | nil
 - connected:send(datagram: string): number | nil, string | nil
 - unconnected:sendto(datagram: string, ip: string, port: number): number | nil, string | nil
 - connected:setpeername("*": string): number | nil, string | nil
 - unconnected:setpeername(address: string, port: number): number | nil, string | nil
 - unconnected:setsockname(address: string, port: number): number | nil, string | nil
-- connected:setoption(option: string, value?: any): number | nil, string | nil
-- unconnected:setoption(option: string, value?: any): number | nil, string | nil
+- connected:setoption(option: string, value?: unknown): number | nil, string | nil
+- unconnected:setoption(option: string, value?: unknown): number | nil, string | nil
 - connected:settimeout(value: number)
 - unconnected:settimeout(value: number)
 - socket._VERSION
@@ -3802,42 +3802,42 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### sound
 
 - sound.is_music_playing(): boolean
-- sound.get_rms(group: string | hash, window: number): number, number
-- sound.get_peak(group: string | hash, window: number): number, number
-- sound.set_group_gain(group: string | hash, gain: number)
-- sound.get_group_gain(group: string | hash): number
-- sound.get_groups(): table
-- sound.get_group_name(group: string | hash): string
+- sound.get_rms(group: string | Hash, window: number): number, number
+- sound.get_peak(group: string | Hash, window: number): number, number
+- sound.set_group_gain(group: string | Hash, gain: number)
+- sound.get_group_gain(group: string | Hash): number
+- sound.get_groups(): Record<string | number, unknown>
+- sound.get_group_name(group: string | Hash): string
 - sound.is_phone_call_active(): boolean
-- sound.play(url: string | hash | url, play_properties?: table, complete_function?: function(self, message_id, message, sender)): number
-- sound.stop(url: string | hash | url, stop_properties?: table)
-- sound.pause(url: string | hash | url, pause: boolean)
-- sound.set_gain(url: string | hash | url, gain?: number)
-- sound.set_pan(url: string | hash | url, pan?: number)
+- sound.play(url: string | Hash | Url, play_properties?: Record<string | number, unknown>, complete_function?: function(self, message_id, message, sender)): number
+- sound.stop(url: string | Hash | Url, stop_properties?: Record<string | number, unknown>)
+- sound.pause(url: string | Hash | Url, pause: boolean)
+- sound.set_gain(url: string | Hash | Url, gain?: number)
+- sound.set_pan(url: string | Hash | Url, pan?: number)
 - gain: number
 - pan: number
 - speed: number
-- sound: hash
+- sound: Hash
 
 ### sprite
 
-- sprite.set_hflip(url: string | hash | url, flip: boolean)
-- sprite.set_vflip(url: string | hash | url, flip: boolean)
-- sprite.play_flipbook(url: string | hash | url, id: string | hash, complete_function?: function(self, message_id, message, sender), play_properties?: table)
-- size: vector3
-- slice: vector4
-- scale: vector3
-- image: hash
-- material: hash
+- sprite.set_hflip(url: string | Hash | Url, flip: boolean)
+- sprite.set_vflip(url: string | Hash | Url, flip: boolean)
+- sprite.play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: function(self, message_id, message, sender), play_properties?: Record<string | number, unknown>)
+- size: Vector3
+- slice: Vector4
+- scale: Vector3
+- image: Hash
+- material: Hash
 - cursor: number
 - playback_rate: number
-- animation: hash
-- frame_count: hash
+- animation: Hash
+- frame_count: Hash
 
 ### sys
 
-- sys.save(filename: string, table: table)
-- sys.load(filename: string): table
+- sys.save(filename: string, table: Record<string | number, unknown>)
+- sys.load(filename: string): Record<string | number, unknown>
 - sys.exists(path: string): boolean
 - sys.get_host_path(filename: string): string
 - sys.get_save_file(application_id: string, file_name: string): string
@@ -3846,22 +3846,22 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - sys.get_config_int(key: string, default_value?: number): number
 - sys.get_config_number(key: string, default_value?: number): number
 - sys.get_config_boolean(key: string, default_value?: boolean): boolean
-- sys.open_url(url: string, attributes?: table): boolean
+- sys.open_url(url: string, attributes?: Record<string | number, unknown>): boolean
 - sys.load_resource(filename: string): string | nil, string | nil
-- sys.get_sys_info(options?: table): table
-- sys.get_engine_info(): table
-- sys.get_application_info(app_string: string): table
-- sys.get_ifaddrs(): table
+- sys.get_sys_info(options?: Record<string | number, unknown>): Record<string | number, unknown>
+- sys.get_engine_info(): Record<string | number, unknown>
+- sys.get_application_info(app_string: string): Record<string | number, unknown>
+- sys.get_ifaddrs(): Record<string | number, unknown>
 - sys.set_error_handler(error_handler: function(source, message, traceback))
 - sys.set_connectivity_host(host: string)
-- sys.get_connectivity(): constant
+- sys.get_connectivity(): Opaque<"constant">
 - sys.exit(code: number)
 - sys.reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string)
 - sys.set_vsync_swap_interval(swap_interval: number)
 - sys.set_update_frequency(frequency: number)
-- sys.serialize(table: table): string
-- sys.deserialize(buffer: string): table
-- sys.load_buffer(path: string): buffer
+- sys.serialize(table: Record<string | number, unknown>): string
+- sys.deserialize(buffer: string): Record<string | number, unknown>
+- sys.load_buffer(path: string): Opaque<"buffer">
 - sys.load_buffer_async(path: string, status_callback: function(self, request_id, result)): number
 - sys.set_engine_throttle(enable: boolean, cooldown: number)
 - sys.set_render_enable(enable: boolean)
@@ -3874,100 +3874,100 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### tilemap
 
-- tilemap.set_tile(url: string | hash | url, layer: string | hash, x: number, y: number, tile: number, transform_bitmask?: number)
-- tilemap.get_tile(url: string | hash | url, layer: string | hash, x: number, y: number): number
-- tilemap.get_tile_info(url: string | hash | url, layer: string | hash, x: number, y: number): table
-- tilemap.get_tiles(url: string | hash | url, layer: string | hash): table
-- tilemap.get_bounds(url: string | hash | url): number, number, number, number
-- tilemap.set_visible(url: string | hash | url, layer: string | hash, visible: boolean)
+- tilemap.set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number)
+- tilemap.get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number
+- tilemap.get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): Record<string | number, unknown>
+- tilemap.get_tiles(url: string | Hash | Url, layer: string | Hash): Record<string | number, unknown>
+- tilemap.get_bounds(url: string | Hash | Url): number, number, number, number
+- tilemap.set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean)
 - tilemap.H_FLIP
 - tilemap.V_FLIP
 - tilemap.ROTATE_90
 - tilemap.ROTATE_180
 - tilemap.ROTATE_270
-- tile_source: hash
-- material: hash
+- tile_source: Hash
+- material: Hash
 
 ### timer
 
 - timer.delay(delay: number, repeating: boolean, callback: function(self, handle, time_elapsed)): number
 - timer.cancel(handle: number): boolean
 - timer.trigger(handle: number): boolean
-- timer.get_info(handle: number): table | nil
+- timer.get_info(handle: number): Record<string | number, unknown> | nil
 - timer.INVALID_TIMER_HANDLE
 
 ### types
 
-- types.is_vector(var: any): boolean
-- types.is_matrix4(var: any): boolean
-- types.is_vector3(var: any): boolean
-- types.is_vector4(var: any): boolean
-- types.is_quat(var: any): boolean
-- types.is_hash(var: any): boolean
-- types.is_url(var: any): boolean
+- types.is_vector(var: unknown): boolean
+- types.is_matrix4(var: unknown): boolean
+- types.is_vector3(var: unknown): boolean
+- types.is_vector4(var: unknown): boolean
+- types.is_quat(var: unknown): boolean
+- types.is_hash(var: unknown): boolean
+- types.is_url(var: unknown): boolean
 
 ### vmath
 
-- vmath.vector(t: table): vector
-- vmath.vector3(): vector3
-- vmath.vector3(n: number): vector3
-- vmath.vector3(v1: vector3): vector3
-- vmath.vector3(x: number, y: number, z: number): vector3
-- vmath.vector4(): vector4
-- vmath.vector4(n: number): vector4
-- vmath.vector4(v1: vector4): vector4
-- vmath.vector4(x: number, y: number, z: number, w: number): vector4
-- vmath.quat(): quaternion
-- vmath.quat(q1: quaternion): quaternion
-- vmath.quat(x: number, y: number, z: number, w: number): quaternion
-- vmath.quat_from_to(v1: vector3, v2: vector3): quaternion
-- vmath.quat_axis_angle(v: vector3, angle: number): quaternion
-- vmath.quat_basis(x: vector3, y: vector3, z: vector3): quaternion
-- vmath.quat_rotation_x(angle: number): quaternion
-- vmath.quat_rotation_y(angle: number): quaternion
-- vmath.quat_rotation_z(angle: number): quaternion
-- vmath.matrix4(): matrix4
-- vmath.matrix4(m1: matrix4): matrix4
-- vmath.matrix4_frustum(left: number, right: number, bottom: number, top: number, near: number, far: number): matrix4
-- vmath.matrix4_look_at(eye: vector3, look_at: vector3, up: vector3): matrix4
-- vmath.matrix4_orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): matrix4
-- vmath.matrix4_perspective(fov: number, aspect: number, near: number, far: number): matrix4
-- vmath.matrix4_quat(q: quaternion): matrix4
-- vmath.matrix4_axis_angle(v: vector3, angle: number): matrix4
-- vmath.matrix4_rotation_x(angle: number): matrix4
-- vmath.matrix4_rotation_y(angle: number): matrix4
-- vmath.matrix4_rotation_z(angle: number): matrix4
-- vmath.matrix4_translation(position: vector3 | vector4): matrix4
-- vmath.inv(m1: matrix4): matrix4
-- vmath.ortho_inv(m1: matrix4): matrix4
-- vmath.dot(v1: vector3 | vector4, v2: vector3 | vector4): number
-- vmath.length_sqr(v: vector3 | vector4 | quaternion): number
-- vmath.length(v: vector3 | vector4 | quaternion): number
-- vmath.normalize(v1: vector3 | vector4 | quaternion): vector3 | vector4 | quaternion
-- vmath.cross(v1: vector3, v2: vector3): vector3
-- vmath.lerp(t: number, v1: vector3 | vector4, v2: vector3 | vector4): vector3 | vector4
-- vmath.lerp(t: number, q1: quaternion, q2: quaternion): quaternion
+- vmath.vector(t: Record<string | number, unknown>): Vector
+- vmath.vector3(): Vector3
+- vmath.vector3(n: number): Vector3
+- vmath.vector3(v1: Vector3): Vector3
+- vmath.vector3(x: number, y: number, z: number): Vector3
+- vmath.vector4(): Vector4
+- vmath.vector4(n: number): Vector4
+- vmath.vector4(v1: Vector4): Vector4
+- vmath.vector4(x: number, y: number, z: number, w: number): Vector4
+- vmath.quat(): Quaternion
+- vmath.quat(q1: Quaternion): Quaternion
+- vmath.quat(x: number, y: number, z: number, w: number): Quaternion
+- vmath.quat_from_to(v1: Vector3, v2: Vector3): Quaternion
+- vmath.quat_axis_angle(v: Vector3, angle: number): Quaternion
+- vmath.quat_basis(x: Vector3, y: Vector3, z: Vector3): Quaternion
+- vmath.quat_rotation_x(angle: number): Quaternion
+- vmath.quat_rotation_y(angle: number): Quaternion
+- vmath.quat_rotation_z(angle: number): Quaternion
+- vmath.matrix4(): Matrix4
+- vmath.matrix4(m1: Matrix4): Matrix4
+- vmath.matrix4_frustum(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4
+- vmath.matrix4_look_at(eye: Vector3, look_at: Vector3, up: Vector3): Matrix4
+- vmath.matrix4_orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4
+- vmath.matrix4_perspective(fov: number, aspect: number, near: number, far: number): Matrix4
+- vmath.matrix4_quat(q: Quaternion): Matrix4
+- vmath.matrix4_axis_angle(v: Vector3, angle: number): Matrix4
+- vmath.matrix4_rotation_x(angle: number): Matrix4
+- vmath.matrix4_rotation_y(angle: number): Matrix4
+- vmath.matrix4_rotation_z(angle: number): Matrix4
+- vmath.matrix4_translation(position: Vector3 | Vector4): Matrix4
+- vmath.inv(m1: Matrix4): Matrix4
+- vmath.ortho_inv(m1: Matrix4): Matrix4
+- vmath.dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number
+- vmath.length_sqr(v: Vector3 | Vector4 | Quaternion): number
+- vmath.length(v: Vector3 | Vector4 | Quaternion): number
+- vmath.normalize(v1: Vector3 | Vector4 | Quaternion): Vector3 | Vector4 | Quaternion
+- vmath.cross(v1: Vector3, v2: Vector3): Vector3
+- vmath.lerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4
+- vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
 - vmath.lerp(t: number, n1: number, n2: number): number
-- vmath.slerp(t: number, v1: vector3 | vector4, v2: vector3 | vector4): vector3 | vector4
-- vmath.slerp(t: number, q1: quaternion, q2: quaternion): quaternion
-- vmath.conj(q1: quaternion): quaternion
-- vmath.rotate(q: quaternion, v1: vector3): vector3
-- vmath.project(v1: vector3, v2: vector3): number
-- vmath.mul_per_elem(v1: vector3 | vector4, v2: vector3 | vector4): vector3 | vector4
-- vmath.quat_matrix4(matrix: matrix4): quaternion
-- vmath.matrix4_compose(translation: vector3 | vector4, rotation: quaternion, scale: vector3): matrix4
-- vmath.matrix4_scale(scale: vector3): matrix4
-- vmath.matrix4_scale(scale: number): matrix4
-- vmath.matrix4_scale(scale_x: number, scale_y: number, scale_z: number): matrix4
-- vmath.clamp(value: number | vector3 | vector4, min: number | vector3 | vector4, max: number | vector3 | vector4): number | vector3 | vector4
-- vmath.quat_to_euler(q: quaternion): number, number, number
-- vmath.euler_to_quat(x: number | vector3, y: number, z: number): quaternion
+- vmath.slerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4
+- vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
+- vmath.conj(q1: Quaternion): Quaternion
+- vmath.rotate(q: Quaternion, v1: Vector3): Vector3
+- vmath.project(v1: Vector3, v2: Vector3): number
+- vmath.mul_per_elem(v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4
+- vmath.quat_matrix4(matrix: Matrix4): Quaternion
+- vmath.matrix4_compose(translation: Vector3 | Vector4, rotation: Quaternion, scale: Vector3): Matrix4
+- vmath.matrix4_scale(scale: Vector3): Matrix4
+- vmath.matrix4_scale(scale: number): Matrix4
+- vmath.matrix4_scale(scale_x: number, scale_y: number, scale_z: number): Matrix4
+- vmath.clamp(value: number | Vector3 | Vector4, min: number | Vector3 | Vector4, max: number | Vector3 | Vector4): number | Vector3 | Vector4
+- vmath.quat_to_euler(q: Quaternion): number, number, number
+- vmath.euler_to_quat(x: number | Vector3, y: number, z: number): Quaternion
 
 ### webview
 
-- webview.create(callback: function)
+- webview.create(callback: (...args: unknown[]) => unknown)
 - webview.destroy(webview_id: number)
-- webview.open_raw(webview_id: number, html: string, options: table)
+- webview.open_raw(webview_id: number, html: string, options: Record<string | number, unknown>)
 - webview.eval(webview_id: number, code: string)
 - webview.set_transparent(webview_id: number, transparent: boolean)
 - webview.set_visible(webview_id: number, visible: number)
@@ -3978,10 +3978,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - window.set_listener(callback: function(self, event, data) | nil)
 - window.set_mouse_lock(flag: boolean)
-- window.set_dim_mode(mode: constant)
-- window.get_dim_mode(): constant
+- window.set_dim_mode(mode: Opaque<"constant">)
+- window.get_dim_mode(): Opaque<"constant">
 - window.get_size(): number, number
-- window.get_safe_area(): table
+- window.get_safe_area(): Record<string | number, unknown>
 - window.get_mouse_lock(): boolean
 - window.get_display_scale(): number
 - window.set_title(title: string)
@@ -4004,30 +4004,30 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### base
 
 - assert(v: boolean, message?: string)
-- collectgarbage(opt?: table, arg?: number)
+- collectgarbage(opt?: Record<string | number, unknown>, arg?: number)
 - dofile(filename?: string)
 - error(message: string, level?: number)
-- getfenv(f?: function)
-- getmetatable(object: table)
-- ipairs(t: table)
-- load(func: function, chunkname?: string)
+- getfenv(f?: (...args: unknown[]) => unknown)
+- getmetatable(object: Record<string | number, unknown>)
+- ipairs(t: Record<string | number, unknown>)
+- load(func: (...args: unknown[]) => unknown, chunkname?: string)
 - loadfile(filename?: string)
 - loadstring(string: string, chunkname?: string)
-- next(table: table, index?: number)
+- next(table: Record<string | number, unknown>, index?: number)
 - pairs(t: string)
-- pcall(f: function, arg1: any, ...: ...)
+- pcall(f: (...args: unknown[]) => unknown, arg1: unknown, ...: ...)
 - print(...: ...)
-- rawequal(v1: any, v2: any)
-- rawget(table: table, index: number)
-- rawset(table: table, index: number, value: any)
+- rawequal(v1: unknown, v2: unknown)
+- rawget(table: Record<string | number, unknown>, index: number)
+- rawset(table: Record<string | number, unknown>, index: number, value: unknown)
 - select(index: number, ...: ...)
-- setfenv(f: function, table: table)
-- setmetatable(table: table, metatable: table)
+- setfenv(f: (...args: unknown[]) => unknown, table: Record<string | number, unknown>)
+- setmetatable(table: Record<string | number, unknown>, metatable: Record<string | number, unknown>)
 - tonumber(e: string, base?: number)
-- tostring(e: any)
-- type(v: any)
-- unpack(list: table, i?: number, j?: number)
-- xpcall(f: function, err: string)
+- tostring(e: unknown)
+- type(v: unknown)
+- unpack(list: Record<string | number, unknown>, i?: number, j?: number)
+- xpcall(f: (...args: unknown[]) => unknown, err: string)
 - module(name: string, ...?: ...)
 - require(modname: string)
 - _G: unknown
@@ -4050,28 +4050,28 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### coroutine
 
-- coroutine.create(f: function)
-- coroutine.resume(co: thread, val1?: any, ...?: unknown)
+- coroutine.create(f: (...args: unknown[]) => unknown)
+- coroutine.resume(co: thread, val1?: unknown, ...?: unknown)
 - coroutine.running()
 - coroutine.status(co: thread)
-- coroutine.wrap(f: function)
+- coroutine.wrap(f: (...args: unknown[]) => unknown)
 - coroutine.yield(...: unknown)
 
 ### debug
 
 - debug.debug()
-- debug.getfenv(o: any)
+- debug.getfenv(o: unknown)
 - debug.gethook(thread?: thread)
-- debug.getinfo(thread?: thread, function: function, what?: string)
+- debug.getinfo(thread?: thread, function: (...args: unknown[]) => unknown, what?: string)
 - debug.getlocal(thread?: thread, level: number, local: number)
-- debug.getmetatable(object: any)
+- debug.getmetatable(object: unknown)
 - debug.getregistry()
-- debug.getupvalue(func: function, up: number)
-- debug.setfenv(object: any, table: table)
-- debug.sethook(thread?: thread, hook: function, mask: string, count?: number)
-- debug.setlocal(thread?: thread, level: number, local: number, value: any)
-- debug.setmetatable(object: any, table: table)
-- debug.setupvalue(func: function, up: number, value: any)
+- debug.getupvalue(func: (...args: unknown[]) => unknown, up: number)
+- debug.setfenv(object: unknown, table: Record<string | number, unknown>)
+- debug.sethook(thread?: thread, hook: (...args: unknown[]) => unknown, mask: string, count?: number)
+- debug.setlocal(thread?: thread, level: number, local: number, value: unknown)
+- debug.setmetatable(object: unknown, table: Record<string | number, unknown>)
+- debug.setupvalue(func: (...args: unknown[]) => unknown, up: number, value: unknown)
 - debug.traceback(thread?: thread, message?: string, level?: number)
 
 ### io
@@ -4139,7 +4139,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - os.remove(filename: string)
 - os.rename(oldname: string, newname: string)
 - os.setlocale(locale: string, category?: string)
-- os.time(table?: table)
+- os.time(table?: Record<string | number, unknown>)
 - os.tmpname()
 
 ### package
@@ -4150,13 +4150,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - package.loadlib(libname: string, funcname: string)
 - package.path()
 - package.preload()
-- package.seeall(module: table)
+- package.seeall(module: Record<string | number, unknown>)
 
 ### string
 
 - string.byte(s: string, i?: number, j?: number)
 - string.char(...: unknown)
-- string.dump(function: function)
+- string.dump(function: (...args: unknown[]) => unknown)
 - string.find(s: string, pattern: string, init?: number, plain?: boolean)
 - string.format(formatstring: string, ...: unknown)
 - string.gmatch(s: string, pattern: string)
@@ -4171,8 +4171,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### table
 
-- table.concat(table: table, sep?: string, i?: number, j?: number)
-- table.insert(table: table, pos?: number, value: any)
-- table.maxn(table: table)
-- table.remove(table: table, pos?: number)
-- table.sort(table: table, comp?: function)
+- table.concat(table: Record<string | number, unknown>, sep?: string, i?: number, j?: number)
+- table.insert(table: Record<string | number, unknown>, pos?: number, value: unknown)
+- table.maxn(table: Record<string | number, unknown>)
+- table.remove(table: Record<string | number, unknown>, pos?: number)
+- table.sort(table: Record<string | number, unknown>, comp?: (...args: unknown[]) => unknown)

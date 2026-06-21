@@ -9,6 +9,7 @@ import {
   exampleMarkdownFor,
   functionSummaryTable,
   groupFunctionSymbols,
+  mapDocType,
 } from "./api-surface";
 import { loadApiSurface } from "./api-surface-loader";
 import { pageHeadings } from "./headings";
@@ -267,7 +268,7 @@ describe("apiModuleSymbols", () => {
     expect(symbols.map((s) => [s.kind, s.signature])).toEqual([
       ["variable", "demo.SPEED: number"],
       ["constant", "demo.MAX"],
-      ["property", "position: vector3"],
+      ["property", "position: Vector3"],
     ]);
     expect(symbols.every((s) => s.exampleMarkdown === undefined)).toBe(true);
   });
@@ -301,13 +302,13 @@ describe("apiModuleSymbols", () => {
       }),
     );
     expect(symbols[0]?.parameters).toEqual([
-      { name: "url", doc: "the url ...", types: ["string", "hash", "url"], isOptional: false },
+      { name: "url", doc: "the url ...", types: ["string", "Hash", "Url"], isOptional: false },
     ]);
     expect(symbols[0]?.returnValues).toEqual([
       {
         name: "body",
         doc: "the body if successful. Otherwise nil.",
-        types: ["b2Body"],
+        types: ['Opaque<"b2Body">'],
         isOptional: false,
       },
     ]);
@@ -474,6 +475,60 @@ describe("apiModuleSymbols", () => {
     );
     expect(symbols[0]?.signature).toBe("demo.V: unknown");
   });
+
+  test("maps a globals-shaped `hash(s: string): hash` return token to `Hash`", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "hash",
+            brief: "",
+            description: "Hashes a string.",
+            parameters: [{ name: "s", doc: "", types: ["string"], isOptional: false }],
+            returnValues: [{ name: "", doc: "", types: ["hash"], isOptional: false }],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.signature).toBe("hash(s: string): Hash");
+  });
+
+  test("maps a `vmath.vector3(): vector3` return token to `Vector3`", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "vmath.vector3",
+            brief: "",
+            description: "Creates a vector3.",
+            parameters: [],
+            returnValues: [{ name: "", doc: "", types: ["vector3"], isOptional: false }],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.signature).toBe("vmath.vector3(): Vector3");
+  });
+
+  test("maps a union param and agrees between signature segment and projected types", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.f",
+            brief: "",
+            description: "F.",
+            parameters: [
+              { name: "x", doc: "", types: ["string", "hash", "url"], isOptional: false },
+            ],
+            returnValues: [],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.signature).toBe("demo.f(x: string | Hash | Url)");
+    expect(symbols[0]?.parameters[0]?.types).toEqual(["string", "Hash", "Url"]);
+  });
 });
 
 describe("exampleMarkdownFor", () => {
@@ -607,6 +662,26 @@ describe("groupFunctionSymbols", () => {
 
   test("yields an empty array for empty input", () => {
     expect(groupFunctionSymbols([])).toEqual([]);
+  });
+});
+
+describe("mapDocType", () => {
+  test("maps Defold engine tokens to their emitted TypeScript names", () => {
+    expect(mapDocType("hash")).toBe("Hash");
+    expect(mapDocType("vector3")).toBe("Vector3");
+    expect(mapDocType("vector4")).toBe("Vector4");
+    expect(mapDocType("quaternion")).toBe("Quaternion");
+    expect(mapDocType("matrix4")).toBe("Matrix4");
+    expect(mapDocType("url")).toBe("Url");
+    expect(mapDocType("vector")).toBe("Vector");
+    expect(mapDocType("any")).toBe("unknown");
+  });
+
+  test("leaves primitives unchanged and returns an unmapped token verbatim", () => {
+    expect(mapDocType("string")).toBe("string");
+    expect(mapDocType("number")).toBe("number");
+    expect(mapDocType("boolean")).toBe("boolean");
+    expect(mapDocType("playback")).toBe("playback");
   });
 });
 
