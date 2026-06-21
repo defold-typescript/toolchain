@@ -3,3 +3,8 @@ public/search-index.json
 
 # Generated at build time from the API surface by scripts/build-symbol-index.ts
 public/symbol-index.json
+
+# Generated at build time from the guide + API surface by scripts/build-llms.ts
+# (the committed copies live in packages/docs/; these are the web-served mirror)
+public/llms.txt
+public/llms-full.txt
