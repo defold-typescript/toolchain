@@ -11,6 +11,10 @@ function realPages(): GuidePage[] {
 }
 
 const GLOBALS = [{ label: "globals", route: "/api/globals" }];
+const GLOBAL_TYPES = [
+  { label: "Vector3", route: "/api/Vector3" },
+  { label: "Hash", route: "/api/Hash" },
+];
 const LUA_STDLIB = [
   { label: "base", route: "/api/base" },
   { label: "bit", route: "/api/bit" },
@@ -21,7 +25,12 @@ const ENGINE = [
 ];
 
 function fullNav() {
-  return buildNav(realPages(), { globals: GLOBALS, luaStdlib: LUA_STDLIB, engine: ENGINE });
+  return buildNav(realPages(), {
+    globals: GLOBALS,
+    globalTypes: [],
+    luaStdlib: LUA_STDLIB,
+    engine: ENGINE,
+  });
 }
 
 describe("buildNav", () => {
@@ -49,8 +58,32 @@ describe("buildNav", () => {
     }
   });
 
+  test("places a populated Global types group between Globals and Lua Standard", () => {
+    const nav = buildNav(realPages(), {
+      globals: GLOBALS,
+      globalTypes: GLOBAL_TYPES,
+      luaStdlib: LUA_STDLIB,
+      engine: ENGINE,
+    });
+    const reference = nav.find((c) => c.id === "reference");
+    expect(reference?.links.map((l) => l.label)).toEqual([
+      "Globals",
+      "Global types",
+      "Lua Standard",
+      "Defold",
+    ]);
+    const group = reference?.links.find((l) => l.label === "Global types");
+    expect(group?.route).toBeUndefined();
+    expect(group?.children?.map((c) => c.route)).toEqual(["/api/Vector3", "/api/Hash"]);
+  });
+
   test("omits a group header entirely when its namespace list is empty", () => {
-    const nav = buildNav(realPages(), { globals: [], luaStdlib: LUA_STDLIB, engine: ENGINE });
+    const nav = buildNav(realPages(), {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: LUA_STDLIB,
+      engine: ENGINE,
+    });
     const reference = nav.find((c) => c.id === "reference");
     expect(reference?.links.map((l) => l.label)).toEqual(["Lua Standard", "Defold"]);
   });
@@ -73,7 +106,7 @@ describe("buildNav", () => {
 
   test("places every guide page route in exactly one category", () => {
     const pages = realPages();
-    const nav = buildNav(pages, { globals: [], luaStdlib: [], engine: [] });
+    const nav = buildNav(pages, { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
     const guideRoutes = nav.flatMap((c) => c.links.map((l) => l.route)).filter(Boolean);
     expect(new Set(guideRoutes).size).toBe(guideRoutes.length);
     expect(new Set(guideRoutes)).toEqual(new Set(pages.map((p) => p.route)));
@@ -93,7 +126,12 @@ describe("buildNav", () => {
       route: "/brand-new-topic",
       isIndex: false,
     };
-    const nav = buildNav([...realPages(), synthetic], { globals: [], luaStdlib: [], engine: [] });
+    const nav = buildNav([...realPages(), synthetic], {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+    });
     const guides = nav.find((c) => c.id === "guides");
     const hit = guides?.links.find((l) => l.route === "/brand-new-topic");
     expect(hit).toBeDefined();
@@ -103,7 +141,12 @@ describe("buildNav", () => {
 
 describe("linkFor toc-title rendering", () => {
   function navLinkFor(page: GuidePage): NavLink | undefined {
-    const nav = buildNav([...realPages(), page], { globals: [], luaStdlib: [], engine: [] });
+    const nav = buildNav([...realPages(), page], {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+    });
     for (const category of nav) {
       const hit = category.links.find((l) => l.route === page.route);
       if (hit) return hit;

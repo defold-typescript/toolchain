@@ -4001,6 +4001,75 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - zlib.inflate(buf: string): string
 - zlib.deflate(buf: string): string
 
+### Hash
+
+
+### Matrix4
+
+- mul(rhs: Matrix4): Matrix4
+- mul(rhs: Vector4): Vector4
+- m00: number
+- m01: number
+- m02: number
+- m03: number
+- m10: number
+- m11: number
+- m12: number
+- m13: number
+- m20: number
+- m21: number
+- m22: number
+- m23: number
+- m30: number
+- m31: number
+- m32: number
+- m33: number
+- c0: Vector4
+- c1: Vector4
+- c2: Vector4
+- c3: Vector4
+
+### Quaternion
+
+- mul(rhs: Quaternion): Quaternion
+- x: number
+- y: number
+- z: number
+- w: number
+
+### Url
+
+- socket: Hash
+- path: Hash
+- fragment: Hash | undefined
+
+### Vector
+
+- length: number
+
+### Vector3
+
+- add(rhs: Vector3): Vector3
+- sub(rhs: Vector3): Vector3
+- mul(rhs: number): Vector3
+- div(rhs: number): Vector3
+- unm(): Vector3
+- x: number
+- y: number
+- z: number
+
+### Vector4
+
+- add(rhs: Vector4): Vector4
+- sub(rhs: Vector4): Vector4
+- mul(rhs: number): Vector4
+- div(rhs: number): Vector4
+- unm(): Vector4
+- x: number
+- y: number
+- z: number
+- w: number
+
 ### base
 
 - assert(v: boolean, message?: string)
