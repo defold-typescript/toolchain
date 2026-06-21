@@ -11,7 +11,7 @@ import {
   groupFunctionSymbols,
   mapDocType,
 } from "./api-surface";
-import { loadApiSurface } from "./api-surface-loader";
+import { listApiVersions, loadApiSurface, loadApiSurfaceForVersion } from "./api-surface-loader";
 import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
 
@@ -84,6 +84,37 @@ describe("loadApiSurface", () => {
       const page = pages.find((p) => p.namespace === namespace);
       expect(page?.category).toBe("engine");
     }
+  });
+});
+
+describe("listApiVersions", () => {
+  test("lists the default target first, then the rest in api-targets.json order", () => {
+    expect(listApiVersions(FIXTURE_DIR)).toEqual([
+      { id: "cur", isDefault: true },
+      { id: "old", isDefault: false },
+    ]);
+  });
+});
+
+describe("loadApiSurfaceForVersion", () => {
+  test("loading the default target by id is byte-identical to the legacy entry point", () => {
+    expect(loadApiSurfaceForVersion(FIXTURE_DIR, "cur")).toEqual(loadApiSurface(FIXTURE_DIR));
+  });
+
+  test("a non-default target loads only its own modules, with version-prefixed routes", () => {
+    const pages = loadApiSurfaceForVersion(FIXTURE_DIR, "old");
+    expect(pages).toHaveLength(1);
+    expect(pages[0]?.namespace).toBe("wmath");
+    expect(pages[0]?.route).toBe("/api/old/wmath");
+  });
+
+  test("a non-default surface omits the shared core-types global-type pages", () => {
+    const pages = loadApiSurfaceForVersion(FIXTURE_DIR, "old");
+    expect(pages.some((p) => p.category === "global-type")).toBe(false);
+  });
+
+  test("throws for an unknown version id", () => {
+    expect(() => loadApiSurfaceForVersion(FIXTURE_DIR, "nope")).toThrow();
   });
 });
 
