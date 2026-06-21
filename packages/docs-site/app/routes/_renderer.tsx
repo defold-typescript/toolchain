@@ -12,7 +12,7 @@ import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
 import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
-import { buildVersionSwitcher, isApiRoute, type VersionSwitcherEntry } from "../lib/version-switch";
+import { buildVersionSwitcher, type VersionSwitcherEntry } from "../lib/version-switch";
 
 declare module "hono" {
   // Must stay an interface: module augmentation merges into hono's ContextRenderer.
@@ -197,9 +197,8 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
       ),
     ]),
   );
-  const versionSwitcher = isApiRoute(path)
-    ? buildVersionSwitcher({ versions, namespacesByVersion, route: path })
-    : [];
+  const versionSwitcher =
+    versions.length > 1 ? buildVersionSwitcher({ versions, namespacesByVersion, route: path }) : [];
   const currentVersion = versionSwitcher.find((entry) => entry.isCurrent) ?? versionSwitcher[0];
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
@@ -328,11 +327,20 @@ function VersionSelector({
 }) {
   return (
     <details class="group relative">
-      <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text [&::-webkit-details-marker]:hidden">
+      <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text [&::-webkit-details-marker]:hidden">
         <span>{currentId}</span>
-        <span aria-hidden="true" class="text-text-faint transition group-open:rotate-180">
-          v
-        </span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-4 w-4 text-text-faint transition group-open:rotate-180"
+          aria-hidden="true"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
       </summary>
       <div class="absolute right-0 z-40 mt-2 min-w-40 rounded-lg border border-border bg-bg p-1 text-sm shadow-lg">
         {entries.map((entry) => (

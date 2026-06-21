@@ -42,6 +42,13 @@ describe("buildVersionSwitcher", () => {
       { id: "old", route: "/api/old", isCurrent: false },
     ]);
   });
+
+  test("links each version's API index from a non-API route", () => {
+    expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/guide/x" })).toEqual([
+      { id: "cur", route: "/api", isCurrent: true },
+      { id: "old", route: "/api/old", isCurrent: false },
+    ]);
+  });
 });
 
 describe("isApiRoute", () => {
