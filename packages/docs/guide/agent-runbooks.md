@@ -27,6 +27,23 @@ created or updated; on `false`, read `error` for the failure reason. Some verbs
 add fields to the success envelope (noted per runbook), but `command`, `ok`, and
 either `written` or `error` are always present.
 
+## Offline knowledge pack
+
+`@defold-typescript/docs` ships two generated, never-hand-edited files at
+`node_modules/@defold-typescript/docs/`:
+
+- `llms.txt` — a curated index (per [llmstxt.org](https://llmstxt.org/)): one
+  link per guide page and per API namespace.
+- `llms-full.txt` — the whole guide inlined plus a compact
+  `namespace.function(signature)` index of the entire API surface.
+
+`llms-full.txt` is self-contained: an agent in a consumer project that has only
+`node_modules` and the in-project source can read every mechanic and signature
+from this one file — no network, no monorepo checkout. The docs site serves the
+same pair at `/llms.txt` and `/llms-full.txt`. Both are regenerated from the
+guide and the typed API on every docs build and drift-gated, so they never go
+stale against the shipped types.
+
 ## Verify against the real API surface
 
 This section governs every runbook below it. Before answering any "how do I…"

@@ -12,7 +12,9 @@
   "bugs": "https://github.com/defold-typescript/toolchain/issues",
   "type": "module",
   "files": [
-    "guide"
+    "guide",
+    "llms.txt",
+    "llms-full.txt"
   ],
   "publishConfig": {
     "access": "public"
