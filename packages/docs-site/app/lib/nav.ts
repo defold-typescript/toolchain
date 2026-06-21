@@ -26,6 +26,7 @@ export interface Namespace {
 
 export interface ReferenceGroups {
   globals: Namespace[];
+  globalTypes: Namespace[];
   luaStdlib: Namespace[];
   engine: Namespace[];
 }
@@ -106,7 +107,7 @@ function linkFor(page: GuidePage): NavLink {
 
 export function buildNav(
   pages: GuidePage[],
-  reference: ReferenceGroups = { globals: [], luaStdlib: [], engine: [] },
+  reference: ReferenceGroups = { globals: [], globalTypes: [], luaStdlib: [], engine: [] },
 ): NavCategory[] {
   const bySlug = new Map(pages.map((page) => [page.slug, page]));
   const claimed = new Set<string>();
@@ -132,6 +133,7 @@ export function buildNav(
 
   const groupSpecs: [string, Namespace[]][] = [
     ["Globals", reference.globals],
+    ["Global types", reference.globalTypes],
     ["Lua Standard", reference.luaStdlib],
     ["Defold", reference.engine],
   ];
