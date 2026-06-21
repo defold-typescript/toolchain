@@ -290,6 +290,17 @@
     color: var(--color-text);
   }
 
+  /* In the overview table a signature code span is wrapped in a plain `.prose a`
+     link, so its underline already marks it: drop the inline-code border and
+     padding so the chip chrome doesn't fight the underline. Excludes
+     `a.heading-anchor` (the permalink wrapping each detail-heading signature),
+     which keeps its pill. Mirrored in critical.css — that unlayered copy is the
+     one that actually wins over the unlayered `.prose code` rule. */
+  .prose a:not(.heading-anchor) .api-signature {
+    border-color: transparent;
+    padding: 0;
+  }
+
   .prose pre {
     font-family: var(--font-mono);
     font-size: 13px;

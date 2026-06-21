@@ -1,4 +1,4 @@
-import { type ApiModule, htmlToDocText } from "@defold-typescript/types";
+import { htmlToDocText } from "@defold-typescript/types";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { apiPages } from "../../lib/api-content";
@@ -21,15 +21,6 @@ const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "constant", label: "Constants" },
   { kind: "property", label: "Properties" },
 ];
-
-function isEmptyModule(m: ApiModule): boolean {
-  return (
-    m.functions.length === 0 &&
-    m.variables.length === 0 &&
-    m.constants.length === 0 &&
-    m.properties.length === 0
-  );
-}
 
 function paramBullet(p: ApiSymbolParam): string {
   const parts: string[] = [];
@@ -113,27 +104,6 @@ export default createRoute(
     const namespace = c.req.param("namespace");
     const page = apiPages().find((entry) => entry.namespace === namespace);
     if (!page) return c.notFound();
-
-    if (isEmptyModule(page.module)) {
-      // Honest empty state: the namespace exists, the fixture for it just
-      // hasn't been populated with elements yet. Don't pretend there's
-      // content — show the brief and a quiet "not yet documented" card.
-      return c.render(
-        <article class="prose">
-          <h1>{page.module.namespace}</h1>
-          {page.module.brief ? <p>{htmlToDocText(page.module.brief)}</p> : null}
-          <div class="not-prose mt-6 rounded-lg border border-dashed border-border bg-surface px-5 py-6 text-sm text-text-muted">
-            <p class="font-medium text-text">No symbols documented yet</p>
-            <p class="mt-1">
-              The Defold reference fixture for this namespace ships with no elements, so the
-              reference surface for it is empty. Once a populated fixture lands, the page picks up
-              functions, variables, constants, and properties automatically.
-            </p>
-          </div>
-        </article>,
-        { title: `${page.module.namespace} API` },
-      );
-    }
 
     // Build the linkify registry from the full surface. `linkifySymbolMentions`
     // itself drops bare-namespace keys (no `.`) — pointing a prose mention at

@@ -97,27 +97,39 @@ export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
   return groups;
 }
 
+// A markdown table splits cells on raw `|`, so any pipe in the content (e.g. a
+// union type `Hash | string` in a signature) must be backslash-escaped to
+// render literally instead of starting a new column. GFM unescapes it before
+// inline parsing, so it survives inside a code span too.
+function escapeTablePipes(text: string): string {
+  return text.replace(/\|/g, "\\|");
+}
+
 // First sentence of a description, table-cell-safe: cut at the first `. `
 // (keeping the period), collapse all whitespace runs to single spaces, trim,
 // and escape `|` so it can't break the markdown table. Empty in -> empty out.
 function summaryCell(text: string): string {
   const boundary = text.indexOf(". ");
   const sentence = boundary === -1 ? text : text.slice(0, boundary + 1);
-  return sentence.replace(/\s+/g, " ").trim().replace(/\|/g, "\\|");
+  return escapeTablePipes(sentence.replace(/\s+/g, " ").trim());
 }
 
 /**
  * Compact per-group function index for the top of an `/api/<namespace>` page:
- * a GitHub markdown table whose rows link each function `name` down to its
- * detailed `### \`signature\`` block (anchor = `slugify(signature)`, matching
- * the `slugify-headings` markdown-it rule) and carry its first-sentence
- * summary. Presentation-only — no new heading, so the "On this page" TOC is
- * unchanged. Returns `""` for an empty list so the caller emits nothing.
+ * a GitHub markdown table whose rows link each function's full `signature`
+ * (parameter and return types included) down to its detailed `### \`signature\``
+ * block (anchor = `slugify(signature)`, matching the `slugify-headings`
+ * markdown-it rule) and carry its first-sentence summary. Linking the whole
+ * signature — not the bare name — keeps overloads (two `mul` arms) distinct and
+ * surfaces the types at a glance. Presentation-only — no new heading, so the
+ * "On this page" TOC is unchanged. Returns `""` for an empty list so the caller
+ * emits nothing.
  */
 export function functionSummaryTable(symbols: ApiSymbol[]): string {
   if (symbols.length === 0) return "";
   const rows = symbols.map(
-    (s) => `| [\`${s.name}\`](#${slugify(s.signature)}) | ${summaryCell(s.docMarkdown)} |`,
+    (s) =>
+      `| [\`${escapeTablePipes(s.signature)}\`](#${slugify(s.signature)}) | ${summaryCell(s.docMarkdown)} |`,
   );
   return ["| Function | Summary |", "| --- | --- |", ...rows].join("\n");
 }

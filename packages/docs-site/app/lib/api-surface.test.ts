@@ -702,8 +702,8 @@ describe("functionSummaryTable", () => {
       [
         "| Function | Summary |",
         "| --- | --- |",
-        "| [`go.get_position`](#goget_position-vector3) |  |",
-        "| [`go.set_position`](#goset_positionposition-vector3-void) |  |",
+        "| [`go.get_position(): vector3`](#goget_position-vector3) |  |",
+        "| [`go.set_position(position: vector3): void`](#goset_positionposition-vector3-void) |  |",
       ].join("\n"),
     );
   });
@@ -719,7 +719,7 @@ describe("functionSummaryTable", () => {
       [
         "| Function | Summary |",
         "| --- | --- |",
-        "| [`go.get_position`](#goget_position-vector3) | Gets the world position. Returns a \\| vector3. |",
+        "| [`go.get_position(): vector3`](#goget_position-vector3) | Gets the world position. Returns a \\| vector3. |",
       ].join("\n"),
     );
   });
@@ -732,7 +732,7 @@ describe("functionSummaryTable", () => {
       [
         "| Function | Summary |",
         "| --- | --- |",
-        "| [`go.get_position`](#goget_position-vector3) |  |",
+        "| [`go.get_position(): vector3`](#goget_position-vector3) |  |",
       ].join("\n"),
     );
   });
@@ -752,7 +752,39 @@ describe("functionSummaryTable", () => {
     const signature = "file:read(): string";
     const table = functionSummaryTable([fnSymbol("file:read", { signature })]);
     const id = await renderedHeadingId(signature);
-    expect(table).toContain(`[\`file:read\`](#${id})`);
+    expect(table).toContain(`[\`file:read(): string\`](#${id})`);
     expect(table).toContain("(#fileread-string)");
+  });
+
+  test("overloaded functions render distinct rows keyed by their full signatures", () => {
+    const table = functionSummaryTable([
+      fnSymbol("mul", {
+        signature: "mul(rhs: Matrix4): Matrix4",
+        docMarkdown: "Lua `*` operator.",
+      }),
+      fnSymbol("mul", {
+        signature: "mul(rhs: Vector4): Vector4",
+        docMarkdown: "Lua `*` operator.",
+      }),
+    ]);
+    expect(table).toBe(
+      [
+        "| Function | Summary |",
+        "| --- | --- |",
+        "| [`mul(rhs: Matrix4): Matrix4`](#mulrhs-matrix4-matrix4) | Lua `*` operator. |",
+        "| [`mul(rhs: Vector4): Vector4`](#mulrhs-vector4-vector4) | Lua `*` operator. |",
+      ].join("\n"),
+    );
+  });
+
+  test("escapes union-type pipes in the signature so the table cell stays intact", () => {
+    const table = functionSummaryTable([
+      fnSymbol("buffer.get_stream", {
+        signature: "buffer.get_stream(name: Hash | string): Opaque",
+      }),
+    ]);
+    expect(table).toContain(
+      "| [`buffer.get_stream(name: Hash \\| string): Opaque`](#bufferget_streamname-hash--string-opaque) |  |",
+    );
   });
 });
