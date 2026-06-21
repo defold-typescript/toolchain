@@ -40,21 +40,19 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='
  * site is statically generated with no client router, so every navigation is a
  * full load that starts the sidebar at scrollTop 0; in long categories the
  * active entry sits below the fold and stays hidden. The script runs after the
- * sidebar DOM is parsed and scrolls the container (never the window) to center
- * the active entry; already-visible entries (top-of-list pages) are a no-op.
+ * sidebar DOM is parsed and, only when the active entry is not already fully
+ * visible, jumps the container (never the window) instantly to center it.
+ * Already-visible entries are a no-op — the scroll position is left untouched.
  *
- * Direct loads — a fresh URL, a refresh, or back/forward — position instantly
- * before first paint, so there is no flash. Only an in-sidebar link click
- * animates: the click handler flags the (one-shot) `sidebar-nav-click`
- * sessionStorage key before the browser unloads, and the next load reads it to
- * scroll smoothly, then clears it. `prefers-reduced-motion: reduce` forces the
- * instant path either way.
+ * The jump is always instant (no smooth animation), so it positions before
+ * first paint on every load with no flash or motion. There is no click
+ * tracking or `prefers-reduced-motion` branch: instant is the only path.
  *
  * The arithmetic mirrors `sidebarScrollTop` in `app/lib/sidebar-scroll.ts` —
  * keep the two in sync; the helper's unit tests are the source of truth. An
  * inline script cannot import a module, hence the duplication.
  */
-const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-sidebar-scroll]');if(!c)return;c.addEventListener('click',function(e){var l=e.target&&e.target.closest&&e.target.closest('a');if(l){try{sessionStorage.setItem('sidebar-nav-click','1');}catch(_){}}});var a=c.querySelector('[aria-current="page"]');if(!a)return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect();var tt=ar.top-cr.top+c.scrollTop,th=ar.height,vt=c.scrollTop,vh=c.clientHeight,ms=c.scrollHeight-c.clientHeight;var clicked='1'===sessionStorage.getItem('sidebar-nav-click');try{sessionStorage.removeItem('sidebar-nav-click');}catch(_){}if(tt>=vt&&tt+th<=vt+vh)return;var top=Math.max(0,Math.min(tt-vh/2+th/2,ms));var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(clicked&&!reduce){c.scrollTo({top:top,behavior:'smooth'});}else{c.scrollTop=top;}}catch(e){}})();`;
+const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-sidebar-scroll]');if(!c)return;var a=c.querySelector('[aria-current="page"]');if(!a)return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect();var tt=ar.top-cr.top+c.scrollTop,th=ar.height,vt=c.scrollTop,vh=c.clientHeight,ms=c.scrollHeight-c.clientHeight;if(tt>=vt&&tt+th<=vt+vh)return;c.scrollTop=Math.max(0,Math.min(tt-vh/2+th/2,ms));}catch(e){}})();`;
 
 /**
  * The script that publishes the real header height as the `--topbar-height`

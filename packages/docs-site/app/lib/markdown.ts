@@ -255,11 +255,24 @@ export async function renderMarkdown(
       i++;
     }
   });
-  // API-page signatures are h3 inline-code (`### `ns.fn(...)``). Recolor them
-  // with the same Shiki dual-theme machinery as fenced blocks, but emit inline
-  // spans (no `<pre>`) so the heading stays one wrapping line. Runs after the
-  // rules above so the slug is already computed from the original heading text;
-  // the API route opts in, guide rendering stays plain.
+  // Shiki-recolor one inline signature code span with the same dual-theme
+  // machinery as fenced blocks, but emit inline spans (no `<pre>`) so it stays
+  // one wrapping line.
+  const signatureCodeHtml = (content: string): string => {
+    const spans = highlighter.codeToHtml(content, {
+      lang: "ts",
+      themes: { light: LIGHT_THEME, dark: DARK_THEME },
+      defaultColor: false,
+      structure: "inline",
+    });
+    return `<code class="api-signature shiki">${spans}</code>`;
+  };
+  // API-page signatures appear both as h3 inline-code (`### `ns.fn(...)``) and,
+  // linked, in each namespace's overview table (`[`ns.fn(...)`](#anchor)`).
+  // Recolor both so the summary index reads with the same syntax highlighting as
+  // the detail headings. Runs after the rules above so the slug is already
+  // computed from the original heading text; the API route opts in, guide
+  // rendering stays plain.
   if (opts.highlightSignatureHeadings) {
     md.core.ruler.push("highlight-signature-headings", (state) => {
       for (let i = 0; i < state.tokens.length; i++) {
@@ -270,15 +283,28 @@ export async function renderMarkdown(
         const idx = inline.children.findIndex((c) => c.type === "code_inline");
         const child = inline.children[idx];
         if (!child) continue;
-        const spans = highlighter.codeToHtml(child.content, {
-          lang: "ts",
-          themes: { light: LIGHT_THEME, dark: DARK_THEME },
-          defaultColor: false,
-          structure: "inline",
-        });
         const replacement = new state.Token("html_inline", "", 0);
-        replacement.content = `<code class="api-signature shiki">${spans}</code>`;
+        replacement.content = signatureCodeHtml(child.content);
         inline.children[idx] = replacement;
+      }
+    });
+    // Overview-table rows link the full signature as inline code inside a
+    // fragment link (`[`sig`](#anchor)`). Same-page cross-links use absolute
+    // `…/route#anchor` hrefs, so a bare `#` href uniquely marks a signature
+    // link; recolor its code span the same way as the heading.
+    md.core.ruler.push("highlight-signature-links", (state) => {
+      for (const token of state.tokens) {
+        if (token.type !== "inline" || !token.children) continue;
+        const children = token.children;
+        for (let i = 0; i < children.length - 1; i++) {
+          if (children[i]?.type !== "link_open") continue;
+          if (!children[i]?.attrGet("href")?.startsWith("#")) continue;
+          const code = children[i + 1];
+          if (code?.type !== "code_inline") continue;
+          const replacement = new state.Token("html_inline", "", 0);
+          replacement.content = signatureCodeHtml(code.content);
+          children[i + 1] = replacement;
+        }
       }
     });
   }

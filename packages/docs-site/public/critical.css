@@ -127,6 +127,15 @@ header.topbar-critical .logo-mark {
   padding: 0.1em 0.35em;
   color: var(--color-text);
 }
+/* A signature linked from the overview table is underlined as a `.prose a`;
+   drop its inline-code border and padding so the chip chrome doesn't fight the
+   underline. Excludes `a.heading-anchor` (the detail-heading permalink), which
+   keeps its pill. Mirrors app/styles.css; unlayered here so it beats the
+   unlayered `.prose code` rule above by specificity. */
+.prose a:not(.heading-anchor) .api-signature {
+  border-color: transparent;
+  padding: 0;
+}
 .prose pre {
   font-family: var(--font-mono);
   font-size: 13px;

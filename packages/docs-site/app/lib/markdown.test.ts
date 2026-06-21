@@ -174,4 +174,35 @@ describe("renderMarkdown", () => {
     expect(headings).toHaveLength(1);
     expect(headings[0]?.text).toBe(SIGNATURE);
   });
+
+  const summaryTable = (sig: string) =>
+    [
+      "| Function | Summary |",
+      "| --- | --- |",
+      `| [\`${sig}\`](#foobarx-string-number) | brief |`,
+    ].join("\n");
+
+  test("inline-highlights a signature linked from a fragment (overview table)", async () => {
+    const html = await renderMarkdown(summaryTable(SIGNATURE), {
+      highlightSignatureHeadings: true,
+    });
+    const cell = html.slice(html.indexOf("<td><a"), html.indexOf("</a>") + "</a>".length);
+    expect(cell).toContain('<code class="api-signature');
+    expect(cell).toContain("--shiki-light:");
+    expect(cell).not.toContain("<pre");
+  });
+
+  test("leaves a fragment-linked signature plain when the highlight option is off", async () => {
+    const html = await renderMarkdown(summaryTable(SIGNATURE));
+    expect(html).not.toContain("api-signature");
+    expect(html).not.toContain("--shiki-light:");
+  });
+
+  test("does not highlight inline code on an absolute cross-link, only fragment signatures", async () => {
+    const html = await renderMarkdown("See [`go.get`](/api/go#goget) for details.\n", {
+      highlightSignatureHeadings: true,
+    });
+    expect(html).not.toContain("api-signature");
+    expect(html).toContain("<code>go.get</code>");
+  });
 });
