@@ -38,4 +38,10 @@ describe("@defold-typescript/docs package", () => {
     expect(paths).toContain("guide/agent-runbooks.md");
     expect(paths).toContain("guide/script-lifecycle.md");
   });
+
+  test("packs the generated offline knowledge pack", () => {
+    const paths = packedPaths(PKG_DIR);
+    expect(paths).toContain("llms.txt");
+    expect(paths).toContain("llms-full.txt");
+  });
 });
