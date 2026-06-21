@@ -1,19 +1,35 @@
 import { create, insertMultiple, type Orama, search } from "@orama/orama";
 import { useEffect, useState } from "hono/jsx";
 import { withBase } from "../lib/base";
-import type { SearchRecord } from "../lib/search-index";
+import { type SearchRecord, searchIndexFileForRoute } from "../lib/search-index";
 import { buildSnippet } from "../lib/snippet";
 
 const SCHEMA = { route: "string", title: "string", text: "string" } as const;
 type SearchDb = Orama<typeof SCHEMA>;
 type Result = { route: string; title: string; snippet: string };
 
+interface SearchResultsProps {
+  versionIds: string[];
+}
+
 function readQuery(): string {
   if (typeof window === "undefined") return "";
   return new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
 }
 
-export default function SearchResults() {
+function searchIndexFromLocation(versionIds: string[]): string {
+  if (typeof window === "undefined") return "search-index.json";
+  const params = new URLSearchParams(window.location.search);
+  const requested = params.get("index");
+  const allowed = new Set([
+    "search-index.json",
+    ...versionIds.map((id) => `search-index-${id}.json`),
+  ]);
+  if (requested && allowed.has(requested)) return requested;
+  return searchIndexFileForRoute(window.location.pathname, versionIds);
+}
+
+export default function SearchResults({ versionIds }: SearchResultsProps) {
   const [db, setDb] = useState<SearchDb | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
@@ -23,7 +39,7 @@ export default function SearchResults() {
     (async () => {
       // Dev appends a per-load `?t=` so Safari can't serve a stale index after
       // a regen; prod uses the stable cached path.
-      const base = withBase("/search-index.json");
+      const base = withBase(`/${searchIndexFromLocation(versionIds)}`);
       const response = await fetch(import.meta.env.DEV ? `${base}?t=${Date.now()}` : base);
       const records = (await response.json()) as SearchRecord[];
       const instance = create({ schema: SCHEMA }) as SearchDb;
@@ -37,7 +53,7 @@ export default function SearchResults() {
       active = false;
       window.removeEventListener("popstate", onPop);
     };
-  }, []);
+  }, [versionIds]);
 
   useEffect(() => {
     if (!db) return;

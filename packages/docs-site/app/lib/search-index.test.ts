@@ -1,9 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { ApiPage } from "./api-surface";
-import { loadApiSurface } from "./api-surface-loader";
+import { listApiVersions, loadApiSurface, loadApiSurfaceForVersion } from "./api-surface-loader";
 import type { GuidePage } from "./guide";
-import { apiSearchRecords, buildSearchIndex } from "./search-index";
+import {
+  apiSearchRecords,
+  buildSearchIndex,
+  searchIndexFileForRoute,
+  versionSearchIndexRecords,
+} from "./search-index";
 
 const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 
@@ -74,6 +79,42 @@ describe("buildSearchIndex", () => {
     const records = buildSearchIndex(pages, read);
     const routes = records.map((r) => r.route);
     expect(routes).toEqual([...routes].sort());
+  });
+});
+
+describe("searchIndexFileForRoute", () => {
+  const versions = ["defold-1.9.8"];
+
+  test("maps versioned API routes to their version-specific index", () => {
+    expect(searchIndexFileForRoute("/api/defold-1.9.8/label", versions)).toBe(
+      "search-index-defold-1.9.8.json",
+    );
+  });
+
+  test("maps default and non-API routes to the default index", () => {
+    expect(searchIndexFileForRoute("/api/go", versions)).toBe("search-index.json");
+    expect(searchIndexFileForRoute("/guide/x", versions)).toBe("search-index.json");
+    expect(searchIndexFileForRoute("/", versions)).toBe("search-index.json");
+  });
+
+  test("keeps unknown version-looking API routes on the default index", () => {
+    expect(searchIndexFileForRoute("/api/foo/bar", versions)).toBe("search-index.json");
+  });
+});
+
+describe("versionSearchIndexRecords", () => {
+  test("returns one guide-plus-API record set per non-default version", () => {
+    const guideRecords = [{ route: "/", title: "Overview", text: "Guide prose" }];
+    const [entry] = versionSearchIndexRecords(API_FIXTURE_DIR, guideRecords, {
+      versions: listApiVersions(API_FIXTURE_DIR),
+      pagesForVersion: loadApiSurfaceForVersion,
+    });
+    expect(entry?.version).toBe("old");
+    expect(entry?.records).toEqual([
+      ...guideRecords,
+      ...apiSearchRecords(loadApiSurfaceForVersion(API_FIXTURE_DIR, "old")),
+    ]);
+    expect(entry?.records.some((record) => record.route === "/api/old/wmath")).toBe(true);
   });
 });
 
