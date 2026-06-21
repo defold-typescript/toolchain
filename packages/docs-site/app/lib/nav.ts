@@ -167,5 +167,10 @@ export function activeCategoryId(route: string, nav: NavCategory[]): string | un
       }
     }
   }
+  // Unmatched /api routes (versioned pages and the /api/<version> index have no
+  // nav link) still belong to the single Reference category.
+  if (!best && (route === "/api" || route.startsWith("/api/"))) {
+    return nav.find((c) => c.id === "reference")?.id;
+  }
   return best?.id;
 }
