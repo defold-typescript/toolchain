@@ -180,6 +180,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
   const nav = buildNav(guidePages(), {
     globals: allApiPages.filter((p) => p.namespace === "globals").map(toNamespace),
+    globalTypes: allApiPages.filter((p) => p.category === "global-type").map(toNamespace),
     luaStdlib: allApiPages.filter((p) => p.category === "lua-stdlib").map(toNamespace),
     engine: allApiPages
       .filter((p) => p.category === "engine" && p.namespace !== "globals")

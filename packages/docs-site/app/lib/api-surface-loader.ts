@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseDefoldApiDoc, type TranslationStore } from "@defold-typescript/types";
-import type { ApiPage } from "./api-surface";
+import type { ApiPage, ApiPageCategory } from "./api-surface";
+import { parseGlobalTypes } from "./global-types";
 
 interface ApiTarget {
   default?: boolean;
@@ -83,8 +84,23 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
     });
   }
 
+  // Hand-curated core value types (`Vector3`, `Hash`, …), parsed from the
+  // typings source string rather than a ref-doc fixture so they never feed
+  // regen / `MODULE_MANIFEST`; presence-gated like the `globals` block.
+  const coreTypesPath = join(typesDir, "src", "core-types.ts");
+  if (existsSync(coreTypesPath)) {
+    for (const page of parseGlobalTypes(readFileSync(coreTypesPath, "utf8"))) {
+      pages.push({ ...page, translations });
+    }
+  }
+
+  const categoryRank: Record<ApiPageCategory, number> = {
+    engine: 0,
+    "global-type": 1,
+    "lua-stdlib": 2,
+  };
   return pages.sort((a, b) => {
-    if (a.category !== b.category) return a.category === "engine" ? -1 : 1;
+    if (a.category !== b.category) return categoryRank[a.category] - categoryRank[b.category];
     if (a.namespace === b.namespace) return 0;
     if (a.category === "engine") {
       if (a.namespace === "globals") return -1;

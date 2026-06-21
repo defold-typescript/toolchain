@@ -13,7 +13,7 @@ import {
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
 
-export type ApiPageCategory = "engine" | "lua-stdlib";
+export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type";
 
 export interface ApiPage {
   namespace: string;
@@ -28,7 +28,10 @@ export interface ApiPage {
    * (currently `base`, `bit`) sourced from `target.luaStdlib` and rendered under
    * the docs-site's separate "Lua standard library" reference category. Types
    * for `lua-stdlib` pages come from the `lua-types` dependency, not from
-   * `@defold-typescript/types` generation.
+   * `@defold-typescript/types` generation. `global-type` for the hand-curated
+   * core value types (`Vector3`, `Hash`, …) parsed from `core-types.ts` and
+   * rendered under the "Global types" reference category — never emitted from
+   * `ref-doc.zip`.
    */
   category: ApiPageCategory;
 }
