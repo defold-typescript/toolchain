@@ -354,7 +354,9 @@ function VersionSelector({
             }
           >
             <span>{entry.id}</span>
-            {entry.isCurrent ? <span class="text-xs uppercase tracking-wide">current</span> : null}
+            {entry.isCurrent ? (
+              <span aria-hidden="true" class="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+            ) : null}
           </a>
         ))}
       </div>
