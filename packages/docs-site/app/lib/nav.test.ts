@@ -211,6 +211,19 @@ describe("activeCategoryId", () => {
     expect(activeCategoryId("/api/globals", nav)).toBe("reference");
   });
 
+  test("resolves a versioned API route to reference via the /api fallback", () => {
+    expect(activeCategoryId("/api/defold-1.9.8/label", nav)).toBe("reference");
+  });
+
+  test("resolves the versioned API index route to reference", () => {
+    expect(activeCategoryId("/api/defold-1.9.8", nav)).toBe("reference");
+  });
+
+  test("the /api fallback does not fire for non-api routes", () => {
+    expect(activeCategoryId("/debugging", nav)).toBe("guides");
+    expect(activeCategoryId("/no-such-page", nav)).toBeUndefined();
+  });
+
   test("resolves the index route to get-started by exact match", () => {
     expect(activeCategoryId("/", nav)).toBe("get-started");
   });
