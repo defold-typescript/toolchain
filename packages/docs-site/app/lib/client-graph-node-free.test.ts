@@ -4,6 +4,13 @@ import { dirname, join, relative, resolve } from "node:path";
 
 const APP_DIR = join(import.meta.dir, "..");
 
+// `node:path` returns OS-native separators (`\` on Windows). The seed and
+// expectation constants below are authored posix-style, so every relative path
+// crossing into a comparison or message is normalized through this first.
+function toPosix(p: string): string {
+  return p.replaceAll("\\", "/");
+}
+
 // The three client islands rolldown ships to the browser. Every module their
 // imports transitively reach must be node-free, or the loader code leaks into
 // the client bundle as an externalized stub (and warns on every build).
@@ -84,9 +91,20 @@ function walkClientGraph(seeds: string[]): {
   return { visited, nodeImporters };
 }
 
+// The gate compares `relative()` output against posix-authored constants. `rel`
+// is injectable so a test can drive a Windows-style separator on any OS and
+// prove the comparison stays separator-safe (it only breaks on Windows live).
+function relativizeReached(
+  visited: Iterable<string>,
+  appDir: string,
+  rel: (from: string, to: string) => string = relative,
+): string[] {
+  return [...visited].map((file) => toPosix(rel(appDir, file)));
+}
+
 describe("client island import graph", () => {
   const { visited, nodeImporters } = walkClientGraph(ISLAND_SEEDS);
-  const reached = [...visited].map((file) => relative(APP_DIR, file));
+  const reached = relativizeReached(visited, APP_DIR);
 
   test("walks far enough to cover the surface and index modules", () => {
     for (const expected of NON_VACUOUS) {
@@ -96,8 +114,36 @@ describe("client island import graph", () => {
 
   test("no client-reachable module imports a node: builtin", () => {
     const offenders = [...nodeImporters.entries()].map(
-      ([file, specs]) => `${relative(APP_DIR, file)} -> ${specs.join(", ")}`,
+      ([file, specs]) => `${toPosix(relative(APP_DIR, file))} -> ${specs.join(", ")}`,
     );
     expect(offenders).toEqual([]);
+  });
+});
+
+// Regression guard for the windows-latest-only failure where `relative()`
+// separators leaked into the comparison. These prove the normalization on every
+// runner so a recurrence fails fast on the posix matrix, not only on Windows.
+describe("cross-platform path normalization", () => {
+  test("toPosix rewrites Windows separators and leaves posix paths intact", () => {
+    expect(toPosix("lib\\api-surface.ts")).toBe("lib/api-surface.ts");
+    expect(toPosix("islands\\sub\\search.tsx")).toBe("islands/sub/search.tsx");
+    expect(toPosix("lib/api-surface.ts")).toBe("lib/api-surface.ts");
+  });
+
+  test("relativizeReached stays separator-safe when relative() emits Windows paths", () => {
+    // Pure synthetic strings + a backslash-returning `relative`, so this proves
+    // the windows-latest shape on any host OS without touching node:path.
+    const appDir = "/abs/app";
+    const windowsRelative = (from: string, to: string) =>
+      to.slice(from.length + 1).replaceAll("/", "\\");
+    const reached = relativizeReached(
+      NON_VACUOUS.map((p) => `${appDir}/${p}`),
+      appDir,
+      windowsRelative,
+    );
+    for (const expected of NON_VACUOUS) {
+      expect(reached).toContain(expected);
+    }
+    for (const p of reached) expect(p).not.toContain("\\");
   });
 });
