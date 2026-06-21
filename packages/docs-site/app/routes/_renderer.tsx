@@ -6,7 +6,7 @@ import SidebarToggle from "../islands/sidebar-toggle";
 import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
-import { apiPages } from "../lib/api-content";
+import { apiPages, apiVersions } from "../lib/api-content";
 import { withBase } from "../lib/base";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
@@ -186,6 +186,9 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   });
   const activeId = activeCategoryId(path, nav) ?? nav[0]?.id;
   const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];
+  const versionIds = apiVersions()
+    .filter((version) => !version.isDefault)
+    .map((version) => version.id);
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();
@@ -260,7 +263,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               ))}
             </nav>
             <div class="ml-auto flex items-center gap-2 lg:ml-0">
-              <Search />
+              <Search versionIds={versionIds} />
               <GithubLink />
               <ThemeToggle />
             </div>
