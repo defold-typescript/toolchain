@@ -1,14 +1,18 @@
 import { create, insertMultiple, type Orama, search } from "@orama/orama";
 import { useEffect, useState } from "hono/jsx";
 import { withBase } from "../lib/base";
-import type { SearchRecord } from "../lib/search-index";
+import { type SearchRecord, searchIndexFileForRoute } from "../lib/search-index";
 import { buildSnippet } from "../lib/snippet";
 
 const SCHEMA = { route: "string", title: "string", text: "string" } as const;
 type SearchDb = Orama<typeof SCHEMA>;
 type Hit = { route: string; title: string; snippet: string };
 
-export default function Search() {
+interface SearchProps {
+  versionIds: string[];
+}
+
+export default function Search({ versionIds }: SearchProps) {
   const [db, setDb] = useState<SearchDb | null>(null);
   const [hits, setHits] = useState<Hit[]>([]);
   const [term, setTerm] = useState("");
@@ -19,7 +23,8 @@ export default function Search() {
     (async () => {
       // Dev appends a per-load `?t=` so Safari can't serve a stale index after
       // a regen; prod uses the stable cached path.
-      const base = withBase("/search-index.json");
+      const indexFile = searchIndexFileForRoute(window.location.pathname, versionIds);
+      const base = withBase(`/${indexFile}`);
       const response = await fetch(import.meta.env.DEV ? `${base}?t=${Date.now()}` : base);
       const records = (await response.json()) as SearchRecord[];
       const instance = create({ schema: SCHEMA }) as SearchDb;
@@ -29,7 +34,7 @@ export default function Search() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [versionIds]);
 
   const onInput = async (event: Event) => {
     const value = (event.target as HTMLInputElement).value.trim();
@@ -57,7 +62,9 @@ export default function Search() {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key !== "Enter" || term.length < 2) return;
     event.preventDefault();
-    window.location.href = `${withBase("/search")}?q=${encodeURIComponent(term)}`;
+    const indexFile = searchIndexFileForRoute(window.location.pathname, versionIds);
+    const params = new URLSearchParams({ q: term, index: indexFile });
+    window.location.href = `${withBase("/search")}?${params.toString()}`;
   };
 
   return (

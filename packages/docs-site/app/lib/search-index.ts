@@ -7,6 +7,46 @@ export interface SearchRecord {
   text: string;
 }
 
+export interface SearchIndexVersion {
+  id: string;
+  isDefault: boolean;
+}
+
+export interface VersionSearchIndex {
+  version: string;
+  records: SearchRecord[];
+}
+
+interface VersionSearchIndexDeps {
+  versions: SearchIndexVersion[];
+  pagesForVersion: (typesDir: string, versionId: string) => ApiPage[];
+}
+
+const DEFAULT_SEARCH_INDEX_FILE = "search-index.json";
+
+export function searchIndexFileForRoute(route: string, versionIds: readonly string[]): string {
+  const path = route.split(/[?#]/, 1)[0] ?? "";
+  const segments = path.split("/").filter(Boolean);
+  const apiIndex = segments.indexOf("api");
+  const candidate = apiIndex >= 0 ? segments[apiIndex + 1] : undefined;
+  return candidate && versionIds.includes(candidate)
+    ? `search-index-${candidate}.json`
+    : DEFAULT_SEARCH_INDEX_FILE;
+}
+
+export function versionSearchIndexRecords(
+  typesDir: string,
+  guideRecords: SearchRecord[],
+  deps: VersionSearchIndexDeps,
+): VersionSearchIndex[] {
+  return deps.versions
+    .filter((version) => !version.isDefault)
+    .map((version) => ({
+      version: version.id,
+      records: [...guideRecords, ...apiSearchRecords(deps.pagesForVersion(typesDir, version.id))],
+    }));
+}
+
 function humanize(slug: string): string {
   return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
