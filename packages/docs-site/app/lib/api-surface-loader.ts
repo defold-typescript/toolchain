@@ -5,10 +5,16 @@ import type { ApiPage, ApiPageCategory } from "./api-surface";
 import { parseGlobalTypes } from "./global-types";
 
 interface ApiTarget {
+  id: string;
   default?: boolean;
   fixturesDir: string;
   modules: { namespace: string; fixture: string }[];
   luaStdlib?: { namespace: string; fixture: string }[];
+}
+
+export interface ApiVersion {
+  id: string;
+  isDefault: boolean;
 }
 
 // The same `examples/translations.json` the `.d.ts` emit consumes; a missing
@@ -21,16 +27,23 @@ function loadTranslationStore(typesDir: string): TranslationStore {
   return JSON.parse(readFileSync(path, "utf8")) as TranslationStore;
 }
 
-export function loadApiSurface(typesDir: string): ApiPage[] {
+function readTargets(typesDir: string): ApiTarget[] {
   const { targets } = JSON.parse(readFileSync(join(typesDir, "api-targets.json"), "utf8")) as {
     targets: ApiTarget[];
   };
+  return targets;
+}
 
-  const target = targets.find((t) => t.default === true);
-  if (!target) {
-    throw new Error("loadApiSurface: no target marked default: true in api-targets.json");
-  }
-
+// Assemble one target's pages: engine modules, the presence-gated globals page,
+// the target's `luaStdlib` pages, and (default only) the shared core-types
+// global-type pages. `routePrefix` is `""` for the default target and
+// `/<version>` for a non-default one, so every page's route reads
+// `/api${routePrefix}/<namespace>` and all downstream link derivation follows.
+function loadTargetPages(
+  typesDir: string,
+  target: ApiTarget,
+  opts: { routePrefix: string; includeCoreTypes: boolean },
+): ApiPage[] {
   const translations = loadTranslationStore(typesDir);
 
   const pages = target.modules.map((mod): ApiPage => {
@@ -38,7 +51,7 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
     const module = parseDefoldApiDoc(raw);
     return {
       namespace: mod.namespace,
-      route: `/api/${mod.namespace}`,
+      route: `/api${opts.routePrefix}/${mod.namespace}`,
       brief: module.brief,
       module,
       translations,
@@ -53,7 +66,7 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(globalsPath, "utf8")));
     pages.push({
       namespace: "globals",
-      route: "/api/globals",
+      route: `/api${opts.routePrefix}/globals`,
       brief: module.brief,
       module,
       translations,
@@ -76,7 +89,7 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
     module.description = provenanceNote + (module.description ? `\n\n${module.description}` : "");
     pages.push({
       namespace: mod.namespace,
-      route: `/api/${mod.namespace}`,
+      route: `/api${opts.routePrefix}/${mod.namespace}`,
       brief: module.brief,
       module,
       translations,
@@ -86,9 +99,10 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
 
   // Hand-curated core value types (`Vector3`, `Hash`, …), parsed from the
   // typings source string rather than a ref-doc fixture so they never feed
-  // regen / `MODULE_MANIFEST`; presence-gated like the `globals` block.
+  // regen / `MODULE_MANIFEST`; presence-gated like the `globals` block. These
+  // are version-independent and stay on the default surface only.
   const coreTypesPath = join(typesDir, "src", "core-types.ts");
-  if (existsSync(coreTypesPath)) {
+  if (opts.includeCoreTypes && existsSync(coreTypesPath)) {
     for (const page of parseGlobalTypes(readFileSync(coreTypesPath, "utf8"))) {
       pages.push({ ...page, translations });
     }
@@ -108,4 +122,33 @@ export function loadApiSurface(typesDir: string): ApiPage[] {
     }
     return a.namespace.localeCompare(b.namespace);
   });
+}
+
+export function loadApiSurfaceForVersion(typesDir: string, versionId: string): ApiPage[] {
+  const target = readTargets(typesDir).find((t) => t.id === versionId);
+  if (!target) {
+    throw new Error(
+      `loadApiSurfaceForVersion: no target with id "${versionId}" in api-targets.json`,
+    );
+  }
+  return loadTargetPages(typesDir, target, {
+    routePrefix: target.default === true ? "" : `/${target.id}`,
+    includeCoreTypes: target.default === true,
+  });
+}
+
+export function loadApiSurface(typesDir: string): ApiPage[] {
+  const target = readTargets(typesDir).find((t) => t.default === true);
+  if (!target) {
+    throw new Error("loadApiSurface: no target marked default: true in api-targets.json");
+  }
+  return loadApiSurfaceForVersion(typesDir, target.id);
+}
+
+export function listApiVersions(typesDir: string): ApiVersion[] {
+  const targets = readTargets(typesDir);
+  const ordered = [...targets].sort(
+    (a, b) => Number(b.default === true) - Number(a.default === true),
+  );
+  return ordered.map((t) => ({ id: t.id, isDefault: t.default === true }));
 }
