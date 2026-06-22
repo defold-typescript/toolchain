@@ -16,10 +16,6 @@ version pin, so a stale `bunx` cache would pin an older release. Then run
 `bun install` once — `init` only declares the dev dependencies below; `install`
 is what puts them in `node_modules` so the editor can resolve the Defold types.
 
-The package is scoped — run it as `@defold-typescript/cli`. The bare
-`bunx defold-typescript` resolves a nonexistent unscoped package and 404s unless
-you have already installed `@defold-typescript/cli` locally.
-
 When `game.project` exists, `init` does not synthesize a new Defold project. It only writes the TypeScript surface:
 
 - `src/main.ts` — a starter entry script, written only when absent. `main.ts` is your source, not managed config, so an existing one is left untouched (and omitted from the reported `written` list) even under `--force`.
