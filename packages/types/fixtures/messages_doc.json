@@ -2,7 +2,7 @@
   "info": {
     "namespace": "builtin_messages",
     "version": "1.12.4",
-    "description": "Hand-vendored catalog of Defold built-in message ids and their payload shapes. Upstream has no machine-readable export for this surface; refresh by reading the Defold API reference and editing this file."
+    "description": "Defold's built-in message ids and the payload shape each one carries."
   },
   "messages": [
     {

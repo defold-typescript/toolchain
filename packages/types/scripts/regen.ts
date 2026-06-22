@@ -148,6 +148,10 @@ export interface MessagesManifestEntry {
   readonly outFile: string;
 }
 
+// Unlike MODULE_MANIFEST, this surface is hand-maintained: Defold ships no
+// machine-readable export for built-in message ids, so refresh fixtures/
+// messages_doc.json by hand from the Defold API reference. The
+// message-payload-drift test guards the payload shapes against drift.
 export const MESSAGES_MANIFEST: MessagesManifestEntry = {
   doc: messagesDoc,
   outFile: "builtin-messages.d.ts",
