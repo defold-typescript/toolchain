@@ -141,6 +141,8 @@ bunx @defold-typescript/cli watch
 
 `watch` rebuilds incrementally on every TypeScript source change: it holds one long-lived transpile session and re-reads and rewrites only the files you actually edited, skipping the re-glob and re-read of unchanged sources. Use it while the Defold editor is open in the same project directory. See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
+`watch` also keeps the [extension surface](./extensions.md#running-resolve) current: a `game.project` save re-runs `resolve`, re-materializing `.defold-types/extensions/` from the declared `[dependencies]`. It does not bootstrap that surface, though — run `resolve` once before `watch` so the initial extension types exist; `watch` only reconciles later `[dependencies]` edits.
+
 ## Machine-readable output (`--json`)
 
 Every command accepts `--json` for agents and scripts that want to parse the

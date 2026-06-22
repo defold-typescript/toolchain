@@ -49,6 +49,23 @@ async function openDrawer(page: import("@playwright/test").Page) {
   }).toPass({ timeout: 15_000 });
 }
 
+// The TOC only renders on a page that has headings, so reach a real guide page
+// from the index. Below `lg` the sidebar is a drawer, so open it first.
+async function gotoFirstGuidePage(
+  page: import("@playwright/test").Page,
+  { drawer }: { drawer: boolean },
+) {
+  await page.goto("/");
+  if (drawer) await openDrawer(page);
+  const link = sidebar(page).getByRole("link").first();
+  const href = await link.getAttribute("href");
+  await link.click();
+  await page.waitForURL(`**${href}`);
+}
+
+const tocRail = (page: import("@playwright/test").Page) => page.getByTestId("toc-rail");
+const tocInline = (page: import("@playwright/test").Page) => page.getByTestId("toc-inline");
+
 test.describe("wide viewport (lg and up)", () => {
   test.use({ viewport: WIDE });
 
@@ -92,6 +109,12 @@ test.describe("wide viewport (lg and up)", () => {
     const varPx = Number.parseFloat(await topbarHeightRaw(page));
     expect(Math.abs(margin - (varPx + 24))).toBeLessThanOrEqual(1);
     expect(Math.abs(margin - 80)).toBeLessThanOrEqual(1);
+  });
+
+  test("guide page shows the TOC rail and hides the inline disclosure", async ({ page }) => {
+    await gotoFirstGuidePage(page, { drawer: false });
+    await expect(tocRail(page)).toBeVisible();
+    await expect(tocInline(page)).toBeHidden();
   });
 });
 
@@ -173,5 +196,43 @@ test.describe("narrow viewport (below lg)", () => {
     const varPx = Number.parseFloat(await topbarHeightRaw(page));
     expect(Math.abs(margin - (varPx + 24))).toBeLessThanOrEqual(1);
     expect(varPx).toBeGreaterThan(80);
+  });
+
+  test("guide page hides the rail and exposes the inline TOC, collapsed by default", async ({
+    page,
+  }) => {
+    await gotoFirstGuidePage(page, { drawer: true });
+    await expect(tocRail(page)).toBeHidden();
+
+    const inline = tocInline(page);
+    await expect(inline).toBeVisible();
+
+    // Collapsed by default: the outline links exist but stay hidden until opened,
+    // so the disclosure never pushes the prose down on load.
+    const firstEntry = inline.getByRole("link").first();
+    await expect(firstEntry).toBeHidden();
+
+    await inline.locator("summary").click();
+    await expect(firstEntry).toBeVisible();
+
+    // A section link jumps within the page, leaving its anchor on the URL.
+    const anchor = await firstEntry.getAttribute("href");
+    if (!anchor) throw new Error("inline TOC entry has no href");
+    await firstEntry.click();
+    await expect(page).toHaveURL(new RegExp(`${anchor}$`));
+  });
+});
+
+// Between `lg` and `xl` the left sidebar is docked again but the rail is still
+// `hidden` (rail is `xl`-only), so the inline disclosure must cover this band —
+// otherwise the page outline would vanish here with no fallback.
+test.describe("medium viewport (lg to xl)", () => {
+  test.use({ viewport: { width: 1100, height: 800 } });
+
+  test("guide page keeps the inline TOC and still hides the rail", async ({ page }) => {
+    // Sidebar is docked at this width, so navigate without opening the drawer.
+    await gotoFirstGuidePage(page, { drawer: false });
+    await expect(tocRail(page)).toBeHidden();
+    await expect(tocInline(page)).toBeVisible();
   });
 });

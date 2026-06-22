@@ -4,7 +4,8 @@ toc-title: Advanced CLI
 # Advanced CLI
 
 This page covers `wall`, the opt-in command for narrowing the API surface of a
-source directory to a single script kind.
+source directory to a single script kind. To *add* a surface for native-extension
+namespaces instead of narrowing one, see [`resolve`](./extensions.md#running-resolve).
 
 ## Full surface by default
 

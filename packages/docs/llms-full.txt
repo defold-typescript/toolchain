@@ -198,6 +198,8 @@ bunx @defold-typescript/cli watch
 
 `watch` rebuilds incrementally on every TypeScript source change: it holds one long-lived transpile session and re-reads and rewrites only the files you actually edited, skipping the re-glob and re-read of unchanged sources. Use it while the Defold editor is open in the same project directory. See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
+`watch` also keeps the [extension surface](./extensions.md#running-resolve) current: a `game.project` save re-runs `resolve`, re-materializing `.defold-types/extensions/` from the declared `[dependencies]`. It does not bootstrap that surface, though — run `resolve` once before `watch` so the initial extension types exist; `watch` only reconciles later `[dependencies]` edits.
+
 ## Machine-readable output (`--json`)
 
 Every command accepts `--json` for agents and scripts that want to parse the
@@ -923,6 +925,12 @@ The `.defold-types/` directory is generated output and is gitignored. Re-run
 `resolve` whenever you change `[dependencies]`; it reconciles the sibling
 surface to exactly the extensions currently declared.
 
+A running [`watch`](./getting-started.md#iterate) automates that re-run: every
+`game.project` save re-resolves the surface, so editing `[dependencies]` while
+`watch` is up refreshes `.defold-types/extensions/` with no extra command.
+`watch` does not bootstrap the surface, though — it only reconciles on save, so
+run `resolve` once first to materialize the initial extension types.
+
 ## Consuming the generated namespace
 
 Each emitted namespace is **ambient**, so you call it with no import — exactly
@@ -1037,7 +1045,8 @@ override the root — the archives then land under
 # Advanced CLI
 
 This page covers `wall`, the opt-in command for narrowing the API surface of a
-source directory to a single script kind.
+source directory to a single script kind. To *add* a surface for native-extension
+namespaces instead of narrowing one, see [`resolve`](./extensions.md#running-resolve).
 
 ## Full surface by default
 

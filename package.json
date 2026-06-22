@@ -9,6 +9,7 @@
     "packages/*"
   ],
   "scripts": {
+    "prepare": "lefthook install",
     "build": "bun run --filter '*' build",
     "test": "bun test",
     "lint": "biome check --error-on-warnings .",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
     "@types/bun": "latest",
+    "lefthook": "^2.1.9",
     "typescript": "6.0.2",
     "yaml": "^2.9.0"
   },

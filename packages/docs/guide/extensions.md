@@ -60,6 +60,12 @@ The `.defold-types/` directory is generated output and is gitignored. Re-run
 `resolve` whenever you change `[dependencies]`; it reconciles the sibling
 surface to exactly the extensions currently declared.
 
+A running [`watch`](./getting-started.md#iterate) automates that re-run: every
+`game.project` save re-resolves the surface, so editing `[dependencies]` while
+`watch` is up refreshes `.defold-types/extensions/` with no extra command.
+`watch` does not bootstrap the surface, though — it only reconciles on save, so
+run `resolve` once first to materialize the initial extension types.
+
 ## Consuming the generated namespace
 
 Each emitted namespace is **ambient**, so you call it with no import — exactly
