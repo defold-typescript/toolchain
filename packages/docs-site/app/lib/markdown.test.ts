@@ -175,6 +175,15 @@ describe("renderMarkdown", () => {
     expect(headings[0]?.text).toBe(SIGNATURE);
   });
 
+  test("the TOC text for a generic-typed signature heading is fully decoded", async () => {
+    const html = await renderMarkdown('### `gui.get_node(id: string | Hash): Opaque<"node">`\n', {
+      highlightSignatureHeadings: true,
+    });
+    const headings = pageHeadings(html);
+    expect(headings).toHaveLength(1);
+    expect(headings[0]?.text).toBe('gui.get_node(id: string | Hash): Opaque<"node">');
+  });
+
   const summaryTable = (sig: string) =>
     [
       "| Function | Summary |",
