@@ -19,6 +19,7 @@ export const MATH_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures",
 export const BIT_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "bit.json");
 export const DEBUG_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "debug.json");
 export const PACKAGE_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "package.json");
+export const BASE_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "base.json");
 
 export function loadSignatureFile(path: string): SignatureStore {
   let raw: string;
