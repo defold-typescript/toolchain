@@ -1,0 +1,37 @@
+{
+  "package.cpath": {
+    "signatures": [
+      "package.cpath: string"
+    ]
+  },
+  "package.loaded": {
+    "signatures": [
+      "package.loaded: Record<string, any>"
+    ]
+  },
+  "package.loaders": {
+    "signatures": [
+      "package.loaders: (((modname: string) => LuaMultiReturn<[(modname: string) => void]>) | (<T>(modname: string) => LuaMultiReturn<[(modname: string, extra: T) => T, T]>) | string)[]"
+    ]
+  },
+  "package.loadlib": {
+    "signatures": [
+      "package.loadlib(libname: string, funcname: string): [Function] | [undefined, string, \"open\" | \"init\"]"
+    ]
+  },
+  "package.path": {
+    "signatures": [
+      "package.path: string"
+    ]
+  },
+  "package.preload": {
+    "signatures": [
+      "package.preload: Record<string, (modname: string, fileName?: string) => any>"
+    ]
+  },
+  "package.seeall": {
+    "signatures": [
+      "package.seeall(module: object): void"
+    ]
+  }
+}

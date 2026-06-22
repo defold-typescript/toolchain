@@ -16,6 +16,9 @@ export const COROUTINE_SIGNATURES_PATH = resolve(
   "coroutine.json",
 );
 export const MATH_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "math.json");
+export const BIT_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "bit.json");
+export const DEBUG_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "debug.json");
+export const PACKAGE_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "package.json");
 
 export function loadSignatureFile(path: string): SignatureStore {
   let raw: string;

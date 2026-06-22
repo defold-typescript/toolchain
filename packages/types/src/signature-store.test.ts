@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
+  BIT_SIGNATURES_PATH,
   COROUTINE_SIGNATURES_PATH,
+  DEBUG_SIGNATURES_PATH,
   IO_SIGNATURES_PATH,
   loadSignatureFile,
   MATH_SIGNATURES_PATH,
   OS_SIGNATURES_PATH,
+  PACKAGE_SIGNATURES_PATH,
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
@@ -189,6 +192,99 @@ describe("authored coroutine signature store", () => {
     const entry = lookupSignature(store, "coroutine.create");
     expect(entry).not.toBeNull();
     expect(entry?.signatures).toContain("coroutine.create(f: (...args: any[]) => any): LuaThread");
+  });
+
+  test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
+    for (const [fqn, override] of Object.entries(store)) {
+      const o: SignatureOverride = override;
+      expect(Array.isArray(o.signatures)).toBe(true);
+      expect(o.signatures.length).toBeGreaterThan(0);
+      for (const sig of o.signatures) {
+        expect(typeof sig).toBe("string");
+        expect(sig.length).toBeGreaterThan(0);
+        expect(fqn.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("authored bit signature store", () => {
+  const store = loadSignatureFile(BIT_SIGNATURES_PATH);
+
+  test("bit.tohex resolves to the authored optional-second-arg form", () => {
+    const entry = lookupSignature(store, "bit.tohex");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain("bit.tohex(x: number, n?: number): string");
+  });
+
+  test("bit.bor resolves to the authored variadic form", () => {
+    const entry = lookupSignature(store, "bit.bor");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain("bit.bor(x: number, ...rest: number[]): number");
+  });
+
+  test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
+    for (const [fqn, override] of Object.entries(store)) {
+      const o: SignatureOverride = override;
+      expect(Array.isArray(o.signatures)).toBe(true);
+      expect(o.signatures.length).toBeGreaterThan(0);
+      for (const sig of o.signatures) {
+        expect(typeof sig).toBe("string");
+        expect(sig.length).toBeGreaterThan(0);
+        expect(fqn.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("authored debug signature store", () => {
+  const store = loadSignatureFile(DEBUG_SIGNATURES_PATH);
+
+  test("debug.getinfo collapses to a single user-facing overload", () => {
+    const entry = lookupSignature(store, "debug.getinfo");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures.length).toBe(1);
+    expect(entry?.signatures[0]).toBe(
+      "debug.getinfo(f: Function | number, what?: string): FunctionInfo",
+    );
+  });
+
+  test("debug.traceback resolves to the authored message/level form", () => {
+    const entry = lookupSignature(store, "debug.traceback");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain(
+      "debug.traceback(message?: string, level?: number): string",
+    );
+  });
+
+  test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
+    for (const [fqn, override] of Object.entries(store)) {
+      const o: SignatureOverride = override;
+      expect(Array.isArray(o.signatures)).toBe(true);
+      expect(o.signatures.length).toBeGreaterThan(0);
+      for (const sig of o.signatures) {
+        expect(typeof sig).toBe("string");
+        expect(sig.length).toBeGreaterThan(0);
+        expect(fqn.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("authored package signature store", () => {
+  const store = loadSignatureFile(PACKAGE_SIGNATURES_PATH);
+
+  test("package.path and package.loaded are typed-value (non-callable) forms", () => {
+    expect(lookupSignature(store, "package.path")?.signatures).toContain("package.path: string");
+    expect(lookupSignature(store, "package.loaded")?.signatures).toContain(
+      "package.loaded: Record<string, any>",
+    );
+  });
+
+  test("package.loadlib is a true call signature", () => {
+    const entry = lookupSignature(store, "package.loadlib");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures[0]).toMatch(/^package\.loadlib\(.*\):/);
   });
 
   test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
