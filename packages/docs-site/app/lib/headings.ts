@@ -16,6 +16,36 @@ export interface Heading {
 const HEADING_RE = /<h([23])(\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
 const TAG_RE = /<[^>]+>/g;
 const ID_RE = /\sid="([^"]+)"/i;
+const NAMED_ENTITY: Record<string, string> = {
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&apos;": "'",
+};
+const DECIMAL_ENTITY_RE = /&#(\d+);/g;
+const HEX_ENTITY_RE = /&#x([0-9a-fA-F]+);/g;
+const AMP_ENTITY_RE = /&amp;/g;
+
+// Shiki emits `<`/`>`/`"`/`&`/`'` as numeric entities inside its inline-highlight
+// `<span>`s, so the serialized heading text we extract for the TOC carries them
+// as raw `&#x3C;` etc. Tags are stripped first so an entity-escaped `&lt;span&gt;`
+// is never resurrected into a real tag and then stripped; `&amp;` decodes last
+// so an already-literal `&` is never re-interpreted.
+function decodeEntities(s: string): string {
+  let out = s;
+  for (const [entity, char] of Object.entries(NAMED_ENTITY)) {
+    if (out.includes(entity)) out = out.split(entity).join(char);
+  }
+  if (DECIMAL_ENTITY_RE.test(out)) {
+    out = out.replace(DECIMAL_ENTITY_RE, (_, code: string) => String.fromCodePoint(Number(code)));
+  }
+  if (HEX_ENTITY_RE.test(out)) {
+    out = out.replace(HEX_ENTITY_RE, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)));
+  }
+  out = out.replace(AMP_ENTITY_RE, "&");
+  return out;
+}
 
 export function pageHeadings(html: string): Heading[] {
   const out: Heading[] = [];
@@ -24,7 +54,7 @@ export function pageHeadings(html: string): Heading[] {
     const rawAttrs = match[2] ?? "";
     const inner = match[3] ?? "";
     const idMatch = rawAttrs.match(ID_RE);
-    const text = inner.replace(TAG_RE, "").trim();
+    const text = decodeEntities(inner.replace(TAG_RE, "")).trim();
     if (!text) continue;
     out.push({
       text,
