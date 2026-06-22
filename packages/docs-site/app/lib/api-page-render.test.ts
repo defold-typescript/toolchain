@@ -77,6 +77,20 @@ describe("apiPageMarkdown", () => {
     expect(md).toContain("io.open(filename: string, mode?: string): LuaFile | undefined");
     expect(md).not.toContain(`\`${thin}\``);
   });
+
+  test("renders the authored string.byte overload from the store, not the thin ref-doc one", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const str = pages.find((p) => p.namespace === "string");
+    expect(str).toBeDefined();
+    if (!str) return;
+    const thin = apiModuleSymbols(str, str.translations).find(
+      (s) => s.name === "string.byte",
+    )?.signature;
+    expect(thin).toBeDefined();
+    const md = apiPageMarkdown(str, apiLinkify(pages));
+    expect(md).toContain("string.byte(s: string, i?: number): number");
+    expect(md).not.toContain(`\`${thin}\``);
+  });
 });
 
 describe("apiLinkify", () => {
