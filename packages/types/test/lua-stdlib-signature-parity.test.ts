@@ -1,15 +1,21 @@
 import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import {
+  COROUTINE_SIGNATURES_PATH,
   IO_SIGNATURES_PATH,
   loadSignatureFile,
+  OS_SIGNATURES_PATH,
   STRING_SIGNATURES_PATH,
+  TABLE_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
 import { parseDefoldApiDoc } from "../src/api-doc";
 
 const NAMESPACES = [
   { ns: "io", docFixture: "io_doc.json", storePath: IO_SIGNATURES_PATH },
   { ns: "string", docFixture: "string_doc.json", storePath: STRING_SIGNATURES_PATH },
+  { ns: "table", docFixture: "table_doc.json", storePath: TABLE_SIGNATURES_PATH },
+  { ns: "os", docFixture: "os_doc.json", storePath: OS_SIGNATURES_PATH },
+  { ns: "coroutine", docFixture: "coroutine_doc.json", storePath: COROUTINE_SIGNATURES_PATH },
 ];
 
 async function docFunctionNames(docFixture: string): Promise<string[]> {
@@ -48,4 +54,28 @@ describe("lua-stdlib signature parity", () => {
     expect(missing).toEqual([]);
     expect(orphans).toEqual([]);
   });
+
+  const COVERAGE = [
+    { ns: "table", docFixture: "table_doc.json", storePath: TABLE_SIGNATURES_PATH, count: 5 },
+    { ns: "os", docFixture: "os_doc.json", storePath: OS_SIGNATURES_PATH, count: 11 },
+    {
+      ns: "coroutine",
+      docFixture: "coroutine_doc.json",
+      storePath: COROUTINE_SIGNATURES_PATH,
+      count: 6,
+    },
+  ];
+
+  for (const { ns, docFixture, storePath, count } of COVERAGE) {
+    test(`${ns} covers all ${count} ${ns}.* doc functions with zero orphans`, async () => {
+      const store = loadSignatureFile(storePath);
+      const names = await docFunctionNames(docFixture);
+
+      expect(names.length).toBe(count);
+      const missing = names.filter((name) => !(name in store));
+      const orphans = Object.keys(store).filter((key) => !names.includes(key));
+      expect(missing).toEqual([]);
+      expect(orphans).toEqual([]);
+    });
+  }
 });
