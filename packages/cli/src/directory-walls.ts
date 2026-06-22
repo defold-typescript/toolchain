@@ -17,9 +17,10 @@ import {
 const PINNED_KIND_SUBPATHS: readonly string[] = ["script", "gui-script", "render-script"];
 
 // `materializeRefDocSurface` writes the per-kind modules at
-// `<surface>/kinds/<kind>.d.ts`. TypeScript's `typeRoots`/`types` lookup
-// expects them at `<surface>/<kind>/{index.d.ts,package.json}`, so mirror the
-// kinds/ files into per-kind subdirs (one verbatim copy each) when the wall
+// `<surface>/kinds/<kind>.d.ts`. Under `typeRoots`/`types`, TypeScript resolves
+// `<surface>/<kind>` via that dir's `package.json` types/typings when present,
+// else its `index.d.ts`; we supply the `index.d.ts` fallback by mirroring each
+// kinds/ file into its per-kind subdir (one verbatim copy each) when the wall
 // consumer detects a pinned surface. A verbatim copy keeps every relative
 // `import "<namespace>"` resolving to the surface root the producer wrote;
 // a triple-slash reference or `export *` re-export does not carry the
@@ -149,14 +150,12 @@ export function resolveActivePinnedSurface(cwd: string): string | null {
   };
   const typeRoots = parsed.compilerOptions?.typeRoots;
   const types = parsed.compilerOptions?.types;
-  if (!Array.isArray(typeRoots) || !Array.isArray(types)) {
+  if (!Array.isArray(types)) {
     return null;
   }
-  if (
-    typeRoots.length !== 1 ||
-    typeof typeRoots[0] !== "string" ||
-    path.posix.basename(typeRoots[0]) !== MATERIALIZED_ROOT
-  ) {
+  // Only the exact `[MATERIALIZED_ROOT]` that `ensureMaterializedReference`
+  // writes counts as pinned, mirroring that writer's own idempotency check.
+  if (JSON.stringify(typeRoots) !== JSON.stringify([MATERIALIZED_ROOT])) {
     return null;
   }
   for (const entry of types) {
