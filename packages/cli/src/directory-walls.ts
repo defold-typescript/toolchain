@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { detectSourceOutputKind, isTranspilerSource, readBuildConfig } from "./build-output";
 import { formatJsonLikeBiome } from "./format-json";
+import { MATERIALIZED_ROOT } from "./materialize";
 import { scanFilesSync } from "./scan";
 import {
   isSkipped,
@@ -10,6 +11,36 @@ import {
   selectScriptKind,
   selectScriptKindEntrypoint,
 } from "./script-kind";
+
+// The kinds a wall may narrow against. Must stay in sync with
+// `KIND_MODULE_MANIFEST` (regen.ts).
+const PINNED_KIND_SUBPATHS: readonly string[] = ["script", "gui-script", "render-script"];
+
+// `materializeRefDocSurface` writes the per-kind modules at
+// `<surface>/kinds/<kind>.d.ts`. TypeScript's `typeRoots`/`types` lookup
+// expects them at `<surface>/<kind>/{index.d.ts,package.json}`, so mirror the
+// kinds/ files into per-kind subdirs (one verbatim copy each) when the wall
+// consumer detects a pinned surface. A verbatim copy keeps every relative
+// `import "<namespace>"` resolving to the surface root the producer wrote;
+// a triple-slash reference or `export *` re-export does not carry the
+// `declare global { namespace … }` ambient side-effects `types` mode expects.
+// No-op when the surface already exposes the per-kind layout.
+function ensurePinnedKindSubpaths(cwd: string, surface: string): void {
+  const surfaceDir = path.join(cwd, MATERIALIZED_ROOT, surface);
+  for (const kind of PINNED_KIND_SUBPATHS) {
+    const kindDir = path.join(surfaceDir, kind);
+    const indexPath = path.join(kindDir, "index.d.ts");
+    if (existsSync(indexPath)) {
+      continue;
+    }
+    const sourcePath = path.join(surfaceDir, "kinds", `${kind}.d.ts`);
+    if (!existsSync(sourcePath)) {
+      continue;
+    }
+    mkdirSync(kindDir, { recursive: true });
+    writeFileSync(indexPath, readFileSync(sourcePath, "utf8"));
+  }
+}
 
 export interface DirectoryWall {
   readonly dir: string;
@@ -72,21 +103,72 @@ interface WallTsconfig {
   readonly extends: string;
   readonly compilerOptions: {
     readonly composite: true;
-    readonly typeRoots: null;
+    readonly typeRoots: null | string[];
     readonly types: string[];
   };
   readonly include: readonly ["**/*.ts"];
   readonly exclude: readonly [];
 }
 
-export function directoryWallTsconfig(wall: DirectoryWall): WallTsconfig {
+export function directoryWallTsconfig(
+  wall: DirectoryWall,
+  pinnedSurface: string | null = null,
+): WallTsconfig {
   const depth = wall.dir.split("/").length;
+  if (pinnedSurface === null) {
+    return {
+      extends: `${"../".repeat(depth)}tsconfig.json`,
+      compilerOptions: { composite: true, typeRoots: null, types: [wall.typesEntrypoint] },
+      include: ["**/*.ts"],
+      exclude: [],
+    };
+  }
   return {
     extends: `${"../".repeat(depth)}tsconfig.json`,
-    compilerOptions: { composite: true, typeRoots: null, types: [wall.typesEntrypoint] },
+    compilerOptions: {
+      composite: true,
+      typeRoots: [`${"../".repeat(depth)}${MATERIALIZED_ROOT}`],
+      types: [`${pinnedSurface}/${wall.kind}`],
+    },
     include: ["**/*.ts"],
     exclude: [],
   };
+}
+
+// Read the root tsconfig and, when it is repointed at the materialized
+// `.defold-types` root, return the first `types` entry whose `<entry>/kinds`
+// directory exists on disk. Returns `null` for an installed project, for a
+// pre-producer surface (no `kinds/`), or for an unknown root tsconfig.
+export function resolveActivePinnedSurface(cwd: string): string | null {
+  const rootPath = path.join(cwd, "tsconfig.json");
+  if (!existsSync(rootPath)) {
+    return null;
+  }
+  const parsed = JSON.parse(readFileSync(rootPath, "utf8")) as {
+    compilerOptions?: { typeRoots?: unknown; types?: unknown };
+  };
+  const typeRoots = parsed.compilerOptions?.typeRoots;
+  const types = parsed.compilerOptions?.types;
+  if (!Array.isArray(typeRoots) || !Array.isArray(types)) {
+    return null;
+  }
+  if (
+    typeRoots.length !== 1 ||
+    typeof typeRoots[0] !== "string" ||
+    path.posix.basename(typeRoots[0]) !== MATERIALIZED_ROOT
+  ) {
+    return null;
+  }
+  for (const entry of types) {
+    if (typeof entry !== "string") {
+      continue;
+    }
+    if (existsSync(path.join(cwd, MATERIALIZED_ROOT, entry, "kinds"))) {
+      ensurePinnedKindSubpaths(cwd, entry);
+      return entry;
+    }
+  }
+  return null;
 }
 
 function writeJson(filePath: string, value: unknown): void {
@@ -166,7 +248,11 @@ export function wireWallReferences(cwd: string, walls: readonly DirectoryWall[])
   }
 }
 
-export function writeDirectoryWallTsconfigs(cwd: string, walls: DirectoryWall[]): string[] {
+export function writeDirectoryWallTsconfigs(
+  cwd: string,
+  walls: DirectoryWall[],
+  pinnedSurface: string | null = null,
+): string[] {
   const written: string[] = [];
   for (const w of walls) {
     if (w.dir === ".") {
@@ -174,7 +260,7 @@ export function writeDirectoryWallTsconfigs(cwd: string, walls: DirectoryWall[])
     }
     const rel = `${w.dir}/tsconfig.json`;
     const target = path.join(cwd, w.dir, "tsconfig.json");
-    const desired = directoryWallTsconfig(w);
+    const desired = directoryWallTsconfig(w, pinnedSurface);
     if (existsSync(target)) {
       const current = JSON.parse(readFileSync(target, "utf8")) as {
         extends?: string;
@@ -187,7 +273,7 @@ export function writeDirectoryWallTsconfigs(cwd: string, walls: DirectoryWall[])
       const alreadyNarrowed =
         current.extends === desired.extends &&
         options.composite === desired.compilerOptions.composite &&
-        options.typeRoots === desired.compilerOptions.typeRoots &&
+        JSON.stringify(options.typeRoots) === JSON.stringify(desired.compilerOptions.typeRoots) &&
         JSON.stringify(options.types) === JSON.stringify(desired.compilerOptions.types) &&
         JSON.stringify(current.include) === JSON.stringify(desired.include) &&
         JSON.stringify(current.exclude) === JSON.stringify(desired.exclude);
