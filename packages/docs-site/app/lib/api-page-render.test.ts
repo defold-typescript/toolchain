@@ -132,6 +132,20 @@ describe("apiPageMarkdown", () => {
     expect(md).toContain("bit.tohex(x: number, n?: number): string");
     expect(md).not.toContain(`\`${thin}\``);
   });
+
+  test("renders the authored bare base.select signature from the store, not the thin ref-doc one", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const base = pages.find((p) => p.namespace === "base");
+    expect(base).toBeDefined();
+    if (!base) return;
+    const thin = apiModuleSymbols(base, base.translations).find(
+      (s) => s.name === "select",
+    )?.signature;
+    expect(thin).toBeDefined();
+    const md = apiPageMarkdown(base, apiLinkify(pages));
+    expect(md).toContain('select(n: number | "#", ...args: any[]): any');
+    expect(md).not.toContain(`\`${thin}\``);
+  });
 });
 
 describe("apiLinkify", () => {
