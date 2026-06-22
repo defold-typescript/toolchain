@@ -1,0 +1,101 @@
+{
+  "assert": {
+    "signatures": ["assert<T>(v: T, message?: any): Exclude<T, undefined | null | false>"]
+  },
+  "collectgarbage": {
+    "signatures": [
+      "collectgarbage(opt?: \"collect\" | \"stop\" | \"restart\" | \"count\" | \"step\" | \"setpause\" | \"setstepmul\", arg?: number): number"
+    ]
+  },
+  "dofile": {
+    "signatures": ["dofile(filename?: string): any"]
+  },
+  "error": {
+    "signatures": ["error(message: string, level?: number): never"]
+  },
+  "getfenv": {
+    "signatures": ["getfenv(f?: Function | number): any"]
+  },
+  "getmetatable": {
+    "signatures": ["getmetatable<T>(object: T): LuaMetatable<T> | undefined"]
+  },
+  "ipairs": {
+    "signatures": [
+      "ipairs<T>(t: Record<number, T>): LuaIterable<LuaMultiReturn<[number, NonNullable<T>]>>"
+    ]
+  },
+  "load": {
+    "signatures": [
+      "load(func: () => string | null | undefined, chunkname?: string): LuaMultiReturn<[() => any] | [undefined, string]>"
+    ]
+  },
+  "loadfile": {
+    "signatures": ["loadfile(filename?: string): LuaMultiReturn<[() => any] | [undefined, string]>"]
+  },
+  "loadstring": {
+    "signatures": [
+      "loadstring(chunk: string | (() => string | null | undefined), chunkname?: string, mode?: \"b\" | \"t\" | \"bt\", env?: object): LuaMultiReturn<[() => any] | [undefined, string]>"
+    ]
+  },
+  "module": {
+    "signatures": ["module(name: string, ...options: any[]): void"]
+  },
+  "next": {
+    "signatures": ["next(table: object, index?: any): LuaMultiReturn<[any, any] | []>"]
+  },
+  "pairs": {
+    "signatures": [
+      "pairs<T>(t: T): LuaIterable<LuaMultiReturn<[keyof T, NonNullable<T[keyof T]>]>>"
+    ]
+  },
+  "pcall": {
+    "signatures": [
+      "pcall<A extends any[], R>(f: (...args: A) => R, ...args: A): LuaMultiReturn<[true, R] | [false, string]>"
+    ]
+  },
+  "print": {
+    "signatures": ["print(...args: any[]): void"]
+  },
+  "rawequal": {
+    "signatures": ["rawequal<T>(v1: T, v2: T): boolean"]
+  },
+  "rawget": {
+    "signatures": ["rawget<T extends object, K extends keyof T>(table: T, index: K): T[K]"]
+  },
+  "rawset": {
+    "signatures": [
+      "rawset<T extends object, K extends keyof T>(table: T, index: K, value: T[K]): T"
+    ]
+  },
+  "require": {
+    "signatures": ["require(modname: string): any"]
+  },
+  "select": {
+    "signatures": ["select(n: number | \"#\", ...args: any[]): any"]
+  },
+  "setfenv": {
+    "signatures": ["setfenv<T extends Function>(f: T, table: object): T"]
+  },
+  "setmetatable": {
+    "signatures": [
+      "setmetatable<T extends object>(table: T, metatable?: LuaMetatable<T> | null): T"
+    ]
+  },
+  "tonumber": {
+    "signatures": ["tonumber(e: any, base?: number): number | undefined"]
+  },
+  "tostring": {
+    "signatures": ["tostring(v: any): string"]
+  },
+  "type": {
+    "signatures": ["type(v: any): string"]
+  },
+  "unpack": {
+    "signatures": ["unpack<T extends any[]>(list: T): LuaMultiReturn<T>"]
+  },
+  "xpcall": {
+    "signatures": [
+      "xpcall<R, E>(f: () => R, err: (err: any) => E): LuaMultiReturn<[true, R] | [false, E]>"
+    ]
+  }
+}
