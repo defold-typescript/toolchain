@@ -104,6 +104,20 @@ describe("apiPageMarkdown", () => {
     expect(md).toContain('os.date(format: "*t", time?: number): LuaDateInfoResult');
     expect(md).not.toContain(`\`${thin}\``);
   });
+
+  test("renders the authored math.random signature from the store, not the thin ref-doc one", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const math = pages.find((p) => p.namespace === "math");
+    expect(math).toBeDefined();
+    if (!math) return;
+    const thin = apiModuleSymbols(math, math.translations).find(
+      (s) => s.name === "math.random",
+    )?.signature;
+    expect(thin).toBeDefined();
+    const md = apiPageMarkdown(math, apiLinkify(pages));
+    expect(md).toContain("math.random(m?: number, n?: number): number");
+    expect(md).not.toContain(`\`${thin}\``);
+  });
 });
 
 describe("apiLinkify", () => {

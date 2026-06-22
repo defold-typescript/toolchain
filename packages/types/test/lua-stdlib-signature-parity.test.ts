@@ -4,6 +4,7 @@ import {
   COROUTINE_SIGNATURES_PATH,
   IO_SIGNATURES_PATH,
   loadSignatureFile,
+  MATH_SIGNATURES_PATH,
   OS_SIGNATURES_PATH,
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
@@ -16,6 +17,7 @@ const NAMESPACES = [
   { ns: "table", docFixture: "table_doc.json", storePath: TABLE_SIGNATURES_PATH },
   { ns: "os", docFixture: "os_doc.json", storePath: OS_SIGNATURES_PATH },
   { ns: "coroutine", docFixture: "coroutine_doc.json", storePath: COROUTINE_SIGNATURES_PATH },
+  { ns: "math", docFixture: "math_doc.json", storePath: MATH_SIGNATURES_PATH },
 ];
 
 async function docFunctionNames(docFixture: string): Promise<string[]> {
@@ -64,6 +66,7 @@ describe("lua-stdlib signature parity", () => {
       storePath: COROUTINE_SIGNATURES_PATH,
       count: 6,
     },
+    { ns: "math", docFixture: "math_doc.json", storePath: MATH_SIGNATURES_PATH, count: 28 },
   ];
 
   for (const { ns, docFixture, storePath, count } of COVERAGE) {

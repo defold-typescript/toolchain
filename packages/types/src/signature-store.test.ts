@@ -3,6 +3,7 @@ import {
   COROUTINE_SIGNATURES_PATH,
   IO_SIGNATURES_PATH,
   loadSignatureFile,
+  MATH_SIGNATURES_PATH,
   OS_SIGNATURES_PATH,
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
@@ -136,6 +137,35 @@ describe("authored os signature store", () => {
     expect(lookupSignature(store, "os.exit")?.signatures).toContain(
       "os.exit(code?: number): never",
     );
+  });
+
+  test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
+    for (const [fqn, override] of Object.entries(store)) {
+      const o: SignatureOverride = override;
+      expect(Array.isArray(o.signatures)).toBe(true);
+      expect(o.signatures.length).toBeGreaterThan(0);
+      for (const sig of o.signatures) {
+        expect(typeof sig).toBe("string");
+        expect(sig.length).toBeGreaterThan(0);
+        expect(fqn.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("authored math signature store", () => {
+  const store = loadSignatureFile(MATH_SIGNATURES_PATH);
+
+  test("math.random resolves to the authored optional-arg form with a number return", () => {
+    const entry = lookupSignature(store, "math.random");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain("math.random(m?: number, n?: number): number");
+  });
+
+  test("math.modf resolves to the authored LuaMultiReturn tuple", () => {
+    const entry = lookupSignature(store, "math.modf");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain("math.modf(x: number): LuaMultiReturn<[number, number]>");
   });
 
   test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
