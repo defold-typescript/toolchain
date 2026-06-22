@@ -24,6 +24,7 @@ function page(namespace: string, module: Partial<ApiModule>): ApiPage {
     brief: full.brief,
     module: full,
     translations: {},
+    signatures: {},
     category: "engine",
   };
 }
