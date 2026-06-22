@@ -8,7 +8,9 @@ import {
   hashExampleSource,
   htmlToCodeText,
   htmlToDocText,
+  lookupSignature,
   lookupTranslation,
+  type SignatureStore,
   type TranslationStore,
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
@@ -22,6 +24,8 @@ export interface ApiPage {
   module: ApiModule;
   /** Hand-authored TypeScript `@example` translations, shared across the surface. */
   translations: TranslationStore;
+  /** Hand-authored `lua-types`-derived signature overrides, keyed by FQN, shared across the surface. */
+  signatures: SignatureStore;
   /**
    * `engine` for Defold-engine namespaces emitted from `api-targets.json` `modules`
    * and the synthetic globals page; `lua-stdlib` for pure-Lua / LuaJIT surfaces
@@ -266,15 +270,17 @@ export function apiModuleMarkdown(
 export function apiModuleSymbols(
   page: Pick<ApiPage, "module">,
   translations: TranslationStore = {},
+  signatures: SignatureStore = {},
 ): ApiSymbol[] {
   const m = page.module;
   const symbols: ApiSymbol[] = [];
 
   for (const fn of m.functions) {
+    const ov = lookupSignature(signatures, fn.name);
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
-      signature: functionSignature(fn),
+      signature: ov === null ? functionSignature(fn) : (ov.signatures[0] ?? functionSignature(fn)),
       docMarkdown: htmlToDocText(fn.description || fn.brief),
       parameters: projectParams(fn.parameters),
       returnValues: projectParams(fn.returnValues),
@@ -282,6 +288,21 @@ export function apiModuleSymbols(
     const example = exampleMarkdownFor(fn, translations);
     if (example) symbol.exampleMarkdown = example;
     symbols.push(symbol);
+    // Each remaining authored overload renders as its own row, reusing the
+    // distinct-row overload pattern: same description, but no per-parameter block
+    // or example since the primary row already carries them.
+    if (ov !== null) {
+      for (const signature of ov.signatures.slice(1)) {
+        symbols.push({
+          kind: "function",
+          name: fn.name,
+          signature,
+          docMarkdown: symbol.docMarkdown,
+          parameters: [],
+          returnValues: [],
+        });
+      }
+    }
   }
 
   for (const v of m.variables) {

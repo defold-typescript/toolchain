@@ -6,7 +6,7 @@ import {
   isKnownVersionId,
   versionedApiParams,
 } from "./api-page-render";
-import type { ApiPage } from "./api-surface";
+import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { loadApiSurface } from "./api-surface-loader";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
@@ -14,6 +14,7 @@ const MISSING_VERSION_FIXTURE_DIR = join(
   import.meta.dir,
   "__fixtures__/api-surface-missing-version",
 );
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 // A non-default surface page: its route already carries the version prefix, so
 // any link derived from it must stay version-scoped.
@@ -41,6 +42,7 @@ function versionedWmathPage(): ApiPage {
       typedefs: [],
     },
     translations: {},
+    signatures: {},
     category: "engine",
   };
 }
@@ -62,6 +64,18 @@ describe("apiPageMarkdown", () => {
     expect(camera).toBeDefined();
     if (!camera) return;
     expect(apiPageMarkdown(camera, apiLinkify(pages))).toMatchSnapshot();
+  });
+
+  test("renders the authored io.open signature from the store, not the thin ref-doc one", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const io = pages.find((p) => p.namespace === "io");
+    expect(io).toBeDefined();
+    if (!io) return;
+    const thin = apiModuleSymbols(io, io.translations).find((s) => s.name === "io.open")?.signature;
+    expect(thin).toBeDefined();
+    const md = apiPageMarkdown(io, apiLinkify(pages));
+    expect(md).toContain("io.open(filename: string, mode?: string): LuaFile | undefined");
+    expect(md).not.toContain(`\`${thin}\``);
   });
 });
 

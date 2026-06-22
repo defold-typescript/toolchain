@@ -81,3 +81,8 @@ export {
   type ScriptProperty,
 } from "./src/lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./src/publish-dts";
+export {
+  lookupSignature,
+  type SignatureOverride,
+  type SignatureStore,
+} from "./src/signature-store";

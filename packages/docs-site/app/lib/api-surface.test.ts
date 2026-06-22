@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { type ApiFunction, hashExampleSource, htmlToCodeText } from "@defold-typescript/types";
+import {
+  type ApiFunction,
+  hashExampleSource,
+  htmlToCodeText,
+  type SignatureStore,
+} from "@defold-typescript/types";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -175,6 +180,7 @@ describe("apiModuleMarkdown", () => {
         typedefs: [],
       },
       translations: {},
+      signatures: {},
       category: "engine",
     };
     const md = apiModuleMarkdown(page);
@@ -212,6 +218,7 @@ describe("apiModuleMarkdown", () => {
         typedefs: [],
       },
       translations: {},
+      signatures: {},
       category: "engine",
     };
   }
@@ -276,6 +283,7 @@ describe("apiModuleSymbols", () => {
         ...module,
       },
       translations: {},
+      signatures: {},
       category: "engine",
     };
   }
@@ -590,6 +598,116 @@ describe("apiModuleSymbols", () => {
     expect(symbols[0]?.signature).toBe("demo.f(x: string | Hash | Url)");
     expect(symbols[0]?.parameters[0]?.types).toEqual(["string", "Hash", "Url"]);
   });
+
+  test("a single-signature override replaces only the signature, keeping ref-doc doc and params", () => {
+    const store: SignatureStore = {
+      "io.open": { signatures: ["io.open(filename: string, mode?: string): LuaFile | undefined"] },
+    };
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "io.open",
+            brief: "",
+            description: "Opens a file.",
+            parameters: [
+              { name: "filename", doc: "the file name", types: ["string"], isOptional: false },
+              { name: "mode", doc: "the open mode", types: ["string"], isOptional: true },
+            ],
+            returnValues: [],
+          },
+        ],
+      }),
+      {},
+      store,
+    );
+    expect(symbols).toHaveLength(1);
+    expect(symbols[0]?.signature).toBe(
+      "io.open(filename: string, mode?: string): LuaFile | undefined",
+    );
+    expect(symbols[0]?.signature).not.toBe("io.open(filename: string, mode?: string)");
+    expect(symbols[0]?.docMarkdown).toBe("Opens a file.");
+    expect(symbols[0]?.parameters).toEqual([
+      { name: "filename", doc: "the file name", types: ["string"], isOptional: false },
+      { name: "mode", doc: "the open mode", types: ["string"], isOptional: true },
+    ]);
+    expect(symbols[0]?.returnValues).toEqual([]);
+  });
+
+  test("an overloaded override expands to one symbol per authored signature in order", () => {
+    const signatures = [
+      "file:read(): string | undefined",
+      'file:read(format: "*n" | "*l" | "*a" | number): string | number | undefined',
+      'file:read(...formats: ("*n" | "*l" | "*a" | number)[]): (string | number | undefined)[]',
+    ];
+    const store: SignatureStore = { "file:read": { signatures } };
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "file:read",
+            brief: "",
+            description: "Reads the file.",
+            parameters: [
+              { name: "format", doc: "the read format", types: ["string"], isOptional: true },
+            ],
+            returnValues: [
+              { name: "", doc: "the data read", types: ["string"], isOptional: false },
+            ],
+            examples:
+              '<div class="codehilite"><pre><code><span class="n">file</span><span class="p">:</span><span class="n">read</span><span class="p">()</span></code></pre></div>',
+          },
+        ],
+      }),
+      {},
+      store,
+    );
+    expect(symbols).toHaveLength(3);
+    expect(symbols.map((s) => s.name)).toEqual(["file:read", "file:read", "file:read"]);
+    expect(symbols.map((s) => s.signature)).toEqual(signatures);
+    expect(symbols[0]?.docMarkdown).toBe("Reads the file.");
+    expect(symbols[0]?.parameters).toEqual([
+      { name: "format", doc: "the read format", types: ["string"], isOptional: true },
+    ]);
+    expect(symbols[0]?.returnValues).toEqual([
+      { name: "", doc: "the data read", types: ["string"], isOptional: false },
+    ]);
+    expect(symbols[0]?.exampleMarkdown).toContain("```lua");
+    for (const i of [1, 2]) {
+      expect(symbols[i]?.docMarkdown).toBe("Reads the file.");
+      expect(symbols[i]?.parameters).toEqual([]);
+      expect(symbols[i]?.returnValues).toEqual([]);
+      expect(symbols[i]?.exampleMarkdown).toBeUndefined();
+    }
+  });
+
+  test("a function absent from the store keeps its ref-doc signature; non-functions are untouched", () => {
+    const store: SignatureStore = {
+      "io.open": { signatures: ["io.open(filename: string, mode?: string): LuaFile | undefined"] },
+    };
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "io.close",
+            brief: "",
+            description: "Closes a file.",
+            parameters: [],
+            returnValues: [],
+          },
+        ],
+        variables: [
+          { name: "io.stdout", brief: "", description: "Standard output.", types: ["number"] },
+        ],
+      }),
+      {},
+      store,
+    );
+    expect(symbols.find((s) => s.name === "io.close")?.signature).toBe("io.close()");
+    const variable = symbols.find((s) => s.name === "io.stdout");
+    expect(variable?.kind).toBe("variable");
+    expect(variable?.signature).toBe("io.stdout: number");
+  });
 });
 
 describe("exampleMarkdownFor", () => {
@@ -676,6 +794,31 @@ describe("loadApiSurface translations and /api rendering", () => {
     expect(JSON.stringify(apiModuleSymbols(cameraPage))).toBe(
       JSON.stringify(apiModuleSymbols(cameraPage, {})),
     );
+  });
+
+  test("a non-io page is byte-identical with vs without a populated io signature store", () => {
+    expect(cameraPage).toBeDefined();
+    if (!cameraPage) return;
+    const ioStore: SignatureStore = {
+      "io.open": { signatures: ["io.open(filename: string, mode?: string): LuaFile | undefined"] },
+    };
+    expect(JSON.stringify(apiModuleSymbols(cameraPage))).toBe(
+      JSON.stringify(apiModuleSymbols(cameraPage, {}, ioStore)),
+    );
+  });
+
+  test("attaches a signature store carrying io.open and file:read to every loaded page", () => {
+    expect(pages.length).toBeGreaterThan(0);
+    for (const page of pages) {
+      expect(page.signatures["io.open"]).toBeDefined();
+      expect(page.signatures["file:read"]).toBeDefined();
+    }
+  });
+
+  test("a surface with no signatures dir attaches an empty signature store", () => {
+    for (const page of loadApiSurface(FIXTURE_DIR)) {
+      expect(page.signatures).toEqual({});
+    }
   });
 });
 
