@@ -1,0 +1,50 @@
+{
+  "debug.debug": {
+    "signatures": ["debug.debug(): void"]
+  },
+  "debug.getfenv": {
+    "signatures": ["debug.getfenv(o: object): any"]
+  },
+  "debug.gethook": {
+    "signatures": [
+      "debug.gethook(thread?: LuaThread): LuaMultiReturn<[undefined, 0] | [Function, number, string?]>"
+    ]
+  },
+  "debug.getinfo": {
+    "signatures": ["debug.getinfo(f: Function | number, what?: string): FunctionInfo"]
+  },
+  "debug.getlocal": {
+    "signatures": ["debug.getlocal(level: number, local: number): LuaMultiReturn<[string, any]>"]
+  },
+  "debug.getmetatable": {
+    "signatures": ["debug.getmetatable<T>(value: T): LuaMetatable<T> | undefined"]
+  },
+  "debug.getregistry": {
+    "signatures": ["debug.getregistry(): Record<string, any>"]
+  },
+  "debug.getupvalue": {
+    "signatures": ["debug.getupvalue(f: Function, up: number): LuaMultiReturn<[string, any] | []>"]
+  },
+  "debug.setfenv": {
+    "signatures": ["debug.setfenv<T extends object>(o: T, table: object): T"]
+  },
+  "debug.sethook": {
+    "signatures": [
+      "debug.sethook(hook?: (event: \"call\" | \"return\" | \"line\" | \"count\", line?: number) => any, mask?: string, count?: number): void"
+    ]
+  },
+  "debug.setlocal": {
+    "signatures": ["debug.setlocal(level: number, local: number, value: any): string | undefined"]
+  },
+  "debug.setmetatable": {
+    "signatures": [
+      "debug.setmetatable<T extends object>(value: T, table?: LuaMetatable<T> | null): T"
+    ]
+  },
+  "debug.setupvalue": {
+    "signatures": ["debug.setupvalue(f: Function, up: number, value: any): string | undefined"]
+  },
+  "debug.traceback": {
+    "signatures": ["debug.traceback(message?: string, level?: number): string"]
+  }
+}
