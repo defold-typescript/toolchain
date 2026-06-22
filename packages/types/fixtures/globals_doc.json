@@ -3,7 +3,7 @@
     "namespace": "globals",
     "version": "1.12.4",
     "brief": "Prefixless global symbols available to every Defold script.",
-    "description": "Hand-vendored catalog of the ambient symbols Defold scripts reach with no namespace prefix (declared in src/engine-globals.d.ts). Upstream has no machine-readable export for this surface; refresh by reading the Defold API reference and editing this file. Documents callable/global-value symbols only; the ambient engine types are out of scope. The Lua base globals (print, pcall, pairs, assert, ...) are owned by the lua-types dependency and documented on the base reference page; they are not duplicated here."
+    "description": "The functions Defold exposes to every script without a namespace prefix. The global *types* (`Hash`, `Vector3`, ...) have their own reference pages. The Lua base globals (`print`, `pcall`, `pairs`, `assert`, ...) come from the `lua-types` dependency and are documented on the [base reference page](/api/base), not duplicated here."
   },
   "elements": [
     {
