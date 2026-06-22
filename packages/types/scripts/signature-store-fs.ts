@@ -7,6 +7,14 @@ import type { SignatureStore } from "../src/signature-store";
 // typecheck. `src/signature-store.ts` stays pure for exactly that reason.
 export const IO_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "io.json");
 export const STRING_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "string.json");
+export const TABLE_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "table.json");
+export const OS_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "os.json");
+export const COROUTINE_SIGNATURES_PATH = resolve(
+  import.meta.dir,
+  "..",
+  "signatures",
+  "coroutine.json",
+);
 
 export function loadSignatureFile(path: string): SignatureStore {
   let raw: string;

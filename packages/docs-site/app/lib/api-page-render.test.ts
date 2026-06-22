@@ -91,6 +91,19 @@ describe("apiPageMarkdown", () => {
     expect(md).toContain("string.byte(s: string, i?: number): number");
     expect(md).not.toContain(`\`${thin}\``);
   });
+
+  test("renders the authored os.date overload from the store, not the thin ref-doc one", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const os = pages.find((p) => p.namespace === "os");
+    expect(os).toBeDefined();
+    if (!os) return;
+    const thin = apiModuleSymbols(os, os.translations).find((s) => s.name === "os.date")?.signature;
+    expect(thin).toBeDefined();
+    const md = apiPageMarkdown(os, apiLinkify(pages));
+    expect(md).toContain("os.date(format?: string, time?: number): string");
+    expect(md).toContain('os.date(format: "*t", time?: number): LuaDateInfoResult');
+    expect(md).not.toContain(`\`${thin}\``);
+  });
 });
 
 describe("apiLinkify", () => {
