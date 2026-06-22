@@ -62,11 +62,11 @@ function symbolBlock(symbol: ApiSymbol): string {
 // skipped — `linkify` is plain-text only and the route never hands it the
 // example or signature fields).
 export function apiPageMarkdown(
-  page: Pick<ApiPage, "module" | "translations">,
+  page: Pick<ApiPage, "module" | "translations" | "signatures">,
   linkify: (text: string) => string,
 ): string {
   const m = page.module;
-  const symbols = apiModuleSymbols(page, page.translations);
+  const symbols = apiModuleSymbols(page, page.translations, page.signatures);
   const lines: string[] = [`# ${m.namespace}`, ""];
   const intro = htmlToDocText(m.description || m.brief);
   if (intro) lines.push(linkify(intro), "");
