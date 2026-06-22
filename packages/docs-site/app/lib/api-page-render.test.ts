@@ -118,6 +118,20 @@ describe("apiPageMarkdown", () => {
     expect(md).toContain("math.random(m?: number, n?: number): number");
     expect(md).not.toContain(`\`${thin}\``);
   });
+
+  test("renders the authored bit.tohex signature from the store, not the thin ref-doc one", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const bit = pages.find((p) => p.namespace === "bit");
+    expect(bit).toBeDefined();
+    if (!bit) return;
+    const thin = apiModuleSymbols(bit, bit.translations).find(
+      (s) => s.name === "bit.tohex",
+    )?.signature;
+    expect(thin).toBeDefined();
+    const md = apiPageMarkdown(bit, apiLinkify(pages));
+    expect(md).toContain("bit.tohex(x: number, n?: number): string");
+    expect(md).not.toContain(`\`${thin}\``);
+  });
 });
 
 describe("apiLinkify", () => {

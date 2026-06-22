@@ -1,0 +1,38 @@
+{
+  "bit.tobit": {
+    "signatures": ["bit.tobit(x: number): number"]
+  },
+  "bit.tohex": {
+    "signatures": ["bit.tohex(x: number, n?: number): string"]
+  },
+  "bit.bnot": {
+    "signatures": ["bit.bnot(x: number): number"]
+  },
+  "bit.bor": {
+    "signatures": ["bit.bor(x: number, ...rest: number[]): number"]
+  },
+  "bit.band": {
+    "signatures": ["bit.band(x: number, ...rest: number[]): number"]
+  },
+  "bit.bxor": {
+    "signatures": ["bit.bxor(x: number, ...rest: number[]): number"]
+  },
+  "bit.lshift": {
+    "signatures": ["bit.lshift(x: number, n: number): number"]
+  },
+  "bit.rshift": {
+    "signatures": ["bit.rshift(x: number, n: number): number"]
+  },
+  "bit.arshift": {
+    "signatures": ["bit.arshift(x: number, n: number): number"]
+  },
+  "bit.rol": {
+    "signatures": ["bit.rol(x: number, n: number): number"]
+  },
+  "bit.ror": {
+    "signatures": ["bit.ror(x: number, n: number): number"]
+  },
+  "bit.bswap": {
+    "signatures": ["bit.bswap(x: number): number"]
+  }
+}

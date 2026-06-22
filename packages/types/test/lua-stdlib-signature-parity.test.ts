@@ -1,11 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import {
+  BIT_SIGNATURES_PATH,
   COROUTINE_SIGNATURES_PATH,
+  DEBUG_SIGNATURES_PATH,
   IO_SIGNATURES_PATH,
   loadSignatureFile,
   MATH_SIGNATURES_PATH,
   OS_SIGNATURES_PATH,
+  PACKAGE_SIGNATURES_PATH,
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
@@ -18,6 +21,9 @@ const NAMESPACES = [
   { ns: "os", docFixture: "os_doc.json", storePath: OS_SIGNATURES_PATH },
   { ns: "coroutine", docFixture: "coroutine_doc.json", storePath: COROUTINE_SIGNATURES_PATH },
   { ns: "math", docFixture: "math_doc.json", storePath: MATH_SIGNATURES_PATH },
+  { ns: "bit", docFixture: "bit_doc.json", storePath: BIT_SIGNATURES_PATH },
+  { ns: "debug", docFixture: "debug_doc.json", storePath: DEBUG_SIGNATURES_PATH },
+  { ns: "package", docFixture: "package_doc.json", storePath: PACKAGE_SIGNATURES_PATH },
 ];
 
 async function docFunctionNames(docFixture: string): Promise<string[]> {
@@ -67,6 +73,9 @@ describe("lua-stdlib signature parity", () => {
       count: 6,
     },
     { ns: "math", docFixture: "math_doc.json", storePath: MATH_SIGNATURES_PATH, count: 28 },
+    { ns: "bit", docFixture: "bit_doc.json", storePath: BIT_SIGNATURES_PATH, count: 12 },
+    { ns: "debug", docFixture: "debug_doc.json", storePath: DEBUG_SIGNATURES_PATH, count: 14 },
+    { ns: "package", docFixture: "package_doc.json", storePath: PACKAGE_SIGNATURES_PATH, count: 7 },
   ];
 
   for (const { ns, docFixture, storePath, count } of COVERAGE) {
