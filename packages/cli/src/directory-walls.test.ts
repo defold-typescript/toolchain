@@ -8,9 +8,11 @@ import {
   groupSourceScriptKindsByDirectory,
   planDirectoryWalls,
   planSourceDirectoryWalls,
+  resolveActivePinnedSurface,
   wireWallReferences,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
+import { MATERIALIZED_ROOT } from "./materialize";
 import type { ScriptKind } from "./script-kind";
 
 let cwd: string;
@@ -197,6 +199,60 @@ describe("directoryWallTsconfig", () => {
       exclude: [],
     });
   });
+
+  test("a pinned nested wall points typeRoots at the materialized root and types at the pinned per-kind subpath", () => {
+    expect(
+      directoryWallTsconfig(
+        wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
+        "1.9.8",
+      ),
+    ).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: {
+        composite: true,
+        typeRoots: [`../../${MATERIALIZED_ROOT}`],
+        types: ["1.9.8/gui-script"],
+      },
+      include: ["**/*.ts"],
+      exclude: [],
+    });
+  });
+
+  test("a pinned depth-1 wall uses one less '../' for the typeRoots path", () => {
+    expect(
+      directoryWallTsconfig(
+        wall("render", "render-script", "@defold-typescript/types/render-script"),
+        "1.9.8",
+      ),
+    ).toEqual({
+      extends: "../tsconfig.json",
+      compilerOptions: {
+        composite: true,
+        typeRoots: [`../${MATERIALIZED_ROOT}`],
+        types: ["1.9.8/render-script"],
+      },
+      include: ["**/*.ts"],
+      exclude: [],
+    });
+  });
+
+  test("a null pinned surface keeps the installed-package form", () => {
+    expect(
+      directoryWallTsconfig(
+        wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
+        null,
+      ),
+    ).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: {
+        composite: true,
+        typeRoots: null,
+        types: ["@defold-typescript/types/gui-script"],
+      },
+      include: ["**/*.ts"],
+      exclude: [],
+    });
+  });
 });
 
 describe("writeDirectoryWallTsconfigs", () => {
@@ -256,6 +312,28 @@ describe("writeDirectoryWallTsconfigs", () => {
 
   test("writes nothing for an empty wall list", () => {
     expect(writeDirectoryWallTsconfigs(cwd, [])).toEqual([]);
+  });
+
+  test("a pinned-surface wall writes the per-kind typeRoots/types and skips when unchanged", () => {
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual(["src/ui/tsconfig.json"]);
+    const target = path.join(cwd, "src/ui/tsconfig.json");
+    expect(JSON.parse(readFileSync(target, "utf8"))).toEqual(
+      directoryWallTsconfig(walls[0] as DirectoryWall, "1.9.8"),
+    );
+
+    const before = statSync(target).mtimeMs;
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual([]);
+    expect(statSync(target).mtimeMs).toBe(before);
+  });
+
+  test("switching a wall from installed to pinned form rewrites it", () => {
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    writeDirectoryWallTsconfigs(cwd, walls);
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual(["src/ui/tsconfig.json"]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
+      directoryWallTsconfig(walls[0] as DirectoryWall, "1.9.8"),
+    );
   });
 });
 
@@ -332,5 +410,83 @@ describe("wireWallReferences", () => {
     expect(JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"))).toEqual({
       include: ["src/**/*.ts"],
     });
+  });
+});
+
+describe("resolveActivePinnedSurface", () => {
+  test("returns the surface id when root tsconfig is repointed and kinds/ exists", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { typeRoots: [MATERIALIZED_ROOT], types: ["1.9.8"] },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    mkdirSync(path.join(cwd, MATERIALIZED_ROOT, "1.9.8", "kinds"), { recursive: true });
+    expect(resolveActivePinnedSurface(cwd)).toBe("1.9.8");
+  });
+
+  test("returns null for an installed project (no materialized root)", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    expect(resolveActivePinnedSurface(cwd)).toBe(null);
+  });
+
+  test("returns null when typeRoots is anything but the materialized root", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { typeRoots: ["node_modules/@types"], types: ["1.9.8"] },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    mkdirSync(path.join(cwd, MATERIALIZED_ROOT, "1.9.8", "kinds"), { recursive: true });
+    expect(resolveActivePinnedSurface(cwd)).toBe(null);
+  });
+
+  test("returns null when no types entry has a kinds/ directory on disk", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { typeRoots: [MATERIALIZED_ROOT], types: ["1.9.8"] },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    expect(resolveActivePinnedSurface(cwd)).toBe(null);
+  });
+
+  test("skips a coexisting 'extensions' types entry without kinds/", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: {
+          typeRoots: [MATERIALIZED_ROOT],
+          types: ["extensions", "1.9.8"],
+        },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    mkdirSync(path.join(cwd, MATERIALIZED_ROOT, "1.9.8", "kinds"), { recursive: true });
+    expect(resolveActivePinnedSurface(cwd)).toBe("1.9.8");
+  });
+
+  test("a pre-producer surface (no kinds/ dir) returns null so walls fall back to the installed entrypoint", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { typeRoots: [MATERIALIZED_ROOT], types: ["1.9.8"] },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    mkdirSync(path.join(cwd, MATERIALIZED_ROOT, "1.9.8"), { recursive: true });
+    expect(resolveActivePinnedSurface(cwd)).toBe(null);
+  });
+
+  test("a missing root tsconfig returns null", () => {
+    expect(resolveActivePinnedSurface(cwd)).toBe(null);
   });
 });
