@@ -36,15 +36,6 @@ Use the `@latest` tag when you scaffold: `bunx` caches binaries, and `init` is
 what writes your `@defold-typescript/types` version pin, so a stale cache would
 pin an older release. `@latest` always scaffolds against the current version.
 
-`bunx defold-typescript` (without the `@defold-typescript/` scope) resolves a
-different, nonexistent package and fails with a registry 404. If you prefer the
-short `defold-typescript` name, install the package first so the binary lands in
-`node_modules/.bin`:
-
-```sh
-bun add -d @defold-typescript/cli   # then: bunx defold-typescript <command>
-```
-
 Check which version you are running with `-v` / `--version`:
 
 ```sh
