@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  BASE_SIGNATURES_PATH,
   BIT_SIGNATURES_PATH,
   COROUTINE_SIGNATURES_PATH,
   DEBUG_SIGNATURES_PATH,
@@ -140,6 +141,58 @@ describe("authored os signature store", () => {
     expect(lookupSignature(store, "os.exit")?.signatures).toContain(
       "os.exit(code?: number): never",
     );
+  });
+
+  test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
+    for (const [fqn, override] of Object.entries(store)) {
+      const o: SignatureOverride = override;
+      expect(Array.isArray(o.signatures)).toBe(true);
+      expect(o.signatures.length).toBeGreaterThan(0);
+      for (const sig of o.signatures) {
+        expect(typeof sig).toBe("string");
+        expect(sig.length).toBeGreaterThan(0);
+        expect(fqn.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("authored base signature store (bare global keys)", () => {
+  const store = loadSignatureFile(BASE_SIGNATURES_PATH);
+
+  test("pcall resolves to the LuaMultiReturn-strengthened authored form", () => {
+    const entry = lookupSignature(store, "pcall");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures[0]).toContain("LuaMultiReturn");
+    expect(entry?.signatures[0]).toBe(
+      "pcall<A extends any[], R>(f: (...args: A) => R, ...args: A): LuaMultiReturn<[true, R] | [false, string]>",
+    );
+  });
+
+  test("select resolves to the authored union-indexed form", () => {
+    const entry = lookupSignature(store, "select");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain('select(n: number | "#", ...args: any[]): any');
+  });
+
+  test("unpack resolves to its Lua-5.1 authored form (not 5.2's table.unpack)", () => {
+    const entry = lookupSignature(store, "unpack");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain("unpack<T extends any[]>(list: T): LuaMultiReturn<T>");
+  });
+
+  test("type resolves to the authored value-to-string form", () => {
+    const entry = lookupSignature(store, "type");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain("type(v: any): string");
+  });
+
+  test("every key is a bare global (no namespace prefix) — the one unprefixed store", () => {
+    const keys = Object.keys(store);
+    expect(keys.length).toBeGreaterThan(0);
+    for (const key of keys) {
+      expect(key).toMatch(/^[a-z]+$/);
+    }
   });
 
   test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
