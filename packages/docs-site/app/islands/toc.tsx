@@ -9,7 +9,16 @@ type ActiveTip = { text: string; top: number; left: number } | null;
  * list is shipped as a prop (so the initial paint is correct) and the
  * intersection observer only re-lights the active link.
  */
-export default function Toc({ headings }: { headings: Heading[] }) {
+export default function Toc({
+  headings,
+  showHeading = true,
+}: {
+  headings: Heading[];
+  // The inline (`<details>`) placement supplies its own "On this page" label via
+  // the `<summary>`, so it renders the outline with this off to avoid the
+  // duplicate heading; the sticky rail keeps it on.
+  showHeading?: boolean;
+}) {
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
   const [clickedId, setClickedId] = useState<string | null>(null);
   // Full-text tooltip for truncated entries. Positioned `fixed` to the viewport
@@ -82,9 +91,11 @@ export default function Toc({ headings }: { headings: Heading[] }) {
 
   return (
     <nav aria-label="On this page" class="text-sm">
-      <p class="mb-3 pl-4 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
-        On this page
-      </p>
+      {showHeading ? (
+        <p class="mb-3 pl-4 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
+          On this page
+        </p>
+      ) : null}
       <ul class="space-y-1.5 border-l border-border">
         {headings.map((h) => (
           <li key={h.id}>

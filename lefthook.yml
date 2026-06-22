@@ -1,0 +1,20 @@
+# Git hooks managed by lefthook. Installed by the root `prepare` script on
+# `bun install`; run `bunx lefthook install` to (re)install manually.
+#
+# The committed packages/docs/llms.txt and llms-full.txt are the repo's only
+# tracked build artifacts. They are generated from the guide markdown, the docs
+# package manifest, and the types API surface (packages/docs-site/scripts/
+# build-llms.ts), and a byte-for-byte drift guard in `bun test` fails CI when the
+# committed copies go stale. This hook regenerates and re-stages them whenever a
+# commit touches one of those inputs, so the guard never trips locally. CI's
+# drift guard stays the real backstop if the glob ever under-triggers.
+pre-commit:
+  commands:
+    llms-txt:
+      glob:
+        - "packages/docs/guide/*.md"
+        - "packages/docs/package.json"
+        - "packages/types/*"
+      run: |
+        bun packages/docs-site/scripts/build-llms.ts
+        git add packages/docs/llms.txt packages/docs/llms-full.txt

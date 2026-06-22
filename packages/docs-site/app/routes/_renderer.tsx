@@ -297,9 +297,12 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
 
           <main class="min-w-0 flex-1">
             <div class="flex gap-10 py-10">
-              <article class={`min-w-0 flex-1 ${contentClass ?? ""}`}>{children}</article>
+              <article class={`min-w-0 flex-1 ${contentClass ?? ""}`}>
+                {showToc ? <InlineToc headings={tocHeadings} /> : null}
+                {children}
+              </article>
               {showToc ? (
-                <aside class="hidden xl:block">
+                <aside data-testid="toc-rail" class="hidden xl:block">
                   <div class="sticky top-[calc(var(--topbar-height,3.5rem)+1.5rem)] max-h-[calc(100vh-var(--topbar-height,3.5rem)-2.5rem)] w-56 overflow-y-auto overflow-x-hidden">
                     <Toc headings={tocHeadings} />
                   </div>
@@ -380,6 +383,43 @@ function GithubLink() {
         dangerouslySetInnerHTML={{ __html: githubIconRaw }}
       />
     </a>
+  );
+}
+
+/**
+ * The narrow-viewport home for the page outline. The sticky right rail is
+ * `hidden` below `xl`, so below that width the same `Toc` outline rides inside
+ * this collapsible disclosure at the top of the content column (`xl:hidden`, the
+ * complement of the rail). It is collapsed by default so it never pushes the
+ * prose far down, and reuses the `Toc` island so scroll-spy and truncation
+ * tooltips work when it is open. The `<summary>` carries the "On this page"
+ * label, so the embedded outline renders with `showHeading={false}`.
+ */
+function InlineToc({ headings }: { headings: Heading[] }) {
+  return (
+    <details
+      data-testid="toc-inline"
+      class="group mb-8 rounded-lg border border-border bg-surface xl:hidden"
+    >
+      <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-text-faint transition hover:text-text [&::-webkit-details-marker]:hidden">
+        <span>On this page</span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-4 w-4 transition group-open:rotate-180"
+          aria-hidden="true"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </summary>
+      <div class="px-2 pb-3">
+        <Toc headings={headings} showHeading={false} />
+      </div>
+    </details>
   );
 }
 
