@@ -3,6 +3,7 @@ import * as path from "node:path";
 import {
   type DirectoryWall,
   planSourceDirectoryWalls,
+  resolveActivePinnedSurface,
   wireWallReferences,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
@@ -65,7 +66,7 @@ export function applyWallSelection(cwd: string, desiredDirs: readonly string[]):
     }
   }
 
-  writeDirectoryWallTsconfigs(cwd, desired);
+  writeDirectoryWallTsconfigs(cwd, desired, resolveActivePinnedSurface(cwd));
   wireWallReferences(cwd, desired);
   return sortDirs(desired);
 }
