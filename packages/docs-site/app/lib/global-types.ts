@@ -151,6 +151,7 @@ function buildPage(name: string, members: RawMember[]): ApiPage {
     brief,
     module,
     translations: {},
+    signatures: {},
     category: "global-type",
   };
 }

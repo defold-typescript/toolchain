@@ -1,6 +1,10 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseDefoldApiDoc, type TranslationStore } from "@defold-typescript/types";
+import {
+  parseDefoldApiDoc,
+  type SignatureStore,
+  type TranslationStore,
+} from "@defold-typescript/types";
 import type { ApiPage, ApiPageCategory } from "./api-surface";
 import { parseGlobalTypes } from "./global-types";
 
@@ -27,6 +31,20 @@ function loadTranslationStore(typesDir: string): TranslationStore {
   return JSON.parse(readFileSync(path, "utf8")) as TranslationStore;
 }
 
+// Merge every `signatures/*.json` override file into one store; an absent dir
+// degrades to an empty store (every signature renders its ref-doc form). Like
+// `loadTranslationStore`, the file read lives here rather than in the node-free
+// types entry graph. Keys are FQNs and never collide across the per-namespace
+// files, so a flat `Object.assign` merge is sufficient.
+function loadSignatureStore(typesDir: string): SignatureStore {
+  const dir = join(typesDir, "signatures");
+  if (!existsSync(dir)) return {};
+  const stores = readdirSync(dir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as SignatureStore);
+  return Object.assign({}, ...stores);
+}
+
 function readTargets(typesDir: string): ApiTarget[] {
   const { targets } = JSON.parse(readFileSync(join(typesDir, "api-targets.json"), "utf8")) as {
     targets: ApiTarget[];
@@ -45,6 +63,7 @@ function loadTargetPages(
   opts: { routePrefix: string; includeCoreTypes: boolean },
 ): ApiPage[] {
   const translations = loadTranslationStore(typesDir);
+  const signatures = loadSignatureStore(typesDir);
 
   const pages = target.modules.map((mod): ApiPage => {
     const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
@@ -55,6 +74,7 @@ function loadTargetPages(
       brief: module.brief,
       module,
       translations,
+      signatures,
       category: "engine",
     };
   });
@@ -70,6 +90,7 @@ function loadTargetPages(
       brief: module.brief,
       module,
       translations,
+      signatures,
       category: "engine",
     });
   }
@@ -93,6 +114,7 @@ function loadTargetPages(
       brief: module.brief,
       module,
       translations,
+      signatures,
       category: "lua-stdlib",
     });
   }
@@ -104,7 +126,7 @@ function loadTargetPages(
   const coreTypesPath = join(typesDir, "src", "core-types.ts");
   if (opts.includeCoreTypes && existsSync(coreTypesPath)) {
     for (const page of parseGlobalTypes(readFileSync(coreTypesPath, "utf8"))) {
-      pages.push({ ...page, translations });
+      pages.push({ ...page, translations, signatures });
     }
   }
 

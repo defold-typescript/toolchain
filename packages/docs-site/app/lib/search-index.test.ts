@@ -167,6 +167,7 @@ describe("apiSearchRecords", () => {
         typedefs: [],
       },
       translations: {},
+      signatures: {},
       category: "engine",
     };
     const [record] = apiSearchRecords([page]);
@@ -219,6 +220,7 @@ describe("apiSearchRecords", () => {
         typedefs: [],
       },
       translations: {},
+      signatures: {},
       category: "engine",
     };
     const [record] = apiSearchRecords([page]);
