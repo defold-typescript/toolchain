@@ -5,9 +5,10 @@ import type { SignatureStore } from "../src/signature-store";
 // Build-time only: lives under `scripts/` (never reachable from the shipped
 // `src/index.ts` graph) so its `node:fs` import cannot leak into a consumer's
 // typecheck. `src/signature-store.ts` stays pure for exactly that reason.
-const IO_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "io.json");
+export const IO_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "io.json");
+export const STRING_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "string.json");
 
-export function loadSignatures(path: string = IO_SIGNATURES_PATH): SignatureStore {
+export function loadSignatureFile(path: string): SignatureStore {
   let raw: string;
   try {
     raw = readFileSync(path, "utf8");
