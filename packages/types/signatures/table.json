@@ -1,0 +1,22 @@
+{
+  "table.concat": {
+    "signatures": [
+      "table.concat(list: (string | number)[], sep?: string, i?: number, j?: number): string"
+    ]
+  },
+  "table.insert": {
+    "signatures": [
+      "table.insert<T>(list: T[], value: T): void",
+      "table.insert<T>(list: T[], pos: number, value: T): void"
+    ]
+  },
+  "table.maxn": {
+    "signatures": ["table.maxn(table: object): number"]
+  },
+  "table.remove": {
+    "signatures": ["table.remove<T>(list: T[], pos?: number): T | undefined"]
+  },
+  "table.sort": {
+    "signatures": ["table.sort<T>(list: T[], comp?: (a: T, b: T) => boolean): void"]
+  }
+}

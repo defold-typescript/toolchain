@@ -1,0 +1,26 @@
+{
+  "coroutine.create": {
+    "signatures": ["coroutine.create(f: (...args: any[]) => any): LuaThread"]
+  },
+  "coroutine.resume": {
+    "signatures": [
+      "coroutine.resume(co: LuaThread, ...val: any[]): LuaMultiReturn<[true, ...any[]] | [false, string]>"
+    ]
+  },
+  "coroutine.running": {
+    "signatures": ["coroutine.running(): LuaThread | undefined"]
+  },
+  "coroutine.status": {
+    "signatures": [
+      "coroutine.status(co: LuaThread): \"running\" | \"suspended\" | \"normal\" | \"dead\""
+    ]
+  },
+  "coroutine.wrap": {
+    "signatures": [
+      "coroutine.wrap(f: (...args: any[]) => any): (...args: any[]) => LuaMultiReturn<any[]>"
+    ]
+  },
+  "coroutine.yield": {
+    "signatures": ["coroutine.yield(...args: any[]): LuaMultiReturn<any[]>"]
+  }
+}

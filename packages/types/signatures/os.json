@@ -1,0 +1,42 @@
+{
+  "os.clock": {
+    "signatures": ["os.clock(): number"]
+  },
+  "os.date": {
+    "signatures": [
+      "os.date(format?: string, time?: number): string",
+      "os.date(format: \"*t\", time?: number): LuaDateInfoResult"
+    ]
+  },
+  "os.difftime": {
+    "signatures": ["os.difftime(t1: number, t2: number): number"]
+  },
+  "os.execute": {
+    "signatures": ["os.execute(command?: string): number"]
+  },
+  "os.exit": {
+    "signatures": ["os.exit(code?: number): never"]
+  },
+  "os.getenv": {
+    "signatures": ["os.getenv(varname: string): string | undefined"]
+  },
+  "os.remove": {
+    "signatures": ["os.remove(filename: string): LuaMultiReturn<[true] | [undefined, string]>"]
+  },
+  "os.rename": {
+    "signatures": [
+      "os.rename(oldname: string, newname: string): LuaMultiReturn<[true] | [undefined, string]>"
+    ]
+  },
+  "os.setlocale": {
+    "signatures": [
+      "os.setlocale(locale?: string, category?: \"all\" | \"collate\" | \"ctype\" | \"monetary\" | \"numeric\" | \"time\"): string | undefined"
+    ]
+  },
+  "os.time": {
+    "signatures": ["os.time(): number", "os.time(table: LuaDateInfo): number"]
+  },
+  "os.tmpname": {
+    "signatures": ["os.tmpname(): string"]
+  }
+}
