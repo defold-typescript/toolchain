@@ -137,6 +137,15 @@ type-check and autocomplete with no import. Defold's own `hash()` is ambient too
 and returns `Hash`. Reach for a local `declare global` only for genuinely
 Lua/Defold-specific globals the type package does not cover.
 
+A `declare global` block is type-only: it **emits no Lua**. The first assignment
+to the declared name is what creates the global at runtime, and it lowers to a
+bare VM-wide Lua global — no `local`, no module prefix. Given
+`declare global { var FOO: number }`, the use site `FOO = FOO + 1` compiles to
+exactly `FOO = FOO + 1`. That global is shared across the entire VM, broader than
+a `require`-cached module local, so for ordinary app state prefer a module
+singleton — see [Where script state lives](./script-state.md) for the full
+placement picture.
+
 Two of Lua's basic types deserve a note because Defold leans on them. **Userdata**
 is arbitrary C data stored in a Lua variable — Defold uses it for hashes, URLs, the
 math objects (`vector3`, `vector4`, `matrix4`, `quaternion`), game objects, GUI
@@ -188,6 +197,8 @@ a runtime surprise.
   page only points at: truthiness, `nil` collapse, `typeof`, opaque handles.
 - [Script lifecycle](./script-lifecycle.md) — typing `self`, `on_message`, and
   `on_input` with `defineScript`.
+- [Where script state lives](./script-state.md) — per-instance `self`, shared
+  module locals, module singletons, and the VM-global `declare global` lowering.
 - [Vector math](./vector-math.md) — why `v3 + v3` is not allowed and you use
   `v3.add(other)` instead.
 - [Getting started](./getting-started.md) — scaffold, write a script, build to

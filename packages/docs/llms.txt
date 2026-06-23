@@ -18,6 +18,7 @@
 - [Agent runbooks](/agent-runbooks)
 - [TypeScript vs Lua](/typescript-vs-lua)
 - [Script lifecycle](/script-lifecycle)
+- [Script state](/script-state)
 - [Vector math](/vector-math)
 - [TypeScript gotchas](/typescript-gotchas)
 - [API docs vs `ts-defold-types`](/api-docs-vs-ts-defold)
