@@ -9,8 +9,12 @@
 # Re-running the workflow on an existing tag is safe: the real publish step is
 # idempotent — it skips any package whose target version is already on npm.
 #
-# Ordering: install (frozen) -> build -> gate -> jq stamp (version + workspace
-# dep rewrite) -> dry-run -> publish.
+# Ordering: require CI green (read the Checks API for this exact commit; abort
+# if CI is absent, still running, or red) -> install (frozen) -> build -> jq
+# stamp (version + workspace dep rewrite) -> dry-run -> publish. The publish
+# never re-runs typecheck/lint/test: it trusts the CI run that already validated
+# this commit on the full OS matrix and refuses to publish if that run is not
+# green, so the checks are done exactly once.
 #   - Build is load-bearing: cli/tstl-plugin resolve
 #     @defold-typescript/transpiler through its built dist/ (its `types`
 #     export). Mirrors ci.yml.
@@ -43,6 +47,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      checks: read
     steps:
       - uses: actions/checkout@v6
 
@@ -78,6 +83,36 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      # Refuse to publish unless ci.yml already finished green on THIS commit.
+      # The release never re-runs the checks; it reads CI's result from the
+      # Checks API (keyed by SHA) and aborts if CI is absent, still running, or
+      # red. ci.yml runs lint-typecheck + a 3-OS `test` matrix, so the names are
+      # `lint-typecheck` and `test (<os>)`.
+      - name: Require CI green on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha="${{ github.sha }}"
+          runs=$(gh api "repos/${{ github.repository }}/commits/$sha/check-runs?per_page=100" \
+                   --jq '[.check_runs[] | select(.name | test("^lint-typecheck$|^test "))]')
+          total=$(jq 'length' <<<"$runs")
+          completed=$(jq '[.[] | select(.status=="completed")] | length' <<<"$runs")
+          green=$(jq '[.[] | select(.status=="completed" and .conclusion=="success")] | length' <<<"$runs")
+          if [ "$total" -eq 0 ]; then
+            echo "::error::No CI check runs on $sha. Tag a commit whose CI has run; refusing to publish."
+            exit 1
+          fi
+          if [ "$completed" -ne "$total" ]; then
+            echo "::error::CI still running on $sha ($completed/$total complete). Re-run this release once CI finishes."
+            exit 1
+          fi
+          if [ "$green" -ne "$total" ]; then
+            echo "::error::CI is not green on $sha ($green/$total passed); refusing to publish:"
+            jq -r '.[] | select(.conclusion!="success") | "  - \(.name): \(.conclusion)"' <<<"$runs"
+            exit 1
+          fi
+          echo "CI green on $sha ($green/$total). Proceeding to publish."
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -86,12 +121,6 @@ jobs:
       # typecheck until the workspace is built. Mirrors ci.yml.
       - name: Build
         run: bun run build
-
-      - name: Gate — typecheck, lint, test
-        run: |
-          bun run typecheck
-          bun run lint
-          bun test
 
       - name: Stamp version and rewrite workspace deps
         shell: bash
