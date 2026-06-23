@@ -15,8 +15,8 @@ The lowerings quoted below were captured by running the real transpile pipeline;
 | --- | --- | --- | --- | --- |
 | `Array` | `const xs: number[] = [1, 2, 3]` | Lua table `{1, 2, 3}` (1-based) | Literal, index, `push`, `length`: no. Higher-order methods (`map`, `filter`, `reduce`, …): yes | The idiomatic sequence. Keep arrays dense — holes desync `arr.length` from Lua's `#`. |
 | tuple | `const t: [number, string] = [1, "a"]` | plain Lua table `{1, "a"}` | **No** | The cheapest container — a fixed-length, positional record. Prefer it over an object for a fixed pair. |
-| `Map` | `new Map<string, number>()` | `__TS__New(Map)`; `.set`/`.get` call helper methods | Yes | Arbitrary (incl. non-string, object) keys. Use over an object record when keys are not fixed strings. |
-| `Set` | `new Set<number>()` | `__TS__New(Set)` | Yes | Membership and dedup. Prefer over scanning an array for "is `x` present". |
+| `Map` | `new Map<string, number>()` | `__TS__New(Map)`; `.set`/`.get` call helper methods | Yes | Arbitrary (incl. non-string, object) keys. Use over an object record when keys are not fixed strings. On hot paths, `LuaMap` (below) is the same idea with no `lualib`. |
+| `Set` | `new Set<number>()` | `__TS__New(Set)` | Yes | Membership and dedup. Prefer over scanning an array for "is `x` present". On hot paths, `LuaSet` (below) skips `lualib`. |
 | `WeakMap` | `new WeakMap<object, V>()` | `__TS__New(WeakMap)` | Yes | Per-object side data whose entries vanish when the key is collected — caches keyed by object identity. |
 | `WeakSet` | `new WeakSet<object>()` | `__TS__New(WeakSet)` | Yes | Weak membership — "have I seen this object" without pinning it alive. |
 | object record | `{ x: 1, y: 2 }` | plain Lua table `{x = 1, y = 2}` | No (spread / `Object.entries` pull a helper) | Fixed, named string keys. The default for a struct; spread `{ ...a, y: 2 }` lowers to `__TS__ObjectAssign`. |
@@ -67,15 +67,44 @@ return ____exports
 
 The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in. You never manage that file by hand.
 
+## Lower-overhead containers: the Lua table extensions
+
+When a `Map` or `Set` sits on a hot path and the `lualib` `__TS__New` indirection matters, TypeScriptToLua's **language extensions** give you `LuaTable`, `LuaMap`, and `LuaSet` — thin, typed views over a raw Lua table that lower to direct indexing with **no `lualib`**:
+
+```ts
+const seen = new LuaSet<number>();
+seen.add(1);
+export const hit = seen.has(1);
+
+const scores = new LuaMap<string, number>();
+scores.set("a", 1);
+export const a = scores.get("a");
+```
+
+```lua
+--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local seen = {}
+seen[1] = true
+____exports.hit = seen[1] ~= nil
+local scores = {}
+scores.a = 1
+____exports.a = scores.a
+return ____exports
+```
+
+`LuaSet.add` becomes `t[v] = true`, `LuaMap.set`/`get` become plain `t[k] = v` / `t[k]`, and nothing pulls `lualib_bundle`. The trade is a deliberately thin surface: `get`/`set`/`has`/`delete` (plus `add` on the set), and that is all — no `.size`, no `for...of`, no insertion order. Reach for the standard `Map`/`Set` when you need to enumerate or count; reach for `LuaMap`/`LuaSet` when you only get, set, and test membership and want zero runtime overhead.
+
+Use them as **ambient globals — do not import them.** `import { LuaMap } from "@typescript-to-lua/language-extensions"` is rejected (`… is not a module`) and silently falls back to the heavyweight `lualib` `Map`; written bare, `LuaMap`/`LuaSet`/`LuaTable` are part of the global type surface like the engine namespaces. (The Lua standard library itself — typed by `lua-types` — adds no container types beyond the universal `table`; these extension types are the typed way to use that raw table directly.)
+
 ## Not available — reach for instead
 
-A few JavaScript built-ins do not survive the transpile to Lua 5.1. They fail at compile time (so you find out from `tsc --noEmit` / the transpile diagnostics, not at runtime) or simply do not exist in the typed surface.
+A couple of genuine JavaScript built-ins do not survive the transpile to Lua 5.1. They type-check but fail at compile time, so you find out from `tsc --noEmit` / the transpile diagnostics, not at runtime.
 
 | Want | Status | Reach for instead |
 | --- | --- | --- |
 | Regular expressions — `/b/`, `"x".match(/b/)` | **Rejected** — the diagnostic reads `string.match is unsupported.` | String methods: `indexOf`, `slice`, `startsWith`, `endsWith`, `includes`, `split`. They cover most parsing needs and lower to native Lua string ops. |
 | `BigInt` — `1n` | **Rejected** — `Unsupported node kind BigIntLiteral` | A `number` (Lua's double holds integers exactly up to 2^53), or a string when you only format/transport the value. |
-| `LinkedList` / `LinkedListNode` | **Not built in** — no such export in `lib.es2022`, the TSTL language extensions, `lua-types`, or `@defold-typescript/types` | An `Array` (fast index, push/pop) or a `Map`; for genuine node-link semantics, a small hand-authored `class` with `next`/`prev` fields. |
 
 Regex is the one that bites most often. `"x".match(/b/)` type-checks but fails to transpile, because TypeScriptToLua maps `String.prototype.match` onto Lua's `string.match`, which takes a Lua pattern, not a JavaScript regex. Rewrite pattern checks with the string methods above; for anything more elaborate, parse by hand.
 
