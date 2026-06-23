@@ -146,6 +146,22 @@ describe("apiPageMarkdown", () => {
     expect(md).toContain('select(n: number | "#", ...args: any[]): any');
     expect(md).not.toContain(`\`${thin}\``);
   });
+
+  test("renders the authored socket client:receive receiver signature from the store, not the thin ref-doc one", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const socket = pages.find((p) => p.namespace === "socket");
+    expect(socket).toBeDefined();
+    if (!socket) return;
+    const thin = apiModuleSymbols(socket, socket.translations).find(
+      (s) => s.name === "client:receive",
+    )?.signature;
+    expect(thin).toBeDefined();
+    const md = apiPageMarkdown(socket, apiLinkify(pages));
+    expect(md).toContain(
+      "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>",
+    );
+    expect(md).not.toContain(`\`${thin}\``);
+  });
 });
 
 describe("apiLinkify", () => {

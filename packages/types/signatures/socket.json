@@ -1,0 +1,267 @@
+{
+  "socket.connect": {
+    "signatures": [
+      "socket.connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | unknown, string | unknown]>"
+    ]
+  },
+  "socket.gettime": {
+    "signatures": ["socket.gettime(): number"]
+  },
+  "socket.newtry": {
+    "signatures": ["socket.newtry(finalizer: () => void): (...args: unknown[]) => unknown"]
+  },
+  "socket.protect": {
+    "signatures": ["socket.protect(func: (...args: unknown[]) => unknown): (arg0: unknown) => void"]
+  },
+  "socket.select": {
+    "signatures": [
+      "socket.select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | unknown]>"
+    ]
+  },
+  "socket.skip": {
+    "signatures": [
+      "socket.skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>"
+    ]
+  },
+  "socket.sleep": {
+    "signatures": ["socket.sleep(time: number): void"]
+  },
+  "socket.tcp": {
+    "signatures": ["socket.tcp(): LuaMultiReturn<[master | unknown, string | unknown]>"]
+  },
+  "socket.tcp6": {
+    "signatures": ["socket.tcp6(): LuaMultiReturn<[master | unknown, string | unknown]>"]
+  },
+  "socket.udp": {
+    "signatures": ["socket.udp(): LuaMultiReturn<[unconnected | unknown, string | unknown]>"]
+  },
+  "socket.udp6": {
+    "signatures": ["socket.udp6(): LuaMultiReturn<[unconnected | unknown, string | unknown]>"]
+  },
+  "socket.dns.getaddrinfo": {
+    "signatures": [
+      "socket.dns.getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>"
+    ]
+  },
+  "socket.dns.gethostname": {
+    "signatures": ["socket.dns.gethostname(): string"]
+  },
+  "socket.dns.getnameinfo": {
+    "signatures": [
+      "socket.dns.getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>"
+    ]
+  },
+  "socket.dns.tohostname": {
+    "signatures": [
+      "socket.dns.tohostname(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>"
+    ]
+  },
+  "socket.dns.toip": {
+    "signatures": [
+      "socket.dns.toip(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>"
+    ]
+  },
+  "client:close": {
+    "signatures": ["client:close(): void"]
+  },
+  "client:dirty": {
+    "signatures": ["client:dirty(): boolean"]
+  },
+  "client:getfd": {
+    "signatures": ["client:getfd(): number"]
+  },
+  "client:getoption": {
+    "signatures": ["client:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>"]
+  },
+  "client:getpeername": {
+    "signatures": ["client:getpeername(): string"]
+  },
+  "client:getsockname": {
+    "signatures": ["client:getsockname(): string"]
+  },
+  "client:getstats": {
+    "signatures": ["client:getstats(): string"]
+  },
+  "client:receive": {
+    "signatures": [
+      "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>"
+    ]
+  },
+  "client:send": {
+    "signatures": [
+      "client:send(data: string, i?: number, j?: number): LuaMultiReturn<[number | unknown, string | unknown, number | unknown]>"
+    ]
+  },
+  "client:setfd": {
+    "signatures": ["client:setfd(handle: number): void"]
+  },
+  "client:setoption": {
+    "signatures": [
+      "client:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "client:setstats": {
+    "signatures": ["client:setstats(received: number, sent: number, age: number): number | unknown"]
+  },
+  "client:settimeout": {
+    "signatures": ["client:settimeout(value: number, mode?: string): void"]
+  },
+  "client:shutdown": {
+    "signatures": ["client:shutdown(mode: string): number"]
+  },
+  "server:accept": {
+    "signatures": ["server:accept(): LuaMultiReturn<[client | unknown, string | unknown]>"]
+  },
+  "server:close": {
+    "signatures": ["server:close(): void"]
+  },
+  "server:dirty": {
+    "signatures": ["server:dirty(): boolean"]
+  },
+  "server:getfd": {
+    "signatures": ["server:getfd(): number"]
+  },
+  "server:getoption": {
+    "signatures": ["server:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>"]
+  },
+  "server:getsockname": {
+    "signatures": ["server:getsockname(): string"]
+  },
+  "server:getstats": {
+    "signatures": ["server:getstats(): string"]
+  },
+  "server:setfd": {
+    "signatures": ["server:setfd(handle: number): void"]
+  },
+  "server:setoption": {
+    "signatures": [
+      "server:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "server:setstats": {
+    "signatures": ["server:setstats(received: number, sent: number, age: number): number | unknown"]
+  },
+  "server:settimeout": {
+    "signatures": ["server:settimeout(value: number, mode?: string): void"]
+  },
+  "master:bind": {
+    "signatures": [
+      "master:bind(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "master:close": {
+    "signatures": ["master:close(): void"]
+  },
+  "master:connect": {
+    "signatures": [
+      "master:connect(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "master:dirty": {
+    "signatures": ["master:dirty(): boolean"]
+  },
+  "master:getfd": {
+    "signatures": ["master:getfd(): number"]
+  },
+  "master:getsockname": {
+    "signatures": ["master:getsockname(): string"]
+  },
+  "master:getstats": {
+    "signatures": ["master:getstats(): string"]
+  },
+  "master:listen": {
+    "signatures": [
+      "master:listen(backlog: number): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "master:setfd": {
+    "signatures": ["master:setfd(handle: number): void"]
+  },
+  "master:setstats": {
+    "signatures": ["master:setstats(received: number, sent: number, age: number): number | unknown"]
+  },
+  "master:settimeout": {
+    "signatures": ["master:settimeout(value: number, mode?: string): void"]
+  },
+  "connected:close": {
+    "signatures": ["connected:close(): void"]
+  },
+  "connected:getoption": {
+    "signatures": [
+      "connected:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>"
+    ]
+  },
+  "connected:getpeername": {
+    "signatures": ["connected:getpeername(): string"]
+  },
+  "connected:getsockname": {
+    "signatures": ["connected:getsockname(): string"]
+  },
+  "connected:receive": {
+    "signatures": [
+      "connected:receive(size?: number): LuaMultiReturn<[string | unknown, string | unknown]>"
+    ]
+  },
+  "connected:send": {
+    "signatures": [
+      "connected:send(datagram: string): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "connected:setoption": {
+    "signatures": [
+      "connected:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "connected:setpeername": {
+    "signatures": [
+      "connected:setpeername(arg0: string): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "connected:settimeout": {
+    "signatures": ["connected:settimeout(value: number): void"]
+  },
+  "unconnected:close": {
+    "signatures": ["unconnected:close(): void"]
+  },
+  "unconnected:getoption": {
+    "signatures": [
+      "unconnected:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>"
+    ]
+  },
+  "unconnected:getsockname": {
+    "signatures": ["unconnected:getsockname(): string"]
+  },
+  "unconnected:receive": {
+    "signatures": [
+      "unconnected:receive(size?: number): LuaMultiReturn<[string | unknown, string | unknown]>"
+    ]
+  },
+  "unconnected:receivefrom": {
+    "signatures": [
+      "unconnected:receivefrom(size?: number): LuaMultiReturn<[string | unknown, string, number | unknown]>"
+    ]
+  },
+  "unconnected:sendto": {
+    "signatures": [
+      "unconnected:sendto(datagram: string, ip: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "unconnected:setoption": {
+    "signatures": [
+      "unconnected:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "unconnected:setpeername": {
+    "signatures": [
+      "unconnected:setpeername(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "unconnected:setsockname": {
+    "signatures": [
+      "unconnected:setsockname(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>"
+    ]
+  },
+  "unconnected:settimeout": {
+    "signatures": ["unconnected:settimeout(value: number): void"]
+  }
+}

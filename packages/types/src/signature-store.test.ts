@@ -9,6 +9,7 @@ import {
   MATH_SIGNATURES_PATH,
   OS_SIGNATURES_PATH,
   PACKAGE_SIGNATURES_PATH,
+  SOCKET_SIGNATURES_PATH,
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
@@ -193,6 +194,49 @@ describe("authored base signature store (bare global keys)", () => {
     for (const key of keys) {
       expect(key).toMatch(/^[a-z]+$/);
     }
+  });
+
+  test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
+    for (const [fqn, override] of Object.entries(store)) {
+      const o: SignatureOverride = override;
+      expect(Array.isArray(o.signatures)).toBe(true);
+      expect(o.signatures.length).toBeGreaterThan(0);
+      for (const sig of o.signatures) {
+        expect(typeof sig).toBe("string");
+        expect(sig.length).toBeGreaterThan(0);
+        expect(fqn.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("authored socket signature store", () => {
+  const store = loadSignatureFile(SOCKET_SIGNATURES_PATH);
+
+  test("a top-level fn strengthens past the thin ref-doc — socket.gettime gains a number return", () => {
+    expect(lookupSignature(store, "socket.gettime")?.signatures).toContain(
+      "socket.gettime(): number",
+    );
+    expect(lookupSignature(store, "socket.connect")?.signatures).toContain(
+      "socket.connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | unknown, string | unknown]>",
+    );
+  });
+
+  test("receiver methods key on the verbatim fixture name with typed (non-unknown) params", () => {
+    expect(lookupSignature(store, "client:receive")?.signatures).toContain(
+      "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>",
+    );
+    expect(lookupSignature(store, "master:bind")?.signatures).toContain(
+      "master:bind(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>",
+    );
+  });
+
+  test("a socket.dns.* sub-namespace key keeps its two-dot shape (no accidental flatten)", () => {
+    const entry = lookupSignature(store, "socket.dns.toip");
+    expect(entry).not.toBeNull();
+    expect(entry?.signatures).toContain(
+      "socket.dns.toip(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>",
+    );
   });
 
   test("every entry typechecks as a SignatureOverride with a non-empty signatures array", () => {
