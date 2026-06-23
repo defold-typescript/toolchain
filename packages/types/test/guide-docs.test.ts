@@ -498,3 +498,35 @@ describe("docs/guide/script-state.md", () => {
     expect(body).toContain("FOO = FOO + 1");
   });
 });
+
+describe("docs/guide/data-structures.md", () => {
+  test("exists and carries the built-in container table with Map, Set, and a tuple cell", async () => {
+    const f = Bun.file(resolve(GUIDE, "data-structures.md"));
+    expect(await f.exists()).toBe(true);
+    const body = await readGuide("data-structures.md");
+    expect(body).toContain("## Built-in containers");
+    expect(body).toContain("`Map`");
+    expect(body).toContain("`Set`");
+    expect(body).toContain("[number, string]");
+  });
+
+  test("carries the not-available section naming regex, BigInt, and LinkedList with substitutes", async () => {
+    const body = await readGuide("data-structures.md");
+    expect(body).toContain("## Not available — reach for instead");
+    expect(body).toContain("string.match is unsupported");
+    expect(body).toContain("BigInt");
+    expect(body).toContain("LinkedList");
+    // Each rejected feature names what to reach for instead.
+    expect(body).toContain("startsWith");
+  });
+
+  test("docs/guide/README.md links data-structures.md", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("data-structures.md");
+  });
+
+  test("typescript-vs-lua.md cross-links data-structures.md", async () => {
+    const body = await readGuide("typescript-vs-lua.md");
+    expect(body).toContain("data-structures.md");
+  });
+});

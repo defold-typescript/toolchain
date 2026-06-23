@@ -71,6 +71,11 @@ write 0-based TypeScript and the transpiler emits the offset. The one place the
 abstraction leaks is sparse arrays: setting an element to `null`/`undefined` or
 leaving holes can make `arr.length` and Lua's `#` disagree, so keep arrays dense.
 
+Beyond these three, TypeScript also gives you `Set`, `WeakMap`, `WeakSet`, and
+`class`, and rejects a few things outright (regex, `BigInt`). For the full map of
+what is built in, what each lowers to, its `lualib` cost, and what to reach for
+when something is missing, see [Data structures](./data-structures.md).
+
 ## Modules: `require` vs `import`
 
 Lua wires files together with `require` and a returned table. TypeScript uses
@@ -199,6 +204,9 @@ a runtime surprise.
   `on_input` with `defineScript`.
 - [Where script state lives](./script-state.md) — per-instance `self`, shared
   module locals, module singletons, and the VM-global `declare global` lowering.
+- [Data structures](./data-structures.md) — the full container availability map:
+  `Array`, tuple, `Map`, `Set`, `WeakMap`, `WeakSet`, object record, and `class`,
+  plus what is not available and what to use instead.
 - [Vector math](./vector-math.md) — why `v3 + v3` is not allowed and you use
   `v3.add(other)` instead.
 - [Getting started](./getting-started.md) — scaffold, write a script, build to
