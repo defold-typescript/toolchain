@@ -65,6 +65,7 @@ const CATEGORY_MAP: CategorySpec[] = [
       "typescript-vs-lua",
       "script-lifecycle",
       "script-state",
+      "data-structures",
       "vector-math",
       "typescript-gotchas",
       "api-docs-vs-ts-defold",

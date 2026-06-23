@@ -1,0 +1,42 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`data-structures transpile lowers an exported tuple to a plain Lua table with no lualib 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+____exports.t = {1, "a"}
+return ____exports
+"
+`;
+
+exports[`data-structures transpile lowers Map and Set construction through the lualib runtime 1`] = `
+"local ____lualib = require("lualib_bundle")
+local Map = ____lualib.Map
+local __TS__New = ____lualib.__TS__New
+local Set = ____lualib.Set
+local ____exports = {}
+____exports.m = __TS__New(Map)
+____exports.m:set("a", 1)
+____exports.s = __TS__New(Set)
+____exports.s:add(1)
+return ____exports
+"
+`;
+
+exports[`data-structures transpile lowers a class to __TS__Class plus __TS__New on instantiation 1`] = `
+"local ____lualib = require("lualib_bundle")
+local __TS__Class = ____lualib.__TS__Class
+local __TS__New = ____lualib.__TS__New
+local ____exports = {}
+____exports.Counter = __TS__Class()
+local Counter = ____exports.Counter
+Counter.name = "Counter"
+function Counter.prototype.____constructor(self)
+    self.n = 0
+end
+function Counter.prototype.bump(self)
+    self.n = self.n + 1
+end
+____exports.c = __TS__New(____exports.Counter)
+return ____exports
+"
+`;
