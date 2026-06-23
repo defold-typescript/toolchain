@@ -42,6 +42,23 @@ describe("data-structures transpile", () => {
     expect(result.lua).toMatchSnapshot();
   });
 
+  test("lowers LuaSet and LuaMap language extensions to plain tables with no lualib", () => {
+    const source = [
+      "const seen = new LuaSet<number>();",
+      "seen.add(1);",
+      "export const hit = seen.has(1);",
+      "",
+      "const scores = new LuaMap<string, number>();",
+      'scores.set("a", 1);',
+      'export const a = scores.get("a");',
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).not.toContain('require("lualib_bundle")');
+    expect(result.lua).toMatchSnapshot();
+  });
+
   test("rejects a regex match with the documented diagnostic", () => {
     const source = ['export const hit = "x".match(/b/);', ""].join("\n");
     const result = transpile(source);
