@@ -89,11 +89,31 @@ describe("release workflow publishes via OIDC on tags", () => {
     }
   });
 
-  test("builds before the gate (transpiler dist must exist to typecheck)", () => {
+  test("requires CI green on the commit rather than re-running the checks", () => {
+    // The publish trusts ci.yml's already-green result for this exact SHA, so it
+    // must NOT re-run the typecheck/lint/test gate — that work happened in CI.
+    const reran = steps().find((s) => /bun run (typecheck|lint)\b|bun test\b/.test(runCmd(s)));
+    expect(reran).toBeUndefined();
+    // Instead a step reads the Checks API for this commit and aborts when CI is
+    // absent, still running, or red.
+    const requireIdx = stepIndex((s) => /check-runs/.test(runCmd(s)) && /exit 1/.test(runCmd(s)));
+    expect(requireIdx).toBeGreaterThanOrEqual(0);
+    // The CI-green guard fences every publish.
+    for (const idx of publishIndices()) {
+      expect(idx).toBeGreaterThan(requireIdx);
+    }
+  });
+
+  test("reads CI check runs with a checks:read token", () => {
+    expect(publishJob().permissions?.checks).toBe("read");
+  });
+
+  test("builds before any publish (stamp + dry-run resolve workspace dist)", () => {
     const buildIdx = stepIndex((s) => /^bun run build\b/.test((s.run ?? "").trim()));
-    const gateIdx = stepIndex((s) => /bun run typecheck/.test(s.run ?? ""));
     expect(buildIdx).toBeGreaterThanOrEqual(0);
-    expect(gateIdx).toBeGreaterThan(buildIdx);
+    for (const idx of publishIndices()) {
+      expect(idx).toBeGreaterThan(buildIdx);
+    }
   });
 
   test("stamps the version and rewrites workspace deps before any publish", () => {
