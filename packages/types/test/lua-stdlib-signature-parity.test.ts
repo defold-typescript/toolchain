@@ -10,6 +10,7 @@ import {
   MATH_SIGNATURES_PATH,
   OS_SIGNATURES_PATH,
   PACKAGE_SIGNATURES_PATH,
+  SOCKET_SIGNATURES_PATH,
   STRING_SIGNATURES_PATH,
   TABLE_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
@@ -26,6 +27,7 @@ const NAMESPACES = [
   { ns: "debug", docFixture: "debug_doc.json", storePath: DEBUG_SIGNATURES_PATH },
   { ns: "package", docFixture: "package_doc.json", storePath: PACKAGE_SIGNATURES_PATH },
   { ns: "base", docFixture: "base_doc.json", storePath: BASE_SIGNATURES_PATH },
+  { ns: "socket", docFixture: "socket_doc.json", storePath: SOCKET_SIGNATURES_PATH },
 ];
 
 async function docFunctionNames(docFixture: string): Promise<string[]> {
@@ -79,6 +81,7 @@ describe("lua-stdlib signature parity", () => {
     { ns: "debug", docFixture: "debug_doc.json", storePath: DEBUG_SIGNATURES_PATH, count: 14 },
     { ns: "package", docFixture: "package_doc.json", storePath: PACKAGE_SIGNATURES_PATH, count: 7 },
     { ns: "base", docFixture: "base_doc.json", storePath: BASE_SIGNATURES_PATH, count: 27 },
+    { ns: "socket", docFixture: "socket_doc.json", storePath: SOCKET_SIGNATURES_PATH, count: 71 },
   ];
 
   for (const { ns, docFixture, storePath, count } of COVERAGE) {
