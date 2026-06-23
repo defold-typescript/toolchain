@@ -1,0 +1,24 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`script state transpile snapshots a module-level local mutated inside an exported function 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local spawnCount = 0
+function ____exports.spawn()
+    spawnCount = spawnCount + 1
+    return spawnCount
+end
+return ____exports
+"
+`;
+
+exports[`script state transpile snapshots a \`declare global\` declaration and a bare-global use site 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.bump()
+    FOO = FOO + 1
+    return FOO
+end
+return ____exports
+"
+`;

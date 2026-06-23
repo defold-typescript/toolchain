@@ -43,6 +43,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [TypeScript vs Lua](./typescript-vs-lua.md) — the Lua-developer on-ramp: a cheat sheet that translates syntax, tables, modules, and the standard library from Lua to the TypeScript the toolchain expects.
 - [Script lifecycle](./script-lifecycle.md) — type `self`, `on_message`, and `on_input` payloads with `defineScript`, `defineGuiScript`, and `defineRenderScript`.
+- [Where script state lives](./script-state.md) — the four state tiers — per-instance `self`, a shared module local, a cross-script module singleton, and VM-global `declare global` — each grounded in the emitted Lua.
 - [Vector math](./vector-math.md) — the method-form arithmetic surface (`add`, `sub`, `mul`, `div`, `unm`) on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`, plus why you cannot write `v3 + v3`.
 - [TypeScript gotchas](./typescript-gotchas.md) — the canonical catalog of TS / TSTL / Defold sharp edges. Today: the unary-minus quirk that silently produces `number` from a `Vector3`. Future entries land here as the toolchain encounters them.
 - [API docs vs `ts-defold-types`](./api-docs-vs-ts-defold.md) — a factual, dimension-by-dimension comparison of the JSDoc that `@defold-typescript/types` and `ts-defold-types` emit (Markdown conversion, dash params, grid-aligned multi-line docs, branded constants, the `@example` trade-off), with a picker for which surface fits your project.
@@ -1744,6 +1745,23 @@ deliberately-shared singleton; keep anything each instance must own its own copy
 of on `self`. The full `self` typing model — how `init` infers it and how
 `properties` seed it — is in [Script lifecycle](./script-lifecycle.md).
 
+Above a module local sits one wider tier: a **VM-global** declared with `declare
+global`. The declaration emits no Lua; a use site lowers to a bare Lua global
+shared across the entire VM — no `require`, no module scope:
+
+```lua
+function ____exports.bump()
+    FOO = FOO + 1
+    return FOO
+end
+```
+
+No `local FOO` and no `____exports.` prefix — `FOO` is raw VM-wide state, broader
+than a cached module local. Reach for it only for genuine engine/Lua globals;
+prefer a module singleton for app state. The full four-tier treatment — per-instance
+`self`, shared module local, cross-script module singleton, and VM-global — is in
+[Where script state lives](./script-state.md).
+
 # TypeScript vs Lua
 
 A translation cheat sheet for Defold developers who already know Lua. Lua on the
@@ -1880,6 +1898,15 @@ type-check and autocomplete with no import. Defold's own `hash()` is ambient too
 and returns `Hash`. Reach for a local `declare global` only for genuinely
 Lua/Defold-specific globals the type package does not cover.
 
+A `declare global` block is type-only: it **emits no Lua**. The first assignment
+to the declared name is what creates the global at runtime, and it lowers to a
+bare VM-wide Lua global — no `local`, no module prefix. Given
+`declare global { var FOO: number }`, the use site `FOO = FOO + 1` compiles to
+exactly `FOO = FOO + 1`. That global is shared across the entire VM, broader than
+a `require`-cached module local, so for ordinary app state prefer a module
+singleton — see [Where script state lives](./script-state.md) for the full
+placement picture.
+
 Two of Lua's basic types deserve a note because Defold leans on them. **Userdata**
 is arbitrary C data stored in a Lua variable — Defold uses it for hashes, URLs, the
 math objects (`vector3`, `vector4`, `matrix4`, `quaternion`), game objects, GUI
@@ -1931,6 +1958,8 @@ a runtime surprise.
   page only points at: truthiness, `nil` collapse, `typeof`, opaque handles.
 - [Script lifecycle](./script-lifecycle.md) — typing `self`, `on_message`, and
   `on_input` with `defineScript`.
+- [Where script state lives](./script-state.md) — per-instance `self`, shared
+  module locals, module singletons, and the VM-global `declare global` lowering.
 - [Vector math](./vector-math.md) — why `v3 + v3` is not allowed and you use
   `v3.add(other)` instead.
 - [Getting started](./getting-started.md) — scaffold, write a script, build to
@@ -1938,7 +1967,7 @@ a runtime surprise.
 
 # Script lifecycle helpers
 
-`@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters.
+`@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters. `self` holds *per-instance* state; for the wider picture — when to reach for a shared module local, a cross-script module singleton, or a VM-global instead — see [Where script state lives](./script-state.md).
 
 `init` **returns** the script's initial state, and that return is the single site TypeScript infers the `self` type (`TSelf`) from, so you write the field set once and every other hook's `self` is typed from it. (When you declare `properties`, `init` also *receives* a `self` holding just those property values — see [Script properties on `self`](#script-properties-on-self) — but the return is still the only state-inference site.) No explicit type argument is needed:
 
@@ -2153,6 +2182,133 @@ The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, s
 Under that config `gui.*` and the universal namespaces type-check while `render.*` is a compile error. The default `@defold-typescript/types` keeps every namespace, so the full surface is what you get everywhere until you opt in to a wall.
 
 `init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a composite `tsconfig.json` that `tsc -b --noEmit` enforces. See [Advanced CLI](advanced-cli.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
+
+# Where script state lives
+
+A Defold game is many script *instances* sharing a few script *modules*. Where you put a piece of mutable state decides who can see it and change it — one component, every component of one script, every script in the game, or the whole Lua VM. This page walks those four tiers from narrowest to widest, each grounded in the Lua the toolchain actually emits.
+
+This page is about *placement*. The typing model for `self` — how `init` infers it and how `properties` seed it — lives in [Script lifecycle](./script-lifecycle.md).
+
+## Per-instance state: `self`
+
+State that each component instance owns belongs on `self`. `init`'s returned object is copied onto `self` for *that* component instance, so two game objects running the same script keep independent values: decrement one object's `self.health` and the other's is untouched.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    return { health: 100 };
+  },
+  update(self) {
+    self.health -= 1;
+  },
+});
+```
+
+Every object that mounts this script gets its own `self.health`. This is the default home for anything an instance must own a private copy of. The full typing model is in [Script lifecycle](./script-lifecycle.md).
+
+## Sharing state across instances of one script
+
+A module-level `let` or `const` is **not** per-instance. Defold loads each script module once via `require` and caches the result, so a variable declared at module scope is created once and seen by every component instance of that script. The build makes the split visible — `spawnCount` is a module local, while `health` is written onto each instance's `self`:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+// Module-level: one value, not per-instance.
+let spawnCount = 0;
+
+export default defineScript({
+  init() {
+    return { health: 100 };
+  },
+  update(self) {
+    self.health -= 1;
+    spawnCount += 1;
+  },
+});
+```
+
+```lua
+local spawnCount = 0
+function init(self)
+    -- self.health is set per instance
+end
+function update(____self)
+    ____self.health = ____self.health - 1
+    spawnCount = spawnCount + 1
+end
+```
+
+`spawnCount` is a single Lua **module local** evaluated once at chunk scope; because the module is cached, that one value is **shared by every component instance** that runs this script. Reach for a module local only for constants or a deliberately-shared counter — keep anything each instance must own its own copy of on `self`.
+
+## Sharing state across different scripts: a module singleton
+
+To share state across *different* scripts — a spawn registry, a score table, an event bus — put it in its own module and import it wherever you need it. Because every `import` lowers to a cached `require`, each script that imports the module sees the same table:
+
+```ts
+// registry.ts — one module, shared by every importer.
+let spawned = 0;
+const names: string[] = [];
+
+export function register(name: string): void {
+  spawned += 1;
+  names.push(name);
+}
+
+export function spawnedCount(): number {
+  return spawned;
+}
+```
+
+```ts
+// spawner.ts and hud.ts both import it and see the same state.
+import { register, spawnedCount } from "./registry";
+```
+
+`import { register } from "./registry"` lowers to a `require` that Defold caches once, so `spawner.ts` and `hud.ts` read and write the **same** `spawned`/`names` values. This is the idiomatic pattern for game-wide tracking — prefer it over raw globals: a module singleton is scoped, typed, and explicit about who depends on it.
+
+## Truly global variables: `declare global`
+
+The widest tier is a bare Lua global, shared across the entire VM — every script, no import. You reach it from TypeScript with `declare global`. The declaration itself emits no Lua; the first assignment creates the global at runtime:
+
+```ts
+declare global {
+  var FOO: number;
+}
+export function bump(): number {
+  FOO = FOO + 1;
+  return FOO;
+}
+```
+
+```lua
+local ____exports = {}
+function ____exports.bump()
+    FOO = FOO + 1
+    return FOO
+end
+return ____exports
+```
+
+Note what is **not** there: no `local FOO`, no initializer, no `____exports.` prefix. `FOO` is a raw Lua global — broader than a cached module local, because it is scoped to no module at all. TypeScriptToLua emits nothing for the `declare global` block itself; it only tells the type-checker the global exists, and the first assignment creates it VM-wide. Reach for this only for genuine engine or Lua globals you cannot type any other way; for app state, prefer a module singleton.
+
+## Choosing where state lives
+
+| You want state… | Put it… |
+| --- | --- |
+| owned by one component instance | on `self` |
+| shared by every instance of one script | a module-level `let`/`const` |
+| shared across different scripts (app state) | a module singleton (import a shared module) |
+| visible to the whole Lua VM, no import | `declare global` — real Lua/Defold globals only |
+
+A rule of thumb: `self` for per-instance state; a module singleton for deliberately-shared app state; `msg.post` or a dedicated manager object when ownership and lifecycle matter; `declare global` only for real Lua/Defold globals. One hot-reload caveat: module state — module locals and singletons alike — persists across `on_reload`, because the cached module is not re-`require`d; only `self` is rebuilt.
+
+## See also
+
+- [Script lifecycle](./script-lifecycle.md) — typing `self`, `on_message`, and `on_input` with `defineScript`.
+- [TypeScript vs Lua](./typescript-vs-lua.md) — the `require`/`import` mapping and the `declare global` lowering this page builds on.
+- [Agent runbooks](./agent-runbooks.md#where-script-state-lives) — the condensed self-vs-module-local procedure.
 
 # Vector math
 
