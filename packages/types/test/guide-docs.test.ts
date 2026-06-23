@@ -463,3 +463,38 @@ describe("docs/guide/agent-runbooks.md topical runbooks", () => {
     expect(state).toContain("shared");
   });
 });
+
+describe("docs/guide/script-state.md", () => {
+  test("exists and carries its four state-tier marker headings", async () => {
+    const f = Bun.file(resolve(GUIDE, "script-state.md"));
+    expect(await f.exists()).toBe(true);
+    const body = await readGuide("script-state.md");
+    expect(body).toContain("## Per-instance state: `self`");
+    expect(body).toContain("shared by every component instance");
+    expect(body).toContain("## Sharing state across different scripts: a module singleton");
+    expect(body).toContain("## Truly global variables: `declare global`");
+  });
+
+  test("docs/guide/README.md links script-state.md", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("script-state.md");
+  });
+
+  test("script-lifecycle.md cross-links script-state.md", async () => {
+    const body = await readGuide("script-lifecycle.md");
+    expect(body).toContain("script-state.md");
+  });
+
+  test("agent-runbooks.md 'Where script state lives' runbook points at script-state.md", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const start = body.indexOf("## Where script state lives");
+    expect(start).toBeGreaterThan(-1);
+    expect(body.slice(start)).toContain("script-state.md");
+  });
+
+  test("typescript-vs-lua.md states the `declare global` lowering: emits no Lua, bare-global use", async () => {
+    const body = await readGuide("typescript-vs-lua.md");
+    expect(body).toContain("emits no Lua");
+    expect(body).toContain("FOO = FOO + 1");
+  });
+});

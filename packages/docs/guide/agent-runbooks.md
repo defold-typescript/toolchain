@@ -615,3 +615,20 @@ not per-instance state. Reach for a module local only for constants or a
 deliberately-shared singleton; keep anything each instance must own its own copy
 of on `self`. The full `self` typing model — how `init` infers it and how
 `properties` seed it — is in [Script lifecycle](./script-lifecycle.md).
+
+Above a module local sits one wider tier: a **VM-global** declared with `declare
+global`. The declaration emits no Lua; a use site lowers to a bare Lua global
+shared across the entire VM — no `require`, no module scope:
+
+```lua
+function ____exports.bump()
+    FOO = FOO + 1
+    return FOO
+end
+```
+
+No `local FOO` and no `____exports.` prefix — `FOO` is raw VM-wide state, broader
+than a cached module local. Reach for it only for genuine engine/Lua globals;
+prefer a module singleton for app state. The full four-tier treatment — per-instance
+`self`, shared module local, cross-script module singleton, and VM-global — is in
+[Where script state lives](./script-state.md).

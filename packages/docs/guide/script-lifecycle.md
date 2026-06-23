@@ -3,7 +3,7 @@ toc-title: Script lifecycle
 ---
 # Script lifecycle helpers
 
-`@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters.
+`@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters. `self` holds *per-instance* state; for the wider picture — when to reach for a shared module local, a cross-script module singleton, or a VM-global instead — see [Where script state lives](./script-state.md).
 
 `init` **returns** the script's initial state, and that return is the single site TypeScript infers the `self` type (`TSelf`) from, so you write the field set once and every other hook's `self` is typed from it. (When you declare `properties`, `init` also *receives* a `self` holding just those property values — see [Script properties on `self`](#script-properties-on-self) — but the return is still the only state-inference site.) No explicit type argument is needed:
 
