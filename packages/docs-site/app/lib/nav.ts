@@ -64,6 +64,7 @@ const CATEGORY_MAP: CategorySpec[] = [
     slugs: [
       "typescript-vs-lua",
       "script-lifecycle",
+      "script-state",
       "vector-math",
       "typescript-gotchas",
       "api-docs-vs-ts-defold",
