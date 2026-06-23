@@ -120,6 +120,14 @@ describe("buildNav", () => {
     expect(guides?.links.find((l) => l.route === "/script-state")).toBeUndefined();
   });
 
+  test("places the data-structures page in the Language category, not the guides fallback", () => {
+    const nav = buildNav(realPages(), { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
+    const language = nav.find((c) => c.id === "language");
+    expect(language?.links.find((l) => l.route === "/data-structures")).toBeDefined();
+    const guides = nav.find((c) => c.id === "guides");
+    expect(guides?.links.find((l) => l.route === "/data-structures")).toBeUndefined();
+  });
+
   test("maps the index page to / under Get started, labeled Overview", () => {
     const nav = fullNav();
     const getStarted = nav.find((c) => c.id === "get-started");
