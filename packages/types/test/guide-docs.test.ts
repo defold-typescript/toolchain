@@ -510,14 +510,21 @@ describe("docs/guide/data-structures.md", () => {
     expect(body).toContain("[number, string]");
   });
 
-  test("carries the not-available section naming regex, BigInt, and LinkedList with substitutes", async () => {
+  test("carries the not-available section naming regex and BigInt with substitutes", async () => {
     const body = await readGuide("data-structures.md");
     expect(body).toContain("## Not available — reach for instead");
     expect(body).toContain("string.match is unsupported");
     expect(body).toContain("BigInt");
-    expect(body).toContain("LinkedList");
     // Each rejected feature names what to reach for instead.
     expect(body).toContain("startsWith");
+  });
+
+  test("documents the no-lualib LuaMap/LuaSet extensions and the no-import rule", async () => {
+    const body = await readGuide("data-structures.md");
+    expect(body).toContain("## Lower-overhead containers: the Lua table extensions");
+    expect(body).toContain("LuaMap");
+    expect(body).toContain("LuaSet");
+    expect(body).toContain("do not import them");
   });
 
   test("docs/guide/README.md links data-structures.md", async () => {

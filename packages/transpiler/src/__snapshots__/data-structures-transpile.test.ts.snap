@@ -40,3 +40,16 @@ ____exports.c = __TS__New(____exports.Counter)
 return ____exports
 "
 `;
+
+exports[`data-structures transpile lowers LuaSet and LuaMap language extensions to plain tables with no lualib 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local seen = {}
+seen[1] = true
+____exports.hit = seen[1] ~= nil
+local scores = {}
+scores.a = 1
+____exports.a = scores.a
+return ____exports
+"
+`;
