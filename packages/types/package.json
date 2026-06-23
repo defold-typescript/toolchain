@@ -62,6 +62,7 @@
     "lua-types": "^2.13.1"
   },
   "devDependencies": {
-    "@typescript-to-lua/language-extensions": "1.19.0"
+    "@typescript-to-lua/language-extensions": "1.19.0",
+    "typescript": "6.0.2"
   }
 }
