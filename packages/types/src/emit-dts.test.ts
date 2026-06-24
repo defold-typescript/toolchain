@@ -1759,12 +1759,13 @@ describe("recoverCallbackSignature", () => {
 });
 
 describe("OVERLOAD_COVERED_SKIPS", () => {
-  test("is exactly the four FQNs served by the hand-written go/msg overloads, in sort order", () => {
+  test("is exactly the FQNs served by the hand-written go/msg overloads, in sort order", () => {
     expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
       "go.get",
       "go.property",
       "go.set",
       "msg.post",
+      "msg.url",
     ]);
   });
 });

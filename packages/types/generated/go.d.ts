@@ -471,7 +471,7 @@ declare global {
      * // Get the world position of the game object the script is attached to:
      * const p = go.get_world_position();
      *
-     * // Get the world position of another game object with id "x":
+     * // Reach a sibling game object by its id — relative addressing, no socket prefix:
      * const p2 = go.get_world_position("x");
      * ```
      */
@@ -868,7 +868,7 @@ declare global {
      * // Set the position of the game object the script is attached to:
      * go.set_position(p);
      *
-     * // Set the position of another game object with id "x":
+     * // Reach a sibling game object by its id — relative addressing, no socket prefix:
      * go.set_position(p, "x");
      * ```
      */
