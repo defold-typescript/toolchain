@@ -122,6 +122,8 @@ The build command transpiles every TypeScript file under `src/` to Lua and write
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`, object spread, and similar), the build also writes a `lualib_bundle.lua` at the output root automatically; the generated Lua's `require("lualib_bundle")` resolves against it.
 
+Because the output kind is the factory a source calls, adding or removing a `defineScript`/`defineGuiScript`/`defineRenderScript` factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the reverse). `build` and `watch` prune the stale alternative for you, so a kind switch never leaves the previous output behind. Every generated file carries a trailing `--# defold-typescript:generated` marker; on a full build — one-shot `build` or `watch` startup — the tool **warns, never deletes** about any marked `.lua` or `.ts.*` output whose TypeScript source no longer exists, so a deleted or renamed source's orphaned Lua surfaces for you to remove (the warning names the file and the source to restore). Hand-authored Lua, which lacks the marker, is never flagged or touched. Without `--json` the warnings print to stderr; with `--json` they appear in the build result's `warnings` array.
+
 The everyday commands carry no version tag: inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the version locked alongside your `@defold-typescript/types`. Reserve `@latest` for `init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
 
 ## Iterate
@@ -144,11 +146,12 @@ JSON object to stdout, terminated by a newline:
 
 ```sh
 bunx @defold-typescript/cli build --json
-# {"command":"build","ok":true,"written":["src/main.ts.script", "src/util.lua", ...]}
+# {"command":"build","ok":true,"written":["src/main.ts.script", "src/util.lua", ...],"warnings":[]}
 ```
 
 A failure flips `ok` to `false` and carries an `error` string instead of
-`written`. Optional fields (`defoldVersion`, `defoldChannel`, `apiSurface`,
+`written`. `warnings` carries the sourceless-orphan lines (empty when there are
+none). Optional fields (`defoldVersion`, `defoldChannel`, `apiSurface`,
 `materializedSurface`, …) appear only when they apply.
 
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
@@ -158,7 +161,7 @@ one object per line, one line per event. The full lifecycle reads
 ```sh
 bunx @defold-typescript/cli watch --json
 # {"command":"watch","event":"start","ok":true,"written":[]}
-# {"command":"watch","event":"build","ok":true,"written":[...]}
+# {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
 # {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[]}
 # {"command":"watch","event":"rebuild","ok":false,"error":"..."}
 # {"command":"watch","event":"resolve","ok":true,"written":[]}

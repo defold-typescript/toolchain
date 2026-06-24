@@ -348,7 +348,11 @@ export function dispatch(
   }
 
   if (command === "build") {
-    const reportBuild = (written: readonly string[], materializedDir: string | null): number => {
+    const reportBuild = (
+      written: readonly string[],
+      warnings: readonly string[],
+      materializedDir: string | null,
+    ): number => {
       ensureMaterializedReference(cwd, materializedDir);
       // walls are opt-in via the wall command
       if (json) {
@@ -356,6 +360,7 @@ export function dispatch(
           renderResult({
             command: "build",
             written,
+            warnings,
             defoldVersion: resolvedVersion,
             defoldVersionSource: resolvedVersionSource,
             defoldChannel: resolvedChannel,
@@ -367,6 +372,9 @@ export function dispatch(
         io.stdout.write(
           `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
         );
+        for (const warning of warnings) {
+          io.stderr.write(`defold-typescript build: ${warning}\n`);
+        }
       }
       return 0;
     };
@@ -389,7 +397,7 @@ export function dispatch(
       const surfaceId = surface.surfaceId as string;
       return (async (): Promise<number> => {
         try {
-          const { written } = runBuild({ cwd });
+          const { written, warnings } = runBuild({ cwd });
           const { materializedDir } = await materializeRefDocSurface({
             cwd,
             surfaceId,
@@ -401,7 +409,7 @@ export function dispatch(
               `defold-typescript build: could not materialize ${surfaceId}; the default surface stays active\n`,
             );
           }
-          return reportBuild(written, materializedDir);
+          return reportBuild(written, warnings, materializedDir);
         } catch (err) {
           return reportError(err);
         }
@@ -409,7 +417,7 @@ export function dispatch(
     }
 
     try {
-      const { written } = runBuild({ cwd });
+      const { written, warnings } = runBuild({ cwd });
       const sourceGeneratedDir =
         internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
       const { materializedDir } = materializeApiSurface({
@@ -417,7 +425,7 @@ export function dispatch(
         surface,
         sourceGeneratedDir,
       });
-      return reportBuild(written, materializedDir);
+      return reportBuild(written, warnings, materializedDir);
     } catch (err) {
       return reportError(err);
     }

@@ -11,6 +11,7 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { runBuild } from "./build";
+import { GENERATED_BANNER } from "./build-output";
 import { createBuildSession } from "./build-session";
 
 let cwd: string;
@@ -230,5 +231,42 @@ describe("createBuildSession", () => {
     writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT);
     const result = session.applyEvents(["src/main.ts"], []);
     expect(result.written).toEqual(["src/main.ts.script"]);
+  });
+
+  test("buildAll prunes a stale module output when a source is now a render-script (watch-startup repro)", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", "export const a = 1;\n");
+    createBuildSession({ cwd }).buildAll();
+    expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(true);
+
+    writeIn(
+      cwd,
+      "src/main.ts",
+      'import { defineRenderScript } from "@defold-typescript/types";\nexport default defineRenderScript({});\n',
+    );
+    const result = createBuildSession({ cwd }).buildAll();
+
+    expect(result.written).toContain("src/main.ts.render_script");
+    expect(existsSync(path.join(cwd, "src/main.ts.render_script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/main.lua.map"))).toBe(false);
+  });
+
+  test("buildAll returns the same orphan warnings as runBuild, and applyEvents runs no orphan scan", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT);
+    writeIn(cwd, "src/old.lua", `return 1\n${GENERATED_BANNER}\n`);
+
+    const sessionResult = createBuildSession({ cwd }).buildAll();
+    const referenceResult = runBuild({ cwd });
+
+    expect(sessionResult.warnings).toEqual(referenceResult.warnings);
+    expect(sessionResult.warnings.some((w) => w.includes("src/old.lua"))).toBe(true);
+
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+    writeIn(cwd, "src/main.ts", `${MAIN_NO_IMPORT}export const extra = 1;\n`);
+    const incremental = session.applyEvents(["src/main.ts"], []);
+    expect(incremental.warnings).toEqual([]);
   });
 });
