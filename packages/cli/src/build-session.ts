@@ -1,4 +1,4 @@
-import { readFileSync, rmSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   createTranspileSession,
@@ -12,13 +12,14 @@ import {
   detectSourceOutputKind,
   isTranspilerSource,
   lualibBundleRel,
-  outputRelsForSource,
+  pruneAlternativeOutputs,
   readBuildConfig,
   throwIfFailures,
   timersModuleRel,
   toPosix,
   writeScriptFile,
 } from "./build-output";
+import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
 
 export interface CreateBuildSessionOptions {
@@ -27,6 +28,7 @@ export interface CreateBuildSessionOptions {
 
 export interface BuildResult {
   readonly written: string[];
+  readonly warnings: string[];
 }
 
 export interface BuildSession {
@@ -40,11 +42,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
   const session: TranspileSession = createTranspileSession();
 
   function pruneOutputs(rel: string, keepRel?: string): void {
-    for (const outputRel of outputRelsForSource(rel, config)) {
-      if (outputRel !== keepRel && outputRel !== `${keepRel}.map`) {
-        rmSync(path.join(cwd, outputRel), { force: true });
-      }
-    }
+    pruneAlternativeOutputs(cwd, rel, config, keepRel);
   }
 
   function writeOutputs(
@@ -81,7 +79,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       written.push(runtimeRel);
     }
     throwIfFailures(failures);
-    return { written: written.sort() };
+    return { written: written.sort(), warnings: [] };
   }
 
   function buildAll(): BuildResult {
@@ -93,7 +91,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
     const sources = [...seen].sort();
     if (sources.length === 0) {
-      return { written: [] };
+      return { written: [], warnings: [] };
     }
 
     const files: Record<string, string> = {};
@@ -102,7 +100,8 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
 
     const result = session.update(files);
-    return writeOutputs(result, sources, files);
+    const built = writeOutputs(result, sources, files, true);
+    return { written: built.written, warnings: scanOrphanOutputs(cwd, sources, config) };
   }
 
   function applyEvents(changed: string[], removed: string[]): BuildResult {

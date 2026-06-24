@@ -6,12 +6,14 @@ import {
   computeOutputRel,
   detectSourceOutputKind,
   lualibBundleRel,
+  pruneAlternativeOutputs,
   readBuildConfig,
   throwIfFailures,
   timersModuleRel,
   toPosix,
   writeScriptFile,
 } from "./build-output";
+import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
 import { findWallImportViolations } from "./wall-import-guardrail";
 
@@ -37,6 +39,7 @@ export interface RunBuildOptions {
 
 export interface RunBuildResult {
   readonly written: string[];
+  readonly warnings: string[];
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
@@ -52,7 +55,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const sources = [...seen].sort();
 
   if (sources.length === 0) {
-    return { written: [] };
+    return { written: [], warnings: [] };
   }
 
   const files: Record<string, string> = {};
@@ -75,6 +78,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       continue;
     }
     const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
+    pruneAlternativeOutputs(cwd, rel, config, outputRel);
     writeScriptFile(cwd, outputRel, lua, result.sourceMaps[rel]);
     written.push(outputRel);
   }
@@ -92,5 +96,6 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   }
 
   throwIfFailures(failures);
-  return { written: written.sort() };
+  const warnings = scanOrphanOutputs(cwd, sources, config);
+  return { written: written.sort(), warnings };
 }

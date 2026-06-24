@@ -120,7 +120,10 @@ Once converted, prove it compiles before handing it back: write the snippet, run
 `build --json`, and on `ok: false` read the `error` span, fix the source, and
 rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
 [script lifecycle](./script-lifecycle.md) page covers which hooks and which
-`self` typing each script kind exposes.
+`self` typing each script kind exposes. On `ok: true` the build envelope adds a
+`warnings` array: it lists any generated `.lua`/`.ts.*` output left without a
+TypeScript source (a deleted or renamed source), each naming the stale file and
+the source to restore. Empty when clean; the build never deletes these for you.
 
 ## Scaffold a project
 
