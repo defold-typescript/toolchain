@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
@@ -7,8 +7,11 @@ import {
   computeScriptRel,
   detectSourceOutputKind,
   detectSourceScriptKind,
+  GENERATED_BANNER,
   isFileIncluded,
   isTranspilerSource,
+  outputRelsForSource,
+  pruneAlternativeOutputs,
   timersModuleRel,
   toPosix,
   writeScriptFile,
@@ -210,10 +213,101 @@ describe("writeScriptFile source-map sibling", () => {
     expect(script).not.toContain("game/hero.ts.script.map");
   });
 
-  test("writes only the script and no comment when the map is undefined", () => {
+  test("writes the script with only the generated banner when the map is undefined", () => {
     writeScriptFile(cwd, "src/player.ts.script", "print('hi')", undefined);
     const script = readFileSync(path.join(cwd, "src/player.ts.script"), "utf8");
-    expect(script).toBe("print('hi')");
+    expect(script).toBe(`print('hi')\n${GENERATED_BANNER}\n`);
     expect(existsSync(path.join(cwd, "src/player.ts.script.map"))).toBe(false);
+  });
+});
+
+describe("writeScriptFile generated banner", () => {
+  let cwd: string;
+
+  beforeEach(() => {
+    cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-banner-"));
+  });
+
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  test("appends the banner as the final line in the no-map branch", () => {
+    writeScriptFile(cwd, "src/m.lua", "local x = 1", undefined);
+    const lua = readFileSync(path.join(cwd, "src/m.lua"), "utf8");
+    const lines = lua.split("\n");
+    expect(lines[0]).toBe("local x = 1");
+    expect(lua.trimEnd().split("\n").at(-1)).toBe(GENERATED_BANNER);
+  });
+
+  test("appends the banner as the final line in the with-map branch", () => {
+    writeScriptFile(cwd, "src/m.ts.script", "local x = 1", "{}");
+    const script = readFileSync(path.join(cwd, "src/m.ts.script"), "utf8");
+    expect(script.trimEnd().split("\n").at(-1)).toBe(GENERATED_BANNER);
+  });
+
+  test("with a map, the banner is a trailer: body stays at line 1 and sourceMappingURL is basename-only", () => {
+    writeScriptFile(cwd, "build/lua/game/hero.ts.script", "local x = 1", "{}");
+    const script = readFileSync(path.join(cwd, "build/lua/game/hero.ts.script"), "utf8");
+    // The banner is appended after the source map trailer, so the mapped body is
+    // untouched: line 1 is still the first Lua line.
+    expect(script.split("\n")[0]).toBe("local x = 1");
+    expect(script).toContain("\n--# sourceMappingURL=hero.ts.script.map\n");
+    expect(script).not.toContain("game/hero.ts.script.map");
+    // sourceMappingURL precedes the banner, which is last.
+    expect(script.indexOf("sourceMappingURL")).toBeLessThan(script.indexOf(GENERATED_BANNER));
+    expect(script.trimEnd().split("\n").at(-1)).toBe(GENERATED_BANNER);
+  });
+});
+
+describe("pruneAlternativeOutputs", () => {
+  let cwd: string;
+
+  beforeEach(() => {
+    cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-prune-"));
+  });
+
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  test("deletes every non-kept output of a source and leaves keepRel and its map", () => {
+    const config = { outDir: undefined, include: ["src/**/*.ts"] };
+    const rel = "src/main.ts";
+    const all = outputRelsForSource(rel, config);
+    for (const out of all) {
+      const abs = path.join(cwd, out);
+      mkdirSync(path.dirname(abs), { recursive: true });
+      writeFileSync(abs, "x");
+    }
+    const keepRel = computeOutputRel(rel, config, "render-script");
+
+    pruneAlternativeOutputs(cwd, rel, config, keepRel);
+
+    expect(existsSync(path.join(cwd, keepRel))).toBe(true);
+    expect(existsSync(path.join(cwd, `${keepRel}.map`))).toBe(true);
+    for (const out of all) {
+      if (out === keepRel || out === `${keepRel}.map`) {
+        continue;
+      }
+      expect(existsSync(path.join(cwd, out))).toBe(false);
+    }
+  });
+
+  test("with no keepRel, deletes all of a source's outputs", () => {
+    const config = { outDir: undefined, include: ["src/**/*.ts"] };
+    const rel = "src/main.ts";
+    const all = outputRelsForSource(rel, config);
+    for (const out of all) {
+      const abs = path.join(cwd, out);
+      mkdirSync(path.dirname(abs), { recursive: true });
+      writeFileSync(abs, "x");
+    }
+
+    pruneAlternativeOutputs(cwd, rel, config);
+
+    for (const out of all) {
+      expect(existsSync(path.join(cwd, out))).toBe(false);
+    }
   });
 });

@@ -76,10 +76,15 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     opts.syncSurface?.();
     session = createBuildSession({ cwd });
     config = readBuildConfig(cwd);
-    const { written } = session.buildAll();
-    stdout.write(
-      opts.json ? renderWatchEvent({ event: "build", written }) : formatBuildLine(written),
-    );
+    const { written, warnings } = session.buildAll();
+    if (opts.json) {
+      stdout.write(renderWatchEvent({ event: "build", written, warnings }));
+    } else {
+      stdout.write(formatBuildLine(written));
+      for (const warning of warnings) {
+        stderr.write(`defold-typescript watch: ${warning}\n`);
+      }
+    }
   } catch (err) {
     rejectDone(rewrapInitError(err));
     return {

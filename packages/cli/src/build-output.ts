@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { TranspileDiagnostic } from "@defold-typescript/transpiler";
 import type { ScriptKind } from "./script-kind";
@@ -79,7 +79,7 @@ export function isFileIncluded(rel: string, include: readonly string[]): boolean
   return include.some((pattern) => globToRegex(pattern).test(posix));
 }
 
-function stripIncludeBase(pattern: string): string {
+export function stripIncludeBase(pattern: string): string {
   const firstWildcard = pattern.search(/[*?[]/);
   if (firstWildcard === -1) {
     return pattern.endsWith("/") ? pattern : `${path.posix.dirname(pattern)}/`;
@@ -183,6 +183,29 @@ export function outputRelsForSource(rel: string, config: BuildConfig): string[] 
   return outputs.flatMap((output) => [output, `${output}.map`]);
 }
 
+// A trailer banner stamped on every generated artifact so the orphan scan can
+// tell tool output from hand-authored Lua. It is a trailer (never a leading
+// line) because the source map is line-indexed: a leading banner would shift
+// every mapped line and break debugging.
+export const GENERATED_BANNER = "--# defold-typescript:generated";
+
+// Delete every output a source could have produced except the one it currently
+// does (`keepRel` and its `.map`). With a source on disk, its non-current
+// outputs are provably stale, so a kind switch never leaves the prior artifact
+// behind. With no `keepRel`, removes all of the source's outputs.
+export function pruneAlternativeOutputs(
+  cwd: string,
+  rel: string,
+  config: BuildConfig,
+  keepRel?: string,
+): void {
+  for (const outputRel of outputRelsForSource(rel, config)) {
+    if (outputRel !== keepRel && outputRel !== `${keepRel}.map`) {
+      rmSync(path.join(cwd, outputRel), { force: true });
+    }
+  }
+}
+
 export function collectFailures(
   diagnostics: readonly TranspileDiagnostic[],
 ): Map<string, string[]> {
@@ -225,8 +248,8 @@ export function writeScriptFile(
   if (map) {
     const mapBasename = `${path.posix.basename(scriptRel)}.map`;
     writeFileSync(`${scriptAbs}.map`, map);
-    writeFileSync(scriptAbs, `${lua}\n--# sourceMappingURL=${mapBasename}\n`);
+    writeFileSync(scriptAbs, `${lua}\n--# sourceMappingURL=${mapBasename}\n${GENERATED_BANNER}\n`);
   } else {
-    writeFileSync(scriptAbs, lua);
+    writeFileSync(scriptAbs, `${lua}\n${GENERATED_BANNER}\n`);
   }
 }

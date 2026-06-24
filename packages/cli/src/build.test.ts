@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import * as os from "node:os";
 import * as path from "node:path";
 import { runBuild } from "./build";
+import { GENERATED_BANNER } from "./build-output";
 
 let cwd: string;
 
@@ -161,7 +162,8 @@ describe("runBuild", () => {
     expect(map.version).toBe(3);
 
     const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
-    expect(lua.trimEnd().endsWith("--# sourceMappingURL=main.ts.script.map")).toBe(true);
+    expect(lua).toContain("\n--# sourceMappingURL=main.ts.script.map\n");
+    expect(lua.trimEnd().endsWith(GENERATED_BANNER)).toBe(true);
   });
 
   test("emits gui/render/script suffixes from the lifecycle factory each source calls", () => {
@@ -292,6 +294,48 @@ describe("runBuild", () => {
     expect(caught).toBeDefined();
     expect(caught?.message).toContain("src/a.ts");
     expect(caught?.message).toContain("src/b.ts");
+  });
+
+  const RENDER_SCRIPT =
+    'import { defineRenderScript } from "@defold-typescript/types";\nexport default defineRenderScript({});\n';
+
+  test("prunes a source's stale .lua/.lua.map when it switches to a render-script kind", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.lua", `return 1\n${GENERATED_BANNER}\n`);
+    writeFile("src/main.lua.map", "{}");
+    writeFile("src/main.ts", RENDER_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("src/main.ts.render_script");
+    expect(existsSync(path.join(cwd, "src/main.ts.render_script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/main.lua.map"))).toBe(false);
+  });
+
+  test("warns about a banner-carrying orphan .lua whose .ts source no longer exists", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/keep.ts", "export const k = 1;\n");
+    writeFile("src/old.lua", `return 1\n${GENERATED_BANNER}\n`);
+
+    const result = runBuild({ cwd });
+
+    expect(result.warnings.some((w) => w.includes("src/old.lua"))).toBe(true);
+  });
+
+  test("does not warn about a hand-authored .lua without the banner, nor the lualib/timers bundles", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      'import { setTimeout } from "@defold-typescript/types/timers";\nexport const ks = Object.keys({ a: 1 });\nsetTimeout(() => print(1), 10);\n',
+    );
+    writeFile("src/hand.lua", "return { hand = true }\n");
+
+    const result = runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(true);
+    expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(true);
+    expect(result.warnings).toEqual([]);
   });
 });
 
