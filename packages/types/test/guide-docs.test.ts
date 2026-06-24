@@ -537,3 +537,60 @@ describe("docs/guide/data-structures.md", () => {
     expect(body).toContain("data-structures.md");
   });
 });
+
+describe("docs/guide URL addressing coverage", () => {
+  const GOTCHAS_HEADING =
+    "## URL addressing: same-world objects are relative, `socket:` crosses worlds";
+  const GOTCHAS_ANCHOR = "#url-addressing-same-world-objects-are-relative-socket-crosses-worlds";
+  const RUNBOOK_HEADING = "## Address an object by URL";
+
+  test("typescript-gotchas.md carries the URL addressing section heading", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain(GOTCHAS_HEADING);
+  });
+
+  test("typescript-gotchas.md front digest links the URL addressing section", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain("[URL addressing");
+    expect(body).toContain(GOTCHAS_ANCHOR);
+  });
+
+  test("typescript-gotchas.md URL addressing section quotes the three-part URL shape", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    const start = body.indexOf("## URL addressing");
+    expect(start).toBeGreaterThan(-1);
+    const section = body.slice(start);
+    expect(section).toContain("[socket:][path][#fragment]");
+  });
+
+  test("typescript-gotchas.md URL addressing section ties the socket to the collection Name property", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    const start = body.indexOf("## URL addressing");
+    expect(start).toBeGreaterThan(-1);
+    const section = body.slice(start);
+    expect(section).toContain("collection");
+    expect(section).toContain("`Name`");
+  });
+
+  test("typescript-gotchas.md URL addressing section cross-references the msg.url arity typing", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    const start = body.indexOf("## URL addressing");
+    expect(start).toBeGreaterThan(-1);
+    const section = body.slice(start);
+    expect(section).toContain("msg.url");
+  });
+
+  test("agent-runbooks.md carries the URL addressing runbook heading", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    expect(body).toContain(RUNBOOK_HEADING);
+  });
+
+  test("agent-runbooks.md URL addressing runbook names the relative-vs-socket rule", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const start = body.indexOf(RUNBOOK_HEADING);
+    expect(start).toBeGreaterThan(-1);
+    const section = body.slice(start);
+    expect(section).toContain("socket:");
+    expect(section).toContain("collection-proxy");
+  });
+});

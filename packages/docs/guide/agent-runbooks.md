@@ -570,6 +570,37 @@ export default defineScript({
 Confirm each address resolves and the snippet builds — see
 [Verify against the real API surface](#verify-against-the-real-api-surface).
 
+## Address an object by URL
+
+**Goal:** pick the right URL form for every `msg.post` / `go.get` / `go.set` /
+`msg.url` call, and know when the `socket:` prefix is required.
+
+A Defold URL is `[socket:][path][#fragment]` — the first part is optional. Inside
+a single world (everything in your bootstrap collection) address by relative id,
+absolute path, or sibling component, with **no** `socket:`:
+
+- `"camera"` — a sibling instance by id, resolved relative to the current component.
+- `"/camera"` — the same instance by id, absolute from the current world's root.
+- `"#health"` — a sibling component on the *same* game object.
+- `"/enemy#ai"` — a named component on a different object in the same world.
+
+The `socket:` segment is reserved for crossing into a **collection-proxy-loaded
+world**: `msg.post("level_a:/door#sensor", "open")` reaches `door#sensor` in the
+collection whose `Name` property is `level_a`. That value is the *target*
+collection's `Name`, not the proxy component's id — and a collection's `Name` is
+a field distinct from its folder, so a bare `"main:…"` copied from a Lua example
+is fragile (it assumes your bootstrap collection happens to be named `main`).
+
+The two-arg `msg.url(socket, path, fragment)` call is a runtime error — only
+`msg.url()`, `msg.url(urlstring)`, and the all-required three-arg form are
+supported. The tightened overloads in `msg-overloads.d.ts` reject the two-arg
+form at compile time, so the typings are the warning.
+
+Confirm every address resolves and the snippet builds — see
+[Verify against the real API surface](#verify-against-the-real-api-surface). For
+the full address grammar and the cross-world proxy case, follow up with the
+[TypeScript gotchas URL addressing entry](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds).
+
 ## Where script state lives
 
 **Goal:** decide whether a piece of mutable state belongs on `self` or in a
