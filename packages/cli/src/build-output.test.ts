@@ -240,23 +240,25 @@ describe("writeScriptFile generated banner", () => {
     expect(lua.trimEnd().split("\n").at(-1)).toBe(GENERATED_BANNER);
   });
 
-  test("appends the banner as the final line in the with-map branch", () => {
+  test("in the with-map branch the banner precedes the sourceMappingURL trailer", () => {
     writeScriptFile(cwd, "src/m.ts.script", "local x = 1", "{}");
     const script = readFileSync(path.join(cwd, "src/m.ts.script"), "utf8");
-    expect(script.trimEnd().split("\n").at(-1)).toBe(GENERATED_BANNER);
+    expect(script).toContain(`\n${GENERATED_BANNER}\n`);
+    // sourceMappingURL stays the last line; the banner comes before it.
+    expect(script.indexOf(GENERATED_BANNER)).toBeLessThan(script.indexOf("sourceMappingURL"));
+    expect(script.trimEnd().split("\n").at(-1)).toBe("--# sourceMappingURL=m.ts.script.map");
   });
 
-  test("with a map, the banner is a trailer: body stays at line 1 and sourceMappingURL is basename-only", () => {
+  test("with a map, the body stays at line 1, sourceMappingURL is basename-only and last", () => {
     writeScriptFile(cwd, "build/lua/game/hero.ts.script", "local x = 1", "{}");
     const script = readFileSync(path.join(cwd, "build/lua/game/hero.ts.script"), "utf8");
-    // The banner is appended after the source map trailer, so the mapped body is
-    // untouched: line 1 is still the first Lua line.
+    // Both trailers sit after the mapped body, so line 1 is still the first Lua line.
     expect(script.split("\n")[0]).toBe("local x = 1");
     expect(script).toContain("\n--# sourceMappingURL=hero.ts.script.map\n");
     expect(script).not.toContain("game/hero.ts.script.map");
-    // sourceMappingURL precedes the banner, which is last.
-    expect(script.indexOf("sourceMappingURL")).toBeLessThan(script.indexOf(GENERATED_BANNER));
-    expect(script.trimEnd().split("\n").at(-1)).toBe(GENERATED_BANNER);
+    // The sourceMappingURL directive must be the file's last line.
+    expect(script.trimEnd().split("\n").at(-1)).toBe("--# sourceMappingURL=hero.ts.script.map");
+    expect(script.indexOf(GENERATED_BANNER)).toBeLessThan(script.indexOf("sourceMappingURL"));
   });
 });
 
