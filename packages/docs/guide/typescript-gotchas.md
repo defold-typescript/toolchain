@@ -24,7 +24,6 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
-- [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; the `socket:` segment is reserved for crossing into a collection-proxy-loaded world.
 
 ## Unary minus on Vector3 / Vector4 silently produces `number`
 
@@ -304,22 +303,6 @@ info.not_a_field;
 **Typed alternative.** Read the members directly — `sys.get_sys_info().system_name`, `liveupdate.get_mounts()[0].uri`, `tilemap.get_tile_info(url, layer, x, y).index` — instead of indexing an opaque record and casting. For an options argument, pass only the fields you need (`image.load(data, { flip_vertically: true })`); omitted fields and `{}` still type-check.
 
 **How we pin this in the type tests.** `packages/types/test-d/sys-info-table-fields.ts` asserts `sys.get_sys_info().system_name` is assignable to `string` and that a bogus field carries `@ts-expect-error`; `packages/types/test-d/example-shaped-table-curations.ts` pins the example-proven `liveupdate.get_mounts()` and `tilemap.get_tile_info()` shapes. The fidelity audit and the emitter share the table recovery and curation data (`packages/types/src/emit-dts.ts`), so the `recordTables` loss gate and the emitted surface cannot drift; if a recovered field's type regressed to `unknown` the audit's `unknownTokens` would surface it.
-
-## URL addressing: same-world objects are relative, `socket:` crosses worlds
-
-**Symptom.** A `msg.post` that reads naturally in TypeScript fails to reach its target at runtime — the receiver's `on_message` never fires, with no compile error pointing at the address. The same applies to `go.get`/`go.set`, `msg.url(...)`, and every other API that takes a URL string. The patterns that work in vanilla Lua frequently pick the wrong world in a project that loads collections through a `collectionproxy`:
-
-```ts
-msg.post("main:/enemy#ai", "alert");   // reaches the bootstrap collection's `enemy` only if it's named `main`; fragile
-msg.post("/enemy#ai", "alert");          // correct: absolute path inside the current world
-msg.post("#health", "damage", { amount: 10 });  // correct: sibling component on the same object
-```
-
-**Why.** A Defold URL is `[socket:][path][#fragment]` — three parts, the first optional. The addressing manual states the rule plainly: a URL that starts with `/` is resolved from the root of the *current* game world; the `socket:` segment names a *different* world, by that world's collection **Name**; the `path` is the rest of the address inside that world; the `#fragment` is the component name on the addressed object. Inside a single world (everything in your bootstrap collection) the `socket:` segment is unnecessary — relative or absolute-rooted paths both resolve. The `socket:` segment only earns its keep when a `collectionproxy` has loaded a *second* world and you want to reach an object there, and the value you pass is that *target* collection's `Name` property, **not** the proxy component's id. A bare relative id (`"camera"`) or an absolute path inside the same world (`"/camera"`) is the canonical form; a literal `"main:…"` works only when your bootstrap collection happens to be named `main` (the editor's default but easy to rename), and the bootstrap collection's `Name` is **not** the empty string — the "empty socket" framing is the original bug. The two-arg form `msg.url(socket, path, fragment)` looks like an obvious helper, but the runtime treats the second argument as a *full URL* when `socket` is set, so `msg.url("@main", "/enemy#ai")` produces the URL `"/enemy#ai"` with the socket discarded. The tightened `msg.url` overloads in `msg-overloads.d.ts` reject that two-arg call at compile time, so the typings are the warning.
-
-**Typed alternative.** Address everything in the same world with one of the three relative forms — `"camera"` (id, relative), `"/camera"` (id, absolute-from-current-world-root), `"#health"` (sibling component). Reserve `socket:` for the collection-proxy case and pass the target collection's `Name` (`msg.post("level_a:/door#sensor", "open")` — `level_a` is the loaded collection's `Name`, not a socket you configured). Cross-world `msg.post` is documented in the collection-proxy manual as `msg.post("mylevel:/myobject", "hello")`. The "empty socket" framing — "the bootstrap loads into the empty socket" — is wrong; the bootstrap collection's `Name` is the default (`main`) and you address it the same way as any other collection, just without crossing a world boundary. Use the tightened `msg.url` overloads: `()` (current message's url), `(urlstring)`, or `(socket, path, fragment)` with `socket` non-empty.
-
-**How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("@/foo")` type-check, while `msg.url("@main", "/foo")` carries `@ts-expect-error`, so the runtime-invalid two-arg form is rejected at compile time. If a future change widened the overloads to accept the two-arg form, the expected error would disappear and the typecheck gate would fail.
 
 ## `async`/`await` work but there is no event loop
 
