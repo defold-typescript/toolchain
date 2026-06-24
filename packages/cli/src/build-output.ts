@@ -186,7 +186,10 @@ export function outputRelsForSource(rel: string, config: BuildConfig): string[] 
 // A trailer banner stamped on every generated artifact so the orphan scan can
 // tell tool output from hand-authored Lua. It is a trailer (never a leading
 // line) because the source map is line-indexed: a leading banner would shift
-// every mapped line and break debugging.
+// every mapped line and break debugging. When a sourceMappingURL directive is
+// also written it stays the file's last line (debuggers only honor it at
+// end-of-file), so the banner precedes it. The orphan scan matches the banner
+// on any line, so its position never matters to detection.
 export const GENERATED_BANNER = "--# defold-typescript:generated";
 
 // Delete every output a source could have produced except the one it currently
@@ -248,7 +251,10 @@ export function writeScriptFile(
   if (map) {
     const mapBasename = `${path.posix.basename(scriptRel)}.map`;
     writeFileSync(`${scriptAbs}.map`, map);
-    writeFileSync(scriptAbs, `${lua}\n--# sourceMappingURL=${mapBasename}\n${GENERATED_BANNER}\n`);
+    // The sourceMappingURL directive must stay the file's last line: the Local
+    // Lua Debugger only honors it at end-of-file (its matcher anchors `%s*$`),
+    // so the banner is appended before it, not after.
+    writeFileSync(scriptAbs, `${lua}\n${GENERATED_BANNER}\n--# sourceMappingURL=${mapBasename}\n`);
   } else {
     writeFileSync(scriptAbs, `${lua}\n${GENERATED_BANNER}\n`);
   }

@@ -162,8 +162,10 @@ describe("runBuild", () => {
     expect(map.version).toBe(3);
 
     const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
-    expect(lua).toContain("\n--# sourceMappingURL=main.ts.script.map\n");
-    expect(lua.trimEnd().endsWith(GENERATED_BANNER)).toBe(true);
+    expect(lua).toContain(`\n${GENERATED_BANNER}\n`);
+    // The sourceMappingURL directive must remain the last line — debuggers only
+    // honor it at end-of-file — so the banner precedes it, never follows it.
+    expect(lua.trimEnd().endsWith("--# sourceMappingURL=main.ts.script.map")).toBe(true);
   });
 
   test("emits gui/render/script suffixes from the lifecycle factory each source calls", () => {
