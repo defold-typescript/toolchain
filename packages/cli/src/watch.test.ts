@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import { GENERATED_BANNER } from "./build-output";
 import { runWatch, type WatchEvent, type Watcher, type WatcherFactory } from "./watch";
 
 function captureStreams() {
@@ -158,6 +159,30 @@ describe("runWatch", () => {
     expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
     expect(err()).toBe("");
     expect(err()).not.toContain("unsupported extension");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("startup warns about a sourceless orphan; an incremental edit adds no new orphan warning", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/old.lua", `return 1\n${GENERATED_BANNER}\n`);
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    expect(err()).toContain("src/old.lua");
+    expect(countMatches(err(), /src\/old\.lua/g)).toBe(1);
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    // The incremental rebuild path runs no orphan scan, so the warning count is unchanged.
+    expect(countMatches(err(), /src\/old\.lua/g)).toBe(1);
 
     handle.stop();
     await handle.done;
