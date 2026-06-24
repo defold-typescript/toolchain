@@ -76,7 +76,10 @@ describe("buildFidelityReport — per-category counting", () => {
     // `export { _delete as delete }` alias rather than dropped, so it no longer
     // counts; only skipFunctions entries remain droppedMembers (none here).
     expect(entry.droppedMembers).toBe(0);
-    expect(entry.optionalAsRequired).toBe(1);
+    // test.opt's interior optional `o` (a required param follows) is now emitted
+    // as `o: number | undefined` rather than dropped to required, so it is no
+    // longer a loss; optionalAsRequired stays in the report shape reading 0.
+    expect(entry.optionalAsRequired).toBe(0);
   });
 
   test("skipFunctions entries are counted as droppedMembers, not as a fidelity regression elsewhere", () => {
@@ -182,7 +185,7 @@ describe("buildFidelityReport — per-category counting", () => {
     expect(entry.optionalAsRequired).toBe(0);
   });
 
-  test("optionalAsRequired counts only the trailing-run residual, not recoverable optionals", () => {
+  test("interior optionals are recovered via | undefined, so optionalAsRequired counts nothing", () => {
     const doc = {
       info: { namespace: "test" },
       elements: [
@@ -208,8 +211,11 @@ describe("buildFidelityReport — per-category counting", () => {
       ],
     };
 
+    // test.midlist's interior optional `x` (a required `y` follows) is emitted
+    // as `x: number | undefined`, the faithful surface, so it is no longer a
+    // loss; trailing optionals were always recovered via `?`.
     const entry = requireEntry(buildFidelityReport(manifestOf(doc)), "test");
-    expect(entry.optionalAsRequired).toBe(1);
+    expect(entry.optionalAsRequired).toBe(0);
   });
 });
 
@@ -245,6 +251,19 @@ describe("fidelity drift gate", () => {
   test("live report over MODULE_MANIFEST equals the committed baseline", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
     expect(report).toEqual(baseline as typeof report);
+  });
+});
+
+describe("camera/font residual recovery", () => {
+  test("camera/font recordTables and camera optionalAsRequired reach 0; project-wide totals are 0", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    expect(requireEntry(report, "camera").recordTables).toBe(0);
+    expect(requireEntry(report, "font").recordTables).toBe(0);
+    expect(requireEntry(report, "camera").optionalAsRequired).toBe(0);
+    const recordTablesTotal = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
+    const optionalTotal = Object.values(report).reduce((sum, e) => sum + e.optionalAsRequired, 0);
+    expect(recordTablesTotal).toBe(0);
+    expect(optionalTotal).toBe(0);
   });
 });
 
@@ -524,10 +543,10 @@ describe("runtime-owned passthrough reclassification", () => {
     expect(requireEntry(report, "go").recordTables).toBe(0);
     expect(requireEntry(report, "gui").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    // camera.get_cameras returns a `table` (the cameras array) that collapses to
-    // Record, and font.get_info's name-only return bag collapses likewise — the
-    // two project-wide record-tables now that camera carries members.
-    expect(total).toBe(2);
+    // camera.get_cameras is recovered as a HOMOGENEOUS_ARRAY_SLOTS `Url[]` and
+    // font.get_info as a TABLE_SLOT_CURATIONS object, so both former record-tables
+    // are gone and the project-wide recordTables total is 0.
+    expect(total).toBe(0);
     // The committed baseline reflects the reclassified counts, so the full
     // report equals it on every namespace and category — proving these four are
     // the only moves and no other category shifted anywhere.
@@ -657,10 +676,9 @@ describe("get_text_metrics return-bag recovery", () => {
     // the project-wide total to 14, and the record-table-batch-recovery-2
     // slice lands at 0 (the 14 recordTables all close, and the audit's
     // function-level arbitraryTable propagation skips the transient recursion
-    // in set_render_target). camera.get_cameras and font.get_info then add the
-    // two remaining record-tables once camera carries members, so the live
-    // total is 2.
-    expect(total).toBe(2);
+    // in set_render_target). camera.get_cameras and font.get_info are now
+    // recovered too (Url[] and a curated object), so the live total is 0.
+    expect(total).toBe(0);
     // The committed baseline reflects the recovered count, so the full report
     // equals it on every namespace and category — proving resource is the only
     // namespace whose recordTables moved and no other category shifted anywhere.
@@ -690,10 +708,10 @@ describe("record-table batch recovery", () => {
     expect(requireEntry(report, "collectionproxy").recordTables).toBe(0);
     expect(requireEntry(report, "render").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
-    // camera.get_cameras and font.get_info contribute the two remaining
-    // record-tables now that camera carries members, so the cumulative live
-    // total is 2.
-    expect(total).toBe(2);
+    // camera.get_cameras and font.get_info are now recovered (Url[] and a
+    // curated object), so no record-tables remain and the cumulative live
+    // total is 0.
+    expect(total).toBe(0);
     // The committed baseline reflects the recovered counts, so the full report
     // equals it on every namespace and category — proving these four namespaces
     // are the only recordTables movers and no other category shifted anywhere.
@@ -951,9 +969,9 @@ describe("record-table batch recovery 2", () => {
     expect(requireEntry(report, "physics").recordTables).toBe(0);
     const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
     // The ratchet work closes the original 14 to 0; camera.get_cameras and
-    // font.get_info then add the two record-tables they carry, so the live
-    // project-wide total is 2.
-    expect(total).toBe(2);
+    // font.get_info are now recovered too (Url[] and a curated object), so no
+    // record-tables remain and the live project-wide total is 0.
+    expect(total).toBe(0);
     // The committed baseline reflects the recovered counts, so the full report
     // equals it on every namespace and category — proving these seven are the
     // only recordTables movers and no other category shifted anywhere.

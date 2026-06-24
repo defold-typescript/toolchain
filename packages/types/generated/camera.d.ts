@@ -52,7 +52,7 @@ declare global {
      * }
      * ```
      */
-    function get_cameras(): Record<string | number, unknown>;
+    function get_cameras(): Url[];
     /**
      * get enabled
      *
@@ -175,7 +175,7 @@ declare global {
      * @param camera - camera id
      * @param aspect_ratio - the manual aspect ratio value.
      */
-    function set_aspect_ratio(camera: Url | number, aspect_ratio: number): void;
+    function set_aspect_ratio(camera: Url | number | undefined, aspect_ratio: number): void;
     /**
      * Enables or disables automatic aspect ratio calculation. When enabled (true),
      * the camera automatically calculates aspect ratio from render target dimensions.
@@ -184,42 +184,42 @@ declare global {
      * @param camera - camera id
      * @param auto_aspect_ratio - true to enable auto aspect ratio
      */
-    function set_auto_aspect_ratio(camera: Url | number, auto_aspect_ratio: boolean): void;
+    function set_auto_aspect_ratio(camera: Url | number | undefined, auto_aspect_ratio: boolean): void;
     /**
      * set far z
      *
      * @param camera - camera id
      * @param far_z - the far z.
      */
-    function set_far_z(camera: Url | number, far_z: number): void;
+    function set_far_z(camera: Url | number | undefined, far_z: number): void;
     /**
      * set field of view
      *
      * @param camera - camera id
      * @param fov - the field of view.
      */
-    function set_fov(camera: Url | number, fov: number): void;
+    function set_fov(camera: Url | number | undefined, fov: number): void;
     /**
      * set near z
      *
      * @param camera - camera id
      * @param near_z - the near z.
      */
-    function set_near_z(camera: Url | number, near_z: number): void;
+    function set_near_z(camera: Url | number | undefined, near_z: number): void;
     /**
      * set orthographic zoom mode
      *
      * @param camera - camera id
      * @param mode - camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or camera.ORTHO_MODE_AUTO_COVER
      */
-    function set_orthographic_mode(camera: Url | number, mode: number): void;
+    function set_orthographic_mode(camera: Url | number | undefined, mode: number): void;
     /**
      * set orthographic zoom
      *
      * @param camera - camera id
      * @param orthographic_zoom - the zoom level when the camera uses orthographic projection.
      */
-    function set_orthographic_zoom(camera: Url | number, orthographic_zoom: number): void;
+    function set_orthographic_zoom(camera: Url | number | undefined, orthographic_zoom: number): void;
     /**
      * Converts a 3D world position to screen-space coordinates with view depth.
      * Returns a vector3 where x and y are in screen pixels and z is the view depth in world units
