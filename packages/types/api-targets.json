@@ -54,7 +54,7 @@
           "namespace": "msg",
           "fixture": "msg_doc.json",
           "outFile": "msg.d.ts",
-          "skipFunctions": ["post"]
+          "skipFunctions": ["post", "url"]
         },
         {
           "namespace": "particlefx",

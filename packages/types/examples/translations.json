@@ -86,7 +86,7 @@
   "go.get_world_position": [
     {
       "sourceHash": "ab804a5cdcfd4f7d",
-      "ts": "// Get the world position of the game object the script is attached to:\nconst p = go.get_world_position();\n\n// Get the world position of another game object with id \"x\":\nconst p2 = go.get_world_position(\"x\");"
+      "ts": "// Get the world position of the game object the script is attached to:\nconst p = go.get_world_position();\n\n// Reach a sibling game object by its id — relative addressing, no socket prefix:\nconst p2 = go.get_world_position(\"x\");"
     }
   ],
   "go.get_world_rotation": [
@@ -134,7 +134,7 @@
   "go.set_position": [
     {
       "sourceHash": "ad83d0274d776e8f",
-      "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\n\n// Set the position of the game object the script is attached to:\ngo.set_position(p);\n\n// Set the position of another game object with id \"x\":\ngo.set_position(p, \"x\");"
+      "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\n\n// Set the position of the game object the script is attached to:\ngo.set_position(p);\n\n// Reach a sibling game object by its id — relative addressing, no socket prefix:\ngo.set_position(p, \"x\");"
     }
   ],
   "go.set_rotation": [
