@@ -36,7 +36,7 @@ declare global {
      * `path_hash`
      * hash The path of the font file
      */
-    function get_info(fontc: string | Hash): { path: Hash; fonts: Record<string | number, unknown>; path: string; path_hash: Hash };
+    function get_info(fontc: string | Hash): { path: Hash; fonts: { path: string; path_hash: Hash }[] };
     /**
      * prepopulates the font glyph cache with rasterised glyphs
      *

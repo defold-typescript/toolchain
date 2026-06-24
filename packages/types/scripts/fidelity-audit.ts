@@ -63,20 +63,6 @@ function docString(raw: unknown): string | undefined {
   return typeof raw === "string" ? raw : undefined;
 }
 
-function isDocOptional(param: Record<string, unknown>): boolean {
-  return param.is_optional === "True" || stringArray(param.types).includes("nil");
-}
-
-function trailingOptionalCutoff(params: readonly Record<string, unknown>[]): number {
-  let cutoff = params.length;
-  for (let i = params.length - 1; i >= 0; i -= 1) {
-    const p = params[i];
-    if (p && isDocOptional(p)) cutoff = i;
-    else break;
-  }
-  return cutoff;
-}
-
 // Colon `<receiver>:<method>` FUNCTION elements are emitted as method-bearing
 // interfaces (see emit-dts collectHandleMethodGroups). Before that recovery they
 // emitted nothing yet were never counted as a droppedMembers loss — a blind spot
@@ -109,7 +95,9 @@ function auditEntry(
   // multiReturn is fully recovered: emitReturn emits LuaMultiReturn<[...]> for
   // every >1-return function, so no documented multi-return is a loss anymore.
   const multiReturn = 0;
-  let optionalAsRequired = 0;
+  // optionalAsRequired is fully recovered: emitParameter expresses an interior
+  // doc-optional param as `| undefined`, so no doc-optional param is a loss.
+  const optionalAsRequired = 0;
   const unknown = new Set<string>();
 
   const constantFqns = new Set<string>();
@@ -325,14 +313,13 @@ function auditEntry(
     }
     const params = paramList(element.parameters);
     const returns = paramList(element.returnvalues);
-    const cutoff = trailingOptionalCutoff(params);
     const arbitraryTable =
       typeof element.name === "string" && ARBITRARY_TABLE_SLOTS.has(element.name);
     const mappingSlot =
       typeof element.name === "string" ? MAPPING_TABLE_SLOTS.get(element.name) : undefined;
     const homogeneousElement =
       typeof element.name === "string" ? HOMOGENEOUS_ARRAY_SLOTS.get(element.name) : undefined;
-    params.forEach((param, index) => {
+    params.forEach((param) => {
       const tableSlotCuration =
         typeof element.name === "string" && typeof param.name === "string"
           ? TABLE_SLOT_CURATIONS.get(tableSlotKey(element.name, "param", param.name))
@@ -348,10 +335,9 @@ function auditEntry(
           ? { element: element.name, kind: "param", name: param.name }
           : undefined,
       );
-      // Residual: a doc-optional param the emitter cannot mark `?` because a
-      // required param follows it. The trailing-run cutoff must match
-      // emit-dts so the gate and the emitted surface agree.
-      if (isDocOptional(param) && index < cutoff) optionalAsRequired += 1;
+      // Interior doc-optional params (a required param follows) are no longer a
+      // loss: emitParameter expresses them as `| undefined`, mirroring the
+      // emitted surface. optionalAsRequired stays in the report shape reading 0.
     });
     for (const ret of returns) {
       const tableSlotCuration =

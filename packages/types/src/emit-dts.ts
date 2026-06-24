@@ -217,6 +217,9 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
   // no brand exists to reference; `number` is the faithful element token for these
   // numeric constants, mirroring the vmath.vector/buffer.* number entries.
   ["push.register", "number"],
+  // camera.get_cameras returns "a table with all camera URLs" (the ref example
+  // iterates it with `pairs`) — a homogeneous list of `url`, emitted `Url[]`.
+  ["camera.get_cameras", "url"],
 ]);
 
 // A `mapping` curation whose value is itself a single-level mapping, emitted
@@ -234,6 +237,30 @@ export const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const
 
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
+  // font.get_info's `info` return is a `<dl>` with `path: hash` and a nested
+  // `fonts` field whose `<dd>` is itself a `<dl>` (`path: string`, `path_hash:
+  // hash`). parseTableFields flattens the inner `<dl>` to the top level, which
+  // duplicates the `path` key and bares `fonts` to Record; this curation replaces
+  // the whole mis-parsed field list with the faithful shape (a nested isList
+  // object), recovering the array and removing the duplicate key.
+  [
+    "font.get_info:return:info",
+    {
+      kind: "object",
+      fields: [
+        { name: "path", types: ["hash"] },
+        {
+          name: "fonts",
+          types: ["table"],
+          isList: true,
+          fields: [
+            { name: "path", types: ["string"] },
+            { name: "path_hash", types: ["hash"] },
+          ],
+        },
+      ],
+    },
+  ],
   // iap.finish and iap.acknowledge take the same Defold IAP transaction object —
   // the table handed to the iap.set_listener callback. The ref-doc fixture
   // describes it in prose only (no field list), so the shape is curated from the
@@ -1237,7 +1264,12 @@ function emitParameter(
     concrete.length > 0
       ? mapSlotUnion(concrete, p.doc, mapType, true, resolver, elementName, "param", p.name)
       : "unknown";
-  return `${name}${optional ? "?" : ""}: ${ts}`;
+  // An interior doc-optional param (a required param follows, so the trailing-`?`
+  // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
+  // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the
+  // `?` form; required params are untouched.
+  const interiorOptional = !optional && isDocOptional(p) ? " | undefined" : "";
+  return `${name}${optional ? "?" : ""}: ${ts}${interiorOptional}`;
 }
 
 function emitReturn(

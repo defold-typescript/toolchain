@@ -486,7 +486,7 @@ describe("emitDeclarations", () => {
     expect(emitDeclarations(module)).toContain("function fn(a?: number): void;");
   });
 
-  test("a doc-optional param followed by a required param stays required", () => {
+  test("a doc-optional param followed by a required param emits | undefined", () => {
     const module: ApiModule = {
       namespace: "ns",
       brief: "",
@@ -508,7 +508,9 @@ describe("emitDeclarations", () => {
       properties: [],
       typedefs: [],
     };
-    expect(emitDeclarations(module)).toContain("function fn(a: number, b: string): void;");
+    expect(emitDeclarations(module)).toContain(
+      "function fn(a: number | undefined, b: string): void;",
+    );
   });
 
   test("consecutive trailing optionals all emit ?", () => {
@@ -1899,6 +1901,24 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect([...TABLE_SLOT_CURATIONS]).toEqual([
       ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
       [
+        "font.get_info:return:info",
+        {
+          kind: "object",
+          fields: [
+            { name: "path", types: ["hash"] },
+            {
+              name: "fonts",
+              types: ["table"],
+              isList: true,
+              fields: [
+                { name: "path", types: ["string"] },
+                { name: "path_hash", types: ["hash"] },
+              ],
+            },
+          ],
+        },
+      ],
+      [
         "iap.finish:param:transaction",
         {
           kind: "object",
@@ -2115,7 +2135,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ],
     ]);
     expect(MAPPING_TABLE_SLOTS.size).toBe(3);
-    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
+    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(8);
   });
 
   test("collectionfactory.create recovers only the ids return", () => {
@@ -2514,7 +2534,8 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("iap.list")).toBe("string");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("go.delete")).toEqual(["string", "hash", "url"]);
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("push.register")).toBe("number");
-    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(7);
+    expect(HOMOGENEOUS_ARRAY_SLOTS.get("camera.get_cameras")).toBe("url");
+    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(8);
   });
 
   function moduleOf(namespace: string, functions: ApiFunction[]): ApiModule {
@@ -2665,6 +2686,110 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
       ]),
     );
     expect(out).toContain("function other(t: Record<string | number, unknown>): void;");
+  });
+});
+
+describe("camera/font residual fidelity recovery", () => {
+  function moduleOf(namespace: string, functions: ApiFunction[]): ApiModule {
+    return {
+      namespace,
+      brief: "",
+      description: "",
+      functions,
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+  }
+
+  test("camera.get_cameras emits Url[] for its homogeneous URL array return", () => {
+    const out = emitDeclarations(
+      moduleOf("camera", [
+        {
+          name: "camera.get_cameras",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [
+            {
+              name: "cameras",
+              doc: "a table with all camera URLs",
+              types: ["table"],
+              isOptional: false,
+            },
+          ],
+        },
+      ]),
+    );
+    expect(out).toContain("function get_cameras(): Url[];");
+    expect(out).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("font.get_info emits the curated object with a fonts array and a single top-level path", () => {
+    const out = emitDeclarations(
+      moduleOf("font", [
+        {
+          name: "font.get_info",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [
+            { name: "info", doc: "the information table", types: ["table"], isOptional: false },
+          ],
+        },
+      ]),
+    );
+    expect(out).toContain(
+      "function get_info(): { path: Hash; fonts: { path: string; path_hash: Hash }[] };",
+    );
+    expect(out).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("a camera setter emits its leading interior-optional camera param as Url | number | undefined", () => {
+    const out = emitDeclarations(
+      moduleOf("camera", [
+        {
+          name: "camera.set_fov",
+          brief: "",
+          description: "",
+          parameters: [
+            {
+              name: "camera",
+              doc: "camera id",
+              types: ["url", "number", "nil"],
+              isOptional: false,
+            },
+            { name: "fov", doc: "the field of view.", types: ["number"], isOptional: false },
+          ],
+          returnValues: [],
+        },
+      ]),
+    );
+    expect(out).toContain("function set_fov(camera: Url | number | undefined, fov: number): void;");
+  });
+
+  test("a trailing-optional camera param keeps the ? form, no | undefined", () => {
+    const out = emitDeclarations(
+      moduleOf("camera", [
+        {
+          name: "camera.get_fov",
+          brief: "",
+          description: "",
+          parameters: [
+            {
+              name: "camera",
+              doc: "camera id",
+              types: ["url", "number", "nil"],
+              isOptional: false,
+            },
+          ],
+          returnValues: [],
+        },
+      ]),
+    );
+    expect(out).toContain("function get_fov(camera?: Url | number): void;");
+    expect(out).not.toContain("| undefined");
   });
 });
 
