@@ -74,6 +74,9 @@ export const BIOME_JSON_CONTENT = {
     enabled: true,
     rules: {
       recommended: true,
+      suspicious: {
+        noDoubleEquals: "off",
+      },
       style: {
         useImportType: "error",
         useNodejsImportProtocol: "error",
