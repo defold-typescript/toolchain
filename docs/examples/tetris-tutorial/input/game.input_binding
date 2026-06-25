@@ -1,0 +1,20 @@
+key_trigger {
+  input: KEY_LEFT
+  action: "left"
+}
+key_trigger {
+  input: KEY_RIGHT
+  action: "right"
+}
+key_trigger {
+  input: KEY_DOWN
+  action: "soft_drop"
+}
+key_trigger {
+  input: KEY_UP
+  action: "rotate"
+}
+key_trigger {
+  input: KEY_SPACE
+  action: "hard_drop"
+}

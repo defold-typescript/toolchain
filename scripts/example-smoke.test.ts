@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { buildSmokeSteps, runSmokeSequence, verifyStep } from "./example-smoke.ts";
+import { buildSmokeSteps, runSmokeSequence, SMOKE_EXAMPLES, verifyStep } from "./example-smoke.ts";
 import { buildUpdateSteps, preserveExampleIdentity } from "./example-update.ts";
 
 const EXAMPLE = "docs/examples/platformer";
+const TETRIS = "docs/examples/tetris-tutorial";
 const BIN = "packages/cli/src/bin.ts";
 
 describe("buildSmokeSteps", () => {
@@ -79,6 +80,29 @@ describe("runSmokeSequence", () => {
     const convert = buildUpdateSteps(EXAMPLE, BIN).map((step) => step.join(" "));
     expect(order).toEqual([...convert, "RESTORE", verifyStep(EXAMPLE).join(" ")]);
     expect(ok).toBe(false);
+  });
+});
+
+describe("tetris example coverage", () => {
+  test("SMOKE_EXAMPLES covers both the platformer and the tetris example dirs", () => {
+    expect(SMOKE_EXAMPLES).toContain(EXAMPLE);
+    expect(SMOKE_EXAMPLES).toContain(TETRIS);
+  });
+
+  test("tetris smoke verifies its own tsconfig", () => {
+    const verify = buildSmokeSteps(TETRIS, BIN).at(-1);
+    expect(verify?.join(" ")).toContain("tsc");
+    expect(verify?.join(" ")).toContain("--noEmit");
+    expect(verify?.join(" ")).toContain(`${TETRIS}/tsconfig.json`);
+    expect(verify?.join(" ")).not.toContain(EXAMPLE);
+  });
+
+  test("tetris smoke never pulls a published artifact", () => {
+    for (const step of buildSmokeSteps(TETRIS, BIN)) {
+      const joined = step.join(" ");
+      expect(joined).not.toContain("@latest");
+      expect(joined).not.toContain("@defold-typescript/cli@");
+    }
   });
 });
 

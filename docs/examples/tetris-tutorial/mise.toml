@@ -1,0 +1,20 @@
+# This in-repo example is pinned to the working-tree CLI, not a published
+# release: its tsconfig resolves @defold-typescript/types via `paths` to the
+# packages/types source, so its build/watch/setup-debug must run the
+# working-tree bin too. A real scaffolded consumer instead gets
+# `bunx @defold-typescript/cli <cmd>` tasks (see packages/cli/src/mise-scaffold.ts);
+# `mise run example:update` restores this file after `init --force` rewrites it
+# with that consumer form. To re-sync the example to source, use the repo-root
+# `mise run example:update`. There is no `:upgrade` task here — the example
+# tracks working-tree source, it does not pull a published release.
+[tasks."defold-typescript:build"]
+description = "Build the TypeScript sources with the working-tree defold-typescript CLI"
+run = "bun ../../../packages/cli/src/bin.ts build"
+
+[tasks."defold-typescript:watch"]
+description = "Watch and rebuild the TypeScript sources with the working-tree defold-typescript CLI"
+run = "bun ../../../packages/cli/src/bin.ts watch"
+
+[tasks."defold-typescript:setup-debug"]
+description = "Wire the lldebugger game.project dependency and entry-script bootstrap with the working-tree defold-typescript CLI"
+run = "bun ../../../packages/cli/src/bin.ts setup-debug"
