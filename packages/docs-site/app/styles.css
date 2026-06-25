@@ -321,6 +321,30 @@
     color: inherit;
   }
 
+  /* A `title="src/board.ts"` fence renders a filename chip flush atop the block:
+     the figure owns the vertical rhythm and the pre drops its top radius/margin
+     so the two read as one unit. Mirrored in critical.css. */
+  .prose .code-block {
+    margin: 1.2em 0;
+  }
+
+  .prose .code-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    padding: 8px 16px;
+  }
+
+  .prose .code-block pre {
+    margin: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
   .prose ul,
   .prose ol {
     padding-left: 1.4em;
