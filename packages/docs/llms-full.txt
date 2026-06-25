@@ -3219,14 +3219,18 @@ Create an empty folder named `tetris`, then open it in VS Code with **File → O
 In VS Code, open **Terminal → New Terminal** and run:
 
 ```bash
-# scaffold into the current folder
 bunx @defold-typescript/cli@latest init .
+```
 
-# start the watcher — recompiles .ts → .lua on save
+> This scaffolds a new Defold project into the current folder — the same as creating one from the Defold start screen. Prefer to start in Defold? Create the project there first, then run the same `init .` inside it: `init` detects the existing `game.project` and just adds the TypeScript surface, leaving your scene untouched.
+
+Now start the **watcher** that automatically converts our `.ts` files.
+
+```bash
 bunx @defold-typescript/cli watch
 ```
 
-> Leave `watch` running. It keeps `.lua` outputs beside your `.ts`; Defold only sees those outputs.
+> Leave `watch` running. On every save it regenerates each `.ts` file's output beside the source — `.ts.script`, `.ts.gui_script`, or a plain `.lua` module — and Defold builds and runs those generated files, never your `.ts`.
 
 Now open the project in Defold too: **File → Open Project…** (or the start screen) → **Open From Disk** → `tetris/game.project`.
 
@@ -3236,15 +3240,19 @@ Now open the project in Defold too: **File → Open Project…** (or the start s
 
 ```text
 tetris/
-├─ game.project          # Defold project settings
-├─ main/main.collection  # boot scene init writes
-├─ src/main.ts           # sample script — you replace it in Step 05
-├─ tsconfig.json
-├─ package.json
-├─ mise.toml
-├─ biome.json
+├─ .vscode/              # VS Code editor settings, snippets, debug launcher
+├─ input/
+│  └─ game.input_binding # empty binding init writes; you add triggers in Step 02
+├─ main/
+│  └─ main.collection    # boot scene init writes
+├─ src/
+│  └─ main.ts            # sample script — you replace it in Step 05
 ├─ .gitignore
-└─ .vscode/              # editor settings, snippets, debug launcher
+├─ biome.json
+├─ game.project          # Defold project settings
+├─ mise.toml
+├─ package.json
+└─ tsconfig.json
 ```
 
 In Step 05 you replace `src/main.ts` with `src/board.ts`, and `watch` swaps the generated `src/main.ts.script` for `src/board.ts.gui_script`. You edit `.ts`; Defold runs the generated files.
@@ -3253,18 +3261,18 @@ In Step 05 you replace `src/main.ts` with `src/board.ts`, and `watch` swaps the 
 
 Tetris needs five keys. Defold maps hardware keys to named **actions** through an input binding, and your script listens for those action names. Set this up first — it is pure editor work, and the script in Step 05 expects the names to exist.
 
-1. In the **Assets** pane, right-click the project root → **New… → Folder**, name it `input` (if it does not exist). Right-click `input` → **New… → Input Binding File**, name it **game.input_binding**.
-2. Open it and add five **Key Triggers**:
+`init` already scaffolded an empty `input/game.input_binding` and pointed `game.project` at it, so you only need to fill in the triggers.
 
-| Input       | Action      |
-| ----------- | ----------- |
-| `KEY_LEFT`  | `left`      |
-| `KEY_RIGHT` | `right`     |
-| `KEY_DOWN`  | `soft_drop` |
-| `KEY_UP`    | `rotate`    |
-| `KEY_SPACE` | `hard_drop` |
+1. In the **Assets** pane, open `input/game.input_binding`.
+2. Add five **Key Triggers**:
 
-3. Open **game.project → Input → Game Binding** and point it at `/input/game.input_binding`.
+| Input   | (Internal value) | Action      |
+| ------- | ---------------- | ----------- |
+| `Left`  | `KEY_LEFT`       | `left`      |
+| `Right` | `KEY_RIGHT`      | `right`     |
+| `Down`  | `KEY_DOWN`       | `soft_drop` |
+| `Up`    | `KEY_UP`         | `rotate`    |
+| `Space` | `KEY_SPACE`      | `hard_drop` |
 
 The script hashes these same names (`hash("left")`, and so on) to recognize each key. Bind them now and the script just works when you attach it.
 
