@@ -6,7 +6,7 @@ toc-title: Build Tetris
 > [!NOTE]
 > **Prereqs** Defold basics; [Defold](https://defold.com/download/), [Bun](https://bun.sh), and an editor such as [VS Code](https://code.visualstudio.com/).
 
-> Scaffold, wire the Defold scene, and write TypeScript that compiles to Lua. Full copy: `docs/examples/tetris-tutorial/`.
+> Scaffold, wire the Defold scene, and write TypeScript that compiles to Lua. Final result: [`docs/examples/tetris-tutorial/`](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/tetris-tutorial).
 
 ![Finished Tetris board](img/tetris-tutorial.png#max-width=200)
 
