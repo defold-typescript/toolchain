@@ -50,7 +50,7 @@ cd my-game
 bun install
 ```
 
-`init` writes a minimal Defold project (`game.project`, `main/main.collection`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
+`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
 
 Run `bun install` once after `init`. The scaffold only declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold

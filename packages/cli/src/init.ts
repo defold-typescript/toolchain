@@ -306,6 +306,10 @@ embedded_instances {
 }
 `;
 
+// Empty binding (zero triggers): the starter src/main.ts reads no input; it
+// exists only so the default game_binding reference resolves at build time.
+const GAME_INPUT_BINDING_CONTENT = "\n";
+
 interface PackageJson {
   name?: string;
   version?: string;
@@ -709,13 +713,19 @@ export function runNewProjectInit(
 
   writeFileSync(
     path.join(cwd, "game.project"),
-    `[project]\ntitle = ${path.basename(cwd)}\nmain_collection = /main/main.collectionc\n`,
+    `[project]\ntitle = ${path.basename(cwd)}\n\n` +
+      `[bootstrap]\nmain_collection = /main/main.collectionc\n\n` +
+      `[input]\ngame_binding = /input/game.input_bindingc\n`,
   );
   written.push("game.project");
 
   mkdirSync(path.join(cwd, "main"), { recursive: true });
   writeFileSync(path.join(cwd, "main", "main.collection"), MAIN_COLLECTION_CONTENT);
   written.push("main/main.collection");
+
+  mkdirSync(path.join(cwd, "input"), { recursive: true });
+  writeFileSync(path.join(cwd, "input", "game.input_binding"), GAME_INPUT_BINDING_CONTENT);
+  written.push("input/game.input_binding");
 
   writeTsSurface(cwd, written, force, mainTs);
 

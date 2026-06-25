@@ -470,6 +470,7 @@ describe("runInit (new-project mode)", () => {
   const NEW_PROJECT_FILES = [
     "game.project",
     "main/main.collection",
+    "input/game.input_binding",
     "src/main.ts",
     "tsconfig.json",
     "package.json",
@@ -505,12 +506,47 @@ describe("runInit (new-project mode)", () => {
     }
   });
 
-  test("emitted game.project has [project], title, and main_collection", () => {
+  const gameProjectSection = (content: string, name: string): string => {
+    const start = content.indexOf(`[${name}]`);
+    if (start === -1) return "";
+    const rest = content.slice(start + name.length + 2);
+    const nextHeader = rest.search(/\n\[/);
+    return nextHeader === -1 ? rest : rest.slice(0, nextHeader);
+  };
+
+  test("emitted game.project has [project] and title", () => {
     runInit({ cwd });
     const content = readFileSync(path.join(cwd, "game.project"), "utf8");
     expect(content).toMatch(/\[project\]/);
     expect(content).toMatch(new RegExp(`title\\s*=\\s*${path.basename(cwd)}`));
-    expect(content).toMatch(/main_collection\s*=\s*\/main\/main\.collectionc/);
+  });
+
+  test("game.project puts main_collection under [bootstrap], not [project]", () => {
+    runInit({ cwd });
+    const content = readFileSync(path.join(cwd, "game.project"), "utf8");
+    expect(content).toMatch(/\[bootstrap\]/);
+    expect(gameProjectSection(content, "bootstrap")).toMatch(
+      /main_collection\s*=\s*\/main\/main\.collectionc/,
+    );
+    expect(gameProjectSection(content, "project")).not.toContain("main_collection");
+  });
+
+  test("game.project declares the input binding under [input]", () => {
+    runInit({ cwd });
+    const content = readFileSync(path.join(cwd, "game.project"), "utf8");
+    expect(content).toMatch(/\[input\]/);
+    expect(gameProjectSection(content, "input")).toMatch(
+      /game_binding\s*=\s*\/input\/game\.input_bindingc/,
+    );
+  });
+
+  test("scaffolds input/game.input_binding as a valid empty binding", () => {
+    const result = runInit({ cwd });
+    expect(result.written).toContain("input/game.input_binding");
+    const bindingPath = path.join(cwd, "input", "game.input_binding");
+    expect(existsSync(bindingPath)).toBe(true);
+    const content = readFileSync(bindingPath, "utf8");
+    expect(content).not.toContain("key_trigger");
   });
 
   test("emitted main/main.collection points at the TypeScript build artifact only", () => {
