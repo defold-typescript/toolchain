@@ -1,0 +1,26 @@
+[project]
+title = Tetris
+dependencies#0 = https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip
+
+[bootstrap]
+main_collection = /main/main.collectionc
+
+[input]
+game_binding = /input/game.input_bindingc
+use_accelerometer = 0
+
+[display]
+width = 400
+height = 720
+vsync = 0
+update_frequency = 60
+high_dpi = 1
+
+[script]
+shared_state = 1
+
+[graphics]
+max_debug_vertices = 50000
+
+[html5]
+scale_mode = stretch

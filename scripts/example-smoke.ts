@@ -21,6 +21,12 @@ import { buildUpdateSteps, EXAMPLE_DIR, preserveExampleIdentity } from "./exampl
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
+// Every checked-in example the smoke run converts/builds/type-checks against the
+// working-tree library. `EXAMPLE_DIR` is the platformer; the tetris tutorial
+// example is the same paths-based consumer shape, so it rides the identical
+// sequence.
+export const SMOKE_EXAMPLES = [EXAMPLE_DIR, "docs/examples/tetris-tutorial"];
+
 function run(step: string[]): boolean {
   process.stdout.write(`$ ${step.join(" ")}\n`);
   const proc = Bun.spawnSync(step, { cwd: REPO_ROOT, stdout: "inherit", stderr: "inherit" });
@@ -65,18 +71,25 @@ export function runSmokeSequence(opts: {
 
 function main(): void {
   process.stdout.write(
-    "example:smoke — convert + verify the platformer against the working-tree library\n",
+    "example:smoke — convert + verify the checked-in examples against the working-tree library\n",
   );
-  const allOk = runSmokeSequence({
-    exampleDir: EXAMPLE_DIR,
-    binPath: "packages/cli/src/bin.ts",
-    run: (step) => {
-      const ok = run(step);
-      process.stdout.write(`${ok ? "PASS" : "FAIL"}  ${step.join(" ")}\n`);
-      return ok;
-    },
-    restore: preserveExampleIdentity,
-  });
+  let allOk = true;
+  for (const exampleDir of SMOKE_EXAMPLES) {
+    process.stdout.write(`\n# ${exampleDir}\n`);
+    const ok = runSmokeSequence({
+      exampleDir,
+      binPath: "packages/cli/src/bin.ts",
+      run: (step) => {
+        const stepOk = run(step);
+        process.stdout.write(`${stepOk ? "PASS" : "FAIL"}  ${step.join(" ")}\n`);
+        return stepOk;
+      },
+      restore: () => preserveExampleIdentity(exampleDir),
+    });
+    if (!ok) {
+      allOk = false;
+    }
+  }
   if (!allOk) {
     process.exit(1);
   }
