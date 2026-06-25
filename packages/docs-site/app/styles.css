@@ -321,6 +321,30 @@
     color: inherit;
   }
 
+  /* A `title="src/board.ts"` fence renders a filename chip flush atop the block:
+     the figure owns the vertical rhythm and the pre drops its top radius/margin
+     so the two read as one unit. Mirrored in critical.css. */
+  .prose .code-block {
+    margin: 1.2em 0;
+  }
+
+  .prose .code-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    padding: 8px 16px;
+  }
+
+  .prose .code-block pre {
+    margin: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
   .prose ul,
   .prose ol {
     padding-left: 1.4em;
@@ -353,7 +377,7 @@
   }
 
   .prose blockquote {
-    margin: 0;
+    margin: 0 0 1.4em;
     padding: 0.4em 1em;
     border-left: 3px solid var(--color-border-strong);
     color: var(--color-text-muted);
@@ -453,6 +477,7 @@
 
   .prose img {
     max-width: 100%;
+    margin-top: 0.75rem;
     border-radius: 8px;
   }
 
@@ -464,8 +489,9 @@
   .prose img[src*="shields.io"] {
     display: inline-block;
     vertical-align: middle;
-    border-radius: 3px;
+    margin-top: 0;
     margin-right: 0.25rem;
+    border-radius: 3px;
   }
 
   /* Badge links are chips, not prose links — drop the `.prose a` underline.
