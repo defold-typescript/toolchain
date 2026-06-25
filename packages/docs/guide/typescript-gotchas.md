@@ -21,6 +21,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`on_message` ids are hashes, not strings](#on_message-ids-are-hashes-not-strings) — compare `message_id` against a `hash("…")` constant; a string literal never matches at runtime.
 - [`window.set_listener` hands `event` and `data` separately](#windowset_listener-hands-event-and-data-as-separate-params) — TS can't auto-narrow `data` from an `event` check; use the `isWindowEvent` guard.
 - [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
+- [`===` and `==` are the same Lua](#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard) — both lower to a non-coercing Lua `==`; `==` is not JS loose equality here, and the real equality footgun is `if (cell)`.
 - [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
@@ -232,6 +233,24 @@ function present(x: unknown): boolean {
 **Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
 
 **How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if TSTL ever distinguished them, the gate would fail.
+
+## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
+
+**Symptom.** The linter forbids `==`, so you see `===` everywhere and assume `==` would behave like JavaScript loose equality — coercing its operands before comparing. In this toolchain it does not: the two operators are indistinguishable in the output.
+
+```ts
+function isEmpty(cell: number): boolean {
+  const strict = cell === 0;   // → `cell == 0`
+  const loose = cell == 0;     // → `cell == 0` (byte-identical)
+  return strict || loose;
+}
+```
+
+**Why.** TypeScriptToLua emits Lua `==` for **both** operators and never inserts a coercion helper, and Lua `==` is already non-coercing. The one runtime distinction JavaScript draws between the two — loose equality's coercion, including `== null` matching both `null` and `undefined` — is moot here as well, because `null` and `undefined` both collapse to `nil` (see [`null`, `undefined`, and `== null` all collapse to `nil`](#null-undefined-and--null-all-collapse-to-nil)). So `===` buys no runtime safety the `==` form lacks; strictness is a source convention, not a guard. Contrast `if (x)` truthiness (see [`if (x)` truthiness differs](#if-x-truthiness-differs--0-and--are-truthy-in-lua)), which *is* a real change of meaning crossing into Lua.
+
+**Typed alternative.** Keep `===`. Biome's `noDoubleEquals` exists to stop JavaScript's implicit coercion — a runtime this code never reaches — so here the rule is *not* the coercion guard it is in JavaScript. It earns its keep for two other reasons: it keeps the source consistent (a stray `==` makes a reader wonder whether loose equality was intentional), and its `== null` exemption preserves the one genuinely useful loose form — `x == null` narrows out both `null` and `undefined` in TypeScript's type-checker, a *compile-time* distinction even though the emitted Lua is identical. So treat `===` as a convention, not a correctness guard. The real equality footgun is never `==` versus `===`; it is `if (cell)`, which is truthy for `0` once it runs as Lua.
+
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` transpiles `cell === 0` and `cell == 0` in one snippet and asserts both lower to the same `cell == 0` — the loose form gets no coercion helper. If TSTL ever started coercing `==`, the two lines would diverge and the gate would fail.
 
 ## `as` is a compile-time assertion, not a runtime check
 

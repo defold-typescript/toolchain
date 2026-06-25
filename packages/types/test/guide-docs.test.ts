@@ -227,6 +227,16 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("## Some slots are `unknown` on purpose — the `any` wildcard");
   });
 
+  test("typescript-gotchas.md states `===`/`==` lower identically and links it from the digest", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain(
+      "## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard",
+    );
+    expect(body).toContain(
+      "[`===` and `==` are the same Lua](#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard)",
+    );
+  });
+
   test("docs/guide/typescript-vs-lua.md exists with its section markers", async () => {
     const f = Bun.file(resolve(GUIDE, "typescript-vs-lua.md"));
     expect(await f.exists()).toBe(true);
@@ -731,6 +741,16 @@ describe("docs/guide/tetris-tutorial.md", () => {
   test("carries the rotation rule anchor and the 0-is-truthy tripwire text", async () => {
     const body = await readGuide("tetris-tutorial.md");
     expect(body).toContain("[-r, c]");
+    expect(body).toContain("=== 0");
+    expect(body).toContain("`0` is truthy in Lua");
+  });
+
+  test("the equality tripwire links the `===`/`==` gotcha and centers on truthiness", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain(
+      "./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard",
+    );
+    // the reframed tripwire still pins the original strings
     expect(body).toContain("=== 0");
     expect(body).toContain("`0` is truthy in Lua");
   });
