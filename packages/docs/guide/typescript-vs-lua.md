@@ -21,7 +21,7 @@ cheat-sheet depth and links down.
 | Block comment | `--[[ … ]]` | `/* … */` |
 | Bind a local | `local x = 1` | `const x = 1` (never reassigned), `let x = 1` (reassigned) |
 | Not equal | `a ~= b` | `a !== b` |
-| Equal | `a == b` | `a === b` (use the strict triple form) |
+| Equal | `a == b` | `a === b` or `a == b` — identical Lua (see the [gotchas page](./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard)) |
 | Logical and / or / not | `and` / `or` / `not` | `&&` / `\|\|` / `!` |
 | String join | `"a" .. b` | `"a" + b`, or a template literal `` `a${b}` `` |
 | Length | `#t` | `t.length` |

@@ -236,7 +236,7 @@ function present(x: unknown): boolean {
 
 ## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
 
-**Symptom.** The linter forbids `==`, so you see `===` everywhere and assume `==` would behave like JavaScript loose equality — coercing its operands before comparing. In this toolchain it does not: the two operators are indistinguishable in the output.
+**Symptom.** Coming from JavaScript you might assume `==` performs loose equality — coercing its operands before comparing — and reach for `===` to avoid it. In this toolchain the two operators are indistinguishable in the output, so the coercion `===` guards against never happens.
 
 ```ts
 function isEmpty(cell: number): boolean {
@@ -248,7 +248,7 @@ function isEmpty(cell: number): boolean {
 
 **Why.** TypeScriptToLua emits Lua `==` for **both** operators and never inserts a coercion helper, and Lua `==` is already non-coercing. The one runtime distinction JavaScript draws between the two — loose equality's coercion, including `== null` matching both `null` and `undefined` — is moot here as well, because `null` and `undefined` both collapse to `nil` (see [`null`, `undefined`, and `== null` all collapse to `nil`](#null-undefined-and--null-all-collapse-to-nil)). So `===` buys no runtime safety the `==` form lacks; strictness is a source convention, not a guard. Contrast `if (x)` truthiness (see [`if (x)` truthiness differs](#if-x-truthiness-differs--0-and--are-truthy-in-lua)), which *is* a real change of meaning crossing into Lua.
 
-**Typed alternative.** Keep `===`. Biome's `noDoubleEquals` exists to stop JavaScript's implicit coercion — a runtime this code never reaches — so here the rule is *not* the coercion guard it is in JavaScript. It earns its keep for two other reasons: it keeps the source consistent (a stray `==` makes a reader wonder whether loose equality was intentional), and its `== null` exemption preserves the one genuinely useful loose form — `x == null` narrows out both `null` and `undefined` in TypeScript's type-checker, a *compile-time* distinction even though the emitted Lua is identical. So treat `===` as a convention, not a correctness guard. The real equality footgun is never `==` versus `===`; it is `if (cell)`, which is truthy for `0` once it runs as Lua.
+**Typed alternative.** The scaffolded `biome.json` ships with `noDoubleEquals` off precisely because the operators are identical in the Lua output, so use whichever reads best — `===` is no longer enforced for consumers. (Our repo keeps the rule on as house style; its `== null` exemption also preserves one genuinely useful loose form — `x == null` narrows out both `null` and `undefined` in TypeScript's type-checker, a *compile-time* distinction even though the emitted Lua is identical.) The real equality footgun is never `==` versus `===`; it is `if (cell)`, which is truthy for `0` once it runs as Lua.
 
 **How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` transpiles `cell === 0` and `cell == 0` in one snippet and asserts both lower to the same `cell == 0` — the loose form gets no coercion helper. If TSTL ever started coercing `==`, the two lines would diverge and the gate would fail.
 
