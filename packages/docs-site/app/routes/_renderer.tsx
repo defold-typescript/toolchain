@@ -430,7 +430,7 @@ function CategoryLink({ category, active }: { category: NavCategory; active: boo
       href={withBase(href)}
       aria-current={active ? "page" : undefined}
       class={
-        "-mb-px inline-flex h-14 items-center border-b-2 px-3 text-text-muted transition hover:text-text " +
+        "-mb-px inline-flex h-14 shrink-0 items-center whitespace-nowrap border-b-2 px-3 text-text-muted transition hover:text-text " +
         (active ? "border-accent text-text" : "border-transparent")
       }
     >
