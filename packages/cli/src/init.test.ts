@@ -697,6 +697,16 @@ describe("runInit (biome scaffold)", () => {
     expect(biome.linter).toBeDefined();
   });
 
+  test("scaffolded biome.json keeps recommended on but turns noDoubleEquals off", () => {
+    runInit({ cwd });
+
+    const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
+      linter: { rules: { recommended: boolean; suspicious: { noDoubleEquals: string } } };
+    };
+    expect(biome.linter.rules.recommended).toBe(true);
+    expect(biome.linter.rules.suspicious.noDoubleEquals).toBe("off");
+  });
+
   test("add-TS mode writes a biome.json and lists it", () => {
     touch("game.project", "[project]\n");
 

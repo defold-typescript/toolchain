@@ -237,6 +237,12 @@ describe("docs/guide scaffold", () => {
     );
   });
 
+  test("typescript-gotchas.md states the scaffold ships noDoubleEquals off and leaves the choice open", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain("scaffolded `biome.json` ships with `noDoubleEquals` off");
+    expect(body).toContain("use whichever reads best");
+  });
+
   test("docs/guide/typescript-vs-lua.md exists with its section markers", async () => {
     const f = Bun.file(resolve(GUIDE, "typescript-vs-lua.md"));
     expect(await f.exists()).toBe(true);
@@ -251,6 +257,12 @@ describe("docs/guide scaffold", () => {
     const body = await readGuide("typescript-vs-lua.md");
     expect(body).toContain("~=");
     expect(body).toContain("!==");
+  });
+
+  test("docs/guide/typescript-vs-lua.md Equal row no longer prescribes the strict triple form", async () => {
+    const body = await readGuide("typescript-vs-lua.md");
+    expect(body).not.toContain("use the strict triple form");
+    expect(body).toContain("`a === b` or `a == b` — identical Lua");
   });
 
   test("docs/guide/README.md links the TypeScript-vs-Lua cheat sheet", async () => {
