@@ -786,20 +786,20 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(treeMatch).not.toBeNull();
     const tree = treeMatch?.[1] ?? "";
     for (const banned of [
-      "main/board.gui",
-      "main/board.go",
-      "main/hud.go",
-      "main/hud.gui",
-      "src/board.ts",
-      "src/pieces.ts",
-      "src/grid.ts",
-      "src/hud.ts",
-      "input/game.input_binding",
+      "board.gui",
+      "board.go",
+      "hud.go",
+      "hud.gui",
+      "board.ts",
+      "pieces.ts",
+      "grid.ts",
+      "hud.ts",
     ]) {
       expect(tree).not.toContain(banned);
     }
-    expect(tree).toContain("src/main.ts");
-    expect(tree).toContain("main/main.collection");
+    expect(tree).toContain("main.ts");
+    expect(tree).toContain("main.collection");
+    expect(tree).toContain("game.input_binding");
     expect(tree).toContain("game.project");
   });
 
