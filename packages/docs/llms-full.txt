@@ -3195,7 +3195,7 @@ A complete, from-scratch walkthrough: scaffold the project, wire the scene in th
 
 A complete, buildable version of everything below lives in the repository at `docs/examples/tetris-tutorial/` — the full, compiling source you can clone, `watch`, and build.
 
-Tetris is the perfect second Defold project. It has exactly one moving thing, a fixed-step clock, a tiny rules engine, and no physics — so every concept you learn here is the concept, not a workaround. We render the whole board with a single factory, drive it on a fixed timestep, and lean on the type system to catch the mistakes that silently break a Lua build.
+Tetris is the perfect second Defold project. It has exactly one moving thing, a fixed-step clock, a tiny rules engine, and no physics — so every concept you learn here is the concept, not a workaround. We build the whole board from code-generated GUI nodes (no sprites placed in the editor), drive it on a fixed timestep, and lean on the type system to catch the mistakes that silently break a Lua build.
 
 | Piece | Index | Color |
 | ----- | ----- | ----- |
@@ -3232,46 +3232,41 @@ tetris/
 ├─ game.project        # Defold project settings
 ├─ main/
 │  ├─ main.collection  # the scene you wire in the editor
-│  ├─ block.go         # one cell prototype (spawned by factory)
-│  └─ board.go         # holds the board script + factory
+│  ├─ board.gui        # empty GUI scene — the script fills it
+│  └─ board.go         # holds the board GUI + script
 └─ src/
-   ├─ board.ts         # the game — compiles to board.ts.script
+   ├─ board.ts         # the game — compiles to board.ts.gui_script
    ├─ pieces.ts        # tetromino shape data (shared module)
    └─ grid.ts          # pure board logic (shared module)
 ```
 
 ## 02 — Build the scene in the Editor
 
-This is the part tutorials usually skip. Defold is editor-first: scripts attach to components, components attach to game objects, game objects live in collections. Here's exactly what to click.
+This is the part tutorials usually skip — and here it's tiny, because the board draws itself from code. Defold is editor-first (scripts attach to components, components to game objects, game objects to collections), yet the playfield has **no hand-placed nodes**: the script generates every cell at runtime (Step 5). You wire up an empty GUI scene and a game object, and that's it — no sprite, no atlas, no factory.
 
-### 2a — Create the block prototype
+### 2a — Create the board GUI scene
 
-Every cell on the board is an instance of one tiny game object. We build that prototype once.
+The board is a **GUI scene** whose nodes are all created from code, so the scene file itself is nearly empty.
 
-1. In the **Assets** pane (left), right-click the `main` folder → **New… → Game Object File**. Name it **block.go**.
-2. Double-click **block.go** to open it. In the **Outline** pane, right-click the root → **Add Component → Sprite**.
-3. Select the new **Sprite**. In **Properties**, set **Image** to an atlas or tilesource containing a single white square. (Make a 1×1 white PNG, drag it in as an atlas with one animation named `block`, then set the sprite's **Default Animation** to `block`.)
-4. We'll tint each block per-piece from code, so the white square is intentional — white × color = the piece color.
+1. In the **Assets** pane, right-click the `main` folder → **New… → Gui File**. Name it **board.gui**.
+2. Open **board.gui**. Select the root **Gui** node; in **Properties** set its **Script** to `/src/board.ts.gui_script` (the watcher emits it from `src/board.ts` once you save it in Step 3). Leave the node list empty — `board.ts` builds the grid at startup.
+3. Raise **Max Nodes** to at least `600`: the board creates `COLS × ROWS × 2` = 400 box nodes (a fill plus a border each), over the default budget of 512.
 
-> [!NOTE]
-> **Why white** A sprite's `tint` multiplies the texture. Start from white and a single sprite can become any of the seven piece colors at runtime — no seven separate images.
+> [!WARNING]
+> **Order** **The script must exist before you can attach it.** Save `src/board.ts` at least once (Step 3) so `watch` emits `board.ts.gui_script`, then set it as the scene's **Script**. If the picker doesn't show it, the watcher hasn't run yet.
 
 ### 2b — Create the board object
 
 1. Right-click `main` → **New… → Game Object File**, name it **board.go**. Open it.
-2. In the **Outline**, right-click root → **Add Component → Factory**. Select it, and in **Properties** set **Prototype** to `/main/block.go`. Give the factory the **Id** `blockfactory`.
-3. Right-click root again → **Add Component File**. We'll point this at the compiled script in the next step — for now, note that the watcher will produce `/src/board.ts.script`. Select that file. Give the component the **Id** `board`.
-
-> [!WARNING]
-> **Order** **The component file must exist before you can attach it.** Save `src/board.ts` at least once (Step 3) so `watch` emits `board.ts.script`, then attach it here. If the picker doesn't show it, the watcher hasn't run yet.
+2. In the **Outline**, right-click root → **Add Component File** → choose **board.gui**. Give the component the **Id** `board`. (A `.gui` is a component; the game object just hosts it.)
 
 ### 2c — Assemble the scene
 
-1. Open **main.collection**. Right-click root → **Add Game Object File** → choose **board.go**. This places one board instance in the scene.
-2. Select it and set its **Id** to `board` and position to a comfortable spot (e.g. `x 280, y 60`) so the playfield sits on screen.
+1. Open **main.collection**. Right-click root → **Add Game Object File** → choose **board.go**. Set its **Id** to `board`. Its position doesn't matter — GUI nodes live in screen space, so the script centers the grid itself (Step 5).
+2. Add the HUD the same way (Step 9): a game object **Id** `hud` hosting a `hud.gui` scene driven by `hud.ts.gui_script`. The board posts to `/hud#hud`.
 3. Open **game.project** → **Bootstrap** and confirm **Main Collection** is `/main/main.collection`.
 
-That's the entire scene: one board object, holding a factory that stamps out block instances, driven by one script. No per-cell objects placed by hand — code spawns all 200 of them.
+That's the entire scene: two game objects, each hosting a GUI scene — one for the board, one for the HUD. Not a single cell is placed by hand; the script draws all 200.
 
 ## 03 — Model the grid
 
@@ -3408,55 +3403,77 @@ export function nextPieceIndex(): number {
 > [!NOTE]
 > **Tripwire** Use Defold's `math.random`, not `Math.random()` — the JS standard library mostly doesn't survive the transpile, so reach for the engine's `math`, `os`, and `json` modules. Also note `cellsAt`: it's the bridge between the abstract piece data and a concrete board position, and every movement check in Step 7 calls it.
 
-## 05 — Render the board with one factory
+## 05 — Render the board with generated GUI nodes
 
-Here's the central trick: we don't create a sprite per cell by hand. The factory stamps out `COLS × ROWS` block instances once at startup; from then on we only change their **tint** and **visibility** to reflect the model.
+Here's the central trick: we don't place a single node in the editor. At startup the script generates the whole `COLS × ROWS` grid with `gui.new_box_node`, then each frame it only changes each node's **color** to reflect the model. Each cell is two stacked box nodes — a `border` box with a smaller `fill` box on top — so `GAP` (space between cells) and `BORDER` (frame thickness) are single variables you tune from one place.
 
 **`src/board.ts`** · excerpt
 
 ```ts
-import { defineScript, type Hash } from "@defold-typescript/types";
 import { COLS, ROWS } from "./grid";
 
-const CELL = 28; // pixels per block
+const CELL = 28; // cell pitch in pixels
+const GAP = 2; // space between cells — tune the grid look from one place
+const BORDER = 2; // thickness of the frame drawn around each filled cell
 
-// Seven tints, indexed by Cell color (1..7). Index 0 unused.
+// Bottom-left of the board in GUI (screen) space, centering 280×560 in 400×720.
+const ORIGIN_X = (400 - COLS * CELL) / 2;
+const ORIGIN_Y = (720 - ROWS * CELL) / 2;
+
+// Fill colors by Cell value (1..7); index 0 is transparent (empty).
 const TINTS = [
-  vmath.vector4(0,0,0,0),          // 0 → transparent (empty)
-  vmath.vector4(0.18,0.83,0.83,1),   // 1 I cyan
-  vmath.vector4(0.97,0.82,0.22,1),   // 2 O yellow
-  vmath.vector4(0.69,0.29,0.94,1),   // 3 T purple
-  vmath.vector4(0.27,0.82,0.38,1),   // 4 S green
-  vmath.vector4(0.94,0.26,0.35,1),   // 5 Z red
-  vmath.vector4(0.31,0.48,0.94,1),   // 6 J blue
-  vmath.vector4(0.94,0.56,0.23,1),   // 7 L orange
+  vmath.vector4(0, 0, 0, 0),
+  vmath.vector4(0.18, 0.83, 0.83, 1), // I
+  vmath.vector4(0.97, 0.82, 0.22, 1), // O
+  vmath.vector4(0.69, 0.29, 0.94, 1), // T
+  vmath.vector4(0.27, 0.82, 0.38, 1), // S
+  vmath.vector4(0.94, 0.26, 0.35, 1), // Z
+  vmath.vector4(0.31, 0.48, 0.94, 1), // J
+  vmath.vector4(0.94, 0.56, 0.23, 1), // L
 ];
+// A darker shade of each fill, drawn as the cell border.
+const BORDERS = TINTS.map((t) => vmath.vector4(t.x * 0.45, t.y * 0.45, t.z * 0.45, t.w));
+// Empty cells stay visible as a dim well with a faint grid line.
+const EMPTY_FILL = vmath.vector4(0.1, 0.11, 0.13, 1);
+const EMPTY_BORDER = vmath.vector4(0.18, 0.19, 0.22, 1);
 
-function spawnCells(): Hash[][] {
-  const ids: Hash[][] = [];
+type GuiNode = Opaque<"node">;
+
+// Generate the grid as GUI box nodes — nothing is placed in the editor.
+function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
+  const fills: GuiNode[][] = [];
+  const borders: GuiNode[][] = [];
+  const outer = CELL - GAP; // border box size (leaves the gap between cells)
+  const inner = outer - 2 * BORDER; // fill box size (leaves the border)
   for (let r = 0; r < ROWS; r++) {
-    const row: Hash[] = [];
+    const frow: GuiNode[] = [];
+    const brow: GuiNode[] = [];
     for (let c = 0; c < COLS; c++) {
-      const pos = vmath.vector3(c * CELL, (ROWS - 1 - r) * CELL, 0);
-      const id = factory.create("#blockfactory", pos);
-      row.push(id);
+      const pos = vmath.vector3(
+        ORIGIN_X + c * CELL + CELL / 2,
+        ORIGIN_Y + (ROWS - 1 - r) * CELL + CELL / 2,
+        0,
+      );
+      brow.push(gui.new_box_node(pos, vmath.vector3(outer, outer, 0)));
+      frow.push(gui.new_box_node(pos, vmath.vector3(inner, inner, 0)));
     }
-    ids.push(row);
+    borders.push(brow);
+    fills.push(frow);
   }
-  return ids;
+  return { fills, borders };
 }
 
-// Paint one cell: set its sprite tint from the model value.
-function paint(id: Hash, value: number) {
-  const url = msg.url(undefined, id, "sprite");
-  go.set(url, "tint", TINTS[value]);
+// Paint one cell: recolor its fill and border from the model value.
+function paint(self, r: number, c: number, value: number) {
+  gui.set_color(self.fills[r][c], value === 0 ? EMPTY_FILL : TINTS[value]);
+  gui.set_color(self.borders[r][c], value === 0 ? EMPTY_BORDER : BORDERS[value]);
 }
 ```
 
-The model-to-screen mapping is the whole renderer: walk the grid each frame, `paint` each cell with its color's tint, and an empty cell (`0`) paints transparent. Row `0` is the top of the board, so we flip `r` against `ROWS` when computing the y-position, since Defold's y-axis points up.
+The whole renderer is "model → colors": each frame, walk the grid and set every cell's fill and border color. Empty cells (`0`) paint a dim well color (not transparent), so the playfield grid is always visible; filled cells get their piece color plus a darker border. Row `0` is the top of the board, so we flip `r` against `ROWS` for the y-position, since GUI's y-axis points up.
 
 > [!NOTE]
-> **Why one factory** 200 sprites sounds heavy but is trivial for Defold, and tinting an existing sprite is far cheaper than creating/deleting objects every time a piece moves. Spawn once, mutate forever.
+> **Why generate, not place** Nodes created from code (`gui.new_box_node`) need no editor work and scale with `COLS`/`ROWS` — change the board size and the grid follows. Recoloring an existing node every frame is far cheaper than creating and deleting nodes as pieces move: build once, recolor forever. The only editor knob is the scene's **Max Nodes**, which must cover `COLS × ROWS × 2` (we set 600 in Step 2).
 
 ## 06 — Gravity and the game loop
 
@@ -3465,12 +3482,13 @@ Tetris runs on a clock: every `fall` seconds, the active piece drops one row. We
 **`src/board.ts`** · the script
 
 ```ts
-export default defineScript({
+export default defineGuiScript({
   init() {
     msg.post(".", "acquire_input_focus"); // or no input fires
-    const cells = spawnCells();
+    const grid = buildGrid();
     return {
-      cells,                       // Hash[][] sprite handles
+      fills: grid.fills,           // generated GUI fill nodes
+      borders: grid.borders,       // generated GUI border nodes
       grid: emptyGrid(),
       piece: nextPieceIndex(),
       rot: 0,
@@ -3481,6 +3499,7 @@ export default defineScript({
       lines: 0,
       level: 1,
       over: false,
+      hud: false,
     };
   },
 
@@ -3491,7 +3510,7 @@ export default defineScript({
       self.timer = 0;
       stepDown(self); // move down, or lock if blocked
     }
-    redraw(self);    // model → tints, every frame
+    redraw(self);    // model → colors, every frame
   },
 
   on_input(self, action_id, action) {
@@ -3573,7 +3592,7 @@ function tryRotate(self): void {
 > [!NOTE]
 > **Wall kicks** Real Tetris uses the full SRS kick tables (five candidate offsets per rotation). The three-candidate version here — in place, one left, one right — is enough to stop a rotation jamming against a wall without the complexity. Swap in the full tables later if you want spin tricks.
 
-Because all four helpers test against the `grid.ts` model and never touch a sprite, every movement is "just data" — which is exactly why we kept that module engine-free. The renderer in Step 5 reflects the result _after_ the model changes.
+Because all four helpers test against the `grid.ts` model and never touch a GUI node, every movement is "just data" — which is exactly why we kept that module engine-free. The renderer in Step 5 reflects the result _after_ the model changes.
 
 ## 08 — Locking and line clears
 
@@ -3662,10 +3681,10 @@ function redraw(self): void {
     }
   }
 
-  // 3. Push the composed frame to the sprite tints.
+  // 3. Recolor every cell node from the composed frame.
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      paint(self.cells[r][c], frame[r][c]);
+      paint(self, r, c, frame[r][c]);
     }
   }
 }
@@ -3701,7 +3720,7 @@ function onLocked(self): void {
   // if it can't even be placed, the stack reached the top
   if (!canPlace(self)) {
     self.over = true;
-    msg.post("/hud#hud", "game_over");
+    if (self.hud) msg.post("/hud#hud", "game_over");
   }
 }
 ```
@@ -3726,7 +3745,7 @@ function hardDrop(self): void {
 
 ### The HUD: a separate GUI script
 
-Score and level live on a GUI scene, not the board. Add a **.gui** file with two text nodes (`score`, `level`) plus a hidden `gameover` node, then drive it from a `.gui_script`. Remember: a GUI script is its _own file_ with `defineGuiScript` — never two factory calls in one file.
+Score and level live on their **own** GUI scene, separate from the board's. Add a **.gui** file with two text nodes (`score`, `level`) plus a hidden `gameover` node, then drive it from a `.gui_script`. Each GUI scene gets one script file with a single `defineGuiScript` export — the board and the HUD are two such pairs.
 
 **`src/hud.ts`** · separate file
 
@@ -3734,6 +3753,11 @@ Score and level live on a GUI scene, not the board. Add a **.gui** file with two
 import { defineGuiScript } from "@defold-typescript/types/gui-script";
 
 export default defineGuiScript({
+  init() {
+    // A gui script has no go.exists, so the HUD announces itself; the board
+    // posts score/level only after this arrives.
+    msg.post("/board#board", "hud_ready");
+  },
   on_message(self, message_id, message) {
     if (isMessage(message_id, message, "set_hud")) {
       gui.set_text(gui.get_node("score"), "SCORE  " + message.score);
@@ -3745,26 +3769,29 @@ export default defineGuiScript({
 });
 ```
 
-And the board's side of the conversation — one helper that posts the current numbers. Because `msg.post` is asynchronous (delivered next frame), the HUD always shows last frame's values, which for a score display is imperceptible:
+And the board's side of the conversation — one helper that posts the current numbers, but only once the HUD has **registered** (a gui script can't call `go.exists`, so the HUD announces itself; the board records that in `on_message`). Because `msg.post` is asynchronous (delivered next frame), the HUD always shows last frame's values, which for a score display is imperceptible:
 
 **`src/board.ts`** · postHud
 
 ```ts
 function postHud(self): void {
-  msg.post("/hud#hud", "set_hud", { score: self.score, level: self.level });
+  // Only post once the HUD has registered (a gui script has no go.exists).
+  if (self.hud) {
+    msg.post("/hud#hud", "set_hud", { score: self.score, level: self.level });
+  }
 }
 // call postHud(self) once in init (after the return is built via a
 // follow-up) and again whenever score/level change.
 ```
 
 > [!NOTE]
-> **Editor step** Create the HUD object: in `main.collection`, add a **GUI** component to a new game object with **Id** `hud`, point it at your `.gui` file, and attach `hud.ts.gui_script`. Its message url becomes `/hud#hud` — exactly what the board posts to.
+> **Editor step** Create the HUD object: in `main.collection`, add a **GUI** component to a new game object with **Id** `hud`, point it at your `.gui` file, and attach `hud.ts.gui_script`. Its message url becomes `/hud#hud` — exactly what the board posts to. Because a gui script can't call `go.exists`, the HUD **registers** with the board in its own `init` (`msg.post("/board#board", "hud_ready")`) and the board posts only after that arrives — so the game runs cleanly with or without the HUD, and `msg.post` never targets a missing instance. The runnable example ships a ready-made `main/hud.gui` (the builtin `/builtins/fonts/default.font`, three text nodes `score`/`level`/`gameover`) already wired into `main.collection` — copy it as a starting point.
 
 ## 10 — Run it, then ship it
 
-With `watch` running, hit `Project → Build` (or `Cmd/Ctrl`+`B`) in the Defold editor. The engine loads `main.collection`, your board script spawns 200 blocks, and gravity starts ticking.
+With `watch` running, hit `Project → Build` (or `Cmd/Ctrl`+`B`) in the Defold editor. The engine loads `main.collection`, your board script generates the grid's 400 GUI nodes (a fill plus a border per cell), and gravity starts ticking.
 
-1. If the board is invisible, check the **block.go** sprite has a valid **Default Animation** and the factory **Prototype** points at `/main/block.go`.
+1. If the board is invisible, check `board.gui`'s **Script** is `/src/board.ts.gui_script` and its **Max Nodes** is at least `600` (too low and `gui.new_box_node` runs out partway).
 2. If keys do nothing, confirm the input bindings exist **and** the script posts `acquire_input_focus` in `init`.
 3. If cells read as occupied when empty, you've hit the `0`-is-truthy trap — find the bare `if (cell)` and make it `=== 0`.
 
@@ -3774,7 +3801,7 @@ To ship, use `Project → Bundle` for your target platform. The bundle contains 
 
 All three TypeScript files, end to end. Drop these into `src/`, wire the scene per Step 2, and you have a playable game — gravity, the seven pieces with real rotation, wall-kicks, soft and hard drop, line clears, scoring, levels, and game over.
 
-These are the buildable files from `docs/examples/tetris-tutorial/src/`, so they carry two adaptations the teaching excerpts above elided: `board.ts` declares a typed **`BoardSelf`** interface so the standalone movement and scoring helpers can annotate `self` (a bare `self` parameter is `noImplicitAny`-illegal), and the HUD imports **`defineGuiScript` from `@defold-typescript/types`** (the main entry). Nothing else differs from the walkthrough.
+These are the buildable files from `docs/examples/tetris-tutorial/src/`. The complete `board.ts` types every `self` through a named **`BoardSelf`** interface — the teaching excerpts above wrote a bare `self` for brevity, but a bare parameter is `noImplicitAny`-illegal. The HUD's `hud.ts` imports **`defineGuiScript` from `@defold-typescript/types`** (the main entry). Nothing else differs from the walkthrough.
 
 > [!NOTE]
 > **Verified** This logic was simulated through thousands of locked pieces: every rotation state is a well-formed four-cell shape, no out-of-range color ever reaches the grid, line clears drop the residual stack correctly, and a full game runs to a clean game-over. The `.gui`/`.gui_script` for the HUD is the one piece you build in the editor (Step 9).
@@ -3939,17 +3966,24 @@ export function nextPieceIndex(): number {
 
 ### `src/board.ts` — the game
 
-The script itself: rendering via the factory, all movement checked against the model, locking, scoring, drawing, and the lifecycle hooks. Everything above is consumed here.
+The script itself: the generated GUI grid, all movement checked against the model, locking, scoring, drawing, and the lifecycle hooks. Everything above is consumed here.
 
 **`src/board.ts`** · complete
 
 ```ts
-import type { Hash } from "@defold-typescript/types";
-import { defineScript } from "@defold-typescript/types";
+import { defineGuiScript } from "@defold-typescript/types";
 import { COLS, clearLines, emptyGrid, type Grid, isFree, ROWS } from "./grid";
 import { cellsAt, nextPieceIndex, PIECES } from "./pieces";
 
-const CELL = 28; // pixels per block
+const CELL = 28; // cell pitch in pixels
+const GAP = 2; // space between cells — tune the grid look from one place
+const BORDER = 2; // thickness of the frame drawn around each filled cell
+
+// Bottom-left of the COLS×ROWS board in GUI (screen) space, centering the
+// 280×560 grid in the 400×720 window (see game.project display).
+const ORIGIN_X = (400 - COLS * CELL) / 2;
+const ORIGIN_Y = (720 - ROWS * CELL) / 2;
+
 const LINE_SCORE = [0, 40, 100, 300, 1200];
 
 // Input ids, hashed once at module scope.
@@ -3959,7 +3993,7 @@ const SOFT = hash("soft_drop");
 const ROTATE = hash("rotate");
 const HARD = hash("hard_drop");
 
-// Seven tints, indexed by color (1..7); index 0 is transparent.
+// Fill colors indexed by Cell color (1..7); index 0 is transparent (empty).
 const TINTS = [
   vmath.vector4(0, 0, 0, 0),
   vmath.vector4(0.18, 0.83, 0.83, 1), // I
@@ -3970,13 +4004,19 @@ const TINTS = [
   vmath.vector4(0.31, 0.48, 0.94, 1), // J
   vmath.vector4(0.94, 0.56, 0.23, 1), // L
 ];
+// A darker shade of each fill, drawn as the cell border.
+const BORDERS = TINTS.map((t) => vmath.vector4(t.x * 0.45, t.y * 0.45, t.z * 0.45, t.w));
+// Empty cells stay visible as a dim well with a faint grid line.
+const EMPTY_FILL = vmath.vector4(0.1, 0.11, 0.13, 1);
+const EMPTY_BORDER = vmath.vector4(0.18, 0.19, 0.22, 1);
+
+type GuiNode = Opaque<"node">;
 
 // The script state, named once so the standalone movement/scoring helpers can
-// annotate `self` (a bare `self` parameter is `noImplicitAny`-illegal). `init`
-// returns exactly this shape, so `update`/`on_input` see it without a second
-// declaration.
+// annotate `self`. `init` returns exactly this shape.
 interface BoardSelf {
-  cells: Hash[][];
+  fills: GuiNode[][];
+  borders: GuiNode[][];
   grid: Grid;
   piece: number;
   rot: number;
@@ -3988,23 +4028,38 @@ interface BoardSelf {
   lines: number;
   level: number;
   over: boolean;
+  hud: boolean; // true once the HUD GUI registers (see on_message)
 }
 
-function spawnCells(): Hash[][] {
-  const ids: Hash[][] = [];
+// Generate the COLS×ROWS grid as GUI box nodes — nothing is placed in the
+// editor. Each cell is a border box with a smaller fill box on top; GAP leaves
+// space between cells and BORDER is the frame thickness.
+function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
+  const fills: GuiNode[][] = [];
+  const borders: GuiNode[][] = [];
+  const outer = CELL - GAP;
+  const inner = outer - 2 * BORDER;
   for (let r = 0; r < ROWS; r++) {
-    const row: Hash[] = [];
+    const frow: GuiNode[] = [];
+    const brow: GuiNode[] = [];
     for (let c = 0; c < COLS; c++) {
-      const pos = vmath.vector3(c * CELL, (ROWS - 1 - r) * CELL, 0);
-      row.push(factory.create("#blockfactory", pos));
+      const pos = vmath.vector3(
+        ORIGIN_X + c * CELL + CELL / 2,
+        ORIGIN_Y + (ROWS - 1 - r) * CELL + CELL / 2,
+        0,
+      );
+      brow.push(gui.new_box_node(pos, vmath.vector3(outer, outer, 0)));
+      frow.push(gui.new_box_node(pos, vmath.vector3(inner, inner, 0)));
     }
-    ids.push(row);
+    borders.push(brow);
+    fills.push(frow);
   }
-  return ids;
+  return { fills, borders };
 }
 
-function paint(id: Hash, value: number): void {
-  go.set(msg.url(msg.url().socket, id, "sprite"), "tint", TINTS[value]);
+function paint(self: BoardSelf, r: number, c: number, value: number): void {
+  gui.set_color(self.fills[r][c], value === 0 ? EMPTY_FILL : TINTS[value]);
+  gui.set_color(self.borders[r][c], value === 0 ? EMPTY_BORDER : BORDERS[value]);
 }
 
 // --- pure movement, all tested against the grid model ---
@@ -4048,7 +4103,12 @@ function lockPiece(self: BoardSelf): void {
   }
 }
 function postHud(self: BoardSelf): void {
-  msg.post("/hud#hud", "set_hud", { score: self.score, level: self.level });
+  // Only post once the HUD has registered. A gui script can't call go.exists
+  // (go.* is .script-only), and msg.post to a missing instance errors at
+  // dispatch — so the HUD announces itself in its init (see on_message below).
+  if (self.hud) {
+    msg.post("/hud#hud", "set_hud", { score: self.score, level: self.level });
+  }
 }
 function onLocked(self: BoardSelf): void {
   const n = clearLines(self.grid);
@@ -4065,7 +4125,7 @@ function onLocked(self: BoardSelf): void {
   self.py = 0;
   if (!canPlace(self)) {
     self.over = true;
-    msg.post("/hud#hud", "game_over");
+    if (self.hud) msg.post("/hud#hud", "game_over");
   }
 }
 function stepDown(self: BoardSelf): void {
@@ -4087,16 +4147,17 @@ function redraw(self: BoardSelf): void {
     }
   }
   for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) paint(self.cells[r][c], frame[r][c]);
+    for (let c = 0; c < COLS; c++) paint(self, r, c, frame[r][c]);
   }
 }
 
-export default defineScript({
+export default defineGuiScript({
   init(): BoardSelf {
     msg.post(".", "acquire_input_focus");
-    const cells = spawnCells();
+    const grid = buildGrid();
     return {
-      cells,
+      fills: grid.fills,
+      borders: grid.borders,
       grid: emptyGrid(),
       piece: nextPieceIndex(),
       rot: 0,
@@ -4108,6 +4169,7 @@ export default defineScript({
       lines: 0,
       level: 1,
       over: false,
+      hud: false,
     };
   },
   update(self, dt) {
@@ -4127,11 +4189,16 @@ export default defineScript({
     else if (action_id === ROTATE) tryRotate(self);
     else if (action_id === HARD) hardDrop(self);
   },
+  on_message(self, message_id) {
+    // The HUD announces itself once loaded; remember it so we only post when
+    // it exists (a gui script has no go.exists).
+    if (message_id === hash("hud_ready")) self.hud = true;
+  },
 });
 ```
 
 > [!NOTE]
-> **What's left to you** Three things make this fully yours: the **1×1 white sprite atlas** for `block.go`, the **input bindings** (`left`/`right`/`soft_drop`/`rotate`/`hard_drop`), and the **HUD .gui scene** with `score`, `level`, and `gameover` nodes plus `hud.ts`. Each is a Step-2-style editor task — no more TypeScript needed.
+> **What's left to you** Two editor-built pieces complete the game: the **input bindings** (`left`/`right`/`soft_drop`/`rotate`/`hard_drop`) and the **HUD .gui scene** with `score`, `level`, and `gameover` nodes driven by `hud.ts`. The playfield itself needs no art — it's generated GUI. The runnable example wires both, so you can copy them directly; each is a Step-2-style editor task, no more TypeScript needed.
 
 ## Toolchain tripwires, collected
 
@@ -4143,7 +4210,9 @@ Every TS-to-Lua sharp edge this build touches, in one place:
 | Keys do nothing | `action_id` is a hash, not a string | Pre-hash ids, compare hash-to-hash |
 | `Math.random` undefined | JS stdlib doesn't transpile | Use engine `math.random` |
 | Piece won't negate / vector errors | `-v3` infers `number` | Use `v.unm()`; arithmetic is method-form |
-| Two scripts in one file | One factory export per file | Split `.script` and `.gui_script` |
+| Two scripts in one file | One `defineScript`/`defineGuiScript` export per file | Split into separate `.ts` files |
+| `Instance '/hud' could not be found` | `msg.post` to a missing instance; errors at dispatch | Have the listener register (post to the sender), then post only after |
+| `go.*` errors in a GUI script | `go.*` is `.script`-only — gui scripts have no `go` | Use `gui.*`/`msg.*`; for optional targets, register via a message |
 | `await` hangs forever | No event loop | Bridge via `timer.delay` / the timers polyfill |
 
 ## API

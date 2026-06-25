@@ -25,16 +25,28 @@ function typecheckExampleWithoutMaterializedSurface(): { exitCode: number; outpu
 }
 
 describe("tetris example bridge", () => {
-  test("board.go runs the emitted /src/board.ts.script and instances the block factory", () => {
+  test("board.go mounts board.gui, which runs the emitted /src/board.ts.gui_script", () => {
     const boardGo = readFileSync(join(exampleDir, "main/board.go"), "utf8");
-    expect(boardGo).toContain("/src/board.ts.script");
-    expect(boardGo).toContain("/main/block.factory");
-    expect(boardGo).not.toContain("/main/board.script");
+    expect(boardGo).toContain("/main/board.gui");
+    expect(boardGo).not.toContain("/src/board.ts.script");
+    expect(boardGo).not.toContain("block.factory");
+
+    const boardGui = readFileSync(join(exampleDir, "main/board.gui"), "utf8");
+    expect(boardGui).toContain("/src/board.ts.gui_script");
   });
 
-  test("block.factory points at /main/block.go", () => {
-    const factory = readFileSync(join(exampleDir, "main/block.factory"), "utf8");
-    expect(factory).toContain("/main/block.go");
+  test("the board grid is generated from code, not placed in the editor", () => {
+    const boardGui = readFileSync(join(exampleDir, "main/board.gui"), "utf8");
+    // No `nodes { ... }` blocks: every cell is created at runtime via
+    // gui.new_box_node, so the scene only carries the script + a node budget.
+    expect(boardGui).not.toContain("nodes {");
+    expect(boardGui).toContain("max_nodes");
+  });
+
+  test("the sprite factory and block object are retired (board renders via GUI)", () => {
+    expect(existsSync(join(exampleDir, "main/block.factory"))).toBe(false);
+    expect(existsSync(join(exampleDir, "main/block.go"))).toBe(false);
+    expect(existsSync(join(exampleDir, "assets/block.atlas"))).toBe(false);
   });
 
   test("the hand-written main/board.script is absent", () => {
