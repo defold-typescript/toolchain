@@ -89,9 +89,9 @@ function git(args: string[]): string {
   return proc.stdout.toString();
 }
 
-// The platformer is a curated, paths-based consumer: `tsconfig.json` resolves
-// `@defold-typescript/*` to the working-tree source, and the example commits no
-// `package.json`/`biome.json`/`src/main.ts`. A blanket `init --force` clobbers
+// Each checked-in example is a curated, paths-based consumer: `tsconfig.json`
+// resolves `@defold-typescript/*` to the working-tree source, and the example
+// commits no `package.json`/`biome.json`/`src/main.ts`. A blanket `init --force` clobbers
 // the tsconfig and the `mise.toml` tasks and scaffolds those files, so the
 // refresh restores the hand-kept `tsconfig.json` and `mise.toml` and drops the
 // scaffold files the example deliberately omits, keeping only the legitimate
@@ -102,11 +102,11 @@ function git(args: string[]): string {
 // form), but this in-repo example is pinned to working-tree source and must run
 // the working-tree bin, so its committed `mise.toml` points at
 // `packages/cli/src/bin.ts` instead.
-export function preserveExampleIdentity(): void {
-  git(["checkout", "--", path.join(EXAMPLE_DIR, "tsconfig.json")]);
-  git(["checkout", "--", path.join(EXAMPLE_DIR, "mise.toml")]);
+export function preserveExampleIdentity(exampleDir: string = EXAMPLE_DIR): void {
+  git(["checkout", "--", path.join(exampleDir, "tsconfig.json")]);
+  git(["checkout", "--", path.join(exampleDir, "mise.toml")]);
 
-  const untracked = git(["ls-files", "--others", "--exclude-standard", "--", EXAMPLE_DIR])
+  const untracked = git(["ls-files", "--others", "--exclude-standard", "--", exampleDir])
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
@@ -124,7 +124,7 @@ export function preserveExampleIdentity(): void {
 
   // The dropped `src/main.ts` leaves its gitignored emit behind; remove any
   // emitted `.ts.script` whose source `.ts` no longer exists.
-  const srcDir = path.join(REPO_ROOT, EXAMPLE_DIR, "src");
+  const srcDir = path.join(REPO_ROOT, exampleDir, "src");
   for (const name of readdirSync(srcDir)) {
     const emit = name.match(/^(.+)\.ts\.script(\.map)?$/);
     if (emit !== null && !existsSync(path.join(srcDir, `${emit[1]}.ts`))) {
