@@ -1,0 +1,3 @@
+script: "/src/board.ts.gui_script"
+material: "/builtins/materials/gui.material"
+max_nodes: 600

@@ -1,6 +1,6 @@
 components {
-  id: "board"
-  component: "/main/board.gui"
+  id: "hud"
+  component: "/main/hud.gui"
   position {
     x: 0.0
     y: 0.0

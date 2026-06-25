@@ -1,3 +1,0 @@
-prototype: "/main/block.go"
-load_dynamically: false
-dynamic_prototype: false
