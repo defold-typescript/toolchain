@@ -224,6 +224,15 @@ header.topbar-critical .logo-mark {
   color: var(--color-text);
   background: var(--color-surface);
 }
+.prose .table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 1.2em 0;
+}
+.prose .table-scroll > table {
+  margin: 0;
+  max-width: none;
+}
 .prose img {
   max-width: 100%;
   margin-top: 0.75rem;

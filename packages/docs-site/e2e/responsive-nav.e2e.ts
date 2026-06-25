@@ -135,6 +135,21 @@ test.describe("narrow viewport (below lg)", () => {
     await expect(toggle(page)).toBeVisible();
   });
 
+  test("topic-nav labels stay on one line (never wrap)", async ({ page }) => {
+    await page.goto("/");
+    const links = topicNav(page).locator("a");
+    const count = await links.count();
+    expect(count).toBeGreaterThan(0);
+    for (let i = 0; i < count; i++) {
+      await expect(links.nth(i)).toHaveCSS("white-space", "nowrap");
+    }
+  });
+
+  test("topic nav scrolls horizontally when its items overflow the row", async ({ page }) => {
+    await page.goto("/");
+    await expect(topicNav(page)).toHaveCSS("overflow-x", "auto");
+  });
+
   test("logo collapses to the mark, hiding the title", async ({ page }) => {
     await page.goto("/");
     await expect(logoIcon(page)).toBeVisible();
