@@ -81,6 +81,18 @@ describe("renderMarkdown", () => {
     expect(html).toContain('href="#section"');
   });
 
+  test("applies image max-width metadata from the src fragment", async () => {
+    const html = await renderMarkdown("![Alt](img/pic.png#max-width=420)\n");
+    expect(html).toContain('src="img/pic.png"');
+    expect(html).toContain('style="max-width: min(100%, 420px)"');
+  });
+
+  test("preserves non-sizing image fragments", async () => {
+    const html = await renderMarkdown("![Alt](sprite.svg#icon)\n");
+    expect(html).toContain('src="sprite.svg#icon"');
+    expect(html).not.toContain("max-width");
+  });
+
   test("renders a [!NOTE] blockquote as a note admonition", async () => {
     const html = await renderMarkdown("> [!NOTE]\n> Body.\n");
     expect(html).toMatch(/<div class="admonition admonition-note"/);

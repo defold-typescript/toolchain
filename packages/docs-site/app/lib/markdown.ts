@@ -95,6 +95,28 @@ function withDeployBase(href: string): string {
   return href.startsWith("/") && !href.startsWith("//") ? withBase(href) : href;
 }
 
+function imageMaxWidthFromSrc(src: string): { src: string; maxWidth?: string } {
+  const hash = src.indexOf("#");
+  if (hash === -1) return { src };
+  const base = src.slice(0, hash);
+  const params = src.slice(hash + 1).split("&");
+  const rest: string[] = [];
+  let maxWidth: string | undefined;
+  for (const param of params) {
+    const [rawKey, rawValue = ""] = param.split("=");
+    const key = decodeURIComponent(rawKey ?? "");
+    const value = decodeURIComponent(rawValue);
+    if (key === "max-width" || key === "maxWidth" || key === "mw") {
+      const normalized = /^\d+(?:\.\d+)?$/.test(value) ? `${value}px` : value;
+      if (/^\d+(?:\.\d+)?(?:px|rem|em|ch|%|vw)$/.test(normalized)) maxWidth = normalized;
+    } else {
+      rest.push(param);
+    }
+  }
+  const cleanSrc = `${base}${rest.length > 0 ? `#${rest.join("&")}` : ""}`;
+  return maxWidth ? { src: cleanSrc, maxWidth } : { src: cleanSrc };
+}
+
 // GitHub's five alert kinds. A `> [!NOTE]` blockquote (case-insensitive marker)
 // becomes a styled callout; every other blockquote passes through unchanged.
 const ALERT_TYPES = ["note", "tip", "important", "warning", "caution"] as const;
@@ -205,7 +227,15 @@ export async function renderMarkdown(
           appendExternalIcon = false;
         } else if (child.type === "image") {
           const src = child.attrGet("src");
-          if (src) child.attrSet("src", withDeployBase(src));
+          if (src) {
+            const image = imageMaxWidthFromSrc(src);
+            child.attrSet("src", withDeployBase(image.src));
+            if (image.maxWidth) {
+              const style = `max-width: min(100%, ${image.maxWidth})`;
+              const existing = child.attrGet("style");
+              child.attrSet("style", existing ? `${existing}; ${style}` : style);
+            }
+          }
         }
         out.push(child);
       }

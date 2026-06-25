@@ -1,7 +1,9 @@
+import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import ssg from "@hono/vite-ssg";
 import tailwindcss from "@tailwindcss/vite";
 import honox from "honox/vite";
-import { createLogger, defineConfig, type Logger } from "vite";
+import { createLogger, defineConfig, type Logger, type Plugin } from "vite";
 
 const entry = "./app/server.ts";
 
@@ -45,6 +47,29 @@ function makeQuietLogger(): Logger {
 }
 
 const quietLogger = makeQuietLogger();
+const configDir = dirname(fileURLToPath(import.meta.url));
+const guideDir = resolve(configDir, "../docs/guide");
+
+function isGuideMarkdown(file: string): boolean {
+  const rel = relative(guideDir, file);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel) && file.endsWith(".md");
+}
+
+function guideMarkdownReload(): Plugin {
+  return {
+    name: "guide-markdown-reload",
+    apply: "serve",
+    configureServer(server) {
+      server.watcher.add(guideDir);
+      const reload = (file: string) => {
+        if (isGuideMarkdown(file)) server.ws.send({ type: "full-reload", path: "*" });
+      };
+      server.watcher.on("add", reload);
+      server.watcher.on("change", reload);
+      server.watcher.on("unlink", reload);
+    },
+  };
+}
 
 // Subpath hosting (GitHub Pages project sites serve at `/<repo>/`) is opt-in via
 // DOCS_BASE; unset means the domain root `/` (dev, tests, Cloudflare Pages).
@@ -76,7 +101,7 @@ export default defineConfig(({ mode }) => {
       base,
       define,
       experimental,
-      plugins: [honox(), tailwindcss()],
+      plugins: [honox(), tailwindcss(), guideMarkdownReload()],
       customLogger: quietLogger,
     };
   }
@@ -84,7 +109,7 @@ export default defineConfig(({ mode }) => {
     base,
     define,
     experimental,
-    plugins: [honox(), tailwindcss(), ssg({ entry })],
+    plugins: [honox(), tailwindcss(), ssg({ entry }), guideMarkdownReload()],
     build: { emptyOutDir: false },
     customLogger: quietLogger,
   };

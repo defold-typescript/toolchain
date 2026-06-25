@@ -3,9 +3,14 @@ toc-title: Build Tetris
 ---
 # Build Tetris in TypeScript
 
-A full walkthrough: scaffold the project, wire the scene in the Defold editor, and write every system in TypeScript that compiles to the Lua the engine runs. A buildable copy of everything below lives in the repository at `docs/examples/tetris-tutorial/`.
+> [!NOTE]
+> **Prereqs** Defold basics; [Defold](https://defold.com/download/), [Bun](https://bun.sh), and an editor such as [VS Code](https://code.visualstudio.com/).
 
-Tetris is a great second Defold project: one moving thing, one fixed-step clock, one tiny rules engine, no physics. Every idea in this tutorial is the idea, not a workaround.
+> Scaffold, wire the Defold scene, and write TypeScript that compiles to Lua. Full copy: `docs/examples/tetris-tutorial/`.
+
+![Finished Tetris board](img/tetris-tutorial.png#max-width=200)
+
+Tetris is a great project: one moving thing, one fixed-step clock, one tiny rules engine, no physics. Patterns carry over.
 
 | Piece | Index | Color  |
 | ----- | ----- | ------ |
@@ -17,27 +22,29 @@ Tetris is a great second Defold project: one moving thing, one fixed-step clock,
 | J     | 6     | blue   |
 | L     | 7     | orange |
 
-> [!NOTE]
-> **Prereqs** You know Defold basics (game objects, components, collections) and have Bun installed. The toolchain's quirks are called out where they bite.
-
 ## 01 — Scaffold the project
 
-The toolchain is a Bun CLI. It generates a Defold project plus a TypeScript surface that compiles down to Lua beside it — no engine fork, no runtime to ship.
+The [Bun](https://bun.sh) CLI generates a Defold project plus TypeScript that compiles to Lua — no engine fork, no runtime to ship.
+
+Create an empty folder named `tetris`, then open it in VS Code with **File → Open Folder…**.
+
+In VS Code, open **Terminal → New Terminal** and run:
 
 ```bash
-# scaffold a new project
-bunx @defold-typescript/cli@latest init tetris
-cd tetris
+# scaffold into the current folder
+bunx @defold-typescript/cli@latest init .
 
 # start the watcher — recompiles .ts → .lua on save
 bunx @defold-typescript/cli watch
 ```
 
-Leave `watch` running in its own terminal. It transpiles your TypeScript to Lua continuously — the editor only sees the `.lua` the CLI emits next to your `.ts`.
+> Leave `watch` running. It keeps `.lua` outputs beside your `.ts`; Defold only sees those outputs.
 
-**What you'll have:** a project you can `cd tetris && bunx … watch` and the Defold editor will run.
+Now open the project in Defold too: **File → Open Project…** (or the start screen) → **Open From Disk** → `tetris/game.project`.
 
-Here's the layout. Everything you hand-write lives under `src/`; the compiled output and scene files live in the project root.
+**What you'll have:** `watch` runs in VS Code, and Defold opens `game.project`.
+
+After scaffolding, the project looks like this. Write TypeScript in `src/`; Defold files live at the root and in `main/`.
 
 ```text
 tetris/
@@ -51,6 +58,9 @@ tetris/
    ├─ pieces.ts        # tetromino shape data (shared module)
    └─ grid.ts          # pure board logic (shared module)
 ```
+
+> [!NOTE]
+> `watch` generates `.lua` and `.ts.script` files next to your TypeScript, so `src/` grows. Defold runs generated files; you edit `.ts`.
 
 ## 02 — Build the scene in the Editor
 
