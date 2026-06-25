@@ -3189,10 +3189,10 @@ naming from the scaffold `.gitignore`; the per-kind type entrypoints from
 upstream template's config file could not be read at authoring time, so this
 guide does not assert those values; consult your own template's `tsconfig.json`.
 
-# Build Tetris in TypeScript
+# Build Tetris
 
 > [!NOTE]
-> **Prereqs** Defold basics; [Defold](https://defold.com/download/), [Bun](https://bun.sh), and an editor such as [VS Code](https://code.visualstudio.com/).
+> **Prereqs**: [Defold](https://defold.com/download/), [Bun](https://bun.sh), and an editor such as [VS Code](https://code.visualstudio.com/).
 
 > Scaffold, wire the Defold scene, and write TypeScript that compiles to Lua. Final result: [`docs/examples/tetris-tutorial/`](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/tetris-tutorial).
 
@@ -3266,13 +3266,13 @@ Tetris needs five keys. Defold maps hardware keys to named **actions** through a
 1. In the **Assets** pane, open `input/game.input_binding`.
 2. Add five **Key Triggers**:
 
-| Input   | (Internal value) | Action      |
-| ------- | ---------------- | ----------- |
-| `Left`  | `KEY_LEFT`       | `left`      |
-| `Right` | `KEY_RIGHT`      | `right`     |
-| `Down`  | `KEY_DOWN`       | `soft_drop` |
-| `Up`    | `KEY_UP`         | `rotate`    |
-| `Space` | `KEY_SPACE`      | `hard_drop` |
+| Input   | Action      |
+| ------- | ----------- |
+| `Left`  | `left`      |
+| `Right` | `right`     |
+| `Down`  | `soft_drop` |
+| `Up`    | `rotate`    |
+| `Space` | `hard_drop` |
 
 The script hashes these same names (`hash("left")`, and so on) to recognize each key. Bind them now and the script just works when you attach it.
 
@@ -3327,7 +3327,7 @@ export function clearLines(g: Grid): number {
 ```
 
 > [!WARNING]
-> **Tripwire** Compare with `=== 0`, never `if (cell)`. An empty cell would otherwise read as "occupied." This is the single most common silent bug crossing TS to Lua.
+> **Tripwire**: Compare with `=== 0`, never `if (cell)`. An empty cell would otherwise read as "occupied." This is the single most common silent bug crossing TS to Lua.
 
 This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 05).
 
@@ -3372,7 +3372,7 @@ function fourRotations(base: Offset[]): Offset[][] {
 ```
 
 > [!NOTE]
-> **Why this works** `[c,r] → [-r,c]` is the +90° rotation matrix specialized to integers. The pivot stays at `[0,0]`; the other three cells swing around it. The **O** piece looks identical in all four states, and **S/Z/I** visually only have two — but four-for-every-piece keeps indexing uniform, so rotation is always `(rot + 1) % 4`.
+> **Why this works**: `[c,r] → [-r,c]` is the +90° rotation matrix specialized to integers. The pivot stays at `[0,0]`; the other three cells swing around it. The **O** piece looks identical in all four states, and **S/Z/I** visually only have two — but four-for-every-piece keeps indexing uniform, so rotation is always `(rot + 1) % 4`.
 
 ### The seven base shapes
 
@@ -3479,13 +3479,13 @@ export function nextPieceIndex(): number {
 ```
 
 > [!NOTE]
-> **Tripwire** Use Defold's `math.random`, not `Math.random()` — the JS standard library mostly doesn't survive compilation, so reach for the engine's `math`, `os`, and `json` modules. `cellsAt` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
+> **Tripwire**: Use Defold's `math.random`, not `Math.random()` — the JS standard library mostly doesn't survive compilation, so reach for the engine's `math`, `os`, and `json` modules. `cellsAt` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
 
 ## 05 — The board script: `src/board.ts`
 
 This is the heart of the game: one GUI script that builds the grid, runs gravity, reads input, locks pieces, scores lines, and redraws every frame. The whole `src/board.ts` is below; here's how to read it.
 
-**State.** `init` returns a **`BoardSelf`** — the generated GUI nodes, the grid model, the active piece (index, rotation, pivot `px`/`py`), the gravity timer, and the score/level fields. A bare `self` is `noImplicitAny`-illegal, so the interface is the type you add. It first posts `acquire_input_focus` to `.`; without it, no key reaches `on_input`. The five input names are hashed once at module scope (`hash("left")` through `hash("hard_drop")`).
+**State.** `init` returns a **`BoardSelf`** — the generated GUI nodes, the grid model, the active piece (index, rotation, pivot `px`/`py`), the gravity timer, and the score/level fields. TypeScript won't let `self` stay untyped, so `BoardSelf` is the shape you declare for it. `init` first posts `acquire_input_focus` to itself (`.`) — without that, no key ever reaches `on_input`. The five input names are hashed once at module scope (`hash("left")` through `hash("hard_drop")`).
 
 **Gravity.** Tetris runs on a clock: every `fall` seconds the piece drops one row. `update` adds `dt` to a timer and steps when it crosses the threshold, then redraws.
 
@@ -3497,7 +3497,7 @@ This is the heart of the game: one GUI script that builds the grid, runs gravity
 
 **Scoring and game over.** Clearing 1/2/3/4 rows at once scores the classic 40/100/300/1200 × level, and the fall speeds up as lines accumulate. A fresh spawn that can't fit means the **stack reached the ceiling** — game over.
 
-**Render.** `redraw` is "model → colors": each frame it composes the locked grid plus the falling piece on top, then recolors every cell node. The model only ever holds locked blocks, so movement never erases anything — the next frame composes fresh.
+**Render.** `redraw` paints the model onto the screen: each frame it lays the falling piece over the locked grid, then recolors every cell node to match. The model only ever holds locked blocks, so moving a piece never erases anything — the next frame just paints the new position.
 
 **Messages.** `on_message` listens for the HUD's `hud_ready` so the board sends score updates only after the HUD exists (Step 08). You can ignore it if you skip the HUD.
 
@@ -3729,7 +3729,7 @@ export default defineGuiScript({
 ```
 
 > [!NOTE]
-> **State tiers** Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, nothing global. Pick the narrowest tier that fits.
+> **State tiers**: Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, nothing global. Pick the narrowest tier that fits.
 
 ## 06 — Wire the scene
 
@@ -3789,7 +3789,7 @@ Then build the scene, all editor work:
 3. In **main.collection**, add `main/hud.go` as a game object with **Id** `hud`. Its message URL becomes `/hud#hud`, exactly what `board.ts` posts to.
 
 > [!NOTE]
-> **Copy the ready-made one** The runnable example ships a ready-made `main/hud.gui` (three text nodes `score`/`level`/`gameover`) wired into `main.collection` — copy it as a starting point.
+> **Copy the ready-made one**: The runnable example ships a ready-made `main/hud.gui` (three text nodes `score`/`level`/`gameover`) wired into `main.collection` — copy it as a starting point.
 
 ## 09 — Optional: Hard drop
 

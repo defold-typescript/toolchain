@@ -207,7 +207,8 @@ header.topbar-critical .logo-mark {
   margin: 2em 0;
 }
 .prose table {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   border-collapse: collapse;
   font-size: 14px;
   margin: 1.2em 0;
@@ -215,7 +216,7 @@ header.topbar-critical .logo-mark {
 .prose th,
 .prose td {
   text-align: left;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--color-border);
 }
 .prose th {
