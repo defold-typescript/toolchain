@@ -4215,6 +4215,19 @@ Every TS-to-Lua sharp edge this build touches, in one place:
 | `go.*` errors in a GUI script | `go.*` is `.script`-only — gui scripts have no `go` | Use `gui.*`/`msg.*`; for optional targets, register via a message |
 | `await` hangs forever | No event loop | Bridge via `timer.delay` / the timers polyfill |
 
+## Next step to explore — show the next tetromino above the board
+
+You have a playable game. The natural next exercise is one feature every Tetris player expects: **a preview of the piece that's coming next**, drawn above the playfield so you can plan ahead.
+
+The hard part is not the rendering — it is the **peek**. `nextPieceIndex()` in `src/pieces.ts` *consumes* from the 7-bag, so calling it once for "what's next" leaves the bag empty for the actual spawn. Refactor it into a peek/advance pair: a function that reads without consuming (`peekNextPieceIndex()`), and the existing one becomes "pop, then refill". The board's `onLocked` calls `peekNextPieceIndex()` *before* spawning, so the next-next piece is already in hand.
+
+Two reasonable places to draw the preview:
+
+- **In the HUD.** Reuse the `hud.ts` message protocol: extend `set_hud` with a `next: number` field (the color index 1..7), and have `hud.ts` paint a small 4-cell cluster out of the same `TINTS` palette, anchored above the playfield. This keeps the preview logic out of `board.ts` and reads naturally — the HUD already owns "out-of-board text and tiny graphics."
+- **In `board.ts` itself, above the grid.** Generate a second 4x4 set of `gui.new_box_node`s above `ORIGIN_Y`, repaint them the same way `redraw` repaints the grid. Cheaper to wire (no protocol change), but the board script now owns two render surfaces.
+
+Either way, the change is small in `board.ts` and the new node tree; the lesson is the **peek-vs-consume split** in `pieces.ts`, which generalizes to "the bag is a stateful randomizer" — the same shape a real Tetris uses for hold-piece and queue-length previews.
+
 ## API
 
 ### globals
