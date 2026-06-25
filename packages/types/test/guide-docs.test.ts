@@ -767,4 +767,12 @@ describe("docs/guide/tetris-tutorial.md", () => {
       expect(body).toContain(anchor);
     }
   });
+
+  test("no heading line ends with a period", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const headingLines = body.split("\n").filter((line) => /^#{1,6}\s/.test(line));
+    for (const line of headingLines) {
+      expect(line.endsWith(".")).toBe(false);
+    }
+  });
 });
