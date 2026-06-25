@@ -95,6 +95,38 @@ function withDeployBase(href: string): string {
   return href.startsWith("/") && !href.startsWith("//") ? withBase(href) : href;
 }
 
+function imageMaxWidthFromSrc(src: string): { src: string; maxWidth?: string } {
+  const hash = src.indexOf("#");
+  if (hash === -1) return { src };
+  const base = src.slice(0, hash);
+  const params = src.slice(hash + 1).split("&");
+  const rest: string[] = [];
+  let maxWidth: string | undefined;
+  for (const param of params) {
+    const [rawKey, rawValue = ""] = param.split("=");
+    const key = decodeURIComponent(rawKey ?? "");
+    const value = decodeURIComponent(rawValue);
+    if (key === "max-width" || key === "maxWidth" || key === "mw") {
+      const normalized = /^\d+(?:\.\d+)?$/.test(value) ? `${value}px` : value;
+      if (/^\d+(?:\.\d+)?(?:px|rem|em|ch|%|vw)$/.test(normalized)) maxWidth = normalized;
+    } else {
+      rest.push(param);
+    }
+  }
+  const cleanSrc = `${base}${rest.length > 0 ? `#${rest.join("&")}` : ""}`;
+  return maxWidth ? { src: cleanSrc, maxWidth } : { src: cleanSrc };
+}
+
+// A fence info string carries the language in its first token; Shiki reads only
+// that and ignores the rest. We borrow a `title="src/board.ts"` (or single-quoted)
+// suffix to caption the block with a filename chip.
+function codeTitleFromInfo(info: string): string | undefined {
+  const match = info.match(/\btitle=(?:"([^"]*)"|'([^']*)')/);
+  if (!match) return undefined;
+  const title = match[1] ?? match[2] ?? "";
+  return title.length > 0 ? title : undefined;
+}
+
 // GitHub's five alert kinds. A `> [!NOTE]` blockquote (case-insensitive marker)
 // becomes a styled callout; every other blockquote passes through unchanged.
 const ALERT_TYPES = ["note", "tip", "important", "warning", "caution"] as const;
@@ -205,7 +237,15 @@ export async function renderMarkdown(
           appendExternalIcon = false;
         } else if (child.type === "image") {
           const src = child.attrGet("src");
-          if (src) child.attrSet("src", withDeployBase(src));
+          if (src) {
+            const image = imageMaxWidthFromSrc(src);
+            child.attrSet("src", withDeployBase(image.src));
+            if (image.maxWidth) {
+              const style = `max-width: min(100%, ${image.maxWidth})`;
+              const existing = child.attrGet("style");
+              child.attrSet("style", existing ? `${existing}; ${style}` : style);
+            }
+          }
         }
         out.push(child);
       }
@@ -317,5 +357,18 @@ export async function renderMarkdown(
       fallbackLanguage: "text" as BundledLanguage,
     }),
   );
+  // Wrap Shiki's `<pre>` in a `<figure>` with a filename caption when the fence
+  // info string carries `title="…"`. Runs after Shiki claims the fence rule so
+  // the highlighted markup is captured intact.
+  const renderFence = md.renderer.rules.fence;
+  if (renderFence) {
+    md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+      const rendered = renderFence(tokens, idx, options, env, self);
+      const title = codeTitleFromInfo(tokens[idx]?.info ?? "");
+      if (!title) return rendered;
+      const caption = `<figcaption class="code-title">${md.utils.escapeHtml(title)}</figcaption>`;
+      return `<figure class="code-block">${caption}${rendered}</figure>\n`;
+    };
+  }
   return md.render(markdown);
 }
