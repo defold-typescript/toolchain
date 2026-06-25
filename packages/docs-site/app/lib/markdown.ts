@@ -370,5 +370,12 @@ export async function renderMarkdown(
       return `<figure class="code-block">${caption}${rendered}</figure>\n`;
     };
   }
+  // Wrap every Markdown table in a `.table-scroll` container so a table wider
+  // than its column scrolls horizontally instead of squishing its cells.
+  // `self.renderToken` keeps any token attrs intact.
+  md.renderer.rules.table_open = (tokens, idx, options, _env, self) =>
+    `<div class="table-scroll">\n${self.renderToken(tokens, idx, options)}`;
+  md.renderer.rules.table_close = (tokens, idx, options, _env, self) =>
+    `${self.renderToken(tokens, idx, options)}</div>\n`;
   return md.render(markdown);
 }

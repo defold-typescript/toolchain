@@ -245,4 +245,15 @@ describe("renderMarkdown", () => {
     expect(html).not.toContain("api-signature");
     expect(html).toContain("<code>go.get</code>");
   });
+
+  test("wraps a table in a horizontally scrollable container", async () => {
+    const html = await renderMarkdown("| A | B |\n| --- | --- |\n| 1 | 2 |\n");
+    expect(html).toContain('<div class="table-scroll">\n<table>');
+    expect(html).toContain("</table>\n</div>");
+  });
+
+  test("leaves a tableless document without a table-scroll wrapper", async () => {
+    const html = await renderMarkdown("Just a paragraph with `code`.\n");
+    expect(html).not.toContain("table-scroll");
+  });
 });
