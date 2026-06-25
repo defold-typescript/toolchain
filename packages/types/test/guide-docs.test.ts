@@ -8,6 +8,115 @@ async function readGuide(relPath: string): Promise<string> {
   return Bun.file(resolve(GUIDE, relPath)).text();
 }
 
+const TETRIS_JARGON = [
+  "transpile",
+  "transpiler",
+  "lowered",
+  "lowering",
+  "lowers",
+  "lower",
+  "userdata",
+  "lualib",
+  "truthy",
+  "opaque",
+  "reconcile",
+  "verify",
+  "verification",
+  "dispatch",
+  "register",
+  "registration",
+];
+
+function tutorialProseMetrics(raw: string): {
+  words: number;
+  longSentences: number;
+  jargon: number;
+} {
+  const lines = raw.split("\n");
+  const proseLines: string[] = [];
+  let inFence = false;
+  for (const line of lines) {
+    if (line.startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    if (/^\|?[\s\-|:]+\|?$/.test(line)) continue;
+    let l = line;
+    l = l.replace(/^#+\s+/, "");
+    l = l.replace(/^> \[!(NOTE|WARNING|TIP|IMPORTANT|CAUTION)\][^\s]*\s*/, "");
+    l = l.replace(/`[^`]*`/g, "");
+    l = l.replace(/\]\([^)]*\)/g, "");
+    l = l.replace(/\|/g, " ");
+    proseLines.push(l.trim());
+  }
+  const prose = proseLines.join("\n");
+  const words = prose.split(/\s+/).filter((t) => t.length > 0);
+  const sentences = prose.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
+  const longSentences = sentences.filter(
+    (s) => s.split(/\s+/).filter((t) => t.length > 0).length > 30,
+  );
+  const lc = prose.toLowerCase();
+  let jargon = 0;
+  for (const w of TETRIS_JARGON) {
+    const re = new RegExp(`\\b${w}\\b`, "g");
+    const m = lc.match(re);
+    if (m) jargon += m.length;
+  }
+  return { words: words.length, longSentences: longSentences.length, jargon };
+}
+
+describe("tutorialProseMetrics helper", () => {
+  test("strips fenced code blocks from the prose count", () => {
+    const raw = [
+      "# Title",
+      "",
+      "Some prose here.",
+      "",
+      "```ts",
+      "const x = 1;",
+      "const y = 2;",
+      "```",
+      "",
+      "More prose after the fence.",
+    ].join("\n");
+    expect(tutorialProseMetrics(raw).words).toBe(9);
+  });
+
+  test("strips table separator lines and keeps table body prose", () => {
+    const raw = ["| A | B |", "| - | - |", "| one | two |", "", "Tail sentence."].join("\n");
+    const m = tutorialProseMetrics(raw);
+    expect(m.words).toBe(6);
+    expect(m.longSentences).toBe(0);
+  });
+
+  test("strips heading markers and admonition markers", () => {
+    const raw = ["# Step 1", "", "> [!NOTE]", "", "Sentence one."].join("\n");
+    const m = tutorialProseMetrics(raw);
+    expect(m.words).toBe(4);
+    expect(m.longSentences).toBe(0);
+  });
+
+  test("strips inline backtick spans and markdown link URLs", () => {
+    const raw = "Use [`foo`](https://example.com) to call the `bar` function on each row.";
+    expect(tutorialProseMetrics(raw).words).toBe(9);
+  });
+
+  test("counts jargon hits word-boundary", () => {
+    const raw =
+      "The transpile lowers userdata; truthy is a Lua thing; register dispatches at runtime.";
+    const m = tutorialProseMetrics(raw);
+    expect(m.jargon).toBeGreaterThanOrEqual(4);
+    expect(m.jargon).toBeLessThanOrEqual(6);
+  });
+
+  test("counts long sentences (>30 words) correctly", () => {
+    const longSentence = "one ".repeat(31).trim();
+    expect(tutorialProseMetrics(`${longSentence}.`).longSentences).toBe(1);
+    expect(tutorialProseMetrics("short.").longSentences).toBe(0);
+  });
+});
+
 describe("docs/guide scaffold", () => {
   test("docs/guide/README.md exists", async () => {
     const f = Bun.file(resolve(GUIDE, "README.md"));
@@ -598,6 +707,20 @@ describe("docs/guide URL addressing coverage", () => {
 describe("docs/guide/tetris-tutorial.md", () => {
   const EXAMPLE_SRC = resolve(REPO_ROOT, "docs", "examples", "tetris-tutorial", "src");
 
+  const TETRIS_RATCHET = {
+    words: 2500,
+    longSentences: 14,
+    jargon: 6,
+  } as const;
+
+  const TETRIS_TONE_ANCHORS = [
+    "What you'll have",
+    "In plain English",
+    "one breath",
+    "freeze into the board",
+    "stack reached the ceiling",
+  ] as const;
+
   test("exists and titles the build", async () => {
     const f = Bun.file(resolve(GUIDE, "tetris-tutorial.md"));
     expect(await f.exists()).toBe(true);
@@ -617,6 +740,31 @@ describe("docs/guide/tetris-tutorial.md", () => {
     for (const file of ["grid.ts", "pieces.ts", "board.ts"]) {
       const source = await Bun.file(resolve(EXAMPLE_SRC, file)).text();
       expect(body).toContain(source);
+    }
+  });
+
+  test("prose word count is at or below the recorded ceiling", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const m = tutorialProseMetrics(body);
+    expect(m.words).toBeLessThanOrEqual(TETRIS_RATCHET.words);
+  });
+
+  test("long-sentence count is at or below the recorded ceiling", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const m = tutorialProseMetrics(body);
+    expect(m.longSentences).toBeLessThanOrEqual(TETRIS_RATCHET.longSentences);
+  });
+
+  test("jargon-term count is at or below the recorded ceiling", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const m = tutorialProseMetrics(body);
+    expect(m.jargon).toBeLessThanOrEqual(TETRIS_RATCHET.jargon);
+  });
+
+  test("carries the five friendly tone anchors", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    for (const anchor of TETRIS_TONE_ANCHORS) {
+      expect(body).toContain(anchor);
     }
   });
 });
