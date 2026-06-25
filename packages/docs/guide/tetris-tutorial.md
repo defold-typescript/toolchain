@@ -20,7 +20,7 @@ Tetris is a great second Defold project: one moving thing, one fixed-step clock,
 > [!NOTE]
 > **Prereqs** You know Defold basics (game objects, components, collections) and have Bun installed. The toolchain's quirks are called out where they bite.
 
-## 01 — Scaffold the project.
+## 01 — Scaffold the project
 
 The toolchain is a Bun CLI. It generates a Defold project plus a TypeScript surface that compiles down to Lua beside it — no engine fork, no runtime to ship.
 
@@ -52,11 +52,11 @@ tetris/
    └─ grid.ts          # pure board logic (shared module)
 ```
 
-## 02 — Build the scene in the Editor.
+## 02 — Build the scene in the Editor
 
 The board draws itself from code, so the editor work is small. You wire up an empty GUI scene and one game object — no sprite, no atlas, no factory.
 
-### 2a — Create the board GUI scene.
+### 2a — Create the board GUI scene
 
 The board is a **GUI scene** whose nodes are all built from code — the scene file itself is nearly empty.
 
@@ -67,12 +67,12 @@ The board is a **GUI scene** whose nodes are all built from code — the scene f
 > [!WARNING]
 > **Order**: **The script must exist before you can attach it.** Save `src/board.ts` at least once (Step 3) so `watch` emits `board.ts.gui_script`, then set it as the scene's **Script**. If the picker doesn't show it, the watcher hasn't run yet.
 
-### 2b — Create the board object.
+### 2b — Create the board object
 
 1. Right-click `main` → **New… → Game Object File**, name it **board.go**.
 2. In the **Outline**, right-click root → **Add Component File** → choose **board.gui**. Give the component the **Id** `board`. (A `.gui` is a component; the game object just hosts it.)
 
-### 2c — Assemble the scene.
+### 2c — Assemble the scene
 
 1. Open **main.collection**. Right-click root → **Add Game Object File** → choose **board.go**. Set its **Id** to `board`. The script centers the grid (Step 5).
 2. Add the HUD the same way (Step 9): a game object **Id** `hud` hosting a `hud.gui` scene driven by `hud.ts.gui_script`. The board posts to `/hud#hud`.
@@ -80,7 +80,7 @@ The board is a **GUI scene** whose nodes are all built from code — the scene f
 
 That's the entire scene. The script draws every cell.
 
-## 03 — Model the grid.
+## 03 — Model the grid
 
 We start with a pure model: a 10×20 grid of cells, each empty or holding a piece color. Engine-free logic is easy to reason about and to type.
 
@@ -118,11 +118,11 @@ export function isFree(g: Grid, c: number, r: number): boolean {
 
 This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 6).
 
-## 04 — Define the tetrominoes.
+## 04 — Define the tetrominoes
 
 Each piece is four cells plus a color, stored as a `[col, row]` offset from a **pivot** at `[0, 0]` — the point the piece spins around. `row` grows downward to match the grid.
 
-### How a single shape is built.
+### How a single shape is built
 
 Read offsets as "relative to the pivot." The T-piece in its spawn orientation is the pivot, plus one cell left, right, and below:
 
@@ -135,7 +135,7 @@ Read offsets as "relative to the pivot." The T-piece in its spawn orientation is
 +1      ▓          [0,1]
 ```
 
-### How rotations are derived.
+### How rotations are derived
 
 Here's the one piece of geometry worth knowing. To rotate any offset 90° **clockwise** around the pivot, swap the coordinates and negate the new column: `[c, r] → [-r, c]`. Apply it four times and you cycle back to the start. We don't hand-invent rotations — we compute them from one base shape.
 
@@ -161,7 +161,7 @@ function fourRotations(base: Offset[]): Offset[][] {
 > [!NOTE]
 > **Why this works** `[c,r] → [-r,c]` is the +90° rotation matrix specialized to integers. The pivot stays at `[0,0]`; the other three cells swing around it. The **O** piece looks identical in all four states, and **S/Z/I** visually only have two — but four-for-every-piece keeps indexing uniform, so rotation is always `(rot + 1) % 4`.
 
-### The seven base shapes.
+### The seven base shapes
 
 That leaves one thing to author by hand: the spawn shape. Everything else is computed. The color index (1–7) matches `TINTS` in Step 5.
 
@@ -217,7 +217,7 @@ export function nextPieceIndex(): number {
 > [!NOTE]
 > **Tripwire** Use Defold's `math.random`, not `Math.random()` — the JS standard library mostly doesn't survive compilation, so reach for the engine's `math`, `os`, and `json` modules. `cellsAt` is the bridge from abstract piece data to board position — Step 7 calls it on every movement check.
 
-## 05 — Render the board with generated GUI nodes.
+## 05 — Render the board with generated GUI nodes
 
 Here's the central trick: the script generates the whole `COLS × ROWS` grid with `gui.new_box_node` at startup, and each frame only changes each node's **color**. Each cell is two stacked boxes (`border` plus a smaller `fill` on top), so `GAP` and `BORDER` are single variables to tune.
 
@@ -289,7 +289,7 @@ The renderer is "model → colors": each frame, walk the grid and set every cell
 > [!NOTE]
 > **Why generate, not place** Nodes created from code (`gui.new_box_node`) need no editor work and scale with `COLS`/`ROWS` — change the board size and the grid follows. Recoloring an existing node every frame is far cheaper than creating and deleting nodes as pieces move: build once, recolor forever. The only editor knob is the scene's **Max Nodes** (`COLS × ROWS × 2`, we set 600 in Step 2).
 
-## 06 — Gravity and the game loop.
+## 06 — Gravity and the game loop
 
 Tetris runs on a clock: every `fall` seconds, the piece drops one row. We accumulate `dt` in `update` and step when the accumulator crosses the threshold. Per-playthrough state lives on `self`.
 
@@ -342,7 +342,7 @@ export default defineGuiScript({
 > [!NOTE]
 > **State tiers** Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, nothing global. Pick the narrowest tier that fits.
 
-## 07 — Input and movement.
+## 07 — Input and movement
 
 Bind keys in **game.project → Input → Game Binding**: map Left/Right/Down/Up to `left`, `right`, `soft_drop`, `rotate`. The `on_input` hook (Step 6) dispatches each one. Pre-hash every action id at module scope to compare hash-to-hash.
 
@@ -410,7 +410,7 @@ function tryRotate(self): void {
 
 All four helpers test against the `grid.ts` model and never touch a GUI node — every movement is just data.
 
-## 08 — Locking and line clears.
+## 08 — Locking and line clears
 
 When gravity can't move the piece down, it **locks**: its four cells become permanent grid values. Then we scan for full rows and drop everything above.
 
@@ -443,7 +443,7 @@ export function clearLines(g: Grid): number {
 > [!NOTE]
 > **Data structures** `splice`/`unshift`/`push` all work — TypeScript arrays become Lua tables via the toolchain's array helpers. They carry a tiny runtime cost but are exactly right here. (Regex and `BigInt` are the notable things that _don't_ survive.)
 
-### Locking, and the gravity step that triggers it.
+### Locking, and the gravity step that triggers it
 
 Back in `board.ts`, gravity tries to move the piece down one row. If it can't, the piece has landed: we stamp its cells into the grid, clear full lines, and spawn the next piece. `stepDown` is the function the game loop called in Step 6.
 
@@ -473,7 +473,7 @@ function stepDown(self): void {
 > [!NOTE]
 > **Why r ≥ 0** A piece can lock while part of it is still above the visible board (row `< 0`). Skip those cells when stamping — writing to `grid[-1]` would error. If any visible cell of the next spawn is already filled, `onLocked` catches it via `canPlace`.
 
-### Drawing the model: the one render function.
+### Drawing the model: the one render function
 
 Everything above mutates pure data. `redraw` — called every frame from `update` — pushes the model onto the screen. It paints every locked cell, then the active piece on top.
 
@@ -511,7 +511,7 @@ function redraw(self): void {
 > [!NOTE]
 > **Locked vs falling** The model (`self.grid`) only ever holds _locked_ blocks. The falling piece lives in `self.piece/rot/px/py` and is composited on top. Movement never touches the grid, so there's nothing to "erase." The next `redraw` composes a fresh frame.
 
-## 09 — Score, levels, and game over.
+## 09 — Score, levels, and game over
 
 Award points by lines cleared at once (classic 40/100/300/1200 × level), speed up as lines accumulate, end when a fresh spawn overlaps. `onLocked` is what `stepDown` calls the moment a piece locks.
 
@@ -544,7 +544,7 @@ function onLocked(self): void {
 
 **Game over is just the spawn check failing — if the new piece can't fit at the top, the stack reached the ceiling.**
 
-### Hard drop — the satisfying one.
+### Hard drop — the satisfying one
 
 Soft drop is in already. **Hard drop** slams the piece to the bottom and locks it. Keep moving down until you can't, award a point per cell dropped, then lock. Bind a key to `hard_drop` and route it through `on_input`:
 
@@ -562,7 +562,7 @@ function hardDrop(self): void {
 // else if (action_id === HARD) hardDrop(self);
 ```
 
-### The HUD: a separate GUI script.
+### The HUD: a separate GUI script
 
 Score and level live on their **own** GUI scene. Add a **.gui** file with two text nodes (`score`, `level`) plus a hidden `gameover` node, then drive it from a `.gui_script`. The board and the HUD are two such pairs.
 
@@ -606,7 +606,7 @@ function postHud(self): void {
 > [!NOTE]
 > **Editor step** Create the HUD object: in `main.collection`, add a **GUI** component to a new game object with **Id** `hud`, point it at your `.gui` file, and attach `hud.ts.gui_script`. Its message URL becomes `/hud#hud`, exactly what the board posts to. A gui script can't call `go.exists`, so the HUD announces itself in its own `init`, and the board posts only after that arrives. The game runs cleanly with or without the HUD. The runnable example ships a ready-made `main/hud.gui` (three text nodes `score`/`level`/`gameover`) wired into `main.collection` — copy it as a starting point.
 
-## 10 — Run it, then ship it.
+## 10 — Run it, then ship it
 
 With `watch` running, hit `Project → Build` (or `Cmd/Ctrl`+`B`) in the Defold editor. The engine loads `main.collection`, your board script generates the grid's 400 GUI nodes, and gravity starts ticking.
 
@@ -616,7 +616,7 @@ With `watch` running, hit `Project → Build` (or `Cmd/Ctrl`+`B`) in the Defold 
 
 To ship, use `Project → Bundle`. The bundle is only Lua — your TypeScript was a build-time convenience.
 
-## 11 — Complete source.
+## 11 — Complete source
 
 All three TypeScript files, end to end. Drop these into `src/`, wire the scene per Step 2, and you have a playable game.
 
@@ -625,7 +625,7 @@ The complete `board.ts` types every `self` through a **`BoardSelf`** interface (
 > [!NOTE]
 > **Verified** Simulated through thousands of locked pieces: every rotation is a four-cell shape, no out-of-range color reaches the grid, line clears drop the residual stack, and a full game runs to a clean game-over. The `.gui`/`.gui_script` is the one editor piece (Step 9).
 
-### `src/grid.ts` — the board model.
+### `src/grid.ts` — the board model
 
 Pure data: dimensions, the cell/grid types, an empty board, the free-cell test, and line clearing. No engine calls, so it's trivial to reason about.
 
@@ -677,7 +677,7 @@ export function clearLines(g: Grid): number {
 }
 ```
 
-### `src/pieces.ts` — shapes & the bag.
+### `src/pieces.ts` — shapes & the bag
 
 The seven base shapes, the clockwise rotation rule that derives the other three states, the `cellsAt` bridge to board coordinates, and the 7-bag randomizer.
 
@@ -783,7 +783,7 @@ export function nextPieceIndex(): number {
 }
 ```
 
-### `src/board.ts` — the game.
+### `src/board.ts` — the game
 
 The script itself: the generated GUI grid, all movement checked against the model, locking, scoring, drawing, and the lifecycle hooks. Everything above is consumed here.
 
@@ -1019,7 +1019,7 @@ export default defineGuiScript({
 > [!NOTE]
 > **What's left to you** Two editor-built pieces complete the game: the **input bindings** (`left`/`right`/`soft_drop`/`rotate`/`hard_drop`) and the **HUD .gui scene** with `score`, `level`, and `gameover` nodes driven by `hud.ts`. The playfield itself needs no art — it's generated GUI. The runnable example wires both, so you can copy them directly; each is a Step-2-style editor task, no more TypeScript needed.
 
-## Toolchain tripwires, collected.
+## Toolchain tripwires, collected
 
 Every sharp edge in one place:
 
