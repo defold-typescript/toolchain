@@ -594,3 +594,29 @@ describe("docs/guide URL addressing coverage", () => {
     expect(section).toContain("collection-proxy");
   });
 });
+
+describe("docs/guide/tetris-tutorial.md", () => {
+  const EXAMPLE_SRC = resolve(REPO_ROOT, "docs", "examples", "tetris-tutorial", "src");
+
+  test("exists and titles the build", async () => {
+    const f = Bun.file(resolve(GUIDE, "tetris-tutorial.md"));
+    expect(await f.exists()).toBe(true);
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain("Build Tetris");
+  });
+
+  test("carries the rotation rule anchor and the 0-is-truthy tripwire text", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain("[-r, c]");
+    expect(body).toContain("=== 0");
+    expect(body).toContain("`0` is truthy in Lua");
+  });
+
+  test("the Complete source step quotes each example file verbatim", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    for (const file of ["grid.ts", "pieces.ts", "board.ts"]) {
+      const source = await Bun.file(resolve(EXAMPLE_SRC, file)).text();
+      expect(body).toContain(source);
+    }
+  });
+});
