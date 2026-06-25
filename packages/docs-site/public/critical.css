@@ -176,7 +176,7 @@ header.topbar-critical .logo-mark {
   padding-left: 0;
 }
 .prose blockquote {
-  margin: 0;
+  margin: 0 0 1.4em;
   padding: 0.4em 1em;
   border-left: 3px solid var(--color-border-strong);
   color: var(--color-text-muted);
@@ -206,6 +206,7 @@ header.topbar-critical .logo-mark {
 }
 .prose img {
   max-width: 100%;
+  margin-top: 0.75rem;
   border-radius: 8px;
 }
 
