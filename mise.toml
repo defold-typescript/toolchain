@@ -74,3 +74,7 @@ set -euo pipefail
 bun run build
 open dist/index.html 2>/dev/null || xdg-open dist/index.html
 """
+
+[tasks."dev:build-llms"]
+description = "Build llms.txt and llms-full.txt"
+run = "bun --filter @defold-typescript/docs-site build-llms"

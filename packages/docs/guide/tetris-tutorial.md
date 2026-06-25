@@ -7,15 +7,15 @@ A full walkthrough: scaffold the project, wire the scene in the Defold editor, a
 
 Tetris is a great second Defold project: one moving thing, one fixed-step clock, one tiny rules engine, no physics. Every idea in this tutorial is the idea, not a workaround.
 
-| Piece | Index | Color |
-| ----- | ----- | ----- |
-| I | 1 | cyan |
-| O | 2 | yellow |
-| T | 3 | purple |
-| S | 4 | green |
-| Z | 5 | red |
-| J | 6 | blue |
-| L | 7 | orange |
+| Piece | Index | Color  |
+| ----- | ----- | ------ |
+| I     | 1     | cyan   |
+| O     | 2     | yellow |
+| T     | 3     | purple |
+| S     | 4     | green  |
+| Z     | 5     | red    |
+| J     | 6     | blue   |
+| L     | 7     | orange |
 
 > [!NOTE]
 > **Prereqs** You know Defold basics (game objects, components, collections) and have Bun installed. The toolchain's quirks are called out where they bite.
@@ -65,7 +65,7 @@ The board is a **GUI scene** whose nodes are all built from code — the scene f
 3. Raise **Max Nodes** to at least `600`: the board creates `COLS × ROWS × 2` = 400 box nodes.
 
 > [!WARNING]
-> **Order** **The script must exist before you can attach it.** Save `src/board.ts` at least once (Step 3) so `watch` emits `board.ts.gui_script`, then set it as the scene's **Script**. If the picker doesn't show it, the watcher hasn't run yet.
+> **Order**: **The script must exist before you can attach it.** Save `src/board.ts` at least once (Step 3) so `watch` emits `board.ts.gui_script`, then set it as the scene's **Script**. If the picker doesn't show it, the watcher hasn't run yet.
 
 ### 2b — Create the board object.
 
@@ -1023,16 +1023,16 @@ export default defineGuiScript({
 
 Every sharp edge in one place:
 
-| Symptom | Cause | Fix |
-| ------- | ----- | --- |
-| Empty cell reads as occupied | `0` is truthy in Lua | Compare `=== 0` explicitly |
-| Keys do nothing | `action_id` is a hash, not a string | Pre-hash ids, compare hash-to-hash |
-| `Math.random` undefined | JS stdlib doesn't transpile | Use engine `math.random` |
-| Piece won't negate / vector errors | `-v3` infers `number` | Use `v.unm()`; arithmetic is method-form |
-| Two scripts in one file | One `defineScript`/`defineGuiScript` export per file | Split into separate `.ts` files |
+| Symptom                              | Cause                                                | Fix                                                                   |
+| ------------------------------------ | ---------------------------------------------------- | --------------------------------------------------------------------- |
+| Empty cell reads as occupied         | `0` is truthy in Lua                                 | Compare `=== 0` explicitly                                            |
+| Keys do nothing                      | `action_id` is a hash, not a string                  | Pre-hash ids, compare hash-to-hash                                    |
+| `Math.random` undefined              | JS stdlib doesn't transpile                          | Use engine `math.random`                                              |
+| Piece won't negate / vector errors   | `-v3` infers `number`                                | Use `v.unm()`; arithmetic is method-form                              |
+| Two scripts in one file              | One `defineScript`/`defineGuiScript` export per file | Split into separate `.ts` files                                       |
 | `Instance '/hud' could not be found` | `msg.post` to a missing instance; errors at dispatch | Have the listener register (post to the sender), then post only after |
-| `go.*` errors in a GUI script | `go.*` is `.script`-only — gui scripts have no `go` | Use `gui.*`/`msg.*`; for optional targets, register via a message |
-| `await` hangs forever | No event loop | Bridge via `timer.delay` / the timers polyfill |
+| `go.*` errors in a GUI script        | `go.*` is `.script`-only — gui scripts have no `go`  | Use `gui.*`/`msg.*`; for optional targets, register via a message     |
+| `await` hangs forever                | No event loop                                        | Bridge via `timer.delay` / the timers polyfill                        |
 
 ## Next step to explore — show the next tetromino above the board
 
