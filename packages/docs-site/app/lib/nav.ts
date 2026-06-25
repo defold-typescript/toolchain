@@ -72,6 +72,11 @@ const CATEGORY_MAP: CategorySpec[] = [
       "migrating-from-ts-defold",
     ],
   },
+  {
+    id: "tutorial",
+    label: "Tutorial",
+    slugs: ["tetris-tutorial"],
+  },
 ];
 
 export function humanize(slug: string): string {

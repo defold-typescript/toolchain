@@ -24,6 +24,7 @@
 - [TypeScript gotchas](/typescript-gotchas)
 - [API docs vs `ts-defold-types`](/api-docs-vs-ts-defold)
 - [Migrating from `ts-defold`](/migrating-from-ts-defold)
+- [Build Tetris](/tetris-tutorial)
 
 ## API
 
