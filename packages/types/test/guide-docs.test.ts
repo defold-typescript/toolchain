@@ -775,4 +775,82 @@ describe("docs/guide/tetris-tutorial.md", () => {
       expect(line.endsWith(".")).toBe(false);
     }
   });
+
+  test("step 1 tree is the init output, not the end state", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const sectionStart = body.indexOf("## 01");
+    expect(sectionStart).toBeGreaterThan(-1);
+    const nextSection = body.indexOf("\n## 02 ", sectionStart);
+    const section = body.slice(sectionStart, nextSection === -1 ? body.length : nextSection);
+    const treeMatch = section.match(/```text\n([\s\S]*?)\n```/);
+    expect(treeMatch).not.toBeNull();
+    const tree = treeMatch?.[1] ?? "";
+    for (const banned of [
+      "main/board.gui",
+      "main/board.go",
+      "main/hud.go",
+      "main/hud.gui",
+      "src/board.ts",
+      "src/pieces.ts",
+      "src/grid.ts",
+      "src/hud.ts",
+      "input/game.input_binding",
+    ]) {
+      expect(tree).not.toContain(banned);
+    }
+    expect(tree).toContain("src/main.ts");
+    expect(tree).toContain("main/main.collection");
+    expect(tree).toContain("game.project");
+  });
+
+  test("script attachment comes after the board.ts script is shown", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const boardTsFence = body.indexOf("```ts\n");
+    expect(boardTsFence).toBeGreaterThan(-1);
+    const sectionFive = body.indexOf("## 05");
+    const attachment = body.indexOf(
+      "/src/board.ts.gui_script",
+      sectionFive === -1 ? 0 : sectionFive,
+    );
+    expect(attachment).toBeGreaterThan(boardTsFence);
+    expect(body).not.toContain("Save `src/board.ts` at least once");
+    expect(body).not.toContain("then set it as the scene's **Script**");
+  });
+
+  test("input bindings precede the script's input code", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const bindingsOffset = body.indexOf("game.input_binding");
+    const scriptOffset = body.indexOf('hash("left")');
+    expect(bindingsOffset).toBeGreaterThan(-1);
+    expect(scriptOffset).toBeGreaterThan(-1);
+    expect(bindingsOffset).toBeLessThan(scriptOffset);
+  });
+
+  test("HUD is its own optional section after the run-it section", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const headingRe = /^#{2,3}\s.+$/gm;
+    const headings = [...body.matchAll(headingRe)].map((m) => ({
+      index: m.index ?? 0,
+      text: m[0],
+    }));
+    const buildOffset = Math.min(
+      body.indexOf("Project → Build"),
+      body.indexOf("Cmd/Ctrl+B"),
+      body.indexOf("Build-and-Run"),
+    );
+    expect(buildOffset).toBeGreaterThan(-1);
+    const hudSection = headings.find((h) => {
+      const lower = h.text.toLowerCase();
+      return lower.includes("hud") && /(optional|extension|stretch)/i.test(h.text);
+    });
+    expect(hudSection).toBeDefined();
+    expect(hudSection?.index).toBeGreaterThan(buildOffset);
+    expect(body).not.toContain("what's left to you");
+  });
+
+  test("no save-then-come-back workaround paragraph", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).not.toContain("then set it as the scene's **Script**");
+    expect(body).not.toContain("Save `src/board.ts` at least once");
+  });
 });
