@@ -139,7 +139,7 @@ export function clearLines(g: Grid): number {
 ```
 
 > [!WARNING]
-> **Tripwire**: Compare with `=== 0`, never `if (cell)`. An empty cell would otherwise read as "occupied." This is the single most common silent bug crossing TS to Lua.
+> **Tripwire**: keep the empty-cell test as `=== 0`, never `if (cell)`. The enemy is truthiness, not the operator: [`===` and `==` compile to the same Lua](./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard), so swapping them changes nothing. A bare `if (cell)` reads an empty cell as "occupied" — the single most common silent bug crossing TS to Lua.
 
 This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 05).
 

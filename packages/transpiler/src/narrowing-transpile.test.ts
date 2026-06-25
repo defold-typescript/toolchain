@@ -37,4 +37,20 @@ describe("narrowing transpile", () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.lua).toMatchSnapshot();
   });
+
+  test("`===` and `==` both lower to the non-coercing Lua `==`", () => {
+    const source = [
+      "export function eq(cell: number): boolean {",
+      "  const strict = cell === 0;",
+      "  const loose = cell == 0;",
+      "  return strict || loose;",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    // Both operators emit the same `cell == 0`: the loose form gets no
+    // coercion helper, so the strict and loose lines are byte-identical.
+    expect(result.lua.match(/cell == 0/g) ?? []).toHaveLength(2);
+  });
 });
