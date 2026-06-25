@@ -3282,9 +3282,7 @@ That's the entire scene. The script draws every cell.
 
 We start with a pure model: a 10×20 grid of cells, each empty or holding a piece color. Engine-free logic is easy to reason about and to type.
 
-**`src/grid.ts`**
-
-```ts
+```ts title="src/grid.ts"
 export const COLS = 10;
 export const ROWS = 20;
 
@@ -3363,9 +3361,7 @@ function fourRotations(base: Offset[]): Offset[][] {
 
 That leaves one thing to author by hand: the spawn shape. Everything else is computed. The color index (1–7) matches `TINTS` in Step 5.
 
-**`src/pieces.ts`**
-
-```ts
+```ts title="src/pieces.ts"
 import type { Cell } from "./grid";
 
 export type Offset = [number, number]; // [col, row], row grows down
@@ -3419,9 +3415,7 @@ export function nextPieceIndex(): number {
 
 Here's the central trick: the script generates the whole `COLS × ROWS` grid with `gui.new_box_node` at startup, and each frame only changes each node's **color**. Each cell is two stacked boxes (`border` plus a smaller `fill` on top), so `GAP` and `BORDER` are single variables to tune.
 
-**`src/board.ts`** · excerpt
-
-```ts
+```ts title="src/board.ts · excerpt"
 import { COLS, ROWS } from "./grid";
 
 const CELL = 28; // cell pitch in pixels
@@ -3491,11 +3485,9 @@ The renderer is "model → colors": each frame, walk the grid and set every cell
 
 Tetris runs on a clock: every `fall` seconds, the piece drops one row. We accumulate `dt` in `update` and step when the accumulator crosses the threshold. Per-playthrough state lives on `self`.
 
-**`src/board.ts`** · the script
-
 **Game loop in one breath:** every frame, add `dt` to a timer; when the timer hits `fall`, drop one row; redraw.
 
-```ts
+```ts title="src/board.ts · the script"
 export default defineGuiScript({
   init() {
     msg.post(".", "acquire_input_focus"); // or no input fires
@@ -3544,9 +3536,7 @@ export default defineGuiScript({
 
 Bind keys in **game.project → Input → Game Binding**: map Left/Right/Down/Up to `left`, `right`, `soft_drop`, `rotate`. The `on_input` hook (Step 6) dispatches each one. Pre-hash every action id at module scope to compare hash-to-hash.
 
-**`src/board.ts`** · input ids
-
-```ts
+```ts title="src/board.ts · input ids"
 // Module scope: hashed once, shared by the whole script.
 const LEFT = hash("left");
 const RIGHT = hash("right");
@@ -3556,9 +3546,7 @@ const ROTATE = hash("rotate");
 
 The three helpers share one rule: **never move the piece until the target is legal.** Compute where it _would_ land, test every cell against the model, commit only if all four are free.
 
-**`src/board.ts`** · movement
-
-```ts
+```ts title="src/board.ts · movement"
 import { cellsAt, PIECES } from "./pieces";
 import { isFree } from "./grid";
 
@@ -3614,9 +3602,7 @@ When gravity can't move the piece down, it **locks**: its four cells become perm
 
 **When a piece can't fall any more, its four cells freeze into the board, and we look for full rows to remove.**
 
-**`src/grid.ts`** · clearLines
-
-```ts
+```ts title="src/grid.ts · clearLines"
 // Remove every full row; return how many were cleared.
 export function clearLines(g: Grid): number {
   let cleared = 0;
@@ -3645,9 +3631,7 @@ export function clearLines(g: Grid): number {
 
 Back in `board.ts`, gravity tries to move the piece down one row. If it can't, the piece has landed: we stamp its cells into the grid, clear full lines, and spawn the next piece. `stepDown` is the function the game loop called in Step 6.
 
-**`src/board.ts`** · lock & step
-
-```ts
+```ts title="src/board.ts · lock & step"
 import { clearLines } from "./grid";
 import { cellsAt, PIECES, nextPieceIndex } from "./pieces";
 
@@ -3675,9 +3659,7 @@ function stepDown(self): void {
 
 Everything above mutates pure data. `redraw` — called every frame from `update` — pushes the model onto the screen. It paints every locked cell, then the active piece on top.
 
-**`src/board.ts`** · redraw
-
-```ts
+```ts title="src/board.ts · redraw"
 import { COLS, ROWS } from "./grid";
 
 function redraw(self): void {
@@ -3713,9 +3695,7 @@ function redraw(self): void {
 
 Award points by lines cleared at once (classic 40/100/300/1200 × level), speed up as lines accumulate, end when a fresh spawn overlaps. `onLocked` is what `stepDown` calls the moment a piece locks.
 
-**`src/board.ts`** · scoring
-
-```ts
+```ts title="src/board.ts · scoring"
 // points for clearing 1/2/3/4 rows at once, before the ×level
 const LINE_SCORE = [0, 40, 100, 300, 1200];
 
@@ -3746,9 +3726,7 @@ function onLocked(self): void {
 
 Soft drop is in already. **Hard drop** slams the piece to the bottom and locks it. Keep moving down until you can't, award a point per cell dropped, then lock. Bind a key to `hard_drop` and route it through `on_input`:
 
-**`src/board.ts`** · hard drop
-
-```ts
+```ts title="src/board.ts · hard drop"
 const HARD = hash("hard_drop");
 
 function hardDrop(self): void {
@@ -3764,9 +3742,7 @@ function hardDrop(self): void {
 
 Score and level live on their **own** GUI scene. Add a **.gui** file with two text nodes (`score`, `level`) plus a hidden `gameover` node, then drive it from a `.gui_script`. The board and the HUD are two such pairs.
 
-**`src/hud.ts`** · separate file
-
-```ts
+```ts title="src/hud.ts · separate file"
 import { defineGuiScript } from "@defold-typescript/types/gui-script";
 
 export default defineGuiScript({
@@ -3788,9 +3764,7 @@ export default defineGuiScript({
 
 And the board's side: one helper that posts the current numbers, but only once the HUD has registered. A gui script can't call `go.exists`, so the HUD announces itself; the board records that. Because `msg.post` is asynchronous, the HUD shows last frame's values — fine for a score display.
 
-**`src/board.ts`** · postHud
-
-```ts
+```ts title="src/board.ts · postHud"
 function postHud(self): void {
   // Only post once the HUD has registered (a gui script has no go.exists).
   if (self.hud) {
@@ -3827,9 +3801,7 @@ The complete `board.ts` types every `self` through a **`BoardSelf`** interface (
 
 Pure data: dimensions, the cell/grid types, an empty board, the free-cell test, and line clearing. No engine calls, so it's trivial to reason about.
 
-**`src/grid.ts`** · complete
-
-```ts
+```ts title="src/grid.ts · complete"
 export const COLS = 10;
 export const ROWS = 20;
 
@@ -3879,9 +3851,7 @@ export function clearLines(g: Grid): number {
 
 The seven base shapes, the clockwise rotation rule that derives the other three states, the `cellsAt` bridge to board coordinates, and the 7-bag randomizer.
 
-**`src/pieces.ts`** · complete
-
-```ts
+```ts title="src/pieces.ts · complete"
 import type { Cell } from "./grid";
 
 export type Offset = [number, number]; // [col, row], row grows down
@@ -3985,9 +3955,7 @@ export function nextPieceIndex(): number {
 
 The script itself: the generated GUI grid, all movement checked against the model, locking, scoring, drawing, and the lifecycle hooks. Everything above is consumed here.
 
-**`src/board.ts`** · complete
-
-```ts
+```ts title="src/board.ts · complete"
 import { defineGuiScript } from "@defold-typescript/types";
 import { COLS, clearLines, emptyGrid, type Grid, isFree, ROWS } from "./grid";
 import { cellsAt, nextPieceIndex, PIECES } from "./pieces";

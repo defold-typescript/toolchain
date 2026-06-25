@@ -117,6 +117,16 @@ function imageMaxWidthFromSrc(src: string): { src: string; maxWidth?: string } {
   return maxWidth ? { src: cleanSrc, maxWidth } : { src: cleanSrc };
 }
 
+// A fence info string carries the language in its first token; Shiki reads only
+// that and ignores the rest. We borrow a `title="src/board.ts"` (or single-quoted)
+// suffix to caption the block with a filename chip.
+function codeTitleFromInfo(info: string): string | undefined {
+  const match = info.match(/\btitle=(?:"([^"]*)"|'([^']*)')/);
+  if (!match) return undefined;
+  const title = match[1] ?? match[2] ?? "";
+  return title.length > 0 ? title : undefined;
+}
+
 // GitHub's five alert kinds. A `> [!NOTE]` blockquote (case-insensitive marker)
 // becomes a styled callout; every other blockquote passes through unchanged.
 const ALERT_TYPES = ["note", "tip", "important", "warning", "caution"] as const;
@@ -347,5 +357,18 @@ export async function renderMarkdown(
       fallbackLanguage: "text" as BundledLanguage,
     }),
   );
+  // Wrap Shiki's `<pre>` in a `<figure>` with a filename caption when the fence
+  // info string carries `title="…"`. Runs after Shiki claims the fence rule so
+  // the highlighted markup is captured intact.
+  const renderFence = md.renderer.rules.fence;
+  if (renderFence) {
+    md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+      const rendered = renderFence(tokens, idx, options, env, self);
+      const title = codeTitleFromInfo(tokens[idx]?.info ?? "");
+      if (!title) return rendered;
+      const caption = `<figcaption class="code-title">${md.utils.escapeHtml(title)}</figcaption>`;
+      return `<figure class="code-block">${caption}${rendered}</figure>\n`;
+    };
+  }
   return md.render(markdown);
 }

@@ -93,6 +93,25 @@ describe("renderMarkdown", () => {
     expect(html).not.toContain("max-width");
   });
 
+  test("captions a fenced block from a title= info string", async () => {
+    const html = await renderMarkdown('```ts title="src/board.ts"\nconst x = 1;\n```\n');
+    expect(html).toContain('<figure class="code-block">');
+    expect(html).toContain('<figcaption class="code-title">src/board.ts</figcaption>');
+    expect(html).toContain("<pre");
+  });
+
+  test("escapes the code title and keeps highlighting the language", async () => {
+    const html = await renderMarkdown("```ts title='a & b'\nconst x = 1;\n```\n");
+    expect(html).toContain('<figcaption class="code-title">a &amp; b</figcaption>');
+    expect(html).toContain('class="shiki');
+  });
+
+  test("leaves an untitled fence unwrapped", async () => {
+    const html = await renderMarkdown("```ts\nconst x = 1;\n```\n");
+    expect(html).not.toContain("code-block");
+    expect(html).not.toContain("code-title");
+  });
+
   test("renders a [!NOTE] blockquote as a note admonition", async () => {
     const html = await renderMarkdown("> [!NOTE]\n> Body.\n");
     expect(html).toMatch(/<div class="admonition admonition-note"/);
