@@ -34,10 +34,22 @@ function fullNav() {
 }
 
 describe("buildNav", () => {
-  test("returns the four categories in declared order with declared labels", () => {
+  test("returns the five categories in declared order with declared labels", () => {
     const nav = fullNav();
-    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "language", "reference"]);
-    expect(nav.map((c) => c.label)).toEqual(["Get started", "Guides", "Language", "Reference"]);
+    expect(nav.map((c) => c.id)).toEqual([
+      "get-started",
+      "guides",
+      "language",
+      "tutorial",
+      "reference",
+    ]);
+    expect(nav.map((c) => c.label)).toEqual([
+      "Get started",
+      "Guides",
+      "Language",
+      "Tutorial",
+      "Reference",
+    ]);
   });
 
   test("has no lua-stdlib category and no /api link anywhere", () => {
