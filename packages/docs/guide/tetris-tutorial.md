@@ -557,11 +557,12 @@ export default defineGuiScript({
 
 ## 06 — Wire the scene
 
-The script exists now, so the editor's picker can find it. The board draws itself from code, so the editor work is small — an empty GUI scene and one game object, no sprite, no atlas, no factory.
+The script exists now, so the editor's picker can find it. The board draws itself from code, so the editor work is small — one project setting, an empty GUI scene, and one game object, no sprite, no atlas, no factory.
 
-1. **Create the board GUI scene.** In **Assets**, right-click `main` → **New… → Gui File**, name it **board.gui**. Open it, select the root **Gui** node, and set its **Script** to `/src/board.ts.gui_script`. Leave the node list empty — `board.ts` builds the grid at startup. Raise **Max Nodes** to at least `600` (the board creates `COLS × ROWS × 2` = 400 box nodes).
-2. **Create the board object.** Right-click `main` → **New… → Game Object File**, name it **board.go**. In the **Outline**, right-click root → **Add Component File** → choose **board.gui**, and give the component the **Id** `board`. (A `.gui` is a component; the game object hosts it.)
-3. **Assemble the scene.** Open **main.collection** (already created by `init`). Right-click root → **Add Game Object File** → choose **board.go**, set its **Id** to `board`. Confirm **game.project → Bootstrap → Main Collection** is `/main/main.collection`.
+1. **Set the window size.** In **Assets**, open **game.project**, and under **Display** set **Width** to `400` and **Height** to `720` (turn **High Dpi** on for crisp cells). `init` leaves the display unset, so Defold defaults to a landscape **960×640**, but Tetris is a tall 10×20 board — `board.ts` centers its 280×560 grid in a **400×720** portrait window (`ORIGIN_X`/`ORIGIN_Y` in Step 05). Skip this and the board renders jammed into a corner instead of centered. If you prefer a different size, change the `400`/`720` literals in `board.ts` to match.
+2. **Create the board GUI scene.** In **Assets**, right-click `main` → **New… → Gui File**, name it **board.gui**. Open it, select the root **Gui** node, and set its **Script** to `/src/board.ts.gui_script`. Leave the node list empty — `board.ts` builds the grid at startup. Raise **Max Nodes** to at least `600` (the board creates `COLS × ROWS × 2` = 400 box nodes).
+3. **Create the board object.** Right-click `main` → **New… → Game Object File**, name it **board.go**. In the **Outline**, right-click root → **Add Component File** → choose **board.gui**, and give the component the **Id** `board`. (A `.gui` is a component; the game object hosts it.)
+4. **Assemble the scene.** Open **main.collection** (already created by `init`). Right-click root → **Add Game Object File** → choose **board.go**, set its **Id** to `board`. Confirm **game.project → Bootstrap → Main Collection** is `/main/main.collection`.
 
 That's the entire scene. The script draws every cell.
 
@@ -570,6 +571,7 @@ That's the entire scene. The script draws every cell.
 With `watch` running, hit **Project → Build** in the Defold editor (`Cmd/Ctrl+B`, the *Build-and-Run* shortcut). The engine loads `main.collection`, your board script generates the grid's 400 GUI nodes, and gravity starts ticking.
 
 - Board invisible? Check `board.gui`'s **Script** is `/src/board.ts.gui_script` and **Max Nodes** is at least `600`.
+- Board off-center or running off-screen? The window isn't `400×720` — set **game.project → Display** to `400×720` (Step 06), or change the `400`/`720` literals in `board.ts` to your window.
 - Keys do nothing? Confirm the Step 02 input bindings exist and the script posts `acquire_input_focus` in `init`.
 - Cells read as occupied when empty? You've hit the `0`-still-counts trap — find the bare `if (cell)` and make it `== 0`.
 
