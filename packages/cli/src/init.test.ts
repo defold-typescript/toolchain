@@ -22,6 +22,31 @@ const CLI_VERSION = (
   }
 ).version;
 const TYPES_SPEC = `^${CLI_VERSION}`;
+const DEFOLD_ARTIFACT_IGNORE_LINES = [
+  "/build/",
+  "/.internal/",
+  "/.editor_settings",
+  "builtins/",
+  ".DS_Store",
+];
+const ROOT_TSTL_BUNDLE_IGNORE_LINES = [
+  "/lualib_bundle.lua",
+  "/lualib_bundle.lua.map",
+  "/defold_typescript_timers.lua",
+  "/defold_typescript_timers.lua.map",
+];
+const PRE_DEFOLD_ARTIFACT_GITIGNORE = [
+  "node_modules",
+  ".vscode/dmengine*",
+  "src/**/*.ts.script",
+  "src/**/*.ts.script.map",
+  "src/**/*.ts.gui_script",
+  "src/**/*.ts.gui_script.map",
+  "src/**/*.ts.render_script",
+  "src/**/*.ts.render_script.map",
+  "src/**/*.lua",
+  "src/**/*.lua.map",
+].join("\n");
 
 let cwd: string;
 
@@ -273,6 +298,58 @@ describe("runInit (add-TS mode)", () => {
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
     expect(gitignore).toMatch(/^\.vscode\/dmengine\*$/m);
+  });
+
+  test("new-project .gitignore ignores Defold editor and build artifacts", () => {
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    for (const line of DEFOLD_ARTIFACT_IGNORE_LINES) {
+      expect(gitignore).toMatch(new RegExp(`^${line.replaceAll(".", "\\.")}$`, "m"));
+    }
+  });
+
+  test("new-project .gitignore ignores root TSTL runtime bundles", () => {
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    for (const line of ROOT_TSTL_BUNDLE_IGNORE_LINES) {
+      expect(gitignore).toMatch(new RegExp(`^${line.replaceAll(".", "\\.")}$`, "m"));
+    }
+  });
+
+  test("init --force backfills Defold and root bundle ignore lines", () => {
+    touch("game.project", "[project]\n");
+    touch(".gitignore", `${PRE_DEFOLD_ARTIFACT_GITIGNORE}\n`);
+
+    runInit({ cwd, force: true });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    for (const line of [...DEFOLD_ARTIFACT_IGNORE_LINES, ...ROOT_TSTL_BUNDLE_IGNORE_LINES]) {
+      expect(gitignore).toContain(line);
+    }
+    for (const line of PRE_DEFOLD_ARTIFACT_GITIGNORE.split("\n")) {
+      expect(gitignore).toContain(line);
+    }
+  });
+
+  test("gitignore backfill is idempotent for Defold and root bundle lines", () => {
+    runInit({ cwd });
+    const afterFirst = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+
+    const second = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-init-rerun-"));
+    try {
+      writeFileSync(path.join(second, "game.project"), "[project]\n");
+      writeFileSync(path.join(second, ".gitignore"), afterFirst);
+      runInit({ cwd: second });
+      const afterSecond = readFileSync(path.join(second, ".gitignore"), "utf8");
+      const lines = afterSecond.trim().split("\n");
+      for (const line of [...DEFOLD_ARTIFACT_IGNORE_LINES, ...ROOT_TSTL_BUNDLE_IGNORE_LINES]) {
+        expect(lines.filter((candidate) => candidate === line)).toHaveLength(1);
+      }
+    } finally {
+      rmSync(second, { recursive: true, force: true });
+    }
   });
 
   test("scaffolded .gitignore and biome.json exclude the gui/render-script suffixes too", () => {
