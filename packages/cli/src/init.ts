@@ -395,9 +395,42 @@ function writeGitignore(cwd: string): void {
   }
 }
 
-function writeBiome(cwd: string, written: string[]): void {
+// Surgically migrate the one deprecated Biome 2.5.x key
+// (`linter.rules.recommended: <bool>` -> `linter.rules.preset: "recommended" | "none"`),
+// preserving every other user key. Returns the re-serialized JSON, or `null` when
+// there is nothing to migrate (no own boolean `recommended`) or the file does not
+// parse as JSON (hand-edited JSONC) — the caller then leaves the file untouched.
+function migrateBiomeRecommended(raw: string): string | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const root = value as { $schema?: string; linter?: { rules?: Record<string, unknown> } };
+  const rules = root.linter?.rules;
+  if (!rules || !Object.hasOwn(rules, "recommended") || typeof rules.recommended !== "boolean") {
+    return null;
+  }
+  if (!Object.hasOwn(rules, "preset")) {
+    rules.preset = rules.recommended ? "recommended" : "none";
+  }
+  delete rules.recommended;
+  root.$schema = BIOME_JSON_CONTENT.$schema;
+  return `${formatJsonLikeBiome(value)}\n`;
+}
+
+function writeBiome(cwd: string, written: string[], force = false): void {
   const biomePath = path.join(cwd, "biome.json");
   if (existsSync(biomePath)) {
+    if (!force) {
+      return;
+    }
+    const migrated = migrateBiomeRecommended(readFileSync(biomePath, "utf8"));
+    if (migrated !== null) {
+      writeFileSync(biomePath, migrated);
+      written.push("biome.json");
+    }
     return;
   }
   writeJson(biomePath, BIOME_JSON_CONTENT);
@@ -688,7 +721,7 @@ function writeTsSurface(
   writeGitignore(cwd);
   written.push(".gitignore");
 
-  writeBiome(cwd, written);
+  writeBiome(cwd, written, force);
   writeMiseTasks(cwd, written);
 
   writeVscodeExtensions(cwd, written);
