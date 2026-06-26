@@ -153,6 +153,20 @@ describe("renderMarkdown", () => {
     expect(html).toContain("Warning");
   });
 
+  test("accepts an alert marker on the same line as its body", async () => {
+    const html = await renderMarkdown("> [!NOTE] Inline body text.\n");
+    expect(html).toMatch(/<div class="admonition admonition-note"/);
+    expect(html).toContain("Inline body text.");
+    expect(html).not.toContain("[!NOTE]");
+  });
+
+  test("keeps same-line text that precedes the first inline token", async () => {
+    const html = await renderMarkdown("> [!NOTE] Before **bold** after.\n");
+    expect(html).toContain("Before ");
+    expect(html).toContain("<strong>bold</strong>");
+    expect(html).not.toContain("[!NOTE]");
+  });
+
   test("leaves a plain blockquote untouched", async () => {
     const html = await renderMarkdown("> Just a quote.\n");
     expect(html).toContain("<blockquote>");
