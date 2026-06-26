@@ -13,7 +13,7 @@ import * as path from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { runBuild } from "./build";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
-import { reconcileManagedList, runInit, SCAFFOLD_DEV_DEPS } from "./init";
+import { BIOME_JSON_CONTENT, reconcileManagedList, runInit, SCAFFOLD_DEV_DEPS } from "./init";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
 
 const CLI_VERSION = (
@@ -744,6 +744,89 @@ describe("runInit (biome scaffold)", () => {
 
     expect(readFileSync(path.join(cwd, "biome.json"), "utf8")).toBe(sentinel);
     expect(result.written).not.toContain("biome.json");
+  });
+
+  test("force migrates an existing deprecated recommended:true to preset, preserving custom keys", () => {
+    touch("game.project", "[project]\n");
+    touch(
+      "biome.json",
+      `${JSON.stringify(
+        {
+          $schema: "https://biomejs.dev/schemas/2.0.0/schema.json",
+          files: { includes: ["src/**/*.ts", "custom/**/*.ts"] },
+          linter: {
+            enabled: true,
+            rules: {
+              recommended: true,
+              style: { useConst: "error" },
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const result = runInit({ cwd, force: true });
+
+    const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
+      $schema: string;
+      files: { includes: string[] };
+      linter: { rules: { preset?: string; recommended?: boolean; style?: { useConst?: string } } };
+    };
+    expect(biome.linter.rules.preset).toBe("recommended");
+    expect(biome.linter.rules.recommended).toBeUndefined();
+    expect(biome.files.includes).toContain("custom/**/*.ts");
+    expect(biome.linter.rules.style?.useConst).toBe("error");
+    expect(biome.$schema).toBe(BIOME_JSON_CONTENT.$schema);
+    expect(result.written).toContain("biome.json");
+  });
+
+  test("force migrates an existing recommended:false to preset none", () => {
+    touch("game.project", "[project]\n");
+    touch(
+      "biome.json",
+      `${JSON.stringify({ linter: { rules: { recommended: false } } }, null, 2)}\n`,
+    );
+
+    const result = runInit({ cwd, force: true });
+
+    const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
+      linter: { rules: { preset?: string; recommended?: boolean } };
+    };
+    expect(biome.linter.rules.preset).toBe("none");
+    expect(biome.linter.rules.recommended).toBeUndefined();
+    expect(result.written).toContain("biome.json");
+  });
+
+  test("force on a biome.json already using preset is an idempotent no-op", () => {
+    touch("game.project", "[project]\n");
+    const existing = `${JSON.stringify(
+      { linter: { rules: { preset: "recommended" } } },
+      null,
+      2,
+    )}\n`;
+    touch("biome.json", existing);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, "biome.json"), "utf8")).toBe(existing);
+    expect(result.written).not.toContain("biome.json");
+  });
+
+  test("force on a non-JSON biome.json leaves it byte-identical and does not throw", () => {
+    touch("game.project", "[project]\n");
+    const jsonc =
+      '{\n  // hand-edited config\n  "linter": { "rules": { "recommended": true } }\n}\n';
+    touch("biome.json", jsonc);
+
+    let result: ReturnType<typeof runInit> | undefined;
+    expect(() => {
+      result = runInit({ cwd, force: true });
+    }).not.toThrow();
+
+    expect(readFileSync(path.join(cwd, "biome.json"), "utf8")).toBe(jsonc);
+    expect(result?.written).not.toContain("biome.json");
   });
 });
 
