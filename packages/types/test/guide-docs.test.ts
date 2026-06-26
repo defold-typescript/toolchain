@@ -836,7 +836,7 @@ describe("docs/guide/tetris-tutorial.md", () => {
 
   test("script attachment comes after the board.ts script is shown", async () => {
     const body = await readGuide("tetris-tutorial.md");
-    const boardTsFence = body.indexOf("```ts\n");
+    const boardTsFence = body.indexOf('```ts title="src/board.ts"');
     expect(boardTsFence).toBeGreaterThan(-1);
     const sectionFive = body.indexOf("## 05");
     const attachment = body.indexOf(
