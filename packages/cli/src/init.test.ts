@@ -166,7 +166,7 @@ describe("runInit (add-TS mode)", () => {
       "@defold-typescript/types": TYPES_SPEC,
       "@defold-typescript/cli": TYPES_SPEC,
       "@defold-typescript/tstl-plugin": TYPES_SPEC,
-      "@biomejs/biome": "^2.2.0",
+      "@biomejs/biome": "^2.5.0",
       "@types/bun": "latest",
     });
   });
@@ -697,13 +697,16 @@ describe("runInit (biome scaffold)", () => {
     expect(biome.linter).toBeDefined();
   });
 
-  test("scaffolded biome.json keeps recommended on but turns noDoubleEquals off", () => {
+  test("scaffolded biome.json uses preset recommended and turns noDoubleEquals off", () => {
     runInit({ cwd });
 
     const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
-      linter: { rules: { recommended: boolean; suspicious: { noDoubleEquals: string } } };
+      linter: {
+        rules: { preset?: string; recommended?: boolean; suspicious: { noDoubleEquals: string } };
+      };
     };
-    expect(biome.linter.rules.recommended).toBe(true);
+    expect(biome.linter.rules.preset).toBe("recommended");
+    expect(biome.linter.rules.recommended).toBeUndefined();
     expect(biome.linter.rules.suspicious.noDoubleEquals).toBe("off");
   });
 

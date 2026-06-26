@@ -51,7 +51,7 @@ const GITIGNORE_LINES = [
 ];
 
 export const BIOME_JSON_CONTENT = {
-  $schema: "https://biomejs.dev/schemas/2.4.15/schema.json",
+  $schema: "https://biomejs.dev/schemas/2.5.1/schema.json",
   files: {
     includes: [
       "src/**/*.ts",
@@ -73,7 +73,7 @@ export const BIOME_JSON_CONTENT = {
   linter: {
     enabled: true,
     rules: {
-      recommended: true,
+      preset: "recommended",
       suspicious: {
         noDoubleEquals: "off",
       },
@@ -346,7 +346,7 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@defold-typescript/types": typesVersionSpec(),
   "@defold-typescript/cli": typesVersionSpec(),
   "@defold-typescript/tstl-plugin": typesVersionSpec(),
-  "@biomejs/biome": "^2.2.0",
+  "@biomejs/biome": "^2.5.0",
   // The `.vscode/defold-debug.ts` launcher is a Bun script importing `node:fs`/
   // `node:path` and using `Bun.*`/`process`/`fetch`; `@types/bun` resolves those
   // (it pulls in `@types/node`). The project tsconfig pins `types` to
