@@ -24,7 +24,7 @@
     "ref-doc-delta": "bun --cwd packages/types run ref-doc-delta"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.16",
+    "@biomejs/biome": "^2.5.1",
     "@types/bun": "latest",
     "lefthook": "^2.1.9",
     "typescript": "6.0.2",
