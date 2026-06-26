@@ -283,10 +283,16 @@ export async function renderMarkdown(
 
       inline.content = inline.content.replace(/^\[!\w+\]\s*\n?/i, "");
       const children = inline.children;
-      if (children?.[0]?.type === "text" && ALERT_MARKER.test(children[0].content)) {
-        children.shift();
-        const next: string | undefined = children[0]?.type;
-        if (next === "softbreak" || next === "hardbreak") children.shift();
+      const lead = children?.[0];
+      if (lead?.type === "text" && ALERT_MARKER.test(lead.content)) {
+        // Strip only the marker so same-line body (`> [!NOTE] text`) survives;
+        // drop the lead node and its trailing break only when the marker stood alone.
+        lead.content = lead.content.replace(/^\[!\w+\]\s*/i, "");
+        if (lead.content === "" && children) {
+          children.shift();
+          const next: string | undefined = children[0]?.type;
+          if (next === "softbreak" || next === "hardbreak") children.shift();
+        }
       }
 
       const title = new state.Token("html_block", "", 0);

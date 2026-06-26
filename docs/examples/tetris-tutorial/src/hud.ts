@@ -12,10 +12,10 @@ export default defineGuiScript({
     msg.post("/board#board", "hud_ready");
   },
   on_message(_self, message_id, message) {
-    if (message_id === hash("set_hud")) {
+    if (message_id == hash("set_hud")) {
       gui.set_text(gui.get_node("score"), `SCORE  ${String(message.score)}`);
       gui.set_text(gui.get_node("level"), `LEVEL  ${String(message.level)}`);
-    } else if (message_id === hash("game_over")) {
+    } else if (message_id == hash("game_over")) {
       gui.set_enabled(gui.get_node("gameover"), true);
     }
   },
