@@ -753,17 +753,16 @@ describe("docs/guide/tetris-tutorial.md", () => {
   test("carries the rotation rule anchor and the 0-is-truthy tripwire text", async () => {
     const body = await readGuide("tetris-tutorial.md");
     expect(body).toContain("[-r, c]");
-    expect(body).toContain("=== 0");
+    expect(body).toContain("== 0");
     expect(body).toContain("`0` is truthy in Lua");
   });
 
-  test("the equality tripwire links the `===`/`==` gotcha and centers on truthiness", async () => {
+  test("the equality note links the truthiness gotcha and prioritizes ==", async () => {
     const body = await readGuide("tetris-tutorial.md");
     expect(body).toContain(
-      "./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard",
+      "./typescript-gotchas.md#if-x-truthiness-differs--0-and--are-truthy-in-lua",
     );
-    // the reframed tripwire still pins the original strings
-    expect(body).toContain("=== 0");
+    expect(body).toContain("cell == 0");
     expect(body).toContain("`0` is truthy in Lua");
   });
 

@@ -84,7 +84,7 @@ export function cellsAt(piece: number, rot: number, px: number, py: number): Off
 
 let bag: number[] = [];
 export function nextPieceIndex(): number {
-  if (bag.length === 0) {
+  if (bag.length == 0) {
     bag = [0, 1, 2, 3, 4, 5, 6];
     for (let i = bag.length - 1; i > 0; i--) {
       const j = math.random(0, i);

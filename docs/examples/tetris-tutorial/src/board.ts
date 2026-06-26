@@ -85,8 +85,8 @@ function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
 }
 
 function paint(self: BoardSelf, r: number, c: number, value: number): void {
-  gui.set_color(self.fills[r][c], value === 0 ? EMPTY_FILL : TINTS[value]);
-  gui.set_color(self.borders[r][c], value === 0 ? EMPTY_BORDER : BORDERS[value]);
+  gui.set_color(self.fills[r][c], value == 0 ? EMPTY_FILL : TINTS[value]);
+  gui.set_color(self.borders[r][c], value == 0 ? EMPTY_BORDER : BORDERS[value]);
 }
 
 // --- pure movement, all tested against the grid model ---
@@ -210,15 +210,15 @@ export default defineGuiScript({
   },
   on_input(self, action_id, action) {
     if (self.over || !action.pressed) return;
-    if (action_id === LEFT) tryMove(self, -1, 0);
-    else if (action_id === RIGHT) tryMove(self, 1, 0);
-    else if (action_id === SOFT) tryMove(self, 0, 1);
-    else if (action_id === ROTATE) tryRotate(self);
-    else if (action_id === HARD) hardDrop(self);
+    if (action_id == LEFT) tryMove(self, -1, 0);
+    else if (action_id == RIGHT) tryMove(self, 1, 0);
+    else if (action_id == SOFT) tryMove(self, 0, 1);
+    else if (action_id == ROTATE) tryRotate(self);
+    else if (action_id == HARD) hardDrop(self);
   },
   on_message(self, message_id) {
     // The HUD announces itself once loaded; remember it so we only post when
     // it exists (a gui script has no go.exists).
-    if (message_id === hash("hud_ready")) self.hud = true;
+    if (message_id == hash("hud_ready")) self.hud = true;
   },
 });

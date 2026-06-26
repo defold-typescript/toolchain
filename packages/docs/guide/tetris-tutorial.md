@@ -36,6 +36,12 @@ bunx @defold-typescript/cli@latest init .
 
 > This scaffolds a new Defold project into the current folder — the same as creating one from the Defold start screen. Prefer to start in Defold? Create the project there first, then run the same `init .` inside it: `init` detects the existing `game.project` and just adds the TypeScript surface, leaving your scene untouched.
 
+Now install the dependencies `init` declared — they power editor IntelliSense, type-checking, and compilation to Lua:
+
+```bash
+bun install
+```
+
 Now start the **watcher** that automatically converts our `.ts` files.
 
 ```bash
@@ -67,6 +73,9 @@ tetris/
 └─ tsconfig.json
 ```
 
+> [!NOTE]
+> If you build from Defold now (**Project → Build**) before `watch` is running, you'll see a black window. The error `"/src/main.ts.script" could not be found.` is a sign you could have forgotten to start the `watch` process.
+
 In Step 05 you replace `src/main.ts` with `src/board.ts`, and `watch` swaps the generated `src/main.ts.script` for `src/board.ts.gui_script`. You edit `.ts`; Defold runs the generated files.
 
 ## 02 — Input bindings
@@ -85,6 +94,9 @@ Tetris needs five keys. Defold maps hardware keys to named **actions** through a
 | `Down`  | `soft_drop` |
 | `Up`    | `rotate`    |
 | `Space` | `hard_drop` |
+
+> [!WARNING]
+> Do not forget to save the files that you edit.
 
 The script hashes these same names (`hash("left")`, and so on) to recognize each key. Bind them now and the script just works when you attach it.
 
@@ -112,7 +124,7 @@ export function emptyGrid(): Grid {
 export function isFree(g: Grid, c: number, r: number): boolean {
   if (c < 0 || c >= COLS || r >= ROWS) return false;
   if (r < 0) return true;
-  return g[r][c] === 0;
+  return g[r][c] == 0;
 }
 
 export function clearLines(g: Grid): number {
@@ -120,7 +132,7 @@ export function clearLines(g: Grid): number {
   for (let r = ROWS - 1; r >= 0; r--) {
     let full = true;
     for (let c = 0; c < COLS; c++) {
-      if (g[r][c] === 0) {
+      if (g[r][c] == 0) {
         full = false;
         break;
       }
@@ -138,8 +150,8 @@ export function clearLines(g: Grid): number {
 }
 ```
 
-> [!WARNING]
-> **Tripwire**: keep the empty-cell test as `=== 0`, never `if (cell)`. The enemy is truthiness, not the operator: [`===` and `==` compile to the same Lua](./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard), so swapping them changes nothing. A bare `if (cell)` reads an empty cell as "occupied" — the single most common silent bug crossing TS to Lua.
+> [!TIP]
+> You can use `cell == 0` (or `===`) if you want to ensure an empty cell is never mistaken for an occupied one once this runs as Lua. A bare `if (cell)` won't do that: Lua treats only `nil` and `false` as falsy, so `0` is [truthy](./typescript-gotchas.md#if-x-truthiness-differs--0-and--are-truthy-in-lua) and an empty cell reads as occupied.
 
 This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 05).
 
@@ -277,7 +289,7 @@ export function cellsAt(piece: number, rot: number, px: number, py: number): Off
 
 let bag: number[] = [];
 export function nextPieceIndex(): number {
-  if (bag.length === 0) {
+  if (bag.length == 0) {
     bag = [0, 1, 2, 3, 4, 5, 6];
     for (let i = bag.length - 1; i > 0; i--) {
       const j = math.random(0, i);
@@ -291,7 +303,7 @@ export function nextPieceIndex(): number {
 ```
 
 > [!NOTE]
-> **Tripwire**: Use Defold's `math.random`, not `Math.random()` — the JS standard library mostly doesn't survive compilation, so reach for the engine's `math`, `os`, and `json` modules. `cellsAt` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
+> This uses Lua's `math.random(0, i)` because the two-argument form returns an integer in a range directly. `Math.random()` compiles fine too — it becomes `math.random()` — but returns a float in `[0, 1)`, so for an index you'd write `math.floor(Math.random() * (i + 1))`. Much of the JS standard library transpiles (`Math`, array and string methods); reach for Defold's `math`, `os`, and `json` for engine-specific concerns. `cellsAt` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
 
 ## 05 — The board script: `src/board.ts`
 
@@ -401,8 +413,8 @@ function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
 }
 
 function paint(self: BoardSelf, r: number, c: number, value: number): void {
-  gui.set_color(self.fills[r][c], value === 0 ? EMPTY_FILL : TINTS[value]);
-  gui.set_color(self.borders[r][c], value === 0 ? EMPTY_BORDER : BORDERS[value]);
+  gui.set_color(self.fills[r][c], value == 0 ? EMPTY_FILL : TINTS[value]);
+  gui.set_color(self.borders[r][c], value == 0 ? EMPTY_BORDER : BORDERS[value]);
 }
 
 // --- pure movement, all tested against the grid model ---
@@ -526,16 +538,16 @@ export default defineGuiScript({
   },
   on_input(self, action_id, action) {
     if (self.over || !action.pressed) return;
-    if (action_id === LEFT) tryMove(self, -1, 0);
-    else if (action_id === RIGHT) tryMove(self, 1, 0);
-    else if (action_id === SOFT) tryMove(self, 0, 1);
-    else if (action_id === ROTATE) tryRotate(self);
-    else if (action_id === HARD) hardDrop(self);
+    if (action_id == LEFT) tryMove(self, -1, 0);
+    else if (action_id == RIGHT) tryMove(self, 1, 0);
+    else if (action_id == SOFT) tryMove(self, 0, 1);
+    else if (action_id == ROTATE) tryRotate(self);
+    else if (action_id == HARD) hardDrop(self);
   },
   on_message(self, message_id) {
     // The HUD announces itself once loaded; remember it so we only post when
     // it exists (a gui script has no go.exists).
-    if (message_id === hash("hud_ready")) self.hud = true;
+    if (message_id == hash("hud_ready")) self.hud = true;
   },
 });
 ```
@@ -559,7 +571,7 @@ With `watch` running, hit **Project → Build** in the Defold editor (`Cmd/Ctrl+
 
 - Board invisible? Check `board.gui`'s **Script** is `/src/board.ts.gui_script` and **Max Nodes** is at least `600`.
 - Keys do nothing? Confirm the Step 02 input bindings exist and the script posts `acquire_input_focus` in `init`.
-- Cells read as occupied when empty? You've hit the `0`-still-counts trap — find the bare `if (cell)` and make it `=== 0`.
+- Cells read as occupied when empty? You've hit the `0`-still-counts trap — find the bare `if (cell)` and make it `== 0`.
 
 To ship, use **Project → Bundle**. The bundle is only Lua — your TypeScript was a build-time convenience.
 
@@ -584,10 +596,10 @@ export default defineGuiScript({
     msg.post("/board#board", "hud_ready");
   },
   on_message(_self, message_id, message) {
-    if (message_id === hash("set_hud")) {
+    if (message_id == hash("set_hud")) {
       gui.set_text(gui.get_node("score"), `SCORE  ${String(message.score)}`);
       gui.set_text(gui.get_node("level"), `LEVEL  ${String(message.level)}`);
-    } else if (message_id === hash("game_over")) {
+    } else if (message_id == hash("game_over")) {
       gui.set_enabled(gui.get_node("gameover"), true);
     }
   },
@@ -616,7 +628,7 @@ function hardDrop(self: BoardSelf): void {
 }
 
 // add to on_input:
-// else if (action_id === HARD) hardDrop(self);
+// else if (action_id == HARD) hardDrop(self);
 ```
 
 That's the satisfying one: instant placement instead of waiting for gravity.
@@ -627,9 +639,9 @@ Every sharp edge in one place:
 
 | Symptom                              | Cause                                                | Fix                                                                   |
 | ------------------------------------ | ---------------------------------------------------- | --------------------------------------------------------------------- |
-| Empty cell reads as occupied         | `0` is truthy in Lua                                 | Compare `=== 0` explicitly                                            |
+| Empty cell reads as occupied         | `0` is truthy in Lua                                 | Compare `== 0` explicitly                                            |
 | Keys do nothing                      | `action_id` is a hash, not a string                  | Pre-hash ids, compare hash-to-hash                                    |
-| `Math.random` undefined              | JS stdlib doesn't transpile                          | Use engine `math.random`                                              |
+| Need a random integer in a range     | `Math.random()` compiles fine but is a float `[0,1)` | Use Lua `math.random(m, n)` for an integer range                      |
 | Piece won't negate / vector errors   | `-v3` infers `number`                                | Use `v.unm()`; arithmetic is method-form                              |
 | Two scripts in one file              | One `defineScript`/`defineGuiScript` export per file | Split into separate `.ts` files                                       |
 | `Instance '/hud' could not be found` | `msg.post` to a missing instance; errors at dispatch | Have the listener register (post to the sender), then post only after |
