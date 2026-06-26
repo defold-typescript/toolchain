@@ -17,7 +17,7 @@ export function emptyGrid(): Grid {
 export function isFree(g: Grid, c: number, r: number): boolean {
   if (c < 0 || c >= COLS || r >= ROWS) return false;
   if (r < 0) return true;
-  return g[r][c] === 0;
+  return g[r][c] == 0;
 }
 
 export function clearLines(g: Grid): number {
@@ -25,7 +25,7 @@ export function clearLines(g: Grid): number {
   for (let r = ROWS - 1; r >= 0; r--) {
     let full = true;
     for (let c = 0; c < COLS; c++) {
-      if (g[r][c] === 0) {
+      if (g[r][c] == 0) {
         full = false;
         break;
       }

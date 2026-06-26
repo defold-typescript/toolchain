@@ -46,5 +46,11 @@
       "trailingCommas": "all",
       "arrowParentheses": "always"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["docs/examples/**"],
+      "linter": { "rules": { "suspicious": { "noDoubleEquals": "off" } } }
+    }
+  ]
 }
