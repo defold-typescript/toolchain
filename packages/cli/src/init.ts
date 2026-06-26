@@ -48,6 +48,15 @@ const GITIGNORE_LINES = [
   "src/**/*.ts.render_script.map",
   "src/**/*.lua",
   "src/**/*.lua.map",
+  "/build/",
+  "/.internal/",
+  "/.editor_settings",
+  "builtins/",
+  ".DS_Store",
+  "/lualib_bundle.lua",
+  "/lualib_bundle.lua.map",
+  "/defold_typescript_timers.lua",
+  "/defold_typescript_timers.lua.map",
 ];
 
 export const BIOME_JSON_CONTENT = {
