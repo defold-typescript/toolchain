@@ -123,5 +123,4 @@ nodes {
   pivot: PIVOT_CENTER
   adjust_mode: ADJUST_MODE_FIT
   inherit_alpha: true
-  enabled: false
 }

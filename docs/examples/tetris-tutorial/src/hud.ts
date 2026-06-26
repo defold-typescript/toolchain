@@ -7,6 +7,8 @@ import { defineGuiScript } from "@defold-typescript/types";
 // display rather than typed through a builtin payload.
 export default defineGuiScript({
   init() {
+    // Hide the game-over banner at startup; on_message re-enables it on game over.
+    gui.set_enabled(gui.get_node("gameover"), false);
     // A gui script can't be probed with go.exists, so announce ourselves to the
     // board; it posts score/level updates only once we have registered.
     msg.post("/board#board", "hud_ready");
