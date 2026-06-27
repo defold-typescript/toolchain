@@ -107,6 +107,8 @@ bytes), — when the project pins that url — the `pinnedVersion`, and the
 ```jsonc
 {
   "command": "resolve",
+  "ok": true,
+  "written": [],
   "materializedSurface": ".defold-types/extensions",
   "extensions": [
     {

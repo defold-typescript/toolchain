@@ -228,14 +228,17 @@ and `package.json` to exactly the declared set.
 {
   "command": "resolve",
   "ok": true,
-  "written": [".defold-types/extensions/<namespace>.d.ts", "..."],
+  "written": [],
+  "materializedSurface": ".defold-types/extensions",
   "extensions": [
     {
       "url": "<archive url>",
       "provenance": "<cache | download>",
       "namespaces": ["<namespace>"],
       "scriptApiCount": 1,
-      "assetOnly": false
+      "assetOnly": false,
+      "resolvedVersion": "<version>",
+      "pinStatus": "<unpinned | match | drift>"
     }
   ]
 }
@@ -247,11 +250,14 @@ On failure:
 { "command": "resolve", "ok": false, "error": "<message>" }
 ```
 
-**Reading `ok`:** if `ok` is `true`, the extension surface is current — `written`
-lists the regenerated declaration files, and `extensions` records where each one
-came from (`provenance`) and how many `.script_api` files it contributed
-(`scriptApiCount`); an `assetOnly` dependency contributes no types. If `ok` is
-`false`, surface `error`; the existing surface is left untouched.
+**Reading `ok`:** if `ok` is `true`, the extension surface is current —
+`materializedSurface` is the regenerated surface directory
+(`.defold-types/extensions`), and `extensions` records where each dependency
+came from (`provenance`), how many `.script_api` files it contributed
+(`scriptApiCount`; an `assetOnly` dependency contributes no types), and its pin
+state (`resolvedVersion`/`pinStatus`). The `written` array is always empty for
+`resolve`. If `ok` is `false`, surface `error`; the existing surface is left
+untouched.
 
 ## Add a script
 

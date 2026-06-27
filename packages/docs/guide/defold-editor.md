@@ -9,9 +9,8 @@ In the CLI-driven loop you author code in TypeScript and build from the command 
 
 ## Open the project
 
-1. Start Defold.
-2. Choose **Open Project**.
-3. Select the folder that contains `game.project`.
+1. Start Defold to open the launcher. (If the editor is already open, choose **File** → **Open Project** to bring the launcher back up.)
+2. On the launcher, click **Open From Disk...** and select the `game.project` file in your project folder.
 
 For a project created with `bunx @defold-typescript/cli@latest init my-game`, that is the destination folder you named — the same folder where you run the CLI commands.
 

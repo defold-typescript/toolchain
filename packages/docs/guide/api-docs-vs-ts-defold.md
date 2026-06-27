@@ -58,10 +58,10 @@ fixture below.
 
 Against the pinned snapshot (Defold stable 1.12.4):
 
-- **762 shared symbols** — for every one, the `@defold-typescript/types` docs are
+- **791 shared symbols** — for every one, the `@defold-typescript/types` docs are
   a superset: if `ts-defold-types` has a description, a `@param`, a `@returns`, or
   an `@example`, `@defold-typescript/types` does too.
-- **135 `ts-defold-types`-only symbols** — reported as coverage notes, not
+- **106 `ts-defold-types`-only symbols** — reported as coverage notes, not
   failures. These are surface-shape differences, not dropped docs: top-level
   globals (`pprint`, `hash`, …) and modules the `@defold-typescript/types` surface
   structures differently (`b2d.body.*`, `bit.*`, some `socket` overloads). They
@@ -71,7 +71,7 @@ Against the pinned snapshot (Defold stable 1.12.4):
 <a id="multi-return-functions"></a>
 ### Multi-return functions
 
-For **16** functions whose Lua API returns several values (e.g.
+For **9** functions whose Lua API returns several values (e.g.
 `gui.get_type`, `gui.new_texture`, `buffer.get_metadata`,
 `collectionproxy.set_collection`, `sound.get_rms`, `window.get_size`),
 `ts-defold-types` collapses the return to one `@returns` line. `@defold-typescript/types`

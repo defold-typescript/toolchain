@@ -16,31 +16,38 @@ version pin, so a stale `bunx` cache would pin an older release. Then run
 `bun install` once — `init` only declares the dev dependencies below; `install`
 is what puts them in `node_modules` so the editor can resolve the Defold types.
 
-When `game.project` exists, `init` does not synthesize a new Defold project. It only writes the TypeScript surface:
+When `game.project` exists, `init` does not synthesize a new Defold project. It writes the same managed surface a new project gets, minus the Defold project files (`game.project`, `main/`, `input/`):
 
 - `src/main.ts` — a starter entry script, written only when absent. `main.ts` is your source, not managed config, so an existing one is left untouched (and omitted from the reported `written` list) even under `--force`.
 - `tsconfig.json`
-- `package.json`
+- `package.json` — created when absent, otherwise field-merged (see below).
+- `.gitignore`, `biome.json`, `mise.toml`
+- `.vscode/` — `extensions.json`, `settings.json`, `defold-typescript.code-snippets`, `launch.json`, `tasks.json`, and the `defold-debug.ts` launcher.
 
 If `package.json` already exists, the command preserves its existing fields and merges these dev dependencies when they are missing:
 
-- `@defold-typescript/types` — pinned to the CLI's own published version (the packages release in lockstep). This is the only `@defold-typescript/*` package your project needs; it is type-only and feeds the editor. The transpiler is a dependency of the CLI itself, pulled in when you run `build`/`watch`, so the scaffold does not add it.
-- `@biomejs/biome`
+- `@defold-typescript/types` — pinned to the CLI's own published version (the packages release in lockstep); type-only, and feeds the editor the ambient Defold API.
+- `@defold-typescript/cli` — the same version pin, so `build`/`watch` run in lockstep with those types.
+- `@defold-typescript/tstl-plugin` — the TSTL language-service plugin wired into `tsconfig.json` for live transpile diagnostics.
+- `@biomejs/biome` — lint and format.
+- `@types/bun` — resolves the Bun and Node globals the `.vscode/defold-debug.ts` launcher uses; kept out of the `src/` compile by the tsconfig `types` pin.
+
+The transpiler is *not* added as a project dependency — it arrives transitively through `@defold-typescript/cli` when you run `build`/`watch`, and the scaffold removes a stray `@defold-typescript/transpiler` devDep if it finds one.
 
 If `package.json` does not exist, the command creates one.
 
 ## Conflicting config files
 
-`init` refuses to overwrite an existing TypeScript or defold-typescript config. Remove or move the conflicting file before running the command.
-
-Conflicts today are:
+`init` refuses to overwrite an existing TypeScript config rather than clobber settings you may have hand-tuned. Without `--force`, it aborts if any of these files exist:
 
 - `tsconfig.json`
 - `defold-typescript.config.ts`
 - `defold-typescript.config.mts`
 - `defold-typescript.config.js`
 
-Pass `--force` to overwrite a conflicting TS config (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` overwrites the config wholesale; it does not merge fields, so any settings you had in `tsconfig.json` are replaced by the scaffold config. `--force` refreshes managed config only — it never overwrites `src/main.ts`, since that file is your source.
+Of these, only `tsconfig.json` is one the scaffold actually generates. The `defold-typescript.config.*` names are reserved: the toolchain neither writes nor reads them today, but `init` still refuses to overwrite one so a config file you create by that name later is never silently clobbered.
+
+Pass `--force` to proceed anyway (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` rewrites `tsconfig.json` wholesale — it does not merge fields, so any settings you had there are replaced by the scaffold config. It does not touch a `defold-typescript.config.*` file: because the scaffold never generates one, `--force` only skips the conflict check and leaves any such file in place. `--force` never overwrites `src/main.ts` either, since that file is your source.
 
 ## Build the Lua output
 
