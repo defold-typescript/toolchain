@@ -111,10 +111,12 @@ bun install
 
 `init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
 
-Run `bun install` once after `init`. The scaffold only declares its
+Run `bun install` once after `init`. The scaffold declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
 types, `@defold-typescript/cli` pinned to the same version so the build runs in
-lockstep with those types, and `@biomejs/biome` for lint and format) — `install`
+lockstep with those types, `@defold-typescript/tstl-plugin` for the live
+transpile diagnostics, `@biomejs/biome` for lint and format, and `@types/bun`
+for the `.vscode/` debug launcher) — `install`
 is what actually puts them in `node_modules`. Skip it and your editor reports the Defold globals as
 unresolved. `init` does not install for you (that keeps scaffolding offline), so
 it prints a `Next: run <pm> install` reminder once it finishes, picking the
@@ -122,7 +124,7 @@ package manager from the runner that invoked it (`bun`/`npm`/`pnpm`/`yarn`,
 falling back to `bun`). Pass `--suppress-install-reminder` to silence that line
 when you install through your own tooling.
 
-The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched.
+The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched, unless you pass `--force`, which migrates the one deprecated Biome `recommended` key and leaves your other settings in place.
 
 If the scaffolded `@defold-typescript/types` pin still looks older than the CLI you expect, your `bunx` cache is stale — `@latest` above already forces the current release, which is more reliable than clearing the cache with `bun pm cache rm`.
 
@@ -252,7 +254,9 @@ bunx @defold-typescript/cli defold bundle    # bundle a platform target
 ```
 
 The first run downloads a version-matched `bob.jar` into a cache dir
-(`$DEFOLD_TYPESCRIPT_CACHE` or `~/.cache/defold-typescript/bob`) and reuses it
+(`$DEFOLD_TYPESCRIPT_CACHE/bob` when set, otherwise
+`$XDG_CACHE_HOME/defold-typescript/bob`, falling back to
+`~/.cache/defold-typescript/bob`) and reuses it
 afterward. `bob` needs a JVM: it uses `java` on your `PATH`, or pass `--java
 <path>` (or set `DEFOLD_JAVA`). Native-extension projects can pass
 `--build-server <url>`. `bob`'s exit code propagates, so a failed build fails the
@@ -354,31 +358,38 @@ version pin, so a stale `bunx` cache would pin an older release. Then run
 `bun install` once — `init` only declares the dev dependencies below; `install`
 is what puts them in `node_modules` so the editor can resolve the Defold types.
 
-When `game.project` exists, `init` does not synthesize a new Defold project. It only writes the TypeScript surface:
+When `game.project` exists, `init` does not synthesize a new Defold project. It writes the same managed surface a new project gets, minus the Defold project files (`game.project`, `main/`, `input/`):
 
 - `src/main.ts` — a starter entry script, written only when absent. `main.ts` is your source, not managed config, so an existing one is left untouched (and omitted from the reported `written` list) even under `--force`.
 - `tsconfig.json`
-- `package.json`
+- `package.json` — created when absent, otherwise field-merged (see below).
+- `.gitignore`, `biome.json`, `mise.toml`
+- `.vscode/` — `extensions.json`, `settings.json`, `defold-typescript.code-snippets`, `launch.json`, `tasks.json`, and the `defold-debug.ts` launcher.
 
 If `package.json` already exists, the command preserves its existing fields and merges these dev dependencies when they are missing:
 
-- `@defold-typescript/types` — pinned to the CLI's own published version (the packages release in lockstep). This is the only `@defold-typescript/*` package your project needs; it is type-only and feeds the editor. The transpiler is a dependency of the CLI itself, pulled in when you run `build`/`watch`, so the scaffold does not add it.
-- `@biomejs/biome`
+- `@defold-typescript/types` — pinned to the CLI's own published version (the packages release in lockstep); type-only, and feeds the editor the ambient Defold API.
+- `@defold-typescript/cli` — the same version pin, so `build`/`watch` run in lockstep with those types.
+- `@defold-typescript/tstl-plugin` — the TSTL language-service plugin wired into `tsconfig.json` for live transpile diagnostics.
+- `@biomejs/biome` — lint and format.
+- `@types/bun` — resolves the Bun and Node globals the `.vscode/defold-debug.ts` launcher uses; kept out of the `src/` compile by the tsconfig `types` pin.
+
+The transpiler is *not* added as a project dependency — it arrives transitively through `@defold-typescript/cli` when you run `build`/`watch`, and the scaffold removes a stray `@defold-typescript/transpiler` devDep if it finds one.
 
 If `package.json` does not exist, the command creates one.
 
 ## Conflicting config files
 
-`init` refuses to overwrite an existing TypeScript or defold-typescript config. Remove or move the conflicting file before running the command.
-
-Conflicts today are:
+`init` refuses to overwrite an existing TypeScript config rather than clobber settings you may have hand-tuned. Without `--force`, it aborts if any of these files exist:
 
 - `tsconfig.json`
 - `defold-typescript.config.ts`
 - `defold-typescript.config.mts`
 - `defold-typescript.config.js`
 
-Pass `--force` to overwrite a conflicting TS config (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` overwrites the config wholesale; it does not merge fields, so any settings you had in `tsconfig.json` are replaced by the scaffold config. `--force` refreshes managed config only — it never overwrites `src/main.ts`, since that file is your source.
+Of these, only `tsconfig.json` is one the scaffold actually generates. The `defold-typescript.config.*` names are reserved: the toolchain neither writes nor reads them today, but `init` still refuses to overwrite one so a config file you create by that name later is never silently clobbered.
+
+Pass `--force` to proceed anyway (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` rewrites `tsconfig.json` wholesale — it does not merge fields, so any settings you had there are replaced by the scaffold config. It does not touch a `defold-typescript.config.*` file: because the scaffold never generates one, `--force` only skips the conflict check and leaves any such file in place. `--force` never overwrites `src/main.ts` either, since that file is your source.
 
 ## Build the Lua output
 
@@ -431,6 +442,7 @@ Defold runs standard Lua 5.1 (LuaJIT), **not** Luau. If you want to read the *ge
 - `settings.json` sets `Lua.workspace.ignoreDir: ["src"]` so that, *if* you install the optional sumneko Lua server, it does not lint the generated `*.ts.script` output (which would flag TSTL-emitted `self` parameters as unused). Hand-written Defold `.script` files under `main/` stay analyzed. The setting is harmless when sumneko is absent.
 - `defold-typescript.code-snippets` expands an empty script over the lifecycle factories (the TypeScript equivalent of the Defold editor's "new script" templates).
 - `launch.json` + `defold-debug.ts` set up a shell-free, Windows-native debug launch path. See [Debugging](debugging.md).
+- `tasks.json` registers `defold-typescript: build` / `defold-typescript: watch` tasks with a shared problem matcher, so transpile errors land in the editor's Problems panel.
 
 These files merge additively into any `.vscode/` config you already have, so your own recommendations, settings, snippets, and launch configs are preserved.
 
@@ -454,7 +466,7 @@ The two variants mirror the two self-typing idioms (see [Script lifecycle](scrip
 An expanded snippet emits every lifecycle hook the installed `@defold-typescript/types` declares. If your editor reports `<hook> does not exist in type 'ScriptHooks'` (and the parameters of that method turn implicitly `any`), work through it in this order:
 
 1. **Restart the TypeScript server first.** A stale language-server process keeps the old type surface in memory after a dependency upgrade, so the error survives even once the right types are on disk. In VS Code, run *TypeScript: Restart TS Server* from the command palette. This clears most false positives.
-2. **Then check the types version.** `fixed_update` and `late_update` need `@defold-typescript/types >= 0.5.0`; a project whose resolved types lag the CLI that wrote the snippets genuinely lacks those hooks. Upgrade the dependency. `bunx @defold-typescript/cli@latest init . --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
+2. **Then bring the types up to the CLI.** The snippet emits whatever the *CLI* knows about, so a newer hook (such as `fixed_update` or `late_update`) errors when the project's resolved `@defold-typescript/types` lags the CLI that wrote the snippet. Upgrade to the latest and keep them in lockstep: `bunx @defold-typescript/cli@latest init . --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
 
 Edit TypeScript under `src/`. Treat generated `.ts.script`/`.ts.gui_script`/`.ts.render_script` component files, helper `.lua` modules, and their `.map` siblings next to your sources as build output; the scaffolded `.gitignore` keeps them out of version control.
 
@@ -476,8 +488,9 @@ If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` (below) give
 
 - **`defold-typescript:build`** — `bunx @defold-typescript/cli build`. Builds once with the project's CLI.
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
+- **`defold-typescript:setup-debug`** — `bunx @defold-typescript/cli setup-debug`. Wires the lldebugger `game.project` dependency and entry-script bootstrap (see [Debugging](debugging.md)).
 - **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents .`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
-- **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init . --force` then `bun install`. The deliberate upgrade path.
+- **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder` then `bun install` (the second command reinstalls, so the install reminder is suppressed). The deliberate upgrade path.
 
 Build and watch carry no version tag, so inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` scaffolds as a pinned devDependency — the build runs the version locked alongside the pinned `@defold-typescript/types`. Upgrade is the one task that intentionally pulls `@latest`: `init . --force` re-pins both managed deps to the new CLI's version, and `bun install` reinstalls.
 
@@ -491,9 +504,8 @@ In the CLI-driven loop you author code in TypeScript and build from the command 
 
 ## Open the project
 
-1. Start Defold.
-2. Choose **Open Project**.
-3. Select the folder that contains `game.project`.
+1. Start Defold to open the launcher. (If the editor is already open, choose **File** → **Open Project** to bring the launcher back up.)
+2. On the launcher, click **Open From Disk...** and select the `game.project` file in your project folder.
 
 For a project created with `bunx @defold-typescript/cli@latest init my-game`, that is the destination folder you named — the same folder where you run the CLI commands.
 
@@ -594,7 +606,7 @@ bunx @defold-typescript/cli setup-debug
 - Writes the ambient `src/lldebugger.debug.d.ts` (the `@noResolution declare module`) alongside the entry-script edit, regenerated whole and skipped when already current.
 - Injects the gated `lldebugger.start()` bootstrap into your entry script inside a managed `BEGIN`/`END` block. A re-run refreshes the block if its wording drifted and is otherwise a no-op; a legacy single-marker block from an older version is upgraded in place. The block is kept in exactly one script: any stale managed block in another `src/` script is stripped on each run.
 
-It selects the entry script from the Defold boot path: starting at `game.project`'s `[bootstrap] main_collection`, it walks the referenced `.collection` files (including nested `collection:` references) and collects every `.ts.script` component, mapping each back to its source `.ts`. A single boot-path script is wired automatically; with several, pass `--script <path>` to choose one or run interactively (without `--json`) to pick from a prompt, and `--json` errors naming the candidates. When the boot path reaches no `.ts.script` (or there is no `[bootstrap]`), it falls back to scanning `src/**/*.ts` for a lifecycle-factory call (`defineScript`/`defineGuiScript`/`defineRenderScript`). The plain output names the script added to, any scripts the block was removed from, and the boot-path trace behind the choice; `--json` emits a machine-readable `{command, ok, written, manualSteps, addedTo, removedFrom, bootPath}` result. The same command is available as the `defold-typescript:setup-debug` mise task.
+It selects the entry script from the Defold boot path: starting at `game.project`'s `[bootstrap] main_collection`, it walks the referenced `.collection` files (including nested `collection:` references) and collects every `.ts.script` component, mapping each back to its source `.ts`. A single boot-path script is wired automatically; with several, pass `--script <path>` to choose one or run interactively (without `--json`) to pick from a prompt, and `--json` errors naming the candidates. When the boot path reaches no `.ts.script` (or there is no `[bootstrap]`), it falls back to scanning `src/**/*.ts` for a lifecycle-factory call (`defineScript`/`defineGuiScript`/`defineRenderScript`). The plain output names the script added to, any scripts the block was removed from, and the boot-path trace behind the choice; `--json` emits a machine-readable `{command, ok, written, actions, manualSteps, addedTo, removedFrom, bootPath}` result. The same command is available as the `defold-typescript:setup-debug` mise task.
 
 Two steps still require the Defold editor and VS Code and are reported as remaining manual steps:
 
@@ -783,9 +795,10 @@ How the surface is produced depends on the resolved version:
   version's Defold reference docs and written into
   `.defold-types/<version>/` (for example `.defold-types/defold-1.9.8/`). The
   reference docs are downloaded once on first use and cached, so later builds
-  are offline. The generated faux package is self-contained: it carries its own
-  `core-types.d.ts`, so the surface type-checks regardless of where the project
-  lives. It also carries `engine-globals.d.ts` and side-effect imports it from
+  are offline. The generated faux package carries a `core-types.d.ts` that
+  re-exports the installed `@defold-typescript/types/core-types`, so its branded
+  engine types stay unified with the ones your code imports rather than minting a
+  nominally distinct copy. It also carries `engine-globals.d.ts` and side-effect imports it from
   the surface `index.d.ts`, so the engine types (`Vector3`, `Hash`, `Url`, …)
   are ambient globals — name them with no import, matching the namespace
   ergonomics (`vmath`, `go`, …).
@@ -841,9 +854,10 @@ pin it yourself.
 
 How the channel affects the doc-source fetch:
 
-- **`stable`** uses the GitHub release URL for the pinned `defold-version` and
-  downloads `engine/share/ref-doc.zip` from that release's archive. This is
-  the only path that touches the GitHub archive directly.
+- **`stable`** downloads `ref-doc.zip` directly from the pinned `defold-version`'s
+  GitHub release assets (`releases/download/<version>/ref-doc.zip`) — no
+  `engine/share/` path. This is the only path that touches the GitHub release
+  archive directly.
 - **`beta`** and **`alpha`** resolve the channel head via
   `d.defold.com/<channel>/info.json` and download
   `archive/<channel>/<sha1>/engine/share/ref-doc.zip`, cached channel-scoped.
@@ -964,6 +978,8 @@ bytes), — when the project pins that url — the `pinnedVersion`, and the
 ```jsonc
 {
   "command": "resolve",
+  "ok": true,
+  "written": [],
   "materializedSurface": ".defold-types/extensions",
   "extensions": [
     {
@@ -1361,14 +1377,17 @@ and `package.json` to exactly the declared set.
 {
   "command": "resolve",
   "ok": true,
-  "written": [".defold-types/extensions/<namespace>.d.ts", "..."],
+  "written": [],
+  "materializedSurface": ".defold-types/extensions",
   "extensions": [
     {
       "url": "<archive url>",
       "provenance": "<cache | download>",
       "namespaces": ["<namespace>"],
       "scriptApiCount": 1,
-      "assetOnly": false
+      "assetOnly": false,
+      "resolvedVersion": "<version>",
+      "pinStatus": "<unpinned | match | drift>"
     }
   ]
 }
@@ -1380,11 +1399,14 @@ On failure:
 { "command": "resolve", "ok": false, "error": "<message>" }
 ```
 
-**Reading `ok`:** if `ok` is `true`, the extension surface is current — `written`
-lists the regenerated declaration files, and `extensions` records where each one
-came from (`provenance`) and how many `.script_api` files it contributed
-(`scriptApiCount`); an `assetOnly` dependency contributes no types. If `ok` is
-`false`, surface `error`; the existing surface is left untouched.
+**Reading `ok`:** if `ok` is `true`, the extension surface is current —
+`materializedSurface` is the regenerated surface directory
+(`.defold-types/extensions`), and `extensions` records where each dependency
+came from (`provenance`), how many `.script_api` files it contributed
+(`scriptApiCount`; an `assetOnly` dependency contributes no types), and its pin
+state (`resolvedVersion`/`pinStatus`). The `written` array is always empty for
+`resolve`. If `ok` is `false`, surface `error`; the existing surface is left
+untouched.
 
 ## Add a script
 
@@ -2416,7 +2438,7 @@ end
 function Counter.prototype.bump(self)
     self.n = self.n + 1
 end
-____exports.c = __TS__New(Counter)
+____exports.c = __TS__New(____exports.Counter)
 return ____exports
 ```
 
@@ -2882,7 +2904,7 @@ export async function main(): Promise<void> {
 **Why.** TypeScriptToLua implements `async`/`await` itself, on top of Lua coroutines:
 
 - An `async function` is lowered to `__TS__AsyncAwaiter(generator)`, which returns a `__TS__Promise` and runs the function body inside a Lua **coroutine**.
-- `await x` is lowered to `coroutine.yield(x)`. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
+- `await x` is lowered to `__TS__Await(x)`, which yields the value through the body's Lua coroutine. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
 - `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
 
 These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module does `require("lualib_bundle")` to pull them in. No setup or polyfill is needed.
@@ -3006,10 +3028,10 @@ fixture below.
 
 Against the pinned snapshot (Defold stable 1.12.4):
 
-- **762 shared symbols** — for every one, the `@defold-typescript/types` docs are
+- **791 shared symbols** — for every one, the `@defold-typescript/types` docs are
   a superset: if `ts-defold-types` has a description, a `@param`, a `@returns`, or
   an `@example`, `@defold-typescript/types` does too.
-- **135 `ts-defold-types`-only symbols** — reported as coverage notes, not
+- **106 `ts-defold-types`-only symbols** — reported as coverage notes, not
   failures. These are surface-shape differences, not dropped docs: top-level
   globals (`pprint`, `hash`, …) and modules the `@defold-typescript/types` surface
   structures differently (`b2d.body.*`, `bit.*`, some `socket` overloads). They
@@ -3019,7 +3041,7 @@ Against the pinned snapshot (Defold stable 1.12.4):
 <a id="multi-return-functions"></a>
 ### Multi-return functions
 
-For **16** functions whose Lua API returns several values (e.g.
+For **9** functions whose Lua API returns several values (e.g.
 `gui.get_type`, `gui.new_texture`, `buffer.get_metadata`,
 `collectionproxy.set_collection`, `sound.get_rms`, `window.get_size`),
 `ts-defold-types` collapses the return to one `@returns` line. `@defold-typescript/types`

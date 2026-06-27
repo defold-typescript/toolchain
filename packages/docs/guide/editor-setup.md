@@ -42,6 +42,7 @@ Defold runs standard Lua 5.1 (LuaJIT), **not** Luau. If you want to read the *ge
 - `settings.json` sets `Lua.workspace.ignoreDir: ["src"]` so that, *if* you install the optional sumneko Lua server, it does not lint the generated `*.ts.script` output (which would flag TSTL-emitted `self` parameters as unused). Hand-written Defold `.script` files under `main/` stay analyzed. The setting is harmless when sumneko is absent.
 - `defold-typescript.code-snippets` expands an empty script over the lifecycle factories (the TypeScript equivalent of the Defold editor's "new script" templates).
 - `launch.json` + `defold-debug.ts` set up a shell-free, Windows-native debug launch path. See [Debugging](debugging.md).
+- `tasks.json` registers `defold-typescript: build` / `defold-typescript: watch` tasks with a shared problem matcher, so transpile errors land in the editor's Problems panel.
 
 These files merge additively into any `.vscode/` config you already have, so your own recommendations, settings, snippets, and launch configs are preserved.
 
@@ -65,7 +66,7 @@ The two variants mirror the two self-typing idioms (see [Script lifecycle](scrip
 An expanded snippet emits every lifecycle hook the installed `@defold-typescript/types` declares. If your editor reports `<hook> does not exist in type 'ScriptHooks'` (and the parameters of that method turn implicitly `any`), work through it in this order:
 
 1. **Restart the TypeScript server first.** A stale language-server process keeps the old type surface in memory after a dependency upgrade, so the error survives even once the right types are on disk. In VS Code, run *TypeScript: Restart TS Server* from the command palette. This clears most false positives.
-2. **Then check the types version.** `fixed_update` and `late_update` need `@defold-typescript/types >= 0.5.0`; a project whose resolved types lag the CLI that wrote the snippets genuinely lacks those hooks. Upgrade the dependency. `bunx @defold-typescript/cli@latest init . --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
+2. **Then bring the types up to the CLI.** The snippet emits whatever the *CLI* knows about, so a newer hook (such as `fixed_update` or `late_update`) errors when the project's resolved `@defold-typescript/types` lags the CLI that wrote the snippet. Upgrade to the latest and keep them in lockstep: `bunx @defold-typescript/cli@latest init . --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
 
 Edit TypeScript under `src/`. Treat generated `.ts.script`/`.ts.gui_script`/`.ts.render_script` component files, helper `.lua` modules, and their `.map` siblings next to your sources as build output; the scaffolded `.gitignore` keeps them out of version control.
 
@@ -87,8 +88,9 @@ If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` (below) give
 
 - **`defold-typescript:build`** — `bunx @defold-typescript/cli build`. Builds once with the project's CLI.
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
+- **`defold-typescript:setup-debug`** — `bunx @defold-typescript/cli setup-debug`. Wires the lldebugger `game.project` dependency and entry-script bootstrap (see [Debugging](debugging.md)).
 - **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents .`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
-- **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init . --force` then `bun install`. The deliberate upgrade path.
+- **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder` then `bun install` (the second command reinstalls, so the install reminder is suppressed). The deliberate upgrade path.
 
 Build and watch carry no version tag, so inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` scaffolds as a pinned devDependency — the build runs the version locked alongside the pinned `@defold-typescript/types`. Upgrade is the one task that intentionally pulls `@latest`: `init . --force` re-pins both managed deps to the new CLI's version, and `bun install` reinstalls.
 

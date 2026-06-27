@@ -61,7 +61,7 @@ end
 function Counter.prototype.bump(self)
     self.n = self.n + 1
 end
-____exports.c = __TS__New(Counter)
+____exports.c = __TS__New(____exports.Counter)
 return ____exports
 ```
 

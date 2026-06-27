@@ -78,6 +78,7 @@ export {
   type ScriptHookName,
   type ScriptHooks,
   type ScriptProperties,
+  type ScriptPropertiesOf,
   type ScriptProperty,
 } from "./src/lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./src/publish-dts";

@@ -114,9 +114,10 @@ How the surface is produced depends on the resolved version:
   version's Defold reference docs and written into
   `.defold-types/<version>/` (for example `.defold-types/defold-1.9.8/`). The
   reference docs are downloaded once on first use and cached, so later builds
-  are offline. The generated faux package is self-contained: it carries its own
-  `core-types.d.ts`, so the surface type-checks regardless of where the project
-  lives. It also carries `engine-globals.d.ts` and side-effect imports it from
+  are offline. The generated faux package carries a `core-types.d.ts` that
+  re-exports the installed `@defold-typescript/types/core-types`, so its branded
+  engine types stay unified with the ones your code imports rather than minting a
+  nominally distinct copy. It also carries `engine-globals.d.ts` and side-effect imports it from
   the surface `index.d.ts`, so the engine types (`Vector3`, `Hash`, `Url`, …)
   are ambient globals — name them with no import, matching the namespace
   ergonomics (`vmath`, `go`, …).
@@ -172,9 +173,10 @@ pin it yourself.
 
 How the channel affects the doc-source fetch:
 
-- **`stable`** uses the GitHub release URL for the pinned `defold-version` and
-  downloads `engine/share/ref-doc.zip` from that release's archive. This is
-  the only path that touches the GitHub archive directly.
+- **`stable`** downloads `ref-doc.zip` directly from the pinned `defold-version`'s
+  GitHub release assets (`releases/download/<version>/ref-doc.zip`) — no
+  `engine/share/` path. This is the only path that touches the GitHub release
+  archive directly.
 - **`beta`** and **`alpha`** resolve the channel head via
   `d.defold.com/<channel>/info.json` and download
   `archive/<channel>/<sha1>/engine/share/ref-doc.zip`, cached channel-scoped.

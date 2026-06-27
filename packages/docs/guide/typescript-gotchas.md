@@ -342,7 +342,7 @@ export async function main(): Promise<void> {
 **Why.** TypeScriptToLua implements `async`/`await` itself, on top of Lua coroutines:
 
 - An `async function` is lowered to `__TS__AsyncAwaiter(generator)`, which returns a `__TS__Promise` and runs the function body inside a Lua **coroutine**.
-- `await x` is lowered to `coroutine.yield(x)`. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
+- `await x` is lowered to `__TS__Await(x)`, which yields the value through the body's Lua coroutine. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
 - `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
 
 These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module does `require("lualib_bundle")` to pull them in. No setup or polyfill is needed.

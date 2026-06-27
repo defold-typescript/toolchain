@@ -52,10 +52,12 @@ bun install
 
 `init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
 
-Run `bun install` once after `init`. The scaffold only declares its
+Run `bun install` once after `init`. The scaffold declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
 types, `@defold-typescript/cli` pinned to the same version so the build runs in
-lockstep with those types, and `@biomejs/biome` for lint and format) — `install`
+lockstep with those types, `@defold-typescript/tstl-plugin` for the live
+transpile diagnostics, `@biomejs/biome` for lint and format, and `@types/bun`
+for the `.vscode/` debug launcher) — `install`
 is what actually puts them in `node_modules`. Skip it and your editor reports the Defold globals as
 unresolved. `init` does not install for you (that keeps scaffolding offline), so
 it prints a `Next: run <pm> install` reminder once it finishes, picking the
@@ -63,7 +65,7 @@ package manager from the runner that invoked it (`bun`/`npm`/`pnpm`/`yarn`,
 falling back to `bun`). Pass `--suppress-install-reminder` to silence that line
 when you install through your own tooling.
 
-The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched.
+The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched, unless you pass `--force`, which migrates the one deprecated Biome `recommended` key and leaves your other settings in place.
 
 If the scaffolded `@defold-typescript/types` pin still looks older than the CLI you expect, your `bunx` cache is stale — `@latest` above already forces the current release, which is more reliable than clearing the cache with `bun pm cache rm`.
 
@@ -193,7 +195,9 @@ bunx @defold-typescript/cli defold bundle    # bundle a platform target
 ```
 
 The first run downloads a version-matched `bob.jar` into a cache dir
-(`$DEFOLD_TYPESCRIPT_CACHE` or `~/.cache/defold-typescript/bob`) and reuses it
+(`$DEFOLD_TYPESCRIPT_CACHE/bob` when set, otherwise
+`$XDG_CACHE_HOME/defold-typescript/bob`, falling back to
+`~/.cache/defold-typescript/bob`) and reuses it
 afterward. `bob` needs a JVM: it uses `java` on your `PATH`, or pass `--java
 <path>` (or set `DEFOLD_JAVA`). Native-extension projects can pass
 `--build-server <url>`. `bob`'s exit code propagates, so a failed build fails the

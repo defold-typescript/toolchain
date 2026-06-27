@@ -39,6 +39,7 @@ export {
   type ScriptHooks,
   type ScriptHooksWithProperties,
   type ScriptProperties,
+  type ScriptPropertiesOf,
   type ScriptProperty,
 } from "./lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./publish-dts";
