@@ -160,12 +160,15 @@ describe("runInit (add-TS mode)", () => {
     expect(tsconfig.compilerOptions.types).toContain("@defold-typescript/types");
   });
 
-  test("refuses on existing defold-typescript.config.* and lists the new config family", () => {
+  test("proceeds past a stray defold-typescript.config.* and leaves it untouched", () => {
     touch("game.project", "[project]\n");
-    touch("defold-typescript.config.ts", "");
+    const sentinel = "// stray config\n";
+    touch("defold-typescript.config.ts", sentinel);
 
-    expect(() => runInit({ cwd })).toThrow(/defold-typescript\.config\.ts/);
-    expect(() => runInit({ cwd })).toThrow(/defold-typescript init/);
+    const result = runInit({ cwd });
+
+    expect(result.written).toContain("tsconfig.json");
+    expect(readFileSync(path.join(cwd, "defold-typescript.config.ts"), "utf8")).toBe(sentinel);
   });
 
   test("merges devDependencies into an existing package.json without touching other keys", () => {
