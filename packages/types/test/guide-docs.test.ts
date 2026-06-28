@@ -118,6 +118,36 @@ function moreBlocks(section: string): string {
   return out.join("\n");
 }
 
+// Strip one level of blockquote prefix from every line, so source quoted
+// inside a `> [!MORE] Full Script` block can be matched byte-for-byte against
+// the original file.
+function dequote(raw: string): string {
+  return raw
+    .split("\n")
+    .map((line) => line.replace(/^> ?/, ""))
+    .join("\n");
+}
+
+// The section text with every `> [!MORE]` block region removed, leaving only
+// the always-visible inline content — so a per-function walkthrough can be
+// asserted to live inline rather than collapsed inside a disclosure.
+function inlineContent(section: string): string {
+  const out: string[] = [];
+  let inMore = false;
+  for (const line of section.split("\n")) {
+    if (/^>\s*\[!more\]/i.test(line)) {
+      inMore = true;
+      continue;
+    }
+    if (inMore) {
+      if (line.startsWith(">")) continue;
+      inMore = false;
+    }
+    out.push(line);
+  }
+  return out.join("\n");
+}
+
 describe("tutorialProseMetrics helper", () => {
   test("strips fenced code blocks from the prose count", () => {
     const raw = [
@@ -812,16 +842,19 @@ describe("docs/guide URL addressing coverage", () => {
 describe("docs/guide/tetris-tutorial.md", () => {
   const EXAMPLE_SRC = resolve(REPO_ROOT, "docs", "examples", "tetris-tutorial", "src");
 
+  // Baselined for the inverted flow: per-function walkthroughs are now
+  // always-visible inline content, so their prose counts toward the Quick read
+  // (the ceilings rose accordingly) instead of the disclosure metric.
   const TETRIS_RATCHET = {
-    words: 2500,
-    longSentences: 14,
+    words: 3546,
+    longSentences: 25,
     jargon: 6,
   } as const;
 
-  // Empirically baselined after authoring the per-function `[!MORE]`
-  // walkthroughs (their fenced excerpts count toward detailed prose); a separate
-  // ceiling from the Quick ratchet so detail prose ratchets on its own.
-  const DETAILED_RATCHET = 1997;
+  // Baselined for the inverted flow: the `[!MORE]` regions are now the collapsed
+  // `Full Script` whole-file blocks plus the conceptual primers — code and
+  // beginner asides, no longer the per-function prose.
+  const DETAILED_RATCHET = 1808;
 
   const TETRIS_TONE_ANCHORS = [
     "What you'll have",
@@ -854,11 +887,30 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(body).toContain("`0` is truthy in Lua");
   });
 
-  test("the Complete source step quotes each example file verbatim", async () => {
+  test("each example file is quoted verbatim (byte-identical, blockquote prefix aside)", async () => {
     const body = await readGuide("tetris-tutorial.md");
+    const dequoted = dequote(body);
     for (const file of ["grid.ts", "pieces.ts", "board.ts"]) {
       const source = await Bun.file(resolve(EXAMPLE_SRC, file)).text();
-      expect(body).toContain(source);
+      expect(dequoted).toContain(source);
+    }
+  });
+
+  test("each section collapses its whole-file source into a Full Script disclosure", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const sections: [string, string, string][] = [
+      ["## 03 — Model the grid", "## 04 ", "grid.ts"],
+      ["## 04 — Define the tetrominoes", "## 05", "pieces.ts"],
+      ["## 05", "## 06", "board.ts"],
+    ];
+    for (const [startMark, endMark, file] of sections) {
+      const start = body.indexOf(startMark);
+      expect(start).toBeGreaterThan(-1);
+      const end = body.indexOf(endMark, start + startMark.length);
+      const section = body.slice(start, end === -1 ? body.length : end);
+      expect(section).toContain(`[!MORE] Full Script — src/${file}`);
+      const source = await Bun.file(resolve(EXAMPLE_SRC, file)).text();
+      expect(dequote(moreBlocks(section))).toContain(source);
     }
   });
 
@@ -999,25 +1051,25 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(body.slice(start, end === -1 ? body.length : end)).toContain("[!MORE]");
   });
 
-  test("the grid section gives each model function its own [!MORE] walkthrough", async () => {
+  test("the grid section gives each model function its own inline walkthrough", async () => {
     const body = await readGuide("tetris-tutorial.md");
     const start = body.indexOf("## 03 — Model the grid");
     const end = body.indexOf("## 04 ", start);
     expect(start).toBeGreaterThan(-1);
-    const more = moreBlocks(body.slice(start, end === -1 ? body.length : end));
+    const inline = inlineContent(body.slice(start, end === -1 ? body.length : end));
     for (const fn of ["emptyGrid", "isFree", "clearLines"]) {
-      expect(more).toContain(fn);
+      expect(inline).toContain(fn);
     }
   });
 
-  test("the tetromino section walks each function and the PIECES table in a [!MORE]", async () => {
+  test("the tetromino section walks each function and the PIECES table inline", async () => {
     const body = await readGuide("tetris-tutorial.md");
     const start = body.indexOf("## 04 — Define the tetrominoes");
     const end = body.indexOf("## 05", start);
     expect(start).toBeGreaterThan(-1);
-    const more = moreBlocks(body.slice(start, end === -1 ? body.length : end));
+    const inline = inlineContent(body.slice(start, end === -1 ? body.length : end));
     for (const name of ["rotateCW", "cellsAt", "nextPieceIndex", "PIECES"]) {
-      expect(more).toContain(name);
+      expect(inline).toContain(name);
     }
   });
 
@@ -1029,12 +1081,12 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(body.slice(start, end === -1 ? body.length : end)).toContain("[!MORE]");
   });
 
-  test("the board section walks each board-state, collision, and lock function in a [!MORE]", async () => {
+  test("the board section walks each board-state, collision, and lock function inline", async () => {
     const body = await readGuide("tetris-tutorial.md");
     const start = body.indexOf("## 05");
     const end = body.indexOf("## 06", start);
     expect(start).toBeGreaterThan(-1);
-    const more = moreBlocks(body.slice(start, end === -1 ? body.length : end));
+    const inline = inlineContent(body.slice(start, end === -1 ? body.length : end));
     for (const fn of [
       "BoardSelf",
       "buildGrid",
@@ -1047,7 +1099,7 @@ describe("docs/guide/tetris-tutorial.md", () => {
       "onLocked",
       "stepDown",
     ]) {
-      expect(more).toContain(fn);
+      expect(inline).toContain(fn);
     }
   });
 
