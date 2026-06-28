@@ -655,6 +655,156 @@ Then **delete the sample `src/main.ts`** that `init` scaffolded — it was only 
 > [!NOTE]
 > **State tiers**: Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, nothing global. Pick the narrowest tier that fits.
 
+That fence is a lot at once. Here is each load-bearing piece of `board.ts` on its own — the state shape, the collision checks, and the lock/line-clear path. Open a walkthrough for a closer look. (`on_input`, `update`, `redraw`, and the HUD wiring get their own walkthroughs in later steps.)
+
+> [!MORE] `BoardSelf` — the shape of `self`
+> ```ts {15}
+> interface BoardSelf {
+>   fills: GuiNode[][];
+>   borders: GuiNode[][];
+>   grid: Grid;
+>   piece: number;
+>   rot: number;
+>   px: number;
+>   py: number;
+>   timer: number;
+>   fall: number;
+>   score: number;
+>   lines: number;
+>   level: number;
+>   over: boolean;
+>   hud: boolean; // true once the HUD GUI registers (see on_message)
+> }
+> ```
+> This interface is the one shape `init` returns and every helper reads through `self`. It bundles the **view** (`fills`/`borders`, the GUI node grids), the **model** (`grid`, plus the active piece's `piece`/`rot`/`px`/`py`), and the **run state** (`timer`/`fall`, `score`/`lines`/`level`, `over`). The trap is the last field: `hud` starts `false` and only flips once the HUD announces itself, so the board never posts to a HUD that does not exist yet.
+
+> [!MORE] `buildGrid` — make the cell nodes once
+> ```ts {15-16}
+> function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
+>   const fills: GuiNode[][] = [];
+>   const borders: GuiNode[][] = [];
+>   const outer = CELL - GAP;
+>   const inner = outer - 2 * BORDER;
+>   for (let r = 0; r < ROWS; r++) {
+>     const frow: GuiNode[] = [];
+>     const brow: GuiNode[] = [];
+>     for (let c = 0; c < COLS; c++) {
+>       const pos = vmath.vector3(
+>         ORIGIN_X + c * CELL + CELL / 2,
+>         ORIGIN_Y + (ROWS - 1 - r) * CELL + CELL / 2,
+>         0,
+>       );
+>       brow.push(gui.new_box_node(pos, vmath.vector3(outer, outer, 0)));
+>       frow.push(gui.new_box_node(pos, vmath.vector3(inner, inner, 0)));
+>     }
+>     borders.push(brow);
+>     fills.push(frow);
+>   }
+>   return { fills, borders };
+> }
+> ```
+> It runs once in `init` and returns two `ROWS × COLS` arrays of GUI box nodes — a border box with a smaller fill box on top of it per cell. The highlighted lines are where the nodes are actually born with `gui.new_box_node`; everything else is just position math. Row `0` is the **top** of the board, so `ROWS - 1 - r` flips the row index into bottom-up screen space.
+
+> [!MORE] `fits` — would these four cells be legal?
+> ```ts {3}
+> function fits(self: BoardSelf, piece: number, rot: number, px: number, py: number): boolean {
+>   for (const [c, r] of cellsAt(piece, rot, px, py)) {
+>     if (!isFree(self.grid, c, r)) return false;
+>   }
+>   return true;
+> }
+> ```
+> This is the single rule the whole game leans on: given a piece, a rotation, and a pivot, ask `cellsAt` for the four board cells it would cover and test each one. The highlighted line bails the moment any cell is off the walls/floor or already filled. Note it takes the candidate position as plain arguments — it never moves anything, so callers can test a hypothetical placement before committing.
+
+> [!MORE] `canPlace` — does the piece fit where it is now?
+> ```ts {2}
+> function canPlace(self: BoardSelf): boolean {
+>   return fits(self, self.piece, self.rot, self.px, self.py);
+> }
+> ```
+> A one-line convenience wrapper: it asks `fits` about the piece's **current** position in `self` rather than a hypothetical one. It is used right after a new piece spawns — if the fresh piece cannot fit, the stack has reached the ceiling and the game is over.
+
+> [!MORE] `tryMove` — commit a shift only if it is legal
+> ```ts {2}
+> function tryMove(self: BoardSelf, dc: number, dr: number): boolean {
+>   if (fits(self, self.piece, self.rot, self.px + dc, self.py + dr)) {
+>     self.px += dc;
+>     self.py += dr;
+>     return true;
+>   }
+>   return false;
+> }
+> ```
+> It takes a column/row delta, tests the would-be position with `fits`, and **only then** writes the new `px`/`py` back into `self`. It returns whether the move happened, which gravity and hard-drop use to know when a piece has hit bottom. This test-then-commit shape is why a blocked move silently does nothing instead of clipping a piece into the wall.
+
+> [!MORE] `tryRotate` — spin, with a wall kick
+> ```ts {3}
+> function tryRotate(self: BoardSelf): void {
+>   const next = (self.rot + 1) % 4;
+>   for (const kick of [0, -1, 1]) {
+>     if (fits(self, self.piece, next, self.px + kick, self.py)) {
+>       self.rot = next;
+>       self.px += kick;
+>       return;
+>     }
+>   }
+> }
+> ```
+> Rotating against a wall would normally fail, so before giving up it retries the rotation nudged one column each way — the highlighted `kick` list tries `0` (in place), then `-1`, then `+1`. The first offset that fits is committed (rotation **and** the nudge), and it returns; if none fit, the piece simply does not turn. That nudge is the classic "wall kick" that keeps rotation from feeling stuck.
+
+> [!MORE] `hardDrop` — slam to the bottom
+> ```ts {2}
+> function hardDrop(self: BoardSelf): void {
+>   while (tryMove(self, 0, 1)) self.score += 1;
+>   self.timer = self.fall;
+> }
+> ```
+> It just calls `tryMove(self, 0, 1)` in a loop until a downward step is no longer legal, scoring one point per row dropped. Setting `timer = fall` forces the very next `update` to lock the piece immediately, so a hard drop feels instant rather than pausing on the floor for a frame.
+
+> [!MORE] `lockPiece` — freeze the piece into the grid
+> ```ts {4}
+> function lockPiece(self: BoardSelf): void {
+>   const color = PIECES[self.piece].color;
+>   for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
+>     if (r >= 0) self.grid[r][c] = color;
+>   }
+> }
+> ```
+> When a piece can fall no further, this writes its color into the model grid permanently — the four falling cells become locked blocks. The `r >= 0` guard is the trap: a piece can lock with cells still above the top row (`r` negative), and writing those would index outside the grid, so they are skipped.
+
+> [!MORE] `onLocked` — clear lines, score, spawn, check for game over
+> ```ts {2}
+> function onLocked(self: BoardSelf): void {
+>   const n = clearLines(self.grid);
+>   if (n > 0) {
+>     self.lines += n;
+>     self.score += LINE_SCORE[n] * self.level;
+>     self.level = 1 + math.floor(self.lines / 10);
+>     self.fall = math.max(0.08, 0.8 - (self.level - 1) * 0.07);
+>   }
+>   postHud(self);
+>   self.piece = nextPieceIndex();
+>   self.rot = 0;
+>   self.px = 4;
+>   self.py = 0;
+>   if (!canPlace(self)) {
+>     self.over = true;
+>     if (self.hud) msg.post("/hud#hud", "game_over");
+>   }
+> }
+> ```
+> This is the everything-after-a-lock step. The highlighted `clearLines` collapses any full rows and reports how many; when that is non-zero it scores `40/100/300/1200 × level`, bumps the level every ten lines, and speeds up the fall (floored at `0.08s`). Then it spawns the next piece at the top — and if that fresh piece cannot fit, the stack has reached the ceiling and `over` is set.
+
+> [!MORE] `stepDown` — one tick of gravity
+> ```ts {2}
+> function stepDown(self: BoardSelf): void {
+>   if (tryMove(self, 0, 1)) return;
+>   lockPiece(self);
+>   onLocked(self);
+> }
+> ```
+> The whole gravity rule in three lines: try to move the piece down one row, and if that worked there is nothing more to do this tick. If the move was blocked the piece has landed, so `lockPiece` freezes it and `onLocked` handles clears, scoring, and the next spawn. `update` calls this once every `fall` seconds.
+
 ## 06 — Wire the scene
 
 The script exists now, so the editor's picker can find it. The board draws itself from code, so the editor work is small — one project setting, an empty GUI scene, and one game object, no sprite, no atlas, no factory.

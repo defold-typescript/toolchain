@@ -821,7 +821,7 @@ describe("docs/guide/tetris-tutorial.md", () => {
   // Empirically baselined after authoring the per-function `[!MORE]`
   // walkthroughs (their fenced excerpts count toward detailed prose); a separate
   // ceiling from the Quick ratchet so detail prose ratchets on its own.
-  const DETAILED_RATCHET = 933;
+  const DETAILED_RATCHET = 1997;
 
   const TETRIS_TONE_ANCHORS = [
     "What you'll have",
@@ -1018,6 +1018,36 @@ describe("docs/guide/tetris-tutorial.md", () => {
     const more = moreBlocks(body.slice(start, end === -1 ? body.length : end));
     for (const name of ["rotateCW", "cellsAt", "nextPieceIndex", "PIECES"]) {
       expect(more).toContain(name);
+    }
+  });
+
+  test("the board section carries a [!MORE] disclosure", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const start = body.indexOf("## 05");
+    const end = body.indexOf("## 06", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(body.slice(start, end === -1 ? body.length : end)).toContain("[!MORE]");
+  });
+
+  test("the board section walks each board-state, collision, and lock function in a [!MORE]", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const start = body.indexOf("## 05");
+    const end = body.indexOf("## 06", start);
+    expect(start).toBeGreaterThan(-1);
+    const more = moreBlocks(body.slice(start, end === -1 ? body.length : end));
+    for (const fn of [
+      "BoardSelf",
+      "buildGrid",
+      "fits",
+      "canPlace",
+      "tryMove",
+      "tryRotate",
+      "hardDrop",
+      "lockPiece",
+      "onLocked",
+      "stepDown",
+    ]) {
+      expect(more).toContain(fn);
     }
   });
 
