@@ -1,5 +1,6 @@
 ---
 toc-title: Build Tetris
+llms-full: false
 ---
 # Build Tetris
 

@@ -12,7 +12,13 @@ export function listGuidePages(dir: string): GuidePage[] {
       const slug = isIndex ? "" : file.replace(/\.md$/, "");
       const { data } = parseFrontmatter(readFileSync(join(dir, file), "utf8"));
       const raw = data["toc-title"];
-      const page: GuidePage = { file, slug, route: isIndex ? "/" : `/${slug}`, isIndex };
+      const page: GuidePage = {
+        file,
+        slug,
+        route: isIndex ? "/" : `/${slug}`,
+        isIndex,
+        includeInLlmsFull: data["llms-full"] !== "false",
+      };
       if (typeof raw === "string" && raw.length > 0) page.tocTitle = raw;
       return page;
     });

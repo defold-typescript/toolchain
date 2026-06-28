@@ -25,4 +25,12 @@ describe("listGuidePages", () => {
     expect(index?.route).toBe("/");
     expect(index?.isIndex).toBe(true);
   });
+
+  test("flags `llms-full: false` pages, defaults the rest to included", () => {
+    const pages = listGuidePages(GUIDE_DIR);
+    const tutorial = pages.find((p) => p.file === "tetris-tutorial.md");
+    const gettingStarted = pages.find((p) => p.file === "getting-started.md");
+    expect(tutorial?.includeInLlmsFull).toBe(false);
+    expect(gettingStarted?.includeInLlmsFull).toBe(true);
+  });
 });

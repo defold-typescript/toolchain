@@ -61,4 +61,14 @@ describe("llms-full.txt is the full guide text", () => {
   test("inlines a known guide-page heading, not just the index", () => {
     expect(buildLlmsFull()).toContain("## Verify against the real API surface");
   });
+
+  test("omits `llms-full: false` pages — no tutorial body", () => {
+    expect(buildLlmsFull()).not.toContain("## 05 — The board script");
+  });
+});
+
+describe("llms.txt still links excluded pages", () => {
+  test("the tutorial stays in the link map", () => {
+    expect(buildLlmsTxt()).toContain(`](${withBase("/tetris-tutorial")})`);
+  });
 });
