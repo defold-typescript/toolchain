@@ -3384,6 +3384,13 @@ export function clearLines(g: Grid): number {
 
 This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 05).
 
+> [!MORE] New to grids? How the board is just numbers
+> The board is a plain 10×20 table of numbers — no engine types, no graphics. Each cell holds `0` for empty or `1`–`7` for a color. Because it is ordinary data, you can read it, test it, and reason about it without running the game.
+>
+> **The two types.** `Cell` is one square (`0 | 1 | … | 7`); `Grid` is rows of cells (`Cell[][]`). Everything in this file works on those two shapes alone.
+>
+> **Reading `isFree`.** It answers "can a square hold a piece here?" A column outside `0…COLS` is a side wall. `r >= ROWS` is the floor — that single test is how a falling piece knows to stop at the bottom. A negative `r` sits above the top of the board and stays free, so a new piece can spawn just off-screen and slide into view.
+
 ## 04 — Define the tetrominoes
 
 Each piece is four cells plus a color, stored as a `[col, row]` offset from a **pivot** at `[0, 0]` — the point the piece spins around. `row` grows downward to match the grid.
@@ -3406,6 +3413,13 @@ Read offsets as "relative to the pivot." The T-piece in its spawn orientation is
 Here's the one piece of geometry worth knowing. To rotate any offset 90° **clockwise** around the pivot, swap the coordinates and negate the new column: `[c, r] → [-r, c]`. Apply it four times and you cycle back to the start. We don't hand-invent rotations — we compute them from one base shape.
 
 **In plain English:** every shape has four cells, and we spin one of them around the others. The math is one line.
+
+> [!MORE] Where `[c, r] → [-r, c]` comes from
+> A piece is just a handful of `[col, row]` offsets measured from a **pivot** at `[0, 0]`. Rotating the whole piece 90° clockwise is the same move applied to each offset: swap the two numbers, then flip the sign of the new column. That is all `[c, r] → [-r, c]` says.
+>
+> **Why row grows downward.** Row `0` is the top and rows count up as you go down, the way screen pixels do. With that convention the formula turns "right" (`[1, 0]`) into "down" (`[0, 1]`), "down" into "left", and so on — exactly the clockwise turn you see on screen.
+>
+> **Why four states.** Apply the move four times and the piece lands back where it started. Some pieces look the same in two or four of those states, but storing all four keeps the bookkeeping uniform: the next rotation is always `(rot + 1) % 4`.
 
 ```ts title="(snippet)"
 // 90° clockwise about the pivot. row grows downward,
