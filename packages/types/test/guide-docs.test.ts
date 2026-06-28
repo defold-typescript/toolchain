@@ -157,6 +157,12 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("game.project");
   });
 
+  test("docs/guide/add-typescript.md scopes the conflict guard to tsconfig.json only", async () => {
+    const body = await readGuide("add-typescript.md");
+    expect(body).toContain("tsconfig.json");
+    expect(body).not.toContain("defold-typescript.config");
+  });
+
   test("docs/guide/editor-setup.md exists and names the watch loop", async () => {
     const f = Bun.file(resolve(GUIDE, "editor-setup.md"));
     expect(await f.exists()).toBe(true);
