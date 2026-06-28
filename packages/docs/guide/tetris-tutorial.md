@@ -106,41 +106,58 @@ The script hashes these same names (`hash("left")`, and so on) to recognize each
 
 ## 03 — Model the grid
 
-Start with a pure model: a 10×20 grid of cells, each empty or holding a piece's color. Engine-free logic is easy to reason about and to type. The whole model is one file — dimensions, the cell types, an empty board, the free-cell test, and line clearing. In VS Code, create `src/grid.ts`:
+Start with a pure model: a 10×20 grid of cells, each empty or holding a piece's color. Engine-free logic is easy to reason about and to type. The whole model is one file — dimensions, the cell types, an empty board, the free-cell test, and line clearing. We'll build `src/grid.ts` one function at a time below; the complete file is in **Full Script** at the end of this section, ready to paste into VS Code.
 
-```ts title="src/grid.ts" {33-40}
-export const COLS = 10;
-export const ROWS = 20;
+This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 05).
 
-export type Cell = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-export type Grid = Cell[][];
+> [!MORE] New to grids? How the board is just numbers
+> The board is a plain 10×20 table of numbers — no engine types, no graphics. Each cell holds `0` for empty or `1`–`7` for a color. Because it is ordinary data, you can read it, test it, and reason about it without running the game.
+>
+> **The two types.** `Cell` is one square (`0 | 1 | … | 7`); `Grid` is rows of cells (`Cell[][]`). Everything in this file works on those two shapes alone.
+>
+> **Reading `isFree`.** It answers "can a square hold a piece here?" A column outside `0…COLS` is a side wall. `r >= ROWS` is the floor — that single test is how a falling piece knows to stop at the bottom. A negative `r` sits above the top of the board and stays free, so a new piece can spawn just off-screen and slide into view.
 
+Each function does one small job. Read them top to bottom:
+
+**`emptyGrid`** — build a blank board
+
+```ts
 export function emptyGrid(): Grid {
   const g: Grid = [];
   for (let r = 0; r < ROWS; r++) {
     const row: Cell[] = [];
-    for (let c = 0; c < COLS; c++) row.push(0);
+    for (let c = 0; c < COLS; c++) row.push(0); // [!code highlight]
     g.push(row);
   }
   return g;
 }
+```
 
+It takes nothing and returns a fresh `Grid`: `ROWS` arrays of `COLS` zeros. The highlighted line fills one row with empty cells; the outer loop stacks twenty such rows. Call it once when a game starts to get a clean board.
+
+**`isFree`** — can a square sit here?
+
+```ts {4}
 export function isFree(g: Grid, c: number, r: number): boolean {
   if (c < 0 || c >= COLS || r >= ROWS) return false;
   if (r < 0) return true;
   return g[r][c] == 0;
 }
+```
 
+It takes the grid and a `[c, r]` cell and returns `true` only when a piece may occupy it. Off the sides or below the floor is `false`; above the top is `true`, so pieces spawn off-screen. The trap is the highlighted line: write `== 0`, because `0` is truthy in Lua and a bare `if (g[r][c])` would read every empty cell as full.
+
+> [!TIP]
+> You can use `cell == 0` (or `===`) if you want to ensure an empty cell is never mistaken for an occupied one once this runs as Lua. A bare `if (cell)` won't do that: Lua treats only `nil` and `false` as falsy, so `0` is [truthy](./typescript-gotchas.md#if-x-truthiness-differs--0-and--are-truthy-in-lua) and an empty cell reads as occupied.
+
+**`clearLines`** — drop full rows and count them
+
+```ts {7}
 export function clearLines(g: Grid): number {
   let cleared = 0;
   for (let r = ROWS - 1; r >= 0; r--) {
     let full = true;
-    for (let c = 0; c < COLS; c++) {
-      if (g[r][c] == 0) {
-        full = false;
-        break;
-      }
-    }
+    for (let c = 0; c < COLS; c++) if (g[r][c] == 0) full = false;
     if (full) {
       g.splice(r, 1);
       const blank: Cell[] = [];
@@ -154,51 +171,42 @@ export function clearLines(g: Grid): number {
 }
 ```
 
-> [!TIP]
-> You can use `cell == 0` (or `===`) if you want to ensure an empty cell is never mistaken for an occupied one once this runs as Lua. A bare `if (cell)` won't do that: Lua treats only `nil` and `false` as falsy, so `0` is [truthy](./typescript-gotchas.md#if-x-truthiness-differs--0-and--are-truthy-in-lua) and an empty cell reads as occupied.
+It scans rows from the bottom up; whenever a row has no empty cell it deletes that row (`splice`) and pushes a fresh blank one onto the top (`unshift`) — gravity for the whole stack. It returns how many rows vanished, which Step 05 turns into score. The `r++` after a clear re-checks the same index, because every row above just shifted down by one.
 
-This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 05).
-
-> [!MORE] New to grids? How the board is just numbers
-> The board is a plain 10×20 table of numbers — no engine types, no graphics. Each cell holds `0` for empty or `1`–`7` for a color. Because it is ordinary data, you can read it, test it, and reason about it without running the game.
+> [!MORE] Full Script — src/grid.ts
+> ```ts title="src/grid.ts" {33-40}
+> export const COLS = 10;
+> export const ROWS = 20;
 >
-> **The two types.** `Cell` is one square (`0 | 1 | … | 7`); `Grid` is rows of cells (`Cell[][]`). Everything in this file works on those two shapes alone.
+> export type Cell = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+> export type Grid = Cell[][];
 >
-> **Reading `isFree`.** It answers "can a square hold a piece here?" A column outside `0…COLS` is a side wall. `r >= ROWS` is the floor — that single test is how a falling piece knows to stop at the bottom. A negative `r` sits above the top of the board and stays free, so a new piece can spawn just off-screen and slide into view.
-
-Each function in this file does one small job. Open any walkthrough below for a line-by-line read.
-
-> [!MORE] `emptyGrid` — build a blank board
-> ```ts
 > export function emptyGrid(): Grid {
 >   const g: Grid = [];
 >   for (let r = 0; r < ROWS; r++) {
 >     const row: Cell[] = [];
->     for (let c = 0; c < COLS; c++) row.push(0); // [!code highlight]
+>     for (let c = 0; c < COLS; c++) row.push(0);
 >     g.push(row);
 >   }
 >   return g;
 > }
-> ```
-> It takes nothing and returns a fresh `Grid`: `ROWS` arrays of `COLS` zeros. The highlighted line fills one row with empty cells; the outer loop stacks twenty such rows. Call it once when a game starts to get a clean board.
-
-> [!MORE] `isFree` — can a square sit here?
-> ```ts {4}
+>
 > export function isFree(g: Grid, c: number, r: number): boolean {
 >   if (c < 0 || c >= COLS || r >= ROWS) return false;
 >   if (r < 0) return true;
 >   return g[r][c] == 0;
 > }
-> ```
-> It takes the grid and a `[c, r]` cell and returns `true` only when a piece may occupy it. Off the sides or below the floor is `false`; above the top is `true`, so pieces spawn off-screen. The trap is the highlighted line: write `== 0`, because `0` is truthy in Lua and a bare `if (g[r][c])` would read every empty cell as full.
-
-> [!MORE] `clearLines` — drop full rows and count them
-> ```ts {7}
+>
 > export function clearLines(g: Grid): number {
 >   let cleared = 0;
 >   for (let r = ROWS - 1; r >= 0; r--) {
 >     let full = true;
->     for (let c = 0; c < COLS; c++) if (g[r][c] == 0) full = false;
+>     for (let c = 0; c < COLS; c++) {
+>       if (g[r][c] == 0) {
+>         full = false;
+>         break;
+>       }
+>     }
 >     if (full) {
 >       g.splice(r, 1);
 >       const blank: Cell[] = [];
@@ -211,7 +219,6 @@ Each function in this file does one small job. Open any walkthrough below for a 
 >   return cleared;
 > }
 > ```
-> It scans rows from the bottom up; whenever a row has no empty cell it deletes that row (`splice`) and pushes a fresh blank one onto the top (`unshift`) — gravity for the whole stack. It returns how many rows vanished, which Step 05 turns into score. The `r++` after a clear re-checks the same index, because every row above just shifted down by one.
 
 ## 04 — Define the tetrominoes
 
@@ -265,93 +272,35 @@ function fourRotations(base: Offset[]): Offset[][] {
 
 ### The seven base shapes
 
-That leaves one thing to author by hand: the spawn shape. Everything else is computed. The color index (1–7) matches `TINTS` in Step 05. Create `src/pieces.ts`:
+That leaves one thing to author by hand: the spawn shape. Everything else is computed. The color index (1–7) matches `TINTS` in Step 05. We'll walk `src/pieces.ts` piece by piece below; the complete file is in **Full Script** at the end of this section.
 
-```ts title="src/pieces.ts"
-import type { Cell } from "./grid";
+**`rotateCW`** — spin one shape 90°
 
-export type Offset = [number, number]; // [col, row], row grows down
-export type Piece = { color: Cell; rots: Offset[][] };
-
+```ts {2}
 function rotateCW(cells: Offset[]): Offset[] {
   return cells.map(([c, r]) => [-r, c] as Offset);
 }
-function four(base: Offset[]): Offset[][] {
-  const s: Offset[][] = [base];
-  for (let i = 0; i < 3; i++) s.push(rotateCW(s[s.length - 1]));
-  return s;
-}
+```
 
-export const PIECES: Piece[] = [
-  {
-    color: 1,
-    rots: four([
-      [-1, 0],
-      [0, 0],
-      [1, 0],
-      [2, 0],
-    ]),
-  }, // I
-  {
-    color: 2,
-    rots: four([
-      [0, 0],
-      [1, 0],
-      [0, 1],
-      [1, 1],
-    ]),
-  }, // O
-  {
-    color: 3,
-    rots: four([
-      [0, 0],
-      [-1, 0],
-      [1, 0],
-      [0, 1],
-    ]),
-  }, // T
-  {
-    color: 4,
-    rots: four([
-      [0, 0],
-      [1, 0],
-      [-1, 1],
-      [0, 1],
-    ]),
-  }, // S
-  {
-    color: 5,
-    rots: four([
-      [-1, 0],
-      [0, 0],
-      [0, 1],
-      [1, 1],
-    ]),
-  }, // Z
-  {
-    color: 6,
-    rots: four([
-      [-1, 0],
-      [0, 0],
-      [1, 0],
-      [1, 1],
-    ]),
-  }, // J
-  {
-    color: 7,
-    rots: four([
-      [-1, 0],
-      [0, 0],
-      [1, 0],
-      [-1, 1],
-    ]),
-  }, // L
-];
+It takes a shape's offsets and returns the same shape turned one quarter-turn clockwise — the single move `[c, r] → [-r, c]` applied to every cell. `four()` calls it three times to precompute all four rotations, so the running game never rotates anything; it just indexes `rots[rot]`.
 
+**`PIECES`** — the seven shapes as data
+
+Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precomputed rotations from `four(base)`. You author only the spawn offsets — the `[-1,0] [0,0] [1,0] [2,0]` block is the I-piece laid flat — and `four` derives the other three states. The trailing comment on each entry (`// I`, `// O`, …) names the letter the shape resembles.
+
+**`cellsAt`** — where a piece sits on the board
+
+```ts {2}
 export function cellsAt(piece: number, rot: number, px: number, py: number): Offset[] {
   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
 }
+```
 
+It takes a piece index, a rotation, and a pivot position `[px, py]`, and returns the four board cells that piece would cover. It is pure offset math — add the pivot to each stored offset — so Step 05 can ask "would this move land legally?" by testing the result against `isFree` before committing.
+
+**`nextPieceIndex`** — the shuffled-bag randomizer
+
+```ts {7}
 let bag: number[] = [];
 export function nextPieceIndex(): number {
   if (bag.length == 0) {
@@ -367,32 +316,97 @@ export function nextPieceIndex(): number {
 }
 ```
 
+Instead of pure random it deals from a bag holding all seven pieces, refilling and reshuffling only once the bag empties — so you never hit long droughts or floods of one shape. The shuffle is the highlighted Fisher–Yates swap, using Lua's integer `math.random(0, i)`. Each call pops one index off the end and returns it.
+
 > [!NOTE]
 > This uses Lua's `math.random(0, i)` because the two-argument form returns an integer in a range directly. `Math.random()` compiles fine too — it becomes `math.random()` — but returns a float in `[0, 1)`, so for an index you'd write `math.floor(Math.random() * (i + 1))`. Much of the JS standard library transpiles (`Math`, array and string methods); reach for Defold's `math`, `os`, and `json` for engine-specific concerns. `cellsAt` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
 
-Here is each piece of `pieces.ts` on its own. Open a walkthrough for a closer look.
-
-> [!MORE] `rotateCW` — spin one shape 90°
-> ```ts {2}
+> [!MORE] Full Script — src/pieces.ts
+> ```ts title="src/pieces.ts"
+> import type { Cell } from "./grid";
+>
+> export type Offset = [number, number]; // [col, row], row grows down
+> export type Piece = { color: Cell; rots: Offset[][] };
+>
 > function rotateCW(cells: Offset[]): Offset[] {
 >   return cells.map(([c, r]) => [-r, c] as Offset);
 > }
-> ```
-> It takes a shape's offsets and returns the same shape turned one quarter-turn clockwise — the single move `[c, r] → [-r, c]` applied to every cell. `four()` calls it three times to precompute all four rotations, so the running game never rotates anything; it just indexes `rots[rot]`.
-
-> [!MORE] `PIECES` — the seven shapes as data
-> Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precomputed rotations from `four(base)`. You author only the spawn offsets — the `[-1,0] [0,0] [1,0] [2,0]` block is the I-piece laid flat — and `four` derives the other three states. The trailing comment on each entry (`// I`, `// O`, …) names the letter the shape resembles.
-
-> [!MORE] `cellsAt` — where a piece sits on the board
-> ```ts {2}
+> function four(base: Offset[]): Offset[][] {
+>   const s: Offset[][] = [base];
+>   for (let i = 0; i < 3; i++) s.push(rotateCW(s[s.length - 1]));
+>   return s;
+> }
+>
+> export const PIECES: Piece[] = [
+>   {
+>     color: 1,
+>     rots: four([
+>       [-1, 0],
+>       [0, 0],
+>       [1, 0],
+>       [2, 0],
+>     ]),
+>   }, // I
+>   {
+>     color: 2,
+>     rots: four([
+>       [0, 0],
+>       [1, 0],
+>       [0, 1],
+>       [1, 1],
+>     ]),
+>   }, // O
+>   {
+>     color: 3,
+>     rots: four([
+>       [0, 0],
+>       [-1, 0],
+>       [1, 0],
+>       [0, 1],
+>     ]),
+>   }, // T
+>   {
+>     color: 4,
+>     rots: four([
+>       [0, 0],
+>       [1, 0],
+>       [-1, 1],
+>       [0, 1],
+>     ]),
+>   }, // S
+>   {
+>     color: 5,
+>     rots: four([
+>       [-1, 0],
+>       [0, 0],
+>       [0, 1],
+>       [1, 1],
+>     ]),
+>   }, // Z
+>   {
+>     color: 6,
+>     rots: four([
+>       [-1, 0],
+>       [0, 0],
+>       [1, 0],
+>       [1, 1],
+>     ]),
+>   }, // J
+>   {
+>     color: 7,
+>     rots: four([
+>       [-1, 0],
+>       [0, 0],
+>       [1, 0],
+>       [-1, 1],
+>     ]),
+>   }, // L
+> ];
+>
 > export function cellsAt(piece: number, rot: number, px: number, py: number): Offset[] {
 >   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
 > }
-> ```
-> It takes a piece index, a rotation, and a pivot position `[px, py]`, and returns the four board cells that piece would cover. It is pure offset math — add the pivot to each stored offset — so Step 05 can ask "would this move land legally?" by testing the result against `isFree` before committing.
-
-> [!MORE] `nextPieceIndex` — the shuffled-bag randomizer
-> ```ts {7}
+>
 > let bag: number[] = [];
 > export function nextPieceIndex(): number {
 >   if (bag.length == 0) {
@@ -407,11 +421,10 @@ Here is each piece of `pieces.ts` on its own. Open a walkthrough for a closer lo
 >   return index;
 > }
 > ```
-> Instead of pure random it deals from a bag holding all seven pieces, refilling and reshuffling only once the bag empties — so you never hit long droughts or floods of one shape. The shuffle is the highlighted Fisher–Yates swap, using Lua's integer `math.random(0, i)`. Each call pops one index off the end and returns it.
 
 ## 05 — The board script: `src/board.ts`
 
-This is the heart of the game: one GUI script that builds the grid, runs gravity, reads input, locks pieces, scores lines, and redraws every frame. The whole `src/board.ts` is below. Here's how to read it:
+This is the heart of the game: one GUI script that builds the grid, runs gravity, reads input, locks pieces, scores lines, and redraws every frame. We'll walk it piece by piece below; the complete `src/board.ts` is in **Full Script** at the end of this section, ready to paste. Here's how it fits together:
 
 - **State** — `init` returns a **`BoardSelf`**: the generated GUI nodes, the grid model, the active piece (index, rotation, pivot `px`/`py`), the gravity timer, and the score/level fields. TypeScript won't let `self` stay untyped, so `BoardSelf` is the shape you declare for it. `init` first posts `acquire_input_focus` to itself (`.`) — without that, no key ever reaches `on_input`. The five input names are hashed once at module scope (`hash("left")` through `hash("hard_drop")`).
 - **Gravity** — Tetris runs on a clock: every `fall` seconds the piece drops one row. In one breath: each frame `update` adds `dt` to a timer; when the timer crosses `fall`, drop one row; then redraw.
@@ -421,52 +434,11 @@ This is the heart of the game: one GUI script that builds the grid, runs gravity
 - **Render** — `redraw` paints the model onto the screen: each frame it lays the falling piece over the locked grid, then recolors every cell node to match. The model only ever holds locked blocks, so moving a piece never erases anything — the next frame just paints the new position.
 - **Messages** — `on_message` listens for the HUD's `hud_ready` so the board sends score updates only after the HUD exists (Step 08). You can ignore it if you skip the HUD.
 
-Create `src/board.ts`:
+Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste. (`on_input`, `update`, `redraw`, and the HUD wiring get their own walkthroughs in later steps.)
 
-```ts title="src/board.ts"
-import { defineGuiScript } from "@defold-typescript/types";
-import { COLS, clearLines, emptyGrid, type Grid, isFree, ROWS } from "./grid";
-import { cellsAt, nextPieceIndex, PIECES } from "./pieces";
+**`BoardSelf`** — the shape of `self`
 
-const CELL = 28; // cell pitch in pixels
-const GAP = 2; // space between cells — tune the grid look from one place
-const BORDER = 2; // thickness of the frame drawn around each filled cell
-
-// Bottom-left of the COLS×ROWS board in GUI (screen) space, centering the
-// 280×560 grid in the 400×720 window (see game.project display).
-const ORIGIN_X = (400 - COLS * CELL) / 2;
-const ORIGIN_Y = (720 - ROWS * CELL) / 2;
-
-const LINE_SCORE = [0, 40, 100, 300, 1200];
-
-// Input ids, hashed once at module scope.
-const LEFT = hash("left");
-const RIGHT = hash("right");
-const SOFT = hash("soft_drop");
-const ROTATE = hash("rotate");
-const HARD = hash("hard_drop");
-
-// Fill colors indexed by Cell color (1..7); index 0 is transparent (empty).
-const TINTS = [
-  vmath.vector4(0, 0, 0, 0),
-  vmath.vector4(0.18, 0.83, 0.83, 1), // I
-  vmath.vector4(0.97, 0.82, 0.22, 1), // O
-  vmath.vector4(0.69, 0.29, 0.94, 1), // T
-  vmath.vector4(0.27, 0.82, 0.38, 1), // S
-  vmath.vector4(0.94, 0.26, 0.35, 1), // Z
-  vmath.vector4(0.31, 0.48, 0.94, 1), // J
-  vmath.vector4(0.94, 0.56, 0.23, 1), // L
-];
-// A darker shade of each fill, drawn as the cell border.
-const BORDERS = TINTS.map((t) => vmath.vector4(t.x * 0.45, t.y * 0.45, t.z * 0.45, t.w));
-// Empty cells stay visible as a dim well with a faint grid line.
-const EMPTY_FILL = vmath.vector4(0.1, 0.11, 0.13, 1);
-const EMPTY_BORDER = vmath.vector4(0.18, 0.19, 0.22, 1);
-
-type GuiNode = Opaque<"node">;
-
-// The script state, named once so the standalone movement/scoring helpers can
-// annotate `self`. `init` returns exactly this shape.
+```ts {15}
 interface BoardSelf {
   fills: GuiNode[][];
   borders: GuiNode[][];
@@ -483,10 +455,13 @@ interface BoardSelf {
   over: boolean;
   hud: boolean; // true once the HUD GUI registers (see on_message)
 }
+```
 
-// Generate the COLS×ROWS grid as GUI box nodes — nothing is placed in the
-// editor. Each cell is a border box with a smaller fill box on top; GAP leaves
-// space between cells and BORDER is the frame thickness.
+This interface is the one shape `init` returns and every helper reads through `self`. It bundles the **view** (`fills`/`borders`, the GUI node grids), the **model** (`grid`, plus the active piece's `piece`/`rot`/`px`/`py`), and the **run state** (`timer`/`fall`, `score`/`lines`/`level`, `over`). The trap is the last field: `hud` starts `false` and only flips once the HUD announces itself, so the board never posts to a HUD that does not exist yet.
+
+**`buildGrid`** — make the cell nodes once
+
+```ts {15-16}
 function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
   const fills: GuiNode[][] = [];
   const borders: GuiNode[][] = [];
@@ -509,22 +484,36 @@ function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
   }
   return { fills, borders };
 }
+```
 
-function paint(self: BoardSelf, r: number, c: number, value: number): void {
-  gui.set_color(self.fills[r][c], value == 0 ? EMPTY_FILL : TINTS[value]);
-  gui.set_color(self.borders[r][c], value == 0 ? EMPTY_BORDER : BORDERS[value]);
-}
+It runs once in `init` and returns two `ROWS × COLS` arrays of GUI box nodes — a border box with a smaller fill box on top of it per cell. The highlighted lines are where the nodes are actually born with `gui.new_box_node`; everything else is just position math. Row `0` is the **top** of the board, so `ROWS - 1 - r` flips the row index into bottom-up screen space.
 
-// --- pure movement, all tested against the grid model ---
+**`fits`** — would these four cells be legal?
+
+```ts {3}
 function fits(self: BoardSelf, piece: number, rot: number, px: number, py: number): boolean {
   for (const [c, r] of cellsAt(piece, rot, px, py)) {
     if (!isFree(self.grid, c, r)) return false;
   }
   return true;
 }
+```
+
+This is the single rule the whole game leans on: given a piece, a rotation, and a pivot, ask `cellsAt` for the four board cells it would cover and test each one. The highlighted line bails the moment any cell is off the walls/floor or already filled. Note it takes the candidate position as plain arguments — it never moves anything, so callers can test a hypothetical placement before committing.
+
+**`canPlace`** — does the piece fit where it is now?
+
+```ts {2}
 function canPlace(self: BoardSelf): boolean {
   return fits(self, self.piece, self.rot, self.px, self.py);
 }
+```
+
+A one-line convenience wrapper: it asks `fits` about the piece's **current** position in `self` rather than a hypothetical one. It is used right after a new piece spawns — if the fresh piece cannot fit, the stack has reached the ceiling and the game is over.
+
+**`tryMove`** — commit a shift only if it is legal
+
+```ts {2}
 function tryMove(self: BoardSelf, dc: number, dr: number): boolean {
   if (fits(self, self.piece, self.rot, self.px + dc, self.py + dr)) {
     self.px += dc;
@@ -533,6 +522,13 @@ function tryMove(self: BoardSelf, dc: number, dr: number): boolean {
   }
   return false;
 }
+```
+
+It takes a column/row delta, tests the would-be position with `fits`, and **only then** writes the new `px`/`py` back into `self`. It returns whether the move happened, which gravity and hard-drop use to know when a piece has hit bottom. This test-then-commit shape is why a blocked move silently does nothing instead of clipping a piece into the wall.
+
+**`tryRotate`** — spin, with a wall kick
+
+```ts {3}
 function tryRotate(self: BoardSelf): void {
   const next = (self.rot + 1) % 4;
   for (const kick of [0, -1, 1]) {
@@ -543,26 +539,37 @@ function tryRotate(self: BoardSelf): void {
     }
   }
 }
+```
+
+Rotating against a wall would normally fail, so before giving up it retries the rotation nudged one column each way — the highlighted `kick` list tries `0` (in place), then `-1`, then `+1`. The first offset that fits is committed (rotation **and** the nudge), and it returns; if none fit, the piece simply does not turn. That nudge is the classic "wall kick" that keeps rotation from feeling stuck.
+
+**`hardDrop`** — slam to the bottom
+
+```ts {2}
 function hardDrop(self: BoardSelf): void {
   while (tryMove(self, 0, 1)) self.score += 1;
   self.timer = self.fall;
 }
+```
 
-// --- locking, scoring, drawing ---
+It just calls `tryMove(self, 0, 1)` in a loop until a downward step is no longer legal, scoring one point per row dropped. Setting `timer = fall` forces the very next `update` to lock the piece immediately, so a hard drop feels instant rather than pausing on the floor for a frame.
+
+**`lockPiece`** — freeze the piece into the grid
+
+```ts {4}
 function lockPiece(self: BoardSelf): void {
   const color = PIECES[self.piece].color;
   for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
     if (r >= 0) self.grid[r][c] = color;
   }
 }
-function postHud(self: BoardSelf): void {
-  // Only post once the HUD has registered. A gui script can't call go.exists
-  // (go.* is .script-only), and msg.post to a missing instance errors at
-  // dispatch — so the HUD announces itself in its init (see on_message below).
-  if (self.hud) {
-    msg.post("/hud#hud", "set_hud", { score: self.score, level: self.level });
-  }
-}
+```
+
+When a piece can fall no further, this writes its color into the model grid permanently — the four falling cells become locked blocks. The `r >= 0` guard is the trap: a piece can lock with cells still above the top row (`r` negative), and writing those would index outside the grid, so they are skipped.
+
+**`onLocked`** — clear lines, score, spawn, check for game over
+
+```ts {2}
 function onLocked(self: BoardSelf): void {
   const n = clearLines(self.grid);
   if (n > 0) {
@@ -581,84 +588,67 @@ function onLocked(self: BoardSelf): void {
     if (self.hud) msg.post("/hud#hud", "game_over");
   }
 }
+```
+
+This is the everything-after-a-lock step. The highlighted `clearLines` collapses any full rows and reports how many; when that is non-zero it scores `40/100/300/1200 × level`, bumps the level every ten lines, and speeds up the fall (floored at `0.08s`). Then it spawns the next piece at the top — and if that fresh piece cannot fit, the stack has reached the ceiling and `over` is set.
+
+**`stepDown`** — one tick of gravity
+
+```ts {2}
 function stepDown(self: BoardSelf): void {
   if (tryMove(self, 0, 1)) return;
   lockPiece(self);
   onLocked(self);
 }
-function redraw(self: BoardSelf): void {
-  const frame: number[][] = [];
-  for (let r = 0; r < ROWS; r++) {
-    const row: number[] = [];
-    for (let c = 0; c < COLS; c++) row.push(self.grid[r][c]);
-    frame.push(row);
-  }
-  if (!self.over) {
-    const color = PIECES[self.piece].color;
-    for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
-      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) frame[r][c] = color;
-    }
-  }
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) paint(self, r, c, frame[r][c]);
-  }
-}
-
-export default defineGuiScript({
-  init(): BoardSelf {
-    msg.post(".", "acquire_input_focus");
-    const grid = buildGrid();
-    return {
-      fills: grid.fills,
-      borders: grid.borders,
-      grid: emptyGrid(),
-      piece: nextPieceIndex(),
-      rot: 0,
-      px: 4,
-      py: 0,
-      timer: 0,
-      fall: 0.8,
-      score: 0,
-      lines: 0,
-      level: 1,
-      over: false,
-      hud: false,
-    };
-  },
-  update(self, dt) {
-    if (self.over) return;
-    self.timer += dt;
-    if (self.timer >= self.fall) {
-      self.timer = 0;
-      stepDown(self);
-    }
-    redraw(self);
-  },
-  on_input(self, action_id, action) {
-    if (self.over || !action.pressed) return;
-    if (action_id == LEFT) tryMove(self, -1, 0);
-    else if (action_id == RIGHT) tryMove(self, 1, 0);
-    else if (action_id == SOFT) tryMove(self, 0, 1);
-    else if (action_id == ROTATE) tryRotate(self);
-    else if (action_id == HARD) hardDrop(self);
-  },
-  on_message(self, message_id) {
-    // The HUD announces itself once loaded; remember it so we only post when
-    // it exists (a gui script has no go.exists).
-    if (message_id == hash("hud_ready")) self.hud = true;
-  },
-});
 ```
 
-Then **delete the sample `src/main.ts`** that `init` scaffolded — it was only a placeholder. On the next save `watch` removes the stale `src/main.ts.script` and emits `src/board.ts.gui_script` beside `board.ts`.
+The whole gravity rule in three lines: try to move the piece down one row, and if that worked there is nothing more to do this tick. If the move was blocked the piece has landed, so `lockPiece` freezes it and `onLocked` handles clears, scoring, and the next spawn. `update` calls this once every `fall` seconds.
 
-> [!NOTE]
-> **State tiers**: Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, nothing global. Pick the narrowest tier that fits.
-
-That fence is a lot at once. Here is each load-bearing piece of `board.ts` on its own — the state shape, the collision checks, and the lock/line-clear path. Open a walkthrough for a closer look. (`on_input`, `update`, `redraw`, and the HUD wiring get their own walkthroughs in later steps.)
-
-> [!MORE] `BoardSelf` — the shape of `self`
-> ```ts {15}
+> [!MORE] Full Script — src/board.ts
+> ```ts title="src/board.ts"
+> import { defineGuiScript } from "@defold-typescript/types";
+> import { COLS, clearLines, emptyGrid, type Grid, isFree, ROWS } from "./grid";
+> import { cellsAt, nextPieceIndex, PIECES } from "./pieces";
+>
+> const CELL = 28; // cell pitch in pixels
+> const GAP = 2; // space between cells — tune the grid look from one place
+> const BORDER = 2; // thickness of the frame drawn around each filled cell
+>
+> // Bottom-left of the COLS×ROWS board in GUI (screen) space, centering the
+> // 280×560 grid in the 400×720 window (see game.project display).
+> const ORIGIN_X = (400 - COLS * CELL) / 2;
+> const ORIGIN_Y = (720 - ROWS * CELL) / 2;
+>
+> const LINE_SCORE = [0, 40, 100, 300, 1200];
+>
+> // Input ids, hashed once at module scope.
+> const LEFT = hash("left");
+> const RIGHT = hash("right");
+> const SOFT = hash("soft_drop");
+> const ROTATE = hash("rotate");
+> const HARD = hash("hard_drop");
+>
+> // Fill colors indexed by Cell color (1..7); index 0 is transparent (empty).
+> const TINTS = [
+>   vmath.vector4(0, 0, 0, 0),
+>   vmath.vector4(0.18, 0.83, 0.83, 1), // I
+>   vmath.vector4(0.97, 0.82, 0.22, 1), // O
+>   vmath.vector4(0.69, 0.29, 0.94, 1), // T
+>   vmath.vector4(0.27, 0.82, 0.38, 1), // S
+>   vmath.vector4(0.94, 0.26, 0.35, 1), // Z
+>   vmath.vector4(0.31, 0.48, 0.94, 1), // J
+>   vmath.vector4(0.94, 0.56, 0.23, 1), // L
+> ];
+> // A darker shade of each fill, drawn as the cell border.
+> const BORDERS = TINTS.map((t) => vmath.vector4(t.x * 0.45, t.y * 0.45, t.z * 0.45, t.w));
+> // Empty cells stay visible as a dim well with a faint grid line.
+> const EMPTY_FILL = vmath.vector4(0.1, 0.11, 0.13, 1);
+> const EMPTY_BORDER = vmath.vector4(0.18, 0.19, 0.22, 1);
+>
+> type GuiNode = Opaque<"node">;
+>
+> // The script state, named once so the standalone movement/scoring helpers can
+> // annotate `self`. `init` returns exactly this shape.
 > interface BoardSelf {
 >   fills: GuiNode[][];
 >   borders: GuiNode[][];
@@ -675,11 +665,10 @@ That fence is a lot at once. Here is each load-bearing piece of `board.ts` on it
 >   over: boolean;
 >   hud: boolean; // true once the HUD GUI registers (see on_message)
 > }
-> ```
-> This interface is the one shape `init` returns and every helper reads through `self`. It bundles the **view** (`fills`/`borders`, the GUI node grids), the **model** (`grid`, plus the active piece's `piece`/`rot`/`px`/`py`), and the **run state** (`timer`/`fall`, `score`/`lines`/`level`, `over`). The trap is the last field: `hud` starts `false` and only flips once the HUD announces itself, so the board never posts to a HUD that does not exist yet.
-
-> [!MORE] `buildGrid` — make the cell nodes once
-> ```ts {15-16}
+>
+> // Generate the COLS×ROWS grid as GUI box nodes — nothing is placed in the
+> // editor. Each cell is a border box with a smaller fill box on top; GAP leaves
+> // space between cells and BORDER is the frame thickness.
 > function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
 >   const fills: GuiNode[][] = [];
 >   const borders: GuiNode[][] = [];
@@ -702,30 +691,22 @@ That fence is a lot at once. Here is each load-bearing piece of `board.ts` on it
 >   }
 >   return { fills, borders };
 > }
-> ```
-> It runs once in `init` and returns two `ROWS × COLS` arrays of GUI box nodes — a border box with a smaller fill box on top of it per cell. The highlighted lines are where the nodes are actually born with `gui.new_box_node`; everything else is just position math. Row `0` is the **top** of the board, so `ROWS - 1 - r` flips the row index into bottom-up screen space.
-
-> [!MORE] `fits` — would these four cells be legal?
-> ```ts {3}
+>
+> function paint(self: BoardSelf, r: number, c: number, value: number): void {
+>   gui.set_color(self.fills[r][c], value == 0 ? EMPTY_FILL : TINTS[value]);
+>   gui.set_color(self.borders[r][c], value == 0 ? EMPTY_BORDER : BORDERS[value]);
+> }
+>
+> // --- pure movement, all tested against the grid model ---
 > function fits(self: BoardSelf, piece: number, rot: number, px: number, py: number): boolean {
 >   for (const [c, r] of cellsAt(piece, rot, px, py)) {
 >     if (!isFree(self.grid, c, r)) return false;
 >   }
 >   return true;
 > }
-> ```
-> This is the single rule the whole game leans on: given a piece, a rotation, and a pivot, ask `cellsAt` for the four board cells it would cover and test each one. The highlighted line bails the moment any cell is off the walls/floor or already filled. Note it takes the candidate position as plain arguments — it never moves anything, so callers can test a hypothetical placement before committing.
-
-> [!MORE] `canPlace` — does the piece fit where it is now?
-> ```ts {2}
 > function canPlace(self: BoardSelf): boolean {
 >   return fits(self, self.piece, self.rot, self.px, self.py);
 > }
-> ```
-> A one-line convenience wrapper: it asks `fits` about the piece's **current** position in `self` rather than a hypothetical one. It is used right after a new piece spawns — if the fresh piece cannot fit, the stack has reached the ceiling and the game is over.
-
-> [!MORE] `tryMove` — commit a shift only if it is legal
-> ```ts {2}
 > function tryMove(self: BoardSelf, dc: number, dr: number): boolean {
 >   if (fits(self, self.piece, self.rot, self.px + dc, self.py + dr)) {
 >     self.px += dc;
@@ -734,11 +715,6 @@ That fence is a lot at once. Here is each load-bearing piece of `board.ts` on it
 >   }
 >   return false;
 > }
-> ```
-> It takes a column/row delta, tests the would-be position with `fits`, and **only then** writes the new `px`/`py` back into `self`. It returns whether the move happened, which gravity and hard-drop use to know when a piece has hit bottom. This test-then-commit shape is why a blocked move silently does nothing instead of clipping a piece into the wall.
-
-> [!MORE] `tryRotate` — spin, with a wall kick
-> ```ts {3}
 > function tryRotate(self: BoardSelf): void {
 >   const next = (self.rot + 1) % 4;
 >   for (const kick of [0, -1, 1]) {
@@ -749,31 +725,26 @@ That fence is a lot at once. Here is each load-bearing piece of `board.ts` on it
 >     }
 >   }
 > }
-> ```
-> Rotating against a wall would normally fail, so before giving up it retries the rotation nudged one column each way — the highlighted `kick` list tries `0` (in place), then `-1`, then `+1`. The first offset that fits is committed (rotation **and** the nudge), and it returns; if none fit, the piece simply does not turn. That nudge is the classic "wall kick" that keeps rotation from feeling stuck.
-
-> [!MORE] `hardDrop` — slam to the bottom
-> ```ts {2}
 > function hardDrop(self: BoardSelf): void {
 >   while (tryMove(self, 0, 1)) self.score += 1;
 >   self.timer = self.fall;
 > }
-> ```
-> It just calls `tryMove(self, 0, 1)` in a loop until a downward step is no longer legal, scoring one point per row dropped. Setting `timer = fall` forces the very next `update` to lock the piece immediately, so a hard drop feels instant rather than pausing on the floor for a frame.
-
-> [!MORE] `lockPiece` — freeze the piece into the grid
-> ```ts {4}
+>
+> // --- locking, scoring, drawing ---
 > function lockPiece(self: BoardSelf): void {
 >   const color = PIECES[self.piece].color;
 >   for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
 >     if (r >= 0) self.grid[r][c] = color;
 >   }
 > }
-> ```
-> When a piece can fall no further, this writes its color into the model grid permanently — the four falling cells become locked blocks. The `r >= 0` guard is the trap: a piece can lock with cells still above the top row (`r` negative), and writing those would index outside the grid, so they are skipped.
-
-> [!MORE] `onLocked` — clear lines, score, spawn, check for game over
-> ```ts {2}
+> function postHud(self: BoardSelf): void {
+>   // Only post once the HUD has registered. A gui script can't call go.exists
+>   // (go.* is .script-only), and msg.post to a missing instance errors at
+>   // dispatch — so the HUD announces itself in its init (see on_message below).
+>   if (self.hud) {
+>     msg.post("/hud#hud", "set_hud", { score: self.score, level: self.level });
+>   }
+> }
 > function onLocked(self: BoardSelf): void {
 >   const n = clearLines(self.grid);
 >   if (n > 0) {
@@ -792,18 +763,79 @@ That fence is a lot at once. Here is each load-bearing piece of `board.ts` on it
 >     if (self.hud) msg.post("/hud#hud", "game_over");
 >   }
 > }
-> ```
-> This is the everything-after-a-lock step. The highlighted `clearLines` collapses any full rows and reports how many; when that is non-zero it scores `40/100/300/1200 × level`, bumps the level every ten lines, and speeds up the fall (floored at `0.08s`). Then it spawns the next piece at the top — and if that fresh piece cannot fit, the stack has reached the ceiling and `over` is set.
-
-> [!MORE] `stepDown` — one tick of gravity
-> ```ts {2}
 > function stepDown(self: BoardSelf): void {
 >   if (tryMove(self, 0, 1)) return;
 >   lockPiece(self);
 >   onLocked(self);
 > }
+> function redraw(self: BoardSelf): void {
+>   const frame: number[][] = [];
+>   for (let r = 0; r < ROWS; r++) {
+>     const row: number[] = [];
+>     for (let c = 0; c < COLS; c++) row.push(self.grid[r][c]);
+>     frame.push(row);
+>   }
+>   if (!self.over) {
+>     const color = PIECES[self.piece].color;
+>     for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
+>       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) frame[r][c] = color;
+>     }
+>   }
+>   for (let r = 0; r < ROWS; r++) {
+>     for (let c = 0; c < COLS; c++) paint(self, r, c, frame[r][c]);
+>   }
+> }
+>
+> export default defineGuiScript({
+>   init(): BoardSelf {
+>     msg.post(".", "acquire_input_focus");
+>     const grid = buildGrid();
+>     return {
+>       fills: grid.fills,
+>       borders: grid.borders,
+>       grid: emptyGrid(),
+>       piece: nextPieceIndex(),
+>       rot: 0,
+>       px: 4,
+>       py: 0,
+>       timer: 0,
+>       fall: 0.8,
+>       score: 0,
+>       lines: 0,
+>       level: 1,
+>       over: false,
+>       hud: false,
+>     };
+>   },
+>   update(self, dt) {
+>     if (self.over) return;
+>     self.timer += dt;
+>     if (self.timer >= self.fall) {
+>       self.timer = 0;
+>       stepDown(self);
+>     }
+>     redraw(self);
+>   },
+>   on_input(self, action_id, action) {
+>     if (self.over || !action.pressed) return;
+>     if (action_id == LEFT) tryMove(self, -1, 0);
+>     else if (action_id == RIGHT) tryMove(self, 1, 0);
+>     else if (action_id == SOFT) tryMove(self, 0, 1);
+>     else if (action_id == ROTATE) tryRotate(self);
+>     else if (action_id == HARD) hardDrop(self);
+>   },
+>   on_message(self, message_id) {
+>     // The HUD announces itself once loaded; remember it so we only post when
+>     // it exists (a gui script has no go.exists).
+>     if (message_id == hash("hud_ready")) self.hud = true;
+>   },
+> });
 > ```
-> The whole gravity rule in three lines: try to move the piece down one row, and if that worked there is nothing more to do this tick. If the move was blocked the piece has landed, so `lockPiece` freezes it and `onLocked` handles clears, scoring, and the next spawn. `update` calls this once every `fall` seconds.
+
+Then **delete the sample `src/main.ts`** that `init` scaffolded — it was only a placeholder. On the next save `watch` removes the stale `src/main.ts.script` and emits `src/board.ts.gui_script` beside `board.ts`.
+
+> [!NOTE]
+> **State tiers**: Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, nothing global. Pick the narrowest tier that fits.
 
 ## 06 — Wire the scene
 
