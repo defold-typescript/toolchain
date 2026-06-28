@@ -179,6 +179,13 @@ function admonitionTitle(type: AlertType): string {
   return `<p class="admonition-title">${ALERT_ICONS[type]}<span>${ALERT_LABELS[type]}</span></p>\n`;
 }
 
+// A `> [!MORE]` blockquote (case-insensitive marker) becomes a native
+// tap-to-reveal `<details>`; trailing same-line text is the `<summary>` label,
+// or this default when the marker stands alone. `MORE` is not an admonition —
+// the `github-alerts` ruler leaves it untouched and vice-versa.
+const MORE_MARKER = /^\[!more\]/i;
+const MORE_DEFAULT_SUMMARY = "More";
+
 export async function renderMarkdown(
   markdown: string,
   opts: { highlightSignatureHeadings?: boolean } = {},
@@ -304,6 +311,56 @@ export async function renderMarkdown(
       const title = new state.Token("html_block", "", 0);
       title.content = admonitionTitle(type);
       tokens.splice(i + 1, 0, title);
+      i++;
+    }
+  });
+  // Retag `> [!MORE]` blockquotes as `<details class="more">` so beginner-facing
+  // explanations live in tap-to-reveal disclosures without client JS. Mirrors the
+  // `github-alerts` retag (blockquote_open/_close -> details) but splices a
+  // `<summary>` from the trailing marker text and removes that marker line from
+  // the revealed body. Inner tokens stay parsed markdown so code fences and bold
+  // still render.
+  md.core.ruler.push("more-disclosures", (state) => {
+    const tokens = state.tokens;
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i]?.type !== "blockquote_open") continue;
+      const inline = tokens[i + 2];
+      if (inline?.type !== "inline") continue;
+      if (!MORE_MARKER.test(inline.content)) continue;
+
+      const open = tokens[i];
+      if (!open) continue;
+      open.tag = "details";
+      open.attrSet("class", "more");
+      for (let j = i, depth = 0; j < tokens.length; j++) {
+        const t = tokens[j];
+        if (t?.type === "blockquote_open") depth++;
+        else if (t?.type === "blockquote_close") {
+          depth--;
+          if (depth === 0) {
+            t.tag = "details";
+            break;
+          }
+        }
+      }
+
+      // The marker line is the summary, not body: lift its trailing text into the
+      // <summary> label, then drop the whole first line (lead token + its break).
+      let summaryText = MORE_DEFAULT_SUMMARY;
+      const children = inline.children;
+      const lead = children?.[0];
+      if (lead?.type === "text" && MORE_MARKER.test(lead.content)) {
+        const trailing = lead.content.replace(/^\[!more\]\s*/i, "").trim();
+        if (trailing !== "") summaryText = trailing;
+        children?.shift();
+        const next: string | undefined = children?.[0]?.type;
+        if (next === "softbreak" || next === "hardbreak") children?.shift();
+      }
+      inline.content = inline.content.replace(/^\[!more\][^\n]*\n?/i, "");
+
+      const summary = new state.Token("html_block", "", 0);
+      summary.content = `<summary>${state.md.utils.escapeHtml(summaryText)}</summary>\n`;
+      tokens.splice(i + 1, 0, summary);
       i++;
     }
   });

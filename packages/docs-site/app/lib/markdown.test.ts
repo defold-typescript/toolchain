@@ -315,4 +315,54 @@ describe("renderMarkdown", () => {
     const html = await renderMarkdown("Just a paragraph with `code`.\n");
     expect(html).not.toContain("table-scroll");
   });
+
+  test("renders a [!MORE] blockquote as a details disclosure with a summary", async () => {
+    const html = await renderMarkdown("> [!MORE]\n> Body.\n");
+    expect(html).toMatch(/<details class="more"/);
+    expect(html).toContain("<summary");
+    expect(html).not.toContain("<blockquote>");
+    expect(html).not.toContain("admonition");
+    expect(html).not.toContain("[!MORE]");
+  });
+
+  test("uses the trailing marker text as the summary label", async () => {
+    const html = await renderMarkdown("> [!MORE] Why row grows downward\n> Body.\n");
+    const summary = html.slice(html.indexOf("<summary"), html.indexOf("</summary>"));
+    expect(summary).toContain("Why row grows downward");
+    expect(html).not.toContain("[!MORE]");
+  });
+
+  test("falls back to a default summary label when the marker stands alone", async () => {
+    const html = await renderMarkdown("> [!MORE]\n> Body.\n");
+    const summary = html.slice(html.indexOf("<summary"), html.indexOf("</summary>"));
+    expect(summary).toContain("More");
+  });
+
+  test("renders bold inside a [!MORE] body as markdown", async () => {
+    const html = await renderMarkdown("> [!MORE]\n> Some **bold** text.\n");
+    expect(html).toContain("<strong>bold</strong>");
+  });
+
+  test("renders a fenced code block inside a [!MORE] body", async () => {
+    const html = await renderMarkdown("> [!MORE] Code\n> \n> ```ts\n> const x = 1;\n> ```\n");
+    expect(html).toContain('class="shiki');
+  });
+
+  test("leaves the [!MORE] details collapsed by default (no open attribute)", async () => {
+    const html = await renderMarkdown("> [!MORE]\n> Body.\n");
+    const tag = html.slice(
+      html.indexOf("<details"),
+      html.indexOf(">", html.indexOf("<details")) + 1,
+    );
+    expect(tag).not.toContain("open");
+  });
+
+  test("the [!MORE] ruler leaves plain quotes and [!NOTE] alerts alone", async () => {
+    const plain = await renderMarkdown("> Just a quote.\n");
+    expect(plain).toContain("<blockquote>");
+    expect(plain).not.toContain("details");
+    const note = await renderMarkdown("> [!NOTE]\n> Body.\n");
+    expect(note).toMatch(/<div class="admonition admonition-note"/);
+    expect(note).not.toContain("details");
+  });
 });
