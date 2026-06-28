@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fromHighlighter } from "@shikijs/markdown-it/core";
+import {
+  transformerMetaHighlight,
+  transformerNotationDiff,
+  transformerNotationFocus,
+  transformerNotationHighlight,
+} from "@shikijs/transformers";
 import MarkdownIt from "markdown-it";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { withBase } from "./base";
@@ -361,6 +367,12 @@ export async function renderMarkdown(
       themes: { light: LIGHT_THEME, dark: DARK_THEME },
       defaultColor: false,
       fallbackLanguage: "text" as BundledLanguage,
+      transformers: [
+        transformerMetaHighlight(),
+        transformerNotationHighlight(),
+        transformerNotationDiff(),
+        transformerNotationFocus(),
+      ],
     }),
   );
   // Wrap Shiki's `<pre>` in a `<figure>` with a filename caption when the fence

@@ -136,6 +136,37 @@
     color: var(--shiki-dark, currentColor);
     background-color: transparent;
   }
+  /*
+   * Line-level overlays painted by the Shiki transformers. A `color-mix` over
+   * `transparent` keys off `currentColor`, so each rule reads under both
+   * data-theme values without a fixed background (the dual-theme is
+   * `defaultColor: false`). Meta ranges (`{2,4-6}`) and `// [!code highlight]`
+   * share the `.highlighted` class; diff and focus notations get their own.
+   */
+  .shiki .line.highlighted {
+    display: inline-block;
+    width: 100%;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
+  .shiki .line.diff {
+    display: inline-block;
+    width: 100%;
+  }
+  .shiki .line.diff.add {
+    background: color-mix(in srgb, #2ea043 15%, transparent);
+  }
+  .shiki .line.diff.remove {
+    background: color-mix(in srgb, #f85149 15%, transparent);
+  }
+  .shiki.has-focused .line:not(.focused) {
+    filter: blur(0.085rem);
+    opacity: 0.5;
+    transition: filter 0.2s, opacity 0.2s;
+  }
+  .shiki.has-focused:hover .line:not(.focused) {
+    filter: none;
+    opacity: 1;
+  }
 }
 
 /*

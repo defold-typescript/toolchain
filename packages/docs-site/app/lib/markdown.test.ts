@@ -27,6 +27,51 @@ describe("renderMarkdown", () => {
     expect(html).toContain("--shiki-dark:");
   });
 
+  test("highlights the meta-range line of a fenced block and leaves others plain", async () => {
+    const html = await renderMarkdown("```ts {2}\nconst a = 1;\nconst b = 2;\n```\n");
+    const lines = html.match(/<span class="line[^"]*">/g) ?? [];
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).not.toContain("highlighted");
+    expect(lines[1]).toContain("highlighted");
+  });
+
+  test("highlights only the lines named in a meta range span", async () => {
+    const html = await renderMarkdown(
+      "```ts {1-2}\nconst a = 1;\nconst b = 2;\nconst c = 3;\n```\n",
+    );
+    const lines = html.match(/<span class="line[^"]*">/g) ?? [];
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain("highlighted");
+    expect(lines[1]).toContain("highlighted");
+    expect(lines[2]).not.toContain("highlighted");
+  });
+
+  test("applies // [!code highlight] notation and strips the comment text", async () => {
+    const html = await renderMarkdown(
+      "```ts\nconst a = 1; // [!code highlight]\nconst b = 2;\n```\n",
+    );
+    const lines = html.match(/<span class="line[^"]*">/g) ?? [];
+    expect(lines[0]).toContain("highlighted");
+    expect(html).not.toContain("[!code highlight]");
+  });
+
+  test("applies // [!code ++] / [!code --] diff notation and strips the comments", async () => {
+    const html = await renderMarkdown(
+      "```ts\nconst added = 1; // [!code ++]\nconst removed = 2; // [!code --]\n```\n",
+    );
+    expect(html).toMatch(/<span class="line[^"]*\bdiff\b[^"]*\badd\b/);
+    expect(html).toMatch(/<span class="line[^"]*\bdiff\b[^"]*\bremove\b/);
+    expect(html).not.toContain("[!code ++]");
+    expect(html).not.toContain("[!code --]");
+  });
+
+  test("a meta range coexists with a title= caption", async () => {
+    const html = await renderMarkdown('```ts title="x.ts" {1}\nconst a = 1;\n```\n');
+    expect(html).toContain('<figcaption class="code-title">x.ts</figcaption>');
+    const lines = html.match(/<span class="line[^"]*">/g) ?? [];
+    expect(lines[0]).toContain("highlighted");
+  });
+
   test("injects a heading-anchor permalink into h2 headings", async () => {
     const html = await renderMarkdown("## Hello world\n");
     expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#hello-world"/);

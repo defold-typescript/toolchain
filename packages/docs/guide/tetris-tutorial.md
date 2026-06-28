@@ -107,7 +107,7 @@ The script hashes these same names (`hash("left")`, and so on) to recognize each
 
 Start with a pure model: a 10×20 grid of cells, each empty or holding a piece's color. Engine-free logic is easy to reason about and to type. The whole model is one file — dimensions, the cell types, an empty board, the free-cell test, and line clearing. In VS Code, create `src/grid.ts`:
 
-```ts title="src/grid.ts"
+```ts title="src/grid.ts" {33-40}
 export const COLS = 10;
 export const ROWS = 20;
 
@@ -185,7 +185,7 @@ Here's the one piece of geometry worth knowing. To rotate any offset 90° **cloc
 // 90° clockwise about the pivot. row grows downward,
 // so this turns "right" into "down", "down" into "left", etc.
 function rotateCW(cells: Offset[]): Offset[] {
-  return cells.map(([c, r]) => [-r, c] as Offset);
+  return cells.map(([c, r]) => [-r, c] as Offset); // [!code highlight]
 }
 
 // Build all 4 states from a base: [base, +90, +180, +270].
