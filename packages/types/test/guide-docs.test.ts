@@ -148,6 +148,36 @@ function inlineContent(section: string): string {
   return out.join("\n");
 }
 
+// Every fenced block whose info string starts with `ts`, matching both bare
+// ` ```ts ` and `[!MORE]`-quoted ` > ```ts `. Returns the raw info string and
+// the (still-quoted) code body up to the matching closing fence. Indented
+// command blocks never start at column 0 (or after `> `), so they are skipped.
+function tsFences(body: string): { info: string; code: string }[] {
+  const fences: { info: string; code: string }[] = [];
+  let info: string | null = null;
+  let quoted = false;
+  let bodyLines: string[] = [];
+  for (const line of body.split("\n")) {
+    if (info === null) {
+      const open = line.match(/^(> )?```(\S.*)?$/);
+      if (open) {
+        quoted = Boolean(open[1]);
+        info = open[2] ?? "";
+        bodyLines = [];
+      }
+      continue;
+    }
+    const closeRe = quoted ? /^> ?```\s*$/ : /^```\s*$/;
+    if (closeRe.test(line)) {
+      if (info.startsWith("ts")) fences.push({ info, code: bodyLines.join("\n") });
+      info = null;
+      continue;
+    }
+    bodyLines.push(line);
+  }
+  return fences;
+}
+
 describe("tutorialProseMetrics helper", () => {
   test("strips fenced code blocks from the prose count", () => {
     const raw = [
@@ -1108,6 +1138,37 @@ describe("docs/guide/tetris-tutorial.md", () => {
     const m = tutorialProseMetrics(body);
     expect(m.detailedWords).toBeGreaterThan(0);
     expect(m.detailedWords).toBeLessThanOrEqual(DETAILED_RATCHET);
+  });
+
+  test("every TypeScript code block carries a title", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const fences = tsFences(body);
+    expect(fences.length).toBeGreaterThan(0);
+    for (const fence of fences) {
+      expect(fence.info).toContain("title=");
+    }
+  });
+
+  test("each (partial) block is a verbatim slice of its named source file", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const partials = tsFences(body).filter((f) => f.info.includes(' (partial)"'));
+    expect(partials.length).toBeGreaterThan(0);
+    for (const fence of partials) {
+      const fileMatch = fence.info.match(/title="src\/([^"]+?) \(partial\)"/);
+      expect(fileMatch).not.toBeNull();
+      const file = fileMatch?.[1] ?? "";
+      const source = await Bun.file(resolve(EXAMPLE_SRC, file)).text();
+      const excerpt = dequote(fence.code)
+        .split("\n")
+        .map((line) => line.replace(/\s*\/\/ \[!code highlight\]$/, ""))
+        .join("\n");
+      expect(source).toContain(excerpt);
+    }
+  });
+
+  test("the rotation-derivation block is a (snippet), exempt from the verbatim check", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain('```ts title="src/pieces.ts (snippet)"');
   });
 
   test("no h2/h3 heading appears inside a [!MORE] disclosure block", async () => {

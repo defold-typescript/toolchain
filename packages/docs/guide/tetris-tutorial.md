@@ -121,7 +121,7 @@ Each function does one small job. Read them top to bottom:
 
 **`emptyGrid`** — build a blank board
 
-```ts
+```ts title="src/grid.ts (partial)"
 export function emptyGrid(): Grid {
   const g: Grid = [];
   for (let r = 0; r < ROWS; r++) {
@@ -137,7 +137,7 @@ It takes nothing and returns a fresh `Grid`: `ROWS` arrays of `COLS` zeros. The 
 
 **`isFree`** — can a square sit here?
 
-```ts {4}
+```ts title="src/grid.ts (partial)" {4}
 export function isFree(g: Grid, c: number, r: number): boolean {
   if (c < 0 || c >= COLS || r >= ROWS) return false;
   if (r < 0) return true;
@@ -152,12 +152,17 @@ It takes the grid and a `[c, r]` cell and returns `true` only when a piece may o
 
 **`clearLines`** — drop full rows and count them
 
-```ts {7}
+```ts title="src/grid.ts (partial)" {17}
 export function clearLines(g: Grid): number {
   let cleared = 0;
   for (let r = ROWS - 1; r >= 0; r--) {
     let full = true;
-    for (let c = 0; c < COLS; c++) if (g[r][c] == 0) full = false;
+    for (let c = 0; c < COLS; c++) {
+      if (g[r][c] == 0) {
+        full = false;
+        break;
+      }
+    }
     if (full) {
       g.splice(r, 1);
       const blank: Cell[] = [];
@@ -250,7 +255,7 @@ Here's the one piece of geometry worth knowing. To rotate any offset 90° **cloc
 >
 > **Why four states.** Apply the move four times and the piece lands back where it started. Some pieces look the same in two or four of those states, but storing all four keeps the bookkeeping uniform: the next rotation is always `(rot + 1) % 4`.
 
-```ts title="(snippet)"
+```ts title="src/pieces.ts (snippet)"
 // 90° clockwise about the pivot. row grows downward,
 // so this turns "right" into "down", "down" into "left", etc.
 function rotateCW(cells: Offset[]): Offset[] {
@@ -276,7 +281,7 @@ That leaves one thing to author by hand: the spawn shape. Everything else is com
 
 **`rotateCW`** — spin one shape 90°
 
-```ts {2}
+```ts title="src/pieces.ts (partial)" {2}
 function rotateCW(cells: Offset[]): Offset[] {
   return cells.map(([c, r]) => [-r, c] as Offset);
 }
@@ -290,7 +295,7 @@ Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precompu
 
 **`cellsAt`** — where a piece sits on the board
 
-```ts {2}
+```ts title="src/pieces.ts (partial)" {2}
 export function cellsAt(piece: number, rot: number, px: number, py: number): Offset[] {
   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
 }
@@ -300,7 +305,7 @@ It takes a piece index, a rotation, and a pivot position `[px, py]`, and returns
 
 **`nextPieceIndex`** — the shuffled-bag randomizer
 
-```ts {7}
+```ts title="src/pieces.ts (partial)" {7}
 let bag: number[] = [];
 export function nextPieceIndex(): number {
   if (bag.length == 0) {
@@ -438,7 +443,7 @@ Read each piece below — the state shape, then the collision checks, then the l
 
 **`BoardSelf`** — the shape of `self`
 
-```ts {15}
+```ts title="src/board.ts (partial)" {15}
 interface BoardSelf {
   fills: GuiNode[][];
   borders: GuiNode[][];
@@ -461,7 +466,7 @@ This interface is the one shape `init` returns and every helper reads through `s
 
 **`buildGrid`** — make the cell nodes once
 
-```ts {15-16}
+```ts title="src/board.ts (partial)" {15-16}
 function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
   const fills: GuiNode[][] = [];
   const borders: GuiNode[][] = [];
@@ -490,7 +495,7 @@ It runs once in `init` and returns two `ROWS × COLS` arrays of GUI box nodes �
 
 **`fits`** — would these four cells be legal?
 
-```ts {3}
+```ts title="src/board.ts (partial)" {3}
 function fits(self: BoardSelf, piece: number, rot: number, px: number, py: number): boolean {
   for (const [c, r] of cellsAt(piece, rot, px, py)) {
     if (!isFree(self.grid, c, r)) return false;
@@ -503,7 +508,7 @@ This is the single rule the whole game leans on: given a piece, a rotation, and 
 
 **`canPlace`** — does the piece fit where it is now?
 
-```ts {2}
+```ts title="src/board.ts (partial)" {2}
 function canPlace(self: BoardSelf): boolean {
   return fits(self, self.piece, self.rot, self.px, self.py);
 }
@@ -513,7 +518,7 @@ A one-line convenience wrapper: it asks `fits` about the piece's **current** pos
 
 **`tryMove`** — commit a shift only if it is legal
 
-```ts {2}
+```ts title="src/board.ts (partial)" {2}
 function tryMove(self: BoardSelf, dc: number, dr: number): boolean {
   if (fits(self, self.piece, self.rot, self.px + dc, self.py + dr)) {
     self.px += dc;
@@ -528,7 +533,7 @@ It takes a column/row delta, tests the would-be position with `fits`, and **only
 
 **`tryRotate`** — spin, with a wall kick
 
-```ts {3}
+```ts title="src/board.ts (partial)" {3}
 function tryRotate(self: BoardSelf): void {
   const next = (self.rot + 1) % 4;
   for (const kick of [0, -1, 1]) {
@@ -545,7 +550,7 @@ Rotating against a wall would normally fail, so before giving up it retries the 
 
 **`hardDrop`** — slam to the bottom
 
-```ts {2}
+```ts title="src/board.ts (partial)" {2}
 function hardDrop(self: BoardSelf): void {
   while (tryMove(self, 0, 1)) self.score += 1;
   self.timer = self.fall;
@@ -556,7 +561,7 @@ It just calls `tryMove(self, 0, 1)` in a loop until a downward step is no longer
 
 **`lockPiece`** — freeze the piece into the grid
 
-```ts {4}
+```ts title="src/board.ts (partial)" {4}
 function lockPiece(self: BoardSelf): void {
   const color = PIECES[self.piece].color;
   for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
@@ -569,7 +574,7 @@ When a piece can fall no further, this writes its color into the model grid perm
 
 **`onLocked`** — clear lines, score, spawn, check for game over
 
-```ts {2}
+```ts title="src/board.ts (partial)" {2}
 function onLocked(self: BoardSelf): void {
   const n = clearLines(self.grid);
   if (n > 0) {
@@ -594,7 +599,7 @@ This is the everything-after-a-lock step. The highlighted `clearLines` collapses
 
 **`stepDown`** — one tick of gravity
 
-```ts {2}
+```ts title="src/board.ts (partial)" {2}
 function stepDown(self: BoardSelf): void {
   if (tryMove(self, 0, 1)) return;
   lockPiece(self);
