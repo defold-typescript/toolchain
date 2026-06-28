@@ -60,13 +60,7 @@ run = "bun run --filter @defold-typescript/docs-site dev"
 
 [tasks."dev:slides"]
 description = "Build the tutorial slide deck (docs/tutorial) and open it in the browser"
-dir = "{{config_root}}/docs/tutorial"
-run = """
-#!/usr/bin/env bash
-set -euo pipefail
-bun run build
-open dist/index.html 2>/dev/null || xdg-open dist/index.html
-"""
+run = "bun scripts/dev-slides.ts"
 
 [tasks."dev:build-llms"]
 description = "Build llms.txt and llms-full.txt"
