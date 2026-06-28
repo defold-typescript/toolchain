@@ -153,6 +153,7 @@ describe("buildNav", () => {
       slug: "brand-new-topic",
       route: "/brand-new-topic",
       isIndex: false,
+      includeInLlmsFull: true,
     };
     const nav = buildNav([...realPages(), synthetic], {
       globals: [],
@@ -188,6 +189,7 @@ describe("linkFor toc-title rendering", () => {
       slug: "add-typescript",
       route: "/add-typescript",
       isIndex: false,
+      includeInLlmsFull: true,
       tocTitle: "Add TypeScript",
     };
     const link = navLinkFor(page);
@@ -201,6 +203,7 @@ describe("linkFor toc-title rendering", () => {
       slug: "x",
       route: "/x",
       isIndex: false,
+      includeInLlmsFull: true,
       tocTitle: "API docs vs `ts-defold-types`",
     };
     const link = navLinkFor(page);
@@ -214,6 +217,7 @@ describe("linkFor toc-title rendering", () => {
       slug: "brand-new-topic",
       route: "/brand-new-topic",
       isIndex: false,
+      includeInLlmsFull: true,
     };
     const link = navLinkFor(page);
     expect(link?.label).toBe("Brand New Topic");

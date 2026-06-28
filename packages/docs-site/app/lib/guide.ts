@@ -9,4 +9,6 @@ export interface GuidePage {
   isIndex: boolean;
   /** Left-sidebar label override from the file's `toc-title` frontmatter. */
   tocTitle?: string;
+  /** Inline this page's body into llms-full.txt; `false` when frontmatter has `llms-full: false`. */
+  includeInLlmsFull: boolean;
 }
