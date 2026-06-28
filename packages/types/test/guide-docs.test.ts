@@ -27,20 +27,46 @@ const TETRIS_JARGON = [
   "registration",
 ];
 
+function stripInlineMarkup(line: string): string {
+  return line
+    .replace(/`[^`]*`/g, "")
+    .replace(/\]\([^)]*\)/g, "")
+    .replace(/\|/g, " ")
+    .trim();
+}
+
 function tutorialProseMetrics(raw: string): {
   words: number;
   longSentences: number;
   jargon: number;
+  detailedWords: number;
 } {
   const lines = raw.split("\n");
   const proseLines: string[] = [];
+  const detailedLines: string[] = [];
   let inFence = false;
+  let inMore = false;
   for (const line of lines) {
     if (line.startsWith("```")) {
       inFence = !inFence;
       continue;
     }
     if (inFence) continue;
+    // A `> [!MORE]` blockquote opens a tap-to-reveal region that runs until the
+    // first line that is not a blockquote continuation. Its prose is metered
+    // separately (detailedWords) and excluded from the Quick ratchet.
+    if (/^>\s*\[!more\]/i.test(line)) {
+      inMore = true;
+      detailedLines.push(stripInlineMarkup(line.replace(/^>\s*\[!more\]\s*/i, "")));
+      continue;
+    }
+    if (inMore) {
+      if (line.startsWith(">")) {
+        detailedLines.push(stripInlineMarkup(line.replace(/^>\s?/, "")));
+        continue;
+      }
+      inMore = false;
+    }
     if (/^\|?[\s\-|:]+\|?$/.test(line)) continue;
     let l = line;
     l = l.replace(/^#+\s+/, "");
@@ -50,6 +76,8 @@ function tutorialProseMetrics(raw: string): {
     l = l.replace(/\|/g, " ");
     proseLines.push(l.trim());
   }
+  const detailed = detailedLines.join("\n");
+  const detailedWords = detailed.split(/\s+/).filter((t) => t.length > 0).length;
   const prose = proseLines.join("\n");
   const words = prose.split(/\s+/).filter((t) => t.length > 0);
   const sentences = prose.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
@@ -63,7 +91,7 @@ function tutorialProseMetrics(raw: string): {
     const m = lc.match(re);
     if (m) jargon += m.length;
   }
-  return { words: words.length, longSentences: longSentences.length, jargon };
+  return { words: words.length, longSentences: longSentences.length, jargon, detailedWords };
 }
 
 describe("tutorialProseMetrics helper", () => {
@@ -114,6 +142,31 @@ describe("tutorialProseMetrics helper", () => {
     const longSentence = "one ".repeat(31).trim();
     expect(tutorialProseMetrics(`${longSentence}.`).longSentences).toBe(1);
     expect(tutorialProseMetrics("short.").longSentences).toBe(0);
+  });
+
+  test("excludes a [!MORE] block region from the Quick prose metrics", () => {
+    const base = ["# Title", "", "Quick prose here now.", ""].join("\n");
+    const withMore = [
+      base,
+      "> [!MORE] Why this matters",
+      "> A long detailed beginner explanation that adds many extra words to the body.",
+      "",
+      "Tail line.",
+    ].join("\n");
+    const without = [base, "Tail line."].join("\n");
+    const a = tutorialProseMetrics(withMore);
+    const b = tutorialProseMetrics(without);
+    expect(a.words).toBe(b.words);
+    expect(a.longSentences).toBe(b.longSentences);
+    expect(a.jargon).toBe(b.jargon);
+  });
+
+  test("counts [!MORE] region prose in detailedWords and reports zero without a block", () => {
+    const withMore = ["# Title", "", "> [!MORE] Summary", "> Three extra detailed words."].join(
+      "\n",
+    );
+    expect(tutorialProseMetrics(withMore).detailedWords).toBeGreaterThan(0);
+    expect(tutorialProseMetrics("# Title\n\nJust prose.\n").detailedWords).toBe(0);
   });
 });
 
@@ -741,6 +794,10 @@ describe("docs/guide/tetris-tutorial.md", () => {
     jargon: 6,
   } as const;
 
+  // Empirically baselined after authoring the two `[!MORE]` proof sections; a
+  // separate ceiling from the Quick ratchet so detail prose ratchets on its own.
+  const DETAILED_RATCHET = 271;
+
   const TETRIS_TONE_ANCHORS = [
     "What you'll have",
     "In plain English",
@@ -899,5 +956,46 @@ describe("docs/guide/tetris-tutorial.md", () => {
     const body = await readGuide("tetris-tutorial.md");
     expect(body).not.toContain("then set it as the scene's **Script**");
     expect(body).not.toContain("Save `src/board.ts` at least once");
+  });
+
+  test("the grid-model section carries a [!MORE] disclosure", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const start = body.indexOf("## 03 — Model the grid");
+    const end = body.indexOf("## 04 ", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(body.slice(start, end === -1 ? body.length : end)).toContain("[!MORE]");
+  });
+
+  test("the rotation-geometry section carries a [!MORE] disclosure", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const start = body.indexOf("### How rotations are derived");
+    const end = body.indexOf("### The seven base shapes", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(body.slice(start, end === -1 ? body.length : end)).toContain("[!MORE]");
+  });
+
+  test("detailed-prose word count is positive and at or below the recorded ceiling", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const m = tutorialProseMetrics(body);
+    expect(m.detailedWords).toBeGreaterThan(0);
+    expect(m.detailedWords).toBeLessThanOrEqual(DETAILED_RATCHET);
+  });
+
+  test("no h2/h3 heading appears inside a [!MORE] disclosure block", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    let inMore = false;
+    for (const line of body.split("\n")) {
+      if (/^>\s*\[!more\]/i.test(line)) {
+        inMore = true;
+        continue;
+      }
+      if (inMore) {
+        if (line.startsWith(">")) {
+          expect(/^>\s*#{2,3}\s/.test(line)).toBe(false);
+          continue;
+        }
+        inMore = false;
+      }
+    }
   });
 });
