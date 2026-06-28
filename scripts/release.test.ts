@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { bumpVersion, compareVersions, maxVersion, parseArgs, resolveTarget } from "./release.ts";
+import { readFileSync } from "node:fs";
+import {
+  bumpVersion,
+  compareVersions,
+  maxVersion,
+  parseArgs,
+  resolveTarget,
+  sleepSync,
+} from "./release.ts";
 
 describe("parseArgs", () => {
   test("defaults to a patch bump", () => {
@@ -69,5 +77,22 @@ describe("resolveTarget", () => {
 
   test("rejects a malformed explicit version", () => {
     expect(() => resolveTarget("0.10.0", "1.2")).toThrow();
+  });
+});
+
+describe("sleepSync", () => {
+  test("blocks for at least the requested interval", () => {
+    const start = performance.now();
+    sleepSync(40);
+    expect(performance.now() - start).toBeGreaterThanOrEqual(30);
+  });
+
+  test("returns immediately for a zero wait", () => {
+    expect(() => sleepSync(0)).not.toThrow();
+  });
+
+  test("the source no longer spawns the sleep binary", () => {
+    const src = readFileSync(new URL("./release.ts", import.meta.url), "utf8");
+    expect(src.includes('"sleep"')).toBe(false);
   });
 });

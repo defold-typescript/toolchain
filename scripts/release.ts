@@ -129,6 +129,13 @@ function publishedBase(): string {
   return maxVersion(versions);
 }
 
+// Block the current thread for `ms` milliseconds with no child process —
+// `Atomics.wait` on a SharedArrayBuffer-backed lock is the binary-free
+// synchronous sleep, so the release flow needs no `sleep` binary on Windows.
+export function sleepSync(ms: number): void {
+  if (ms > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
 // Wait for the commit's CI run (ci.yml) to finish and require success before
 // tagging — a tag whose CI is still running or red would publish unvalidated
 // code. `gh run watch` blocks until the run concludes; --exit-status makes it
@@ -161,7 +168,7 @@ function waitForGreenCI(sha: string): void {
     } catch {
       // not yet queued; retry below
     }
-    if (!runId) run(["sleep", "10"]);
+    if (!runId) sleepSync(10_000);
   }
   if (!runId) {
     die(
