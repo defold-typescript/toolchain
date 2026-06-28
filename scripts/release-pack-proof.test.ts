@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { checkCoordinatedDeps, PACKAGES } from "./release-pack-proof.ts";
+import {
+  checkCoordinatedDeps,
+  PACKAGES,
+  readTarEntry,
+  stampVersion,
+} from "./release-pack-proof.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const PACKAGES_DIR = path.join(REPO_ROOT, "packages");
@@ -68,6 +73,74 @@ describe("checkCoordinatedDeps", () => {
       "9.9.9",
     );
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("stampVersion", () => {
+  test("sets .version, leaves every other field untouched, and does not mutate the input", () => {
+    const input = {
+      name: "@defold-typescript/types",
+      version: "0.0.0",
+      dependencies: { "@defold-typescript/transpiler": "0.0.0" },
+    };
+    const stamped = stampVersion(input, "1.2.3");
+    expect(stamped.version).toBe("1.2.3");
+    expect(stamped.name).toBe("@defold-typescript/types");
+    expect(stamped.dependencies).toEqual({ "@defold-typescript/transpiler": "0.0.0" });
+    expect(input.version).toBe("0.0.0");
+  });
+});
+
+describe("readTarEntry", () => {
+  function buildTar(entries: Array<{ name: string; content: string }>): Uint8Array {
+    const enc = new TextEncoder();
+    const blocks: Uint8Array[] = [];
+    for (const { name, content } of entries) {
+      const header = new Uint8Array(512);
+      header.set(enc.encode(name), 0);
+      const bytes = enc.encode(content);
+      header.set(enc.encode(bytes.length.toString(8).padStart(11, "0")), 124);
+      blocks.push(header);
+      const padded = new Uint8Array(Math.ceil(bytes.length / 512) * 512);
+      padded.set(bytes, 0);
+      blocks.push(padded);
+    }
+    blocks.push(new Uint8Array(1024)); // two trailing zero blocks
+    const total = blocks.reduce((n, b) => n + b.length, 0);
+    const out = new Uint8Array(total);
+    let off = 0;
+    for (const b of blocks) {
+      out.set(b, off);
+      off += b.length;
+    }
+    return out;
+  }
+
+  test("returns the exact text of a named entry", () => {
+    const tar = buildTar([{ name: "package/package.json", content: '{"version":"9.9.9"}' }]);
+    expect(readTarEntry(tar, "package/package.json")).toBe('{"version":"9.9.9"}');
+  });
+
+  test("walks past earlier entries to find a later one", () => {
+    const tar = buildTar([
+      { name: "package/README.md", content: "hello world" },
+      { name: "package/package.json", content: '{"name":"x"}' },
+    ]);
+    expect(readTarEntry(tar, "package/package.json")).toBe('{"name":"x"}');
+  });
+
+  test("returns null when the name is absent", () => {
+    const tar = buildTar([{ name: "package/README.md", content: "hi" }]);
+    expect(readTarEntry(tar, "package/package.json")).toBeNull();
+  });
+});
+
+describe("release-pack-proof.ts is shell-free", () => {
+  test("spawns none of bash, jq, or tar", () => {
+    const src = readFileSync(path.join(REPO_ROOT, "scripts", "release-pack-proof.ts"), "utf8");
+    expect(src.includes('"bash"')).toBe(false);
+    expect(src.includes('"jq"')).toBe(false);
+    expect(src.includes('"tar"')).toBe(false);
   });
 });
 
