@@ -19,12 +19,7 @@ export interface RunInitResult {
   readonly written: string[];
 }
 
-const CONFLICTING_TS_CONFIGS = [
-  "tsconfig.json",
-  "defold-typescript.config.ts",
-  "defold-typescript.config.mts",
-  "defold-typescript.config.js",
-];
+const CONFLICTING_TS_CONFIGS = ["tsconfig.json"];
 
 const TSCONFIG_COMPILER_OPTIONS = {
   target: "ES2022",

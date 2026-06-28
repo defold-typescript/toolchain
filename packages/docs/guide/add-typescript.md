@@ -38,16 +38,13 @@ If `package.json` does not exist, the command creates one.
 
 ## Conflicting config files
 
-`init` refuses to overwrite an existing TypeScript config rather than clobber settings you may have hand-tuned. Without `--force`, it aborts if any of these files exist:
+`init` refuses to overwrite an existing `tsconfig.json` rather than clobber settings you may have hand-tuned. Without `--force`, it aborts if this file exists:
 
 - `tsconfig.json`
-- `defold-typescript.config.ts`
-- `defold-typescript.config.mts`
-- `defold-typescript.config.js`
 
-Of these, only `tsconfig.json` is one the scaffold actually generates. The `defold-typescript.config.*` names are reserved: the toolchain neither writes nor reads them today, but `init` still refuses to overwrite one so a config file you create by that name later is never silently clobbered.
+`tsconfig.json` is the one TypeScript config the scaffold generates, and the only file the guard protects.
 
-Pass `--force` to proceed anyway (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` rewrites `tsconfig.json` wholesale — it does not merge fields, so any settings you had there are replaced by the scaffold config. It does not touch a `defold-typescript.config.*` file: because the scaffold never generates one, `--force` only skips the conflict check and leaves any such file in place. `--force` never overwrites `src/main.ts` either, since that file is your source.
+Pass `--force` to proceed anyway (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` rewrites `tsconfig.json` wholesale — it does not merge fields, so any settings you had there are replaced by the scaffold config. `--force` never overwrites `src/main.ts` either, since that file is your source.
 
 ## Build the Lua output
 
