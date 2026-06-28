@@ -780,6 +780,16 @@ describe("docs/guide/tetris-tutorial.md", () => {
     }
   });
 
+  test("a verbatim example fence carries a Shiki meta highlight range", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain('```ts title="src/grid.ts" {33-40}');
+  });
+
+  test("a hand-authored snippet demonstrates [!code highlight] notation", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain("[-r, c] as Offset); // [!code highlight]");
+  });
+
   test("prose word count is at or below the recorded ceiling", async () => {
     const body = await readGuide("tetris-tutorial.md");
     const m = tutorialProseMetrics(body);
