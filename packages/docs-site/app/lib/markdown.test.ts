@@ -348,6 +348,25 @@ describe("renderMarkdown", () => {
     expect(html).toContain('class="shiki');
   });
 
+  test("highlights a meta-range line on a fence nested inside a [!MORE] body", async () => {
+    const html = await renderMarkdown(
+      "> [!MORE] Code\n> \n> ```ts {1}\n> const a = 1;\n> const b = 2;\n> ```\n",
+    );
+    const lines = html.match(/<span class="line[^"]*">/g) ?? [];
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain("highlighted");
+    expect(lines[1]).not.toContain("highlighted");
+  });
+
+  test("applies [!code highlight] notation on a fence nested inside a [!MORE] body", async () => {
+    const html = await renderMarkdown(
+      "> [!MORE] Code\n> \n> ```ts\n> const a = 1; // [!code highlight]\n> const b = 2;\n> ```\n",
+    );
+    const lines = html.match(/<span class="line[^"]*">/g) ?? [];
+    expect(lines[0]).toContain("highlighted");
+    expect(html).not.toContain("[!code highlight]");
+  });
+
   test("leaves the [!MORE] details collapsed by default (no open attribute)", async () => {
     const html = await renderMarkdown("> [!MORE]\n> Body.\n");
     const tag = html.slice(

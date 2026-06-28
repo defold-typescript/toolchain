@@ -165,6 +165,53 @@ This module is a **shared singleton**: every `import` becomes a cached `require`
 >
 > **Reading `isFree`.** It answers "can a square hold a piece here?" A column outside `0…COLS` is a side wall. `r >= ROWS` is the floor — that single test is how a falling piece knows to stop at the bottom. A negative `r` sits above the top of the board and stays free, so a new piece can spawn just off-screen and slide into view.
 
+Each function in this file does one small job. Open any walkthrough below for a line-by-line read.
+
+> [!MORE] `emptyGrid` — build a blank board
+> ```ts
+> export function emptyGrid(): Grid {
+>   const g: Grid = [];
+>   for (let r = 0; r < ROWS; r++) {
+>     const row: Cell[] = [];
+>     for (let c = 0; c < COLS; c++) row.push(0); // [!code highlight]
+>     g.push(row);
+>   }
+>   return g;
+> }
+> ```
+> It takes nothing and returns a fresh `Grid`: `ROWS` arrays of `COLS` zeros. The highlighted line fills one row with empty cells; the outer loop stacks twenty such rows. Call it once when a game starts to get a clean board.
+
+> [!MORE] `isFree` — can a square sit here?
+> ```ts {4}
+> export function isFree(g: Grid, c: number, r: number): boolean {
+>   if (c < 0 || c >= COLS || r >= ROWS) return false;
+>   if (r < 0) return true;
+>   return g[r][c] == 0;
+> }
+> ```
+> It takes the grid and a `[c, r]` cell and returns `true` only when a piece may occupy it. Off the sides or below the floor is `false`; above the top is `true`, so pieces spawn off-screen. The trap is the highlighted line: write `== 0`, because `0` is truthy in Lua and a bare `if (g[r][c])` would read every empty cell as full.
+
+> [!MORE] `clearLines` — drop full rows and count them
+> ```ts {7}
+> export function clearLines(g: Grid): number {
+>   let cleared = 0;
+>   for (let r = ROWS - 1; r >= 0; r--) {
+>     let full = true;
+>     for (let c = 0; c < COLS; c++) if (g[r][c] == 0) full = false;
+>     if (full) {
+>       g.splice(r, 1);
+>       const blank: Cell[] = [];
+>       for (let c = 0; c < COLS; c++) blank.push(0);
+>       g.unshift(blank);
+>       cleared++;
+>       r++;
+>     }
+>   }
+>   return cleared;
+> }
+> ```
+> It scans rows from the bottom up; whenever a row has no empty cell it deletes that row (`splice`) and pushes a fresh blank one onto the top (`unshift`) — gravity for the whole stack. It returns how many rows vanished, which Step 05 turns into score. The `r++` after a clear re-checks the same index, because every row above just shifted down by one.
+
 ## 04 — Define the tetrominoes
 
 Each piece is four cells plus a color, stored as a `[col, row]` offset from a **pivot** at `[0, 0]` — the point the piece spins around. `row` grows downward to match the grid.
@@ -321,6 +368,45 @@ export function nextPieceIndex(): number {
 
 > [!NOTE]
 > This uses Lua's `math.random(0, i)` because the two-argument form returns an integer in a range directly. `Math.random()` compiles fine too — it becomes `math.random()` — but returns a float in `[0, 1)`, so for an index you'd write `math.floor(Math.random() * (i + 1))`. Much of the JS standard library transpiles (`Math`, array and string methods); reach for Defold's `math`, `os`, and `json` for engine-specific concerns. `cellsAt` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
+
+Here is each piece of `pieces.ts` on its own. Open a walkthrough for a closer look.
+
+> [!MORE] `rotateCW` — spin one shape 90°
+> ```ts {2}
+> function rotateCW(cells: Offset[]): Offset[] {
+>   return cells.map(([c, r]) => [-r, c] as Offset);
+> }
+> ```
+> It takes a shape's offsets and returns the same shape turned one quarter-turn clockwise — the single move `[c, r] → [-r, c]` applied to every cell. `four()` calls it three times to precompute all four rotations, so the running game never rotates anything; it just indexes `rots[rot]`.
+
+> [!MORE] `PIECES` — the seven shapes as data
+> Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precomputed rotations from `four(base)`. You author only the spawn offsets — the `[-1,0] [0,0] [1,0] [2,0]` block is the I-piece laid flat — and `four` derives the other three states. The trailing comment on each entry (`// I`, `// O`, …) names the letter the shape resembles.
+
+> [!MORE] `cellsAt` — where a piece sits on the board
+> ```ts {2}
+> export function cellsAt(piece: number, rot: number, px: number, py: number): Offset[] {
+>   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
+> }
+> ```
+> It takes a piece index, a rotation, and a pivot position `[px, py]`, and returns the four board cells that piece would cover. It is pure offset math — add the pivot to each stored offset — so Step 05 can ask "would this move land legally?" by testing the result against `isFree` before committing.
+
+> [!MORE] `nextPieceIndex` — the shuffled-bag randomizer
+> ```ts {7}
+> let bag: number[] = [];
+> export function nextPieceIndex(): number {
+>   if (bag.length == 0) {
+>     bag = [0, 1, 2, 3, 4, 5, 6];
+>     for (let i = bag.length - 1; i > 0; i--) {
+>       const j = math.random(0, i);
+>       [bag[i], bag[j]] = [bag[j], bag[i]];
+>     }
+>   }
+>   const index = bag[bag.length - 1];
+>   bag.pop();
+>   return index;
+> }
+> ```
+> Instead of pure random it deals from a bag holding all seven pieces, refilling and reshuffling only once the bag empties — so you never hit long droughts or floods of one shape. The shuffle is the highlighted Fisher–Yates swap, using Lua's integer `math.random(0, i)`. Each call pops one index off the end and returns it.
 
 ## 05 — The board script: `src/board.ts`
 

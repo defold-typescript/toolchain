@@ -94,6 +94,30 @@ function tutorialProseMetrics(raw: string): {
   return { words: words.length, longSentences: longSentences.length, jargon, detailedWords };
 }
 
+// Concatenated text of every `> [!MORE]` block in `section` (the summary line
+// plus its contiguous `>`-prefixed body), so a per-function walkthrough can be
+// asserted to name its function inside a disclosure rather than only in the
+// canonical whole-file fence.
+function moreBlocks(section: string): string {
+  const out: string[] = [];
+  let inMore = false;
+  for (const line of section.split("\n")) {
+    if (/^>\s*\[!more\]/i.test(line)) {
+      inMore = true;
+      out.push(line);
+      continue;
+    }
+    if (inMore) {
+      if (line.startsWith(">")) {
+        out.push(line);
+        continue;
+      }
+      inMore = false;
+    }
+  }
+  return out.join("\n");
+}
+
 describe("tutorialProseMetrics helper", () => {
   test("strips fenced code blocks from the prose count", () => {
     const raw = [
@@ -794,9 +818,10 @@ describe("docs/guide/tetris-tutorial.md", () => {
     jargon: 6,
   } as const;
 
-  // Empirically baselined after authoring the two `[!MORE]` proof sections; a
-  // separate ceiling from the Quick ratchet so detail prose ratchets on its own.
-  const DETAILED_RATCHET = 271;
+  // Empirically baselined after authoring the per-function `[!MORE]`
+  // walkthroughs (their fenced excerpts count toward detailed prose); a separate
+  // ceiling from the Quick ratchet so detail prose ratchets on its own.
+  const DETAILED_RATCHET = 933;
 
   const TETRIS_TONE_ANCHORS = [
     "What you'll have",
@@ -972,6 +997,28 @@ describe("docs/guide/tetris-tutorial.md", () => {
     const end = body.indexOf("### The seven base shapes", start);
     expect(start).toBeGreaterThan(-1);
     expect(body.slice(start, end === -1 ? body.length : end)).toContain("[!MORE]");
+  });
+
+  test("the grid section gives each model function its own [!MORE] walkthrough", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const start = body.indexOf("## 03 — Model the grid");
+    const end = body.indexOf("## 04 ", start);
+    expect(start).toBeGreaterThan(-1);
+    const more = moreBlocks(body.slice(start, end === -1 ? body.length : end));
+    for (const fn of ["emptyGrid", "isFree", "clearLines"]) {
+      expect(more).toContain(fn);
+    }
+  });
+
+  test("the tetromino section walks each function and the PIECES table in a [!MORE]", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const start = body.indexOf("## 04 — Define the tetrominoes");
+    const end = body.indexOf("## 05", start);
+    expect(start).toBeGreaterThan(-1);
+    const more = moreBlocks(body.slice(start, end === -1 ? body.length : end));
+    for (const name of ["rotateCW", "cellsAt", "nextPieceIndex", "PIECES"]) {
+      expect(more).toContain(name);
+    }
   });
 
   test("detailed-prose word count is positive and at or below the recorded ceiling", async () => {
