@@ -18,7 +18,7 @@
 // Usage: bun scripts/release-pack-proof.ts [--version <x.y.z>]
 
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
@@ -76,14 +76,54 @@ function parseVersion(argv: readonly string[]): string {
   return v;
 }
 
+// Pure version stamp: return a copy with `.version` set, every other field
+// (name, dependencies) preserved and the input left unmutated.
+export function stampVersion<T extends object>(
+  manifest: T,
+  version: string,
+): T & { version: string } {
+  return { ...manifest, version };
+}
+
+function stampManifest(file: string, version: string): void {
+  const stamped = stampVersion(JSON.parse(readFileSync(file, "utf8")), version);
+  writeFileSync(file, `${JSON.stringify(stamped, null, 2)}\n`);
+}
+
 function stamp(worktree: string, version: string): void {
-  // Mirror release.yml's stamp loop: jq-rewrite `.version` across the root and
-  // every package manifest.
-  const stampCmd = `for manifest in package.json packages/*/package.json; do jq --arg v "${version}" '.version = $v' "$manifest" > "$manifest.tmp" && mv "$manifest.tmp" "$manifest"; done`;
-  const res = run(["bash", "-c", stampCmd], { cwd: worktree });
-  if (res.code !== 0) {
-    throw new Error(`stamp failed:\n${res.output}`);
+  // Mirror release.yml's stamp loop: rewrite `.version` across the root and
+  // every package manifest, in-process (no bash/jq).
+  stampManifest(path.join(worktree, "package.json"), version);
+  const packagesDir = path.join(worktree, "packages");
+  for (const entry of readdirSync(packagesDir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      stampManifest(path.join(packagesDir, entry.name, "package.json"), version);
+    }
   }
+}
+
+// Read one entry out of an uncompressed (already-gunzipped) tar by walking its
+// 512-byte ustar headers. `package/package.json` is short, so the 100-byte name
+// field suffices — no prefix/long-name handling. Returns null when absent.
+export function readTarEntry(tar: Uint8Array, name: string): string | null {
+  const decoder = new TextDecoder();
+  const trimNul = (s: string): string => {
+    const i = s.indexOf("\0");
+    return i === -1 ? s : s.slice(0, i);
+  };
+  let offset = 0;
+  while (offset + 512 <= tar.length) {
+    const header = tar.subarray(offset, offset + 512);
+    const entryName = trimNul(decoder.decode(header.subarray(0, 100)));
+    if (entryName === "") break; // trailing all-zero block
+    const size = Number.parseInt(trimNul(decoder.decode(header.subarray(124, 136))).trim(), 8);
+    const dataStart = offset + 512;
+    if (entryName === name) {
+      return decoder.decode(tar.subarray(dataStart, dataStart + size));
+    }
+    offset = dataStart + Math.ceil(size / 512) * 512;
+  }
+  return null;
 }
 
 function packedManifest(worktree: string, pkg: string, dest: string): unknown {
@@ -100,11 +140,12 @@ function packedManifest(worktree: string, pkg: string, dest: string): unknown {
     throw new Error(`could not locate packed tarball for ${pkg}:\n${pack.output}`);
   }
   const tarballPath = path.isAbsolute(tgz) ? tgz : path.join(pkgDir, tgz);
-  const extract = run(["tar", "-xzOf", tarballPath, "package/package.json"]);
-  if (extract.code !== 0) {
-    throw new Error(`could not read manifest from ${pkg} tarball:\n${extract.output}`);
+  const tar = Bun.gunzipSync(new Uint8Array(readFileSync(tarballPath)));
+  const manifest = readTarEntry(tar, "package/package.json");
+  if (manifest === null) {
+    throw new Error(`could not read manifest from ${pkg} tarball: package/package.json not found`);
   }
-  return JSON.parse(extract.output);
+  return JSON.parse(manifest);
 }
 
 interface RunResult {
