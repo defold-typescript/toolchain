@@ -8,14 +8,7 @@ run = "bun run sync-api-docs --check"
 
 [tasks.current-version]
 description = "Show the currently-published npm version of each workspace package"
-run = """
-#!/usr/bin/env bash
-set -euo pipefail
-for pkg in @defold-typescript/types @defold-typescript/transpiler @defold-typescript/cli; do
-  version=$(bun pm view "$pkg" version 2>/dev/null || true)
-  printf '%s\\t%s\\n' "$pkg" "${version:-(unpublished)}"
-done
-"""
+run = "bun scripts/current-version.ts"
 
 [tasks.smoke]
 description = "Advisory packed-install release smoke (network-touching, not a CI gate)"
