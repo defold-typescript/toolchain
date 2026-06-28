@@ -480,6 +480,52 @@
     --admonition-color: #f85149;
   }
 
+  .prose details.more {
+    margin: 1.2em 0;
+    padding: 0.6em 1em;
+    border-left: 3px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-accent) 5%, var(--color-bg));
+    color: var(--color-text);
+  }
+
+  .prose details.more > summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-accent);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+  }
+
+  .prose details.more > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .prose details.more > summary::before {
+    content: "";
+    width: 0.55em;
+    height: 0.55em;
+    flex: none;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+  }
+
+  .prose details.more[open] > summary::before {
+    transform: rotate(45deg);
+  }
+
+  .prose details.more > summary + * {
+    margin-top: 0.6em;
+  }
+
+  .prose details.more > :last-child {
+    margin-bottom: 0;
+  }
+
   .prose hr {
     border: 0;
     border-top: 1px solid var(--color-border);
