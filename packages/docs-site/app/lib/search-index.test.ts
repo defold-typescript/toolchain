@@ -14,7 +14,7 @@ const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 
 const page = (file: string, isIndex = false): GuidePage => {
   const slug = isIndex ? "" : file.replace(/\.md$/, "");
-  return { file, slug, route: isIndex ? "/" : `/${slug}`, isIndex };
+  return { file, slug, route: isIndex ? "/" : `/${slug}`, isIndex, includeInLlmsFull: true };
 };
 
 const CONTENTS: Record<string, string> = {

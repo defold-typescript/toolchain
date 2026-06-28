@@ -82,6 +82,7 @@ export function buildLlmsTxt(): string {
 export function buildLlmsFull(): string {
   const lines: string[] = [`# ${PRODUCT}`, "", `> ${SUMMARY}`, "", "## Guide", ""];
   for (const page of navOrderedPages()) {
+    if (!page.includeInLlmsFull) continue;
     const body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body.trimEnd();
     lines.push(body, "");
   }
