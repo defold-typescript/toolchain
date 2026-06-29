@@ -344,22 +344,37 @@ export async function renderMarkdown(
         }
       }
 
-      // The marker line is the summary, not body: lift its trailing text into the
-      // <summary> label, then drop the whole first line (lead token + its break).
-      let summaryText = MORE_DEFAULT_SUMMARY;
+      // The marker line is the summary, not body: render every inline token of
+      // that first line (the `[!MORE]` marker text plus anything up to the line
+      // break — backticks, bold, links) into the `<summary>` so inline
+      // formatting survives, then splice the consumed line out of the body.
+      let summaryHtml = state.md.utils.escapeHtml(MORE_DEFAULT_SUMMARY);
       const children = inline.children;
       const lead = children?.[0];
       if (lead?.type === "text" && MORE_MARKER.test(lead.content)) {
-        const trailing = lead.content.replace(/^\[!more\]\s*/i, "").trim();
-        if (trailing !== "") summaryText = trailing;
-        children?.shift();
-        const next: string | undefined = children?.[0]?.type;
-        if (next === "softbreak" || next === "hardbreak") children?.shift();
+        lead.content = lead.content.replace(/^\[!more\]\s*/i, "");
+        // Walk to the first break (or EOF) to bound the marker line.
+        const n = children?.length ?? 0;
+        let lineEnd = 1;
+        while (lineEnd < n) {
+          const t = children?.[lineEnd];
+          if (t?.type === "softbreak" || t?.type === "hardbreak") break;
+          lineEnd++;
+        }
+        const summaryTokens = children?.slice(0, lineEnd) ?? [];
+        const hasContent = summaryTokens.some((t) => (t.type === "text" ? t.content !== "" : true));
+        if (hasContent) {
+          summaryHtml = state.md.renderer.renderInline(summaryTokens, state.md.options, state.env);
+        }
+        const atBreak =
+          lineEnd < n &&
+          (children?.[lineEnd]?.type === "softbreak" || children?.[lineEnd]?.type === "hardbreak");
+        children?.splice(0, lineEnd + (atBreak ? 1 : 0));
       }
       inline.content = inline.content.replace(/^\[!more\][^\n]*\n?/i, "");
 
       const summary = new state.Token("html_block", "", 0);
-      summary.content = `<summary>${state.md.utils.escapeHtml(summaryText)}</summary>\n`;
+      summary.content = `<summary>${summaryHtml}</summary>\n`;
       tokens.splice(i + 1, 0, summary);
       i++;
     }
