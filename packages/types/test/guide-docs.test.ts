@@ -62,6 +62,48 @@ function inlineContent(section: string): string {
   return out.join("\n");
 }
 
+function markdownSection(body: string, startMark: string, endMark: string): string {
+  const start = body.indexOf(startMark);
+  expect(start).toBeGreaterThan(-1);
+  const end = body.indexOf(endMark, start + startMark.length);
+  return body.slice(start, end === -1 ? body.length : end);
+}
+
+function methodBody(source: string, signature: string): string {
+  const start = source.indexOf(signature);
+  expect(start).toBeGreaterThan(-1);
+  const open = source.indexOf("{", start);
+  expect(open).toBeGreaterThan(-1);
+  let depth = 0;
+  for (let i = open; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === "{") depth++;
+    if (ch === "}") depth--;
+    if (depth === 0) return source.slice(open + 1, i);
+  }
+  throw new Error(`Unclosed method body for ${signature}`);
+}
+
+function guiNodeBlockById(source: string, id: string): string {
+  const lines = source.split("\n");
+  let block: string[] = [];
+  let depth = 0;
+  for (const line of lines) {
+    if (depth === 0 && line === "nodes {") {
+      block = [line];
+      depth = 1;
+      continue;
+    }
+    if (depth > 0) {
+      block.push(line);
+      depth += (line.match(/\{/g) ?? []).length;
+      depth -= (line.match(/\}/g) ?? []).length;
+      if (depth === 0 && block.join("\n").includes(`id: "${id}"`)) return block.join("\n");
+    }
+  }
+  throw new Error(`Missing GUI node ${id}`);
+}
+
 // Every fenced block whose info string starts with `ts`, matching both bare
 // ` ```ts ` and `[!MORE]`-quoted ` > ```ts `. Returns the raw info string and
 // the (still-quoted) code body up to the matching closing fence. Indented
@@ -882,6 +924,78 @@ describe("docs/guide/tetris-tutorial.md", () => {
     for (const name of ["rotateCW", "cellsAt", "nextPieceIndex", "PIECES"]) {
       expect(inline).toContain(name);
     }
+  });
+
+  test("Max Nodes recommendation matches the grid node math", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain("at least `400` (the board creates `COLS × ROWS × 2` = 400 box nodes)");
+    expect(body).toContain("**Max Nodes** is at least `400`");
+    expect(body).not.toContain("at least `600` (the board creates");
+    expect(body).not.toContain("**Max Nodes** is at least `600`");
+  });
+
+  test("step 5 closing parenthetical points to the Full Script for omitted helpers", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const section = markdownSection(body, "## 05", "\n**`BoardSelf`**");
+    expect(section).toContain("Full Script");
+    expect(section).toContain("`init`");
+    expect(section).toContain("`paint`");
+    expect(section).toContain("`postHud`");
+    expect(section).toContain("`redraw`");
+    expect(section).not.toContain("which the overview above already introduced");
+  });
+
+  test("state tiers note acknowledges per-module state", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const section = markdownSection(body, "**State tiers**", "## 06");
+    expect(section).toContain("module-scope");
+    expect(section).toContain("`bag`");
+    expect(section).toContain("`src/pieces.ts`");
+  });
+
+  test("onLocked walkthrough notes lines are internal to level math", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const boardSection = markdownSection(body, "## 05", "## 06");
+    const inline = inlineContent(boardSection);
+    const onLockedStart = inline.indexOf("**`onLocked`**");
+    expect(onLockedStart).toBeGreaterThan(-1);
+    const onLockedEnd = inline.indexOf("**`stepDown`**", onLockedStart);
+    const onLocked = inline.slice(onLockedStart, onLockedEnd === -1 ? inline.length : onLockedEnd);
+    expect(onLocked).toContain("lines");
+    expect(onLocked).toContain("is internal");
+    expect(onLocked).toContain("`set_hud`");
+  });
+
+  test("board.ts uses named window constants for centering", async () => {
+    const source = await Bun.file(resolve(EXAMPLE_SRC, "board.ts")).text();
+    expect(source).toContain("const WINDOW_W = 400");
+    expect(source).toContain("const WINDOW_H = 720");
+    expect(source).toContain("const ORIGIN_X = (WINDOW_W - COLS * CELL) / 2;");
+    expect(source).toContain("const ORIGIN_Y = (WINDOW_H - ROWS * CELL) / 2;");
+  });
+
+  test("hud.ts init leaves gameover visibility to the GUI scene", async () => {
+    const source = await Bun.file(resolve(EXAMPLE_SRC, "hud.ts")).text();
+    expect(methodBody(source, "  init()")).not.toContain(
+      'gui.set_enabled(gui.get_node("gameover"), false)',
+    );
+    expect(methodBody(source, "  on_message")).toContain(
+      'gui.set_enabled(gui.get_node("gameover"), true)',
+    );
+  });
+
+  test("main/hud.gui disables the gameover node initially", async () => {
+    const source = await Bun.file(
+      resolve(REPO_ROOT, "docs", "examples", "tetris-tutorial", "main", "hud.gui"),
+    ).text();
+    expect(guiNodeBlockById(source, "gameover")).toContain("enabled: false");
+  });
+
+  test("step 4 inline walkthrough shows four and the I-piece base block", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const inline = inlineContent(markdownSection(body, "## 04 — Define the tetrominoes", "## 05"));
+    expect(inline).toContain("function four(");
+    expect(inline).toContain("[[-1, 0], [0, 0], [1, 0], [2, 0]]");
   });
 
   test("the board section carries a [!MORE] disclosure", async () => {
