@@ -119,19 +119,18 @@
 
 /*
  * The Shiki output swaps its theme via the `data-theme` attribute on the
- * <html> element. We pin the Shiki spans to the per-theme variable pair,
- * and force Shiki's per-line background to transparent so the surrounding
- * `.prose pre` background shows through (Shiki's per-line `<span
- * class="line">` wrappers would otherwise double-paint a background under
- * every single line).
+ * <html> element. We pin the Shiki spans to the per-theme variable pair, and
+ * force Shiki's per-line `<span class="line">` background to transparent so
+ * the surrounding `.prose pre` background shows through (those wrappers would
+ * otherwise double-paint a background under every single line). The `<pre>`
+ * itself is intentionally not neutralized — its background comes from
+ * `.prose pre { background: var(--color-code-bg) }`.
  */
 @layer base {
-  .shiki,
   .shiki span {
     color: var(--shiki-light, currentColor);
     background-color: transparent;
   }
-  html[data-theme="dark"] .shiki,
   html[data-theme="dark"] .shiki span {
     color: var(--shiki-dark, currentColor);
     background-color: transparent;
