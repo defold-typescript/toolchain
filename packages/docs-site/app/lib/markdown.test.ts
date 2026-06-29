@@ -27,6 +27,20 @@ describe("renderMarkdown", () => {
     expect(html).toContain("--shiki-dark:");
   });
 
+  test("every Shiki token span on a fenced block carries non-empty --shiki-light/--shiki-dark hex colors", async () => {
+    const html = await renderMarkdown("```ts\nconst x: number = 42;\n```\n");
+    expect(html).toMatch(
+      /<pre class="shiki shiki-themes github-light github-dark" style="--shiki-light:#[0-9a-fA-F]+;--shiki-dark:#[0-9a-fA-F]+/,
+    );
+    const tokenSpans =
+      html.match(/<span style="--shiki-light:#[0-9a-fA-F]+;--shiki-dark:#[0-9a-fA-F]+"/g) ?? [];
+    expect(tokenSpans.length).toBeGreaterThanOrEqual(3);
+    for (const span of tokenSpans) {
+      expect(span).toMatch(/--shiki-light:#[0-9a-fA-F]+/);
+      expect(span).toMatch(/--shiki-dark:#[0-9a-fA-F]+/);
+    }
+  });
+
   test("highlights the meta-range line of a fenced block and leaves others plain", async () => {
     const html = await renderMarkdown("```ts {2}\nconst a = 1;\nconst b = 2;\n```\n");
     const lines = html.match(/<span class="line[^"]*">/g) ?? [];
@@ -383,5 +397,49 @@ describe("renderMarkdown", () => {
     const note = await renderMarkdown("> [!NOTE]\n> Body.\n");
     expect(note).toMatch(/<div class="admonition admonition-note"/);
     expect(note).not.toContain("details");
+  });
+
+  test("preserves inline code inside the [!MORE] summary and keeps it out of the body", async () => {
+    const html = await renderMarkdown(
+      "> [!MORE] Where `[c, r]` comes from\n> A piece is measured.\n",
+    );
+    const summary = html.slice(html.indexOf("<summary"), html.indexOf("</summary>"));
+    expect(summary).toContain("<code>[c, r]</code>");
+    expect(summary).toContain("comes from");
+    const body = html.slice(html.indexOf("</summary>") + "</summary>".length);
+    expect(body).not.toContain("comes from");
+    expect(body).toContain("A piece is measured.");
+    expect(html).not.toContain("[!MORE]");
+  });
+
+  test("renders the tetris-tutorial line-264 [!MORE] summary with inline-code chips intact", async () => {
+    const html = await renderMarkdown(
+      "> [!MORE] Where `[c, r] → [-r, c]` comes from\n> A piece is just a handful of `[col, row]` offsets.\n",
+    );
+    const summary = html.slice(
+      html.indexOf("<summary"),
+      html.indexOf("</summary>") + "</summary>".length,
+    );
+    expect(summary).toBe("<summary>Where <code>[c, r] → [-r, c]</code> comes from</summary>");
+    expect(html).not.toContain("[!MORE]");
+  });
+
+  test("preserves bold inside the [!MORE] summary and keeps it out of the body", async () => {
+    const html = await renderMarkdown("> [!MORE] Some **bold** text.\n> Body.\n");
+    const summary = html.slice(html.indexOf("<summary"), html.indexOf("</summary>"));
+    expect(summary).toContain("<strong>bold</strong>");
+    const body = html.slice(html.indexOf("</summary>") + "</summary>".length);
+    expect(body).not.toContain("<strong>");
+    expect(body).toContain("Body.");
+  });
+
+  test("a fenced block nested in a [!MORE] body still carries per-token --shiki-light styles", async () => {
+    const html = await renderMarkdown(
+      "> [!MORE] Code\n> \n> ```ts\n> const x: number = 42;\n> ```\n",
+    );
+    expect(html).toContain('class="shiki');
+    const tokenSpans =
+      html.match(/<span style="--shiki-light:#[0-9a-fA-F]+;--shiki-dark:#[0-9a-fA-F]+"/g) ?? [];
+    expect(tokenSpans.length).toBeGreaterThanOrEqual(3);
   });
 });
