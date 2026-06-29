@@ -127,11 +127,11 @@
  * `.prose pre { background: var(--color-code-bg) }`.
  */
 @layer base {
-  .shiki span {
+  .shiki span:not(.line) {
     color: var(--shiki-light, currentColor);
     background-color: transparent;
   }
-  html[data-theme="dark"] .shiki span {
+  html[data-theme="dark"] .shiki span:not(.line) {
     color: var(--shiki-dark, currentColor);
     background-color: transparent;
   }

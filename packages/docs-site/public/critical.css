@@ -244,11 +244,11 @@ header.topbar-critical .logo-mark {
  * `.prose pre` background shows through. The `<pre>` itself is intentionally
  * not neutralized — keep in sync with `app/styles.css`.
  */
-.shiki span {
+.shiki span:not(.line) {
   color: var(--shiki-light, currentColor);
   background-color: transparent;
 }
-html[data-theme="dark"] .shiki span {
+html[data-theme="dark"] .shiki span:not(.line) {
   color: var(--shiki-dark, currentColor);
   background-color: transparent;
 }

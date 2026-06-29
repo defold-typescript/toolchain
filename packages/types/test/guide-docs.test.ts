@@ -921,7 +921,7 @@ describe("docs/guide/tetris-tutorial.md", () => {
     const end = body.indexOf("## 05", start);
     expect(start).toBeGreaterThan(-1);
     const inline = inlineContent(body.slice(start, end === -1 ? body.length : end));
-    for (const name of ["rotateCW", "cellsAt", "nextPieceIndex", "PIECES"]) {
+    for (const name of ["rotateCW", "cellsCoveredByPiece", "nextPieceIndex", "PIECES"]) {
       expect(inline).toContain(name);
     }
   });
