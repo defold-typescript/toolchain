@@ -4,9 +4,9 @@ llms-full: false
 ---
 # Build Tetris
 
-![Finished Tetris board](img/tetris-tutorial.png#max-width=200)
-
 Tetris is a great project: one moving thing, one fixed-step clock, one tiny rules engine, no physics. Patterns carry over. You'll build it from scratch: writing TypeScript, compiling it to Lua, then wiring the scene in the editor.
+
+Here’s our table of tetrominoes — the pieces at the heart of the game:
 
 | Piece | Index | Color  |
 | ----- | ----- | ------ |
@@ -18,6 +18,8 @@ Tetris is a great project: one moving thing, one fixed-step clock, one tiny rule
 | J     | 6     | blue   |
 | L     | 7     | orange |
 
+![Finished Tetris board](img/tetris-tutorial.png#max-width=200)
+
 > [!NOTE]
 > **Prereqs**: [Defold](https://defold.com/download/), [Bun](https://bun.sh), and an editor such as [VS Code](https://code.visualstudio.com/).
 
@@ -26,7 +28,7 @@ Tetris is a great project: one moving thing, one fixed-step clock, one tiny rule
 
 ## 01 — Scaffold the project
 
-The [Bun](https://bun.sh) CLI generates a Defold project plus TypeScript that compiles to Lua — no engine fork, no runtime to ship.
+The npm package [`@defold-typescript/cli`](https://www.npmjs.com/package/@defold-typescript/cli) scaffolds a Defold project with TypeScript that compiles to Lua — no engine fork, no runtime to ship.
 
 1. **Create the project folder.** Make an empty folder named `tetris`, then open it in VS Code with **File → Open Folder…**.
 
@@ -50,7 +52,7 @@ The [Bun](https://bun.sh) CLI generates a Defold project plus TypeScript that co
    bunx @defold-typescript/cli watch
    ```
 
-   > Leave `watch` running. On every save it regenerates each `.ts` file's output beside the source — `.ts.script`, `.ts.gui_script`, or a plain `.lua` module — and Defold builds and runs those generated files, never your `.ts`.
+   > [!NOTE] Leave `watch` running. On every save it regenerates each `.ts` file's output beside the source — `.ts.script`, `.ts.gui_script`, or a plain `.lua` module — and Defold builds and runs those generated files.
 
 5. **Open the project in Defold:** **File → Open Project…** (or the start screen) → **Open From Disk** → `tetris/game.project`.
 
@@ -67,16 +69,16 @@ tetris/
 │  └─ main.collection    # boot scene init writes
 ├─ src/
 │  └─ main.ts            # sample script — you replace it in Step 05
-├─ .gitignore
-├─ biome.json
+├─ .gitignore            # files Git should not track
+├─ biome.json            # Biome config for checking and formatting the project
 ├─ game.project          # Defold project settings
-├─ mise.toml
-├─ package.json
-└─ tsconfig.json
+├─ mise.toml             # tasks for running common commands with `mise run`
+├─ package.json          # Bun package manifest and dependencies
+└─ tsconfig.json         # TypeScript compiler settings
 ```
 
 > [!NOTE]
-> If you build from Defold now (**Project → Build**) before `watch` is running, you'll see a black window. The error `"/src/main.ts.script" could not be found.` is a sign you could have forgotten to start the `watch` process.
+> If you run the game from Defold now (**Project → Build**) before `watch` is running, you'll see a black window. The error `"/src/main.ts.script" could not be found.` is a sign you could have forgotten to start the `watch` process.
 
 In Step 05 you replace `src/main.ts` with `src/board.ts`, and `watch` swaps the generated `src/main.ts.script` for `src/board.ts.gui_script`. You edit `.ts`; Defold runs the generated files.
 
@@ -100,7 +102,7 @@ Tetris needs five keys. Defold maps hardware keys to named **actions** through a
 > [!WARNING]
 > Do not forget to save the files you edit. In Defold, Ctrl/Cmd+S saves **all** modified files at once; in VS Code it saves only the currently open one.
 
-The script hashes these same names (`hash("left")`, and so on) to recognize each key. Bind them now and the script just works when you attach it.
+Inside the script, we will hash these action names (for example, `hash("left")`) to recognize each key, because Defold sends them to `on_input` in hashed form (for fast `==` checks and lower memory use).
 
 ## 03 — Model the grid
 
@@ -115,9 +117,21 @@ This module is a **shared singleton**: every `import` becomes a cached `require`
 >
 > **Reading `isFree`.** It answers "can a square hold a piece here?" A column outside `0…COLS` is a side wall. `r >= ROWS` is the floor — that single test is how a falling piece knows to stop at the bottom. A negative `r` sits above the top of the board and stays free, so a new piece can spawn just off-screen and slide into view.
 
-Each function does one small job. Read them top to bottom:
+Create a new `src/grid.ts` and follow along — the full file is at the end of this section.
 
-**`emptyGrid`** — build a blank board
+First we need some constants and types for our board model:
+
+```ts title="src/grid.ts (partial)"
+export const COLS = 10;
+export const ROWS = 20;
+
+export type Cell = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type Grid = Cell[][];
+```
+
+This defines `Grid` as rows of `Cell` values, where each `Cell` can only be the numbers `0` through `7`. Remember that our tetrominoes are indexed starting from `1`, and `0` represents an empty cell.
+
+Now **`emptyGrid`** function. We call it once when a new game starts to get a clean board and store it in shared game memory:
 
 ```ts title="src/grid.ts (partial)"
 export function emptyGrid(): Grid {
@@ -131,22 +145,23 @@ export function emptyGrid(): Grid {
 }
 ```
 
-It takes nothing and returns a fresh `Grid`: `ROWS` arrays of `COLS` zeros. The highlighted line fills one row with empty cells; the outer loop stacks twenty such rows. Call it once when a game starts to get a clean board.
+The `emptyGrid` function takes nothing and returns a fresh structure of type `Grid`: `ROWS` arrays of `COLS` zeros. The highlighted line fills one row with empty cells; the outer loop stacks twenty such rows. We have to recreate each row from scratch because arrays are "reference" types — in both TypeScript and Lua.
 
 **`isFree`** — can a square sit here?
 
-```ts title="src/grid.ts (partial)" {4}
+```ts title="src/grid.ts (partial)" {3}
 export function isFree(g: Grid, c: number, r: number): boolean {
   if (c < 0 || c >= COLS || r >= ROWS) return false;
   if (r < 0) return true;
-  return g[r][c] == 0;
+  return g[r][c] == 0; // [!code highlight]
 }
 ```
 
-It takes the grid and a `[c, r]` cell and returns `true` only when a piece may occupy it. Off the sides or below the floor is `false`; above the top is `true`, so pieces spawn off-screen. The trap is the highlighted line: write `== 0`, because `0` is truthy in Lua and a bare `if (g[r][c])` would read every empty cell as full.
+It takes the grid data of type `Grid` and `c`, `r` cell indexes, and returns `true` only when a piece may occupy that square. Off the sides or below the floor is `false`; above the top is `true` because the pieces spawn off-screen and we want to allow that. The trap is the highlighted line: write `== 0`. Happily, we can't simply return `g[r][c]` directly because it won't be considered a `boolean` — which is exactly what we declared as the return type of `isFree`. Thank you, TypeScript!
 
 > [!TIP]
-> You can use `cell == 0` (or `===`) if you want to ensure an empty cell is never mistaken for an occupied one once this runs as Lua. A bare `if (cell)` won't do that: Lua treats only `nil` and `false` as falsy, so `0` is [truthy](./typescript-gotchas.md#if-x-truthiness-differs--0-and--are-truthy-in-lua) and an empty cell reads as occupied.
+> You can use `===` too — it lowers to the same Lua here. But be careful:
+> You **cannot** use `if (g[r][c]) return true; else return false;` because Lua treats only `nil` and `false` as falsy, so `0` is [truthy](./typescript-gotchas.md#if-x-truthiness-differs--0-and--are-truthy-in-lua) and an empty cell would read as occupied!
 
 **`clearLines`** — drop full rows and count them
 
@@ -885,7 +900,7 @@ If the first build looks off, check these in order:
 - **Board invisible?** Confirm `board.gui`'s **Script** is `/src/board.ts.gui_script` and **Max Nodes** is at least `400`.
 - **Board off-center or running off-screen?** The window isn't `400×720` — set **game.project → Display** to `400×720` (Step 06), or change `WINDOW_W`/`WINDOW_H` in `board.ts` to your window.
 - **Keys do nothing?** Confirm the Step 02 input bindings exist and the script posts `acquire_input_focus` in `init`.
-- **Cells read as occupied when empty?** You've hit the `0`-still-counts trap — find the bare `if (cell)` and make it `== 0`.
+- **Cells read as occupied when empty?** You've hit the `0`-still-counts trap — `0` is truthy in Lua, so always write `cell == 0` instead of `if (cell)`.
 
 **Ship.** Use **Project → Bundle**. The bundle is only Lua — your TypeScript was a build-time convenience.
 
@@ -905,6 +920,8 @@ import { defineGuiScript } from "@defold-typescript/types";
 // display rather than typed through a builtin payload.
 export default defineGuiScript({
   init() {
+    // Hide the game-over banner at startup; on_message re-enables it on game over.
+    gui.set_enabled(gui.get_node("gameover"), false);
     // A gui script can't be probed with go.exists, so announce ourselves to the
     // board; it posts score/level updates only once we have registered.
     msg.post("/board#board", "hud_ready");
@@ -926,7 +943,7 @@ Then build the scene, all editor work:
 2. **Add three text nodes** to the **Nodes** folder, each with its **Font** property set to `default`:
     * `score` (top-left, "SCORE  0"),
     * `level` (below it, "LEVEL  1")
-    * `gameover` (centered, "GAME OVER") — leave it **Disabled** in the editor. `hud.ts` reveals it on the `game_over` message; one source of truth (the editor) for the initial hidden state, one runtime call (the message handler) for the reveal.
+    * `gameover` (centered, "GAME OVER") — leave it **Enabled** in the editor so you can see and adjust the label while editing. `hud.ts` hides it at startup with `gui.set_enabled(gui.get_node("gameover"), false)` in `init` and reveals it again on the `game_over` message.
 3. **Create the HUD object.** Right-click `main` → **New… → Game Object File**, name it **hud.go** — this file *is* a game object. In its **Outline**, right-click root → **Add Component File** → choose **hud.gui**, and give the component the **Id** `hud`. (A `.gui` is a component; the game object hosts it.)
 4. **Add it to the scene.** Open **main.collection**, right-click root → **Add Game Object File** → choose **hud.go**, and set its **Id** to `hud`. A Defold message URL is `/<game-object-id>#<component-id>`, so this game object (`/hud`) plus the component **Id** `hud` make `/hud#hud` — exactly where `board.ts` posts `set_hud` and `game_over` (`msg.post("/hud#hud", …)`). The board sits at `/board#board` for the same reason.
 

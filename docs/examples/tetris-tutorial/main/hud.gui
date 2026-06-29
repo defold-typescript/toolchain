@@ -120,7 +120,6 @@ nodes {
   text: "GAME OVER"
   font: "default"
   id: "gameover"
-  enabled: false
   pivot: PIVOT_CENTER
   adjust_mode: ADJUST_MODE_FIT
   inherit_alpha: true

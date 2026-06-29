@@ -974,9 +974,9 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(source).toContain("const ORIGIN_Y = (WINDOW_H - ROWS * CELL) / 2;");
   });
 
-  test("hud.ts init leaves gameover visibility to the GUI scene", async () => {
+  test("hud.ts init hides gameover at runtime", async () => {
     const source = await Bun.file(resolve(EXAMPLE_SRC, "hud.ts")).text();
-    expect(methodBody(source, "  init()")).not.toContain(
+    expect(methodBody(source, "  init()")).toContain(
       'gui.set_enabled(gui.get_node("gameover"), false)',
     );
     expect(methodBody(source, "  on_message")).toContain(
@@ -984,11 +984,11 @@ describe("docs/guide/tetris-tutorial.md", () => {
     );
   });
 
-  test("main/hud.gui disables the gameover node initially", async () => {
+  test("main/hud.gui keeps the gameover node visible in the editor", async () => {
     const source = await Bun.file(
       resolve(REPO_ROOT, "docs", "examples", "tetris-tutorial", "main", "hud.gui"),
     ).text();
-    expect(guiNodeBlockById(source, "gameover")).toContain("enabled: false");
+    expect(guiNodeBlockById(source, "gameover")).not.toContain("enabled: false");
   });
 
   test("step 4 inline walkthrough shows four and the I-piece base block", async () => {
