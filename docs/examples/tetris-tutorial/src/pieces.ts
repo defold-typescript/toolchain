@@ -78,7 +78,7 @@ export const PIECES: Piece[] = [
   }, // L
 ];
 
-export function cellsAt(piece: number, rot: number, px: number, py: number): Offset[] {
+export function cellsCoveredByPiece(piece: number, rot: number, px: number, py: number): Offset[] {
   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
 }
 

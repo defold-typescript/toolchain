@@ -240,11 +240,22 @@ It scans rows from the bottom up; whenever a row has no empty cell it deletes th
 
 ## 04 — Define the tetrominoes
 
-Each piece is four cells plus a color, stored as a `[col, row]` offset from a **pivot** at `[0, 0]` — the point the piece spins around. `row` grows downward to match the grid.
+We'll walk `src/pieces.ts` piece by piece below; the complete file is in **Full Script** at the end of this section.
+
+Start by importing the `Cell` type from the previous script and exporting two more types:
+
+```ts title="src/pieces.ts"
+import type { Cell } from "./grid";
+
+export type Offset = [number, number]; // [col, row], row grows down
+export type Piece = { color: Cell; rots: Offset[][] };
+```
+
+The `Piece` type has a `color` and a list of four rotations, stored in `rots`.
 
 ### How a single shape is built
 
-Read offsets as "relative to the pivot." The T-piece in its spawn orientation is the pivot, plus one cell left, right, and below:
+Offsets mean “where this cell is relative to the pivot.” The `T`-piece in its spawn orientation is the pivot, plus one cell left, right, and below:
 
 ```text
 // offsets:  [0,0]  [-1,0]  [1,0]  [0,1]
@@ -255,18 +266,33 @@ Read offsets as "relative to the pivot." The T-piece in its spawn orientation is
 +1      ▓          [0,1]
 ```
 
+So this can be stored as a sequence of `Offset`s.
+
+For example, our `I` piece can be defined as follows:
+
+```
+[
+  [-1, 0],
+  [0, 0], // pivot
+  [1, 0],
+  [2, 0],
+]
+```
+
+The pivot point for `I` is off-center, but the rotation math handles that. The `row` part grows downward to match how the whole grid is defined.
+
 ### How rotations are derived
 
 Here's the one piece of geometry worth knowing. To rotate any offset 90° **clockwise** around the pivot, swap the coordinates and negate the new column: `[c, r] → [-r, c]`. Apply it four times and you cycle back to the start. We don't hand-invent rotations — we compute them from one base shape.
 
-**In plain English:** every shape has four cells, and we spin one of them around the others. The math is one line.
-
 > [!MORE] Where `[c, r] → [-r, c]` comes from
-> A piece is just a handful of `[col, row]` offsets measured from a **pivot** at `[0, 0]`. Rotating the whole piece 90° clockwise is the same move applied to each offset: swap the two numbers, then flip the sign of the new column. That is all `[c, r] → [-r, c]` says.
+> A piece is just a handful of `[col, row]` offsets measured from a **pivot** at `[0, 0]`. Rotating the whole piece 90° clockwise is the same move applied to each offset: swap the two numbers, then flip the sign of the new column. That is all `[c, r] → [-r, c]` says. The `[0,0]` stays in place.
 >
 > **Why row grows downward.** Row `0` is the top and rows count up as you go down, the way screen pixels do. With that convention the formula turns "right" (`[1, 0]`) into "down" (`[0, 1]`), "down" into "left", and so on — exactly the clockwise turn you see on screen.
 >
-> **Why four states.** Apply the move four times and the piece lands back where it started. Some pieces look the same in two or four of those states, but storing all four keeps the bookkeeping uniform: the next rotation is always `(rot + 1) % 4`.
+> **Why four states.** Apply the move four times and the piece lands back where it started. Some pieces look the same in two or four of those states, but storing all four keeps the bookkeeping uniform: the next rotation is always `(rot + 1) % 4` (`%` returns the remainder left over when the left side is divided by the right side).
+
+**`rotateCW`** — spin one shape 90°
 
 ```ts title="src/pieces.ts (snippet)"
 // 90° clockwise about the pivot. row grows downward,
@@ -283,36 +309,16 @@ function four(base: Offset[]): Offset[][] {
 }
 ```
 
-> [!NOTE]
-> **Why this works**: `[c,r] → [-r,c]` is the +90° rotation matrix specialized to integers. The pivot stays at `[0,0]`; the other three cells swing around it. The **O** piece looks identical in all four states, and **S/Z/I** visually only have two — but four-for-every-piece keeps indexing uniform, so rotation is always `(rot + 1) % 4`.
+The `four` function builds the four rotations as an array.
 
 ### The seven base shapes
 
-That leaves one thing to author by hand: the spawn shape. Everything else is computed. The color index (1–7) matches `TINTS` in Step 05. We'll walk `src/pieces.ts` piece by piece below; the complete file is in **Full Script** at the end of this section.
-
-**`rotateCW`** — spin one shape 90°
-
-```ts title="src/pieces.ts (partial)" {2}
-function rotateCW(cells: Offset[]): Offset[] {
-  return cells.map(([c, r]) => [-r, c] as Offset);
-}
-```
-
-It takes a shape's offsets and returns the same shape turned one quarter-turn clockwise — the single move `[c, r] → [-r, c]` applied to every cell. `four()` calls it three times to precompute all four rotations, so the running game never rotates anything; it just indexes `rots[rot]`.
-
 **`PIECES`** — the seven shapes as data
 
-Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precomputed rotations from `four(base)`. You author only the spawn offsets — the I-piece laid flat is `[[-1, 0], [0, 0], [1, 0], [2, 0]]` — and `four` derives the other three states. The trailing comment on each entry (`// I`, `// O`, …) names the letter the shape resembles.
+Now we'll use our `four` function and combine the colors with the rotations.
+By storing the result in the module-level `PIECES` constant, we precompute the rotations before the game starts. The running game never rotates anything; it just reads an already calculated rotation by index, from `0` through `3`.
 
-```ts title="src/pieces.ts (partial)" {3}
-function four(base: Offset[]): Offset[][] {
-  const s: Offset[][] = [base];
-  for (let i = 0; i < 3; i++) s.push(rotateCW(s[s.length - 1]));
-  return s;
-}
-```
-
-`four` is the precomputer: given one base shape it builds the four rotated states by calling `rotateCW` three times. The running game never rotates anything — `cellsAt` just indexes `rots[rot]`.
+Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precomputed rotations from `four(base)`. You author only the spawn offsets — the `I`-piece laid flat is `[[-1, 0], [0, 0], [1, 0], [2, 0]]` — and `four` derives the other three states. The trailing comment on each entry (`// I`, `// O`, …) names the letter the shape resembles.
 
 ```ts title="src/pieces.ts (partial)"
 export const PIECES: Piece[] = [
@@ -327,17 +333,30 @@ export const PIECES: Piece[] = [
   }, // I
 ```
 
-Each `PIECES` entry is a `color` and the four precomputed rotations from `four(base)`. You author only the spawn offsets; the other three states fall out of the rotation rule. The seven-piece data array in full is in the **Full Script** disclosure at the section end; the inline excerpt above is enough to read the I-piece base block.
+> [!WARNING]
+> This excerpt shows the array start and the `I` piece only. Continue the same pattern for the other six tetrominoes (`O`, `T`, `S`, `Z`, `J`, and `L`), or paste the complete `src/pieces.ts` from the **Full Script** disclosure below.
 
-**`cellsAt`** — where a piece sits on the board
+Each `PIECES` entry is a `color` and the four precomputed rotations from `four(base)`. You author only the spawn offsets; the other three states fall out of the rotation rule. The full array appears in the **Full Script** disclosure at the end of this section.
+
+**`cellsCoveredByPiece`** — where a piece sits on the board
 
 ```ts title="src/pieces.ts (partial)" {2}
-export function cellsAt(piece: number, rot: number, px: number, py: number): Offset[] {
+export function cellsCoveredByPiece(piece: number, rot: number, px: number, py: number): Offset[] {
   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
 }
 ```
 
-It takes a piece index, a rotation, and a pivot position `[px, py]`, and returns the four board cells that piece would cover. It is pure offset math — add the pivot to each stored offset — so Step 05 can ask "would this move land legally?" by testing the result against `isFree` before committing.
+This function answers one simple question: “which four board squares would this piece cover right now?”
+
+Read it from left to right:
+
+1. `PIECES[piece]` picks the shape, such as `I` or `T`.
+2. `.rots[rot]` picks the direction it is facing: `0`, `1`, `2`, or `3`.
+3. `.map(...)` walks the four offsets and adds the piece's current board position, `[px, py]`.
+
+For example, the flat `I` piece has offsets `[-1, 0]`, `[0, 0]`, `[1, 0]`, and `[2, 0]`. If the piece's pivot point coordinates on the board are `[4, 0]`, `cellsCoveredByPiece` returns `[3, 0]`, `[4, 0]`, `[5, 0]`, and `[6, 0]` — the real board cells it covers.
+
+Step 05 uses that list before every move: check the four cells with `isFree`, then move only if all four are legal.
 
 **`nextPieceIndex`** — the shuffled-bag randomizer
 
@@ -360,7 +379,7 @@ export function nextPieceIndex(): number {
 Instead of pure random it deals from a bag holding all seven pieces, refilling and reshuffling only once the bag empties — so you never hit long droughts or floods of one shape. The shuffle is the highlighted Fisher–Yates swap, using Lua's integer `math.random(0, i)`. Each call pops one index off the end and returns it.
 
 > [!NOTE]
-> This uses Lua's `math.random(0, i)` because the two-argument form returns an integer in a range directly. `Math.random()` compiles fine too — it becomes `math.random()` — but returns a float in `[0, 1)`, so for an index you'd write `math.floor(Math.random() * (i + 1))`. Much of the JS standard library transpiles (`Math`, array and string methods); reach for Defold's `math`, `os`, and `json` for engine-specific concerns. `cellsAt` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
+> This uses Lua's `math.random(0, i)` because the two-argument form returns an integer in a range directly. `Math.random()` compiles fine too — it becomes `math.random()` — but returns a float in `[0, 1)`, so for an index you'd write `math.floor(Math.random() * (i + 1))`. Much of the JS standard library transpiles (`Math`, array and string methods); reach for Defold's `math`, `os`, and `json` for engine-specific concerns. `cellsCoveredByPiece` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
 
 > [!MORE] Full Script — src/pieces.ts
 > ```ts title="src/pieces.ts"
@@ -444,7 +463,7 @@ Instead of pure random it deals from a bag holding all seven pieces, refilling a
 >   }, // L
 > ];
 >
-> export function cellsAt(piece: number, rot: number, px: number, py: number): Offset[] {
+> export function cellsCoveredByPiece(piece: number, rot: number, px: number, py: number): Offset[] {
 >   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
 > }
 >
@@ -475,9 +494,9 @@ This is the heart of the game: one GUI script that builds the grid, runs gravity
 - **Render** — `redraw` paints the model onto the screen: each frame it lays the falling piece over the locked grid, then recolors every cell node to match. The model only ever holds locked blocks, so moving a piece never erases anything — the next frame just paints the new position.
 - **Messages** — `on_message` listens for the HUD's `hud_ready` so the board sends score updates only after the HUD exists (Step 08). You can ignore it if you skip the HUD.
 
-Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste. The lifecycle block (`init` / `update` / `on_input` / `on_message`) and the `paint` / `postHud` / `redraw` helpers live only in the Full Script at the section end — the [[tutorial-more-disclosures-input]] and [[tutorial-more-disclosures-runtime-hud]] slices walk each inline once shipped.
+Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste. The lifecycle block (`init` / `update` / `on_input` / `on_message`) and the `paint` / `postHud` / `redraw` helpers live only in the Full Script at the section end.
 
-**`BoardSelf`** — the shape of `self`
+**`BoardSelf`** — the shape of `self`:
 
 ```ts title="src/board.ts (partial)" {15}
 interface BoardSelf {
@@ -533,14 +552,14 @@ It runs once in `init` and returns two `ROWS × COLS` arrays of GUI box nodes �
 
 ```ts title="src/board.ts (partial)" {3}
 function fits(self: BoardSelf, piece: number, rot: number, px: number, py: number): boolean {
-  for (const [c, r] of cellsAt(piece, rot, px, py)) {
+  for (const [c, r] of cellsCoveredByPiece(piece, rot, px, py)) {
     if (!isFree(self.grid, c, r)) return false;
   }
   return true;
 }
 ```
 
-This is the single rule the whole game leans on: given a piece, a rotation, and a pivot, ask `cellsAt` for the four board cells it would cover and test each one. The highlighted line bails the moment any cell is off the walls/floor or already filled. Note it takes the candidate position as plain arguments — it never moves anything, so callers can test a hypothetical placement before committing.
+This is the single rule the whole game leans on: given a piece, a rotation, and a pivot, ask `cellsCoveredByPiece` for the four board cells it would cover and test each one. The highlighted line bails the moment any cell is off the walls/floor or already filled. Note it takes the candidate position as plain arguments — it never moves anything, so callers can test a hypothetical placement before committing.
 
 **`canPlace`** — does the piece fit where it is now?
 
@@ -600,7 +619,7 @@ It just calls `tryMove(self, 0, 1)` in a loop until a downward step is no longer
 ```ts title="src/board.ts (partial)" {4}
 function lockPiece(self: BoardSelf): void {
   const color = PIECES[self.piece].color;
-  for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
+  for (const [c, r] of cellsCoveredByPiece(self.piece, self.rot, self.px, self.py)) {
     if (r >= 0) self.grid[r][c] = color;
   }
 }
@@ -649,7 +668,7 @@ The whole gravity rule in three lines: try to move the piece down one row, and i
 > ```ts title="src/board.ts"
 > import { defineGuiScript } from "@defold-typescript/types";
 > import { COLS, clearLines, emptyGrid, type Grid, isFree, ROWS } from "./grid";
-> import { cellsAt, nextPieceIndex, PIECES } from "./pieces";
+> import { cellsCoveredByPiece, nextPieceIndex, PIECES } from "./pieces";
 >
 > const CELL = 28; // cell pitch in pixels
 > const GAP = 2; // space between cells — tune the grid look from one place
@@ -742,7 +761,7 @@ The whole gravity rule in three lines: try to move the piece down one row, and i
 >
 > // --- pure movement, all tested against the grid model ---
 > function fits(self: BoardSelf, piece: number, rot: number, px: number, py: number): boolean {
->   for (const [c, r] of cellsAt(piece, rot, px, py)) {
+>   for (const [c, r] of cellsCoveredByPiece(piece, rot, px, py)) {
 >     if (!isFree(self.grid, c, r)) return false;
 >   }
 >   return true;
@@ -776,7 +795,7 @@ The whole gravity rule in three lines: try to move the piece down one row, and i
 > // --- locking, scoring, drawing ---
 > function lockPiece(self: BoardSelf): void {
 >   const color = PIECES[self.piece].color;
->   for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
+>   for (const [c, r] of cellsCoveredByPiece(self.piece, self.rot, self.px, self.py)) {
 >     if (r >= 0) self.grid[r][c] = color;
 >   }
 > }
@@ -820,7 +839,7 @@ The whole gravity rule in three lines: try to move the piece down one row, and i
 >   }
 >   if (!self.over) {
 >     const color = PIECES[self.piece].color;
->     for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
+>     for (const [c, r] of cellsCoveredByPiece(self.piece, self.rot, self.px, self.py)) {
 >       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) frame[r][c] = color;
 >     }
 >   }

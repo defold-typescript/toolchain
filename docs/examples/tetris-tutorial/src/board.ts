@@ -1,6 +1,6 @@
 import { defineGuiScript } from "@defold-typescript/types";
 import { COLS, clearLines, emptyGrid, type Grid, isFree, ROWS } from "./grid";
-import { cellsAt, nextPieceIndex, PIECES } from "./pieces";
+import { cellsCoveredByPiece, nextPieceIndex, PIECES } from "./pieces";
 
 const CELL = 28; // cell pitch in pixels
 const GAP = 2; // space between cells — tune the grid look from one place
@@ -93,7 +93,7 @@ function paint(self: BoardSelf, r: number, c: number, value: number): void {
 
 // --- pure movement, all tested against the grid model ---
 function fits(self: BoardSelf, piece: number, rot: number, px: number, py: number): boolean {
-  for (const [c, r] of cellsAt(piece, rot, px, py)) {
+  for (const [c, r] of cellsCoveredByPiece(piece, rot, px, py)) {
     if (!isFree(self.grid, c, r)) return false;
   }
   return true;
@@ -127,7 +127,7 @@ function hardDrop(self: BoardSelf): void {
 // --- locking, scoring, drawing ---
 function lockPiece(self: BoardSelf): void {
   const color = PIECES[self.piece].color;
-  for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
+  for (const [c, r] of cellsCoveredByPiece(self.piece, self.rot, self.px, self.py)) {
     if (r >= 0) self.grid[r][c] = color;
   }
 }
@@ -171,7 +171,7 @@ function redraw(self: BoardSelf): void {
   }
   if (!self.over) {
     const color = PIECES[self.piece].color;
-    for (const [c, r] of cellsAt(self.piece, self.rot, self.px, self.py)) {
+    for (const [c, r] of cellsCoveredByPiece(self.piece, self.rot, self.px, self.py)) {
       if (r >= 0 && r < ROWS && c >= 0 && c < COLS) frame[r][c] = color;
     }
   }
