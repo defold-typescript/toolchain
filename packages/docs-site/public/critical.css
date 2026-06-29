@@ -239,12 +239,15 @@ header.topbar-critical .logo-mark {
   border-radius: 8px;
 }
 
-.shiki,
+/* Shiki token spans pinned to the per-theme variable pair, with the per-line
+ * `<span class="line">` background forced transparent so the surrounding
+ * `.prose pre` background shows through. The `<pre>` itself is intentionally
+ * not neutralized — keep in sync with `app/styles.css`.
+ */
 .shiki span {
   color: var(--shiki-light, currentColor);
   background-color: transparent;
 }
-html[data-theme="dark"] .shiki,
 html[data-theme="dark"] .shiki span {
   color: var(--shiki-dark, currentColor);
   background-color: transparent;
