@@ -5,11 +5,13 @@ import { cellsAt, nextPieceIndex, PIECES } from "./pieces";
 const CELL = 28; // cell pitch in pixels
 const GAP = 2; // space between cells — tune the grid look from one place
 const BORDER = 2; // thickness of the frame drawn around each filled cell
+const WINDOW_W = 400;
+const WINDOW_H = 720;
 
 // Bottom-left of the COLS×ROWS board in GUI (screen) space, centering the
-// 280×560 grid in the 400×720 window (see game.project display).
-const ORIGIN_X = (400 - COLS * CELL) / 2;
-const ORIGIN_Y = (720 - ROWS * CELL) / 2;
+// 280×560 grid in the configured portrait window (see game.project display).
+const ORIGIN_X = (WINDOW_W - COLS * CELL) / 2;
+const ORIGIN_Y = (WINDOW_H - ROWS * CELL) / 2;
 
 const LINE_SCORE = [0, 40, 100, 300, 1200];
 
