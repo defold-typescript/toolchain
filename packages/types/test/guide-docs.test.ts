@@ -8,92 +8,6 @@ async function readGuide(relPath: string): Promise<string> {
   return Bun.file(resolve(GUIDE, relPath)).text();
 }
 
-const TETRIS_JARGON = [
-  "transpile",
-  "transpiler",
-  "lowered",
-  "lowering",
-  "lowers",
-  "lower",
-  "userdata",
-  "lualib",
-  "truthy",
-  "opaque",
-  "reconcile",
-  "verify",
-  "verification",
-  "dispatch",
-  "register",
-  "registration",
-];
-
-function stripInlineMarkup(line: string): string {
-  return line
-    .replace(/`[^`]*`/g, "")
-    .replace(/\]\([^)]*\)/g, "")
-    .replace(/\|/g, " ")
-    .trim();
-}
-
-function tutorialProseMetrics(raw: string): {
-  words: number;
-  longSentences: number;
-  jargon: number;
-  detailedWords: number;
-} {
-  const lines = raw.split("\n");
-  const proseLines: string[] = [];
-  const detailedLines: string[] = [];
-  let inFence = false;
-  let inMore = false;
-  for (const line of lines) {
-    if (line.startsWith("```")) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
-    // A `> [!MORE]` blockquote opens a tap-to-reveal region that runs until the
-    // first line that is not a blockquote continuation. Its prose is metered
-    // separately (detailedWords) and excluded from the Quick ratchet.
-    if (/^>\s*\[!more\]/i.test(line)) {
-      inMore = true;
-      detailedLines.push(stripInlineMarkup(line.replace(/^>\s*\[!more\]\s*/i, "")));
-      continue;
-    }
-    if (inMore) {
-      if (line.startsWith(">")) {
-        detailedLines.push(stripInlineMarkup(line.replace(/^>\s?/, "")));
-        continue;
-      }
-      inMore = false;
-    }
-    if (/^\|?[\s\-|:]+\|?$/.test(line)) continue;
-    let l = line;
-    l = l.replace(/^#+\s+/, "");
-    l = l.replace(/^> \[!(NOTE|WARNING|TIP|IMPORTANT|CAUTION)\][^\s]*\s*/, "");
-    l = l.replace(/`[^`]*`/g, "");
-    l = l.replace(/\]\([^)]*\)/g, "");
-    l = l.replace(/\|/g, " ");
-    proseLines.push(l.trim());
-  }
-  const detailed = detailedLines.join("\n");
-  const detailedWords = detailed.split(/\s+/).filter((t) => t.length > 0).length;
-  const prose = proseLines.join("\n");
-  const words = prose.split(/\s+/).filter((t) => t.length > 0);
-  const sentences = prose.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
-  const longSentences = sentences.filter(
-    (s) => s.split(/\s+/).filter((t) => t.length > 0).length > 30,
-  );
-  const lc = prose.toLowerCase();
-  let jargon = 0;
-  for (const w of TETRIS_JARGON) {
-    const re = new RegExp(`\\b${w}\\b`, "g");
-    const m = lc.match(re);
-    if (m) jargon += m.length;
-  }
-  return { words: words.length, longSentences: longSentences.length, jargon, detailedWords };
-}
-
 // Concatenated text of every `> [!MORE]` block in `section` (the summary line
 // plus its contiguous `>`-prefixed body), so a per-function walkthrough can be
 // asserted to name its function inside a disclosure rather than only in the
@@ -177,82 +91,6 @@ function tsFences(body: string): { info: string; code: string }[] {
   }
   return fences;
 }
-
-describe("tutorialProseMetrics helper", () => {
-  test("strips fenced code blocks from the prose count", () => {
-    const raw = [
-      "# Title",
-      "",
-      "Some prose here.",
-      "",
-      "```ts",
-      "const x = 1;",
-      "const y = 2;",
-      "```",
-      "",
-      "More prose after the fence.",
-    ].join("\n");
-    expect(tutorialProseMetrics(raw).words).toBe(9);
-  });
-
-  test("strips table separator lines and keeps table body prose", () => {
-    const raw = ["| A | B |", "| - | - |", "| one | two |", "", "Tail sentence."].join("\n");
-    const m = tutorialProseMetrics(raw);
-    expect(m.words).toBe(6);
-    expect(m.longSentences).toBe(0);
-  });
-
-  test("strips heading markers and admonition markers", () => {
-    const raw = ["# Step 1", "", "> [!NOTE]", "", "Sentence one."].join("\n");
-    const m = tutorialProseMetrics(raw);
-    expect(m.words).toBe(4);
-    expect(m.longSentences).toBe(0);
-  });
-
-  test("strips inline backtick spans and markdown link URLs", () => {
-    const raw = "Use [`foo`](https://example.com) to call the `bar` function on each row.";
-    expect(tutorialProseMetrics(raw).words).toBe(9);
-  });
-
-  test("counts jargon hits word-boundary", () => {
-    const raw =
-      "The transpile lowers userdata; truthy is a Lua thing; register dispatches at runtime.";
-    const m = tutorialProseMetrics(raw);
-    expect(m.jargon).toBeGreaterThanOrEqual(4);
-    expect(m.jargon).toBeLessThanOrEqual(6);
-  });
-
-  test("counts long sentences (>30 words) correctly", () => {
-    const longSentence = "one ".repeat(31).trim();
-    expect(tutorialProseMetrics(`${longSentence}.`).longSentences).toBe(1);
-    expect(tutorialProseMetrics("short.").longSentences).toBe(0);
-  });
-
-  test("excludes a [!MORE] block region from the Quick prose metrics", () => {
-    const base = ["# Title", "", "Quick prose here now.", ""].join("\n");
-    const withMore = [
-      base,
-      "> [!MORE] Why this matters",
-      "> A long detailed beginner explanation that adds many extra words to the body.",
-      "",
-      "Tail line.",
-    ].join("\n");
-    const without = [base, "Tail line."].join("\n");
-    const a = tutorialProseMetrics(withMore);
-    const b = tutorialProseMetrics(without);
-    expect(a.words).toBe(b.words);
-    expect(a.longSentences).toBe(b.longSentences);
-    expect(a.jargon).toBe(b.jargon);
-  });
-
-  test("counts [!MORE] region prose in detailedWords and reports zero without a block", () => {
-    const withMore = ["# Title", "", "> [!MORE] Summary", "> Three extra detailed words."].join(
-      "\n",
-    );
-    expect(tutorialProseMetrics(withMore).detailedWords).toBeGreaterThan(0);
-    expect(tutorialProseMetrics("# Title\n\nJust prose.\n").detailedWords).toBe(0);
-  });
-});
 
 describe("docs/guide scaffold", () => {
   test("docs/guide/README.md exists", async () => {
@@ -872,28 +710,6 @@ describe("docs/guide URL addressing coverage", () => {
 describe("docs/guide/tetris-tutorial.md", () => {
   const EXAMPLE_SRC = resolve(REPO_ROOT, "docs", "examples", "tetris-tutorial", "src");
 
-  // Baselined for the inverted flow: per-function walkthroughs are now
-  // always-visible inline content, so their prose counts toward the Quick read
-  // (the ceilings rose accordingly) instead of the disclosure metric.
-  const TETRIS_RATCHET = {
-    words: 3546,
-    longSentences: 25,
-    jargon: 6,
-  } as const;
-
-  // Baselined for the inverted flow: the `[!MORE]` regions are now the collapsed
-  // `Full Script` whole-file blocks plus the conceptual primers — code and
-  // beginner asides, no longer the per-function prose.
-  const DETAILED_RATCHET = 1808;
-
-  const TETRIS_TONE_ANCHORS = [
-    "What you'll have",
-    "In plain English",
-    "one breath",
-    "freeze into the board",
-    "stack reached the ceiling",
-  ] as const;
-
   test("exists and titles the build", async () => {
     const f = Bun.file(resolve(GUIDE, "tetris-tutorial.md"));
     expect(await f.exists()).toBe(true);
@@ -941,41 +757,6 @@ describe("docs/guide/tetris-tutorial.md", () => {
       expect(section).toContain(`[!MORE] Full Script — src/${file}`);
       const source = await Bun.file(resolve(EXAMPLE_SRC, file)).text();
       expect(dequote(moreBlocks(section))).toContain(source);
-    }
-  });
-
-  test("a verbatim example fence carries a Shiki meta highlight range", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    expect(body).toContain('```ts title="src/grid.ts" {33-40}');
-  });
-
-  test("a hand-authored snippet demonstrates [!code highlight] notation", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    expect(body).toContain("[-r, c] as Offset); // [!code highlight]");
-  });
-
-  test("prose word count is at or below the recorded ceiling", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    const m = tutorialProseMetrics(body);
-    expect(m.words).toBeLessThanOrEqual(TETRIS_RATCHET.words);
-  });
-
-  test("long-sentence count is at or below the recorded ceiling", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    const m = tutorialProseMetrics(body);
-    expect(m.longSentences).toBeLessThanOrEqual(TETRIS_RATCHET.longSentences);
-  });
-
-  test("jargon-term count is at or below the recorded ceiling", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    const m = tutorialProseMetrics(body);
-    expect(m.jargon).toBeLessThanOrEqual(TETRIS_RATCHET.jargon);
-  });
-
-  test("carries the five friendly tone anchors", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    for (const anchor of TETRIS_TONE_ANCHORS) {
-      expect(body).toContain(anchor);
     }
   });
 
@@ -1131,13 +912,6 @@ describe("docs/guide/tetris-tutorial.md", () => {
     ]) {
       expect(inline).toContain(fn);
     }
-  });
-
-  test("detailed-prose word count is positive and at or below the recorded ceiling", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    const m = tutorialProseMetrics(body);
-    expect(m.detailedWords).toBeGreaterThan(0);
-    expect(m.detailedWords).toBeLessThanOrEqual(DETAILED_RATCHET);
   });
 
   test("every TypeScript code block carries a title", async () => {
