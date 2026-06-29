@@ -287,7 +287,32 @@ It takes a shape's offsets and returns the same shape turned one quarter-turn cl
 
 **`PIECES`** — the seven shapes as data
 
-Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precomputed rotations from `four(base)`. You author only the spawn offsets — the `[-1,0] [0,0] [1,0] [2,0]` block is the I-piece laid flat — and `four` derives the other three states. The trailing comment on each entry (`// I`, `// O`, …) names the letter the shape resembles.
+Each entry is one tetromino: a `color` (`1`–`7`) and `rots`, its four precomputed rotations from `four(base)`. You author only the spawn offsets — the I-piece laid flat is `[[-1, 0], [0, 0], [1, 0], [2, 0]]` — and `four` derives the other three states. The trailing comment on each entry (`// I`, `// O`, …) names the letter the shape resembles.
+
+```ts title="src/pieces.ts (partial)" {3}
+function four(base: Offset[]): Offset[][] {
+  const s: Offset[][] = [base];
+  for (let i = 0; i < 3; i++) s.push(rotateCW(s[s.length - 1]));
+  return s;
+}
+```
+
+`four` is the precomputer: given one base shape it builds the four rotated states by calling `rotateCW` three times. The running game never rotates anything — `cellsAt` just indexes `rots[rot]`.
+
+```ts title="src/pieces.ts (partial)"
+export const PIECES: Piece[] = [
+  {
+    color: 1,
+    rots: four([
+      [-1, 0],
+      [0, 0],
+      [1, 0],
+      [2, 0],
+    ]),
+  }, // I
+```
+
+Each `PIECES` entry is a `color` and the four precomputed rotations from `four(base)`. You author only the spawn offsets; the other three states fall out of the rotation rule. The seven-piece data array in full is in the **Full Script** disclosure at the section end; the inline excerpt above is enough to read the I-piece base block.
 
 **`cellsAt`** — where a piece sits on the board
 
@@ -435,7 +460,7 @@ This is the heart of the game: one GUI script that builds the grid, runs gravity
 - **Render** — `redraw` paints the model onto the screen: each frame it lays the falling piece over the locked grid, then recolors every cell node to match. The model only ever holds locked blocks, so moving a piece never erases anything — the next frame just paints the new position.
 - **Messages** — `on_message` listens for the HUD's `hud_ready` so the board sends score updates only after the HUD exists (Step 08). You can ignore it if you skip the HUD.
 
-Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste — including `on_input`, `update`, and `redraw`, which the overview above already introduced.
+Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste. The lifecycle block (`init` / `update` / `on_input` / `on_message`) and the `paint` / `postHud` / `redraw` helpers live only in the Full Script at the section end — the [[tutorial-more-disclosures-input]] and [[tutorial-more-disclosures-runtime-hud]] slices walk each inline once shipped.
 
 **`BoardSelf`** — the shape of `self`
 
@@ -591,7 +616,7 @@ function onLocked(self: BoardSelf): void {
 }
 ```
 
-This is the everything-after-a-lock step. The highlighted `clearLines` collapses any full rows and reports how many; when that is non-zero it scores `40/100/300/1200 × level`, bumps the level every ten lines, and speeds up the fall (floored at `0.08s`). Then it spawns the next piece at the top — and if that fresh piece cannot fit, the stack has reached the ceiling and `over` is set.
+This is the everything-after-a-lock step. The highlighted `clearLines` collapses any full rows and reports how many; when that is non-zero it scores `40/100/300/1200 × level`, bumps the level every ten lines, and speeds up the fall (floored at `0.08s`). The `lines` counter is internal — it drives the level-up math and never reaches the HUD; the `set_hud` payload ships `score` and `level` only, so the user-facing form of lines-cleared progress is the level number itself. Then it spawns the next piece at the top — and if that fresh piece cannot fit, the stack has reached the ceiling and `over` is set.
 
 **`stepDown`** — one tick of gravity
 
@@ -614,11 +639,13 @@ The whole gravity rule in three lines: try to move the piece down one row, and i
 > const CELL = 28; // cell pitch in pixels
 > const GAP = 2; // space between cells — tune the grid look from one place
 > const BORDER = 2; // thickness of the frame drawn around each filled cell
+> const WINDOW_W = 400;
+> const WINDOW_H = 720;
 >
 > // Bottom-left of the COLS×ROWS board in GUI (screen) space, centering the
-> // 280×560 grid in the 400×720 window (see game.project display).
-> const ORIGIN_X = (400 - COLS * CELL) / 2;
-> const ORIGIN_Y = (720 - ROWS * CELL) / 2;
+> // 280×560 grid in the configured portrait window (see game.project display).
+> const ORIGIN_X = (WINDOW_W - COLS * CELL) / 2;
+> const ORIGIN_Y = (WINDOW_H - ROWS * CELL) / 2;
 >
 > const LINE_SCORE = [0, 40, 100, 300, 1200];
 >
@@ -836,14 +863,14 @@ The whole gravity rule in three lines: try to move the piece down one row, and i
 Then **delete the sample `src/main.ts`** that `init` scaffolded — it was only a placeholder. On the next save `watch` removes the stale `src/main.ts.script` and emits `src/board.ts.gui_script` beside `board.ts`.
 
 > [!NOTE]
-> **State tiers**: Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, nothing global. Pick the narrowest tier that fits.
+> **State tiers**: Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, and **module-scope state** (for example, `bag` in `src/pieces.ts`) for things the module owns across playthroughs. Nothing truly global. Pick the narrowest tier that fits.
 
 ## 06 — Wire the scene
 
 The script exists now, so the editor's picker can find it. The board draws itself from code, so the editor work is small — one project setting, an empty GUI scene, and one game object, no sprite, no atlas, no factory.
 
-1. **Set the window size.** In **Assets**, open **game.project**, and under **Display** set **Width** to `400` and **Height** to `720` (turn **High Dpi** on for crisp cells). `init` leaves the display unset, so Defold defaults to a landscape **960×640**, but Tetris is a tall 10×20 board — `board.ts` centers its 280×560 grid in a **400×720** portrait window (`ORIGIN_X`/`ORIGIN_Y` in Step 05). Skip this and the board renders jammed into a corner instead of centered. If you prefer a different size, change the `400`/`720` literals in `board.ts` to match.
-2. **Create the board GUI scene.** In **Assets**, right-click `main` → **New… → GUI**, name it **board.gui**. Open it, select the root **GUI** node in the Outline, and set its **Script** to `/src/board.ts.gui_script`. Leave the node list empty — `board.ts` builds the grid at startup. Raise **Max Nodes** to at least `600` (the board creates `COLS × ROWS × 2` = 400 box nodes).
+1. **Set the window size.** In **Assets**, open **game.project**, and under **Display** set **Width** to `400` and **Height** to `720` (turn **High Dpi** on for crisp cells). `init` leaves the display unset, so Defold defaults to a landscape **960×640**, but Tetris is a tall 10×20 board — `board.ts` centers its 280×560 grid in a **400×720** portrait window (`WINDOW_W`/`WINDOW_H` feed `ORIGIN_X`/`ORIGIN_Y` in Step 05). Skip this and the board renders jammed into a corner instead of centered. If you prefer a different size, change `WINDOW_W`/`WINDOW_H` in `board.ts` to match.
+2. **Create the board GUI scene.** In **Assets**, right-click `main` → **New… → GUI**, name it **board.gui**. Open it, select the root **GUI** node in the Outline, and set its **Script** to `/src/board.ts.gui_script`. Leave the node list empty — `board.ts` builds the grid at startup. Raise **Max Nodes** to at least `400` (the board creates `COLS × ROWS × 2` = 400 box nodes).
 3. **Create the board object.** Right-click `main` → **New… → Game Object File**, name it **board.go**. In the **Outline**, right-click root → **Add Component File** → choose **board.gui**, and give the component the **Id** `board`. (A `.gui` is a component; the game object hosts it.)
 4. **Assemble the scene.** Open **main.collection** (already created by `init`). It still holds the scaffold's `main` game object, whose component points at `/src/main.ts.script` — gone once you deleted the sample `src/main.ts` in Step 05, so leaving it fails the build with `"/src/main.ts.script" could not be found`. Right-click it → **Delete**. Then right-click root → **Add Game Object File** → choose **board.go**, set its **Id** to `board`. Confirm **game.project → Bootstrap → Main Collection** is `/main/main.collection`.
 
@@ -855,8 +882,8 @@ That's the entire scene. The script draws every cell.
 
 If the first build looks off, check these in order:
 
-- **Board invisible?** Confirm `board.gui`'s **Script** is `/src/board.ts.gui_script` and **Max Nodes** is at least `600`.
-- **Board off-center or running off-screen?** The window isn't `400×720` — set **game.project → Display** to `400×720` (Step 06), or change the `400`/`720` literals in `board.ts` to your window.
+- **Board invisible?** Confirm `board.gui`'s **Script** is `/src/board.ts.gui_script` and **Max Nodes** is at least `400`.
+- **Board off-center or running off-screen?** The window isn't `400×720` — set **game.project → Display** to `400×720` (Step 06), or change `WINDOW_W`/`WINDOW_H` in `board.ts` to your window.
 - **Keys do nothing?** Confirm the Step 02 input bindings exist and the script posts `acquire_input_focus` in `init`.
 - **Cells read as occupied when empty?** You've hit the `0`-still-counts trap — find the bare `if (cell)` and make it `== 0`.
 
@@ -878,8 +905,6 @@ import { defineGuiScript } from "@defold-typescript/types";
 // display rather than typed through a builtin payload.
 export default defineGuiScript({
   init() {
-    // Hide the game-over banner at startup; on_message re-enables it on game over.
-    gui.set_enabled(gui.get_node("gameover"), false);
     // A gui script can't be probed with go.exists, so announce ourselves to the
     // board; it posts score/level updates only once we have registered.
     msg.post("/board#board", "hud_ready");
@@ -901,7 +926,7 @@ Then build the scene, all editor work:
 2. **Add three text nodes** to the **Nodes** folder, each with its **Font** property set to `default`:
     * `score` (top-left, "SCORE  0"),
     * `level` (below it, "LEVEL  1")
-    * `gameover` (centered, "GAME OVER") — leave it **Enabled**. `hud.ts` hides it at startup with `gui.set_enabled(gui.get_node("gameover"), false)` in `init` and re-enables it on game over, so the editor's **Enabled** toggle stays on (toggling it off in the editor works too, but the code already covers it).
+    * `gameover` (centered, "GAME OVER") — leave it **Disabled** in the editor. `hud.ts` reveals it on the `game_over` message; one source of truth (the editor) for the initial hidden state, one runtime call (the message handler) for the reveal.
 3. **Create the HUD object.** Right-click `main` → **New… → Game Object File**, name it **hud.go** — this file *is* a game object. In its **Outline**, right-click root → **Add Component File** → choose **hud.gui**, and give the component the **Id** `hud`. (A `.gui` is a component; the game object hosts it.)
 4. **Add it to the scene.** Open **main.collection**, right-click root → **Add Game Object File** → choose **hud.go**, and set its **Id** to `hud`. A Defold message URL is `/<game-object-id>#<component-id>`, so this game object (`/hud`) plus the component **Id** `hud` make `/hud#hud` — exactly where `board.ts` posts `set_hud` and `game_over` (`msg.post("/hud#hud", …)`). The board sits at `/board#board` for the same reason.
 
