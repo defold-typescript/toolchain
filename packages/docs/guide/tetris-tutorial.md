@@ -6,9 +6,7 @@ llms-full: false
 
 ![Finished Tetris board](img/tetris-tutorial.png#max-width=200)
 
-Scaffold, wire the Defold scene, and write TypeScript that compiles to Lua.
-
-Tetris is a great project: one moving thing, one fixed-step clock, one tiny rules engine, no physics. Patterns carry over.
+Tetris is a great project: one moving thing, one fixed-step clock, one tiny rules engine, no physics. Patterns carry over. You'll build it from scratch: writing TypeScript, compiling it to Lua, then wiring the scene in the editor.
 
 | Piece | Index | Color  |
 | ----- | ----- | ------ |
@@ -100,7 +98,7 @@ Tetris needs five keys. Defold maps hardware keys to named **actions** through a
 | `Space` | `hard_drop` |
 
 > [!WARNING]
-> Do not forget to save the files that you edit.
+> Do not forget to save the files you edit. In Defold, Ctrl/Cmd+S saves **all** modified files at once; in VS Code it saves only the currently open one.
 
 The script hashes these same names (`hash("left")`, and so on) to recognize each key. Bind them now and the script just works when you attach it.
 
@@ -263,12 +261,10 @@ function rotateCW(cells: Offset[]): Offset[] {
 }
 
 // Build all 4 states from a base: [base, +90, +180, +270].
-function fourRotations(base: Offset[]): Offset[][] {
-  const states: Offset[][] = [base];
-  for (let i = 0; i < 3; i++) {
-    states.push(rotateCW(states[states.length - 1]));
-  }
-  return states;
+function four(base: Offset[]): Offset[][] {
+  const s: Offset[][] = [base];
+  for (let i = 0; i < 3; i++) s.push(rotateCW(s[s.length - 1]));
+  return s;
 }
 ```
 
@@ -439,7 +435,7 @@ This is the heart of the game: one GUI script that builds the grid, runs gravity
 - **Render** — `redraw` paints the model onto the screen: each frame it lays the falling piece over the locked grid, then recolors every cell node to match. The model only ever holds locked blocks, so moving a piece never erases anything — the next frame just paints the new position.
 - **Messages** — `on_message` listens for the HUD's `hud_ready` so the board sends score updates only after the HUD exists (Step 08). You can ignore it if you skip the HUD.
 
-Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste. (`on_input`, `update`, `redraw`, and the HUD wiring get their own walkthroughs in later steps.)
+Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste — including `on_input`, `update`, and `redraw`, which the overview above already introduced.
 
 **`BoardSelf`** — the shape of `self`
 
