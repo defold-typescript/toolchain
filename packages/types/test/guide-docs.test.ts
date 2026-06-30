@@ -285,7 +285,7 @@ describe("docs/guide scaffold", () => {
   test("docs/guide/typescript-vs-lua.md Equal row no longer prescribes the strict triple form", async () => {
     const body = await readGuide("typescript-vs-lua.md");
     expect(body).not.toContain("use the strict triple form");
-    expect(body).toContain("`a === b` or `a == b` — identical Lua");
+    expect(body).toContain("`a == b` or `a === b` — identical Lua");
   });
 
   test("docs/guide/README.md links the TypeScript-vs-Lua cheat sheet", async () => {
