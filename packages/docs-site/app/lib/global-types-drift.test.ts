@@ -17,9 +17,9 @@ const KNOWN_OPERATOR_METHODS = [
 
 describe("global-types drift guard", () => {
   test("documented page set equals engine-globals value-type re-exports", () => {
-    const reexported = [...globalsSource.matchAll(/type (\w+) = Core\.\w+;/g)]
-      .map((m) => m[1] as string)
-      .filter((name) => name !== "Opaque");
+    const reexported = [
+      ...globalsSource.matchAll(/type (\w+)(?:<[^>]*>)? = Core\.\w+(?:<[^>]*>)?;/g),
+    ].map((m) => m[1] as string);
     const documented = parseGlobalTypes(coreSource).map((p) => p.namespace);
     expect(documented.slice().sort()).toEqual(reexported.slice().sort());
   });
