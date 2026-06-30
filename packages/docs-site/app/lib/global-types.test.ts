@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { htmlToDocText } from "@defold-typescript/types";
 import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { parseGlobalTypes } from "./global-types";
 import { buildSymbolIndex } from "./symbol-index";
@@ -6,7 +7,8 @@ import { buildSymbolIndex } from "./symbol-index";
 // Representative slice of `packages/types/src/core-types.ts`, inlined so this
 // suite stays pure (no `node:*` read) and off the client graph. Mirrors the
 // real declarations: JSDoc blocks, `readonly`, index/brand signatures, a
-// `&`-joined operator overload, and the generic `Opaque` that must be excluded.
+// `&`-joined operator overload, and the generic `Opaque` brand documented as a
+// brief-only page.
 const SRC = `
 export interface Vector {
   readonly [index: number]: number;
@@ -86,10 +88,11 @@ function methodSignatures(name: string, member: string): string[] {
 }
 
 describe("parseGlobalTypes", () => {
-  test("returns one global-type page per value type, excluding generic Opaque", () => {
+  test("returns one global-type page per value type, including the Opaque brand", () => {
     expect(PAGES.map((p) => p.namespace).sort()).toEqual([
       "Hash",
       "Matrix4",
+      "Opaque",
       "Quaternion",
       "Url",
       "Vector",
@@ -126,6 +129,35 @@ describe("parseGlobalTypes", () => {
     expect(hash.module.functions).toEqual([]);
     expect(hash.brief.toLowerCase()).toContain("opaque");
     expect(hash.brief.toLowerCase()).toContain("brand");
+  });
+
+  test("Hash carries a deep multi-paragraph description", () => {
+    const rendered = htmlToDocText(pageNamed("Hash").module.description);
+    expect(rendered.length).toBeGreaterThan(300);
+    expect(rendered).toContain("\n\n");
+    expect(rendered).toContain("hash(name)");
+    expect(rendered).toContain("unique symbol");
+    expect(rendered.toLowerCase()).toContain("one-way");
+  });
+
+  test("Opaque's description keeps its generic notation through htmlToDocText", () => {
+    const rendered = htmlToDocText(pageNamed("Opaque").module.description);
+    expect(rendered.length).toBeGreaterThan(300);
+    expect(rendered).toContain("\n\n");
+    // The entity-encoded `Opaque&lt;"node"&gt;` decodes back to angle brackets
+    // instead of being stripped as a tag.
+    expect(rendered).toContain('Opaque<"node">');
+    expect(rendered).toContain('Opaque<"texture">');
+    expect(rendered).toContain("unique symbol");
+    expect(rendered).toContain("LuaTable");
+  });
+
+  test("Opaque is a brand-only page with no inspectable members", () => {
+    const opaque = pageNamed("Opaque");
+    expect(opaque.module.properties).toEqual([]);
+    expect(opaque.module.functions).toEqual([]);
+    expect(opaque.brief.toLowerCase()).toContain("brand");
+    expect(opaque.brief.toLowerCase()).toContain("never");
   });
 
   test("Url carries socket/path/fragment with fragment optional", () => {
