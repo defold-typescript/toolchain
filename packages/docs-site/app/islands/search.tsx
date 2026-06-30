@@ -80,19 +80,28 @@ export default function Search({ versionIds }: SearchProps) {
         class="h-9 w-56 max-w-[40vw] rounded-md border border-border bg-surface px-3 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none"
       />
       {open && hits.length > 0 ? (
-        <ul class="absolute right-0 z-40 mt-1 w-80 overflow-hidden rounded-md border border-border bg-bg shadow-lg">
-          {hits.map((hit) => (
-            <li>
-              <a href={withBase(hit.route)} class="block px-3 py-2 transition hover:bg-surface">
-                <span class="block text-sm font-medium text-text">{hit.title}</span>
-                <span
-                  class="search-snippet mt-0.5 line-clamp-2 block text-xs text-text-muted"
-                  dangerouslySetInnerHTML={{ __html: hit.snippet }}
-                />
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div class="absolute right-0 z-40 mt-1 w-80 overflow-hidden rounded-md border border-border bg-bg shadow-lg">
+          <p class="flex items-center gap-1.5 border-b border-border bg-surface px-3 py-1.5 text-[11px] text-text-muted">
+            Press
+            <kbd class="rounded border border-border bg-bg px-1 font-mono text-[10px] text-text">
+              Enter
+            </kbd>
+            to see all results on a page
+          </p>
+          <ul>
+            {hits.map((hit) => (
+              <li>
+                <a href={withBase(hit.route)} class="block px-3 py-2 transition hover:bg-surface">
+                  <span class="block text-sm font-medium text-text">{hit.title}</span>
+                  <span
+                    class="search-snippet mt-0.5 line-clamp-2 block text-xs text-text-muted"
+                    dangerouslySetInnerHTML={{ __html: hit.snippet }}
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </div>
   );

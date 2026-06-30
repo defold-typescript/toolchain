@@ -192,7 +192,7 @@
 @layer components {
   .prose {
     color: var(--color-text);
-    font-size: 15px;
+    font-size: var(--prose-text-size);
     line-height: 1.7;
   }
 
@@ -219,7 +219,7 @@
 
   .prose h1 {
     position: relative;
-    font-size: 2rem;
+    font-size: var(--prose-h1-size);
     line-height: 1.2;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -231,7 +231,7 @@
 
   .prose h2 {
     position: relative;
-    font-size: 1.4rem;
+    font-size: var(--prose-h2-size);
     line-height: 1.3;
     font-weight: 600;
     letter-spacing: -0.015em;
@@ -244,7 +244,7 @@
 
   .prose h3 {
     position: relative;
-    font-size: 1.1rem;
+    font-size: var(--prose-h3-size);
     line-height: 1.4;
     font-weight: 600;
     margin-top: 1.6em;
@@ -260,7 +260,7 @@
   }
 
   .prose h4 {
-    font-size: 0.95rem;
+    font-size: var(--prose-h4-size);
     line-height: 1.4;
     font-weight: 600;
     margin-top: 1.4em;
@@ -341,7 +341,7 @@
 
   .prose code {
     font-family: var(--font-mono);
-    font-size: 0.875em;
+    font-size: var(--prose-code-size);
     background: var(--color-code-bg);
     border: 1px solid var(--color-border);
     border-radius: 4px;
@@ -362,7 +362,7 @@
 
   .prose pre {
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: var(--prose-pre-size);
     line-height: 1.55;
     background: var(--color-code-bg);
     border: 1px solid var(--color-border);
@@ -389,7 +389,7 @@
 
   .prose .code-title {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--prose-code-title-size);
     color: var(--color-text-muted);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -402,6 +402,70 @@
     margin: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+  }
+
+  /* Copy-to-clipboard button, injected per code block by the CodeCopy island.
+     The `.code-body` wrapper owns the block rhythm so the button can pin to the
+     top-right without scrolling along with the code. */
+  .code-body {
+    position: relative;
+  }
+  .prose > .code-body {
+    margin: 1.2em 0;
+  }
+  .code-body > pre {
+    margin: 0;
+  }
+  .code-copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    opacity: 0.35;
+    cursor: pointer;
+    transition:
+      opacity 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .code-body:hover .code-copy {
+    opacity: 0.7;
+  }
+  .code-copy:hover,
+  .code-copy:focus-visible {
+    opacity: 1;
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+    outline: none;
+  }
+  .code-copy > svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+  }
+  .code-copy .code-copy-check {
+    display: none;
+  }
+  .code-copy.is-copied {
+    opacity: 1;
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  .code-copy.is-copied .code-copy-icon {
+    display: none;
+  }
+  .code-copy.is-copied .code-copy-check {
+    display: block;
   }
 
   .prose ul,
@@ -564,7 +628,7 @@
     width: auto;
     max-width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: var(--prose-table-size);
     margin: 1.2em 0;
   }
 

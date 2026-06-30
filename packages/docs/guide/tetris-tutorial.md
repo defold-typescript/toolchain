@@ -80,11 +80,11 @@ tetris/
 > [!NOTE]
 > If you run the game from Defold now (**Project → Build**) before `watch` is running, you'll see a black window. The error `"/src/main.ts.script" could not be found.` is a sign you could have forgotten to start the `watch` process.
 
-In Step 05 you replace `src/main.ts` with `src/board.ts`, and `watch` swaps the generated `src/main.ts.script` for `src/board.ts.gui_script`. You edit `.ts`; Defold runs the generated files.
+In **Step 05** you replace `src/main.ts` with `src/board.ts`, and `watch` swaps the generated `src/main.ts.script` for `src/board.ts.gui_script`. You edit `.ts`; Defold runs the generated files.
 
 ## 02 — Input bindings
 
-Tetris needs five keys. Defold maps hardware keys to named **actions** through an input binding, and your script listens for those action names. Set this up first — it is pure editor work, and the script in Step 05 expects the names to exist.
+Tetris needs five keys. Defold maps hardware keys to named **actions** through an input binding, and your script listens for those action names. Set this up first — it is pure editor work, and the script in **Step 05** expects the names to exist.
 
 `init` already scaffolded an empty `input/game.input_binding` and pointed `game.project` at it, so you only need to fill in the triggers.
 
@@ -104,11 +104,11 @@ Tetris needs five keys. Defold maps hardware keys to named **actions** through a
 
 Inside the script, we will hash these action names (for example, `hash("left")`) to recognize each key, because Defold sends them to `on_input` in hashed form (for fast `==` checks and lower memory use).
 
-## 03 — Model the grid
+## 03 — Model the grid: `src/grid.ts`
 
 Start with a pure model: a 10×20 grid of cells, each empty or holding a piece's color. Engine-free logic is easy to reason about and to type. The whole model is one file — dimensions, the cell types, an empty board, the free-cell test, and line clearing. We'll build `src/grid.ts` one function at a time below; the complete file is in **Full Script** at the end of this section, ready to paste into VS Code.
 
-This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (Step 05).
+This module is a **shared singleton**: every `import` becomes a cached `require`. Per-playthrough state stays on `self` (**Step 05**).
 
 > [!MORE] New to grids? How the board is just numbers
 > The board is a plain 10×20 table of numbers — no engine types, no graphics. Each cell holds `0` for empty or `1`–`7` for a color. Because it is ordinary data, you can read it, test it, and reason about it without running the game.
@@ -189,7 +189,7 @@ export function clearLines(g: Grid): number {
 }
 ```
 
-It scans rows from the bottom up; whenever a row has no empty cell it deletes that row (`splice`) and pushes a fresh blank one onto the top (`unshift`) — gravity for the whole stack. It returns how many rows vanished, which Step 05 turns into score. The `r++` after a clear re-checks the same index, because every row above just shifted down by one.
+It scans rows from the bottom up; whenever a row has no empty cell it deletes that row (`splice`) and pushes a fresh blank one onto the top (`unshift`) — gravity for the whole stack. It returns how many rows vanished, which **Step 05** turns into score. The `r++` after a clear re-checks the same index, because every row above just shifted down by one.
 
 > [!MORE] Full Script — src/grid.ts
 > ```ts title="src/grid.ts" {33-40}
@@ -238,7 +238,7 @@ It scans rows from the bottom up; whenever a row has no empty cell it deletes th
 > }
 > ```
 
-## 04 — Define the tetrominoes
+## 04 — Define the tetrominoes: `src/pieces.ts`
 
 We'll walk `src/pieces.ts` piece by piece below; the complete file is in **Full Script** at the end of this section.
 
@@ -354,7 +354,7 @@ Read it from left to right:
 
 For example, the flat `I` piece has offsets `[-1, 0]`, `[0, 0]`, `[1, 0]`, and `[2, 0]`. If the piece's pivot point coordinates on the board are `[4, 0]`, `cellsCoveredByPiece` returns `[3, 0]`, `[4, 0]`, `[5, 0]`, and `[6, 0]` — the real board cells it covers.
 
-Step 05 uses that list before every move: check the four cells with `isFree`, then move only if all four are legal.
+**Step 05** uses that list before every move: check the four cells with `isFree`, then move only if all four are legal.
 
 **`nextPieceIndex`** — the shuffled-bag randomizer
 
@@ -377,7 +377,7 @@ export function nextPieceIndex(): number {
 Instead of pure random it deals from a bag holding all seven pieces, refilling and reshuffling only once the bag empties — so you never hit long droughts or floods of one shape. The shuffle is the highlighted Fisher–Yates swap, using Lua's integer `math.random(0, i)`. Each call pops one index off the end and returns it.
 
 > [!NOTE]
-> This uses Lua's `math.random(0, i)` because the two-argument form returns an integer in a range directly. `Math.random()` compiles fine too — it becomes `math.random()` — but returns a float in `[0, 1)`, so for an index you'd write `math.floor(Math.random() * (i + 1))`. Much of the JS standard library transpiles (`Math`, array and string methods); reach for Defold's `math`, `os`, and `json` for engine-specific concerns. `cellsCoveredByPiece` is the bridge from abstract piece data to board position — Step 05 calls it on every movement check.
+> This uses Lua's `math.random(0, i)` because the two-argument form returns an integer in a range directly. `Math.random()` compiles fine too — it becomes `math.random()` — but returns a float in `[0, 1)`, so for an index you'd write `math.floor(Math.random() * (i + 1))`. Much of the JS standard library transpiles (`Math`, array and string methods); reach for Defold's `math`, `os`, and `json` for engine-specific concerns. `cellsCoveredByPiece` is the bridge from abstract piece data to board position — **Step 05** calls it on every movement check.
 
 > [!MORE] Full Script — src/pieces.ts
 > ```ts title="src/pieces.ts"
@@ -705,7 +705,7 @@ function postHud(self: BoardSelf): void {
 }
 ```
 
-It forwards `score` and `level` to the HUD with `msg.post`, but only when `self.hud` is `true`. The guard is the trap: a gui script can't probe a target with `go.exists` (that API is `.script`-only), and `msg.post` to a missing instance errors at dispatch — so the HUD registers itself first by posting `hud_ready` (Step 08), and the board posts only after `on_message` has flipped `self.hud`. If you skip the HUD this stays a no-op. `onLocked` calls it after every lock.
+It forwards `score` and `level` to the HUD with `msg.post`, but only when `self.hud` is `true`. The guard is the trap: a gui script can't probe a target with `go.exists` (that API is `.script`-only), and `msg.post` to a missing instance errors at dispatch — so the HUD registers itself first by posting `hud_ready` (**Step 08**), and the board posts only after `on_message` has flipped `self.hud`. If you skip the HUD this stays a no-op. `onLocked` calls it after every lock.
 
 **`onLocked`** — clear lines, score, spawn, check for game over
 
@@ -821,8 +821,8 @@ export default defineGuiScript({
 
 - **`init`** builds the grid nodes once, spawns the first piece, and posts `acquire_input_focus` to itself (`.`) — without that, no key ever reaches `on_input`. Its returned object is the `BoardSelf` shape from the top of the file.
 - **`update`** is the clock: every frame it adds `dt` to `timer`, and when that crosses `fall` it runs one `stepDown`; then `redraw` repaints. `if (self.over) return` freezes the game on a loss.
-- **`on_input`** ignores everything until a key is `pressed`, then matches the pre-hashed `action_id` against the five module constants and calls the matching helper — the same five names you bound in Step 02.
-- **`on_message`** waits for the HUD's `hud_ready` and flips `self.hud`, the register-then-post handshake that `postHud` depends on (Step 08).
+- **`on_input`** ignores everything until a key is `pressed`, then matches the pre-hashed `action_id` against the five module constants and calls the matching helper — the same five names you bound in **Step 02**.
+- **`on_message`** waits for the HUD's `hud_ready` and flips `self.hud`, the register-then-post handshake that `postHud` depends on (**Step 08**).
 
 > [!MORE] Full Script — src/board.ts
 > ```ts title="src/board.ts"
@@ -1063,10 +1063,10 @@ Then **delete the sample `src/main.ts`** that `init` scaffolded — it was only 
 
 The script exists now, so the editor's picker can find it. The board draws itself from code, so the editor work is small — one project setting, an empty GUI scene, and one game object, no sprite, no atlas, no factory.
 
-1. **Set the window size.** In **Assets**, open **game.project**, and under **Display** set **Width** to `400` and **Height** to `720` (turn **High Dpi** on for crisp cells). `init` leaves the display unset, so Defold defaults to a landscape **960×640**, but Tetris is a tall 10×20 board — `board.ts` centers its 280×560 grid in a **400×720** portrait window (`WINDOW_W`/`WINDOW_H` feed `ORIGIN_X`/`ORIGIN_Y` in Step 05). Skip this and the board renders jammed into a corner instead of centered. If you prefer a different size, change `WINDOW_W`/`WINDOW_H` in `board.ts` to match.
+1. **Set the window size.** In **Assets**, open **game.project**, and under **Display** set **Width** to `400` and **Height** to `720` (turn **High Dpi** on for crisp cells). `init` leaves the display unset, so Defold defaults to a landscape **960×640**, but Tetris is a tall 10×20 board — `board.ts` centers its 280×560 grid in a **400×720** portrait window (`WINDOW_W`/`WINDOW_H` feed `ORIGIN_X`/`ORIGIN_Y` in **Step 05**). Skip this and the board renders jammed into a corner instead of centered. If you prefer a different size, change `WINDOW_W`/`WINDOW_H` in `board.ts` to match.
 2. **Create the board GUI scene.** In **Assets**, right-click `main` → **New… → GUI**, name it **board.gui**. Open it, select the root **GUI** node in the Outline, and set its **Script** to `/src/board.ts.gui_script`. Leave the node list empty — `board.ts` builds the grid at startup. Raise **Max Nodes** to at least `400` (the board creates `COLS × ROWS × 2` = 400 box nodes).
 3. **Create the board object.** Right-click `main` → **New… → Game Object File**, name it **board.go**. In the **Outline**, right-click root → **Add Component File** → choose **board.gui**, and give the component the **Id** `board`. (A `.gui` is a component; the game object hosts it.)
-4. **Assemble the scene.** Open **main.collection** (already created by `init`). It still holds the scaffold's `main` game object, whose component points at `/src/main.ts.script` — gone once you deleted the sample `src/main.ts` in Step 05, so leaving it fails the build with `"/src/main.ts.script" could not be found`. Right-click it → **Delete**. Then right-click root → **Add Game Object File** → choose **board.go**, set its **Id** to `board`. Confirm **game.project → Bootstrap → Main Collection** is `/main/main.collection`.
+4. **Assemble the scene.** Open **main.collection** (already created by `init`). It still holds the scaffold's `main` game object, whose component points at `/src/main.ts.script` — gone once you deleted the sample `src/main.ts` in **Step 05**, so leaving it fails the build with `"/src/main.ts.script" could not be found`. Right-click it → **Delete**. Then right-click root → **Add Game Object File** → choose **board.go**, set its **Id** to `board`. Confirm **game.project → Bootstrap → Main Collection** is `/main/main.collection`.
 
 That's the entire scene. The script draws every cell.
 
@@ -1077,15 +1077,15 @@ That's the entire scene. The script draws every cell.
 If the first build looks off, check these in order:
 
 - **Board invisible?** Confirm `board.gui`'s **Script** is `/src/board.ts.gui_script` and **Max Nodes** is at least `400`.
-- **Board off-center or running off-screen?** The window isn't `400×720` — set **game.project → Display** to `400×720` (Step 06), or change `WINDOW_W`/`WINDOW_H` in `board.ts` to your window.
-- **Keys do nothing?** Confirm the Step 02 input bindings exist and the script posts `acquire_input_focus` in `init`.
+- **Board off-center or running off-screen?** The window isn't `400×720` — set **game.project → Display** to `400×720` (**Step 06**), or change `WINDOW_W`/`WINDOW_H` in `board.ts` to your window.
+- **Keys do nothing?** Confirm the **Step 02** input bindings exist and the script posts `acquire_input_focus` in `init`.
 - **Cells read as occupied when empty?** You've hit the `0`-still-counts trap — `0` is truthy in Lua, so always write `cell == 0` instead of `if (cell)`.
 
 **Ship.** Use **Project → Bundle**. The bundle is only Lua — your TypeScript was a build-time convenience.
 
 ## 08 — Optional: Add the HUD
 
-The core game is complete. Score and level are a stretch goal on their **own** GUI scene, so you can stop at Step 07 if you only want the board.
+The core game is complete. Score and level are a stretch goal on their **own** GUI scene, so you can stop at **Step 07** if you only want the board.
 
 It announces itself to the board with `hud_ready`, then paints `score`/`level` text and reveals a `gameover` node on the matching messages. Create `src/hud.ts`:
 
