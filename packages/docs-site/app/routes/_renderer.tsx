@@ -1,8 +1,10 @@
 import githubIconRaw from "@phosphor-icons/core/duotone/github-logo-duotone.svg?raw";
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
+import CodeCopy from "../islands/code-copy";
 import Search from "../islands/search";
 import SidebarToggle from "../islands/sidebar-toggle";
+import SidebarTooltip from "../islands/sidebar-tooltip";
 import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
@@ -20,7 +22,7 @@ declare module "hono" {
     // biome-ignore lint/style/useShorthandFunctionType: interface merging requires the interface form
     (
       content: string | Promise<string>,
-      props?: { title?: string; headings?: Heading[]; contentClass?: string },
+      props?: { title?: string; headings?: Heading[]; contentClass?: string; },
     ): Response | Promise<Response>;
   }
 }
@@ -87,6 +89,22 @@ const THEME_TOKENS = `
   --font-sans: "Barlow", "Barlow Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Ubuntu", "Ubuntu Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Spline Sans Mono Variable", "Spline Sans Mono Fallback", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Prose type scale — single source of truth for both critical.css and
+   * styles.css. Defined here (not @theme) because it must be present before
+   * either stylesheet paints, and it backs no Tailwind utility. */
+  --prose-text-size: 17px;
+  --prose-table-size: 17px;
+  --prose-h1-size: 1.9rem;
+  --prose-h2-size: 1.4rem;
+  --prose-h3-size: 1.1rem;
+  --prose-h4-size: 0.95rem;
+  --prose-code-size: 0.875em;
+  --prose-pre-size: 14px;
+  --prose-code-title-size: 12px;
+  /* Navigation type scale. Top menu is its own knob; the left sidebar and
+   * right "on this page" rail share one. */
+  --nav-top-size: 0.9rem;
+  --nav-side-size: 0.9rem;
   --color-bg: #ffffff;
   --color-surface: #f7f7f8;
   --color-surface-2: #f0f0f2;
@@ -106,9 +124,9 @@ const THEME_TOKENS = `
   --color-surface-2: #1d1d20;
   --color-border: #2a2a2e;
   --color-border-strong: #3a3a40;
-  --color-text: #ececef;
+  --color-text: #c0c0c4;
   --color-text-muted: #a4a4ad;
-  --color-text-faint: #6f6f78;
+  --color-text-faint: #4c4c56;
   --color-accent: #79a8ff;
   --color-accent-soft: rgba(121, 168, 255, 0.12);
   --color-accent-strong: #a9c4ff;
@@ -129,7 +147,7 @@ type ViteManifest = Record<string, ViteManifestEntry>;
  * build from leaking hashed links into the dev server.
  */
 const CLIENT_MANIFEST = import.meta.env.PROD
-  ? import.meta.glob<{ default: ViteManifest }>("/dist/.vite/manifest.json", { eager: true })
+  ? import.meta.glob<{ default: ViteManifest; }>("/dist/.vite/manifest.json", { eager: true })
   : {};
 
 /**
@@ -143,7 +161,7 @@ const CLIENT_MANIFEST = import.meta.env.PROD
  * preloading the Latin font subsets makes the full stylesheet and font faces
  * present at first paint, so navigation no longer flashes.
  */
-function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: string } {
+function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: string; } {
   for (const mod of Object.values(CLIENT_MANIFEST)) {
     const manifest = mod.default;
     if (!manifest) continue;
@@ -159,7 +177,7 @@ function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: stri
     // honox's <Script> resolves the hashed entry but does not apply the deploy
     // base (the server bundle never sees Vite's base), so under a subpath the
     // client script would 404. Emit a base-aware tag from the manifest instead.
-    const result: { stylesheets: string[]; fonts: string[]; script?: string } = {
+    const result: { stylesheets: string[]; fonts: string[]; script?: string; } = {
       stylesheets,
       fonts,
     };
@@ -269,7 +287,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
                 defold-typescript
               </span>
             </a>
-            <nav class="order-last flex w-full basis-full items-center gap-1 overflow-x-auto overflow-y-hidden text-sm lg:order-none lg:w-auto lg:flex-1 lg:basis-auto lg:overflow-visible">
+            <nav class="order-last flex w-full basis-full items-center gap-1 overflow-x-auto overflow-y-hidden text-[length:var(--nav-top-size)] leading-5 lg:order-none lg:w-auto lg:flex-1 lg:basis-auto lg:overflow-visible">
               {nav.map((category) => (
                 <CategoryLink
                   key={category.id}
@@ -297,6 +315,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
             >
               <SidebarNav category={activeCategory} path={path} />
             </div>
+            <SidebarTooltip />
           </aside>
           <div data-testid="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true" />
 
@@ -317,6 +336,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           </main>
         </div>
         <SymbolTooltip />
+        <CodeCopy />
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
         <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />
       </body>
@@ -400,7 +420,7 @@ function GithubLink() {
  * tooltips work when it is open. The `<summary>` carries the "On this page"
  * label, so the embedded outline renders with `showHeading={false}`.
  */
-function InlineToc({ headings }: { headings: Heading[] }) {
+function InlineToc({ headings }: { headings: Heading[]; }) {
   return (
     <details
       data-testid="toc-inline"
@@ -428,7 +448,7 @@ function InlineToc({ headings }: { headings: Heading[] }) {
   );
 }
 
-function CategoryLink({ category, active }: { category: NavCategory; active: boolean }) {
+function CategoryLink({ category, active }: { category: NavCategory; active: boolean; }) {
   const href = category.links[0]?.route ?? category.links[0]?.children?.[0]?.route ?? "/";
   return (
     <a
@@ -444,14 +464,14 @@ function CategoryLink({ category, active }: { category: NavCategory; active: boo
   );
 }
 
-function SidebarNav({ category, path }: { category: NavCategory | undefined; path: string }) {
+function SidebarNav({ category, path }: { category: NavCategory | undefined; path: string; }) {
   if (!category) return null;
   return (
     <nav aria-label={`${category.label} navigation`}>
       <p class="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
         {category.label}
       </p>
-      <ul class="space-y-0.5 text-sm">
+      <ul class="space-y-0.5 text-[length:var(--nav-side-size)] leading-5">
         {category.links.map((link) => (
           <li key={link.route ?? link.label}>
             {link.route ? (
@@ -477,14 +497,14 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
   );
 }
 
-function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
+function SidebarLink({ link, active }: { link: NavLink; active: boolean; }) {
   if (!link.route) return null;
   return (
     <a
       href={withBase(link.route)}
       aria-current={active ? "page" : undefined}
       class={
-        "block rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
+        "block truncate rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
         (active ? "bg-accent-soft text-accent" : "")
       }
       dangerouslySetInnerHTML={{ __html: link.labelHtml }}

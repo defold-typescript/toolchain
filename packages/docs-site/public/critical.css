@@ -15,6 +15,11 @@
  * hardcoded light fallbacks, which broke dark mode — the fallbacks
  * fired and the prose rendered with the light-theme color in dark
  * mode. Now both files read from the same `--color-*` tokens.
+ *
+ * The prose font sizes read from `--prose-*` tokens defined in the
+ * inlined THEME_TOKENS block (app/routes/_renderer.tsx). That block is
+ * the single source of truth for the type scale, so the size values
+ * here and in styles.css can never drift.
  */
 
 html,
@@ -50,7 +55,7 @@ header.topbar-critical .logo-mark {
 
 .prose {
   color: var(--color-text);
-  font-size: 15px;
+  font-size: var(--prose-text-size);
   line-height: 1.7;
 }
 .prose > * + * {
@@ -68,7 +73,7 @@ header.topbar-critical .logo-mark {
   margin-top: 1.1em;
 }
 .prose h1 {
-  font-size: 2rem;
+  font-size: var(--prose-h1-size);
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -77,7 +82,7 @@ header.topbar-critical .logo-mark {
   scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
 }
 .prose h2 {
-  font-size: 1.4rem;
+  font-size: var(--prose-h2-size);
   line-height: 1.3;
   font-weight: 600;
   letter-spacing: -0.015em;
@@ -87,7 +92,7 @@ header.topbar-critical .logo-mark {
   scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
 }
 .prose h3 {
-  font-size: 1.1rem;
+  font-size: var(--prose-h3-size);
   line-height: 1.4;
   font-weight: 600;
   margin: 1.6em 0 0.4em;
@@ -95,7 +100,7 @@ header.topbar-critical .logo-mark {
   scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
 }
 .prose h4 {
-  font-size: 0.95rem;
+  font-size: var(--prose-h4-size);
   line-height: 1.4;
   font-weight: 600;
   margin: 1.4em 0 0.4em;
@@ -111,7 +116,8 @@ header.topbar-critical .logo-mark {
   color: var(--color-accent);
   text-decoration: none;
   font-weight: 500;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-accent) 30%, transparent);
   transition: border-color 0.15s ease;
 }
 .prose a:hover {
@@ -131,7 +137,7 @@ header.topbar-critical .logo-mark {
 }
 .prose code {
   font-family: var(--font-mono);
-  font-size: 0.875em;
+  font-size: var(--prose-code-size);
   background: var(--color-code-bg);
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -149,7 +155,7 @@ header.topbar-critical .logo-mark {
 }
 .prose pre {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--prose-pre-size);
   line-height: 1.55;
   background: var(--color-code-bg);
   border: 1px solid var(--color-border);
@@ -171,7 +177,7 @@ header.topbar-critical .logo-mark {
 }
 .prose .code-title {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--prose-code-title-size);
   color: var(--color-text-muted);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -221,7 +227,7 @@ header.topbar-critical .logo-mark {
   width: auto;
   max-width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--prose-table-size);
   margin: 1.2em 0;
 }
 .prose th,

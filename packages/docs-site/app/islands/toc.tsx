@@ -90,7 +90,7 @@ export default function Toc({
   const hideTip = () => setTip(null);
 
   return (
-    <nav aria-label="On this page" class="text-sm">
+    <nav aria-label="On this page" class="text-[length:var(--nav-side-size)] leading-5">
       {showHeading ? (
         <p class="mb-3 pl-4 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
           On this page
