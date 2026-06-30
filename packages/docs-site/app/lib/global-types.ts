@@ -5,8 +5,8 @@ import type { ApiPage } from "./api-surface";
 // `api-surface.ts`); index into `ApiModule` for the structural shape instead.
 type ApiPropertyShape = ApiModule["properties"][number];
 
-// The seven core global value types documented as reference pages. Kept in
-// lockstep with the `declare global` re-exports in
+// The core global value types plus the generic `Opaque` brand, documented as
+// reference pages. Kept in lockstep with the `declare global` re-exports in
 // `packages/types/src/engine-globals.d.ts` by `global-types-drift.test.ts`.
 const VALUE_TYPE_NAMES = [
   "Vector",
@@ -16,6 +16,7 @@ const VALUE_TYPE_NAMES = [
   "Matrix4",
   "Hash",
   "Url",
+  "Opaque",
 ] as const;
 
 // TSTL operator metamethod types -> their display operator and arity. A method
@@ -30,8 +31,9 @@ const OPERATOR_METHODS: Record<string, { op: string; unary: boolean }> = {
 };
 
 // Hand-curated briefs for the types whose intent isn't obvious from members
-// alone (the opaque `Hash`, the index-accessed `Vector`); the rest get a short
-// component summary. These are core types, never sourced from `ref-doc.zip`.
+// alone (the opaque `Hash`, the index-accessed `Vector`, the branded `Opaque`);
+// the rest get a short component summary. These are core types, never sourced
+// from `ref-doc.zip`.
 const TYPE_BRIEFS: Record<string, string> = {
   Vector: "A read-only numeric vector accessed by index; `length` is its component count.",
   Vector3: "A three-component vector with `x`, `y`, and `z` components.",
@@ -40,6 +42,31 @@ const TYPE_BRIEFS: Record<string, string> = {
   Matrix4: "A 4x4 transformation matrix.",
   Hash: "An opaque, branded handle to a hashed name: hold it and pass it back to the engine API, but never inspect or construct it.",
   Url: "A message-passing address with `socket`, `path`, and `fragment` components.",
+  Opaque:
+    "A nominal, branded handle to an engine value: hold it and pass it back to the API, but never inspect or construct it. The `Name` parameter mints a distinct brand per kind, so handles of different kinds never interchange.",
+};
+
+// Deep, multi-paragraph descriptions for the two brand types whose intent is
+// the least obvious at a glance. Paragraphs are separated by blank lines and
+// rendered as the page body (`description` wins over `brief` in
+// `apiPageMarkdown`). Kept in lockstep with the canonical JSDoc on
+// `Core.Hash`/`Core.Opaque` in `packages/types/src/core-types.ts` — when one
+// changes, change the other. These strings are the same HTML-ish data contract
+// as ref-doc descriptions: `htmlToDocText` strips tags and decodes entities, so
+// a literal generic like `Opaque<"node">` is written `Opaque&lt;"node"&gt;` to
+// survive the tag-strip and decode back before Markdown rendering.
+const TYPE_DESCRIPTIONS: Record<string, string> = {
+  Hash: [
+    "A nominal, branded handle to a *hashed name* — the identifier Defold uses in place of a string for game-object and component ids, resource paths, input-action names, material, animation, and constant names, and the `socket`, `path`, and `fragment` of every `Url`. You obtain one from the global `hash(name)` function (or receive it back from the engine) and pass it straight to the API; you never inspect or assemble its bits by hand.",
+    "The brand is a phantom `unique symbol` property that exists only in the type system and is erased at transpile — at runtime a `Hash` is the engine's opaque hash value, not an object carrying that property. Because the symbol is not exported, consumer code cannot fabricate a `Hash`; the only sources are `hash()` and the engine. That nominal branding is what stops a bare `string` or `number` from standing in where the API expects an already-hashed name. Many engine functions also accept a plain `string` and hash it for you, but a value already typed `Hash` is passed through as-is.",
+    "Hashing is one-way: the original string cannot be recovered from a `Hash`. `hash_to_hex(h)` renders it as a hexadecimal string for logging, and `pprint` shows it as `hash: [0x…]`. Two hashes are equal exactly when they name the same thing, so a `Hash` is safe to compare, store, and use as a table key.",
+  ].join("\n\n"),
+  Opaque: [
+    "A nominal, branded handle to an engine-owned value that you hold and pass back to the API but must never inspect or construct — a Defold `node`, `texture`, `render_target`, `buffer`, `predicate`, raw `userdata`, and similar resources all resolve to an `Opaque`. It is the generic form of the same nominal trick `Hash` uses, parameterised by a name.",
+    'The `Name` type parameter mints a distinct, mutually-incompatible brand per kind: `Opaque&lt;"node"&gt;` and `Opaque&lt;"texture"&gt;` are different types. So TypeScript\'s structural typing can\'t silently swap a `render_target` for a `constant`, and a plain object can\'t stand in for either — the compiler rejects a handle of the wrong kind exactly as it would a wrong primitive.',
+    "The brand is a phantom `unique symbol` property that exists only in the type system and is erased at transpile — at runtime an `Opaque` is just the engine's userdata, with no extra field. Because the symbol is not exported, consumer code cannot fabricate one; the engine API is the only source.",
+    'Contrast with a `LuaTable` alias, which says the opposite: "inspect freely, the shape simply isn\'t modeled." An `Opaque` says "do not look inside — this value is meaningful only to the engine."',
+  ].join("\n\n"),
 };
 
 const INTERFACE_RE = /export interface (\w+)[^{]*\{([\s\S]*?)\}/g;
@@ -135,10 +162,11 @@ function buildPage(name: string, members: RawMember[]): ApiPage {
     else properties.push(parseProperty(member));
   }
   const brief = TYPE_BRIEFS[name] ?? "";
+  const description = TYPE_DESCRIPTIONS[name] ?? "";
   const module: ApiModule = {
     namespace: name,
     brief,
-    description: "",
+    description,
     functions,
     variables: [],
     constants: [],

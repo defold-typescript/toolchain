@@ -70,6 +70,7 @@
 - [zlib](/api/zlib)
 - [Hash](/api/Hash)
 - [Matrix4](/api/Matrix4)
+- [Opaque](/api/Opaque)
 - [Quaternion](/api/Quaternion)
 - [Url](/api/Url)
 - [Vector](/api/Vector)
