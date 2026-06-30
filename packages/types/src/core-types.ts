@@ -1,10 +1,16 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 
+/**
+ * A read-only numeric vector accessed by index; `length` is its component count.
+ */
 export interface Vector {
   readonly [index: number]: number;
   readonly length: number;
 }
 
+/**
+ * A three-component vector with `x`, `y`, and `z` components.
+ */
 export interface Vector3 {
   x: number;
   y: number;
@@ -22,6 +28,9 @@ export interface Vector3 {
   unm: LuaNegationMethod<Vector3>;
 }
 
+/**
+ * A four-component vector with `x`, `y`, `z`, and `w` components.
+ */
 export interface Vector4 {
   x: number;
   y: number;
@@ -40,6 +49,9 @@ export interface Vector4 {
   unm: LuaNegationMethod<Vector4>;
 }
 
+/**
+ * A rotation quaternion with `x`, `y`, `z`, and `w` components.
+ */
 export interface Quaternion {
   x: number;
   y: number;
@@ -48,6 +60,9 @@ export interface Quaternion {
   mul: LuaMultiplicationMethod<Quaternion, Quaternion>;
 }
 
+/**
+ * A 4x4 transformation matrix.
+ */
 export interface Matrix4 {
   m00: number;
   m01: number;
@@ -149,6 +164,9 @@ export interface Opaque<Name extends string> {
   readonly [OpaqueBrand]: Name;
 }
 
+/**
+ * A message-passing address with `socket`, `path`, and `fragment` components.
+ */
 export interface Url {
   readonly socket: Hash;
   readonly path: Hash;

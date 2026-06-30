@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   DEFOLD_TYPE_MAP,
   type Hash,
@@ -10,6 +12,72 @@ import {
   type Vector3,
   type Vector4,
 } from "./core-types";
+
+const VALUE_TYPES = [
+  "Hash",
+  "Opaque",
+  "Vector",
+  "Vector3",
+  "Vector4",
+  "Quaternion",
+  "Matrix4",
+  "Url",
+] as const;
+
+// The next step derives each global-type page's brief from the first sentence of
+// these JSDoc summaries, so each must carry the concept it names.
+const SUMMARY_MARKERS: Record<string, string> = {
+  Vector: "accessed by index",
+  Vector3: "three-component vector",
+  Vector4: "four-component vector",
+  Quaternion: "rotation quaternion",
+  Matrix4: "transformation matrix",
+  Url: "message-passing address",
+};
+
+const coreSource = readFileSync(path.join(import.meta.dir, "core-types.ts"), "utf8");
+const coreLines = coreSource.split("\n");
+
+function declarationLine(name: string): number {
+  const index = coreLines.findIndex((line) => line.trim().startsWith(`export interface ${name}`));
+  if (index < 0) throw new Error(`interface ${name} not found`);
+  return index;
+}
+
+function precedingNonBlank(lineIndex: number): string | undefined {
+  for (let i = lineIndex - 1; i >= 0; i--) {
+    const trimmed = (coreLines[i] as string).trim();
+    if (trimmed) return trimmed;
+  }
+  return undefined;
+}
+
+// The JSDoc summary for `name`: text from its `/**` block up to the first
+// sentence terminator, gutter stripped.
+function jsdocSummary(name: string): string {
+  const start = declarationLine(name);
+  let open = -1;
+  for (let i = start - 1; i >= 0; i--) {
+    if ((coreLines[i] as string).trim().startsWith("/**")) {
+      open = i;
+      break;
+    }
+  }
+  if (open < 0) throw new Error(`no JSDoc block above ${name}`);
+  const body = coreLines
+    .slice(open, start)
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^\/\*\*+/, "")
+        .replace(/\*\/$/, "")
+        .replace(/^\*\s?/, ""),
+    )
+    .join(" ")
+    .trim();
+  const terminator = body.search(/\.(\s|$)/);
+  return terminator < 0 ? body : body.slice(0, terminator);
+}
 
 describe("core-types", () => {
   test("Vector3 is assignable to { x: number; y: number; z: number }", () => {
@@ -131,4 +199,20 @@ describe("core-types", () => {
       expect(DEFOLD_TYPE_MAP[defoldToken]).toBe(tsType);
     }
   });
+});
+
+describe("core-types.ts canonical JSDoc", () => {
+  for (const name of VALUE_TYPES) {
+    test(`${name} is immediately preceded by a JSDoc block`, () => {
+      const preceding = precedingNonBlank(declarationLine(name));
+      expect(preceding).toBeDefined();
+      expect((preceding as string).endsWith("*/")).toBe(true);
+    });
+  }
+
+  for (const [name, marker] of Object.entries(SUMMARY_MARKERS)) {
+    test(`${name} JSDoc summary carries its marker`, () => {
+      expect(jsdocSummary(name).toLowerCase()).toContain(marker);
+    });
+  }
 });
