@@ -188,6 +188,15 @@
     margin-top: 1.1em;
   }
 
+  /* `.prose p { margin: 0 }` zeroes a paragraph's top margin, and the rhythm
+     above only matches a paragraph that *follows another paragraph*. A paragraph
+     after a list (which carries `margin: 0`) would otherwise butt straight
+     against the last bullet, so restore the gap explicitly. */
+  .prose ul + p,
+  .prose ol + p {
+    margin-top: 1.1em;
+  }
+
   .prose h1 {
     position: relative;
     font-size: 2rem;
