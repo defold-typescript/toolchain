@@ -58,17 +58,22 @@ function symbolBlock(symbol: ApiSymbol): string {
 // single combined string keeps Shiki and the heading-id slugger to one pass, so
 // per-symbol headings stay uniquely id'd for the "On this page" TOC. The
 // `linkify` callback rewrites bare symbol mentions in the prose to local
-// `/api/<namespace>` links (example code fences and signature headings are
-// skipped — `linkify` is plain-text only and the route never hands it the
-// example or signature fields).
+// `/api/<namespace>` links; it skips backtick-fenced code spans, so a Markdown
+// intro carrying an `@example` fence is safe to pass through it.
+//
+// global-type pages carry a Markdown description (derived from the canonical
+// JSDoc); it goes straight to the shared `markdown-it` pipeline so fenced
+// examples and bullet lists render verbatim. ref-doc descriptions are HTML and
+// still flow through `htmlToDocText` first.
 export function apiPageMarkdown(
-  page: Pick<ApiPage, "module" | "translations" | "signatures">,
+  page: Pick<ApiPage, "module" | "translations" | "signatures" | "category">,
   linkify: (text: string) => string,
 ): string {
   const m = page.module;
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
   const lines: string[] = [`# ${m.namespace}`, ""];
-  const intro = htmlToDocText(m.description || m.brief);
+  const raw = m.description || m.brief;
+  const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
   if (intro) lines.push(linkify(intro), "");
   const emitSymbol = (symbol: ApiSymbol) => {
     const linkified: ApiSymbol = {

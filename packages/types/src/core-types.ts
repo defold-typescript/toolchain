@@ -148,14 +148,14 @@ declare const OpaqueBrand: unique symbol;
  * @example
  * Handles always come back from the engine — for instance:
  * ```ts
- * const node = gui.get_node("button");        // Opaque<"node">
- * const rt = render.render_target("rt", opts); // Opaque<"render_target">
- * const cb = render.constant_buffer();         // Opaque<"constant_buffer">
- * const buf = resource.load_buffer(path);      // Opaque<"buffer">
+ * const node = gui.get_node("button");          // Opaque<"node">
+ * const rt = render.render_target("rt", opts);  // Opaque<"render_target">
+ * const cb = render.constant_buffer();          // Opaque<"constant_buffer">
+ * const buf = resource.load_buffer(path);       // Opaque<"buffer">
  * const stream = buffer.get_stream(buf, "rgb"); // Opaque<"bufferstream">
- * const world = b2d.get_world();               // Opaque<"b2World">
- * const [conn] = socket.tcp();                 // a "master" socket handle
- * function update(self: ...) {}                // self is Opaque<"userdata">
+ * const world = b2d.get_world();                // Opaque<"b2World">
+ * const [conn] = socket.tcp();                  // a "master" socket handle
+ * function update(self: ...) {}                 // self is Opaque<"userdata">
  * ```
  *
  * Contrast with a `LuaTable` alias, which says the opposite — "inspect freely,
