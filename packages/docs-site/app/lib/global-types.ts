@@ -30,47 +30,100 @@ const OPERATOR_METHODS: Record<string, { op: string; unary: boolean }> = {
   LuaNegationMethod: { op: "-", unary: true },
 };
 
-// Hand-curated briefs for the types whose intent isn't obvious from members
-// alone (the opaque `Hash`, the index-accessed `Vector`, the branded `Opaque`);
-// the rest get a short component summary. These are core types, never sourced
-// from `ref-doc.zip`.
-const TYPE_BRIEFS: Record<string, string> = {
-  Vector: "A read-only numeric vector accessed by index; `length` is its component count.",
-  Vector3: "A three-component vector with `x`, `y`, and `z` components.",
-  Vector4: "A four-component vector with `x`, `y`, `z`, and `w` components.",
-  Quaternion: "A rotation quaternion with `x`, `y`, `z`, and `w` components.",
-  Matrix4: "A 4x4 transformation matrix.",
-  Hash: "An opaque, branded handle to a hashed name: hold it and pass it back to the engine API, but never inspect or construct it.",
-  Url: "A message-passing address with `socket`, `path`, and `fragment` components.",
-  Opaque:
-    "A nominal, branded handle to an engine value: hold it and pass it back to the API, but never inspect or construct it. The `Name` parameter mints a distinct brand per kind, so handles of different kinds never interchange.",
-};
-
-// Deep, multi-paragraph descriptions for the two brand types whose intent is
-// the least obvious at a glance. Paragraphs are separated by blank lines and
-// rendered as the page body (`description` wins over `brief` in
-// `apiPageMarkdown`). Kept in lockstep with the canonical JSDoc on
-// `Core.Hash`/`Core.Opaque` in `packages/types/src/core-types.ts` — when one
-// changes, change the other. These strings are the same HTML-ish data contract
-// as ref-doc descriptions: `htmlToDocText` strips tags and decodes entities, so
-// a literal generic like `Opaque<"node">` is written `Opaque&lt;"node"&gt;` to
-// survive the tag-strip and decode back before Markdown rendering.
-const TYPE_DESCRIPTIONS: Record<string, string> = {
-  Hash: [
-    "A nominal, branded handle to a *hashed name* — the identifier Defold uses in place of a string for game-object and component ids, resource paths, input-action names, material, animation, and constant names, and the `socket`, `path`, and `fragment` of every `Url`. You obtain one from the global `hash(name)` function (or receive it back from the engine) and pass it straight to the API; you never inspect or assemble its bits by hand.",
-    "The brand is a phantom `unique symbol` property that exists only in the type system and is erased at transpile — at runtime a `Hash` is the engine's opaque hash value, not an object carrying that property. Because the symbol is not exported, consumer code cannot fabricate a `Hash`; the only sources are `hash()` and the engine. That nominal branding is what stops a bare `string` or `number` from standing in where the API expects an already-hashed name. Many engine functions also accept a plain `string` and hash it for you, but a value already typed `Hash` is passed through as-is.",
-    "Hashing is one-way: the original string cannot be recovered from a `Hash`. `hash_to_hex(h)` renders it as a hexadecimal string for logging, and `pprint` shows it as `hash: [0x…]`. Two hashes are equal exactly when they name the same thing, so a `Hash` is safe to compare, store, and use as a table key.",
-  ].join("\n\n"),
-  Opaque: [
-    "A typed handle to a resource the engine owns and manages — a GUI node, a texture, a render target, a physics body, a socket, and so on. You get one back from an engine function, keep it in a variable, and pass it to the other functions that act on that resource. Treat it as an opaque ticket: meaningful to the engine, not a value you read or assemble yourself.",
-    'Why a dedicated type? Each kind of handle is its own brand, so the compiler keeps them apart: `Opaque&lt;"node"&gt;` and `Opaque&lt;"texture"&gt;` are different types, and passing a texture where a node is expected is a compile error, exactly as a wrong primitive would be. The brand is a phantom `unique symbol` property that lives only in the type system and is erased at transpile — at runtime the value is just the engine\'s userdata. Because the symbol is never exported, consumer code cannot fabricate a handle or inspect or construct one; the engine API is the only source.',
-    'The handle kinds modeled today, grouped by area: GUI &amp; rendering — `Opaque&lt;"node"&gt;`, `Opaque&lt;"texture"&gt;`, `Opaque&lt;"render_target"&gt;`, `Opaque&lt;"constant"&gt;`, `Opaque&lt;"constant_buffer"&gt;`; resources &amp; buffers — `Opaque&lt;"resource"&gt;`, `Opaque&lt;"buffer"&gt;`, `Opaque&lt;"bufferstream"&gt;`; sockets — `Opaque&lt;"client"&gt;`, `Opaque&lt;"server"&gt;`, `Opaque&lt;"master"&gt;`, `Opaque&lt;"connected"&gt;`, `Opaque&lt;"unconnected"&gt;`; Box2D physics — `Opaque&lt;"b2Body"&gt;`, `Opaque&lt;"b2World"&gt;`; and the generic `Opaque&lt;"userdata"&gt;`.',
-    'Handles always come back from the engine. For example: `gui.get_node("button")` yields `Opaque&lt;"node"&gt;`; `render.render_target(name, opts)` yields `Opaque&lt;"render_target"&gt;`; `render.constant_buffer()` yields `Opaque&lt;"constant_buffer"&gt;`; `resource.load_buffer(path)` yields `Opaque&lt;"buffer"&gt;`; `buffer.get_stream(buf, "rgb")` yields `Opaque&lt;"bufferstream"&gt;`; `b2d.get_world()` yields `Opaque&lt;"b2World"&gt;`; `socket.tcp()` yields a `master` socket handle; and the `self` passed to lifecycle functions like `init` and `update` is `Opaque&lt;"userdata"&gt;`.',
-    'Contrast with a `LuaTable` alias, which says the opposite: "inspect freely, the shape simply isn\'t modeled." An `Opaque` says "do not look inside — this value is meaningful only to the engine."',
-  ].join("\n\n"),
-};
-
 const INTERFACE_RE = /export interface (\w+)[^{]*\{([\s\S]*?)\}/g;
+
+// Rewrite the JSDoc inline `{@link [Core.]X}` tag to Markdown inline code, then
+// entity-encode `&`/`<`/`>` so the string survives the shared render path:
+// `apiPageMarkdown` runs `htmlToDocText` over the description, which strips any
+// `<…>` it reads as a tag and decodes the entities back. Encoding must cover
+// inline code too (not only prose) — a raw `Opaque<"node">` inside backticks
+// would be eaten by the tag strip just the same.
+function encodeProse(text: string): string {
+  return text
+    .replace(/\{@link\s+(?:Core\.)?([\w.]+)\s*\}/g, "`$1`")
+    .split("&")
+    .join("&amp;")
+    .split("<")
+    .join("&lt;")
+    .split(">")
+    .join("&gt;");
+}
+
+// Convert a `/** … */` JSDoc block above a value-type interface into the same
+// HTML-ish Markdown contract ref-doc descriptions use. Strips the `/**`/`*/`
+// delimiters and the per-line ` * ` gutter, drops the `@remarks`/`@example`
+// markers (keeping their bodies), and entity-encodes every prose and inline-code
+// run while leaving fenced `@example` code verbatim for Markdown to render.
+export function jsdocToMarkdown(block: string): string {
+  const lines = block
+    .replace(/^\s*\/\*\*+/, "")
+    .replace(/\*\/\s*$/, "")
+    .split("\n")
+    .map((line) => line.replace(/^\s*\*\s?/, ""));
+
+  const blocks: string[] = [];
+  let paragraph: string[] = [];
+  let fence: string[] | null = null;
+
+  const flush = () => {
+    if (paragraph.length > 0) {
+      blocks.push(encodeProse(paragraph.join("\n")));
+      paragraph = [];
+    }
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (fence) {
+      fence.push(line);
+      if (trimmed === "```") {
+        blocks.push(fence.join("\n"));
+        fence = null;
+      }
+      continue;
+    }
+    if (trimmed.startsWith("```")) {
+      flush();
+      fence = [line];
+      continue;
+    }
+    if (trimmed === "") {
+      flush();
+      continue;
+    }
+    if (trimmed.startsWith("@remarks") || trimmed.startsWith("@example")) {
+      flush();
+      const body = trimmed.replace(/^@\w+\s*/, "");
+      if (body) paragraph.push(body);
+      continue;
+    }
+    paragraph.push(line);
+  }
+  flush();
+  if (fence) blocks.push(fence.join("\n"));
+  return blocks.join("\n\n");
+}
+
+// The page brief is the first sentence of the converted summary: the first
+// paragraph (soft-wrapped lines rejoined with spaces) up to the first sentence
+// terminator, matching the JSDoc convention that the opening sentence is the
+// summary.
+function firstSentence(markdown: string): string {
+  const firstParagraph = (markdown.split("\n\n")[0] ?? "").replace(/\n/g, " ").trim();
+  const match = firstParagraph.match(/^([\s\S]*?\.)(?:\s|$)/);
+  return (match ? (match[1] as string) : firstParagraph).trim();
+}
+
+// The `/** … */` block immediately above the interface declaration at
+// `interfaceStart`, or `""` when none precedes it. A `declare const …Brand`
+// line above the JSDoc (as for `Hash`/`Opaque`) sits before the block's `/**`,
+// so it is never swept in.
+function precedingJsdoc(source: string, interfaceStart: number): string {
+  const before = source.slice(0, interfaceStart).replace(/\s+$/, "");
+  if (!before.endsWith("*/")) return "";
+  const open = before.lastIndexOf("/**");
+  return open < 0 ? "" : before.slice(open);
+}
 
 interface RawMember {
   name: string;
@@ -154,7 +207,7 @@ function parseProperty(member: RawMember): ApiPropertyShape {
   };
 }
 
-function buildPage(name: string, members: RawMember[]): ApiPage {
+function buildPage(name: string, members: RawMember[], jsdoc: string): ApiPage {
   const functions: ApiFunction[] = [];
   const properties: ApiPropertyShape[] = [];
   for (const member of members) {
@@ -162,8 +215,8 @@ function buildPage(name: string, members: RawMember[]): ApiPage {
       functions.push(...parseOperatorMethod(member.name, member.rhs));
     else properties.push(parseProperty(member));
   }
-  const brief = TYPE_BRIEFS[name] ?? "";
-  const description = TYPE_DESCRIPTIONS[name] ?? "";
+  const description = jsdoc ? jsdocToMarkdown(jsdoc) : "";
+  const brief = description ? firstSentence(description) : "";
   const module: ApiModule = {
     namespace: name,
     brief,
@@ -198,7 +251,8 @@ export function parseGlobalTypes(source: string): ApiPage[] {
   for (const match of source.matchAll(INTERFACE_RE)) {
     const name = match[1] as string;
     if (!(VALUE_TYPE_NAMES as readonly string[]).includes(name)) continue;
-    pages.push(buildPage(name, parseMembers(match[2] as string)));
+    const jsdoc = precedingJsdoc(source, match.index ?? 0);
+    pages.push(buildPage(name, parseMembers(match[2] as string), jsdoc));
   }
   return pages;
 }
