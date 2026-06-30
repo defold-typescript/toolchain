@@ -28,7 +28,7 @@ If `package.json` already exists, the command preserves its existing fields and 
 
 - `@defold-typescript/types` — pinned to the CLI's own published version (the packages release in lockstep); type-only, and feeds the editor the ambient Defold API.
 - `@defold-typescript/cli` — the same version pin, so `build`/`watch` run in lockstep with those types.
-- `@defold-typescript/tstl-plugin` — the TSTL language-service plugin wired into `tsconfig.json` for live transpile diagnostics.
+- `@defold-typescript/tstl-plugin` — the [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) language-service plugin wired into `tsconfig.json` for live transpile diagnostics.
 - `@biomejs/biome` — lint and format.
 - `@types/bun` — resolves the Bun and Node globals the `.vscode/defold-debug.ts` launcher uses; kept out of the `src/` compile by the tsconfig `types` pin.
 

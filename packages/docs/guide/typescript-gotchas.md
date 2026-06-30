@@ -138,7 +138,7 @@ function describe(count: number, label: string): string {
 
 **Typed alternative.** Test the value you actually mean. Use `if (count > 0)`, `if (label !== "")`, or `if (x !== undefined)` instead of relying on truthiness. An explicit comparison transpiles to the same comparison in Lua and means the same thing in both languages.
 
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `transpile(...)` of an `if (x)` guard and asserts the committed Lua is `if x then` — no coercion inserted. If TSTL ever started wrapping the condition in a JS-truthiness helper, the snapshot would change and the gate would fail.
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `transpile(...)` of an `if (x)` guard and asserts the committed Lua is `if x then` — no coercion inserted. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever started wrapping the condition in a JS-truthiness helper, the snapshot would change and the gate would fail.
 
 ## `typeof` cannot narrow engine values — they are Lua `userdata`
 
@@ -165,7 +165,7 @@ function asNode(x: unknown): unknown {
 
 ```ts
 on_message(self, message_id, message) {
-  if (message_id === "contact_point_response") {  // never true at runtime
+  if (message_id == "contact_point_response") {  // never true at runtime
     // ...
   }
 }
@@ -179,7 +179,7 @@ on_message(self, message_id, message) {
 const msg_contact_point_response = hash("contact_point_response");
 
 on_message(self, message_id, message) {
-  if (message_id === msg_contact_point_response) {
+  if (message_id == msg_contact_point_response) {
     const contact = message as unknown as ContactPoint;  // handler payload is an untyped record
     // ...
   }
@@ -192,17 +192,17 @@ The handler's `message` is an untyped `Record<string | number, unknown>` — cas
 
 ## `window.set_listener` hands `event` and `data` as separate params
 
-**Symptom.** A `window.set_listener` callback reads the resize dimensions off `data`, but `data.width` does not type-check (or is `unknown`) even after checking `event === window.WINDOW_EVENT_RESIZED`:
+**Symptom.** A `window.set_listener` callback reads the resize dimensions off `data`, but `data.width` does not type-check (or is `unknown`) even after checking `event == window.WINDOW_EVENT_RESIZED`:
 
 ```ts
 window.set_listener((self, event, data) => {
-  if (event === window.WINDOW_EVENT_RESIZED) {
+  if (event == window.WINDOW_EVENT_RESIZED) {
     print(data.width, data.height);  // data stays a record — width/height not known
   }
 });
 ```
 
-**Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event === …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ===` narrowing) and `data` as a bare `Record<string | number, unknown>` (only a resize carries fields, so the record is the honest default).
+**Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event == …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ==` narrowing) and `data` as a bare `Record<string | number, unknown>` (only a resize carries fields, so the record is the honest default).
 
 **Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](script-lifecycle.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
 
@@ -232,7 +232,7 @@ function present(x: unknown): boolean {
 
 **Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
 
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if TSTL ever distinguished them, the gate would fail.
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished them, the gate would fail.
 
 ## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
 
@@ -250,7 +250,7 @@ function isEmpty(cell: number): boolean {
 
 **Typed alternative.** The scaffolded `biome.json` ships with `noDoubleEquals` off precisely because the operators are identical in the Lua output, so use whichever reads best — `===` is no longer enforced for consumers. (Our repo keeps the rule on as house style; its `== null` exemption also preserves one genuinely useful loose form — `x == null` narrows out both `null` and `undefined` in TypeScript's type-checker, a *compile-time* distinction even though the emitted Lua is identical.) The real equality footgun is never `==` versus `===`; it is `if (cell)`, which is truthy for `0` once it runs as Lua.
 
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` transpiles `cell === 0` and `cell == 0` in one snippet and asserts both lower to the same `cell == 0` — the loose form gets no coercion helper. If TSTL ever started coercing `==`, the two lines would diverge and the gate would fail.
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` transpiles `cell === 0` and `cell == 0` in one snippet and asserts both lower to the same `cell == 0` — the loose form gets no coercion helper. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever started coercing `==`, the two lines would diverge and the gate would fail.
 
 ## `as` is a compile-time assertion, not a runtime check
 
@@ -391,7 +391,7 @@ These are not ambient globals: each script is an isolated Lua chunk with no shar
 
 **ts-defold contrast.** ts-defold ships no `setTimeout` polyfill of its own — its only `settimeout` is LuaSocket's per-socket I/O timeout method, not a scheduler. The `@defold-typescript/types/timers` module is specific to this toolchain.
 
-**How we pin this in the type tests.** `packages/transpiler/src/transpile.test.ts` transpiles an `async`/`await` sample and asserts the lowering (`__TS__AsyncAwaiter` for the function, `__TS__Await` for the await) with zero diagnostics, and that the Promise runtime (`__TS__Promise`) is present in the emitted `lualib_bundle`. If TSTL changed the async lowering or stopped bundling the Promise helpers, the assertions would fail.
+**How we pin this in the type tests.** `packages/transpiler/src/transpile.test.ts` transpiles an `async`/`await` sample and asserts the lowering (`__TS__AsyncAwaiter` for the function, `__TS__Await` for the await) with zero diagnostics, and that the Promise runtime (`__TS__Promise`) is present in the emitted `lualib_bundle`. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) changed the async lowering or stopped bundling the Promise helpers, the assertions would fail.
 
 ## URL addressing: same-world objects are relative, `socket:` crosses worlds
 

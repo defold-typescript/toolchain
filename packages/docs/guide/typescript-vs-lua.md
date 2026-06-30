@@ -15,27 +15,31 @@ cheat-sheet depth and links down.
 
 ## Syntax at a glance
 
-| Concept | Lua | TypeScript |
-| --- | --- | --- |
-| Line comment | `-- note` | `// note` |
-| Block comment | `--[[ … ]]` | `/* … */` |
-| Bind a local | `local x = 1` | `const x = 1` (never reassigned), `let x = 1` (reassigned) |
-| Not equal | `a ~= b` | `a !== b` |
-| Equal | `a == b` | `a === b` or `a == b` — identical Lua (see the [gotchas page](./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard)) |
-| Logical and / or / not | `and` / `or` / `not` | `&&` / `\|\|` / `!` |
-| String join | `"a" .. b` | `"a" + b`, or a template literal `` `a${b}` `` |
-| Length | `#t` | `t.length` |
-| Block delimiters | `then … end`, `do … end` | `{ … }` |
-| Absence | `nil` | `null` and `undefined` (both lower to `nil` — see the gotchas page) |
-| Index base | 1-based: `t[1]` | 0-based: `arr[0]` |
+| Concept                | Lua                      | TypeScript                                                                                                                                                            |
+| ---------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line comment           | `-- note`                | `// note`                                                                                                                                                             |
+| Block comment          | `--[[ … ]]`              | `/* … */`                                                                                                                                                             |
+| Bind a local           | `local x = 1`            | `const x = 1` (never reassigned), `let x = 1` (reassigned)                                                                                                            |
+| Not equal              | `a ~= b`                 | `a != b` or `a !== b` — identical Lua (see the [gotchas page](./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard)) |
+| Equal                  | `a == b`                 | `a == b` or `a === b` — identical Lua (see the [gotchas page](./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard)) |
+| Logical and / or / not | `and` / `or` / `not`     | `&&` / `\|\|` / `!`                                                                                                                                                   |
+| String join            | `"a" .. b`               | `"a" + b`, or a template literal `` `a${b}` ``                                                                                                                        |
+| Length                 | `#t`                     | `t.length`                                                                                                                                                            |
+| Block delimiters       | `then … end`, `do … end` | `{ … }`                                                                                                                                                               |
+| Absence                | `nil`                    | `null` and `undefined` (both lower to `nil` — see the gotchas page)                                                                                                   |
+| Index base             | 1-based: `t[1]`          | 0-based: `arr[0]`                                                                                                                                                     |
 
 Two things to internalise before the rest of the page:
 
-- **Equality is strict.** Write `===` / `!==`, not `==` / `!=`. The double form
-  exists in TypeScript but performs JavaScript coercion and is a lint error in
-  the scaffolded project. `===` is value equality for primitives and reference
-  equality for objects — the same split Lua draws between numbers/strings and
-  tables.
+- **Equality has no loose/strict split here.** `==` / `!=` and `===` / `!==`
+  compile to the *same* non-coercing Lua `==` / `~=`, so JavaScript's
+  coercion — the thing `===` guards against — never happens in the output. The
+  scaffolded `biome.json` ships `noDoubleEquals` off, so neither form lints; use
+  whichever reads best — the worked examples here (such as the Tetris build) use
+  `==` / `!=` to mirror Lua's `==` / `~=`. Both are value equality for primitives
+  and reference equality for objects — the same split Lua draws between
+  numbers/strings and tables. The one real equality trap is `if (cell)`
+  truthiness, since `0` is truthy in Lua — see the [gotchas page](./typescript-gotchas.md#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard).
 - **Indexing flips from 1 to 0.** This is the single biggest porting bug. A Lua
   `for i = 1, #t` loop becomes a `for (let i = 0; i < arr.length; i++)` loop, and
   every literal index shifts down by one. Prefer `for…of` (below) so you never
@@ -47,19 +51,19 @@ Lua has one container — the `table` — used for records, arrays, and dictiona
 alike. TypeScript splits that one type into three, each with its own syntax and
 methods. Pick the one that matches how you actually use the data:
 
-| Lua `table` used as… | TypeScript | Notes |
-| --- | --- | --- |
-| Record / struct | object literal `{ x: 1, y: 2 }` | fixed, named string keys |
-| Record with a computed key | object literal `{ [graphics.BUFFER_TYPE_COLOR0_BIT]: params }` | bracketed key from an expression — Lua's `[expr] = v` (e.g. `render.render_target` option tables keyed by engine enum constants) |
-| Sequence / list | array `[1, 2, 3]` | 0-based; `arr.length`, `arr.push(x)` |
-| Dictionary with arbitrary keys | `Map` | `new Map()`, `.set(k, v)`, `.get(k)`; non-string keys |
+| Lua `table` used as…           | TypeScript                                                     | Notes                                                                                                                            |
+| ------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Record / struct                | object literal `{ x: 1, y: 2 }`                                | fixed, named string keys                                                                                                         |
+| Record with a computed key     | object literal `{ [graphics.BUFFER_TYPE_COLOR0_BIT]: params }` | bracketed key from an expression — Lua's `[expr] = v` (e.g. `render.render_target` option tables keyed by engine enum constants) |
+| Sequence / list                | array `[1, 2, 3]`                                              | 0-based; `arr.length`, `arr.push(x)`                                                                                             |
+| Dictionary with arbitrary keys | `Map`                                                          | `new Map()`, `.set(k, v)`, `.get(k)`; non-string keys                                                                            |
 
 Iteration translates the same way:
 
-| Lua | TypeScript |
-| --- | --- |
-| `for _, v in ipairs(t) do` | `for (const v of arr)` |
-| `for k, v in pairs(t) do` | `for (const [k, v] of Object.entries(obj))` |
+| Lua                         | TypeScript                                       |
+| --------------------------- | ------------------------------------------------ |
+| `for _, v in ipairs(t) do`  | `for (const v of arr)`                           |
+| `for k, v in pairs(t) do`   | `for (const [k, v] of Object.entries(obj))`      |
 | `for k, v in pairs(map) do` | `for (const [k, v] of map)` (or `map.entries()`) |
 
 Do **not** use `for…in` to walk an array — TypeScriptToLua rejects it because
@@ -83,11 +87,11 @@ Lua wires files together with `require` and a returned table. TypeScript uses
 module system — an `import` becomes a `require`, and your `export`s become the
 module's returned table.
 
-| Lua | TypeScript |
-| --- | --- |
-| `local M = {}` … `return M` | `export function f() {}`, `export const C = …` |
-| `local foo = require("foo")` | `import { f, C } from "./foo"` |
-| `local foo = require("foo")` (whole table) | `import * as foo from "./foo"` |
+| Lua                                        | TypeScript                                     |
+| ------------------------------------------ | ---------------------------------------------- |
+| `local M = {}` … `return M`                | `export function f() {}`, `export const C = …` |
+| `local foo = require("foo")`               | `import { f, C } from "./foo"`                 |
+| `local foo = require("foo")` (whole table) | `import * as foo from "./foo"`                 |
 
 Use **relative** specifiers (`"./foo"`, `"../lib/util"`) for your own files under
 `src/`. Engine APIs are different: the namespaces `go`, `msg`, `vmath`, `sprite`,
@@ -120,15 +124,15 @@ you write idiomatic TypeScript — array methods, string methods, `Math`, templa
 literals — the transpiler emits the matching Lua via its runtime library. So the
 idiomatic move is to use the TypeScript form, not to call the Lua global.
 
-| Lua | Idiomatic TypeScript |
-| --- | --- |
-| `table.insert(t, x)` | `arr.push(x)` |
-| `#t` | `arr.length` |
-| `string.format("%d", n)` | template literal `` `${n}` `` |
-| `tostring(x)` | `` `${x}` `` or `String(x)` |
-| `tonumber(s)` | `Number(s)` |
+| Lua                            | Idiomatic TypeScript          |
+| ------------------------------ | ----------------------------- |
+| `table.insert(t, x)`           | `arr.push(x)`                 |
+| `#t`                           | `arr.length`                  |
+| `string.format("%d", n)`       | template literal `` `${n}` `` |
+| `tostring(x)`                  | `` `${x}` `` or `String(x)`   |
+| `tonumber(s)`                  | `Number(s)`                   |
 | `string.sub`, `string.find`, … | `str.slice`, `str.indexOf`, … |
-| `math.abs`, `math.floor`, … | `Math.abs`, `Math.floor`, … |
+| `math.abs`, `math.floor`, …    | `Math.abs`, `Math.floor`, …   |
 
 A caveat worth knowing: `Array.prototype.sort` lowers to Lua's `table.sort`,
 which is **not stable**, unlike JavaScript's guaranteed-stable sort. If element
@@ -172,10 +176,10 @@ const roll = math.random(1, 6); // integer in [1, 6]
 ```
 
 `Math.random()` and `math.random(m, n)` are not interchangeable. `Math.random()`
-returns a `[0, 1)` float (TSTL lowers it to a Lua runtime helper) and cannot be
-seeded; `math.random(m, n)` returns an integer in `[m, n]` from the seedable
-engine RNG. Use the Lua form whenever you need a reproducible or integer-ranged
-result.
+returns a `[0, 1)` float ([TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
+lowers it to a Lua runtime helper) and cannot be seeded; `math.random(m, n)` returns
+an integer in `[m, n]` from the seedable engine RNG. Use the Lua form whenever you
+need a reproducible or integer-ranged result.
 
 The transpiler targets **Lua 5.1** to match Defold's runtime (LuaJIT on native and
 desktop, a 5.1 VM on HTML5). That keeps the emitted code clear of 5.4-only

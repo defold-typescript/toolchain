@@ -8,8 +8,14 @@
  * fallback font and reflowed when the web font finally loaded (a shift on
  * every navigation).
  */
-@import "@fontsource-variable/inter/index.css";
-@import "@fontsource-variable/jetbrains-mono/index.css";
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow/700.css";
+@import "@fontsource/ubuntu/400.css";
+@import "@fontsource/ubuntu/500.css";
+@import "@fontsource/ubuntu/700.css";
+@import "@fontsource-variable/spline-sans-mono/index.css";
 
 /*
  * Metric-matched fallback faces. `font-display: swap` paints the local
@@ -21,19 +27,27 @@
  * (web-font xWidthAvg / fallback xWidthAvg, then ascent ÷ (em × size-adjust)).
  */
 @font-face {
-  font-family: "Inter Fallback";
+  font-family: "Barlow Fallback";
   src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
-  size-adjust: 107.3%;
-  ascent-override: 90.28%;
-  descent-override: 22.48%;
+  size-adjust: 96.68%;
+  ascent-override: 103.43%;
+  descent-override: 20.69%;
   line-gap-override: 0%;
 }
 @font-face {
-  font-family: "JetBrains Mono Fallback";
+  font-family: "Ubuntu Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
+  size-adjust: 102.06%;
+  ascent-override: 91.32%;
+  descent-override: 18.52%;
+  line-gap-override: 2.74%;
+}
+@font-face {
+  font-family: "Spline Sans Mono Fallback";
   src: local("Courier New"), local("Courier");
   size-adjust: 100%;
-  ascent-override: 102%;
-  descent-override: 30%;
+  ascent-override: 96.37%;
+  descent-override: 23.65%;
   line-gap-override: 0%;
 }
 
@@ -48,9 +62,11 @@
  */
 @theme {
   --font-sans:
-    "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+    "Barlow", "Barlow Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-heading:
+    "Ubuntu", "Ubuntu Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace,
+    "Spline Sans Mono Variable", "Spline Sans Mono Fallback", ui-monospace,
     SFMono-Regular, Menlo, monospace;
 
   --color-bg: #ffffff;
@@ -195,6 +211,10 @@
   .prose ul + p,
   .prose ol + p {
     margin-top: 1.1em;
+  }
+
+  .prose :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-heading);
   }
 
   .prose h1 {

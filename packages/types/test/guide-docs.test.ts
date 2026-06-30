@@ -934,15 +934,14 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(body).not.toContain("**Max Nodes** is at least `600`");
   });
 
-  test("step 5 closing parenthetical points to the Full Script for omitted helpers", async () => {
+  test("step 5 walks the render and lifecycle helpers inline and still ships a Full Script", async () => {
     const body = await readGuide("tetris-tutorial.md");
-    const section = markdownSection(body, "## 05", "\n**`BoardSelf`**");
+    const section = markdownSection(body, "## 05", "## 06");
     expect(section).toContain("Full Script");
+    for (const heading of ["**`paint`**", "**`postHud`**", "**`redraw`**", "**The lifecycle**"]) {
+      expect(section).toContain(heading);
+    }
     expect(section).toContain("`init`");
-    expect(section).toContain("`paint`");
-    expect(section).toContain("`postHud`");
-    expect(section).toContain("`redraw`");
-    expect(section).not.toContain("which the overview above already introduced");
   });
 
   test("state tiers note acknowledges per-module state", async () => {
