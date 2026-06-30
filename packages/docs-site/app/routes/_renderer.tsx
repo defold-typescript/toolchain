@@ -22,7 +22,7 @@ declare module "hono" {
     // biome-ignore lint/style/useShorthandFunctionType: interface merging requires the interface form
     (
       content: string | Promise<string>,
-      props?: { title?: string; headings?: Heading[]; contentClass?: string; },
+      props?: { title?: string; headings?: Heading[]; contentClass?: string },
     ): Response | Promise<Response>;
   }
 }
@@ -147,7 +147,7 @@ type ViteManifest = Record<string, ViteManifestEntry>;
  * build from leaking hashed links into the dev server.
  */
 const CLIENT_MANIFEST = import.meta.env.PROD
-  ? import.meta.glob<{ default: ViteManifest; }>("/dist/.vite/manifest.json", { eager: true })
+  ? import.meta.glob<{ default: ViteManifest }>("/dist/.vite/manifest.json", { eager: true })
   : {};
 
 /**
@@ -161,7 +161,7 @@ const CLIENT_MANIFEST = import.meta.env.PROD
  * preloading the Latin font subsets makes the full stylesheet and font faces
  * present at first paint, so navigation no longer flashes.
  */
-function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: string; } {
+function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: string } {
   for (const mod of Object.values(CLIENT_MANIFEST)) {
     const manifest = mod.default;
     if (!manifest) continue;
@@ -177,7 +177,7 @@ function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: stri
     // honox's <Script> resolves the hashed entry but does not apply the deploy
     // base (the server bundle never sees Vite's base), so under a subpath the
     // client script would 404. Emit a base-aware tag from the manifest instead.
-    const result: { stylesheets: string[]; fonts: string[]; script?: string; } = {
+    const result: { stylesheets: string[]; fonts: string[]; script?: string } = {
       stylesheets,
       fonts,
     };
@@ -420,7 +420,7 @@ function GithubLink() {
  * tooltips work when it is open. The `<summary>` carries the "On this page"
  * label, so the embedded outline renders with `showHeading={false}`.
  */
-function InlineToc({ headings }: { headings: Heading[]; }) {
+function InlineToc({ headings }: { headings: Heading[] }) {
   return (
     <details
       data-testid="toc-inline"
@@ -448,7 +448,7 @@ function InlineToc({ headings }: { headings: Heading[]; }) {
   );
 }
 
-function CategoryLink({ category, active }: { category: NavCategory; active: boolean; }) {
+function CategoryLink({ category, active }: { category: NavCategory; active: boolean }) {
   const href = category.links[0]?.route ?? category.links[0]?.children?.[0]?.route ?? "/";
   return (
     <a
@@ -464,7 +464,7 @@ function CategoryLink({ category, active }: { category: NavCategory; active: boo
   );
 }
 
-function SidebarNav({ category, path }: { category: NavCategory | undefined; path: string; }) {
+function SidebarNav({ category, path }: { category: NavCategory | undefined; path: string }) {
   if (!category) return null;
   return (
     <nav aria-label={`${category.label} navigation`}>
@@ -497,7 +497,7 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
   );
 }
 
-function SidebarLink({ link, active }: { link: NavLink; active: boolean; }) {
+function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
   if (!link.route) return null;
   return (
     <a
