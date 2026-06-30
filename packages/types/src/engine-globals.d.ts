@@ -15,17 +15,23 @@ declare global {
   /** Pretty-print any value to the console for debugging. */
   function pprint(v: unknown): void;
   /**
-   * A nominal handle to an engine value you may hold and pass back to the API
-   * but must never inspect or construct — a Defold `node`, `texture`,
-   * `render_target`, `userdata`, etc. The `Name` parameter mints a distinct,
-   * mutually-incompatible brand per kind (e.g. `Opaque<"node">`), so structural
-   * typing can't silently swap one handle for another and a plain object can't
-   * stand in for either. The brand is a phantom `unique symbol` property that
-   * exists only in the type system and is erased at transpile; because the symbol
-   * is not exported, consumer code cannot fabricate one — the engine API is the
-   * only source. Contrast with a `LuaTable` alias, which says the opposite:
-   * "inspect freely, the shape just isn't modeled." See {@link Core.Opaque} for
-   * the canonical explanation.
+   * A typed handle to a resource the engine owns — a GUI node, a texture, a
+   * render target, a physics body, a socket, and so on. You get one back from an
+   * engine function, keep it in a variable, and pass it to the functions that
+   * act on that resource; you never inspect or construct one yourself.
+   *
+   * Each kind of handle is its own brand, so `Opaque<"node">` and
+   * `Opaque<"texture">` are different types and the compiler rejects passing one
+   * where the other is expected. The brand is a phantom `unique symbol` property
+   * that lives only in the type system and is erased at transpile; because the
+   * symbol is not exported, consumer code cannot fabricate one. The kinds
+   * modeled: `node`, `texture`, `render_target`, `constant`, `constant_buffer`,
+   * `resource`, `buffer`, `bufferstream`, `client`, `server`, `master`,
+   * `connected`, `unconnected`, `b2Body`, `b2World`, `userdata`. You obtain them
+   * from the engine, e.g. `gui.get_node("id")`, `render.render_target(...)`,
+   * `render.constant_buffer()`, `resource.load_buffer(path)`, `b2d.get_world()`,
+   * or `socket.tcp()`. See {@link Core.Opaque} for the full explanation, the per
+   * -kind obtain examples, and the contrast with a `LuaTable` alias.
    */
   type Opaque<Name extends string> = Core.Opaque<Name>;
   /** A message-passing address with `socket`, `path`, and `fragment`; see {@link Core.Url}. */
