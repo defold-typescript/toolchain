@@ -89,12 +89,13 @@ export interface Matrix4 {
 
 declare const HashBrand: unique symbol;
 /**
- * A nominal, branded handle to a *hashed name* — the identifier Defold uses in
- * place of a string for game-object and component ids, resource paths,
- * input-action names, material/animation/constant names, and the `socket`,
- * `path`, and `fragment` of every {@link Url}. You obtain one from the global
- * `hash(name)` function (or receive it back from the engine) and pass it
- * straight to the API; you never inspect or assemble its bits by hand.
+ * An opaque, branded handle to a *hashed name*: hold it and pass it back to the
+ * engine API, but never inspect or construct it. Defold uses it in place of a
+ * string for game-object and component ids, resource paths, input-action names,
+ * material/animation/constant names, and the `socket`, `path`, and `fragment` of
+ * every {@link Url}; you obtain one from the global `hash(name)` function (or
+ * receive it back from the engine) and pass it straight to the API, never
+ * assembling its bits by hand.
  *
  * @remarks
  * The brand is a phantom `unique symbol` property (`[HashBrand]: "Hash"`) that
@@ -117,10 +118,11 @@ export interface Hash {
 
 declare const OpaqueBrand: unique symbol;
 /**
- * A typed handle to a resource the engine owns and manages — a GUI node, a
- * texture, a render target, a physics body, a socket, and so on. You get one
- * back from an engine function, keep it in a variable, and pass it to the other
- * functions that act on that resource. Treat it as an opaque ticket: meaningful
+ * A nominal, branded handle to a value the engine owns and manages — a GUI node,
+ * a texture, a render target, a physics body, a socket, and so on: hold it and
+ * pass it back to the API, but never inspect or construct it. You get one back
+ * from an engine function, keep it in a variable, and pass it to the other
+ * functions that act on that resource; treat it as an opaque ticket, meaningful
  * to the engine, not a value you read or assemble yourself.
  *
  * @remarks
