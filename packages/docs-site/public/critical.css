@@ -59,6 +59,14 @@ header.topbar-critical .logo-mark {
 .prose p + p {
   margin-top: 1.1em;
 }
+/* A paragraph after a list: `.prose p { margin: 0 }` zeroes its top margin and
+   `.prose p + p` only matches a paragraph after a paragraph, so a paragraph
+   following a list (which carries `margin: 0`) would butt against the last
+   bullet. Restore the rhythm. */
+.prose ul + p,
+.prose ol + p {
+  margin-top: 1.1em;
+}
 .prose h1 {
   font-size: 2rem;
   line-height: 1.2;

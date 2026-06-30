@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { htmlToDocText } from "@defold-typescript/types";
 import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { jsdocToMarkdown, parseGlobalTypes } from "./global-types";
 import { buildSymbolIndex } from "./symbol-index";
@@ -171,18 +170,39 @@ describe("jsdocToMarkdown", () => {
     expect(jsdocToMarkdown("/**\n * See {@link Url} here.\n */")).toBe("See `Url` here.");
   });
 
-  test("entity-encodes prose AND inline-code angle brackets so they survive htmlToDocText", () => {
-    // The shared render path runs `htmlToDocText` over the description, which
-    // strips any `<…>` it reads as a tag. Encoding must therefore cover inline
-    // code too, not just prose — a raw `Opaque<"node">` would be eaten. (The
-    // plan's draft test-5 wanted inline code left untouched; that is impossible
-    // given the shared htmlToDocText, so this asserts the working contract.)
-    const prose = jsdocToMarkdown("/**\n * Holds when a < b is true.\n */");
-    expect(prose).toBe("Holds when a &lt; b is true.");
+  test("leaves prose and inline-code angle brackets RAW (no entity-encoding)", () => {
+    // The derived Markdown is rendered directly by markdown-it, not sanitized
+    // through `htmlToDocText`, so `<`/`>` stay literal — markdown-it escapes them
+    // per its own rules (code spans render `<` verbatim).
+    expect(jsdocToMarkdown("/**\n * Holds when a < b is true.\n */")).toBe(
+      "Holds when a < b is true.",
+    );
+    expect(jsdocToMarkdown('/**\n * Keeps `Opaque<"node">` apart.\n */')).toBe(
+      'Keeps `Opaque<"node">` apart.',
+    );
+  });
 
-    const inline = jsdocToMarkdown('/**\n * Keeps `Opaque<"node">` apart.\n */');
-    expect(inline).toBe('Keeps `Opaque&lt;"node"&gt;` apart.');
-    expect(htmlToDocText(inline)).toContain('Opaque<"node">');
+  test("keeps a @remarks bullet list separated from a following @example by a blank line", () => {
+    // Locks the list -> paragraph spacing: each tag body becomes its own
+    // Markdown block joined by a blank line, so markdown-it renders the list and
+    // the example caption as distinct blocks instead of one run-on.
+    const md = jsdocToMarkdown(
+      [
+        "/**",
+        " * Summary.",
+        " *",
+        " * @remarks",
+        " * Kinds:",
+        " * - node",
+        " * - texture",
+        " *",
+        " * @example",
+        " * After the list.",
+        " */",
+      ].join("\n"),
+    );
+    expect(md).toContain("Kinds:\n- node\n- texture");
+    expect(md).toContain("- texture\n\nAfter the list.");
   });
 });
 
@@ -247,25 +267,29 @@ describe("parseGlobalTypes", () => {
     expect(hash.brief.toLowerCase()).toContain("brand");
   });
 
-  test("Hash carries a deep multi-paragraph description", () => {
-    const rendered = htmlToDocText(pageNamed("Hash").module.description);
-    expect(rendered.length).toBeGreaterThan(300);
-    expect(rendered).toContain("\n\n");
-    expect(rendered).toContain("hash(name)");
-    expect(rendered).toContain("unique symbol");
-    expect(rendered.toLowerCase()).toContain("one-way");
+  test("Hash carries a deep multi-paragraph Markdown description", () => {
+    // The description is raw Markdown rendered directly by markdown-it — assert
+    // on it as-is, not through the HTML-oriented htmlToDocText.
+    const md = pageNamed("Hash").module.description;
+    expect(md.length).toBeGreaterThan(300);
+    expect(md).toContain("\n\n");
+    expect(md).toContain("hash(name)");
+    expect(md).toContain("unique symbol");
+    expect(md.toLowerCase()).toContain("one-way");
   });
 
-  test("Opaque's description keeps its generic notation through htmlToDocText", () => {
-    const rendered = htmlToDocText(pageNamed("Opaque").module.description);
-    expect(rendered.length).toBeGreaterThan(300);
-    expect(rendered).toContain("\n\n");
-    // The entity-encoded `Opaque&lt;"node"&gt;` decodes back to angle brackets
-    // instead of being stripped as a tag.
-    expect(rendered).toContain('Opaque<"node">');
-    expect(rendered).toContain('Opaque<"texture">');
-    expect(rendered).toContain("unique symbol");
-    expect(rendered).toContain("LuaTable");
+  test("Opaque's description keeps its generic notation and example fence verbatim", () => {
+    const md = pageNamed("Opaque").module.description;
+    expect(md.length).toBeGreaterThan(300);
+    expect(md).toContain("\n\n");
+    // Inline-code generics stay literal (markdown-it renders them verbatim).
+    expect(md).toContain('`Opaque<"node">`');
+    expect(md).toContain('`Opaque<"texture">`');
+    expect(md).toContain("unique symbol");
+    expect(md).toContain("LuaTable");
+    // The @example fence — and its `Opaque<"node">` comment — survives intact,
+    // no longer eaten by an HTML tag-strip.
+    expect(md).toContain('```ts\nconst node = gui.get_node("button"); // Opaque<"node">\n```');
   });
 
   test("Opaque is a brand-only page with no inspectable members", () => {

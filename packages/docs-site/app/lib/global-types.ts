@@ -1,4 +1,5 @@
 import type { ApiFunction, ApiModule } from "@defold-typescript/types";
+import { parse as parseComment, tokenizers } from "comment-parser";
 import type { ApiPage } from "./api-surface";
 
 // `ApiProperty` is not re-exported from the types package entry (matching
@@ -32,76 +33,39 @@ const OPERATOR_METHODS: Record<string, { op: string; unary: boolean }> = {
 
 const INTERFACE_RE = /export interface (\w+)[^{]*\{([\s\S]*?)\}/g;
 
-// Rewrite the JSDoc inline `{@link [Core.]X}` tag to Markdown inline code, then
-// entity-encode `&`/`<`/`>` so the string survives the shared render path:
-// `apiPageMarkdown` runs `htmlToDocText` over the description, which strips any
-// `<…>` it reads as a tag and decodes the entities back. Encoding must cover
-// inline code too (not only prose) — a raw `Opaque<"node">` inside backticks
-// would be eaten by the tag strip just the same.
-function encodeProse(text: string): string {
-  return text
-    .replace(/\{@link\s+(?:Core\.)?([\w.]+)\s*\}/g, "`$1`")
-    .split("&")
-    .join("&amp;")
-    .split("<")
-    .join("&lt;")
-    .split(">")
-    .join("&gt;");
+// `comment-parser` with the tag + description tokenizers (no name/type
+// extraction, so a prose tag like `@remarks The brand…` keeps its first word)
+// and `spacing: "preserve"` so list indentation and `@example` fences survive
+// verbatim.
+const COMMENT_PARSE_OPTIONS = {
+  spacing: "preserve" as const,
+  tokenizers: [tokenizers.tag(), tokenizers.description("preserve")],
+};
+
+// JSDoc's inline `{@link [Core.]X}` tag has no Markdown equivalent; render it as
+// inline code naming the target.
+function rewriteLinks(text: string): string {
+  return text.replace(/\{@link\s+(?:Core\.)?([\w.]+)\s*\}/g, "`$1`");
 }
 
-// Convert a `/** … */` JSDoc block above a value-type interface into the same
-// HTML-ish Markdown contract ref-doc descriptions use. Strips the `/**`/`*/`
-// delimiters and the per-line ` * ` gutter, drops the `@remarks`/`@example`
-// markers (keeping their bodies), and entity-encodes every prose and inline-code
-// run while leaving fenced `@example` code verbatim for Markdown to render.
+// Convert a `/** … */` JSDoc block above a value-type interface into Markdown:
+// the summary, then each `@remarks`/`@example` body as its own paragraph, marker
+// dropped. The result is already Markdown — fences, lists, and inline code stay
+// raw — and is rendered directly by the docs-site `markdown-it` pipeline (see
+// `apiPageMarkdown`), never through the HTML-oriented `htmlToDocText`.
 export function jsdocToMarkdown(block: string): string {
-  const lines = block
-    .replace(/^\s*\/\*\*+/, "")
-    .replace(/\*\/\s*$/, "")
-    .split("\n")
-    .map((line) => line.replace(/^\s*\*\s?/, ""));
+  const [parsed] = parseComment(block, COMMENT_PARSE_OPTIONS);
+  if (!parsed) return "";
 
   const blocks: string[] = [];
-  let paragraph: string[] = [];
-  let fence: string[] | null = null;
-
-  const flush = () => {
-    if (paragraph.length > 0) {
-      blocks.push(encodeProse(paragraph.join("\n")));
-      paragraph = [];
-    }
-  };
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (fence) {
-      fence.push(line);
-      if (trimmed === "```") {
-        blocks.push(fence.join("\n"));
-        fence = null;
-      }
-      continue;
-    }
-    if (trimmed.startsWith("```")) {
-      flush();
-      fence = [line];
-      continue;
-    }
-    if (trimmed === "") {
-      flush();
-      continue;
-    }
-    if (trimmed.startsWith("@remarks") || trimmed.startsWith("@example")) {
-      flush();
-      const body = trimmed.replace(/^@\w+\s*/, "");
-      if (body) paragraph.push(body);
-      continue;
-    }
-    paragraph.push(line);
+  const summary = parsed.description.trim();
+  if (summary) blocks.push(summary);
+  for (const tag of parsed.tags) {
+    if (tag.tag !== "remarks" && tag.tag !== "example") continue;
+    const body = tag.description.trim();
+    if (body) blocks.push(body);
   }
-  flush();
-  if (fence) blocks.push(fence.join("\n"));
-  return blocks.join("\n\n");
+  return rewriteLinks(blocks.join("\n\n"));
 }
 
 // The page brief is the first sentence of the converted summary: the first

@@ -22,6 +22,7 @@
     "@phosphor-icons/core": "^2.1.1",
     "@shikijs/markdown-it": "^4.2.0",
     "@shikijs/transformers": "^4.2.0",
+    "comment-parser": "^1.4.7",
     "hono": "^4.12.25",
     "honox": "^0.1.56",
     "markdown-it": "^14.2.0",
