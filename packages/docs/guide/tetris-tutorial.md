@@ -336,8 +336,6 @@ export const PIECES: Piece[] = [
 > [!WARNING]
 > This excerpt shows the array start and the `I` piece only. Continue the same pattern for the other six tetrominoes (`O`, `T`, `S`, `Z`, `J`, and `L`), or paste the complete `src/pieces.ts` from the **Full Script** disclosure below.
 
-Each `PIECES` entry is a `color` and the four precomputed rotations from `four(base)`. You author only the spawn offsets; the other three states fall out of the rotation rule. The full array appears in the **Full Script** disclosure at the end of this section.
-
 **`cellsCoveredByPiece`** — where a piece sits on the board
 
 ```ts title="src/pieces.ts (partial)" {2}
@@ -484,17 +482,73 @@ Instead of pure random it deals from a bag holding all seven pieces, refilling a
 
 ## 05 — The board script: `src/board.ts`
 
-This is the heart of the game: one GUI script that builds the grid, runs gravity, reads input, locks pieces, scores lines, and redraws every frame. We'll walk it piece by piece below; the complete `src/board.ts` is in **Full Script** at the end of this section, ready to paste. Here's how it fits together:
+This is the heart of the game. We will build the grid, run gravity, read input, lock pieces, and score lines — reusing the modules we wrote earlier. We will also **redraw every frame** — this is how games are written in most game engines, Defold included.
 
-- **State** — `init` returns a **`BoardSelf`**: the generated GUI nodes, the grid model, the active piece (index, rotation, pivot `px`/`py`), the gravity timer, and the score/level fields. TypeScript won't let `self` stay untyped, so `BoardSelf` is the shape you declare for it. `init` first posts `acquire_input_focus` to itself (`.`) — without that, no key ever reaches `on_input`. The five input names are hashed once at module scope (`hash("left")` through `hash("hard_drop")`).
-- **Gravity** — Tetris runs on a clock: every `fall` seconds the piece drops one row. In one breath: each frame `update` adds `dt` to a timer; when the timer crosses `fall`, drop one row; then redraw.
-- **Input** — `on_input` compares the pre-hashed `action_id` against the five constants. Every helper shares one rule: never move a piece until the target is legal — compute where it _would_ land, test each cell against the model, commit only if all four are free.
-- **Lock and clear** — when gravity can't move the piece down, its four cells **freeze into the board** as permanent grid values; then full rows clear and everything above drops one row.
-- **Scoring and game over** — clearing 1/2/3/4 rows at once scores the classic 40/100/300/1200 × level, and the fall speeds up as lines accumulate. A fresh spawn that can't fit means the **stack reached the ceiling** — game over.
-- **Render** — `redraw` paints the model onto the screen: each frame it lays the falling piece over the locked grid, then recolors every cell node to match. The model only ever holds locked blocks, so moving a piece never erases anything — the next frame just paints the new position.
-- **Messages** — `on_message` listens for the HUD's `hud_ready` so the board sends score updates only after the HUD exists (Step 08). You can ignore it if you skip the HUD.
+> [!TIP] For regular game objects you'll mostly use `defineScript`. However, in this game we run a **GUI script**, because Tetris is _basically_ a GUI and needs GUI-specific APIs that regular scripts don't expose. You can read more about that [here](script-lifecycle.md#api-availability-by-script-kind).
 
-Read each piece below — the state shape, then the collision checks, then the lock/line-clear path. The complete `src/board.ts` is in **Full Script** at the end, ready to paste. The lifecycle block (`init` / `update` / `on_input` / `on_message`) and the `paint` / `postHud` / `redraw` helpers live only in the Full Script at the section end.
+So, because this is a GUI board, we need a `default export` from this script; the `watch` process compiles that export into a `.ts.gui_script` Lua file. The function we export is called `defineGuiScript`:
+
+```ts title="src/board.ts (snippet)"
+export default defineGuiScript({...})
+```
+
+> [!NOTE]
+> The snippets below omit their `import` statements on purpose, to build a habit worth having.
+> To make a symbol like `defineGuiScript` available in the script, tap `Ctrl/Cmd-Space` right after the typed name
+> and pick where it should be imported from. Some symbols come from our own scripts, others from the `@defold-typescript/types` package.
+
+We'll build it top to bottom — constants and types first, then the cell builder and painter, the movement and collision helpers, the lock/score path, the per-frame render, and finally the lifecycle hooks that tie them together. The complete `src/board.ts` is in the **Full Script** disclosure at the end of this section, ready to paste.
+
+We'll begin by defining constants, hashing the action names, building the fill-color list, and deriving each border color as 45% of its fill:
+
+```ts title="src/board.ts (partial)"
+const CELL = 28; // cell pitch in pixels
+const GAP = 2; // space between cells — tune the grid look from one place
+const BORDER = 2; // thickness of the frame drawn around each filled cell
+const WINDOW_W = 400;
+const WINDOW_H = 720;
+
+// Bottom-left of the COLS×ROWS board in GUI (screen) space, centering the
+// 280×560 grid in the configured portrait window (see game.project display).
+const ORIGIN_X = (WINDOW_W - COLS * CELL) / 2;
+const ORIGIN_Y = (WINDOW_H - ROWS * CELL) / 2;
+
+const LINE_SCORE = [0, 40, 100, 300, 1200];
+
+// Input ids, hashed once at module scope.
+const LEFT = hash("left");
+const RIGHT = hash("right");
+const SOFT = hash("soft_drop");
+const ROTATE = hash("rotate");
+const HARD = hash("hard_drop");
+
+// Fill colors indexed by Cell color (1..7); index 0 is transparent (empty).
+const TINTS = [
+  vmath.vector4(0, 0, 0, 0),
+  vmath.vector4(0.18, 0.83, 0.83, 1), // I
+  vmath.vector4(0.97, 0.82, 0.22, 1), // O
+  vmath.vector4(0.69, 0.29, 0.94, 1), // T
+  vmath.vector4(0.27, 0.82, 0.38, 1), // S
+  vmath.vector4(0.94, 0.26, 0.35, 1), // Z
+  vmath.vector4(0.31, 0.48, 0.94, 1), // J
+  vmath.vector4(0.94, 0.56, 0.23, 1), // L
+];
+// A darker shade of each fill, drawn as the cell border.
+const BORDERS = TINTS.map((t) => vmath.vector4(t.x * 0.45, t.y * 0.45, t.z * 0.45, t.w));
+// Empty cells stay visible as a dim well with a faint grid line.
+const EMPTY_FILL = vmath.vector4(0.1, 0.11, 0.13, 1);
+const EMPTY_BORDER = vmath.vector4(0.18, 0.19, 0.22, 1);
+```
+
+Now we'll alias the handle type that `@defold-typescript/types` uses to keep GUI nodes distinct from other engine handles.
+
+```ts title="src/board.ts (partial)"
+type GuiNode = Opaque<"node">;
+```
+
+> [!NOTE] You can read more about the `Opaque` type in the [API Reference](/api/Opaque). For now just know that it is something we never construct ourselves —
+> the GUI functions hand it back to us. You don't have to create the alias either, but
+> it makes the code easier to type and read.
 
 **`BoardSelf`** — the shape of `self`:
 
@@ -547,6 +601,17 @@ function buildGrid(): { fills: GuiNode[][]; borders: GuiNode[][] } {
 ```
 
 It runs once in `init` and returns two `ROWS × COLS` arrays of GUI box nodes — a border box with a smaller fill box on top of it per cell. The highlighted lines are where the nodes are actually born with `gui.new_box_node`; everything else is just position math. Row `0` is the **top** of the board, so `ROWS - 1 - r` flips the row index into bottom-up screen space.
+
+**`paint`** — recolor one cell
+
+```ts title="src/board.ts (partial)"
+function paint(self: BoardSelf, r: number, c: number, value: number): void {
+  gui.set_color(self.fills[r][c], value == 0 ? EMPTY_FILL : TINTS[value]);
+  gui.set_color(self.borders[r][c], value == 0 ? EMPTY_BORDER : BORDERS[value]);
+}
+```
+
+It recolors a single cell's two nodes — the fill and its border — from that cell's `value`. A `0` paints the empty-well colors (`EMPTY_FILL`/`EMPTY_BORDER`); any `1`–`7` paints that color's `TINTS` entry with the matching darker `BORDERS` shade. The nodes never move or change size after `buildGrid`; every visible change on the board is just a recolor, and `redraw` calls this for every cell each frame.
 
 **`fits`** — would these four cells be legal?
 
@@ -627,6 +692,21 @@ function lockPiece(self: BoardSelf): void {
 
 When a piece can fall no further, this writes its color into the model grid permanently — the four falling cells become locked blocks. The `r >= 0` guard is the trap: a piece can lock with cells still above the top row (`r` negative), and writing those would index outside the grid, so they are skipped.
 
+**`postHud`** — push score and level to the HUD
+
+```ts title="src/board.ts (partial)" {6}
+function postHud(self: BoardSelf): void {
+  // Only post once the HUD has registered. A gui script can't call go.exists
+  // (go.* is .script-only), and msg.post to a missing instance errors at
+  // dispatch — so the HUD announces itself in its init (see on_message below).
+  if (self.hud) {
+    msg.post("/hud#hud", "set_hud", { score: self.score, level: self.level });
+  }
+}
+```
+
+It forwards `score` and `level` to the HUD with `msg.post`, but only when `self.hud` is `true`. The guard is the trap: a gui script can't probe a target with `go.exists` (that API is `.script`-only), and `msg.post` to a missing instance errors at dispatch — so the HUD registers itself first by posting `hud_ready` (Step 08), and the board posts only after `on_message` has flipped `self.hud`. If you skip the HUD this stays a no-op. `onLocked` calls it after every lock.
+
 **`onLocked`** — clear lines, score, spawn, check for game over
 
 ```ts title="src/board.ts (partial)" {2}
@@ -663,6 +743,86 @@ function stepDown(self: BoardSelf): void {
 ```
 
 The whole gravity rule in three lines: try to move the piece down one row, and if that worked there is nothing more to do this tick. If the move was blocked the piece has landed, so `lockPiece` freezes it and `onLocked` handles clears, scoring, and the next spawn. `update` calls this once every `fall` seconds.
+
+**`redraw`** — paint the model onto the screen every frame
+
+```ts title="src/board.ts (partial)" {9-13}
+function redraw(self: BoardSelf): void {
+  const frame: number[][] = [];
+  for (let r = 0; r < ROWS; r++) {
+    const row: number[] = [];
+    for (let c = 0; c < COLS; c++) row.push(self.grid[r][c]);
+    frame.push(row);
+  }
+  if (!self.over) {
+    const color = PIECES[self.piece].color;
+    for (const [c, r] of cellsCoveredByPiece(self.piece, self.rot, self.px, self.py)) {
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) frame[r][c] = color;
+    }
+  }
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) paint(self, r, c, frame[r][c]);
+  }
+}
+```
+
+Each frame it copies the locked `grid` into a scratch `frame`, lays the falling piece on top (the highlighted block, skipping any cell still off the board), then calls `paint` for every cell so each node's color matches. Because the model only ever holds **locked** blocks, moving a piece never erases anything — the next frame simply repaints it in its new spot. When `over` is set the falling piece is omitted, freezing the final stack on screen.
+
+**The lifecycle** — `init` / `update` / `on_input` / `on_message`
+
+Everything above is plumbing; the default export is what Defold actually calls. `defineGuiScript` registers the four GUI-script hooks, and `init`'s return value is the `BoardSelf` every helper reads through `self`.
+
+```ts title="src/board.ts (partial)"
+export default defineGuiScript({
+  init(): BoardSelf {
+    msg.post(".", "acquire_input_focus");
+    const grid = buildGrid();
+    return {
+      fills: grid.fills,
+      borders: grid.borders,
+      grid: emptyGrid(),
+      piece: nextPieceIndex(),
+      rot: 0,
+      px: 4,
+      py: 0,
+      timer: 0,
+      fall: 0.8,
+      score: 0,
+      lines: 0,
+      level: 1,
+      over: false,
+      hud: false,
+    };
+  },
+  update(self, dt) {
+    if (self.over) return;
+    self.timer += dt;
+    if (self.timer >= self.fall) {
+      self.timer = 0;
+      stepDown(self);
+    }
+    redraw(self);
+  },
+  on_input(self, action_id, action) {
+    if (self.over || !action.pressed) return;
+    if (action_id == LEFT) tryMove(self, -1, 0);
+    else if (action_id == RIGHT) tryMove(self, 1, 0);
+    else if (action_id == SOFT) tryMove(self, 0, 1);
+    else if (action_id == ROTATE) tryRotate(self);
+    else if (action_id == HARD) hardDrop(self);
+  },
+  on_message(self, message_id) {
+    // The HUD announces itself once loaded; remember it so we only post when
+    // it exists (a gui script has no go.exists).
+    if (message_id == hash("hud_ready")) self.hud = true;
+  },
+});
+```
+
+- **`init`** builds the grid nodes once, spawns the first piece, and posts `acquire_input_focus` to itself (`.`) — without that, no key ever reaches `on_input`. Its returned object is the `BoardSelf` shape from the top of the file.
+- **`update`** is the clock: every frame it adds `dt` to `timer`, and when that crosses `fall` it runs one `stepDown`; then `redraw` repaints. `if (self.over) return` freezes the game on a loss.
+- **`on_input`** ignores everything until a key is `pressed`, then matches the pre-hashed `action_id` against the five module constants and calls the matching helper — the same five names you bound in Step 02.
+- **`on_message`** waits for the HUD's `hud_ready` and flips `self.hud`, the register-then-post handshake that `postHud` depends on (Step 08).
 
 > [!MORE] Full Script — src/board.ts
 > ```ts title="src/board.ts"

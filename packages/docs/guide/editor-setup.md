@@ -34,7 +34,7 @@ You edit TypeScript, not Lua, and the build runs from the CLI — so the require
 Defold runs standard Lua 5.1 (LuaJIT), **not** Luau. If you want to read the *generated* Lua, [sumneko Lua](https://marketplace.visualstudio.com/items?itemName=sumneko.lua) (`sumneko.lua`) adds a Lua language server — optional, and no longer auto-recommended, since you author in TypeScript.
 
 > [!WARNING]
-> Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold project: it reports `Failed to load sourcemap.json` and bogus diagnostics, because it expects a Roblox/Rojo `sourcemap.json` — an artifact this toolchain never produces. The `*.ts.script.map` files next to your output are TSTL source maps, unrelated to Roblox's `sourcemap.json`.
+> Avoid the Roblox **Luau Language Server** (`johnnymorganz.luau-lsp`) in a Defold project: it reports `Failed to load sourcemap.json` and bogus diagnostics, because it expects a Roblox/Rojo `sourcemap.json` — an artifact this toolchain never produces. The `*.ts.script.map` files next to your output are [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) source maps, unrelated to Roblox's `sourcemap.json`.
 
 `init` scaffolds a `.vscode/` folder that encodes this:
 

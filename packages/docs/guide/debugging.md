@@ -50,7 +50,7 @@ The manual walkthrough below remains the fallback and documents exactly what `se
 
    This is our vendored, MIT-licensed snapshot of `ts-defold/defold-lldebugger`, hosted from this repo's releases — that is why the URL differs from the upstream docs. Then run *Project -> Fetch Libraries* in the Defold editor so the `lldebugger` Lua module is available to `require`.
 
-3. **Start the debugger from your entry script.** First create an ambient declaration at `src/lldebugger.debug.d.ts` so TypeScript and TSTL both know the module without resolving it:
+3. **Start the debugger from your entry script.** First create an ambient declaration at `src/lldebugger.debug.d.ts` so TypeScript and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) both know the module without resolving it:
 
    ```ts
    /** @noResolution */
@@ -72,7 +72,7 @@ The manual walkthrough below remains the fallback and documents exactly what `se
    // defold-typescript:setup-debug END
    ```
 
-   The `@noResolution` ambient declaration must live in a `.d.ts`, not inline in a `.ts` — under `moduleResolution: "Bundler"` an inline `declare module` augmentation that the entry script also imports fails to type-check. With the declaration in the ambient file, TypeScript leaves the module unresolved and TSTL keeps the literal path, so the emitted Lua is `require("lldebugger.debug")` followed by `lldebugger.start()`. The `is_debug` guard keeps the call inert in release builds, so the entry is safe to leave in shipped code — it only activates in a debug build with the debugger attached. `setup-debug` writes both files for you; the `BEGIN`/`END` sentinels let a re-run refresh the block if its wording changes.
+   The `@noResolution` ambient declaration must live in a `.d.ts`, not inline in a `.ts` — under `moduleResolution: "Bundler"` an inline `declare module` augmentation that the entry script also imports fails to type-check. With the declaration in the ambient file, TypeScript leaves the module unresolved and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) keeps the literal path, so the emitted Lua is `require("lldebugger.debug")` followed by `lldebugger.start()`. The `is_debug` guard keeps the call inert in release builds, so the entry is safe to leave in shipped code — it only activates in a debug build with the debugger attached. `setup-debug` writes both files for you; the `BEGIN`/`END` sentinels let a re-run refresh the block if its wording changes.
 
 ## Launching a debug session
 

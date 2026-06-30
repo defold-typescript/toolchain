@@ -84,8 +84,9 @@ const TOPBAR_HEIGHT_INIT = `(function(){try{var h=document.querySelector('[data-
  */
 const THEME_TOKENS = `
 :root {
-  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Barlow", "Barlow Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Ubuntu", "Ubuntu Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Spline Sans Mono Variable", "Spline Sans Mono Fallback", ui-monospace, SFMono-Regular, Menlo, monospace;
   --color-bg: #ffffff;
   --color-surface: #f7f7f8;
   --color-surface-2: #f0f0f2;
@@ -149,7 +150,11 @@ function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: stri
     const entry = manifest["app/client.ts"];
     const stylesheets = (entry?.css ?? []).map((file) => withBase(file));
     const fonts = Object.entries(manifest)
-      .filter(([key]) => /(?:inter|jetbrains-mono)-latin-wght-normal\.woff2$/.test(key))
+      .filter(([key]) =>
+        /(?:spline-sans-mono-latin-wght-normal|barlow-latin-400-normal|ubuntu-latin-700-normal)\.woff2$/.test(
+          key,
+        ),
+      )
       .map(([, e]) => withBase(e.file));
     // honox's <Script> resolves the hashed entry but does not apply the deploy
     // base (the server bundle never sees Vite's base), so under a subpath the

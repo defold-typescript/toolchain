@@ -34,14 +34,14 @@ tooling and configuration, not a rewrite.
 
 ## Package and tooling map
 
-| ts-defold | `@defold-typescript` equivalent |
-| --- | --- |
-| `@ts-defold/types` — Defold TypeScript definitions | `@defold-typescript/types` — ambient, type-only engine surface |
-| `@ts-defold/type-gen` — dev-dep that generates those types | type generation is internal to `@defold-typescript/types`; it is never a consumer dependency |
+| ts-defold                                                                                                               | `@defold-typescript` equivalent                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `@ts-defold/types` — Defold TypeScript definitions                                                                      | `@defold-typescript/types` — ambient, type-only engine surface                                                                      |
+| `@ts-defold/type-gen` — dev-dep that generates those types                                                              | type generation is internal to `@defold-typescript/types`; it is never a consumer dependency                                        |
 | `@ts-defold/create` — `npm init @ts-defold my-game` (resolves GitHub `tsd-template-*` templates, or a local/remote zip) | `bunx @defold-typescript/cli@latest init my-game` — built-in templates via `init my-game --template <name>` (`default` / `minimal`) |
-| template `npm run build` (compile, no watcher) | `defold-typescript build` |
-| template `npm run dev` (watch: compile + emit lua/script on save) | `defold-typescript watch` |
-| — (no first-party editor-diagnostics package verified) | `@defold-typescript/tstl-plugin` — live transpile diagnostics in the editor |
+| template `npm run build` (compile, no watcher)                                                                          | `defold-typescript build`                                                                                                           |
+| template `npm run dev` (watch: compile + emit lua/script on save)                                                       | `defold-typescript watch`                                                                                                           |
+| — (no first-party editor-diagnostics package verified)                                                                  | `@defold-typescript/tstl-plugin` — live transpile diagnostics in the editor                                                         |
 
 The full `defold-typescript` command surface is
 `init | init-agents | build | watch | wall | setup-debug | resolve | defold`
@@ -124,7 +124,8 @@ naming from the scaffold `.gitignore`; the per-kind type entrypoints from
   and [ts-defold/types](https://github.com/ts-defold/types): the
   `npm init @ts-defold <dir> [-- --template <name>]` scaffolder, the
   `tsd-template-*` GitHub discovery pattern, the template `npm run build`
-  (compile) / `npm run dev` (watch) scripts, and TSTL as the transpiler.
+  (compile) / `npm run dev` (watch) scripts, and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
+  as the transpiler.
 
 **Omitted as unverifiable here:** the exact contents of a ts-defold template's
 `tsconfig.json` (its `luaTarget`, `luaLibImport`, `outDir`, plugin list) — the

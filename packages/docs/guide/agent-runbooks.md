@@ -62,13 +62,13 @@ In a consumer project an agent can read only these; everything else (the
 generation pipeline, fixtures, monorepo planning docs) is contributor-only and
 absent from an install:
 
-| Location | What it holds | When it exists |
-| -------- | ------------- | -------------- |
-| `.defold-types/<surfaceId>/*.d.ts` | the pinned ambient engine surface (e.g. `.defold-types/defold-1.12.4/`) | after `build`; gitignored but on disk |
-| `node_modules/@defold-typescript/types/generated/*.d.ts` | namespace signatures (`go`, `vmath`, `factory`, …) | always, once installed |
-| `node_modules/@defold-typescript/types/src/` | the three factories (`lifecycle.ts`) and the narrowing guards (`message-guard.d.ts`, `message-dispatch.d.ts`, `window-event-guard.d.ts`) | always, once installed |
-| `node_modules/@defold-typescript/docs/guide/*.md` | this guide, refreshed on every install | always, once installed |
-| `packages/types/generated`, `packages/types/fixtures`, `packages/types/scripts` | generator inputs and outputs — **contributor-only** | only in a clone of this monorepo |
+| Location                                                                        | What it holds                                                                                                                            | When it exists                        |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `.defold-types/<surfaceId>/*.d.ts`                                              | the pinned ambient engine surface (e.g. `.defold-types/defold-1.12.4/`)                                                                  | after `build`; gitignored but on disk |
+| `node_modules/@defold-typescript/types/generated/*.d.ts`                        | namespace signatures (`go`, `vmath`, `factory`, …)                                                                                       | always, once installed                |
+| `node_modules/@defold-typescript/types/src/`                                    | the three factories (`lifecycle.ts`) and the narrowing guards (`message-guard.d.ts`, `message-dispatch.d.ts`, `window-event-guard.d.ts`) | always, once installed                |
+| `node_modules/@defold-typescript/docs/guide/*.md`                               | this guide, refreshed on every install                                                                                                   | always, once installed                |
+| `packages/types/generated`, `packages/types/fixtures`, `packages/types/scripts` | generator inputs and outputs — **contributor-only**                                                                                      | only in a clone of this monorepo      |
 
 The installed-guide pointer is the one the `init-agents` managed block writes:
 `node_modules/@defold-typescript/docs/guide/README.md`.
@@ -94,13 +94,13 @@ is only documented there, run the conversion loop: **locate the mechanic** in
 the Lua docs -> **find its namespace** in the generated `.d.ts` -> **confirm the
 signature** as above -> **translate the idioms** to the TypeScript surface.
 
-| Lua idiom | TypeScript surface |
-| --------- | ------------------ |
-| `function init(self) … end` | `defineScript({ init() { … } })` |
-| `obj:method(a)` | `obj.method(a)` (method form) |
-| `local x, y = f()` (multi-return) | `const [x, y] = f()` / `LuaMultiReturn` |
-| `hash("player")` | `hash("player")`, or a pre-hashed `Hash` id |
-| `msg.post("#comp", "msg", {})` | `msg.post("#comp", "msg", {})` |
+| Lua idiom                         | TypeScript surface                          |
+| --------------------------------- | ------------------------------------------- |
+| `function init(self) … end`       | `defineScript({ init() { … } })`            |
+| `obj:method(a)`                   | `obj.method(a)` (method form)               |
+| `local x, y = f()` (multi-return) | `const [x, y] = f()` / `LuaMultiReturn`     |
+| `hash("player")`                  | `hash("player")`, or a pre-hashed `Hash` id |
+| `msg.post("#comp", "msg", {})`    | `msg.post("#comp", "msg", {})`              |
 
 ### Fetch upstream on demand (gitignored, not a submodule)
 
@@ -270,10 +270,10 @@ compiled component.
 single lifecycle factory as `default` (never two in one file). The factory
 decides the compiled kind:
 
-| Source factory | Compiled artifact | Referenced by |
-| -------------- | ----------------- | ------------- |
-| `defineScript` | `<name>.ts.script` | a game object (`.go` / `.collection`) as a component |
-| `defineGuiScript` | `<name>.ts.gui_script` | a GUI scene (`.gui`), as its **Script** property |
+| Source factory       | Compiled artifact         | Referenced by                                                  |
+| -------------------- | ------------------------- | -------------------------------------------------------------- |
+| `defineScript`       | `<name>.ts.script`        | a game object (`.go` / `.collection`) as a component           |
+| `defineGuiScript`    | `<name>.ts.gui_script`    | a GUI scene (`.gui`), as its **Script** property               |
 | `defineRenderScript` | `<name>.ts.render_script` | the render pipeline (a `.render` file, set via `game.project`) |
 
 A source that calls no factory emits a plain `<name>.lua` module to `import`
@@ -328,12 +328,12 @@ demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
 `Object.keys` or spread) and `defold_typescript_timers.lua` (when timers are
 used).
 
-Who creates these: typescript-to-lua (TSTL) produces the Lua *content* in
-memory; the CLI writes the *files*, choosing the `.ts.script` / `.ts.gui_script`
-/ `.ts.render_script` / `.lua` name and location. TSTL never touches disk — that
-is why the outputs carry Defold-correct extensions instead of plain `.lua`.
-Treat the `--json` `written` array as the authoritative list of what landed; do
-not infer paths.
+Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
+produces the Lua *content* in memory; the CLI writes the *files*, choosing the
+`.ts.script` / `.ts.gui_script` / `.ts.render_script` / `.lua` name and location.
+TSTL never touches disk — that is why the outputs carry Defold-correct extensions
+instead of plain `.lua`. Treat the `--json` `written` array as the authoritative
+list of what landed; do not infer paths.
 
 **3. Attach the compiled script.** Building only produces the artifact; nothing
 runs until a scene references it as a component. Scene files (`.go`,
@@ -483,7 +483,7 @@ import { defineScript } from "@defold-typescript/types";
 
 export default defineScript({
   on_input(self, action_id) {
-    if (action_id === hash("jump")) {
+    if (action_id == hash("jump")) {
       // "#" addresses a sibling component on this same game object.
       msg.post("#animator", "play_animation", { id: hash("jump") });
     }

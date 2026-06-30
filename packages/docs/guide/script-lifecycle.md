@@ -160,7 +160,7 @@ export default defineScript({
     if (isMessage(message_id, message, "contact_point_response")) {
       // message: { position: Vector3; normal: Vector3; distance: number;
       //            other_group: Hash; own_group: Hash; ... } — no cast.
-      if (message.other_group === hash("ground")) {
+      if (message.other_group == hash("ground")) {
         go.set_position(go.get_position().add(message.normal.mul(message.distance)));
       }
     }

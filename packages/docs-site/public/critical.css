@@ -101,6 +101,9 @@ header.topbar-critical .logo-mark {
   margin: 1.4em 0 0.4em;
   color: var(--color-text);
 }
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-heading);
+}
 .prose p {
   margin: 0;
 }
