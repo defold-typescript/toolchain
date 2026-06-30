@@ -4397,6 +4397,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - c2: Vector4
 - c3: Vector4
 
+### Opaque
+
+
 ### Quaternion
 
 - mul(rhs: Quaternion): Quaternion

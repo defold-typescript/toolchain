@@ -73,6 +73,29 @@ export interface Matrix4 {
 }
 
 declare const HashBrand: unique symbol;
+/**
+ * A nominal, branded handle to a *hashed name* — the identifier Defold uses in
+ * place of a string for game-object and component ids, resource paths,
+ * input-action names, material/animation/constant names, and the `socket`,
+ * `path`, and `fragment` of every {@link Url}. You obtain one from the global
+ * `hash(name)` function (or receive it back from the engine) and pass it
+ * straight to the API; you never inspect or assemble its bits by hand.
+ *
+ * @remarks
+ * The brand is a phantom `unique symbol` property (`[HashBrand]: "Hash"`) that
+ * exists only in the type system and is erased at transpile — at runtime a
+ * `Hash` is the engine's opaque hash value, not an object carrying that key.
+ * Because the symbol is not exported, consumer code cannot fabricate a `Hash`;
+ * the only sources are `hash()` and the engine. That nominal branding is what
+ * stops a bare `string` or `number` from standing in where the API expects an
+ * already-hashed name. Many engine functions also accept a plain `string` and
+ * hash it for you, but a value already typed `Hash` is passed through as-is.
+ *
+ * Hashing is one-way: the original string cannot be recovered from a `Hash`.
+ * `hash_to_hex(h)` renders it as a hexadecimal string for logging, and `pprint`
+ * shows it as `hash: [0x…]`. Two hashes are equal exactly when they name the
+ * same thing, so a `Hash` is safe to compare, store, and use as a table key.
+ */
 export interface Hash {
   readonly [HashBrand]: "Hash";
 }
