@@ -102,18 +102,48 @@ export interface Hash {
 
 declare const OpaqueBrand: unique symbol;
 /**
- * A nominal handle to an engine value you may hold and pass back to the API but
- * must never inspect or construct — a Defold `node`, `texture`, `render_target`,
- * `userdata`, etc. The `Name` parameter mints a distinct, mutually-incompatible
- * brand per kind, so TypeScript's structural typing can't silently swap a
- * `render_target` for a `constant`, and a plain object can't stand in for either.
+ * A typed handle to a resource the engine owns and manages — a GUI node, a
+ * texture, a render target, a physics body, a socket, and so on. You get one
+ * back from an engine function, keep it in a variable, and pass it to the other
+ * functions that act on that resource. Treat it as an opaque ticket: meaningful
+ * to the engine, not a value you read or assemble yourself.
  *
  * @remarks
- * The brand is a phantom `unique symbol` property: it exists only in the type
- * system (erased at transpile, never present at runtime). Because the symbol is
- * not exported, consumer code cannot fabricate an `Opaque` — the engine API is
- * the only source. Contrast with a `LuaTable` alias, which says the opposite:
- * "inspect freely, the shape just isn't modeled."
+ * Why a dedicated type? Each kind of handle is its own brand, so the compiler
+ * keeps them apart: `Opaque<"node">` and `Opaque<"texture">` are different
+ * types, and passing a texture where a node is expected is a compile error,
+ * exactly as a wrong primitive would be. The brand is a phantom `unique symbol`
+ * property that lives only in the type system and is erased at transpile — at
+ * runtime the value is just the engine's userdata. Because the symbol is never
+ * exported, your code cannot fabricate a handle or inspect or construct one; the
+ * engine API is the only source.
+ *
+ * The handle kinds modeled today:
+ * - GUI & rendering: `Opaque<"node">`, `Opaque<"texture">`,
+ *   `Opaque<"render_target">`, `Opaque<"constant">`, `Opaque<"constant_buffer">`
+ * - Resources & buffers: `Opaque<"resource">`, `Opaque<"buffer">`,
+ *   `Opaque<"bufferstream">`
+ * - Sockets: `Opaque<"client">`, `Opaque<"server">`, `Opaque<"master">`,
+ *   `Opaque<"connected">`, `Opaque<"unconnected">`
+ * - Box2D physics: `Opaque<"b2Body">`, `Opaque<"b2World">`
+ * - Generic: `Opaque<"userdata">`
+ *
+ * @example
+ * Handles always come back from the engine — for instance:
+ * ```ts
+ * const node = gui.get_node("button");        // Opaque<"node">
+ * const rt = render.render_target("rt", opts); // Opaque<"render_target">
+ * const cb = render.constant_buffer();         // Opaque<"constant_buffer">
+ * const buf = resource.load_buffer(path);      // Opaque<"buffer">
+ * const stream = buffer.get_stream(buf, "rgb"); // Opaque<"bufferstream">
+ * const world = b2d.get_world();               // Opaque<"b2World">
+ * const [conn] = socket.tcp();                 // a "master" socket handle
+ * function update(self: ...) {}                // self is Opaque<"userdata">
+ * ```
+ *
+ * Contrast with a `LuaTable` alias, which says the opposite — "inspect freely,
+ * the shape just isn't modeled." An `Opaque` says "do not look inside; this
+ * value is meaningful only to the engine."
  */
 export interface Opaque<Name extends string> {
   readonly [OpaqueBrand]: Name;
