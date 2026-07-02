@@ -94,6 +94,41 @@ defineScript({
   },
 });
 
+// packages/docs/guide/messages.md "Sending: msg.post payload narrowing" —
+// a builtin message id checks the payload against BuiltinMessages[id].
+msg.post("#collisionobject", "apply_force", { force: v3a, position: v3b });
+// @ts-expect-error apply_force needs { force, position } — a missing field is a compile error
+msg.post("#collisionobject", "apply_force", { force: v3a });
+// An arbitrary (non-builtin) string id addresses a custom message; its payload is unchecked.
+msg.post("#logic", "spawn_wave", { count: 3, boss: true });
+
+// packages/docs/guide/messages.md "Receiving messages with type narrowing" —
+// isMessage re-introduces the id literal so the untyped message record narrows.
+defineScript({
+  on_message(self, message_id, message) {
+    void self;
+    if (isMessage(message_id, message, "contact_point_response")) {
+      const _distance: number = message.distance;
+      const _otherGroup: Hash = message.other_group;
+      void _distance;
+      void _otherGroup;
+    }
+    // @ts-expect-error "not_a_message" is not a BuiltinMessageId
+    void isMessage(message_id, message, "not_a_message");
+  },
+});
+
+// packages/docs/guide/messages.md "Routing many messages with onMessage" —
+// each handler key is a builtin message id; an unknown key is a compile error.
+onMessage({
+  set_parent(_self, message) {
+    const _parentId: Hash | undefined = message.parent_id;
+    void _parentId;
+  },
+  // @ts-expect-error "not_a_message" is not a BuiltinMessageId handler key
+  not_a_message(_self, _message) {},
+});
+
 void _v3add;
 void _v3mul2;
 void _v3unm;

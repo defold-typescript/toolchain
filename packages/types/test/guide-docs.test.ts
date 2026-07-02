@@ -206,9 +206,12 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("@defold-typescript/types/gui-script");
   });
 
-  test("docs/guide/script-lifecycle.md documents the onMessage dispatcher", async () => {
-    const body = await readGuide("script-lifecycle.md");
-    expect(body).toContain("## Routing many messages with `onMessage`");
+  test("the onMessage dispatcher doc moved from script-lifecycle.md to messages.md", async () => {
+    const lifecycle = await readGuide("script-lifecycle.md");
+    const messages = await readGuide("messages.md");
+    expect(messages).toContain("## Routing many messages with `onMessage`");
+    expect(lifecycle).not.toContain("## Routing many messages with `onMessage`");
+    expect(lifecycle).toContain("messages.md");
   });
 
   test("docs/guide/script-lifecycle.md documents the value-keyed properties field", async () => {
@@ -615,6 +618,39 @@ describe("docs/guide/agent-runbooks.md topical runbooks", () => {
     expect(state).toContain("self");
     expect(state).toContain("module local");
     expect(state).toContain("shared");
+  });
+});
+
+describe("docs/guide/messages.md", () => {
+  test("exists and carries its four message-typing marker headings", async () => {
+    const f = Bun.file(resolve(GUIDE, "messages.md"));
+    expect(await f.exists()).toBe(true);
+    const body = await readGuide("messages.md");
+    expect(body).toContain("## The message type surface");
+    expect(body).toContain("## Sending: `msg.post` payload narrowing");
+    expect(body).toContain("## Receiving messages with type narrowing");
+    expect(body).toContain("## Routing many messages with `onMessage`");
+  });
+
+  test("names the generated BuiltinMessages catalog and its id union", async () => {
+    const body = await readGuide("messages.md");
+    expect(body).toContain("BuiltinMessages");
+    expect(body).toContain("BuiltinMessageId");
+  });
+
+  test("docs/guide/README.md links messages.md", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("messages.md");
+  });
+
+  test("typescript-gotchas.md retargets the messages-guide mention to a real link", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain("(see the [messages guide](./messages.md))");
+  });
+
+  test("docs/guide/README.md no longer carries a Coming later section", async () => {
+    const body = await readGuide("README.md");
+    expect(body).not.toContain("## Coming later");
   });
 });
 
