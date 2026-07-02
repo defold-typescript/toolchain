@@ -860,6 +860,18 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(bindingsOffset).toBeLessThan(scriptOffset);
   });
 
+  test("step 2 teaches the input pipeline inline", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const inline = inlineContent(markdownSection(body, "## 02 — Input bindings", "## 03"));
+    expect(inline).toContain("**Input ids");
+    expect(inline).toContain("**`on_input`**");
+    expect(inline).toContain("action.pressed");
+    expect(inline).toContain("action.repeated");
+    expect(inline).toContain("acquire_input_focus");
+    expect(inline).toContain("The lifecycle");
+    expect(inline).toContain("in full context");
+  });
+
   test("HUD is its own optional section after the run-it section", async () => {
     const body = await readGuide("tetris-tutorial.md");
     const headingRe = /^#{2,3}\s.+$/gm;
