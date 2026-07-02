@@ -14,6 +14,7 @@ import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
 import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
+import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
 import { buildVersionSwitcher, type VersionSwitcherEntry } from "../lib/version-switch";
 
 declare module "hono" {
@@ -324,6 +325,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               <article class={`min-w-0 flex-1 ${contentClass ?? ""}`}>
                 {showToc ? <InlineToc headings={tocHeadings} /> : null}
                 {children}
+                <Pager pager={buildPager(nav, path)} />
               </article>
               {showToc ? (
                 <aside data-testid="toc-rail" class="hidden xl:block">
@@ -511,6 +513,39 @@ function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
       }
       dangerouslySetInnerHTML={{ __html: link.labelHtml }}
     />
+  );
+}
+
+function PagerCard({ link, side }: { link: PagerLink; side: "prev" | "next" }) {
+  const eyebrow = link.crossesTopic ? link.topicLabel : side === "prev" ? "Previous" : "Next";
+  const layout = side === "prev" ? "items-start text-left" : "ml-auto items-end text-right";
+  const surface = link.crossesTopic
+    ? "border-accent bg-accent-soft text-accent"
+    : "border-border text-text-muted hover:border-accent hover:text-text";
+  return (
+    <a
+      href={withBase(link.route)}
+      class={`flex max-w-[calc(50%-0.5rem)] flex-col gap-1 rounded-lg border px-4 py-3 transition ${layout} ${surface}`}
+    >
+      <span
+        class={`text-[11px] font-semibold uppercase tracking-wider ${
+          link.crossesTopic ? "text-accent" : "text-text-faint"
+        }`}
+      >
+        {eyebrow}
+      </span>
+      <span class="text-sm font-medium" dangerouslySetInnerHTML={{ __html: link.labelHtml }} />
+    </a>
+  );
+}
+
+function Pager({ pager }: { pager: PagerData }) {
+  if (!pager.prev && !pager.next) return null;
+  return (
+    <nav aria-label="Pagination" class="mt-12 flex gap-4 border-t border-border pt-6">
+      {pager.prev ? <PagerCard link={pager.prev} side="prev" /> : null}
+      {pager.next ? <PagerCard link={pager.next} side="next" /> : null}
+    </nav>
   );
 }
 
