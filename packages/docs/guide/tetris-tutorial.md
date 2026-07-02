@@ -258,12 +258,9 @@ The `Piece` type has a `color` and a list of four rotations, stored in `rots`.
 Offsets mean “where this cell is relative to the pivot.” The `T`-piece in its spawn orientation is the pivot, plus one cell left, right, and below:
 
 ```text
-// offsets:  [0,0]  [-1,0]  [1,0]  [0,1]
-//           pivot  left    right  below
-
-   -1   0  +1     ← col offset
-0   ▓   ▓   ▓      [-1,0] [0,0] [1,0]
-+1      ▓          [0,1]
+//    -1   0  +1     ← col offset
+// 0   ▓   ▓   ▓      [-1,0] [0,0] [1,0]
+// +1      ▓                 [0,1]
 ```
 
 So this can be stored as a sequence of `Offset`s.
