@@ -766,6 +766,14 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(body).toContain("`0` is truthy in Lua");
   });
 
+  test("names the counterclockwise-in-math trap and resolves it by axis direction", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    expect(body).toContain("[-r, c]");
+    expect(body).toContain("clockwise");
+    expect(body.toLowerCase()).toContain("counterclockwise");
+    expect(body.toLowerCase()).toContain("points down");
+  });
+
   test("the equality note links the truthiness gotcha and prioritizes ==", async () => {
     const body = await readGuide("tetris-tutorial.md");
     expect(body).toContain(
