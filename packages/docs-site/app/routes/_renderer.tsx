@@ -416,9 +416,11 @@ function GithubLink() {
  * `hidden` below `xl`, so below that width the same `Toc` outline rides inside
  * this collapsible disclosure at the top of the content column (`xl:hidden`, the
  * complement of the rail). It is collapsed by default so it never pushes the
- * prose far down, and reuses the `Toc` island so scroll-spy and truncation
- * tooltips work when it is open. The `<summary>` carries the "On this page"
- * label, so the embedded outline renders with `showHeading={false}`.
+ * prose far down, and reuses the `Toc` island so scroll-spy works when it is
+ * open. The `<summary>` carries the "On this page" label, so the embedded
+ * outline renders with `showHeading={false}`; it also passes `showTooltip={false}`
+ * so truncated entries expose their full text via a native `title` instead of the
+ * JS reveal, which sticks on touch (bug-37).
  */
 function InlineToc({ headings }: { headings: Heading[] }) {
   return (
@@ -442,7 +444,7 @@ function InlineToc({ headings }: { headings: Heading[] }) {
         </svg>
       </summary>
       <div class="px-2 pb-3">
-        <Toc headings={headings} showHeading={false} />
+        <Toc headings={headings} showHeading={false} showTooltip={false} />
       </div>
     </details>
   );

@@ -116,6 +116,13 @@ test.describe("wide viewport (lg and up)", () => {
     await expect(tocRail(page)).toBeVisible();
     await expect(tocInline(page)).toBeHidden();
   });
+
+  test("rail TOC entry still reveals its tooltip on hover", async ({ page }) => {
+    await gotoFirstGuidePage(page, { drawer: false });
+    const firstEntry = tocRail(page).getByRole("link").first();
+    await firstEntry.hover();
+    await expect(page.locator('[role="tooltip"]')).toBeVisible();
+  });
 });
 
 test.describe("narrow viewport (below lg)", () => {
@@ -231,6 +238,27 @@ test.describe("narrow viewport (below lg)", () => {
     await expect(firstEntry).toBeVisible();
 
     // A section link jumps within the page, leaving its anchor on the URL.
+    const anchor = await firstEntry.getAttribute("href");
+    if (!anchor) throw new Error("inline TOC entry has no href");
+    await firstEntry.click();
+    await expect(page).toHaveURL(new RegExp(`${anchor}$`));
+  });
+
+  test("dropdown entry raises no stuck tooltip yet still navigates", async ({ page }) => {
+    await gotoFirstGuidePage(page, { drawer: true });
+
+    const inline = tocInline(page);
+    await inline.locator("summary").click();
+    const firstEntry = inline.getByRole("link").first();
+    await expect(firstEntry).toBeVisible();
+
+    // A tap synthesizes `focus` on the entry; in the dropdown that must not raise
+    // the JS `role="tooltip"`, which on touch has no hover/blur to clear it and
+    // would stick after the same-page jump (bug-37).
+    await firstEntry.focus();
+    await expect(page.locator('[role="tooltip"]')).toHaveCount(0);
+
+    // The tap still jumps within the page, leaving its anchor on the URL.
     const anchor = await firstEntry.getAttribute("href");
     if (!anchor) throw new Error("inline TOC entry has no href");
     await firstEntry.click();

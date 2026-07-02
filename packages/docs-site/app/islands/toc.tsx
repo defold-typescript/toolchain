@@ -12,12 +12,18 @@ type ActiveTip = { text: string; top: number; left: number } | null;
 export default function Toc({
   headings,
   showHeading = true,
+  showTooltip = true,
 }: {
   headings: Heading[];
   // The inline (`<details>`) placement supplies its own "On this page" label via
   // the `<summary>`, so it renders the outline with this off to avoid the
   // duplicate heading; the sticky rail keeps it on.
   showHeading?: boolean;
+  // The dropdown placement turns this off: on touch there is no hover to clear a
+  // JS tooltip, so tapping an entry synthesizes `focus`, shows the tip, then
+  // leaves it stuck after the same-page jump (bug-37). With it off the outline
+  // falls back to a native `title` the browser manages and cannot leave stuck.
+  showTooltip?: boolean;
 }) {
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
   const [clickedId, setClickedId] = useState<string | null>(null);
@@ -97,32 +103,47 @@ export default function Toc({
         </p>
       ) : null}
       <ul class="space-y-1.5 border-l border-border">
-        {headings.map((h) => (
-          <li key={h.id}>
-            <a
-              href={`#${h.id}`}
-              aria-current={currentId === h.id ? "location" : undefined}
-              onClick={() => setClickedId(h.id)}
-              onMouseEnter={(e) => showTip(e, h.text)}
-              onMouseLeave={hideTip}
-              onFocus={(e) => showTip(e, h.text)}
-              onBlur={hideTip}
-              class={
-                "-ml-px block truncate border-l py-1 text-text-muted transition hover:text-text " +
-                (h.level === 3 ? "pl-7 " : "pl-4 ") +
-                (h.id === clickedId
-                  ? "border-accent-strong font-medium text-accent-strong"
-                  : visibleIds.includes(h.id)
-                    ? "border-accent text-accent"
-                    : "border-transparent")
-              }
-            >
-              {h.text}
-            </a>
-          </li>
-        ))}
+        {headings.map((h) => {
+          const linkClass =
+            "-ml-px block truncate border-l py-1 text-text-muted transition hover:text-text " +
+            (h.level === 3 ? "pl-7 " : "pl-4 ") +
+            (h.id === clickedId
+              ? "border-accent-strong font-medium text-accent-strong"
+              : visibleIds.includes(h.id)
+                ? "border-accent text-accent"
+                : "border-transparent");
+          const ariaCurrent = currentId === h.id ? "location" : undefined;
+          return (
+            <li key={h.id}>
+              {showTooltip ? (
+                <a
+                  href={`#${h.id}`}
+                  aria-current={ariaCurrent}
+                  onClick={() => setClickedId(h.id)}
+                  onMouseEnter={(e) => showTip(e, h.text)}
+                  onMouseLeave={hideTip}
+                  onFocus={(e) => showTip(e, h.text)}
+                  onBlur={hideTip}
+                  class={linkClass}
+                >
+                  {h.text}
+                </a>
+              ) : (
+                <a
+                  href={`#${h.id}`}
+                  aria-current={ariaCurrent}
+                  onClick={() => setClickedId(h.id)}
+                  title={h.text}
+                  class={linkClass}
+                >
+                  {h.text}
+                </a>
+              )}
+            </li>
+          );
+        })}
       </ul>
-      {tip ? (
+      {showTooltip && tip ? (
         <div
           role="tooltip"
           class="pointer-events-none fixed z-50 max-w-xs -translate-x-full -translate-y-1/2 whitespace-normal break-words rounded-md border border-border-strong bg-surface px-3 py-2 text-sm leading-relaxed text-text shadow-lg"
