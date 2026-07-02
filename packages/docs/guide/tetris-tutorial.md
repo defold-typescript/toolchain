@@ -104,6 +104,36 @@ Tetris needs five keys. Defold maps hardware keys to named **actions** through a
 
 Inside the script, we will hash these action names (for example, `hash("left")`) to recognize each key, because Defold sends them to `on_input` in hashed form (for fast `==` checks and lower memory use).
 
+The script side has two halves — hash the names once, then react to them each frame. You write both in **Step 05**, but here is the pipeline they form.
+
+**Input ids, hashed once** — the five names you just bound, pre-hashed at module scope:
+
+```ts title="src/board.ts (partial)"
+// Input ids, hashed once at module scope.
+const LEFT = hash("left");
+const RIGHT = hash("right");
+const SOFT = hash("soft_drop");
+const ROTATE = hash("rotate");
+const HARD = hash("hard_drop");
+```
+
+Defold delivers `action_id` to `on_input` already hashed, so hashing each name once here turns every per-frame comparison into a fast `==` check on a `Hash`, not a string compare.
+
+**`on_input`** — the dispatcher that turns keys into moves:
+
+```ts title="src/board.ts (partial)" {2}
+  on_input(self, action_id, action) {
+    if (self.over || !action.pressed) return;
+    if (action_id == LEFT) tryMove(self, -1, 0);
+    else if (action_id == RIGHT) tryMove(self, 1, 0);
+    else if (action_id == SOFT) tryMove(self, 0, 1);
+    else if (action_id == ROTATE) tryRotate(self);
+    else if (action_id == HARD) hardDrop(self);
+  },
+```
+
+`action_id` is the hashed action name; the chain matches it against the five constants above and calls one helper. `action.pressed` is `true` only on the frame a key first goes down — tap-to-move, which is exactly what Tetris wants — whereas `action.repeated` fires on the engine's held-key auto-repeat (useful for a continuous soft-drop, not used here). One catch: `init` must `msg.post(".", "acquire_input_focus")` or `on_input` never fires at all. You will see `on_input` in full context in **Step 05**, under **The lifecycle**, where the dispatcher runs alongside `update` and `on_message`.
+
 ## 03 — Model the grid: `src/grid.ts`
 
 Start with a pure model: a 10×20 grid of cells, each empty or holding a piece's color. Engine-free logic is easy to reason about and to type. The whole model is one file — dimensions, the cell types, an empty board, the free-cell test, and line clearing. We'll build `src/grid.ts` one function at a time below; the complete file is in **Full Script** at the end of this section, ready to paste into VS Code.
