@@ -132,6 +132,14 @@ describe("buildNav", () => {
     expect(guides?.links.find((l) => l.route === "/script-state")).toBeUndefined();
   });
 
+  test("places the messages page in the Language category, not the guides fallback", () => {
+    const nav = buildNav(realPages(), { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
+    const language = nav.find((c) => c.id === "language");
+    expect(language?.links.find((l) => l.route === "/messages")).toBeDefined();
+    const guides = nav.find((c) => c.id === "guides");
+    expect(guides?.links.find((l) => l.route === "/messages")).toBeUndefined();
+  });
+
   test("places the data-structures page in the Language category, not the guides fallback", () => {
     const nav = buildNav(realPages(), { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
     const language = nav.find((c) => c.id === "language");

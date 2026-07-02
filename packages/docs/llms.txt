@@ -18,6 +18,7 @@
 - [Agent runbooks](/agent-runbooks)
 - [TypeScript vs Lua](/typescript-vs-lua)
 - [Script lifecycle](/script-lifecycle)
+- [Messages](/messages)
 - [Script state](/script-state)
 - [Data structures](/data-structures)
 - [Vector math](/vector-math)
