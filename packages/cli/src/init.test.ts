@@ -23,8 +23,8 @@ const CLI_VERSION = (
 ).version;
 const TYPES_SPEC = `^${CLI_VERSION}`;
 const DEFOLD_ARTIFACT_IGNORE_LINES = [
-  "/build/",
-  "/.internal/",
+  "/build",
+  "/.internal",
   "/.editor_settings",
   "builtins/",
   ".DS_Store",
@@ -353,6 +353,28 @@ describe("runInit (add-TS mode)", () => {
     } finally {
       rmSync(second, { recursive: true, force: true });
     }
+  });
+
+  test("new-project .gitignore uses Defold's exact editor lines (no trailing slash)", () => {
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    expect(gitignore).toMatch(/^\/build$/m);
+    expect(gitignore).toMatch(/^\/\.internal$/m);
+    expect(gitignore).not.toMatch(/^\/build\/$/m);
+    expect(gitignore).not.toMatch(/^\/\.internal\/$/m);
+  });
+
+  test("re-init over an editor-canonical .gitignore appends no duplicate", () => {
+    touch("game.project", "[project]\n");
+    touch(".gitignore", `${PRE_DEFOLD_ARTIFACT_GITIGNORE}\n/build\n/.internal\n`);
+
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    const lines = gitignore.split("\n");
+    expect(lines.filter((line) => line.trim() === "/build")).toHaveLength(1);
+    expect(lines.filter((line) => line.trim() === "/.internal")).toHaveLength(1);
   });
 
   test("scaffolded .gitignore and biome.json exclude the gui/render-script suffixes too", () => {
