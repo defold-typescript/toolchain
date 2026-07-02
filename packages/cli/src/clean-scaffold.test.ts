@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { runInit } from "./init";
@@ -33,6 +33,23 @@ describe("scaffolded project is clean out of the box", () => {
       const { code, output } = run("tsc", ["--noEmit", "-p", "tsconfig.json"], cwd);
       if (code !== 0) {
         throw new Error(`tsc reported errors on the scaffold:\n${output}`);
+      }
+      expect(code).toBe(0);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("tsc --noEmit resolves Lua stdlib globals in scaffolded source", () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-lua-"));
+    try {
+      runInit({ cwd });
+      linkTypes(cwd);
+      writeFileSync(path.join(cwd, "src", "lua-global.ts"), "export const n = math.floor(1.5);\n");
+
+      const { code, output } = run("tsc", ["--noEmit", "-p", "tsconfig.json"], cwd);
+      if (code !== 0) {
+        throw new Error(`tsc could not resolve the Lua stdlib globals on the scaffold:\n${output}`);
       }
       expect(code).toBe(0);
     } finally {

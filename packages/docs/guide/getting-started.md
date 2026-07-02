@@ -56,8 +56,9 @@ Run `bun install` once after `init`. The scaffold declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
 types, `@defold-typescript/cli` pinned to the same version so the build runs in
 lockstep with those types, `@defold-typescript/tstl-plugin` for the live
-transpile diagnostics, `@biomejs/biome` for lint and format, and `@types/bun`
-for the `.vscode/` debug launcher) — `install`
+transpile diagnostics, `@biomejs/biome` for lint and format, `@types/bun`
+for the `.vscode/` debug launcher, and `lua-types` for the ambient Lua standard
+library so `math`/`string`/`table`/… resolve) — `install`
 is what actually puts them in `node_modules`. Skip it and your editor reports the Defold globals as
 unresolved. `init` does not install for you (that keeps scaffolding offline), so
 it prints a `Next: run <pm> install` reminder once it finishes, picking the
