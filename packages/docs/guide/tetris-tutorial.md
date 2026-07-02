@@ -315,7 +315,7 @@ Here's the one piece of geometry worth knowing. To rotate any offset 90° **cloc
 > [!MORE] Where `[c, r] → [-r, c]` comes from
 > A piece is just a handful of `[col, row]` offsets measured from a **pivot** at `[0, 0]`. Rotating the whole piece 90° clockwise is the same move applied to each offset: swap the two numbers, then flip the sign of the new column. That is all `[c, r] → [-r, c]` says. The `[0,0]` stays in place.
 >
-> **Why row grows downward.** Row `0` is the top and rows count up as you go down, the way screen pixels do. With that convention the formula turns "right" (`[1, 0]`) into "down" (`[0, 1]`), "down" into "left", and so on — exactly the clockwise turn you see on screen.
+> **Why row grows downward.** Row `0` is the top and rows count up as you go down, the way screen pixels do. With that convention the formula turns "right" (`[1, 0]`) into "down" (`[0, 1]`), "down" into "left", and so on — exactly the clockwise turn you see on screen. Seen `[c, r] → [-r, c]` before and read it as *counterclockwise*? That instinct is right for the axes textbooks use, where y **points up** — there this is the counterclockwise 90° turn. It only comes out clockwise here because our vertical axis, the row, **points down** instead: gravity and soft drop both move a piece down by *increasing* its row, so the same formula spins the opposite-looking way.
 >
 > **Why four states.** Apply the move four times and the piece lands back where it started. Some pieces look the same in two or four of those states, but storing all four keeps the bookkeeping uniform: the next rotation is always `(rot + 1) % 4` (`%` returns the remainder left over when the left side is divided by the right side).
 
