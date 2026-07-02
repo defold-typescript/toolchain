@@ -341,6 +341,14 @@ function typesVersionSpec(): string {
   }
 }
 
+// The Lua stdlib globals (`math`, `string`, `table`, `os`, ...) reach a consumer
+// only through the `/// <reference types="lua-types/5.1" />` at the top of
+// `@defold-typescript/types`; declaring `lua-types` directly guarantees a
+// resolvable copy even when the transitive one is absent or unhoisted. Kept in
+// lockstep with the range `packages/types` requires — `init.test.ts`'s drift
+// guard fails loud if the two diverge.
+export const LUA_TYPES_SPEC = "^2.13.1";
+
 // @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
 // (the local bin the managed `bunx @defold-typescript/cli` mise tasks resolve
 // inside an installed project) both ship into the consumer. The transpiler must NOT be a direct
@@ -356,6 +364,7 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   // (it pulls in `@types/node`). The project tsconfig pins `types` to
   // `@defold-typescript/types`, so these never leak into the `src/` Defold compile.
   "@types/bun": "latest",
+  "lua-types": LUA_TYPES_SPEC,
 };
 
 // Older scaffolds wrote the managed `@defold-typescript/*` devDeps as

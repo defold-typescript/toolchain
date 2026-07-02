@@ -13,7 +13,13 @@ import * as path from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { runBuild } from "./build";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
-import { BIOME_JSON_CONTENT, reconcileManagedList, runInit, SCAFFOLD_DEV_DEPS } from "./init";
+import {
+  BIOME_JSON_CONTENT,
+  LUA_TYPES_SPEC,
+  reconcileManagedList,
+  runInit,
+  SCAFFOLD_DEV_DEPS,
+} from "./init";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
 
 const CLI_VERSION = (
@@ -22,6 +28,7 @@ const CLI_VERSION = (
   }
 ).version;
 const TYPES_SPEC = `^${CLI_VERSION}`;
+const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const DEFOLD_ARTIFACT_IGNORE_LINES = [
   "/build",
   "/.internal",
@@ -196,6 +203,7 @@ describe("runInit (add-TS mode)", () => {
       "@defold-typescript/tstl-plugin": TYPES_SPEC,
       "@biomejs/biome": "^2.5.0",
       "@types/bun": "latest",
+      "lua-types": LUA_TYPES_SPEC,
     });
   });
 
@@ -219,6 +227,22 @@ describe("runInit (add-TS mode)", () => {
 
     const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
     expect(pkg.devDependencies["@types/bun"]).toBe("latest");
+  });
+
+  test("scaffold declares lua-types so the editor's `types` entrypoint surfaces the Lua stdlib globals", () => {
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    const spec = pkg.devDependencies["lua-types"];
+    expect(typeof spec).toBe("string");
+    expect(spec.length).toBeGreaterThan(0);
+  });
+
+  test("scaffold's lua-types pin stays in lockstep with @defold-typescript/types", () => {
+    const typesPkg = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, "packages", "types", "package.json"), "utf8"),
+    ) as { dependencies: Record<string, string> };
+    expect(SCAFFOLD_DEV_DEPS["lua-types"]).toBe(typesPkg.dependencies["lua-types"]);
   });
 
   test("seeds the defold-version pin with current-stable in a fresh package.json", () => {
