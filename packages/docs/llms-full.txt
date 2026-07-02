@@ -117,8 +117,9 @@ Run `bun install` once after `init`. The scaffold declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
 types, `@defold-typescript/cli` pinned to the same version so the build runs in
 lockstep with those types, `@defold-typescript/tstl-plugin` for the live
-transpile diagnostics, `@biomejs/biome` for lint and format, and `@types/bun`
-for the `.vscode/` debug launcher) — `install`
+transpile diagnostics, `@biomejs/biome` for lint and format, `@types/bun`
+for the `.vscode/` debug launcher, and `lua-types` for the ambient Lua standard
+library so `math`/`string`/`table`/… resolve) — `install`
 is what actually puts them in `node_modules`. Skip it and your editor reports the Defold globals as
 unresolved. `init` does not install for you (that keeps scaffolding offline), so
 it prints a `Next: run <pm> install` reminder once it finishes, picking the
@@ -375,6 +376,7 @@ If `package.json` already exists, the command preserves its existing fields and 
 - `@defold-typescript/tstl-plugin` — the [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) language-service plugin wired into `tsconfig.json` for live transpile diagnostics.
 - `@biomejs/biome` — lint and format.
 - `@types/bun` — resolves the Bun and Node globals the `.vscode/defold-debug.ts` launcher uses; kept out of the `src/` compile by the tsconfig `types` pin.
+- `lua-types` — the ambient Lua standard library (`math`, `string`, `table`, `os`, …). `@defold-typescript/types` references it, but declaring it directly guarantees those globals resolve even when the transitive copy is not hoisted.
 
 The transpiler is *not* added as a project dependency — it arrives transitively through `@defold-typescript/cli` when you run `build`/`watch`, and the scaffold removes a stray `@defold-typescript/transpiler` devDep if it finds one.
 
