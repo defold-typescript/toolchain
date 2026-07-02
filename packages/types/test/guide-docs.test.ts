@@ -822,7 +822,7 @@ describe("docs/guide/tetris-tutorial.md", () => {
   test("each example file is quoted verbatim (byte-identical, blockquote prefix aside)", async () => {
     const body = await readGuide("tetris-tutorial.md");
     const dequoted = dequote(body);
-    for (const file of ["grid.ts", "pieces.ts", "board.ts"]) {
+    for (const file of ["grid.ts", "pieces.ts", "board.ts", "hud.ts"]) {
       const source = await Bun.file(resolve(EXAMPLE_SRC, file)).text();
       expect(dequoted).toContain(source);
     }
@@ -1037,6 +1037,21 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(methodBody(source, "  on_message")).toContain(
       'gui.set_enabled(gui.get_node("gameover"), true)',
     );
+  });
+
+  test("the HUD section collapses hud.ts into a Full Script disclosure", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const section = markdownSection(body, "## 08", "## Toolchain tripwires");
+    expect(section).toContain("[!MORE] Full Script — src/hud.ts");
+    const source = await Bun.file(resolve(EXAMPLE_SRC, "hud.ts")).text();
+    expect(dequote(moreBlocks(section))).toContain(source);
+  });
+
+  test("the HUD section walks init and on_message inline", async () => {
+    const body = await readGuide("tetris-tutorial.md");
+    const inline = inlineContent(markdownSection(body, "## 08", "## Toolchain tripwires"));
+    expect(inline).toContain("**`init`**");
+    expect(inline).toContain("**`on_message`**");
   });
 
   test("main/hud.gui keeps the gameover node visible in the editor", async () => {
