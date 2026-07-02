@@ -186,7 +186,7 @@ on_message(self, message_id, message) {
 }
 ```
 
-The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the messages guide), not on the handler.
+The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the [messages guide](./messages.md)), not on the handler.
 
 **How we pin this in the type tests.** `packages/types/test-d/lifecycle.ts` binds `message_id` to a `Hash` inside the handler and asserts a string-literal `message_id` at the call site carries `@ts-expect-error`. If `on_message` ever re-typed the id as a string, the expected error would disappear and the typecheck gate would fail.
 
@@ -204,7 +204,7 @@ window.set_listener((self, event, data) => {
 
 **Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event == …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ==` narrowing) and `data` as a bare `Record<string | number, unknown>` (only a resize carries fields, so the record is the honest default).
 
-**Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](script-lifecycle.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
+**Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](messages.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
 
 ```ts
 window.set_listener((self, event, data) => {

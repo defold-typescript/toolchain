@@ -427,7 +427,7 @@ window.set_listener((self, event, data) => {
 
 An unknown id/event constant is a compile error, so the guard also catches typos.
 The full narrowing reference, including `onMessage`'s multi-message dispatcher,
-lives in [Script lifecycle](./script-lifecycle.md#receiving-messages-with-type-narrowing)
+lives in [Typed messages](./messages.md#receiving-messages-with-type-narrowing)
 and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params).
 
 ## Fix the Lua output
