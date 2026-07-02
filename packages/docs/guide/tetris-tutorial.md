@@ -1114,34 +1114,64 @@ If the first build looks off, check these in order:
 
 The core game is complete. Score and level are a stretch goal on their **own** GUI scene, so you can stop at **Step 07** if you only want the board.
 
-It announces itself to the board with `hud_ready`, then paints `score`/`level` text and reveals a `gameover` node on the matching messages. Create `src/hud.ts`:
+The HUD is one small gui script — `src/hud.ts`, just two functions. We'll walk each below; the complete file is in **Full Script** at the end of this section, ready to paste into a new `src/hud.ts`.
 
-```ts title="src/hud.ts"
-import { defineGuiScript } from "@defold-typescript/types";
+**`init`** — hide the banner, then announce yourself
 
-// `set_hud` is a project-defined message, not a Defold builtin, so the
-// `isMessage` guard (which only accepts builtin ids) does not apply here: match
-// the id directly and read the payload `board.ts` posts. `message` arrives as
-// `Record<string | number, unknown>`, so the score/level are stringified for
-// display rather than typed through a builtin payload.
-export default defineGuiScript({
+```ts title="src/hud.ts (partial)"
   init() {
     // Hide the game-over banner at startup; on_message re-enables it on game over.
-    gui.set_enabled(gui.get_node("gameover"), false);
+    gui.set_enabled(gui.get_node("gameover"), false); // [!code highlight]
     // A gui script can't be probed with go.exists, so announce ourselves to the
     // board; it posts score/level updates only once we have registered.
-    msg.post("/board#board", "hud_ready");
+    msg.post("/board#board", "hud_ready"); // [!code highlight]
   },
+```
+
+Startup hides the `gameover` node, then posts `hud_ready` to `/board#board`. That order is an announce-then-listen handshake: a gui script has no `go`, so the board can't probe it with `go.exists` before sending. The HUD registers itself first, and `board.ts` begins posting `score`/`level` updates only once `hud_ready` arrives — post any earlier and the messages target an instance the engine can't yet find.
+
+**`on_message`** — paint the score, reveal the banner
+
+```ts title="src/hud.ts (partial)"
   on_message(_self, message_id, message) {
-    if (message_id == hash("set_hud")) {
+    if (message_id == hash("set_hud")) { // [!code highlight]
       gui.set_text(gui.get_node("score"), `SCORE  ${String(message.score)}`);
       gui.set_text(gui.get_node("level"), `LEVEL  ${String(message.level)}`);
-    } else if (message_id == hash("game_over")) {
+    } else if (message_id == hash("game_over")) { // [!code highlight]
       gui.set_enabled(gui.get_node("gameover"), true);
     }
   },
-});
 ```
+
+It matches the board's `set_hud` (paint the score and level text with `gui.set_text` / `gui.get_node`) and `game_over` (reveal the banner) ids directly. Both are **project-defined** messages, not Defold builtins, so the `isMessage` guard — which only narrows builtin ids — does not apply: match the hashes yourself and read the payload as `Record<string | number, unknown>`, which is why `message.score` / `message.level` are stringified for display rather than typed through a builtin payload. See [Typed messages](./messages.md#sending-msgpost-payload-narrowing) for the full custom-id escape hatch.
+
+> [!MORE] Full Script — src/hud.ts
+> ```ts title="src/hud.ts"
+> import { defineGuiScript } from "@defold-typescript/types";
+>
+> // `set_hud` is a project-defined message, not a Defold builtin, so the
+> // `isMessage` guard (which only accepts builtin ids) does not apply here: match
+> // the id directly and read the payload `board.ts` posts. `message` arrives as
+> // `Record<string | number, unknown>`, so the score/level are stringified for
+> // display rather than typed through a builtin payload.
+> export default defineGuiScript({
+>   init() {
+>     // Hide the game-over banner at startup; on_message re-enables it on game over.
+>     gui.set_enabled(gui.get_node("gameover"), false);
+>     // A gui script can't be probed with go.exists, so announce ourselves to the
+>     // board; it posts score/level updates only once we have registered.
+>     msg.post("/board#board", "hud_ready");
+>   },
+>   on_message(_self, message_id, message) {
+>     if (message_id == hash("set_hud")) {
+>       gui.set_text(gui.get_node("score"), `SCORE  ${String(message.score)}`);
+>       gui.set_text(gui.get_node("level"), `LEVEL  ${String(message.level)}`);
+>     } else if (message_id == hash("game_over")) {
+>       gui.set_enabled(gui.get_node("gameover"), true);
+>     }
+>   },
+> });
+> ```
 
 Then build the scene, all editor work:
 
