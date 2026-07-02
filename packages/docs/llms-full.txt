@@ -45,6 +45,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [TypeScript vs Lua](./typescript-vs-lua.md) — the Lua-developer on-ramp: a cheat sheet that translates syntax, tables, modules, and the standard library from Lua to the TypeScript the toolchain expects.
 - [Script lifecycle](./script-lifecycle.md) — type `self`, `on_message`, and `on_input` payloads with `defineScript`, `defineGuiScript`, and `defineRenderScript`.
+- [Messages](./messages.md) — the `BuiltinMessages` catalog, `msg.post` send-side payload narrowing, and the `isMessage` / `onMessage` receive-side helpers.
 - [Where script state lives](./script-state.md) — the four state tiers — per-instance `self`, a shared module local, a cross-script module singleton, and VM-global `declare global` — each grounded in the emitted Lua.
 - [Data structures](./data-structures.md) — what's built in for Defold: `Array`, tuple, `Map`, `Set`, `WeakMap`, `WeakSet`, object record, and `class`, each with its Lua lowering and `lualib` cost, plus the not-available list (regex, `BigInt`, `LinkedList`) and what to reach for instead.
 - [Vector math](./vector-math.md) — the method-form arithmetic surface (`add`, `sub`, `mul`, `div`, `unm`) on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`, plus why you cannot write `v3 + v3`.
@@ -56,11 +57,6 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [API](/api) — the generated `@defold-typescript/types` reference: every documented Defold namespace, grouped alphabetically as cards (site-only; built from the typed surface the toolchain ships).
 - [Lua standard library](/api/base) — the pure-Lua / LuaJIT reference category (`base`, `bit`, …). Types are owned by the `lua-types` dependency the `lua-stdlib-globals` goal adopted; `@defold-typescript/types` does not re-emit them as generated namespaces.
-
-## Coming later
-
-- Per-module API guide — landing with `builtin-messages-typing` and `script-lifecycle-typing`.
-- Messages guide — `msg.post` payload narrowing, builtin message IDs — landing with `builtin-messages-typing`.
 
 # Getting started
 
@@ -1577,7 +1573,7 @@ window.set_listener((self, event, data) => {
 
 An unknown id/event constant is a compile error, so the guard also catches typos.
 The full narrowing reference, including `onMessage`'s multi-message dispatcher,
-lives in [Script lifecycle](./script-lifecycle.md#receiving-messages-with-type-narrowing)
+lives in [Typed messages](./messages.md#receiving-messages-with-type-narrowing)
 and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params).
 
 ## Fix the Lua output
@@ -2187,6 +2183,62 @@ export default defineScript({
 });
 ```
 
+## Receiving messages: `on_message`
+
+`on_message(self, message_id, message, sender)` runs when another script or the engine posts to this component. Defold pre-hashes the id, so `message_id` arrives as a `Hash` and `message` as an untyped record. `on_message`'s payload narrowing — the `isMessage` guard and the `onMessage` dispatcher that turn that untyped record back into its `BuiltinMessages` shape — is covered in [Typed messages](./messages.md), the same way [Where script state lives](./script-state.md) is the canonical home for `self` typing.
+
+## API availability by script kind
+
+Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
+
+The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, so it never rejects a call the engine would allow at runtime — but it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall at compile time, pin the entrypoint matching the file's script kind in that file's `tsconfig`:
+
+| Script kind      | `types` entrypoint                       | Namespaces           |
+| ---------------- | ---------------------------------------- | -------------------- |
+| `.script`        | `@defold-typescript/types/script`        | universal only       |
+| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
+| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
+
+```jsonc
+// tsconfig for a .gui_script source tree
+{
+  "compilerOptions": {
+    "types": ["@defold-typescript/types/gui-script"]
+  }
+}
+```
+
+Under that config `gui.*` and the universal namespaces type-check while `render.*` is a compile error. The default `@defold-typescript/types` keeps every namespace, so the full surface is what you get everywhere until you opt in to a wall.
+
+`init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a composite `tsconfig.json` that `tsc -b --noEmit` enforces. See [Advanced CLI](advanced-cli.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
+
+# Typed messages
+
+Defold delivers a message as a hashed id and a plain table, so the payload's shape is invisible to TypeScript by default. `@defold-typescript/types` restores it from both ends: `msg.post` checks the table you send against the built-in message's declared shape, and the `isMessage` guard — plus the `onMessage` dispatcher built on it — narrows a received `message` back to that shape. This page is the canonical home for that model; the `on_message` lifecycle callback itself is covered in [Script lifecycle](./script-lifecycle.md).
+
+## The message type surface
+
+`BuiltinMessages` (generated in `packages/types/generated/builtin-messages.d.ts` from the Defold reference docs, not hand-maintained) maps each built-in message id to its payload shape, and `BuiltinMessageId = keyof BuiltinMessages` is the union of those ids. Both are ambient globals — no import. Because the catalog is regenerated from the ref docs rather than curated by hand, it is exhaustive: every message Defold documents is in it, so a valid built-in id always type-checks and a typo never does.
+
+## Sending: `msg.post` payload narrowing
+
+A `msg.post(receiver, "<builtin id>", payload)` call checks `payload` against `BuiltinMessages["<id>"]`. Miss a required field or give one the wrong type and it is a compile error, not a silent runtime mismatch:
+
+```ts
+msg.post("#collisionobject", "apply_force", {
+  force: vmath.vector3(0, 1000, 0),
+  position: go.get_world_position(),
+});
+```
+
+The narrowing keys on the literal id. An arbitrary (non-builtin) string id addresses a **custom** message, and its payload is unchecked — the escape hatch for your own message protocol:
+
+```ts
+msg.post("#logic", "spawn_wave", { count: 3, boss: true }); // custom id — payload unchecked
+```
+
+Passing the id as an already-hashed `Hash` also skips the check, since the hashed form has lost the literal the narrowing needs.
+
 ## Receiving messages with type narrowing
 
 `on_message` delivers `message_id` as a `Hash` (Defold pre-hashes it) and `message` as an untyped record. Because the id arrives already hashed, the string literal a discriminated union would switch on is gone — TypeScript cannot automatically narrow `message` from a runtime `Hash` comparison. The `isMessage` type guard re-introduces the literal at the use site and narrows the payload to its `BuiltinMessages` shape:
@@ -2231,30 +2283,10 @@ export default defineScript<Self>({
 
 Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output.
 
-## API availability by script kind
+## See also
 
-Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
-
-The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, so it never rejects a call the engine would allow at runtime — but it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall at compile time, pin the entrypoint matching the file's script kind in that file's `tsconfig`:
-
-| Script kind      | `types` entrypoint                       | Namespaces           |
-| ---------------- | ---------------------------------------- | -------------------- |
-| `.script`        | `@defold-typescript/types/script`        | universal only       |
-| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
-| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
-
-```jsonc
-// tsconfig for a .gui_script source tree
-{
-  "compilerOptions": {
-    "types": ["@defold-typescript/types/gui-script"]
-  }
-}
-```
-
-Under that config `gui.*` and the universal namespaces type-check while `render.*` is a compile error. The default `@defold-typescript/types` keeps every namespace, so the full surface is what you get everywhere until you opt in to a wall.
-
-`init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a composite `tsconfig.json` that `tsc -b --noEmit` enforces. See [Advanced CLI](advanced-cli.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
+- [Script lifecycle](./script-lifecycle.md) — the `on_message` lifecycle callback and the other typed script hooks.
+- [TypeScript gotchas](./typescript-gotchas.md) — why a raw `on_message` handler's `message` is an untyped record, and the cast you would otherwise reach for.
 
 # Where script state lives
 
@@ -2753,7 +2785,7 @@ on_message(self, message_id, message) {
 }
 ```
 
-The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the messages guide), not on the handler.
+The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the [messages guide](./messages.md)), not on the handler.
 
 **How we pin this in the type tests.** `packages/types/test-d/lifecycle.ts` binds `message_id` to a `Hash` inside the handler and asserts a string-literal `message_id` at the call site carries `@ts-expect-error`. If `on_message` ever re-typed the id as a string, the expected error would disappear and the typecheck gate would fail.
 
@@ -2771,7 +2803,7 @@ window.set_listener((self, event, data) => {
 
 **Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event == …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ==` narrowing) and `data` as a bare `Record<string | number, unknown>` (only a resize carries fields, so the record is the honest default).
 
-**Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](script-lifecycle.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
+**Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](messages.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
 
 ```ts
 window.set_listener((self, event, data) => {
