@@ -38,12 +38,15 @@ jobs:
       - run: touch packages/docs-site/dist/.nojekyll
       # enablement: true turns Pages on (Actions source) via the API on the
       # first run, so no manual Settings -> Pages step is required.
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         with:
           enablement: true
-      - uses: actions/upload-pages-artifact@v3
+      # include-hidden-files keeps the `.nojekyll` marker above in the artifact:
+      # upload-pages-artifact drops dotfiles by default from v4 on.
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: packages/docs-site/dist
+          include-hidden-files: true
 
   deploy:
     needs: build
@@ -53,4 +56,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
