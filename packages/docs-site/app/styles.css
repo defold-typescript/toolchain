@@ -347,6 +347,11 @@
     border-radius: 4px;
     padding: 0.1em 0.35em;
     color: var(--color-text);
+    /* A space-less token (long identifier, URL, hash) is otherwise one atomic
+       box that overflows its line and forces page-wide horizontal scroll on
+       narrow screens; `anywhere` lets it break and also reports a small
+       min-content width so a flex/grid content column can still shrink. */
+    overflow-wrap: anywhere;
   }
 
   /* In the overview table a signature code span is wrapped in a plain `.prose a`
