@@ -143,6 +143,9 @@ header.topbar-critical .logo-mark {
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--color-text);
+  /* Break space-less tokens so they can't force page-wide horizontal scroll on
+     narrow screens. Mirrors app/styles.css. */
+  overflow-wrap: anywhere;
 }
 /* A signature linked from the overview table is underlined as a `.prose a`;
    drop its inline-code border and padding so the chip chrome doesn't fight the
