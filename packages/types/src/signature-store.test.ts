@@ -170,16 +170,22 @@ describe("authored base signature store (bare global keys)", () => {
     );
   });
 
-  test("select resolves to the authored union-indexed form", () => {
+  test('select resolves to its two argument-form overloads (number index vs "#" count)', () => {
     const entry = lookupSignature(store, "select");
     expect(entry).not.toBeNull();
-    expect(entry?.signatures).toContain('select(n: number | "#", ...args: any[]): any');
+    expect(entry?.signatures).toContain(
+      "select<T>(index: number, ...args: T[]): LuaMultiReturn<T[]>",
+    );
+    expect(entry?.signatures).toContain('select<T>(index: "#", ...args: T[]): number');
   });
 
   test("unpack resolves to its Lua-5.1 authored form (not 5.2's table.unpack)", () => {
     const entry = lookupSignature(store, "unpack");
     expect(entry).not.toBeNull();
     expect(entry?.signatures).toContain("unpack<T extends any[]>(list: T): LuaMultiReturn<T>");
+    expect(entry?.signatures).toContain(
+      "unpack<T>(list: T[], i: number, j?: number): LuaMultiReturn<T[]>",
+    );
   });
 
   test("type resolves to its closed value-to-string union (matching lua-types)", () => {
