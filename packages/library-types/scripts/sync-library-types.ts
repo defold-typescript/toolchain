@@ -86,16 +86,28 @@ export function codemodDeclaration(source: string): CodemodResult {
   return { output, unmapped: [...unmapped] };
 }
 
-interface LibraryTarget {
+export interface LibrarySource {
+  repo: string;
+  commit: string;
+  license: string;
+}
+
+export interface LibraryTarget {
   module: string;
   path: string;
   fixture: string;
   generated: string;
 }
 
-interface LibraryTargets {
-  source: { repo: string; commit: string; license: string };
+export interface LibraryTargets {
+  source: LibrarySource;
   targets: LibraryTarget[];
+}
+
+function readTargets(packageRoot: string): LibraryTargets {
+  return JSON.parse(
+    readFileSync(join(packageRoot, "library-targets.json"), "utf8"),
+  ) as LibraryTargets;
 }
 
 /**
@@ -104,9 +116,7 @@ interface LibraryTargets {
  * rename table never ships a silently-broken type.
  */
 export function regenerate(packageRoot: string): void {
-  const targets = JSON.parse(
-    readFileSync(join(packageRoot, "library-targets.json"), "utf8"),
-  ) as LibraryTargets;
+  const targets = readTargets(packageRoot);
   for (const target of targets.targets) {
     const source = readFileSync(join(packageRoot, target.fixture), "utf8");
     const { output, unmapped } = codemodDeclaration(source);
@@ -119,6 +129,75 @@ export function regenerate(packageRoot: string): void {
   }
 }
 
+/**
+ * The raw.githubusercontent.com URL for a target's upstream `.d.ts` at the
+ * pinned commit. `source.repo` is the human `https://github.com/<owner>/<repo>`
+ * form; raw content is addressed by the bare `<owner>/<repo>` slug, so the
+ * prefix (and any `.git` suffix) is stripped.
+ */
+export function rawUrl(source: LibrarySource, target: LibraryTarget): string {
+  const slug = source.repo.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "");
+  return `https://raw.githubusercontent.com/${slug}/${source.commit}/${target.path}`;
+}
+
+export type DriftStatus = "ok" | "upstream-drift" | "transform-drift";
+
+export interface DriftResult {
+  module: string;
+  status: DriftStatus;
+}
+
+export type FetchText = (url: string) => Promise<string>;
+
+const defaultFetch: FetchText = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`fetch failed: ${url} -> ${res.status} ${res.statusText}`);
+  }
+  return res.text();
+};
+
+/**
+ * Live-fetch each pinned upstream `.d.ts` and classify it against the committed
+ * files: `upstream-drift` when the fetched bytes no longer match the committed
+ * fixture (upstream moved off the pin), `transform-drift` when the fixture is
+ * unchanged but the committed generated file differs from a fresh codemod (the
+ * codemod or fixture changed without a `bun regen`). The `fetchText` seam keeps
+ * the classifier offline-testable; only the CLI wires the real network.
+ */
+export async function checkDrift(
+  packageRoot: string,
+  fetchText: FetchText = defaultFetch,
+): Promise<DriftResult[]> {
+  const { source, targets } = readTargets(packageRoot);
+  const results: DriftResult[] = [];
+  for (const target of targets) {
+    const fetched = await fetchText(rawUrl(source, target));
+    const fixture = readFileSync(join(packageRoot, target.fixture), "utf8");
+    let status: DriftStatus;
+    if (fetched !== fixture) {
+      status = "upstream-drift";
+    } else {
+      const generated = readFileSync(join(packageRoot, target.generated), "utf8");
+      status = codemodDeclaration(fetched).output === generated ? "ok" : "transform-drift";
+    }
+    results.push({ module: target.module, status });
+  }
+  return results;
+}
+
 if (import.meta.main) {
-  regenerate(join(import.meta.dir, ".."));
+  const root = join(import.meta.dir, "..");
+  if (process.argv.slice(2).includes("--check")) {
+    const results = await checkDrift(root);
+    console.log(`checked ${results.length} vendored target(s) against ts-defold/library`);
+    for (const { module, status } of results) {
+      console.log(`  ${status}: ${module}`);
+    }
+    if (results.some((r) => r.status !== "ok")) {
+      process.exitCode = 1;
+    }
+  } else {
+    regenerate(root);
+  }
 }
