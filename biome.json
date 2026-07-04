@@ -16,6 +16,7 @@
       "!**/node_modules",
       "!**/generated",
       "!**/test/fixtures",
+      "!**/fixtures/ts-defold",
       "!**/*.lua"
     ]
   },
