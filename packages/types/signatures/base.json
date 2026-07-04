@@ -88,7 +88,9 @@
     "signatures": ["tostring(v: any): string"]
   },
   "type": {
-    "signatures": ["type(v: any): string"]
+    "signatures": [
+      "type(v: any): \"nil\" | \"number\" | \"string\" | \"boolean\" | \"table\" | \"function\" | \"thread\" | \"userdata\""
+    ]
   },
   "unpack": {
     "signatures": ["unpack<T extends any[]>(list: T): LuaMultiReturn<T>"]

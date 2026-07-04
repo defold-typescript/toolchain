@@ -182,10 +182,12 @@ describe("authored base signature store (bare global keys)", () => {
     expect(entry?.signatures).toContain("unpack<T extends any[]>(list: T): LuaMultiReturn<T>");
   });
 
-  test("type resolves to the authored value-to-string form", () => {
+  test("type resolves to its closed value-to-string union (matching lua-types)", () => {
     const entry = lookupSignature(store, "type");
     expect(entry).not.toBeNull();
-    expect(entry?.signatures).toContain("type(v: any): string");
+    expect(entry?.signatures).toContain(
+      'type(v: any): "nil" | "number" | "string" | "boolean" | "table" | "function" | "thread" | "userdata"',
+    );
   });
 
   test("every key is a bare global (no namespace prefix) — the one unprefixed store", () => {
