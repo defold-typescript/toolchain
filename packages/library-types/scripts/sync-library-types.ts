@@ -130,14 +130,23 @@ export function regenerate(packageRoot: string): void {
 }
 
 /**
+ * A GitHub repo URL (`https://github.com/<owner>/<repo>[.git]`) reduced to the
+ * bare `<owner>/<repo>` slug used to address raw content and the git-trees API.
+ */
+export function repoSlug(repo: string): string {
+  return repo
+    .replace(/^https:\/\/github\.com\//, "")
+    .replace(/\.git$/, "")
+    .replace(/\/$/, "");
+}
+
+/**
  * The raw.githubusercontent.com URL for a target's upstream `.d.ts` at the
  * pinned commit. `source.repo` is the human `https://github.com/<owner>/<repo>`
- * form; raw content is addressed by the bare `<owner>/<repo>` slug, so the
- * prefix (and any `.git` suffix) is stripped.
+ * form; raw content is addressed by the bare `<owner>/<repo>` slug.
  */
 export function rawUrl(source: LibrarySource, target: LibraryTarget): string {
-  const slug = source.repo.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "");
-  return `https://raw.githubusercontent.com/${slug}/${source.commit}/${target.path}`;
+  return `https://raw.githubusercontent.com/${repoSlug(source.repo)}/${source.commit}/${target.path}`;
 }
 
 export type DriftStatus = "ok" | "upstream-drift" | "transform-drift";
@@ -186,9 +195,141 @@ export async function checkDrift(
   return results;
 }
 
+export type DirClassification = "pure-lua" | "native" | "already-vendored" | "covered-by-goal";
+
+export interface ClassificationEntry {
+  dir: string;
+  classification: DirClassification;
+  modules: string[];
+}
+
+// A ts-defold/library `<name>-<version>.d.ts` alias file (e.g. `monarch-5.1.0`,
+// `taptic_engine-1.2`) — the "latest" pointer, not a distinct module name.
+const VERSION_ALIAS = /-\d+\.\d+(\.\d+)?$/;
+
+/**
+ * Group the vendored module names in a ts-defold/library tree by library dir.
+ * Every library lives at `packages/<dir>/<module>.d.ts`; each contributes
+ * `<module>`, minus the versioned alias files (`<name>-<semver>.d.ts`). A dir
+ * is registered from any path under it, so a dir carrying only a `library.json`
+ * (or nothing but an alias) maps to `[]`. Root files, dot-prefixed dirs, and
+ * non-`packages/` paths are ignored. Module lists are sorted for stable output.
+ */
+export function libraryModulesFromTree(paths: string[]): Map<string, string[]> {
+  const byDir = new Map<string, string[]>();
+  for (const p of paths) {
+    const segments = p.split("/");
+    if (segments[0] !== "packages" || segments.length < 3) continue;
+    const dir = segments[1];
+    if (dir === undefined || dir.startsWith(".")) continue;
+    if (!byDir.has(dir)) byDir.set(dir, []);
+    const file = segments[segments.length - 1];
+    if (file === undefined || !file.endsWith(".d.ts")) continue;
+    const moduleName = file.slice(0, -".d.ts".length);
+    if (VERSION_ALIAS.test(moduleName)) continue;
+    byDir.get(dir)?.push(moduleName);
+  }
+  for (const modules of byDir.values()) modules.sort();
+  return byDir;
+}
+
+/**
+ * Classify each library dir from its module-name shape. A Defold native
+ * extension registers a bare global module (`daabbcc`, `astar`), while a
+ * pure-Lua library is required by a dotted path (`monarch.monarch`,
+ * `richtext.richtext`) — so a dir is `pure-lua` iff it has at least one module
+ * and every module name is dotted; any bare module (or none at all) means
+ * `native`. The exclusion sets win: a vendored or goal-covered dir keeps that
+ * label regardless of shape. The module names are recorded as the classification
+ * evidence. Sorted by `dir` for a stable committed manifest.
+ */
+export function classifyLibraryDirs(
+  dirs: { dir: string; modules: string[] }[],
+  opts: { vendoredDirs: ReadonlySet<string>; coveredByGoalDirs: ReadonlySet<string> },
+): ClassificationEntry[] {
+  return dirs
+    .map(({ dir, modules }): ClassificationEntry => {
+      let classification: DirClassification;
+      if (opts.vendoredDirs.has(dir)) {
+        classification = "already-vendored";
+      } else if (opts.coveredByGoalDirs.has(dir)) {
+        classification = "covered-by-goal";
+      } else if (modules.length > 0 && modules.every((m) => m.includes("."))) {
+        classification = "pure-lua";
+      } else {
+        classification = "native";
+      }
+      return { dir, classification, modules };
+    })
+    .sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
+}
+
+interface GithubTreeResponse {
+  tree?: { path: string }[];
+}
+
+const githubHeaders = (): Record<string, string> => {
+  const token = process.env.GITHUB_TOKEN;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+async function githubTreePaths(slug: string, ref: string): Promise<string[]> {
+  const url = `https://api.github.com/repos/${slug}/git/trees/${ref}?recursive=1`;
+  const res = await fetch(url, { headers: githubHeaders() });
+  if (!res.ok) {
+    throw new Error(`git-trees fetch failed: ${url} -> ${res.status} ${res.statusText}`);
+  }
+  const body = (await res.json()) as GithubTreeResponse;
+  return (body.tree ?? []).map((e) => e.path);
+}
+
+/** Enumerate the ts-defold/library tree at the pinned commit. Network seam. */
+export type ListTree = (source: LibrarySource) => Promise<string[]>;
+
+const defaultListTree: ListTree = (source) => githubTreePaths(repoSlug(source.repo), source.commit);
+
+/**
+ * Enumerate every ts-defold/library dir at the pin, classify each by its
+ * module-name shape, and write `library-classification.json`. The `listTree`
+ * seam keeps the pass offline-testable; only the CLI wires the real call, and it
+ * stays out of CI (mirrors `--check`). The manifest pins the same `source` as
+ * `library-targets.json`.
+ */
+export async function writeClassification(
+  packageRoot: string,
+  seams: { listTree?: ListTree } = {},
+): Promise<void> {
+  const listTree = seams.listTree ?? defaultListTree;
+  const { source, targets } = readTargets(packageRoot);
+  const vendoredDirs = new Set(
+    targets.map((t) => t.path.split("/")[1]).filter((d): d is string => d !== undefined),
+  );
+  const coveredByGoalDirs = new Set(["defold-lldebugger", "defold-xmath"]);
+
+  const modulesByDir = libraryModulesFromTree(await listTree(source));
+  const dirs = [...modulesByDir].map(([dir, modules]) => ({ dir, modules }));
+  const entries = classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs });
+  writeFileSync(
+    join(packageRoot, "library-classification.json"),
+    `${JSON.stringify({ source, dirs: entries }, null, 2)}\n`,
+  );
+}
+
 if (import.meta.main) {
   const root = join(import.meta.dir, "..");
-  if (process.argv.slice(2).includes("--check")) {
+  const argv = process.argv.slice(2);
+  if (argv.includes("--classify")) {
+    await writeClassification(root);
+    const { dirs } = JSON.parse(
+      readFileSync(join(root, "library-classification.json"), "utf8"),
+    ) as { dirs: ClassificationEntry[] };
+    const counts = new Map<DirClassification, number>();
+    for (const e of dirs) counts.set(e.classification, (counts.get(e.classification) ?? 0) + 1);
+    console.log(`classified ${dirs.length} upstream dir(s) from ts-defold/library`);
+    for (const [classification, n] of [...counts].sort()) {
+      console.log(`  ${classification}: ${n}`);
+    }
+  } else if (argv.includes("--check")) {
     const results = await checkDrift(root);
     console.log(`checked ${results.length} vendored target(s) against ts-defold/library`);
     for (const { module, status } of results) {
