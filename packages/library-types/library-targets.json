@@ -34,6 +34,66 @@
       "path": "packages/gooey/gooey.gooey.d.ts",
       "fixture": "fixtures/ts-defold/gooey.gooey.d.ts",
       "generated": "generated/gooey.gooey.d.ts"
+    },
+    {
+      "module": "in.accelerometer",
+      "path": "packages/defold-input/in.accelerometer.d.ts",
+      "fixture": "fixtures/ts-defold/in.accelerometer.d.ts",
+      "generated": "generated/in.accelerometer.d.ts"
+    },
+    {
+      "module": "in.button",
+      "path": "packages/defold-input/in.button.d.ts",
+      "fixture": "fixtures/ts-defold/in.button.d.ts",
+      "generated": "generated/in.button.d.ts"
+    },
+    {
+      "module": "in.cursor",
+      "path": "packages/defold-input/in.cursor.d.ts",
+      "fixture": "fixtures/ts-defold/in.cursor.d.ts",
+      "generated": "generated/in.cursor.d.ts"
+    },
+    {
+      "module": "in.gesture",
+      "path": "packages/defold-input/in.gesture.d.ts",
+      "fixture": "fixtures/ts-defold/in.gesture.d.ts",
+      "generated": "generated/in.gesture.d.ts"
+    },
+    {
+      "module": "in.keyboard",
+      "path": "packages/defold-input/in.keyboard.d.ts",
+      "fixture": "fixtures/ts-defold/in.keyboard.d.ts",
+      "generated": "generated/in.keyboard.d.ts"
+    },
+    {
+      "module": "in.mapper",
+      "path": "packages/defold-input/in.mapper.d.ts",
+      "fixture": "fixtures/ts-defold/in.mapper.d.ts",
+      "generated": "generated/in.mapper.d.ts"
+    },
+    {
+      "module": "in.onscreen",
+      "path": "packages/defold-input/in.onscreen.d.ts",
+      "fixture": "fixtures/ts-defold/in.onscreen.d.ts",
+      "generated": "generated/in.onscreen.d.ts"
+    },
+    {
+      "module": "in.state",
+      "path": "packages/defold-input/in.state.d.ts",
+      "fixture": "fixtures/ts-defold/in.state.d.ts",
+      "generated": "generated/in.state.d.ts"
+    },
+    {
+      "module": "in.textbox",
+      "path": "packages/defold-input/in.textbox.d.ts",
+      "fixture": "fixtures/ts-defold/in.textbox.d.ts",
+      "generated": "generated/in.textbox.d.ts"
+    },
+    {
+      "module": "in.triggers",
+      "path": "packages/defold-input/in.triggers.d.ts",
+      "fixture": "fixtures/ts-defold/in.triggers.d.ts",
+      "generated": "generated/in.triggers.d.ts"
     }
   ]
 }
