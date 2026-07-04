@@ -20,6 +20,8 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - defold-orthographic — Britzl, https://github.com/britzl/defold-orthographic
     - gooey               — Britzl, https://github.com/britzl/gooey
     - defold-input        — Britzl, https://github.com/britzl/defold-input
+    - platypus            — Britzl, https://github.com/britzl/platypus
+    - defold-event        — Insality, https://github.com/Insality/defold-event
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition
