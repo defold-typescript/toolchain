@@ -191,6 +191,25 @@ export const MAPPING_TABLE_SLOTS: ReadonlyMap<string, { key: string; value: stri
 // there.
 export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([["gui.get", "unknown"]]);
 
+// FQN-keyed allowlist of the `types.is_*` checks that genuinely narrow their
+// argument, mapped to the `DEFOLD_TYPE_MAP` token whose interface they prove.
+// Emitting these as user-defined type guards (`var_ is Vector3`) is the only way
+// to narrow an engine userdata value, which `typeof` cannot. An allowlist, not a
+// blanket `is_*` match: `b2d.body.is_active`, `gui.is_enabled`,
+// `sound.is_music_playing`, `go.exists`, `sys.exists` are runtime-state /
+// existence checks on already-typed arguments and must stay `boolean`. An
+// unlisted future `types.is_*` also stays a visible `boolean` until curated here,
+// matching the ARBITRARY_TABLE_SLOTS deliberate-opt-in precedent.
+export const TYPE_PREDICATES: ReadonlyMap<string, string> = new Map([
+  ["types.is_hash", "hash"],
+  ["types.is_matrix4", "matrix4"],
+  ["types.is_quat", "quaternion"],
+  ["types.is_url", "url"],
+  ["types.is_vector", "vector"],
+  ["types.is_vector3", "vector3"],
+  ["types.is_vector4", "vector4"],
+]);
+
 // Element names whose `table` slot is a prose-only `array/list/table of <T>` shape
 // the field-list parser cannot read, but whose element type a human curated from
 // the doc. The value is a single element token (`T[]`) or a token list when the
@@ -1153,6 +1172,16 @@ function memberSignature(
     .map((p, i) => emitParameter(p, i, i >= cutoff, mapType, resolver, elementName))
     .join(", ");
   const ret = emitReturn(prepared.original.returnValues, mapType, resolver, elementName);
+  const predicateToken = TYPE_PREDICATES.get(elementName);
+  const soleParam = original[0];
+  if (
+    predicateToken !== undefined &&
+    soleParam !== undefined &&
+    original.length === 1 &&
+    ret.type === "boolean"
+  ) {
+    return `${name}(${params}): ${safeParamName(soleParam.name, 0)} is ${mapType(predicateToken)};`;
+  }
   return `${name}(${params}): ${ret.type};${ret.trailing}`;
 }
 
