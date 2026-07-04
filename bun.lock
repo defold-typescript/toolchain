@@ -56,6 +56,17 @@
         "vite": "^8.0.16",
       },
     },
+    "packages/library-types": {
+      "name": "@defold-typescript/library-types",
+      "version": "0.0.0",
+      "dependencies": {
+        "@defold-typescript/types": "workspace:*",
+      },
+      "devDependencies": {
+        "@typescript-to-lua/language-extensions": "1.19.0",
+        "typescript": "6.0.2",
+      },
+    },
     "packages/transpiler": {
       "name": "@defold-typescript/transpiler",
       "version": "0.0.0",
@@ -129,6 +140,8 @@
     "@defold-typescript/docs": ["@defold-typescript/docs@workspace:packages/docs"],
 
     "@defold-typescript/docs-site": ["@defold-typescript/docs-site@workspace:packages/docs-site"],
+
+    "@defold-typescript/library-types": ["@defold-typescript/library-types@workspace:packages/library-types"],
 
     "@defold-typescript/transpiler": ["@defold-typescript/transpiler@workspace:packages/transpiler"],
 
