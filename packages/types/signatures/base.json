@@ -71,7 +71,10 @@
     "signatures": ["require(modname: string): any"]
   },
   "select": {
-    "signatures": ["select(n: number | \"#\", ...args: any[]): any"]
+    "signatures": [
+      "select<T>(index: number, ...args: T[]): LuaMultiReturn<T[]>",
+      "select<T>(index: \"#\", ...args: T[]): number"
+    ]
   },
   "setfenv": {
     "signatures": ["setfenv<T extends Function>(f: T, table: object): T"]
@@ -93,7 +96,10 @@
     ]
   },
   "unpack": {
-    "signatures": ["unpack<T extends any[]>(list: T): LuaMultiReturn<T>"]
+    "signatures": [
+      "unpack<T extends any[]>(list: T): LuaMultiReturn<T>",
+      "unpack<T>(list: T[], i: number, j?: number): LuaMultiReturn<T[]>"
+    ]
   },
   "xpcall": {
     "signatures": [
