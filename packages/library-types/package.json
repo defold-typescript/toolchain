@@ -70,13 +70,15 @@
     "generated",
     "scripts",
     "library-targets.json",
+    "library-classification.json",
     "NOTICE",
     "!scripts/**/*.test.ts"
   ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "regen": "bun scripts/sync-library-types.ts",
-    "check": "bun scripts/sync-library-types.ts --check"
+    "check": "bun scripts/sync-library-types.ts --check",
+    "classify": "bun scripts/sync-library-types.ts --classify"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*"
