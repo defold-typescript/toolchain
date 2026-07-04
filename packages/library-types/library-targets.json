@@ -1,0 +1,27 @@
+{
+  "source": {
+    "repo": "https://github.com/ts-defold/library",
+    "commit": "2fe3aed3352a913d2859e6e85d34a8b23d821368",
+    "license": "MIT"
+  },
+  "targets": [
+    {
+      "module": "monarch.monarch",
+      "path": "packages/monarch/monarch.monarch.d.ts",
+      "fixture": "fixtures/ts-defold/monarch.monarch.d.ts",
+      "generated": "generated/monarch.monarch.d.ts"
+    },
+    {
+      "module": "orthographic.camera",
+      "path": "packages/defold-orthographic/orthographic.camera.d.ts",
+      "fixture": "fixtures/ts-defold/orthographic.camera.d.ts",
+      "generated": "generated/orthographic.camera.d.ts"
+    },
+    {
+      "module": "gooey.gooey",
+      "path": "packages/gooey/gooey.gooey.d.ts",
+      "fixture": "fixtures/ts-defold/gooey.gooey.d.ts",
+      "generated": "generated/gooey.gooey.d.ts"
+    }
+  ]
+}

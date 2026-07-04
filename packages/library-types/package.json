@@ -1,0 +1,44 @@
+{
+  "name": "@defold-typescript/library-types",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Vendored TypeScript types for popular Defold Lua libraries, core-type-renamed against @defold-typescript/types.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/defold-typescript/toolchain.git",
+    "directory": "packages/library-types"
+  },
+  "homepage": "https://github.com/defold-typescript/toolchain#readme",
+  "bugs": "https://github.com/defold-typescript/toolchain/issues",
+  "type": "module",
+  "exports": {
+    "./monarch.monarch": {
+      "types": "./generated/monarch.monarch.d.ts"
+    },
+    "./orthographic.camera": {
+      "types": "./generated/orthographic.camera.d.ts"
+    },
+    "./gooey.gooey": {
+      "types": "./generated/gooey.gooey.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "generated",
+    "scripts",
+    "library-targets.json",
+    "!scripts/**/*.test.ts"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "regen": "bun scripts/sync-library-types.ts"
+  },
+  "dependencies": {
+    "@defold-typescript/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@typescript-to-lua/language-extensions": "1.19.0",
+    "typescript": "6.0.2"
+  }
+}
