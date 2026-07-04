@@ -16,6 +16,7 @@ import resourceDoc from "../fixtures/resource_doc.json" with { type: "json" };
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
 import sysDoc from "../fixtures/sys_doc.json" with { type: "json" };
 import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
+import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, parseDefoldApiDoc } from "./api-doc";
 import {
@@ -217,6 +218,38 @@ describe("emitDeclarations", () => {
     };
     const out = emitDeclarations(module);
     expect(out).toContain('function set(node: Opaque<"node">, property: string): void;');
+  });
+
+  test("types.is_* emit as user-defined type guards over core-types", () => {
+    const module = parseDefoldApiDoc(typesDoc);
+    const out = emitDeclarations(module);
+    expect(out).toContain("function is_vector3(var_: unknown): var_ is Vector3;");
+    expect(out).toContain("function is_hash(var_: unknown): var_ is Hash;");
+    expect(out).toContain("function is_quat(var_: unknown): var_ is Quaternion;");
+    expect(out).not.toContain(": boolean;");
+  });
+
+  test("a single-arg boolean function not in TYPE_PREDICATES still emits boolean", () => {
+    const module: ApiModule = {
+      namespace: "types",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "types.is_frob",
+          brief: "",
+          description: "",
+          parameters: [{ name: "var_", doc: "", types: [], isOptional: false }],
+          returnValues: [{ name: "", doc: "", types: ["boolean"], isOptional: false }],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain("function is_frob(var_: unknown): boolean;");
   });
 
   test("a callback-signature token emits an arity-preserving typed function", () => {
@@ -1008,12 +1041,12 @@ describe("emitDeclarations", () => {
 
   test("a reserved-word parameter name takes the trailing-underscore escape", () => {
     const module: ApiModule = {
-      namespace: "types",
+      namespace: "thing",
       brief: "",
       description: "",
       functions: [
         {
-          name: "types.is_vector3",
+          name: "thing.is_vector3",
           brief: "",
           description: "",
           parameters: [
