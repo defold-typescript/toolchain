@@ -143,7 +143,8 @@ describe("apiPageMarkdown", () => {
     )?.signature;
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(base, apiLinkify(pages));
-    expect(md).toContain('select(n: number | "#", ...args: any[]): any');
+    expect(md).toContain("select<T>(index: number, ...args: T[]): LuaMultiReturn<T[]>");
+    expect(md).toContain('select<T>(index: "#", ...args: T[]): number');
     expect(md).not.toContain(`\`${thin}\``);
   });
 
