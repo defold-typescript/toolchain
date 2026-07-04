@@ -16,6 +16,12 @@
     "./monarch.monarch": {
       "types": "./generated/monarch.monarch.d.ts"
     },
+    "./monarch.transitions.easings": {
+      "types": "./generated/monarch.transitions.easings.d.ts"
+    },
+    "./monarch.transitions.gui": {
+      "types": "./generated/monarch.transitions.gui.d.ts"
+    },
     "./orthographic.camera": {
       "types": "./generated/orthographic.camera.d.ts"
     },
