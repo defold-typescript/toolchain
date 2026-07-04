@@ -1,6 +1,7 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as event from "event.event";
 import * as gooey from "gooey.gooey";
 import * as accelerometer from "in.accelerometer";
 import * as button from "in.button";
@@ -10,6 +11,7 @@ import * as monarch from "monarch.monarch";
 import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
 import * as camera from "orthographic.camera";
+import * as platypus from "platypus.platypus";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -69,6 +71,21 @@ state.acquire(_url);
 // in.triggers — every key/gamepad constant is a `Hash`.
 const _trigger: Hash = triggers.KEY_SPACE;
 
+// platypus.platypus — a lifecycle constant is a `Hash`; a `PlatypusInstance`'s
+// `velocity` is a `Vector3` and `move` accepts one (upstream `vmath.vector3`),
+// proving both core-type renames land on the real exported surface.
+const _pFalling: Hash = platypus.FALLING;
+declare const _pInstance: ReturnType<typeof platypus.create>;
+const _pVelocity: Vector3 = _pInstance.velocity;
+_pInstance.move(_v3);
+
+// event.event — a pure-passthrough module: the upstream surface is `any`-based,
+// so the codemod renames nothing. The proof is that the module resolves and its
+// exported surface type-checks — `create` yields an `EventInstance` whose
+// `is_empty` is a boolean.
+const _event = event.create(() => {});
+const _eventEmpty: boolean = _event.is_empty();
+
 void _mHash;
 void _ok;
 void _err;
@@ -86,3 +103,6 @@ void _bTouch;
 void _bNode;
 void _accel;
 void _trigger;
+void _pFalling;
+void _pVelocity;
+void _eventEmpty;

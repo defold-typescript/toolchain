@@ -58,6 +58,12 @@
     "./in.triggers": {
       "types": "./generated/in.triggers.d.ts"
     },
+    "./platypus.platypus": {
+      "types": "./generated/platypus.platypus.d.ts"
+    },
+    "./event.event": {
+      "types": "./generated/event.event.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [
