@@ -12,6 +12,18 @@
       "generated": "generated/monarch.monarch.d.ts"
     },
     {
+      "module": "monarch.transitions.easings",
+      "path": "packages/monarch/monarch.transitions.easings.d.ts",
+      "fixture": "fixtures/ts-defold/monarch.transitions.easings.d.ts",
+      "generated": "generated/monarch.transitions.easings.d.ts"
+    },
+    {
+      "module": "monarch.transitions.gui",
+      "path": "packages/monarch/monarch.transitions.gui.d.ts",
+      "fixture": "fixtures/ts-defold/monarch.transitions.gui.d.ts",
+      "generated": "generated/monarch.transitions.gui.d.ts"
+    },
+    {
       "module": "orthographic.camera",
       "path": "packages/defold-orthographic/orthographic.camera.d.ts",
       "fixture": "fixtures/ts-defold/orthographic.camera.d.ts",
