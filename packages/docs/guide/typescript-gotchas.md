@@ -157,6 +157,18 @@ function asNode(x: unknown): unknown {
 
 **Typed alternative.** Do not reach for `typeof` to recognise an engine handle. The handles are already nominally typed (`Opaque<"node">` and friends — see [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds)), so thread the typed value through instead of re-checking it. When you genuinely hold an `unknown` from a wildcard slot, narrow it with the engine predicate that fits (a `nil` check, a field probe) rather than `typeof`.
 
+The one runtime narrowing the engine *does* support for vmath userdata is the `types.is_*` family, emitted as user-defined type guards:
+
+```ts
+declare const v: unknown;
+if (types.is_vector3(v)) {
+  // v is Vector3 here — v.x is a number, no cast needed
+  const x = v.x;
+}
+```
+
+`types.is_hash`, `types.is_url`, `types.is_matrix4`, `types.is_quat`, `types.is_vector`, `types.is_vector3`, and `types.is_vector4` each narrow their argument to the matching core type. The other `is_*` / `exists` names (`go.exists`, `sound.is_music_playing`, …) are runtime-state checks on an already-typed value, not type guards, so they stay `boolean`.
+
 **How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots both forms: `typeof x === "object"` → `type(x) == "table"`, and the value form `typeof x` → `__TS__TypeOf(x)`. The committed Lua makes the userdata mismatch visible; if either lowering changed, the snapshot would fail.
 
 ## `on_message` ids are hashes, not strings
