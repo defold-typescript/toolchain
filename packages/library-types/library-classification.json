@@ -1,0 +1,726 @@
+{
+  "source": {
+    "repo": "https://github.com/ts-defold/library",
+    "commit": "2fe3aed3352a913d2859e6e85d34a8b23d821368",
+    "license": "MIT"
+  },
+  "dirs": [
+    {
+      "dir": "AppLovin-MAX-Defold",
+      "classification": "native",
+      "modules": [
+        "applovin"
+      ]
+    },
+    {
+      "dir": "DAABBCC",
+      "classification": "native",
+      "modules": [
+        "aabb",
+        "daabbcc"
+      ]
+    },
+    {
+      "dir": "LuaScriptInstance",
+      "classification": "native",
+      "modules": [
+        "lua_script_instance"
+      ]
+    },
+    {
+      "dir": "boom",
+      "classification": "pure-lua",
+      "modules": [
+        "boom.boom"
+      ]
+    },
+    {
+      "dir": "bzAnim",
+      "classification": "pure-lua",
+      "modules": [
+        "bzAnim.bzAnim"
+      ]
+    },
+    {
+      "dir": "def-setv",
+      "classification": "native",
+      "modules": [
+        "setv"
+      ]
+    },
+    {
+      "dir": "def-windward-jps",
+      "classification": "native",
+      "modules": [
+        "def_windward_jps"
+      ]
+    },
+    {
+      "dir": "def_taptic_engine",
+      "classification": "native",
+      "modules": [
+        "taptic_engine"
+      ]
+    },
+    {
+      "dir": "defcon",
+      "classification": "pure-lua",
+      "modules": [
+        "defcon.console"
+      ]
+    },
+    {
+      "dir": "defmath",
+      "classification": "pure-lua",
+      "modules": [
+        "defmath.defmath"
+      ]
+    },
+    {
+      "dir": "defold-apkx",
+      "classification": "native",
+      "modules": [
+        "apkx"
+      ]
+    },
+    {
+      "dir": "defold-astar",
+      "classification": "native",
+      "modules": [
+        "astar"
+      ]
+    },
+    {
+      "dir": "defold-bridge",
+      "classification": "pure-lua",
+      "modules": [
+        "bridge.bridge"
+      ]
+    },
+    {
+      "dir": "defold-clipboard",
+      "classification": "native",
+      "modules": [
+        "clipboard"
+      ]
+    },
+    {
+      "dir": "defold-coolmathgames-sdk",
+      "classification": "native",
+      "modules": [
+        "coolmath_games"
+      ]
+    },
+    {
+      "dir": "defold-event",
+      "classification": "already-vendored",
+      "modules": [
+        "event.event"
+      ]
+    },
+    {
+      "dir": "defold-extension-unity-ads",
+      "classification": "native",
+      "modules": [
+        "unityads"
+      ]
+    },
+    {
+      "dir": "defold-imagepicker",
+      "classification": "native",
+      "modules": [
+        "imagepicker"
+      ]
+    },
+    {
+      "dir": "defold-input",
+      "classification": "already-vendored",
+      "modules": [
+        "in.accelerometer",
+        "in.button",
+        "in.cursor",
+        "in.gesture",
+        "in.keyboard",
+        "in.mapper",
+        "in.onscreen",
+        "in.state",
+        "in.textbox",
+        "in.triggers"
+      ]
+    },
+    {
+      "dir": "defold-lang",
+      "classification": "pure-lua",
+      "modules": [
+        "lang.lang"
+      ]
+    },
+    {
+      "dir": "defold-lfs",
+      "classification": "native",
+      "modules": [
+        "lfs"
+      ]
+    },
+    {
+      "dir": "defold-lldebugger",
+      "classification": "covered-by-goal",
+      "modules": [
+        "lldebugger.debug"
+      ]
+    },
+    {
+      "dir": "defold-log",
+      "classification": "pure-lua",
+      "modules": [
+        "log.log"
+      ]
+    },
+    {
+      "dir": "defold-metrics",
+      "classification": "pure-lua",
+      "modules": [
+        "metrics.fps",
+        "metrics.mem"
+      ]
+    },
+    {
+      "dir": "defold-orthographic",
+      "classification": "already-vendored",
+      "modules": [
+        "orthographic.camera"
+      ]
+    },
+    {
+      "dir": "defold-playable-ads",
+      "classification": "native",
+      "modules": [
+        "mraid"
+      ]
+    },
+    {
+      "dir": "defold-playdeck",
+      "classification": "native",
+      "modules": [
+        "playdeck"
+      ]
+    },
+    {
+      "dir": "defold-prng",
+      "classification": "native",
+      "modules": [
+        "prng"
+      ]
+    },
+    {
+      "dir": "defold-proto",
+      "classification": "pure-lua",
+      "modules": [
+        "proto.proto"
+      ]
+    },
+    {
+      "dir": "defold-random",
+      "classification": "native",
+      "modules": [
+        "rnd"
+      ]
+    },
+    {
+      "dir": "defold-richtext",
+      "classification": "pure-lua",
+      "modules": [
+        "richtext.color",
+        "richtext.richtext",
+        "richtext.tags"
+      ]
+    },
+    {
+      "dir": "defold-saver",
+      "classification": "pure-lua",
+      "modules": [
+        "saver.saver",
+        "saver.storage"
+      ]
+    },
+    {
+      "dir": "defold-scene3d",
+      "classification": "native",
+      "modules": [
+        "scene3d"
+      ]
+    },
+    {
+      "dir": "defold-screenshot",
+      "classification": "native",
+      "modules": [
+        "screenshot"
+      ]
+    },
+    {
+      "dir": "defold-sharing",
+      "classification": "native",
+      "modules": [
+        "share"
+      ]
+    },
+    {
+      "dir": "defold-simplex-noise",
+      "classification": "native",
+      "modules": [
+        "simplex"
+      ]
+    },
+    {
+      "dir": "defold-skippy",
+      "classification": "native",
+      "modules": [
+        "skippy"
+      ]
+    },
+    {
+      "dir": "defold-splitmix64",
+      "classification": "native",
+      "modules": [
+        "splitmix64"
+      ]
+    },
+    {
+      "dir": "defold-textinput",
+      "classification": "native",
+      "modules": [
+        "textinput"
+      ]
+    },
+    {
+      "dir": "defold-tile-raycast",
+      "classification": "native",
+      "modules": [
+        "tile_raycast"
+      ]
+    },
+    {
+      "dir": "defold-tweener",
+      "classification": "pure-lua",
+      "modules": [
+        "tweener.tweener"
+      ]
+    },
+    {
+      "dir": "defold-uuid4",
+      "classification": "native",
+      "modules": [
+        "uuid4"
+      ]
+    },
+    {
+      "dir": "defold-webgl-memory",
+      "classification": "native",
+      "modules": [
+        "webgl_memory"
+      ]
+    },
+    {
+      "dir": "defold-xmath",
+      "classification": "covered-by-goal",
+      "modules": [
+        "xmath"
+      ]
+    },
+    {
+      "dir": "defold-yagames",
+      "classification": "pure-lua",
+      "modules": [
+        "yagames.yagames"
+      ]
+    },
+    {
+      "dir": "defold-yametrica",
+      "classification": "native",
+      "modules": [
+        "yametrica"
+      ]
+    },
+    {
+      "dir": "defold-yoga",
+      "classification": "native",
+      "modules": [
+        "yoga"
+      ]
+    },
+    {
+      "dir": "defold-zstd",
+      "classification": "native",
+      "modules": [
+        "zstd"
+      ]
+    },
+    {
+      "dir": "defold-zzfx",
+      "classification": "pure-lua",
+      "modules": [
+        "zzfx.api"
+      ]
+    },
+    {
+      "dir": "defos",
+      "classification": "native",
+      "modules": [
+        "defos"
+      ]
+    },
+    {
+      "dir": "defsave",
+      "classification": "pure-lua",
+      "modules": [
+        "defsave.defsave"
+      ]
+    },
+    {
+      "dir": "deftest",
+      "classification": "pure-lua",
+      "modules": [
+        "deftest.deftest"
+      ]
+    },
+    {
+      "dir": "dicebag",
+      "classification": "pure-lua",
+      "modules": [
+        "dicebag.dicebag"
+      ]
+    },
+    {
+      "dir": "drawpixels",
+      "classification": "native",
+      "modules": [
+        "drawpixels"
+      ]
+    },
+    {
+      "dir": "extension-adinfo",
+      "classification": "native",
+      "modules": [
+        "adinfo"
+      ]
+    },
+    {
+      "dir": "extension-admob",
+      "classification": "native",
+      "modules": [
+        "admob"
+      ]
+    },
+    {
+      "dir": "extension-cas",
+      "classification": "native",
+      "modules": [
+        "cas"
+      ]
+    },
+    {
+      "dir": "extension-crypt",
+      "classification": "native",
+      "modules": [
+        "crypt"
+      ]
+    },
+    {
+      "dir": "extension-facebook",
+      "classification": "native",
+      "modules": [
+        "facebook"
+      ]
+    },
+    {
+      "dir": "extension-firebase-analytics",
+      "classification": "native",
+      "modules": [
+        "firebase"
+      ]
+    },
+    {
+      "dir": "extension-googleplayinstant",
+      "classification": "native",
+      "modules": [
+        "instantapp"
+      ]
+    },
+    {
+      "dir": "extension-gpgs",
+      "classification": "native",
+      "modules": [
+        "gpgs"
+      ]
+    },
+    {
+      "dir": "extension-iac",
+      "classification": "native",
+      "modules": [
+        "iac"
+      ]
+    },
+    {
+      "dir": "extension-iap",
+      "classification": "native",
+      "modules": [
+        "iap"
+      ]
+    },
+    {
+      "dir": "extension-imgui",
+      "classification": "native",
+      "modules": [
+        "imgui"
+      ]
+    },
+    {
+      "dir": "extension-ironsource",
+      "classification": "native",
+      "modules": [
+        "ironsource"
+      ]
+    },
+    {
+      "dir": "extension-kaiads",
+      "classification": "native",
+      "modules": [
+        "kaiads"
+      ]
+    },
+    {
+      "dir": "extension-nativetext",
+      "classification": "native",
+      "modules": [
+        "nativetext"
+      ]
+    },
+    {
+      "dir": "extension-netimgui",
+      "classification": "native",
+      "modules": [
+        "netimgui"
+      ]
+    },
+    {
+      "dir": "extension-pcgrandom",
+      "classification": "native",
+      "modules": [
+        "pcgrandom"
+      ]
+    },
+    {
+      "dir": "extension-permissions",
+      "classification": "native",
+      "modules": [
+        "permissions"
+      ]
+    },
+    {
+      "dir": "extension-poki-sdk",
+      "classification": "native",
+      "modules": [
+        "poki_sdk"
+      ]
+    },
+    {
+      "dir": "extension-push",
+      "classification": "native",
+      "modules": [
+        "push"
+      ]
+    },
+    {
+      "dir": "extension-review",
+      "classification": "native",
+      "modules": [
+        "review"
+      ]
+    },
+    {
+      "dir": "extension-rive",
+      "classification": "native",
+      "modules": [
+        "rive"
+      ]
+    },
+    {
+      "dir": "extension-safearea",
+      "classification": "native",
+      "modules": [
+        "safearea"
+      ]
+    },
+    {
+      "dir": "extension-sfmtrandom",
+      "classification": "native",
+      "modules": [
+        "sfmtrandom"
+      ]
+    },
+    {
+      "dir": "extension-siwa",
+      "classification": "native",
+      "modules": [
+        "siwa"
+      ]
+    },
+    {
+      "dir": "extension-spine",
+      "classification": "native",
+      "modules": [
+        "gui",
+        "spine"
+      ]
+    },
+    {
+      "dir": "extension-steam",
+      "classification": "native",
+      "modules": [
+        "steam"
+      ]
+    },
+    {
+      "dir": "extension-vibrate",
+      "classification": "native",
+      "modules": [
+        "vibrate"
+      ]
+    },
+    {
+      "dir": "extension-videoplayer",
+      "classification": "native",
+      "modules": [
+        "videoplayer"
+      ]
+    },
+    {
+      "dir": "extension-videoplayer-mpeg",
+      "classification": "native",
+      "modules": [
+        "mpeg"
+      ]
+    },
+    {
+      "dir": "extension-videoplayer-native",
+      "classification": "native",
+      "modules": [
+        "videoplayer"
+      ]
+    },
+    {
+      "dir": "extension-webrtc",
+      "classification": "native",
+      "modules": [
+        "webrtc"
+      ]
+    },
+    {
+      "dir": "extension-websocket",
+      "classification": "native",
+      "modules": [
+        "websocket"
+      ]
+    },
+    {
+      "dir": "extension-webview",
+      "classification": "native",
+      "modules": [
+        "webview"
+      ]
+    },
+    {
+      "dir": "extension-zendesk",
+      "classification": "native",
+      "modules": [
+        "zendesk"
+      ]
+    },
+    {
+      "dir": "gd-defold",
+      "classification": "native",
+      "modules": []
+    },
+    {
+      "dir": "gooey",
+      "classification": "already-vendored",
+      "modules": [
+        "gooey.gooey"
+      ]
+    },
+    {
+      "dir": "jstodef",
+      "classification": "native",
+      "modules": [
+        "jstodef"
+      ]
+    },
+    {
+      "dir": "library-defold-persist",
+      "classification": "pure-lua",
+      "modules": [
+        "persist.persist"
+      ]
+    },
+    {
+      "dir": "library-defold-rendy",
+      "classification": "pure-lua",
+      "modules": [
+        "rendy.rendy"
+      ]
+    },
+    {
+      "dir": "lua-immutable",
+      "classification": "pure-lua",
+      "modules": [
+        "immutable.immutable"
+      ]
+    },
+    {
+      "dir": "monarch",
+      "classification": "already-vendored",
+      "modules": [
+        "monarch.monarch",
+        "monarch.transitions.easings",
+        "monarch.transitions.gui"
+      ]
+    },
+    {
+      "dir": "nakama-defold",
+      "classification": "pure-lua",
+      "modules": [
+        "nakama.engine.defold",
+        "nakama.nakama",
+        "nakama.util.log"
+      ]
+    },
+    {
+      "dir": "narrator",
+      "classification": "pure-lua",
+      "modules": [
+        "narrator.narrator"
+      ]
+    },
+    {
+      "dir": "platypus",
+      "classification": "already-vendored",
+      "modules": [
+        "platypus.platypus"
+      ]
+    },
+    {
+      "dir": "squid",
+      "classification": "pure-lua",
+      "modules": [
+        "squid.squid"
+      ]
+    },
+    {
+      "dir": "starly",
+      "classification": "pure-lua",
+      "modules": [
+        "starly.starly"
+      ]
+    }
+  ]
+}
