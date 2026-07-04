@@ -1,0 +1,25 @@
+@defold-typescript/library-types
+=================================
+
+This package vendors TypeScript type declarations derived from the Lua library
+definitions published by the ts-defold/library project:
+
+    https://github.com/ts-defold/library
+    License: MIT
+    Pinned commit: 2fe3aed3352a913d2859e6e85d34a8b23d821368
+
+The `.d.ts` sources under `generated/` are produced by codemodding the upstream
+declarations — Defold core types (`vmath.*`, `hash`, `url`, engine handles) are
+renamed to the `@defold-typescript/types` surface; all other content is left
+byte-identical. The original copyright and license notices of the upstream
+authors are retained.
+
+Attributed upstream libraries (by their directory in ts-defold/library):
+
+    - monarch             — Britzl, https://github.com/britzl/monarch
+    - defold-orthographic — Britzl, https://github.com/britzl/defold-orthographic
+    - gooey               — Britzl, https://github.com/britzl/gooey
+
+Each upstream library is distributed under its own license by its original
+author. The ts-defold/library MIT license covers the TypeScript definition
+packaging that this package's `generated/` output is derived from.

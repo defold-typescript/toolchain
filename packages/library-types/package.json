@@ -28,11 +28,13 @@
     "generated",
     "scripts",
     "library-targets.json",
+    "NOTICE",
     "!scripts/**/*.test.ts"
   ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "regen": "bun scripts/sync-library-types.ts"
+    "regen": "bun scripts/sync-library-types.ts",
+    "check": "bun scripts/sync-library-types.ts --check"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*"
