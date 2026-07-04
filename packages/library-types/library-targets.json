@@ -94,6 +94,18 @@
       "path": "packages/defold-input/in.triggers.d.ts",
       "fixture": "fixtures/ts-defold/in.triggers.d.ts",
       "generated": "generated/in.triggers.d.ts"
+    },
+    {
+      "module": "platypus.platypus",
+      "path": "packages/platypus/platypus.platypus.d.ts",
+      "fixture": "fixtures/ts-defold/platypus.platypus.d.ts",
+      "generated": "generated/platypus.platypus.d.ts"
+    },
+    {
+      "module": "event.event",
+      "path": "packages/defold-event/event.event.d.ts",
+      "fixture": "fixtures/ts-defold/event.event.d.ts",
+      "generated": "generated/event.event.d.ts"
     }
   ]
 }
