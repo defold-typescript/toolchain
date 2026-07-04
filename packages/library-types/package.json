@@ -28,6 +28,36 @@
     "./gooey.gooey": {
       "types": "./generated/gooey.gooey.d.ts"
     },
+    "./in.accelerometer": {
+      "types": "./generated/in.accelerometer.d.ts"
+    },
+    "./in.button": {
+      "types": "./generated/in.button.d.ts"
+    },
+    "./in.cursor": {
+      "types": "./generated/in.cursor.d.ts"
+    },
+    "./in.gesture": {
+      "types": "./generated/in.gesture.d.ts"
+    },
+    "./in.keyboard": {
+      "types": "./generated/in.keyboard.d.ts"
+    },
+    "./in.mapper": {
+      "types": "./generated/in.mapper.d.ts"
+    },
+    "./in.onscreen": {
+      "types": "./generated/in.onscreen.d.ts"
+    },
+    "./in.state": {
+      "types": "./generated/in.state.d.ts"
+    },
+    "./in.textbox": {
+      "types": "./generated/in.textbox.d.ts"
+    },
+    "./in.triggers": {
+      "types": "./generated/in.triggers.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [

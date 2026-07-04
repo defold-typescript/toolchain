@@ -2,6 +2,10 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as gooey from "gooey.gooey";
+import * as accelerometer from "in.accelerometer";
+import * as button from "in.button";
+import * as state from "in.state";
+import * as triggers from "in.triggers";
 import * as monarch from "monarch.monarch";
 import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
@@ -48,6 +52,23 @@ const _button = gooey.button("id", _hash, {}, () => {});
 const _node: Opaque<"node"> = _button.node;
 const _nodeId: Hash = _button.node_id;
 
+// in.button — `TOUCH` is a `Hash`, `register` returns an `Opaque<"node">` handle,
+// and `effect` accepts that handle plus a `Vector3`; the upstream `hash`, `node`,
+// and `vmath.vector3` references were all renamed off the core surface.
+const _bTouch: Hash = button.TOUCH;
+const _bNode: Opaque<"node"> = button.register("id", () => {});
+declare const _bScale: Vector3;
+button.effect(_bNode, _bScale);
+
+// in.accelerometer — `calibrated` yields a `Vector3` (upstream `vmath.vector3`).
+const _accel: Vector3 = accelerometer.calibrated();
+
+// in.state — `acquire` takes a `Url` (upstream `url`), reusing the `_url` handle.
+state.acquire(_url);
+
+// in.triggers — every key/gamepad constant is a `Hash`.
+const _trigger: Hash = triggers.KEY_SPACE;
+
 void _mHash;
 void _ok;
 void _err;
@@ -61,3 +82,7 @@ void _w;
 void _h;
 void _node;
 void _nodeId;
+void _bTouch;
+void _bNode;
+void _accel;
+void _trigger;
