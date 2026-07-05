@@ -6,6 +6,7 @@ import {
   apiModuleSymbols,
   functionOverviewCards,
   groupFunctionSymbols,
+  type LibraryMeta,
 } from "./api-surface";
 import {
   type ApiVersion,
@@ -85,6 +86,22 @@ function symbolBlock(symbol: ApiSymbol): string {
   );
 }
 
+// The uniform provenance block for a `library` page: five fixed-order bullets
+// under the intro. Source and Commit pin are markdown links (the commit-pin
+// text is the pinned sha, taken as the last path segment of `commitUrl`); the
+// import string is backtick-fenced so the prose linkifier skips the dotted
+// module name inside it.
+function libraryMetaBlock(meta: LibraryMeta): string[] {
+  const sha = meta.commitUrl.slice(meta.commitUrl.lastIndexOf("/") + 1);
+  return [
+    `- Source: [${meta.sourceUrl}](${meta.sourceUrl})`,
+    `- Commit pin: [${sha}](${meta.commitUrl})`,
+    `- Import: \`${meta.importString}\``,
+    `- License: ${meta.license}`,
+    `- Attribution: ${meta.attribution}`,
+  ];
+}
+
 // Render the module intro, then each kind's symbols stacked in one column. A
 // single combined string keeps Shiki and the heading-id slugger to one pass, so
 // per-symbol headings stay uniquely id'd for the "On this page" TOC. The
@@ -97,7 +114,7 @@ function symbolBlock(symbol: ApiSymbol): string {
 // examples and bullet lists render verbatim. ref-doc descriptions are HTML and
 // still flow through `htmlToDocText` first.
 export function apiPageMarkdown(
-  page: Pick<ApiPage, "module" | "translations" | "signatures" | "category">,
+  page: Pick<ApiPage, "module" | "translations" | "signatures" | "category" | "libraryMeta">,
   linkify: (text: string) => string,
 ): string {
   const m = page.module;
@@ -106,6 +123,9 @@ export function apiPageMarkdown(
   const raw = m.description || m.brief;
   const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
   if (intro) lines.push(linkify(intro), "");
+  if (page.category === "library" && page.libraryMeta) {
+    lines.push(...libraryMetaBlock(page.libraryMeta), "");
+  }
   const linkifyParam = (p: ApiSymbolParam): ApiSymbolParam => ({
     ...p,
     doc: linkify(p.doc),

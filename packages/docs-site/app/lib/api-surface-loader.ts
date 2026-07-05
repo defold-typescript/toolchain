@@ -5,7 +5,7 @@ import {
   type SignatureStore,
   type TranslationStore,
 } from "@defold-typescript/types";
-import type { ApiPage, ApiPageCategory } from "./api-surface";
+import type { ApiPage, ApiPageCategory, LibraryMeta } from "./api-surface";
 import { parseGlobalTypes } from "./global-types";
 
 interface ApiTarget {
@@ -105,10 +105,10 @@ export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> 
 
 // Per-library provenance, joined from `library-classification.json` (repo,
 // pinned commit, license, and the dir each module belongs to) plus `NOTICE`
-// (the upstream author/url). Mirrors the `lua-stdlib` prepend so a reader
-// landing on `/api/monarch.monarch` sees why this surface is vendored, not
-// generated. Returns a per-module note builder.
-function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => string {
+// (the upstream author/url). Returns a per-module `LibraryMeta` builder the
+// render layer turns into the uniform Source / Commit pin / Import / License /
+// Attribution block; the module description is left clean.
+function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => LibraryMeta {
   const classification = JSON.parse(
     readFileSync(join(libraryTypesDir, "library-classification.json"), "utf8"),
   ) as LibraryClassification;
@@ -120,20 +120,24 @@ function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => 
   const moduleDir = libraryModuleDirs(libraryTypesDir);
 
   const { repo, commit, license } = classification.source;
-  return (namespace: string): string => {
+  const commitUrl = `${repo}/tree/${commit}`;
+  return (namespace: string): LibraryMeta => {
     const dir = moduleDir.get(namespace);
     const credit = dir ? attribution.get(dir) : undefined;
-    const upstream =
+    const attributionText =
       dir && credit
-        ? `${dir} library by ${credit.author} (${credit.url})`
-        : `${dir ?? namespace} library`;
-    // The import string is fenced in backticks so the prose linkifier (which
-    // skips code spans) leaves the dotted module name inside it alone rather
-    // than turning it into an `/api/<slug>` link mid-statement.
-    return (
-      `Vendored from the ${upstream}, packaged by the ts-defold/library project ` +
-      `(${repo}) at pinned commit ${commit} (${license}). Import: \`${libraryImportString(namespace)}\`.`
-    );
+        ? `${dir} library by ${credit.author} (${credit.url}), vendored via ts-defold/library`
+        : `${dir ?? namespace} library, vendored via ts-defold/library`;
+    return {
+      // Upstream libraries live at `packages/<dir>/…` in ts-defold/library
+      // (see sync-library-types `libraryModulesFromTree`), so the source link
+      // needs the `packages/` segment or GitHub 404s.
+      sourceUrl: dir ? `${commitUrl}/packages/${dir}` : repo,
+      commitUrl,
+      importString: libraryImportString(namespace),
+      license,
+      attribution: attributionText,
+    };
   };
 }
 
@@ -142,12 +146,13 @@ function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => 
 // `parseDefoldApiDoc`, gated on an already-vendored `generated/*.d.ts` sibling,
 // tagged `category: "library"`, routed default-only under `/api/<slug>` (no
 // version prefix — library types are pinned to a ts-defold/library commit, not
-// a Defold version), and led by a per-library provenance note. Library symbols
-// carry no authored translations/signatures, so those stores stay empty.
+// a Defold version), and carrying a structured `libraryMeta` the render layer
+// turns into the uniform provenance block. Library symbols carry no authored
+// translations/signatures, so those stores stay empty.
 function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   const apiDocDir = join(libraryTypesDir, "api-doc");
   if (!existsSync(apiDocDir)) return [];
-  const noteFor = loadLibraryProvenance(libraryTypesDir);
+  const metaFor = loadLibraryProvenance(libraryTypesDir);
 
   const pages: ApiPage[] = [];
   for (const file of readdirSync(apiDocDir)) {
@@ -155,8 +160,6 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     const namespace = file.replace(/\.json$/, "");
     if (!existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`))) continue;
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(join(apiDocDir, file), "utf8")));
-    const note = noteFor(namespace);
-    module.description = note + (module.description ? `\n\n${module.description}` : "");
     pages.push({
       namespace,
       route: `/api/${libraryRouteSlug(namespace)}`,
@@ -165,6 +168,7 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
       translations: {},
       signatures: {},
       category: "library",
+      libraryMeta: metaFor(namespace),
     });
   }
   return pages;
