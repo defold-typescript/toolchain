@@ -21,11 +21,11 @@ Returns the projection matrix.
 
 **Parameters**
 
-- \`camera\` *Url* — camera id
+- \`camera\`: \`Url\` — camera id
 
 **Returns**
 
-- \`projection\` *Matrix4* — the matrix
+- \`projection\`: \`Matrix4\` — the matrix
 
 </div>
 "
