@@ -30,6 +30,7 @@ function fullNav() {
     globalTypes: [],
     luaStdlib: LUA_STDLIB,
     engine: ENGINE,
+    libraries: [],
   });
 }
 
@@ -76,6 +77,7 @@ describe("buildNav", () => {
       globalTypes: GLOBAL_TYPES,
       luaStdlib: LUA_STDLIB,
       engine: ENGINE,
+      libraries: [],
     });
     const reference = nav.find((c) => c.id === "reference");
     expect(reference?.links.map((l) => l.label)).toEqual([
@@ -95,6 +97,7 @@ describe("buildNav", () => {
       globalTypes: [],
       luaStdlib: LUA_STDLIB,
       engine: ENGINE,
+      libraries: [],
     });
     const reference = nav.find((c) => c.id === "reference");
     expect(reference?.links.map((l) => l.label)).toEqual(["Lua Standard", "Defold"]);
@@ -116,16 +119,92 @@ describe("buildNav", () => {
     expect(defold?.children?.every((c) => typeof c.labelHtml === "string")).toBe(true);
   });
 
+  test("nests a Libraries group one level: multi-module libs as subgroups, single-module as leaves", () => {
+    const nav = buildNav(realPages(), {
+      globals: GLOBALS,
+      globalTypes: [],
+      luaStdlib: LUA_STDLIB,
+      engine: ENGINE,
+      libraries: [
+        {
+          dir: "defold-input",
+          label: "defold-input",
+          modules: [
+            { label: "in.button", route: "/api/in.button" },
+            { label: "in.cursor", route: "/api/in.cursor" },
+          ],
+        },
+        {
+          dir: "monarch",
+          label: "monarch",
+          modules: [
+            { label: "monarch.monarch", route: "/api/monarch.monarch" },
+            { label: "monarch.transitions.gui", route: "/api/monarch.transitions.gui" },
+          ],
+        },
+        {
+          dir: "library-defold-persist",
+          label: "library-defold-persist",
+          modules: [{ label: "persist.persist", route: "/api/persist.persist" }],
+        },
+      ],
+    });
+    const reference = nav.find((c) => c.id === "reference");
+    const libraries = reference?.links.find((l) => l.label === "Libraries");
+    expect(libraries?.route).toBeUndefined();
+    // Order preserved: two multi-module subgroups, then the single-module leaf.
+    expect(libraries?.children?.map((c) => c.label)).toEqual([
+      "defold-input",
+      "monarch",
+      "persist.persist",
+    ]);
+
+    const input = libraries?.children?.find((c) => c.label === "defold-input");
+    expect(input?.route).toBeUndefined();
+    expect(input?.children?.map((c) => c.label)).toEqual(["in.button", "in.cursor"]);
+    expect(input?.children?.map((c) => c.route)).toEqual(["/api/in.button", "/api/in.cursor"]);
+
+    // A single-module library renders as a bare leaf — no redundant one-child subgroup.
+    const persist = libraries?.children?.find((c) => c.label === "persist.persist");
+    expect(persist?.route).toBe("/api/persist.persist");
+    expect(persist?.children).toBeUndefined();
+  });
+
+  test("emits no Libraries group when the libraries list is empty", () => {
+    const nav = buildNav(realPages(), {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: LUA_STDLIB,
+      engine: ENGINE,
+      libraries: [],
+    });
+    const reference = nav.find((c) => c.id === "reference");
+    expect(reference?.links.find((l) => l.label === "Libraries")).toBeUndefined();
+    expect(reference?.links.map((l) => l.label)).toEqual(["Lua Standard", "Defold"]);
+  });
+
   test("places every guide page route in exactly one category", () => {
     const pages = realPages();
-    const nav = buildNav(pages, { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
+    const nav = buildNav(pages, {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: [],
+    });
     const guideRoutes = nav.flatMap((c) => c.links.map((l) => l.route)).filter(Boolean);
     expect(new Set(guideRoutes).size).toBe(guideRoutes.length);
     expect(new Set(guideRoutes)).toEqual(new Set(pages.map((p) => p.route)));
   });
 
   test("places the script-state page in the Language category, not the guides fallback", () => {
-    const nav = buildNav(realPages(), { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
+    const nav = buildNav(realPages(), {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: [],
+    });
     const language = nav.find((c) => c.id === "language");
     expect(language?.links.find((l) => l.route === "/script-state")).toBeDefined();
     const guides = nav.find((c) => c.id === "guides");
@@ -133,7 +212,13 @@ describe("buildNav", () => {
   });
 
   test("places the messages page in the Language category, not the guides fallback", () => {
-    const nav = buildNav(realPages(), { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
+    const nav = buildNav(realPages(), {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: [],
+    });
     const language = nav.find((c) => c.id === "language");
     expect(language?.links.find((l) => l.route === "/messages")).toBeDefined();
     const guides = nav.find((c) => c.id === "guides");
@@ -141,7 +226,13 @@ describe("buildNav", () => {
   });
 
   test("places the data-structures page in the Language category, not the guides fallback", () => {
-    const nav = buildNav(realPages(), { globals: [], globalTypes: [], luaStdlib: [], engine: [] });
+    const nav = buildNav(realPages(), {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: [],
+    });
     const language = nav.find((c) => c.id === "language");
     expect(language?.links.find((l) => l.route === "/data-structures")).toBeDefined();
     const guides = nav.find((c) => c.id === "guides");
@@ -168,6 +259,7 @@ describe("buildNav", () => {
       globalTypes: [],
       luaStdlib: [],
       engine: [],
+      libraries: [],
     });
     const guides = nav.find((c) => c.id === "guides");
     const hit = guides?.links.find((l) => l.route === "/brand-new-topic");
@@ -183,6 +275,7 @@ describe("linkFor toc-title rendering", () => {
       globalTypes: [],
       luaStdlib: [],
       engine: [],
+      libraries: [],
     });
     for (const category of nav) {
       const hit = category.links.find((l) => l.route === page.route);
@@ -257,6 +350,10 @@ describe("activeCategoryId", () => {
 
   test("resolves the versioned API index route to reference", () => {
     expect(activeCategoryId("/api/defold-1.9.8", nav)).toBe("reference");
+  });
+
+  test("resolves a dotted-slug library page route to reference", () => {
+    expect(activeCategoryId("/api/persist.persist", nav)).toBe("reference");
   });
 
   test("the /api fallback does not fire for non-api routes", () => {

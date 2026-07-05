@@ -89,6 +89,20 @@ function parseNoticeAttribution(notice: string): Map<string, { author: string; u
   return attribution;
 }
 
+// Module -> upstream `dir` join from `library-classification.json`
+// (`dirs[].modules[]`): the reverse index every library-surface consumer needs
+// to attribute a dotted module (`monarch.monarch`, `in.button`) to its library.
+export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> {
+  const classification = JSON.parse(
+    readFileSync(join(libraryTypesDir, "library-classification.json"), "utf8"),
+  ) as LibraryClassification;
+  const moduleDir = new Map<string, string>();
+  for (const entry of classification.dirs) {
+    for (const mod of entry.modules) moduleDir.set(mod, entry.dir);
+  }
+  return moduleDir;
+}
+
 // Per-library provenance, joined from `library-classification.json` (repo,
 // pinned commit, license, and the dir each module belongs to) plus `NOTICE`
 // (the upstream author/url). Mirrors the `lua-stdlib` prepend so a reader
@@ -103,10 +117,7 @@ function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => 
     ? parseNoticeAttribution(readFileSync(noticePath, "utf8"))
     : new Map<string, { author: string; url: string }>();
 
-  const moduleDir = new Map<string, string>();
-  for (const entry of classification.dirs) {
-    for (const mod of entry.modules) moduleDir.set(mod, entry.dir);
-  }
+  const moduleDir = libraryModuleDirs(libraryTypesDir);
 
   const { repo, commit, license } = classification.source;
   return (namespace: string): string => {
