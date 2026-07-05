@@ -52,6 +52,113 @@ function readTargets(typesDir: string): ApiTarget[] {
   return targets;
 }
 
+interface LibraryClassification {
+  source: { repo: string; commit: string; license: string };
+  dirs: { dir: string; modules: string[] }[];
+}
+
+// The `/api/<slug>` route for a dotted library module. honox SSG emits a clean
+// static file for a literal dot (`…/monarch.monarch/index.html`), so the slug
+// keeps the dotted module name verbatim — namespace, card label, and route stay
+// identical, and the `[namespace]` route needs no bespoke slug mapping.
+export function libraryRouteSlug(namespace: string): string {
+  return namespace;
+}
+
+// The vendored `import * as <alias> from '<module>'` string, mirroring the
+// upstream ts-defold/library `@example` convention: the alias is the module
+// name past its first dotted segment, remaining dots collapsed to underscores
+// (`monarch.transitions.easings` -> `transitions_easings`).
+function libraryImportString(namespace: string): string {
+  const segments = namespace.split(".");
+  const alias = segments.length > 1 ? segments.slice(1).join("_") : segments[0];
+  return `import * as ${alias} from '${namespace}'`;
+}
+
+// Parse the `NOTICE` attribution table (`- <dir> — <author>, <url>` lines) into
+// a per-upstream-dir map so each library page can credit its original author.
+function parseNoticeAttribution(notice: string): Map<string, { author: string; url: string }> {
+  const attribution = new Map<string, { author: string; url: string }>();
+  const line = /^\s*-\s+(\S+)\s+—\s+(.+?),\s+(https?:\/\/\S+)\s*$/;
+  for (const raw of notice.split("\n")) {
+    const match = line.exec(raw);
+    if (match?.[1] && match[2] && match[3]) {
+      attribution.set(match[1], { author: match[2], url: match[3] });
+    }
+  }
+  return attribution;
+}
+
+// Per-library provenance, joined from `library-classification.json` (repo,
+// pinned commit, license, and the dir each module belongs to) plus `NOTICE`
+// (the upstream author/url). Mirrors the `lua-stdlib` prepend so a reader
+// landing on `/api/monarch.monarch` sees why this surface is vendored, not
+// generated. Returns a per-module note builder.
+function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => string {
+  const classification = JSON.parse(
+    readFileSync(join(libraryTypesDir, "library-classification.json"), "utf8"),
+  ) as LibraryClassification;
+  const noticePath = join(libraryTypesDir, "NOTICE");
+  const attribution = existsSync(noticePath)
+    ? parseNoticeAttribution(readFileSync(noticePath, "utf8"))
+    : new Map<string, { author: string; url: string }>();
+
+  const moduleDir = new Map<string, string>();
+  for (const entry of classification.dirs) {
+    for (const mod of entry.modules) moduleDir.set(mod, entry.dir);
+  }
+
+  const { repo, commit, license } = classification.source;
+  return (namespace: string): string => {
+    const dir = moduleDir.get(namespace);
+    const credit = dir ? attribution.get(dir) : undefined;
+    const upstream =
+      dir && credit
+        ? `${dir} library by ${credit.author} (${credit.url})`
+        : `${dir ?? namespace} library`;
+    // The import string is fenced in backticks so the prose linkifier (which
+    // skips code spans) leaves the dotted module name inside it alone rather
+    // than turning it into an `/api/<slug>` link mid-statement.
+    return (
+      `Vendored from the ${upstream}, packaged by the ts-defold/library project ` +
+      `(${repo}) at pinned commit ${commit} (${license}). Import: \`${libraryImportString(namespace)}\`.`
+    );
+  };
+}
+
+// Docs-only pages for the vendored third-party libraries in
+// `@defold-typescript/library-types`: each `api-doc/*.json` fixture parsed by
+// `parseDefoldApiDoc`, gated on an already-vendored `generated/*.d.ts` sibling,
+// tagged `category: "library"`, routed default-only under `/api/<slug>` (no
+// version prefix — library types are pinned to a ts-defold/library commit, not
+// a Defold version), and led by a per-library provenance note. Library symbols
+// carry no authored translations/signatures, so those stores stay empty.
+function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
+  const apiDocDir = join(libraryTypesDir, "api-doc");
+  if (!existsSync(apiDocDir)) return [];
+  const noteFor = loadLibraryProvenance(libraryTypesDir);
+
+  const pages: ApiPage[] = [];
+  for (const file of readdirSync(apiDocDir)) {
+    if (!file.endsWith(".json")) continue;
+    const namespace = file.replace(/\.json$/, "");
+    if (!existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`))) continue;
+    const module = parseDefoldApiDoc(JSON.parse(readFileSync(join(apiDocDir, file), "utf8")));
+    const note = noteFor(namespace);
+    module.description = note + (module.description ? `\n\n${module.description}` : "");
+    pages.push({
+      namespace,
+      route: `/api/${libraryRouteSlug(namespace)}`,
+      brief: module.brief,
+      module,
+      translations: {},
+      signatures: {},
+      category: "library",
+    });
+  }
+  return pages;
+}
+
 // Assemble one target's pages: engine modules, the presence-gated globals page,
 // the target's `luaStdlib` pages, and (default only) the shared core-types
 // global-type pages. `routePrefix` is `""` for the default target and
@@ -60,7 +167,7 @@ function readTargets(typesDir: string): ApiTarget[] {
 function loadTargetPages(
   typesDir: string,
   target: ApiTarget,
-  opts: { routePrefix: string; includeCoreTypes: boolean },
+  opts: { routePrefix: string; includeCoreTypes: boolean; libraryTypesDir: string | undefined },
 ): ApiPage[] {
   const translations = loadTranslationStore(typesDir);
   const signatures = loadSignatureStore(typesDir);
@@ -130,10 +237,17 @@ function loadTargetPages(
     }
   }
 
+  // Vendored third-party library pages ride on the default, core-types-including
+  // surface only, so they never appear under a versioned `/api/<version>` route.
+  if (opts.libraryTypesDir) {
+    pages.push(...loadLibraryPages(opts.libraryTypesDir));
+  }
+
   const categoryRank: Record<ApiPageCategory, number> = {
     engine: 0,
     "global-type": 1,
     "lua-stdlib": 2,
+    library: 3,
   };
   return pages.sort((a, b) => {
     if (a.category !== b.category) return categoryRank[a.category] - categoryRank[b.category];
@@ -146,25 +260,33 @@ function loadTargetPages(
   });
 }
 
-export function loadApiSurfaceForVersion(typesDir: string, versionId: string): ApiPage[] {
+export function loadApiSurfaceForVersion(
+  typesDir: string,
+  versionId: string,
+  libraryTypesDir?: string,
+): ApiPage[] {
   const target = readTargets(typesDir).find((t) => t.id === versionId);
   if (!target) {
     throw new Error(
       `loadApiSurfaceForVersion: no target with id "${versionId}" in api-targets.json`,
     );
   }
+  const isDefault = target.default === true;
   return loadTargetPages(typesDir, target, {
-    routePrefix: target.default === true ? "" : `/${target.id}`,
-    includeCoreTypes: target.default === true,
+    routePrefix: isDefault ? "" : `/${target.id}`,
+    includeCoreTypes: isDefault,
+    // Library pages are default-surface only; a versioned target never gets them
+    // even when a library dir is supplied.
+    libraryTypesDir: isDefault ? libraryTypesDir : undefined,
   });
 }
 
-export function loadApiSurface(typesDir: string): ApiPage[] {
+export function loadApiSurface(typesDir: string, libraryTypesDir?: string): ApiPage[] {
   const target = readTargets(typesDir).find((t) => t.default === true);
   if (!target) {
     throw new Error("loadApiSurface: no target marked default: true in api-targets.json");
   }
-  return loadApiSurfaceForVersion(typesDir, target.id);
+  return loadApiSurfaceForVersion(typesDir, target.id, libraryTypesDir);
 }
 
 function orderedTargets(typesDir: string): ApiTarget[] {

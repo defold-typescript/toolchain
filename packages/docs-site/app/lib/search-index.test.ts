@@ -11,6 +11,8 @@ import {
 } from "./search-index";
 
 const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 const page = (file: string, isIndex = false): GuidePage => {
   const slug = isIndex ? "" : file.replace(/\.md$/, "");
@@ -180,6 +182,18 @@ describe("apiSearchRecords", () => {
     const records = apiSearchRecords([...pages].reverse());
     const routes = records.map((r) => r.route);
     expect(routes).toEqual([...routes].sort());
+  });
+
+  test("indexes a library page into the default search index with no bespoke wiring", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const monarch = pages.find((p) => p.namespace === "monarch.monarch");
+    if (!monarch) throw new Error("expected a monarch.monarch library page");
+    expect(monarch.category).toBe("library");
+    const records = apiSearchRecords(pages);
+    const record = records.find((r) => r.route === monarch.route);
+    expect(record).toBeDefined();
+    expect(record?.title).toBe("monarch.monarch API");
+    expect(record?.text).toContain("monarch");
   });
 
   test("indexes parameter and return doc prose into text while preserving the schema", () => {
