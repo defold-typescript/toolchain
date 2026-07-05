@@ -106,8 +106,8 @@ export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> 
 // Per-library provenance, joined from `library-classification.json` (repo,
 // pinned commit, license, and the dir each module belongs to) plus `NOTICE`
 // (the upstream author/url). Returns a per-module `LibraryMeta` builder the
-// render layer turns into the uniform Source / Commit pin / Import / License /
-// Attribution block; the module description is left clean.
+// render layer turns into the uniform Author / GitHub / Commit pin / Import /
+// License block; the module description is left clean.
 function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => LibraryMeta {
   const classification = JSON.parse(
     readFileSync(join(libraryTypesDir, "library-classification.json"), "utf8"),
@@ -124,19 +124,12 @@ function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => 
   return (namespace: string): LibraryMeta => {
     const dir = moduleDir.get(namespace);
     const credit = dir ? attribution.get(dir) : undefined;
-    const attributionText =
-      dir && credit
-        ? `${dir} library by ${credit.author} (${credit.url}), vendored via ts-defold/library`
-        : `${dir ?? namespace} library, vendored via ts-defold/library`;
     return {
-      // Upstream libraries live at `packages/<dir>/…` in ts-defold/library
-      // (see sync-library-types `libraryModulesFromTree`), so the source link
-      // needs the `packages/` segment or GitHub 404s.
-      sourceUrl: dir ? `${commitUrl}/packages/${dir}` : repo,
+      author: credit?.author ?? "",
+      authorUrl: credit?.url ?? "",
       commitUrl,
       importString: libraryImportString(namespace),
       license,
-      attribution: attributionText,
     };
   };
 }
