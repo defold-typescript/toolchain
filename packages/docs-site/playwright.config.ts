@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 5173;
+const PORT = Number(process.env.PORT ?? 5173);
 const baseURL = `http://localhost:${PORT}`;
 
 // Bun's `bun test` discovers `*.spec.ts` / `*.test.ts` repo-wide, so the

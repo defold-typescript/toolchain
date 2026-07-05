@@ -12,7 +12,7 @@ import {
   apiModuleMarkdown,
   apiModuleSymbols,
   exampleMarkdownFor,
-  functionSummaryTable,
+  functionOverviewCards,
   groupFunctionSymbols,
   mapDocType,
 } from "./api-surface";
@@ -889,7 +889,7 @@ describe("mapDocType", () => {
   });
 });
 
-describe("functionSummaryTable", () => {
+describe("functionOverviewCards", () => {
   async function renderedHeadingId(signature: string): Promise<string> {
     const html = await renderMarkdown(`### \`${signature}\``);
     const heading = pageHeadings(html)[0];
@@ -897,98 +897,65 @@ describe("functionSummaryTable", () => {
     return heading.id;
   }
 
-  test("emits a GitHub table with a header row and one anchor-linked row per symbol", () => {
-    const table = functionSummaryTable([
-      fnSymbol("go.get_position", { signature: "go.get_position(): vector3" }),
-      fnSymbol("go.set_position", { signature: "go.set_position(position: vector3): void" }),
-    ]);
-    expect(table).toBe(
-      [
-        "| Function | Summary |",
-        "| --- | --- |",
-        "| [`go.get_position(): vector3`](#goget_position-vector3) |  |",
-        "| [`go.set_position(position: vector3): void`](#goset_positionposition-vector3-void) |  |",
-      ].join("\n"),
-    );
-  });
-
-  test("summary cell is the first sentence of docMarkdown, newline-collapsed and pipe-escaped", () => {
-    const table = functionSummaryTable([
+  test("emits one overview container and one linked card per symbol", () => {
+    const cards = functionOverviewCards([
       fnSymbol("go.get_position", {
         signature: "go.get_position(): vector3",
-        docMarkdown: "Gets the world position.\nReturns a | vector3. More prose here.",
+        docMarkdown: "Gets the world position. More prose.",
+      }),
+      fnSymbol("go.set_position", {
+        signature: "go.set_position(position: vector3): void",
+        docMarkdown: "Sets the world position.",
       }),
     ]);
-    expect(table).toBe(
+    expect(cards).toBe(
       [
-        "| Function | Summary |",
-        "| --- | --- |",
-        "| [`go.get_position(): vector3`](#goget_position-vector3) | Gets the world position. Returns a \\| vector3. |",
-      ].join("\n"),
-    );
-  });
-
-  test("empty docMarkdown yields an empty summary cell", () => {
-    const table = functionSummaryTable([
-      fnSymbol("go.get_position", { signature: "go.get_position(): vector3", docMarkdown: "" }),
-    ]);
-    expect(table).toBe(
-      [
-        "| Function | Summary |",
-        "| --- | --- |",
-        "| [`go.get_position(): vector3`](#goget_position-vector3) |  |",
+        '<div class="api-overview" aria-label="Function overview">',
+        '  <div class="api-overview-grid" role="list">',
+        '    <a class="api-overview-card" role="listitem" href="#goget_position-vector3" title="go.get_position(): vector3 — Gets the world position.">',
+        '      <code class="api-overview-title">go.get_position(): vector3</code>',
+        '      <span class="api-overview-description">Gets the world position.</span>',
+        "    </a>",
+        '    <a class="api-overview-card" role="listitem" href="#goset_positionposition-vector3-void" title="go.set_position(position: vector3): void — Sets the world position.">',
+        '      <code class="api-overview-title">go.set_position(position: vector3): void</code>',
+        '      <span class="api-overview-description">Sets the world position.</span>',
+        "    </a>",
+        "  </div>",
+        "</div>",
       ].join("\n"),
     );
   });
 
   test("anchors match the id the slugify-headings rule actually assigns", async () => {
-    const signature = "go.set_position(position: vector3): void";
-    const table = functionSummaryTable([fnSymbol("go.set_position", { signature })]);
-    const id = await renderedHeadingId(signature);
-    expect(table).toContain(`(#${id})`);
+    const signatures = [
+      "go.set_position(position: vector3): void",
+      "file:read(): string",
+      "mul(rhs: Matrix4): Matrix4",
+      "mul(rhs: Vector4): Vector4",
+    ];
+    const cards = functionOverviewCards(
+      signatures.map((signature) => fnSymbol(signature, { signature })),
+    );
+    for (const signature of signatures) {
+      const id = await renderedHeadingId(signature);
+      expect(cards).toContain(`href="#${id}"`);
+    }
   });
 
-  test("an empty symbol list yields an empty string", () => {
-    expect(functionSummaryTable([])).toBe("");
-  });
-
-  test("colon-named receiver methods produce a valid row whose anchor matches the heading id", async () => {
-    const signature = "file:read(): string";
-    const table = functionSummaryTable([fnSymbol("file:read", { signature })]);
-    const id = await renderedHeadingId(signature);
-    expect(table).toContain(`[\`file:read(): string\`](#${id})`);
-    expect(table).toContain("(#fileread-string)");
-  });
-
-  test("overloaded functions render distinct rows keyed by their full signatures", () => {
-    const table = functionSummaryTable([
-      fnSymbol("mul", {
-        signature: "mul(rhs: Matrix4): Matrix4",
-        docMarkdown: "Lua `*` operator.",
-      }),
-      fnSymbol("mul", {
-        signature: "mul(rhs: Vector4): Vector4",
-        docMarkdown: "Lua `*` operator.",
+  test("escapes signatures and summaries as HTML and returns empty string for no symbols", () => {
+    const cards = functionOverviewCards([
+      fnSymbol("demo.escape", {
+        signature: 'demo.escape(value: "Hash | <Url> & string")',
+        docMarkdown: 'Uses `a | b` and <unsafe> "quotes" & ampersands. Second sentence.',
       }),
     ]);
-    expect(table).toBe(
-      [
-        "| Function | Summary |",
-        "| --- | --- |",
-        "| [`mul(rhs: Matrix4): Matrix4`](#mulrhs-matrix4-matrix4) | Lua `*` operator. |",
-        "| [`mul(rhs: Vector4): Vector4`](#mulrhs-vector4-vector4) | Lua `*` operator. |",
-      ].join("\n"),
+    expect(cards).toContain('href="#demoescapevalue-hash--url--string"');
+    expect(cards).toContain("demo.escape(value: &quot;Hash | &lt;Url&gt; &amp; string&quot;)");
+    expect(cards).toContain(
+      'title="demo.escape(value: &quot;Hash | &lt;Url&gt; &amp; string&quot;) — Uses `a | b` and &lt;unsafe&gt; &quot;quotes&quot; &amp; ampersands."',
     );
-  });
-
-  test("escapes union-type pipes in the signature so the table cell stays intact", () => {
-    const table = functionSummaryTable([
-      fnSymbol("buffer.get_stream", {
-        signature: "buffer.get_stream(name: Hash | string): Opaque",
-      }),
-    ]);
-    expect(table).toContain(
-      "| [`buffer.get_stream(name: Hash \\| string): Opaque`](#bufferget_streamname-hash--string-opaque) |  |",
-    );
+    expect(cards).toContain("Uses `a | b` and &lt;unsafe&gt; &quot;quotes&quot; &amp; ampersands.");
+    expect(cards).not.toContain("\\|");
+    expect(functionOverviewCards([])).toBe("");
   });
 });
