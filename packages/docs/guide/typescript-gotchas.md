@@ -34,8 +34,8 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 ```ts
 declare const v3a: Vector3;
 
-const neg = -v3a;          // inferred as `number`, not `Vector3`
-const target: Vector3 = -v3a;  // TS error here — but the bug is the `-`
+const neg = -v3a; // inferred as `number`, not `Vector3`
+const target: Vector3 = -v3a; // TS error here — but the bug is the `-`
 ```
 
 **Why.** TypeScript's TS2362 check ("operand of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum") applies to *binary* `+`, `-`, `*`, `/` but **not** to *unary* `-`. The unary form has its own narrow check that does not reject object-typed operands; it just produces `number`. There is no way to opt a type out of unary negation at the type-system level, so the `vector3` interface cannot defend itself.
@@ -43,7 +43,7 @@ const target: Vector3 = -v3a;  // TS error here — but the bug is the `-`
 **Typed alternative.** Use `v.unm()` — the same metamethod the Lua runtime would call for `-v`, but exposed as a typed method:
 
 ```ts
-const neg: Vector3 = v3a.unm();   // returns Vector3
+const neg: Vector3 = v3a.unm(); // returns Vector3
 ```
 
 The same gap exists for `Vector4`; the same workaround applies: `v.unm()`.
