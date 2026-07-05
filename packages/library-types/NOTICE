@@ -22,6 +22,10 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - defold-input        — Britzl, https://github.com/britzl/defold-input
     - platypus            — Britzl, https://github.com/britzl/platypus
     - defold-event        — Insality, https://github.com/Insality/defold-event
+    - defold-richtext     — Britzl, https://github.com/britzl/defold-richtext
+    - narrator            — astrochili, https://github.com/astrochili/narrator
+    - defcon              — Britzl, https://github.com/britzl/defcon
+    - defold-lang         — Insality, https://github.com/Insality/defold-lang
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition
