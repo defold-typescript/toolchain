@@ -142,6 +142,36 @@
       "path": "packages/defold-lang/lang.lang.d.ts",
       "fixture": "fixtures/ts-defold/lang.lang.d.ts",
       "generated": "generated/lang.lang.d.ts"
+    },
+    {
+      "module": "saver.saver",
+      "path": "packages/defold-saver/saver.saver.d.ts",
+      "fixture": "fixtures/ts-defold/saver.saver.d.ts",
+      "generated": "generated/saver.saver.d.ts"
+    },
+    {
+      "module": "saver.storage",
+      "path": "packages/defold-saver/saver.storage.d.ts",
+      "fixture": "fixtures/ts-defold/saver.storage.d.ts",
+      "generated": "generated/saver.storage.d.ts"
+    },
+    {
+      "module": "defsave.defsave",
+      "path": "packages/defsave/defsave.defsave.d.ts",
+      "fixture": "fixtures/ts-defold/defsave.defsave.d.ts",
+      "generated": "generated/defsave.defsave.d.ts"
+    },
+    {
+      "module": "persist.persist",
+      "path": "packages/library-defold-persist/persist.persist.d.ts",
+      "fixture": "fixtures/ts-defold/persist.persist.d.ts",
+      "generated": "generated/persist.persist.d.ts"
+    },
+    {
+      "module": "proto.proto",
+      "path": "packages/defold-proto/proto.proto.d.ts",
+      "fixture": "fixtures/ts-defold/proto.proto.d.ts",
+      "generated": "generated/proto.proto.d.ts"
     }
   ]
 }

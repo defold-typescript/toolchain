@@ -214,7 +214,7 @@
     },
     {
       "dir": "defold-proto",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "proto.proto"
       ]
@@ -237,7 +237,7 @@
     },
     {
       "dir": "defold-saver",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "saver.saver",
         "saver.storage"
@@ -371,7 +371,7 @@
     },
     {
       "dir": "defsave",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "defsave.defsave"
       ]
@@ -657,7 +657,7 @@
     },
     {
       "dir": "library-defold-persist",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "persist.persist"
       ]
