@@ -82,7 +82,22 @@
     "./lang.lang": {
       "types": "./generated/lang.lang.d.ts"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./saver.saver": {
+      "types": "./generated/saver.saver.d.ts"
+    },
+    "./saver.storage": {
+      "types": "./generated/saver.storage.d.ts"
+    },
+    "./defsave.defsave": {
+      "types": "./generated/defsave.defsave.d.ts"
+    },
+    "./persist.persist": {
+      "types": "./generated/persist.persist.d.ts"
+    },
+    "./proto.proto": {
+      "types": "./generated/proto.proto.d.ts"
+    }
   },
   "files": [
     "generated",
