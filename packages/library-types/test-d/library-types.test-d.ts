@@ -2,7 +2,9 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as defcon from "defcon.console";
+import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
+import * as dicebag from "dicebag.dicebag";
 import * as event from "event.event";
 import * as gooey from "gooey.gooey";
 import * as accelerometer from "in.accelerometer";
@@ -23,6 +25,9 @@ import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
 import * as saver from "saver.saver";
 import * as storage from "saver.storage";
+import * as squid from "squid.squid";
+import * as starly from "starly.starly";
+import * as tweener from "tweener.tweener";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -169,6 +174,32 @@ const _protoVerified: { [key: string]: unknown } = proto.verify("Player", { name
 const _protoEncoded: string = proto.encode("Player", { name: "Ada" });
 proto.set_logger(undefined);
 
+// defmath.defmath — `round` is a scalar helper; `vect_to_quat` accepts a
+// `Vector3 | Vector4` and returns a `Quaternion`, proving the `vmath.quaternion`
+// alias renames onto the same core surface as `vmath.quat`.
+const _dmRound: number = defmath.round(1.5);
+const _dmQuat: Quaternion = defmath.vect_to_quat(_v3);
+
+// dicebag.dicebag — `flip_coin` returns a boolean; `bag_draw` accepts a
+// `string | number | Hash`, proving the upstream `hash` reference was renamed.
+const _dbFlip: boolean = dicebag.flip_coin();
+const _dbDraw: boolean = dicebag.bag_draw(_hash);
+
+// tweener.tweener — `insine` is a `TweenFunc`; `tween` returns a `Hash` (upstream
+// `hash`) and `ease` a plain number, both driven by an `AnyTweenFunc` argument.
+const _twHandle: Hash = tweener.tween(tweener.insine, 0, 1, 1, () => {});
+const _twEase: number = tweener.ease(tweener.insine, 0, 1, 1, 0.5);
+
+// squid.squid — an `export =` module: the default object exposes `save_logs`
+// returning a boolean and a `SquidConfig` whose `is_enabled` is a boolean.
+const _sqSaved: boolean = squid.save_logs();
+const _sqEnabled: boolean = squid.get_config().is_enabled;
+
+// starly.starly — an `export =` module: `get_view` returns a `Matrix4` (upstream
+// `vmath.matrix4`) for a `Hash` camera id, and `is_shaking` returns a boolean.
+const _stView: Matrix4 = starly.get_view(_hash);
+const _stShaking: boolean = starly.is_shaking(_hash);
+
 void _mHash;
 void _ok;
 void _err;
@@ -215,3 +246,13 @@ void _protoSchema;
 void _protoDecoded;
 void _protoVerified;
 void _protoEncoded;
+void _dmRound;
+void _dmQuat;
+void _dbFlip;
+void _dbDraw;
+void _twHandle;
+void _twEase;
+void _sqSaved;
+void _sqEnabled;
+void _stView;
+void _stShaking;

@@ -30,6 +30,11 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - defsave             — subsoap, https://github.com/subsoap/defsave
     - library-defold-persist — klaytonkowalski, https://github.com/klaytonkowalski/library-defold-persist
     - defold-proto        — Insality, https://github.com/Insality/defold-proto
+    - defmath             — subsoap, https://github.com/subsoap/defmath
+    - dicebag             — 8bitskull, https://github.com/8bitskull/dicebag
+    - defold-tweener      — Insality, https://github.com/Insality/defold-tweener
+    - squid               — paweljarosz, https://github.com/paweljarosz/squid
+    - starly              — VowSoftware, https://github.com/VowSoftware/starly
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition

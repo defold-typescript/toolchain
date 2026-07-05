@@ -1,0 +1,419 @@
+{
+  "info": {
+    "namespace": "tweener.tweener",
+    "brief": "Timer Based Defold Tween Library",
+    "description": "Timer Based Defold Tween Library"
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "TweenFunc"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AnyTweenFunc"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "insine",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inquad",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "incubic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "incirc",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inquart",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inquint",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inexpo",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inback",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inelastic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inbounce",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outsine",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outquad",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outcubic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outcirc",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outquart",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outquint",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outexpo",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outback",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outelastic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outbounce",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutsine",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutquad",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutcubic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutcirc",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutquart",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutquint",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutexpo",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutback",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutelastic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "inoutbounce",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinsine",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinquad",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outincubic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outincirc",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinquart",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinquint",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinexpo",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinback",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinelastic",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "outinbounce",
+      "types": [
+        "TweenFunc"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tween",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "tween_function",
+          "doc": "",
+          "types": [
+            "AnyTweenFunc"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "(value: number, is_final_call: boolean) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Hash"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ease",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "tween_function",
+          "doc": "",
+          "types": [
+            "AnyTweenFunc"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time_elapsed",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

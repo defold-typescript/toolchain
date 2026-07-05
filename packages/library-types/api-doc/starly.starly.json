@@ -1,0 +1,17 @@
+{
+  "info": {
+    "namespace": "starly.starly",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "CameraMap"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Starley"
+    }
+  ]
+}
