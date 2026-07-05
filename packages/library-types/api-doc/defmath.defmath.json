@@ -964,7 +964,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "LuaMultiReturn<[number, number]>"
+            "LuaMultiReturn<[ number, number ]>"
           ]
         }
       ]

@@ -118,7 +118,7 @@
           "name": "scale",
           "doc": "",
           "types": [
-            "{ x: number; y: number }"
+            "{ x: number; y: number; }"
           ],
           "is_optional": "False"
         }

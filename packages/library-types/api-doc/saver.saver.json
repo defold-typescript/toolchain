@@ -313,7 +313,7 @@
           "name": "migrationList",
           "doc": "",
           "types": [
-            "((\n\t\t\tthis: void,\n\t\t\tgameState: any,\n\t\t\tlogger: LoggerInstance,\n\t\t) => any)[]"
+            "((this: void, gameState: any, logger: LoggerInstance) => any)[]"
           ],
           "is_optional": "False"
         }
