@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { ApiPage } from "./api-surface";
 import {
   type ApiVersion,
+  libraryModuleDirs,
   loadApiSurface,
   loadApiSurfaceForVersion,
   versionsWithDiskFixtures,
@@ -23,4 +24,10 @@ export function apiVersions(): ApiVersion[] {
 
 export function apiPagesForVersion(versionId: string): ApiPage[] {
   return loadApiSurfaceForVersion(TYPES_DIR, versionId);
+}
+
+// Module -> upstream-library `dir` map for the vendored library surface, used to
+// group the Reference-menu Libraries subgroup by library.
+export function libraryDirs(): Map<string, string> {
+  return libraryModuleDirs(LIBRARY_TYPES_DIR);
 }
