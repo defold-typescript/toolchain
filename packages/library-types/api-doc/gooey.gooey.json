@@ -1,0 +1,929 @@
+{
+  "info": {
+    "namespace": "gooey.gooey",
+    "brief": "This is a definition stub with incomplete or untested signatures.",
+    "description": "This is a definition stub with incomplete or untested signatures.\nContributions to improve the accuracy of these types are welcome."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "table"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ButtonState"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CheckboxState"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RadioState"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ListState"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ScrollbarState"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "InputState"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "button",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(button: ButtonState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(button: ButtonState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ButtonState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "checkbox",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(checkbox: CheckboxState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(checkbox: CheckboxState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "CheckboxState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "radio",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(radio: RadioState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(radio: RadioState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "RadioState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "static_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "list_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "stencil_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "item_ids",
+          "doc": "",
+          "types": [
+            "(Hash | string)[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "{ horizontal?: boolean } | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "is_horizontal",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ListState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dynamic_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "list_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "root_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "stencil_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "item_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "{ horizontal?: boolean; carousel?: boolean } | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "is_horizontal",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ListState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "horizontal_dynamic_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "list_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "root_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "stencil_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "item_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "{ carousel?: boolean } | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ListState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "vertical_dynamic_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "list_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "root_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "stencil_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "item_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "{ carousel?: boolean } | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ListState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "horizontal_static_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "list_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "stencil_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "item_ids",
+          "doc": "",
+          "types": [
+            "(Hash | string)[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ListState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "vertical_static_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "list_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "stencil_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "item_ids",
+          "doc": "",
+          "types": [
+            "(Hash | string)[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(list: ListState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ListState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "vertical_scrollbar",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "handle_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "bounds_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(scrollbar: ScrollbarState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(scrollbar: ScrollbarState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ScrollbarState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "input",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "keyboard_type",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "{\n\t\t\tmax_length?: number;\n\t\t\tempty_text?: string;\n\t\t\tallowed_characters?: string;\n\t\t\tuse_marked_text?: boolean;\n\t\t}"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(input: InputState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "InputState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    }
+  ]
+}

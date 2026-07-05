@@ -1,0 +1,41 @@
+{
+  "info": {
+    "namespace": "richtext.color",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "add",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "color",
+          "doc": "",
+          "types": [
+            "number | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "COLORS",
+      "types": [
+        "{\n\t\taqua: Vector4;\n\t\tblack: Vector4;\n\t\tblue: Vector4;\n\t\tbrown: Vector4;\n\t\tcyan: Vector4;\n\t\tdarkblue: Vector4;\n\t\tfuchsia: Vector4;\n\t\tgreen: Vector4;\n\t\tgrey: Vector4;\n\t\tlightblue: Vector4;\n\t\tlime: Vector4;\n\t\tmagenta: Vector4;\n\t\tmaroon: Vector4;\n\t\tnavy: Vector4;\n\t\tolive: Vector4;\n\t\torange: Vector4;\n\t\tpurple: Vector4;\n\t\tred: Vector4;\n\t\tsilver: Vector4;\n\t\tteal: Vector4;\n\t\twhite: Vector4;\n\t\tyellow: Vector4;\n\t}"
+      ]
+    }
+  ]
+}

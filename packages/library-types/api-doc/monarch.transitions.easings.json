@@ -1,0 +1,206 @@
+{
+  "info": {
+    "namespace": "monarch.transitions.easings",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "EasingIn"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "EasingOut"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Easing"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "BACK",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "BOUNCE",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "CIRC",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "CUBIC",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ELASTIC",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EXPO",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "QUAD",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "QUART",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "QUINT",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "SINE",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "EasingIn | EasingOut"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Easing"
+          ]
+        }
+      ]
+    }
+  ]
+}

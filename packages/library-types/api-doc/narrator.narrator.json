@@ -1,0 +1,140 @@
+{
+  "info": {
+    "namespace": "narrator.narrator",
+    "brief": "This is a definition stub with incomplete or untested signatures.",
+    "description": "This is a definition stub with incomplete or untested signatures.\nContributions to improve the accuracy of these types are welcome."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Paragraph"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Choice"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Book"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SaveState"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "parse_file",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "this",
+          "doc": "",
+          "types": [
+            "void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "{ save?: boolean }"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Book"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "parse_content",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "this",
+          "doc": "",
+          "types": [
+            "void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "inclusions",
+          "doc": "",
+          "types": [
+            "string[]"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Book"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init_story",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "this",
+          "doc": "",
+          "types": [
+            "void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "book",
+          "doc": "",
+          "types": [
+            "Book"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Story"
+          ]
+        }
+      ]
+    }
+  ]
+}

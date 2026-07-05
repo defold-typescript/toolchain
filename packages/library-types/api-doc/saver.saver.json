@@ -1,0 +1,382 @@
+{
+  "info": {
+    "namespace": "saver.saver",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bind_save_part",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "keyId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tableReference",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_game_state",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fileName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_game_state",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fileName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_game_state",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_game_state",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_file_by_path",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "filePath",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_file_by_path",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_file_by_name",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fileName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_file_by_name",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fileName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_autosave_timer",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "seconds",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_save_path",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fileName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_save_version",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_migrations",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "migrationList",
+          "doc": "",
+          "types": [
+            "((\n\t\t\tthis: void,\n\t\t\tgameState: any,\n\t\t\tlogger: LoggerInstance,\n\t\t) => any)[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "apply_migrations",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "logger",
+          "doc": "",
+          "types": [
+            "LoggerInstance"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "remove_logger",
+          "doc": "",
+          "types": [
+            "undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_current_game_project_folder",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    }
+  ]
+}
