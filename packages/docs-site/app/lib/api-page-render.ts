@@ -22,16 +22,31 @@ const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "property", label: "Properties" },
 ];
 
+// A wider-than-normal gap after the `:` between a name and its type. An en space
+// (U+2002) survives HTML whitespace collapsing (repeated ASCII spaces do not), so
+// the type reads as its own column across every parameter/return/field list.
+const NAME_TYPE_GAP = "\u2002";
+
+// The `` `name`?:<gap>`type` `` label shared by parameter, return, and field
+// bullets, so name/type separation is uniform everywhere. An anonymous slot (an
+// unnamed return value) is just its `` `type` `` with no colon; a typeless named
+// slot is the name alone.
+function nameTypeLabel(name: string, isOptional: boolean, types: string): string {
+  const optional = isOptional ? "?" : "";
+  if (!name) return types ? `\`${types}\`` : "";
+  if (!types) return `\`${name}\`${optional}`;
+  return `\`${name}\`${optional}:${NAME_TYPE_GAP}\`${types}\``;
+}
+
 // An object-literal member and its subtree, indented two spaces per depth so
 // markdown-it nests it under the parameter bullet. Each member reads
-// `` `name`?: `type` — doc ``, keeping the member type inline (backticked)
-// rather than italic so a nested literal token stays legible.
+// `` `name`?:<gap>`type` — doc ``, keeping the member type inline (backticked)
+// so a nested literal token stays legible.
 function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
   const indent = "  ".repeat(depth + 1);
   const out: string[] = [];
   for (const f of fields) {
-    const name = `\`${f.name}\`${f.isOptional ? "?" : ""}`;
-    let bullet = `${indent}- ${name}: \`${f.types.join(" | ")}\``;
+    let bullet = `${indent}- ${nameTypeLabel(f.name, f.isOptional, f.types.join(" | "))}`;
     if (f.doc) bullet += ` — ${f.doc}`;
     out.push(bullet);
     if (f.fields && f.fields.length > 0) out.push(...fieldBullets(f.fields, depth + 1));
@@ -40,11 +55,7 @@ function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
 }
 
 function paramBullet(p: ApiSymbolParam): string {
-  const parts: string[] = [];
-  if (p.name) parts.push(`\`${p.name}\`${p.isOptional ? "?" : ""}`);
-  const types = p.types.join(" | ");
-  if (types) parts.push(`*${types}*`);
-  let bullet = `- ${parts.join(" ")}`;
+  let bullet = `- ${nameTypeLabel(p.name, p.isOptional, p.types.join(" | "))}`;
   if (p.doc) bullet += ` — ${p.doc}`;
   if (p.fields && p.fields.length > 0) {
     return [bullet, ...fieldBullets(p.fields, 0)].join("\n");

@@ -216,14 +216,16 @@ describe("apiPageMarkdown", () => {
 });
 
 describe("apiPageMarkdown field tree", () => {
+  // The en space (U+2002) is the wider gap `nameTypeLabel` puts after the `:`.
+  const G = "\u2002";
   test("renders a parameter's fields as an indented nested list, one indent per depth", () => {
     const md = apiPageMarkdown(fieldsPage(), (t) => t);
     expect(md).toContain(
-      "- `options`? *{ lerp?: number; nested?: { deep?: boolean; }; }* — the options",
+      `- \`options\`?:${G}\`{ lerp?: number; nested?: { deep?: boolean; }; }\` — the options`,
     );
-    expect(md).toContain("  - `lerp`?: `number` — Lerp factor.");
-    expect(md).toContain("  - `nested`?: `{ deep?: boolean; }` — Nested config.");
-    expect(md).toContain("    - `deep`?: `boolean` — Deep flag.");
+    expect(md).toContain(`  - \`lerp\`?:${G}\`number\` — Lerp factor.`);
+    expect(md).toContain(`  - \`nested\`?:${G}\`{ deep?: boolean; }\` — Nested config.`);
+    expect(md).toContain(`    - \`deep\`?:${G}\`boolean\` — Deep flag.`);
   });
 
   test("a parameter without fields renders no sub-list", () => {
