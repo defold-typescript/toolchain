@@ -444,6 +444,74 @@ describe("apiModuleSymbols", () => {
     ]);
   });
 
+  test("projects a parameter's fields tree recursively, mapping member docs and types", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.follow",
+            brief: "",
+            description: "Follow.",
+            parameters: [
+              {
+                name: "options",
+                doc: "the options",
+                types: ["{ lerp?: number; nested?: { color?: vector3; }; }"],
+                isOptional: true,
+                fields: [
+                  {
+                    name: "lerp",
+                    doc: 'the <span class="type">lerp</span> factor',
+                    types: ["number"],
+                    isOptional: true,
+                  },
+                  {
+                    name: "nested",
+                    doc: "nested config",
+                    types: ["{ color?: vector3; }"],
+                    isOptional: true,
+                    fields: [
+                      { name: "color", doc: "the color", types: ["vector3"], isOptional: true },
+                    ],
+                  },
+                ],
+              },
+            ],
+            returnValues: [],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.parameters[0]?.fields).toEqual([
+      { name: "lerp", doc: "the lerp factor", types: ["number"], isOptional: true },
+      {
+        name: "nested",
+        doc: "nested config",
+        types: ["{ color?: vector3; }"],
+        isOptional: true,
+        fields: [{ name: "color", doc: "the color", types: ["Vector3"], isOptional: true }],
+      },
+    ]);
+  });
+
+  test("leaves a parameter without fields free of a fields key", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.plain",
+            brief: "",
+            description: "Plain.",
+            parameters: [{ name: "x", doc: "", types: ["number"], isOptional: false }],
+            returnValues: [],
+          },
+        ],
+      }),
+    );
+    expect(symbols[0]?.parameters[0]?.fields).toBeUndefined();
+    expect(Object.hasOwn(symbols[0]?.parameters[0] ?? {}, "fields")).toBe(false);
+  });
+
   test("reduces HTML in a parameter doc to plain text", () => {
     const symbols = apiModuleSymbols(
       pageWith({

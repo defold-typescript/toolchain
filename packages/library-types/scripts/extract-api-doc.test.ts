@@ -69,6 +69,88 @@ declare module 'norm.norm' {
 }
 `;
 
+// A module exercising the object-literal field tree: a param typed as an inline
+// object literal with per-member JSDoc, one member whose own type is another
+// object literal (tree recursion), a member with no JSDoc, and a plain param
+// whose type is not an object literal (must emit no `fields`).
+const FIELDS = `/**
+ * Fields demo.
+ * @noResolution
+ */
+declare module 'fld.fld' {
+	/**
+	 * Follow a target.
+	 * @param options the options
+	 */
+	export function follow(options: {
+		/** Lerp factor. */
+		lerp?: number;
+		/** Nested config. */
+		nested?: {
+			/** Deep flag. */
+			deep?: boolean;
+		};
+		required: string;
+	}): void;
+
+	/** Plain param, no fields. */
+	export function plain(x: number): boolean;
+}
+`;
+
+type EmittedField = {
+  name: string;
+  doc: string;
+  types: string[];
+  is_optional: string;
+  fields?: EmittedField[];
+};
+
+describe("extractApiDoc object-literal field tree", () => {
+  const fn = (name: string) =>
+    (
+      extractApiDoc(FIELDS, "fld.fld") as { elements: Array<Record<string, unknown>> }
+    ).elements.find((e) => e.type === "FUNCTION" && e.name === name) as {
+      parameters: Array<{ name: string; types: string[]; fields?: EmittedField[] }>;
+    };
+
+  test("emits one field node per object-literal member, each with its member JSDoc and one-line type token", () => {
+    const options = fn("follow").parameters[0];
+    expect(options?.types[0]).toBe(
+      "{ lerp?: number; nested?: { deep?: boolean; }; required: string; }",
+    );
+    const fields = options?.fields ?? [];
+    expect(fields.map((f) => f.name)).toEqual(["lerp", "nested", "required"]);
+    expect(fields[0]).toEqual({
+      name: "lerp",
+      doc: "Lerp factor.",
+      types: ["number"],
+      is_optional: "True",
+    });
+    expect(fields[2]).toEqual({
+      name: "required",
+      doc: "",
+      types: ["string"],
+      is_optional: "False",
+    });
+  });
+
+  test("recurses into a member whose own type is an object literal", () => {
+    const nested = fn("follow").parameters[0]?.fields?.[1];
+    expect(nested?.name).toBe("nested");
+    expect(nested?.types[0]).toBe("{ deep?: boolean; }");
+    expect(nested?.fields).toEqual([
+      { name: "deep", doc: "Deep flag.", types: ["boolean"], is_optional: "True" },
+    ]);
+  });
+
+  test("emits no fields key for a plain (non-object-literal) param type", () => {
+    const param = fn("plain").parameters[0];
+    expect(param?.fields).toBeUndefined();
+    expect(Object.hasOwn(param ?? {}, "fields")).toBe(false);
+  });
+});
+
 describe("extractApiDoc type-token normalization", () => {
   const emitted = () =>
     extractApiDoc(NORMALIZE, "norm.norm") as {

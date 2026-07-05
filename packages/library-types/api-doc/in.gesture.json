@@ -18,6 +18,64 @@
       "name": "SETTINGS",
       "types": [
         "{ action_id: Hash; tap_threshold: number; double_tap_interval: number; swipe_threshold: number; swipe_time: number; long_press_time: number; multi_touch: boolean; }"
+      ],
+      "fields": [
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tap_threshold",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "double_tap_interval",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "swipe_threshold",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "swipe_time",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "long_press_time",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "multi_touch",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
       ]
     },
     {
@@ -32,7 +90,65 @@
           "types": [
             "{ action_id?: string; tap_threshold?: number; double_tap_interval?: number; swipe_threshold?: number; swipe_time?: number; long_press_time?: number; multi_touch?: boolean; }"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "action_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "tap_threshold",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "double_tap_interval",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "swipe_threshold",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "swipe_time",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "long_press_time",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "multi_touch",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ]
         }
       ],
       "returnvalues": [
