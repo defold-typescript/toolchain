@@ -871,7 +871,41 @@
           "types": [
             "{ max_length?: number; empty_text?: string; allowed_characters?: string; use_marked_text?: boolean; }"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "max_length",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "empty_text",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "allowed_characters",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "use_marked_text",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ]
         },
         {
           "name": "refresh_fn",

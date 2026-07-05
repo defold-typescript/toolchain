@@ -80,7 +80,33 @@
           "types": [
             "{ acc_x: number; acc_y: number; acc_z: number; }"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "acc_x",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "acc_y",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "acc_z",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
         },
         {
           "name": "instance",

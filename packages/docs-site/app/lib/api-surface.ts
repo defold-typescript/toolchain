@@ -48,6 +48,8 @@ export interface ApiSymbolParam {
   doc: string;
   types: string[];
   isOptional: boolean;
+  /** Object-literal member docs, projected recursively; absent for plain types. */
+  fields?: ApiSymbolParam[];
 }
 
 export interface ApiSymbol {
@@ -152,6 +154,7 @@ function projectParams(list: ApiParameter[]): ApiSymbolParam[] {
     doc: htmlToDocText(p.doc),
     types: normalizeTypes(p.types).map(mapDocType),
     isOptional: p.isOptional,
+    ...(p.fields ? { fields: projectParams(p.fields) } : {}),
   }));
 }
 

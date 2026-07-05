@@ -35,6 +35,184 @@
       "name": "COLORS",
       "types": [
         "{ aqua: Vector4; black: Vector4; blue: Vector4; brown: Vector4; cyan: Vector4; darkblue: Vector4; fuchsia: Vector4; green: Vector4; grey: Vector4; lightblue: Vector4; lime: Vector4; magenta: Vector4; maroon: Vector4; navy: Vector4; olive: Vector4; orange: Vector4; purple: Vector4; red: Vector4; silver: Vector4; teal: Vector4; white: Vector4; yellow: Vector4; }"
+      ],
+      "fields": [
+        {
+          "name": "aqua",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "black",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "brown",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cyan",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "darkblue",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fuchsia",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "grey",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lightblue",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lime",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "magenta",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "maroon",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "navy",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "olive",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "orange",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "purple",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "silver",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "teal",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "white",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "yellow",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        }
       ]
     }
   ]

@@ -120,7 +120,25 @@
           "types": [
             "{ x: number; y: number; }"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "x",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "y",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
         }
       ],
       "returnvalues": []
