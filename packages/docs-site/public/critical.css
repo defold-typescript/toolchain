@@ -32,6 +32,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-strong);
+  background-clip: content-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-faint);
+}
+
 header.topbar-critical {
   display: flex;
   align-items: center;
@@ -51,6 +71,42 @@ header.topbar-critical .logo-mark {
   height: 24px;
   flex: none;
   display: block;
+}
+
+.topic-scroll-frame {
+  position: relative;
+}
+.topic-scroll-frame::before,
+.topic-scroll-frame::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.topic-scroll-frame::before {
+  left: -0.55rem;
+  border-top: 0.28rem solid transparent;
+  border-right: 0.38rem solid var(--color-text-faint);
+  border-bottom: 0.28rem solid transparent;
+  transform: translateY(-50%);
+}
+.topic-scroll-frame::after {
+  right: -0.55rem;
+  border-top: 0.28rem solid transparent;
+  border-bottom: 0.28rem solid transparent;
+  border-left: 0.38rem solid var(--color-text-faint);
+  transform: translateY(-50%);
+}
+@media (max-width: 1023.98px) {
+  .topic-scroll-frame[data-scroll-left]::before,
+  .topic-scroll-frame[data-scroll-right]::after {
+    opacity: 0.45;
+  }
 }
 
 .prose {
@@ -73,6 +129,8 @@ header.topbar-critical .logo-mark {
   margin-top: 1.1em;
 }
 .prose h1 {
+  --heading-anchor-bottom: 0.42em;
+  position: relative;
   font-size: var(--prose-h1-size);
   line-height: 1.2;
   font-weight: 700;
@@ -82,6 +140,8 @@ header.topbar-critical .logo-mark {
   scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
 }
 .prose h2 {
+  --heading-anchor-bottom: 0.24em;
+  position: relative;
   font-size: var(--prose-h2-size);
   line-height: 1.3;
   font-weight: 600;
@@ -92,6 +152,8 @@ header.topbar-critical .logo-mark {
   scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
 }
 .prose h3 {
+  --heading-anchor-bottom: 0.1em;
+  position: relative;
   font-size: var(--prose-h3-size);
   line-height: 1.4;
   font-weight: 600;
@@ -124,9 +186,37 @@ header.topbar-critical .logo-mark {
   border-bottom-color: var(--color-accent);
 }
 .prose a.heading-anchor {
+  position: relative;
   color: inherit;
   font-weight: inherit;
   border-bottom: none;
+}
+.prose a.heading-anchor:hover {
+  color: var(--color-accent);
+}
+.heading-anchor-icon {
+  position: absolute;
+  bottom: var(--heading-anchor-bottom, 0.1em);
+  left: -1.15em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  opacity: 0;
+  color: var(--color-text-faint);
+  font-size: var(--prose-h3-size);
+  line-height: 1;
+  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+.heading-anchor-icon svg {
+  width: 0.85em;
+  height: 0.85em;
+}
+.prose :is(h1, h2, h3):hover .heading-anchor-icon,
+.heading-anchor:focus-visible .heading-anchor-icon {
+  opacity: 1;
+  color: var(--color-accent);
 }
 .prose a.badge-link {
   border-bottom: none;
