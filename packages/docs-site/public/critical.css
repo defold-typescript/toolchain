@@ -147,11 +147,11 @@ header.topbar-critical .logo-mark {
      narrow screens. Mirrors app/styles.css. */
   overflow-wrap: anywhere;
 }
-/* A signature linked from the overview table is underlined as a `.prose a`;
-   drop its inline-code border and padding so the chip chrome doesn't fight the
-   underline. Excludes `a.heading-anchor` (the detail-heading permalink), which
-   keeps its pill. Mirrors app/styles.css; unlayered here so it beats the
-   unlayered `.prose code` rule above by specificity. */
+/* If a signature code span is wrapped in a plain `.prose a`, the link underline
+   already marks it: drop the inline-code border and padding so the chip chrome
+   doesn't fight the underline. Excludes `a.heading-anchor` (the detail-heading
+   permalink), which keeps its pill. Mirrors app/styles.css; unlayered here so
+   it beats the unlayered `.prose code` rule above by specificity. */
 .prose a:not(.heading-anchor) .api-signature {
   border-color: transparent;
   padding: 0;
@@ -252,6 +252,74 @@ header.topbar-critical .logo-mark {
 .prose .table-scroll > table {
   margin: 0;
   max-width: none;
+}
+.prose .api-overview {
+  position: relative;
+  max-height: 18rem;
+  overflow-y: auto;
+  margin: 1.2em 0;
+  padding-right: 0.2rem;
+  transition: max-height 0.18s ease;
+}
+.prose .api-overview::after {
+  content: "";
+  position: sticky;
+  display: block;
+  bottom: 0;
+  height: 2.5rem;
+  margin-top: -2.5rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--color-bg));
+  transition: opacity 0.18s ease;
+}
+.prose .api-overview-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+.prose .api-overview-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  align-items: baseline;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: var(--color-shadow);
+}
+.prose .api-overview-card:hover,
+.prose .api-overview-card:focus-visible {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.prose .api-overview-title {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--prose-code-size);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prose .api-overview-description {
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--prose-table-size);
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 639.98px) {
+  .prose .api-overview-card {
+    grid-template-columns: 1fr;
+  }
 }
 .prose img {
   max-width: 100%;
