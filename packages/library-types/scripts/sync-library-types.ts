@@ -175,19 +175,18 @@ export function checkApiDocs(packageRoot: string): { module: string; ok: boolean
 }
 
 /**
- * Compare the committed `library-descriptions.json` against a fresh `merge`
- * using only the curated overrides (no network). Returns the sorted list of
- * dirs whose committed entry differs from the merge output — the `--check`
- * counterpart to `writeDescriptions`. A stale file or a removed override
- * surfaces here so `bun run sync --check` exits red.
+ * Verify the curated overrides are applied in the committed
+ * `library-descriptions.json` without doing a network fetch. Fetched-only
+ * descriptions use the committed file as the baseline and round-trip unchanged;
+ * stale override entries surface so `bun run sync --check` exits red.
  */
 export function checkDescriptions(packageRoot: string): string[] {
-  const expected = mergeLibraryDescriptions({}, readOverrides(packageRoot));
   let committed: Record<string, string> = {};
   const path = join(packageRoot, "library-descriptions.json");
   if (existsSync(path)) {
     committed = JSON.parse(readFileSync(path, "utf8")) as Record<string, string>;
   }
+  const expected = mergeLibraryDescriptions(committed, readOverrides(packageRoot));
   const allDirs = new Set<string>([...Object.keys(expected), ...Object.keys(committed)]);
   return [...allDirs].filter((dir) => expected[dir] !== committed[dir]).sort();
 }
@@ -511,7 +510,9 @@ if (import.meta.main) {
     const descriptions = JSON.parse(
       readFileSync(join(root, "library-descriptions.json"), "utf8"),
     ) as Record<string, string>;
-    console.log(`wrote ${descriptions.length} description(s) to library-descriptions.json`);
+    console.log(
+      `wrote ${Object.keys(descriptions).length} description(s) to library-descriptions.json`,
+    );
   } else if (argv.includes("--check")) {
     const results = await checkDrift(root);
     console.log(`checked ${results.length} vendored target(s) against ts-defold/library`);
