@@ -7,9 +7,14 @@ Camera module fixture.
 
 ## Functions
 
-| Function | Summary |
-| --- | --- |
-| [\`camera.get_projection(camera: Url): Matrix4\`](#cameraget_projectioncamera-url-matrix4) | Returns the projection matrix. |
+<div class="api-overview" aria-label="Function overview">
+  <div class="api-overview-grid" role="list">
+    <a class="api-overview-card" role="listitem" href="#cameraget_projectioncamera-url-matrix4" title="camera.get_projection(camera: Url): Matrix4 — Returns the projection matrix.">
+      <code class="api-overview-title">camera.get_projection(camera: Url): Matrix4</code>
+      <span class="api-overview-description">Returns the projection matrix.</span>
+    </a>
+  </div>
+</div>
 
 ### \`camera.get_projection(camera: Url): Matrix4\`
 
