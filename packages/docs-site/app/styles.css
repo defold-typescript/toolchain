@@ -665,53 +665,41 @@
     margin: 1.2em 0;
   }
 
-  .prose .api-overview-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.55rem;
-  }
-
-  .prose .api-overview-card {
+  .prose .api-overview ul {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
-    min-width: 0;
-    padding: 0.8rem 0.9rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    color: inherit;
+    gap: 0.2rem;
+    margin: 0;
+    padding-left: 1.35rem;
+  }
+
+  .prose .api-overview li {
+    margin: 0;
+    padding-left: 0.1rem;
+  }
+
+  .prose .api-overview a {
+    border-bottom: 0;
     text-decoration: none;
-    box-shadow: var(--color-shadow);
   }
 
-  .prose .api-overview-card:hover,
-  .prose .api-overview-card:focus-visible {
-    border-color: var(--color-accent);
+  .prose .api-overview a:hover,
+  .prose .api-overview a:focus-visible {
+    border-bottom: 0;
+    text-decoration: none;
+  }
+
+  .prose .api-overview a .api-signature {
+    padding: 0.04em 0.2em;
+    border-color: transparent;
+    background: color-mix(in srgb, var(--color-accent) 6%, var(--color-code-bg));
+    font-size: 0.82em;
+    line-height: 1.55;
+  }
+
+  .prose .api-overview a:hover .api-signature,
+  .prose .api-overview a:focus-visible .api-signature {
     background: var(--color-accent-soft);
-  }
-
-  .prose .api-overview-title {
-    min-width: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--color-text);
-    font-size: var(--prose-code-size);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .prose .api-overview-description {
-    min-width: 0;
-    max-height: 1.45em;
-    color: var(--color-text-muted);
-    font-size: var(--prose-table-size);
-    line-height: 1.45;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .prose img {
