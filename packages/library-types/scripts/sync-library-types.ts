@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import ts from "typescript";
+import { extractApiDoc } from "./extract-api-doc";
 
 /**
  * ts-defold/library core-type references -> the @defold-typescript/types surface.
@@ -127,6 +128,49 @@ export function regenerate(packageRoot: string): void {
     }
     writeFileSync(join(packageRoot, target.generated), output);
   }
+  writeApiDocs(packageRoot);
+}
+
+/** The pretty-printed ref-doc JSON a generated module extracts to. */
+function apiDocJson(packageRoot: string, target: LibraryTarget): string {
+  const generated = readFileSync(join(packageRoot, target.generated), "utf8");
+  return `${JSON.stringify(extractApiDoc(generated, target.module), null, 2)}\n`;
+}
+
+/**
+ * Extract every generated `declare module` into a committed
+ * `api-doc/<module>.json` ref-doc fixture the docs-site loads via
+ * `parseDefoldApiDoc`. Runs at the tail of `regenerate` so the fixtures never
+ * drift from the `.d.ts` they describe.
+ */
+export function writeApiDocs(packageRoot: string): void {
+  const { targets } = readTargets(packageRoot);
+  mkdirSync(join(packageRoot, "api-doc"), { recursive: true });
+  for (const target of targets) {
+    writeFileSync(
+      join(packageRoot, "api-doc", `${target.module}.json`),
+      apiDocJson(packageRoot, target),
+    );
+  }
+}
+
+/**
+ * Verify each committed `api-doc/<module>.json` still equals a fresh extraction
+ * from its generated file, without rewriting — the `--check` counterpart to
+ * `writeApiDocs`. A missing or stale fixture reports `false`.
+ */
+export function checkApiDocs(packageRoot: string): { module: string; ok: boolean }[] {
+  const { targets } = readTargets(packageRoot);
+  return targets.map((target) => {
+    const expected = apiDocJson(packageRoot, target);
+    let committed = "";
+    try {
+      committed = readFileSync(join(packageRoot, "api-doc", `${target.module}.json`), "utf8");
+    } catch {
+      committed = "";
+    }
+    return { module: target.module, ok: committed === expected };
+  });
 }
 
 /**
@@ -335,7 +379,12 @@ if (import.meta.main) {
     for (const { module, status } of results) {
       console.log(`  ${status}: ${module}`);
     }
-    if (results.some((r) => r.status !== "ok")) {
+    const apiDocs = checkApiDocs(root);
+    console.log(`checked ${apiDocs.length} api-doc fixture(s)`);
+    for (const { module, ok } of apiDocs) {
+      if (!ok) console.log(`  api-doc-drift: ${module}`);
+    }
+    if (results.some((r) => r.status !== "ok") || apiDocs.some((r) => !r.ok)) {
       process.exitCode = 1;
     }
   } else {

@@ -1,0 +1,142 @@
+{
+  "info": {
+    "namespace": "persist.persist",
+    "brief": "A simple interface for saving and loading data.",
+    "description": "A simple interface for saving and loading data."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Creates a file with the specified data.",
+      "description": "Creates a file with the specified data.\nIf the file already exists, then its data can be overwritten.",
+      "parameters": [
+        {
+          "name": "file_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "overwrite",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "write",
+      "brief": "Writes data to a file.",
+      "description": "Writes data to a file.",
+      "parameters": [
+        {
+          "name": "file_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "flush",
+      "brief": "Flushes unsaved data from a file. If a key is specified, then only that field is flushed.",
+      "description": "Flushes unsaved data from a file. If a key is specified, then only that field is flushed.",
+      "parameters": [
+        {
+          "name": "file_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save",
+      "brief": "Saves data that was written to a file.",
+      "description": "Saves data that was written to a file.",
+      "parameters": [
+        {
+          "name": "file_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load",
+      "brief": "Loads data from a file, including data that has not yet been saved.",
+      "description": "Loads data from a file, including data that has not yet been saved.\nReturns an `object`, or `undefined` if the file does not exist.",
+      "parameters": [
+        {
+          "name": "file_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "{} | undefined"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "info": {
+    "namespace": "richtext.tags",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "register",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(params?: string, settings?: {}) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "apply",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

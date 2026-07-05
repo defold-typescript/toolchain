@@ -1,0 +1,141 @@
+{
+  "info": {
+    "namespace": "in.mapper",
+    "brief": "This is a definition stub with incomplete or untested signatures.",
+    "description": "This is a definition stub with incomplete or untested signatures.\nContributions to improve the accuracy of these types are welcome."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "bind",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "trigger",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "gamepad",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unbind",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "trigger",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unbind_all",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "player",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "trigger",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "gamepad",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "{} | undefined"
+          ]
+        }
+      ]
+    }
+  ]
+}

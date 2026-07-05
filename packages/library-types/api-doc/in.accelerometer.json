@@ -1,0 +1,255 @@
+{
+  "info": {
+    "namespace": "in.accelerometer",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "AccelerometerInstance"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "samplecount",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "calibrate",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{ acc_x: number; acc_y: number; acc_z: number }"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "calibrated",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adjusted",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "average",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zero",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "latest",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_window_resized",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "AccelerometerInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

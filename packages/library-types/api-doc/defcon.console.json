@@ -1,0 +1,109 @@
+{
+  "info": {
+    "namespace": "defcon.console",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "start",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "port",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "stop",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_module",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_command",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "command",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "description",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "CommandCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_environment",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "env",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

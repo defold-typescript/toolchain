@@ -1,0 +1,195 @@
+{
+  "info": {
+    "namespace": "in.textbox",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "TOUCH",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TYPE",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "BACKSPACE",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "acquire",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "release",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "box_node_or_string",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\"> | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "text_node_or_string",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\"> | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "is_masked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unregister",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node_or_string",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\"> | string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "effect",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "scale",
+          "doc": "",
+          "types": [
+            "{ x: number; y: number }"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "text",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node_or_string",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\"> | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

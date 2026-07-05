@@ -1,0 +1,1005 @@
+{
+  "info": {
+    "namespace": "monarch.monarch",
+    "brief": "Monarch is a screen manager for the Defold game engine.",
+    "description": "Monarch is a screen manager for the Defold game engine."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "ScreenId"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ShowOptions"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ReplaceOptions"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RegisterProxyOptions"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BackOptions"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PreloadOptions"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Data"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Message"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Callback"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TRANSITION",
+      "types": [
+        "{\n\t\tDONE: Hash;\n\t\tSHOW_IN: Hash;\n\t\tSHOW_OUT: Hash;\n\t\tBACK_IN: Hash;\n\t\tBACK_OUT: Hash;\n\t}"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FOCUS",
+      "types": [
+        "{\n\t\tGAINED: Hash;\n\t\tLOST: Hash;\n\t}"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SCREEN_TRANSITION_IN_STARTED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SCREEN_TRANSITION_IN_FINISHED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SCREEN_TRANSITION_OUT_STARTED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SCREEN_TRANSITION_OUT_FINISHED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SCREEN_TRANSITION_FAILED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "debug",
+      "brief": "Enable verbose logging of the internals of Monarch.",
+      "description": "Enable verbose logging of the internals of Monarch.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "in_stack",
+      "brief": "Check if a screen exists in the current screen stack",
+      "description": "Check if a screen exists in the current screen stack",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true of the screen is in the stack",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_top",
+      "brief": "Check if a Monarch screen is at the top of the view stack.",
+      "description": "Check if a Monarch screen is at the top of the view stack.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the screen is at the top of the stack",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_visible",
+      "brief": "Check if a Monarch screen is visible.",
+      "description": "Check if a Monarch screen is visible.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the screen is visible",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_loaded",
+      "brief": "Check if a screen is loaded",
+      "description": "Check if a screen is loaded",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the screen is loaded",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_popup",
+      "brief": "Check if a screen is a popup",
+      "description": "Check if a screen is a popup",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the screen is a popup",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_proxy",
+      "brief": "Register a new screen contained in a collection proxy.",
+      "description": "Register a new screen contained in a collection proxy.\nThis is done automatically by the screen_proxy.script. It is expected that\nthe caller of this function is a script component attached to the same game\nobject as the proxy. This is required since monarch will acquire and\nrelease input focus of the game object where the proxy is attached.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Unique id of the screen",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "proxy",
+          "doc": "URL to the collection proxy containing the screen",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "settings",
+          "doc": "Settings table for screen. Accepted values:\n* popup - true if the screen is a popup\n* popup_on_popup - true if this popup can be shown on top of\nanother popup or false if an underlying popup should be closed\n* timestep_below_popup - Timestep to set on proxy when below a popup\n* screen_keeps_input_focus_when_below_popup - If this screen should\nkeep input focus when below a popup\n* others_keep_input_focus_when_below_screen - If screens below this\nscreen should keep input focus\n* auto_preload - true if the screen should be automatically preloaded",
+          "types": [
+            "RegisterProxyOptions"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_factory",
+      "brief": "Register a new screen contained in a collection factory.",
+      "description": "Register a new screen contained in a collection factory.\nThis is done automatically by the screen_factory.script. It is expected that\nthe caller of this function is a script component attached to the same game\nobject as the factory. This is required since monarch will acquire and\nrelease input focus of the game object where the factory is attached.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Unique id of the screen",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "factory",
+          "doc": "URL to the collection factory containing the screen",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "settings",
+          "doc": "Settings table for screen. Accepted values:\n* popup - true if the screen is a popup\n* popup_on_popup - true if this popup can be shown on top of\nanother popup or false if an underlying popup should be closed\n* screen_keeps_input_focus_when_below_popup - If this screen should\nkeep input focus when below a popup\n* others_keep_input_focus_when_below_screen - If screens below this\nscreen should keep input focus\n* auto_preload - true if the screen should be automatically preloaded",
+          "types": [
+            "RegisterProxyOptions"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unregister",
+      "brief": "Unregister a screen",
+      "description": "Unregister a screen\nThis is done automatically by the screen.script",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to unregister",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "data",
+      "brief": "Get data associated with a screen",
+      "description": "Get data associated with a screen",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to get data for",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Data associated with the screen",
+          "types": [
+            "Data"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_exists",
+      "brief": "Check if a Monarch screen exists.",
+      "description": "Check if a Monarch screen exists.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to check if is registered",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True or False if the screen id is registered or not",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_busy",
+      "brief": "Check if Monarch is busy showing and/or hiding a screen.",
+      "description": "Check if Monarch is busy showing and/or hiding a screen.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if busy",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show",
+      "brief": "Show a Monarch screen.",
+      "description": "Show a Monarch screen.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to check if is registered",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Table with options when showing the screen (can be nil). Valid values:\n- clear - Set to true if the stack should be cleared down to an existing instance of the screen\n- reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded.\nThis would be the case if doing a show() from a popup on the screen just below the popup.\n- sequential - Set to true to wait for the previous screen to show itself out before starting the\nshow in transition even when transitioning to a different scene ID.\n- no_stack - Set to true to load the screen without adding it to the screen stack.\n- pop - The number of screens to pop from the stack before adding the new one.",
+          "types": [
+            "ShowOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "data",
+          "doc": "Optional data to set on the screen. Can be retrieved by the `data()` function",
+          "types": [
+            "Data"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Optional callback to invoke when screen is shown",
+          "types": [
+            "Callback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "replace",
+      "brief": "Replace the top of the stack with a new screen.",
+      "description": "Replace the top of the stack with a new screen.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to show.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Table with options when showing the screen (can be nil). Valid values:\n- clear {boolean} - Set to true if the stack should be cleared down to an existing instance of the screen.\n- reload {boolean} - Set to true if the screen should be reloaded if it already exists in the stack and is loaded.\nThis would be the case if doing a show() from a popup on the screen just below the popup.\n- no_stack {boolean} - Set to true to load the screen without adding it to the screen stack.",
+          "types": [
+            "ReplaceOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "data",
+          "doc": "Optional data to set on the screen. Can be retrieved by the data() function.",
+          "types": [
+            "Data"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Optional callback to invoke when the screen is shown.",
+          "types": [
+            "Callback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hide",
+      "brief": "Hide a screen. The screen must either be at the top of the stack or",
+      "description": "Hide a screen. The screen must either be at the top of the stack or\nvisible but not added to the stack (through the no_stack option).",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to hide.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Optional callback to invoke when the screen is hidden.",
+          "types": [
+            "Callback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if successfully hiding, false if busy or for some other reason unable to hide the screen.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear",
+      "brief": "Clear the stack completely. Any visible screens will be hidden by navigating back out",
+      "description": "Clear the stack completely. Any visible screens will be hidden by navigating back out\nfrom them.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Optional callback to invoke when the stack has been cleared.",
+          "types": [
+            "Callback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "back",
+      "brief": "Go back to the previous screen in the stack.",
+      "description": "Go back to the previous screen in the stack.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Table with options when backing out from the screen (can be nil).\nValid values:\n- sequential {boolean} - Set to true to wait for the current screen to hide itself out before starting the\nback in transition even when transitioning to a different scene ID.",
+          "types": [
+            "BackOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "data",
+          "doc": "Optional data to set for the previous screen.",
+          "types": [
+            "Data"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Optional callback to invoke when the previous screen is visible again.",
+          "types": [
+            "Callback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_preloading",
+      "brief": "Check if a screen is preloading via monarch.preload() or automatically",
+      "description": "Check if a screen is preloading via monarch.preload() or automatically\nvia the Preload screen option.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Screen id.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if preloading, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_preloaded",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "when_preloaded",
+      "brief": "Invoke a callback when a specific screen has been preloaded.",
+      "description": "Invoke a callback when a specific screen has been preloaded.\nThis is mainly useful on app start when wanting to show a screen that\nhas the `Preload` flag set (since it will immediately start to load which\nwould prevent a call to `monarch.show` from having any effect).",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to monitor for preload completion.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Callback to invoke when the screen has been preloaded.",
+          "types": [
+            "(screen_id?: ScreenId) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "preload",
+      "brief": "Preload a screen. This will load but not enable and show a screen.",
+      "description": "Preload a screen. This will load but not enable and show a screen.\nUseful for \"heavier\" screens that you wish to show without any delay.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to preload.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Options for preloading the screen.",
+          "types": [
+            "PreloadOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Optional callback to invoke when the screen is loaded.",
+          "types": [
+            "Callback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has_missing_resources",
+      "brief": "Check if a screen has missing resources, always returns false for factory",
+      "description": "Check if a screen has missing resources, always returns false for factory",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to preload",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unload",
+      "brief": "Unload a preloaded monarch screen.",
+      "description": "Unload a preloaded monarch screen.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to unload.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Optional callback to invoke when the screen is unloaded.",
+          "types": [
+            "Callback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "post",
+      "brief": "Post a message to a screen using msg.post.",
+      "description": "Post a message to a screen using msg.post.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to send the message to.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "Id of the message to send.",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "Optional message data to send.",
+          "types": [
+            "Message"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "result - True if the message is sent successfully.",
+          "types": [
+            "LuaMultiReturn<[boolean, string | undefined]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "Message"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sender",
+          "doc": "",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_stack",
+      "brief": "Get a list of IDs for the current screen stack.",
+      "description": "Get a list of IDs for the current screen stack.\n(Primarily used for unit testing, but could have uses outside testing.)",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Table with screen IDs. The first entry is at the bottom of the\nstack, and the last value is at the top (and currently visible).",
+          "types": [
+            "ScreenId[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "top",
+      "brief": "Get the screen on top of the stack.",
+      "description": "Get the screen on top of the stack.",
+      "parameters": [
+        {
+          "name": "offset",
+          "doc": "Optional offset from the top of the stack (e.g., -1 for the previous screen).",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Id of the requested screen.",
+          "types": [
+            "ScreenId"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bottom",
+      "brief": "Get the screen at the bottom of the stack.",
+      "description": "Get the screen at the bottom of the stack.",
+      "parameters": [
+        {
+          "name": "offset",
+          "doc": "Optional offset from the bottom of the stack.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Id of the requested screen.",
+          "types": [
+            "ScreenId"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_timestep_below_popup",
+      "brief": "Set the timestep to apply for a screen when below a popup.",
+      "description": "Set the timestep to apply for a screen when below a popup.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Id of the screen to change the timestep setting for.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "timestep",
+          "doc": "Timestep to apply.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_transition",
+      "brief": "Set a function to call when a transition should be started.",
+      "description": "Set a function to call when a transition should be started.\nThe function will receive (`message_id`, `message`, `sender`).\nIMPORTANT! You must call `monarch.on_message()` from the same script as\nthis function was called.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Screen id to associate the transition with.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Transition handler function.",
+          "types": [
+            "(message_id: string, message: Message, sender: Url) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_focus_changed",
+      "brief": "Set a function to call when a screen gains or loses focus.",
+      "description": "Set a function to call when a screen gains or loses focus.\nThe function will receive (`message_id`, `message`, `sender`).\nIMPORTANT! You must call `monarch.on_message()` from the same script as\nthis function was called.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Screen id to associate the focus listener function with.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Focus listener function.",
+          "types": [
+            "(message_id: string, message: Message, sender: Url) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_post",
+      "brief": "Set either a function to be called when `msg.post()` is called on a specific screen",
+      "description": "Set either a function to be called when `msg.post()` is called on a specific screen\nor a URL where the message is sent.\nIMPORTANT! If you provide a function, you must also make sure to call\n`monarch.on_message(message_id, message, sender)` from the same script as\nthis function was called.",
+      "parameters": [
+        {
+          "name": "screen_id",
+          "doc": "Screen id to associate the message listener function with.",
+          "types": [
+            "ScreenId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn_or_url",
+          "doc": "The function to call or URL to send the message to.",
+          "types": [
+            "Callback | Url | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_listener",
+      "brief": "Add a listener to be notified when screens are shown or hidden.",
+      "description": "Add a listener to be notified when screens are shown or hidden.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The url to notify, undefined for the current url.",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_listener",
+      "brief": "Remove a previously added listener.",
+      "description": "Remove a previously added listener.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The url to remove, nil for current url.",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dump_stack",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "queue_size",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

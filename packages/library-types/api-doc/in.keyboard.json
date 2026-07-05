@@ -1,0 +1,45 @@
+{
+  "info": {
+    "namespace": "in.keyboard",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "KEYBOARD_INPUT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "KeyboardTypes"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "keyboard_type",
+          "doc": "",
+          "types": [
+            "KeyboardTypes"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hide",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}
