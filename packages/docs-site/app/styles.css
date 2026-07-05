@@ -435,7 +435,7 @@
   .code-body > pre {
     margin: 0;
   }
-  .code-copy {
+  .code-clip {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
@@ -457,33 +457,33 @@
       color 0.15s ease,
       border-color 0.15s ease;
   }
-  .code-body:hover .code-copy {
+  .code-body:hover .code-clip {
     opacity: 0.7;
   }
-  .code-copy:hover,
-  .code-copy:focus-visible {
+  .code-clip:hover,
+  .code-clip:focus-visible {
     opacity: 1;
     color: var(--color-text);
     border-color: var(--color-border-strong);
     outline: none;
   }
-  .code-copy > svg {
+  .code-clip > svg {
     display: block;
     width: 1rem;
     height: 1rem;
   }
-  .code-copy .code-copy-check {
+  .code-clip .code-clip-check {
     display: none;
   }
-  .code-copy.is-copied {
+  .code-clip.is-clipped {
     opacity: 1;
     color: var(--color-accent);
     border-color: var(--color-accent);
   }
-  .code-copy.is-copied .code-copy-icon {
+  .code-clip.is-clipped .code-clip-icon {
     display: none;
   }
-  .code-copy.is-copied .code-copy-check {
+  .code-clip.is-clipped .code-clip-check {
     display: block;
   }
 

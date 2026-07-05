@@ -14,11 +14,12 @@ export default defineScript({
   init: () => ({ speed: 120 }),
 
   on_input(self, action_id, action) {
-    if (action_id === undefined) {
+    if (action_id == null) {
+      // No action_id = raw pointer/mouse-move event; read the cursor off `action`.
       const pointerX = action.x;
       const pointerY = action.y;
-      void pointerX;
-      void pointerY;
+      void pointerX; // replace with real usage
+      void pointerY; // replace with real usage
       return;
     }
 
@@ -29,8 +30,8 @@ export default defineScript({
     for (const touch of action.touch ?? []) {
       const finger = touch.id;
       const x = touch.x;
-      void finger;
-      void x;
+      void finger; // replace with real usage
+      void x; // replace with real usage
     }
   },
 });
@@ -47,13 +48,14 @@ type MenuSelf = {
 
 export default defineGuiScript<MenuSelf>({
   on_input(_self, action_id, action) {
-    if (action_id === undefined) {
+    if (action_id == null) {
+      // No action_id = pointer move; this menu handles only named actions, so bail.
       return;
     }
 
     if (action.released) {
       const text = action.text;
-      void text;
+      void text; // replace with real usage
     }
   },
 });
@@ -79,7 +81,7 @@ export default defineScript({
   update(self) {
     const name: Hash = self.name;
     self.velocity = self.velocity.add(self.adj);
-    void name;
+    void name; // replace with real usage
   },
 });
 ```
@@ -106,7 +108,7 @@ export default defineScript({
   update(self) {
     // Outside init, `self` is the merged properties + returned state.
     self.hp -= 1;
-    void self.max_hp;
+    void self.max_hp; // replace with real usage
   },
 });
 ```
@@ -145,7 +147,7 @@ export default defineScript({
     self.velocity *= 1 - dt;
   },
   late_update(self, dt) {
-    void dt;
+    void dt; // replace with real usage
   },
 });
 ```
