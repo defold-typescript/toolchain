@@ -2,6 +2,7 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as defcon from "defcon.console";
+import * as defsave from "defsave.defsave";
 import * as event from "event.event";
 import * as gooey from "gooey.gooey";
 import * as accelerometer from "in.accelerometer";
@@ -14,10 +15,14 @@ import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
 import * as narrator from "narrator.narrator";
 import * as camera from "orthographic.camera";
+import * as persist from "persist.persist";
 import * as platypus from "platypus.platypus";
+import * as proto from "proto.proto";
 import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
+import * as saver from "saver.saver";
+import * as storage from "saver.storage";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -126,6 +131,44 @@ const _langs: string[] = lang.get_langs();
 const _translated: string = lang.txp("score", 1);
 lang.set_logger(undefined);
 
+// saver.* — the persistence API resolves scalar returns and logger removal
+// overloads while storage keeps typed scalar getter helpers.
+saver.init();
+const _saveOk: boolean = saver.save_game_state();
+const _savePath: string = saver.get_save_path();
+const _projectFolder: string | undefined = saver.get_current_game_project_folder();
+saver.set_logger(undefined);
+const _storageSet: boolean = storage.set("volume", 1);
+const _storageNumber: number = storage.get_number("volume");
+const _storageString: string = storage.get_string("name");
+const _storageBoolean: boolean = storage.get_boolean("muted");
+
+// defsave.defsave — scalar config helpers compile and unknown payloads stay
+// weakly typed to match the upstream declaration.
+const _defsaveAppName: string = defsave.appname;
+const _defsaveLoaded: unknown = defsave.load("settings");
+const _defsaveVolume: unknown = defsave.get("settings", "volume");
+defsave.set("settings", "volume", 1);
+defsave.save_all();
+defsave.update(1 / 60);
+
+// persist.persist — structural persistence helpers preserve the upstream
+// object-or-undefined load result.
+const _persistLoaded: Record<never, never> | undefined = persist.load("slot");
+persist.create("slot", { volume: 1 });
+persist.write("slot", "volume", 1);
+persist.flush("slot");
+persist.save("slot");
+
+// proto.proto — serialization helpers preserve object-map payloads and logger
+// removal overloads.
+proto.init({ player: "/proto/player.proto" });
+const _protoSchema: { [key: string]: unknown } = proto.get("Player");
+const _protoDecoded: { [key: string]: unknown } = proto.decode("Player", "");
+const _protoVerified: { [key: string]: unknown } = proto.verify("Player", { name: "Ada" });
+const _protoEncoded: string = proto.encode("Player", { name: "Ada" });
+proto.set_logger(undefined);
+
 void _mHash;
 void _ok;
 void _err;
@@ -157,3 +200,18 @@ void _storyTags;
 void _langId;
 void _langs;
 void _translated;
+void _saveOk;
+void _savePath;
+void _projectFolder;
+void _storageSet;
+void _storageNumber;
+void _storageString;
+void _storageBoolean;
+void _defsaveAppName;
+void _defsaveLoaded;
+void _defsaveVolume;
+void _persistLoaded;
+void _protoSchema;
+void _protoDecoded;
+void _protoVerified;
+void _protoEncoded;

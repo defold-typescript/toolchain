@@ -314,16 +314,7 @@ describe("library-classification.json coverage", () => {
   });
 
   test("named pure-Lua candidates are pure-lua", () => {
-    for (const dir of [
-      "defold-saver",
-      "defsave",
-      "defmath",
-      "squid",
-      "starly",
-      "defold-tweener",
-      "defold-log",
-      "defold-proto",
-    ]) {
+    for (const dir of ["defmath", "squid", "starly", "defold-tweener", "defold-log"]) {
       expect(byDir.get(dir)?.classification).toBe("pure-lua");
     }
   });

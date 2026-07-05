@@ -26,6 +26,10 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - narrator            — astrochili, https://github.com/astrochili/narrator
     - defcon              — Britzl, https://github.com/britzl/defcon
     - defold-lang         — Insality, https://github.com/Insality/defold-lang
+    - defold-saver        — Insality, https://github.com/Insality/defold-saver
+    - defsave             — subsoap, https://github.com/subsoap/defsave
+    - library-defold-persist — klaytonkowalski, https://github.com/klaytonkowalski/library-defold-persist
+    - defold-proto        — Insality, https://github.com/Insality/defold-proto
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition
