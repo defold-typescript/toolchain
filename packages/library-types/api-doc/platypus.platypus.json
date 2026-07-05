@@ -1,0 +1,122 @@
+{
+  "info": {
+    "namespace": "platypus.platypus",
+    "brief": "Defold platformer engine",
+    "description": "Defold platformer engine"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "PlatypusConfig"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "PlatypusInstance"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FALLING",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "GROUND_CONTACT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WALL_CONTACT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "JUMP",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WALL_JUMP",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DOUBLE_JUMP",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WALL_SLIDE",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Direction"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIR_UP",
+      "types": [
+        "Direction"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIR_LEFT",
+      "types": [
+        "Direction"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIR_RIGHT",
+      "types": [
+        "Direction"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIR_DOWN",
+      "types": [
+        "Direction"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIR_ALL",
+      "types": [
+        "Direction"
+      ]
+    }
+  ]
+}

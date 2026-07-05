@@ -1,0 +1,195 @@
+{
+  "info": {
+    "namespace": "in.state",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "StateInstance"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "StateInstance"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "acquire",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "StateInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "release",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "StateInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_pressed",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "StateInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "StateInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "StateInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "StateInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

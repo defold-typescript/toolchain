@@ -101,6 +101,7 @@
   },
   "files": [
     "generated",
+    "api-doc",
     "scripts",
     "library-targets.json",
     "library-classification.json",

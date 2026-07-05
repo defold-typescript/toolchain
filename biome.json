@@ -15,6 +15,7 @@
       "!**/dist",
       "!**/node_modules",
       "!**/generated",
+      "!**/api-doc",
       "!**/library-classification.json",
       "!**/test/fixtures",
       "!**/fixtures/ts-defold",

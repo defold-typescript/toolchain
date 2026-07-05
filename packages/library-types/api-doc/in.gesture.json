@@ -1,0 +1,90 @@
+{
+  "info": {
+    "namespace": "in.gesture",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "GestureInstance"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DetectedGestures"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SETTINGS",
+      "types": [
+        "{\n\t\taction_id: Hash;\n\t\ttap_threshold: number;\n\t\tdouble_tap_interval: number;\n\t\tswipe_threshold: number;\n\t\tswipe_time: number;\n\t\tlong_press_time: number;\n\t\tmulti_touch: boolean;\n\t}"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "settings",
+          "doc": "",
+          "types": [
+            "{\n\t\taction_id?: string;\n\t\ttap_threshold?: number;\n\t\tdouble_tap_interval?: number;\n\t\tswipe_threshold?: number;\n\t\tswipe_time?: number;\n\t\tlong_press_time?: number;\n\t\tmulti_touch?: boolean;\n\t}"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GestureInstance"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "this",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "DetectedGestures"
+          ]
+        }
+      ]
+    }
+  ]
+}

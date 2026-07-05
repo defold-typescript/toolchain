@@ -1,0 +1,230 @@
+{
+  "info": {
+    "namespace": "in.onscreen",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "BUTTON",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "BUTTON_PRESSED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "BUTTON_RELEASED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG_PRESSED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG_RELEASED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG_MOVED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG_LEFT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG_RIGHT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG_UP",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ANALOG_DOWN",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "OnscreenInstance"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "OnscreenInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_button",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "settings",
+          "doc": "",
+          "types": [
+            "{} | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(action: Hash, node: Opaque<\"node\">, touch: {}) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "OnscreenInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_analog",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "settings",
+          "doc": "",
+          "types": [
+            "{ radius?: number; threshold?: number } | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(action: Hash, node: Opaque<\"node\">, touch: {}) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "OnscreenInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{}"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "instance",
+          "doc": "",
+          "types": [
+            "OnscreenInstance"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

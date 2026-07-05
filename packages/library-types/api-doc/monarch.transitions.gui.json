@@ -1,0 +1,445 @@
+{
+  "info": {
+    "namespace": "monarch.transitions.gui",
+    "brief": "Monarch comes with a system for setting up transitions easily",
+    "description": "Monarch comes with a system for setting up transitions easily\nin a `gui_script` using the `monarch.transitions.gui` module."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "GuiEasing"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Easing"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Transition"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TransitionNodeless"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TransitionInFn"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TransitionOutFn"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_in_right",
+      "types": [
+        "TransitionInFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_in_left",
+      "types": [
+        "TransitionInFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_in_top",
+      "types": [
+        "TransitionInFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_in_bottom",
+      "types": [
+        "TransitionInFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_out_right",
+      "types": [
+        "TransitionOutFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_out_left",
+      "types": [
+        "TransitionOutFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_out_top",
+      "types": [
+        "TransitionOutFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "slide_out_bottom",
+      "types": [
+        "TransitionOutFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "scale_in",
+      "types": [
+        "TransitionInFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "scale_out",
+      "types": [
+        "TransitionOutFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "fade_in",
+      "types": [
+        "TransitionInFn"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "fade_out",
+      "types": [
+        "TransitionOutFn"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "in_right_out_left",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "Easing"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "in_left_out_right",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "Easing"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "in_left_out_left",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "Easing"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "in_right_out_right",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "Easing"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fade_in_out",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "Easing"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window_resized",
+      "brief": "Notify the transition system that the window size has changed",
+      "description": "Notify the transition system that the window size has changed",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "instant",
+      "brief": "Calls `complete_function`",
+      "description": "Calls `complete_function`",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Transition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "TransitionNodeless"
+          ]
+        }
+      ]
+    }
+  ]
+}
