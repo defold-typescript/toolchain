@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiFunction,
@@ -17,6 +18,7 @@ import {
   mapDocType,
 } from "./api-surface";
 import {
+  libraryRouteSlug,
   listApiVersions,
   loadApiSurface,
   loadApiSurfaceForVersion,
@@ -44,6 +46,17 @@ const MISSING_VERSION_FIXTURE_DIR = join(
   "__fixtures__/api-surface-missing-version",
 );
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+
+// Every `api-doc/*.json` fixture that also has a vendored `generated/*.d.ts`
+// sibling — the exact set the loader is expected to surface as `library` pages.
+function vendoredLibraryModules(): string[] {
+  const apiDocDir = join(REAL_LIBRARY_TYPES_DIR, "api-doc");
+  return readdirSync(apiDocDir)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => f.replace(/\.json$/, ""))
+    .filter((mod) => existsSync(join(REAL_LIBRARY_TYPES_DIR, "generated", `${mod}.d.ts`)));
+}
 
 describe("loadApiSurface", () => {
   test("returns one ApiPage per module of the default target (engine then lua-stdlib), globals first then alphabetical", () => {
@@ -150,6 +163,54 @@ describe("loadApiSurfaceForVersion", () => {
 
   test("throws for an unknown version id", () => {
     expect(() => loadApiSurfaceForVersion(FIXTURE_DIR, "nope")).toThrow();
+  });
+});
+
+describe("loadApiSurface library pages", () => {
+  const modules = vendoredLibraryModules();
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const libraryPages = pages.filter((p) => p.category === "library");
+
+  test("adds one default-surface `library` page per vendored library fixture", () => {
+    expect(modules.length).toBeGreaterThan(0);
+    expect(libraryPages.map((p) => p.namespace).sort()).toEqual([...modules].sort());
+    for (const page of libraryPages) {
+      expect(page.route).toBe(`/api/${libraryRouteSlug(page.namespace)}`);
+      expect(page.route.startsWith("/api/")).toBe(true);
+      // default surface only — never under `/api/<version>/…`
+      expect(page.route).not.toMatch(/^\/api\/defold-/);
+    }
+  });
+
+  test("omits library pages entirely when no library-types dir is supplied", () => {
+    const noLib = loadApiSurface(REAL_TYPES_DIR);
+    expect(noLib.some((p) => p.category === "library")).toBe(false);
+  });
+
+  test("prepends a per-library provenance note (upstream repo, pinned commit, import string)", () => {
+    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
+    expect(monarch).toBeDefined();
+    const description = monarch?.module.description ?? "";
+    expect(description.startsWith("Vendored from the monarch library by Britzl")).toBe(true);
+    expect(description).toContain("https://github.com/ts-defold/library");
+    expect(description).toContain("2fe3aed3352a913d2859e6e85d34a8b23d821368");
+    expect(description).toContain("import * as monarch from 'monarch.monarch'");
+    // the upstream module description survives after the note
+    expect(description).toContain("Monarch is a screen manager");
+  });
+
+  test("derives a round-tripping /api slug for a dotted library module", () => {
+    const slug = libraryRouteSlug("monarch.monarch");
+    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
+    expect(monarch?.route).toBe(`/api/${slug}`);
+    // slug -> page lookup round-trips with the dotted module name preserved
+    const bySlug = pages.find((p) => p.route === `/api/${slug}`);
+    expect(bySlug?.namespace).toBe("monarch.monarch");
+  });
+
+  test("a non-default versioned surface yields zero library pages even when a lib dir is supplied", () => {
+    const versioned = loadApiSurfaceForVersion(FIXTURE_DIR, "old", REAL_LIBRARY_TYPES_DIR);
+    expect(versioned.some((p) => p.category === "library")).toBe(false);
   });
 });
 
