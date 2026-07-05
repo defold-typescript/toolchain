@@ -8,7 +8,7 @@ import SidebarTooltip from "../islands/sidebar-tooltip";
 import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
-import { apiPages, apiPagesForVersion, apiVersions } from "../lib/api-content";
+import { apiPages, apiPagesForVersion, apiVersions, libraryDirs } from "../lib/api-content";
 import { withBase } from "../lib/base";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
@@ -209,6 +209,27 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const path = c.req.path;
   const allApiPages = apiPages();
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
+
+  // Group vendored library pages by their upstream `dir` for the Libraries
+  // subgroup: modules of a multi-module library nest under one header, a
+  // single-module library becomes a leaf. Libraries and their modules sort
+  // alphabetically for stable nav output.
+  const moduleDir = libraryDirs();
+  const byDir = new Map<string, { label: string; route: string }[]>();
+  for (const page of allApiPages.filter((p) => p.category === "library")) {
+    const dir = moduleDir.get(page.namespace) ?? page.namespace;
+    const bucket = byDir.get(dir);
+    if (bucket) bucket.push(toNamespace(page));
+    else byDir.set(dir, [toNamespace(page)]);
+  }
+  const libraries = [...byDir.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dir, modules]) => ({
+      dir,
+      label: dir,
+      modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
+    }));
+
   const nav = buildNav(guidePages(), {
     globals: allApiPages.filter((p) => p.namespace === "globals").map(toNamespace),
     globalTypes: allApiPages.filter((p) => p.category === "global-type").map(toNamespace),
@@ -216,6 +237,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     engine: allApiPages
       .filter((p) => p.category === "engine" && p.namespace !== "globals")
       .map(toNamespace),
+    libraries,
   });
   const activeId = activeCategoryId(path, nav) ?? nav[0]?.id;
   const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];

@@ -24,11 +24,19 @@ export interface Namespace {
   route: string;
 }
 
+/** One upstream library: its `modules` render as leaves, nested under `label` when there are several. */
+export interface LibraryGroup {
+  dir: string;
+  label: string;
+  modules: Namespace[];
+}
+
 export interface ReferenceGroups {
   globals: Namespace[];
   globalTypes: Namespace[];
   luaStdlib: Namespace[];
   engine: Namespace[];
+  libraries: LibraryGroup[];
 }
 
 const FALLBACK_CATEGORY_ID = "guides";
@@ -115,7 +123,13 @@ function linkFor(page: GuidePage): NavLink {
 
 export function buildNav(
   pages: GuidePage[],
-  reference: ReferenceGroups = { globals: [], globalTypes: [], luaStdlib: [], engine: [] },
+  reference: ReferenceGroups = {
+    globals: [],
+    globalTypes: [],
+    luaStdlib: [],
+    engine: [],
+    libraries: [],
+  },
 ): NavCategory[] {
   const bySlug = new Map(pages.map((page) => [page.slug, page]));
   const claimed = new Set<string>();
@@ -153,6 +167,18 @@ export function buildNav(
         namespaces.map(({ label, route }) => toNavLink(label, route)),
       ),
     );
+  if (reference.libraries.length > 0) {
+    const libraryLinks = reference.libraries.map((lib) => {
+      const [only, ...rest] = lib.modules;
+      return only && rest.length === 0
+        ? toNavLink(only.label, only.route)
+        : toNavGroup(
+            lib.label,
+            lib.modules.map(({ label, route }) => toNavLink(label, route)),
+          );
+    });
+    referenceLinks.push(toNavGroup("Libraries", libraryLinks));
+  }
   categories.push({ id: "reference", label: "Reference", links: referenceLinks });
 
   return categories;
