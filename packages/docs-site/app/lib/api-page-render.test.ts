@@ -97,6 +97,40 @@ function fieldsPage(): ApiPage {
   };
 }
 
+// A vendored library page carrying the structured provenance metadata the
+// uniform render block reads.
+function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
+  return {
+    namespace: "orthographic.camera",
+    route: "/api/orthographic.camera",
+    brief: "Camera",
+    module: {
+      namespace: "orthographic.camera",
+      brief: "Camera",
+      description: "Orthographic camera helpers.",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    },
+    translations: {},
+    signatures: {},
+    category: "library",
+    libraryMeta: {
+      sourceUrl:
+        "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic",
+      commitUrl:
+        "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368",
+      importString: "import * as camera from 'orthographic.camera'",
+      license: "MIT",
+      attribution:
+        "defold-orthographic library by Britzl (https://github.com/britzl/defold-orthographic), vendored via ts-defold/library",
+    },
+    ...overrides,
+  };
+}
+
 describe("versionedApiParams", () => {
   test("yields one {version, namespace} per on-disk non-default page", () => {
     expect(versionedApiParams(FIXTURE_DIR)).toEqual([{ version: "old", namespace: "wmath" }]);
@@ -241,6 +275,38 @@ describe("apiPageMarkdown field tree", () => {
     });
     expect(seen).toContain("Lerp factor.");
     expect(seen).toContain("Deep flag.");
+  });
+});
+
+describe("apiPageMarkdown library provenance block", () => {
+  test("emits the five ordered provenance bullets after the description for a library page", () => {
+    const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
+    const iDesc = md.indexOf("Orthographic camera helpers.");
+    const iSource = md.indexOf("- Source:");
+    const iCommit = md.indexOf("- Commit pin:");
+    const iImport = md.indexOf("- Import:");
+    const iLicense = md.indexOf("- License:");
+    const iAttribution = md.indexOf("- Attribution:");
+    for (const i of [iDesc, iSource, iCommit, iImport, iLicense, iAttribution]) {
+      expect(i).toBeGreaterThan(-1);
+    }
+    expect(iDesc).toBeLessThan(iSource);
+    expect(iSource).toBeLessThan(iCommit);
+    expect(iCommit).toBeLessThan(iImport);
+    expect(iImport).toBeLessThan(iLicense);
+    expect(iLicense).toBeLessThan(iAttribution);
+  });
+
+  test("renders the Commit pin as a clickable GitHub tree link and fences the import string", () => {
+    const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
+    expect(md).toContain("](https://github.com/ts-defold/library/tree/");
+    expect(md).toContain("`import * as camera from 'orthographic.camera'`");
+  });
+
+  test("a non-library page emits no provenance block", () => {
+    const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
+    expect(md).not.toContain("- Commit pin:");
+    expect(md).not.toContain("- Attribution:");
   });
 });
 
