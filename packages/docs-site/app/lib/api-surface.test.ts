@@ -187,16 +187,38 @@ describe("loadApiSurface library pages", () => {
     expect(noLib.some((p) => p.category === "library")).toBe(false);
   });
 
-  test("prepends a per-library provenance note (upstream repo, pinned commit, import string)", () => {
+  test("builds a structured libraryMeta with commit-pinned source, import, license, and attribution", () => {
+    const camera = libraryPages.find((p) => p.namespace === "orthographic.camera");
+    expect(camera).toBeDefined();
+    const meta = camera?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.commitUrl).toBe(
+      "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368",
+    );
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic",
+    );
+    expect(meta.importString).toBe("import * as camera from 'orthographic.camera'");
+    expect(meta.license).toBe("MIT");
+    expect(meta.attribution).toContain("Britzl");
+    expect(meta.attribution).toContain("https://github.com/britzl/defold-orthographic");
+    expect(meta.attribution).toContain("vendored via ts-defold/library");
+  });
+
+  test("no longer prepends the prose provenance note into a library module description", () => {
+    for (const page of libraryPages) {
+      expect(page.module.description ?? "").not.toContain("Vendored from");
+    }
+    // the library's own description survives, unburied by the removed boilerplate
     const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
-    expect(monarch).toBeDefined();
-    const description = monarch?.module.description ?? "";
-    expect(description.startsWith("Vendored from the monarch library by Britzl")).toBe(true);
-    expect(description).toContain("https://github.com/ts-defold/library");
-    expect(description).toContain("2fe3aed3352a913d2859e6e85d34a8b23d821368");
-    expect(description).toContain("import * as monarch from 'monarch.monarch'");
-    // the upstream module description survives after the note
-    expect(description).toContain("Monarch is a screen manager");
+    expect(monarch?.module.description ?? "").toContain("Monarch is a screen manager");
+  });
+
+  test("a non-library page carries no libraryMeta", () => {
+    const engine = pages.find((p) => p.category === "engine");
+    expect(engine).toBeDefined();
+    expect(engine?.libraryMeta).toBeUndefined();
   });
 
   test("derives a round-tripping /api slug for a dotted library module", () => {
