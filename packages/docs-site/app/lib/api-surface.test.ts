@@ -897,8 +897,8 @@ describe("functionOverviewCards", () => {
     return heading.id;
   }
 
-  test("emits one overview container and one linked card per symbol", () => {
-    const cards = functionOverviewCards([
+  test("emits one overview container and one linked bullet per symbol", () => {
+    const list = functionOverviewCards([
       fnSymbol("go.get_position", {
         signature: "go.get_position(): vector3",
         docMarkdown: "Gets the world position. More prose.",
@@ -908,19 +908,13 @@ describe("functionOverviewCards", () => {
         docMarkdown: "Sets the world position.",
       }),
     ]);
-    expect(cards).toBe(
+    expect(list).toBe(
       [
         '<div class="api-overview" aria-label="Function overview">',
-        '  <div class="api-overview-grid" role="list">',
-        '    <a class="api-overview-card" role="listitem" href="#goget_position-vector3" title="go.get_position(): vector3 — Gets the world position.">',
-        '      <code class="api-overview-title">go.get_position(): vector3</code>',
-        '      <span class="api-overview-description">Gets the world position.</span>',
-        "    </a>",
-        '    <a class="api-overview-card" role="listitem" href="#goset_positionposition-vector3-void" title="go.set_position(position: vector3): void — Sets the world position.">',
-        '      <code class="api-overview-title">go.set_position(position: vector3): void</code>',
-        '      <span class="api-overview-description">Sets the world position.</span>',
-        "    </a>",
-        "  </div>",
+        "",
+        "- [`go.get_position(): vector3`](#goget_position-vector3)",
+        "- [`go.set_position(position: vector3): void`](#goset_positionposition-vector3-void)",
+        "",
         "</div>",
       ].join("\n"),
     );
@@ -938,24 +932,27 @@ describe("functionOverviewCards", () => {
     );
     for (const signature of signatures) {
       const id = await renderedHeadingId(signature);
-      expect(cards).toContain(`href="#${id}"`);
+      expect(cards).toContain(`](#${id})`);
     }
   });
 
-  test("escapes signatures and summaries as HTML and returns empty string for no symbols", () => {
-    const cards = functionOverviewCards([
+  test("keeps descriptions out of the overview and returns empty string for no symbols", async () => {
+    const list = functionOverviewCards([
       fnSymbol("demo.escape", {
         signature: 'demo.escape(value: "Hash | <Url> & string")',
         docMarkdown: 'Uses `a | b` and <unsafe> "quotes" & ampersands. Second sentence.',
       }),
     ]);
-    expect(cards).toContain('href="#demoescapevalue-hash--url--string"');
-    expect(cards).toContain("demo.escape(value: &quot;Hash | &lt;Url&gt; &amp; string&quot;)");
-    expect(cards).toContain(
-      'title="demo.escape(value: &quot;Hash | &lt;Url&gt; &amp; string&quot;) — Uses `a | b` and &lt;unsafe&gt; &quot;quotes&quot; &amp; ampersands."',
+    expect(list).toContain(
+      '[`demo.escape(value: "Hash | <Url> & string")`](#demoescapevalue-hash--url--string)',
     );
-    expect(cards).toContain("Uses `a | b` and &lt;unsafe&gt; &quot;quotes&quot; &amp; ampersands.");
-    expect(cards).not.toContain("\\|");
+    expect(list).not.toContain("Uses `a | b`");
+    expect(list).not.toContain("title=");
+    expect(list).not.toContain("\\|");
     expect(functionOverviewCards([])).toBe("");
+
+    const html = await renderMarkdown(list, { highlightSignatureHeadings: true });
+    expect(html).toContain('<code class="api-signature');
+    expect(html).toContain("--shiki-light:");
   });
 });

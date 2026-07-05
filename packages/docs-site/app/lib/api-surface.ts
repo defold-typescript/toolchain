@@ -101,50 +101,24 @@ export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
   return groups;
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-// First sentence of a description for the overview cards: cut at the first `. `
-// (keeping the period), collapse all whitespace runs to single spaces, and trim.
-// Empty in -> empty out.
-function summaryText(text: string): string {
-  const boundary = text.indexOf(". ");
-  const sentence = boundary === -1 ? text : text.slice(0, boundary + 1);
-  return sentence.replace(/\s+/g, " ").trim();
-}
-
 /**
  * Compact per-group function index for the top of an `/api/<namespace>` page:
- * a card grid whose rows link each function's full `signature` (parameter and
- * return types included) down to its detailed `### \`signature\`` block (anchor =
- * `slugify(signature)`, matching the `slugify-headings` markdown-it rule) and
- * carry its first-sentence summary. Linking the whole signature — not the bare
- * name — keeps overloads (two `mul` arms) distinct and surfaces the types at a
- * glance. Presentation-only — no new heading, so the "On this page" TOC is
- * unchanged. Returns `""` for an empty list so the caller emits nothing.
+ * a bulleted list whose links use each function's full `signature` (parameter
+ * and return types included) and point down to the detailed `### \`signature\``
+ * block (anchor = `slugify(signature)`, matching the `slugify-headings`
+ * markdown-it rule). Linking the whole signature — not the bare name — keeps
+ * overloads (two `mul` arms) distinct and surfaces the types at a glance.
+ * Presentation-only — no new heading, so the "On this page" TOC is unchanged.
+ * Returns `""` for an empty list so the caller emits nothing.
  */
 export function functionOverviewCards(symbols: ApiSymbol[]): string {
   if (symbols.length === 0) return "";
-  const rows = symbols.flatMap((s) => {
-    const summary = summaryText(s.docMarkdown);
-    const tooltip = summary ? `${s.signature} — ${summary}` : s.signature;
-    return [
-      `    <a class="api-overview-card" role="listitem" href="#${escapeHtml(slugify(s.signature))}" title="${escapeHtml(tooltip)}">`,
-      `      <code class="api-overview-title">${escapeHtml(s.signature)}</code>`,
-      `      <span class="api-overview-description">${escapeHtml(summary)}</span>`,
-      "    </a>",
-    ];
-  });
+  const rows = symbols.map((s) => `- [\`${s.signature}\`](#${slugify(s.signature)})`);
   return [
     '<div class="api-overview" aria-label="Function overview">',
-    '  <div class="api-overview-grid" role="list">',
+    "",
     ...rows,
-    "  </div>",
+    "",
     "</div>",
   ].join("\n");
 }

@@ -392,7 +392,7 @@ export async function renderMarkdown(
     return `<code class="api-signature shiki">${spans}</code>`;
   };
   // API-page signatures appear both as h3 inline-code (`### `ns.fn(...)``) and,
-  // linked, in each namespace's overview table (`[`ns.fn(...)`](#anchor)`).
+  // linked, in each namespace's overview list (`[`ns.fn(...)`](#anchor)`).
   // Recolor both so the summary index reads with the same syntax highlighting as
   // the detail headings. Runs after the rules above so the slug is already
   // computed from the original heading text; the API route opts in, guide
@@ -412,7 +412,7 @@ export async function renderMarkdown(
         inline.children[idx] = replacement;
       }
     });
-    // Overview-table rows link the full signature as inline code inside a
+    // Overview-list items link the full signature as inline code inside a
     // fragment link (`[`sig`](#anchor)`). Same-page cross-links use absolute
     // `…/route#anchor` hrefs, so a bare `#` href uniquely marks a signature
     // link; recolor its code span the same way as the heading.
