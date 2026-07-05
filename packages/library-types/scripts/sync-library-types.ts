@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import ts from "typescript";
 import { extractApiDoc } from "./extract-api-doc";
@@ -175,8 +175,28 @@ export function checkApiDocs(packageRoot: string): { module: string; ok: boolean
 }
 
 /**
+ * Compare the committed `library-descriptions.json` against a fresh `merge`
+ * using only the curated overrides (no network). Returns the sorted list of
+ * dirs whose committed entry differs from the merge output — the `--check`
+ * counterpart to `writeDescriptions`. A stale file or a removed override
+ * surfaces here so `bun run sync --check` exits red.
+ */
+export function checkDescriptions(packageRoot: string): string[] {
+  const expected = mergeLibraryDescriptions({}, readOverrides(packageRoot));
+  let committed: Record<string, string> = {};
+  const path = join(packageRoot, "library-descriptions.json");
+  if (existsSync(path)) {
+    committed = JSON.parse(readFileSync(path, "utf8")) as Record<string, string>;
+  }
+  const allDirs = new Set<string>([...Object.keys(expected), ...Object.keys(committed)]);
+  return [...allDirs].filter((dir) => expected[dir] !== committed[dir]).sort();
+}
+
+/**
  * A GitHub repo URL (`https://github.com/<owner>/<repo>[.git]`) reduced to the
  * bare `<owner>/<repo>` slug used to address raw content and the git-trees API.
+ * A non-github URL is returned unchanged so callers can decide whether to skip
+ * it (the descriptions pass does; the raw-content / tree passes don't).
  */
 export function repoSlug(repo: string): string {
   return repo
@@ -184,6 +204,8 @@ export function repoSlug(repo: string): string {
     .replace(/\.git$/, "")
     .replace(/\/$/, "");
 }
+
+const GITHUB_REPO_URL = /^https:\/\/github\.com\/([^/]+)\/([^/]+?)(\.git)?\/?$/;
 
 /**
  * The raw.githubusercontent.com URL for a target's upstream `.d.ts` at the
@@ -313,6 +335,10 @@ interface GithubTreeResponse {
   tree?: { path: string }[];
 }
 
+interface GithubRepoResponse {
+  description?: string | null;
+}
+
 const githubHeaders = (): Record<string, string> => {
   const token = process.env.GITHUB_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -327,6 +353,23 @@ async function githubTreePaths(slug: string, ref: string): Promise<string[]> {
   const body = (await res.json()) as GithubTreeResponse;
   return (body.tree ?? []).map((e) => e.path);
 }
+
+/**
+ * Fetch the GitHub `description` field for `<owner>/<repo>` via the repos API.
+ * Returns the trimmed string, or `""` when the field is missing/null/blank.
+ * Network seam kept out of CI by the `--descriptions` CLI arm.
+ */
+export type FetchRepoDescription = (owner: string, repo: string) => Promise<string>;
+
+const defaultFetchRepoDescription: FetchRepoDescription = async (owner, repo) => {
+  const url = `https://api.github.com/repos/${owner}/${repo}`;
+  const res = await fetch(url, { headers: githubHeaders() });
+  if (!res.ok) {
+    throw new Error(`repo fetch failed: ${url} -> ${res.status} ${res.statusText}`);
+  }
+  const body = (await res.json()) as GithubRepoResponse;
+  return (body.description ?? "").trim();
+};
 
 /** Enumerate the ts-defold/library tree at the pinned commit. Network seam. */
 export type ListTree = (source: LibrarySource) => Promise<string[]>;
@@ -360,6 +403,95 @@ export async function writeClassification(
   );
 }
 
+// `library-description-overrides.json` shape: `{ "<dir>": "<one-line description>" }`.
+// Curated entries win over the fetched GitHub description, so empty or poorly-
+// phrased upstream descriptions can be patched without a network run. The
+// committed map seeds every dir that has no `info.description` in its api-doc
+// fixture, so a fresh checkout ships every library page with a non-empty intro.
+export type DescriptionOverrides = Readonly<Record<string, string>>;
+
+function readOverrides(packageRoot: string): DescriptionOverrides {
+  const path = join(packageRoot, "library-description-overrides.json");
+  if (!existsSync(path)) return {};
+  return JSON.parse(readFileSync(path, "utf8")) as DescriptionOverrides;
+}
+
+/**
+ * Pure merge of `fetched` descriptions with the curated `overrides` map.
+ * Override wins per-dir; a missing or blank value (in either source) means the
+ * dir is dropped; output is sorted by key for stable committed output.
+ */
+export function mergeLibraryDescriptions(
+  fetched: Readonly<Record<string, string>>,
+  overrides: Readonly<Record<string, string>>,
+): Record<string, string> {
+  const dirs = new Set<string>([...Object.keys(fetched), ...Object.keys(overrides)]);
+  const merged: Record<string, string> = {};
+  for (const dir of dirs) {
+    const text = (overrides[dir] ?? fetched[dir] ?? "").trim();
+    if (text.length > 0) merged[dir] = text;
+  }
+  return Object.fromEntries(
+    Object.entries(merged).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+  );
+}
+
+// A NOTICE credit line: `- <dir> — <author>, <url>`.
+const NOTICE_CREDIT = /^\s*-\s+(\S+)\s+—\s+(.+?),\s+(https?:\/\/\S+)\s*$/;
+
+/**
+ * Read the `NOTICE` credit table and resolve each dir's upstream `owner/repo`
+ * from its GitHub URL. A non-github URL or an entry with no URL is skipped — the
+ * vendored library still gets a description from `overrides`, but no network
+ * fetch is attempted for it.
+ */
+function parseNoticeRepoSlugs(packageRoot: string): Map<string, { owner: string; repo: string }> {
+  const path = join(packageRoot, "NOTICE");
+  if (!existsSync(path)) return new Map();
+  const slugs = new Map<string, { owner: string; repo: string }>();
+  for (const raw of readFileSync(path, "utf8").split("\n")) {
+    const match = NOTICE_CREDIT.exec(raw);
+    if (!match) continue;
+    const dir = match[1];
+    const url = match[3];
+    if (!dir || !url) continue;
+    const gh = GITHUB_REPO_URL.exec(url);
+    if (!gh) continue;
+    const owner = gh[1];
+    const repo = gh[2];
+    if (!owner || !repo) continue;
+    slugs.set(dir, { owner, repo });
+  }
+  return slugs;
+}
+
+/**
+ * Fetch each NOTICE-credited upstream's GitHub `description`, apply the curated
+ * overrides, and write `library-descriptions.json` as a sorted `{ dir: text }`
+ * map. Dirs with no upstream GitHub URL contribute only via overrides; dirs
+ * that fetch to empty AND have no override are dropped.
+ */
+export async function writeDescriptions(
+  packageRoot: string,
+  seams: {
+    fetchRepoDescription?: FetchRepoDescription;
+    overrides?: DescriptionOverrides;
+  } = {},
+): Promise<void> {
+  const fetchRepoDescription = seams.fetchRepoDescription ?? defaultFetchRepoDescription;
+  const overrides = seams.overrides ?? readOverrides(packageRoot);
+
+  const slugs = parseNoticeRepoSlugs(packageRoot);
+  const fetched: Record<string, string> = {};
+  for (const [dir, { owner, repo }] of slugs) {
+    fetched[dir] = await fetchRepoDescription(owner, repo);
+  }
+  writeFileSync(
+    join(packageRoot, "library-descriptions.json"),
+    `${JSON.stringify(mergeLibraryDescriptions(fetched, overrides), null, 2)}\n`,
+  );
+}
+
 if (import.meta.main) {
   const root = join(import.meta.dir, "..");
   const argv = process.argv.slice(2);
@@ -374,6 +506,12 @@ if (import.meta.main) {
     for (const [classification, n] of [...counts].sort()) {
       console.log(`  ${classification}: ${n}`);
     }
+  } else if (argv.includes("--descriptions")) {
+    await writeDescriptions(root);
+    const descriptions = JSON.parse(
+      readFileSync(join(root, "library-descriptions.json"), "utf8"),
+    ) as Record<string, string>;
+    console.log(`wrote ${descriptions.length} description(s) to library-descriptions.json`);
   } else if (argv.includes("--check")) {
     const results = await checkDrift(root);
     console.log(`checked ${results.length} vendored target(s) against ts-defold/library`);
@@ -385,7 +523,16 @@ if (import.meta.main) {
     for (const { module, ok } of apiDocs) {
       if (!ok) console.log(`  api-doc-drift: ${module}`);
     }
-    if (results.some((r) => r.status !== "ok") || apiDocs.some((r) => !r.ok)) {
+    const descriptionDrift = checkDescriptions(root);
+    if (descriptionDrift.length > 0) {
+      console.log(`checked library-descriptions.json`);
+      for (const dir of descriptionDrift) console.log(`  description-drift: ${dir}`);
+    }
+    if (
+      results.some((r) => r.status !== "ok") ||
+      apiDocs.some((r) => !r.ok) ||
+      descriptionDrift.length > 0
+    ) {
       process.exitCode = 1;
     }
   } else {

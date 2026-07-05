@@ -142,10 +142,21 @@ function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => 
 // a Defold version), and carrying a structured `libraryMeta` the render layer
 // turns into the uniform provenance block. Library symbols carry no authored
 // translations/signatures, so those stores stay empty.
+//
+// A library page whose api-doc fixture has an empty `info.description` falls
+// back to the per-upstream-dir text in `library-descriptions.json` (keyed by
+// library dir, populated from the upstream GitHub `description` field at sync
+// time + a curated overrides map). A richer per-module description, where the
+// api-doc fixture already supplies one, still wins — the fallback only fills
+// the empty cases that the previous step rendered as a floating provenance
+// block.
 function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   const apiDocDir = join(libraryTypesDir, "api-doc");
   if (!existsSync(apiDocDir)) return [];
   const metaFor = loadLibraryProvenance(libraryTypesDir);
+
+  const descByDir = loadLibraryDescriptions(libraryTypesDir);
+  const moduleDir = descByDir ? libraryModuleDirs(libraryTypesDir) : new Map<string, string>();
 
   const pages: ApiPage[] = [];
   for (const file of readdirSync(apiDocDir)) {
@@ -153,6 +164,11 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     const namespace = file.replace(/\.json$/, "");
     if (!existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`))) continue;
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(join(apiDocDir, file), "utf8")));
+    if (!module.description) {
+      const dir = moduleDir.get(namespace);
+      const fallback = dir ? descByDir?.get(dir) : undefined;
+      if (fallback) module.description = fallback;
+    }
     pages.push({
       namespace,
       route: `/api/${libraryRouteSlug(namespace)}`,
@@ -165,6 +181,17 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     });
   }
   return pages;
+}
+
+// Per-upstream-dir description text from `library-descriptions.json`, keyed by
+// the library dir (not the dotted module). A missing or unreadable file
+// degrades to undefined — every page falls back to its own (possibly empty)
+// api-doc description, which matches the pre-step behavior.
+function loadLibraryDescriptions(libraryTypesDir: string): Map<string, string> | undefined {
+  const path = join(libraryTypesDir, "library-descriptions.json");
+  if (!existsSync(path)) return undefined;
+  const raw = JSON.parse(readFileSync(path, "utf8")) as Record<string, string>;
+  return new Map(Object.entries(raw));
 }
 
 // Assemble one target's pages: engine modules, the presence-gated globals page,
