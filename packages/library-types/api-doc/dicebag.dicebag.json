@@ -1,0 +1,323 @@
+{
+  "info": {
+    "namespace": "dicebag.dicebag",
+    "brief": "Dicebag is a Defold extension containing probability functions designed specifically for games.",
+    "description": "Dicebag is a Defold extension containing probability functions designed specifically for games."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_up_rng",
+      "brief": "Sets up the randomseed and clears the first number of random rolls.",
+      "description": "Sets up the randomseed and clears the first number of random rolls.",
+      "parameters": [
+        {
+          "name": "seed",
+          "doc": "optional seed, if not specified a seed will be generated using socket.gettime().",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "the number used to seed the random function.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "flip_coin",
+      "brief": "Flip a coin.",
+      "description": "Flip a coin.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true or false (50% chance).",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "roll_dice",
+      "brief": "Roll a number of dice, D&D-style. An example would be rolling 3d6+2. Returns the sum of the resulting roll.",
+      "description": "Roll a number of dice, D&D-style. An example would be rolling 3d6+2. Returns the sum of the resulting roll.",
+      "parameters": [
+        {
+          "name": "num_dice",
+          "doc": "Number of dice to roll.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "num_sides",
+          "doc": "Number of sides on the dice.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "modifier",
+          "doc": "Number to add to the result.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Sum of rolled dice plus modifier.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "roll_special_dice",
+      "brief": "Roll a number of dice and choose one (or more) of the highest (advantage) or lowest (disadvantage) results. Returns the sum of the relevant dice rolls.",
+      "description": "Roll a number of dice and choose one (or more) of the highest (advantage) or lowest (disadvantage) results. Returns the sum of the relevant dice rolls.",
+      "parameters": [
+        {
+          "name": "num_sides",
+          "doc": "Number of sides on the dice.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "advantage",
+          "doc": "If true, the highest rolls will be selected, otherwise the lowest values will be selected.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "num_dice",
+          "doc": "Number of dice to roll.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "num_results",
+          "doc": "How many of the highest (advantage) or lowest (disadvantage) dice to sum up.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Sum of the highest (advantage) or lowest (disadvantage) dice rolls",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "roll_custom_dice",
+      "brief": "Roll custom dice. The dice can have sides with different weights and different values.",
+      "description": "Roll custom dice. The dice can have sides with different weights and different values.",
+      "parameters": [
+        {
+          "name": "num_dice",
+          "doc": "How many dice to roll.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sides",
+          "doc": "A table describing the sides of the die in the format `[[weight1, value1], [weight2, value2], ...]`.",
+          "types": [
+            "Array<[number, number]>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The sum of the values as specified in the table `sides`.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bag_create",
+      "brief": "Create a marble bag of green (success) and red (fails) 'marbles'. This allows you to, for example, make an unlikely event more and more likely the more fails are accumulated.",
+      "description": "Create a marble bag of green (success) and red (fails) 'marbles'. This allows you to, for example, make an unlikely event more and more likely the more fails are accumulated.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "A unique identifier for the marble bag.",
+          "types": [
+            "string | number | Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "num_success",
+          "doc": "The number of success marbles in the bag.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "num_fails",
+          "doc": "The number of fails marbles in the bag.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "reset_on_success",
+          "doc": "Whether or not the bag should reset when a successful result is drawn. If false or nil the bag will reset when all marbles have been drawn.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bag_draw",
+      "brief": "Draw a marble from a previously created bag.",
+      "description": "Draw a marble from a previously created bag.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "A unique identifier for the marble bag.",
+          "types": [
+            "string | number | Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True or false",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bag_reset",
+      "brief": "Manually reset a marble bag. Will also be called when a marble bag is empty, or a success is drawn in a bag where `reset_on_success` is true.",
+      "description": "Manually reset a marble bag. Will also be called when a marble bag is empty, or a success is drawn in a bag where `reset_on_success` is true.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "A unique identifier for the marble bag.",
+          "types": [
+            "string | number | Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "table_create",
+      "brief": "Create a rollable table. This is similar to a marble bag, except each entry can have a different weight, and can return any value (not just a boolean).",
+      "description": "Create a rollable table. This is similar to a marble bag, except each entry can have a different weight, and can return any value (not just a boolean).",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "A unique identifier for the rollable table.",
+          "types": [
+            "string | number | Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "rollable_table",
+          "doc": "A table of weights, values and reset flags.",
+          "types": [
+            "Array<[number, any, boolean?]>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "table_roll",
+      "brief": "Draw a random value from the rollable table created in `table_create`. The value will be removed from the table. If `reset_on_roll` is true, the table will reset. Otherwise, the table will reset when all values are drawn.",
+      "description": "Draw a random value from the rollable table created in `table_create`. The value will be removed from the table. If `reset_on_roll` is true, the table will reset. Otherwise, the table will reset when all values are drawn.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "A unique identifier for the rollable table.",
+          "types": [
+            "string | number | Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The value specified in `table_create`.",
+          "types": [
+            "any"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "table_reset",
+      "brief": "Manually reset a rollable table. Will also be called when the rollable table is empty, or a drawn value where `reset_on_roll` is true.",
+      "description": "Manually reset a rollable table. Will also be called when the rollable table is empty, or a drawn value where `reset_on_roll` is true.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "A unique identifier for the rollable table.",
+          "types": [
+            "string | number | Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
