@@ -1,17 +1,23 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as defcon from "defcon.console";
 import * as event from "event.event";
 import * as gooey from "gooey.gooey";
 import * as accelerometer from "in.accelerometer";
 import * as button from "in.button";
 import * as state from "in.state";
 import * as triggers from "in.triggers";
+import * as lang from "lang.lang";
 import * as monarch from "monarch.monarch";
 import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
+import * as narrator from "narrator.narrator";
 import * as camera from "orthographic.camera";
 import * as platypus from "platypus.platypus";
+import * as richtextColor from "richtext.color";
+import * as richtext from "richtext.richtext";
+import * as richtextTags from "richtext.tags";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -86,6 +92,40 @@ _pInstance.move(_v3);
 const _event = event.create(() => {});
 const _eventEmpty: boolean = _event.is_empty();
 
+// richtext.* — color constants and created words rename Defold core types to
+// Vector4 and Opaque<"node"> while preserving passthrough LuaMultiReturn.
+const _richRed: Vector4 = richtextColor.COLORS.red;
+const [_richWords, _richMetrics] = richtext.create("hi", "default");
+declare const _richWord: (typeof _richWords)[number];
+const _richNode: Opaque<"node"> = _richWord.node;
+const _richWordColor: Vector4 = _richWord.color;
+const _richWidth: number = _richMetrics.width;
+const _taggedWords = richtext.tagged(_richWords, "em");
+declare const _taggedWord: (typeof _taggedWords)[number];
+const _taggedNode: Opaque<"node"> = _taggedWord.node;
+richtextTags.register("em", () => {});
+
+// narrator.narrator — a mostly structural pure-Lua surface: story parsing and
+// runtime helpers resolve without relying on Defold core-type renames.
+const _story = narrator.init_story(narrator.parse_content("== start\nHello"));
+const _canContinue: boolean = _story.can_continue();
+const _continued: { text: string; tags?: string[] }[] | { text: string; tags?: string[] } =
+  _story.continue();
+const _storyTags: string[] = _story.get_tags("start");
+
+// defcon.console — command registration and server lifecycle compile through the
+// package subpath export.
+defcon.register_command("ping", "desc", () => "pong");
+defcon.start(8090);
+defcon.stop();
+
+// lang.lang — scalar helpers and logger removal overload resolve from the
+// vendored declaration.
+const _langId: string = lang.get_lang();
+const _langs: string[] = lang.get_langs();
+const _translated: string = lang.txp("score", 1);
+lang.set_logger(undefined);
+
 void _mHash;
 void _ok;
 void _err;
@@ -106,3 +146,14 @@ void _trigger;
 void _pFalling;
 void _pVelocity;
 void _eventEmpty;
+void _richRed;
+void _richNode;
+void _richWordColor;
+void _richWidth;
+void _taggedNode;
+void _canContinue;
+void _continued;
+void _storyTags;
+void _langId;
+void _langs;
+void _translated;
