@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   type ClassificationEntry,
+  checkDescriptions,
   checkDrift,
   classifyLibraryDirs,
   codemodDeclaration,
@@ -435,6 +436,45 @@ describe("mergeLibraryDescriptions", () => {
   test("emits a sorted key set in the output", () => {
     const merged = mergeLibraryDescriptions({ zebra: "z", alpha: "a", mango: "m" }, {});
     expect([...Object.keys(merged)]).toEqual(["alpha", "mango", "zebra"]);
+  });
+});
+
+describe("checkDescriptions", () => {
+  function writeTempRoot(
+    committed: Record<string, string>,
+    overrides: Record<string, string>,
+  ): string {
+    const root = mkdtempSync(join(tmpdir(), "library-types-description-check-"));
+    writeFileSync(join(root, "library-descriptions.json"), JSON.stringify(committed, null, 2));
+    writeFileSync(
+      join(root, "library-description-overrides.json"),
+      JSON.stringify(overrides, null, 2),
+    );
+    return root;
+  }
+
+  test("does not report fetched-only committed descriptions as drift", () => {
+    const root = writeTempRoot(
+      {
+        "fetched-only": "description from GitHub",
+        curated: "curated description",
+      },
+      { curated: "curated description" },
+    );
+
+    expect(checkDescriptions(root)).toEqual([]);
+  });
+
+  test("reports an override whose committed description is stale", () => {
+    const root = writeTempRoot(
+      {
+        "fetched-only": "description from GitHub",
+        curated: "old description",
+      },
+      { curated: "curated description" },
+    );
+
+    expect(checkDescriptions(root)).toEqual(["curated"]);
   });
 });
 
