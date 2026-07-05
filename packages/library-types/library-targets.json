@@ -172,6 +172,36 @@
       "path": "packages/defold-proto/proto.proto.d.ts",
       "fixture": "fixtures/ts-defold/proto.proto.d.ts",
       "generated": "generated/proto.proto.d.ts"
+    },
+    {
+      "module": "defmath.defmath",
+      "path": "packages/defmath/defmath.defmath.d.ts",
+      "fixture": "fixtures/ts-defold/defmath.defmath.d.ts",
+      "generated": "generated/defmath.defmath.d.ts"
+    },
+    {
+      "module": "dicebag.dicebag",
+      "path": "packages/dicebag/dicebag.dicebag.d.ts",
+      "fixture": "fixtures/ts-defold/dicebag.dicebag.d.ts",
+      "generated": "generated/dicebag.dicebag.d.ts"
+    },
+    {
+      "module": "tweener.tweener",
+      "path": "packages/defold-tweener/tweener.tweener.d.ts",
+      "fixture": "fixtures/ts-defold/tweener.tweener.d.ts",
+      "generated": "generated/tweener.tweener.d.ts"
+    },
+    {
+      "module": "squid.squid",
+      "path": "packages/squid/squid.squid.d.ts",
+      "fixture": "fixtures/ts-defold/squid.squid.d.ts",
+      "generated": "generated/squid.squid.d.ts"
+    },
+    {
+      "module": "starly.starly",
+      "path": "packages/starly/starly.starly.d.ts",
+      "fixture": "fixtures/ts-defold/starly.starly.d.ts",
+      "generated": "generated/starly.starly.d.ts"
     }
   ]
 }

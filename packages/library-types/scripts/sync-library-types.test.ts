@@ -115,6 +115,15 @@ describe("codemodDeclaration", () => {
     expect(output).toContain("): table;");
   });
 
+  test("renames the vmath.quaternion alias to Quaternion alongside vmath.quat", () => {
+    const src =
+      "declare module 'x.x' {\n  export function a(): vmath.quat;\n  export function b(): vmath.quaternion;\n}\n";
+    const { output, unmapped } = codemodDeclaration(src);
+    expect(unmapped).toEqual([]);
+    expect(output).toContain("export function a(): Quaternion;");
+    expect(output).toContain("export function b(): Quaternion;");
+  });
+
   test("reports an unmapped vmath.* reference instead of renaming it silently", () => {
     const src = "declare module 'x.x' {\n  export function f(): vmath.matrix3;\n}\n";
     const { output, unmapped } = codemodDeclaration(src);
@@ -314,7 +323,7 @@ describe("library-classification.json coverage", () => {
   });
 
   test("named pure-Lua candidates are pure-lua", () => {
-    for (const dir of ["defmath", "squid", "starly", "defold-tweener", "defold-log"]) {
+    for (const dir of ["defold-log", "deftest", "lua-immutable", "nakama-defold"]) {
       expect(byDir.get(dir)?.classification).toBe("pure-lua");
     }
   });

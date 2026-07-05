@@ -1,0 +1,17 @@
+{
+  "info": {
+    "namespace": "squid.squid",
+    "brief": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold.",
+    "description": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "SquidConfig"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Squid"
+    }
+  ]
+}

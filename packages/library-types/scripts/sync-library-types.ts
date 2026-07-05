@@ -17,6 +17,7 @@ export const CORE_TYPE_RENAMES: Readonly<Record<string, string>> = {
   "vmath.vector4": "Vector4",
   "vmath.matrix4": "Matrix4",
   "vmath.quat": "Quaternion",
+  "vmath.quaternion": "Quaternion",
   hash: "Hash",
   url: "Url",
   node: 'Opaque<"node">',
