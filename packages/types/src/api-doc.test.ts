@@ -163,4 +163,73 @@ describe("parseDefoldApiDoc", () => {
       expect(Array.isArray(fn.returnValues)).toBe(true);
     }
   });
+
+  test("parses a nested fields tree recursively, mapping isOptional from is_optional", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "ns.fn",
+          parameters: [
+            {
+              name: "options",
+              doc: "the options",
+              types: ["{ lerp?: number; nested?: { deep?: boolean; }; }"],
+              is_optional: "True",
+              fields: [
+                { name: "lerp", doc: "Lerp factor.", types: ["number"], is_optional: "True" },
+                {
+                  name: "nested",
+                  doc: "Nested config.",
+                  types: ["{ deep?: boolean; }"],
+                  is_optional: "False",
+                  fields: [
+                    { name: "deep", doc: "Deep flag.", types: ["boolean"], is_optional: "True" },
+                  ],
+                },
+              ],
+            },
+          ],
+          returnvalues: [],
+        },
+      ],
+    };
+    const options = parseDefoldApiDoc(doc).functions[0]?.parameters[0];
+    expect(options).toBeDefined();
+    if (!options) return;
+    expect(options.fields?.map((f) => f.name)).toEqual(["lerp", "nested"]);
+    expect(options.fields?.[0]).toEqual({
+      name: "lerp",
+      doc: "Lerp factor.",
+      types: ["number"],
+      isOptional: true,
+    });
+    expect(options.fields?.[1]?.isOptional).toBe(false);
+    expect(options.fields?.[1]?.fields?.[0]).toEqual({
+      name: "deep",
+      doc: "Deep flag.",
+      types: ["boolean"],
+      isOptional: true,
+    });
+  });
+
+  test("a parameter with no fields key yields fields absent (no empty array injected)", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "ns.fn",
+          parameters: [{ name: "a", types: ["number"], is_optional: "False" }],
+          returnvalues: [],
+        },
+      ],
+    };
+    const param = parseDefoldApiDoc(doc).functions[0]?.parameters[0];
+    expect(param).toBeDefined();
+    if (!param) return;
+    expect(param.fields).toBeUndefined();
+    expect(Object.hasOwn(param, "fields")).toBe(false);
+  });
 });

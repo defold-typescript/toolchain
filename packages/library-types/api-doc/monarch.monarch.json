@@ -46,6 +46,48 @@
       "name": "TRANSITION",
       "types": [
         "{ DONE: Hash; SHOW_IN: Hash; SHOW_OUT: Hash; BACK_IN: Hash; BACK_OUT: Hash; }"
+      ],
+      "fields": [
+        {
+          "name": "DONE",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "SHOW_IN",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "SHOW_OUT",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "BACK_IN",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "BACK_OUT",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
       ]
     },
     {
@@ -53,6 +95,24 @@
       "name": "FOCUS",
       "types": [
         "{ GAINED: Hash; LOST: Hash; }"
+      ],
+      "fields": [
+        {
+          "name": "GAINED",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "LOST",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
       ]
     },
     {

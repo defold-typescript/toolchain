@@ -40,6 +40,11 @@ export interface ApiParameter {
   doc: string;
   types: string[];
   isOptional: boolean;
+  /**
+   * Per-member docs for an object-literal type, extracted as a tree alongside
+   * the flat `types` token (never inside it). Absent for plain-typed params.
+   */
+  fields?: ApiParameter[];
 }
 
 export interface ApiVariable {
@@ -148,6 +153,7 @@ function parseParameterList(raw: unknown): ApiParameter[] {
       doc: stringOr(item.doc, ""),
       types: parseStringArray(item.types),
       isOptional: item.is_optional === "True",
+      ...(Array.isArray(item.fields) ? { fields: parseParameterList(item.fields) } : {}),
     });
   }
   return out;

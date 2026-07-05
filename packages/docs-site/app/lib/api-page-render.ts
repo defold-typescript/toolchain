@@ -22,6 +22,23 @@ const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "property", label: "Properties" },
 ];
 
+// An object-literal member and its subtree, indented two spaces per depth so
+// markdown-it nests it under the parameter bullet. Each member reads
+// `` `name`?: `type` — doc ``, keeping the member type inline (backticked)
+// rather than italic so a nested literal token stays legible.
+function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
+  const indent = "  ".repeat(depth + 1);
+  const out: string[] = [];
+  for (const f of fields) {
+    const name = `\`${f.name}\`${f.isOptional ? "?" : ""}`;
+    let bullet = `${indent}- ${name}: \`${f.types.join(" | ")}\``;
+    if (f.doc) bullet += ` — ${f.doc}`;
+    out.push(bullet);
+    if (f.fields && f.fields.length > 0) out.push(...fieldBullets(f.fields, depth + 1));
+  }
+  return out;
+}
+
 function paramBullet(p: ApiSymbolParam): string {
   const parts: string[] = [];
   if (p.name) parts.push(`\`${p.name}\`${p.isOptional ? "?" : ""}`);
@@ -29,6 +46,9 @@ function paramBullet(p: ApiSymbolParam): string {
   if (types) parts.push(`*${types}*`);
   let bullet = `- ${parts.join(" ")}`;
   if (p.doc) bullet += ` — ${p.doc}`;
+  if (p.fields && p.fields.length > 0) {
+    return [bullet, ...fieldBullets(p.fields, 0)].join("\n");
+  }
   return bullet;
 }
 
@@ -75,12 +95,17 @@ export function apiPageMarkdown(
   const raw = m.description || m.brief;
   const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
   if (intro) lines.push(linkify(intro), "");
+  const linkifyParam = (p: ApiSymbolParam): ApiSymbolParam => ({
+    ...p,
+    doc: linkify(p.doc),
+    ...(p.fields ? { fields: p.fields.map(linkifyParam) } : {}),
+  });
   const emitSymbol = (symbol: ApiSymbol) => {
     const linkified: ApiSymbol = {
       ...symbol,
       docMarkdown: linkify(symbol.docMarkdown),
-      parameters: symbol.parameters.map((p) => ({ ...p, doc: linkify(p.doc) })),
-      returnValues: symbol.returnValues.map((r) => ({ ...r, doc: linkify(r.doc) })),
+      parameters: symbol.parameters.map(linkifyParam),
+      returnValues: symbol.returnValues.map(linkifyParam),
     };
     lines.push(symbolBlock(linkified), "");
   };

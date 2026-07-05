@@ -131,7 +131,17 @@
           "types": [
             "{ words: boolean; }"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "words",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            }
+          ]
         }
       ],
       "returnvalues": [
@@ -214,7 +224,49 @@
           "types": [
             "{ node_id: Hash; text: string; screen_x: number; screen_y: number; tags: string[]; }"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "node_id",
+              "doc": "",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "text",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "screen_x",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "screen_y",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "tags",
+              "doc": "",
+              "types": [
+                "string[]"
+              ],
+              "is_optional": "False"
+            }
+          ]
         }
       ],
       "returnvalues": [
