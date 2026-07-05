@@ -162,7 +162,7 @@
           "name": "settings",
           "doc": "",
           "types": [
-            "{ radius?: number; threshold?: number } | undefined"
+            "{ radius?: number; threshold?: number; } | undefined"
           ],
           "is_optional": "False"
         },

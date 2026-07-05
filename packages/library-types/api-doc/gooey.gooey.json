@@ -262,7 +262,7 @@
           "name": "config",
           "doc": "",
           "types": [
-            "{ horizontal?: boolean } | undefined"
+            "{ horizontal?: boolean; } | undefined"
           ],
           "is_optional": "False"
         },
@@ -367,7 +367,7 @@
           "name": "config",
           "doc": "",
           "types": [
-            "{ horizontal?: boolean; carousel?: boolean } | undefined"
+            "{ horizontal?: boolean; carousel?: boolean; } | undefined"
           ],
           "is_optional": "False"
         },
@@ -472,7 +472,7 @@
           "name": "config",
           "doc": "",
           "types": [
-            "{ carousel?: boolean } | undefined"
+            "{ carousel?: boolean; } | undefined"
           ],
           "is_optional": "False"
         },
@@ -569,7 +569,7 @@
           "name": "config",
           "doc": "",
           "types": [
-            "{ carousel?: boolean } | undefined"
+            "{ carousel?: boolean; } | undefined"
           ],
           "is_optional": "False"
         },
@@ -869,7 +869,7 @@
           "name": "config",
           "doc": "",
           "types": [
-            "{\n\t\t\tmax_length?: number;\n\t\t\tempty_text?: string;\n\t\t\tallowed_characters?: string;\n\t\t\tuse_marked_text?: boolean;\n\t\t}"
+            "{ max_length?: number; empty_text?: string; allowed_characters?: string; use_marked_text?: boolean; }"
           ],
           "is_optional": "True"
         },

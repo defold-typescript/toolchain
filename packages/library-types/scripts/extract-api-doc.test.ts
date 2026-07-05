@@ -40,6 +40,67 @@ declare module 'demo.demo' {
 }
 `;
 
+// A module whose types span multiple lines in the source: an inline object
+// literal with per-member JSDoc, a wrapped union return, and plain single-line
+// types. The extractor must collapse each type token to one comment-free line.
+const NORMALIZE = `/**
+ * Normalize demo.
+ * @noResolution
+ */
+declare module 'norm.norm' {
+	/**
+	 * Configure it.
+	 * @param opts the options
+	 */
+	export function configure(opts: {
+		/** lerp factor */
+		a?: number;
+		/** label text */
+		b?: string;
+	}): boolean;
+
+	/** Pick a heading. */
+	export function pick(): "north"
+		| "south"
+		| "east";
+
+	/** Already single-line: must be untouched. */
+	export function plain(x: number): Hash | Url | undefined;
+}
+`;
+
+describe("extractApiDoc type-token normalization", () => {
+  const emitted = () =>
+    extractApiDoc(NORMALIZE, "norm.norm") as {
+      elements: Array<Record<string, unknown>>;
+    };
+  const fn = (name: string) =>
+    emitted().elements.find((e) => e.type === "FUNCTION" && e.name === name) as {
+      parameters: Array<{ name: string; types: string[] }>;
+      returnvalues: Array<{ types: string[] }>;
+    };
+
+  test("collapses an inline object-literal param with member JSDoc to one comment-free line", () => {
+    const token = fn("configure").parameters[0]?.types[0] ?? "";
+    expect(token).not.toContain("\n");
+    expect(token).not.toContain("/**");
+    expect(token).not.toContain("//");
+    expect(token).toBe("{ a?: number; b?: string; }");
+  });
+
+  test("collapses a multi-line union return type to one line", () => {
+    const token = fn("pick").returnvalues[0]?.types[0] ?? "";
+    expect(token).not.toContain("\n");
+    expect(token).toBe('"north" | "south" | "east"');
+  });
+
+  test("leaves already single-line type tokens unchanged", () => {
+    const plain = fn("plain");
+    expect(plain.parameters[0]?.types[0]).toBe("number");
+    expect(plain.returnvalues[0]?.types[0]).toBe("Hash | Url | undefined");
+  });
+});
+
 describe("extractApiDoc", () => {
   test("emits an { info, elements } object matching the parseDefoldApiDoc schema", () => {
     const emitted = extractApiDoc(DEMO, "demo.demo") as {

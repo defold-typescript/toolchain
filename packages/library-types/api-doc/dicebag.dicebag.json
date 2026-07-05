@@ -154,7 +154,7 @@
           "name": "sides",
           "doc": "A table describing the sides of the die in the format `[[weight1, value1], [weight2, value2], ...]`.",
           "types": [
-            "Array<[number, number]>"
+            "Array<[ number, number ]>"
           ],
           "is_optional": "False"
         }
@@ -270,7 +270,7 @@
           "name": "rollable_table",
           "doc": "A table of weights, values and reset flags.",
           "types": [
-            "Array<[number, any, boolean?]>"
+            "Array<[ number, any, boolean? ]>"
           ],
           "is_optional": "False"
         }
