@@ -1,0 +1,174 @@
+{
+  "info": {
+    "namespace": "saver.storage",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "boolean | number | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "defaultValue",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_number",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "defaultValue",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_string",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "defaultValue",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_boolean",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "defaultValue",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

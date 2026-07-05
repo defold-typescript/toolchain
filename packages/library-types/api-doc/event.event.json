@@ -1,0 +1,67 @@
+{
+  "info": {
+    "namespace": "event.event",
+    "brief": "Cross-Context Defold Event System",
+    "description": "Cross-Context Defold Event System"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "logger",
+          "doc": "",
+          "types": [
+            "LoggerInstance"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Generate a new event instance. This instance can then be used to subscribe to and trigger events.",
+      "description": "Generate a new event instance. This instance can then be used to subscribe to and trigger events.",
+      "parameters": [
+        {
+          "name": "this",
+          "doc": "",
+          "types": [
+            "void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "(this: any) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback_context",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "EventInstance"
+          ]
+        }
+      ]
+    }
+  ]
+}

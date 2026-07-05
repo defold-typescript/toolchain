@@ -1,0 +1,184 @@
+{
+  "info": {
+    "namespace": "proto.proto",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "configOrPath",
+          "doc": "",
+          "types": [
+            "string | { [key: string]: string }"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "protoType",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "{ [key: string]: unknown }"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "encode",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "protoType",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "{ [key: string]: any }"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "decode",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "protoType",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "{ [key: string]: unknown }"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "verify",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "protoType",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "{ [key: string]: any }"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "{ [key: string]: unknown }"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "",
+          "types": [
+            "LoggerInstance"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "remove_logger_instance",
+          "doc": "",
+          "types": [
+            "undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

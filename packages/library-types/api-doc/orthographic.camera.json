@@ -1,0 +1,925 @@
+{
+  "info": {
+    "namespace": "orthographic.camera",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "follow",
+      "brief": "Follow a game object.",
+      "description": "Follow a game object.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "target",
+          "doc": "Game object to follow",
+          "types": [
+            "Hash | Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Options",
+          "types": [
+            "{\n\t\t\t/**\n\t\t\t *  Lerp from current position to target position with lerp as t.\n\t\t\t */\n\t\t\tlerp?: number;\n\t\t\t/**\n\t\t\t *  Camera offset from target position.\n\t\t\t */\n\t\t\toffset?: Vector3;\n\t\t\t/**\n\t\t\t *  True if following the target along the horizontal axis.\n\t\t\t */\n\t\t\thorizontal?: boolean;\n\t\t\t/**\n\t\t\t *  True if following the target along the vertical axis.\n\t\t\t */\n\t\t\tvertical?: boolean;\n\t\t\t/**\n\t\t\t * True if the camera should be immediately positioned on the target even when lerping.\n\t\t\t */\n\t\t\timmediate?: boolean;\n\t\t}"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_zoom",
+      "brief": "Get the current zoom level of the camera.",
+      "description": "Get the current zoom level of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "(hash | url), undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_zoom",
+      "brief": "Change the zoom level of the camera.",
+      "description": "Change the zoom level of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "zoom",
+          "doc": "The new zoom level of the camera",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shake",
+      "brief": "Shake the camera.",
+      "description": "Shake the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "intensity",
+          "doc": "Intensity of the shake, in percent of screen. Defaults to 0.05",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "duration",
+          "doc": "Duration of the shake, in seconds. Defaults to 0.5",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "direction",
+          "doc": "Direction of the shake. Possible values: `both`, `horizontal`, `vertical`. Defaults to `both`.",
+          "types": [
+            "{ both?: boolean; horizontal?: boolean; vertical?: boolean }"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cb",
+          "doc": "Function to call when the shake has finished. Optional.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "stop_shaking",
+      "brief": "Stop shaking the camera.",
+      "description": "Stop shaking the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "(hash | url), undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_to_world",
+      "brief": "Translate screen coordinates to world coordinates, based on the view and projection of the camera.",
+      "description": "Translate screen coordinates to world coordinates, based on the view and projection of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "(hash | url), undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "screen",
+          "doc": "Screen coordinates to convert",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "window_to_world",
+      "brief": "Translate window coordinates to world coordinates, based on the view and projection of the camera.",
+      "description": "Translate window coordinates to world coordinates, based on the view and projection of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "(hash | url), undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "window",
+          "doc": "Window coordinates to convert",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_display_size",
+      "brief": "Get the display size (ie from game.project).",
+      "description": "Get the display size (ie from game.project).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[number, number]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_window_size",
+      "brief": "Get window size.",
+      "description": "Get window size.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[number, number]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_cameras",
+      "brief": "Get list of camera ids.",
+      "description": "Get list of camera ids.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Array<Hash | Url | undefined>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_view",
+      "brief": "Get the current view of the camera.",
+      "description": "Get the current view of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_viewport",
+      "brief": "Get the current viewport of the camera.",
+      "description": "Get the current viewport of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[number, number, number, number]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_projection",
+      "brief": "Get the current projection of the camera.",
+      "description": "Get the current projection of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_projection_id",
+      "brief": "Get the current projection id of the camera.",
+      "description": "Get the current projection id of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Hash"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "recoil",
+      "brief": "Apply a recoil effect to the camera. The recoil will decay using linear interpolation.",
+      "description": "Apply a recoil effect to the camera. The recoil will decay using linear interpolation.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "",
+          "types": [
+            "Hash | Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "offset",
+          "doc": "Offset to apply to the camera. Defaults to 0.05",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "Duration of the recoil, in seconds. Defaults to 0.5",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_offset",
+      "brief": "Get the current offset of the camera (caused by shake or recoil)",
+      "description": "Get the current offset of the camera (caused by shake or recoil)",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "follow_offset",
+      "brief": "Change the camera follow offset.",
+      "description": "Change the camera follow offset.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "offset",
+          "doc": "Camera offset from target position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unfollow",
+      "brief": "Stop following a game object.",
+      "description": "Stop following a game object.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "deadzone",
+      "brief": "If following a game object this will add a deadzone around the camera position where the camera position will not update. If the target moves to the edge of the deadzone the camera will start to follow until the target returns within the bounds of the deadzone.",
+      "description": "If following a game object this will add a deadzone around the camera position where the camera position will not update. If the target moves to the edge of the deadzone the camera will start to follow until the target returns within the bounds of the deadzone.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "left",
+          "doc": "Number of pixels to the left of the camera",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "top",
+          "doc": "Number of pixels above the camera",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "right",
+          "doc": "Number of pixels to the right of the camera",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "bottom",
+          "doc": "Number of pixels below the camera",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bounds",
+      "brief": "Limits the camera position to within the specified rectangle.",
+      "description": "Limits the camera position to within the specified rectangle.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "left",
+          "doc": "Left edge of the camera bounds",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "top",
+          "doc": "Top edge of camera bounds",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "right",
+          "doc": "Right edge of camera bounds",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "bottom",
+          "doc": "Bottom edge of camera bounds",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_to_world_bounds",
+      "brief": "Translate screen boundaries (corners) to world coordinates, based on the view and projection of the camera.",
+      "description": "Translate screen boundaries (corners) to world coordinates, based on the view and projection of the camera.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "world_to_screen",
+      "brief": "Translate world coordinates to screen coordinates, based on the view and projection of the camera, optionally taking into account an adjust mode. This is useful when manually culling game objects and you need to determine if a world coordinate will be visible or not. It can also be used to position gui nodes on top of game objects.",
+      "description": "Translate world coordinates to screen coordinates, based on the view and projection of the camera, optionally taking into account an adjust mode. This is useful when manually culling game objects and you need to determine if a world coordinate will be visible or not. It can also be used to position gui nodes on top of game objects.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "world",
+          "doc": "World coordinates to convert",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "adjust_mode",
+          "doc": "One of gui.ADJUST_FIT, gui.ADJUST_ZOOM and gui.ADJUST_STRETCH, or undefined to not take into account the adjust mode.",
+          "types": [
+            "| typeof gui.ADJUST_FIT\n\t\t\t| typeof gui.ADJUST_STRETCH\n\t\t\t| typeof gui.ADJUST_ZOOM"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unproject",
+      "brief": "Translate screen coordinates to world coordinates using the specified view and projection.",
+      "description": "Translate screen coordinates to world coordinates using the specified view and projection.",
+      "parameters": [
+        {
+          "name": "view",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "projection",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "screen",
+          "doc": "Screen coordinates to convert",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "project",
+      "brief": "Translate world coordinates to screen coordinates using the specified view and projection.",
+      "description": "Translate world coordinates to screen coordinates using the specified view and projection.",
+      "parameters": [
+        {
+          "name": "view",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "projection",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "world",
+          "doc": "World coordinates to convert",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_projector",
+      "brief": "Add a custom projector that can be used by cameras in your project (see configuration above).",
+      "description": "Add a custom projector that can be used by cameras in your project (see configuration above).",
+      "parameters": [
+        {
+          "name": "projector_id",
+          "doc": "Id of the projector. Used as a value in the projection field of the camera script.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "projector_fn",
+          "doc": "The function to call when a projection matrix is needed for the camera. The function will receive the id, near_z and far_z values of the camera.",
+          "types": [
+            "(id: Hash, near_z: number, far_z: number) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "use_projector",
+      "brief": "Set a specific projector for a camera. This must be either one of the predefined projectors (see above) or a custom projector added using `camera.add_projector()`.",
+      "description": "Set a specific projector for a camera. This must be either one of the predefined projectors (see above) or a custom projector added using `camera.add_projector()`.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "undefined for the first camera",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "projector_id",
+          "doc": "Id of the projector.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_window_scaling_factor",
+      "brief": "Set window scaling factor (basically retina or no retina screen). There is no built-in way to detect if Defold is running on a retina or non retina screen. This information combined with the High DPI setting in game.project can be used to ensure that the zoom behaves the same way regardless of screen type and High DPI setting. You can use an extension such as DefOS to get the window scaling factor.",
+      "description": "Set window scaling factor (basically retina or no retina screen). There is no built-in way to detect if Defold is running on a retina or non retina screen. This information combined with the High DPI setting in game.project can be used to ensure that the zoom behaves the same way regardless of screen type and High DPI setting. You can use an extension such as DefOS to get the window scaling factor.",
+      "parameters": [
+        {
+          "name": "scaling_factor",
+          "doc": "Current window scaling factor",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PROJECTOR",
+      "types": [
+        "{\n\t\tFIXED_ZOOM: Hash;\n\t\tDEFAULT: Hash;\n\t\tFIXED_AUTO: Hash;\n\t}"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SHAKE_BOTH",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SHAKE_VERTICAL",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SHAKE_HORIZONTAL",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ORTHOGRAPHIC_RENDER_SCRIPT_USED",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_DISABLE",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_UNFOLLOW",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_FOLLOW",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_FOLLOW_OFFSET",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_RECOIL",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_SHAKE",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_SHAKE_COMPLETED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_STOP_SHAKING",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_DEADZONE",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_BOUNDS",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_UPDATE_CAMERA",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_ZOOM_TO",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_USE_PROJECTION",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_VIEWPORT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_ENABLE",
+      "types": [
+        "Hash"
+      ]
+    }
+  ]
+}

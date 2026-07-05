@@ -1,0 +1,330 @@
+{
+  "info": {
+    "namespace": "richtext.richtext",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "FontSettings"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FontsTable"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LayersTable"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Settings"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Word"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TextMetrics"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Creates rich text gui nodes from a text containing markup.",
+      "description": "Creates rich text gui nodes from a text containing markup.",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "font",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "settings",
+          "doc": "",
+          "types": [
+            "Settings"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[Word[], TextMetrics]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tagged",
+      "brief": "Get all words with a specific tag.",
+      "description": "Get all words with a specific tag.",
+      "parameters": [
+        {
+          "name": "words",
+          "doc": "",
+          "types": [
+            "Word[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Word[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "truncate",
+      "brief": "Truncate a text down to a specific length. This function has two modes of operation:",
+      "description": "Truncate a text down to a specific length. This function has two modes of operation:\n1) It can truncate the text on a per word basis or\n2) on a per character/image basis.\nThe function will disable nodes that shouldn't be visible and in the case of truncating\non a per character basis also update the text in nodes that should be partially visible.\nThe text metrics of a truncated word will be updated.",
+      "parameters": [
+        {
+          "name": "words",
+          "doc": "",
+          "types": [
+            "Word[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "length",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "{ words: boolean }"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Word"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "length",
+      "brief": "Get the length of a text ignoring any tags except image and spine tags which are treated as having a length of 1.",
+      "description": "Get the length of a text ignoring any tags except image and spine tags which are treated as having a length of 1.",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "Word[] | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "characters",
+      "brief": "Split a word into it's characters, including the creation of the gui nodes. Each of the characters will be given the same attributes as the word, and they will be positioned correctly within the word.",
+      "description": "Split a word into it's characters, including the creation of the gui nodes. Each of the characters will be given the same attributes as the word, and they will be positioned correctly within the word.",
+      "parameters": [
+        {
+          "name": "word",
+          "doc": "",
+          "types": [
+            "Word"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Word[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_click",
+      "brief": "Call this function when a click/touch has been detected and your text contains words with an a tag. These words act as \"hyperlinks\" and will generate a message when clicked.",
+      "description": "Call this function when a click/touch has been detected and your text contains words with an a tag. These words act as \"hyperlinks\" and will generate a message when clicked.",
+      "parameters": [
+        {
+          "name": "words",
+          "doc": "",
+          "types": [
+            "Word[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{\n\t\t\tnode_id: Hash;\n\t\t\ttext: string;\n\t\t\tscreen_x: number;\n\t\t\tscreen_y: number;\n\t\t\ttags: string[];\n\t\t}"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove",
+      "brief": "Removes all gui text nodes created by richtext.create().",
+      "description": "Removes all gui text nodes created by richtext.create().",
+      "parameters": [
+        {
+          "name": "words",
+          "doc": "",
+          "types": [
+            "Word[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "plaintext",
+      "brief": "Returns the words created by richtext.create() as a plain text string without any formatting or tags. Linebreaks are included in the returned string.",
+      "description": "Returns the words created by richtext.create() as a plain text string without any formatting or tags. Linebreaks are included in the returned string.",
+      "parameters": [
+        {
+          "name": "words",
+          "doc": "",
+          "types": [
+            "Word[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Alignment"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "VAlignment"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_LEFT",
+      "types": [
+        "Alignment"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_CENTER",
+      "types": [
+        "Alignment"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_RIGHT",
+      "types": [
+        "Alignment"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_JUSTIFY",
+      "types": [
+        "Alignment"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "VALIGN_TOP",
+      "types": [
+        "VAlignment"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "VALIGN_MIDDLE",
+      "types": [
+        "VAlignment"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "VALIGN_BOTTOM",
+      "types": [
+        "VAlignment"
+      ]
+    }
+  ]
+}
