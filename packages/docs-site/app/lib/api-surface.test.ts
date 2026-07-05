@@ -187,23 +187,21 @@ describe("loadApiSurface library pages", () => {
     expect(noLib.some((p) => p.category === "library")).toBe(false);
   });
 
-  test("builds a structured libraryMeta with commit-pinned source, import, license, and attribution", () => {
+  test("builds a structured libraryMeta with author/upstream repo, commit pin, import, and license", () => {
     const camera = libraryPages.find((p) => p.namespace === "orthographic.camera");
     expect(camera).toBeDefined();
     const meta = camera?.libraryMeta;
     expect(meta).toBeDefined();
     if (!meta) return;
+    expect(meta.author).toBe("Britzl");
+    expect(meta.authorUrl).toBe("https://github.com/britzl/defold-orthographic");
     expect(meta.commitUrl).toBe(
       "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368",
     );
-    expect(meta.sourceUrl).toBe(
-      "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic",
-    );
     expect(meta.importString).toBe("import * as camera from 'orthographic.camera'");
     expect(meta.license).toBe("MIT");
-    expect(meta.attribution).toContain("Britzl");
-    expect(meta.attribution).toContain("https://github.com/britzl/defold-orthographic");
-    expect(meta.attribution).toContain("vendored via ts-defold/library");
+    expect("sourceUrl" in meta).toBe(false);
+    expect("attribution" in meta).toBe(false);
   });
 
   test("no longer prepends the prose provenance note into a library module description", () => {

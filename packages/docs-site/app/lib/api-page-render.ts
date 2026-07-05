@@ -86,20 +86,22 @@ function symbolBlock(symbol: ApiSymbol): string {
   );
 }
 
-// The uniform provenance block for a `library` page: five fixed-order bullets
-// under the intro. Source and Commit pin are markdown links (the commit-pin
-// text is the pinned sha, taken as the last path segment of `commitUrl`); the
-// import string is backtick-fenced so the prose linkifier skips the dotted
-// module name inside it.
+// The uniform provenance block for a `library` page: the bullets lead with the
+// real origin (author + upstream GitHub repo), followed by the ts-defold
+// commit pin, the import string, and the license. Author and GitHub are
+// omitted when the dir carries no NOTICE credit (both `meta.author` and
+// `meta.authorUrl` are `""`). The commit-pin text is the pinned sha, taken
+// as the last path segment of `commitUrl`; the import string is backtick-
+// fenced so the prose linkifier skips the dotted module name inside it.
 function libraryMetaBlock(meta: LibraryMeta): string[] {
   const sha = meta.commitUrl.slice(meta.commitUrl.lastIndexOf("/") + 1);
-  return [
-    `- Source: [${meta.sourceUrl}](${meta.sourceUrl})`,
-    `- Commit pin: [${sha}](${meta.commitUrl})`,
-    `- Import: \`${meta.importString}\``,
-    `- License: ${meta.license}`,
-    `- Attribution: ${meta.attribution}`,
-  ];
+  const bullets: string[] = [];
+  if (meta.author) bullets.push(`- Author: ${meta.author}`);
+  if (meta.authorUrl) bullets.push(`- GitHub: [${meta.authorUrl}](${meta.authorUrl})`);
+  bullets.push(`- Commit pin: [${sha}](${meta.commitUrl})`);
+  bullets.push(`- Import: \`${meta.importString}\``);
+  bullets.push(`- License: ${meta.license}`);
+  return bullets;
 }
 
 // Render the module intro, then each kind's symbols stacked in one column. A
