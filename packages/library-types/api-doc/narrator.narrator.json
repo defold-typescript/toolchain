@@ -49,7 +49,17 @@
           "types": [
             "{ save?: boolean; }"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "save",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ]
         }
       ],
       "returnvalues": [

@@ -47,6 +47,56 @@ function versionedWmathPage(): ApiPage {
   };
 }
 
+// A library page whose one function has a parameter typed as an inline object
+// literal with a nested member, so the render must emit an indented field tree.
+function fieldsPage(): ApiPage {
+  return {
+    namespace: "fld",
+    route: "/api/fld",
+    brief: "Fields",
+    module: {
+      namespace: "fld",
+      brief: "Fields",
+      description: "Field demo.",
+      functions: [
+        {
+          name: "fld.follow",
+          brief: "",
+          description: "Follow.",
+          parameters: [
+            {
+              name: "options",
+              doc: "the options",
+              types: ["{ lerp?: number; nested?: { deep?: boolean; }; }"],
+              isOptional: true,
+              fields: [
+                { name: "lerp", doc: "Lerp factor.", types: ["number"], isOptional: true },
+                {
+                  name: "nested",
+                  doc: "Nested config.",
+                  types: ["{ deep?: boolean; }"],
+                  isOptional: true,
+                  fields: [
+                    { name: "deep", doc: "Deep flag.", types: ["boolean"], isOptional: true },
+                  ],
+                },
+              ],
+            },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    },
+    translations: {},
+    signatures: {},
+    category: "library",
+  };
+}
+
 describe("versionedApiParams", () => {
   test("yields one {version, namespace} per on-disk non-default page", () => {
     expect(versionedApiParams(FIXTURE_DIR)).toEqual([{ version: "old", namespace: "wmath" }]);
@@ -162,6 +212,33 @@ describe("apiPageMarkdown", () => {
       "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>",
     );
     expect(md).not.toContain(`\`${thin}\``);
+  });
+});
+
+describe("apiPageMarkdown field tree", () => {
+  test("renders a parameter's fields as an indented nested list, one indent per depth", () => {
+    const md = apiPageMarkdown(fieldsPage(), (t) => t);
+    expect(md).toContain(
+      "- `options`? *{ lerp?: number; nested?: { deep?: boolean; }; }* — the options",
+    );
+    expect(md).toContain("  - `lerp`?: `number` — Lerp factor.");
+    expect(md).toContain("  - `nested`?: `{ deep?: boolean; }` — Nested config.");
+    expect(md).toContain("    - `deep`?: `boolean` — Deep flag.");
+  });
+
+  test("a parameter without fields renders no sub-list", () => {
+    const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
+    expect(md).not.toContain("  - `");
+  });
+
+  test("linkify recurses into nested field docs", () => {
+    const seen: string[] = [];
+    apiPageMarkdown(fieldsPage(), (t) => {
+      seen.push(t);
+      return t;
+    });
+    expect(seen).toContain("Lerp factor.");
+    expect(seen).toContain("Deep flag.");
   });
 });
 

@@ -33,7 +33,49 @@
           "types": [
             "{ lerp?: number; offset?: Vector3; horizontal?: boolean; vertical?: boolean; immediate?: boolean; }"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "lerp",
+              "doc": "Lerp from current position to target position with lerp as t.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "offset",
+              "doc": "Camera offset from target position.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "horizontal",
+              "doc": "True if following the target along the horizontal axis.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "vertical",
+              "doc": "True if following the target along the vertical axis.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "immediate",
+              "doc": "True if the camera should be immediately positioned on the target even when lerping.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ]
         }
       ],
       "returnvalues": []
@@ -124,7 +166,33 @@
           "types": [
             "{ both?: boolean; horizontal?: boolean; vertical?: boolean; }"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "both",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "horizontal",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "vertical",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ]
         },
         {
           "name": "cb",
@@ -786,6 +854,32 @@
       "name": "PROJECTOR",
       "types": [
         "{ FIXED_ZOOM: Hash; DEFAULT: Hash; FIXED_AUTO: Hash; }"
+      ],
+      "fields": [
+        {
+          "name": "FIXED_ZOOM",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "DEFAULT",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "FIXED_AUTO",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
       ]
     },
     {

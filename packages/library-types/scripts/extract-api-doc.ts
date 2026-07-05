@@ -12,6 +12,38 @@ function typeText(node: ts.TypeNode, sf: ts.SourceFile): string {
   return printer.printNode(ts.EmitHint.Unspecified, node, sf).replace(/\s+/g, " ").trim();
 }
 
+interface Field {
+  name: string;
+  doc: string;
+  types: string[];
+  is_optional: string;
+  fields?: Field[];
+}
+
+/**
+ * Recursively walk an object-literal type's property members into a `fields`
+ * tree, preserving each member's JSDoc alongside the flat `typeText` token (see
+ * bug-39). Returns `undefined` for a non-object-literal node or a literal with
+ * no property members (e.g. an index-signature-only map), so plain-typed
+ * parameters emit no `fields` key.
+ */
+function objectFields(node: ts.TypeNode | undefined, sf: ts.SourceFile): Field[] | undefined {
+  if (!node || !ts.isTypeLiteralNode(node)) return undefined;
+  const fields: Field[] = [];
+  for (const member of node.members) {
+    if (!ts.isPropertySignature(member) || !member.type) continue;
+    const nested = objectFields(member.type, sf);
+    fields.push({
+      name: member.name.getText(sf),
+      doc: jsDocSummary(member),
+      types: [typeText(member.type, sf)],
+      is_optional: member.questionToken ? "True" : "False",
+      ...(nested ? { fields: nested } : {}),
+    });
+  }
+  return fields.length > 0 ? fields : undefined;
+}
+
 /**
  * Turn a vendored `declare module '<name>'` ambient `.d.ts` into the
  * `{ info, elements }` JSON shape that `@defold-typescript/types`'
@@ -42,10 +74,12 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
       elements.push(functionElement(stmt, stmt.name.text, sf));
     } else if (ts.isVariableStatement(stmt) && isExported(stmt)) {
       for (const decl of stmt.declarationList.declarations) {
+        const fields = objectFields(decl.type, sf);
         elements.push({
           type: "VARIABLE",
           name: decl.name.getText(sf),
           types: decl.type ? [typeText(decl.type, sf)] : [],
+          ...(fields ? { fields } : {}),
         });
       }
     } else if (ts.isTypeAliasDeclaration(stmt)) {
@@ -68,19 +102,29 @@ function functionElement(
   const paramDocs = paramDocMap(decl, sf);
   const parameters = decl.parameters.map((p) => {
     const pname = p.name.getText(sf);
+    const fields = objectFields(p.type, sf);
     return {
       name: pname,
       doc: paramDocs.get(pname) ?? "",
       types: p.type ? [typeText(p.type, sf)] : [],
       is_optional: p.questionToken || p.initializer ? "True" : "False",
+      ...(fields ? { fields } : {}),
     };
   });
 
   const returnText = decl.type ? typeText(decl.type, sf) : "";
+  const returnFields = objectFields(decl.type, sf);
   const returnvalues =
     returnText === "" || returnText === "void"
       ? []
-      : [{ name: "", doc: returnDoc(decl), types: [returnText] }];
+      : [
+          {
+            name: "",
+            doc: returnDoc(decl),
+            types: [returnText],
+            ...(returnFields ? { fields: returnFields } : {}),
+          },
+        ];
 
   const example = exampleText(decl);
   return {
