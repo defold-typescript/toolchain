@@ -8,9 +8,10 @@ import {
 } from "./api-surface-loader";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
+export const LIBRARY_TYPES_DIR = join(process.cwd(), "../library-types");
 
 export function apiPages(): ApiPage[] {
-  return loadApiSurface(TYPES_DIR);
+  return loadApiSurface(TYPES_DIR, LIBRARY_TYPES_DIR);
 }
 
 // Enumeration for routing and version chrome: a non-default target with no

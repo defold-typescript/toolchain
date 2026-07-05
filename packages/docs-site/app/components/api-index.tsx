@@ -1,6 +1,7 @@
 import { htmlToDocText } from "@defold-typescript/types";
 import type { ApiPage } from "../lib/api-surface";
 import { withBase } from "../lib/base";
+import { groupApiIndexPages } from "./api-index-sections";
 
 // One category's card grid. Factored so the three sections share identical
 // markup; an empty category is rendered by the caller as nothing at all (a
@@ -31,9 +32,12 @@ function CardGrid({ pages }: { pages: ApiPage[] }) {
 // the version and only the non-empty categories render (a non-default surface
 // carries engine pages only — the shared core-types stay default-only).
 export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: string }) {
-  const enginePages = pages.filter((p) => p.category === "engine");
-  const globalTypePages = pages.filter((p) => p.category === "global-type");
-  const luaStdlibPages = pages.filter((p) => p.category === "lua-stdlib");
+  const {
+    engine: enginePages,
+    globalType: globalTypePages,
+    luaStdlib: luaStdlibPages,
+    library: libraryPages,
+  } = groupApiIndexPages(pages);
   // The engine pages are the Defold reference surface (generated from ref-doc.zip);
   // the Lua standard library pages are pure-Lua / LuaJIT surfaces whose types are
   // owned by `lua-types` and are surfaced as their own labelled section so the
@@ -80,6 +84,18 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
             <code>@defold-typescript/types</code>.
           </p>
           <CardGrid pages={luaStdlibPages} />
+        </>
+      ) : null}
+      {libraryPages.length > 0 ? (
+        <>
+          <h2>Libraries</h2>
+          <p>
+            Vendored third-party libraries (<code>monarch.monarch</code>, <code>in.button</code>, …)
+            from <code>@defold-typescript/library-types</code>. Types are pinned to a{" "}
+            <a href="https://github.com/ts-defold/library">ts-defold/library</a> commit rather than
+            a Defold version; each page names its upstream author and import string.
+          </p>
+          <CardGrid pages={libraryPages} />
         </>
       ) : null}
     </article>

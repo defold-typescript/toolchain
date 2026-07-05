@@ -15,7 +15,7 @@ import {
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
 
-export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type";
+export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type" | "library";
 
 export interface ApiPage {
   namespace: string;
@@ -35,7 +35,10 @@ export interface ApiPage {
    * `@defold-typescript/types` generation. `global-type` for the hand-curated
    * core value types (`Vector3`, `Hash`, …) parsed from `core-types.ts` and
    * rendered under the "Global types" reference category — never emitted from
-   * `ref-doc.zip`.
+   * `ref-doc.zip`. `library` for vendored third-party library modules
+   * (`monarch.monarch`, `in.button`, …) sourced from `@defold-typescript/library-types`
+   * fixtures, pinned to a ts-defold/library commit rather than a Defold version,
+   * and surfaced default-only under the "Libraries" reference category.
    */
   category: ApiPageCategory;
 }
