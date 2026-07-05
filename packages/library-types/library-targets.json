@@ -106,6 +106,42 @@
       "path": "packages/defold-event/event.event.d.ts",
       "fixture": "fixtures/ts-defold/event.event.d.ts",
       "generated": "generated/event.event.d.ts"
+    },
+    {
+      "module": "richtext.color",
+      "path": "packages/defold-richtext/richtext.color.d.ts",
+      "fixture": "fixtures/ts-defold/richtext.color.d.ts",
+      "generated": "generated/richtext.color.d.ts"
+    },
+    {
+      "module": "richtext.richtext",
+      "path": "packages/defold-richtext/richtext.richtext.d.ts",
+      "fixture": "fixtures/ts-defold/richtext.richtext.d.ts",
+      "generated": "generated/richtext.richtext.d.ts"
+    },
+    {
+      "module": "richtext.tags",
+      "path": "packages/defold-richtext/richtext.tags.d.ts",
+      "fixture": "fixtures/ts-defold/richtext.tags.d.ts",
+      "generated": "generated/richtext.tags.d.ts"
+    },
+    {
+      "module": "narrator.narrator",
+      "path": "packages/narrator/narrator.narrator.d.ts",
+      "fixture": "fixtures/ts-defold/narrator.narrator.d.ts",
+      "generated": "generated/narrator.narrator.d.ts"
+    },
+    {
+      "module": "defcon.console",
+      "path": "packages/defcon/defcon.console.d.ts",
+      "fixture": "fixtures/ts-defold/defcon.console.d.ts",
+      "generated": "generated/defcon.console.d.ts"
+    },
+    {
+      "module": "lang.lang",
+      "path": "packages/defold-lang/lang.lang.d.ts",
+      "fixture": "fixtures/ts-defold/lang.lang.d.ts",
+      "generated": "generated/lang.lang.d.ts"
     }
   ]
 }

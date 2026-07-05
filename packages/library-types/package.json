@@ -64,6 +64,24 @@
     "./event.event": {
       "types": "./generated/event.event.d.ts"
     },
+    "./richtext.color": {
+      "types": "./generated/richtext.color.d.ts"
+    },
+    "./richtext.richtext": {
+      "types": "./generated/richtext.richtext.d.ts"
+    },
+    "./richtext.tags": {
+      "types": "./generated/richtext.tags.d.ts"
+    },
+    "./narrator.narrator": {
+      "types": "./generated/narrator.narrator.d.ts"
+    },
+    "./defcon.console": {
+      "types": "./generated/defcon.console.d.ts"
+    },
+    "./lang.lang": {
+      "types": "./generated/lang.lang.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [
