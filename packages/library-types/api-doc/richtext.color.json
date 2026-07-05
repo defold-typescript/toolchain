@@ -34,7 +34,7 @@
       "type": "VARIABLE",
       "name": "COLORS",
       "types": [
-        "{\n\t\taqua: Vector4;\n\t\tblack: Vector4;\n\t\tblue: Vector4;\n\t\tbrown: Vector4;\n\t\tcyan: Vector4;\n\t\tdarkblue: Vector4;\n\t\tfuchsia: Vector4;\n\t\tgreen: Vector4;\n\t\tgrey: Vector4;\n\t\tlightblue: Vector4;\n\t\tlime: Vector4;\n\t\tmagenta: Vector4;\n\t\tmaroon: Vector4;\n\t\tnavy: Vector4;\n\t\tolive: Vector4;\n\t\torange: Vector4;\n\t\tpurple: Vector4;\n\t\tred: Vector4;\n\t\tsilver: Vector4;\n\t\tteal: Vector4;\n\t\twhite: Vector4;\n\t\tyellow: Vector4;\n\t}"
+        "{ aqua: Vector4; black: Vector4; blue: Vector4; brown: Vector4; cyan: Vector4; darkblue: Vector4; fuchsia: Vector4; green: Vector4; grey: Vector4; lightblue: Vector4; lime: Vector4; magenta: Vector4; maroon: Vector4; navy: Vector4; olive: Vector4; orange: Vector4; purple: Vector4; red: Vector4; silver: Vector4; teal: Vector4; white: Vector4; yellow: Vector4; }"
       ]
     }
   ]

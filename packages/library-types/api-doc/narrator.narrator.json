@@ -47,7 +47,7 @@
           "name": "params",
           "doc": "",
           "types": [
-            "{ save?: boolean }"
+            "{ save?: boolean; }"
           ],
           "is_optional": "True"
         }

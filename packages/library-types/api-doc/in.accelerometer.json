@@ -78,7 +78,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "{ acc_x: number; acc_y: number; acc_z: number }"
+            "{ acc_x: number; acc_y: number; acc_z: number; }"
           ],
           "is_optional": "False"
         },

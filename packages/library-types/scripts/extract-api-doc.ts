@@ -1,5 +1,17 @@
 import ts from "typescript";
 
+const printer = ts.createPrinter({ removeComments: true });
+
+/**
+ * A type node's text as a single comment-free line. The printer re-emits the
+ * AST (so a `//`/`/*` inside a string-literal type is never mistaken for a
+ * comment), then interior whitespace is collapsed so multi-line object literals
+ * and wrapped unions no longer leak newlines or member JSDoc into `/api`.
+ */
+function typeText(node: ts.TypeNode, sf: ts.SourceFile): string {
+  return printer.printNode(ts.EmitHint.Unspecified, node, sf).replace(/\s+/g, " ").trim();
+}
+
 /**
  * Turn a vendored `declare module '<name>'` ambient `.d.ts` into the
  * `{ info, elements }` JSON shape that `@defold-typescript/types`'
@@ -33,7 +45,7 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         elements.push({
           type: "VARIABLE",
           name: decl.name.getText(sf),
-          types: decl.type ? [decl.type.getText(sf).trim()] : [],
+          types: decl.type ? [typeText(decl.type, sf)] : [],
         });
       }
     } else if (ts.isTypeAliasDeclaration(stmt)) {
@@ -59,12 +71,12 @@ function functionElement(
     return {
       name: pname,
       doc: paramDocs.get(pname) ?? "",
-      types: p.type ? [p.type.getText(sf).trim()] : [],
+      types: p.type ? [typeText(p.type, sf)] : [],
       is_optional: p.questionToken || p.initializer ? "True" : "False",
     };
   });
 
-  const returnText = decl.type?.getText(sf).trim() ?? "";
+  const returnText = decl.type ? typeText(decl.type, sf) : "";
   const returnvalues =
     returnText === "" || returnText === "void"
       ? []

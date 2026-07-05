@@ -31,7 +31,7 @@
           "name": "options",
           "doc": "Options",
           "types": [
-            "{\n\t\t\t/**\n\t\t\t *  Lerp from current position to target position with lerp as t.\n\t\t\t */\n\t\t\tlerp?: number;\n\t\t\t/**\n\t\t\t *  Camera offset from target position.\n\t\t\t */\n\t\t\toffset?: Vector3;\n\t\t\t/**\n\t\t\t *  True if following the target along the horizontal axis.\n\t\t\t */\n\t\t\thorizontal?: boolean;\n\t\t\t/**\n\t\t\t *  True if following the target along the vertical axis.\n\t\t\t */\n\t\t\tvertical?: boolean;\n\t\t\t/**\n\t\t\t * True if the camera should be immediately positioned on the target even when lerping.\n\t\t\t */\n\t\t\timmediate?: boolean;\n\t\t}"
+            "{ lerp?: number; offset?: Vector3; horizontal?: boolean; vertical?: boolean; immediate?: boolean; }"
           ],
           "is_optional": "True"
         }
@@ -122,7 +122,7 @@
           "name": "direction",
           "doc": "Direction of the shake. Possible values: `both`, `horizontal`, `vertical`. Defaults to `both`.",
           "types": [
-            "{ both?: boolean; horizontal?: boolean; vertical?: boolean }"
+            "{ both?: boolean; horizontal?: boolean; vertical?: boolean; }"
           ],
           "is_optional": "True"
         },
@@ -231,7 +231,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "LuaMultiReturn<[number, number]>"
+            "LuaMultiReturn<[ number, number ]>"
           ]
         }
       ]
@@ -247,7 +247,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "LuaMultiReturn<[number, number]>"
+            "LuaMultiReturn<[ number, number ]>"
           ]
         }
       ]
@@ -313,7 +313,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "LuaMultiReturn<[number, number, number, number]>"
+            "LuaMultiReturn<[ number, number, number, number ]>"
           ]
         }
       ]
@@ -617,7 +617,7 @@
           "name": "adjust_mode",
           "doc": "One of gui.ADJUST_FIT, gui.ADJUST_ZOOM and gui.ADJUST_STRETCH, or undefined to not take into account the adjust mode.",
           "types": [
-            "| typeof gui.ADJUST_FIT\n\t\t\t| typeof gui.ADJUST_STRETCH\n\t\t\t| typeof gui.ADJUST_ZOOM"
+            "typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM"
           ],
           "is_optional": "True"
         }
@@ -785,7 +785,7 @@
       "type": "VARIABLE",
       "name": "PROJECTOR",
       "types": [
-        "{\n\t\tFIXED_ZOOM: Hash;\n\t\tDEFAULT: Hash;\n\t\tFIXED_AUTO: Hash;\n\t}"
+        "{ FIXED_ZOOM: Hash; DEFAULT: Hash; FIXED_AUTO: Hash; }"
       ]
     },
     {

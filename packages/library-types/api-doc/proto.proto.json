@@ -15,7 +15,7 @@
           "name": "configOrPath",
           "doc": "",
           "types": [
-            "string | { [key: string]: string }"
+            "string | { [key: string]: string; }"
           ],
           "is_optional": "False"
         }
@@ -42,7 +42,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "{ [key: string]: unknown }"
+            "{ [key: string]: unknown; }"
           ]
         }
       ]
@@ -65,7 +65,7 @@
           "name": "data",
           "doc": "",
           "types": [
-            "{ [key: string]: any }"
+            "{ [key: string]: any; }"
           ],
           "is_optional": "False"
         }
@@ -108,7 +108,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "{ [key: string]: unknown }"
+            "{ [key: string]: unknown; }"
           ]
         }
       ]
@@ -131,7 +131,7 @@
           "name": "data",
           "doc": "",
           "types": [
-            "{ [key: string]: any }"
+            "{ [key: string]: any; }"
           ],
           "is_optional": "False"
         }
@@ -141,7 +141,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "{ [key: string]: unknown }"
+            "{ [key: string]: unknown; }"
           ]
         }
       ]

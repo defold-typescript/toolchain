@@ -65,7 +65,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "LuaMultiReturn<[Word[], TextMetrics]>"
+            "LuaMultiReturn<[ Word[], TextMetrics ]>"
           ]
         }
       ]
@@ -129,7 +129,7 @@
           "name": "options",
           "doc": "",
           "types": [
-            "{ words: boolean }"
+            "{ words: boolean; }"
           ],
           "is_optional": "True"
         }
@@ -212,7 +212,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "{\n\t\t\tnode_id: Hash;\n\t\t\ttext: string;\n\t\t\tscreen_x: number;\n\t\t\tscreen_y: number;\n\t\t\ttags: string[];\n\t\t}"
+            "{ node_id: Hash; text: string; screen_x: number; screen_y: number; tags: string[]; }"
           ],
           "is_optional": "False"
         }
