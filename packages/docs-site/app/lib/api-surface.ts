@@ -21,20 +21,21 @@ export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type" | "library
  * Structured provenance for a vendored `library` page, joined from
  * `library-classification.json` (repo, pinned commit, license, the module's
  * upstream `dir`) and `NOTICE` (author credit). Rendered as the uniform
- * Source / Commit pin / Import / License / Attribution block; replaces the
- * old run-on prose note prepended into the module description.
+ * Author / GitHub / Commit pin / Import / License block; leads with the real
+ * origin (the upstream author and their repo) rather than the ts-defold
+ * vendoring plumbing.
  */
 export interface LibraryMeta {
-  /** The module's upstream dir at the pin (`<repo>/tree/<commit>/<dir>`), or `<repo>` when the dir is unknown. */
-  sourceUrl: string;
+  /** NOTICE author credit for the upstream dir; `""` when the dir has no credit. */
+  author: string;
+  /** Link to the author's upstream repo (the NOTICE credit URL); `""` when the dir has no credit. */
+  authorUrl: string;
   /** The pinned-commit tree URL (`<repo>/tree/<commit>`). */
   commitUrl: string;
   /** The vendored `import * as <alias> from '<module>'` string. */
   importString: string;
   /** SPDX-style license id from the classification `source`. */
   license: string;
-  /** NOTICE author credit plus the "vendored via ts-defold/library" tail. */
-  attribution: string;
 }
 
 export interface ApiPage {
