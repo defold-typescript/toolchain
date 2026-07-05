@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiFunction,
@@ -231,6 +231,34 @@ describe("loadApiSurface library pages", () => {
   test("a non-default versioned surface yields zero library pages even when a lib dir is supplied", () => {
     const versioned = loadApiSurfaceForVersion(FIXTURE_DIR, "old", REAL_LIBRARY_TYPES_DIR);
     expect(versioned.some((p) => p.category === "library")).toBe(false);
+  });
+});
+
+describe("loadApiSurface library descriptions", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const libraryPages = pages.filter((p) => p.category === "library");
+  const descByDir = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-descriptions.json"), "utf8"),
+  ) as Record<string, string>;
+
+  test("every library page has a non-empty module.description", () => {
+    for (const page of libraryPages) {
+      expect(page.module.description.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("a description-less api-doc page (orthographic.camera) gets its description from the vendored map", () => {
+    const orthographic = libraryPages.find((p) => p.namespace === "orthographic.camera");
+    expect(orthographic).toBeDefined();
+    expect(orthographic?.module.description).toBe(descByDir["defold-orthographic"]);
+    expect(orthographic?.module.description ?? "").not.toContain("vendored via");
+    expect(orthographic?.module.description ?? "").not.toContain("tree/");
+  });
+
+  test("a page whose api-doc fixture already carries a description keeps its own richer text", () => {
+    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
+    expect(monarch?.module.description ?? "").toContain("Monarch is a screen manager");
+    expect(monarch?.module.description).not.toBe(descByDir["monarch"]);
   });
 });
 

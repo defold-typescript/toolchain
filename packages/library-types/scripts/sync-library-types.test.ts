@@ -7,15 +7,18 @@ import {
   checkDrift,
   classifyLibraryDirs,
   codemodDeclaration,
+  type FetchRepoDescription,
   type FetchText,
   type LibrarySource,
   type LibraryTarget,
   type LibraryTargets,
   type ListTree,
   libraryModulesFromTree,
+  mergeLibraryDescriptions,
   rawUrl,
   repoSlug,
   writeClassification,
+  writeDescriptions,
 } from "./sync-library-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -396,5 +399,104 @@ describe("writeClassification", () => {
       },
     );
     expect(written.dirs).toEqual(expected);
+  });
+});
+
+describe("mergeLibraryDescriptions", () => {
+  test("an override wins over a fetched description for the same dir", () => {
+    expect(
+      mergeLibraryDescriptions({ monarch: "fetched text" }, { monarch: "curated text" }),
+    ).toEqual({ monarch: "curated text" });
+  });
+
+  test("a dir present only in fetched keeps the fetched text", () => {
+    expect(mergeLibraryDescriptions({ monarch: "fetched text" }, {})).toEqual({
+      monarch: "fetched text",
+    });
+  });
+
+  test("a dir with an empty fetched value takes the override", () => {
+    expect(mergeLibraryDescriptions({ monarch: "" }, { monarch: "curated text" })).toEqual({
+      monarch: "curated text",
+    });
+  });
+
+  test("a dir with neither fetched nor override is omitted", () => {
+    expect(mergeLibraryDescriptions({ monarch: "fetched" }, { richtext: "curated" })).toEqual({
+      monarch: "fetched",
+      richtext: "curated",
+    });
+  });
+
+  test("a dir with an empty value in both fetched and override is omitted", () => {
+    expect(mergeLibraryDescriptions({ monarch: "" }, { richtext: "  " })).toEqual({});
+  });
+
+  test("emits a sorted key set in the output", () => {
+    const merged = mergeLibraryDescriptions({ zebra: "z", alpha: "a", mango: "m" }, {});
+    expect([...Object.keys(merged)]).toEqual(["alpha", "mango", "zebra"]);
+  });
+});
+
+describe("writeDescriptions", () => {
+  const NOTICE = [
+    "Some preamble.",
+    "",
+    "Attributed upstream libraries (by their directory in ts-defold/library):",
+    "",
+    "    - with-repo        — Alice, https://github.com/alice/with-repo",
+    "    - without-repo    — Bob, https://example.com/no-github",
+    "    - bare            — Carol",
+    "",
+  ].join("\n");
+
+  function writeTempRoot(): string {
+    const root = mkdtempSync(join(tmpdir(), "library-types-descriptions-"));
+    writeFileSync(join(root, "NOTICE"), NOTICE);
+    return root;
+  }
+
+  test("fetches owner/repo from NOTICE credit URLs, applies overrides, writes sorted map", async () => {
+    const root = writeTempRoot();
+    const fetchRepoDescription: FetchRepoDescription = async (owner, repo) => {
+      if (owner === "alice" && repo === "with-repo") return "fetched with-repo text";
+      if (owner === "bob") return "fetched bob text";
+      throw new Error(`unexpected fetch: ${owner}/${repo}`);
+    };
+    await writeDescriptions(root, {
+      fetchRepoDescription,
+      overrides: { "without-repo": "curated bob text" },
+    });
+    const written = JSON.parse(
+      readFileSync(join(root, "library-descriptions.json"), "utf8"),
+    ) as Record<string, string>;
+    expect(written).toEqual({
+      "with-repo": "fetched with-repo text",
+      "without-repo": "curated bob text",
+    });
+    expect([...Object.keys(written)]).toEqual([...Object.keys(written)].sort());
+  });
+
+  test("skips a NOTICE entry whose credit URL is not a github repo", async () => {
+    const root = mkdtempSync(join(tmpdir(), "library-types-descriptions-skip-"));
+    writeFileSync(
+      join(root, "NOTICE"),
+      [
+        "    - non-github      — Alice, https://example.com/no-github",
+        "    - no-url          — Bob",
+        "",
+      ].join("\n"),
+    );
+    const fetchRepoDescription: FetchRepoDescription = async () => {
+      throw new Error("should not be called");
+    };
+    await writeDescriptions(root, {
+      fetchRepoDescription,
+      overrides: {},
+    });
+    const written = JSON.parse(
+      readFileSync(join(root, "library-descriptions.json"), "utf8"),
+    ) as Record<string, string>;
+    expect(written).toEqual({});
   });
 });
