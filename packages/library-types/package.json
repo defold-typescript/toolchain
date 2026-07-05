@@ -97,6 +97,21 @@
     },
     "./proto.proto": {
       "types": "./generated/proto.proto.d.ts"
+    },
+    "./defmath.defmath": {
+      "types": "./generated/defmath.defmath.d.ts"
+    },
+    "./dicebag.dicebag": {
+      "types": "./generated/dicebag.dicebag.d.ts"
+    },
+    "./tweener.tweener": {
+      "types": "./generated/tweener.tweener.d.ts"
+    },
+    "./squid.squid": {
+      "types": "./generated/squid.squid.d.ts"
+    },
+    "./starly.starly": {
+      "types": "./generated/starly.starly.d.ts"
     }
   },
   "files": [

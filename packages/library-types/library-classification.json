@@ -71,7 +71,7 @@
     },
     {
       "dir": "defmath",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "defmath.defmath"
       ]
@@ -301,7 +301,7 @@
     },
     {
       "dir": "defold-tweener",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "tweener.tweener"
       ]
@@ -385,7 +385,7 @@
     },
     {
       "dir": "dicebag",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "dicebag.dicebag"
       ]
@@ -710,14 +710,14 @@
     },
     {
       "dir": "squid",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "squid.squid"
       ]
     },
     {
       "dir": "starly",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "starly.starly"
       ]
