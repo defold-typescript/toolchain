@@ -74,6 +74,14 @@ const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data
 const TOPBAR_HEIGHT_INIT = `(function(){try{var h=document.querySelector('[data-topbar]');if(!h)return;var set=function(){document.documentElement.style.setProperty('--topbar-height',h.offsetHeight+'px');};set();if(typeof ResizeObserver==='function'){new ResizeObserver(set).observe(h);}}catch(_){}})();`;
 
 /**
+ * The script that centers the active top-level topic in the horizontally
+ * scrollable mobile topbar and marks whether more topics are available off each
+ * side. Desktop keeps the non-scrolling nav untouched; below `lg`, every page
+ * load starts with the current topic visible instead of hidden past the edge.
+ */
+const TOPIC_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-topic-scroll]');if(!c)return;var f=document.querySelector('[data-topic-scroll-frame]')||c.parentElement;var a=c.querySelector('[aria-current="page"]');var isNarrow=function(){return window.matchMedia?window.matchMedia('(max-width: 1023.98px)').matches:c.scrollWidth>c.clientWidth;};var max=function(){return Math.max(0,c.scrollWidth-c.clientWidth);};var update=function(){if(!f)return;var m=max();f.toggleAttribute('data-scroll-left',c.scrollLeft>1);f.toggleAttribute('data-scroll-right',c.scrollLeft<m-1);};var center=function(){if(!a||!isNarrow())return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect(),left=ar.left-cr.left+c.scrollLeft;c.scrollLeft=Math.max(0,Math.min(left-c.clientWidth/2+ar.width/2,max()));};center();update();c.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',function(){center();update();},{passive:true});if(typeof ResizeObserver==='function'){new ResizeObserver(function(){center();update();}).observe(c);}}catch(_){}})();`;
+
+/**
  * The design tokens, inlined so they are available before the Tailwind
  * stylesheet (and `public/critical.css`) load. Without this, `var(--color-text)`
  * in critical.css would be undefined at first paint and the body would briefly
@@ -288,15 +296,23 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
                 defold-typescript
               </span>
             </a>
-            <nav class="order-last flex w-full basis-full items-center gap-1 overflow-x-auto overflow-y-hidden text-[length:var(--nav-top-size)] leading-5 lg:order-none lg:w-auto lg:flex-1 lg:basis-auto lg:overflow-visible">
-              {nav.map((category) => (
-                <CategoryLink
-                  key={category.id}
-                  category={category}
-                  active={category.id === activeId}
-                />
-              ))}
-            </nav>
+            <div
+              data-topic-scroll-frame
+              class="topic-scroll-frame order-last w-full min-w-0 basis-full lg:order-none lg:w-auto lg:flex-1 lg:basis-auto"
+            >
+              <nav
+                data-topic-scroll
+                class="flex w-full items-center gap-1 overflow-x-auto overflow-y-hidden text-[length:var(--nav-top-size)] leading-5 lg:overflow-visible"
+              >
+                {nav.map((category) => (
+                  <CategoryLink
+                    key={category.id}
+                    category={category}
+                    active={category.id === activeId}
+                  />
+                ))}
+              </nav>
+            </div>
             <div class="ml-auto flex items-center gap-2 lg:ml-0">
               {currentVersion ? (
                 <VersionSelector entries={versionSwitcher} currentId={currentVersion.id} />
@@ -341,6 +357,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <CodeCopy />
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
         <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />
+        <script dangerouslySetInnerHTML={{ __html: TOPIC_SCROLL_INIT }} />
       </body>
     </html>
   );
