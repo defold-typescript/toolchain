@@ -17,7 +17,7 @@
       "type": "VARIABLE",
       "name": "SETTINGS",
       "types": [
-        "{\n\t\taction_id: Hash;\n\t\ttap_threshold: number;\n\t\tdouble_tap_interval: number;\n\t\tswipe_threshold: number;\n\t\tswipe_time: number;\n\t\tlong_press_time: number;\n\t\tmulti_touch: boolean;\n\t}"
+        "{ action_id: Hash; tap_threshold: number; double_tap_interval: number; swipe_threshold: number; swipe_time: number; long_press_time: number; multi_touch: boolean; }"
       ]
     },
     {
@@ -30,7 +30,7 @@
           "name": "settings",
           "doc": "",
           "types": [
-            "{\n\t\taction_id?: string;\n\t\ttap_threshold?: number;\n\t\tdouble_tap_interval?: number;\n\t\tswipe_threshold?: number;\n\t\tswipe_time?: number;\n\t\tlong_press_time?: number;\n\t\tmulti_touch?: boolean;\n\t}"
+            "{ action_id?: string; tap_threshold?: number; double_tap_interval?: number; swipe_threshold?: number; swipe_time?: number; long_press_time?: number; multi_touch?: boolean; }"
           ],
           "is_optional": "True"
         }

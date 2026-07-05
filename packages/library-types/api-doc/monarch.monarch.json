@@ -45,14 +45,14 @@
       "type": "VARIABLE",
       "name": "TRANSITION",
       "types": [
-        "{\n\t\tDONE: Hash;\n\t\tSHOW_IN: Hash;\n\t\tSHOW_OUT: Hash;\n\t\tBACK_IN: Hash;\n\t\tBACK_OUT: Hash;\n\t}"
+        "{ DONE: Hash; SHOW_IN: Hash; SHOW_OUT: Hash; BACK_IN: Hash; BACK_OUT: Hash; }"
       ]
     },
     {
       "type": "VARIABLE",
       "name": "FOCUS",
       "types": [
-        "{\n\t\tGAINED: Hash;\n\t\tLOST: Hash;\n\t}"
+        "{ GAINED: Hash; LOST: Hash; }"
       ]
     },
     {
@@ -731,7 +731,7 @@
           "name": "",
           "doc": "result - True if the message is sent successfully.",
           "types": [
-            "LuaMultiReturn<[boolean, string | undefined]>"
+            "LuaMultiReturn<[ boolean, string | undefined ]>"
           ]
         }
       ]
