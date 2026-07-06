@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
-import { activeCategoryId, buildNav, type NavLink } from "./nav";
+import { activeCategoryId, buildNav, libraryNavGroups, type NavLink } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
@@ -383,5 +383,55 @@ describe("activeCategoryId", () => {
 
   test("resolves the index route to get-started by exact match", () => {
     expect(activeCategoryId("/", nav)).toBe("get-started");
+  });
+});
+
+describe("libraryNavGroups", () => {
+  const moduleDir = new Map<string, string>([
+    ["squid.squid", "squid"],
+    ["in.button", "defold-input"],
+    ["in.cursor", "defold-input"],
+  ]);
+
+  test("a single-module library leaf uses displayName; the route stays the dotted slug", () => {
+    const [group] = libraryNavGroups(
+      [{ namespace: "squid.squid", route: "/api/squid.squid", displayName: "paweljarosz / squid" }],
+      moduleDir,
+    );
+    expect(group?.dir).toBe("squid");
+    expect(group?.modules).toEqual([{ label: "paweljarosz / squid", route: "/api/squid.squid" }]);
+  });
+
+  test("a multi-module library nests displayName leaves under the dir label", () => {
+    const [group] = libraryNavGroups(
+      [
+        {
+          namespace: "in.button",
+          route: "/api/in.button",
+          displayName: "britzl / defold-input · button",
+        },
+        {
+          namespace: "in.cursor",
+          route: "/api/in.cursor",
+          displayName: "britzl / defold-input · cursor",
+        },
+      ],
+      moduleDir,
+    );
+    expect(group?.dir).toBe("defold-input");
+    expect(group?.label).toBe("defold-input");
+    expect(group?.modules.map((m) => m.label)).toEqual([
+      "britzl / defold-input · button",
+      "britzl / defold-input · cursor",
+    ]);
+    expect(group?.modules.map((m) => m.route)).toEqual(["/api/in.button", "/api/in.cursor"]);
+  });
+
+  test("a page with no displayName falls back to its namespace label", () => {
+    const [group] = libraryNavGroups(
+      [{ namespace: "squid.squid", route: "/api/squid.squid" }],
+      moduleDir,
+    );
+    expect(group?.modules[0]?.label).toBe("squid.squid");
   });
 });

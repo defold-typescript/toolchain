@@ -184,6 +184,41 @@ export function buildNav(
   return categories;
 }
 
+/** A library page projected to what the nav model needs: its route, its dotted
+ * namespace (the grouping key via `moduleDir` and the leaf fallback label), and
+ * the presentation-only author-first `displayName` when one is derived. */
+export interface LibraryNavPage {
+  namespace: string;
+  route: string;
+  displayName?: string;
+}
+
+// Group vendored library pages by their upstream `dir` for the Libraries
+// subgroup: a leaf label is the page's `displayName` (falling back to its
+// namespace), while the group header stays the bare `dir`. Libraries and their
+// modules sort alphabetically by dir / label for stable nav output. The route
+// always stays the dotted namespace slug — the alias is presentation only.
+export function libraryNavGroups(
+  pages: LibraryNavPage[],
+  moduleDir: Map<string, string>,
+): LibraryGroup[] {
+  const byDir = new Map<string, Namespace[]>();
+  for (const page of pages) {
+    const dir = moduleDir.get(page.namespace) ?? page.namespace;
+    const namespace: Namespace = { label: page.displayName ?? page.namespace, route: page.route };
+    const bucket = byDir.get(dir);
+    if (bucket) bucket.push(namespace);
+    else byDir.set(dir, [namespace]);
+  }
+  return [...byDir.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dir, modules]) => ({
+      dir,
+      label: dir,
+      modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
+    }));
+}
+
 export function activeCategoryId(route: string, nav: NavCategory[]): string | undefined {
   let best: { id: string; length: number } | undefined;
   const consider = (id: string, candidate: string | undefined) => {

@@ -66,6 +66,13 @@ export interface ApiPage {
   category: ApiPageCategory;
   /** Structured provenance for a `library` page; absent for every other category. */
   libraryMeta?: LibraryMeta;
+  /**
+   * Presentation-only author-first title for a `library` page
+   * (`paweljarosz / squid`); absent for every other category. The `namespace`
+   * stays the canonical `require()` path — `displayName` never touches the
+   * route, the import example, or the provenance block.
+   */
+  displayName?: string;
 }
 
 export interface ApiSymbolParam {
@@ -241,11 +248,14 @@ export function exampleMarkdownFor(
 }
 
 export function apiModuleMarkdown(
-  page: Pick<ApiPage, "namespace" | "module">,
+  page: Pick<ApiPage, "namespace" | "module" | "displayName">,
   translations: TranslationStore = {},
 ): string {
   const m = page.module;
-  const lines: string[] = [`# ${m.namespace}`, ""];
+  const lines: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
+  if (page.displayName && page.displayName !== m.namespace) {
+    lines.push(`\`${m.namespace}\``, "");
+  }
   const intro = htmlToDocText(m.description || m.brief);
   if (intro) lines.push(intro, "");
 
