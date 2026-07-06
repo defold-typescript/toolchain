@@ -21,6 +21,7 @@ const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "variable", label: "Variables" },
   { kind: "constant", label: "Constants" },
   { kind: "property", label: "Properties" },
+  { kind: "type", label: "Types" },
 ];
 
 // A wider-than-normal gap after the `:` between a name and its type. An en space

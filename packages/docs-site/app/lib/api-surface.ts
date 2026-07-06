@@ -17,6 +17,8 @@ import { slugify } from "./headings";
 
 export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type" | "library";
 
+type ApiTypedef = ApiModule["typedefs"][number];
+
 /**
  * Structured provenance for a vendored `library` page, joined from
  * `library-classification.json` (repo, pinned commit, license, the module's
@@ -76,7 +78,7 @@ export interface ApiSymbolParam {
 }
 
 export interface ApiSymbol {
-  kind: "function" | "variable" | "constant" | "property";
+  kind: "function" | "variable" | "constant" | "property" | "type";
   name: string;
   /** Inner signature text, e.g. `go.get_position(): vector3` — no backticks. */
   signature: string;
@@ -193,6 +195,24 @@ function variableSignature(v: ApiVariable): string {
   return `${v.name}: ${typeList(v.types)}`;
 }
 
+function memberBearingTypedefs(typedefs: ApiTypedef[]): ApiTypedef[] {
+  return typedefs.filter(
+    (td) => (td.functions?.length ?? 0) > 0 || (td.properties?.length ?? 0) > 0,
+  );
+}
+
+function typeMemberName(typeName: string, memberName: string): string {
+  return `${typeName}.${memberName}`;
+}
+
+function typeMemberFunctionSignature(typeName: string, fn: ApiFunction): string {
+  return `${typeName}.${functionSignature(fn)}`;
+}
+
+function typeMemberPropertySignature(typeName: string, prop: ApiVariable): string {
+  return `${typeName}.${variableSignature(prop)}`;
+}
+
 // `ApiConstant`/`ApiProperty` are not re-exported from the types package entry;
 // these helpers only touch the structural fields they need.
 function constantSignature(cst: { name: string }): string {
@@ -269,6 +289,31 @@ export function apiModuleMarkdown(
       lines.push(`### \`${propertySignature(prop)}\``, "");
       const doc = htmlToDocText(prop.description || prop.brief);
       if (doc) lines.push(doc, "");
+    }
+  }
+
+  const typedefs = memberBearingTypedefs(m.typedefs);
+  if (typedefs.length > 0) {
+    lines.push("## Types", "");
+    for (const td of typedefs) {
+      lines.push(`### ${td.name}`, "");
+      for (const fn of td.functions ?? []) {
+        lines.push(`#### \`${functionSignature(fn)}\``, "");
+        const doc = htmlToDocText(fn.description || fn.brief);
+        if (doc) lines.push(doc, "");
+        const example = exampleMarkdownFor(fn, translations);
+        if (example) lines.push(example, "");
+        for (const p of [...fn.parameters, ...fn.returnValues]) {
+          const pdoc = htmlToDocText(p.doc);
+          if (!pdoc) continue;
+          lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
+        }
+      }
+      for (const prop of td.properties ?? []) {
+        lines.push(`#### \`${variableSignature(prop)}\``, "");
+        const doc = htmlToDocText(prop.description || prop.brief);
+        if (doc) lines.push(doc, "");
+      }
     }
   }
 
@@ -350,6 +395,32 @@ export function apiModuleSymbols(
       parameters: [],
       returnValues: [],
     });
+  }
+
+  for (const td of memberBearingTypedefs(m.typedefs)) {
+    for (const fn of td.functions ?? []) {
+      const symbol: ApiSymbol = {
+        kind: "type",
+        name: typeMemberName(td.name, fn.name),
+        signature: typeMemberFunctionSignature(td.name, fn),
+        docMarkdown: htmlToDocText(fn.description || fn.brief),
+        parameters: projectParams(fn.parameters),
+        returnValues: projectParams(fn.returnValues),
+      };
+      const example = exampleMarkdownFor(fn, translations);
+      if (example) symbol.exampleMarkdown = example;
+      symbols.push(symbol);
+    }
+    for (const prop of td.properties ?? []) {
+      symbols.push({
+        kind: "type",
+        name: typeMemberName(td.name, prop.name),
+        signature: typeMemberPropertySignature(td.name, prop),
+        docMarkdown: htmlToDocText(prop.description || prop.brief),
+        parameters: [],
+        returnValues: [],
+      });
+    }
   }
 
   return symbols;
