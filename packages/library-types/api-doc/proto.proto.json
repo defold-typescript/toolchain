@@ -179,6 +179,177 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LoggerInstance",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "any"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "{}"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "any"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "{}"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "any"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "{}"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "any"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "{}"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "any"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "{}"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        }
+      ]
     }
   ]
 }
