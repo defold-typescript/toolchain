@@ -75,6 +75,27 @@ describe("buildPager", () => {
     expect(next?.crossesTopic).toBe(false);
   });
 
+  test("flattening descends into nested library subgroups", () => {
+    const nested: NavCategory[] = [
+      {
+        id: "reference",
+        label: "Reference",
+        links: [
+          group("Libraries", [
+            group("defold-saver", [
+              link("saver.saver", "/api/saver.saver"),
+              link("saver.storage", "/api/saver.storage"),
+            ]),
+          ]),
+        ],
+      },
+    ];
+    const { prev, next } = buildPager(nested, "/api/saver.storage");
+    expect(prev?.route).toBe("/api/saver.saver");
+    expect(prev?.crossesTopic).toBe(false);
+    expect(next).toBeUndefined();
+  });
+
   test("crossing into or out of Reference is a cross-topic hop", () => {
     const outOf = buildPager(nav, "/b2");
     expect(outOf.next?.route).toBe("/api/g1");

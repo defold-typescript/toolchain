@@ -193,13 +193,12 @@ export function activeCategoryId(route: string, nav: NavCategory[]): string | un
       best = { id, length: candidate.length };
     }
   };
+  const visit = (id: string, link: NavLink) => {
+    consider(id, link.route);
+    for (const child of link.children ?? []) visit(id, child);
+  };
   for (const category of nav) {
-    for (const link of category.links) {
-      consider(category.id, link.route);
-      for (const child of link.children ?? []) {
-        consider(category.id, child.route);
-      }
-    }
+    for (const link of category.links) visit(category.id, link);
   }
   // Unmatched /api routes (versioned pages and the /api/<version> index have no
   // nav link) still belong to the single Reference category.

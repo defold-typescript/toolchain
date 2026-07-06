@@ -491,8 +491,17 @@ function InlineToc({ headings }: { headings: Heading[] }) {
   );
 }
 
+function firstRoute(links: NavLink[]): string | undefined {
+  for (const link of links) {
+    if (link.route) return link.route;
+    const childRoute = link.children ? firstRoute(link.children) : undefined;
+    if (childRoute) return childRoute;
+  }
+  return undefined;
+}
+
 function CategoryLink({ category, active }: { category: NavCategory; active: boolean }) {
-  const href = category.links[0]?.route ?? category.links[0]?.children?.[0]?.route ?? "/";
+  const href = firstRoute(category.links) ?? "/";
   return (
     <a
       href={withBase(href)}
@@ -514,29 +523,43 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
       <p class="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
         {category.label}
       </p>
-      <ul class="space-y-0.5 text-[length:var(--nav-side-size)] leading-5">
-        {category.links.map((link) => (
-          <li key={link.route ?? link.label}>
-            {link.route ? (
-              <SidebarLink link={link} active={path === link.route} />
-            ) : (
-              <p class="mt-3 mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
-                {link.label}
-              </p>
-            )}
-            {link.children && link.children.length > 0 ? (
-              <ul class="mt-0.5 ml-3 space-y-0.5 border-l border-border pl-2">
-                {link.children.map((child) => (
-                  <li key={child.route}>
-                    <SidebarLink link={child} active={path === child.route} />
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <SidebarItems links={category.links} path={path} />
     </nav>
+  );
+}
+
+function SidebarItems({
+  links,
+  path,
+  depth = 0,
+}: {
+  links: NavLink[];
+  path: string;
+  depth?: number;
+}) {
+  return (
+    <ul
+      class={
+        depth === 0
+          ? "space-y-0.5 text-[length:var(--nav-side-size)] leading-5"
+          : "mt-0.5 ml-3 space-y-0.5 border-l border-border pl-2"
+      }
+    >
+      {links.map((link) => (
+        <li key={link.route ?? link.label}>
+          {link.route ? (
+            <SidebarLink link={link} active={path === link.route} />
+          ) : (
+            <p class="mt-3 mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
+              {link.label}
+            </p>
+          )}
+          {link.children && link.children.length > 0 ? (
+            <SidebarItems links={link.children} path={path} depth={depth + 1} />
+          ) : null}
+        </li>
+      ))}
+    </ul>
   );
 }
 
