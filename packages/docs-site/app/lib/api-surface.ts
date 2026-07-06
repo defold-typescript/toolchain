@@ -175,31 +175,33 @@ export function mapDocType(token: string): string {
   return Object.hasOwn(DEFOLD_TYPE_MAP, token) ? (DEFOLD_TYPE_MAP[token] as string) : token;
 }
 
-function typeList(types: string[]): string {
-  const real = normalizeTypes(types).map(mapDocType);
+type MapType = (token: string) => string;
+
+function typeList(types: string[], mapType: MapType = mapDocType): string {
+  const real = normalizeTypes(types).map(mapType);
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
-function projectParams(list: ApiParameter[]): ApiSymbolParam[] {
+function projectParams(list: ApiParameter[], mapType: MapType = mapDocType): ApiSymbolParam[] {
   return list.map((p) => ({
     name: p.name,
     doc: htmlToDocText(p.doc),
-    types: normalizeTypes(p.types).map(mapDocType),
+    types: normalizeTypes(p.types).map(mapType),
     isOptional: p.isOptional,
-    ...(p.fields ? { fields: projectParams(p.fields) } : {}),
+    ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
   }));
 }
 
-function functionSignature(fn: ApiFunction): string {
+function functionSignature(fn: ApiFunction, mapType: MapType = mapDocType): string {
   const params = fn.parameters
-    .map((p) => `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types)}`)
+    .map((p) => `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`)
     .join(", ");
-  const ret = fn.returnValues.map((r) => typeList(r.types)).join(", ");
+  const ret = fn.returnValues.map((r) => typeList(r.types, mapType)).join(", ");
   return `${fn.name}(${params})${ret ? `: ${ret}` : ""}`;
 }
 
-function variableSignature(v: ApiVariable): string {
-  return `${v.name}: ${typeList(v.types)}`;
+function variableSignature(v: ApiVariable, mapType: MapType = mapDocType): string {
+  return `${v.name}: ${typeList(v.types, mapType)}`;
 }
 
 function memberBearingTypedefs(typedefs: ApiTypedef[]): ApiTypedef[] {
@@ -212,12 +214,20 @@ function typeMemberName(typeName: string, memberName: string): string {
   return `${typeName}.${memberName}`;
 }
 
-function typeMemberFunctionSignature(typeName: string, fn: ApiFunction): string {
-  return `${typeName}.${functionSignature(fn)}`;
+function typeMemberFunctionSignature(
+  typeName: string,
+  fn: ApiFunction,
+  mapType: MapType = mapDocType,
+): string {
+  return `${typeName}.${functionSignature(fn, mapType)}`;
 }
 
-function typeMemberPropertySignature(typeName: string, prop: ApiVariable): string {
-  return `${typeName}.${variableSignature(prop)}`;
+function typeMemberPropertySignature(
+  typeName: string,
+  prop: ApiVariable,
+  mapType: MapType = mapDocType,
+): string {
+  return `${typeName}.${variableSignature(prop, mapType)}`;
 }
 
 // `ApiConstant`/`ApiProperty` are not re-exported from the types package entry;
@@ -226,8 +236,11 @@ function constantSignature(cst: { name: string }): string {
   return cst.name;
 }
 
-function propertySignature(prop: { name: string; types: string[] }): string {
-  return `${prop.name}: ${typeList(prop.types)}`;
+function propertySignature(
+  prop: { name: string; types: string[] },
+  mapType: MapType = mapDocType,
+): string {
+  return `${prop.name}: ${typeList(prop.types, mapType)}`;
 }
 
 // Resolve a function's example to rendered markdown, matching the `.d.ts` emit
@@ -248,10 +261,13 @@ export function exampleMarkdownFor(
 }
 
 export function apiModuleMarkdown(
-  page: Pick<ApiPage, "namespace" | "module" | "displayName">,
+  page: Pick<ApiPage, "namespace" | "module" | "displayName" | "category">,
   translations: TranslationStore = {},
 ): string {
   const m = page.module;
+  // `library` JSON tokens are already TypeScript, so re-mapping them through the
+  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
+  const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const lines: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
   if (page.displayName && page.displayName !== m.namespace) {
     lines.push(`\`${m.namespace}\``, "");
@@ -262,7 +278,7 @@ export function apiModuleMarkdown(
   if (m.functions.length > 0) {
     lines.push("## Functions", "");
     for (const fn of m.functions) {
-      lines.push(`### \`${functionSignature(fn)}\``, "");
+      lines.push(`### \`${functionSignature(fn, mapType)}\``, "");
       const doc = htmlToDocText(fn.description || fn.brief);
       if (doc) lines.push(doc, "");
       const example = exampleMarkdownFor(fn, translations);
@@ -278,7 +294,7 @@ export function apiModuleMarkdown(
   if (m.variables.length > 0) {
     lines.push("## Variables", "");
     for (const v of m.variables) {
-      lines.push(`### \`${variableSignature(v)}\``, "");
+      lines.push(`### \`${variableSignature(v, mapType)}\``, "");
       const doc = htmlToDocText(v.description || v.brief);
       if (doc) lines.push(doc, "");
     }
@@ -296,7 +312,7 @@ export function apiModuleMarkdown(
   if (m.properties.length > 0) {
     lines.push("## Properties", "");
     for (const prop of m.properties) {
-      lines.push(`### \`${propertySignature(prop)}\``, "");
+      lines.push(`### \`${propertySignature(prop, mapType)}\``, "");
       const doc = htmlToDocText(prop.description || prop.brief);
       if (doc) lines.push(doc, "");
     }
@@ -308,7 +324,7 @@ export function apiModuleMarkdown(
     for (const td of typedefs) {
       lines.push(`### ${td.name}`, "");
       for (const fn of td.functions ?? []) {
-        lines.push(`#### \`${functionSignature(fn)}\``, "");
+        lines.push(`#### \`${functionSignature(fn, mapType)}\``, "");
         const doc = htmlToDocText(fn.description || fn.brief);
         if (doc) lines.push(doc, "");
         const example = exampleMarkdownFor(fn, translations);
@@ -320,7 +336,7 @@ export function apiModuleMarkdown(
         }
       }
       for (const prop of td.properties ?? []) {
-        lines.push(`#### \`${variableSignature(prop)}\``, "");
+        lines.push(`#### \`${variableSignature(prop, mapType)}\``, "");
         const doc = htmlToDocText(prop.description || prop.brief);
         if (doc) lines.push(doc, "");
       }
@@ -337,11 +353,14 @@ export function apiModuleMarkdown(
  * rows. `apiModuleMarkdown` stays the flat search/index projection.
  */
 export function apiModuleSymbols(
-  page: Pick<ApiPage, "module">,
+  page: Pick<ApiPage, "module" | "category">,
   translations: TranslationStore = {},
   signatures: SignatureStore = {},
 ): ApiSymbol[] {
   const m = page.module;
+  // `library` JSON tokens are already TypeScript, so re-mapping them through the
+  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
+  const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const symbols: ApiSymbol[] = [];
 
   for (const fn of m.functions) {
@@ -349,10 +368,13 @@ export function apiModuleSymbols(
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
-      signature: ov === null ? functionSignature(fn) : (ov.signatures[0] ?? functionSignature(fn)),
+      signature:
+        ov === null
+          ? functionSignature(fn, mapType)
+          : (ov.signatures[0] ?? functionSignature(fn, mapType)),
       docMarkdown: htmlToDocText(fn.description || fn.brief),
-      parameters: projectParams(fn.parameters),
-      returnValues: projectParams(fn.returnValues),
+      parameters: projectParams(fn.parameters, mapType),
+      returnValues: projectParams(fn.returnValues, mapType),
     };
     const example = exampleMarkdownFor(fn, translations);
     if (example) symbol.exampleMarkdown = example;
@@ -378,7 +400,7 @@ export function apiModuleSymbols(
     symbols.push({
       kind: "variable",
       name: v.name,
-      signature: variableSignature(v),
+      signature: variableSignature(v, mapType),
       docMarkdown: htmlToDocText(v.description || v.brief),
       parameters: [],
       returnValues: [],
@@ -400,7 +422,7 @@ export function apiModuleSymbols(
     symbols.push({
       kind: "property",
       name: prop.name,
-      signature: propertySignature(prop),
+      signature: propertySignature(prop, mapType),
       docMarkdown: htmlToDocText(prop.description || prop.brief),
       parameters: [],
       returnValues: [],
@@ -412,10 +434,10 @@ export function apiModuleSymbols(
       const symbol: ApiSymbol = {
         kind: "type",
         name: typeMemberName(td.name, fn.name),
-        signature: typeMemberFunctionSignature(td.name, fn),
+        signature: typeMemberFunctionSignature(td.name, fn, mapType),
         docMarkdown: htmlToDocText(fn.description || fn.brief),
-        parameters: projectParams(fn.parameters),
-        returnValues: projectParams(fn.returnValues),
+        parameters: projectParams(fn.parameters, mapType),
+        returnValues: projectParams(fn.returnValues, mapType),
       };
       const example = exampleMarkdownFor(fn, translations);
       if (example) symbol.exampleMarkdown = example;
@@ -425,7 +447,7 @@ export function apiModuleSymbols(
       symbols.push({
         kind: "type",
         name: typeMemberName(td.name, prop.name),
-        signature: typeMemberPropertySignature(td.name, prop),
+        signature: typeMemberPropertySignature(td.name, prop, mapType),
         docMarkdown: htmlToDocText(prop.description || prop.brief),
         parameters: [],
         returnValues: [],
