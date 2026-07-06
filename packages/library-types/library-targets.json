@@ -202,6 +202,36 @@
       "path": "packages/starly/starly.starly.d.ts",
       "fixture": "fixtures/ts-defold/starly.starly.d.ts",
       "generated": "generated/starly.starly.d.ts"
+    },
+    {
+      "module": "log.log",
+      "path": "packages/defold-log/log.log.d.ts",
+      "fixture": "fixtures/ts-defold/log.log.d.ts",
+      "generated": "generated/log.log.d.ts"
+    },
+    {
+      "module": "metrics.fps",
+      "path": "packages/defold-metrics/metrics.fps.d.ts",
+      "fixture": "fixtures/ts-defold/metrics.fps.d.ts",
+      "generated": "generated/metrics.fps.d.ts"
+    },
+    {
+      "module": "metrics.mem",
+      "path": "packages/defold-metrics/metrics.mem.d.ts",
+      "fixture": "fixtures/ts-defold/metrics.mem.d.ts",
+      "generated": "generated/metrics.mem.d.ts"
+    },
+    {
+      "module": "deftest.deftest",
+      "path": "packages/deftest/deftest.deftest.d.ts",
+      "fixture": "fixtures/ts-defold/deftest.deftest.d.ts",
+      "generated": "generated/deftest.deftest.d.ts"
+    },
+    {
+      "module": "immutable.immutable",
+      "path": "packages/lua-immutable/immutable.immutable.d.ts",
+      "fixture": "fixtures/ts-defold/immutable.immutable.d.ts",
+      "generated": "generated/immutable.immutable.d.ts"
     }
   ]
 }
