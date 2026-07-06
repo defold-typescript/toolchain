@@ -15,7 +15,9 @@ function CardGrid({ pages }: { pages: ApiPage[] }) {
             href={withBase(page.route)}
             class="block rounded-lg border border-border bg-surface px-4 py-3 transition hover:border-border-strong hover:bg-surface-2"
           >
-            <span class="font-mono text-[13px] font-semibold text-accent">{page.namespace}</span>
+            <span class="font-mono text-[13px] font-semibold text-accent">
+              {page.displayName ?? page.namespace}
+            </span>
             {page.brief ? (
               <span class="mt-1 block text-sm text-text-muted">{htmlToDocText(page.brief)}</span>
             ) : null}

@@ -75,6 +75,32 @@ function libraryImportString(namespace: string): string {
   return `import * as ${alias} from '${namespace}'`;
 }
 
+// The GitHub owner handle is the first path segment of an author URL
+// (`https://github.com/paweljarosz/squid` -> `paweljarosz`); an empty or
+// hostless URL yields `""`. Handles are consistent across the NOTICE credits,
+// unlike the free-text author column casing, so the display alias keys off this.
+export function githubOwner(url: string): string {
+  const path = url.replace(/^https?:\/\/[^/]+\//, "");
+  return path.split("/")[0] ?? "";
+}
+
+// Presentation-only author-first label for a library module:
+// `<owner> / <dir>[ · <leaf>]`. The spaced slash signals "label, not a require
+// path". The `· <leaf>` tail is kept only for a genuinely multi-module dir whose
+// module leaf differs from the dir (`defold-input` -> `· button`); a single-
+// module dir, or a module whose last segment equals its dir (`monarch.monarch`),
+// drops the leaf. A missing owner falls back to the bare dir part.
+export function libraryDisplayName(
+  namespace: string,
+  dir: string,
+  ownerHandle: string,
+  moduleCountInDir: number,
+): string {
+  const leaf = namespace.split(".").at(-1) ?? namespace;
+  const dirPart = moduleCountInDir > 1 && leaf !== dir ? `${dir} · ${leaf}` : dir;
+  return ownerHandle ? `${ownerHandle} / ${dirPart}` : dirPart;
+}
+
 // Parse the `NOTICE` attribution table (`- <dir> — <author>, <url>` lines) into
 // a per-upstream-dir map so each library page can credit its original author.
 function parseNoticeAttribution(notice: string): Map<string, { author: string; url: string }> {
@@ -156,7 +182,13 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   const metaFor = loadLibraryProvenance(libraryTypesDir);
 
   const descByDir = loadLibraryDescriptions(libraryTypesDir);
-  const moduleDir = descByDir ? libraryModuleDirs(libraryTypesDir) : new Map<string, string>();
+  const moduleDir = libraryModuleDirs(libraryTypesDir);
+  const displayOverrides = loadLibraryDisplayOverrides(libraryTypesDir);
+
+  // Modules-per-dir count drives whether the display label keeps its `· <leaf>`
+  // distinguisher; a single-module dir drops it.
+  const dirCounts = new Map<string, number>();
+  for (const dir of moduleDir.values()) dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
 
   const pages: ApiPage[] = [];
   for (const file of readdirSync(apiDocDir)) {
@@ -164,11 +196,20 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     const namespace = file.replace(/\.json$/, "");
     if (!existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`))) continue;
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(join(apiDocDir, file), "utf8")));
+    const dir = moduleDir.get(namespace);
     if (!module.description) {
-      const dir = moduleDir.get(namespace);
       const fallback = dir ? descByDir?.get(dir) : undefined;
       if (fallback) module.description = fallback;
     }
+    const meta = metaFor(namespace);
+    const displayName =
+      displayOverrides.get(namespace) ??
+      libraryDisplayName(
+        namespace,
+        dir ?? namespace,
+        githubOwner(meta.authorUrl),
+        dirCounts.get(dir ?? namespace) ?? 1,
+      );
     pages.push({
       namespace,
       route: `/api/${libraryRouteSlug(namespace)}`,
@@ -177,10 +218,23 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
       translations: {},
       signatures: {},
       category: "library",
-      libraryMeta: metaFor(namespace),
+      libraryMeta: meta,
+      displayName,
     });
   }
   return pages;
+}
+
+// Curated display-name overrides from `library-display-overrides.json` (dotted
+// namespace -> label). The escape hatch for a namespace whose derived
+// author-first label reads awkwardly; an absent file degrades to an empty map,
+// so every module falls back to `libraryDisplayName`. Mirrors the
+// `loadLibraryDescriptions` override-loader pattern.
+function loadLibraryDisplayOverrides(libraryTypesDir: string): Map<string, string> {
+  const path = join(libraryTypesDir, "library-display-overrides.json");
+  if (!existsSync(path)) return new Map();
+  const raw = JSON.parse(readFileSync(path, "utf8")) as Record<string, string>;
+  return new Map(Object.entries(raw));
 }
 
 // Per-upstream-dir description text from `library-descriptions.json`, keyed by
