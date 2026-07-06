@@ -1,0 +1,6574 @@
+{
+  "info": {
+    "namespace": "nakama.nakama",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Client"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SessionToken"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_custom",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "{ id: string; vars?: unknown; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "vars",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Session"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_client",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "ClientConfig"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Client"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_custom",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "{ id: string; vars: unknown; }"
+          ],
+          "fields": [
+            {
+              "name": "id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "vars",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_bearer_token",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "SessionToken"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sync",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_match_create_message",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_match_leave_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_channel_message_send_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_channel_message_update_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_channel_message_remove_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_channel_join_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "target",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "type",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "persistence",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "hidden",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_channel_leave_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_matchmaker_add_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "query",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "min_count",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_count",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "string_properties",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "numeric_properties",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_matchmaker_remove_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "ticket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_match_data_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "op_code",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_status_follow_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "user_ids",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_status_unfollow_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "user_ids",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_status_update_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "status",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_group_user_list_group_user",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "state_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_api_user",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_user_group_list_user_group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "group_api_group",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "state_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_write_leaderboard_record_request_leaderboard_record_write",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "metadata_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "operator_api_operator",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "score_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "subscore_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_write_tournament_record_request_tournament_record_write",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "metadata_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "operator_api_operator",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "score_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "subscore_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "custom_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "devices_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "disable_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "email_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_api_user",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "verify_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wallet_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_apple",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_device",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_email",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "email_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "password_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_facebook",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_facebook_instant_game",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "signed_player_info_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_game_center",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "bundle_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "public_key_url_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "salt_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "signature_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "timestamp_seconds_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_google",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_account_steam",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_channel_message",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "code_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "persistent_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "room_name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sender_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_one_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_two_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_channel_message_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cacheable_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "messages_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "next_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "prev_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_create_group_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "avatar_url_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "description_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lang_tag_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_count_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "open_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_delete_storage_object_id",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "collection_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "version_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_delete_storage_objects_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "object_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_event",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "external_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "properties_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "timestamp_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_friend",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "state_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_api_user",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_friend_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "friends_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "avatar_url_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "creator_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "description_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "edge_count_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lang_tag_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_count_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "metadata_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "open_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_group_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "groups_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_group_user_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_users_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_leaderboard_record",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "expiry_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_num_score_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "metadata_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "num_score_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "owner_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "rank_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "score_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "subscore_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_leaderboard_record_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "next_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "owner_records_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "prev_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "records_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_link_steam_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "account_api_account_steam",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sync_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_match",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "authoritative_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "handler_name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "label_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "match_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "size_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tick_rate_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_match_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "matches_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_notification",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "code_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "persistent_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sender_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "subject_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_notification_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cacheable_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "notifications_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_read_storage_object_id",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "collection_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_read_storage_objects_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "object_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_rpc",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "http_key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "payload_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_session",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "created_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_session_logout_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "refresh_token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_session_refresh_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "token_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars_obj",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_storage_object",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "collection_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "permission_read_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "permission_write_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "version_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_storage_object_ack",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "collection_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "version_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_storage_object_acks",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "acks_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_storage_object_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "objects_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_storage_objects",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "objects_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_tournament",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "can_enter_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "category_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "description_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "end_active_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "end_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_num_score_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_size_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "metadata_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "next_reset_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "operator_api_operator",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "prev_reset_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "size_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sort_order_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "start_active_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "start_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "title_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_tournament_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournaments_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_tournament_record_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "next_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "owner_records_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "prev_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "records_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_update_account_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "avatar_url_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "display_name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lang_tag_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "location_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "timezone_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_update_group_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "avatar_url_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "description_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lang_tag_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "open_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_user",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "apple_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "avatar_url_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "display_name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "edge_count_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "facebook_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "facebook_instant_game_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "gamecenter_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "google_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lang_tag_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "location_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "metadata_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "online_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "steam_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "timezone_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_user_group_list",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_groups_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "users_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_validate_purchase_apple_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "receipt_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_validate_purchase_google_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "purchase_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_validate_purchase_huawei_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "purchase_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "signature_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_validate_purchase_response",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "validated_purchases_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_validated_purchase",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "create_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "environment_validated_purchase_environment",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "product_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "provider_response_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "purchase_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "store_validated_purchase_store",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "transaction_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_time_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_write_storage_object",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "collection_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "permission_read_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "permission_write_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "version_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_api_write_storage_objects_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "objects_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_protobuf_any",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "type_url_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_rpc_status",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "code_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "details_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_notification",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_matchdata",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_matchpresence",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_matchmakermatched",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_statuspresence",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_streampresence",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_streamdata",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_channelmessage",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_channelpresence",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_disconnect",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_socket",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "socket_connect",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "socket_send",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "healthcheck",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_account",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_account",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_update_account_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_apple",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_apple",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_device",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_device",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_email",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_email",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_facebook",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_facebook",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sync_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_facebook_instant_game",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_facebook_instant_game",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_game_center",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_game_center",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_google",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_google",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "authenticate_steam",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_steam",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "create_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sync_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_apple",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_apple",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_custom",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_custom",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_device",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_device",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_email",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_email",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_facebook",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_facebook",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sync_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_facebook_instant_game",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_facebook_instant_game",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_game_center",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_game_center",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_google",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_google",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_steam",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_link_steam_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "session_refresh",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_session_refresh_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_apple",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_apple",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_custom",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_custom",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_device",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_device",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_email",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_email",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_facebook",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_facebook",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_facebook_instant_game",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_facebook_instant_game",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_game_center",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_game_center",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_google",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_google",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_steam",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_steam",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_channel_messages",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "channel_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "forward_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "event",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_event",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_friends",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "usernames_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_friends",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "state_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_friends",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "usernames_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "block_friends",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "usernames_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "import_facebook_friends",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_facebook",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "reset_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "import_steam_friends",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_account_steam",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "reset_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_groups",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "name_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lang_tag_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "members_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "open_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_create_group_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_update_group_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_group_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ban_group_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "demote_group_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "join_group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kick_group_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leave_group",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "promote_group_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_group_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "state_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "validate_purchase_apple",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_validate_purchase_apple_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "validate_purchase_google",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_validate_purchase_google_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "validate_purchase_huawei",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_validate_purchase_huawei_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_leaderboard_record",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_leaderboard_records",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "owner_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "expiry_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "write_leaderboard_record",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_write_leaderboard_record_request_leaderboard_record_write",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_leaderboard_records_around_owner",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "owner_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "expiry_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_matches",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "authoritative_bool",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "label_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "min_size_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_size_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "query_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_notifications",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_notifications",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cacheable_cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rpc_func2",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "payload_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "http_key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rpc_func",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "http_key_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "session_logout",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_session_logout_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "read_storage_objects",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_read_storage_objects_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "write_storage_objects",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_write_storage_objects_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_storage_objects",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_api_delete_storage_objects_request",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_storage_objects",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "collection_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_storage_objects2",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "collection_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_tournaments",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "category_start_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "category_end_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "start_time_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "end_time_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_tournament_records",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournament_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "owner_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "expiry_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "write_tournament_record2",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournament_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_write_tournament_record_request_tournament_record_write",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "write_tournament_record",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournament_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_write_tournament_record_request_tournament_record_write",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "join_tournament",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournament_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_tournament_records_around_owner",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournament_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "owner_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "expiry_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_users",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "usernames_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "facebook_ids_arr",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_user_groups",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_id_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit_int",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "state_int",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cursor_str",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Session",
+      "properties": [
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "SessionToken"
+          ]
+        },
+        {
+          "name": "refresh_token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "SessionToken"
+          ]
+        },
+        {
+          "name": "created",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ClientConfig",
+      "properties": [
+        {
+          "name": "host",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "port",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "use_ssl",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "username",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "password",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "engine",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    }
+  ]
+}

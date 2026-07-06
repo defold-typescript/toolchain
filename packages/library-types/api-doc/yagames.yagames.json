@@ -1,0 +1,1465 @@
+{
+  "info": {
+    "namespace": "yagames.yagames",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Context"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adv_show_fullscreen_adv",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callbacks",
+          "doc": "",
+          "types": [
+            "AdvCallbacks"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adv_show_rewarded_video",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callbacks",
+          "doc": "",
+          "types": [
+            "RewardedCallbacks"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "auth_open_auth_dialog",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "PlayerInitOptions"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_set_data",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "flush",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_data",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "keys",
+          "doc": "",
+          "types": [
+            "Array<string> | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_set_stats",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "stats",
+          "doc": "",
+          "types": [
+            "Record<string, number>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_increment_stats",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "stats",
+          "doc": "",
+          "types": [
+            "Record<string, number>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_stats",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "keys",
+          "doc": "",
+          "types": [
+            "Array<string> | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_id",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_unique_id",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_name",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlayerGetIdsCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_ids_per_game",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "PlayerGetIdsCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_photo",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "'small' | 'medium' | 'large'"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments_init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "{ signed?: boolean; } | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PaymentsPurchaseCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments_purchase",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "PaymentsPurchaseOptions | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "PaymentsPurchaseCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PaymentsPurchasesCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments_get_purchases",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "PaymentsPurchasesCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PaymentsCatalogCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments_get_catalog",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "PaymentsCatalogCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments_consume_purchase",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "purchase_token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards_init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LeaderboardsDescriptionCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards_get_description",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "leaderboard_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "LeaderboardsDescriptionCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards_get_player_entry",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "leaderboard_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "LeaderboardsGetPlayerEntryOptions | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LeaderboardsGetPlayerEntriesCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards_get_entries",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "leaderboard_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "LeaderboardsGetEntriesOptions | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "LeaderboardsGetPlayerEntriesCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards_set_score",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "leaderboard_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "extra_data",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FeedbackCanReviewCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "feedback_can_review",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "FeedbackCanReviewCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FeedbackRequestReviewCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "feedback_request_review",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "FeedbackCanReviewCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clipboard_write_text",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "device_info_type",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "\"desktop\" | \"mobile\" | \"tablet\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "device_info_is_desktop",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "device_info_is_mobile",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "device_info_is_tablet",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "environment",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "EnvironmentResults"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_fullscreen_status",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "\"on\" | \"off\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_fullscreen_request",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_fullscreen_exit",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage_init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage_get_item",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage_set_item",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage_remove_item",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage_clear",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage_key",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "n",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage_length",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "banner_init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BannerCreateCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "banner_create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "rtb_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "BannerCreateOptions"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "BannerCreateCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "banner_delete",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "rtb_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "banner_refresh",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "rtb_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "BannerCreateCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "banner_set",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "rtb_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "",
+          "types": [
+            "\"stat_id\" | \"css_styles\" | \"css_class\" | \"display\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_domain",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "domain",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "verify_domain",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_current_domain",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_release_build",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AdvCallbacks",
+      "properties": [
+        {
+          "name": "open",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(ctx: Context) => void"
+          ]
+        },
+        {
+          "name": "close",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(ctx: Context, was_shown: boolean) => void"
+          ]
+        },
+        {
+          "name": "offline",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(ctx: Context) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(err: string) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RewardedCallbacks",
+      "properties": [
+        {
+          "name": "open",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(ctx: Context) => void"
+          ]
+        },
+        {
+          "name": "rewarded",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(ctx: Context) => void"
+          ]
+        },
+        {
+          "name": "close",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(ctx: Context) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(ctx: Context, err: string) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlayerInitOptions",
+      "properties": [
+        {
+          "name": "signed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "scopes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PaymentsPurchaseOptions",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "developerPayload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LeaderboardsGetPlayerEntryOptions",
+      "properties": [
+        {
+          "name": "includeUser",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "quantityAround",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "quantityTop",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "getAvatarSrc",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"small\" | \"medium\" | \"large\""
+          ]
+        },
+        {
+          "name": "getAvatarSrcSet",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"small\" | \"medium\" | \"large\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LeaderboardsGetEntriesOptions",
+      "properties": [
+        {
+          "name": "includeUser",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "quantityAround",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "quantityTop",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "getAvatarSrc",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"small\" | \"medium\" | \"large\""
+          ]
+        },
+        {
+          "name": "getAvatarSrcSet",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"small\" | \"medium\" | \"large\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "EnvironmentResults",
+      "properties": [
+        {
+          "name": "app",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ id: string; }"
+          ],
+          "fields": [
+            {
+              "name": "id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "browser",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ lang: string; }"
+          ],
+          "fields": [
+            {
+              "name": "lang",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "i18n",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ lang: string; tld: string; }"
+          ],
+          "fields": [
+            {
+              "name": "lang",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "tld",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "payload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BannerCreateOptions",
+      "properties": [
+        {
+          "name": "stat_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "css_styles",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "css_class",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "display",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"none\" | \"block\""
+          ]
+        }
+      ]
+    }
+  ]
+}

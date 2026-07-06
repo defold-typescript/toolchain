@@ -1,0 +1,156 @@
+{
+  "info": {
+    "namespace": "bzAnim.bzLibrary",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "INFO_LEVEL",
+      "types": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DEBUG_LEVEL",
+      "types": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TRACE_LEVEL",
+      "types": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Path"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Segment"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AnimateArgs"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AnimateSequenceArgs"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "animate",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "",
+          "types": [
+            "AnimateArgs"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "animateSequence",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "",
+          "types": [
+            "AnimateSequenceArgs"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "info",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "isReady",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "setDebugLevel",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "level",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
