@@ -47,13 +47,10 @@ describe("buildNav", () => {
     ]);
   });
 
-  test("has no lua-stdlib category and no /api link anywhere", () => {
+  test("has no lua-stdlib category and links the API category to its index", () => {
     const nav = fullNav();
     expect(nav.find((c) => c.id === "lua-stdlib")).toBeUndefined();
-    const allRoutes = nav.flatMap((c) =>
-      c.links.flatMap((l) => [l.route, ...(l.children ?? []).map((ch) => ch.route)]),
-    );
-    expect(allRoutes).not.toContain("/api");
+    expect(nav.find((c) => c.id === "api")?.route).toBe("/api");
   });
 
   test("reference links are three route-less group headers in order", () => {
@@ -145,6 +142,7 @@ describe("buildNav", () => {
     });
     const libraries = nav.find((c) => c.id === "libraries");
     expect(libraries?.label).toBe("Libraries");
+    expect(libraries?.route).toBe("/libraries");
     // Order preserved: two multi-module subgroups, then the single-module leaf.
     expect(libraries?.links.map((l) => l.label)).toEqual([
       "defold-input",
@@ -163,7 +161,7 @@ describe("buildNav", () => {
     expect(persist?.children).toBeUndefined();
   });
 
-  test("activeCategoryId descends into nested library subgroups", () => {
+  test("activeCategoryId resolves the Libraries index and nested library subgroups", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -180,6 +178,7 @@ describe("buildNav", () => {
         },
       ],
     });
+    expect(activeCategoryId("/libraries", nav)).toBe("libraries");
     expect(activeCategoryId("/lib/saver.storage", nav)).toBe("libraries");
   });
 
@@ -358,7 +357,8 @@ describe("activeCategoryId", () => {
     expect(activeCategoryId("/api/globals", nav)).toBe("api");
   });
 
-  test("resolves a versioned API route to api via the /api fallback", () => {
+  test("resolves the API index and versioned API routes to api via the category route", () => {
+    expect(activeCategoryId("/api", nav)).toBe("api");
     expect(activeCategoryId("/api/defold-1.9.8/label", nav)).toBe("api");
   });
 

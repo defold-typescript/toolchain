@@ -105,6 +105,27 @@ describe("buildPager", () => {
     expect(into.prev?.crossesTopic).toBe(true);
   });
 
+  test("category index routes are first-class pager entries", () => {
+    const withIndex: NavCategory[] = [
+      { id: "guides", label: "Guides", links: [link("Guide", "/guide")] },
+      {
+        id: "api",
+        label: "API",
+        route: "/api",
+        links: [group("Defold", [link("go", "/api/go")])],
+      },
+    ];
+    const outOf = buildPager(withIndex, "/guide");
+    expect(outOf.next?.route).toBe("/api");
+    expect(outOf.next?.label).toBe("API");
+    expect(outOf.next?.crossesTopic).toBe(true);
+
+    const index = buildPager(withIndex, "/api");
+    expect(index.prev?.route).toBe("/guide");
+    expect(index.next?.route).toBe("/api/go");
+    expect(index.next?.crossesTopic).toBe(false);
+  });
+
   test("each neighbor carries route, label, labelHtml, topicId, topicLabel, crossesTopic", () => {
     const { prev, next } = buildPager(nav, "/a3");
     expect(prev).toEqual({

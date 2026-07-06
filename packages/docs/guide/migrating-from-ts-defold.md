@@ -47,6 +47,16 @@ The full `defold-typescript` command surface is
 `init | init-agents | build | watch | wall | setup-debug | resolve | defold`
 (and `defold <resolve|build|bundle>`).
 
+## In-place adoption is a migration strength
+
+Compared with the verified `@ts-defold/create` flow, `defold-typescript init .`
+is intentionally optimized for an existing Defold project. When `game.project`
+already exists, the command adds the TypeScript toolchain in place instead of
+creating a wrapper folder or a new template tree you have to merge back into your
+game. That is the main practical advantage for teams migrating a real project:
+assets, collections, scripts, and editor paths stay where they are while the TypeScript
+surface is layered on top.
+
 ## Step-by-step migration
 
 These steps run against an **existing** ts-defold project (a directory that

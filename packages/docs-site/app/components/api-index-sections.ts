@@ -11,6 +11,12 @@ export interface ApiIndexSections {
   library: ApiPage[];
 }
 
+export interface LibraryIndexGroup {
+  dir: string;
+  label: string;
+  pages: ApiPage[];
+}
+
 export function groupApiIndexPages(pages: ApiPage[]): ApiIndexSections {
   return {
     engine: pages.filter((p) => p.category === "engine"),
@@ -18,4 +24,33 @@ export function groupApiIndexPages(pages: ApiPage[]): ApiIndexSections {
     luaStdlib: pages.filter((p) => p.category === "lua-stdlib"),
     library: pages.filter((p) => p.category === "library"),
   };
+}
+
+export function apiPageCardDescription(page: ApiPage): string {
+  if (page.brief) return page.brief;
+  if (page.category === "library") return page.module.description;
+  return "";
+}
+
+export function groupLibraryIndexPages(
+  pages: ApiPage[],
+  moduleDir: Map<string, string>,
+): LibraryIndexGroup[] {
+  const byDir = new Map<string, ApiPage[]>();
+  for (const page of pages) {
+    if (page.category !== "library") continue;
+    const dir = moduleDir.get(page.namespace) ?? page.namespace;
+    const bucket = byDir.get(dir);
+    if (bucket) bucket.push(page);
+    else byDir.set(dir, [page]);
+  }
+  return [...byDir.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dir, groupPages]) => ({
+      dir,
+      label: dir,
+      pages: groupPages.sort((a, b) =>
+        (a.displayName ?? a.namespace).localeCompare(b.displayName ?? b.namespace),
+      ),
+    }));
 }

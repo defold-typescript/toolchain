@@ -1,73 +1,59 @@
-<p align="center">
-  <img src="docs/logo-ver-classic.png" alt="defold-typescript logo" width="128" height="128">
-</p>
+<!-- Generated from packages/docs/guide/README.md by `bun run readme:sync`. Do not edit directly. -->
 
 # defold-typescript
 
+<p align="center">
+  <img src="packages/docs/guide/logo-ver-classic.png" alt="defold-typescript logo" width="128" height="128">
+</p>
+
 [![npm](https://img.shields.io/npm/v/@defold-typescript/cli)](https://www.npmjs.com/package/@defold-typescript/cli)
+[![GitHub repo](https://img.shields.io/badge/github-repo-181717?logo=github&logoColor=white)](https://github.com/defold-typescript/toolchain)
 [![CI](https://img.shields.io/github/actions/workflow/status/defold-typescript/toolchain/ci.yml?branch=main)](https://github.com/defold-typescript/toolchain/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-defold--typescript.github.io-1f6feb)](https://defold-typescript.github.io/toolchain/)
 
-TypeScript for [Defold](https://defold.com/), transpiled to Lua. A modern, agent-friendly successor to the [ts-defold](https://github.com/ts-defold) family of repositories.
+Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
-📖 **[Documentation](https://defold-typescript.github.io/toolchain/)** — guides, CLI reference, and the full Defold API browser.
+- **The full Defold API, typed** — every module and namespace is typed from the official reference, so `go`, `gui`, `vmath`, `msg`, and the rest autocomplete and type-check as you write.
+- **Compiles to plain Lua** — your TypeScript runs through the battle-tested [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) compiler down to the Lua Defold already runs: no engine fork, no proprietary runtime, no lock-in.
+- **Typed scripts end to end** — `self`, `on_message`, and `on_input` payloads are typed through `defineScript`, `defineGuiScript`, and `defineRenderScript`.
+- **Fits new and existing projects** — scaffold from scratch, or add the TypeScript surface to a project that already has `game.project` and adopt type safety gradually, one script at a time alongside your existing Lua.
+  - **Preserves your project layout** — TypeScript blends into the existing project structure without creating a wrapper folder.
+- **Built for the real loop** — `watch` recompiles beside the Defold editor, live transpile diagnostics surface errors inline, and source maps let you set breakpoints in your `.ts`.
 
-## Why a new project
+This guide shows how to scaffold a project, write TypeScript that the toolchain compiles to Lua, and look up the language-and-toolchain quirks you will hit along the way.
 
-[ts-defold](https://github.com/ts-defold) — by [@thinginitself](https://github.com/thinginitself) and contributors — proved that authoring Defold games in TypeScript is viable. This repo restarts that effort with a tighter, monorepo-first layout so we can:
+The sections below mirror the top navigation; each lists the pages in its left-sidebar order. The repository `README.md` is generated from this file so the GitHub landing page and docs homepage stay aligned.
 
-- **Add agent (clanker) support** — first-class instructions and tooling for AI agents driving the toolchain, type generation, and game code.
-- **Move faster** — single repo, single test runner, single dependency graph. No coordination across five repos to ship one change.
-- **Modernize the toolchain** — Bun as runtime, package manager, and test runner; ESM throughout; TypeScript 5.x with strict settings.
-- **Lint with Biome** — replace the ESLint + Prettier combo with a single fast tool.
-- **Speed up testing** — Bun's built-in test runner instead of Jest/Mocha; co-located unit tests with millisecond-level feedback.
+## Get started
 
-Credit to the original ts-defold maintainers; this project stands on their work and the broader [TypeScriptToLua](https://github.com/TypeScriptToLua/TypeScriptToLua) ecosystem.
+- [Getting started](packages/docs/guide/getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init my-game`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
+- [Starter templates](packages/docs/guide/init-templates.md) — pick a new-project layout with `init my-game --template <name>`: the opinionated `default` or a blank-script `minimal`.
+- [Existing project](packages/docs/guide/add-typescript.md) — run `bunx @defold-typescript/cli@latest init .` in a folder with `game.project` to add the TypeScript surface without replacing the Defold project.
+- [Editor setup](packages/docs/guide/editor-setup.md) — open the project in VSCode, use the generated `tsconfig.json`, and run `bunx @defold-typescript/cli watch` beside the Defold editor.
+- [Defold editor](packages/docs/guide/defold-editor.md) — install Defold, open the generated project folder, attach a compiled script (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to its game object, GUI scene, or render pipeline, and run the game (TypeScript is transpiled to Lua by the CLI, not the editor).
 
-## Repository layout
+## Guides
 
-```
-defold-typescript/
-├── packages/
-│   ├── types/        Defold API typings (script lifecycle, message system, GUI, etc.)
-│   ├── transpiler/   TS-to-Lua build pipeline tuned for Defold's runtime
-│   └── cli/          End-user CLI: scaffold, build, watch
-├── docs/
-│   └── guide/        End-user documentation — getting started, vector math, TypeScript gotchas
-└── biome.json, tsconfig.json, package.json (workspace root)
-```
+- [Transpile diagnostics](packages/docs/guide/transpile-diagnostics.md) — the scaffolded `@defold-typescript/tstl-plugin` language-service plugin that surfaces TypeScript-to-Lua transpile errors live in the editor, advisory-only and never blocking `tsc --noEmit`.
+- [Debugging](packages/docs/guide/debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
+- [Pinning the Defold version](packages/docs/guide/pinning-defold-version.md) — keep the default latest surface, or pin an older Defold version whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
+- [Native extensions](packages/docs/guide/extensions.md) — declare an extension in `game.project` `[dependencies]`, run `defold-typescript resolve` to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
+- [Advanced CLI](packages/docs/guide/advanced-cli.md) — opt-in per-directory API walls with the `wall` command (interactive checkbox and flag forms), the full-surface-by-default policy, and the import-from-subpath rule a wall depends on.
+- [Agent runbooks](packages/docs/guide/agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](packages/docs/guide/agent-runbooks.md#install-the-agent-contract), regenerate extension types, [add and attach a script](packages/docs/guide/agent-runbooks.md#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
 
-## Prerequisites
+## Language
 
-- [Bun](https://bun.sh/) `>= 1.3`
-- Defold editor (for running the resulting games)
+- [TypeScript vs Lua](packages/docs/guide/typescript-vs-lua.md) — the Lua-developer on-ramp: a cheat sheet that translates syntax, tables, modules, and the standard library from Lua to the TypeScript the toolchain expects.
+- [Script lifecycle](packages/docs/guide/script-lifecycle.md) — type `self`, `on_message`, and `on_input` payloads with `defineScript`, `defineGuiScript`, and `defineRenderScript`.
+- [Messages](packages/docs/guide/messages.md) — the `BuiltinMessages` catalog, `msg.post` send-side payload narrowing, and the `isMessage` / `onMessage` receive-side helpers.
+- [Where script state lives](packages/docs/guide/script-state.md) — the four state tiers — per-instance `self`, a shared module local, a cross-script module singleton, and VM-global `declare global` — each grounded in the emitted Lua.
+- [Data structures](packages/docs/guide/data-structures.md) — what's built in for Defold: `Array`, tuple, `Map`, `Set`, `WeakMap`, `WeakSet`, object record, and `class`, each with its Lua lowering and `lualib` cost, plus the not-available list (regex, `BigInt`, `LinkedList`) and what to reach for instead.
+- [Vector math](packages/docs/guide/vector-math.md) — the method-form arithmetic surface (`add`, `sub`, `mul`, `div`, `unm`) on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`, plus why you cannot write `v3 + v3`.
+- [TypeScript gotchas](packages/docs/guide/typescript-gotchas.md) — the canonical catalog of TS / [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) / Defold sharp edges. Today: the unary-minus quirk that silently produces `number` from a `Vector3`. Future entries land here as the toolchain encounters them.
+- [API docs vs `ts-defold-types`](packages/docs/guide/api-docs-vs-ts-defold.md) — a factual, dimension-by-dimension comparison of the JSDoc that `@defold-typescript/types` and `ts-defold-types` emit (Markdown conversion, dash params, grid-aligned multi-line docs, branded constants, the `@example` trade-off), with a picker for which surface fits your project.
+- [Migrating from `ts-defold`](packages/docs/guide/migrating-from-ts-defold.md) — move a project off the `@ts-defold/*` stack: the package/tooling map, the step-by-step port via `init` add-TypeScript mode and a `tsconfig.json` reconcile, and the type-surface differences you will hit.
 
-## Getting started
+## Reference
 
-```sh
-bun install
-bun run lint
-bun test
-```
-
-## Documentation
-
-End-user documentation lives in [packages/docs/guide/README.md](packages/docs/guide/README.md): getting started with `bunx @defold-typescript/cli init <folder>`/`build`/`watch`, the typed vector-math surface, and a growing catalog of TypeScript-in-Defold gotchas (starting with the unary-minus quirk on `Vector3`/`Vector4`).
-
-## Tutorial
-
-An interactive slide-style walk-through of building a platformer in TypeScript lives at [docs/tutorial/](docs/tutorial/). It mirrors the [Defold platformer tutorial](https://defold.com/tutorials/platformer/) but with Lua replaced by `defineScript`, method-based vector math, and `isMessage`-narrowed payloads. Build the deck with `bun run build` from the tutorial directory.
-
-## Example
-
-A runnable Defold project that uses the same patterns is at [docs/examples/platformer/](docs/examples/platformer/).
-
-## License
-
-[MIT](LICENSE) — matching the ts-defold ecosystem.
-
-## Acknowledgements
-
-- [ts-defold](https://github.com/ts-defold) — the original project this repo aims to succeed
-- [TypeScriptToLua](https://github.com/TypeScriptToLua/TypeScriptToLua) — the transpiler we build on
-- [Defold](https://defold.com/) — the engine
+- [API](https://defold-typescript.github.io/toolchain/api) — the generated `@defold-typescript/types` reference: every documented Defold namespace, grouped alphabetically as cards (site-only; built from the typed surface the toolchain ships).
+- [Lua standard library](https://defold-typescript.github.io/toolchain/api/base) — the pure-Lua / LuaJIT reference category (`base`, `bit`, …). Types are owned by the `lua-types` dependency the `lua-stdlib-globals` goal adopted; `@defold-typescript/types` does not re-emit them as generated namespaces.

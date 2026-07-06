@@ -1,15 +1,25 @@
 # Git hooks managed by lefthook. Installed by the root `prepare` script on
 # `bun install`; run `bunx lefthook install` to (re)install manually.
 #
-# The committed packages/docs/llms.txt and llms-full.txt are the repo's only
-# tracked build artifacts. They are generated from the guide markdown, the docs
-# package manifest, and the types API surface (packages/docs-site/scripts/
-# build-llms.ts), and a byte-for-byte drift guard in `bun test` fails CI when the
-# committed copies go stale. This hook regenerates and re-stages them whenever a
-# commit touches one of those inputs, so the guard never trips locally. CI's
-# drift guard stays the real backstop if the glob ever under-triggers.
+# The committed README.md, packages/docs/llms.txt, and llms-full.txt are the
+# repo's tracked generated documentation artifacts. README.md is generated from
+# packages/docs/guide/README.md; the llms files are generated from the guide
+# markdown, the docs package manifest, and the types API surface
+# (packages/docs-site/scripts/build-llms.ts). Byte-for-byte drift guards in
+# `bun test` fail CI when committed copies go stale. This hook regenerates and
+# re-stages them whenever a commit touches one of those inputs, so the guards
+# never trip locally. CI's drift guards stay the real backstop if the globs ever
+# under-trigger.
 pre-commit:
   commands:
+    readme:
+      glob:
+        - "README.md"
+        - "packages/docs/guide/README.md"
+        - "scripts/sync-readme.ts"
+      run: |
+        bun run readme:sync
+        git add README.md
     llms-txt:
       glob:
         - "packages/docs/guide/*.md"

@@ -15,6 +15,12 @@ export function guidePages(): GuidePage[] {
   return listGuidePages(GUIDE_DIR);
 }
 
-export function renderGuide(page: GuidePage): Promise<string> {
-  return renderMarkdown(parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body);
+export function renderGuide(
+  page: GuidePage,
+  opts: { firstHeading?: string } = {},
+): Promise<string> {
+  return renderMarkdown(
+    parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body,
+    opts,
+  );
 }

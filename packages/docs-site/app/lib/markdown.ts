@@ -186,10 +186,15 @@ function admonitionTitle(type: AlertType): string {
 const MORE_MARKER = /^\[!more\]/i;
 const MORE_DEFAULT_SUMMARY = "More";
 
+function replaceFirstHeading(markdown: string, heading: string): string {
+  return markdown.replace(/^#\s+.+$/m, `# ${heading}`);
+}
+
 export async function renderMarkdown(
   markdown: string,
-  opts: { highlightSignatureHeadings?: boolean } = {},
+  opts: { firstHeading?: string; highlightSignatureHeadings?: boolean } = {},
 ): Promise<string> {
+  const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
   // Slugify heading ids so the right-side TOC can link to them deterministically.
@@ -467,5 +472,5 @@ export async function renderMarkdown(
     `<div class="table-scroll">\n${self.renderToken(tokens, idx, options)}`;
   md.renderer.rules.table_close = (tokens, idx, options, _env, self) =>
     `${self.renderToken(tokens, idx, options)}</div>\n`;
-  return md.render(markdown);
+  return md.render(source);
 }

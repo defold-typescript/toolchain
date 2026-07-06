@@ -32,6 +32,7 @@ function flatten(nav: NavCategory[]): FlatEntry[] {
       if (link.route) tag(link.route, link.label, link.labelHtml);
       for (const child of link.children ?? []) visit(child);
     };
+    if (category.route) tag(category.route, category.label, category.label);
     for (const link of category.links) visit(link);
   }
   return entries;

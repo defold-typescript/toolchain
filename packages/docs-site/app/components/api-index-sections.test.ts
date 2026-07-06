@@ -1,13 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage, ApiPageCategory } from "../lib/api-surface";
-import { groupApiIndexPages } from "./api-index-sections";
+import {
+  apiPageCardDescription,
+  groupApiIndexPages,
+  groupLibraryIndexPages,
+} from "./api-index-sections";
 
-function page(namespace: string, category: ApiPageCategory, route: string): ApiPage {
+function page(
+  namespace: string,
+  category: ApiPageCategory,
+  route: string,
+  opts: { brief?: string; description?: string } = {},
+): ApiPage {
+  const brief = opts.brief ?? `${namespace} brief`;
   const module: ApiModule = {
     namespace,
-    brief: `${namespace} brief`,
-    description: "",
+    brief,
+    description: opts.description ?? "",
     functions: [],
     variables: [],
     constants: [],
@@ -17,13 +27,69 @@ function page(namespace: string, category: ApiPageCategory, route: string): ApiP
   return {
     namespace,
     route,
-    brief: `${namespace} brief`,
+    brief,
     module,
     translations: {},
     signatures: {},
     category,
   };
 }
+
+describe("apiPageCardDescription", () => {
+  test("uses the page brief when one exists", () => {
+    const apiPage = page("monarch.monarch", "library", "/api/monarch.monarch", {
+      brief: "Module summary.",
+      description: "Longer module description.",
+    });
+    expect(apiPageCardDescription(apiPage)).toBe("Module summary.");
+  });
+
+  test("falls back to library module descriptions when brief is empty", () => {
+    const apiPage = page("bridge.bridge", "library", "/api/bridge.bridge", {
+      brief: "",
+      description: "One SDK for cross-platform publishing HTML5 games",
+    });
+    expect(apiPageCardDescription(apiPage)).toBe(
+      "One SDK for cross-platform publishing HTML5 games",
+    );
+  });
+
+  test("does not fall back to long descriptions for non-library pages", () => {
+    const apiPage = page("go", "engine", "/api/go", {
+      brief: "",
+      description: "Long engine module description.",
+    });
+    expect(apiPageCardDescription(apiPage)).toBe("");
+  });
+});
+
+describe("groupLibraryIndexPages", () => {
+  test("groups libraries by upstream dir in the same shape as the sidebar tree", () => {
+    const groups = groupLibraryIndexPages(
+      [
+        page("go", "engine", "/api/go"),
+        {
+          ...page("in.cursor", "library", "/api/in.cursor"),
+          displayName: "britzl / input · cursor",
+        },
+        {
+          ...page("in.button", "library", "/api/in.button"),
+          displayName: "britzl / input · button",
+        },
+        page("monarch.monarch", "library", "/api/monarch.monarch"),
+      ],
+      new Map([
+        ["in.button", "defold-input"],
+        ["in.cursor", "defold-input"],
+        ["monarch.monarch", "monarch"],
+      ]),
+    );
+
+    expect(groups.map((group) => group.label)).toEqual(["defold-input", "monarch"]);
+    expect(groups[0]?.pages.map((p) => p.namespace)).toEqual(["in.button", "in.cursor"]);
+    expect(groups[1]?.pages.map((p) => p.namespace)).toEqual(["monarch.monarch"]);
+  });
+});
 
 describe("groupApiIndexPages", () => {
   test("collects library pages into their own section, alongside engine and lua-stdlib", () => {
