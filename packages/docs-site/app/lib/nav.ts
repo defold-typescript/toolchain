@@ -167,6 +167,10 @@ export function buildNav(
         namespaces.map(({ label, route }) => toNavLink(label, route)),
       ),
     );
+  categories.push({ id: "api", label: "API", links: referenceLinks });
+
+  // Vendored third-party libraries live in their own top-level tab after API, so
+  // engine reference and community libraries read as distinct sections.
   if (reference.libraries.length > 0) {
     const libraryLinks = reference.libraries.map((lib) => {
       const [only, ...rest] = lib.modules;
@@ -177,9 +181,8 @@ export function buildNav(
             lib.modules.map(({ label, route }) => toNavLink(label, route)),
           );
     });
-    referenceLinks.push(toNavGroup("Libraries", libraryLinks));
+    categories.push({ id: "libraries", label: "Libraries", links: libraryLinks });
   }
-  categories.push({ id: "reference", label: "Reference", links: referenceLinks });
 
   return categories;
 }
@@ -236,9 +239,10 @@ export function activeCategoryId(route: string, nav: NavCategory[]): string | un
     for (const link of category.links) visit(category.id, link);
   }
   // Unmatched /api routes (versioned pages and the /api/<version> index have no
-  // nav link) still belong to the single Reference category.
+  // nav link) still belong to the engine API category. Library pages carry their
+  // own nav links, so they match above and resolve to the Libraries category.
   if (!best && (route === "/api" || route.startsWith("/api/"))) {
-    return nav.find((c) => c.id === "reference")?.id;
+    return nav.find((c) => c.id === "api")?.id;
   }
   return best?.id;
 }

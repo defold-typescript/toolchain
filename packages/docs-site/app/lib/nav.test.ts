@@ -37,19 +37,13 @@ function fullNav() {
 describe("buildNav", () => {
   test("returns the five categories in declared order with declared labels", () => {
     const nav = fullNav();
-    expect(nav.map((c) => c.id)).toEqual([
-      "get-started",
-      "guides",
-      "language",
-      "tutorial",
-      "reference",
-    ]);
+    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "language", "tutorial", "api"]);
     expect(nav.map((c) => c.label)).toEqual([
       "Get started",
       "Guides",
       "Language",
       "Tutorial",
-      "Reference",
+      "API",
     ]);
   });
 
@@ -63,7 +57,7 @@ describe("buildNav", () => {
   });
 
   test("reference links are three route-less group headers in order", () => {
-    const reference = fullNav().find((c) => c.id === "reference");
+    const reference = fullNav().find((c) => c.id === "api");
     expect(reference?.links.map((l) => l.label)).toEqual(["Globals", "Lua Standard", "Defold"]);
     for (const header of reference?.links ?? []) {
       expect(header.route).toBeUndefined();
@@ -79,7 +73,7 @@ describe("buildNav", () => {
       engine: ENGINE,
       libraries: [],
     });
-    const reference = nav.find((c) => c.id === "reference");
+    const reference = nav.find((c) => c.id === "api");
     expect(reference?.links.map((l) => l.label)).toEqual([
       "Globals",
       "Global types",
@@ -99,12 +93,12 @@ describe("buildNav", () => {
       engine: ENGINE,
       libraries: [],
     });
-    const reference = nav.find((c) => c.id === "reference");
+    const reference = nav.find((c) => c.id === "api");
     expect(reference?.links.map((l) => l.label)).toEqual(["Lua Standard", "Defold"]);
   });
 
   test("each group holds exactly its namespaces, round-tripping order, route, and labelHtml", () => {
-    const reference = fullNav().find((c) => c.id === "reference");
+    const reference = fullNav().find((c) => c.id === "api");
     const byLabel = (label: string) => reference?.links.find((l) => l.label === label);
 
     expect(byLabel("Globals")?.children?.map((c) => c.route)).toEqual(["/api/globals"]);
@@ -119,7 +113,7 @@ describe("buildNav", () => {
     expect(defold?.children?.every((c) => typeof c.labelHtml === "string")).toBe(true);
   });
 
-  test("nests a Libraries group one level: multi-module libs as subgroups, single-module as leaves", () => {
+  test("Libraries is a top-level category: multi-module libs as subgroups, single-module as leaves", () => {
     const nav = buildNav(realPages(), {
       globals: GLOBALS,
       globalTypes: [],
@@ -149,23 +143,22 @@ describe("buildNav", () => {
         },
       ],
     });
-    const reference = nav.find((c) => c.id === "reference");
-    const libraries = reference?.links.find((l) => l.label === "Libraries");
-    expect(libraries?.route).toBeUndefined();
+    const libraries = nav.find((c) => c.id === "libraries");
+    expect(libraries?.label).toBe("Libraries");
     // Order preserved: two multi-module subgroups, then the single-module leaf.
-    expect(libraries?.children?.map((c) => c.label)).toEqual([
+    expect(libraries?.links.map((l) => l.label)).toEqual([
       "defold-input",
       "monarch",
       "persist.persist",
     ]);
 
-    const input = libraries?.children?.find((c) => c.label === "defold-input");
+    const input = libraries?.links.find((l) => l.label === "defold-input");
     expect(input?.route).toBeUndefined();
     expect(input?.children?.map((c) => c.label)).toEqual(["in.button", "in.cursor"]);
     expect(input?.children?.map((c) => c.route)).toEqual(["/api/in.button", "/api/in.cursor"]);
 
     // A single-module library renders as a bare leaf — no redundant one-child subgroup.
-    const persist = libraries?.children?.find((c) => c.label === "persist.persist");
+    const persist = libraries?.links.find((l) => l.label === "persist.persist");
     expect(persist?.route).toBe("/api/persist.persist");
     expect(persist?.children).toBeUndefined();
   });
@@ -187,10 +180,10 @@ describe("buildNav", () => {
         },
       ],
     });
-    expect(activeCategoryId("/lib/saver.storage", nav)).toBe("reference");
+    expect(activeCategoryId("/lib/saver.storage", nav)).toBe("libraries");
   });
 
-  test("emits no Libraries group when the libraries list is empty", () => {
+  test("emits no Libraries category when the libraries list is empty", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -198,7 +191,8 @@ describe("buildNav", () => {
       engine: ENGINE,
       libraries: [],
     });
-    const reference = nav.find((c) => c.id === "reference");
+    expect(nav.find((c) => c.id === "libraries")).toBeUndefined();
+    const reference = nav.find((c) => c.id === "api");
     expect(reference?.links.find((l) => l.label === "Libraries")).toBeUndefined();
     expect(reference?.links.map((l) => l.label)).toEqual(["Lua Standard", "Defold"]);
   });
@@ -358,22 +352,22 @@ describe("activeCategoryId", () => {
     expect(activeCategoryId("/debugging", nav)).toBe("guides");
   });
 
-  test("resolves engine and lua-stdlib API subpaths to reference via a child route", () => {
-    expect(activeCategoryId("/api/base", nav)).toBe("reference");
-    expect(activeCategoryId("/api/camera", nav)).toBe("reference");
-    expect(activeCategoryId("/api/globals", nav)).toBe("reference");
+  test("resolves engine and lua-stdlib API subpaths to api via a child route", () => {
+    expect(activeCategoryId("/api/base", nav)).toBe("api");
+    expect(activeCategoryId("/api/camera", nav)).toBe("api");
+    expect(activeCategoryId("/api/globals", nav)).toBe("api");
   });
 
-  test("resolves a versioned API route to reference via the /api fallback", () => {
-    expect(activeCategoryId("/api/defold-1.9.8/label", nav)).toBe("reference");
+  test("resolves a versioned API route to api via the /api fallback", () => {
+    expect(activeCategoryId("/api/defold-1.9.8/label", nav)).toBe("api");
   });
 
-  test("resolves the versioned API index route to reference", () => {
-    expect(activeCategoryId("/api/defold-1.9.8", nav)).toBe("reference");
+  test("resolves the versioned API index route to api", () => {
+    expect(activeCategoryId("/api/defold-1.9.8", nav)).toBe("api");
   });
 
-  test("resolves a dotted-slug library page route to reference", () => {
-    expect(activeCategoryId("/api/persist.persist", nav)).toBe("reference");
+  test("resolves an unmatched dotted-slug API route to api via the /api fallback", () => {
+    expect(activeCategoryId("/api/persist.persist", nav)).toBe("api");
   });
 
   test("the /api fallback does not fire for non-api routes", () => {
