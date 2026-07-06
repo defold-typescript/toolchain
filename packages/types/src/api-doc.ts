@@ -18,6 +18,8 @@ export interface ApiProperty {
 
 export interface ApiTypedef {
   name: string;
+  functions?: ApiFunction[];
+  properties?: ApiVariable[];
 }
 
 export interface ApiConstant {
@@ -90,11 +92,21 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
     } else if (type === "PROPERTY") {
       properties.push(parseProperty(element));
     } else if (type === "TYPEDEF") {
-      typedefs.push({ name: stringOr(element.name, "") });
+      typedefs.push(parseTypedef(element));
     }
   }
 
   return { namespace, brief, description, functions, variables, constants, properties, typedefs };
+}
+
+function parseTypedef(element: Record<string, unknown>): ApiTypedef {
+  const functions = parseFunctionList(element.functions);
+  const properties = parseVariableList(element.properties);
+  return {
+    name: stringOr(element.name, ""),
+    ...(functions.length > 0 ? { functions } : {}),
+    ...(properties.length > 0 ? { properties } : {}),
+  };
 }
 
 function parseProperty(element: Record<string, unknown>): ApiProperty {
@@ -141,6 +153,24 @@ function parseVariable(element: Record<string, unknown>): ApiVariable {
     description: stringOr(element.description, ""),
     types: parseStringArray(element.types),
   };
+}
+
+function parseFunctionList(raw: unknown): ApiFunction[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ApiFunction[] = [];
+  for (const item of raw) {
+    if (isRecord(item)) out.push(parseFunction(item));
+  }
+  return out;
+}
+
+function parseVariableList(raw: unknown): ApiVariable[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ApiVariable[] = [];
+  for (const item of raw) {
+    if (isRecord(item)) out.push(parseVariable(item));
+  }
+  return out;
 }
 
 function parseParameterList(raw: unknown): ApiParameter[] {
