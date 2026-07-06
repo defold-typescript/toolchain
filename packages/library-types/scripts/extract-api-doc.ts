@@ -69,21 +69,47 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   const summary = moduleBlock ? jsDocSummary(moduleBlock.parent) : "";
 
   const elements: Record<string, unknown>[] = [];
+  const emittedNames = new Set<string>();
   for (const stmt of moduleBlock?.statements ?? []) {
     if (ts.isFunctionDeclaration(stmt) && stmt.name && isExported(stmt)) {
       elements.push(functionElement(stmt, stmt.name.text, sf));
+      emittedNames.add(stmt.name.text);
     } else if (ts.isVariableStatement(stmt) && isExported(stmt)) {
       for (const decl of stmt.declarationList.declarations) {
         const fields = objectFields(decl.type, sf);
+        const name = decl.name.getText(sf);
         elements.push({
           type: "VARIABLE",
-          name: decl.name.getText(sf),
+          name,
           types: decl.type ? [typeText(decl.type, sf)] : [],
           ...(fields ? { fields } : {}),
         });
+        emittedNames.add(name);
       }
     } else if (ts.isTypeAliasDeclaration(stmt)) {
       elements.push({ type: "TYPEDEF", name: stmt.name.text });
+      emittedNames.add(stmt.name.text);
+    }
+  }
+
+  for (const iface of exportedValueInterfaces(moduleBlock)) {
+    for (const member of iface.members) {
+      if (!member.name) continue;
+      const name = memberName(member.name, sf);
+      if (emittedNames.has(name)) continue;
+      if (ts.isMethodSignature(member)) {
+        elements.push(functionElement(member, name, sf));
+        emittedNames.add(name);
+      } else if (ts.isPropertySignature(member)) {
+        const fields = objectFields(member.type, sf);
+        elements.push({
+          type: "VARIABLE",
+          name,
+          types: member.type ? [typeText(member.type, sf)] : [],
+          ...(fields ? { fields } : {}),
+        });
+        emittedNames.add(name);
+      }
     }
   }
 
@@ -94,7 +120,7 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
 }
 
 function functionElement(
-  decl: ts.FunctionDeclaration,
+  decl: ts.FunctionDeclaration | ts.MethodSignature,
   name: string,
   sf: ts.SourceFile,
 ): Record<string, unknown> {
@@ -138,6 +164,66 @@ function functionElement(
   };
 }
 
+function exportedValueInterfaces(
+  moduleBlock: ts.ModuleBlock | undefined,
+): ts.InterfaceDeclaration[] {
+  if (!moduleBlock) return [];
+  const localVars = new Map<string, ts.TypeNode>();
+  const aliases = new Map<string, ts.TypeAliasDeclaration>();
+  const interfaces = new Map<string, ts.InterfaceDeclaration>();
+  let exportedName = "";
+
+  for (const stmt of moduleBlock.statements) {
+    if (ts.isVariableStatement(stmt)) {
+      for (const decl of stmt.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name) && decl.type) localVars.set(decl.name.text, decl.type);
+      }
+    } else if (ts.isTypeAliasDeclaration(stmt)) {
+      aliases.set(stmt.name.text, stmt);
+    } else if (ts.isInterfaceDeclaration(stmt)) {
+      interfaces.set(stmt.name.text, stmt);
+    } else if (ts.isExportAssignment(stmt) && ts.isIdentifier(stmt.expression)) {
+      exportedName = stmt.expression.text;
+    }
+  }
+
+  const rootType = localVars.get(exportedName);
+  if (!rootType) return [];
+  const seen = new Set<string>();
+  const resolved = resolveInterfaces(rootType, aliases, interfaces, seen);
+  return [...new Set(resolved)];
+}
+
+function resolveInterfaces(
+  node: ts.TypeNode,
+  aliases: Map<string, ts.TypeAliasDeclaration>,
+  interfaces: Map<string, ts.InterfaceDeclaration>,
+  seen: Set<string>,
+): ts.InterfaceDeclaration[] {
+  if (ts.isIntersectionTypeNode(node)) {
+    return node.types.flatMap((type) => resolveInterfaces(type, aliases, interfaces, seen));
+  }
+  if (!ts.isTypeReferenceNode(node) || !ts.isIdentifier(node.typeName)) return [];
+  const name = node.typeName.text;
+  if (name === "Readonly" && node.typeArguments?.[0]) {
+    return resolveInterfaces(node.typeArguments[0], aliases, interfaces, seen);
+  }
+  const iface = interfaces.get(name);
+  if (iface) return [iface];
+  const alias = aliases.get(name);
+  if (!alias || seen.has(name)) return [];
+  seen.add(name);
+  return resolveInterfaces(alias.type, aliases, interfaces, seen);
+}
+
+function memberName(name: ts.PropertyName, sf: ts.SourceFile): string {
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name))
+    return name.text;
+  if (ts.isComputedPropertyName(name) && ts.isStringLiteral(name.expression))
+    return name.expression.text;
+  return name.getText(sf);
+}
+
 function findModuleBlock(sf: ts.SourceFile): ts.ModuleBlock | undefined {
   for (const stmt of sf.statements) {
     if (ts.isModuleDeclaration(stmt) && stmt.body && ts.isModuleBlock(stmt.body)) {
@@ -165,7 +251,10 @@ function briefOf(summary: string): string {
   return summary.split("\n")[0]?.trim() ?? "";
 }
 
-function paramDocMap(decl: ts.FunctionDeclaration, sf: ts.SourceFile): Map<string, string> {
+function paramDocMap(
+  decl: ts.FunctionDeclaration | ts.MethodSignature,
+  sf: ts.SourceFile,
+): Map<string, string> {
   const out = new Map<string, string>();
   for (const tag of ts.getAllJSDocTagsOfKind(decl, ts.SyntaxKind.JSDocParameterTag)) {
     const paramTag = tag as ts.JSDocParameterTag;
@@ -175,12 +264,12 @@ function paramDocMap(decl: ts.FunctionDeclaration, sf: ts.SourceFile): Map<strin
   return out;
 }
 
-function returnDoc(decl: ts.FunctionDeclaration): string {
+function returnDoc(decl: ts.FunctionDeclaration | ts.MethodSignature): string {
   const [tag] = ts.getAllJSDocTagsOfKind(decl, ts.SyntaxKind.JSDocReturnTag);
   return tag ? cleanDoc(ts.getTextOfJSDocComment(tag.comment)) : "";
 }
 
-function exampleText(decl: ts.FunctionDeclaration): string {
+function exampleText(decl: ts.FunctionDeclaration | ts.MethodSignature): string {
   for (const tag of ts.getJSDocTags(decl)) {
     if (tag.tagName.text === "example") {
       return (ts.getTextOfJSDocComment(tag.comment) ?? "").trim();

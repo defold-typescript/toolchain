@@ -98,6 +98,42 @@ declare module 'fld.fld' {
 }
 `;
 
+const INTERFACE_BACKED = `/**
+ * Interface-backed module.
+ * @noResolution
+ */
+declare module 'iface.iface' {
+	interface Core {
+		/** Run by id. */
+		go(id: number): void;
+		/** Item count. */
+		COUNT: number;
+		/** Construct one. */
+		['new'](tag?: string): Inst;
+	}
+	interface Inst {}
+	type T = Readonly<Core>;
+	const v: T;
+	export = v;
+}
+`;
+
+const INTERFACE_INTERSECTION = `/**
+ * Interface intersection module.
+ * @noResolution
+ */
+declare module 'inter.inter' {
+	interface SomeMap {}
+	interface Core {
+		/** Pan camera. */
+		pan(x: number): boolean;
+	}
+	type T = SomeMap & Readonly<Core>;
+	const exportThis: T;
+	export = exportThis;
+}
+`;
+
 type EmittedField = {
   name: string;
   doc: string;
@@ -105,6 +141,72 @@ type EmittedField = {
   is_optional: string;
   fields?: EmittedField[];
 };
+
+describe("extractApiDoc interface-backed module exports", () => {
+  test("resolves an export-assigned Readonly interface into functions and variables", () => {
+    const module = parseDefoldApiDoc(extractApiDoc(INTERFACE_BACKED, "iface.iface"));
+
+    expect(module.functions.map((f) => f.name)).toEqual(["go", "new"]);
+    expect(module.variables.map((v) => v.name)).toEqual(["COUNT"]);
+
+    const go = module.functions.find((f) => f.name === "go");
+    expect(go?.brief).toBe("Run by id.");
+    expect(go?.parameters.map((p) => [p.name, p.types, p.isOptional])).toEqual([
+      ["id", ["number"], false],
+    ]);
+
+    const count = module.variables.find((v) => v.name === "COUNT");
+    expect(count?.types).toEqual(["number"]);
+
+    const ctor = module.functions.find((f) => f.name === "new");
+    expect(ctor?.parameters.map((p) => [p.name, p.types, p.isOptional])).toEqual([
+      ["tag", ["string"], true],
+    ]);
+  });
+
+  test("resolves a Readonly interface inside an intersection", () => {
+    const module = parseDefoldApiDoc(extractApiDoc(INTERFACE_INTERSECTION, "inter.inter"));
+
+    expect(module.functions.map((f) => f.name)).toEqual(["pan"]);
+    expect(module.functions[0]?.returnValues[0]?.types).toEqual(["boolean"]);
+  });
+
+  test("leaves the top-level declaration extraction shape unchanged", () => {
+    expect(extractApiDoc(DEMO, "demo.demo")).toEqual({
+      info: {
+        namespace: "demo.demo",
+        brief: "Demo library summary.",
+        description: "Demo library summary.",
+      },
+      elements: [
+        { type: "TYPEDEF", name: "Thing" },
+        { type: "VARIABLE", name: "VERSION", types: ["number"] },
+        {
+          type: "FUNCTION",
+          name: "run",
+          brief: "Do the demo thing.",
+          description: "Do the demo thing.",
+          parameters: [
+            {
+              name: "name",
+              doc: "the name to use",
+              types: ["string"],
+              is_optional: "False",
+            },
+            {
+              name: "times",
+              doc: "optional repeat count",
+              types: ["number"],
+              is_optional: "True",
+            },
+          ],
+          returnvalues: [{ name: "", doc: "whether it worked", types: ["boolean"] }],
+          examples: 'demo.run("x")',
+        },
+      ],
+    });
+  });
+});
 
 describe("extractApiDoc object-literal field tree", () => {
   const fn = (name: string) =>
