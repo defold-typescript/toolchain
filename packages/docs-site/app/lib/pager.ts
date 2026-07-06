@@ -28,12 +28,11 @@ function flatten(nav: NavCategory[]): FlatEntry[] {
         topicLabel: category.label,
       });
     };
-    for (const link of category.links) {
+    const visit = (link: NavCategory["links"][number]) => {
       if (link.route) tag(link.route, link.label, link.labelHtml);
-      for (const child of link.children ?? []) {
-        if (child.route) tag(child.route, child.label, child.labelHtml);
-      }
-    }
+      for (const child of link.children ?? []) visit(child);
+    };
+    for (const link of category.links) visit(link);
   }
   return entries;
 }

@@ -170,6 +170,26 @@ describe("buildNav", () => {
     expect(persist?.children).toBeUndefined();
   });
 
+  test("activeCategoryId descends into nested library subgroups", () => {
+    const nav = buildNav(realPages(), {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: [
+        {
+          dir: "defold-saver",
+          label: "defold-saver",
+          modules: [
+            { label: "saver.saver", route: "/lib/saver.saver" },
+            { label: "saver.storage", route: "/lib/saver.storage" },
+          ],
+        },
+      ],
+    });
+    expect(activeCategoryId("/lib/saver.storage", nav)).toBe("reference");
+  });
+
   test("emits no Libraries group when the libraries list is empty", () => {
     const nav = buildNav(realPages(), {
       globals: [],
