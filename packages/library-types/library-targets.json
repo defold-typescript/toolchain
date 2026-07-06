@@ -232,6 +232,60 @@
       "path": "packages/lua-immutable/immutable.immutable.d.ts",
       "fixture": "fixtures/ts-defold/immutable.immutable.d.ts",
       "generated": "generated/immutable.immutable.d.ts"
+    },
+    {
+      "module": "nakama.engine.defold",
+      "path": "packages/nakama-defold/nakama.engine.defold.d.ts",
+      "fixture": "fixtures/ts-defold/nakama.engine.defold.d.ts",
+      "generated": "generated/nakama.engine.defold.d.ts"
+    },
+    {
+      "module": "nakama.nakama",
+      "path": "packages/nakama-defold/nakama.nakama.d.ts",
+      "fixture": "fixtures/ts-defold/nakama.nakama.d.ts",
+      "generated": "generated/nakama.nakama.d.ts"
+    },
+    {
+      "module": "nakama.util.log",
+      "path": "packages/nakama-defold/nakama.util.log.d.ts",
+      "fixture": "fixtures/ts-defold/nakama.util.log.d.ts",
+      "generated": "generated/nakama.util.log.d.ts"
+    },
+    {
+      "module": "yagames.yagames",
+      "path": "packages/defold-yagames/yagames.yagames.d.ts",
+      "fixture": "fixtures/ts-defold/yagames.yagames.d.ts",
+      "generated": "generated/yagames.yagames.d.ts"
+    },
+    {
+      "module": "bridge.bridge",
+      "path": "packages/defold-bridge/bridge.bridge.d.ts",
+      "fixture": "fixtures/ts-defold/bridge.bridge.d.ts",
+      "generated": "generated/bridge.bridge.d.ts"
+    },
+    {
+      "module": "zzfx.api",
+      "path": "packages/defold-zzfx/zzfx.api.d.ts",
+      "fixture": "fixtures/ts-defold/zzfx.api.d.ts",
+      "generated": "generated/zzfx.api.d.ts"
+    },
+    {
+      "module": "boom.boom",
+      "path": "packages/boom/boom.boom.d.ts",
+      "fixture": "fixtures/ts-defold/boom.boom.d.ts",
+      "generated": "generated/boom.boom.d.ts"
+    },
+    {
+      "module": "bzAnim.bzLibrary",
+      "path": "packages/bzAnim/bzAnim.bzAnim.d.ts",
+      "fixture": "fixtures/ts-defold/bzAnim.bzAnim.d.ts",
+      "generated": "generated/bzAnim.bzLibrary.d.ts"
+    },
+    {
+      "module": "rendy.rendy",
+      "path": "packages/library-defold-rendy/rendy.rendy.d.ts",
+      "fixture": "fixtures/ts-defold/rendy.rendy.d.ts",
+      "generated": "generated/rendy.rendy.d.ts"
     }
   ]
 }

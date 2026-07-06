@@ -1,6 +1,9 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as bzAnim from "bzAnim.bzLibrary";
+import * as boom from "boom.boom";
+import * as bridge from "bridge.bridge";
 import * as defcon from "defcon.console";
 import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
@@ -20,11 +23,15 @@ import * as mem from "metrics.mem";
 import * as monarch from "monarch.monarch";
 import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
+import * as nakamaEngine from "nakama.engine.defold";
+import * as nakama from "nakama.nakama";
+import * as nakamaLog from "nakama.util.log";
 import * as narrator from "narrator.narrator";
 import * as camera from "orthographic.camera";
 import * as persist from "persist.persist";
 import * as platypus from "platypus.platypus";
 import * as proto from "proto.proto";
+import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
@@ -33,6 +40,8 @@ import * as storage from "saver.storage";
 import * as squid from "squid.squid";
 import * as starly from "starly.starly";
 import * as tweener from "tweener.tweener";
+import * as yagames from "yagames.yagames";
+import * as zzfx from "zzfx.api";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -242,6 +251,72 @@ const _immutableStats = immutable.make({ hp: 10 });
 const _immutableHp: number = _immutableStats.hp;
 const _isImmutable: boolean = immutable.is_immutable(_immutableStats);
 
+const _nakamaUuid: string = nakamaEngine.uuid();
+declare const _nakamaSocket: symbol;
+nakamaEngine.socket_create({}, (socket, message) => {
+  void socket;
+  void message;
+});
+nakamaEngine.socket_connect(_nakamaSocket, (success, error) => {
+  void success;
+  void error;
+});
+nakamaEngine.socket_send(_nakamaSocket, "{}", () => {});
+const _nakamaClient = nakama.create_client({
+  host: "127.0.0.1",
+  port: 7350,
+  username: "defaultkey",
+  password: "defaultkey",
+  engine: {},
+});
+const _nakamaAccount: { id: string; vars: unknown } = nakama.create_api_account_custom("user", {});
+const _nakamaSession = nakama.authenticate_custom(_nakamaClient, _nakamaAccount, true, "user");
+nakama.set_bearer_token(_nakamaClient, _nakamaSession.token);
+nakamaLog.print();
+nakamaLog.silent();
+
+const _yagamesPlayerId: string = yagames.player_get_id();
+const _yagamesDevice: "desktop" | "mobile" | "tablet" = yagames.device_info_type();
+const _yagamesStorageLength: number = yagames.storage_length();
+yagames.player_get_data(undefined, (ctx, err, data) => {
+  void ctx;
+  void err;
+  void data;
+});
+
+const _bridgeDevice: string = bridge.device.type();
+const _bridgeInterstitialDelay: number = bridge.advertisement.minimum_delay_between_interstitial();
+bridge.leaderboards.set_score(
+  "score",
+  100,
+  () => {},
+  (error) => {
+    void error;
+  },
+);
+
+const _zzfxSample: ReturnType<typeof zzfx.build_sample> = zzfx.build_sample(1, 0, 440);
+zzfx.play_sample(_zzfxSample);
+zzfx.samplerate(44100);
+
+boom.boom(() => {});
+const _boomObject = add(["player"]);
+const _boomVec = vec2(1, 2);
+const _boomRand: number = rand();
+const _boomRed = RED;
+
+const _bzInfoLevel: 1 = bzAnim.INFO_LEVEL;
+const _bzAnimId: string = bzAnim.animate({ obj: _hash, easing: "TYPE_LINEAR" });
+const _bzSeqId: string = bzAnim.animateSequence({ obj: undefined, easing: "TYPE_INQUAD" });
+bzAnim.cancel(_bzAnimId);
+const _bzReady: boolean = bzAnim.isReady();
+
+const _rendyDisplay: Vector3 = rendy.get_display_size();
+const _rendyWindow: Vector3 = rendy.get_window_size();
+rendy.set("camera", _hash, 1);
+rendy.animate("camera", _hash, go.PLAYBACK_ONCE_FORWARD, _v3, go.EASING_LINEAR, 1);
+const _rendyWorld: Vector3 = rendy.screen_to_world("camera", _v3);
+
 void _mHash;
 void _ok;
 void _err;
@@ -298,3 +373,23 @@ void _sqSaved;
 void _sqEnabled;
 void _stView;
 void _stShaking;
+void _isImmutable;
+void _nakamaUuid;
+void _nakamaAccount;
+void _nakamaSession;
+void _yagamesPlayerId;
+void _yagamesDevice;
+void _yagamesStorageLength;
+void _bridgeDevice;
+void _bridgeInterstitialDelay;
+void _zzfxSample;
+void _boomObject;
+void _boomVec;
+void _boomRand;
+void _boomRed;
+void _bzInfoLevel;
+void _bzSeqId;
+void _bzReady;
+void _rendyDisplay;
+void _rendyWindow;
+void _rendyWorld;

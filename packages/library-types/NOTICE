@@ -39,6 +39,13 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - defold-metrics      — Britzl, https://github.com/britzl/defold-metrics
     - deftest             — Britzl, https://github.com/britzl/deftest
     - lua-immutable       — paweljarosz, https://github.com/paweljarosz/lua-immutable
+    - nakama-defold       — Heroic Labs, https://github.com/heroiclabs/nakama-defold
+    - defold-yagames      — indiesoftby, https://github.com/indiesoftby/defold-yagames
+    - defold-bridge       — Playgama, https://github.com/Playgama/bridge-defold
+    - defold-zzfx         — thejustinwalsh, https://github.com/thejustinwalsh/defold-zzfx
+    - boom                — Britzl, https://github.com/britzl/boom
+    - bzAnim              — jbp4444, https://github.com/jbp4444/bzAnim
+    - library-defold-rendy — klaytonkowalski, https://github.com/klaytonkowalski/library-defold-rendy
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition

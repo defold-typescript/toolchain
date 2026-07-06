@@ -326,10 +326,8 @@ describe("library-classification.json coverage", () => {
     }
   });
 
-  test("named pure-Lua candidates are pure-lua", () => {
-    for (const dir of ["boom", "defold-bridge", "library-defold-rendy", "nakama-defold"]) {
-      expect(byDir.get(dir)?.classification).toBe("pure-lua");
-    }
+  test("no pure-Lua candidates remain", () => {
+    expect([...byDir.values()].filter((entry) => entry.classification === "pure-lua")).toEqual([]);
   });
 
   test("goal-covered dirs are covered-by-goal", () => {

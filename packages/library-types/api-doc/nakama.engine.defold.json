@@ -1,0 +1,165 @@
+{
+  "info": {
+    "namespace": "nakama.engine.defold",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "uuid",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "http",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "url_path",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "query_params",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "method",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "post_data",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "(response: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "socket_create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_message",
+          "doc": "",
+          "types": [
+            "(socket: symbol, message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "socket_connect",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "symbol"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "(success: boolean, error: string) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "socket_send",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "",
+          "types": [
+            "symbol"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
