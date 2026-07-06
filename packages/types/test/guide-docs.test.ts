@@ -514,6 +514,12 @@ describe("docs/guide/migrating-from-ts-defold.md", () => {
     expect(body).not.toContain("Add our toolchain");
   });
 
+  test("calls out in-place adoption as the migration strength", async () => {
+    const body = await readGuide("migrating-from-ts-defold.md");
+    expect(body).toContain("## In-place adoption is a migration strength");
+    expect(body).toContain("creating a wrapper folder");
+  });
+
   test("docs/guide/README.md Contents links the migration guide", async () => {
     const body = await readGuide("README.md");
     expect(body).toContain("./migrating-from-ts-defold.md");

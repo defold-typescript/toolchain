@@ -13,6 +13,14 @@ describe("renderMarkdown", () => {
     expect(html).toMatch(/<h2[^>]*id="hello-world"/);
   });
 
+  test("can replace the first h1 during rendering", async () => {
+    const html = await renderMarkdown("# defold-typescript\n\nBody\n", {
+      firstHeading: "Overview",
+    });
+    expect(html).toMatch(/<h1[^>]*id="overview"/);
+    expect(html).toContain("Overview");
+  });
+
   test("deduplicates repeated heading slugs with a numeric suffix", async () => {
     const html = await renderMarkdown("## Same\n\n## Same\n\n## Same\n");
     expect(html).toMatch(/<h2[^>]*id="same"/);

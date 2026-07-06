@@ -10,6 +10,7 @@ export interface NavLink {
 export interface NavCategory {
   id: string;
   label: string;
+  route?: string;
   links: NavLink[];
 }
 
@@ -167,7 +168,7 @@ export function buildNav(
         namespaces.map(({ label, route }) => toNavLink(label, route)),
       ),
     );
-  categories.push({ id: "api", label: "API", links: referenceLinks });
+  categories.push({ id: "api", label: "API", route: "/api", links: referenceLinks });
 
   // Vendored third-party libraries live in their own top-level tab after API, so
   // engine reference and community libraries read as distinct sections.
@@ -181,7 +182,12 @@ export function buildNav(
             lib.modules.map(({ label, route }) => toNavLink(label, route)),
           );
     });
-    categories.push({ id: "libraries", label: "Libraries", links: libraryLinks });
+    categories.push({
+      id: "libraries",
+      label: "Libraries",
+      route: "/libraries",
+      links: libraryLinks,
+    });
   }
 
   return categories;
@@ -236,6 +242,7 @@ export function activeCategoryId(route: string, nav: NavCategory[]): string | un
     for (const child of link.children ?? []) visit(id, child);
   };
   for (const category of nav) {
+    consider(category.id, category.route);
     for (const link of category.links) visit(category.id, link);
   }
   // Unmatched /api routes (versioned pages and the /api/<version> index have no

@@ -495,7 +495,7 @@ function firstRoute(links: NavLink[]): string | undefined {
 }
 
 function CategoryLink({ category, active }: { category: NavCategory; active: boolean }) {
-  const href = firstRoute(category.links) ?? "/";
+  const href = category.route ?? firstRoute(category.links) ?? "/";
   return (
     <a
       href={withBase(href)}
@@ -514,9 +514,22 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
   if (!category) return null;
   return (
     <nav aria-label={`${category.label} navigation`}>
-      <p class="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
-        {category.label}
-      </p>
+      {category.route ? (
+        <a
+          href={withBase(category.route)}
+          aria-current={path === category.route ? "page" : undefined}
+          class={
+            "mb-3 block rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-wider transition hover:bg-surface hover:text-text " +
+            (path === category.route ? "bg-accent-soft text-accent" : "text-text-faint")
+          }
+        >
+          {category.label}
+        </a>
+      ) : (
+        <p class="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
+          {category.label}
+        </p>
+      )}
       <SidebarItems links={category.links} path={path} />
     </nav>
   );
