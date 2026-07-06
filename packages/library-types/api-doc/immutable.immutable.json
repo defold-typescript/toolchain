@@ -1,0 +1,63 @@
+{
+  "info": {
+    "namespace": "immutable.immutable",
+    "brief": "Runtime immutable Lua table implementation",
+    "description": "Runtime immutable Lua table implementation"
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "table"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "make",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "original_table",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Readonly<T>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_immutable",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "table_to_check",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

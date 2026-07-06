@@ -35,6 +35,10 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - defold-tweener      — Insality, https://github.com/Insality/defold-tweener
     - squid               — paweljarosz, https://github.com/paweljarosz/squid
     - starly              — VowSoftware, https://github.com/VowSoftware/starly
+    - defold-log          — Insality, https://github.com/Insality/defold-log
+    - defold-metrics      — Britzl, https://github.com/britzl/defold-metrics
+    - deftest             — Britzl, https://github.com/britzl/deftest
+    - lua-immutable       — paweljarosz, https://github.com/paweljarosz/lua-immutable
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition

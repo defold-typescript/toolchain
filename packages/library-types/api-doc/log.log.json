@@ -1,0 +1,50 @@
+{
+  "info": {
+    "namespace": "log.log",
+    "brief": "Context logger with performance metrics for Defold",
+    "description": "Context logger with performance metrics for Defold"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get_logger",
+      "brief": "Create a new logger instance with an optional forced log level for debugging purposes.",
+      "description": "Create a new logger instance with an optional forced log level for debugging purposes.",
+      "parameters": [
+        {
+          "name": "this",
+          "doc": "",
+          "types": [
+            "void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "logger_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "force_logger_level_in_debug",
+          "doc": "",
+          "types": [
+            "'FATAL' | 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'TRACE'"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LoggerInstance"
+          ]
+        }
+      ]
+    }
+  ]
+}
