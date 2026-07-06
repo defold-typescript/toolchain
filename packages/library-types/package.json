@@ -127,6 +127,33 @@
     },
     "./starly.starly": {
       "types": "./generated/starly.starly.d.ts"
+    },
+    "./nakama.engine.defold": {
+      "types": "./generated/nakama.engine.defold.d.ts"
+    },
+    "./nakama.nakama": {
+      "types": "./generated/nakama.nakama.d.ts"
+    },
+    "./nakama.util.log": {
+      "types": "./generated/nakama.util.log.d.ts"
+    },
+    "./yagames.yagames": {
+      "types": "./generated/yagames.yagames.d.ts"
+    },
+    "./bridge.bridge": {
+      "types": "./generated/bridge.bridge.d.ts"
+    },
+    "./zzfx.api": {
+      "types": "./generated/zzfx.api.d.ts"
+    },
+    "./boom.boom": {
+      "types": "./generated/boom.boom.d.ts"
+    },
+    "./bzAnim.bzLibrary": {
+      "types": "./generated/bzAnim.bzLibrary.d.ts"
+    },
+    "./rendy.rendy": {
+      "types": "./generated/rendy.rendy.d.ts"
     }
   },
   "files": [

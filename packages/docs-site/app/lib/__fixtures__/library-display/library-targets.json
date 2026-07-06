@@ -1,0 +1,15 @@
+{
+  "source": {
+    "repo": "https://github.com/ts-defold/library",
+    "commit": "0000000000000000000000000000000000000000",
+    "license": "MIT"
+  },
+  "targets": [
+    {
+      "module": "alias.actual",
+      "path": "packages/aliased/alias.source.d.ts",
+      "fixture": "fixtures/ts-defold/alias.source.d.ts",
+      "generated": "generated/alias.actual.d.ts"
+    }
+  ]
+}

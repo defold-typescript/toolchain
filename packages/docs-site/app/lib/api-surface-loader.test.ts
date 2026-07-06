@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { githubOwner, libraryDisplayName, loadApiSurface } from "./api-surface-loader";
+import {
+  githubOwner,
+  libraryDisplayName,
+  libraryModuleDirs,
+  loadApiSurface,
+} from "./api-surface-loader";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
@@ -64,5 +69,12 @@ describe("loadApiSurface library displayName", () => {
     const one = libraryPages().find((p) => p.namespace === "demo.one");
     expect(one?.namespace).toBe("demo.one");
     expect(one?.route).toBe("/api/demo.one");
+  });
+
+  test("library targets map declared modules whose path stem differs from the module name", () => {
+    expect(libraryModuleDirs(LIBRARY_FIXTURE_DIR).get("alias.actual")).toBe("aliased");
+    const page = libraryPages().find((p) => p.namespace === "alias.actual");
+    expect(page?.displayName).toBe("alias / aliased");
+    expect(page?.module.description).toBe("Aliased module description.");
   });
 });

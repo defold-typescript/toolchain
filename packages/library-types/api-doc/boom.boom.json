@@ -1,0 +1,26 @@
+{
+  "info": {
+    "namespace": "boom.boom",
+    "brief": "Boom is a game framework built on top of Defold.",
+    "description": "Boom is a game framework built on top of Defold."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "boom",
+      "brief": "Start a boom game. Call this from your own game script",
+      "description": "Start a boom game. Call this from your own game script",
+      "parameters": [
+        {
+          "name": "game",
+          "doc": "Game loop function",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
