@@ -134,6 +134,23 @@ declare module 'inter.inter' {
 }
 `;
 
+const REFERENCED_INTERFACE = `/**
+ * Referenced interface module.
+ * @noResolution
+ */
+declare module 'ref.ref' {
+	interface Inst {
+		/** Save the instance. */
+		save(): boolean;
+		/** Instance tag. */
+		tag: string;
+	}
+
+	/** Create one. */
+	export function create(): Inst;
+}
+`;
+
 type EmittedField = {
   name: string;
   doc: string;
@@ -169,6 +186,19 @@ describe("extractApiDoc interface-backed module exports", () => {
 
     expect(module.functions.map((f) => f.name)).toEqual(["pan"]);
     expect(module.functions[0]?.returnValues[0]?.types).toEqual(["boolean"]);
+  });
+
+  test("emits referenced interfaces as typedefs with members", () => {
+    const module = parseDefoldApiDoc(extractApiDoc(REFERENCED_INTERFACE, "ref.ref"));
+
+    expect(module.functions.map((f) => f.name)).toEqual(["create"]);
+    const inst = module.typedefs.find((t) => t.name === "Inst");
+    expect(inst?.functions?.map((f) => f.name)).toEqual(["save"]);
+    expect(inst?.functions?.[0]?.brief).toBe("Save the instance.");
+    expect(inst?.functions?.[0]?.returnValues[0]?.types).toEqual(["boolean"]);
+    expect(inst?.properties).toEqual([
+      { name: "tag", brief: "Instance tag.", description: "Instance tag.", types: ["string"] },
+    ]);
   });
 
   test("leaves the top-level declaration extraction shape unchanged", () => {

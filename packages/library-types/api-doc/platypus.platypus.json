@@ -117,6 +117,515 @@
       "types": [
         "Direction"
       ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlatypusConfig",
+      "properties": [
+        {
+          "name": "collisions",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ groups: LuaMap<Hash, Direction>; left: number; right: number; top: number; bottom: number; offset?: Vector3; }"
+          ],
+          "fields": [
+            {
+              "name": "groups",
+              "doc": "",
+              "types": [
+                "LuaMap<Hash, Direction>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "left",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "right",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "top",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "bottom",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "offset",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "reparent",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "gravity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_velocity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "wall_jump_power_ratio_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "wall_jump_power_ratio_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "allow_double_jump",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "allow_wall_jump",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "const_wall_jump",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "allow_wall_slide",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "wall_slide_velocity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlatypusInstance",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_message",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message_id",
+              "doc": "",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "AnyNotNil"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "left",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "velocity",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "right",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "velocity",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "up",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "velocity",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "down",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "velocity",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "move",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "velocity",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "jump",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "power",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "force_jump",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "power",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "abort_jump",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "reduction",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "abort_wall_slide",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "has_ground_contact",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "has_wall_contact",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_falling",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_jumping",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_wall_jumping",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_wall_sliding",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "toggle_debug",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_collisions",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "collisions",
+              "doc": "",
+              "types": [
+                "{ top: number; left: number; right: number; bottom: number; }"
+              ],
+              "is_optional": "False",
+              "fields": [
+                {
+                  "name": "top",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "left",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "right",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "bottom",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                }
+              ]
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "velocity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
     }
   ]
 }
