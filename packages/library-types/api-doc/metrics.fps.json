@@ -1,0 +1,88 @@
+{
+  "info": {
+    "namespace": "metrics.fps",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "samples",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "format",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "position",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "color",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Metrics"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Metrics",
+      "properties": [
+        {
+          "name": "fps",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => number"
+          ]
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "draw",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        }
+      ]
+    }
+  ]
+}

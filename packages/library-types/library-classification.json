@@ -171,14 +171,14 @@
     },
     {
       "dir": "defold-log",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "log.log"
       ]
     },
     {
       "dir": "defold-metrics",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "metrics.fps",
         "metrics.mem"
@@ -378,7 +378,7 @@
     },
     {
       "dir": "deftest",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "deftest.deftest"
       ]
@@ -671,7 +671,7 @@
     },
     {
       "dir": "lua-immutable",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "immutable.immutable"
       ]

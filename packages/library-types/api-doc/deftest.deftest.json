@@ -1,0 +1,71 @@
+{
+  "info": {
+    "namespace": "deftest.deftest",
+    "brief": "Unit testing in Defold",
+    "description": "Unit testing in Defold"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "add",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "",
+          "types": [
+            "((...args: any[]) => unknown)[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "run",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "{ coverage?: { enabled?: boolean; }; pattern?: string; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "coverage",
+              "doc": "",
+              "types": [
+                "{ enabled?: boolean; }"
+              ],
+              "is_optional": "True",
+              "fields": [
+                {
+                  "name": "enabled",
+                  "doc": "",
+                  "types": [
+                    "boolean"
+                  ],
+                  "is_optional": "True"
+                }
+              ]
+            },
+            {
+              "name": "pattern",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -4,14 +4,19 @@
 import * as defcon from "defcon.console";
 import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
+import * as deftest from "deftest.deftest";
 import * as dicebag from "dicebag.dicebag";
 import * as event from "event.event";
 import * as gooey from "gooey.gooey";
+import * as immutable from "immutable.immutable";
 import * as accelerometer from "in.accelerometer";
 import * as button from "in.button";
 import * as state from "in.state";
 import * as triggers from "in.triggers";
 import * as lang from "lang.lang";
+import * as log from "log.log";
+import * as fps from "metrics.fps";
+import * as mem from "metrics.mem";
 import * as monarch from "monarch.monarch";
 import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
@@ -199,6 +204,43 @@ const _sqEnabled: boolean = squid.get_config().is_enabled;
 // `vmath.matrix4`) for a `Hash` camera id, and `is_shaking` returns a boolean.
 const _stView: Matrix4 = starly.get_view(_hash);
 const _stShaking: boolean = starly.is_shaking(_hash);
+
+// log.log — contextual loggers expose level-scoped methods and an optional
+// forced debug level union.
+const _logger = log.get_logger("core");
+const _debugLogger = log.get_logger("core", "DEBUG");
+loggerProof(_logger);
+function loggerProof(logger: ReturnType<typeof log.get_logger>): void {
+  logger.info("msg");
+  logger.debug("msg");
+  logger.warn("msg");
+  logger.error("msg");
+  logger.trace("msg", {});
+}
+
+// metrics.* — each submodule has its own Metrics interface, so fps and mem
+// accessors stay scoped to their module.
+const _fpsMetrics = fps.create();
+const _configuredFpsMetrics = fps.create(60, "%.1f", "top-left", "white");
+const _fpsValue: number = _fpsMetrics.fps();
+_fpsMetrics.update();
+_fpsMetrics.draw();
+const _memMetrics = mem.create();
+const _memValue: number = _memMetrics.mem();
+_memMetrics.update();
+_memMetrics.draw();
+
+// deftest.deftest — module exports compile without pulling the ambient test
+// globals into this proof file.
+deftest.add(() => {});
+deftest.run();
+deftest.run({ coverage: { enabled: true }, pattern: "foo" });
+
+// immutable.immutable — generic `Readonly<T>` output and scalar predicate resolve
+// alongside tstl language-extension collection aliases.
+const _immutableStats = immutable.make({ hp: 10 });
+const _immutableHp: number = _immutableStats.hp;
+const _isImmutable: boolean = immutable.is_immutable(_immutableStats);
 
 void _mHash;
 void _ok;
