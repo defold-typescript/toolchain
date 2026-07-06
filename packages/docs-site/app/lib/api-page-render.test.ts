@@ -385,6 +385,25 @@ describe("apiPageMarkdown library provenance block", () => {
   });
 });
 
+describe("apiPageMarkdown display name", () => {
+  test("renders the alias as the H1 and keeps the raw namespace visible beneath it", () => {
+    const md = apiPageMarkdown(
+      libraryPageWithMeta({ displayName: "britzl / defold-orthographic" }),
+      (t) => t,
+    );
+    const iTitle = md.indexOf("# britzl / defold-orthographic");
+    const iNamespace = md.indexOf("`orthographic.camera`");
+    expect(iTitle).toBe(0);
+    expect(iNamespace).toBeGreaterThan(iTitle);
+    expect(md).not.toContain("# orthographic.camera");
+  });
+
+  test("a page without displayName renders `# <namespace>` unchanged", () => {
+    const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
+    expect(md.startsWith("# wmath")).toBe(true);
+  });
+});
+
 describe("apiLinkify", () => {
   test("links a bare member mention to the page's version-scoped route", () => {
     const linkify = apiLinkify([versionedWmathPage()]);

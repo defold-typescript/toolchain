@@ -1,0 +1,8 @@
+{
+  "source": {
+    "repo": "https://github.com/ts-defold/library",
+    "commit": "0000000000000000000000000000000000000000",
+    "license": "MIT"
+  },
+  "dirs": [{ "dir": "demolib", "modules": ["demo.one", "demo.two"] }]
+}

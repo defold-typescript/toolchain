@@ -13,7 +13,13 @@ import { withBase } from "../lib/base";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
-import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
+import {
+  activeCategoryId,
+  buildNav,
+  libraryNavGroups,
+  type NavCategory,
+  type NavLink,
+} from "../lib/nav";
 import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
 import { buildVersionSwitcher, type VersionSwitcherEntry } from "../lib/version-switch";
 
@@ -210,25 +216,13 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const allApiPages = apiPages();
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
 
-  // Group vendored library pages by their upstream `dir` for the Libraries
-  // subgroup: modules of a multi-module library nest under one header, a
-  // single-module library becomes a leaf. Libraries and their modules sort
-  // alphabetically for stable nav output.
-  const moduleDir = libraryDirs();
-  const byDir = new Map<string, { label: string; route: string }[]>();
-  for (const page of allApiPages.filter((p) => p.category === "library")) {
-    const dir = moduleDir.get(page.namespace) ?? page.namespace;
-    const bucket = byDir.get(dir);
-    if (bucket) bucket.push(toNamespace(page));
-    else byDir.set(dir, [toNamespace(page)]);
-  }
-  const libraries = [...byDir.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([dir, modules]) => ({
-      dir,
-      label: dir,
-      modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
-    }));
+  // Vendored library pages grouped by their upstream `dir` for the Libraries
+  // subgroup; each module leaf carries its author-first `displayName` while the
+  // route stays the dotted namespace slug.
+  const libraries = libraryNavGroups(
+    allApiPages.filter((p) => p.category === "library"),
+    libraryDirs(),
+  );
 
   const nav = buildNav(guidePages(), {
     globals: allApiPages.filter((p) => p.namespace === "globals").map(toNamespace),
