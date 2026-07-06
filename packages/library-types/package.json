@@ -58,6 +58,18 @@
     "./in.triggers": {
       "types": "./generated/in.triggers.d.ts"
     },
+    "./immutable.immutable": {
+      "types": "./generated/immutable.immutable.d.ts"
+    },
+    "./log.log": {
+      "types": "./generated/log.log.d.ts"
+    },
+    "./metrics.fps": {
+      "types": "./generated/metrics.fps.d.ts"
+    },
+    "./metrics.mem": {
+      "types": "./generated/metrics.mem.d.ts"
+    },
     "./platypus.platypus": {
       "types": "./generated/platypus.platypus.d.ts"
     },
@@ -100,6 +112,9 @@
     },
     "./defmath.defmath": {
       "types": "./generated/defmath.defmath.d.ts"
+    },
+    "./deftest.deftest": {
+      "types": "./generated/deftest.deftest.d.ts"
     },
     "./dicebag.dicebag": {
       "types": "./generated/dicebag.dicebag.d.ts"
