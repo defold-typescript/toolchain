@@ -372,6 +372,65 @@ describe("apiModuleMarkdown", () => {
     expect(md).toContain("Runs the demo.");
     expect(md).toContain("### `demo.run()`");
   });
+
+  test("renders member-bearing typedefs under a Types section", () => {
+    const md = apiModuleMarkdown({
+      namespace: "demo",
+      module: {
+        namespace: "demo",
+        brief: "Demo brief",
+        description: "Demo module.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [
+          {
+            name: "LoggerInstance",
+            functions: [
+              {
+                name: "info",
+                brief: "",
+                description: "Writes an info message.",
+                parameters: [
+                  { name: "message", doc: "message text", types: ["string"], isOptional: false },
+                ],
+                returnValues: [],
+              },
+            ],
+            properties: [
+              { name: "level", brief: "", description: "Current log level.", types: ["number"] },
+            ],
+          },
+        ],
+      },
+    });
+    expect(md).toContain("## Types");
+    expect(md).toContain("### LoggerInstance");
+    expect(md).toContain("#### `info(message: string)`");
+    expect(md).toContain("Writes an info message.");
+    expect(md).toContain("message — message text");
+    expect(md).toContain("#### `level: number`");
+    expect(md).toContain("Current log level.");
+  });
+
+  test("omits the Types section for memberless typedefs", () => {
+    const md = apiModuleMarkdown({
+      namespace: "demo",
+      module: {
+        namespace: "demo",
+        brief: "Demo brief",
+        description: "Demo module.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [{ name: "Alias" }],
+      },
+    });
+    expect(md).not.toContain("## Types");
+    expect(md).not.toContain("Alias");
+  });
 });
 
 describe("apiModuleSymbols", () => {
@@ -449,6 +508,47 @@ describe("apiModuleSymbols", () => {
       ["property", "position: Vector3"],
     ]);
     expect(symbols.every((s) => s.exampleMarkdown === undefined)).toBe(true);
+  });
+
+  test("emits type member symbols for member-bearing typedefs only", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        typedefs: [
+          {
+            name: "LoggerInstance",
+            functions: [
+              {
+                name: "info",
+                brief: "",
+                description: "Writes an info message.",
+                parameters: [
+                  { name: "message", doc: "message text", types: ["string"], isOptional: false },
+                ],
+                returnValues: [],
+              },
+            ],
+            properties: [
+              { name: "level", brief: "", description: "Current log level.", types: ["number"] },
+            ],
+          },
+          { name: "BareAlias" },
+        ],
+      }),
+    );
+    expect(symbols.map((s) => [s.kind, s.name, s.signature, s.docMarkdown])).toEqual([
+      [
+        "type",
+        "LoggerInstance.info",
+        "LoggerInstance.info(message: string)",
+        "Writes an info message.",
+      ],
+      ["type", "LoggerInstance.level", "LoggerInstance.level: number", "Current log level."],
+    ]);
+    expect(symbols[0]?.parameters).toEqual([
+      { name: "message", doc: "message text", types: ["string"], isOptional: false },
+    ]);
+    expect(symbols[1]?.parameters).toEqual([]);
+    expect(symbols.every((s) => s.returnValues.length === 0)).toBe(true);
   });
 
   test("carries structured parameters and named return values for a function", () => {

@@ -97,6 +97,45 @@ function fieldsPage(): ApiPage {
   };
 }
 
+function typedefPage(): ApiPage {
+  return {
+    namespace: "demo",
+    route: "/api/demo",
+    brief: "Demo",
+    module: {
+      namespace: "demo",
+      brief: "Demo",
+      description: "Type demo.",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [
+        {
+          name: "LoggerInstance",
+          functions: [
+            {
+              name: "info",
+              brief: "",
+              description: "Writes an info message.",
+              parameters: [
+                { name: "message", doc: "message text", types: ["string"], isOptional: false },
+              ],
+              returnValues: [],
+            },
+          ],
+          properties: [
+            { name: "level", brief: "", description: "Current log level.", types: ["number"] },
+          ],
+        },
+      ],
+    },
+    translations: {},
+    signatures: {},
+    category: "library",
+  };
+}
+
 // A vendored library page carrying the structured provenance metadata the
 // uniform render block reads.
 function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
@@ -244,6 +283,16 @@ describe("apiPageMarkdown", () => {
       "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>",
     );
     expect(md).not.toContain(`\`${thin}\``);
+  });
+
+  test("renders member-bearing typedefs as a Types section", () => {
+    const md = apiPageMarkdown(typedefPage(), (t) => t);
+    expect(md).toContain("## Types");
+    expect(md).toContain("### `LoggerInstance.info(message: string)`");
+    expect(md).toContain("Writes an info message.");
+    expect(md).toContain("- `message`: `string` — message text");
+    expect(md).toContain("### `LoggerInstance.level: number`");
+    expect(md).toContain("Current log level.");
   });
 });
 
