@@ -38,17 +38,20 @@ function anchoredGoals(stepMd: string): string[] {
   return goals;
 }
 
-// PRD `### <goal>` blocks -> { status, hasImpl }. The Impl bullet may be a single
-// line (`- **Impl**: [link]`) or a header followed by indented sub-bullets, so the
+type PrdGoal = { status: string; hasImpl: boolean; sourceFile: string; block: string };
+
+// PRD `### <goal>` blocks -> goal info. The Impl bullet may be a single line
+// (`- **Impl**: [link]`) or a header followed by indented sub-bullets, so the
 // link is detected across the whole Impl region, not just the marker line.
-function parsePrdGoals(md: string): Map<string, { status: string; hasImpl: boolean }> {
-  const out = new Map<string, { status: string; hasImpl: boolean }>();
+function parsePrdGoals(md: string, sourceFile = ""): Map<string, PrdGoal> {
+  const out = new Map<string, PrdGoal>();
   let cur: string | null = null;
   let status = "";
   let hasImpl = false;
   let inImpl = false;
+  let block: string[] = [];
   const flush = () => {
-    if (cur) out.set(cur, { status, hasImpl });
+    if (cur) out.set(cur, { status, hasImpl, sourceFile, block: block.join("\n") });
   };
   for (const line of md.split("\n")) {
     const h = line.match(/^### (\S+)\s*$/);
@@ -58,9 +61,11 @@ function parsePrdGoals(md: string): Map<string, { status: string; hasImpl: boole
       status = "";
       hasImpl = false;
       inImpl = false;
+      block = [line];
       continue;
     }
     if (!cur) continue;
+    block.push(line);
     const s = line.match(/^- \*\*Status\*\*:\s*(.+?)\s*$/);
     if (s) {
       status = s[1] ?? "";
@@ -80,6 +85,23 @@ function parsePrdGoals(md: string): Map<string, { status: string; hasImpl: boole
   return out;
 }
 
+const PARKED_BLOCKER_PATTERNS = [
+  /(^|\n)- \*\*Impl\*\*:\s*none yet\b/i,
+  /\bcannot be planned until\b/i,
+  /\bStays parked\b/i,
+];
+
+function parkedBlockerGoals(goals: Map<string, PrdGoal>): string[] {
+  const offenders: string[] = [];
+  for (const [goal, info] of goals) {
+    if (info.status === "shipped") continue;
+    if (PARKED_BLOCKER_PATTERNS.some((pattern) => pattern.test(info.block))) {
+      offenders.push(info.sourceFile ? `${goal} (${info.sourceFile})` : goal);
+    }
+  }
+  return offenders;
+}
+
 // goal id -> the index statuses of every step anchored to it.
 function coveringStatuses(): Map<string, string[]> {
   const index = parseIndexStatus(readFileSync(join(implDir, "README.md"), "utf8"));
@@ -96,11 +118,11 @@ function coveringStatuses(): Map<string, string[]> {
   return out;
 }
 
-function allPrdGoals(): Map<string, { status: string; hasImpl: boolean }> {
-  const out = new Map<string, { status: string; hasImpl: boolean }>();
+function allPrdGoals(): Map<string, PrdGoal> {
+  const out = new Map<string, PrdGoal>();
   for (const f of readdirSync(prdDir)) {
     if (!f.endsWith(".md") || f === "README.md") continue;
-    for (const [goal, info] of parsePrdGoals(readFileSync(join(prdDir, f), "utf8"))) {
+    for (const [goal, info] of parsePrdGoals(readFileSync(join(prdDir, f), "utf8"), f)) {
       out.set(goal, info);
     }
   }
@@ -145,6 +167,28 @@ describe("PRD goal status drift", () => {
       if (!info.hasImpl) offenders.push(goal);
     }
     expect(offenders).toEqual([]);
+  });
+
+  test.skipIf(!present)("active PRD goals do not contain parked-blocker language", () => {
+    expect(parkedBlockerGoals(allPrdGoals())).toEqual([]);
+  });
+
+  test("parked-blocker parser reports only active blocked goals", () => {
+    const goals = parsePrdGoals(
+      [
+        "### parked-goal",
+        "- **Status**: planned",
+        "- **Impl**: none yet",
+        "- **Why**: Stays parked until upstream exists.",
+        "",
+        "### shipped-goal",
+        "- **Status**: shipped",
+        "- **Impl**: [done](../impl/done.md)",
+        "- **Why**: normal shipped goal.",
+      ].join("\n"),
+      "synthetic.md",
+    );
+    expect(parkedBlockerGoals(goals)).toEqual(["parked-goal (synthetic.md)"]);
   });
 
   test("resolver keys off the PRD anchor, not the Goal line or index column", () => {
