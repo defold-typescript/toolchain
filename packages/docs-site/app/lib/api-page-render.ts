@@ -117,12 +117,18 @@ function libraryMetaBlock(meta: LibraryMeta): string[] {
 // examples and bullet lists render verbatim. ref-doc descriptions are HTML and
 // still flow through `htmlToDocText` first.
 export function apiPageMarkdown(
-  page: Pick<ApiPage, "module" | "translations" | "signatures" | "category" | "libraryMeta">,
+  page: Pick<
+    ApiPage,
+    "module" | "translations" | "signatures" | "category" | "libraryMeta" | "displayName"
+  >,
   linkify: (text: string) => string,
 ): string {
   const m = page.module;
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
-  const lines: string[] = [`# ${m.namespace}`, ""];
+  const lines: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
+  if (page.displayName && page.displayName !== m.namespace) {
+    lines.push(`\`${m.namespace}\``, "");
+  }
   const raw = m.description || m.brief;
   const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
   if (intro) lines.push(linkify(intro), "");

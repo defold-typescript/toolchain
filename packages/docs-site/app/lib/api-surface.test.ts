@@ -300,6 +300,43 @@ describe("apiModuleMarkdown", () => {
     expect(md).not.toContain("<span");
   });
 
+  test("renders displayName as the H1 and keeps the raw namespace visible beneath it", () => {
+    const md = apiModuleMarkdown({
+      namespace: "squid.squid",
+      displayName: "paweljarosz / squid",
+      module: {
+        namespace: "squid.squid",
+        brief: "Squid",
+        description: "Squid helpers.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+    });
+    expect(md).toContain("# paweljarosz / squid");
+    expect(md).not.toContain("# squid.squid");
+    expect(md).toContain("`squid.squid`");
+  });
+
+  test("a page without displayName renders `# <namespace>` unchanged", () => {
+    const md = apiModuleMarkdown({
+      namespace: "camera",
+      module: {
+        namespace: "camera",
+        brief: "Camera",
+        description: "Camera module.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+    });
+    expect(md).toContain("# camera");
+  });
+
   function paramDocPage(
     parameters: { name: string; doc: string; types: string[]; isOptional: boolean }[],
     returnValues: { name: string; doc: string; types: string[]; isOptional: boolean }[],
