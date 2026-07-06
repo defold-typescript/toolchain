@@ -120,6 +120,42 @@ describe("parseDefoldApiDoc", () => {
     };
     const module = parseDefoldApiDoc(doc);
     expect(module.typedefs.map((t) => t.name)).toEqual(["render_target", "constant_buffer"]);
+    expect(module.typedefs.every((t) => t.functions === undefined)).toBe(true);
+    expect(module.typedefs.every((t) => t.properties === undefined)).toBe(true);
+  });
+
+  test("collects TYPEDEF member functions and properties", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        {
+          type: "TYPEDEF",
+          name: "Inst",
+          functions: [
+            {
+              name: "save",
+              brief: "Save it.",
+              description: "Save it.",
+              parameters: [],
+              returnvalues: [{ name: "", doc: "ok", types: ["boolean"] }],
+            },
+          ],
+          properties: [{ name: "tag", types: ["string"] }],
+        },
+        { type: "TYPEDEF", name: "Bare" },
+      ],
+    };
+    const module = parseDefoldApiDoc(doc);
+    const inst = module.typedefs.find((t) => t.name === "Inst");
+    expect(inst?.functions?.map((fn) => fn.name)).toEqual(["save"]);
+    expect(inst?.functions?.[0]?.brief).toBe("Save it.");
+    expect(inst?.functions?.[0]?.returnValues[0]?.types).toEqual(["boolean"]);
+    expect(inst?.properties).toEqual([
+      { name: "tag", brief: "", description: "", types: ["string"] },
+    ]);
+    const bare = module.typedefs.find((t) => t.name === "Bare");
+    expect(bare?.functions).toBeUndefined();
+    expect(bare?.properties).toBeUndefined();
   });
 
   test("a PROPERTY with no type span parses to an empty types array", () => {

@@ -70,12 +70,15 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
 
   const elements: Record<string, unknown>[] = [];
   const emittedNames = new Set<string>();
+  const referencedTypeNodes: ts.TypeNode[] = [];
   for (const stmt of moduleBlock?.statements ?? []) {
     if (ts.isFunctionDeclaration(stmt) && stmt.name && isExported(stmt)) {
+      collectFunctionReferenceTypes(stmt, referencedTypeNodes);
       elements.push(functionElement(stmt, stmt.name.text, sf));
       emittedNames.add(stmt.name.text);
     } else if (ts.isVariableStatement(stmt) && isExported(stmt)) {
       for (const decl of stmt.declarationList.declarations) {
+        if (decl.type) referencedTypeNodes.push(decl.type);
         const fields = objectFields(decl.type, sf);
         const name = decl.name.getText(sf);
         elements.push({
@@ -92,15 +95,18 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
     }
   }
 
-  for (const iface of exportedValueInterfaces(moduleBlock)) {
+  const moduleValueInterfaces = exportedValueInterfaces(moduleBlock);
+  for (const iface of moduleValueInterfaces) {
     for (const member of iface.members) {
       if (!member.name) continue;
       const name = memberName(member.name, sf);
       if (emittedNames.has(name)) continue;
       if (ts.isMethodSignature(member)) {
+        collectFunctionReferenceTypes(member, referencedTypeNodes);
         elements.push(functionElement(member, name, sf));
         emittedNames.add(name);
       } else if (ts.isPropertySignature(member)) {
+        if (member.type) referencedTypeNodes.push(member.type);
         const fields = objectFields(member.type, sf);
         elements.push({
           type: "VARIABLE",
@@ -111,6 +117,19 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         emittedNames.add(name);
       }
     }
+  }
+
+  const moduleValueInterfaceNames = new Set(moduleValueInterfaces.map((iface) => iface.name.text));
+  for (const iface of referencedInterfaces(
+    moduleBlock,
+    referencedTypeNodes,
+    moduleValueInterfaceNames,
+  )) {
+    if (emittedNames.has(iface.name.text)) continue;
+    const typedef = typedefElement(iface, sf);
+    if (!typedef) continue;
+    elements.push(typedef);
+    emittedNames.add(iface.name.text);
   }
 
   return {
@@ -162,6 +181,81 @@ function functionElement(
     returnvalues,
     ...(example === "" ? {} : { examples: example }),
   };
+}
+
+function collectFunctionReferenceTypes(
+  decl: ts.FunctionDeclaration | ts.MethodSignature,
+  out: ts.TypeNode[],
+): void {
+  for (const param of decl.parameters) {
+    if (param.type) out.push(param.type);
+  }
+  if (decl.type) out.push(decl.type);
+}
+
+function typedefElement(
+  iface: ts.InterfaceDeclaration,
+  sf: ts.SourceFile,
+): Record<string, unknown> | undefined {
+  const functions: Record<string, unknown>[] = [];
+  const properties: Record<string, unknown>[] = [];
+  for (const member of iface.members) {
+    if (!member.name) continue;
+    const name = memberName(member.name, sf);
+    if (ts.isMethodSignature(member)) {
+      functions.push(functionElement(member, name, sf));
+    } else if (ts.isPropertySignature(member)) {
+      const summary = jsDocSummary(member);
+      const fields = objectFields(member.type, sf);
+      properties.push({
+        name,
+        brief: briefOf(summary),
+        description: summary,
+        types: member.type ? [typeText(member.type, sf)] : [],
+        ...(fields ? { fields } : {}),
+      });
+    }
+  }
+  if (functions.length === 0 && properties.length === 0) return undefined;
+  return {
+    type: "TYPEDEF",
+    name: iface.name.text,
+    ...(functions.length > 0 ? { functions } : {}),
+    ...(properties.length > 0 ? { properties } : {}),
+  };
+}
+
+function referencedInterfaces(
+  moduleBlock: ts.ModuleBlock | undefined,
+  typeNodes: ts.TypeNode[],
+  excludedNames: ReadonlySet<string>,
+): ts.InterfaceDeclaration[] {
+  if (!moduleBlock) return [];
+  const aliases = new Map<string, ts.TypeAliasDeclaration>();
+  const interfaces = new Map<string, ts.InterfaceDeclaration>();
+  for (const stmt of moduleBlock.statements) {
+    if (ts.isTypeAliasDeclaration(stmt)) aliases.set(stmt.name.text, stmt);
+    if (ts.isInterfaceDeclaration(stmt)) interfaces.set(stmt.name.text, stmt);
+  }
+
+  const found = new Map<string, ts.InterfaceDeclaration>();
+  const seenAliases = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
+      const name = node.typeName.text;
+      const iface = interfaces.get(name);
+      if (iface && !excludedNames.has(name)) found.set(name, iface);
+      const alias = aliases.get(name);
+      if (alias && !seenAliases.has(name)) {
+        seenAliases.add(name);
+        visit(alias.type);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  for (const node of typeNodes) visit(node);
+  return [...found.values()];
 }
 
 function exportedValueInterfaces(
