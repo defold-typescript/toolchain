@@ -66,7 +66,12 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   );
 
   const moduleBlock = findModuleBlock(sf);
-  const summary = moduleBlock ? jsDocSummary(moduleBlock.parent) : "";
+  const rawSummary = moduleBlock ? jsDocSummary(moduleBlock.parent) : "";
+  // ts-defold marks a hand-written stub module with a fixed "definition stub"
+  // JSDoc that carries no real docs. Emitting it as `info.description` would
+  // shadow the docs-site fallback to the GitHub-sourced `library-descriptions`
+  // text, so treat the sentinel as no summary and let that fallback fill in.
+  const summary = isStubSummary(rawSummary) ? "" : rawSummary;
 
   const elements: Record<string, unknown>[] = [];
   const emittedNames = new Set<string>();
@@ -343,6 +348,14 @@ function jsDocSummary(node: ts.Node): string {
 
 function briefOf(summary: string): string {
   return summary.split("\n")[0]?.trim() ?? "";
+}
+
+// The verbatim first line of ts-defold's "definition stub" JSDoc marker.
+const STUB_SUMMARY_MARKER = "This is a definition stub with incomplete or untested signatures.";
+
+/** Whether a module summary is ts-defold's placeholder stub marker (no real docs). */
+function isStubSummary(summary: string): boolean {
+  return summary.startsWith(STUB_SUMMARY_MARKER);
 }
 
 function paramDocMap(

@@ -347,6 +347,23 @@ describe("extractApiDoc", () => {
     });
   });
 
+  test("drops ts-defold's 'definition stub' marker so info.description stays empty", () => {
+    const stub = `/**
+ * This is a definition stub with incomplete or untested signatures.
+ * Contributions to improve the accuracy of these types are welcome.
+ * @see {@link https://github.com/owner/repo|Github Source}
+ * @noResolution
+ */
+declare module 'stub.stub' {
+	export const VERSION: number;
+}`;
+    const emitted = extractApiDoc(stub, "stub.stub") as {
+      info: { brief: string; description: string };
+    };
+    expect(emitted.info.brief).toBe("");
+    expect(emitted.info.description).toBe("");
+  });
+
   test("round-trips through parseDefoldApiDoc into a populated ApiModule", () => {
     const module = parseDefoldApiDoc(extractApiDoc(DEMO, "demo.demo"));
     expect(module.namespace).toBe("demo.demo");
