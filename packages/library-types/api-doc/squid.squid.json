@@ -12,6 +12,370 @@
     {
       "type": "TYPEDEF",
       "name": "Squid"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TRACE",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DEBUG",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "INFO",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WARN",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Create a new instance of the Squid logger",
+      "description": "Create a new instance of the Squid logger",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "is_allowed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "SquidInstance"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_config",
+      "brief": "Get Squid configuration",
+      "description": "Get Squid configuration",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "SquidConfig"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_config",
+      "brief": "Set and use user configuration",
+      "description": "Set and use user configuration",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "SquidConfig"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initialize Squid for error and crash handling and logging",
+      "description": "Initialize Squid for error and crash handling and logging",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_allowed",
+      "brief": "Set if logs should be saved to file",
+      "description": "Set if logs should be saved to file",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "trace",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "AnyNotNil"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "debug",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "AnyNotNil"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "info",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "AnyNotNil"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "warn",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "AnyNotNil"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "error",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "AnyNotNil"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "log",
+      "brief": "Log message with provided level, message, data and tag",
+      "description": "Log message with provided level, message, data and tag",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "level",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "AnyNotNil"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_logs",
+      "brief": "Explicitly save buffer of unsaved logs to file",
+      "description": "Explicitly save buffer of unsaved logs to file",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if saved logs successfully, false otherwise",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Finalize Squid logging - check for crashes and saved all unsaved buffered logs",
+      "description": "Finalize Squid logging - check for crashes and saved all unsaved buffered logs",
+      "parameters": [],
+      "returnvalues": []
     }
   ]
 }

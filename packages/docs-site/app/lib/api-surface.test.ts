@@ -258,7 +258,7 @@ describe("loadApiSurface library descriptions", () => {
   test("a page whose api-doc fixture already carries a description keeps its own richer text", () => {
     const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
     expect(monarch?.module.description ?? "").toContain("Monarch is a screen manager");
-    expect(monarch?.module.description).not.toBe(descByDir["monarch"]);
+    expect(monarch?.module.description).not.toBe(descByDir.monarch);
   });
 });
 

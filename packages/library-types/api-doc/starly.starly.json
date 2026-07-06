@@ -12,6 +12,477 @@
     {
       "type": "TYPEDEF",
       "name": "Starley"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "c_display_width",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "c_display_height",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "c_display_ratio",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "c_behavior_center",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "c_behavior_expand",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "c_behavior_mixed",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "c_behavior_stretch",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Creates a camera. This function is called automatically in the game object's script component.",
+      "description": "Creates a camera. This function is called automatically in the game object's script component.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "destroy",
+      "brief": "Destroys a camera. This function is called automatically in the game object's script component.",
+      "description": "Destroys a camera. This function is called automatically in the game object's script component.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "activate",
+      "brief": "Activates a camera. This function should be called in the render script before any making any draw calls.",
+      "description": "Activates a camera. This function should be called in the render script before any making any draw calls.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "frustum",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shake",
+      "brief": "Shakes a camera.",
+      "description": "Shakes a camera.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "count",
+          "doc": "Amount of pingpong movements.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "Duration of each pingpong.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "radius",
+          "doc": "Distance of each pingpong.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "durationScalar",
+          "doc": "After each pingpong, the duration is scaled by this value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "radiusScalar",
+          "doc": "After each pingpong, the radius is scaled by this value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_shake",
+      "brief": "Cancels an ongoing camera shake.",
+      "description": "Cancels an ongoing camera shake.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_shaking",
+      "brief": "Checks if a camera is shaking.",
+      "description": "Checks if a camera is shaking.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_offset",
+      "brief": "Gets the position offset of a camera after moving distance units, accounting for zoom and rotation.",
+      "description": "Gets the position offset of a camera after moving distance units, accounting for zoom and rotation.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "distance",
+          "doc": "Position offset, before accounting for zoom and rotation.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "absolute",
+          "doc": "Determines if `distance` is in absolute world coordinates, which ignore rotation.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_world_area",
+      "brief": "Gets the world area of a camera, which is defined as the rectangular area of the world that the camera can see, in world coordinates.",
+      "description": "Gets the world area of a camera, which is defined as the rectangular area of the world that the camera can see, in world coordinates.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "x, y, width, height",
+          "types": [
+            "LuaMultiReturn<[ number, number, number, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_tight_world_area",
+      "brief": "Gets the center position, minimum zoom, and minimum world area of a camera that can see all positions.",
+      "description": "Gets the center position, minimum zoom, and minimum world area of a camera that can see all positions.\n\nThis function was inspired by Super Smash Bros, where the camera moves and zooms to center and include all characters, with only a small amount of padding to the sides of the window.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "positions",
+          "doc": "Array of `vector3` positions, in world coordinates.",
+          "types": [
+            "Vector3[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "position, zoom, x, y, width, height",
+          "types": [
+            "LuaMultiReturn<[ Vector3, number, number, number, number, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_to_world",
+      "brief": "Converts screen coordinates to world coordinates.",
+      "description": "Converts screen coordinates to world coordinates.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "screenX",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "screenY",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "visible",
+          "doc": "Determines if the cursor must be visible to the camera. If `true`, then this function returns `undefined` when the cursor is outside the camera's viewport.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3 | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "world_to_screen",
+      "brief": "Converts world coordinates to screen coordinates.",
+      "description": "Converts world coordinates to screen coordinates.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "worldPosition",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "visible",
+          "doc": "Determines if the cursor must be visible to the camera. If `true`, then this function returns `undefined` when the cursor is outside the camera's viewport.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3 | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_viewport",
+      "brief": "Gets the viewport of a camera, in screen coordinates.",
+      "description": "Gets the viewport of a camera, in screen coordinates.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "x, y, width, height",
+          "types": [
+            "LuaMultiReturn<[ number, number, number, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_view",
+      "brief": "Gets the view of a camera.",
+      "description": "Gets the view of a camera.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_projection",
+      "brief": "Gets the projection of a camera.",
+      "description": "Gets the projection of a camera.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Camera game object id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
     }
   ]
 }
