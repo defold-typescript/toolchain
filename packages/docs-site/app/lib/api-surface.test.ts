@@ -304,6 +304,7 @@ describe("apiModuleMarkdown", () => {
     const md = apiModuleMarkdown({
       namespace: "squid.squid",
       displayName: "paweljarosz / squid",
+      category: "library",
       module: {
         namespace: "squid.squid",
         brief: "Squid",
@@ -323,6 +324,7 @@ describe("apiModuleMarkdown", () => {
   test("a page without displayName renders `# <namespace>` unchanged", () => {
     const md = apiModuleMarkdown({
       namespace: "camera",
+      category: "engine",
       module: {
         namespace: "camera",
         brief: "Camera",
@@ -413,6 +415,7 @@ describe("apiModuleMarkdown", () => {
   test("renders member-bearing typedefs under a Types section", () => {
     const md = apiModuleMarkdown({
       namespace: "demo",
+      category: "engine",
       module: {
         namespace: "demo",
         brief: "Demo brief",
@@ -454,6 +457,7 @@ describe("apiModuleMarkdown", () => {
   test("omits the Types section for memberless typedefs", () => {
     const md = apiModuleMarkdown({
       namespace: "demo",
+      category: "engine",
       module: {
         namespace: "demo",
         brief: "Demo brief",
@@ -1180,6 +1184,112 @@ describe("groupFunctionSymbols", () => {
 
   test("yields an empty array for empty input", () => {
     expect(groupFunctionSymbols([])).toEqual([]);
+  });
+});
+
+describe("library-category token rendering", () => {
+  function libraryPage(module: Partial<ApiPage["module"]>): ApiPage {
+    return {
+      namespace: "event.event",
+      route: "/api/event.event",
+      brief: "Event",
+      module: {
+        namespace: "event.event",
+        brief: "Event",
+        description: "Event helpers.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+        ...module,
+      },
+      translations: {},
+      signatures: {},
+      category: "library",
+    };
+  }
+
+  test("renders a library typedef member's `this: any` verbatim, not remapped to unknown", () => {
+    const module: Partial<ApiPage["module"]> = {
+      typedefs: [
+        {
+          name: "EventInstance",
+          functions: [
+            {
+              name: "trigger",
+              brief: "",
+              description: "Triggers the event.",
+              parameters: [{ name: "this", doc: "", types: ["any"], isOptional: false }],
+              returnValues: [],
+            },
+          ],
+          properties: [],
+        },
+      ],
+    };
+    const md = apiModuleMarkdown(libraryPage(module));
+    expect(md).toContain("trigger(this: any)");
+    expect(md).not.toContain("this: unknown");
+    const sig = apiModuleSymbols(libraryPage(module)).find(
+      (s) => s.name === "EventInstance.trigger",
+    )?.signature;
+    expect(sig).toBe("EventInstance.trigger(this: any)");
+  });
+
+  test("renders DEFOLD_TYPE_MAP-key tokens that are valid TS verbatim for a library module", () => {
+    const sig = apiModuleSymbols(
+      libraryPage({
+        functions: [
+          {
+            name: "event.on",
+            brief: "",
+            description: "Subscribes.",
+            parameters: [
+              { name: "callback", doc: "", types: ["function"], isOptional: false },
+              { name: "context", doc: "", types: ["any"], isOptional: false },
+            ],
+            returnValues: [{ name: "", doc: "", types: ["table"], isOptional: false }],
+          },
+        ],
+      }),
+    )[0]?.signature;
+    expect(sig).toBe("event.on(callback: function, context: any): table");
+  });
+
+  test("still maps ref-doc tokens through DEFOLD_TYPE_MAP for an engine module", () => {
+    const enginePage: ApiPage = {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo",
+      module: {
+        namespace: "demo",
+        brief: "Demo",
+        description: "Demo module.",
+        functions: [
+          {
+            name: "demo.move",
+            brief: "",
+            description: "Moves.",
+            parameters: [
+              { name: "pos", doc: "", types: ["vector3"], isOptional: false },
+              { name: "ctx", doc: "", types: ["any"], isOptional: false },
+            ],
+            returnValues: [],
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+    };
+    expect(apiModuleSymbols(enginePage)[0]?.signature).toBe(
+      "demo.move(pos: Vector3, ctx: unknown)",
+    );
   });
 });
 
