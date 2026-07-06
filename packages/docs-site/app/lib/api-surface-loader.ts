@@ -57,6 +57,10 @@ interface LibraryClassification {
   dirs: { dir: string; modules: string[] }[];
 }
 
+interface LibraryTargets {
+  targets: { module: string; path: string }[];
+}
+
 // The `/api/<slug>` route for a dotted library module. honox SSG emits a clean
 // static file for a literal dot (`…/monarch.monarch/index.html`), so the slug
 // keeps the dotted module name verbatim — namespace, card label, and route stay
@@ -126,6 +130,14 @@ export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> 
   for (const entry of classification.dirs) {
     for (const mod of entry.modules) moduleDir.set(mod, entry.dir);
   }
+  const targetsPath = join(libraryTypesDir, "library-targets.json");
+  if (existsSync(targetsPath)) {
+    const { targets } = JSON.parse(readFileSync(targetsPath, "utf8")) as LibraryTargets;
+    for (const target of targets) {
+      const dir = target.path.split("/")[1];
+      if (dir) moduleDir.set(target.module, dir);
+    }
+  }
   return moduleDir;
 }
 
@@ -185,17 +197,24 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   const moduleDir = libraryModuleDirs(libraryTypesDir);
   const displayOverrides = loadLibraryDisplayOverrides(libraryTypesDir);
 
+  const namespaces = readdirSync(apiDocDir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.replace(/\.json$/, ""))
+    .filter((namespace) => existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`)));
+
   // Modules-per-dir count drives whether the display label keeps its `· <leaf>`
   // distinguisher; a single-module dir drops it.
   const dirCounts = new Map<string, number>();
-  for (const dir of moduleDir.values()) dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
+  for (const namespace of namespaces) {
+    const dir = moduleDir.get(namespace) ?? namespace;
+    dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
+  }
 
   const pages: ApiPage[] = [];
-  for (const file of readdirSync(apiDocDir)) {
-    if (!file.endsWith(".json")) continue;
-    const namespace = file.replace(/\.json$/, "");
-    if (!existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`))) continue;
-    const module = parseDefoldApiDoc(JSON.parse(readFileSync(join(apiDocDir, file), "utf8")));
+  for (const namespace of namespaces) {
+    const module = parseDefoldApiDoc(
+      JSON.parse(readFileSync(join(apiDocDir, `${namespace}.json`), "utf8")),
+    );
     const dir = moduleDir.get(namespace);
     if (!module.description) {
       const fallback = dir ? descByDir?.get(dir) : undefined;

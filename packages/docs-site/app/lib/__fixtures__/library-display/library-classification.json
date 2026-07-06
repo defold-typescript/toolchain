@@ -4,5 +4,8 @@
     "commit": "0000000000000000000000000000000000000000",
     "license": "MIT"
   },
-  "dirs": [{ "dir": "demolib", "modules": ["demo.one", "demo.two"] }]
+  "dirs": [
+    { "dir": "aliased", "modules": ["alias.source"] },
+    { "dir": "demolib", "modules": ["demo.one", "demo.two"] }
+  ]
 }

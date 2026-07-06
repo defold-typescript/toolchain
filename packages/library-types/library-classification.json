@@ -29,14 +29,14 @@
     },
     {
       "dir": "boom",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "boom.boom"
       ]
     },
     {
       "dir": "bzAnim",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "bzAnim.bzAnim"
       ]
@@ -92,7 +92,7 @@
     },
     {
       "dir": "defold-bridge",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "bridge.bridge"
       ]
@@ -329,7 +329,7 @@
     },
     {
       "dir": "defold-yagames",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "yagames.yagames"
       ]
@@ -357,7 +357,7 @@
     },
     {
       "dir": "defold-zzfx",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "zzfx.api"
       ]
@@ -664,7 +664,7 @@
     },
     {
       "dir": "library-defold-rendy",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "rendy.rendy"
       ]
@@ -687,7 +687,7 @@
     },
     {
       "dir": "nakama-defold",
-      "classification": "pure-lua",
+      "classification": "already-vendored",
       "modules": [
         "nakama.engine.defold",
         "nakama.nakama",

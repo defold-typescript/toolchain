@@ -1,0 +1,85 @@
+{
+  "info": {
+    "namespace": "zzfx.api",
+    "brief": "ZzFX extension for Defold",
+    "description": "ZzFX extension for Defold"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "play",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "",
+          "types": [
+            "number[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "samplerate",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "rate",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "play_sample",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "sample",
+          "doc": "",
+          "types": [
+            "ZzFXSample"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "build_sample",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "",
+          "types": [
+            "number[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ZzFXSample"
+          ]
+        }
+      ]
+    }
+  ]
+}
