@@ -75,7 +75,10 @@ directory, or `null` when nothing was materialized) and, per extension, the `url
 generated `namespaces`, `scriptApiCount`, `provenance` (`cache` or `download`),
 whether it was `assetOnly`, the `resolvedVersion` (sha256 digest of the resolved
 archive bytes), — when the project pins that url — the `pinnedVersion`, and the
-`pinStatus` (`unpinned` / `match` / `drift`):
+`pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
+each asset-only dependency that matched a [vendored
+library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
+source identity), materialized `modules`, and `provenance` (`vendored`):
 
 ```jsonc
 {
@@ -93,6 +96,14 @@ archive bytes), — when the project pins that url — the `pinnedVersion`, and 
       "resolvedVersion": "sha256:ab12…",
       "pinnedVersion": "sha256:ab12…",
       "pinStatus": "match"
+    }
+  ],
+  "libraries": [
+    {
+      "url": "https://github.com/paulomrpp/dicebag/archive/main.zip",
+      "source": "dicebag",
+      "modules": ["dicebag.dicebag"],
+      "provenance": "vendored"
     }
   ]
 }
