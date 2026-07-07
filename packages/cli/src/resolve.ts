@@ -116,6 +116,15 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
 
   const deps = readExtensionDependencies(text);
   if (deps.length === 0) {
+    // No declared dependencies means no matched libraries, so reconcile the
+    // library surface to zero — prune a previously-materialized one and drop its
+    // tsconfig entry.
+    const { materializedDir: librariesDir } = materializeVendoredLibraries({
+      cwd,
+      matched: [],
+      generatedDir: null,
+    });
+    ensureLibraryTypesReference(cwd, librariesDir);
     return { ok: true, materializedSurface: null, extensions: [], libraries: [] };
   }
 
@@ -151,12 +160,16 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       matchedLibraries.push({ library, url: bundle.url });
     }
   }
-  const { materializedDir: librariesDir } = materializeVendoredLibraries({
-    cwd,
-    matched: matchedLibraries.map((m) => m.library),
-    generatedDir: libraryGeneratedDir,
-  });
+  const { materializedDir: librariesDir, skipped: skippedLibraryModules } =
+    materializeVendoredLibraries({
+      cwd,
+      matched: matchedLibraries.map((m) => m.library),
+      generatedDir: libraryGeneratedDir,
+    });
   ensureLibraryTypesReference(cwd, librariesDir);
+  for (const module of skippedLibraryModules) {
+    console.warn(`skipping library module ${module}: no generated .d.ts in the vendored corpus`);
+  }
   const libraries: ResolvedLibraryReport[] = matchedLibraries.map(({ library, url }) => ({
     url,
     source: library.sourceId,

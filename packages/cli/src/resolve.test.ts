@@ -517,4 +517,108 @@ describe("runResolve library matching", () => {
     expect(result.libraries).toEqual([]);
     expect(existsSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"))).toBe(false);
   });
+
+  test("re-running after the matched dependency stops matching prunes the surface and derefs tsconfig", async () => {
+    const cwd = tmp();
+    const cacheDir = tmp();
+    const generatedDir = seedGenerated();
+    const matchUrl = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${matchUrl}\n`);
+
+    await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(assetArchive(matchUrl)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: generatedDir,
+    });
+    expect(existsSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"))).toBe(true);
+
+    const otherUrl = "https://example.com/other-asset.zip";
+    writeFileSync(join(cwd, "game.project"), `[project]\ndependencies#0 = ${otherUrl}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(assetArchive(otherUrl)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: generatedDir,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.libraries).toEqual([]);
+    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).not.toContain("libraries");
+  });
+
+  test("removing every [dependencies] entry prunes a previously-materialized surface and derefs tsconfig", async () => {
+    const cwd = tmp();
+    const cacheDir = tmp();
+    const generatedDir = seedGenerated();
+    const matchUrl = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${matchUrl}\n`);
+
+    await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(assetArchive(matchUrl)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: generatedDir,
+    });
+    expect(existsSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"))).toBe(true);
+
+    writeFileSync(join(cwd, "game.project"), "[project]\ntitle = Test\n");
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip: () => {
+        throw new Error("readZip should not be called");
+      },
+      libraryRegistry: registry,
+      libraryGeneratedDir: generatedDir,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).not.toContain("libraries");
+  });
+
+  test("a matched library whose generated file is missing is reported on stderr, not thrown", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const emptyGeneratedDir = tmp();
+
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args.map(String).join(" "));
+    };
+    let result: Awaited<ReturnType<typeof runResolve>>;
+    try {
+      result = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        download: someBytes,
+        readZip: makeReadZip(assetArchive(url)),
+        libraryRegistry: registry,
+        libraryGeneratedDir: emptyGeneratedDir,
+      });
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(warnings.join("\n")).toContain("mylib.core");
+  });
 });
