@@ -29,26 +29,50 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 ## Get started
 
 - [Getting started](./getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init my-game`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
-- [Starter templates](./init-templates.md) — pick a new-project layout with `init my-game --template <name>`: the opinionated `default` or a blank-script `minimal`.
 - [Existing project](./add-typescript.md) — run `bunx @defold-typescript/cli@latest init .` in a folder with `game.project` to add the TypeScript surface without replacing the Defold project.
 - [Editor setup](./editor-setup.md) — open the project in VSCode, use the generated `tsconfig.json`, and run `bunx @defold-typescript/cli watch` beside the Defold editor.
 - [Defold editor](./defold-editor.md) — install Defold, open the generated project folder, attach a compiled script (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to its game object, GUI scene, or render pipeline, and run the game (TypeScript is transpiled to Lua by the CLI, not the editor).
 
 ## Guides
 
-- [Transpile diagnostics](./transpile-diagnostics.md) — the scaffolded `@defold-typescript/tstl-plugin` language-service plugin that surfaces TypeScript-to-Lua transpile errors live in the editor, advisory-only and never blocking `tsc --noEmit`.
-- [Debugging](./debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
-- [Pinning the Defold version](./pinning-defold-version.md) — keep the default latest surface, or pin an older Defold version whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
-- [Native extensions](./extensions.md) — declare an extension in `game.project` `[dependencies]`, run `defold-typescript resolve` to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
-- [Advanced CLI](./advanced-cli.md) — opt-in per-directory API walls with the `wall` command (interactive checkbox and flag forms), the full-surface-by-default policy, and the import-from-subpath rule a wall depends on.
-- [Agent runbooks](./agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](./agent-runbooks.md#install-the-agent-contract), regenerate extension types, [add and attach a script](./agent-runbooks.md#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
+### Tutorial
+
+- [Build Tetris](./tetris-tutorial.md) — build a complete Tetris game from scratch: write TypeScript, compile it to Lua, and wire the scene in the Defold editor, seeing the whole workflow end to end.
+
+### TypeScript
+
 - [TypeScript vs Lua](./typescript-vs-lua.md) — the Lua-developer on-ramp: a cheat sheet that translates syntax, tables, modules, and the standard library from Lua to the TypeScript the toolchain expects.
+- [TypeScript gotchas](./typescript-gotchas.md) — the canonical catalog of TS / [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) / Defold sharp edges. Today: the unary-minus quirk that silently produces `number` from a `Vector3`. Future entries land here as the toolchain encounters them.
+- [Data structures](./data-structures.md) — what's built in for Defold: `Array`, tuple, `Map`, `Set`, `WeakMap`, `WeakSet`, object record, and `class`, each with its Lua lowering and `lualib` cost, plus the not-available list (regex, `BigInt`, `LinkedList`) and what to reach for instead.
+
+### Core concepts
+
 - [Script lifecycle](./script-lifecycle.md) — type `self`, `on_message`, and `on_input` payloads with `defineScript`, `defineGuiScript`, and `defineRenderScript`.
 - [Messages](./messages.md) — the `BuiltinMessages` catalog, `msg.post` send-side payload narrowing, and the `isMessage` / `onMessage` receive-side helpers.
 - [Where script state lives](./script-state.md) — the four state tiers — per-instance `self`, a shared module local, a cross-script module singleton, and VM-global `declare global` — each grounded in the emitted Lua.
-- [Data structures](./data-structures.md) — what's built in for Defold: `Array`, tuple, `Map`, `Set`, `WeakMap`, `WeakSet`, object record, and `class`, each with its Lua lowering and `lualib` cost, plus the not-available list (regex, `BigInt`, `LinkedList`) and what to reach for instead.
 - [Vector math](./vector-math.md) — the method-form arithmetic surface (`add`, `sub`, `mul`, `div`, `unm`) on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`, plus why you cannot write `v3 + v3`.
-- [TypeScript gotchas](./typescript-gotchas.md) — the canonical catalog of TS / [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) / Defold sharp edges. Today: the unary-minus quirk that silently produces `number` from a `Vector3`. Future entries land here as the toolchain encounters them.
+
+### CLI
+
+- [init](./init.md) — scaffold a new Defold project with a TypeScript surface, or add TypeScript to an existing project; the two modes, the `--template` / `--force` flags, and the starter templates.
+- [watch](./watch.md) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, and re-resolve the extension surface on `game.project` changes.
+- [build](./build.md) — one-shot transpile of every `src/` TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.
+- [wall](./wall.md) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
+- [resolve](./resolve.md) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
+
+### Toolchain & workflow
+
+- [Transpile diagnostics](./transpile-diagnostics.md) — the scaffolded `@defold-typescript/tstl-plugin` language-service plugin that surfaces TypeScript-to-Lua transpile errors live in the editor, advisory-only and never blocking `tsc --noEmit`.
+- [Debugging](./debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
+- [Agent runbooks](./agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](./agent-runbooks.md#install-the-agent-contract), regenerate extension types, [add and attach a script](./agent-runbooks.md#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
+
+### Project configuration
+
+- [Pinning the Defold version](./pinning-defold-version.md) — keep the default latest surface, or pin an older Defold version whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
+- [Native extensions](./extensions.md) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](./resolve.md) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
+
+### Migration
+
 - [API docs vs `ts-defold-types`](./api-docs-vs-ts-defold.md) — a factual, dimension-by-dimension comparison of the JSDoc that `@defold-typescript/types` and `ts-defold-types` emit (Markdown conversion, dash params, grid-aligned multi-line docs, branded constants, the `@example` trade-off), with a picker for which surface fits your project.
 - [Migrating from `ts-defold`](./migrating-from-ts-defold.md) — move a project off the `@ts-defold/*` stack: the package/tooling map, the step-by-step port via `init` add-TypeScript mode and a `tsconfig.json` reconcile, and the type-surface differences you will hit.
 
@@ -106,7 +130,7 @@ cd my-game
 bun install
 ```
 
-`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
+`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs. See [Init](./init.md) for the command's two modes, its flags (`--template`, `--force`), and the starter templates.
 
 Run `bun install` once after `init`. The scaffold declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
@@ -173,95 +197,20 @@ export default defineScript({
 ```sh
 # one-time build
 bunx @defold-typescript/cli build
-# build and watch for changes
+# rebuild on every change while you edit
 bunx @defold-typescript/cli watch
 ```
 
-The build command transpiles every TypeScript file under `src/` to Lua and writes the result into the Defold project tree — each source becomes exactly one output. A file that had `export default defineScript({...})` lifecycle factory becomes a Defold script component (`src/main.ts` -> `src/main.ts.script`); a plain module with no factory becomes a Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you never edit or reference by hand, only ever the `src/util.ts` you author. Your `import` becomes a Lua `require` that resolves against that emitted module, so a shared module must be built before the script importing it will run. Open the project in the [Defold editor](./defold-editor.md) (or run it from the command line) to play it.
+[`build`](./build.md) transpiles every TypeScript file under `src/` to Lua and writes the result into the Defold project tree — each source becomes exactly one output: a lifecycle-factory file becomes a Defold script component (`src/main.ts` -> `src/main.ts.script`), a plain module becomes a Lua module (`src/util.ts` -> `src/util.lua`). Open the project in the [Defold editor](./defold-editor.md) to play it, or build and run it headlessly — see [Build](./build.md) for the full behavior, the generated-file markers, and the headless `defold` subcommand.
 
-When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`, object spread, and similar), the build also writes a `lualib_bundle.lua` at the output root automatically; the generated Lua's `require("lualib_bundle")` resolves against it.
-
-Because the output kind is the factory a source calls, adding or removing a `defineScript`/`defineGuiScript`/`defineRenderScript` factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the reverse). `build` and `watch` prune the stale alternative for you, so a kind switch never leaves the previous output behind. Every generated file carries a trailing `--# defold-typescript:generated` marker; on a full build — one-shot `build` or `watch` startup — the tool **warns, never deletes** about any marked `.lua` or `.ts.*` output whose TypeScript source no longer exists, so a deleted or renamed source's orphaned Lua surfaces for you to remove (the warning names the file and the source to restore). Hand-authored Lua, which lacks the marker, is never flagged or touched. Without `--json` the warnings print to stderr; with `--json` they appear in the build result's `warnings` array.
-
-The everyday commands carry no version tag: inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the version locked alongside your `@defold-typescript/types`. Reserve `@latest` for `init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
-
-## Iterate
-
-```sh
-bunx @defold-typescript/cli watch
-```
-
-`watch` rebuilds incrementally on every TypeScript source change: it holds one long-lived transpile session and re-reads and rewrites only the files you actually edited, skipping the re-glob and re-read of unchanged sources. Use it while the Defold editor is open in the same project directory. See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
-
-`watch` also keeps the [extension surface](./extensions.md#running-resolve) current: a `game.project` save re-runs `resolve`, re-materializing `.defold-types/extensions/` from the declared `[dependencies]`. It does not bootstrap that surface, though — run `resolve` once before `watch` so the initial extension types exist; `watch` only reconciles later `[dependencies]` edits.
+While you edit, run [`watch`](./watch.md) instead: it rebuilds incrementally on every save and keeps the native-extension surface current (run [`resolve`](./resolve.md) once first). See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
 ## Machine-readable output (`--json`)
 
-Every command accepts `--json` for agents and scripts that want to parse the
-result instead of scraping the human lines.
-
-The one-shot commands (`init`, `build`, `setup-debug`, `defold`) print a single
-JSON object to stdout, terminated by a newline:
-
-```sh
-bunx @defold-typescript/cli build --json
-# {"command":"build","ok":true,"written":["src/main.ts.script", "src/util.lua", ...],"warnings":[]}
-```
-
-A failure flips `ok` to `false` and carries an `error` string instead of
-`written`. `warnings` carries the sourceless-orphan lines (empty when there are
-none). Optional fields (`defoldVersion`, `defoldChannel`, `apiSurface`,
-`materializedSurface`, …) appear only when they apply.
-
-`watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
-one object per line, one line per event. The full lifecycle reads
-`start` → `build` → `rebuild`* → `resolve`* → `stop`:
-
-```sh
-bunx @defold-typescript/cli watch --json
-# {"command":"watch","event":"start","ok":true,"written":[]}
-# {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
-# {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[]}
-# {"command":"watch","event":"rebuild","ok":false,"error":"..."}
-# {"command":"watch","event":"resolve","ok":true,"written":[]}
-# {"command":"watch","event":"stop","ok":true,"written":[]}
-```
-
-A `resolve` event is emitted whenever a `game.project` save re-resolves the
-extension surface (re-materializing `.defold-types/extensions/` from the
-declared `[dependencies]` URLs).
-
-`start` arrives once, before the initial full build — the process is up and
-listening. `stop` arrives once on graceful shutdown. A failed startup (missing
-`tsconfig.json`, etc.) emits `start` then exits non-zero with **no** `stop`
-line; a rebuild that fails emits an `ok: false` line **to stdout too**, so a
-line-reader sees one uninterrupted stream — failures never split off to stderr.
-Read each line as it arrives and react per event. Without `--json`, stdout stays
-the human `wrote N files: …` output and rebuild errors stay on stderr.
-
-## Headless builds (no editor)
-
-`build` transpiles TypeScript to Lua; to compile and run the Defold project
-itself from the command line — no editor — drive Defold's headless build tool
-(`bob`) through the `defold` subcommand:
-
-```sh
-bunx @defold-typescript/cli defold resolve   # fetch library dependencies
-bunx @defold-typescript/cli defold build     # debug build into build/default
-bunx @defold-typescript/cli defold bundle    # bundle a platform target
-```
-
-The first run downloads a version-matched `bob.jar` into a cache dir
-(`$DEFOLD_TYPESCRIPT_CACHE/bob` when set, otherwise
-`$XDG_CACHE_HOME/defold-typescript/bob`, falling back to
-`~/.cache/defold-typescript/bob`) and reuses it
-afterward. `bob` needs a JVM: it uses `java` on your `PATH`, or pass `--java
-<path>` (or set `DEFOLD_JAVA`). Native-extension projects can pass
-`--build-server <url>`. `bob`'s exit code propagates, so a failed build fails the
-command.
-
-Like the engine launcher, the `bob` version tracks the latest stable Defold
-release. A project pinned to an older Defold version is a known limitation.
+Every command accepts `--json` so agents and scripts can parse the result instead
+of scraping the human lines. See
+[Agent runbooks](./agent-runbooks.md#machine-readable-output) for the
+contract and each command's output shape.
 
 ## Release smoke (maintainers)
 
@@ -314,32 +263,6 @@ convert path as `mise run example:update`.
 
 - Read [vector math](./vector-math.md) for the arithmetic methods on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`.
 - Read [TypeScript gotchas](./typescript-gotchas.md) for the sharp edges the type system cannot catch on its own — starting with the unary-minus quirk on `Vector3`.
-
-# Starter templates
-
-`defold-typescript init` synthesizes a new Defold project from a starter template. Pick one with `--template <name>`:
-
-```sh
-bunx @defold-typescript/cli@latest init my-game --template minimal
-```
-
-## Available templates
-
-- **`default`** — the opinionated layout you get when you omit `--template`: a `game.project`, a `main/main.collection`, and a `src/main.ts` whose `init` returns a small `vmath.vector3` example state.
-- **`minimal`** — the same project layout with an empty-state `src/main.ts` (a `defineScript` whose `init` returns `{}`), for starting from a blank script.
-
-Both templates differ only in the synthesized entry script; the shared TypeScript surface (`tsconfig.json`, `package.json`, `.gitignore`, `biome.json`, `mise.toml`, and the `.vscode/` files) is identical.
-
-## Behavior
-
-- Omitting `--template` is equivalent to `--template default`.
-- An unknown name fails fast and lists the valid templates:
-
-  ```
-  defold-typescript init: unknown template "foo". Valid templates: default, minimal.
-  ```
-
-- `--template` applies only when **creating a new project**. Running `init` inside a folder that already has a `game.project` (the [add-TypeScript](./add-typescript.md) flow) adds only the TypeScript surface, so passing a non-default `--template` there is rejected — there is nothing to synthesize.
 
 # Add TypeScript to an existing Defold project
 
@@ -468,15 +391,13 @@ Edit TypeScript under `src/`. Treat generated `.ts.script`/`.ts.gui_script`/`.ts
 
 ## Run the watch loop
 
-Keep Defold open on the same project folder. In the editor's integrated terminal, run:
+Keep Defold open on the same project folder, and in the editor's integrated terminal run [`watch`](./watch.md):
 
 ```sh
 bunx @defold-typescript/cli watch
 ```
 
-`bunx @defold-typescript/cli watch` rebuilds Lua when files under `src/` change. Run the game from the Defold editor after the rebuild completes.
-
-If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` (below) gives you `mise run defold-typescript:watch` as the equivalent task.
+It rebuilds Lua when files under `src/` change; run the game from the Defold editor after each rebuild. See [Watch](./watch.md) for the incremental-session behavior, the extension-surface reconciliation, and the `mise` task equivalent (also listed below).
 
 ## Opinionated `mise.toml`
 
@@ -496,7 +417,7 @@ Build and watch carry no version tag, so inside an installed project `bunx` reso
 
 Install the Defold editor from [defold.com](https://defold.com/). The editor is the engine UI you use to open the project folder, inspect assets, and run the game.
 
-In the CLI-driven loop you author code in TypeScript and build from the command line (`defold build`, see [Getting started](getting-started.md#headless-builds-no-editor)) — so the editor is opened mainly for **visual assets**: collections, atlases, tilemaps, GUI scenes, and previewing the running game. Compiling and running can happen entirely from the CLI without it.
+In the CLI-driven loop you author code in TypeScript and build from the command line (`defold build`, see [Build](build.md#headless-builds-no-editor)) — so the editor is opened mainly for **visual assets**: collections, atlases, tilemaps, GUI scenes, and previewing the running game. Compiling and running can happen entirely from the CLI without it.
 
 ## Open the project
 
@@ -754,6 +675,539 @@ a runtime surprise.
 - [Getting started](./getting-started.md) — scaffold, write a script, build to
   Lua.
 
+# TypeScript gotchas
+
+Sharp edges where TypeScript, the TypeScriptToLua transpiler, or the Defold runtime behave in ways the type system cannot fully express. Each entry names the symptom, explains why it happens, and gives the recommended workaround.
+
+New to TypeScript from Lua? Start with [TypeScript vs Lua](./typescript-vs-lua.md) for the syntax-and-idiom map; this page is the depth catalog you reach for when one of those quirks bites.
+
+## Before you start: Lua vs TypeScript gotchas
+
+The one-line version of every trap on this page. Skim it once; jump to the full entry when one bites.
+
+- [Unary minus on a vector yields `number`](#unary-minus-on-vector3--vector4-silently-produces-number) — `-v3` infers `number`, not `Vector3`; use `v.unm()`.
+- [Enum constants are branded numbers](#enum-constants-are-branded-numbers--a-bare-number-wont-do) — a bare magic number won't satisfy an enum parameter; pass the named `go.PLAYBACK_*` constant.
+- [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds) — a `node` is not a `texture`; obtain each handle from the API that returns it, never fabricate or cross-cast.
+- [Callback parameters are `unknown`](#callback-parameters-type-check-as-functions-not-unknown) — match the documented arity; narrow each param before use.
+- [Some slots are `unknown` on purpose](#some-slots-are-unknown-on-purpose--the-any-wildcard) — `socket.skip` and friends accept anything and force a narrow on the way out.
+- [`if (x)` truthiness differs in Lua](#if-x-truthiness-differs--0-and--are-truthy-in-lua) — `0` and `""` are **truthy** once transpiled; test the value explicitly.
+- [`typeof` cannot narrow engine values](#typeof-cannot-narrow-engine-values--they-are-lua-userdata) — Defold handles are Lua `userdata`, so `typeof x === "object"` is `false` for them at runtime.
+- [`on_message` ids are hashes, not strings](#on_message-ids-are-hashes-not-strings) — compare `message_id` against a `hash("…")` constant; a string literal never matches at runtime.
+- [`window.set_listener` hands `event` and `data` separately](#windowset_listener-hands-event-and-data-as-separate-params) — TS can't auto-narrow `data` from an `event` check; use the `isWindowEvent` guard.
+- [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
+- [`===` and `==` are the same Lua](#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard) — both lower to a non-coercing Lua `==`; `==` is not JS loose equality here, and the real equality footgun is `if (cell)`.
+- [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
+- [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
+- [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
+- [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
+
+## Unary minus on Vector3 / Vector4 silently produces `number`
+
+**Symptom.** `-v3a` compiles cleanly and infers as `number`, not `Vector3`. Anything downstream that expects a `Vector3` (passing to `go.set_position`, chaining `.add(...)`, etc.) fails to compile with a confusing error pointing at the *use site*, not at the `-`.
+
+```ts
+declare const v3a: Vector3;
+
+const neg = -v3a; // inferred as `number`, not `Vector3`
+const target: Vector3 = -v3a; // TS error here — but the bug is the `-`
+```
+
+**Why.** TypeScript's TS2362 check ("operand of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum") applies to *binary* `+`, `-`, `*`, `/` but **not** to *unary* `-`. The unary form has its own narrow check that does not reject object-typed operands; it just produces `number`. There is no way to opt a type out of unary negation at the type-system level, so the `vector3` interface cannot defend itself.
+
+**Typed alternative.** Use `v.unm()` — the same metamethod the Lua runtime would call for `-v`, but exposed as a typed method:
+
+```ts
+const neg: Vector3 = v3a.unm(); // returns Vector3
+```
+
+The same gap exists for `Vector4`; the same workaround applies: `v.unm()`.
+
+**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` carries a symmetric proof: one line asserts `const _: number = -v3a` (which must compile), the next asserts `const _: Vector3 = -v3a` with `@ts-expect-error` (which must remain an error). If a future change either fixes the TS behavior or breaks the workaround, exactly one of the two lines flips and the typecheck gate fails.
+
+## Enum constants are branded numbers — a bare number won't do
+
+**Symptom.** A call that the Lua runtime accepts with a magic number fails to typecheck when the parameter is an enum:
+
+```ts
+go.animate(id, "position.x", 2, 10, go.EASING_LINEAR, 1);  // TS error on `2`
+go.animate(id, "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1);  // ok
+```
+
+**Why.** Defold's ref-doc encodes an enum member as a bare constant and lists the members' fully-qualified names as a parameter's accepted types. The generated typings recover each constant as a *nominally branded* number — `go.PLAYBACK_ONCE_FORWARD` has type `number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" }` — and the parameter's type is the union of those brands. A plain `number` lacks the brand, so only a real `go.PLAYBACK_*` (or `go.EASING_*`) value satisfies it. This is intentional strictness: it stops you from passing the wrong magic number.
+
+**Typed alternative.** Always pass the named constant (`go.PLAYBACK_ONCE_FORWARD`, `go.EASING_LINEAR`, …). The brand is type-only and erases at transpile time to a plain Lua global access, so there is no runtime cost. A branded constant is still assignable to any plain `number` parameter, so existing numeric signatures keep working.
+
+**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails.
+
+**Constants can live in another namespace.** The brand is keyed on the constant's fully-qualified name, not on the namespace of the function that accepts it, so an enum can be owned by one namespace and consumed by another. The render buffer-type flags are the worked example: `render.get_render_target_width`, `render.get_render_target_height`, and `render.enable_texture` take a `graphics.BUFFER_TYPE_*` flag (`graphics.BUFFER_TYPE_COLOR0_BIT` … `_COLOR3_BIT`, `graphics.BUFFER_TYPE_DEPTH_BIT`, `graphics.BUFFER_TYPE_STENCIL_BIT`), and the named constant lives in the `graphics` namespace.
+
+```ts
+render.get_render_target_width(rt, graphics.BUFFER_TYPE_COLOR0_BIT);  // ok
+render.get_render_target_width(rt, 0);                                // TS error on `0`
+```
+
+`packages/types/test-d/graphics-render-buffer-types.ts` pins this: the real `graphics` constant type-checks and a bare number carries `@ts-expect-error`.
+
+## Engine handles are opaque — you cannot fabricate or cast across kinds
+
+**Symptom.** A GUI `node`, a render `texture` or `render_target`, a `buffer`, a `resource`, a box2d `b2World`/`b2Body`, and similar engine handles each have a distinct nominal type. A value obtained for one kind is not accepted where another kind is expected, and a plain value (a number, an object literal) is never accepted:
+
+```ts
+const n = gui.get_node("button");        // Opaque<"node">
+render.enable_texture(0, n);             // TS error — a node is not a texture
+render.set_render_target(undefined);     // TS error — undefined is not a render_target
+```
+
+**Why.** Defold's ref-doc names these handles by a bare token (`node`, `texture`, `buffer`, …) with no public structure. The generated typings recover each as `Opaque<"<token>">` — a phantom-branded type whose brand is the token string. Distinct tokens carry distinct brands, so they are mutually non-assignable, and because the brand is a `unique symbol` property no plain value satisfies it. This mirrors the `Hash`/`Url` brands: the strictness stops you from passing a handle of the wrong kind or conjuring one from thin air.
+
+**Typed alternative.** Obtain the handle from the engine API that returns it (`gui.get_node`, `render.render_target`, `resource.create_buffer`, …) and thread that value through. There is no constructor and no meaningful cast across handle kinds — if you find yourself casting, the call you are feeding it almost certainly wants a different handle.
+
+**Named handle types.** Each handle is also referenceable as a named type alias under its namespace — `render.render_target`, `render.constant_buffer`, `render.texture`, `socket.master`, `socket.client`, `socket.unconnected`, `b2d.b2World`, `b2d.b2Body` — so you can annotate a binding directly (`const rt: render.render_target = render.render_target("rt", {})`). The alias resolves to the same `Opaque<"<token>">` brand the handle-returning function yields, so the annotation and the returned value are the same nominal type.
+
+**How we pin this in the type tests.** `packages/types/test-d/ambient.ts` passes an `Opaque<"constant">`-typed value to `model.play_anim` and asserts a bare `0` in the same slot carries `@ts-expect-error`. It also binds `render.render_target(...)` to a `render.render_target`-typed variable and asserts a bare `0` cannot be — proving the named alias and the function's return type share one brand. If the brand is dropped or widened to `unknown`, the expected errors disappear and the typecheck gate fails.
+
+## Callback parameters type-check as functions, not `unknown`
+
+**Symptom.** Engine APIs that take a callback (`timer.delay`, `msg`-style message handlers, `http.request`, factory/particlefx completion callbacks, …) now expect a function of a specific arity. Passing a non-function, or a function with the wrong number of parameters, is a type error:
+
+```ts
+timer.delay(0.5, false, () => print("tick"));                       // too few params — TS error
+timer.delay(0.5, false, (self, handle, time_elapsed) => { });       // OK — three params
+```
+
+**Why.** Defold's ref-doc names a callback parameter by its whole Lua signature string, e.g. `function(self, handle, time_elapsed)`. The generated typings recover each into an arity-preserving function type with the documented parameter names: `(self: unknown, handle: unknown, time_elapsed: unknown) => void`. The parameter names survive for hover documentation, but their types are `unknown` — the ref-doc carries no inner types — so you must narrow each argument yourself before using it. The return is `void`: the engine ignores any value a callback returns, and a `void` return position still accepts a callback that happens to return something.
+
+**Typed alternative.** Match the documented arity and read the parameter names off hover to know what each slot is. Cast or narrow the `unknown` params at the point of use (`const url = result as Url`), exactly as you would any other `unknown`.
+
+## Some slots are `unknown` on purpose — the `any` wildcard
+
+**Symptom.** A few API slots are typed `unknown`: they accept any value going in, and a value coming out cannot be used until you narrow it.
+
+```ts
+const [first] = socket.skip(1, "a string", 42);  // first is `unknown`
+const n: number = first;                          // TS error — narrow it first
+const n2 = first as number;                       // OK
+```
+
+**Why.** Where Defold's own ref-doc types a value as the bare `any` token — "any Lua value" — the generated typings use `unknown` rather than guessing a concrete type. `socket`'s utilities (`socket.skip`) and its option accessors (`getoption`/`setoption`) are the cases you will meet. This is deliberate, not a gap: `unknown` is the honest model for "could be anything." It accepts everything as an argument, and as a result it forces a check before use — unlike TypeScript's `any`, which would silently switch type-checking off for that value.
+
+**Typed alternative.** Treat these exactly like callback parameters: narrow or cast at the point of use (`first as number`), guided by what the Defold API docs say the value is. A branded or nominal type would be wrong here — the whole point of the `any` token is that no single concrete type fits.
+
+**How we pin this in the type tests.** `packages/types/test-d/socket-any-unknown.ts` passes assorted values into `socket.skip`'s wildcard slots (proving any argument is accepted) and asserts a wildcard return is not directly assignable to `number` via `@ts-expect-error`, while a narrowing cast is. If a wildcard slot ever widened to `any` or were mis-mapped to a concrete type, the expected error would flip and the typecheck gate would fail.
+
+## `if (x)` truthiness differs — `0` and `""` are truthy in Lua
+
+**Symptom.** A guard that reads naturally in TypeScript changes meaning after transpile. `if (count)` in TS is false for `0`; the Lua it becomes is true for `0`.
+
+```ts
+function describe(count: number, label: string): string {
+  if (count) {            // transpiles to `if count then` — true even when count is 0
+    return label;
+  }
+  return "empty";
+}
+```
+
+**Why.** `if (x)` transpiles to `if x then`, a direct pass-through with no coercion. JavaScript and Lua disagree on what counts as falsy: JS treats `0`, `""`, `NaN`, `null`, and `undefined` as falsy; Lua treats **only** `nil` and `false` as falsy. So `0` and `""` — falsy in the TypeScript you wrote — are **truthy** in the Lua that runs. The type system cannot warn you: the code is well-typed in both directions.
+
+**Typed alternative.** Test the value you actually mean. Use `if (count > 0)`, `if (label !== "")`, or `if (x !== undefined)` instead of relying on truthiness. An explicit comparison transpiles to the same comparison in Lua and means the same thing in both languages.
+
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `transpile(...)` of an `if (x)` guard and asserts the committed Lua is `if x then` — no coercion inserted. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever started wrapping the condition in a JS-truthiness helper, the snapshot would change and the gate would fail.
+
+## `typeof` cannot narrow engine values — they are Lua `userdata`
+
+**Symptom.** A `typeof` guard that should match a Defold handle never fires at runtime, even though it type-checks.
+
+```ts
+function asNode(x: unknown): unknown {
+  if (typeof x === "object") {   // transpiles to `type(x) == "table"` — false for a gui.node
+    return x;
+  }
+  return undefined;
+}
+```
+
+**Why.** `typeof x === "object"` transpiles to `type(x) == "table"`. Defold engine values — `gui.node`, `texture`, `buffer`, `b2World`, … — are Lua `userdata`, not tables, so `type(handle)` returns `"userdata"` and the branch is skipped. The value form is no better: `typeof x` transpiles to `__TS__TypeOf(x)`, which returns the string `"userdata"` for these handles — a value TypeScript's `typeof` union (`"object"`, `"function"`, `"number"`, …) does not even contain, so you cannot write a matching comparison. `typeof x === "number"/"string"/"boolean"/"function"` *do* inline to a reliable `type(x) == "…"`, and those work as written; it is only objects-vs-userdata that breaks.
+
+**Typed alternative.** Do not reach for `typeof` to recognise an engine handle. The handles are already nominally typed (`Opaque<"node">` and friends — see [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds)), so thread the typed value through instead of re-checking it. When you genuinely hold an `unknown` from a wildcard slot, narrow it with the engine predicate that fits (a `nil` check, a field probe) rather than `typeof`.
+
+The one runtime narrowing the engine *does* support for vmath userdata is the `types.is_*` family, emitted as user-defined type guards:
+
+```ts
+declare const v: unknown;
+if (types.is_vector3(v)) {
+  // v is Vector3 here — v.x is a number, no cast needed
+  const x = v.x;
+}
+```
+
+`types.is_hash`, `types.is_url`, `types.is_matrix4`, `types.is_quat`, `types.is_vector`, `types.is_vector3`, and `types.is_vector4` each narrow their argument to the matching core type. The other `is_*` / `exists` names (`go.exists`, `sound.is_music_playing`, …) are runtime-state checks on an already-typed value, not type guards, so they stay `boolean`.
+
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots both forms: `typeof x === "object"` → `type(x) == "table"`, and the value form `typeof x` → `__TS__TypeOf(x)`. The committed Lua makes the userdata mismatch visible; if either lowering changed, the snapshot would fail.
+
+## `on_message` ids are hashes, not strings
+
+**Symptom.** A handler that compares `message_id` against a string literal never fires, even though it reads naturally and (under older typings) compiled. The object it should react to is silently ignored — in the platformer example, the player fell through every wall because the contact handler never ran.
+
+```ts
+on_message(self, message_id, message) {
+  if (message_id == "contact_point_response") {  // never true at runtime
+    // ...
+  }
+}
+```
+
+**Why.** Defold delivers `message_id` to `on_message` as a pre-hashed `hash` value, not a string — the same way `action_id` arrives in `on_input`. Lua's `==` does no cross-type coercion, so `hash_value == "contact_point_response"` is always `false`. The string comparison transpiles verbatim (`message_id == "contact_point_response"`) and silently never matches. `ScriptHooks.on_message` types `message_id` as `Hash` to make the mismatch a *compile* error rather than a runtime mystery; the string-literal form no longer type-checks.
+
+**Typed alternative.** Pre-hash the id once at module scope and compare `Hash` to `Hash`, exactly as the original Lua does and as `on_input` already does for `action_id`:
+
+```ts
+const msg_contact_point_response = hash("contact_point_response");
+
+on_message(self, message_id, message) {
+  if (message_id == msg_contact_point_response) {
+    const contact = message as unknown as ContactPoint;  // handler payload is an untyped record
+    // ...
+  }
+}
+```
+
+The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the [messages guide](./messages.md)), not on the handler.
+
+**How we pin this in the type tests.** `packages/types/test-d/lifecycle.ts` binds `message_id` to a `Hash` inside the handler and asserts a string-literal `message_id` at the call site carries `@ts-expect-error`. If `on_message` ever re-typed the id as a string, the expected error would disappear and the typecheck gate would fail.
+
+## `window.set_listener` hands `event` and `data` as separate params
+
+**Symptom.** A `window.set_listener` callback reads the resize dimensions off `data`, but `data.width` does not type-check (or is `unknown`) even after checking `event == window.WINDOW_EVENT_RESIZED`:
+
+```ts
+window.set_listener((self, event, data) => {
+  if (event == window.WINDOW_EVENT_RESIZED) {
+    print(data.width, data.height);  // data stays a record — width/height not known
+  }
+});
+```
+
+**Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event == …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ==` narrowing) and `data` as a bare `Record<string | number, unknown>` (only a resize carries fields, so the record is the honest default).
+
+**Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](messages.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
+
+```ts
+window.set_listener((self, event, data) => {
+  if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
+    print("resized:", data.width, data.height);  // data: { width: number; height: number }
+  }
+});
+```
+
+`isWindowEvent` is declaration-only: the transpiler lowers the call to a bare `event == window.WINDOW_EVENT_RESIZED`, so there is no runtime function and no import to add. Only `WINDOW_EVENT_RESIZED` carries fields; every other event narrows `data` to `undefined`. This is the same wall — and the same fix — as [`on_message` ids](#on_message-ids-are-hashes-not-strings): the engine hands back an untyped payload discriminated by a separate id/event argument, and a declaration-only guard is the path to a typed payload.
+
+## `null`, `undefined`, and `== null` all collapse to `nil`
+
+**Symptom.** Three TypeScript checks you might think are distinct produce one identical Lua test, so they cannot be told apart at runtime.
+
+```ts
+function present(x: unknown): boolean {
+  if (x === null) return false;       // `x == nil`
+  if (x === undefined) return false;  // `x == nil`
+  return true;
+}
+```
+
+**Why.** Lua has a single absent value, `nil`. TypeScript's `null`, `undefined`, the strict `x === null` / `x === undefined`, and the loose `x == null` all transpile to `x == nil`. There is no Lua-level distinction between "explicitly null" and "missing", so a function that tries to treat `null` and `undefined` differently cannot — both arrive as `nil`. The `=== nil` form (using the ambient `nil` type) works as written and is the honest model.
+
+**Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
+
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished them, the gate would fail.
+
+## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
+
+**Symptom.** Coming from JavaScript you might assume `==` performs loose equality — coercing its operands before comparing — and reach for `===` to avoid it. In this toolchain the two operators are indistinguishable in the output, so the coercion `===` guards against never happens.
+
+```ts
+function isEmpty(cell: number): boolean {
+  const strict = cell === 0;   // → `cell == 0`
+  const loose = cell == 0;     // → `cell == 0` (byte-identical)
+  return strict || loose;
+}
+```
+
+**Why.** TypeScriptToLua emits Lua `==` for **both** operators and never inserts a coercion helper, and Lua `==` is already non-coercing. The one runtime distinction JavaScript draws between the two — loose equality's coercion, including `== null` matching both `null` and `undefined` — is moot here as well, because `null` and `undefined` both collapse to `nil` (see [`null`, `undefined`, and `== null` all collapse to `nil`](#null-undefined-and--null-all-collapse-to-nil)). So `===` buys no runtime safety the `==` form lacks; strictness is a source convention, not a guard. Contrast `if (x)` truthiness (see [`if (x)` truthiness differs](#if-x-truthiness-differs--0-and--are-truthy-in-lua)), which *is* a real change of meaning crossing into Lua.
+
+**Typed alternative.** The scaffolded `biome.json` ships with `noDoubleEquals` off precisely because the operators are identical in the Lua output, so use whichever reads best — `===` is no longer enforced for consumers. (Our repo keeps the rule on as house style; its `== null` exemption also preserves one genuinely useful loose form — `x == null` narrows out both `null` and `undefined` in TypeScript's type-checker, a *compile-time* distinction even though the emitted Lua is identical.) The real equality footgun is never `==` versus `===`; it is `if (cell)`, which is truthy for `0` once it runs as Lua.
+
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` transpiles `cell === 0` and `cell == 0` in one snippet and asserts both lower to the same `cell == 0` — the loose form gets no coercion helper. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever started coercing `==`, the two lines would diverge and the gate would fail.
+
+## `as` is a compile-time assertion, not a runtime check
+
+**Symptom.** A cast that compiles cleanly does nothing at runtime — the value is never validated, and a wrong assertion produces a silent type mismatch later, not an error at the cast.
+
+```ts
+function first(values: unknown): number {
+  const n = values as number;   // transpiles to `local n = values` — no check
+  return n + 1;                 // runs even if `values` was a string or a table
+}
+```
+
+**Why.** `const n = first as number` transpiles to `local n = first`: the cast is erased entirely. TypeScript's `as` is a *compile-time* assertion that you, the author, know the type — it inserts no runtime guard. So a cast that is wrong does not throw at the cast site; the bad value flows on until some Lua operation on it misbehaves, far from the cause. This is the same erasure that makes branded constants and opaque handles zero-cost — useful there, a footgun when you use `as` to "convert" an `unknown`.
+
+**Typed alternative.** When you actually need to *check* a value (a wildcard `unknown`, untrusted input), narrow it with a real runtime test — `typeof x === "number"` (reliable for primitives, see the `typeof` entry above), a `=== nil` check, or a field probe — before using it. Reserve `as` for the cases where you already know the type from context the type system can't see, exactly as with callback and wildcard params.
+
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `const n = x as number` and asserts the committed Lua is `local n = x` with no inserted check. If a cast ever started emitting a guard, the snapshot would change and the gate would fail.
+
+## Component properties are catalogued per namespace
+
+**Symptom.** Defold component properties — the values you address at runtime through `go.get`/`go.set`/`go.animate` with a string id (`"color"`, `"position"`, `"size"`, …) — do not appear as members on the namespace object. There is no `label.color` you can read directly.
+
+**Why.** These properties are not module-level globals; they are per-component fields keyed by a string id passed to `go.get(url, "color")`. The ref-doc lists them as `PROPERTY` elements with a name and a type but no addressable symbol. The generated typings recover each namespace's properties into an in-namespace `interface properties { … }` so the name and type survive as a committed, drift-gated catalog. For example, `label.properties` carries `color: Vector4`, `size: Vector3`, `scale: number | Vector3`, and so on.
+
+**Typed alternative.** Read a property's type off the catalog with an indexed access — `label.properties["color"]` is `Vector4`. The catalog also makes `go.get`/`go.set` type-aware: a literal key drawn from `go`'s own transform properties narrows the result and the written value to the property's real type. `go.get(url, "position")` is `Vector3`, `go.get(url, "scale")` is `number`, and `go.set(url, "euler", v3)` type-checks while `go.set(url, "position", "oops")` is rejected. Any other key — a `Hash`, a dynamic string, or a fragment-addressed cross-component property like `go.get("#sprite", "tint")` — falls through to an open `string | Hash` overload returning the documented wide union, so hashed and runtime access keep working unchanged.
+
+**Name the component to narrow a cross-component property.** A string url like `"#sprite"` cannot tell the type system which component it targets, so the bare call can only narrow `go`'s own transform properties. When you know the component, name it with a type argument and the result narrows to *that* component's catalog:
+
+```ts
+const animation = go.get<sprite.properties>()("#sprite", "animation"); // Hash, not the wide union
+go.set<sprite.properties>()("#sprite", "playback_rate", 2);            // value gated to number
+go.get<sprite.properties>()("#sprite", "nope");                       // type error — not a sprite property
+```
+
+The form is curried — `go.get<P>()(url, property)` — on purpose. TypeScript has no partial type-argument inference: if `P` and the property key were both type parameters on one call, supplying `<sprite.properties>` would force the key to its default and collapse the return to the component's whole value union. The empty `()` fixes `P`, then the inner call infers the key from the `"animation"` argument, recovering the exact field type. You are naming the component yourself — nothing checks that `"#sprite"` actually resolves to a sprite — so this is a typed convenience over an unverified url, not a correctness guarantee. The bare direct call (`go.get("#go", "position")`) is unchanged for the transform default, and a fully dynamic key still falls through to the wide union.
+
+**Name the script to read or tune another object's declared properties.** The same generic also types the *cross-script* channel — reading or writing a property a *different* script declared, addressed by its script-component url (`go.get("/enemy#controller", "speed")`). This is distinct from a component property and from the `self`-side access inside the owning script: it is how one object tunes another object's declared state. A script declares its editor properties with the value-keyed `properties` field of `defineScript`, and exports that shape as a nameable type with `ScriptPropertiesOf<typeof script>`; another script names it as the `P` generic to get a typed read and a value-gated write:
+
+```ts
+// enemy.ts — the owning script declares its properties
+export default defineScript({
+  properties: { speed: 100, target: vmath.vector3() },
+});
+export type EnemyProps = ScriptPropertiesOf<typeof import("./enemy").default>;
+
+// elsewhere — another object reads and tunes them by url
+const speed = go.get<EnemyProps>()("/enemy#controller", "speed");  // number
+go.set<EnemyProps>()("/enemy#controller", "speed", 250);           // value gated to number
+go.get<EnemyProps>()("/enemy#controller", "missing");              // type error — not declared
+```
+
+`ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script.
+
+**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number`, a wrong-typed `go.set` value and a wrong-typed `go.get` assignment carry `@ts-expect-error`, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.properties>()("#sprite", "animation")` is `Hash`, a wrong key and a wrong value type carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
+
+## Field-documented tables are typed object shapes, not opaque records
+
+**Symptom.** A `table` param or return whose Defold ref-doc spells out its fields, or whose official example proves a stable shape, is no longer the opaque `Record<string | number, unknown>` it once was. `sys.get_sys_info()` returns a concrete object — `system_name`, `gmt_offset`, and the rest are typed members you can read directly and that auto-complete; a misspelled field is a compile error, not silent `unknown`.
+
+```ts
+const info = sys.get_sys_info();
+const name: string = info.system_name;   // typed string, no cast
+const offset: number = info.gmt_offset;  // typed number
+// @ts-expect-error not_a_field is not a field of the sys info table
+info.not_a_field;
+```
+
+**Why.** Many Defold `table` slots carry their field structure only in the doc HTML, in one of four regular shapes: a `<dt><code>field</code></dt><dd><span class="type">T</span></dd>` definition list, a `<ul>` whose items read `<span class="type">T</span> <code>field</code>` (type before name), a dash-list option bag whose items read `field <span class="type">T</span>` / `<code>field</code> <span class="type">T</span>` (name before type), or a code-dash field that reads `<code>field</code> - <span class="type">T</span>` (name in `<code>`, then dash, then type — `sys.open_url`'s `target` attribute). The generator parses these shapes and emits an inline object type instead of the `Record` fallback, so the field names and types survive. Two nested shapes are also recovered: a `<dl>` declaring a single `table`-typed field whose keys sit in an immediately-following `<ul>` typed-field list (`window.get_safe_area()` now returns `{ safe_area: { x: number; y: number; … } }`), and a flattened `<ul><li><dl>` option bag whose `table` entries are followed by their member fields (`resource.create_atlas` groups `animations` and `geometries` into nested objects). A recovered `table` field whose `<dd>` prose reads "a list of …" emits an **array** of that recovered element shape rather than a single object (`resource`'s `animations` and `create_atlas`'s `geometries` become `{ … }[]`); the `[]` is appended only when member fields were recovered. A "list" field with no recovered member shape but a machine-readable **numeric** element type — its `<dd>` reads "a list of … in the form {px0, py0, …}" / "{i0, i1, …}", a flat comma-separated list of numeric placeholders — emits `number[]` (`resource.create_atlas`/`set_atlas`'s `vertices`/`uvs`/`indices`); a brace form with quotes, nested braces, or non-numeric identifiers is never guessed and stays `Record`. A "list" field with neither members nor a numeric brace form (opaque maps, the wholesale `geometries` `Record`) stays `Record`. A cross-reference form is also recovered: a `table` slot with no inline field list of its own whose doc carries a `See <a href="…#<element>">` pointer to a sibling element in the same module adopts that element's already-recovered fields (`physics.set_shape`'s data param adopts `physics.get_shape`'s fields). Resolution is one hop only. A supplementary `See` pointer sitting beside an **untyped name-only** `<ul>` field list (`<li>field</li>` items with no `<span class="type">`) is also recovered: the slot adopts the referenced element's fields **filtered to the names the own `<ul>` enumerates** (`resource.get_atlas` lists `texture`/`geometries`/`animations` then points at `resource.set_atlas`, so it adopts those three only — the sibling's unlisted `vertices`/`uvs`/`indices` are excluded). A `See` pointer beside an element's own **typed** field list still loses to the direct parse, which already recovers those fields. Tables with no recoverable shape (the wholesale `geometries` `Record`, opaque key→value maps) keep the `Record` type — there is no single machine-readable structure to recover. Two deliberate distinctions: a recovered **input** parameter's fields are optional (an option bag accepts a partial or empty `{}`, exactly as the old `Record` did), while a **return** table's fields are required (the engine always populates them); and recovery nests at most one level — a deeper `table` field with no recovered keys stays `Record`.
+
+**Typed alternative.** Read the members directly — `sys.get_sys_info().system_name`, `liveupdate.get_mounts()[0].uri`, `tilemap.get_tile_info(url, layer, x, y).index` — instead of indexing an opaque record and casting. For an options argument, pass only the fields you need (`image.load(data, { flip_vertically: true })`); omitted fields and `{}` still type-check.
+
+**How we pin this in the type tests.** `packages/types/test-d/sys-info-table-fields.ts` asserts `sys.get_sys_info().system_name` is assignable to `string` and that a bogus field carries `@ts-expect-error`; `packages/types/test-d/example-shaped-table-curations.ts` pins the example-proven `liveupdate.get_mounts()` and `tilemap.get_tile_info()` shapes. The fidelity audit and the emitter share the table recovery and curation data (`packages/types/src/emit-dts.ts`), so the `recordTables` loss gate and the emitted surface cannot drift; if a recovered field's type regressed to `unknown` the audit's `unknownTokens` would surface it.
+
+## `async`/`await` work but there is no event loop
+
+**Symptom.** You can write `async` functions, `await`, and `Promise` (the `Promise` type ships in the ES2022 lib), and it type-checks and transpiles. What does **not** exist is a JavaScript event loop: there is no `setTimeout`, no I/O microtask queue, and no scheduler that drains pending promises between frames. A promise advances only when something resolves it synchronously on the current call stack.
+
+```ts
+async function rollLater(): Promise<number> {
+  return 42; // resolves synchronously
+}
+
+export async function main(): Promise<void> {
+  const r = await rollLater(); // runs to completion in the same call
+  print(r);
+}
+```
+
+**Why.** TypeScriptToLua implements `async`/`await` itself, on top of Lua coroutines:
+
+- An `async function` is lowered to `__TS__AsyncAwaiter(generator)`, which returns a `__TS__Promise` and runs the function body inside a Lua **coroutine**.
+- `await x` is lowered to `__TS__Await(x)`, which yields the value through the body's Lua coroutine. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
+- `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
+
+These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module does `require("lualib_bundle")` to pull them in. No setup or polyfill is needed.
+
+The consequences are where it bites:
+
+- Awaiting an already-resolved or synchronously-resolving promise runs to completion in the same frame — fine, and reads well.
+- There is no timer or I/O integration. `await new Promise((r) => setTimeout(r, 1000))` cannot be written with a *global* `setTimeout` — there is none, so a bare call is a compile error (TS2304, *Cannot find name 'setTimeout'*), not a silent runtime failure. Import one from `@defold-typescript/types/timers` instead (see **Importable polyfills** below). A promise that nobody resolves leaves the async function suspended **forever**, with no error and no warning.
+- A rejected promise with no `.catch` is silently dropped; there is no Node-style "unhandled rejection" report.
+
+**The engine scheduler bridge.** What the JS runtime lacks — a thing that advances pending work between frames — Defold supplies as `timer.delay`: a frame-driven scheduler that fires a callback on a later frame. That callback is the hook. Resolve a `Promise` from inside a `timer.delay` callback and the `await` waiting on it resumes when the engine fires the timer, not before. Bridge it by hand by stashing the promise's `resolve` and calling it from the callback:
+
+```ts
+function waitSeconds(seconds: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    timer.delay(seconds, false, () => resolve()); // engine callback drives the promise
+  });
+}
+```
+
+**Importable polyfills.** You do not have to hand-roll that bridge. The first timer-polyfills slice ships it as named module exports:
+
+```ts
+import { setTimeout, setInterval, clearTimeout, clearInterval, wait } from "@defold-typescript/types/timers";
+```
+
+`setTimeout`/`setInterval` take **milliseconds** (the web-familiar unit) and return a numeric `timer` handle; pass that handle to `clearTimeout`/`clearInterval` — or to Defold's own `timer.cancel`, which is the same handle. `wait` takes **Defold-native seconds** and returns a `Promise<void>` you can `await`:
+
+```ts
+import { wait } from "@defold-typescript/types/timers";
+
+export async function main(): Promise<void> {
+  await wait(1); // resumes when the engine timer fires, not before
+  print("one second later");
+}
+```
+
+These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root (the same mechanism as `lualib_bundle`). Because there is no global, a bare `setTimeout(...)`/`setInterval(...)` (the muscle-memory web form) is a **compile error** — `TS2304: Cannot find name 'setTimeout'` — under the scaffolded `lib: ["ES2022"]` surface (no DOM/Node globals). That error is the warning: add the `import { setTimeout, … } from "@defold-typescript/types/timers"` line and it resolves. Your editor does this for you — tsserver lists the timers module in autocomplete and offers an *Add import from "@defold-typescript/types/timers"* quick-fix on the `TS2304` squiggle, so the fix is one keystroke (works in any tsserver-backed editor; no extension needed). Do not "fix" it by widening `lib` to `"DOM"` or adding `@types/node` — that would restore a global `setTimeout` declaration that type-checks but has no runtime behind it in Defold, turning the honest compile error into a silent forever-suspended `await`.
+
+**Caveats.** The polyfills are timer-backed, not a drop-in `setTimeout`. Four differences bite:
+
+- **Context-bound lifetime.** A `timer.delay` timer is owned by the script that created it and is auto-cancelled when that game object is deleted. A `wait` straddling the deletion of its own object never resolves.
+- **One-frame minimum resolution.** Even `setTimeout(cb, 0)` / `wait(0)` fires on the *next* frame, never the same one — the scheduler is frame-driven, so sub-frame delays round up to one frame.
+- **No microtask queue.** `Promise.resolve().then(...)` still runs synchronously on the current call stack; there is no microtask drain. Only a *timer-backed* promise crosses a frame boundary.
+- **Leaked suspended coroutines.** A promise that nobody ever resolves leaves its `async` function suspended forever as a parked Lua coroutine — no error, no warning, no timeout.
+
+**ts-defold contrast.** ts-defold ships no `setTimeout` polyfill of its own — its only `settimeout` is LuaSocket's per-socket I/O timeout method, not a scheduler. The `@defold-typescript/types/timers` module is specific to this toolchain.
+
+**How we pin this in the type tests.** `packages/transpiler/src/transpile.test.ts` transpiles an `async`/`await` sample and asserts the lowering (`__TS__AsyncAwaiter` for the function, `__TS__Await` for the await) with zero diagnostics, and that the Promise runtime (`__TS__Promise`) is present in the emitted `lualib_bundle`. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) changed the async lowering or stopped bundling the Promise helpers, the assertions would fail.
+
+## URL addressing: same-world objects are relative, `socket:` crosses worlds
+
+**Symptom.** A `msg.post` that reads naturally in TypeScript silently fails to reach its target — the receiver's `on_message` never fires, and nothing compiles wrong. The same applies to every API that takes a URL string (`go.get`/`go.set`, `msg.url`, `factory.create`, …). A literal socket copied from a Lua manual example, like `"main:/manager#controller"`, is the usual culprit: it resolves only when the target collection is actually *named* `main`.
+
+```ts
+msg.post("main:/enemy#ai", "alert");            // resolves only if the target collection's Name is "main" — fragile
+msg.post("/enemy#ai", "alert");                 // robust: absolute path inside the current world
+msg.post("#health", "damage", { amount: 10 }); // sibling component on the same game object
+```
+
+**Why.** A Defold URL is `[socket:][path][#fragment]` — three parts, the first optional. The `path` is the target object's id, the `#fragment` is the component on it, and an address that **starts with `/` is resolved from the root of the current game world** (the bootstrap collection loaded at game start). The `socket:` segment names *which game world* the target lives in, and it earns its keep only with collection proxies: a world's socket name is the **`Name` property of its collection file** — "The new world gets its name from the *Name* property in the collection file." The bootstrap collection is named the same way (it too is given a unique name from *its* `Name` property), so there is no special socket you address it through — inside that one world you never write the `socket:` segment at all. The trap is that a collection's `Name` is a property distinct from its folder: the editor's `main/main.collection` is a *file path*, while the `Name` you address the world by is a separate field (commonly the project default `default`, not `main`). So a literal `"main:…"` borrowed from a manual example breaks the moment your bootstrap collection is named anything other than `main`. The two-arg form `msg.url(socket, path, fragment)` is a separate runtime trap — only the no-arg, one-string, and three-arg forms are runtime-supported, so `msg.url("main", "camera")` is a runtime error. The tightened `msg.url` overloads in `packages/types/src/msg-overloads.d.ts` reject that two-arg call at compile time, so the typings are the warning.
+
+**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (one string), or the all-required `msg.url(hash("level1"), hash("/door"), hash("script"))` — never the two-arg form.
+
+**How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate. The prose pins — this section's heading, its front-digest link, and the `agent-runbooks.md` runbook — are asserted structurally in `packages/types/test/guide-docs.test.ts`.
+
+# Data structures: what's built in
+
+TypeScript ships a richer set of containers than Lua's single `table`, and the toolchain lowers each one to code Defold's Lua 5.1 VM runs. Most of them lower to a plain Lua table; the ones with behaviour (`Map`, `Set`, `class`, spread) lean on runtime helpers that TypeScriptToLua emits into `lualib_bundle`. That bundle is pure Lua 5.1 the CLI writes to the output root, pay-for-use: a container that needs a helper pulls it in, the rest cost nothing. Every container below runs unchanged on Defold's VM (LuaJIT on native and desktop, a 5.1 VM on HTML5).
+
+This page is the full availability map. For the Lua-to-TypeScript container translation at cheat-sheet depth — which `table` shape becomes which TypeScript type — see [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps).
+
+The lowerings quoted below were captured by running the real transpile pipeline; the same shapes are pinned in `packages/transpiler/src/data-structures-transpile.test.ts`.
+
+## Built-in containers
+
+| Structure | TypeScript form | Lowers to | Pulls `lualib`? | Use instead / note |
+| --- | --- | --- | --- | --- |
+| `Array` | `const xs: number[] = [1, 2, 3]` | Lua table `{1, 2, 3}` (1-based) | Literal, index, `push`, `length`: no. Higher-order methods (`map`, `filter`, `reduce`, …): yes | The idiomatic sequence. Keep arrays dense — holes desync `arr.length` from Lua's `#`. |
+| tuple | `const t: [number, string] = [1, "a"]` | plain Lua table `{1, "a"}` | **No** | The cheapest container — a fixed-length, positional record. Prefer it over an object for a fixed pair. |
+| `Map` | `new Map<string, number>()` | `__TS__New(Map)`; `.set`/`.get` call helper methods | Yes | Arbitrary (incl. non-string, object) keys. Use over an object record when keys are not fixed strings. On hot paths, `LuaMap` (below) is the same idea with no `lualib`. |
+| `Set` | `new Set<number>()` | `__TS__New(Set)` | Yes | Membership and dedup. Prefer over scanning an array for "is `x` present". On hot paths, `LuaSet` (below) skips `lualib`. |
+| `WeakMap` | `new WeakMap<object, V>()` | `__TS__New(WeakMap)` | Yes | Per-object side data whose entries vanish when the key is collected — caches keyed by object identity. |
+| `WeakSet` | `new WeakSet<object>()` | `__TS__New(WeakSet)` | Yes | Weak membership — "have I seen this object" without pinning it alive. |
+| object record | `{ x: 1, y: 2 }` | plain Lua table `{x = 1, y = 2}` | No (spread / `Object.entries` pull a helper) | Fixed, named string keys. The default for a struct; spread `{ ...a, y: 2 }` lowers to `__TS__ObjectAssign`. |
+| `class` | `class C { … }` + `new C()` | `__TS__Class()` + `__TS__New`; table + metatable, methods on `prototype` | Yes | Real OO with inheritance. On hot paths a plain object or a closure is lighter — reach for `class` when you want a typed constructor and method dispatch. |
+
+Two lowerings worth seeing in full. A tuple is just a table — no runtime helper, no `require`:
+
+```ts
+export const t: [number, string] = [1, "a"];
+```
+
+```lua
+--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+____exports.t = {1, "a"}
+return ____exports
+```
+
+A `class`, by contrast, builds on the `lualib` runtime — `__TS__Class` makes the metatable-backed table and `__TS__New` instantiates it:
+
+```ts
+export class Counter {
+  n = 0;
+  bump(): void {
+    this.n += 1;
+  }
+}
+export const c = new Counter();
+```
+
+```lua
+local ____lualib = require("lualib_bundle")
+local __TS__Class = ____lualib.__TS__Class
+local __TS__New = ____lualib.__TS__New
+local ____exports = {}
+____exports.Counter = __TS__Class()
+local Counter = ____exports.Counter
+Counter.name = "Counter"
+function Counter.prototype.____constructor(self)
+    self.n = 0
+end
+function Counter.prototype.bump(self)
+    self.n = self.n + 1
+end
+____exports.c = __TS__New(____exports.Counter)
+return ____exports
+```
+
+The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in. You never manage that file by hand.
+
+## Lower-overhead containers: the Lua table extensions
+
+When a `Map` or `Set` sits on a hot path and the `lualib` `__TS__New` indirection matters, TypeScriptToLua's **language extensions** give you `LuaTable`, `LuaMap`, and `LuaSet` — thin, typed views over a raw Lua table that lower to direct indexing with **no `lualib`**:
+
+```ts
+const seen = new LuaSet<number>();
+seen.add(1);
+export const hit = seen.has(1);
+
+const scores = new LuaMap<string, number>();
+scores.set("a", 1);
+export const a = scores.get("a");
+```
+
+```lua
+--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local seen = {}
+seen[1] = true
+____exports.hit = seen[1] ~= nil
+local scores = {}
+scores.a = 1
+____exports.a = scores.a
+return ____exports
+```
+
+`LuaSet.add` becomes `t[v] = true`, `LuaMap.set`/`get` become plain `t[k] = v` / `t[k]`, and nothing pulls `lualib_bundle`. The trade is a deliberately thin surface: `get`/`set`/`has`/`delete` (plus `add` on the set), and that is all — no `.size`, no `for...of`, no insertion order. Reach for the standard `Map`/`Set` when you need to enumerate or count; reach for `LuaMap`/`LuaSet` when you only get, set, and test membership and want zero runtime overhead.
+
+Use them as **ambient globals — do not import them.** `import { LuaMap } from "@typescript-to-lua/language-extensions"` is rejected (`… is not a module`) and silently falls back to the heavyweight `lualib` `Map`; written bare, `LuaMap`/`LuaSet`/`LuaTable` are part of the global type surface like the engine namespaces. (The Lua standard library itself — typed by `lua-types` — adds no container types beyond the universal `table`; these extension types are the typed way to use that raw table directly.)
+
+## Not available — reach for instead
+
+A couple of genuine JavaScript built-ins do not survive the transpile to Lua 5.1. They type-check but fail at compile time, so you find out from `tsc --noEmit` / the transpile diagnostics, not at runtime.
+
+| Want | Status | Reach for instead |
+| --- | --- | --- |
+| Regular expressions — `/b/`, `"x".match(/b/)` | **Rejected** — the diagnostic reads `string.match is unsupported.` | String methods: `indexOf`, `slice`, `startsWith`, `endsWith`, `includes`, `split`. They cover most parsing needs and lower to native Lua string ops. |
+| `BigInt` — `1n` | **Rejected** — `Unsupported node kind BigIntLiteral` | A `number` (Lua's double holds integers exactly up to 2^53), or a string when you only format/transport the value. |
+
+Regex is the one that bites most often. `"x".match(/b/)` type-checks but fails to transpile, because TypeScriptToLua maps `String.prototype.match` onto Lua's `string.match`, which takes a Lua pattern, not a JavaScript regex. Rewrite pattern checks with the string methods above; for anything more elaborate, parse by hand.
+
+## See also
+
+- [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps) — the container translation cheat sheet this page deepens.
+- [Where script state lives](./script-state.md) — where to *put* these containers: per-instance `self`, a shared module local, or a module singleton.
+- [TypeScript gotchas](./typescript-gotchas.md) — the runtime sharp edges (truthiness, `nil` collapse) that bite once the data is in a container.
+
 # Script lifecycle helpers
 
 `@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters. `self` holds *per-instance* state; for the wider picture — when to reach for a shared module local, a cross-script module singleton, or a VM-global instead — see [Where script state lives](./script-state.md).
@@ -932,7 +1386,7 @@ The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, s
 
 Under that config `gui.*` and the universal namespaces type-check while `render.*` is a compile error. The default `@defold-typescript/types` keeps every namespace, so the full surface is what you get everywhere until you opt in to a wall.
 
-`init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a composite `tsconfig.json` that `tsc -b --noEmit` enforces. See [Advanced CLI](advanced-cli.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
+`init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a composite `tsconfig.json` that `tsc -b --noEmit` enforces. See [Wall](wall.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
 
 # Typed messages
 
@@ -1137,119 +1591,6 @@ A rule of thumb: `self` for per-instance state; a module singleton for deliberat
 - [TypeScript vs Lua](./typescript-vs-lua.md) — the `require`/`import` mapping and the `declare global` lowering this page builds on.
 - [Agent runbooks](./agent-runbooks.md#where-script-state-lives) — the condensed self-vs-module-local procedure.
 
-# Data structures: what's built in
-
-TypeScript ships a richer set of containers than Lua's single `table`, and the toolchain lowers each one to code Defold's Lua 5.1 VM runs. Most of them lower to a plain Lua table; the ones with behaviour (`Map`, `Set`, `class`, spread) lean on runtime helpers that TypeScriptToLua emits into `lualib_bundle`. That bundle is pure Lua 5.1 the CLI writes to the output root, pay-for-use: a container that needs a helper pulls it in, the rest cost nothing. Every container below runs unchanged on Defold's VM (LuaJIT on native and desktop, a 5.1 VM on HTML5).
-
-This page is the full availability map. For the Lua-to-TypeScript container translation at cheat-sheet depth — which `table` shape becomes which TypeScript type — see [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps).
-
-The lowerings quoted below were captured by running the real transpile pipeline; the same shapes are pinned in `packages/transpiler/src/data-structures-transpile.test.ts`.
-
-## Built-in containers
-
-| Structure | TypeScript form | Lowers to | Pulls `lualib`? | Use instead / note |
-| --- | --- | --- | --- | --- |
-| `Array` | `const xs: number[] = [1, 2, 3]` | Lua table `{1, 2, 3}` (1-based) | Literal, index, `push`, `length`: no. Higher-order methods (`map`, `filter`, `reduce`, …): yes | The idiomatic sequence. Keep arrays dense — holes desync `arr.length` from Lua's `#`. |
-| tuple | `const t: [number, string] = [1, "a"]` | plain Lua table `{1, "a"}` | **No** | The cheapest container — a fixed-length, positional record. Prefer it over an object for a fixed pair. |
-| `Map` | `new Map<string, number>()` | `__TS__New(Map)`; `.set`/`.get` call helper methods | Yes | Arbitrary (incl. non-string, object) keys. Use over an object record when keys are not fixed strings. On hot paths, `LuaMap` (below) is the same idea with no `lualib`. |
-| `Set` | `new Set<number>()` | `__TS__New(Set)` | Yes | Membership and dedup. Prefer over scanning an array for "is `x` present". On hot paths, `LuaSet` (below) skips `lualib`. |
-| `WeakMap` | `new WeakMap<object, V>()` | `__TS__New(WeakMap)` | Yes | Per-object side data whose entries vanish when the key is collected — caches keyed by object identity. |
-| `WeakSet` | `new WeakSet<object>()` | `__TS__New(WeakSet)` | Yes | Weak membership — "have I seen this object" without pinning it alive. |
-| object record | `{ x: 1, y: 2 }` | plain Lua table `{x = 1, y = 2}` | No (spread / `Object.entries` pull a helper) | Fixed, named string keys. The default for a struct; spread `{ ...a, y: 2 }` lowers to `__TS__ObjectAssign`. |
-| `class` | `class C { … }` + `new C()` | `__TS__Class()` + `__TS__New`; table + metatable, methods on `prototype` | Yes | Real OO with inheritance. On hot paths a plain object or a closure is lighter — reach for `class` when you want a typed constructor and method dispatch. |
-
-Two lowerings worth seeing in full. A tuple is just a table — no runtime helper, no `require`:
-
-```ts
-export const t: [number, string] = [1, "a"];
-```
-
-```lua
---[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-____exports.t = {1, "a"}
-return ____exports
-```
-
-A `class`, by contrast, builds on the `lualib` runtime — `__TS__Class` makes the metatable-backed table and `__TS__New` instantiates it:
-
-```ts
-export class Counter {
-  n = 0;
-  bump(): void {
-    this.n += 1;
-  }
-}
-export const c = new Counter();
-```
-
-```lua
-local ____lualib = require("lualib_bundle")
-local __TS__Class = ____lualib.__TS__Class
-local __TS__New = ____lualib.__TS__New
-local ____exports = {}
-____exports.Counter = __TS__Class()
-local Counter = ____exports.Counter
-Counter.name = "Counter"
-function Counter.prototype.____constructor(self)
-    self.n = 0
-end
-function Counter.prototype.bump(self)
-    self.n = self.n + 1
-end
-____exports.c = __TS__New(____exports.Counter)
-return ____exports
-```
-
-The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in. You never manage that file by hand.
-
-## Lower-overhead containers: the Lua table extensions
-
-When a `Map` or `Set` sits on a hot path and the `lualib` `__TS__New` indirection matters, TypeScriptToLua's **language extensions** give you `LuaTable`, `LuaMap`, and `LuaSet` — thin, typed views over a raw Lua table that lower to direct indexing with **no `lualib`**:
-
-```ts
-const seen = new LuaSet<number>();
-seen.add(1);
-export const hit = seen.has(1);
-
-const scores = new LuaMap<string, number>();
-scores.set("a", 1);
-export const a = scores.get("a");
-```
-
-```lua
---[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local seen = {}
-seen[1] = true
-____exports.hit = seen[1] ~= nil
-local scores = {}
-scores.a = 1
-____exports.a = scores.a
-return ____exports
-```
-
-`LuaSet.add` becomes `t[v] = true`, `LuaMap.set`/`get` become plain `t[k] = v` / `t[k]`, and nothing pulls `lualib_bundle`. The trade is a deliberately thin surface: `get`/`set`/`has`/`delete` (plus `add` on the set), and that is all — no `.size`, no `for...of`, no insertion order. Reach for the standard `Map`/`Set` when you need to enumerate or count; reach for `LuaMap`/`LuaSet` when you only get, set, and test membership and want zero runtime overhead.
-
-Use them as **ambient globals — do not import them.** `import { LuaMap } from "@typescript-to-lua/language-extensions"` is rejected (`… is not a module`) and silently falls back to the heavyweight `lualib` `Map`; written bare, `LuaMap`/`LuaSet`/`LuaTable` are part of the global type surface like the engine namespaces. (The Lua standard library itself — typed by `lua-types` — adds no container types beyond the universal `table`; these extension types are the typed way to use that raw table directly.)
-
-## Not available — reach for instead
-
-A couple of genuine JavaScript built-ins do not survive the transpile to Lua 5.1. They type-check but fail at compile time, so you find out from `tsc --noEmit` / the transpile diagnostics, not at runtime.
-
-| Want | Status | Reach for instead |
-| --- | --- | --- |
-| Regular expressions — `/b/`, `"x".match(/b/)` | **Rejected** — the diagnostic reads `string.match is unsupported.` | String methods: `indexOf`, `slice`, `startsWith`, `endsWith`, `includes`, `split`. They cover most parsing needs and lower to native Lua string ops. |
-| `BigInt` — `1n` | **Rejected** — `Unsupported node kind BigIntLiteral` | A `number` (Lua's double holds integers exactly up to 2^53), or a string when you only format/transport the value. |
-
-Regex is the one that bites most often. `"x".match(/b/)` type-checks but fails to transpile, because TypeScriptToLua maps `String.prototype.match` onto Lua's `string.match`, which takes a Lua pattern, not a JavaScript regex. Rewrite pattern checks with the string methods above; for anything more elaborate, parse by hand.
-
-## See also
-
-- [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps) — the container translation cheat sheet this page deepens.
-- [Where script state lives](./script-state.md) — where to *put* these containers: per-instance `self`, a shared module local, or a module singleton.
-- [TypeScript gotchas](./typescript-gotchas.md) — the runtime sharp edges (truthiness, `nil` collapse) that bite once the data is in a container.
-
 # Vector math
 
 Defold exposes vector arithmetic through Lua metamethods on `vector3`, `vector4`, `quaternion`, and `matrix4`. In TypeScript the same operations are typed as **methods**, not operators: `a.add(b)` instead of `a + b`. The TypeScript-to-Lua transpiler turns these calls into the underlying metamethod invocations at build time, so the runtime cost is identical.
@@ -1321,6 +1662,412 @@ Whole-vector operations read left-to-right as a chain of `Vector3` methods (`go.
 TypeScript's binary `+`, `-`, `*`, `/` operators require both operands to be `number` (or `+` accepts `string`). The type-checker rejects `v3a + v3b` with TS2362/TS2365 because `Vector3` is not assignable to either, so writing the operator form fails to compile and you cannot ship code that would crash at runtime.
 
 There is **one** exception: **unary minus**. TypeScript does not flag `-v3a`; it silently produces `number`. This is a TS-level gap the toolchain cannot close with types alone. The typed alternative is `v.unm()`. See [unary minus on Vector3 silently produces number](./typescript-gotchas.md#unary-minus-on-vector3--vector4-silently-produces-number) on the gotchas page for the full story.
+
+# Init
+
+`init` scaffolds a Defold project with a TypeScript surface — or adds TypeScript
+to an existing Defold project. It writes the files and stops; run `bun install`
+afterward (it prints the reminder).
+
+```sh
+bunx @defold-typescript/cli@latest init my-game   # new project in ./my-game
+bunx @defold-typescript/cli@latest init .         # scaffold / add to the current folder
+```
+
+Use the `@latest` tag when you scaffold: `bunx` caches binaries, and `init` is
+what writes your `@defold-typescript/types` version pin, so a stale cache would
+pin an older release.
+
+## A destination is required
+
+`init` takes an explicit destination — there is no implicit "current folder"
+default, so it never scaffolds where you did not mean to. Pass a path to create
+(or add to) that folder, or `.` to target the folder you are already in. The same
+rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
+
+## Two modes
+
+`init` detects whether the destination already holds a `game.project`:
+
+- **New project.** In an empty or non-Defold folder it synthesizes a full Defold
+  project (`game.project`, `main/main.collection`, `input/game.input_binding`)
+  alongside the TypeScript surface (`src/main.ts`, `tsconfig.json`,
+  `package.json`, `.gitignore`, `biome.json`, `mise.toml`, `.vscode/`).
+  `game.project` boots the collection and points `[input]` at the binding, so a
+  fresh scaffold loads in Defold with no missing references.
+- **Add TypeScript.** Run inside a folder that already has a `game.project` and
+  `init` adds only the TypeScript infrastructure, leaving `.script`,
+  `.collection`, `.gui_script`, `.render_script`, `game.project`, and other engine
+  assets untouched. See [Add TypeScript to an existing project](./add-typescript.md).
+
+Scaffolded config files (`biome.json`, `.vscode/`, `mise.toml`) merge additively
+into anything you already have, so re-running `init` refreshes the managed blocks
+without disturbing your own entries.
+
+## Flags
+
+- `--template <name>` — pick a starter template when **creating a new project**
+  (see below). Rejected in add-TypeScript mode, where there is nothing to
+  synthesize.
+- `--force` — refresh managed files: repin the managed `@defold-typescript/types`
+  and `@defold-typescript/cli` dependencies to the CLI's own version and migrate a
+  deprecated Biome `recommended` key, leaving your other settings in place. This is
+  the deliberate upgrade path.
+- `--suppress-install-reminder` — silence the `Next: run <pm> install` line when
+  you install through your own tooling.
+- `--json` — emit the result envelope. See
+  [Agent runbooks](./agent-runbooks.md#machine-readable-output).
+
+## Starter templates
+
+Pick a template with `--template <name>` when creating a new project:
+
+```sh
+bunx @defold-typescript/cli@latest init my-game --template minimal
+```
+
+- **`default`** — the opinionated layout you get when you omit `--template`: a
+  `game.project`, a `main/main.collection`, and a `src/main.ts` whose `init`
+  returns a small `vmath.vector3` example state.
+- **`minimal`** — the same project layout with an empty-state `src/main.ts` (a
+  `defineScript` whose `init` returns `{}`), for starting from a blank script.
+
+Both templates differ only in the synthesized entry script; the shared TypeScript
+surface (`tsconfig.json`, `package.json`, `.gitignore`, `biome.json`, `mise.toml`,
+and the `.vscode/` files) is identical.
+
+Omitting `--template` is equivalent to `--template default`. An unknown name fails
+fast and lists the valid templates:
+
+```
+defold-typescript init: unknown template "foo". Valid templates: default, minimal.
+```
+
+# Watch
+
+`watch` rebuilds your Lua incrementally on every TypeScript change. Run it in the
+editor's integrated terminal and leave it running while you work; the
+[Defold editor](./defold-editor.md) picks up each rebuild.
+
+```sh
+bunx @defold-typescript/cli watch
+```
+
+## What it does
+
+`watch` holds one long-lived transpile session and re-reads and rewrites only the
+files you actually edit, skipping the re-glob and re-read of unchanged sources, so
+a rebuild after a save is near-instant. Each source under `src/` becomes exactly
+one output, the same mapping [`build`](./build.md) uses: a lifecycle-factory file
+becomes a Defold component (`src/main.ts` -> `src/main.ts.script`), a plain module
+becomes a Lua module (`src/util.ts` -> `src/util.lua`). Adding or removing a
+factory switches the artifact kind, and `watch` prunes the stale alternative so a
+kind switch never leaves the old output behind.
+
+Keep Defold open on the same project folder you run `watch` in, and run the game
+from the editor after a rebuild completes.
+
+## Keeping the extension surface current
+
+`watch` re-runs [`resolve`](./resolve.md) whenever you save `game.project`,
+re-materializing `.defold-types/extensions/` from the declared `[dependencies]`.
+It does **not** bootstrap that surface: run `resolve` once before `watch` so the
+initial extension types exist; `watch` only reconciles later `[dependencies]`
+edits.
+
+## Flags
+
+- `--json` — stream the build lifecycle as newline-delimited JSON for agents and
+  scripts. See [Agent runbooks](./agent-runbooks.md#machine-readable-output)
+  for the event stream.
+
+## As a mise task
+
+If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` exposes the
+loop as `mise run defold-typescript:watch`. Like [`build`](./build.md), it carries
+no version tag, so `bunx` resolves the `@defold-typescript/cli` that `init` pinned
+as a devDependency — the version locked alongside your `@defold-typescript/types`.
+
+# Build
+
+`build` transpiles every TypeScript file under `src/` to Lua and writes the result
+into the Defold project tree — a one-shot compile. For the incremental loop you
+run while editing, see [`watch`](./watch.md).
+
+```sh
+bunx @defold-typescript/cli build
+```
+
+## What it does
+
+Each source becomes exactly one output. A file with an
+`export default defineScript({...})` (or `defineGuiScript`/`defineRenderScript`)
+lifecycle factory becomes a Defold script component
+(`src/main.ts` -> `src/main.ts.script`); a plain module with no factory becomes a
+Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you never edit
+or reference by hand, only ever the `src/util.ts` you author. Your `import`
+becomes a Lua `require` that resolves against that emitted module, so a shared
+module must be built before the script importing it will run. Open the project in
+the [Defold editor](./defold-editor.md) (or run it headlessly, below) to play it.
+
+When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
+object spread, and similar), the build also writes a `lualib_bundle.lua` at the
+output root automatically; the generated Lua's `require("lualib_bundle")` resolves
+against it.
+
+Because the output kind is the factory a source calls, adding or removing a
+factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the
+reverse). `build` and [`watch`](./watch.md) prune the stale alternative for you, so
+a kind switch never leaves the previous output behind. Every generated file
+carries a trailing `--# defold-typescript:generated` marker; on a full build the
+tool **warns, never deletes** about any marked `.lua` or `.ts.*` output whose
+TypeScript source no longer exists, so a deleted or renamed source's orphaned Lua
+surfaces for you to remove (the warning names the file and the source to restore).
+Hand-authored Lua, which lacks the marker, is never flagged or touched.
+
+`build` never narrows the API surface — it builds against whatever entrypoint your
+`tsconfig` names, the full `@defold-typescript/types` by default. Opt into
+per-directory narrowing with [`wall`](./wall.md).
+
+The everyday commands carry no version tag: inside an installed project `bunx`
+resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the
+version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
+`init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
+
+## Flags
+
+- `--json` — emit the build result as a single JSON object (including the
+  `warnings` array) for agents and scripts. See
+  [Agent runbooks](./agent-runbooks.md#machine-readable-output).
+
+## Headless builds (no editor)
+
+`build` transpiles TypeScript to Lua; to compile and run the Defold project itself
+from the command line — no editor — drive Defold's headless build tool (`bob`)
+through the `defold` subcommand:
+
+```sh
+bunx @defold-typescript/cli defold resolve   # fetch library dependencies
+bunx @defold-typescript/cli defold build     # debug build into build/default
+bunx @defold-typescript/cli defold bundle    # bundle a platform target
+```
+
+The first run downloads a version-matched `bob.jar` into a cache dir
+(`$DEFOLD_TYPESCRIPT_CACHE/bob` when set, otherwise
+`$XDG_CACHE_HOME/defold-typescript/bob`, falling back to
+`~/.cache/defold-typescript/bob`) and reuses it afterward. `bob` needs a JVM: it
+uses `java` on your `PATH`, or pass `--java <path>` (or set `DEFOLD_JAVA`).
+Native-extension projects can pass `--build-server <url>`. `bob`'s exit code
+propagates, so a failed build fails the command.
+
+Like the engine launcher, the `bob` version tracks the latest stable Defold
+release. A project pinned to an older Defold version is a known limitation.
+
+# Wall
+
+This page covers `wall`, the opt-in command for narrowing the API surface of a
+source directory to a single script kind. To *add* a surface for native-extension
+namespaces instead of narrowing one, see [`resolve`](./resolve.md).
+
+## Full surface by default
+
+Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a
+`.gui_script`, and `render.*` only inside a `.render_script`. Every other
+namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
+
+By default `defold-typescript` gives you the **full** `@defold-typescript/types`
+surface everywhere. `init`, `build`, and `watch` never change this: they scaffold
+and build against whatever entrypoint your `tsconfig` names and never add, remove,
+or prune a wall. The full surface never rejects a call the engine would allow, but
+it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall
+at compile time, opt in with `wall`.
+
+## What a wall is
+
+A wall is a composite `tsconfig.json` written into a single-kind source directory
+that narrows `compilerOptions.types` to that kind's subpath:
+
+| Script kind      | `types` entrypoint                       | Namespaces           |
+| ---------------- | ---------------------------------------- | -------------------- |
+| `.script`        | `@defold-typescript/types/script`        | universal only       |
+| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
+| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
+
+The root `tsconfig.json` references each walled directory and excludes it from the
+root program, so `tsc -b --noEmit` builds every walled directory against only its
+narrowed surface — a `render.*` use inside a gui-walled directory becomes a compile
+error, while the rest of the project stays full-surface.
+
+A directory is **eligible** to be walled only when every `.ts` source in it is one
+kind; a directory mixing kinds cannot be walled, because no single narrowing
+applies. `build` and `watch` never touch walls — they are entirely yours to
+manage.
+
+## Interactive
+
+Run `wall` with no arguments in a terminal:
+
+```sh
+bunx @defold-typescript/cli wall
+```
+
+You get a checkbox of every eligible source directory, pre-checked to the
+directories already walled. Checking an unwalled directory walls it; unchecking a
+walled directory removes its wall. Mixed-kind directories appear disabled, with
+their competing kinds shown as the reason. The final selection **is** the desired
+wall set — the command reconciles the project on disk to exactly what you checked.
+
+## Flags
+
+For agents, CI, and scripted use, pass directories explicitly (a bare `wall` with
+no TTY errors rather than hanging on an unrenderable prompt):
+
+```sh
+# Wall these directories (added to any already walled)
+bunx @defold-typescript/cli wall src/ui src/rendering
+
+# Remove a wall
+bunx @defold-typescript/cli wall --remove src/ui
+
+# List current and eligible walls (writes nothing)
+bunx @defold-typescript/cli wall --list
+bunx @defold-typescript/cli wall --list --json
+```
+
+`--json` emits the resulting `directoryWalls` (and, for `--list`, the `eligible`
+set) for machine consumption. `--json` is machine-driven intent, so a bare
+`wall --json` never opens the interactive menu — pass directories or `--list`.
+
+## Import the factory from the kind subpath
+
+A wall only holds if a walled source imports its lifecycle factory from the **kind
+subpath**, not the main entry:
+
+```ts
+// src/ui/hud.ts — inside a gui wall
+import { defineGuiScript } from "@defold-typescript/types/gui-script"; // correct
+```
+
+Importing the same factory from the main `@defold-typescript/types` entry pulls
+*every* `declare global` namespace (including `render`) into the wall's program and
+silently defeats the narrowing — `render.*` would type-check inside a gui wall:
+
+```ts
+// Wrong: re-introduces the full surface, defeating the wall
+import { defineGuiScript } from "@defold-typescript/types";
+```
+
+The interactive snippets scaffolded by `init` already import from the kind
+subpaths. `build` enforces this: a walled source that imports a lifecycle factory
+from the main entry fails the build before transpile, naming the file and the kind
+subpath it should import from instead. (`watch` does not enforce it yet — its
+session path is a separate slice.)
+
+# Resolve
+
+`resolve` reads your project's declared native-extension dependencies, fetches
+each archive, and generates an ambient TypeScript namespace from every
+`.script_api` doc inside it — so extension functions gain autocomplete and `tsc`
+coverage with no import. For what native extensions are, and how to declare and
+consume them, see [Native extensions](./extensions.md).
+
+```sh
+bunx @defold-typescript/cli resolve        # defaults to the current directory
+bunx @defold-typescript/cli resolve path/to/project
+```
+
+## What it does
+
+`resolve` reads every `dependencies#N` URL under `[project]` in `game.project`. A
+`game.project` with no `[project]` section is an error; a `[project]` with no
+`dependencies#N` keys reports `no extension dependencies declared` and exits
+cleanly. For each declared dependency, `resolve`:
+
+1. downloads and caches the archive (later runs are offline),
+2. locates every `.script_api` doc inside it,
+3. emits one ambient namespace per doc into
+   `.defold-types/extensions/<namespace>.d.ts`,
+4. writes an index barrel and a `package.json` for that sibling surface, and
+5. additively appends `"extensions"` to `tsconfig.json` `compilerOptions.types`,
+   so it coexists with the pinned engine surface.
+
+The human-readable output lists each resolved extension and where the surface was
+written:
+
+```
+  iap <- https://github.com/defold/extension-iap/archive/main.zip (1 .script_api, download)
+  <other.url>: asset-only, skipped
+defold-typescript resolve: wrote .defold-types/extensions
+```
+
+The `.defold-types/` directory is generated output and is gitignored. Re-run
+`resolve` whenever you change `[dependencies]`; it reconciles the sibling surface
+to exactly the extensions currently declared.
+
+A running [`watch`](./watch.md) automates that re-run: every `game.project` save
+re-resolves the surface, so editing `[dependencies]` while `watch` is up refreshes
+`.defold-types/extensions/` with no extra command. `watch` does not bootstrap the
+surface, though — it only reconciles on save, so run `resolve` once first to
+materialize the initial extension types.
+
+Dependencies that ship no `.script_api` — asset packs, fonts, other content-only
+archives — are reported and skipped, never a failure; `resolve` still exits `0`
+and materializes the surface for the extensions that do carry docs.
+
+## Flags
+
+- `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift
+  (so CI gates the upgrade) and write nothing. See [Pinning](#pinning-extension-versions).
+- `--json` — emit one object describing the run. See
+  [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
+  (`materializedSurface`, and per extension the `namespaces`, `provenance`,
+  `resolvedVersion`, `pinnedVersion`, and `pinStatus`).
+
+## Pinning extension versions
+
+A declared `dependencies#N` URL is the only identity `resolve` reads, and it is
+often a **moving** ref (`.../archive/master.zip`) — the same URL can resolve to
+different bytes over time. The reproducible identity of *what was actually
+resolved* is therefore the sha256 digest of the resolved archive bytes, not a URL
+segment. `resolve` records that digest as the extension's version and seeds it
+into the project's `package.json` when absent (never clobbering an existing pin):
+
+```jsonc
+"defold-typescript": {
+  "extensions": {
+    "https://github.com/defold/extension-iap/archive/main.zip": "sha256:ab12…"
+  }
+}
+```
+
+A committed pin is human-owned intent. When the URL later yields different bytes,
+the freshly-resolved digest no longer matches the pinned one, and `resolve`
+reports **drift**. The enforcement is two layered knobs:
+
+- The **human-readable** `resolve` (no flag) **warns on drift** by default,
+  writing one line per drifted url to `stderr` (e.g.
+  `pin drift for https://...: sha256:pinned -> sha256:fresh`). Exit code is `0` —
+  drift still surfaces loudly on a developer's machine without breaking non-frozen
+  scripted runs.
+- The opt-in `--frozen` flag treats the committed pin set as a lockfile: it
+  **exits non-zero on drift** (so CI gates the upgrade) and **writes nothing** —
+  no absent-pin seeding, no clobbering. An unpinned extension under `--frozen`
+  passes and stays unseeded; failing on unpinned is a stricter mode and out of
+  scope for this knob.
+
+The default behavior — seed absent pins, never clobber, exit `0` — is unchanged.
+`resolve` materializes the surface for the drifted extensions either way; only the
+`package.json` write and the exit code are gated. The `--json` output reports the
+pin state per extension (`pinStatus`: `unpinned` / `match` / `drift`); see
+[Agent runbooks](./agent-runbooks.md#machine-readable-output) for the full shape.
+
+## Cache location
+
+Downloaded extension archives are cached so repeated `resolve` runs stay offline.
+The cache lives at `$XDG_CACHE_HOME/defold-typescript/extensions` (defaulting to
+`~/.cache/defold-typescript/extensions`). Set `DEFOLD_TYPESCRIPT_CACHE` to
+override the root — the archives then land under
+`$DEFOLD_TYPESCRIPT_CACHE/extensions`.
 
 # Live transpile diagnostics
 
@@ -1442,7 +2189,7 @@ The launcher runs whatever already sits under `build/`; it does **not** compile 
    bunx @defold-typescript/cli defold build      # debug build into build/default
    ```
 
-   `defold build` runs Defold's headless `bob` tool — see [Getting started](getting-started.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
+   `defold build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
 3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
 4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
 
@@ -1460,106 +2207,6 @@ The CLI build loop above is the primary path and needs no editor. If you prefer,
 
 - [Script lifecycle](script-lifecycle.md) — typing `self` and the lifecycle hooks you will step through.
 - [Code editor setup](editor-setup.md) — the rest of the scaffolded `.vscode/` config and the watch loop.
-
-# Advanced CLI
-
-This page covers `wall`, the opt-in command for narrowing the API surface of a
-source directory to a single script kind. To *add* a surface for native-extension
-namespaces instead of narrowing one, see [`resolve`](./extensions.md#running-resolve).
-
-## Full surface by default
-
-Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a
-`.gui_script`, and `render.*` only inside a `.render_script`. Every other
-namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
-
-By default `defold-typescript` gives you the **full** `@defold-typescript/types`
-surface everywhere. `init`, `build`, and `watch` never change this: they scaffold
-and build against whatever entrypoint your `tsconfig` names and never add, remove,
-or prune a wall. The full surface never rejects a call the engine would allow, but
-it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall
-at compile time, opt in with `wall`.
-
-## What a wall is
-
-A wall is a composite `tsconfig.json` written into a single-kind source directory
-that narrows `compilerOptions.types` to that kind's subpath:
-
-| Script kind | `types` entrypoint | Namespaces |
-| ----------- | ------------------ | ---------- |
-| `.script` | `@defold-typescript/types/script` | universal only |
-| `.gui_script` | `@defold-typescript/types/gui-script` | universal + `gui` |
-| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
-
-The root `tsconfig.json` references each walled directory and excludes it from the
-root program, so `tsc -b --noEmit` builds every walled directory against only its
-narrowed surface — a `render.*` use inside a gui-walled directory becomes a compile
-error, while the rest of the project stays full-surface.
-
-A directory is **eligible** to be walled only when every `.ts` source in it is one
-kind; a directory mixing kinds cannot be walled, because no single narrowing
-applies. `build` and `watch` never touch walls — they are entirely yours to
-manage.
-
-## Interactive
-
-Run `wall` with no arguments in a terminal:
-
-```sh
-bunx @defold-typescript/cli wall
-```
-
-You get a checkbox of every eligible source directory, pre-checked to the
-directories already walled. Checking an unwalled directory walls it; unchecking a
-walled directory removes its wall. Mixed-kind directories appear disabled, with
-their competing kinds shown as the reason. The final selection **is** the desired
-wall set — the command reconciles the project on disk to exactly what you checked.
-
-## Flags
-
-For agents, CI, and scripted use, pass directories explicitly (a bare `wall` with
-no TTY errors rather than hanging on an unrenderable prompt):
-
-```sh
-# Wall these directories (added to any already walled)
-bunx @defold-typescript/cli wall src/ui src/rendering
-
-# Remove a wall
-bunx @defold-typescript/cli wall --remove src/ui
-
-# List current and eligible walls (writes nothing)
-bunx @defold-typescript/cli wall --list
-bunx @defold-typescript/cli wall --list --json
-```
-
-`--json` emits the resulting `directoryWalls` (and, for `--list`, the `eligible`
-set) for machine consumption. `--json` is machine-driven intent, so a bare
-`wall --json` never opens the interactive menu — pass directories or `--list`.
-
-## Import the factory from the kind subpath
-
-A wall only holds if a walled source imports its lifecycle factory from the **kind
-subpath**, not the main entry:
-
-```ts
-// src/ui/hud.ts — inside a gui wall
-import { defineGuiScript } from "@defold-typescript/types/gui-script"; // correct
-```
-
-Importing the same factory from the main `@defold-typescript/types` entry pulls
-*every* `declare global` namespace (including `render`) into the wall's program and
-silently defeats the narrowing — `render.*` would type-check inside a gui wall:
-
-```ts
-// Wrong: re-introduces the full surface, defeating the wall
-import { defineGuiScript } from "@defold-typescript/types";
-```
-
-The interactive snippets scaffolded by `init` already import from the kind
-subpaths. `build` enforces this: a walled source that imports a lifecycle factory
-from the main entry fails the build before transpile, naming the file and the kind
-subpath it should import from instead. (`watch` does not enforce it yet — its
-session path is a separate slice.)
 
 # Agent runbooks
 
@@ -1586,6 +2233,81 @@ The agent branches on `ok`: on `true`, read `written` for the paths the command
 created or updated; on `false`, read `error` for the failure reason. Some verbs
 add fields to the success envelope (noted per runbook), but `command`, `ok`, and
 either `written` or `error` are always present.
+
+## Machine-readable output
+
+Every command accepts `--json`. The one-shot commands (`init`, `build`,
+`setup-debug`, `defold`) print a single JSON object to stdout, terminated by a
+newline; [`watch`](./watch.md) streams newline-delimited JSON (one object per
+line):
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":["src/main.ts.script", "src/util.lua", ...],"warnings":[]}
+```
+
+A failure flips `ok` to `false` and carries an `error` string instead of
+`written`. On [`build`](./build.md), `warnings` carries the sourceless-orphan
+lines (empty when there are none). Optional fields (`defoldVersion`,
+`defoldChannel`, `apiSurface`, `materializedSurface`, …) appear only when they
+apply.
+
+`watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
+one object per line, one line per event. The full lifecycle reads
+`start` → `build` → `rebuild`* → `resolve`* → `stop`:
+
+```sh
+bunx @defold-typescript/cli watch --json
+# {"command":"watch","event":"start","ok":true,"written":[]}
+# {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
+# {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[]}
+# {"command":"watch","event":"rebuild","ok":false,"error":"..."}
+# {"command":"watch","event":"resolve","ok":true,"written":[]}
+# {"command":"watch","event":"stop","ok":true,"written":[]}
+```
+
+A `resolve` event is emitted whenever a `game.project` save re-resolves the
+extension surface (re-materializing `.defold-types/extensions/` from the declared
+`[dependencies]` URLs). `start` arrives once, before the initial full build — the
+process is up and listening. `stop` arrives once on graceful shutdown. A failed
+startup (missing `tsconfig.json`, etc.) emits `start` then exits non-zero with
+**no** `stop` line; a rebuild that fails emits an `ok: false` line **to stdout
+too**, so a line-reader sees one uninterrupted stream — failures never split off
+to stderr. Read each line as it arrives and react per event. Without `--json`,
+stdout stays the human `wrote N files: …` output and rebuild errors stay on
+stderr.
+
+[`resolve --json`](./resolve.md) reports `materializedSurface` (the written
+directory, or `null` when nothing was materialized) and, per extension, the `url`,
+generated `namespaces`, `scriptApiCount`, `provenance` (`cache` or `download`),
+whether it was `assetOnly`, the `resolvedVersion` (sha256 digest of the resolved
+archive bytes), — when the project pins that url — the `pinnedVersion`, and the
+`pinStatus` (`unpinned` / `match` / `drift`):
+
+```jsonc
+{
+  "command": "resolve",
+  "ok": true,
+  "written": [],
+  "materializedSurface": ".defold-types/extensions",
+  "extensions": [
+    {
+      "url": "https://github.com/defold/extension-iap/archive/main.zip",
+      "namespaces": ["iap"],
+      "scriptApiCount": 1,
+      "provenance": "download",
+      "assetOnly": false,
+      "resolvedVersion": "sha256:ab12…",
+      "pinnedVersion": "sha256:ab12…",
+      "pinStatus": "match"
+    }
+  ]
+}
+```
+
+A `pinnedVersion` field is only present when the project's `package.json` records
+a pin for that `url`. See [Resolve](./resolve.md#pinning-extension-versions) for
+what `pinStatus` drives.
 
 ## Offline knowledge pack
 
@@ -2360,7 +3082,7 @@ as `materializedSurface`. Re-running build is idempotent.
 
 The pinned versioned surface is materialized in full — `build` and `watch` never
 narrow it by script kind. Narrowing a directory to one kind is opt-in via the
-`wall` command; see [Advanced CLI](advanced-cli.md) and the per-kind API wall in
+`wall` command; see [Wall](wall.md) and the per-kind API wall in
 [Script lifecycle](script-lifecycle.md). (Walls today narrow against the
 installed `@defold-typescript/types` subpaths, not the pinned
 `.defold-types/<version>/` surface.)
@@ -2452,41 +3174,20 @@ dependencies#1 = https://github.com/some/asset-pack/archive/main.zip
 with no `[project]` section is an error; a `[project]` with no `dependencies#N`
 keys reports `no extension dependencies declared` and exits cleanly.
 
-## Running `resolve`
+## Materializing the types: `resolve`
+
+The [`resolve`](./resolve.md) command reads every `dependencies#N` URL, downloads
+and caches each archive, and emits one ambient namespace per `.script_api` doc
+into `.defold-types/extensions/`, wiring it into `tsconfig.json`:
 
 ```sh
-bunx @defold-typescript/cli resolve        # defaults to the current directory
-bunx @defold-typescript/cli resolve path/to/project
+bunx @defold-typescript/cli resolve
 ```
 
-For each declared dependency, `resolve`:
-
-1. downloads and caches the archive (later runs are offline),
-2. locates every `.script_api` doc inside it,
-3. emits one ambient namespace per doc into
-   `.defold-types/extensions/<namespace>.d.ts`,
-4. writes an index barrel and a `package.json` for that sibling surface, and
-5. additively appends `"extensions"` to `tsconfig.json`
-   `compilerOptions.types`, so it coexists with the pinned engine surface.
-
-The human-readable output lists each resolved extension and where the surface
-was written:
-
-```
-  iap <- https://github.com/defold/extension-iap/archive/main.zip (1 .script_api, download)
-  <other.url>: asset-only, skipped
-defold-typescript resolve: wrote .defold-types/extensions
-```
-
-The `.defold-types/` directory is generated output and is gitignored. Re-run
-`resolve` whenever you change `[dependencies]`; it reconciles the sibling
-surface to exactly the extensions currently declared.
-
-A running [`watch`](./getting-started.md#iterate) automates that re-run: every
-`game.project` save re-resolves the surface, so editing `[dependencies]` while
-`watch` is up refreshes `.defold-types/extensions/` with no extra command.
-`watch` does not bootstrap the surface, though — it only reconciles on save, so
-run `resolve` once first to materialize the initial extension types.
+Run it once after declaring a dependency, and re-run it (or leave
+[`watch`](./watch.md) running, which re-resolves on every `game.project` save)
+whenever you edit `[dependencies]`. See [Resolve](./resolve.md) for the full
+behavior, the `--frozen` lockfile mode, version pinning, and the cache location.
 
 ## Consuming the generated namespace
 
@@ -2503,523 +3204,8 @@ iap.set_listener((self, transaction, error) => {
 `tsc` picks the surface up through the `"extensions"` entry in
 `compilerOptions.types`.
 
-## Asset-only dependencies
-
-Not every dependency ships a `.script_api` — asset packs, fonts, and other
-content-only archives carry no API. These are **reported and skipped**, never
-treated as a failure:
-
-```
-  https://github.com/some/asset-pack/archive/main.zip: asset-only, skipped
-```
-
-`resolve` still exits `0` and materializes the surface for the extensions that
-do carry docs.
-
-## Machine-readable output
-
-`resolve --json` emits one object describing the run. It reports
-`materializedSurface` (the written directory, or `null` when nothing was
-materialized) and, per extension, the `url`, the generated `namespaces`, the
-`scriptApiCount`, the `provenance` (`cache` or `download`), whether it was
-`assetOnly`, the `resolvedVersion` (sha256 digest of the resolved archive
-bytes), — when the project pins that url — the `pinnedVersion`, and the
-`pinStatus` (`unpinned` / `match` / `drift`):
-
-```jsonc
-{
-  "command": "resolve",
-  "ok": true,
-  "written": [],
-  "materializedSurface": ".defold-types/extensions",
-  "extensions": [
-    {
-      "url": "https://github.com/defold/extension-iap/archive/main.zip",
-      "namespaces": ["iap"],
-      "scriptApiCount": 1,
-      "provenance": "download",
-      "assetOnly": false,
-      "resolvedVersion": "sha256:ab12…",
-      "pinnedVersion": "sha256:ab12…",
-      "pinStatus": "match"
-    }
-  ]
-}
-```
-
-A `pinnedVersion` field is only present when the project's `package.json`
-records a pin for that `url`. The `pinStatus` is always present: `unpinned`
-means the project has no committed pin, `match` means the pin equals
-`resolvedVersion`, and `drift` means the pin exists but no longer matches
-the resolved archive bytes — the explicit upgrade signal.
-
-## Pinning extension versions
-
-A declared `dependencies#N` URL is the only identity `resolve` reads, and it
-is often a **moving** ref (`.../archive/master.zip`) — the same URL can
-resolve to different bytes over time. The reproducible identity of *what was
-actually resolved* is therefore the sha256 digest of the resolved archive
-bytes, not a URL segment. `resolve` records that digest as the extension's
-version and seeds it into the project's `package.json` when absent
-(never clobbering an existing pin):
-
-```jsonc
-"defold-typescript": {
-  "extensions": {
-    "https://github.com/defold/extension-iap/archive/main.zip": "sha256:ab12…"
-  }
-}
-```
-
-A committed pin is human-owned intent. When the URL later yields different
-bytes, the freshly-resolved digest no longer matches the pinned one — the
-`resolvedVersion` and `pinnedVersion` in `--json` differ, and the
-`pinStatus` reports `drift`. The visible signal is the upgrade prompt; the
-enforcement is two layered knobs:
-
-- The **human-readable** `resolve` (no flag) **warns on drift** by default,
-  writing one line per drifted url to `stderr` (e.g. `pin drift for
-  https://...: sha256:pinned -> sha256:fresh`). Exit code is `0` — drift
-  still surfaces loudly on a developer's machine without breaking
-  non-frozen scripted runs.
-- The opt-in `--frozen` flag treats the committed pin set as a lockfile: it
-  **exits non-zero on drift** (so CI gates the upgrade) and **writes
-  nothing** — no absent-pin seeding, no clobbering. An unpinned extension
-  under `--frozen` passes and stays unseeded; failing on unpinned is a
-  stricter mode and out of scope for this knob.
-
-The default behavior — seed absent pins, never clobber, exit `0` — is
-unchanged. `resolve` materializes the surface for the drifted extensions
-either way; only the `package.json` write and the exit code are gated.
-
-## Cache location
-
-Downloaded extension archives are cached so repeated `resolve` runs stay
-offline. The cache lives at
-`$XDG_CACHE_HOME/defold-typescript/extensions` (defaulting to
-`~/.cache/defold-typescript/extensions`). Set `DEFOLD_TYPESCRIPT_CACHE` to
-override the root — the archives then land under
-`$DEFOLD_TYPESCRIPT_CACHE/extensions`.
-
-# TypeScript gotchas
-
-Sharp edges where TypeScript, the TypeScriptToLua transpiler, or the Defold runtime behave in ways the type system cannot fully express. Each entry names the symptom, explains why it happens, and gives the recommended workaround.
-
-New to TypeScript from Lua? Start with [TypeScript vs Lua](./typescript-vs-lua.md) for the syntax-and-idiom map; this page is the depth catalog you reach for when one of those quirks bites.
-
-## Before you start: Lua vs TypeScript gotchas
-
-The one-line version of every trap on this page. Skim it once; jump to the full entry when one bites.
-
-- [Unary minus on a vector yields `number`](#unary-minus-on-vector3--vector4-silently-produces-number) — `-v3` infers `number`, not `Vector3`; use `v.unm()`.
-- [Enum constants are branded numbers](#enum-constants-are-branded-numbers--a-bare-number-wont-do) — a bare magic number won't satisfy an enum parameter; pass the named `go.PLAYBACK_*` constant.
-- [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds) — a `node` is not a `texture`; obtain each handle from the API that returns it, never fabricate or cross-cast.
-- [Callback parameters are `unknown`](#callback-parameters-type-check-as-functions-not-unknown) — match the documented arity; narrow each param before use.
-- [Some slots are `unknown` on purpose](#some-slots-are-unknown-on-purpose--the-any-wildcard) — `socket.skip` and friends accept anything and force a narrow on the way out.
-- [`if (x)` truthiness differs in Lua](#if-x-truthiness-differs--0-and--are-truthy-in-lua) — `0` and `""` are **truthy** once transpiled; test the value explicitly.
-- [`typeof` cannot narrow engine values](#typeof-cannot-narrow-engine-values--they-are-lua-userdata) — Defold handles are Lua `userdata`, so `typeof x === "object"` is `false` for them at runtime.
-- [`on_message` ids are hashes, not strings](#on_message-ids-are-hashes-not-strings) — compare `message_id` against a `hash("…")` constant; a string literal never matches at runtime.
-- [`window.set_listener` hands `event` and `data` separately](#windowset_listener-hands-event-and-data-as-separate-params) — TS can't auto-narrow `data` from an `event` check; use the `isWindowEvent` guard.
-- [`null`/`undefined`/`== null` all become `nil`](#null-undefined-and--null-all-collapse-to-nil) — the three TS forms collapse to one Lua check; you cannot tell them apart at runtime.
-- [`===` and `==` are the same Lua](#-and--compile-to-the-same-lua--strictness-is-a-convention-not-a-runtime-guard) — both lower to a non-coercing Lua `==`; `==` is not JS loose equality here, and the real equality footgun is `if (cell)`.
-- [`as` is not a runtime check](#as-is-a-compile-time-assertion-not-a-runtime-check) — a cast erases to nothing; the value is unverified at runtime.
-- [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
-- [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
-- [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
-
-## Unary minus on Vector3 / Vector4 silently produces `number`
-
-**Symptom.** `-v3a` compiles cleanly and infers as `number`, not `Vector3`. Anything downstream that expects a `Vector3` (passing to `go.set_position`, chaining `.add(...)`, etc.) fails to compile with a confusing error pointing at the *use site*, not at the `-`.
-
-```ts
-declare const v3a: Vector3;
-
-const neg = -v3a; // inferred as `number`, not `Vector3`
-const target: Vector3 = -v3a; // TS error here — but the bug is the `-`
-```
-
-**Why.** TypeScript's TS2362 check ("operand of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum") applies to *binary* `+`, `-`, `*`, `/` but **not** to *unary* `-`. The unary form has its own narrow check that does not reject object-typed operands; it just produces `number`. There is no way to opt a type out of unary negation at the type-system level, so the `vector3` interface cannot defend itself.
-
-**Typed alternative.** Use `v.unm()` — the same metamethod the Lua runtime would call for `-v`, but exposed as a typed method:
-
-```ts
-const neg: Vector3 = v3a.unm(); // returns Vector3
-```
-
-The same gap exists for `Vector4`; the same workaround applies: `v.unm()`.
-
-**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` carries a symmetric proof: one line asserts `const _: number = -v3a` (which must compile), the next asserts `const _: Vector3 = -v3a` with `@ts-expect-error` (which must remain an error). If a future change either fixes the TS behavior or breaks the workaround, exactly one of the two lines flips and the typecheck gate fails.
-
-## Enum constants are branded numbers — a bare number won't do
-
-**Symptom.** A call that the Lua runtime accepts with a magic number fails to typecheck when the parameter is an enum:
-
-```ts
-go.animate(id, "position.x", 2, 10, go.EASING_LINEAR, 1);  // TS error on `2`
-go.animate(id, "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1);  // ok
-```
-
-**Why.** Defold's ref-doc encodes an enum member as a bare constant and lists the members' fully-qualified names as a parameter's accepted types. The generated typings recover each constant as a *nominally branded* number — `go.PLAYBACK_ONCE_FORWARD` has type `number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" }` — and the parameter's type is the union of those brands. A plain `number` lacks the brand, so only a real `go.PLAYBACK_*` (or `go.EASING_*`) value satisfies it. This is intentional strictness: it stops you from passing the wrong magic number.
-
-**Typed alternative.** Always pass the named constant (`go.PLAYBACK_ONCE_FORWARD`, `go.EASING_LINEAR`, …). The brand is type-only and erases at transpile time to a plain Lua global access, so there is no runtime cost. A branded constant is still assignable to any plain `number` parameter, so existing numeric signatures keep working.
-
-**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails.
-
-**Constants can live in another namespace.** The brand is keyed on the constant's fully-qualified name, not on the namespace of the function that accepts it, so an enum can be owned by one namespace and consumed by another. The render buffer-type flags are the worked example: `render.get_render_target_width`, `render.get_render_target_height`, and `render.enable_texture` take a `graphics.BUFFER_TYPE_*` flag (`graphics.BUFFER_TYPE_COLOR0_BIT` … `_COLOR3_BIT`, `graphics.BUFFER_TYPE_DEPTH_BIT`, `graphics.BUFFER_TYPE_STENCIL_BIT`), and the named constant lives in the `graphics` namespace.
-
-```ts
-render.get_render_target_width(rt, graphics.BUFFER_TYPE_COLOR0_BIT);  // ok
-render.get_render_target_width(rt, 0);                                // TS error on `0`
-```
-
-`packages/types/test-d/graphics-render-buffer-types.ts` pins this: the real `graphics` constant type-checks and a bare number carries `@ts-expect-error`.
-
-## Engine handles are opaque — you cannot fabricate or cast across kinds
-
-**Symptom.** A GUI `node`, a render `texture` or `render_target`, a `buffer`, a `resource`, a box2d `b2World`/`b2Body`, and similar engine handles each have a distinct nominal type. A value obtained for one kind is not accepted where another kind is expected, and a plain value (a number, an object literal) is never accepted:
-
-```ts
-const n = gui.get_node("button");        // Opaque<"node">
-render.enable_texture(0, n);             // TS error — a node is not a texture
-render.set_render_target(undefined);     // TS error — undefined is not a render_target
-```
-
-**Why.** Defold's ref-doc names these handles by a bare token (`node`, `texture`, `buffer`, …) with no public structure. The generated typings recover each as `Opaque<"<token>">` — a phantom-branded type whose brand is the token string. Distinct tokens carry distinct brands, so they are mutually non-assignable, and because the brand is a `unique symbol` property no plain value satisfies it. This mirrors the `Hash`/`Url` brands: the strictness stops you from passing a handle of the wrong kind or conjuring one from thin air.
-
-**Typed alternative.** Obtain the handle from the engine API that returns it (`gui.get_node`, `render.render_target`, `resource.create_buffer`, …) and thread that value through. There is no constructor and no meaningful cast across handle kinds — if you find yourself casting, the call you are feeding it almost certainly wants a different handle.
-
-**Named handle types.** Each handle is also referenceable as a named type alias under its namespace — `render.render_target`, `render.constant_buffer`, `render.texture`, `socket.master`, `socket.client`, `socket.unconnected`, `b2d.b2World`, `b2d.b2Body` — so you can annotate a binding directly (`const rt: render.render_target = render.render_target("rt", {})`). The alias resolves to the same `Opaque<"<token>">` brand the handle-returning function yields, so the annotation and the returned value are the same nominal type.
-
-**How we pin this in the type tests.** `packages/types/test-d/ambient.ts` passes an `Opaque<"constant">`-typed value to `model.play_anim` and asserts a bare `0` in the same slot carries `@ts-expect-error`. It also binds `render.render_target(...)` to a `render.render_target`-typed variable and asserts a bare `0` cannot be — proving the named alias and the function's return type share one brand. If the brand is dropped or widened to `unknown`, the expected errors disappear and the typecheck gate fails.
-
-## Callback parameters type-check as functions, not `unknown`
-
-**Symptom.** Engine APIs that take a callback (`timer.delay`, `msg`-style message handlers, `http.request`, factory/particlefx completion callbacks, …) now expect a function of a specific arity. Passing a non-function, or a function with the wrong number of parameters, is a type error:
-
-```ts
-timer.delay(0.5, false, () => print("tick"));                       // too few params — TS error
-timer.delay(0.5, false, (self, handle, time_elapsed) => { });       // OK — three params
-```
-
-**Why.** Defold's ref-doc names a callback parameter by its whole Lua signature string, e.g. `function(self, handle, time_elapsed)`. The generated typings recover each into an arity-preserving function type with the documented parameter names: `(self: unknown, handle: unknown, time_elapsed: unknown) => void`. The parameter names survive for hover documentation, but their types are `unknown` — the ref-doc carries no inner types — so you must narrow each argument yourself before using it. The return is `void`: the engine ignores any value a callback returns, and a `void` return position still accepts a callback that happens to return something.
-
-**Typed alternative.** Match the documented arity and read the parameter names off hover to know what each slot is. Cast or narrow the `unknown` params at the point of use (`const url = result as Url`), exactly as you would any other `unknown`.
-
-## Some slots are `unknown` on purpose — the `any` wildcard
-
-**Symptom.** A few API slots are typed `unknown`: they accept any value going in, and a value coming out cannot be used until you narrow it.
-
-```ts
-const [first] = socket.skip(1, "a string", 42);  // first is `unknown`
-const n: number = first;                          // TS error — narrow it first
-const n2 = first as number;                       // OK
-```
-
-**Why.** Where Defold's own ref-doc types a value as the bare `any` token — "any Lua value" — the generated typings use `unknown` rather than guessing a concrete type. `socket`'s utilities (`socket.skip`) and its option accessors (`getoption`/`setoption`) are the cases you will meet. This is deliberate, not a gap: `unknown` is the honest model for "could be anything." It accepts everything as an argument, and as a result it forces a check before use — unlike TypeScript's `any`, which would silently switch type-checking off for that value.
-
-**Typed alternative.** Treat these exactly like callback parameters: narrow or cast at the point of use (`first as number`), guided by what the Defold API docs say the value is. A branded or nominal type would be wrong here — the whole point of the `any` token is that no single concrete type fits.
-
-**How we pin this in the type tests.** `packages/types/test-d/socket-any-unknown.ts` passes assorted values into `socket.skip`'s wildcard slots (proving any argument is accepted) and asserts a wildcard return is not directly assignable to `number` via `@ts-expect-error`, while a narrowing cast is. If a wildcard slot ever widened to `any` or were mis-mapped to a concrete type, the expected error would flip and the typecheck gate would fail.
-
-## `if (x)` truthiness differs — `0` and `""` are truthy in Lua
-
-**Symptom.** A guard that reads naturally in TypeScript changes meaning after transpile. `if (count)` in TS is false for `0`; the Lua it becomes is true for `0`.
-
-```ts
-function describe(count: number, label: string): string {
-  if (count) {            // transpiles to `if count then` — true even when count is 0
-    return label;
-  }
-  return "empty";
-}
-```
-
-**Why.** `if (x)` transpiles to `if x then`, a direct pass-through with no coercion. JavaScript and Lua disagree on what counts as falsy: JS treats `0`, `""`, `NaN`, `null`, and `undefined` as falsy; Lua treats **only** `nil` and `false` as falsy. So `0` and `""` — falsy in the TypeScript you wrote — are **truthy** in the Lua that runs. The type system cannot warn you: the code is well-typed in both directions.
-
-**Typed alternative.** Test the value you actually mean. Use `if (count > 0)`, `if (label !== "")`, or `if (x !== undefined)` instead of relying on truthiness. An explicit comparison transpiles to the same comparison in Lua and means the same thing in both languages.
-
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `transpile(...)` of an `if (x)` guard and asserts the committed Lua is `if x then` — no coercion inserted. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever started wrapping the condition in a JS-truthiness helper, the snapshot would change and the gate would fail.
-
-## `typeof` cannot narrow engine values — they are Lua `userdata`
-
-**Symptom.** A `typeof` guard that should match a Defold handle never fires at runtime, even though it type-checks.
-
-```ts
-function asNode(x: unknown): unknown {
-  if (typeof x === "object") {   // transpiles to `type(x) == "table"` — false for a gui.node
-    return x;
-  }
-  return undefined;
-}
-```
-
-**Why.** `typeof x === "object"` transpiles to `type(x) == "table"`. Defold engine values — `gui.node`, `texture`, `buffer`, `b2World`, … — are Lua `userdata`, not tables, so `type(handle)` returns `"userdata"` and the branch is skipped. The value form is no better: `typeof x` transpiles to `__TS__TypeOf(x)`, which returns the string `"userdata"` for these handles — a value TypeScript's `typeof` union (`"object"`, `"function"`, `"number"`, …) does not even contain, so you cannot write a matching comparison. `typeof x === "number"/"string"/"boolean"/"function"` *do* inline to a reliable `type(x) == "…"`, and those work as written; it is only objects-vs-userdata that breaks.
-
-**Typed alternative.** Do not reach for `typeof` to recognise an engine handle. The handles are already nominally typed (`Opaque<"node">` and friends — see [Engine handles are opaque](#engine-handles-are-opaque--you-cannot-fabricate-or-cast-across-kinds)), so thread the typed value through instead of re-checking it. When you genuinely hold an `unknown` from a wildcard slot, narrow it with the engine predicate that fits (a `nil` check, a field probe) rather than `typeof`.
-
-The one runtime narrowing the engine *does* support for vmath userdata is the `types.is_*` family, emitted as user-defined type guards:
-
-```ts
-declare const v: unknown;
-if (types.is_vector3(v)) {
-  // v is Vector3 here — v.x is a number, no cast needed
-  const x = v.x;
-}
-```
-
-`types.is_hash`, `types.is_url`, `types.is_matrix4`, `types.is_quat`, `types.is_vector`, `types.is_vector3`, and `types.is_vector4` each narrow their argument to the matching core type. The other `is_*` / `exists` names (`go.exists`, `sound.is_music_playing`, …) are runtime-state checks on an already-typed value, not type guards, so they stay `boolean`.
-
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots both forms: `typeof x === "object"` → `type(x) == "table"`, and the value form `typeof x` → `__TS__TypeOf(x)`. The committed Lua makes the userdata mismatch visible; if either lowering changed, the snapshot would fail.
-
-## `on_message` ids are hashes, not strings
-
-**Symptom.** A handler that compares `message_id` against a string literal never fires, even though it reads naturally and (under older typings) compiled. The object it should react to is silently ignored — in the platformer example, the player fell through every wall because the contact handler never ran.
-
-```ts
-on_message(self, message_id, message) {
-  if (message_id == "contact_point_response") {  // never true at runtime
-    // ...
-  }
-}
-```
-
-**Why.** Defold delivers `message_id` to `on_message` as a pre-hashed `hash` value, not a string — the same way `action_id` arrives in `on_input`. Lua's `==` does no cross-type coercion, so `hash_value == "contact_point_response"` is always `false`. The string comparison transpiles verbatim (`message_id == "contact_point_response"`) and silently never matches. `ScriptHooks.on_message` types `message_id` as `Hash` to make the mismatch a *compile* error rather than a runtime mystery; the string-literal form no longer type-checks.
-
-**Typed alternative.** Pre-hash the id once at module scope and compare `Hash` to `Hash`, exactly as the original Lua does and as `on_input` already does for `action_id`:
-
-```ts
-const msg_contact_point_response = hash("contact_point_response");
-
-on_message(self, message_id, message) {
-  if (message_id == msg_contact_point_response) {
-    const contact = message as unknown as ContactPoint;  // handler payload is an untyped record
-    // ...
-  }
-}
-```
-
-The handler's `message` is an untyped `Record<string | number, unknown>` — cast it to the subset you read. Sender-side payload narrowing by message id lives on `msg.post` (see the [messages guide](./messages.md)), not on the handler.
-
-**How we pin this in the type tests.** `packages/types/test-d/lifecycle.ts` binds `message_id` to a `Hash` inside the handler and asserts a string-literal `message_id` at the call site carries `@ts-expect-error`. If `on_message` ever re-typed the id as a string, the expected error would disappear and the typecheck gate would fail.
-
-## `window.set_listener` hands `event` and `data` as separate params
-
-**Symptom.** A `window.set_listener` callback reads the resize dimensions off `data`, but `data.width` does not type-check (or is `unknown`) even after checking `event == window.WINDOW_EVENT_RESIZED`:
-
-```ts
-window.set_listener((self, event, data) => {
-  if (event == window.WINDOW_EVENT_RESIZED) {
-    print(data.width, data.height);  // data stays a record — width/height not known
-  }
-});
-```
-
-**Why.** The engine delivers `event` and `data` to the callback as two **separate** parameters, and the `WINDOW_EVENT_*` constants are branded numbers. TypeScript never correlates two independent parameters, and a branded number is not a unit-type discriminant — so an `event == …` check cannot auto-narrow `data` the way a discriminated-union field would. The generated callback types `event` as the union of the five `WINDOW_EVENT_*` constants (so you get autocomplete and simple positive `event ==` narrowing) and `data` as a bare `Record<string | number, unknown>` (only a resize carries fields, so the record is the honest default).
-
-**Typed alternative.** Use the provided `isWindowEvent` guard — the window mirror of [`isMessage`](messages.md#receiving-messages-with-type-narrowing). It re-introduces the discriminant at the use site and narrows the untyped `data` to that event's payload:
-
-```ts
-window.set_listener((self, event, data) => {
-  if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
-    print("resized:", data.width, data.height);  // data: { width: number; height: number }
-  }
-});
-```
-
-`isWindowEvent` is declaration-only: the transpiler lowers the call to a bare `event == window.WINDOW_EVENT_RESIZED`, so there is no runtime function and no import to add. Only `WINDOW_EVENT_RESIZED` carries fields; every other event narrows `data` to `undefined`. This is the same wall — and the same fix — as [`on_message` ids](#on_message-ids-are-hashes-not-strings): the engine hands back an untyped payload discriminated by a separate id/event argument, and a declaration-only guard is the path to a typed payload.
-
-## `null`, `undefined`, and `== null` all collapse to `nil`
-
-**Symptom.** Three TypeScript checks you might think are distinct produce one identical Lua test, so they cannot be told apart at runtime.
-
-```ts
-function present(x: unknown): boolean {
-  if (x === null) return false;       // `x == nil`
-  if (x === undefined) return false;  // `x == nil`
-  return true;
-}
-```
-
-**Why.** Lua has a single absent value, `nil`. TypeScript's `null`, `undefined`, the strict `x === null` / `x === undefined`, and the loose `x == null` all transpile to `x == nil`. There is no Lua-level distinction between "explicitly null" and "missing", so a function that tries to treat `null` and `undefined` differently cannot — both arrive as `nil`. The `=== nil` form (using the ambient `nil` type) works as written and is the honest model.
-
-**Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
-
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished them, the gate would fail.
-
-## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
-
-**Symptom.** Coming from JavaScript you might assume `==` performs loose equality — coercing its operands before comparing — and reach for `===` to avoid it. In this toolchain the two operators are indistinguishable in the output, so the coercion `===` guards against never happens.
-
-```ts
-function isEmpty(cell: number): boolean {
-  const strict = cell === 0;   // → `cell == 0`
-  const loose = cell == 0;     // → `cell == 0` (byte-identical)
-  return strict || loose;
-}
-```
-
-**Why.** TypeScriptToLua emits Lua `==` for **both** operators and never inserts a coercion helper, and Lua `==` is already non-coercing. The one runtime distinction JavaScript draws between the two — loose equality's coercion, including `== null` matching both `null` and `undefined` — is moot here as well, because `null` and `undefined` both collapse to `nil` (see [`null`, `undefined`, and `== null` all collapse to `nil`](#null-undefined-and--null-all-collapse-to-nil)). So `===` buys no runtime safety the `==` form lacks; strictness is a source convention, not a guard. Contrast `if (x)` truthiness (see [`if (x)` truthiness differs](#if-x-truthiness-differs--0-and--are-truthy-in-lua)), which *is* a real change of meaning crossing into Lua.
-
-**Typed alternative.** The scaffolded `biome.json` ships with `noDoubleEquals` off precisely because the operators are identical in the Lua output, so use whichever reads best — `===` is no longer enforced for consumers. (Our repo keeps the rule on as house style; its `== null` exemption also preserves one genuinely useful loose form — `x == null` narrows out both `null` and `undefined` in TypeScript's type-checker, a *compile-time* distinction even though the emitted Lua is identical.) The real equality footgun is never `==` versus `===`; it is `if (cell)`, which is truthy for `0` once it runs as Lua.
-
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` transpiles `cell === 0` and `cell == 0` in one snippet and asserts both lower to the same `cell == 0` — the loose form gets no coercion helper. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever started coercing `==`, the two lines would diverge and the gate would fail.
-
-## `as` is a compile-time assertion, not a runtime check
-
-**Symptom.** A cast that compiles cleanly does nothing at runtime — the value is never validated, and a wrong assertion produces a silent type mismatch later, not an error at the cast.
-
-```ts
-function first(values: unknown): number {
-  const n = values as number;   // transpiles to `local n = values` — no check
-  return n + 1;                 // runs even if `values` was a string or a table
-}
-```
-
-**Why.** `const n = first as number` transpiles to `local n = first`: the cast is erased entirely. TypeScript's `as` is a *compile-time* assertion that you, the author, know the type — it inserts no runtime guard. So a cast that is wrong does not throw at the cast site; the bad value flows on until some Lua operation on it misbehaves, far from the cause. This is the same erasure that makes branded constants and opaque handles zero-cost — useful there, a footgun when you use `as` to "convert" an `unknown`.
-
-**Typed alternative.** When you actually need to *check* a value (a wildcard `unknown`, untrusted input), narrow it with a real runtime test — `typeof x === "number"` (reliable for primitives, see the `typeof` entry above), a `=== nil` check, or a field probe — before using it. Reserve `as` for the cases where you already know the type from context the type system can't see, exactly as with callback and wildcard params.
-
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `const n = x as number` and asserts the committed Lua is `local n = x` with no inserted check. If a cast ever started emitting a guard, the snapshot would change and the gate would fail.
-
-## Component properties are catalogued per namespace
-
-**Symptom.** Defold component properties — the values you address at runtime through `go.get`/`go.set`/`go.animate` with a string id (`"color"`, `"position"`, `"size"`, …) — do not appear as members on the namespace object. There is no `label.color` you can read directly.
-
-**Why.** These properties are not module-level globals; they are per-component fields keyed by a string id passed to `go.get(url, "color")`. The ref-doc lists them as `PROPERTY` elements with a name and a type but no addressable symbol. The generated typings recover each namespace's properties into an in-namespace `interface properties { … }` so the name and type survive as a committed, drift-gated catalog. For example, `label.properties` carries `color: Vector4`, `size: Vector3`, `scale: number | Vector3`, and so on.
-
-**Typed alternative.** Read a property's type off the catalog with an indexed access — `label.properties["color"]` is `Vector4`. The catalog also makes `go.get`/`go.set` type-aware: a literal key drawn from `go`'s own transform properties narrows the result and the written value to the property's real type. `go.get(url, "position")` is `Vector3`, `go.get(url, "scale")` is `number`, and `go.set(url, "euler", v3)` type-checks while `go.set(url, "position", "oops")` is rejected. Any other key — a `Hash`, a dynamic string, or a fragment-addressed cross-component property like `go.get("#sprite", "tint")` — falls through to an open `string | Hash` overload returning the documented wide union, so hashed and runtime access keep working unchanged.
-
-**Name the component to narrow a cross-component property.** A string url like `"#sprite"` cannot tell the type system which component it targets, so the bare call can only narrow `go`'s own transform properties. When you know the component, name it with a type argument and the result narrows to *that* component's catalog:
-
-```ts
-const animation = go.get<sprite.properties>()("#sprite", "animation"); // Hash, not the wide union
-go.set<sprite.properties>()("#sprite", "playback_rate", 2);            // value gated to number
-go.get<sprite.properties>()("#sprite", "nope");                       // type error — not a sprite property
-```
-
-The form is curried — `go.get<P>()(url, property)` — on purpose. TypeScript has no partial type-argument inference: if `P` and the property key were both type parameters on one call, supplying `<sprite.properties>` would force the key to its default and collapse the return to the component's whole value union. The empty `()` fixes `P`, then the inner call infers the key from the `"animation"` argument, recovering the exact field type. You are naming the component yourself — nothing checks that `"#sprite"` actually resolves to a sprite — so this is a typed convenience over an unverified url, not a correctness guarantee. The bare direct call (`go.get("#go", "position")`) is unchanged for the transform default, and a fully dynamic key still falls through to the wide union.
-
-**Name the script to read or tune another object's declared properties.** The same generic also types the *cross-script* channel — reading or writing a property a *different* script declared, addressed by its script-component url (`go.get("/enemy#controller", "speed")`). This is distinct from a component property and from the `self`-side access inside the owning script: it is how one object tunes another object's declared state. A script declares its editor properties with the value-keyed `properties` field of `defineScript`, and exports that shape as a nameable type with `ScriptPropertiesOf<typeof script>`; another script names it as the `P` generic to get a typed read and a value-gated write:
-
-```ts
-// enemy.ts — the owning script declares its properties
-export default defineScript({
-  properties: { speed: 100, target: vmath.vector3() },
-});
-export type EnemyProps = ScriptPropertiesOf<typeof import("./enemy").default>;
-
-// elsewhere — another object reads and tunes them by url
-const speed = go.get<EnemyProps>()("/enemy#controller", "speed");  // number
-go.set<EnemyProps>()("/enemy#controller", "speed", 250);           // value gated to number
-go.get<EnemyProps>()("/enemy#controller", "missing");              // type error — not declared
-```
-
-`ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script.
-
-**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number`, a wrong-typed `go.set` value and a wrong-typed `go.get` assignment carry `@ts-expect-error`, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.properties>()("#sprite", "animation")` is `Hash`, a wrong key and a wrong value type carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
-
-## Field-documented tables are typed object shapes, not opaque records
-
-**Symptom.** A `table` param or return whose Defold ref-doc spells out its fields, or whose official example proves a stable shape, is no longer the opaque `Record<string | number, unknown>` it once was. `sys.get_sys_info()` returns a concrete object — `system_name`, `gmt_offset`, and the rest are typed members you can read directly and that auto-complete; a misspelled field is a compile error, not silent `unknown`.
-
-```ts
-const info = sys.get_sys_info();
-const name: string = info.system_name;   // typed string, no cast
-const offset: number = info.gmt_offset;  // typed number
-// @ts-expect-error not_a_field is not a field of the sys info table
-info.not_a_field;
-```
-
-**Why.** Many Defold `table` slots carry their field structure only in the doc HTML, in one of four regular shapes: a `<dt><code>field</code></dt><dd><span class="type">T</span></dd>` definition list, a `<ul>` whose items read `<span class="type">T</span> <code>field</code>` (type before name), a dash-list option bag whose items read `field <span class="type">T</span>` / `<code>field</code> <span class="type">T</span>` (name before type), or a code-dash field that reads `<code>field</code> - <span class="type">T</span>` (name in `<code>`, then dash, then type — `sys.open_url`'s `target` attribute). The generator parses these shapes and emits an inline object type instead of the `Record` fallback, so the field names and types survive. Two nested shapes are also recovered: a `<dl>` declaring a single `table`-typed field whose keys sit in an immediately-following `<ul>` typed-field list (`window.get_safe_area()` now returns `{ safe_area: { x: number; y: number; … } }`), and a flattened `<ul><li><dl>` option bag whose `table` entries are followed by their member fields (`resource.create_atlas` groups `animations` and `geometries` into nested objects). A recovered `table` field whose `<dd>` prose reads "a list of …" emits an **array** of that recovered element shape rather than a single object (`resource`'s `animations` and `create_atlas`'s `geometries` become `{ … }[]`); the `[]` is appended only when member fields were recovered. A "list" field with no recovered member shape but a machine-readable **numeric** element type — its `<dd>` reads "a list of … in the form {px0, py0, …}" / "{i0, i1, …}", a flat comma-separated list of numeric placeholders — emits `number[]` (`resource.create_atlas`/`set_atlas`'s `vertices`/`uvs`/`indices`); a brace form with quotes, nested braces, or non-numeric identifiers is never guessed and stays `Record`. A "list" field with neither members nor a numeric brace form (opaque maps, the wholesale `geometries` `Record`) stays `Record`. A cross-reference form is also recovered: a `table` slot with no inline field list of its own whose doc carries a `See <a href="…#<element>">` pointer to a sibling element in the same module adopts that element's already-recovered fields (`physics.set_shape`'s data param adopts `physics.get_shape`'s fields). Resolution is one hop only. A supplementary `See` pointer sitting beside an **untyped name-only** `<ul>` field list (`<li>field</li>` items with no `<span class="type">`) is also recovered: the slot adopts the referenced element's fields **filtered to the names the own `<ul>` enumerates** (`resource.get_atlas` lists `texture`/`geometries`/`animations` then points at `resource.set_atlas`, so it adopts those three only — the sibling's unlisted `vertices`/`uvs`/`indices` are excluded). A `See` pointer beside an element's own **typed** field list still loses to the direct parse, which already recovers those fields. Tables with no recoverable shape (the wholesale `geometries` `Record`, opaque key→value maps) keep the `Record` type — there is no single machine-readable structure to recover. Two deliberate distinctions: a recovered **input** parameter's fields are optional (an option bag accepts a partial or empty `{}`, exactly as the old `Record` did), while a **return** table's fields are required (the engine always populates them); and recovery nests at most one level — a deeper `table` field with no recovered keys stays `Record`.
-
-**Typed alternative.** Read the members directly — `sys.get_sys_info().system_name`, `liveupdate.get_mounts()[0].uri`, `tilemap.get_tile_info(url, layer, x, y).index` — instead of indexing an opaque record and casting. For an options argument, pass only the fields you need (`image.load(data, { flip_vertically: true })`); omitted fields and `{}` still type-check.
-
-**How we pin this in the type tests.** `packages/types/test-d/sys-info-table-fields.ts` asserts `sys.get_sys_info().system_name` is assignable to `string` and that a bogus field carries `@ts-expect-error`; `packages/types/test-d/example-shaped-table-curations.ts` pins the example-proven `liveupdate.get_mounts()` and `tilemap.get_tile_info()` shapes. The fidelity audit and the emitter share the table recovery and curation data (`packages/types/src/emit-dts.ts`), so the `recordTables` loss gate and the emitted surface cannot drift; if a recovered field's type regressed to `unknown` the audit's `unknownTokens` would surface it.
-
-## `async`/`await` work but there is no event loop
-
-**Symptom.** You can write `async` functions, `await`, and `Promise` (the `Promise` type ships in the ES2022 lib), and it type-checks and transpiles. What does **not** exist is a JavaScript event loop: there is no `setTimeout`, no I/O microtask queue, and no scheduler that drains pending promises between frames. A promise advances only when something resolves it synchronously on the current call stack.
-
-```ts
-async function rollLater(): Promise<number> {
-  return 42; // resolves synchronously
-}
-
-export async function main(): Promise<void> {
-  const r = await rollLater(); // runs to completion in the same call
-  print(r);
-}
-```
-
-**Why.** TypeScriptToLua implements `async`/`await` itself, on top of Lua coroutines:
-
-- An `async function` is lowered to `__TS__AsyncAwaiter(generator)`, which returns a `__TS__Promise` and runs the function body inside a Lua **coroutine**.
-- `await x` is lowered to `__TS__Await(x)`, which yields the value through the body's Lua coroutine. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
-- `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
-
-These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module does `require("lualib_bundle")` to pull them in. No setup or polyfill is needed.
-
-The consequences are where it bites:
-
-- Awaiting an already-resolved or synchronously-resolving promise runs to completion in the same frame — fine, and reads well.
-- There is no timer or I/O integration. `await new Promise((r) => setTimeout(r, 1000))` cannot be written with a *global* `setTimeout` — there is none, so a bare call is a compile error (TS2304, *Cannot find name 'setTimeout'*), not a silent runtime failure. Import one from `@defold-typescript/types/timers` instead (see **Importable polyfills** below). A promise that nobody resolves leaves the async function suspended **forever**, with no error and no warning.
-- A rejected promise with no `.catch` is silently dropped; there is no Node-style "unhandled rejection" report.
-
-**The engine scheduler bridge.** What the JS runtime lacks — a thing that advances pending work between frames — Defold supplies as `timer.delay`: a frame-driven scheduler that fires a callback on a later frame. That callback is the hook. Resolve a `Promise` from inside a `timer.delay` callback and the `await` waiting on it resumes when the engine fires the timer, not before. Bridge it by hand by stashing the promise's `resolve` and calling it from the callback:
-
-```ts
-function waitSeconds(seconds: number): Promise<void> {
-  return new Promise<void>((resolve) => {
-    timer.delay(seconds, false, () => resolve()); // engine callback drives the promise
-  });
-}
-```
-
-**Importable polyfills.** You do not have to hand-roll that bridge. The first timer-polyfills slice ships it as named module exports:
-
-```ts
-import { setTimeout, setInterval, clearTimeout, clearInterval, wait } from "@defold-typescript/types/timers";
-```
-
-`setTimeout`/`setInterval` take **milliseconds** (the web-familiar unit) and return a numeric `timer` handle; pass that handle to `clearTimeout`/`clearInterval` — or to Defold's own `timer.cancel`, which is the same handle. `wait` takes **Defold-native seconds** and returns a `Promise<void>` you can `await`:
-
-```ts
-import { wait } from "@defold-typescript/types/timers";
-
-export async function main(): Promise<void> {
-  await wait(1); // resumes when the engine timer fires, not before
-  print("one second later");
-}
-```
-
-These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root (the same mechanism as `lualib_bundle`). Because there is no global, a bare `setTimeout(...)`/`setInterval(...)` (the muscle-memory web form) is a **compile error** — `TS2304: Cannot find name 'setTimeout'` — under the scaffolded `lib: ["ES2022"]` surface (no DOM/Node globals). That error is the warning: add the `import { setTimeout, … } from "@defold-typescript/types/timers"` line and it resolves. Your editor does this for you — tsserver lists the timers module in autocomplete and offers an *Add import from "@defold-typescript/types/timers"* quick-fix on the `TS2304` squiggle, so the fix is one keystroke (works in any tsserver-backed editor; no extension needed). Do not "fix" it by widening `lib` to `"DOM"` or adding `@types/node` — that would restore a global `setTimeout` declaration that type-checks but has no runtime behind it in Defold, turning the honest compile error into a silent forever-suspended `await`.
-
-**Caveats.** The polyfills are timer-backed, not a drop-in `setTimeout`. Four differences bite:
-
-- **Context-bound lifetime.** A `timer.delay` timer is owned by the script that created it and is auto-cancelled when that game object is deleted. A `wait` straddling the deletion of its own object never resolves.
-- **One-frame minimum resolution.** Even `setTimeout(cb, 0)` / `wait(0)` fires on the *next* frame, never the same one — the scheduler is frame-driven, so sub-frame delays round up to one frame.
-- **No microtask queue.** `Promise.resolve().then(...)` still runs synchronously on the current call stack; there is no microtask drain. Only a *timer-backed* promise crosses a frame boundary.
-- **Leaked suspended coroutines.** A promise that nobody ever resolves leaves its `async` function suspended forever as a parked Lua coroutine — no error, no warning, no timeout.
-
-**ts-defold contrast.** ts-defold ships no `setTimeout` polyfill of its own — its only `settimeout` is LuaSocket's per-socket I/O timeout method, not a scheduler. The `@defold-typescript/types/timers` module is specific to this toolchain.
-
-**How we pin this in the type tests.** `packages/transpiler/src/transpile.test.ts` transpiles an `async`/`await` sample and asserts the lowering (`__TS__AsyncAwaiter` for the function, `__TS__Await` for the await) with zero diagnostics, and that the Promise runtime (`__TS__Promise`) is present in the emitted `lualib_bundle`. If [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) changed the async lowering or stopped bundling the Promise helpers, the assertions would fail.
-
-## URL addressing: same-world objects are relative, `socket:` crosses worlds
-
-**Symptom.** A `msg.post` that reads naturally in TypeScript silently fails to reach its target — the receiver's `on_message` never fires, and nothing compiles wrong. The same applies to every API that takes a URL string (`go.get`/`go.set`, `msg.url`, `factory.create`, …). A literal socket copied from a Lua manual example, like `"main:/manager#controller"`, is the usual culprit: it resolves only when the target collection is actually *named* `main`.
-
-```ts
-msg.post("main:/enemy#ai", "alert");            // resolves only if the target collection's Name is "main" — fragile
-msg.post("/enemy#ai", "alert");                 // robust: absolute path inside the current world
-msg.post("#health", "damage", { amount: 10 }); // sibling component on the same game object
-```
-
-**Why.** A Defold URL is `[socket:][path][#fragment]` — three parts, the first optional. The `path` is the target object's id, the `#fragment` is the component on it, and an address that **starts with `/` is resolved from the root of the current game world** (the bootstrap collection loaded at game start). The `socket:` segment names *which game world* the target lives in, and it earns its keep only with collection proxies: a world's socket name is the **`Name` property of its collection file** — "The new world gets its name from the *Name* property in the collection file." The bootstrap collection is named the same way (it too is given a unique name from *its* `Name` property), so there is no special socket you address it through — inside that one world you never write the `socket:` segment at all. The trap is that a collection's `Name` is a property distinct from its folder: the editor's `main/main.collection` is a *file path*, while the `Name` you address the world by is a separate field (commonly the project default `default`, not `main`). So a literal `"main:…"` borrowed from a manual example breaks the moment your bootstrap collection is named anything other than `main`. The two-arg form `msg.url(socket, path, fragment)` is a separate runtime trap — only the no-arg, one-string, and three-arg forms are runtime-supported, so `msg.url("main", "camera")` is a runtime error. The tightened `msg.url` overloads in `packages/types/src/msg-overloads.d.ts` reject that two-arg call at compile time, so the typings are the warning.
-
-**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (one string), or the all-required `msg.url(hash("level1"), hash("/door"), hash("script"))` — never the two-arg form.
-
-**How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate. The prose pins — this section's heading, its front-digest link, and the `agent-runbooks.md` runbook — are asserted structurally in `packages/types/test/guide-docs.test.ts`.
+For the command itself — `--frozen`, version pinning, drift detection, and the
+cache location — see [Resolve](./resolve.md).
 
 # API docs vs. ts-defold-types
 

@@ -50,7 +50,7 @@ cd my-game
 bun install
 ```
 
-`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
+`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs. See [Init](./init.md) for the command's two modes, its flags (`--template`, `--force`), and the starter templates.
 
 Run `bun install` once after `init`. The scaffold declares its
 `devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
@@ -117,95 +117,20 @@ export default defineScript({
 ```sh
 # one-time build
 bunx @defold-typescript/cli build
-# build and watch for changes
+# rebuild on every change while you edit
 bunx @defold-typescript/cli watch
 ```
 
-The build command transpiles every TypeScript file under `src/` to Lua and writes the result into the Defold project tree — each source becomes exactly one output. A file that had `export default defineScript({...})` lifecycle factory becomes a Defold script component (`src/main.ts` -> `src/main.ts.script`); a plain module with no factory becomes a Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you never edit or reference by hand, only ever the `src/util.ts` you author. Your `import` becomes a Lua `require` that resolves against that emitted module, so a shared module must be built before the script importing it will run. Open the project in the [Defold editor](./defold-editor.md) (or run it from the command line) to play it.
+[`build`](./build.md) transpiles every TypeScript file under `src/` to Lua and writes the result into the Defold project tree — each source becomes exactly one output: a lifecycle-factory file becomes a Defold script component (`src/main.ts` -> `src/main.ts.script`), a plain module becomes a Lua module (`src/util.ts` -> `src/util.lua`). Open the project in the [Defold editor](./defold-editor.md) to play it, or build and run it headlessly — see [Build](./build.md) for the full behavior, the generated-file markers, and the headless `defold` subcommand.
 
-When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`, object spread, and similar), the build also writes a `lualib_bundle.lua` at the output root automatically; the generated Lua's `require("lualib_bundle")` resolves against it.
-
-Because the output kind is the factory a source calls, adding or removing a `defineScript`/`defineGuiScript`/`defineRenderScript` factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the reverse). `build` and `watch` prune the stale alternative for you, so a kind switch never leaves the previous output behind. Every generated file carries a trailing `--# defold-typescript:generated` marker; on a full build — one-shot `build` or `watch` startup — the tool **warns, never deletes** about any marked `.lua` or `.ts.*` output whose TypeScript source no longer exists, so a deleted or renamed source's orphaned Lua surfaces for you to remove (the warning names the file and the source to restore). Hand-authored Lua, which lacks the marker, is never flagged or touched. Without `--json` the warnings print to stderr; with `--json` they appear in the build result's `warnings` array.
-
-The everyday commands carry no version tag: inside an installed project `bunx` resolves the `@defold-typescript/cli` that `init` pinned, so the build runs the version locked alongside your `@defold-typescript/types`. Reserve `@latest` for `init` and the deliberate upgrade path (see [code editor setup](./editor-setup.md)).
-
-## Iterate
-
-```sh
-bunx @defold-typescript/cli watch
-```
-
-`watch` rebuilds incrementally on every TypeScript source change: it holds one long-lived transpile session and re-reads and rewrites only the files you actually edited, skipping the re-glob and re-read of unchanged sources. Use it while the Defold editor is open in the same project directory. See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
-
-`watch` also keeps the [extension surface](./extensions.md#running-resolve) current: a `game.project` save re-runs `resolve`, re-materializing `.defold-types/extensions/` from the declared `[dependencies]`. It does not bootstrap that surface, though — run `resolve` once before `watch` so the initial extension types exist; `watch` only reconciles later `[dependencies]` edits.
+While you edit, run [`watch`](./watch.md) instead: it rebuilds incrementally on every save and keeps the native-extension surface current (run [`resolve`](./resolve.md) once first). See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
 ## Machine-readable output (`--json`)
 
-Every command accepts `--json` for agents and scripts that want to parse the
-result instead of scraping the human lines.
-
-The one-shot commands (`init`, `build`, `setup-debug`, `defold`) print a single
-JSON object to stdout, terminated by a newline:
-
-```sh
-bunx @defold-typescript/cli build --json
-# {"command":"build","ok":true,"written":["src/main.ts.script", "src/util.lua", ...],"warnings":[]}
-```
-
-A failure flips `ok` to `false` and carries an `error` string instead of
-`written`. `warnings` carries the sourceless-orphan lines (empty when there are
-none). Optional fields (`defoldVersion`, `defoldChannel`, `apiSurface`,
-`materializedSurface`, …) appear only when they apply.
-
-`watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
-one object per line, one line per event. The full lifecycle reads
-`start` → `build` → `rebuild`* → `resolve`* → `stop`:
-
-```sh
-bunx @defold-typescript/cli watch --json
-# {"command":"watch","event":"start","ok":true,"written":[]}
-# {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
-# {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[]}
-# {"command":"watch","event":"rebuild","ok":false,"error":"..."}
-# {"command":"watch","event":"resolve","ok":true,"written":[]}
-# {"command":"watch","event":"stop","ok":true,"written":[]}
-```
-
-A `resolve` event is emitted whenever a `game.project` save re-resolves the
-extension surface (re-materializing `.defold-types/extensions/` from the
-declared `[dependencies]` URLs).
-
-`start` arrives once, before the initial full build — the process is up and
-listening. `stop` arrives once on graceful shutdown. A failed startup (missing
-`tsconfig.json`, etc.) emits `start` then exits non-zero with **no** `stop`
-line; a rebuild that fails emits an `ok: false` line **to stdout too**, so a
-line-reader sees one uninterrupted stream — failures never split off to stderr.
-Read each line as it arrives and react per event. Without `--json`, stdout stays
-the human `wrote N files: …` output and rebuild errors stay on stderr.
-
-## Headless builds (no editor)
-
-`build` transpiles TypeScript to Lua; to compile and run the Defold project
-itself from the command line — no editor — drive Defold's headless build tool
-(`bob`) through the `defold` subcommand:
-
-```sh
-bunx @defold-typescript/cli defold resolve   # fetch library dependencies
-bunx @defold-typescript/cli defold build     # debug build into build/default
-bunx @defold-typescript/cli defold bundle    # bundle a platform target
-```
-
-The first run downloads a version-matched `bob.jar` into a cache dir
-(`$DEFOLD_TYPESCRIPT_CACHE/bob` when set, otherwise
-`$XDG_CACHE_HOME/defold-typescript/bob`, falling back to
-`~/.cache/defold-typescript/bob`) and reuses it
-afterward. `bob` needs a JVM: it uses `java` on your `PATH`, or pass `--java
-<path>` (or set `DEFOLD_JAVA`). Native-extension projects can pass
-`--build-server <url>`. `bob`'s exit code propagates, so a failed build fails the
-command.
-
-Like the engine launcher, the `bob` version tracks the latest stable Defold
-release. A project pinned to an older Defold version is a known limitation.
+Every command accepts `--json` so agents and scripts can parse the result instead
+of scraping the human lines. See
+[Agent runbooks](./agent-runbooks.md#machine-readable-output) for the
+contract and each command's output shape.
 
 ## Release smoke (maintainers)
 

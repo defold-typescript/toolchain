@@ -1,3 +1,4 @@
+import { GET_STARTED_SLUGS } from "./get-started";
 import type { GuidePage } from "./guide";
 import { GUIDE_GROUPS } from "./guide-groups";
 
@@ -18,6 +19,8 @@ export interface NavCategory {
 interface CategorySpec {
   id: string;
   label: string;
+  /** Landing ("root node") route, making the sidebar header a selectable link. */
+  route?: string;
   /** Flat page membership; omitted for `guides`, which nests via GUIDE_GROUPS. */
   slugs?: string[];
 }
@@ -54,14 +57,9 @@ const CATEGORY_MAP: CategorySpec[] = [
   {
     id: "get-started",
     label: "Get started",
-    slugs: [
-      "",
-      "getting-started",
-      "init-templates",
-      "add-typescript",
-      "editor-setup",
-      "defold-editor",
-    ],
+    route: "/get-started",
+    // Same shared list that seeds the /get-started landing (Overview first).
+    slugs: [...GET_STARTED_SLUGS],
   },
   {
     id: "guides",
@@ -136,7 +134,7 @@ export function buildNav(
       claimed.add(slug);
       links.push(linkFor(page));
     }
-    return { id: spec.id, label: spec.label, links };
+    return { id: spec.id, label: spec.label, links, ...(spec.route ? { route: spec.route } : {}) };
   });
 
   const fallback = categories.find((category) => category.id === FALLBACK_CATEGORY_ID);

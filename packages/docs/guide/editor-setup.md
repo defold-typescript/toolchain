@@ -72,15 +72,13 @@ Edit TypeScript under `src/`. Treat generated `.ts.script`/`.ts.gui_script`/`.ts
 
 ## Run the watch loop
 
-Keep Defold open on the same project folder. In the editor's integrated terminal, run:
+Keep Defold open on the same project folder, and in the editor's integrated terminal run [`watch`](./watch.md):
 
 ```sh
 bunx @defold-typescript/cli watch
 ```
 
-`bunx @defold-typescript/cli watch` rebuilds Lua when files under `src/` change. Run the game from the Defold editor after the rebuild completes.
-
-If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` (below) gives you `mise run defold-typescript:watch` as the equivalent task.
+It rebuilds Lua when files under `src/` change; run the game from the Defold editor after each rebuild. See [Watch](./watch.md) for the incremental-session behavior, the extension-surface reconciliation, and the `mise` task equivalent (also listed below).
 
 ## Opinionated `mise.toml`
 

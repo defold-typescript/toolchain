@@ -47,6 +47,11 @@ describe("buildNav", () => {
     expect(nav.find((c) => c.id === "api")?.route).toBe("/api");
   });
 
+  test("links the Get started category to its landing so its root node is selectable", () => {
+    const nav = fullNav();
+    expect(nav.find((c) => c.id === "get-started")?.route).toBe("/get-started");
+  });
+
   test("reference links are three route-less group headers in order", () => {
     const reference = fullNav().find((c) => c.id === "api");
     expect(reference?.links.map((l) => l.label)).toEqual(["Globals", "Lua Standard", "Defold"]);
@@ -242,7 +247,7 @@ describe("buildNav", () => {
     expect(guides?.route).toBe("/guides");
   });
 
-  test("nests the Guides pages under four route-less group headers in learning order", () => {
+  test("nests the Guides pages under seven route-less group headers in learning order", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -253,10 +258,12 @@ describe("buildNav", () => {
     const guides = nav.find((c) => c.id === "guides");
     expect(guides?.links.map((l) => l.label)).toEqual([
       "Tutorial",
+      "TypeScript",
       "Core concepts",
+      "CLI",
       "Toolchain & workflow",
       "Project configuration",
-      "Pitfalls & migration",
+      "Migration",
     ]);
     for (const header of guides?.links ?? []) {
       expect(header.route).toBeUndefined();
@@ -264,26 +271,34 @@ describe("buildNav", () => {
     }
     const byLabel = (label: string) => guides?.links.find((l) => l.label === label);
     expect(byLabel("Tutorial")?.children?.map((c) => c.route)).toEqual(["/tetris-tutorial"]);
-    expect(byLabel("Core concepts")?.children?.map((c) => c.route)).toEqual([
+    expect(byLabel("TypeScript")?.children?.map((c) => c.route)).toEqual([
       "/typescript-vs-lua",
+      "/typescript-gotchas",
+      "/data-structures",
+    ]);
+    expect(byLabel("Core concepts")?.children?.map((c) => c.route)).toEqual([
       "/script-lifecycle",
       "/messages",
       "/script-state",
-      "/data-structures",
       "/vector-math",
+    ]);
+    expect(byLabel("CLI")?.children?.map((c) => c.route)).toEqual([
+      "/init",
+      "/watch",
+      "/build",
+      "/wall",
+      "/resolve",
     ]);
     expect(byLabel("Toolchain & workflow")?.children?.map((c) => c.route)).toEqual([
       "/transpile-diagnostics",
       "/debugging",
-      "/advanced-cli",
       "/agent-runbooks",
     ]);
     expect(byLabel("Project configuration")?.children?.map((c) => c.route)).toEqual([
       "/pinning-defold-version",
       "/extensions",
     ]);
-    expect(byLabel("Pitfalls & migration")?.children?.map((c) => c.route)).toEqual([
-      "/typescript-gotchas",
+    expect(byLabel("Migration")?.children?.map((c) => c.route)).toEqual([
       "/api-docs-vs-ts-defold",
       "/migrating-from-ts-defold",
     ]);

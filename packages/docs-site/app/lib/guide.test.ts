@@ -62,6 +62,13 @@ describe("deriveGuideMeta", () => {
     expect(meta.summary).toBeUndefined();
   });
 
+  test("skips a logo image and a badge row to reach the first prose paragraph", () => {
+    const meta = deriveGuideMeta(
+      "# defold-typescript\n\n![logo](logo.png#max-width=200)\n\n[![npm](https://img.shields.io/npm/v/x)](https://npmjs.com/x)\n\nBuild your game in TypeScript.\n",
+    );
+    expect(meta.summary).toBe("Build your game in TypeScript.");
+  });
+
   test("skips fenced code and headings when locating the lead paragraph", () => {
     const meta = deriveGuideMeta(
       "# Title\n\n```ts\n# not a heading\nconst x = 1;\n```\n\nActual lead.\n",

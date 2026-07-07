@@ -460,8 +460,11 @@
     if (firstScrollReset) { firstScrollReset = false; window.scrollTo(0, 0); }
   }, { passive: true });
 
-  const total = <!--SLIDE_COUNT-->;
   const slides = Array.from(document.querySelectorAll(".slide"));
+  // Derive the count from the rendered slides. build.ts fills the slides
+  // placeholder; opening this template directly (un-built) yields zero slides,
+  // and the guard below shows a hint instead of a broken, empty deck.
+  const total = slides.length;
   const counterCurrent = document.querySelector(".counter .current");
   const counterTotal = document.querySelector(".counter .total");
   const tocEl = document.getElementById("toc");
@@ -473,6 +476,18 @@
   const navToc = document.querySelector('[data-action="toc"]');
 
   let current = 0;
+
+  // This file is the build template, not a standalone page. If it is opened
+  // un-built (no slides were injected), show a hint rather than a blank,
+  // broken-looking deck. The built dist/index.html always has slides.
+  if (total === 0) {
+    document.querySelector(".slides").innerHTML =
+      '<p style="max-width:640px;margin:0 auto;color:var(--fg-dim)">' +
+      "This is the tutorial <strong>build template</strong>, not a finished page. " +
+      "Run <code>bun run build</code> in <code>docs/tutorial/</code> and open " +
+      "<code>dist/index.html</code>.</p>";
+    return;
+  }
 
   /* ----- TOC build ----- */
   slides.forEach((s, i) => {

@@ -18,23 +18,28 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     slugs: ["tetris-tutorial"],
   },
   {
+    id: "typescript",
+    label: "TypeScript",
+    subtitle: "Writing TypeScript for this toolchain and how it lowers to Lua.",
+    slugs: ["typescript-vs-lua", "typescript-gotchas", "data-structures"],
+  },
+  {
     id: "core-concepts",
     label: "Core concepts",
-    subtitle: "How TypeScript maps onto Defold's Lua runtime.",
-    slugs: [
-      "typescript-vs-lua",
-      "script-lifecycle",
-      "messages",
-      "script-state",
-      "data-structures",
-      "vector-math",
-    ],
+    subtitle: "How Defold's script model works in TypeScript.",
+    slugs: ["script-lifecycle", "messages", "script-state", "vector-math"],
+  },
+  {
+    id: "cli",
+    label: "CLI",
+    subtitle: "The command-line verbs you run day to day.",
+    slugs: ["init", "watch", "build", "wall", "resolve"],
   },
   {
     id: "toolchain-workflow",
     label: "Toolchain & workflow",
     subtitle: "Build, inspect, and drive the transpiler.",
-    slugs: ["transpile-diagnostics", "debugging", "advanced-cli", "agent-runbooks"],
+    slugs: ["transpile-diagnostics", "debugging", "agent-runbooks"],
   },
   {
     id: "project-configuration",
@@ -43,10 +48,10 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     slugs: ["pinning-defold-version", "extensions"],
   },
   {
-    id: "pitfalls-migration",
-    label: "Pitfalls & migration",
-    subtitle: "Sharp edges and moving off ts-defold.",
-    slugs: ["typescript-gotchas", "api-docs-vs-ts-defold", "migrating-from-ts-defold"],
+    id: "migration",
+    label: "Migration",
+    subtitle: "Comparing surfaces and moving off ts-defold.",
+    slugs: ["api-docs-vs-ts-defold", "migrating-from-ts-defold"],
   },
 ];
 

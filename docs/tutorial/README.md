@@ -20,7 +20,7 @@ docs/tutorial/
 ├── build.ts           # bun + shiki → dist/index.html
 ├── verify.ts          # checks snippets match the canonical src/player.ts
 ├── slides.ts          # the slide manifest (content + structure)
-├── template.html      # the HTML/CSS/JS scaffold with placeholders
+├── template.html.tmpl # the HTML/CSS/JS scaffold with placeholders
 ├── src/               # the canonical TypeScript source the deck teaches
 │   └── player.ts
 ├── snippets/          # slices of src/player.ts, one per concept

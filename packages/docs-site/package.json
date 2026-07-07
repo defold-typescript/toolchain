@@ -6,7 +6,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build-indexes": "bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && bun scripts/build-llms.ts",
+    "build-indexes": "bun scripts/build-guide-images.ts && bun scripts/build-font-fallbacks.ts && bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && bun scripts/build-llms.ts",
+    "build-font-fallbacks": "bun scripts/build-font-fallbacks.ts",
     "build-llms": "bun scripts/build-llms.ts",
     "dev": "bun run build-indexes && vite",
     "build": "bun run build-indexes && vite build --mode client && vite build",
@@ -30,6 +31,9 @@
     "shiki": "^4.2.0"
   },
   "devDependencies": {
+    "@capsizecss/core": "^4.1.3",
+    "@capsizecss/metrics": "^4.1.0",
+    "@capsizecss/unpack": "^4.0.1",
     "@hono/vite-ssg": "^0.3.3",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4",

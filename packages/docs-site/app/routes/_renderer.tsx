@@ -1,6 +1,7 @@
 import githubIconRaw from "@phosphor-icons/core/duotone/github-logo-duotone.svg?raw";
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
+import { FONT_TOKENS, PRELOAD_FONT_FILES } from "../generated/fonts";
 import CodeCopy from "../islands/code-copy";
 import Search from "../islands/search";
 import SidebarToggle from "../islands/sidebar-toggle";
@@ -103,13 +104,12 @@ const TOPIC_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-t
  * block is a higher-specificity origin.
  *
  * Keep this list in sync with the `@theme` block in `app/styles.css` and
- * the dark override below it.
+ * the dark override below it. The --font-* tokens come from the shared
+ * generator output (app/generated/fonts.ts) so they cannot drift from the
+ * fallback @font-face rules.
  */
 const THEME_TOKENS = `
-:root {
-  --font-sans: "Barlow", "Barlow Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Ubuntu", "Ubuntu Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Spline Sans Mono Variable", "Spline Sans Mono Fallback", ui-monospace, SFMono-Regular, Menlo, monospace;
+:root {${FONT_TOKENS}
   /* Prose type scale — single source of truth for both critical.css and
    * styles.css. Defined here (not @theme) because it must be present before
    * either stylesheet paints, and it backs no Tailwind utility. */
@@ -189,11 +189,7 @@ function clientStyles(): { stylesheets: string[]; fonts: string[]; script?: stri
     const entry = manifest["app/client.ts"];
     const stylesheets = (entry?.css ?? []).map((file) => withBase(file));
     const fonts = Object.entries(manifest)
-      .filter(([key]) =>
-        /(?:spline-sans-mono-latin-wght-normal|barlow-latin-400-normal|ubuntu-latin-700-normal)\.woff2$/.test(
-          key,
-        ),
-      )
+      .filter(([key]) => PRELOAD_FONT_FILES.some((file) => key.endsWith(file)))
       .map(([, e]) => withBase(e.file));
     // honox's <Script> resolves the hashed entry but does not apply the deploy
     // base (the server bundle never sees Vite's base), so under a subpath the
@@ -302,8 +298,12 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         >
           <div class="mx-auto flex w-full flex-wrap items-center gap-x-6 gap-y-2 py-2 lg:h-14 lg:flex-nowrap lg:gap-y-0 lg:py-0">
             <SidebarToggle />
+            {/* Wordmark uses font-medium (Barlow 500), which is preloaded, not
+                font-semibold (600, not preloaded): a non-preloaded weight here
+                swaps a beat after first paint and shifts the flex-1 nav to its
+                right on every navigation. */}
             <a
-              class="flex items-center gap-2 text-[15px] font-semibold tracking-tight"
+              class="flex items-center gap-2 text-[15px] font-medium tracking-tight"
               href={withBase("/")}
               aria-label="defold-typescript"
             >

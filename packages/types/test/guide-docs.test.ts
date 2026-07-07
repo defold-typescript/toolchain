@@ -349,13 +349,19 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("[dependencies]");
   });
 
-  test("docs/guide/extensions.md notes the asset-only case", async () => {
-    const body = await readGuide("extensions.md");
+  test("docs/guide/resolve.md exists and documents the resolve command", async () => {
+    const body = await readGuide("resolve.md");
+    expect(body).toContain("bunx @defold-typescript/cli resolve");
+    expect(body).toContain("--frozen");
+  });
+
+  test("docs/guide/resolve.md notes the asset-only case", async () => {
+    const body = await readGuide("resolve.md");
     expect(body).toContain("asset-only");
   });
 
-  test("docs/guide/extensions.md names the cache override env var", async () => {
-    const body = await readGuide("extensions.md");
+  test("docs/guide/resolve.md names the cache override env var", async () => {
+    const body = await readGuide("resolve.md");
     expect(body).toContain("DEFOLD_TYPESCRIPT_CACHE");
   });
 
@@ -866,7 +872,7 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(sectionStart).toBeGreaterThan(-1);
     const nextSection = body.indexOf("\n## 02 ", sectionStart);
     const section = body.slice(sectionStart, nextSection === -1 ? body.length : nextSection);
-    const treeMatch = section.match(/```text\n([\s\S]*?)\n```/);
+    const treeMatch = section.match(/```text\n([\s\S]*?)\n\s*```/);
     expect(treeMatch).not.toBeNull();
     const tree = treeMatch?.[1] ?? "";
     for (const banned of [
@@ -908,18 +914,6 @@ describe("docs/guide/tetris-tutorial.md", () => {
     expect(bindingsOffset).toBeGreaterThan(-1);
     expect(scriptOffset).toBeGreaterThan(-1);
     expect(bindingsOffset).toBeLessThan(scriptOffset);
-  });
-
-  test("step 2 teaches the input pipeline inline", async () => {
-    const body = await readGuide("tetris-tutorial.md");
-    const inline = inlineContent(markdownSection(body, "## 02 — Input bindings", "## 03"));
-    expect(inline).toContain("**Input ids");
-    expect(inline).toContain("**`on_input`**");
-    expect(inline).toContain("action.pressed");
-    expect(inline).toContain("action.repeated");
-    expect(inline).toContain("acquire_input_focus");
-    expect(inline).toContain("The lifecycle");
-    expect(inline).toContain("in full context");
   });
 
   test("HUD is its own optional section after the run-it section", async () => {

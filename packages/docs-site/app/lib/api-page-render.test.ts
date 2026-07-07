@@ -159,9 +159,10 @@ function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
     libraryMeta: {
       author: "Britzl",
       authorUrl: "https://github.com/britzl/defold-orthographic",
-      commitUrl:
-        "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368",
-      importString: "import * as camera from 'orthographic.camera'",
+      commit: "2fe3aed3352a913d2859e6e85d34a8b23d821368",
+      sourceUrl:
+        "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
+      importString: 'import * as camera from "orthographic.camera"',
       license: "MIT",
     },
     ...overrides,
@@ -326,32 +327,46 @@ describe("apiPageMarkdown field tree", () => {
 });
 
 describe("apiPageMarkdown library provenance block", () => {
-  test("emits the five ordered provenance bullets — Author, GitHub, Commit pin, Import, License — after the description", () => {
+  test("emits Author, GitHub (with folded commit pin), License bullets, then the Import code block", () => {
     const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
     const iDesc = md.indexOf("Orthographic camera helpers.");
     const iAuthor = md.indexOf("- Author:");
     const iGithub = md.indexOf("- GitHub:");
-    const iCommit = md.indexOf("- Commit pin:");
-    const iImport = md.indexOf("- Import:");
     const iLicense = md.indexOf("- License:");
-    for (const i of [iDesc, iAuthor, iGithub, iCommit, iImport, iLicense]) {
+    const iImport = md.indexOf("- Import");
+    for (const i of [iDesc, iAuthor, iGithub, iLicense, iImport]) {
       expect(i).toBeGreaterThan(-1);
     }
     expect(iDesc).toBeLessThan(iAuthor);
     expect(iAuthor).toBeLessThan(iGithub);
-    expect(iGithub).toBeLessThan(iCommit);
-    expect(iCommit).toBeLessThan(iImport);
-    expect(iImport).toBeLessThan(iLicense);
+    expect(iGithub).toBeLessThan(iLicense);
+    expect(iLicense).toBeLessThan(iImport);
+    // The import nests as a fenced code block under the `Import` bullet (which
+    // yields a copyable <pre>), not an inline `- Import: ...` value.
+    expect(md).not.toContain("- Import:");
+    // The commit pin folds into the GitHub line as `— pinned to <short-sha>`,
+    // with the URL shown as its repo slug, not a separate bullet.
+    expect(md).not.toContain("- Commit pin:");
+    expect(md).toContain(
+      "- GitHub: [britzl/defold-orthographic](https://github.com/britzl/defold-orthographic)",
+    );
+    expect(md).toContain(
+      " — pinned to [`2fe3aed`](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
+    );
     expect(md).not.toContain("- Source:");
     expect(md).not.toContain("- Attribution:");
     expect(md).not.toContain("vendored via ts-defold/library");
   });
 
-  test("GitHub links the upstream author repo, Commit pin links the ts-defold/library tree, Import stays backtick-fenced", () => {
+  test("GitHub links the upstream author repo, the pin links the generating .d.ts, Import is a fenced code block", () => {
     const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
     expect(md).toContain("](https://github.com/britzl/defold-orthographic)");
-    expect(md).toContain("](https://github.com/ts-defold/library/tree/");
-    expect(md).toContain("`import * as camera from 'orthographic.camera'`");
+    expect(md).toContain(
+      "](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
+    );
+    expect(md).toContain(
+      '- Import\n  ```ts\n  import * as camera from "orthographic.camera"\n  ```',
+    );
   });
 
   test("a library page with an empty author omits both Author and GitHub, starting the block at Commit pin", () => {
@@ -360,20 +375,21 @@ describe("apiPageMarkdown library provenance block", () => {
         libraryMeta: {
           author: "",
           authorUrl: "",
-          commitUrl:
-            "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368",
-          importString: "import * as camera from 'orthographic.camera'",
+          commit: "2fe3aed3352a913d2859e6e85d34a8b23d821368",
+          sourceUrl:
+            "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
+          importString: 'import * as camera from "orthographic.camera"',
           license: "MIT",
         },
       }),
       (t) => t,
     );
     const iCommit = md.indexOf("- Commit pin:");
-    const iImport = md.indexOf("- Import:");
     const iLicense = md.indexOf("- License:");
+    const iImport = md.indexOf("- Import");
     expect(iCommit).toBeGreaterThan(-1);
-    expect(iImport).toBeGreaterThan(iCommit);
-    expect(iLicense).toBeGreaterThan(iImport);
+    expect(iLicense).toBeGreaterThan(iCommit);
+    expect(iImport).toBeGreaterThan(iLicense);
     expect(md).not.toContain("- Author:");
     expect(md).not.toContain("- GitHub:");
   });

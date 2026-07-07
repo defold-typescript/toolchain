@@ -91,18 +91,30 @@ function symbolBlock(symbol: ApiSymbol): string {
 // real origin (author + upstream GitHub repo), followed by the ts-defold
 // commit pin, the import string, and the license. Author and GitHub are
 // omitted when the dir carries no NOTICE credit (both `meta.author` and
-// `meta.authorUrl` are `""`). The commit-pin text is the pinned sha, taken
-// as the last path segment of `commitUrl`; the import string is backtick-
-// fenced so the prose linkifier skips the dotted module name inside it.
+// `meta.authorUrl` are `""`). The commit-pin text is the abbreviated `meta.commit`
+// sha, linking to `meta.sourceUrl` (the exact `.d.ts` at the pin). The import
+// statement is emitted as a `ts` code block nested under an `Import` bullet (not
+// an inline span) so it renders as a `<pre>` and picks up the copy-to-clipboard
+// button; the fence also keeps the prose linkifier off the dotted module name.
 function libraryMetaBlock(meta: LibraryMeta): string[] {
-  const sha = meta.commitUrl.slice(meta.commitUrl.lastIndexOf("/") + 1);
-  const bullets: string[] = [];
-  if (meta.author) bullets.push(`- Author: ${meta.author}`);
-  if (meta.authorUrl) bullets.push(`- GitHub: [${meta.authorUrl}](${meta.authorUrl})`);
-  bullets.push(`- Commit pin: [${sha}](${meta.commitUrl})`);
-  bullets.push(`- Import: \`${meta.importString}\``);
-  bullets.push(`- License: ${meta.license}`);
-  return bullets;
+  // Abbreviated, still-live pin — `2fe3aed` linking to the generating source.
+  const pin = `[\`${meta.commit.slice(0, 7)}\`](${meta.sourceUrl})`;
+  const lines: string[] = [];
+  if (meta.author) lines.push(`- Author: ${meta.author}`);
+  // Fold the commit pin into the GitHub line — `<owner>/<repo> — pinned to
+  // <short-sha>` — so provenance reads as one sentence; the URL shows as its
+  // repo slug. Without an author repo the pin stands alone.
+  if (meta.authorUrl) {
+    const repo = meta.authorUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "");
+    lines.push(`- GitHub: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`);
+  } else {
+    lines.push(`- Commit pin: ${pin}`);
+  }
+  lines.push(`- License: ${meta.license}`);
+  // Nested under the bullet (2-space indent) so the fenced block reads as the
+  // `Import` item's body while still rendering a copyable <pre>.
+  lines.push("- Import", "  ```ts", `  ${meta.importString}`, "  ```");
+  return lines;
 }
 
 // Render the module intro, then each kind's symbols stacked in one column. A
@@ -122,12 +134,18 @@ export function apiPageMarkdown(
     "module" | "translations" | "signatures" | "category" | "libraryMeta" | "displayName"
   >,
   linkify: (text: string) => string,
+  // Library pages render their heading as the styled `creator/dir/namespace`
+  // path component in the route, so the markdown starts at the intro.
+  { omitHeading = false }: { omitHeading?: boolean } = {},
 ): string {
   const m = page.module;
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
-  const lines: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
-  if (page.displayName && page.displayName !== m.namespace) {
-    lines.push(`\`${m.namespace}\``, "");
+  const lines: string[] = [];
+  if (!omitHeading) {
+    lines.push(`# ${page.displayName ?? m.namespace}`, "");
+    if (page.displayName && page.displayName !== m.namespace) {
+      lines.push(`\`${m.namespace}\``, "");
+    }
   }
   const raw = m.description || m.brief;
   const intro = page.category === "global-type" ? raw : htmlToDocText(raw);

@@ -195,12 +195,14 @@ describe("loadApiSurface library pages", () => {
     if (!meta) return;
     expect(meta.author).toBe("Britzl");
     expect(meta.authorUrl).toBe("https://github.com/britzl/defold-orthographic");
-    expect(meta.commitUrl).toBe(
-      "https://github.com/ts-defold/library/tree/2fe3aed3352a913d2859e6e85d34a8b23d821368",
+    expect(meta.commit).toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
+    // Links to the exact `.d.ts` the types were generated from, at the pin.
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
     );
-    expect(meta.importString).toBe("import * as camera from 'orthographic.camera'");
+    expect(meta.importString).toBe('import * as camera from "orthographic.camera"');
     expect(meta.license).toBe("MIT");
-    expect("sourceUrl" in meta).toBe(false);
+    expect("commitUrl" in meta).toBe(false);
     expect("attribution" in meta).toBe(false);
   });
 

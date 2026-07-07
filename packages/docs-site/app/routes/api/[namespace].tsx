@@ -1,7 +1,13 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { ApiIndex } from "../../components/api-index";
-import { apiPages, apiPagesForVersion, apiVersions } from "../../lib/api-content";
+import { ApiIndex, LibraryPath } from "../../components/api-index";
+import {
+  apiPages,
+  apiPagesForVersion,
+  apiVersions,
+  libraryDirs,
+  libraryOwners,
+} from "../../lib/api-content";
 import { apiLinkify, apiPageMarkdown, isKnownVersionId } from "../../lib/api-page-render";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
@@ -38,6 +44,26 @@ export default createRoute(
     // `/api/camera` is too broad; only qualified member keys like
     // `camera.screen_to_world` (with the heading-slug anchor) are linked.
     const linkify = apiLinkify(pages);
+
+    // Library pages render their heading as the styled `creator/dir/namespace`
+    // path (matching the /libraries index), so the markdown body omits its H1.
+    if (page.category === "library") {
+      const dir = libraryDirs().get(page.namespace) ?? page.namespace;
+      const creator = libraryOwners().get(dir) ?? dir;
+      const body = await renderMarkdown(apiPageMarkdown(page, linkify, { omitHeading: true }), {
+        highlightSignatureHeadings: true,
+      });
+      return c.render(
+        <article class="prose">
+          <h1>
+            <LibraryPath creator={creator} dir={dir} namespace={page.namespace} />
+          </h1>
+          <div dangerouslySetInnerHTML={{ __html: body }} />
+        </article>,
+        { title: `${page.module.namespace} API`, headings: pageHeadings(body) },
+      );
+    }
+
     const html = await renderMarkdown(apiPageMarkdown(page, linkify), {
       highlightSignatureHeadings: true,
     });

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Build the tutorial. Reads snippets/, slides.ts, and template.html; highlights
+ * Build the tutorial. Reads snippets/, slides.ts, and template.html.tmpl; highlights
  * each snippet with Shiki; renders the slides into the template; writes the
  * final self-contained HTML to dist/index.html. Pictures are linked from
  * defold.com on purpose — they are part of the original tutorial, not vendored.
@@ -15,7 +15,7 @@ import { verifySnippets } from "./verify.ts";
 
 const HERE = import.meta.dir;
 const SNIPPETS_DIR = join(HERE, "snippets");
-const TEMPLATE_PATH = join(HERE, "template.html");
+const TEMPLATE_PATH = join(HERE, "template.html.tmpl");
 const OUTPUT_DIR = join(HERE, "dist");
 const OUTPUT_PATH = join(OUTPUT_DIR, "index.html");
 

@@ -69,14 +69,15 @@ export function libraryRouteSlug(namespace: string): string {
   return namespace;
 }
 
-// The vendored `import * as <alias> from '<module>'` string, mirroring the
+// The vendored `import * as <alias> from "<module>"` string, mirroring the
 // upstream ts-defold/library `@example` convention: the alias is the module
 // name past its first dotted segment, remaining dots collapsed to underscores
-// (`monarch.transitions.easings` -> `transitions_easings`).
+// (`monarch.transitions.easings` -> `transitions_easings`). Double quotes match
+// the module declarations in `@defold-typescript/library-types`.
 function libraryImportString(namespace: string): string {
   const segments = namespace.split(".");
   const alias = segments.length > 1 ? segments.slice(1).join("_") : segments[0];
-  return `import * as ${alias} from '${namespace}'`;
+  return `import * as ${alias} from "${namespace}"`;
 }
 
 // The GitHub owner handle is the first path segment of an author URL
@@ -168,20 +169,34 @@ function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => 
     : new Map<string, { author: string; url: string }>();
 
   const moduleDir = libraryModuleDirs(libraryTypesDir);
+  const modulePath = libraryModulePaths(libraryTypesDir);
 
   const { repo, commit, license } = classification.source;
-  const commitUrl = `${repo}/tree/${commit}`;
   return (namespace: string): LibraryMeta => {
     const dir = moduleDir.get(namespace);
     const credit = dir ? attribution.get(dir) : undefined;
+    // Link straight to the `.d.ts` the types were generated from at the pin;
+    // fall back to the repo tree at the commit if the path is unknown.
+    const path = modulePath.get(namespace);
+    const sourceUrl = path ? `${repo}/blob/${commit}/${path}` : `${repo}/tree/${commit}`;
     return {
       author: credit?.author ?? "",
       authorUrl: credit?.url ?? "",
-      commitUrl,
+      commit,
+      sourceUrl,
       importString: libraryImportString(namespace),
       license,
     };
   };
+}
+
+// Module -> upstream `.d.ts` path (`packages/<dir>/<module>.d.ts`) from
+// `library-targets.json`: the file each module's types were generated from.
+export function libraryModulePaths(libraryTypesDir: string): Map<string, string> {
+  const targetsPath = join(libraryTypesDir, "library-targets.json");
+  if (!existsSync(targetsPath)) return new Map();
+  const { targets } = JSON.parse(readFileSync(targetsPath, "utf8")) as LibraryTargets;
+  return new Map(targets.map((target) => [target.module, target.path]));
 }
 
 // Docs-only pages for the vendored third-party libraries in

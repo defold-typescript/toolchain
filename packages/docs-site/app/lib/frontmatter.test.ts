@@ -44,7 +44,7 @@ describe("guide frontmatter integration", () => {
   });
 
   test("the rendered body strips the frontmatter from a sample page", async () => {
-    const raw = readFileSync(join(GUIDE_DIR, "advanced-cli.md"), "utf8");
+    const raw = readFileSync(join(GUIDE_DIR, "wall.md"), "utf8");
     const html = await renderMarkdown(parseFrontmatter(raw).body);
     expect(html).not.toContain("toc-title");
     expect(html.trimStart().startsWith("---")).toBe(false);

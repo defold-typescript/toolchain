@@ -27,6 +27,81 @@ created or updated; on `false`, read `error` for the failure reason. Some verbs
 add fields to the success envelope (noted per runbook), but `command`, `ok`, and
 either `written` or `error` are always present.
 
+## Machine-readable output
+
+Every command accepts `--json`. The one-shot commands (`init`, `build`,
+`setup-debug`, `defold`) print a single JSON object to stdout, terminated by a
+newline; [`watch`](./watch.md) streams newline-delimited JSON (one object per
+line):
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":["src/main.ts.script", "src/util.lua", ...],"warnings":[]}
+```
+
+A failure flips `ok` to `false` and carries an `error` string instead of
+`written`. On [`build`](./build.md), `warnings` carries the sourceless-orphan
+lines (empty when there are none). Optional fields (`defoldVersion`,
+`defoldChannel`, `apiSurface`, `materializedSurface`, …) appear only when they
+apply.
+
+`watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
+one object per line, one line per event. The full lifecycle reads
+`start` → `build` → `rebuild`* → `resolve`* → `stop`:
+
+```sh
+bunx @defold-typescript/cli watch --json
+# {"command":"watch","event":"start","ok":true,"written":[]}
+# {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
+# {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[]}
+# {"command":"watch","event":"rebuild","ok":false,"error":"..."}
+# {"command":"watch","event":"resolve","ok":true,"written":[]}
+# {"command":"watch","event":"stop","ok":true,"written":[]}
+```
+
+A `resolve` event is emitted whenever a `game.project` save re-resolves the
+extension surface (re-materializing `.defold-types/extensions/` from the declared
+`[dependencies]` URLs). `start` arrives once, before the initial full build — the
+process is up and listening. `stop` arrives once on graceful shutdown. A failed
+startup (missing `tsconfig.json`, etc.) emits `start` then exits non-zero with
+**no** `stop` line; a rebuild that fails emits an `ok: false` line **to stdout
+too**, so a line-reader sees one uninterrupted stream — failures never split off
+to stderr. Read each line as it arrives and react per event. Without `--json`,
+stdout stays the human `wrote N files: …` output and rebuild errors stay on
+stderr.
+
+[`resolve --json`](./resolve.md) reports `materializedSurface` (the written
+directory, or `null` when nothing was materialized) and, per extension, the `url`,
+generated `namespaces`, `scriptApiCount`, `provenance` (`cache` or `download`),
+whether it was `assetOnly`, the `resolvedVersion` (sha256 digest of the resolved
+archive bytes), — when the project pins that url — the `pinnedVersion`, and the
+`pinStatus` (`unpinned` / `match` / `drift`):
+
+```jsonc
+{
+  "command": "resolve",
+  "ok": true,
+  "written": [],
+  "materializedSurface": ".defold-types/extensions",
+  "extensions": [
+    {
+      "url": "https://github.com/defold/extension-iap/archive/main.zip",
+      "namespaces": ["iap"],
+      "scriptApiCount": 1,
+      "provenance": "download",
+      "assetOnly": false,
+      "resolvedVersion": "sha256:ab12…",
+      "pinnedVersion": "sha256:ab12…",
+      "pinStatus": "match"
+    }
+  ]
+}
+```
+
+A `pinnedVersion` field is only present when the project's `package.json` records
+a pin for that `url`. See [Resolve](./resolve.md#pinning-extension-versions) for
+what `pinStatus` drives.
+
 ## Offline knowledge pack
 
 `@defold-typescript/docs` ships two generated, never-hand-edited files at

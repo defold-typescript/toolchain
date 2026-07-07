@@ -21,9 +21,20 @@ function capSummary(text: string): string {
   return out.trim();
 }
 
+// A line made up only of markdown images and/or badge links (a logo or a row of
+// shields), with no prose left once those tokens are stripped. Such a line heads
+// many READMEs but is never a real summary.
+function isImageOnly(line: string): boolean {
+  const stripped = line
+    .replace(/\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)/g, "") // [![alt](img)](href) badge links
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // ![alt](img) images
+    .trim();
+  return stripped === "";
+}
+
 // The first prose paragraph, skipping blank lines, headings, blockquotes, list
-// items, HTML, and fenced code blocks. Wrapped lines of that paragraph are
-// gathered until the next blank line or block boundary.
+// items, HTML, image/badge rows, and fenced code blocks. Wrapped lines of that
+// paragraph are gathered until the next blank line or block boundary.
 function leadParagraph(lines: string[]): string | undefined {
   let inFence = false;
   const collected: string[] = [];
@@ -41,7 +52,8 @@ function leadParagraph(lines: string[]): string | undefined {
         line.startsWith("#") ||
         line.startsWith(">") ||
         line.startsWith("<") ||
-        /^([-*+]\s|\d+\.\s)/.test(line)
+        /^([-*+]\s|\d+\.\s)/.test(line) ||
+        isImageOnly(line)
       ) {
         continue;
       }
