@@ -720,20 +720,28 @@ export function dispatch(
         const result = await runDefoldCommand({
           cwd: defoldCwd,
           subcommand,
+          capture: json,
           ...(javaOverride !== undefined ? { java: javaOverride } : {}),
           ...(buildServerFlag !== undefined ? { buildServer: buildServerFlag } : {}),
           io: defoldIo,
         });
         if (json) {
+          const withOutput = result.output !== undefined ? { output: result.output } : {};
           io.stdout.write(
             renderResult(
               result.ok
-                ? { command: "defold", subcommand: result.subcommand, exitCode: result.exitCode }
+                ? {
+                    command: "defold",
+                    subcommand: result.subcommand,
+                    exitCode: result.exitCode,
+                    ...withOutput,
+                  }
                 : {
                     command: "defold",
                     subcommand: result.subcommand,
                     exitCode: result.exitCode,
                     error: `bob ${result.subcommand} exited with code ${result.exitCode}`,
+                    ...withOutput,
                   },
             ),
           );
