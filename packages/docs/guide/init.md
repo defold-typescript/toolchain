@@ -32,11 +32,16 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
   alongside the TypeScript surface (`src/main.ts`, `tsconfig.json`,
   `package.json`, `.gitignore`, `biome.json`, `mise.toml`, `.vscode/`).
   `game.project` boots the collection and points `[input]` at the binding, so a
-  fresh scaffold loads in Defold with no missing references.
+  fresh scaffold loads in Defold with no missing references. If the target folder
+  already holds both a `.collection` and a `.ts` file (a `--force` synthesis into
+  a directory you have authored), the starter `main/main.collection` and
+  `src/main.ts` are skipped so your entry files are never clobbered.
 - **Add TypeScript.** Run inside a folder that already has a `game.project` and
   `init` adds only the TypeScript infrastructure, leaving `.script`,
   `.collection`, `.gui_script`, `.render_script`, `game.project`, and other engine
-  assets untouched. See [Add TypeScript to an existing project](./add-typescript.md).
+  assets untouched. It writes a starter `src/main.ts` only for a fresh scaffold
+  shape, never dropping one into a project you have already authored. See
+  [Add TypeScript to an existing project](./add-typescript.md).
 
 Scaffolded config files (`biome.json`, `.vscode/`, `mise.toml`) merge additively
 into anything you already have, so re-running `init` refreshes the managed blocks

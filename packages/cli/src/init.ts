@@ -682,15 +682,58 @@ function writeVscodeDebugLauncher(cwd: string, written: string[]): void {
   written.push(".vscode/defold-debug.ts");
 }
 
+// Dirs whose contents never count as user-authored project files: an installed
+// dependency's `.ts` or a build artifact must not false-trigger an init signal.
+const INIT_SCAN_SKIP_DIRS = new Set([
+  "node_modules",
+  ".git",
+  "build",
+  ".internal",
+  "dist",
+  "builtins",
+  ".editor_settings",
+]);
+
+// Yields every file under `root` as a `path.join`-built relative path (so the
+// separator matches on every OS), skipping the heavy/irrelevant dirs above. A
+// missing root yields nothing.
+function* walkProjectFiles(root: string, rel = ""): Generator<string> {
+  const abs = rel ? path.join(root, rel) : root;
+  if (!existsSync(abs)) {
+    return;
+  }
+  for (const entry of readdirSync(abs, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (!INIT_SCAN_SKIP_DIRS.has(entry.name)) {
+        yield* walkProjectFiles(root, path.join(rel, entry.name));
+      }
+    } else {
+      yield path.join(rel, entry.name);
+    }
+  }
+}
+
+// Whether any file under `root` ends with `ext`, optionally ignoring one known
+// relative path (used to exclude the managed entry file from an "other" scan).
+function anyFileWithExt(root: string, ext: string, exceptRel = ""): boolean {
+  for (const rel of walkProjectFiles(root)) {
+    if (rel.endsWith(ext) && rel !== exceptRel) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function writeTsSurface(
   cwd: string,
   written: string[],
   force = false,
   mainTs: string = MAIN_TS_CONTENT,
+  writeMainTs = true,
 ): void {
-  mkdirSync(path.join(cwd, "src"), { recursive: true });
   const mainPath = path.join(cwd, "src", "main.ts");
-  if (!existsSync(mainPath)) {
+  if (writeMainTs && !existsSync(mainPath)) {
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
     writeFileSync(mainPath, mainTs);
     written.push("src/main.ts");
   }
@@ -758,6 +801,9 @@ export function runNewProjectInit(
     );
   }
 
+  // init: skip-on-user-authored-project
+  const skipUserAuthored = anyFileWithExt(cwd, ".collection") && anyFileWithExt(cwd, ".ts");
+
   const written: string[] = [];
 
   writeFileSync(
@@ -768,15 +814,17 @@ export function runNewProjectInit(
   );
   written.push("game.project");
 
-  mkdirSync(path.join(cwd, "main"), { recursive: true });
-  writeFileSync(path.join(cwd, "main", "main.collection"), MAIN_COLLECTION_CONTENT);
-  written.push("main/main.collection");
+  if (!skipUserAuthored) {
+    mkdirSync(path.join(cwd, "main"), { recursive: true });
+    writeFileSync(path.join(cwd, "main", "main.collection"), MAIN_COLLECTION_CONTENT);
+    written.push("main/main.collection");
+  }
 
   mkdirSync(path.join(cwd, "input"), { recursive: true });
   writeFileSync(path.join(cwd, "input", "game.input_binding"), GAME_INPUT_BINDING_CONTENT);
   written.push("input/game.input_binding");
 
-  writeTsSurface(cwd, written, force, mainTs);
+  writeTsSurface(cwd, written, force, mainTs, !skipUserAuthored);
 
   return { written };
 }
@@ -806,7 +854,17 @@ export function runInit(opts: RunInitOptions): RunInitResult {
     }
   }
 
+  // init: greenfield-starter-carveout
+  const mainCollectionRel = path.join("main", "main.collection");
+  const mainTsRel = path.join("src", "main.ts");
+  const mcPath = path.join(cwd, mainCollectionRel);
+  const mcExists = existsSync(mcPath);
+  const mcRefs = mcExists && readFileSync(mcPath, "utf8").includes("src/main.ts.script");
+  const otherCollection = anyFileWithExt(cwd, ".collection", mainCollectionRel);
+  const otherTs = anyFileWithExt(cwd, ".ts", mainTsRel);
+  const writeMainTs = !(mcExists && !mcRefs) && !otherCollection && !otherTs;
+
   const written: string[] = [];
-  writeTsSurface(cwd, written, force);
+  writeTsSurface(cwd, written, force, MAIN_TS_CONTENT, writeMainTs);
   return { written };
 }

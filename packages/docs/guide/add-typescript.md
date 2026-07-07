@@ -18,7 +18,7 @@ is what puts them in `node_modules` so the editor can resolve the Defold types.
 
 When `game.project` exists, `init` does not synthesize a new Defold project. It writes the same managed surface a new project gets, minus the Defold project files (`game.project`, `main/`, `input/`):
 
-- `src/main.ts` — a starter entry script, written only when absent. `main.ts` is your source, not managed config, so an existing one is left untouched (and omitted from the reported `written` list) even under `--force`.
+- `src/main.ts` — a starter entry script, written only when it is absent **and** the project is a fresh scaffold shape: a `main/main.collection` that references `/src/main.ts.script`, with no other `.collection` or `.ts` anywhere in the tree. In a project you have already authored (your own collections or scripts), `init` never drops a `main.ts` into your structure. `main.ts` is your source, not managed config, so an existing one is left untouched (and omitted from the reported `written` list) even under `--force`.
 - `tsconfig.json`
 - `package.json` — created when absent, otherwise field-merged (see below).
 - `.gitignore`, `biome.json`, `mise.toml`
@@ -45,7 +45,7 @@ If `package.json` does not exist, the command creates one.
 
 `tsconfig.json` is the one TypeScript config the scaffold generates, and the only file the guard protects.
 
-Pass `--force` to proceed anyway (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` rewrites `tsconfig.json` wholesale — it does not merge fields, so any settings you had there are replaced by the scaffold config. `--force` never overwrites `src/main.ts` either, since that file is your source.
+Pass `--force` to proceed anyway (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` rewrites `tsconfig.json` wholesale — it does not merge fields, so any settings you had there are replaced by the scaffold config. `--force` never overwrites `src/main.ts` either, since that file is your source; it grants permission to init a non-empty directory and to refresh managed configs, never to clobber your entry files (`main/main.collection`, `src/main.ts`), which stay skipped under `--force` just as they do by default.
 
 ## Build the Lua output
 

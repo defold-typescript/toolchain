@@ -1532,3 +1532,124 @@ describe("runInit (scaffolds .vscode/tasks.json build/watch tasks)", () => {
     expect(labels.filter((l) => l === "defold-typescript: watch")).toHaveLength(1);
   });
 });
+
+describe("runInit (skips user-authored entry files)", () => {
+  const write = (rel: string, contents = ""): void => {
+    const abs = path.join(cwd, rel);
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, contents);
+  };
+  const REF_COLLECTION = 'embedded_instances {\n  component: "/src/main.ts.script"\n}\n';
+  const NONREF_COLLECTION = 'embedded_instances {\n  component: "/main/logic.script"\n}\n';
+
+  test("(a) new-project both signals under --force skips both entry files, keeps user files", () => {
+    write("src/foo.ts", "// user script\n");
+    write("levels/level.collection", 'name: "level"\n');
+
+    const result = runInit({ cwd, force: true });
+
+    expect(result.written).not.toContain("main/main.collection");
+    expect(result.written).not.toContain("src/main.ts");
+    expect(existsSync(path.join(cwd, "main", "main.collection"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(false);
+    expect(readFileSync(path.join(cwd, "src", "foo.ts"), "utf8")).toBe("// user script\n");
+    expect(readFileSync(path.join(cwd, "levels", "level.collection"), "utf8")).toBe(
+      'name: "level"\n',
+    );
+    // game.project is still synthesized; only the entry files are skipped.
+    expect(result.written).toContain("game.project");
+  });
+
+  test("(b) new-project with a single signal under --force still writes both entry files", () => {
+    // only a *.collection present
+    write("levels/level.collection", 'name: "level"\n');
+    const collOnly = runInit({ cwd, force: true });
+    expect(collOnly.written).toContain("main/main.collection");
+    expect(collOnly.written).toContain("src/main.ts");
+    expect(existsSync(path.join(cwd, "main", "main.collection"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+
+    // only a *.ts present, in a fresh tempdir
+    const tsOnlyDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-init-tsonly-"));
+    try {
+      writeFileSync(path.join(tsOnlyDir, "foo.ts"), "// user\n");
+      const tsOnly = runInit({ cwd: tsOnlyDir, force: true });
+      expect(tsOnly.written).toContain("main/main.collection");
+      expect(tsOnly.written).toContain("src/main.ts");
+      expect(existsSync(path.join(tsOnlyDir, "main", "main.collection"))).toBe(true);
+      expect(existsSync(path.join(tsOnlyDir, "src", "main.ts"))).toBe(true);
+    } finally {
+      rmSync(tsOnlyDir, { recursive: true, force: true });
+    }
+  });
+
+  test("(c) new-project with neither signal writes both entry files (greenfield)", () => {
+    const result = runInit({ cwd });
+
+    expect(result.written).toContain("main/main.collection");
+    expect(result.written).toContain("src/main.ts");
+    expect(existsSync(path.join(cwd, "main", "main.collection"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+  });
+
+  test("(g) --force is not a clobber signal: both signals still skip, user files byte-identical", () => {
+    const userTs = "// user main\nprint(1)\n";
+    const userColl = 'name: "level"\n';
+    write("src/main.ts", userTs);
+    write("levels/level.collection", userColl);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(result.written).not.toContain("main/main.collection");
+    expect(result.written).not.toContain("src/main.ts");
+    expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).toBe(userTs);
+    expect(readFileSync(path.join(cwd, "levels", "level.collection"), "utf8")).toBe(userColl);
+    expect(existsSync(path.join(cwd, "main", "main.collection"))).toBe(false);
+  });
+
+  test("(d) existing greenfield-scaffold shape writes src/main.ts", () => {
+    write("game.project", "[project]\n");
+    write("main/main.collection", REF_COLLECTION);
+
+    const result = runInit({ cwd });
+
+    expect(result.written).toContain("src/main.ts");
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+    expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).toContain("defineScript");
+  });
+
+  test("(e) existing collection not referencing our script: src/main.ts not written", () => {
+    write("game.project", "[project]\n");
+    write("main/main.collection", NONREF_COLLECTION);
+
+    const result = runInit({ cwd });
+
+    expect(result.written).not.toContain("src/main.ts");
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(false);
+    // managed config is still refreshed.
+    expect(result.written).toContain("tsconfig.json");
+  });
+
+  test("(f) existing greenfield collection but an extra *.collection: src/main.ts not written", () => {
+    write("game.project", "[project]\n");
+    write("main/main.collection", REF_COLLECTION);
+    write("levels/level.collection", 'name: "level"\n');
+
+    const result = runInit({ cwd });
+
+    expect(result.written).not.toContain("src/main.ts");
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(false);
+  });
+
+  test("(h) --force refreshes managed config yet preserves the anti-clobber carve-out", () => {
+    write("game.project", "[project]\n");
+    write("main/main.collection", REF_COLLECTION);
+    write("levels/level.collection", 'name: "level"\n');
+
+    const result = runInit({ cwd, force: true });
+
+    expect(result.written).not.toContain("src/main.ts");
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(false);
+    expect(result.written).toContain("tsconfig.json");
+  });
+});
