@@ -9,6 +9,10 @@ export interface GuidePage {
   isIndex: boolean;
   /** Left-sidebar label override from the file's `toc-title` frontmatter. */
   tocTitle?: string;
+  /** First `# ` H1 of the body; feeds the `/guides` landing card title. */
+  title?: string;
+  /** One-line summary drawn from the body's lead paragraph, for landing cards. */
+  summary?: string;
   /** Inline this page's body into llms-full.txt; `false` when frontmatter has `llms-full: false`. */
   includeInLlmsFull: boolean;
 }
