@@ -4,7 +4,7 @@ import type { ApiPage, ApiPageCategory } from "../lib/api-surface";
 import {
   apiPageCardDescription,
   groupApiIndexPages,
-  groupLibraryIndexPages,
+  groupLibraryIndexByCreator,
 } from "./api-index-sections";
 
 function page(
@@ -63,9 +63,9 @@ describe("apiPageCardDescription", () => {
   });
 });
 
-describe("groupLibraryIndexPages", () => {
-  test("groups libraries by upstream dir in the same shape as the sidebar tree", () => {
-    const groups = groupLibraryIndexPages(
+describe("groupLibraryIndexByCreator", () => {
+  test("groups libraries by creator and upstream dir", () => {
+    const groups = groupLibraryIndexByCreator(
       [
         page("go", "engine", "/api/go"),
         {
@@ -77,17 +77,31 @@ describe("groupLibraryIndexPages", () => {
           displayName: "britzl / input · button",
         },
         page("monarch.monarch", "library", "/api/monarch.monarch"),
+        page("squid.squid", "library", "/api/squid.squid"),
       ],
       new Map([
         ["in.button", "defold-input"],
         ["in.cursor", "defold-input"],
         ["monarch.monarch", "monarch"],
+        ["squid.squid", "squid"],
+      ]),
+      new Map([
+        ["defold-input", "britzl"],
+        ["monarch", "britzl"],
+        ["squid", "paweljarosz"],
       ]),
     );
 
-    expect(groups.map((group) => group.label)).toEqual(["defold-input", "monarch"]);
-    expect(groups[0]?.pages.map((p) => p.namespace)).toEqual(["in.button", "in.cursor"]);
-    expect(groups[1]?.pages.map((p) => p.namespace)).toEqual(["monarch.monarch"]);
+    expect(groups.map((group) => group.label)).toEqual(["britzl", "paweljarosz"]);
+    expect(groups[0]?.libraries.map((library) => library.label)).toEqual([
+      "defold-input",
+      "monarch",
+    ]);
+    expect(groups[0]?.libraries[0]?.pages.map((p) => p.namespace)).toEqual([
+      "in.button",
+      "in.cursor",
+    ]);
+    expect(groups[1]?.libraries[0]?.pages.map((p) => p.namespace)).toEqual(["squid.squid"]);
   });
 });
 

@@ -8,7 +8,13 @@ import SidebarTooltip from "../islands/sidebar-tooltip";
 import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
-import { apiPages, apiPagesForVersion, apiVersions, libraryDirs } from "../lib/api-content";
+import {
+  apiPages,
+  apiPagesForVersion,
+  apiVersions,
+  libraryDirs,
+  libraryOwners,
+} from "../lib/api-content";
 import { withBase } from "../lib/base";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
@@ -16,7 +22,7 @@ import type { Heading } from "../lib/headings";
 import {
   activeCategoryId,
   buildNav,
-  libraryNavGroups,
+  libraryCreatorGroups,
   type NavCategory,
   type NavLink,
 } from "../lib/nav";
@@ -216,12 +222,14 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const allApiPages = apiPages();
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
 
-  // Vendored library pages grouped by their upstream `dir` for the Libraries
-  // subgroup; each module leaf carries its author-first `displayName` while the
-  // route stays the dotted namespace slug.
-  const libraries = libraryNavGroups(
-    allApiPages.filter((p) => p.category === "library"),
+  // Vendored library pages grouped by creator and upstream `dir` for the
+  // Libraries tab; namespace leaves keep the dotted route slug.
+  const libraries = libraryCreatorGroups(
+    allApiPages
+      .filter((p) => p.category === "library")
+      .map((p) => ({ namespace: p.namespace, route: p.route })),
     libraryDirs(),
+    libraryOwners(),
   );
 
   const nav = buildNav(guidePages(), {

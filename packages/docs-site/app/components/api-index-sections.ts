@@ -17,6 +17,12 @@ export interface LibraryIndexGroup {
   pages: ApiPage[];
 }
 
+export interface LibraryCreatorIndexGroup {
+  creator: string;
+  label: string;
+  libraries: LibraryIndexGroup[];
+}
+
 export function groupApiIndexPages(pages: ApiPage[]): ApiIndexSections {
   return {
     engine: pages.filter((p) => p.category === "engine"),
@@ -32,25 +38,33 @@ export function apiPageCardDescription(page: ApiPage): string {
   return "";
 }
 
-export function groupLibraryIndexPages(
+export function groupLibraryIndexByCreator(
   pages: ApiPage[],
   moduleDir: Map<string, string>,
-): LibraryIndexGroup[] {
-  const byDir = new Map<string, ApiPage[]>();
+  ownerByDir: Map<string, string>,
+): LibraryCreatorIndexGroup[] {
+  const byCreator = new Map<string, Map<string, ApiPage[]>>();
   for (const page of pages) {
     if (page.category !== "library") continue;
     const dir = moduleDir.get(page.namespace) ?? page.namespace;
-    const bucket = byDir.get(dir);
-    if (bucket) bucket.push(page);
-    else byDir.set(dir, [page]);
+    const creator = ownerByDir.get(dir) || dir;
+    const libraries = byCreator.get(creator) ?? new Map<string, ApiPage[]>();
+    const groupPages = libraries.get(dir) ?? [];
+    groupPages.push(page);
+    libraries.set(dir, groupPages);
+    byCreator.set(creator, libraries);
   }
-  return [...byDir.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([dir, groupPages]) => ({
-      dir,
-      label: dir,
-      pages: groupPages.sort((a, b) =>
-        (a.displayName ?? a.namespace).localeCompare(b.displayName ?? b.namespace),
-      ),
+  return [...byCreator.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+    .map(([creator, libraries]) => ({
+      creator,
+      label: creator,
+      libraries: [...libraries.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([dir, groupPages]) => ({
+          dir,
+          label: dir,
+          pages: groupPages.sort((a, b) => a.namespace.localeCompare(b.namespace)),
+        })),
     }));
 }
