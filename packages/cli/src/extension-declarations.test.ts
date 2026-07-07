@@ -165,4 +165,48 @@ describe("resolveExtensionDeclarations", () => {
     expect(bundles[1]?.declarations.map((d) => d.namespace)).toEqual(["bravo"]);
     expect(reads).toEqual(["ext0/a.script_api", "ext1/b.script_api"]);
   });
+
+  test("attaches archive .lua module paths as luaModules on an asset-only bundle, wrapper dir stripped", async () => {
+    const cacheDir = tmp();
+    const url = "https://github.com/owner/libfoo/archive/main.zip";
+    const reads: string[] = [];
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: [
+          "libfoo-main/libfoo/util.lua",
+          "libfoo-main/libfoo/core.lua",
+          "libfoo-main/README.md",
+        ],
+        contents: {},
+      },
+    };
+    const bundles = await resolveExtensionDeclarations([dep(url)], {
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(byKey, reads),
+    });
+    expect(bundles[0]?.assetOnly).toBe(true);
+    expect(bundles[0]?.luaModules).toEqual(["libfoo.core", "libfoo.util"]);
+    expect(reads).toEqual([]);
+  });
+
+  test("attaches luaModules to a .script_api bundle alongside its declarations", async () => {
+    const cacheDir = tmp();
+    const url = "https://example.com/mixed.zip";
+    const reads: string[] = [];
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["mixed-main/api/alpha.script_api", "mixed-main/lua/helper.lua"],
+        contents: { "mixed-main/api/alpha.script_api": ALPHA },
+      },
+    };
+    const bundles = await resolveExtensionDeclarations([dep(url)], {
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(byKey, reads),
+    });
+    expect(bundles[0]?.assetOnly).toBe(false);
+    expect(bundles[0]?.declarations.map((d) => d.namespace)).toEqual(["alpha"]);
+    expect(bundles[0]?.luaModules).toEqual(["lua.helper"]);
+  });
 });

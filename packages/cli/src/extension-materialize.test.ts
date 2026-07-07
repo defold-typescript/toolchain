@@ -30,6 +30,7 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
     assetOnly: declarations.length === 0,
     resolvedVersion: "sha256:stub",
     declarations,
+    luaModules: [],
   };
 }
 

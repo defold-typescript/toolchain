@@ -415,11 +415,24 @@ describe("runResolve library matching", () => {
 
   const registry = [{ sourceId: "mylib", modules: ["mylib.core"] }];
 
+  // A plain asset-only archive that ships no Lua modules — a repo-name match
+  // against this stays unverified because the module path is absent.
   function assetArchive(url: string): Record<string, FakeArchive> {
     return { [extensionArchiveKey(url)]: { entries: ["asset/foo.png"], contents: {} } };
   }
 
-  test("an asset-only dependency whose URL matches a vendored library materializes it and reports libraries", async () => {
+  // An asset-only archive that actually ships `mylib/core.lua` under the GitHub
+  // wrapper dir, so a `mylib` repo-name match verifies against `mylib.core`.
+  function verifiedMylibArchive(url: string): Record<string, FakeArchive> {
+    return {
+      [extensionArchiveKey(url)]: {
+        entries: ["mylib-main/mylib/core.lua", "mylib-main/asset/foo.png"],
+        contents: {},
+      },
+    };
+  }
+
+  test("an asset-only dependency whose URL matches a vendored library and whose module is present in the archive materializes it and reports it verified", async () => {
     const cwd = tmp();
     const url = "https://github.com/owner/mylib/archive/main.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
@@ -428,7 +441,7 @@ describe("runResolve library matching", () => {
       cwd,
       cacheDir: tmp(),
       download: someBytes,
-      readZip: makeReadZip(assetArchive(url)),
+      readZip: makeReadZip(verifiedMylibArchive(url)),
       libraryRegistry: registry,
       libraryGeneratedDir: seedGenerated(),
     });
@@ -442,9 +455,40 @@ describe("runResolve library matching", () => {
     };
     expect(tsconfig.compilerOptions.types).toContain("libraries");
     expect(result.libraries).toEqual([
-      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored" },
+      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
     ]);
     // The dependency stays asset-only for the extension surface.
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+  });
+
+  test("a repo-name match whose module path is absent from the archive is not materialized and is reported unverified", async () => {
+    const cwd = tmp();
+    // The URL's repo name (`mylib`) matches the registry sourceId, but the archive
+    // ships a different module folder — a collision or a drifted fork.
+    const url = "https://github.com/other-owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["mylib-main/somethingelse/init.lua", "mylib-main/asset/foo.png"],
+        contents: {},
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    // No library surface is written for an unverified match.
+    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(result.libraries).toEqual([
+      { url, source: "mylib", modules: [], provenance: "vendored", verified: false },
+    ]);
     expect(result.extensions[0]?.assetOnly).toBe(true);
   });
 
@@ -529,7 +573,7 @@ describe("runResolve library matching", () => {
       cwd,
       cacheDir,
       download: someBytes,
-      readZip: makeReadZip(assetArchive(matchUrl)),
+      readZip: makeReadZip(verifiedMylibArchive(matchUrl)),
       libraryRegistry: registry,
       libraryGeneratedDir: generatedDir,
     });
@@ -566,7 +610,7 @@ describe("runResolve library matching", () => {
       cwd,
       cacheDir,
       download: someBytes,
-      readZip: makeReadZip(assetArchive(matchUrl)),
+      readZip: makeReadZip(verifiedMylibArchive(matchUrl)),
       libraryRegistry: registry,
       libraryGeneratedDir: generatedDir,
     });
@@ -609,7 +653,7 @@ describe("runResolve library matching", () => {
         cwd,
         cacheDir: tmp(),
         download: someBytes,
-        readZip: makeReadZip(assetArchive(url)),
+        readZip: makeReadZip(verifiedMylibArchive(url)),
         libraryRegistry: registry,
         libraryGeneratedDir: emptyGeneratedDir,
       });

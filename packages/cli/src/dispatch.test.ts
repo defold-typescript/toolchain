@@ -1944,13 +1944,44 @@ describe("dispatch resolve", () => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
-          return { entries: () => ["asset/foo.png"], read: () => "" };
+          return { entries: () => ["mylib-main/mylib/core.lua", "asset/foo.png"], read: () => "" };
         },
       },
     };
   }
 
-  test("--json includes a libraries report for a matched asset-only dependency", async () => {
+  // The repo name matches the registry, but the archive ships a different module
+  // folder, so the match cannot be verified against `mylib.core`.
+  function unverifiedLibraryResolveInternals(url: string): {
+    resolveInternals: {
+      download: () => Promise<Uint8Array>;
+      readZip: (zipPath: string) => ExtensionZip;
+      cacheDir: string;
+      libraryRegistry: { sourceId: string; modules: string[] }[];
+      libraryGeneratedDir: string;
+    };
+  } {
+    const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
+    const generatedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-generated-"));
+    writeFileSync(path.join(generatedDir, "mylib.core.d.ts"), "declare module 'mylib.core' {}\n");
+    const key = extensionArchiveKey(url);
+    return {
+      resolveInternals: {
+        cacheDir,
+        libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
+        libraryGeneratedDir: generatedDir,
+        download: async () => new TextEncoder().encode("z"),
+        readZip: (zipPath: string) => {
+          if (path.basename(path.dirname(zipPath)) !== key) {
+            throw new Error(`no fake archive for ${zipPath}`);
+          }
+          return { entries: () => ["mylib-main/somethingelse/init.lua"], read: () => "" };
+        },
+      },
+    };
+  }
+
+  test("--json includes a verified libraries report for a matched asset-only dependency", async () => {
     const { io, out } = captureStreams();
     const url = "https://github.com/owner/mylib/archive/main.zip";
     writeProject(`[project]\ndependencies#0 = ${url}\n`);
@@ -1959,10 +1990,16 @@ describe("dispatch resolve", () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as {
-      libraries: { url: string; source: string; modules: string[]; provenance: string }[];
+      libraries: {
+        url: string;
+        source: string;
+        modules: string[];
+        provenance: string;
+        verified: boolean;
+      }[];
     };
     expect(parsed.libraries).toEqual([
-      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored" },
+      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
     ]);
   });
 
@@ -1976,6 +2013,39 @@ describe("dispatch resolve", () => {
     expect(code).toBe(0);
     expect(out()).toContain("mylib.core");
     expect(out()).not.toContain("asset-only, skipped");
+  });
+
+  test("--json reports an unverified match with verified:false and no modules", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/other-owner/mylib/archive/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(
+      ["resolve", cwd, "--json"],
+      io,
+      unverifiedLibraryResolveInternals(url),
+    );
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      libraries: { url: string; source: string; modules: string[]; verified: boolean }[];
+    };
+    expect(parsed.libraries).toEqual([
+      { url, source: "mylib", modules: [], provenance: "vendored", verified: false },
+    ] as unknown as typeof parsed.libraries);
+  });
+
+  test("the human path warns for an unverified match instead of printing modules", async () => {
+    const { io, out, err } = captureStreams();
+    const url = "https://github.com/other-owner/mylib/archive/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(["resolve", cwd], io, unverifiedLibraryResolveInternals(url));
+
+    expect(code).toBe(0);
+    expect(out()).not.toContain("mylib.core");
+    expect(err()).toContain("unverified");
+    expect(err()).toContain(url);
   });
 
   test("a missing game.project returns 1 and, under --json, reports ok:false", async () => {
