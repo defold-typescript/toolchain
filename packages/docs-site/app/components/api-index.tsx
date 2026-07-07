@@ -4,13 +4,19 @@ import { withBase } from "../lib/base";
 import {
   apiPageCardDescription,
   groupApiIndexPages,
-  groupLibraryIndexPages,
+  groupLibraryIndexByCreator,
 } from "./api-index-sections";
 
 // One category's card grid. Factored so the three sections share identical
 // markup; an empty category is rendered by the caller as nothing at all (a
 // sparse non-default version shows only the sections it actually has).
-function CardGrid({ pages }: { pages: ApiPage[] }) {
+function CardGrid({
+  pages,
+  label = (page) => page.displayName ?? page.namespace,
+}: {
+  pages: ApiPage[];
+  label?: (page: ApiPage) => string;
+}) {
   return (
     <ul class="not-prose mt-4 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
       {pages.map((page) => {
@@ -21,9 +27,7 @@ function CardGrid({ pages }: { pages: ApiPage[] }) {
               href={withBase(page.route)}
               class="block rounded-lg border border-border bg-surface px-4 py-3 transition hover:border-border-strong hover:bg-surface-2"
             >
-              <span class="font-mono text-[13px] font-semibold text-accent">
-                {page.displayName ?? page.namespace}
-              </span>
+              <span class="font-mono text-[13px] font-semibold text-accent">{label(page)}</span>
               {description ? (
                 <span class="mt-1 block text-sm text-text-muted">{htmlToDocText(description)}</span>
               ) : null}
@@ -103,12 +107,17 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
 export function LibraryIndex({
   pages,
   moduleDir,
+  owners,
 }: {
   pages: ApiPage[];
   moduleDir: Map<string, string>;
+  owners: Map<string, string>;
 }) {
-  const groups = groupLibraryIndexPages(pages, moduleDir);
-  const libraryPageCount = groups.reduce((sum, group) => sum + group.pages.length, 0);
+  const groups = groupLibraryIndexByCreator(pages, moduleDir, owners);
+  const libraryPageCount = groups.reduce(
+    (sum, group) => sum + group.libraries.reduce((groupSum, lib) => groupSum + lib.pages.length, 0),
+    0,
+  );
   return (
     <article class="prose">
       <h1>Libraries</h1>
@@ -121,7 +130,12 @@ export function LibraryIndex({
       {groups.map((group) => (
         <section>
           <h2>{group.label}</h2>
-          <CardGrid pages={group.pages} />
+          {group.libraries.map((lib) => (
+            <section>
+              <h3>{lib.label}</h3>
+              <CardGrid pages={lib.pages} label={(page) => page.namespace} />
+            </section>
+          ))}
         </section>
       ))}
     </article>

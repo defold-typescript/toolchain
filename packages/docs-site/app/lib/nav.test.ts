@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
-import { activeCategoryId, buildNav, libraryNavGroups, type NavLink } from "./nav";
+import { activeCategoryId, buildNav, libraryCreatorGroups, type NavLink } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
@@ -110,7 +110,7 @@ describe("buildNav", () => {
     expect(defold?.children?.every((c) => typeof c.labelHtml === "string")).toBe(true);
   });
 
-  test("Libraries is a top-level category: multi-module libs as subgroups, single-module as leaves", () => {
+  test("Libraries is a top-level category with creator, library, and namespace levels", () => {
     const nav = buildNav(realPages(), {
       globals: GLOBALS,
       globalTypes: [],
@@ -118,50 +118,68 @@ describe("buildNav", () => {
       engine: ENGINE,
       libraries: [
         {
-          dir: "defold-input",
-          label: "defold-input",
-          modules: [
-            { label: "in.button", route: "/api/in.button" },
-            { label: "in.cursor", route: "/api/in.cursor" },
+          creator: "britzl",
+          label: "britzl",
+          libraries: [
+            {
+              dir: "defold-input",
+              label: "defold-input",
+              modules: [
+                { label: "in.button", route: "/api/in.button" },
+                { label: "in.cursor", route: "/api/in.cursor" },
+              ],
+            },
+            {
+              dir: "monarch",
+              label: "monarch",
+              modules: [{ label: "monarch.monarch", route: "/api/monarch.monarch" }],
+            },
           ],
         },
         {
-          dir: "monarch",
-          label: "monarch",
-          modules: [
-            { label: "monarch.monarch", route: "/api/monarch.monarch" },
-            { label: "monarch.transitions.gui", route: "/api/monarch.transitions.gui" },
+          creator: "subsoap",
+          label: "subsoap",
+          libraries: [
+            {
+              dir: "library-defold-persist",
+              label: "library-defold-persist",
+              modules: [{ label: "persist.persist", route: "/api/persist.persist" }],
+            },
           ],
-        },
-        {
-          dir: "library-defold-persist",
-          label: "library-defold-persist",
-          modules: [{ label: "persist.persist", route: "/api/persist.persist" }],
         },
       ],
     });
     const libraries = nav.find((c) => c.id === "libraries");
     expect(libraries?.label).toBe("Libraries");
     expect(libraries?.route).toBe("/libraries");
-    // Order preserved: two multi-module subgroups, then the single-module leaf.
-    expect(libraries?.links.map((l) => l.label)).toEqual([
-      "defold-input",
-      "monarch",
-      "persist.persist",
+    expect(libraries?.links.map((l) => l.label)).toEqual(["britzl", "subsoap"]);
+
+    const britzl = libraries?.links.find((l) => l.label === "britzl");
+    expect(britzl?.route).toBeUndefined();
+    expect(britzl?.children?.map((c) => c.label)).toEqual(["defold-input", "monarch"]);
+
+    const monarch = britzl?.children?.find((l) => l.label === "monarch");
+    expect(monarch?.route).toBeUndefined();
+    expect(monarch?.children).toEqual([
+      {
+        label: "monarch.monarch",
+        labelHtml: "monarch.monarch",
+        route: "/api/monarch.monarch",
+      },
     ]);
 
-    const input = libraries?.links.find((l) => l.label === "defold-input");
-    expect(input?.route).toBeUndefined();
-    expect(input?.children?.map((c) => c.label)).toEqual(["in.button", "in.cursor"]);
-    expect(input?.children?.map((c) => c.route)).toEqual(["/api/in.button", "/api/in.cursor"]);
-
-    // A single-module library renders as a bare leaf — no redundant one-child subgroup.
-    const persist = libraries?.links.find((l) => l.label === "persist.persist");
-    expect(persist?.route).toBe("/api/persist.persist");
-    expect(persist?.children).toBeUndefined();
+    const labels: string[] = [];
+    const collectLabels = (links: NavLink[] | undefined) => {
+      for (const link of links ?? []) {
+        labels.push(link.label);
+        collectLabels(link.children);
+      }
+    };
+    collectLabels(libraries?.links);
+    expect(labels.every((label) => !label.includes("/"))).toBe(true);
   });
 
-  test("activeCategoryId resolves the Libraries index and nested library subgroups", () => {
+  test("activeCategoryId resolves the Libraries index and nested namespace leaves", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -169,17 +187,23 @@ describe("buildNav", () => {
       engine: [],
       libraries: [
         {
-          dir: "defold-saver",
-          label: "defold-saver",
-          modules: [
-            { label: "saver.saver", route: "/lib/saver.saver" },
-            { label: "saver.storage", route: "/lib/saver.storage" },
+          creator: "subsoap",
+          label: "subsoap",
+          libraries: [
+            {
+              dir: "defold-saver",
+              label: "defold-saver",
+              modules: [
+                { label: "saver.saver", route: "/api/saver.saver" },
+                { label: "saver.storage", route: "/api/saver.storage" },
+              ],
+            },
           ],
         },
       ],
     });
     expect(activeCategoryId("/libraries", nav)).toBe("libraries");
-    expect(activeCategoryId("/lib/saver.storage", nav)).toBe("libraries");
+    expect(activeCategoryId("/api/saver.storage", nav)).toBe("libraries");
   });
 
   test("emits no Libraries category when the libraries list is empty", () => {
@@ -380,52 +404,49 @@ describe("activeCategoryId", () => {
   });
 });
 
-describe("libraryNavGroups", () => {
+describe("libraryCreatorGroups", () => {
   const moduleDir = new Map<string, string>([
     ["squid.squid", "squid"],
     ["in.button", "defold-input"],
     ["in.cursor", "defold-input"],
+    ["monarch.monarch", "monarch"],
+  ]);
+  const ownerByDir = new Map<string, string>([
+    ["squid", "paweljarosz"],
+    ["defold-input", "britzl"],
+    ["monarch", "britzl"],
   ]);
 
-  test("a single-module library leaf uses displayName; the route stays the dotted slug", () => {
-    const [group] = libraryNavGroups(
-      [{ namespace: "squid.squid", route: "/api/squid.squid", displayName: "paweljarosz / squid" }],
-      moduleDir,
-    );
-    expect(group?.dir).toBe("squid");
-    expect(group?.modules).toEqual([{ label: "paweljarosz / squid", route: "/api/squid.squid" }]);
-  });
-
-  test("a multi-module library nests displayName leaves under the dir label", () => {
-    const [group] = libraryNavGroups(
+  test("groups pages into creator, library, and namespace levels", () => {
+    const groups = libraryCreatorGroups(
       [
-        {
-          namespace: "in.button",
-          route: "/api/in.button",
-          displayName: "britzl / defold-input · button",
-        },
-        {
-          namespace: "in.cursor",
-          route: "/api/in.cursor",
-          displayName: "britzl / defold-input · cursor",
-        },
+        { namespace: "squid.squid", route: "/api/squid.squid" },
+        { namespace: "in.cursor", route: "/api/in.cursor" },
+        { namespace: "in.button", route: "/api/in.button" },
+        { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
       ],
       moduleDir,
+      ownerByDir,
     );
-    expect(group?.dir).toBe("defold-input");
-    expect(group?.label).toBe("defold-input");
-    expect(group?.modules.map((m) => m.label)).toEqual([
-      "britzl / defold-input · button",
-      "britzl / defold-input · cursor",
+    expect(groups.map((group) => group.label)).toEqual(["britzl", "paweljarosz"]);
+    expect(groups[0]?.libraries.map((lib) => lib.label)).toEqual(["defold-input", "monarch"]);
+    expect(groups[0]?.libraries[0]?.modules).toEqual([
+      { label: "in.button", route: "/api/in.button" },
+      { label: "in.cursor", route: "/api/in.cursor" },
     ]);
-    expect(group?.modules.map((m) => m.route)).toEqual(["/api/in.button", "/api/in.cursor"]);
+    expect(groups[1]?.libraries[0]?.modules).toEqual([
+      { label: "squid.squid", route: "/api/squid.squid" },
+    ]);
   });
 
-  test("a page with no displayName falls back to its namespace label", () => {
-    const [group] = libraryNavGroups(
-      [{ namespace: "squid.squid", route: "/api/squid.squid" }],
-      moduleDir,
+  test("falls back to the dir for uncredited libraries", () => {
+    const [group] = libraryCreatorGroups(
+      [{ namespace: "orphan.module", route: "/api/orphan.module" }],
+      new Map([["orphan.module", "orphan-lib"]]),
+      new Map(),
     );
-    expect(group?.modules[0]?.label).toBe("squid.squid");
+    expect(group?.creator).toBe("orphan-lib");
+    expect(group?.libraries[0]?.label).toBe("orphan-lib");
+    expect(group?.libraries[0]?.modules[0]?.label).toBe("orphan.module");
   });
 });

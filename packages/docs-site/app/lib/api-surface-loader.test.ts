@@ -4,11 +4,13 @@ import {
   githubOwner,
   libraryDisplayName,
   libraryModuleDirs,
+  libraryOwnerByDir,
   loadApiSurface,
 } from "./api-surface-loader";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 describe("githubOwner", () => {
   test("returns the first path segment of a GitHub author URL", () => {
@@ -18,6 +20,21 @@ describe("githubOwner", () => {
 
   test("returns an empty string for an empty URL", () => {
     expect(githubOwner("")).toBe("");
+  });
+});
+
+describe("libraryOwnerByDir", () => {
+  test("maps credited dirs to their GitHub owner handles", () => {
+    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
+    expect(owners.get("monarch")).toBe("britzl");
+    expect(owners.get("squid")).toBe("paweljarosz");
+    expect(owners.get("defold-event")).toBe("Insality");
+  });
+
+  test("omits an uncredited dir from the returned map", () => {
+    const owners = libraryOwnerByDir(LIBRARY_FIXTURE_DIR);
+    expect(owners.get("demolib")).toBe("someone");
+    expect(owners.has("uncredited")).toBe(false);
   });
 });
 
