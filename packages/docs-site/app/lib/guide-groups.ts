@@ -12,6 +12,12 @@ export interface GuideGroup {
 // cannot drift. Ordered most-important-to-learn first, most-subtle last.
 export const GUIDE_GROUPS: GuideGroup[] = [
   {
+    id: "tutorial",
+    label: "Tutorial",
+    subtitle: "Build a complete game to see the whole workflow end to end.",
+    slugs: ["tetris-tutorial"],
+  },
+  {
     id: "core-concepts",
     label: "Core concepts",
     subtitle: "How TypeScript maps onto Defold's Lua runtime.",

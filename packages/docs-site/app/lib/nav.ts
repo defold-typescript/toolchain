@@ -67,11 +67,6 @@ const CATEGORY_MAP: CategorySpec[] = [
     id: "guides",
     label: "Guides",
   },
-  {
-    id: "tutorial",
-    label: "Tutorial",
-    slugs: ["tetris-tutorial"],
-  },
 ];
 
 export function humanize(slug: string): string {

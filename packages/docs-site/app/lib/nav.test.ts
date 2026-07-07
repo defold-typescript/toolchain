@@ -35,10 +35,10 @@ function fullNav() {
 }
 
 describe("buildNav", () => {
-  test("returns the four categories in declared order with declared labels", () => {
+  test("returns the top-level categories in declared order with declared labels", () => {
     const nav = fullNav();
-    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "tutorial", "api"]);
-    expect(nav.map((c) => c.label)).toEqual(["Get started", "Guides", "Tutorial", "API"]);
+    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "api"]);
+    expect(nav.map((c) => c.label)).toEqual(["Get started", "Guides", "API"]);
   });
 
   test("has no lua-stdlib category and links the API category to its index", () => {
@@ -252,6 +252,7 @@ describe("buildNav", () => {
     });
     const guides = nav.find((c) => c.id === "guides");
     expect(guides?.links.map((l) => l.label)).toEqual([
+      "Tutorial",
       "Core concepts",
       "Toolchain & workflow",
       "Project configuration",
@@ -262,6 +263,7 @@ describe("buildNav", () => {
       expect(header.children?.length).toBeGreaterThan(0);
     }
     const byLabel = (label: string) => guides?.links.find((l) => l.label === label);
+    expect(byLabel("Tutorial")?.children?.map((c) => c.route)).toEqual(["/tetris-tutorial"]);
     expect(byLabel("Core concepts")?.children?.map((c) => c.route)).toEqual([
       "/typescript-vs-lua",
       "/script-lifecycle",
@@ -388,6 +390,10 @@ describe("activeCategoryId", () => {
 
   test("resolves the /guides landing route to guides via the category route", () => {
     expect(activeCategoryId("/guides", nav)).toBe("guides");
+  });
+
+  test("resolves the tutorial route to guides now that it nests under Guides", () => {
+    expect(activeCategoryId("/tetris-tutorial", nav)).toBe("guides");
   });
 
   test("resolves engine and lua-stdlib API subpaths to api via a child route", () => {
