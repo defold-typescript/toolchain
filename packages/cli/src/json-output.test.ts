@@ -84,6 +84,23 @@ describe("renderResult", () => {
     const parsed = JSON.parse(out) as Record<string, unknown>;
     expect("extensions" in parsed).toBe(false);
   });
+
+  test("threads a defold output tail when present", () => {
+    const out = renderResult({
+      command: "defold",
+      subcommand: "build",
+      exitCode: 0,
+      output: "bob: done",
+    });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect(parsed.output).toBe("bob: done");
+  });
+
+  test("omits output when undefined", () => {
+    const out = renderResult({ command: "defold", subcommand: "build", exitCode: 0 });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect("output" in parsed).toBe(false);
+  });
 });
 
 describe("renderWatchEvent", () => {

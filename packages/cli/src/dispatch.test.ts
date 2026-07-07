@@ -1723,18 +1723,22 @@ describe("dispatch defold", () => {
   function defoldInternals(overrides: Partial<DefoldIo> = {}): {
     defoldIo: Partial<DefoldIo>;
     spawned: string[][];
+    captures: boolean[];
   } {
     const spawned: string[][] = [];
+    const captures: boolean[] = [];
     return {
       spawned,
+      captures,
       defoldIo: {
         cacheDir: "/c",
         fetchSha: async () => SHA,
         probe: () => true,
         javaProbe: () => true,
-        spawn: async (argv) => {
+        spawn: async (argv, _cwd, opts) => {
           spawned.push(argv);
-          return 0;
+          captures.push(opts?.capture ?? false);
+          return { exitCode: 0 };
         },
         download: async () => {},
         ...overrides,
@@ -1778,12 +1782,80 @@ describe("dispatch defold", () => {
 
   test("a non-zero bob exit becomes the CLI exit code", async () => {
     const { io, err } = captureStreams();
-    const { defoldIo } = defoldInternals({ spawn: async () => 17 });
+    const { defoldIo } = defoldInternals({ spawn: async () => ({ exitCode: 17 }) });
 
     const code = await dispatch(["defold", "bundle", cwd], io, { defoldIo });
 
     expect(code).toBe(17);
     expect(err()).not.toContain("\n    at ");
+  });
+
+  test("--json keeps stdout to exactly one JSON object with bob chatter in the envelope", async () => {
+    const { io, out } = captureStreams();
+    const { defoldIo } = defoldInternals({
+      spawn: async () => ({ exitCode: 0, output: "bob: building\nbob: done" }),
+    });
+
+    const code = await dispatch(["defold", "resolve", cwd, "--json"], io, { defoldIo });
+
+    expect(code).toBe(0);
+    const lines = out().trim().split("\n");
+    expect(lines.length).toBe(1);
+    const parsed = JSON.parse(lines[0] as string) as {
+      command: string;
+      subcommand: string;
+      ok: boolean;
+      exitCode: number;
+      output: string;
+    };
+    expect(parsed).toMatchObject({
+      command: "defold",
+      subcommand: "resolve",
+      ok: true,
+      exitCode: 0,
+    });
+    expect(parsed.output).toBe("bob: building\nbob: done");
+  });
+
+  test("--json surfaces a failing bob's captured output and marks ok:false", async () => {
+    const { io, out } = captureStreams();
+    const { defoldIo } = defoldInternals({
+      spawn: async () => ({ exitCode: 5, output: "bob: fatal error" }),
+    });
+
+    const code = await dispatch(["defold", "build", cwd, "--json"], io, { defoldIo });
+
+    expect(code).toBe(5);
+    const parsed = JSON.parse(out().trim()) as {
+      ok: boolean;
+      exitCode: number;
+      error: string;
+      output: string;
+    };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.exitCode).toBe(5);
+    expect(parsed.error).toBeDefined();
+    expect(parsed.output).toBe("bob: fatal error");
+  });
+
+  test("--json runs bob in capture mode", async () => {
+    const { io } = captureStreams();
+    const { defoldIo, captures } = defoldInternals();
+
+    await dispatch(["defold", "resolve", cwd, "--json"], io, { defoldIo });
+
+    expect(captures).toEqual([true]);
+  });
+
+  test("without --json bob runs in inherit mode and no JSON is written", async () => {
+    const { io, out } = captureStreams();
+    const { defoldIo, captures } = defoldInternals();
+
+    const code = await dispatch(["defold", "resolve", cwd], io, { defoldIo });
+
+    expect(code).toBe(0);
+    expect(captures).toEqual([false]);
+    expect(out()).toBe("");
   });
 
   test("--json emits a defold result via renderResult", async () => {
