@@ -1441,6 +1441,7 @@ describe("dispatch", () => {
       written: string[];
       materializedSurface: string | null;
       extensions: unknown[];
+      libraries: unknown[];
     };
     expect(parsed).toEqual({
       command: "resolve",
@@ -1448,6 +1449,7 @@ describe("dispatch", () => {
       written: [],
       materializedSurface: null,
       extensions: [],
+      libraries: [],
     });
 
     const extDir = path.join(cwd, ".defold-types", "extensions");
@@ -1917,6 +1919,63 @@ describe("dispatch resolve", () => {
     expect(parsed.extensions).toHaveLength(1);
     expect(parsed.extensions[0]?.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(parsed.extensions[0]?.pinnedVersion).toBe("sha256:pinned");
+  });
+
+  function libraryResolveInternals(url: string): {
+    resolveInternals: {
+      download: () => Promise<Uint8Array>;
+      readZip: (zipPath: string) => ExtensionZip;
+      cacheDir: string;
+      libraryRegistry: { sourceId: string; modules: string[] }[];
+      libraryGeneratedDir: string;
+    };
+  } {
+    const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
+    const generatedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-generated-"));
+    writeFileSync(path.join(generatedDir, "mylib.core.d.ts"), "declare module 'mylib.core' {}\n");
+    const key = extensionArchiveKey(url);
+    return {
+      resolveInternals: {
+        cacheDir,
+        libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
+        libraryGeneratedDir: generatedDir,
+        download: async () => new TextEncoder().encode("z"),
+        readZip: (zipPath: string) => {
+          if (path.basename(path.dirname(zipPath)) !== key) {
+            throw new Error(`no fake archive for ${zipPath}`);
+          }
+          return { entries: () => ["asset/foo.png"], read: () => "" };
+        },
+      },
+    };
+  }
+
+  test("--json includes a libraries report for a matched asset-only dependency", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(["resolve", cwd, "--json"], io, libraryResolveInternals(url));
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      libraries: { url: string; source: string; modules: string[]; provenance: string }[];
+    };
+    expect(parsed.libraries).toEqual([
+      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored" },
+    ]);
+  });
+
+  test("the human path prints matched library modules instead of asset-only, skipped", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(["resolve", cwd], io, libraryResolveInternals(url));
+
+    expect(code).toBe(0);
+    expect(out()).toContain("mylib.core");
+    expect(out()).not.toContain("asset-only, skipped");
   });
 
   test("a missing game.project returns 1 and, under --json, reports ok:false", async () => {

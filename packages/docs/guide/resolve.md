@@ -34,6 +34,7 @@ written:
 
 ```
   iap <- https://github.com/defold/extension-iap/archive/main.zip (1 .script_api, download)
+  dicebag.dicebag <- https://github.com/paulomrpp/dicebag/archive/main.zip (vendored library)
   <other.url>: asset-only, skipped
 defold-typescript resolve: wrote .defold-types/extensions
 ```
@@ -50,7 +51,29 @@ materialize the initial extension types.
 
 Dependencies that ship no `.script_api` — asset packs, fonts, other content-only
 archives — are reported and skipped, never a failure; `resolve` still exits `0`
-and materializes the surface for the extensions that do carry docs.
+and materializes the surface for the extensions that do carry docs. A skipped,
+asset-only dependency that matches a **vendored pure-Lua library** is the one
+exception: instead of `asset-only, skipped`, its committed types are materialized
+(see [Vendored library types](#vendored-library-types)).
+
+## Vendored library types
+
+Many popular Defold libraries are plain Lua — installed via **Fetch Libraries**,
+carrying no `.script_api`. This toolchain ships hand-vendored TypeScript types for
+a curated set of them in `@defold-typescript/library-types`. When an asset-only
+`dependencies#N` URL matches one of those libraries, `resolve` materializes the
+committed `.d.ts` files verbatim into `.defold-types/libraries/` and additively
+appends `"libraries"` to `tsconfig.json` `compilerOptions.types` — a sibling
+surface that coexists with the engine and `extensions` surfaces under one
+`typeRoots`.
+
+The match keys on the library's source identity (the repository name), not exact
+URL equality, so a fork or a pinned-tag archive URL still resolves. The emitted
+module specifier is the Lua `require` path (`import * as dicebag from
+'dicebag.dicebag'`), so it matches what Fetch Libraries installs at runtime — the
+types are used as-is, never regenerated. Only libraries you actually **declare**
+under `[dependencies]` are materialized; an undeclared library stays
+non-importable, keeping types in lockstep with the project's real dependencies.
 
 ## Flags
 
@@ -58,8 +81,10 @@ and materializes the surface for the extensions that do carry docs.
   (so CI gates the upgrade) and write nothing. See [Pinning](#pinning-extension-versions).
 - `--json` — emit one object describing the run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
-  (`materializedSurface`, and per extension the `namespaces`, `provenance`,
-  `resolvedVersion`, `pinnedVersion`, and `pinStatus`).
+  (`materializedSurface`, per extension the `namespaces`, `provenance`,
+  `resolvedVersion`, `pinnedVersion`, and `pinStatus`, and a `libraries` array
+  reporting each matched vendored library's `source`, `modules`, and
+  `provenance`).
 
 ## Pinning extension versions
 

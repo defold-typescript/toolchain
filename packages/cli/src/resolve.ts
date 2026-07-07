@@ -24,6 +24,9 @@ import {
 } from "./extension-materialize";
 import { mergeResolvedVersionPins, readExtensionVersionPins } from "./extension-version";
 import { formatJsonLikeBiome } from "./format-json";
+import { matchVendoredLibrary, type VendoredLibrary } from "./library-match";
+import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
+import { loadVendoredLibraryRegistry } from "./library-registry";
 
 export interface ResolvedExtensionReport {
   readonly url: string;
@@ -36,6 +39,13 @@ export interface ResolvedExtensionReport {
   readonly pinStatus: "unpinned" | "match" | "drift";
 }
 
+export interface ResolvedLibraryReport {
+  readonly url: string;
+  readonly source: string;
+  readonly modules: string[];
+  readonly provenance: "vendored";
+}
+
 export interface RunResolveOptions {
   readonly cwd: string;
   readonly cacheDir?: string;
@@ -44,6 +54,11 @@ export interface RunResolveOptions {
   // When true, skip writing newly-resolved pins into `package.json`. Used by
   // `--frozen` to verify the committed pin set without mutating it.
   readonly freeze?: boolean;
+  // The vendored pure-Lua library corpus to match `assetOnly` dependencies
+  // against. Defaults to the installed `@defold-typescript/library-types`;
+  // tests inject a synthetic registry + generatedDir to stay hermetic.
+  readonly libraryRegistry?: readonly VendoredLibrary[];
+  readonly libraryGeneratedDir?: string | null;
 }
 
 export interface RunResolveResult {
@@ -51,6 +66,7 @@ export interface RunResolveResult {
   readonly error?: string;
   readonly materializedSurface: string | null;
   readonly extensions: ResolvedExtensionReport[];
+  readonly libraries: ResolvedLibraryReport[];
 }
 
 function hasProjectSection(text: string): boolean {
@@ -83,6 +99,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       error: `no game.project found in ${cwd}`,
       materializedSurface: null,
       extensions: [],
+      libraries: [],
     };
   }
 
@@ -93,12 +110,13 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       error: "game.project has no [project] section",
       materializedSurface: null,
       extensions: [],
+      libraries: [],
     };
   }
 
   const deps = readExtensionDependencies(text);
   if (deps.length === 0) {
-    return { ok: true, materializedSurface: null, extensions: [] };
+    return { ok: true, materializedSurface: null, extensions: [], libraries: [] };
   }
 
   const bundles = await resolveExtensionDeclarations(deps, {
@@ -109,6 +127,42 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
 
   const { materializedDir } = materializeExtensionDeclarations({ cwd, bundles });
   ensureExtensionTypesReference(cwd, materializedDir);
+
+  // Match each asset-only dependency (no `.script_api`, so it contributes no
+  // extension namespace) against the vendored pure-Lua corpus and materialize the
+  // matched libraries into the sibling `.defold-types/libraries/` surface. The
+  // registry is loaded at most once, only when a default is needed.
+  const loaded =
+    opts.libraryRegistry === undefined || opts.libraryGeneratedDir === undefined
+      ? loadVendoredLibraryRegistry()
+      : null;
+  const libraryRegistry = opts.libraryRegistry ?? loaded?.registry ?? [];
+  const libraryGeneratedDir =
+    opts.libraryGeneratedDir !== undefined
+      ? opts.libraryGeneratedDir
+      : (loaded?.generatedDir ?? null);
+  const matchedLibraries: { library: VendoredLibrary; url: string }[] = [];
+  for (const bundle of bundles) {
+    if (!bundle.assetOnly) {
+      continue;
+    }
+    const library = matchVendoredLibrary(bundle.url, libraryRegistry);
+    if (library !== null) {
+      matchedLibraries.push({ library, url: bundle.url });
+    }
+  }
+  const { materializedDir: librariesDir } = materializeVendoredLibraries({
+    cwd,
+    matched: matchedLibraries.map((m) => m.library),
+    generatedDir: libraryGeneratedDir,
+  });
+  ensureLibraryTypesReference(cwd, librariesDir);
+  const libraries: ResolvedLibraryReport[] = matchedLibraries.map(({ library, url }) => ({
+    url,
+    source: library.sourceId,
+    modules: library.modules,
+    provenance: "vendored",
+  }));
 
   const existingPkg = readExistingPackageJson(cwd);
   const pins = readExtensionVersionPins(existingPkg.value);
@@ -150,5 +204,5 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     return report;
   });
 
-  return { ok: true, materializedSurface: materializedDir, extensions };
+  return { ok: true, materializedSurface: materializedDir, extensions, libraries };
 }

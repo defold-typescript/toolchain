@@ -18,6 +18,13 @@ export interface ResolvedExtensionReportJson {
   readonly pinStatus: "unpinned" | "match" | "drift";
 }
 
+export interface ResolvedLibraryReportJson {
+  readonly url: string;
+  readonly source: string;
+  readonly modules: readonly string[];
+  readonly provenance: string;
+}
+
 export interface RenderResultInput {
   readonly command: CliCommand;
   readonly written?: readonly string[];
@@ -38,6 +45,7 @@ export interface RenderResultInput {
   readonly subcommand?: string;
   readonly exitCode?: number;
   readonly extensions?: readonly ResolvedExtensionReportJson[];
+  readonly libraries?: readonly ResolvedLibraryReportJson[];
   readonly warnings?: readonly string[];
 }
 
@@ -82,8 +90,10 @@ export function renderResult(input: RenderResultInput): string {
   const withExit = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
   const withExtensions =
     "extensions" in input ? { ...withExit, extensions: input.extensions } : withExit;
+  const withLibraries =
+    "libraries" in input ? { ...withExtensions, libraries: input.libraries } : withExtensions;
   const payload =
-    "warnings" in input ? { ...withExtensions, warnings: input.warnings } : withExtensions;
+    "warnings" in input ? { ...withLibraries, warnings: input.warnings } : withLibraries;
   return `${JSON.stringify(payload)}\n`;
 }
 
