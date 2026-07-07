@@ -77,4 +77,41 @@ describe("resolveJava", () => {
   test("throws a clear error when no override and no java is found", () => {
     expect(() => resolveJava({ probe: () => false })).toThrow(/java/i);
   });
+
+  test("returns the editor-bundled java when no override and no PATH java", () => {
+    expect(
+      resolveJava({ probe: () => false, bundledJava: () => "/editor/packages/jdk-17/bin/java" }),
+    ).toBe("/editor/packages/jdk-17/bin/java");
+  });
+
+  test("does not consult the editor bundle when java is on PATH", () => {
+    let consulted = false;
+    const result = resolveJava({
+      probe: (cmd) => cmd === "java",
+      bundledJava: () => {
+        consulted = true;
+        return "/editor/bin/java";
+      },
+    });
+    expect(result).toBe("java");
+    expect(consulted).toBe(false);
+  });
+
+  test("does not consult the editor bundle when an override is set", () => {
+    let consulted = false;
+    const result = resolveJava({
+      override: "/jdk/bin/java",
+      probe: () => false,
+      bundledJava: () => {
+        consulted = true;
+        return "/editor/bin/java";
+      },
+    });
+    expect(result).toBe("/jdk/bin/java");
+    expect(consulted).toBe(false);
+  });
+
+  test("throws naming override, PATH, and the editor bundle when all are exhausted", () => {
+    expect(() => resolveJava({ probe: () => false, bundledJava: () => null })).toThrow(/editor/i);
+  });
 });
