@@ -88,6 +88,41 @@
     },
     {
       "type": "FUNCTION",
+      "name": "create",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "{ touch: Hash; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "touch",
+              "doc": "",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "OnscreenInstance"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "reset",
       "brief": "",
       "description": "",

@@ -73,32 +73,59 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   // text, so treat the sentinel as no summary and let that fallback fill in.
   const summary = isStubSummary(rawSummary) ? "" : rawSummary;
 
+  const statements = moduleBlock?.statements ?? [];
+  // A string-named ambient module's public surface is the module block itself.
+  // When it has no `export =` re-export, every top-level (and nested-namespace)
+  // declaration is API regardless of a missing `export` keyword — ts-defold
+  // vendors both `export function` and bare `function` for the same intent
+  // (`rendy.rendy`, `in.onscreen`). With an `export =`, the bare declarations
+  // are internal plumbing behind the re-exported value, so they stay unemitted
+  // and the value's interface drives the surface instead (`squid`, `starly`).
+  const emitBare = !statements.some(ts.isExportAssignment);
+
   const elements: Record<string, unknown>[] = [];
   const emittedNames = new Set<string>();
   const referencedTypeNodes: ts.TypeNode[] = [];
-  for (const stmt of moduleBlock?.statements ?? []) {
-    if (ts.isFunctionDeclaration(stmt) && stmt.name && isExported(stmt)) {
-      collectFunctionReferenceTypes(stmt, referencedTypeNodes);
-      elements.push(functionElement(stmt, stmt.name.text, sf));
-      emittedNames.add(stmt.name.text);
-    } else if (ts.isVariableStatement(stmt) && isExported(stmt)) {
-      for (const decl of stmt.declarationList.declarations) {
-        if (decl.type) referencedTypeNodes.push(decl.type);
-        const fields = objectFields(decl.type, sf);
-        const name = decl.name.getText(sf);
-        elements.push({
-          type: "VARIABLE",
-          name,
-          types: decl.type ? [typeText(decl.type, sf)] : [],
-          ...(fields ? { fields } : {}),
-        });
+
+  // Members nested in an `export namespace` (`bridge.bridge`) keep their
+  // namespace path so same-named members across namespaces (e.g. `is_supported`)
+  // stay distinct instead of colliding in `emittedNames`.
+  const collect = (nodes: readonly ts.Statement[], prefix: string): void => {
+    const qualify = (name: string): string => (prefix ? `${prefix}.${name}` : name);
+    for (const stmt of nodes) {
+      if (ts.isFunctionDeclaration(stmt) && stmt.name && (isExported(stmt) || emitBare)) {
+        collectFunctionReferenceTypes(stmt, referencedTypeNodes);
+        const name = qualify(stmt.name.text);
+        elements.push(functionElement(stmt, name, sf));
         emittedNames.add(name);
+      } else if (ts.isVariableStatement(stmt) && (isExported(stmt) || emitBare)) {
+        for (const decl of stmt.declarationList.declarations) {
+          if (decl.type) referencedTypeNodes.push(decl.type);
+          const fields = objectFields(decl.type, sf);
+          const name = qualify(decl.name.getText(sf));
+          elements.push({
+            type: "VARIABLE",
+            name,
+            types: decl.type ? [typeText(decl.type, sf)] : [],
+            ...(fields ? { fields } : {}),
+          });
+          emittedNames.add(name);
+        }
+      } else if (ts.isTypeAliasDeclaration(stmt)) {
+        const name = qualify(stmt.name.text);
+        elements.push({ type: "TYPEDEF", name });
+        emittedNames.add(name);
+      } else if (
+        ts.isModuleDeclaration(stmt) &&
+        stmt.body &&
+        ts.isModuleBlock(stmt.body) &&
+        (isExported(stmt) || emitBare)
+      ) {
+        collect(stmt.body.statements, qualify(stmt.name.getText(sf)));
       }
-    } else if (ts.isTypeAliasDeclaration(stmt)) {
-      elements.push({ type: "TYPEDEF", name: stmt.name.text });
-      emittedNames.add(stmt.name.text);
     }
-  }
+  };
+  collect(statements, "");
 
   const moduleValueInterfaces = exportedValueInterfaces(moduleBlock);
   for (const iface of moduleValueInterfaces) {

@@ -99,22 +99,41 @@ function symbolBlock(symbol: ApiSymbol): string {
 function libraryMetaBlock(meta: LibraryMeta): string[] {
   // Abbreviated, still-live pin — `2fe3aed` linking to the generating source.
   const pin = `[\`${meta.commit.slice(0, 7)}\`](${meta.sourceUrl})`;
-  const lines: string[] = [];
-  if (meta.author) lines.push(`- Author: ${meta.author}`);
-  // Fold the commit pin into the GitHub line — `<owner>/<repo> — pinned to
-  // <short-sha>` — so provenance reads as one sentence; the URL shows as its
-  // repo slug. Without an author repo the pin stands alone.
-  if (meta.authorUrl) {
-    const repo = meta.authorUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "");
-    lines.push(`- GitHub: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`);
-  } else {
-    lines.push(`- Commit pin: ${pin}`);
-  }
-  lines.push(`- License: ${meta.license}`);
-  // Nested under the bullet (2-space indent) so the fenced block reads as the
-  // `Import` item's body while still rendering a copyable <pre>.
-  lines.push("- Import", "  ```ts", `  ${meta.importString}`, "  ```");
-  return lines;
+  const repo = meta.authorUrl
+    ? meta.authorUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "")
+    : "";
+  // A single provenance bullet — the GitHub repo with the commit pin folded in
+  // as `— pinned to <short-sha>` (or the standalone `Commit pin` when the dir
+  // carries no NOTICE credit). Author and License are deliberately omitted: the
+  // reader gets them from the linked repo. The adopt steps nest as a numbered
+  // list directly under this bullet (no `Usage:` label).
+  //
+  // We deliberately do *not* mint a moving archive URL (`master`/`main`/
+  // `HEAD.zip`): version choice is the user's, and a specific release is a
+  // vetted, reproducible pin rather than whatever the default branch holds at
+  // fetch time. So step 1 links the repo's `/releases` page (browsed, hence a
+  // link) so the reader copies a release's Source-code ZIP or a packaged `.zip`
+  // asset — Defold and `resolve` extract zip, never the tar.gz GitHub also
+  // offers. With no NOTICE credit there is no repo to link, so it is named only.
+  // Step 3's import stays a fenced block at the ordered-item content column
+  // (5 spaces) so it renders a copyable <pre>.
+  const head = meta.authorUrl
+    ? `- GitHub: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`
+    : `- Commit pin: ${pin}`;
+  const isGithub = /^https?:\/\/github\.com\//i.test(meta.authorUrl);
+  const releasesUrl = isGithub ? `${meta.authorUrl.replace(/\/$/, "")}/releases` : "";
+  const step1 = releasesUrl
+    ? `Pick a release from [${repo} releases](${releasesUrl}) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) to \`game.project\` under \`[project]\` \`dependencies\``
+    : "Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged `.zip` asset, if the library ships one) to `game.project` under `[project]` `dependencies`";
+  return [
+    head,
+    `  1. ${step1}, then **Fetch Libraries** in the Defold editor.`,
+    "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
+    "  3. Import it under a namespace alias of your choice:",
+    "     ```ts",
+    `     ${meta.importString}`,
+    "     ```",
+  ];
 }
 
 // Render the module intro, then each kind's symbols stacked in one column. A

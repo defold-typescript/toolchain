@@ -327,49 +327,57 @@ describe("apiPageMarkdown field tree", () => {
 });
 
 describe("apiPageMarkdown library provenance block", () => {
-  test("emits Author, GitHub (with folded commit pin), License bullets, then the Import code block", () => {
+  test("emits a single GitHub provenance bullet (no Author/License) with the numbered steps nested directly under it", () => {
     const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
     const iDesc = md.indexOf("Orthographic camera helpers.");
-    const iAuthor = md.indexOf("- Author:");
     const iGithub = md.indexOf("- GitHub:");
-    const iLicense = md.indexOf("- License:");
-    const iImport = md.indexOf("- Import");
-    for (const i of [iDesc, iAuthor, iGithub, iLicense, iImport]) {
+    const iStep1 = md.indexOf("  1. Pick a release");
+    for (const i of [iDesc, iGithub, iStep1]) {
       expect(i).toBeGreaterThan(-1);
     }
-    expect(iDesc).toBeLessThan(iAuthor);
-    expect(iAuthor).toBeLessThan(iGithub);
-    expect(iGithub).toBeLessThan(iLicense);
-    expect(iLicense).toBeLessThan(iImport);
-    // The import nests as a fenced code block under the `Import` bullet (which
-    // yields a copyable <pre>), not an inline `- Import: ...` value.
-    expect(md).not.toContain("- Import:");
-    // The commit pin folds into the GitHub line as `— pinned to <short-sha>`,
-    // with the URL shown as its repo slug, not a separate bullet.
+    expect(iDesc).toBeLessThan(iGithub);
+    // The steps nest directly under the GitHub bullet — no `Usage:` label.
+    expect(iGithub).toBeLessThan(iStep1);
+    expect(md).toContain(
+      "- GitHub: [britzl/defold-orthographic](https://github.com/britzl/defold-orthographic) — pinned to [`2fe3aed`](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
+    );
+    // Author and License are omitted; the reader gets them from the linked repo.
+    expect(md).not.toContain("Author:");
+    expect(md).not.toContain("License:");
+    expect(md).not.toContain("- Usage:");
     expect(md).not.toContain("- Commit pin:");
-    expect(md).toContain(
-      "- GitHub: [britzl/defold-orthographic](https://github.com/britzl/defold-orthographic)",
-    );
-    expect(md).toContain(
-      " — pinned to [`2fe3aed`](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
-    );
+    // The import nests as a fenced code block under step 3, not a top-level bullet.
+    expect(md).not.toContain("- Import");
     expect(md).not.toContain("- Source:");
     expect(md).not.toContain("- Attribution:");
     expect(md).not.toContain("vendored via ts-defold/library");
   });
 
-  test("GitHub links the upstream author repo, the pin links the generating .d.ts, Import is a fenced code block", () => {
+  test("GitHub links the upstream author repo, the pin links the generating .d.ts, and add/resolve/import nest as numbered steps", () => {
     const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
     expect(md).toContain("](https://github.com/britzl/defold-orthographic)");
     expect(md).toContain(
       "](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
     );
+    // Step 1 links the repo's /releases page so the user picks a pinned version
+    // (never a minted moving archive URL); step 2 runs resolve; step 3 folds the
+    // import in as a fenced block at the ordered-item content column.
     expect(md).toContain(
-      '- Import\n  ```ts\n  import * as camera from "orthographic.camera"\n  ```',
+      "  1. Pick a release from [britzl/defold-orthographic releases](https://github.com/britzl/defold-orthographic/releases) and add its **Source code (zip)** URL (or a packaged `.zip` asset, if the library ships one) to `game.project` under `[project]` `dependencies`, then **Fetch Libraries** in the Defold editor.",
+    );
+    // No auto-minted moving archive URL — no HEAD.zip, no branch-specific zips.
+    expect(md).not.toContain("HEAD.zip");
+    expect(md).not.toContain("master.zip");
+    expect(md).not.toContain("main.zip");
+    expect(md).toContain(
+      "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
+    );
+    expect(md).toContain(
+      '  3. Import it under a namespace alias of your choice:\n     ```ts\n     import * as camera from "orthographic.camera"\n     ```',
     );
   });
 
-  test("a library page with an empty author omits both Author and GitHub, starting the block at Commit pin", () => {
+  test("a library page with an empty author omits Author and GitHub, starts at Commit pin, and names the dependency step without a link", () => {
     const md = apiPageMarkdown(
       libraryPageWithMeta({
         libraryMeta: {
@@ -385,13 +393,23 @@ describe("apiPageMarkdown library provenance block", () => {
       (t) => t,
     );
     const iCommit = md.indexOf("- Commit pin:");
-    const iLicense = md.indexOf("- License:");
-    const iImport = md.indexOf("- Import");
+    const iStep1 = md.indexOf("  1. Pick a release");
     expect(iCommit).toBeGreaterThan(-1);
-    expect(iLicense).toBeGreaterThan(iCommit);
-    expect(iImport).toBeGreaterThan(iLicense);
+    expect(iStep1).toBeGreaterThan(iCommit);
     expect(md).not.toContain("- Author:");
     expect(md).not.toContain("- GitHub:");
+    // With no author, the bullet is the standalone Commit pin; Author/License omitted.
+    expect(md).toContain(
+      "- Commit pin: [`2fe3aed`](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
+    );
+    expect(md).not.toContain("License:");
+    expect(md).not.toContain("- Usage:");
+    // No NOTICE credit → no repo, so step 1 is named generically with no /releases link.
+    expect(md).toContain(
+      "  1. Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged `.zip` asset, if the library ships one) to `game.project` under `[project]` `dependencies`, then **Fetch Libraries** in the Defold editor.",
+    );
+    expect(md).not.toContain("/releases");
+    expect(md).not.toContain("HEAD.zip");
   });
 
   test("a non-library page emits no provenance block", () => {

@@ -6,7 +6,6 @@
 
 - [Overview](/)
 - [Getting started](/getting-started)
-- [Existing project](/add-typescript)
 - [Editor setup](/editor-setup)
 - [Defold editor](/defold-editor)
 - [Build Tetris](/tetris-tutorial)

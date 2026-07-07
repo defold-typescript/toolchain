@@ -4,5 +4,22 @@
     "brief": "",
     "description": ""
   },
-  "elements": []
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "print",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "silent",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
 }

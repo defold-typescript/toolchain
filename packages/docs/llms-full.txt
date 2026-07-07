@@ -28,8 +28,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 ## Get started
 
-- [Getting started](./getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init my-game`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
-- [Existing project](./add-typescript.md) — run `bunx @defold-typescript/cli@latest init .` in a folder with `game.project` to add the TypeScript surface without replacing the Defold project.
+- [Getting started](./getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init my-game`, add TypeScript to an existing Defold project with `init .`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
 - [Editor setup](./editor-setup.md) — open the project in VSCode, use the generated `tsconfig.json`, and run `bunx @defold-typescript/cli watch` beside the Defold editor.
 - [Defold editor](./defold-editor.md) — install Defold, open the generated project folder, attach a compiled script (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to its game object, GUI scene, or render pipeline, and run the game (TypeScript is transpiled to Lua by the CLI, not the editor).
 
@@ -99,17 +98,36 @@ bun --version
 
 You need Bun `>= 1.3`.
 
-## Run the CLI
+## Scaffold a project
 
 The package is scoped, so run it through `bunx` by its full name — no install required:
 
 ```sh
 bunx @defold-typescript/cli@latest init my-game
+cd my-game
+git init
+bun install
 ```
 
-`init` requires an explicit destination — there is no implicit "current folder" default, so it never scaffolds where you did not mean to. Pass a path to create (or add to) that folder, or `.` to target the folder you are already in. The same rule applies to [`init-agents`](./agent-runbooks.md).
+> `my-game` will be created if it doesn't exist.
+>
+> **Optional**: Run `bunx @defold-typescript/cli@latest init-agents .` to initialize `AGENTS.md` and `CLAUDE.md` files.
 
-> `init` also generates a `mise.toml`. If you already have [mise](https://mise.jdx.dev) installed, it flags the new file as untrusted — run `mise trust` once to approve it.
+```sh
+bunx @defold-typescript/cli@latest init .
+git init
+bun install
+```
+
+> `.` scaffolds into the folder you are already in.
+
+`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs.
+
+See [Init](./init.md) for more options.
+
+> [!NOTE] `init` requires an explicit destination — there is no implicit "current folder" default, so it never scaffolds where you did not mean to. Pass a path to create (or add to) that folder, or `.` to target the folder you are already in.
+
+> [!TIP] `init` also generates a `mise.toml`. If you already have [mise](https://mise.jdx.dev) installed, it flags the new file as untrusted — run `mise trust` once to approve it.
 > After that, `mise run` (or its shorthand `mise r`) lets you pick one of the scaffolded tasks interactively.
 
 Use the `@latest` tag when you scaffold: `bunx` caches binaries, and `init` is
@@ -122,34 +140,6 @@ Check which version you are running with `-v` / `--version`:
 bunx @defold-typescript/cli --version
 ```
 
-## Scaffold a project
-
-```sh
-bunx @defold-typescript/cli@latest init my-game
-cd my-game
-bun install
-```
-
-`init` writes a minimal Defold project (`game.project`, `main/main.collection`, `input/game.input_binding`) alongside a TypeScript surface (`src/main.ts`, `tsconfig.json`, `package.json`). `game.project` boots the collection from its `[bootstrap]` section and points `[input]` at the binding, so a fresh scaffold loads in Defold with no missing references. The collection points at the generated `src/main.ts.script`, so the TypeScript starter is the script Defold runs. See [Init](./init.md) for the command's two modes, its flags (`--template`, `--force`), and the starter templates.
-
-Run `bun install` once after `init`. The scaffold declares its
-`devDependencies` (`@defold-typescript/types` for the editor's ambient Defold
-types, `@defold-typescript/cli` pinned to the same version so the build runs in
-lockstep with those types, `@defold-typescript/tstl-plugin` for the live
-transpile diagnostics, `@biomejs/biome` for lint and format, `@types/bun`
-for the `.vscode/` debug launcher, and `lua-types` for the ambient Lua standard
-library so `math`/`string`/`table`/… resolve) — `install`
-is what actually puts them in `node_modules`. Skip it and your editor reports the Defold globals as
-unresolved. `init` does not install for you (that keeps scaffolding offline), so
-it prints a `Next: run <pm> install` reminder once it finishes, picking the
-package manager from the runner that invoked it (`bun`/`npm`/`pnpm`/`yarn`,
-falling back to `bun`). Pass `--suppress-install-reminder` to silence that line
-when you install through your own tooling.
-
-The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched, unless you pass `--force`, which migrates the one deprecated Biome `recommended` key and leaves your other settings in place.
-
-If the scaffolded `@defold-typescript/types` pin still looks older than the CLI you expect, your `bunx` cache is stale — `@latest` above already forces the current release, which is more reliable than clearing the cache with `bun pm cache rm`.
-
 ## Add TypeScript to an existing project
 
 `init` is not just for fresh directories. Run it inside an existing Defold project to drop in the TypeScript infrastructure (`package.json`, `tsconfig.json`, `.gitignore`, `biome.json`, editor settings, and managed tasks) without touching `.script`, `.collection`, `.gui_script`, `.render_script`, `game.project`, or other engine assets.
@@ -157,15 +147,58 @@ If the scaffolded `@defold-typescript/types` pin still looks older than the CLI 
 1. `cd` into the project, such as a clone of [`defold/template-platformer`](https://github.com/defold/template-platformer).
 2. Run `bunx @defold-typescript/cli@latest init .` (the `.` targets the current folder).
 3. Run `bun install`, matching the install reminder printed by `init`.
-4. Hand-convert your Lua scripts to TypeScript; see [Convert a Lua script](#convert-a-lua-script).
+4. Hand-convert your Lua scripts to TypeScript — move each Defold lifecycle hook into a `defineScript({...})` method; the [platformer example](../examples/platformer/) is a worked conversion.
 5. Run `bunx @defold-typescript/cli build` to transpile the converted sources.
 6. Open the project in the Defold editor and Build-and-Run.
 
-### Convert a Lua script
+## Update `@defold-typescript` version
 
-Move each Defold lifecycle hook into a method on `defineScript({...})`, keep module-level constants at the top of the file, and use Defold APIs directly: vector math, `msg.post`, `go.set`, `sprite.play_flipbook`, `hash("...")`, and engine types are ambient globals with no import. The platformer example is a worked conversion of a real Lua project: [`docs/examples/platformer/`](../examples/platformer/).
+To update to the latest version:
+
+```sh
+bunx @defold-typescript/cli@latest init . --force
+```
+
+Despite the intimidating name, `--force` does not overwrite your source files — `src/main.ts`, `.script`, `.collection`, `game.project`, and other engine assets are left alone. It only refreshes the managed config (`tsconfig.json`, `biome.json`, and the `@defold-typescript` dependency pins), so an existing project keeps up with the current toolchain.
+
+## Project structure
+
+`@defold-typescript` doesn't create any folder wrappers around your Defold project, and instead adds TypeScript infrastructure in-place.
+
+The scaffold declares its `devDependencies` in `package.json`:
+* `@defold-typescript/types` for the editor's ambient Defold types
+* `@defold-typescript/cli` pinned to the same version so the build runs in
+lockstep with those types
+* `@defold-typescript/tstl-plugin` for the live transpile diagnostics
+* `@biomejs/biome` for lint and format
+* `@types/bun` for the `.vscode/` debug launcher
+* `lua-types` for the ambient Lua standard library so `math`/`string`/`table`/… resolve
+
+`bun install` is what actually downloads these dependencies to the `node_modules` folder (it is gitignored inside the generated `.gitignore`).
+If you forget to do so, your editor reports the Defold globals as unresolved.
+
+> [!WARNING] If you are using VSCode, you may need to open the `main.ts` file and run `Restart TS Server` from the Command Palette, or simply reload the window if the errors persist even after installing all the dependencies.
+
+> [!TIP] `init` does not install for you (that keeps scaffolding offline), so
+> it prints a `Next: run <pm> install` reminder once it finishes, picking the
+> package manager from the runner that invoked it (`bun`/`npm`/`pnpm`/`yarn`,
+> falling back to `bun`).
+>
+> Pass `--suppress-install-reminder` to silence that line when you install through your own tooling.
+
+The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched, unless you pass `--force`, which migrates the one deprecated Biome `recommended` key and leaves your other settings in place.
+
+If the scaffolded `@defold-typescript/types` pin still looks older than the CLI you expect, your `bunx` cache is stale — `@latest` above already forces the current release, which is more reliable than clearing the cache with `bun pm cache rm`.
 
 ## Write a script
+
+By default, only `.ts` files under the project's `src/` folder are compiled. That scope is the `include` array in `tsconfig.json` (both `build` and `watch` honor it) — widen it to manage more folders:
+
+```json
+{
+  "include": ["src/**/*.ts"]
+}
+```
 
 Open `src/main.ts` and replace its body with:
 
@@ -205,120 +238,10 @@ bunx @defold-typescript/cli watch
 
 While you edit, run [`watch`](./watch.md) instead: it rebuilds incrementally on every save and keeps the native-extension surface current (run [`resolve`](./resolve.md) once first). See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
-## Machine-readable output (`--json`)
-
-Every command accepts `--json` so agents and scripts can parse the result instead
-of scraping the human lines. See
-[Agent runbooks](./agent-runbooks.md#machine-readable-output) for the
-contract and each command's output shape.
-
-## Release smoke (maintainers)
-
-Before publishing, run the packed-artifact smoke check from the repo root:
-
-```sh
-bun run smoke
-```
-
-It packs all three `@defold-typescript/*` tarballs, installs them into a throwaway
-project outside the monorepo, and drives the installed `defold-typescript` bin
-under both `node` and `bun` through `init` → `build` → `tsc --noEmit` → a bounded
-`watch`. This proves a real consumer flow that the in-workspace tests cannot — the
-published packages resolve and run on a clean machine. It touches the network and
-the filesystem outside the repo, so it is a manual check, not a CI gate.
-
-After a release is live on npm, run the registry-sourced twin to confirm the
-**published** graph installs from the registry with no local checkout:
-
-```sh
-bun run registry-smoke          # tests the `latest` published version
-bun run registry-smoke 0.1.0    # or a specific published version
-```
-
-It is identical to `bun run smoke` in everything but the source of the bin:
-instead of packing local tarballs, it `bun add` / `npm install`s
-`@defold-typescript/cli@<version>` straight from npm, then drives the installed
-bin through `init` (both modes) → `build` → `tsc --noEmit`. Like `smoke`, it is
-network-touching and manual, never a CI gate.
-
-## Example smoke (maintainers)
-
-A second pre-publish gate exercises the working-tree library against the
-platformer example (the consumer end of the toolchain):
-
-```sh
-bun run example-smoke      # or: mise run example:smoke
-```
-
-It re-runs the local-source CLI (`init --force` then `build`) against
-`docs/examples/platformer` and follows that with `tsc --noEmit` against the
-example's `tsconfig.json`, so a library change that breaks the example's
-type-check surface ships detected. `bun run typecheck` is
-`bun run --filter '*' typecheck` and only covers workspace packages, so the
-example's `paths`-based resolution is invisible to it. Like `smoke`, this is
-advisory and manual — it mutates the committed example artifacts via the same
-convert path as `mise run example:update`.
-
 ## Next
 
 - Read [vector math](./vector-math.md) for the arithmetic methods on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`.
 - Read [TypeScript gotchas](./typescript-gotchas.md) for the sharp edges the type system cannot catch on its own — starting with the unary-minus quirk on `Vector3`.
-
-# Add TypeScript to an existing Defold project
-
-Use `bunx @defold-typescript/cli@latest init .` inside a Defold project that already has `game.project`. The `.` names the current folder as the destination — `init` requires an explicit target and has no implicit current-folder default.
-
-```sh
-cd my-existing-defold-game
-bunx @defold-typescript/cli@latest init .
-bun install
-```
-
-Scaffold with the `@latest` tag: `init` writes your `@defold-typescript/types`
-version pin, so a stale `bunx` cache would pin an older release. Then run
-`bun install` once — `init` only declares the dev dependencies below; `install`
-is what puts them in `node_modules` so the editor can resolve the Defold types.
-
-When `game.project` exists, `init` does not synthesize a new Defold project. It writes the same managed surface a new project gets, minus the Defold project files (`game.project`, `main/`, `input/`):
-
-- `src/main.ts` — a starter entry script, written only when it is absent **and** the project is a fresh scaffold shape: a `main/main.collection` that references `/src/main.ts.script`, with no other `.collection` or `.ts` anywhere in the tree. In a project you have already authored (your own collections or scripts), `init` never drops a `main.ts` into your structure. `main.ts` is your source, not managed config, so an existing one is left untouched (and omitted from the reported `written` list) even under `--force`.
-- `tsconfig.json`
-- `package.json` — created when absent, otherwise field-merged (see below).
-- `.gitignore`, `biome.json`, `mise.toml`
-- `.vscode/` — `extensions.json`, `settings.json`, `defold-typescript.code-snippets`, `launch.json`, `tasks.json`, and the `defold-debug.ts` launcher.
-
-If `package.json` already exists, the command preserves its existing fields and merges these dev dependencies when they are missing:
-
-- `@defold-typescript/types` — pinned to the CLI's own published version (the packages release in lockstep); type-only, and feeds the editor the ambient Defold API.
-- `@defold-typescript/cli` — the same version pin, so `build`/`watch` run in lockstep with those types.
-- `@defold-typescript/tstl-plugin` — the [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) language-service plugin wired into `tsconfig.json` for live transpile diagnostics.
-- `@biomejs/biome` — lint and format.
-- `@types/bun` — resolves the Bun and Node globals the `.vscode/defold-debug.ts` launcher uses; kept out of the `src/` compile by the tsconfig `types` pin.
-- `lua-types` — the ambient Lua standard library (`math`, `string`, `table`, `os`, …). `@defold-typescript/types` references it, but declaring it directly guarantees those globals resolve even when the transitive copy is not hoisted.
-
-The transpiler is *not* added as a project dependency — it arrives transitively through `@defold-typescript/cli` when you run `build`/`watch`, and the scaffold removes a stray `@defold-typescript/transpiler` devDep if it finds one.
-
-If `package.json` does not exist, the command creates one.
-
-## Conflicting config files
-
-`init` refuses to overwrite an existing `tsconfig.json` rather than clobber settings you may have hand-tuned. Without `--force`, it aborts if this file exists:
-
-- `tsconfig.json`
-
-`tsconfig.json` is the one TypeScript config the scaffold generates, and the only file the guard protects.
-
-Pass `--force` to proceed anyway (in new-project mode, `--force` also lets `init` synthesize into a non-empty directory). `--force` rewrites `tsconfig.json` wholesale — it does not merge fields, so any settings you had there are replaced by the scaffold config. `--force` never overwrites `src/main.ts` either, since that file is your source; it grants permission to init a non-empty directory and to refresh managed configs, never to clobber your entry files (`main/main.collection`, `src/main.ts`), which stay skipped under `--force` just as they do by default.
-
-## Build the Lua output
-
-After initialization, write TypeScript under `src/` and run:
-
-```sh
-bunx @defold-typescript/cli build
-```
-
-The default `tsconfig.json` type-checks against `@defold-typescript/types` and writes generated Lua next to each `.ts` source. Files that call a lifecycle factory become Defold components: `defineScript` writes `<name>.ts.script`, `defineGuiScript` writes `<name>.ts.gui_script`, and `defineRenderScript` writes `<name>.ts.render_script`. Helper modules with no lifecycle factory write plain Lua modules such as `src/util.lua`, matching the `require(...)` path emitted for TypeScript imports. The scaffold also drops a `.gitignore` so generated component files, helper `.lua` modules under `src/`, and their `.map` siblings stay out of version control. Set a concrete `outDir` to collect the outputs under a separate tree instead.
 
 # Code editor setup
 
@@ -405,6 +328,7 @@ It rebuilds Lua when files under `src/` change; run the game from the Defold edi
 
 - **`defold-typescript:build`** — `bunx @defold-typescript/cli build`. Builds once with the project's CLI.
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
+- **`defold-typescript:resolve`** — `bunx @defold-typescript/cli resolve`. Materializes the native-extension and vendored-library type surfaces from `game.project` dependencies. `watch` runs this automatically on every `game.project` change, so it is mainly a one-off after adding a dependency.
 - **`defold-typescript:setup-debug`** — `bunx @defold-typescript/cli setup-debug`. Wires the lldebugger `game.project` dependency and entry-script bootstrap (see [Debugging](debugging.md)).
 - **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents .`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
 - **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder` then `bun install` (the second command reinstalls, so the install reminder is suppressed). The deliberate upgrade path.
@@ -432,6 +356,8 @@ Run the TypeScript build before launching the game:
 
 ```sh
 bunx @defold-typescript/cli build
+# or keep it running while you edit:
+bunx @defold-typescript/cli watch
 ```
 
 By default the scaffolded `tsconfig.json` has no `outDir`, so generated Lua lands next to its `.ts` source.
@@ -1703,7 +1629,7 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
   `.collection`, `.gui_script`, `.render_script`, `game.project`, and other engine
   assets untouched. It writes a starter `src/main.ts` only for a fresh scaffold
   shape, never dropping one into a project you have already authored. See
-  [Add TypeScript to an existing project](./add-typescript.md).
+  [Add TypeScript to an existing project](./getting-started.md#add-typescript-to-an-existing-project).
 
 Scaffolded config files (`biome.json`, `.vscode/`, `mise.toml`) merge additively
 into anything you already have, so re-running `init` refreshes the managed blocks
@@ -1972,34 +1898,33 @@ session path is a separate slice.)
 
 # Resolve
 
-`resolve` reads your project's declared native-extension dependencies, fetches
-each archive, and generates an ambient TypeScript namespace from every
-`.script_api` doc inside it — so extension functions gain autocomplete and `tsc`
-coverage with no import. For what native extensions are, and how to declare and
-consume them, see [Native extensions](./extensions.md).
+`resolve` reads the Defold dependencies declared in your `game.project`, fetches
+each archive, and generates the TypeScript types for them — so extension
+functions and vendored-library modules gain autocomplete and `tsc` coverage with
+no hand-written declarations. For what native extensions are and how to declare
+them, see [Native extensions](./extensions.md).
 
 ```sh
 bunx @defold-typescript/cli resolve        # defaults to the current directory
 bunx @defold-typescript/cli resolve path/to/project
 ```
 
-## What it does
-
-`resolve` reads every `dependencies#N` URL under `[project]` in `game.project`. A
+It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 `game.project` with no `[project]` section is an error; a `[project]` with no
-`dependencies#N` keys reports `no extension dependencies declared` and exits
-cleanly. For each declared dependency, `resolve`:
+`dependencies#N` keys reports `no extension dependencies declared` and exits `0`.
 
-1. downloads and caches the archive (later runs are offline),
-2. locates every `.script_api` doc inside it,
-3. emits one ambient namespace per doc into
-   `.defold-types/extensions/<namespace>.d.ts`,
-4. writes an index barrel and a `package.json` for that sibling surface, and
-5. additively appends `"extensions"` to `tsconfig.json` `compilerOptions.types`,
-   so it coexists with the pinned engine surface.
+## Dependency kinds
 
-The human-readable output lists each resolved extension and where the surface was
-written:
+`resolve` inspects each declared archive and sorts it into one of three kinds:
+
+| Kind | Detected by | What `resolve` produces |
+| ---- | ----------- | ----------------------- |
+| **Native extension** | the archive carries one or more `.script_api` docs | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
+| **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries/`, plus `"libraries"` on the tsconfig `types` list |
+| **Asset-only / content** | no `.script_api` and no library match — fonts, asset packs, other content archives | nothing: reported and skipped |
+
+A skipped **asset-only** archive is never a failure — `resolve` still exits `0`
+and materializes types for the dependencies that do carry them. A typical run:
 
 ```
   iap <- https://github.com/defold/extension-iap/archive/main.zip (1 .script_api, download)
@@ -2008,76 +1933,69 @@ written:
 defold-typescript resolve: wrote .defold-types/extensions
 ```
 
-The `.defold-types/` directory is generated output and is gitignored. Re-run
-`resolve` whenever you change `[dependencies]`; it reconciles the sibling surface
-to exactly the extensions currently declared.
+## The generated surface
 
-A running [`watch`](./watch.md) automates that re-run: every `game.project` save
-re-resolves the surface, so editing `[dependencies]` while `watch` is up refreshes
-`.defold-types/extensions/` with no extra command. `watch` does not bootstrap the
-surface, though — it only reconciles on save, so run `resolve` once first to
-materialize the initial extension types.
+For each native extension, `resolve`:
 
-Dependencies that ship no `.script_api` — asset packs, fonts, other content-only
-archives — are reported and skipped, never a failure; `resolve` still exits `0`
-and materializes the surface for the extensions that do carry docs. A skipped,
-asset-only dependency that matches a **vendored pure-Lua library** is the one
-exception: instead of `asset-only, skipped`, its committed types are materialized
-(see [Vendored library types](#vendored-library-types)).
+1. downloads and caches the archive (later runs are offline),
+2. locates every `.script_api` doc inside it,
+3. emits one ambient namespace per doc into `.defold-types/extensions/<namespace>.d.ts`,
+4. writes an index barrel and a `package.json` for that sibling surface, and
+5. additively appends `"extensions"` to `tsconfig.json` `compilerOptions.types`, so
+   it coexists with the pinned engine surface (and the `"libraries"` surface,
+   below) under one `typeRoots`.
+
+`.defold-types/` is generated output and is gitignored. Re-run `resolve` whenever
+you change `[dependencies]`; each surface reconciles to exactly what is declared
+now, so removing a dependency prunes its generated types and drops the tsconfig
+entry — nothing stale is left behind.
 
 ## Vendored library types
 
 Many popular Defold libraries are plain Lua — installed via **Fetch Libraries**,
 carrying no `.script_api`. This toolchain ships hand-vendored TypeScript types for
-a curated set of them in `@defold-typescript/library-types`. When an asset-only
-`dependencies#N` URL matches one of those libraries, `resolve` materializes the
-committed `.d.ts` files verbatim into `.defold-types/libraries/` and additively
-appends `"libraries"` to `tsconfig.json` `compilerOptions.types` — a sibling
-surface that coexists with the engine and `extensions` surfaces under one
-`typeRoots`.
+a curated set of them in `@defold-typescript/library-types`. When a declared
+dependency matches one, its committed `.d.ts` is materialized verbatim (never
+regenerated), and the import specifier is the Lua `require` path —
+`import * as dicebag from 'dicebag.dicebag'` — so it matches what Fetch Libraries
+installs at runtime.
 
-The match keys on the library's source identity (the repository name), not exact
-URL equality, so a fork or a pinned-tag archive URL still resolves. Because the
-repository name alone can collide — a different library that happens to share the
-name, or a fork that renamed its module folder — the match is then **verified
-against the downloaded archive**: `resolve` reads the archive's `.lua` require
-paths and only materializes the modules it actually ships. A repo-name match whose
-module path is absent from the archive is reported **unverified** (a warning on
-`stderr`) and never materialized, so a collision or drifted fork cannot inject the
-wrong types. The emitted module specifier is the Lua `require` path
-(`import * as dicebag from 'dicebag.dicebag'`), so it matches what Fetch Libraries
-installs at runtime — the types are used as-is, never regenerated. Only libraries
-you actually **declare** under `[dependencies]` are materialized; an undeclared
-library stays non-importable, keeping types in lockstep with the project's real
-dependencies.
+The match keys on the library's **source identity (the repository name)**, not
+exact URL equality, so a fork or a pinned-tag archive URL still resolves. Because
+a repo name alone can collide — a different library sharing the name, or a fork
+that renamed its module folder — the match is then **verified against the
+downloaded archive**: `resolve` reads the archive's `.lua` require paths and
+materializes only the modules it actually ships. A repo-name match the archive
+does not confirm is reported **unverified** (a `stderr` warning) and never
+materialized, so a collision cannot inject the wrong types. A declared library
+whose vendored `.d.ts` is missing from the shipped corpus is likewise warned and
+skipped rather than failing the run.
 
-The library surface reconciles the same way the extension surface does: removing a
-matched dependency (or every `[dependencies]` entry) on a later run prunes
-`.defold-types/libraries/` and drops the `"libraries"` tsconfig entry, so a
-removed library never leaves stale types behind. A declared library whose vendored
-`.d.ts` is missing from the shipped corpus is warned on `stderr` and skipped rather
-than failing the run.
+## Keeping types in sync with `watch`
+
+A running [`watch`](./watch.md) re-resolves on every `game.project` save, so
+editing `[dependencies]` while `watch` is up refreshes `.defold-types/` with no
+extra command. `watch` only reconciles on save — it does not bootstrap the
+surface — so run `resolve` once first to materialize the initial types.
 
 ## Flags
 
 - `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift
-  (so CI gates the upgrade) and write nothing. See [Pinning](#pinning-extension-versions).
-- `--json` — emit one object describing the run. See
+  (so CI gates the upgrade) and write nothing. See [Pinning extension versions](#pinning-extension-versions).
+- `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
-  (`materializedSurface`, per extension the `namespaces`, `provenance`,
-  `resolvedVersion`, `pinnedVersion`, and `pinStatus`, and a `libraries` array
-  reporting each matched vendored library's `source`, `modules`, `provenance`, and
-  `verified` — `verified: false` (with an empty `modules`) marks a repo-name match
-  that the archive did not confirm).
+  (`materializedSurface`; per extension `namespaces`, `provenance`,
+  `resolvedVersion`, `pinnedVersion`, `pinStatus`; and a `libraries` array with
+  each match's `source`, `modules`, `provenance`, and `verified`).
 
 ## Pinning extension versions
 
-A declared `dependencies#N` URL is the only identity `resolve` reads, and it is
-often a **moving** ref (`.../archive/master.zip`) — the same URL can resolve to
-different bytes over time. The reproducible identity of *what was actually
-resolved* is therefore the sha256 digest of the resolved archive bytes, not a URL
-segment. `resolve` records that digest as the extension's version and seeds it
-into the project's `package.json` when absent (never clobbering an existing pin):
+A `dependencies#N` URL is often a **moving** ref (`.../archive/master.zip`) — the
+same URL can yield different bytes over time. So the reproducible identity of
+*what was actually resolved* is the **sha256 digest of the resolved archive
+bytes**, not a URL segment. `resolve` records that digest as the dependency's
+version and seeds it into the project's `package.json` when absent, never
+clobbering an existing pin:
 
 ```jsonc
 "defold-typescript": {
@@ -2088,33 +2006,27 @@ into the project's `package.json` when absent (never clobbering an existing pin)
 ```
 
 A committed pin is human-owned intent. When the URL later yields different bytes,
-the freshly-resolved digest no longer matches the pinned one, and `resolve`
-reports **drift**. The enforcement is two layered knobs:
+the fresh digest no longer matches the pin and `resolve` reports **drift**, gated
+by two knobs:
 
-- The **human-readable** `resolve` (no flag) **warns on drift** by default,
-  writing one line per drifted url to `stderr` (e.g.
-  `pin drift for https://...: sha256:pinned -> sha256:fresh`). Exit code is `0` —
-  drift still surfaces loudly on a developer's machine without breaking non-frozen
-  scripted runs.
-- The opt-in `--frozen` flag treats the committed pin set as a lockfile: it
-  **exits non-zero on drift** (so CI gates the upgrade) and **writes nothing** —
-  no absent-pin seeding, no clobbering. An unpinned extension under `--frozen`
-  passes and stays unseeded; failing on unpinned is a stricter mode and out of
-  scope for this knob.
+- **Default (no flag)** — warns on drift, writing one `stderr` line per drifted
+  URL (e.g. `pin drift for https://...: sha256:pinned -> sha256:fresh`) but exits
+  `0`, so drift surfaces on a developer's machine without breaking scripted runs.
+  Absent pins are seeded; existing pins are never clobbered.
+- **`--frozen`** — treats the pin set as a lockfile: exits non-zero on drift and
+  writes nothing (no seeding, no clobbering). An unpinned extension passes and
+  stays unseeded.
 
-The default behavior — seed absent pins, never clobber, exit `0` — is unchanged.
-`resolve` materializes the surface for the drifted extensions either way; only the
-`package.json` write and the exit code are gated. The `--json` output reports the
-pin state per extension (`pinStatus`: `unpinned` / `match` / `drift`); see
-[Agent runbooks](./agent-runbooks.md#machine-readable-output) for the full shape.
+Either way `resolve` still materializes the surface for the drifted dependencies;
+only the `package.json` write and the exit code are gated. `--json` reports
+`pinStatus` per extension (`unpinned` / `match` / `drift`).
 
 ## Cache location
 
-Downloaded extension archives are cached so repeated `resolve` runs stay offline.
-The cache lives at `$XDG_CACHE_HOME/defold-typescript/extensions` (defaulting to
+Downloaded archives are cached so repeated runs stay offline, at
+`$XDG_CACHE_HOME/defold-typescript/extensions` (default
 `~/.cache/defold-typescript/extensions`). Set `DEFOLD_TYPESCRIPT_CACHE` to
-override the root — the archives then land under
-`$DEFOLD_TYPESCRIPT_CACHE/extensions`.
+override the root; archives then land under `$DEFOLD_TYPESCRIPT_CACHE/extensions`.
 
 # Live transpile diagnostics
 

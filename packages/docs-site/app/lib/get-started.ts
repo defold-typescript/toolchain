@@ -7,7 +7,6 @@ import type { GuidePage } from "./guide";
 export const GET_STARTED_SLUGS = [
   "", // Overview — the index page
   "getting-started",
-  "add-typescript",
   "editor-setup",
   "defold-editor",
 ] as const;
