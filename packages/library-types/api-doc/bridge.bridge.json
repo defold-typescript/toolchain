@@ -4,5 +4,1650 @@
     "brief": "",
     "description": ""
   },
-  "elements": []
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "achievements.get_list",
+      "brief": "Returns the achievement list in JSON.",
+      "description": "Returns the achievement list in JSON.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, list)",
+          "types": [
+            "(this: any, list: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "achievements.is_get_list_supported",
+      "brief": "Check if getting list of achievements is supported.",
+      "description": "Check if getting list of achievements is supported.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "achievements.is_native_popup_supported",
+      "brief": "Check if built-in popup is supported.",
+      "description": "Check if built-in popup is supported.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "achievements.is_supported",
+      "brief": "Use this to determine if you can implement achievements for your game on the current platform.",
+      "description": "Use this to determine if you can implement achievements for your game on the current platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "achievements.show_native_popup",
+      "brief": "Returns the achievement list in JSON.",
+      "description": "Returns the achievement list in JSON.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function()",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "achievements.unlock",
+      "brief": "Unlocks achievement for a player.",
+      "description": "Unlocks achievement for a player.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, result)",
+          "types": [
+            "(this: any, result: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.banner_state",
+      "brief": "Hide the currently displayed banner ad when it is no longer needed.",
+      "description": "Hide the currently displayed banner ad when it is no longer needed.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.check_ad_block",
+      "brief": "Check if the ad blocker is enabled.",
+      "description": "Check if the ad blocker is enabled.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, bool)",
+          "types": [
+            "(this: any, bool: boolean) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.hide_banner",
+      "brief": "Hide the currently displayed banner ad when it is no longer needed.",
+      "description": "Hide the currently displayed banner ad when it is no longer needed.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.interstitial_state",
+      "brief": "Track the state of the interstitial ad to manage ad display and user experience.",
+      "description": "Track the state of the interstitial ad to manage ad display and user experience.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.is_banner_supported",
+      "brief": "Check if the platform supports displaying banner ads. Use this to determine if you can include banner advertisements in your game.",
+      "description": "Check if the platform supports displaying banner ads. Use this to determine if you can include banner advertisements in your game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.is_interstitial_supported",
+      "brief": "Check if the platform supports displaying interstitial ads. Use this to determine if you can include interstitial advertisements in your game.",
+      "description": "Check if the platform supports displaying interstitial ads. Use this to determine if you can include interstitial advertisements in your game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.is_rewarded_supported",
+      "brief": "Check if the platform supports displaying rewarded ads. Use this to determine if you can include rewarded advertisements in your game.",
+      "description": "Check if the platform supports displaying rewarded ads. Use this to determine if you can include rewarded advertisements in your game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.minimum_delay_between_interstitial",
+      "brief": "Minimum time interval between interstitial ad displays to comply with platform requirements and improve user experience.",
+      "description": "Minimum time interval between interstitial ad displays to comply with platform requirements and improve user experience.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.on",
+      "brief": "State changed events.",
+      "description": "State changed events.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "function(_, state)",
+          "types": [
+            "(this: any, state: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.rewarded_placement",
+      "brief": "Monitor the placement of the rewarded ad to manage the reward process.",
+      "description": "Monitor the placement of the rewarded ad to manage the reward process.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.rewarded_state",
+      "brief": "Monitor the state of the rewarded ad (loading, opened, closed, rewarded, failed) to manage the reward process.",
+      "description": "Monitor the state of the rewarded ad (loading, opened, closed, rewarded, failed) to manage the reward process.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.set_minimum_delay_between_interstitial",
+      "brief": "Set the minimum time interval between interstitial ad displays to comply with platform requirements and improve user experience.",
+      "description": "Set the minimum time interval between interstitial ad displays to comply with platform requirements and improve user experience.",
+      "parameters": [
+        {
+          "name": "delay",
+          "doc": "60 from default",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.show_banner",
+      "brief": "Display a banner ad within your game to generate revenue through advertising.",
+      "description": "Display a banner ad within your game to generate revenue through advertising.",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.show_interstitial",
+      "brief": "Display an interstitial ad at appropriate moments, such as during level transitions or game over screens.",
+      "description": "Display an interstitial ad at appropriate moments, such as during level transitions or game over screens.",
+      "parameters": [
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "advertisement.show_rewarded",
+      "brief": "Display a rewarded ad and provide incentives to players for watching the entire ad.",
+      "description": "Display a rewarded ad and provide incentives to players for watching the entire ad.",
+      "parameters": [
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "device.type",
+      "brief": "Determine the type of device (mobile, tablet, desktop, tv) the game is being played on to adjust the game`s interface and performance settings.",
+      "description": "Determine the type of device (mobile, tablet, desktop, tv) the game is being played on to adjust the game`s interface and performance settings.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "game.on",
+      "brief": "Check if the game tab is visible or hidden, and adjust game behavior accordingly, such as muting sound when hidden.",
+      "description": "Check if the game tab is visible or hidden, and adjust game behavior accordingly, such as muting sound when hidden.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "function(_, state)",
+          "types": [
+            "(this: any, state: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "game.visibility_state",
+      "brief": "Returns the current visibility state of the game (the tab with the game).",
+      "description": "Returns the current visibility state of the game (the tab with the game).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards.get_entries",
+      "brief": "Retrieve entries from the leaderboard, including the player's rank and score, to display a comprehensive leaderboard.",
+      "description": "Retrieve entries from the leaderboard, including the player's rank and score, to display a comprehensive leaderboard.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, entries)",
+          "types": [
+            "(this: any, entries: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards.set_score",
+      "brief": "Submit the player's score to the leaderboard to update their rank and position.",
+      "description": "Submit the player's score to the leaderboard to update their rank and position.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function()",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards.show_native_popup",
+      "brief": "Show native popup leaderboard.",
+      "description": "Show native popup leaderboard.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function()",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leaderboards.type",
+      "brief": "Check the leaderboards type on the platform.",
+      "description": "Check the leaderboards type on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments.consume_purchase",
+      "brief": "Consume purchased items, such as in-game currency, once they are used, to manage inventory and player progression.",
+      "description": "Consume purchased items, such as in-game currency, once they are used, to manage inventory and player progression.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, purchase)",
+          "types": [
+            "(this: any, purchase: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments.get_catalog",
+      "brief": "Retrieve a list of all available in-game items that players can purchase to display in the game store.",
+      "description": "Retrieve a list of all available in-game items that players can purchase to display in the game store.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, catalogItems)",
+          "types": [
+            "(this: any, catalogItems: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments.get_purchases",
+      "brief": "Retrieve a list of items that the player has purchased to manage their inventory and provide access to purchased content.",
+      "description": "Retrieve a list of items that the player has purchased to manage their inventory and provide access to purchased content.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(nil, purchases)",
+          "types": [
+            "(this: any, purchases: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments.is_supported",
+      "brief": "Check if in-game purchases are supported to offer items or upgrades within the game.",
+      "description": "Check if in-game purchases are supported to offer items or upgrades within the game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "payments.purchase",
+      "brief": "Allow players to buy items or upgrades in your game to enhance their gameplay experience.",
+      "description": "Allow players to buy items or upgrades in your game to enhance their gameplay experience.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, purchase)",
+          "types": [
+            "(this: any, purchase: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.get_all_games",
+      "brief": "Get all games on the platform.",
+      "description": "Get all games on the platform.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, data)",
+          "types": [
+            "(this: any, data: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.get_game_by_id",
+      "brief": "Get game by ID on the platform.",
+      "description": "Get game by ID on the platform.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, data)",
+          "types": [
+            "(this: any, data: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.get_server_time",
+      "brief": "Server Time",
+      "description": "Server Time",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, time)",
+          "types": [
+            "(this: any, time: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.id",
+      "brief": "Identify the platform on which the game is currently running to customize features and settings accordingly.",
+      "description": "Identify the platform on which the game is currently running to customize features and settings accordingly.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.is_audio_enabled",
+      "brief": "Check if the audio is enabled on the platform.",
+      "description": "Check if the audio is enabled on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.is_get_all_games_supported",
+      "brief": "Verify if the get_all_games is supported on the platform to ensure compatibility.",
+      "description": "Verify if the get_all_games is supported on the platform to ensure compatibility.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.is_get_game_by_id_supported",
+      "brief": "Verify if the get_game_by_id is supported on the platform to ensure compatibility.",
+      "description": "Verify if the get_game_by_id is supported on the platform to ensure compatibility.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.language",
+      "brief": "Get the language set by the user on the platform or the browser language if not provided by the platform, to localize game content.",
+      "description": "Get the language set by the user on the platform or the browser language if not provided by the platform, to localize game content.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.on",
+      "brief": "State changed events.",
+      "description": "State changed events.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "function(_, state)",
+          "types": [
+            "(this: any, state: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.payload",
+      "brief": "Embed auxiliary information into the game URL to pass additional data or settings when launching the game.",
+      "description": "Embed auxiliary information into the game URL to pass additional data or settings when launching the game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.send_message",
+      "brief": "Send predefined messages to the platform to trigger specific actions or events, such as signaling that the game is ready.",
+      "description": "Send predefined messages to the platform to trigger specific actions or events, such as signaling that the game is ready.",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "One of message types: `game_ready` `in_game_loading_started`",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "platform.tld",
+      "brief": "Retrieve the top-level domain of the platform to handle domain-specific configurations and behavior.",
+      "description": "Retrieve the top-level domain of the platform to handle domain-specific configurations and behavior.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player.authorize",
+      "brief": "Authorize the player on the platform to access protected features and personalize the game experience. For example, prompting the player to log in to save their progress or unlock social sharing features.",
+      "description": "Authorize the player on the platform to access protected features and personalize the game experience. For example, prompting the player to log in to save their progress or unlock social sharing features.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function()",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player.extra",
+      "brief": "Get the extra information about player.",
+      "description": "Get the extra information about player.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player.id",
+      "brief": "Get the player’s unique ID on the platform to manage user-specific data and settings. Use this ID to track player progress, achievements, and purchases.",
+      "description": "Get the player’s unique ID on the platform to manage user-specific data and settings. Use this ID to track player progress, achievements, and purchases.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player.is_authorization_supported",
+      "brief": "Check if the platform supports player authorization to enable features that require user authentication, such as saving game progress or accessing social features.",
+      "description": "Check if the platform supports player authorization to enable features that require user authentication, such as saving game progress or accessing social features.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player.is_authorized",
+      "brief": "Verify if the player is currently authorized on the platform. This allows you to enable personalized features, such as saving high scores or providing user-specific content.",
+      "description": "Verify if the player is currently authorized on the platform. This allows you to enable personalized features, such as saving high scores or providing user-specific content.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player.name",
+      "brief": "Retrieve the player's name to personalize the game experience. Display the name in leaderboards, friend lists, or when sending notifications and messages.",
+      "description": "Retrieve the player's name to personalize the game experience. Display the name in leaderboards, friend lists, or when sending notifications and messages.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player.photos",
+      "brief": "Get the count of player avatars available. Use this to manage and display user profile images effectively, such as showing the avatar in multiplayer lobbies or profile screens.",
+      "description": "Get the count of player avatars available. Use this to manage and display user profile images effectively, such as showing the avatar in multiplayer lobbies or profile screens.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remote_config.get",
+      "brief": "Encourage players to rate your game, providing valuable feedback and improving visibility.",
+      "description": "Encourage players to rate your game, providing valuable feedback and improving visibility.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, data)",
+          "types": [
+            "(this: any, data: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remote_config.is_supported",
+      "brief": "Check if remote configuration is supported to manage game settings without releasing updates.",
+      "description": "Check if remote configuration is supported to manage game settings without releasing updates.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.add_to_favorites",
+      "brief": "Allow players to bookmark your game for easy access in the future.",
+      "description": "Allow players to bookmark your game for easy access in the future.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.add_to_home_screen",
+      "brief": "Enable players to add a shortcut to your game on their home screen for quick access.",
+      "description": "Enable players to add a shortcut to your game on their home screen for quick access.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.create_post",
+      "brief": "Use this to let players create posts about their achievements or updates directly from the game.",
+      "description": "Use this to let players create posts about their achievements or updates directly from the game.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.invite_friends",
+      "brief": "Allow players to invite their friends to play the game, helping to grow your player base organically.",
+      "description": "Allow players to invite their friends to play the game, helping to grow your player base organically.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_add_to_favorites_supported",
+      "brief": "Check if the add to favorites functionality is supported on the platform.",
+      "description": "Check if the add to favorites functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_add_to_home_screen_supported",
+      "brief": "Check if the add to home screen functionality is supported on the platform.",
+      "description": "Check if the add to home screen functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_create_post_supported",
+      "brief": "Check if the create post functionality is supported on the platform.",
+      "description": "Check if the create post functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_external_links_allowed",
+      "brief": "Check if external links are allowed on the platform.",
+      "description": "Check if external links are allowed on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_invite_friends_supported",
+      "brief": "Check if the invite friends functionality is supported on the platform.",
+      "description": "Check if the invite friends functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_join_community_supported",
+      "brief": "Check if the join community functionality is supported on the platform.",
+      "description": "Check if the join community functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_rate_supported",
+      "brief": "Check if the rate game functionality is supported on the platform.",
+      "description": "Check if the rate game functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.is_share_supported",
+      "brief": "Check if the share functionality is supported on the platform.",
+      "description": "Check if the share functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.join_community",
+      "brief": "Use this to allow players to share game content or achievements on social media platforms.",
+      "description": "Use this to allow players to share game content or achievements on social media platforms.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.rate",
+      "brief": "Encourage players to rate your game, providing valuable feedback and improving visibility.",
+      "description": "Encourage players to rate your game, providing valuable feedback and improving visibility.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "social.share",
+      "brief": "Use this to allow players to share game content or achievements on social media platforms.",
+      "description": "Use this to allow players to share game content or achievements on social media platforms.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage.default_type",
+      "brief": "Identify the default storage type to understand where data is being saved (local or server).",
+      "description": "Identify the default storage type to understand where data is being saved (local or server).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage.delete_",
+      "brief": "Remove data from the specified storage by key to manage player data and settings effectively.",
+      "description": "Remove data from the specified storage by key to manage player data and settings effectively.",
+      "parameters": [
+        {
+          "name": "table_keys",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "storage_type",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage.get",
+      "brief": "Retrieve stored data based on a key or multiple keys to restore player progress or settings.",
+      "description": "Retrieve stored data based on a key or multiple keys to restore player progress or settings.",
+      "parameters": [
+        {
+          "name": "table_keys",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, data)",
+          "types": [
+            "(this: any, data: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "storage_type",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage.is_available",
+      "brief": "Check if the specified storage type is currently available for use to manage data storage effectively.",
+      "description": "Check if the specified storage type is currently available for use to manage data storage effectively.",
+      "parameters": [
+        {
+          "name": "storage_type",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage.is_supported",
+      "brief": "Verify if the specified storage type is supported on the platform to ensure compatibility.",
+      "description": "Verify if the specified storage type is supported on the platform to ensure compatibility.",
+      "parameters": [
+        {
+          "name": "storage_type",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "storage.set",
+      "brief": "Save data to the specified storage with a key to retain player progress or settings.",
+      "description": "Save data to the specified storage with a key to retain player progress or settings.",
+      "parameters": [
+        {
+          "name": "table_data",
+          "doc": "",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "(...args: any[]) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "(this: any, error: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "storage_type",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
 }

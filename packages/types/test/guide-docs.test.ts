@@ -167,17 +167,10 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("src/main.ts.script");
   });
 
-  test("docs/guide/add-typescript.md exists and explains add-TS mode", async () => {
-    const f = Bun.file(resolve(GUIDE, "add-typescript.md"));
-    expect(await f.exists()).toBe(true);
-    const body = await readGuide("add-typescript.md");
+  test("docs/guide/getting-started.md documents adding TypeScript to an existing project", async () => {
+    const body = await readGuide("getting-started.md");
+    expect(body).toContain("## Add TypeScript to an existing project");
     expect(body).toContain("game.project");
-  });
-
-  test("docs/guide/add-typescript.md scopes the conflict guard to tsconfig.json only", async () => {
-    const body = await readGuide("add-typescript.md");
-    expect(body).toContain("tsconfig.json");
-    expect(body).not.toContain("defold-typescript.config");
   });
 
   test("docs/guide/editor-setup.md exists and names the watch loop", async () => {
@@ -230,7 +223,6 @@ describe("docs/guide scaffold", () => {
   test("docs/guide/README.md links to the toolchain setup pages", async () => {
     const body = await readGuide("README.md");
     expect(body).toContain("defold-editor.md");
-    expect(body).toContain("add-typescript.md");
     expect(body).toContain("editor-setup.md");
   });
 
@@ -303,7 +295,6 @@ describe("docs/guide scaffold", () => {
 
   test("guide build-output pages document helper modules as .lua outputs", async () => {
     for (const rel of [
-      "add-typescript.md",
       "editor-setup.md",
       "defold-editor.md",
       "getting-started.md",

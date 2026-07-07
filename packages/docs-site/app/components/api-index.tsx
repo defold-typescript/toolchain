@@ -224,10 +224,11 @@ export function LibraryIndex({
       title="Libraries"
       lead={
         <p>
-          Third-party library API blocks, built on the TypeScript definitions maintained by the{" "}
-          <a href="https://github.com/ts-defold/library">ts-defold/library</a> project — thank you
-          to its maintainers for the typings this section rests on. Each block also credits its
-          original library author and links the exact source it was generated from.{" "}
+          Third-party library API blocks.
+          <br />
+          They are built on the TypeScript definitions maintained by the{" "}
+          <a href="https://github.com/ts-defold/library">ts-defold/library</a> project.
+          <br />
           <span class="mt-1 block text-sm text-text-faint">
             {total} namespace{total === 1 ? "" : "s"} documented.
           </span>

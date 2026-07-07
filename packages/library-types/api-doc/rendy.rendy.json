@@ -8,6 +8,401 @@
     {
       "type": "TYPEDEF",
       "name": "CameraId"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_camera",
+      "brief": "Creates a camera. This function is called automatically by the rendy.go game object.",
+      "description": "Creates a camera. This function is called automatically by the rendy.go game object.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "destroy_camera",
+      "brief": "Destroys a camera. This function is called automatically by the rendy.go game object.",
+      "description": "Destroys a camera. This function is called automatically by the rendy.go game object.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera to be destroyed.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "Sets a camera property. This function replaces the standard go.set().",
+      "description": "Sets a camera property. This function replaces the standard go.set().",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "The property to be set.",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "The value to set the property to.",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "animate",
+      "brief": "Animates a camera property. This function replaces the standard go.animate().",
+      "description": "Animates a camera property. This function replaces the standard go.animate().",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "The property to be animated.",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "playback",
+          "doc": "The playback mode of the animation.",
+          "types": [
+            "typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "The target value of the animation.",
+          "types": [
+            "Quaternion | Vector3 | Vector4 | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "The easing function for the animation.",
+          "types": [
+            "Vector3 | typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "The duration of the animation.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "Optional delay before starting the animation.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "Optional function to be called when the animation is complete.",
+          "types": [
+            "(this: any, url: Url, property: Hash) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_animations",
+      "brief": "Cancels a camera property animation. This function replaces the standard go.cancel_animations().",
+      "description": "Cancels a camera property animation. This function replaces the standard go.cancel_animations().",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "The property of the animation to be cancelled.",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Gets a camera property. This function is equivalent to the standard go.get().",
+      "description": "Gets a camera property. This function is equivalent to the standard go.get().",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "property",
+          "doc": "The property to be retrieved.",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The value of the specified property.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_display_size",
+      "brief": "Gets the initial window size specified in the game.project file.",
+      "description": "Gets the initial window size specified in the game.project file.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The initial window size.",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_window_size",
+      "brief": "Gets the current window size.",
+      "description": "Gets the current window size.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The current window size.",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_stack",
+      "brief": "Gets camera ids whose viewports intersect a screen position.",
+      "description": "Gets camera ids whose viewports intersect a screen position.",
+      "parameters": [
+        {
+          "name": "screen_x",
+          "doc": "The x-coordinate of the screen position.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "screen_y",
+          "doc": "The y-coordinate of the screen position.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "An array of camera ids.",
+          "types": [
+            "CameraId[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shake",
+      "brief": "Starts a camera shake animation. If the camera is already shaking, then the animation is cancelled and restarted.",
+      "description": "Starts a camera shake animation. If the camera is already shaking, then the animation is cancelled and restarted.\nThe radius is increased or decreased over time if the scaler argument is ~= 1.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "radius",
+          "doc": "The initial radius of the camera shake.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "intensity",
+          "doc": "The intensity of the camera shake.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "The duration of the camera shake animation.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "scaler",
+          "doc": "Optional scaler argument for adjusting the radius over time.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_shake",
+      "brief": "Cancels an ongoing camera shake animation.",
+      "description": "Cancels an ongoing camera shake animation.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_to_world",
+      "brief": "Converts a screen position to a world position. The screen position's z component maps to the camera frustum's z component.",
+      "description": "Converts a screen position to a world position. The screen position's z component maps to the camera frustum's z component.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "screen_position",
+          "doc": "The screen position to be converted.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The corresponding world position.",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "world_to_screen",
+      "brief": "Converts a world position to a screen position. The world position's z component maps to the camera frustum's z component.",
+      "description": "Converts a world position to a screen position. The world position's z component maps to the camera frustum's z component.",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "The identifier for the camera.",
+          "types": [
+            "CameraId"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_position",
+          "doc": "The world position to be converted.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The corresponding screen position.",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
     }
   ]
 }

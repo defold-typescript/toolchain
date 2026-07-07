@@ -41,7 +41,7 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
   `.collection`, `.gui_script`, `.render_script`, `game.project`, and other engine
   assets untouched. It writes a starter `src/main.ts` only for a fresh scaffold
   shape, never dropping one into a project you have already authored. See
-  [Add TypeScript to an existing project](./add-typescript.md).
+  [Add TypeScript to an existing project](./getting-started.md#add-typescript-to-an-existing-project).
 
 Scaffolded config files (`biome.json`, `.vscode/`, `mise.toml`) merge additively
 into anything you already have, so re-running `init` refreshes the managed blocks

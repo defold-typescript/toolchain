@@ -20,6 +20,8 @@ Run the TypeScript build before launching the game:
 
 ```sh
 bunx @defold-typescript/cli build
+# or keep it running while you edit:
+bunx @defold-typescript/cli watch
 ```
 
 By default the scaffolded `tsconfig.json` has no `outDir`, so generated Lua lands next to its `.ts` source.

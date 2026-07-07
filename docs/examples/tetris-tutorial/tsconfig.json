@@ -14,7 +14,9 @@
         "../../../packages/types/generated/kinds/gui-script.d.ts"
       ],
       "@defold-typescript/types/timers": ["../../../packages/types/src/timers.d.ts"]
-    }
+    },
+    "typeRoots": [".defold-types"],
+    "types": []
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }

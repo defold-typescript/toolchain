@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { MISE_TASKS_TOML, mergeMiseToml } from "./mise-scaffold";
 
 describe("MISE_TASKS_TOML", () => {
-  test("declares the five quoted namespaced task headers", () => {
+  test("declares the six quoted namespaced task headers", () => {
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:build"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:watch"]');
+    expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:resolve"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:upgrade"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:setup-debug"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:init-agents"]');
@@ -18,9 +19,16 @@ describe("MISE_TASKS_TOML", () => {
     expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli init-agents ."');
   });
 
-  test("build and watch invoke the CLI via bunx @defold-typescript/cli", () => {
+  test("build, watch, and resolve invoke the CLI via bunx @defold-typescript/cli", () => {
     expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli build"');
     expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli watch"');
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli resolve"');
+  });
+
+  test("resolve carries the note that watch runs it automatically", () => {
+    expect(MISE_TASKS_TOML).toContain(
+      "# watch runs this automatically on every game.project change; run it manually for a one-off resolve",
+    );
   });
 
   test("upgrade is the two-command @latest init --force then bun install array", () => {
@@ -31,7 +39,7 @@ describe("MISE_TASKS_TOML", () => {
 
   test("each managed task is fronted by the managed marker", () => {
     const markers = MISE_TASKS_TOML.match(/# managed by @defold-typescript/g) ?? [];
-    expect(markers.length).toBe(5);
+    expect(markers.length).toBe(6);
   });
 });
 
@@ -103,7 +111,7 @@ describe("mergeMiseToml", () => {
     expect(merged).toContain('[tasks."my-custom-task"]\nrun = "echo hello"');
 
     const markers = merged.match(/# managed by @defold-typescript/g) ?? [];
-    expect(markers.length).toBe(5);
+    expect(markers.length).toBe(6);
   });
 
   test("strips a stale managed block before re-appending the fresh one", () => {

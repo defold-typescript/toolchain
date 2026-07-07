@@ -86,6 +86,7 @@ It rebuilds Lua when files under `src/` change; run the game from the Defold edi
 
 - **`defold-typescript:build`** — `bunx @defold-typescript/cli build`. Builds once with the project's CLI.
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
+- **`defold-typescript:resolve`** — `bunx @defold-typescript/cli resolve`. Materializes the native-extension and vendored-library type surfaces from `game.project` dependencies. `watch` runs this automatically on every `game.project` change, so it is mainly a one-off after adding a dependency.
 - **`defold-typescript:setup-debug`** — `bunx @defold-typescript/cli setup-debug`. Wires the lldebugger `game.project` dependency and entry-script bootstrap (see [Debugging](debugging.md)).
 - **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents .`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
 - **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder` then `bun install` (the second command reinstalls, so the install reminder is suppressed). The deliberate upgrade path.

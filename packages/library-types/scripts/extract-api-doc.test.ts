@@ -238,6 +238,84 @@ describe("extractApiDoc interface-backed module exports", () => {
   });
 });
 
+// A string-named ambient module with no `export =`: ts-defold vendors the
+// surface as bare `function`/`const` with no `export` keyword (`rendy.rendy`,
+// `nakama.util.log`). Every top-level declaration is still public API.
+const BARE = `/**
+ * Bare module.
+ * @noResolution
+ */
+declare module 'bare.bare' {
+	type Id = Hash | string;
+
+	/** Make it. */
+	function make(id: Id): void;
+
+	/** Item count. */
+	const COUNT: number;
+}
+`;
+
+// Nested `export namespace` blocks (`bridge.bridge`), including a member name
+// reused across two namespaces that must not collide.
+const NAMESPACED = `/**
+ * Namespaced module.
+ * @noResolution
+ */
+declare module 'ns.ns' {
+	export namespace alpha {
+		/** Alpha check. */
+		export function is_supported(): boolean;
+	}
+	export namespace beta {
+		/** Beta check. */
+		export function is_supported(): boolean;
+	}
+}
+`;
+
+// A `export =` module (`squid`, `starly`): the surface is the re-exported
+// value's interface, so a bare internal helper stays unemitted.
+const EXPORT_ASSIGN = `/**
+ * Export-assign module.
+ * @noResolution
+ */
+declare module 'ea.ea' {
+	interface Core {
+		/** Go. */
+		go(): void;
+	}
+	/** Internal helper, behind the re-export. */
+	function internal(): void;
+	const v: Core;
+	export = v;
+}
+`;
+
+describe("extractApiDoc bare and namespaced declarations", () => {
+  test("emits bare (non-export) declarations in a module without export =", () => {
+    const module = parseDefoldApiDoc(extractApiDoc(BARE, "bare.bare"));
+    expect(module.functions.map((f) => f.name)).toEqual(["make"]);
+    expect(module.functions[0]?.brief).toBe("Make it.");
+    expect(module.variables.map((v) => v.name)).toEqual(["COUNT"]);
+    expect(module.typedefs.map((t) => t.name)).toEqual(["Id"]);
+  });
+
+  test("qualifies nested namespace members so same-named members stay distinct", () => {
+    const module = parseDefoldApiDoc(extractApiDoc(NAMESPACED, "ns.ns"));
+    expect(module.functions.map((f) => f.name)).toEqual([
+      "alpha.is_supported",
+      "beta.is_supported",
+    ]);
+  });
+
+  test("suppresses bare internal declarations behind an export =", () => {
+    const module = parseDefoldApiDoc(extractApiDoc(EXPORT_ASSIGN, "ea.ea"));
+    expect(module.functions.map((f) => f.name)).toEqual(["go"]);
+    expect(module.functions.map((f) => f.name)).not.toContain("internal");
+  });
+});
+
 describe("extractApiDoc object-literal field tree", () => {
   const fn = (name: string) =>
     (
