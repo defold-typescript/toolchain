@@ -2,6 +2,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { delimiter, dirname, join } from "node:path";
 import { bobCacheDir, bobDownloadUrl, resolveBobJar, resolveJava } from "./bob";
 import { ENGINE_INFO_URL } from "./debug-launcher";
+import { detectEditorBundledJava } from "./installed-editor-version";
 
 export const DEFOLD_SUBCOMMANDS = ["resolve", "build", "bundle"] as const;
 export type DefoldSubcommand = (typeof DEFOLD_SUBCOMMANDS)[number];
@@ -40,6 +41,7 @@ export interface DefoldIo {
   readonly fetchSha: () => Promise<string>;
   readonly probe: (candidate: string) => boolean;
   readonly javaProbe: (cmd: string) => boolean;
+  readonly bundledJava?: () => string | null;
   readonly spawn: (argv: string[], cwd: string) => Promise<number>;
   readonly download: (url: string, dest: string) => Promise<void>;
 }
@@ -71,6 +73,7 @@ export async function runDefoldCommand(opts: {
   const java = resolveJava({
     ...(opts.java !== undefined ? { override: opts.java } : {}),
     probe: io.javaProbe,
+    ...(io.bundledJava !== undefined ? { bundledJava: io.bundledJava } : {}),
   });
   const argv = composeBobArgv({
     java,
@@ -131,6 +134,7 @@ export function defaultDefoldIo(): DefoldIo {
     fetchSha: fetchStableSha,
     probe: existsSync,
     javaProbe: (cmd) => javaOnPath(cmd),
+    bundledJava: () => detectEditorBundledJava(),
     spawn: spawnInherit,
     download: downloadTo,
   };

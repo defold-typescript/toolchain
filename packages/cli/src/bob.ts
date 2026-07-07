@@ -43,17 +43,28 @@ export function resolveBobJar(opts: {
   return { jarPath, cached: opts.probe(jarPath) };
 }
 
-// override -> `java` on PATH -> clear error. `probe` is injectable so callers
-// (and tests) decide what "found on PATH" means without spawning.
-export function resolveJava(opts: { override?: string; probe: (cmd: string) => boolean }): string {
+// override -> `java` on PATH -> editor's bundled JDK -> clear error. `probe`
+// and `bundledJava` are injectable so callers (and tests) decide what "found
+// on PATH" and "found in the editor bundle" mean without spawning or touching
+// the real filesystem.
+export function resolveJava(opts: {
+  override?: string;
+  probe: (cmd: string) => boolean;
+  bundledJava?: () => string | null;
+}): string {
   if (opts.override) {
     return opts.override;
   }
   if (opts.probe("java")) {
     return "java";
   }
+  const bundled = opts.bundledJava?.();
+  if (bundled) {
+    return bundled;
+  }
   throw new Error(
-    'defold-typescript: no Java runtime found. Install a JDK and ensure "java" is on PATH, ' +
-      "or pass --java <path> (or set DEFOLD_JAVA). bob.jar requires a JVM to run.",
+    "defold-typescript: no Java runtime found. Checked the --java/DEFOLD_JAVA override, " +
+      '"java" on PATH, and the Defold editor\'s bundled JDK. Install a JDK and ensure "java" ' +
+      "is on PATH, or pass --java <path> (or set DEFOLD_JAVA). bob.jar requires a JVM to run.",
   );
 }
