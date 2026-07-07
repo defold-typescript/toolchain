@@ -668,9 +668,13 @@ export function dispatch(
           for (const ext of result.extensions) {
             if (ext.assetOnly) {
               const library = result.libraries.find((lib) => lib.url === ext.url);
-              if (library !== undefined) {
+              if (library?.verified) {
                 io.stdout.write(
                   `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
+                );
+              } else if (library !== undefined) {
+                io.stderr.write(
+                  `defold-typescript resolve: unverified library match for ${ext.url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
                 );
               } else {
                 io.stdout.write(`  ${ext.url}: asset-only, skipped\n`);

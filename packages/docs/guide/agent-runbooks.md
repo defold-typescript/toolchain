@@ -78,7 +78,9 @@ archive bytes), — when the project pins that url — the `pinnedVersion`, and 
 `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
 each asset-only dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
-source identity), materialized `modules`, and `provenance` (`vendored`):
+source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
+A `verified: false` entry (with an empty `modules`) is a repo-name match the
+downloaded archive did not confirm; it is reported but never materialized:
 
 ```jsonc
 {
@@ -103,7 +105,8 @@ source identity), materialized `modules`, and `provenance` (`vendored`):
       "url": "https://github.com/paulomrpp/dicebag/archive/main.zip",
       "source": "dicebag",
       "modules": ["dicebag.dicebag"],
-      "provenance": "vendored"
+      "provenance": "vendored",
+      "verified": true
     }
   ]
 }

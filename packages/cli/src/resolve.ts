@@ -44,6 +44,10 @@ export interface ResolvedLibraryReport {
   readonly source: string;
   readonly modules: string[];
   readonly provenance: "vendored";
+  // A repo-name match is verified only when at least one of its modules' require
+  // paths is present in the downloaded archive; unverified matches are reported
+  // but never materialized (collision or drifted fork).
+  readonly verified: boolean;
 }
 
 export interface RunResolveOptions {
@@ -150,32 +154,39 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     opts.libraryGeneratedDir !== undefined
       ? opts.libraryGeneratedDir
       : (loaded?.generatedDir ?? null);
-  const matchedLibraries: { library: VendoredLibrary; url: string }[] = [];
+  const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
   for (const bundle of bundles) {
     if (!bundle.assetOnly) {
       continue;
     }
     const library = matchVendoredLibrary(bundle.url, libraryRegistry);
     if (library !== null) {
-      matchedLibraries.push({ library, url: bundle.url });
+      const shipped = new Set(bundle.luaModules);
+      const confirmed = library.modules.filter((module) => shipped.has(module));
+      matchedLibraries.push({ library, url: bundle.url, confirmed });
     }
   }
   const { materializedDir: librariesDir, skipped: skippedLibraryModules } =
     materializeVendoredLibraries({
       cwd,
-      matched: matchedLibraries.map((m) => m.library),
+      matched: matchedLibraries
+        .filter((m) => m.confirmed.length > 0)
+        .map((m) => ({ sourceId: m.library.sourceId, modules: m.confirmed })),
       generatedDir: libraryGeneratedDir,
     });
   ensureLibraryTypesReference(cwd, librariesDir);
   for (const module of skippedLibraryModules) {
     console.warn(`skipping library module ${module}: no generated .d.ts in the vendored corpus`);
   }
-  const libraries: ResolvedLibraryReport[] = matchedLibraries.map(({ library, url }) => ({
-    url,
-    source: library.sourceId,
-    modules: library.modules,
-    provenance: "vendored",
-  }));
+  const libraries: ResolvedLibraryReport[] = matchedLibraries.map(
+    ({ library, url, confirmed }) => ({
+      url,
+      source: library.sourceId,
+      modules: confirmed,
+      provenance: "vendored",
+      verified: confirmed.length > 0,
+    }),
+  );
 
   const existingPkg = readExistingPackageJson(cwd);
   const pins = readExtensionVersionPins(existingPkg.value);
