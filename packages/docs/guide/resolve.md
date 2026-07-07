@@ -75,6 +75,13 @@ types are used as-is, never regenerated. Only libraries you actually **declare**
 under `[dependencies]` are materialized; an undeclared library stays
 non-importable, keeping types in lockstep with the project's real dependencies.
 
+The library surface reconciles the same way the extension surface does: removing a
+matched dependency (or every `[dependencies]` entry) on a later run prunes
+`.defold-types/libraries/` and drops the `"libraries"` tsconfig entry, so a
+removed library never leaves stale types behind. A declared library whose vendored
+`.d.ts` is missing from the shipped corpus is warned on `stderr` and skipped rather
+than failing the run.
+
 ## Flags
 
 - `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift

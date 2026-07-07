@@ -24,6 +24,7 @@ export interface MaterializeVendoredLibrariesOptions {
 export interface MaterializeVendoredLibrariesResult {
   readonly materializedDir: string | null;
   readonly modules: string[];
+  readonly skipped: string[];
 }
 
 export function materializeVendoredLibraries(
@@ -31,28 +32,43 @@ export function materializeVendoredLibraries(
 ): MaterializeVendoredLibrariesResult {
   const { cwd, matched, generatedDir } = opts;
 
-  const modules = [...new Set(matched.flatMap((library) => library.modules))].sort();
-  if (modules.length === 0 || generatedDir === null) {
-    return { materializedDir: null, modules: [] };
-  }
-
   const relDir = path.posix.join(MATERIALIZED_ROOT, LIBRARIES_DIR);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, LIBRARIES_DIR);
+
+  const modules = [...new Set(matched.flatMap((library) => library.modules))].sort();
+
+  // reconcile-to-zero: an empty match set means the declared set no longer wants
+  // any library surface, so remove a previously-materialized one.
+  if (modules.length === 0) {
+    rmSync(absDir, { recursive: true, force: true });
+    return { materializedDir: null, modules: [], skipped: [] };
+  }
+  // corpus-unavailable: keep a good surface rather than nuke it on a null source.
+  if (generatedDir === null) {
+    return { materializedDir: null, modules: [], skipped: [] };
+  }
+
+  const present = modules.filter((module) => existsSync(path.join(generatedDir, `${module}.d.ts`)));
+  const skipped = modules.filter((module) => !present.includes(module));
+  if (present.length === 0) {
+    return { materializedDir: null, modules: [], skipped };
+  }
+
   mkdirSync(absDir, { recursive: true });
 
-  const wanted = new Set(modules.map((module) => `${module}.d.ts`));
+  const wanted = new Set(present.map((module) => `${module}.d.ts`));
   for (const existing of readdirSync(absDir)) {
     if (existing.endsWith(".d.ts") && existing !== "index.d.ts" && !wanted.has(existing)) {
       rmSync(path.join(absDir, existing));
     }
   }
 
-  for (const module of modules) {
+  for (const module of present) {
     const file = `${module}.d.ts`;
     writeFileSync(path.join(absDir, file), readFileSync(path.join(generatedDir, file), "utf8"));
   }
 
-  const imports = modules.map((module) => `import "./${module}";`).join("\n");
+  const imports = present.map((module) => `import "./${module}";`).join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
   writeFileSync(
@@ -63,16 +79,31 @@ export function materializeVendoredLibraries(
     })}\n`,
   );
 
-  return { materializedDir: relDir, modules };
+  return { materializedDir: relDir, modules: present, skipped };
 }
 
 export function ensureLibraryTypesReference(cwd: string, materializedDir: string | null): void {
+  const tsconfigPath = path.join(cwd, "tsconfig.json");
   if (materializedDir === null) {
+    if (!existsSync(tsconfigPath)) {
+      return;
+    }
+    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+      compilerOptions?: Record<string, unknown>;
+      [key: string]: unknown;
+    };
+    const current = tsconfig.compilerOptions ?? {};
+    const types = Array.isArray(current.types) ? (current.types as unknown[]).slice() : [];
+    const idx = types.indexOf(LIBRARIES_DIR);
+    if (idx !== -1) {
+      types.splice(idx, 1);
+      tsconfig.compilerOptions = { ...current, types };
+      writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
+    }
     return;
   }
   const entry = path.posix.basename(materializedDir);
 
-  const tsconfigPath = path.join(cwd, "tsconfig.json");
   if (existsSync(tsconfigPath)) {
     const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
       compilerOptions?: Record<string, unknown>;

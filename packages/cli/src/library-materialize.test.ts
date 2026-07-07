@@ -48,6 +48,7 @@ describe("materializeVendoredLibraries", () => {
     expect(result).toEqual({
       materializedDir: ".defold-types/libraries",
       modules: ["dicebag.dicebag", "monarch.transitions.gui"],
+      skipped: [],
     });
     const dir = librariesDir();
     expect(readFileSync(path.join(dir, "dicebag.dicebag.d.ts"), "utf8")).toBe(dicebag);
@@ -105,6 +106,7 @@ describe("materializeVendoredLibraries", () => {
     expect(materializeVendoredLibraries({ cwd, matched: [], generatedDir })).toEqual({
       materializedDir: null,
       modules: [],
+      skipped: [],
     });
     expect(existsSync(librariesDir())).toBe(false);
 
@@ -114,8 +116,56 @@ describe("materializeVendoredLibraries", () => {
         matched: [library("keep", ["keep.keep"])],
         generatedDir: null,
       }),
-    ).toEqual({ materializedDir: null, modules: [] });
+    ).toEqual({ materializedDir: null, modules: [], skipped: [] });
     expect(existsSync(librariesDir())).toBe(false);
+  });
+
+  test("an empty match set removes a previously-materialized surface (reconcile to zero)", () => {
+    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
+    materializeVendoredLibraries({ cwd, matched: [library("keep", ["keep.keep"])], generatedDir });
+    expect(existsSync(librariesDir())).toBe(true);
+
+    const result = materializeVendoredLibraries({ cwd, matched: [], generatedDir });
+
+    expect(result).toEqual({ materializedDir: null, modules: [], skipped: [] });
+    expect(existsSync(librariesDir())).toBe(false);
+  });
+
+  test("a null generatedDir leaves an existing surface intact (corpus unavailable, not a removal)", () => {
+    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
+    materializeVendoredLibraries({ cwd, matched: [library("keep", ["keep.keep"])], generatedDir });
+    expect(existsSync(librariesDir())).toBe(true);
+
+    const result = materializeVendoredLibraries({
+      cwd,
+      matched: [library("keep", ["keep.keep"])],
+      generatedDir: null,
+    });
+
+    expect(result).toEqual({ materializedDir: null, modules: [], skipped: [] });
+    expect(existsSync(path.join(librariesDir(), "keep.keep.d.ts"))).toBe(true);
+  });
+
+  test("a matched module whose generated file is absent is skipped; present siblings materialize", () => {
+    seedGenerated("present.present", "declare module 'present.present' {}\n");
+
+    const result = materializeVendoredLibraries({
+      cwd,
+      matched: [library("present", ["present.present"]), library("missing", ["missing.missing"])],
+      generatedDir,
+    });
+
+    expect(result).toEqual({
+      materializedDir: ".defold-types/libraries",
+      modules: ["present.present"],
+      skipped: ["missing.missing"],
+    });
+    const dir = librariesDir();
+    expect(existsSync(path.join(dir, "present.present.d.ts"))).toBe(true);
+    expect(existsSync(path.join(dir, "missing.missing.d.ts"))).toBe(false);
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
+      'import "./present.present";\n\nexport {};\n',
+    );
   });
 });
 
@@ -155,13 +205,30 @@ describe("ensureLibraryTypesReference", () => {
     expect(gitignore).toContain("src/**/*.lua");
   });
 
-  test("a null materializedDir is a no-op", () => {
+  test("a null materializedDir with no libraries entry rewrites nothing", () => {
     writeTsconfig({ compilerOptions: { types: ["defold-1.12.4"] } });
     const before = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
 
     ensureLibraryTypesReference(cwd, null);
 
     expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(before);
+    expect(existsSync(path.join(cwd, ".gitignore"))).toBe(false);
+  });
+
+  test("a null materializedDir removes an existing libraries entry, leaving siblings and typeRoots", () => {
+    writeTsconfig({
+      compilerOptions: {
+        strict: true,
+        typeRoots: [".defold-types"],
+        types: ["defold-1.12.4", "extensions", "libraries"],
+      },
+    });
+
+    ensureLibraryTypesReference(cwd, null);
+
+    const tsconfig = readTsconfig();
+    expect(tsconfig.compilerOptions.types).toEqual(["defold-1.12.4", "extensions"]);
+    expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
     expect(existsSync(path.join(cwd, ".gitignore"))).toBe(false);
   });
 });
