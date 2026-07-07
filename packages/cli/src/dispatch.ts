@@ -18,6 +18,7 @@ import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
 import { detectInstalledEditorVersion } from "./installed-editor-version";
 import { renderResult } from "./json-output";
+import type { VendoredLibrary } from "./library-match";
 import {
   ensureMaterializedReference,
   materializeApiSurface,
@@ -56,6 +57,8 @@ export interface DispatchInternals {
     readonly download?: DownloadExtensionArchive;
     readonly readZip?: ReadExtensionZip;
     readonly cacheDir?: string;
+    readonly libraryRegistry?: readonly VendoredLibrary[];
+    readonly libraryGeneratedDir?: string | null;
   };
   // Reads the installed Defold editor's `config` and returns its `version` key,
   // or null when no installed editor is detected. The default is the live
@@ -462,6 +465,12 @@ export function dispatch(
           ...(resolveSeams?.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
           ...(resolveSeams?.download ? { download: resolveSeams.download } : {}),
           ...(resolveSeams?.readZip ? { readZip: resolveSeams.readZip } : {}),
+          ...(resolveSeams?.libraryRegistry
+            ? { libraryRegistry: resolveSeams.libraryRegistry }
+            : {}),
+          ...(resolveSeams?.libraryGeneratedDir !== undefined
+            ? { libraryGeneratedDir: resolveSeams.libraryGeneratedDir }
+            : {}),
         });
         if (json) {
           io.stdout.write(
@@ -471,6 +480,7 @@ export function dispatch(
                     command: "resolve",
                     materializedSurface: result.materializedSurface,
                     extensions: result.extensions,
+                    libraries: result.libraries,
                   }
                 : { command: "resolve", error: result.error ?? "resolve failed" },
             ),
@@ -619,6 +629,10 @@ export function dispatch(
         ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
         ...(seams?.download ? { download: seams.download } : {}),
         ...(seams?.readZip ? { readZip: seams.readZip } : {}),
+        ...(seams?.libraryRegistry ? { libraryRegistry: seams.libraryRegistry } : {}),
+        ...(seams?.libraryGeneratedDir !== undefined
+          ? { libraryGeneratedDir: seams.libraryGeneratedDir }
+          : {}),
         ...(frozen ? { freeze: true } : {}),
       });
       if (json) {
@@ -629,6 +643,7 @@ export function dispatch(
                   command: "resolve",
                   materializedSurface: result.materializedSurface,
                   extensions: result.extensions,
+                  libraries: result.libraries,
                 }
               : { command: "resolve", error: result.error ?? "resolve failed" },
           ),
@@ -652,7 +667,14 @@ export function dispatch(
         } else {
           for (const ext of result.extensions) {
             if (ext.assetOnly) {
-              io.stdout.write(`  ${ext.url}: asset-only, skipped\n`);
+              const library = result.libraries.find((lib) => lib.url === ext.url);
+              if (library !== undefined) {
+                io.stdout.write(
+                  `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
+                );
+              } else {
+                io.stdout.write(`  ${ext.url}: asset-only, skipped\n`);
+              }
             } else {
               io.stdout.write(
                 `  ${ext.namespaces.join(", ")} <- ${ext.url} (${ext.scriptApiCount} .script_api, ${ext.provenance})\n`,

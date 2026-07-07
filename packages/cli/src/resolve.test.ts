@@ -403,3 +403,118 @@ describe("runResolve", () => {
     expect(result.error).toBeDefined();
   });
 });
+
+describe("runResolve library matching", () => {
+  const MYLIB = "declare module 'mylib.core' { export const version: string; }\n";
+
+  function seedGenerated(): string {
+    const dir = tmp();
+    writeFileSync(join(dir, "mylib.core.d.ts"), MYLIB);
+    return dir;
+  }
+
+  const registry = [{ sourceId: "mylib", modules: ["mylib.core"] }];
+
+  function assetArchive(url: string): Record<string, FakeArchive> {
+    return { [extensionArchiveKey(url)]: { entries: ["asset/foo.png"], contents: {} } };
+  }
+
+  test("an asset-only dependency whose URL matches a vendored library materializes it and reports libraries", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(assetArchive(url)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"), "utf8")).toBe(
+      MYLIB,
+    );
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).toContain("libraries");
+    expect(result.libraries).toEqual([
+      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored" },
+    ]);
+    // The dependency stays asset-only for the extension surface.
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+  });
+
+  test("an asset-only dependency that matches nothing writes no library surface and reports no libraries", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/unknown-asset.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(assetArchive(url)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.libraries).toEqual([]);
+    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+  });
+
+  test("a declared native extension (.script_api) produces no library surface", async () => {
+    const cwd = tmp();
+    // The `mylib` archive URL matches the registry sourceId, but the archive is a
+    // real .script_api extension, so it is not asset-only and never materializes a
+    // library surface.
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.libraries).toEqual([]);
+    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(result.extensions[0]?.assetOnly).toBe(false);
+  });
+
+  test("an undeclared vendored library is not materialized (types track [dependencies])", async () => {
+    const cwd = tmp();
+    // The registry knows `mylib`, but the project declares only an unrelated
+    // asset-only dependency, so `mylib` must not be materialized.
+    const url = "https://example.com/other-asset.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(assetArchive(url)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.libraries).toEqual([]);
+    expect(existsSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"))).toBe(false);
+  });
+});
