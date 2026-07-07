@@ -68,12 +68,19 @@ surface that coexists with the engine and `extensions` surfaces under one
 `typeRoots`.
 
 The match keys on the library's source identity (the repository name), not exact
-URL equality, so a fork or a pinned-tag archive URL still resolves. The emitted
-module specifier is the Lua `require` path (`import * as dicebag from
-'dicebag.dicebag'`), so it matches what Fetch Libraries installs at runtime — the
-types are used as-is, never regenerated. Only libraries you actually **declare**
-under `[dependencies]` are materialized; an undeclared library stays
-non-importable, keeping types in lockstep with the project's real dependencies.
+URL equality, so a fork or a pinned-tag archive URL still resolves. Because the
+repository name alone can collide — a different library that happens to share the
+name, or a fork that renamed its module folder — the match is then **verified
+against the downloaded archive**: `resolve` reads the archive's `.lua` require
+paths and only materializes the modules it actually ships. A repo-name match whose
+module path is absent from the archive is reported **unverified** (a warning on
+`stderr`) and never materialized, so a collision or drifted fork cannot inject the
+wrong types. The emitted module specifier is the Lua `require` path
+(`import * as dicebag from 'dicebag.dicebag'`), so it matches what Fetch Libraries
+installs at runtime — the types are used as-is, never regenerated. Only libraries
+you actually **declare** under `[dependencies]` are materialized; an undeclared
+library stays non-importable, keeping types in lockstep with the project's real
+dependencies.
 
 The library surface reconciles the same way the extension surface does: removing a
 matched dependency (or every `[dependencies]` entry) on a later run prunes
@@ -90,8 +97,9 @@ than failing the run.
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`, per extension the `namespaces`, `provenance`,
   `resolvedVersion`, `pinnedVersion`, and `pinStatus`, and a `libraries` array
-  reporting each matched vendored library's `source`, `modules`, and
-  `provenance`).
+  reporting each matched vendored library's `source`, `modules`, `provenance`, and
+  `verified` — `verified: false` (with an empty `modules`) marks a repo-name match
+  that the archive did not confirm).
 
 ## Pinning extension versions
 

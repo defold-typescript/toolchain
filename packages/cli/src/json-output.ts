@@ -23,6 +23,7 @@ export interface ResolvedLibraryReportJson {
   readonly source: string;
   readonly modules: readonly string[];
   readonly provenance: string;
+  readonly verified: boolean;
 }
 
 export interface RenderResultInput {
