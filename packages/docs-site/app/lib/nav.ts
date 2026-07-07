@@ -25,11 +25,17 @@ export interface Namespace {
   route: string;
 }
 
-/** One upstream library: its `modules` render as leaves, nested under `label` when there are several. */
+/** One upstream library: its `modules` render as namespace leaves under a route-less library header. */
 export interface LibraryGroup {
   dir: string;
   label: string;
   modules: Namespace[];
+}
+
+export interface LibraryCreatorGroup {
+  creator: string;
+  label: string;
+  libraries: LibraryGroup[];
 }
 
 export interface ReferenceGroups {
@@ -37,7 +43,7 @@ export interface ReferenceGroups {
   globalTypes: Namespace[];
   luaStdlib: Namespace[];
   engine: Namespace[];
-  libraries: LibraryGroup[];
+  libraries: LibraryCreatorGroup[];
 }
 
 const FALLBACK_CATEGORY_ID = "guides";
@@ -173,15 +179,17 @@ export function buildNav(
   // Vendored third-party libraries live in their own top-level tab after API, so
   // engine reference and community libraries read as distinct sections.
   if (reference.libraries.length > 0) {
-    const libraryLinks = reference.libraries.map((lib) => {
-      const [only, ...rest] = lib.modules;
-      return only && rest.length === 0
-        ? toNavLink(only.label, only.route)
-        : toNavGroup(
+    const libraryLinks = reference.libraries.map((creator) =>
+      toNavGroup(
+        creator.label,
+        creator.libraries.map((lib) =>
+          toNavGroup(
             lib.label,
             lib.modules.map(({ label, route }) => toNavLink(label, route)),
-          );
-    });
+          ),
+        ),
+      ),
+    );
     categories.push({
       id: "libraries",
       label: "Libraries",
@@ -193,38 +201,42 @@ export function buildNav(
   return categories;
 }
 
-/** A library page projected to what the nav model needs: its route, its dotted
- * namespace (the grouping key via `moduleDir` and the leaf fallback label), and
- * the presentation-only author-first `displayName` when one is derived. */
+/** A library page projected to what the nav model needs: its route and dotted namespace. */
 export interface LibraryNavPage {
   namespace: string;
   route: string;
-  displayName?: string;
 }
 
-// Group vendored library pages by their upstream `dir` for the Libraries
-// subgroup: a leaf label is the page's `displayName` (falling back to its
-// namespace), while the group header stays the bare `dir`. Libraries and their
-// modules sort alphabetically by dir / label for stable nav output. The route
-// always stays the dotted namespace slug — the alias is presentation only.
-export function libraryNavGroups(
+// Group vendored library pages by creator, upstream `dir`, then namespace for
+// the Libraries tab. Labels stay slash-free: owner handle, dir, and namespace.
+export function libraryCreatorGroups(
   pages: LibraryNavPage[],
   moduleDir: Map<string, string>,
-): LibraryGroup[] {
-  const byDir = new Map<string, Namespace[]>();
+  ownerByDir: Map<string, string>,
+): LibraryCreatorGroup[] {
+  const byCreator = new Map<string, Map<string, Namespace[]>>();
   for (const page of pages) {
     const dir = moduleDir.get(page.namespace) ?? page.namespace;
-    const namespace: Namespace = { label: page.displayName ?? page.namespace, route: page.route };
-    const bucket = byDir.get(dir);
-    if (bucket) bucket.push(namespace);
-    else byDir.set(dir, [namespace]);
+    const creator = ownerByDir.get(dir) || dir;
+    const libraries = byCreator.get(creator) ?? new Map<string, Namespace[]>();
+    const modules = libraries.get(dir) ?? [];
+    modules.push({ label: page.namespace, route: page.route });
+    libraries.set(dir, modules);
+    byCreator.set(creator, libraries);
   }
-  return [...byDir.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([dir, modules]) => ({
-      dir,
-      label: dir,
-      modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
+
+  return [...byCreator.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+    .map(([creator, libraries]) => ({
+      creator,
+      label: creator,
+      libraries: [...libraries.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([dir, modules]) => ({
+          dir,
+          label: dir,
+          modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
+        })),
     }));
 }
 

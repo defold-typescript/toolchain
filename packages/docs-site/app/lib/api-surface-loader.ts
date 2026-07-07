@@ -141,6 +141,18 @@ export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> 
   return moduleDir;
 }
 
+export function libraryOwnerByDir(libraryTypesDir: string): Map<string, string> {
+  const noticePath = join(libraryTypesDir, "NOTICE");
+  if (!existsSync(noticePath)) return new Map();
+  const attribution = parseNoticeAttribution(readFileSync(noticePath, "utf8"));
+  const ownerByDir = new Map<string, string>();
+  for (const [dir, credit] of attribution) {
+    const owner = githubOwner(credit.url);
+    if (owner) ownerByDir.set(dir, owner);
+  }
+  return ownerByDir;
+}
+
 // Per-library provenance, joined from `library-classification.json` (repo,
 // pinned commit, license, and the dir each module belongs to) plus `NOTICE`
 // (the upstream author/url). Returns a per-module `LibraryMeta` builder the
