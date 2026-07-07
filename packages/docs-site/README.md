@@ -28,10 +28,13 @@ bun --filter @defold-typescript/docs-site run build
 search index, then `scripts/build-symbol-index.ts`, and finally the two-pass Vite build
 (`--mode client` + SSG). The static site is prerendered to `dist/`, one HTML file per
 guide page (`dist/getting-started.html`, `dist/index.html` from the guide `README.md`,
-...), the API index (`dist/api.html`), and one per API namespace under `dist/api/`.
+...), the API index (`dist/api.html`), the Guides landing (`dist/guides.html`), and one
+per API namespace under `dist/api/`.
 Guide pages are served by the single dynamic `app/routes/[slug].tsx` route, whose
 `ssgParams` enumerates every non-index `packages/docs/guide/*.md` slug so each prerenders to
-`dist/<slug>.html` — no per-slug route files to keep in sync.
+`dist/<slug>.html` — no per-slug route files to keep in sync. The Guides tab itself is a
+static `app/routes/guides.tsx` landing page (it wins over `[slug].tsx` because no
+`guides.md` exists).
 
 ## Test the responsive chrome (Playwright)
 

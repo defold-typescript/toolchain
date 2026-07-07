@@ -5,7 +5,7 @@ import { parseFrontmatter } from "./frontmatter";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";
-import { buildNav } from "./nav";
+import { buildNav, type NavLink } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
@@ -52,7 +52,16 @@ describe("guide frontmatter integration", () => {
 
   test("the sidebar renders an inline-code label from the ts-defold titles", () => {
     const nav = buildNav(realPages());
-    const labels = nav.flatMap((c) => c.links.map((l) => l.labelHtml));
+    // Guide leaves nest under route-less group headers, so gather labelHtml
+    // recursively rather than only from the top-level links.
+    const labels: string[] = [];
+    const collect = (links: NavLink[]) => {
+      for (const link of links) {
+        labels.push(link.labelHtml);
+        if (link.children) collect(link.children);
+      }
+    };
+    for (const category of nav) collect(category.links);
     expect(labels.some((html) => html.includes("<code>"))).toBe(true);
   });
 });

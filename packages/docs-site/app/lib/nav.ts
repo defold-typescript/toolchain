@@ -1,4 +1,5 @@
 import type { GuidePage } from "./guide";
+import { GUIDE_GROUPS } from "./guide-groups";
 
 export interface NavLink {
   label: string;
@@ -17,7 +18,8 @@ export interface NavCategory {
 interface CategorySpec {
   id: string;
   label: string;
-  slugs: string[];
+  /** Flat page membership; omitted for `guides`, which nests via GUIDE_GROUPS. */
+  slugs?: string[];
 }
 
 export interface Namespace {
@@ -64,23 +66,6 @@ const CATEGORY_MAP: CategorySpec[] = [
   {
     id: "guides",
     label: "Guides",
-    slugs: [
-      "transpile-diagnostics",
-      "debugging",
-      "pinning-defold-version",
-      "extensions",
-      "advanced-cli",
-      "agent-runbooks",
-      "typescript-vs-lua",
-      "script-lifecycle",
-      "messages",
-      "script-state",
-      "data-structures",
-      "vector-math",
-      "typescript-gotchas",
-      "api-docs-vs-ts-defold",
-      "migrating-from-ts-defold",
-    ],
   },
   {
     id: "tutorial",
@@ -136,8 +121,21 @@ export function buildNav(
   const claimed = new Set<string>();
 
   const categories: NavCategory[] = CATEGORY_MAP.map((spec) => {
+    if (spec.id === "guides") {
+      const links = GUIDE_GROUPS.map((group) => {
+        const children: NavLink[] = [];
+        for (const slug of group.slugs) {
+          const page = bySlug.get(slug);
+          if (!page) continue;
+          claimed.add(slug);
+          children.push(linkFor(page));
+        }
+        return toNavGroup(group.label, children);
+      });
+      return { id: spec.id, label: spec.label, route: "/guides", links };
+    }
     const links: NavLink[] = [];
-    for (const slug of spec.slugs) {
+    for (const slug of spec.slugs ?? []) {
       const page = bySlug.get(slug);
       if (!page) continue;
       claimed.add(slug);
