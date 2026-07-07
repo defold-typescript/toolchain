@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 export const EDITOR_VERSION_KEY = "version";
 
@@ -62,6 +62,48 @@ export function detectInstalledEditorVersion(
     const match = body.match(pattern);
     if (match && match[1] !== undefined) {
       return match[1];
+    }
+  }
+  return null;
+}
+
+const defaultListDir = (dir: string): string[] => {
+  try {
+    return readdirSync(dir);
+  } catch {
+    return [];
+  }
+};
+
+export interface DetectEditorBundledJavaOpts {
+  readonly platform?: NodeJS.Platform;
+  readonly env?: NodeJS.ProcessEnv;
+  readonly home?: () => string;
+  readonly listDir?: (dir: string) => string[];
+  readonly exists?: (path: string) => boolean;
+}
+
+// The editor ships a JDK at `<resources-root>/packages/jdk-<version>/bin/java`
+// (`java.exe` on win32); the resources root is the parent of each
+// `editorConfigCandidates` entry. First readable `jdk-*` with a present binary
+// wins; `null` when no editor bundle yields one.
+export function detectEditorBundledJava(opts: DetectEditorBundledJavaOpts = {}): string | null {
+  const platform = opts.platform ?? process.platform;
+  const env = opts.env ?? process.env;
+  const home = opts.home ?? homedir;
+  const listDir = opts.listDir ?? defaultListDir;
+  const exists = opts.exists ?? existsSync;
+  const javaBin = platform === "win32" ? "java.exe" : "java";
+  for (const configPath of editorConfigCandidates(platform, env, home)) {
+    const packagesDir = join(dirname(configPath), "packages");
+    const jdkDirs = listDir(packagesDir)
+      .filter((entry) => entry.startsWith("jdk-"))
+      .sort();
+    for (const jdk of jdkDirs) {
+      const javaPath = join(packagesDir, jdk, "bin", javaBin);
+      if (exists(javaPath)) {
+        return javaPath;
+      }
     }
   }
   return null;

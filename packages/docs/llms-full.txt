@@ -1860,9 +1860,11 @@ bunx @defold-typescript/cli defold bundle    # bundle a platform target
 The first run downloads a version-matched `bob.jar` into a cache dir
 (`$DEFOLD_TYPESCRIPT_CACHE/bob` when set, otherwise
 `$XDG_CACHE_HOME/defold-typescript/bob`, falling back to
-`~/.cache/defold-typescript/bob`) and reuses it afterward. `bob` needs a JVM: it
-uses `java` on your `PATH`, or pass `--java <path>` (or set `DEFOLD_JAVA`).
-Native-extension projects can pass `--build-server <url>`. `bob`'s exit code
+`~/.cache/defold-typescript/bob`) and reuses it afterward. `bob` needs a JVM. It
+resolves one in order: the `--java <path>` flag (or `DEFOLD_JAVA`), then `java`
+on your `PATH`, then the JDK bundled inside an installed Defold editor. If none
+resolve, the command errors and names all three. Native-extension projects can
+pass `--build-server <url>`. `bob`'s exit code
 propagates, so a failed build fails the command.
 
 Like the engine launcher, the `bob` version tracks the latest stable Defold
