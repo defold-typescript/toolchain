@@ -6,14 +6,16 @@ import { listGuidePages } from "./guide-loader";
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
 describe("GUIDE_GROUPS", () => {
-  test("declares the four learning-ordered groups with labels and subtitles", () => {
+  test("declares the learning-ordered groups with labels and subtitles, Tutorial first", () => {
     expect(GUIDE_GROUPS.map((g) => g.id)).toEqual([
+      "tutorial",
       "core-concepts",
       "toolchain-workflow",
       "project-configuration",
       "pitfalls-migration",
     ]);
     expect(GUIDE_GROUPS.map((g) => g.label)).toEqual([
+      "Tutorial",
       "Core concepts",
       "Toolchain & workflow",
       "Project configuration",
@@ -29,7 +31,7 @@ describe("GUIDE_GROUPS", () => {
 describe("groupGuidePages", () => {
   const pages = listGuidePages(GUIDE_DIR);
 
-  test("returns the four groups, each resolving its slugs to real pages in order", () => {
+  test("returns every group, each resolving its slugs to real pages in order", () => {
     const groups = groupGuidePages(pages);
     expect(groups.map((g) => g.id)).toEqual(GUIDE_GROUPS.map((g) => g.id));
     for (const group of groups) {
@@ -40,13 +42,16 @@ describe("groupGuidePages", () => {
     }
   });
 
-  test("the union of grouped routes is exactly the 15 guide-tab routes", () => {
+  test("the union of grouped routes is exactly the 16 guide-tab routes, tutorial first", () => {
     const groups = groupGuidePages(pages);
     const routes = groups.flatMap((g) => g.pages.map((p) => p.route));
-    expect(routes.length).toBe(15);
-    expect(new Set(routes).size).toBe(15);
+    expect(routes.length).toBe(16);
+    expect(new Set(routes).size).toBe(16);
+    // the Tetris tutorial now leads the guide list as its own first subgroup
+    expect(routes[0]).toBe("/tetris-tutorial");
     expect(new Set(routes)).toEqual(
       new Set([
+        "/tetris-tutorial",
         "/typescript-vs-lua",
         "/script-lifecycle",
         "/messages",
@@ -64,10 +69,9 @@ describe("groupGuidePages", () => {
         "/migrating-from-ts-defold",
       ]),
     );
-    // no index / get-started / tutorial route leaks into a guide group
+    // the site index and get-started onboarding stay out of the guide groups
     expect(routes).not.toContain("/");
     expect(routes).not.toContain("/getting-started");
-    expect(routes).not.toContain("/tetris-tutorial");
   });
 
   test("skips a group slug that has no matching page instead of emitting undefined", () => {
