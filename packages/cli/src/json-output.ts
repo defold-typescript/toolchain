@@ -45,6 +45,7 @@ export interface RenderResultInput {
   readonly bootPath?: readonly string[];
   readonly subcommand?: string;
   readonly exitCode?: number;
+  readonly output?: string;
   readonly extensions?: readonly ResolvedExtensionReportJson[];
   readonly libraries?: readonly ResolvedLibraryReportJson[];
   readonly warnings?: readonly string[];
@@ -89,8 +90,9 @@ export function renderResult(input: RenderResultInput): string {
   const withBoot = "bootPath" in input ? { ...withRemoved, bootPath: input.bootPath } : withRemoved;
   const withSub = "subcommand" in input ? { ...withBoot, subcommand: input.subcommand } : withBoot;
   const withExit = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
+  const withOutput = "output" in input ? { ...withExit, output: input.output } : withExit;
   const withExtensions =
-    "extensions" in input ? { ...withExit, extensions: input.extensions } : withExit;
+    "extensions" in input ? { ...withOutput, extensions: input.extensions } : withOutput;
   const withLibraries =
     "libraries" in input ? { ...withExtensions, libraries: input.libraries } : withExtensions;
   const payload =

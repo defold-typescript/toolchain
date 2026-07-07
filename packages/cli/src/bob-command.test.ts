@@ -48,20 +48,24 @@ describe("composeBobArgv", () => {
 
 function fakeIo(overrides: Partial<DefoldIo> = {}): DefoldIo & {
   spawned: string[][];
+  captures: boolean[];
   downloaded: Array<{ url: string; dest: string }>;
 } {
   const spawned: string[][] = [];
+  const captures: boolean[] = [];
   const downloaded: Array<{ url: string; dest: string }> = [];
   return {
     spawned,
+    captures,
     downloaded,
     cacheDir: "/c",
     fetchSha: async () => SHA,
     probe: () => true,
     javaProbe: () => true,
-    spawn: async (argv) => {
+    spawn: async (argv, _cwd, opts) => {
       spawned.push(argv);
-      return 0;
+      captures.push(opts?.capture ?? false);
+      return { exitCode: 0 };
     },
     download: async (url, dest) => {
       downloaded.push({ url, dest });
@@ -95,7 +99,7 @@ describe("runDefoldCommand", () => {
   });
 
   test("propagates a non-zero bob exit code as a failed result", async () => {
-    const io = fakeIo({ spawn: async () => 17 });
+    const io = fakeIo({ spawn: async () => ({ exitCode: 17 }) });
     const result = await runDefoldCommand({ cwd: "/proj", subcommand: "bundle", io });
     expect(result.ok).toBe(false);
     expect(result.exitCode).toBe(17);
@@ -114,5 +118,30 @@ describe("runDefoldCommand", () => {
     expect(argv[0]).toBe("/jdk/bin/java");
     expect(argv).toContain("--build-server");
     expect(argv).toContain("https://build.example");
+  });
+
+  test("selects inherit mode by default and carries no captured output", async () => {
+    const io = fakeIo();
+    const result = await runDefoldCommand({ cwd: "/proj", subcommand: "resolve", io });
+    expect(io.captures).toEqual([false]);
+    expect(result.output).toBeUndefined();
+  });
+
+  test("selects capture mode when asked and returns bob's collected output", async () => {
+    let seenCapture: boolean | undefined;
+    const io = fakeIo({
+      spawn: async (_argv, _cwd, opts) => {
+        seenCapture = opts?.capture;
+        return { exitCode: 0, output: "bob: done" };
+      },
+    });
+    const result = await runDefoldCommand({
+      cwd: "/proj",
+      subcommand: "build",
+      capture: true,
+      io,
+    });
+    expect(seenCapture).toBe(true);
+    expect(result.output).toBe("bob: done");
   });
 });
