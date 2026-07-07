@@ -538,7 +538,11 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
           {category.label}
         </p>
       )}
-      <SidebarItems links={category.links} path={path} />
+      <SidebarItems
+        links={category.links}
+        path={path}
+        uppercaseGroupHeaders={category.id !== "libraries"}
+      />
     </nav>
   );
 }
@@ -547,10 +551,12 @@ function SidebarItems({
   links,
   path,
   depth = 0,
+  uppercaseGroupHeaders = true,
 }: {
   links: NavLink[];
   path: string;
   depth?: number;
+  uppercaseGroupHeaders?: boolean;
 }) {
   return (
     <ul
@@ -565,12 +571,24 @@ function SidebarItems({
           {link.route ? (
             <SidebarLink link={link} active={path === link.route} />
           ) : (
-            <p class="mt-3 mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
+            <p
+              class={
+                "mt-3 mb-1 px-2 text-text-faint " +
+                (uppercaseGroupHeaders
+                  ? "text-[11px] font-semibold uppercase tracking-wider"
+                  : "text-[13px] font-medium")
+              }
+            >
               {link.label}
             </p>
           )}
           {link.children && link.children.length > 0 ? (
-            <SidebarItems links={link.children} path={path} depth={depth + 1} />
+            <SidebarItems
+              links={link.children}
+              path={path}
+              depth={depth + 1}
+              uppercaseGroupHeaders={uppercaseGroupHeaders}
+            />
           ) : null}
         </li>
       ))}

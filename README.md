@@ -40,9 +40,6 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Native extensions](packages/docs/guide/extensions.md) — declare an extension in `game.project` `[dependencies]`, run `defold-typescript resolve` to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
 - [Advanced CLI](packages/docs/guide/advanced-cli.md) — opt-in per-directory API walls with the `wall` command (interactive checkbox and flag forms), the full-surface-by-default policy, and the import-from-subpath rule a wall depends on.
 - [Agent runbooks](packages/docs/guide/agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](packages/docs/guide/agent-runbooks.md#install-the-agent-contract), regenerate extension types, [add and attach a script](packages/docs/guide/agent-runbooks.md#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
-
-## Language
-
 - [TypeScript vs Lua](packages/docs/guide/typescript-vs-lua.md) — the Lua-developer on-ramp: a cheat sheet that translates syntax, tables, modules, and the standard library from Lua to the TypeScript the toolchain expects.
 - [Script lifecycle](packages/docs/guide/script-lifecycle.md) — type `self`, `on_message`, and `on_input` payloads with `defineScript`, `defineGuiScript`, and `defineRenderScript`.
 - [Messages](packages/docs/guide/messages.md) — the `BuiltinMessages` catalog, `msg.post` send-side payload narrowing, and the `isMessage` / `onMessage` receive-side helpers.

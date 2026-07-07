@@ -71,12 +71,6 @@ const CATEGORY_MAP: CategorySpec[] = [
       "extensions",
       "advanced-cli",
       "agent-runbooks",
-    ],
-  },
-  {
-    id: "language",
-    label: "Language",
-    slugs: [
       "typescript-vs-lua",
       "script-lifecycle",
       "messages",

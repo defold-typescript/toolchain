@@ -6,11 +6,11 @@ and `@hono/vite-ssg`, deployable to Cloudflare Pages.
 
 This package is `private` and is never part of the coordinated npm release.
 
-The chrome is a top bar that groups the guide pages plus the API reference into four
-categories (Get started, Guides, Language, Reference), a per-category left sidebar, a
-right-side scroll-spy table of contents, and a flash-free dark/light theme toggle over
-self-hosted Inter / JetBrains Mono fonts. Tailwind v4 powers the design tokens and
-utility classes.
+The chrome is a top bar that groups the guide pages plus the API reference into
+Get started, Guides, Tutorial, API, and optional Libraries categories, a per-category
+left sidebar, a right-side scroll-spy table of contents, and a flash-free dark/light
+theme toggle over self-hosted Inter / JetBrains Mono fonts. Tailwind v4 powers the
+design tokens and utility classes.
 
 ## Develop
 
@@ -71,7 +71,7 @@ CI automation for deploys is a later slice.
 - `app/lib/guide.ts` — `listGuidePages`: enumerate the guide files and their routes.
 - `app/lib/content.ts` — bridges the libs to the `packages/docs/guide/` directory.
 - `app/lib/nav.ts` — `buildNav` / `activeCategoryId`: group the guide pages plus
-  `/api` into the four nav categories.
+  `/api` into the top-level nav categories.
 - `app/lib/headings.ts` — `pageHeadings`: extract h2/h3 headings with slugs from a
   rendered HTML body, used by the right-side TOC.
 - `app/lib/api-surface.ts` + `app/lib/api-content.ts` — load the Defold reference

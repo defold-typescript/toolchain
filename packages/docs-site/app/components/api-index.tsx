@@ -47,15 +47,15 @@ function CardGrid({
 // default-only).
 export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: string }) {
   const {
-    engine: enginePages,
+    globals: globalsPages,
     globalType: globalTypePages,
     luaStdlib: luaStdlibPages,
+    engine: enginePages,
   } = groupApiIndexPages(pages);
-  const apiPageCount = enginePages.length + globalTypePages.length + luaStdlibPages.length;
-  // The engine pages are the Defold reference surface (generated from ref-doc.zip);
-  // the Lua standard library pages are pure-Lua / LuaJIT surfaces whose types are
-  // owned by `lua-types` and are surfaced as their own labelled section so the
-  // provenance split stays obvious to a reader landing on the index.
+  const apiPageCount =
+    globalsPages.length + globalTypePages.length + luaStdlibPages.length + enginePages.length;
+  // The API index mirrors the left-side API tree order: Globals, Global types,
+  // Lua Standard, then Defold engine namespaces.
   return (
     <article class="prose">
       <h1>{version ? `API reference (${version})` : "API reference"}</h1>
@@ -67,14 +67,11 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
           {apiPageCount} namespace{apiPageCount === 1 ? "" : "s"} documented.
         </span>
       </p>
-      {enginePages.length > 0 ? (
+      {globalsPages.length > 0 ? (
         <>
-          <h2>Defold engine</h2>
-          <p>
-            Namespaces emitted by <code>@defold-typescript/types</code> from the pinned Defold
-            reference documentation.
-          </p>
-          <CardGrid pages={enginePages} />
+          <h2>Globals</h2>
+          <p>Prefixless globals that Defold exposes to every script.</p>
+          <CardGrid pages={globalsPages} />
         </>
       ) : null}
       {globalTypePages.length > 0 ? (
@@ -98,6 +95,16 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
             <code>@defold-typescript/types</code>.
           </p>
           <CardGrid pages={luaStdlibPages} />
+        </>
+      ) : null}
+      {enginePages.length > 0 ? (
+        <>
+          <h2>Defold engine</h2>
+          <p>
+            Namespaces emitted by <code>@defold-typescript/types</code> from the pinned Defold
+            reference documentation.
+          </p>
+          <CardGrid pages={enginePages} />
         </>
       ) : null}
     </article>
