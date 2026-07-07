@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import {
+  detectEditorBundledJava,
   detectInstalledEditorVersion,
   EDITOR_VERSION_KEY,
   editorConfigCandidates,
@@ -125,6 +126,69 @@ describe("detectInstalledEditorVersion", () => {
     expect(result === null || typeof result === "string").toBe(true);
     // Suppress unused-import lint for homedir in case the build tool runs strict.
     expect(typeof homedir()).toBe("string");
+  });
+});
+
+describe("detectEditorBundledJava", () => {
+  const RESOURCES = "/Applications/Defold.app/Contents/Resources";
+  const PACKAGES = join(RESOURCES, "packages");
+  const JDK = "jdk-17.0.5+8";
+  const JAVA = join(PACKAGES, JDK, "bin", "java");
+
+  test("returns the bundled java under packages/jdk-*/bin for the first editor root", () => {
+    const result = detectEditorBundledJava({
+      platform: "darwin",
+      home: () => "/home/u",
+      listDir: (dir) => (dir === PACKAGES ? [JDK] : []),
+      exists: (p) => p === JAVA,
+    });
+    expect(result).toBe(JAVA);
+  });
+
+  test("probes java.exe on win32", () => {
+    const packages = join("C:\\pf", "Defold", "packages");
+    const javaExe = join(packages, JDK, "bin", "java.exe");
+    const result = detectEditorBundledJava({
+      platform: "win32",
+      env: { PROGRAMFILES: "C:\\pf" },
+      home: () => "C:\\u",
+      listDir: (dir) => (dir === packages ? [JDK] : []),
+      exists: (p) => p === javaExe,
+    });
+    expect(result).toBe(javaExe);
+  });
+
+  test("returns null when no editor config candidate resolves", () => {
+    expect(
+      detectEditorBundledJava({
+        platform: "freebsd",
+        home: () => "/home/u",
+        listDir: () => [JDK],
+        exists: () => true,
+      }),
+    ).toBeNull();
+  });
+
+  test("returns null when packages/ has no jdk-* entry", () => {
+    expect(
+      detectEditorBundledJava({
+        platform: "darwin",
+        home: () => "/home/u",
+        listDir: () => ["shared", "bob"],
+        exists: () => true,
+      }),
+    ).toBeNull();
+  });
+
+  test("returns null when the jdk-*/bin/java binary is absent", () => {
+    expect(
+      detectEditorBundledJava({
+        platform: "darwin",
+        home: () => "/home/u",
+        listDir: (dir) => (dir === PACKAGES ? [JDK] : []),
+        exists: () => false,
+      }),
+    ).toBeNull();
   });
 });
 
