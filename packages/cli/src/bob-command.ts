@@ -36,13 +36,22 @@ export function composeBobArgv(opts: {
   }
 }
 
+export interface SpawnResult {
+  readonly exitCode: number;
+  readonly output?: string;
+}
+
 export interface DefoldIo {
   readonly cacheDir: string;
   readonly fetchSha: () => Promise<string>;
   readonly probe: (candidate: string) => boolean;
   readonly javaProbe: (cmd: string) => boolean;
   readonly bundledJava?: () => string | null;
-  readonly spawn: (argv: string[], cwd: string) => Promise<number>;
+  readonly spawn: (
+    argv: string[],
+    cwd: string,
+    opts?: { capture?: boolean },
+  ) => Promise<SpawnResult>;
   readonly download: (url: string, dest: string) => Promise<void>;
 }
 
@@ -51,6 +60,7 @@ export interface DefoldCommandResult {
   readonly subcommand: string;
   readonly exitCode: number;
   readonly argv: string[];
+  readonly output?: string;
 }
 
 export async function runDefoldCommand(opts: {
@@ -58,6 +68,7 @@ export async function runDefoldCommand(opts: {
   subcommand: string;
   java?: string;
   buildServer?: string;
+  capture?: boolean;
   io: DefoldIo;
 }): Promise<DefoldCommandResult> {
   const { io } = opts;
@@ -81,8 +92,14 @@ export async function runDefoldCommand(opts: {
     subcommand: opts.subcommand,
     ...(opts.buildServer !== undefined ? { buildServer: opts.buildServer } : {}),
   });
-  const exitCode = await io.spawn(argv, opts.cwd);
-  return { ok: exitCode === 0, subcommand: opts.subcommand, exitCode, argv };
+  const { exitCode, output } = await io.spawn(argv, opts.cwd, { capture: opts.capture ?? false });
+  return {
+    ok: exitCode === 0,
+    subcommand: opts.subcommand,
+    exitCode,
+    argv,
+    ...(output !== undefined ? { output } : {}),
+  };
 }
 
 async function fetchStableSha(): Promise<string> {
@@ -112,9 +129,28 @@ function javaOnPath(cmd: string, env: NodeJS.ProcessEnv = process.env): boolean 
   return false;
 }
 
-async function spawnInherit(argv: string[], cwd: string): Promise<number> {
+// Under --json the CLI keeps stdout to a single JSON line, so bob must not
+// share the inherited fd. Cap the diagnostic tail so a chatty build cannot
+// bloat the envelope.
+const OUTPUT_TAIL_LIMIT = 4000;
+
+async function spawnInherit(argv: string[], cwd: string): Promise<SpawnResult> {
   const proc = Bun.spawn(argv, { cwd, stdio: ["inherit", "inherit", "inherit"] });
-  return proc.exited;
+  const exitCode = await proc.exited;
+  return { exitCode };
+}
+
+async function spawnCapture(argv: string[], cwd: string): Promise<SpawnResult> {
+  const proc = Bun.spawn(argv, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  const combined = `${stdout}${stderr}`.trim();
+  const output =
+    combined.length > OUTPUT_TAIL_LIMIT ? combined.slice(-OUTPUT_TAIL_LIMIT) : combined;
+  return { exitCode, output };
 }
 
 async function downloadTo(url: string, dest: string): Promise<void> {
@@ -135,7 +171,7 @@ export function defaultDefoldIo(): DefoldIo {
     probe: existsSync,
     javaProbe: (cmd) => javaOnPath(cmd),
     bundledJava: () => detectEditorBundledJava(),
-    spawn: spawnInherit,
+    spawn: (argv, cwd, opts) => (opts?.capture ? spawnCapture(argv, cwd) : spawnInherit(argv, cwd)),
     download: downloadTo,
   };
 }
