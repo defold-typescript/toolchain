@@ -223,12 +223,26 @@ describe("buildNav", () => {
       engine: [],
       libraries: [],
     });
-    const guideRoutes = nav.flatMap((c) => c.links.map((l) => l.route)).filter(Boolean);
+    // Guide leaves are now nested under route-less group headers, so the
+    // collector recurses into children instead of reading category.links alone.
+    const guideRoutes: string[] = [];
+    const collect = (links: NavLink[]) => {
+      for (const link of links) {
+        if (link.route) guideRoutes.push(link.route);
+        if (link.children) collect(link.children);
+      }
+    };
+    for (const category of nav) collect(category.links);
     expect(new Set(guideRoutes).size).toBe(guideRoutes.length);
     expect(new Set(guideRoutes)).toEqual(new Set(pages.map((p) => p.route)));
   });
 
-  test("appends the former language pages to Guides after existing guide articles", () => {
+  test("links the Guides category to its /guides landing route", () => {
+    const guides = fullNav().find((c) => c.id === "guides");
+    expect(guides?.route).toBe("/guides");
+  });
+
+  test("nests the Guides pages under four route-less group headers in learning order", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -237,19 +251,36 @@ describe("buildNav", () => {
       libraries: [],
     });
     const guides = nav.find((c) => c.id === "guides");
-    expect(guides?.links.map((l) => l.route)).toEqual([
-      "/transpile-diagnostics",
-      "/debugging",
-      "/pinning-defold-version",
-      "/extensions",
-      "/advanced-cli",
-      "/agent-runbooks",
+    expect(guides?.links.map((l) => l.label)).toEqual([
+      "Core concepts",
+      "Toolchain & workflow",
+      "Project configuration",
+      "Pitfalls & migration",
+    ]);
+    for (const header of guides?.links ?? []) {
+      expect(header.route).toBeUndefined();
+      expect(header.children?.length).toBeGreaterThan(0);
+    }
+    const byLabel = (label: string) => guides?.links.find((l) => l.label === label);
+    expect(byLabel("Core concepts")?.children?.map((c) => c.route)).toEqual([
       "/typescript-vs-lua",
       "/script-lifecycle",
       "/messages",
       "/script-state",
       "/data-structures",
       "/vector-math",
+    ]);
+    expect(byLabel("Toolchain & workflow")?.children?.map((c) => c.route)).toEqual([
+      "/transpile-diagnostics",
+      "/debugging",
+      "/advanced-cli",
+      "/agent-runbooks",
+    ]);
+    expect(byLabel("Project configuration")?.children?.map((c) => c.route)).toEqual([
+      "/pinning-defold-version",
+      "/extensions",
+    ]);
+    expect(byLabel("Pitfalls & migration")?.children?.map((c) => c.route)).toEqual([
       "/typescript-gotchas",
       "/api-docs-vs-ts-defold",
       "/migrating-from-ts-defold",
@@ -353,6 +384,10 @@ describe("activeCategoryId", () => {
 
   test("resolves a guide route to its owning category", () => {
     expect(activeCategoryId("/debugging", nav)).toBe("guides");
+  });
+
+  test("resolves the /guides landing route to guides via the category route", () => {
+    expect(activeCategoryId("/guides", nav)).toBe("guides");
   });
 
   test("resolves engine and lua-stdlib API subpaths to api via a child route", () => {

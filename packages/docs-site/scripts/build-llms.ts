@@ -6,7 +6,7 @@ import { withBase } from "../app/lib/base";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
 import { listGuidePages } from "../app/lib/guide-loader";
-import { buildNav, humanize } from "../app/lib/nav";
+import { buildNav, humanize, type NavLink } from "../app/lib/nav";
 
 // Anchored on the script's own location, never `process.cwd()`: the regeneration
 // test imports these generators and runs from the repo root, so a cwd-relative
@@ -32,21 +32,26 @@ function navLabel(page: GuidePage): string {
 // Guide pages in the site's left-nav order, every page exactly once. `buildNav`
 // claims known slugs into their category and appends any stray to the fallback
 // group, so the flattened route list is the full guide set with no duplicates.
+// Guides nest their pages under route-less subgroup headers, so the walk
+// recurses into children to reach every leaf in nav order.
 function navOrderedPages(): GuidePage[] {
   const pages = listGuidePages(GUIDE_DIR);
   const byRoute = new Map(pages.map((page) => [page.route, page]));
   const ordered: GuidePage[] = [];
   const seen = new Set<string>();
-  for (const category of buildNav(pages)) {
-    for (const link of category.links) {
-      if (!link.route) continue;
-      const page = byRoute.get(link.route);
-      if (page && !seen.has(page.route)) {
-        seen.add(page.route);
-        ordered.push(page);
+  const visit = (links: NavLink[]) => {
+    for (const link of links) {
+      if (link.route) {
+        const page = byRoute.get(link.route);
+        if (page && !seen.has(page.route)) {
+          seen.add(page.route);
+          ordered.push(page);
+        }
       }
+      if (link.children) visit(link.children);
     }
-  }
+  };
+  for (const category of buildNav(pages)) visit(category.links);
   for (const page of pages) {
     if (!seen.has(page.route)) {
       seen.add(page.route);

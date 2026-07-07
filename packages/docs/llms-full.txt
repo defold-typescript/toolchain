@@ -539,1285 +539,6 @@ Driving this without the editor — editing `.go` / `.collection` text directly 
 
 With the project open in Defold, press **Build** or **Project > Build** to run the game. If you change TypeScript code, rebuild with `bunx @defold-typescript/cli build` before running again, or keep `watch` running in a terminal.
 
-# Live transpile diagnostics
-
-`bunx @defold-typescript/cli@latest init .` scaffolds a TypeScript language-service plugin, `@defold-typescript/tstl-plugin`, into the generated `tsconfig.json`:
-
-```jsonc
-{
-  "compilerOptions": {
-    "types": ["@defold-typescript/types"],
-    "plugins": [{ "name": "@defold-typescript/tstl-plugin" }]
-  }
-}
-```
-
-The plugin is added as a managed devDependency at the same time, pinned in lockstep with the other `@defold-typescript/*` packages, so it resolves from your project's `node_modules` once you run `bun install`.
-
-## What it surfaces
-
-The plugin runs the **same TypeScript-to-Lua diagnostic pass the `build` command uses** against the program your editor already has open, and reports anything the transpiler cannot lower — directly on the offending source span. You see the squiggle in the editor as you type, instead of discovering the failure when you run `build`. Because editor and build share one diagnostic source, they cannot disagree about what is unsupported.
-
-## It is advisory, not blocking
-
-Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.
-
-## How it relates to the gotchas guide
-
-This plugin catches constructs the *transpiler* rejects. It does not catch the runtime-semantics traps where valid TypeScript compiles but behaves unexpectedly under Lua — truthiness, `typeof` on engine values, `nil` collapsing, and the rest. Those live in [TypeScript gotchas](./typescript-gotchas.md). The two complement each other: the plugin flags what will not transpile, the gotchas page explains what transpiles but surprises you.
-
-## Build-time diagnostics in the editor
-
-`init` also scaffolds a `.vscode/tasks.json` carrying two managed tasks — `defold-typescript: build` and `defold-typescript: watch` — that invoke the CLI via `bunx @defold-typescript/cli build` / `… watch`. Run them from the command palette (`Tasks: Run Task`, or `Tasks: Run Build Task` for the build task), and a shared `problemMatcher` routes any `build` failure into VS Code's Problems panel.
-
-This is the build-time complement to the live `tstl-plugin` squiggles above: the plugin flags unsupported constructs as you type, while the task surfaces whatever the actual `build` rejects. No editor extension is required — the matcher is wired entirely in `tasks.json`.
-
-The honest limitation: a build `TranspileDiagnostic` carries only a file and a message, with no line or column, so each problem lands at the **head of the offending file**, not a precise span. A column-precise matcher is blocked on positional diagnostics from the transpiler. The merge is additive — your own tasks are preserved; only the two managed labels are reconciled.
-
-# Debugging TypeScript in Defold
-
-Step through your TypeScript with breakpoints set directly in the `.ts` source, even though Defold runs the transpiled Lua. The toolchain already emits the load-bearing piece: every build writes a `<name>.ts.script.map` source map next to the chunk and appends a `--# sourceMappingURL=` trailer. The [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) extension reads that map, so a breakpoint in a `.ts` file resolves to the right generated line with no extra wiring.
-
-## What `init` scaffolds
-
-Running `bunx @defold-typescript/cli@latest init .` sets up the whole debug path:
-
-- `extensions.json` recommends `tomblind.local-lua-debugger-vscode` — the one required third-party extension for debugging. (Defold Kit is no longer recommended; sumneko Lua is an optional aid for reading generated Lua. See [editor setup](editor-setup.md).)
-- `launch.json` adds a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`. It also sets `scriptFiles` (`src/**/*.ts.script`) and `scriptRoots` (`.`, `src`). Local Lua Debugger (>=0.3.0) pre-scans `scriptFiles` for the emitted `--# sourceMappingURL=` trailers to resolve `.ts` breakpoints ahead of time — without it, no source-mapped breakpoint binds — and uses `scriptRoots` to resolve the running Defold chunk path and the map's bare `sources` entry back to files on disk.
-- `defold-debug.ts` is a self-contained Bun launcher that downloads and runs a stock `dmengine` (or your native-extension build engine) with its stdio inherited — the pipe Local Lua Debugger attaches over.
-
-The launcher is **Bun, not a shell script**. The upstream `lua-local` template runs a `bash` script and, on Windows, routes it through Git Bash. This toolchain already mandates Bun and targets Windows, so the launcher uses `process.platform` for the OS, `fetch` for the engine download, and `Bun.spawn` for the run — no `bash`, no Git Bash dependency. All `.vscode` debug files merge additively into any config you already have.
-
-## Automated setup
-
-`init` scaffolds the `.vscode` debug files, but two steps touch your own project files and so are left to a dedicated command:
-
-```
-bunx @defold-typescript/cli setup-debug
-```
-
-`setup-debug` is idempotent and does three things `init` cannot:
-
-- Adds the `lldebugger` library dependency to `game.project` (at the next free `dependencies#N` index, skipped if already present).
-- Writes the ambient `src/lldebugger.debug.d.ts` (the `@noResolution declare module`) alongside the entry-script edit, regenerated whole and skipped when already current.
-- Injects the gated `lldebugger.start()` bootstrap into your entry script inside a managed `BEGIN`/`END` block. A re-run refreshes the block if its wording drifted and is otherwise a no-op; a legacy single-marker block from an older version is upgraded in place. The block is kept in exactly one script: any stale managed block in another `src/` script is stripped on each run.
-
-It selects the entry script from the Defold boot path: starting at `game.project`'s `[bootstrap] main_collection`, it walks the referenced `.collection` files (including nested `collection:` references) and collects every `.ts.script` component, mapping each back to its source `.ts`. A single boot-path script is wired automatically; with several, pass `--script <path>` to choose one or run interactively (without `--json`) to pick from a prompt, and `--json` errors naming the candidates. When the boot path reaches no `.ts.script` (or there is no `[bootstrap]`), it falls back to scanning `src/**/*.ts` for a lifecycle-factory call (`defineScript`/`defineGuiScript`/`defineRenderScript`). The plain output names the script added to, any scripts the block was removed from, and the boot-path trace behind the choice; `--json` emits a machine-readable `{command, ok, written, actions, manualSteps, addedTo, removedFrom, bootPath}` result. The same command is available as the `defold-typescript:setup-debug` mise task.
-
-Two steps still require the Defold editor and VS Code and are reported as remaining manual steps:
-
-- Install the *Local Lua Debugger* VS Code extension.
-- Run *Project -> Fetch Libraries* so the `lldebugger` module is downloaded.
-
-The manual walkthrough below remains the fallback and documents exactly what `setup-debug` automates.
-
-## One-time setup
-
-1. **Install the recommended extension.** Open the project in VS Code and accept the *Local Lua Debugger* recommendation (or install `tomblind.local-lua-debugger-vscode` directly).
-
-2. **Add the `lldebugger` library to Defold.** In `game.project`, add the dependency:
-
-   ```
-   https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip
-   ```
-
-   This is our vendored, MIT-licensed snapshot of `ts-defold/defold-lldebugger`, hosted from this repo's releases — that is why the URL differs from the upstream docs. Then run *Project -> Fetch Libraries* in the Defold editor so the `lldebugger` Lua module is available to `require`.
-
-3. **Start the debugger from your entry script.** First create an ambient declaration at `src/lldebugger.debug.d.ts` so TypeScript and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) both know the module without resolving it:
-
-   ```ts
-   /** @noResolution */
-   declare module "lldebugger.debug" {
-     export function start(): void;
-   }
-   ```
-
-   Then add the debugger entry near the top of your main script, inside the managed block, gated so it only runs in a debug build:
-
-   ```ts
-   // defold-typescript:setup-debug BEGIN — managed block, do not edit
-   import * as lldebugger from "lldebugger.debug";
-
-   if (sys.get_engine_info().is_debug) {
-     lldebugger.start();
-   }
-
-   // defold-typescript:setup-debug END
-   ```
-
-   The `@noResolution` ambient declaration must live in a `.d.ts`, not inline in a `.ts` — under `moduleResolution: "Bundler"` an inline `declare module` augmentation that the entry script also imports fails to type-check. With the declaration in the ambient file, TypeScript leaves the module unresolved and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) keeps the literal path, so the emitted Lua is `require("lldebugger.debug")` followed by `lldebugger.start()`. The `is_debug` guard keeps the call inert in release builds, so the entry is safe to leave in shipped code — it only activates in a debug build with the debugger attached. `setup-debug` writes both files for you; the `BEGIN`/`END` sentinels let a re-run refresh the block if its wording changes.
-
-## Launching a debug session
-
-The launcher runs whatever already sits under `build/`; it does **not** compile the Defold project itself. The CLI build loop produces both artifacts headlessly — no editor required:
-
-1. Transpile your TypeScript so the `.ts.script` and `.ts.script.map` files are current (`bunx @defold-typescript/cli build`, or keep `watch` running).
-2. Compile the Defold project so `build/default/game.projectc` exists:
-
-   ```sh
-   bunx @defold-typescript/cli defold resolve   # first time / after editing dependencies
-   bunx @defold-typescript/cli defold build      # debug build into build/default
-   ```
-
-   `defold build` runs Defold's headless `bob` tool — see [Getting started](getting-started.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
-3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
-4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
-
-The launcher prefers the native-extension build engine at `build/<platform>/dmengine` when it exists and otherwise downloads a stock engine from `d.defold.com` next to the launcher (`.vscode/dmengine`). The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps that binary out of version control.
-
-### Native-extension runtime libraries
-
-On a build-engine run the launcher checks each supported native extension's declared runtime libraries and warns-and-continues if any are missing — it never fetches them, because no extension has a fetchable source yet. OpenAL on Windows is currently the only declared extension: native-extension builds need `OpenAL32.dll` and `wrap_oal.dll` placed by hand next to the build engine (in `build/x86_64-win32/`). The Defold build server does not ship these runtime DLLs and no Defold-hosted archive serves them, so the launcher cannot fetch them; the copy fix is tracked upstream at [defold/defold#11860](https://github.com/defold/defold/issues/11860). When they are missing on a Windows build-engine run the launcher prints a one-line reminder and continues. macOS and Linux declare no native-extension runtime libraries and resolve OpenAL from the system, so nothing needs placing.
-
-### Building from the editor instead
-
-The CLI build loop above is the primary path and needs no editor. If you prefer, you can still produce `build/default/game.projectc` (and any native-extension engine) by building from the Defold editor before launching from VS Code — the launcher runs whatever is already under `build/` either way.
-
-## See also
-
-- [Script lifecycle](script-lifecycle.md) — typing `self` and the lifecycle hooks you will step through.
-- [Code editor setup](editor-setup.md) — the rest of the scaffolded `.vscode/` config and the watch loop.
-
-# Pinning the Defold API version
-
-`@defold-typescript/types` ships the **latest/current** Defold API surface
-pre-baked, and generates older versioned surfaces on demand. The default import
-is always the current surface; opting into an older version generates that
-version's surface on your machine and materializes it locally. Pinning a surface
-makes the TypeScript compiler reject calls to engine functions that do not exist
-in the Defold version you target, instead of letting them through to fail at
-runtime.
-
-## The default stays current
-
-If you do nothing, you get the current surface — the same behaviour as before
-versioning existed:
-
-```jsonc
-// tsconfig.json
-{
-  "compilerOptions": {
-    "types": ["@defold-typescript/types"]
-  }
-}
-```
-
-This is unchanged for existing projects. The default surface tracks the latest
-generated API.
-
-## Opting into a pinned surface
-
-You do not pin a surface through a package subpath export. Versioned surfaces
-are **not** shipped pre-baked in the npm package — only the current-stable
-surface is. A non-current version's `.d.ts` are generated on your machine the
-moment you pin it (from that version's Defold reference docs) and
-**materialized** into a project-local `.defold-types/<version>/` faux `@types`
-package that your `tsconfig.json` references.
-
-You select the version with the `package.json` pin described below; the
-toolchain resolves it, generates the matching surface, and repoints
-`tsconfig.json` at the materialized package. A function that exists only on the
-current surface is then a compile error against an older pin, while functions
-shared across versions continue to type-check.
-
-## Recording the project's Defold version
-
-A Defold project pins a fixed engine version, but that version is not stored
-anywhere in the project tree — not in `game.project`, not in build artifacts,
-not in editor metadata. You declare it in `package.json` under the
-`defold-typescript` namespace:
-
-```jsonc
-// package.json
-{
-  "defold-typescript": { "defold-version": "1.12.4" }
-}
-```
-
-`bunx @defold-typescript/cli@latest init <folder>` seeds this key with the current-stable version when it
-creates or augments a `package.json`, and leaves an existing pin untouched.
-
-The active version resolves with this precedence:
-
-1. `--defold-version <version>` on the command line (highest),
-2. the `package.json` pin,
-3. the **installed Defold editor's `version`** (lowest-precedence fallback),
-4. the current-stable default.
-
-The installed-editor detection reads the editor bundle's `config` file from
-its conventional per-OS location (for example
-`/Applications/Defold.app/Contents/Resources/config` on macOS,
-`~/Defold/config` on Linux, `%LOCALAPPDATA%\Defold\config` or
-`%PROGRAMFILES%\Defold\config` on Windows), parses the `version = ...` line,
-and uses that value when no flag or pin is present. The first candidate that
-parses wins, and an unknown platform — or no editor installed — reports
-`detected: null` and falls through to the current-stable default. The exact
-bundle paths are pinned for live verification against a real install; the
-probe mechanics (per-OS candidate order, parse, hit/miss) are unit-tested
-synthetically and the production reader is an injectable seam.
-
-The resolved version is reported in `--json` output as `defoldVersion`, and the
-surface it maps to is reported alongside it as `apiSurface`. The current-stable
-version maps to the default surface (`apiSurface: "defold-1.12.4"`); a version with a
-registered reference-doc target maps to `apiSurface: "defold-<version>"` (for
-example `defold-1.9.8`); a version with no matching target reports
-`apiSurface: null`. The source that resolved the version is reported as
-`defoldVersionSource` (`flag` / `pin` / `detected` / `default`), so an agent
-script can tell whether the version came from the command line, the
-`package.json` pin, the installed editor, or the hardcoded default.
-
-## Materializing the pinned surface
-
-`bunx @defold-typescript/cli build` does not only report the surface — it **materializes**
-it. The build writes a project-local `.defold-types/<surface>/` directory (a faux
-`@types` package with its own `index.d.ts` and `package.json`), then repoints
-`tsconfig.json` at it so exactly one surface is the active ambient type surface:
-
-```jsonc
-// tsconfig.json (rewritten by build)
-{
-  "compilerOptions": {
-    "typeRoots": [".defold-types"],
-    "types": ["defold-1.9.8"]
-  }
-}
-```
-
-How the surface is produced depends on the resolved version:
-
-- **Current-stable** copies the pre-baked surface that ships in
-  `@defold-typescript/types` into `.defold-types/defold-1.12.4/`. No network access.
-- **A pinned non-current version** is generated **on the fly** from that
-  version's Defold reference docs and written into
-  `.defold-types/<version>/` (for example `.defold-types/defold-1.9.8/`). The
-  reference docs are downloaded once on first use and cached, so later builds
-  are offline. The generated faux package carries a `core-types.d.ts` that
-  re-exports the installed `@defold-typescript/types/core-types`, so its branded
-  engine types stay unified with the ones your code imports rather than minting a
-  nominally distinct copy. It also carries `engine-globals.d.ts` and side-effect imports it from
-  the surface `index.d.ts`, so the engine types (`Vector3`, `Hash`, `Url`, …)
-  are ambient globals — name them with no import, matching the namespace
-  ergonomics (`vmath`, `go`, …).
-
-The `.defold-types/` directory is generated output, so build adds it to the
-project `.gitignore`. The materialized directory is reported in `--json` output
-as `materializedSurface`. Re-running build is idempotent.
-
-The pinned versioned surface is materialized in full — `build` and `watch` never
-narrow it by script kind. Narrowing a directory to one kind is opt-in via the
-`wall` command; see [Advanced CLI](advanced-cli.md) and the per-kind API wall in
-[Script lifecycle](script-lifecycle.md). (Walls today narrow against the
-installed `@defold-typescript/types` subpaths, not the pinned
-`.defold-types/<version>/` surface.)
-
-If a pinned version cannot be generated — an unknown version, or no network on
-first use — the build does **not** fail. It reports `materializedSurface: null`,
-warns on stderr, leaves `tsconfig.json` untouched, and exits `0`; the default
-committed surface stays usable. Having Bun is enough to compile your project.
-
-## Pinning a release channel
-
-A Defold release channel picks which build of the engine the reference docs
-are fetched from. Three channels are supported — `stable` (the default),
-`beta`, and `alpha`. The `stable` channel is the production release line; the
-`beta` and `alpha` channels are experimental pre-release surfaces that track
-in-development builds and may break at any time. If you do nothing, the
-default stays `stable`; existing projects with no channel pin are unchanged.
-
-You select a channel the same way you select a version — by name — and the
-channel rides the same precedence chain. The `--channel` flag overrides the
-`package.json` pin, and the pin overrides the `stable` default:
-
-1. `--channel <channel>` on the command line (highest),
-2. the `package.json` `defold-typescript.channel` pin,
-3. the `stable` default.
-
-```jsonc
-// package.json
-{
-  "defold-typescript": {
-    "defold-version": "1.12.4",
-    "channel": "stable"
-  }
-}
-```
-
-`bunx @defold-typescript/cli@latest init <folder>` does not seed a `channel` key, so a
-project with no pin behaves exactly as today. The resolved channel is reported
-in `--json` output as `defoldChannel` on `init` and `build`. `init` reports the
-default `stable` without writing the key, so the key stays absent unless you
-pin it yourself.
-
-How the channel affects the doc-source fetch:
-
-- **`stable`** downloads `ref-doc.zip` directly from the pinned `defold-version`'s
-  GitHub release assets (`releases/download/<version>/ref-doc.zip`) — no
-  `engine/share/` path. This is the only path that touches the GitHub release
-  archive directly.
-- **`beta`** and **`alpha`** resolve the channel head via
-  `d.defold.com/<channel>/info.json` and download
-  `archive/<channel>/<sha1>/engine/share/ref-doc.zip`, cached channel-scoped.
-  Each channel's cache directory is independent, so switching channels does
-  not invalidate the `stable` cache.
-
-## Maintainer verification
-
-The public `defold-1.9.8` example target is periodically checked with the
-advisory, network-touching `bun run ref-doc-delta` command. It verifies that the
-live Defold 1.9.8 reference docs still include `label.get_text` and still omit
-`label.set_text`. If the command fails, update the registry target or the example
-delta; do not ignore the drift.
-
-# Typing native extensions
-
-Defold native extensions ship their own Lua API alongside the engine's. When a
-project depends on an extension, `defold-typescript resolve` reads that
-extension's `.script_api` docs and generates an ambient TypeScript namespace for
-it — the same fan-out the built-in engine namespaces (`go`, `vmath`, …) go
-through, applied to whatever extensions your project actually declares. The
-generated surface lands in a project-local, gitignored `.defold-types/` package,
-so extension functions gain autocomplete and `tsc` coverage with no import.
-
-## Declaring an extension
-
-Extensions are declared in `game.project` under `[dependencies]`, one archive
-URL per numbered key — the same INI surface the Defold editor's *Fetch
-Libraries* writes:
-
-```ini
-[project]
-title = My Game
-
-[dependencies]
-dependencies#0 = https://github.com/defold/extension-iap/archive/main.zip
-dependencies#1 = https://github.com/some/asset-pack/archive/main.zip
-```
-
-`resolve` reads every `dependencies#N` URL under `[project]`. A `game.project`
-with no `[project]` section is an error; a `[project]` with no `dependencies#N`
-keys reports `no extension dependencies declared` and exits cleanly.
-
-## Running `resolve`
-
-```sh
-bunx @defold-typescript/cli resolve        # defaults to the current directory
-bunx @defold-typescript/cli resolve path/to/project
-```
-
-For each declared dependency, `resolve`:
-
-1. downloads and caches the archive (later runs are offline),
-2. locates every `.script_api` doc inside it,
-3. emits one ambient namespace per doc into
-   `.defold-types/extensions/<namespace>.d.ts`,
-4. writes an index barrel and a `package.json` for that sibling surface, and
-5. additively appends `"extensions"` to `tsconfig.json`
-   `compilerOptions.types`, so it coexists with the pinned engine surface.
-
-The human-readable output lists each resolved extension and where the surface
-was written:
-
-```
-  iap <- https://github.com/defold/extension-iap/archive/main.zip (1 .script_api, download)
-  <other.url>: asset-only, skipped
-defold-typescript resolve: wrote .defold-types/extensions
-```
-
-The `.defold-types/` directory is generated output and is gitignored. Re-run
-`resolve` whenever you change `[dependencies]`; it reconciles the sibling
-surface to exactly the extensions currently declared.
-
-A running [`watch`](./getting-started.md#iterate) automates that re-run: every
-`game.project` save re-resolves the surface, so editing `[dependencies]` while
-`watch` is up refreshes `.defold-types/extensions/` with no extra command.
-`watch` does not bootstrap the surface, though — it only reconciles on save, so
-run `resolve` once first to materialize the initial extension types.
-
-## Consuming the generated namespace
-
-Each emitted namespace is **ambient**, so you call it with no import — exactly
-like the engine namespaces:
-
-```ts
-// iap is ambient — resolved through the .defold-types/extensions surface.
-iap.set_listener((self, transaction, error) => {
-  // transaction and error are typed from the extension's .script_api
-});
-```
-
-`tsc` picks the surface up through the `"extensions"` entry in
-`compilerOptions.types`.
-
-## Asset-only dependencies
-
-Not every dependency ships a `.script_api` — asset packs, fonts, and other
-content-only archives carry no API. These are **reported and skipped**, never
-treated as a failure:
-
-```
-  https://github.com/some/asset-pack/archive/main.zip: asset-only, skipped
-```
-
-`resolve` still exits `0` and materializes the surface for the extensions that
-do carry docs.
-
-## Machine-readable output
-
-`resolve --json` emits one object describing the run. It reports
-`materializedSurface` (the written directory, or `null` when nothing was
-materialized) and, per extension, the `url`, the generated `namespaces`, the
-`scriptApiCount`, the `provenance` (`cache` or `download`), whether it was
-`assetOnly`, the `resolvedVersion` (sha256 digest of the resolved archive
-bytes), — when the project pins that url — the `pinnedVersion`, and the
-`pinStatus` (`unpinned` / `match` / `drift`):
-
-```jsonc
-{
-  "command": "resolve",
-  "ok": true,
-  "written": [],
-  "materializedSurface": ".defold-types/extensions",
-  "extensions": [
-    {
-      "url": "https://github.com/defold/extension-iap/archive/main.zip",
-      "namespaces": ["iap"],
-      "scriptApiCount": 1,
-      "provenance": "download",
-      "assetOnly": false,
-      "resolvedVersion": "sha256:ab12…",
-      "pinnedVersion": "sha256:ab12…",
-      "pinStatus": "match"
-    }
-  ]
-}
-```
-
-A `pinnedVersion` field is only present when the project's `package.json`
-records a pin for that `url`. The `pinStatus` is always present: `unpinned`
-means the project has no committed pin, `match` means the pin equals
-`resolvedVersion`, and `drift` means the pin exists but no longer matches
-the resolved archive bytes — the explicit upgrade signal.
-
-## Pinning extension versions
-
-A declared `dependencies#N` URL is the only identity `resolve` reads, and it
-is often a **moving** ref (`.../archive/master.zip`) — the same URL can
-resolve to different bytes over time. The reproducible identity of *what was
-actually resolved* is therefore the sha256 digest of the resolved archive
-bytes, not a URL segment. `resolve` records that digest as the extension's
-version and seeds it into the project's `package.json` when absent
-(never clobbering an existing pin):
-
-```jsonc
-"defold-typescript": {
-  "extensions": {
-    "https://github.com/defold/extension-iap/archive/main.zip": "sha256:ab12…"
-  }
-}
-```
-
-A committed pin is human-owned intent. When the URL later yields different
-bytes, the freshly-resolved digest no longer matches the pinned one — the
-`resolvedVersion` and `pinnedVersion` in `--json` differ, and the
-`pinStatus` reports `drift`. The visible signal is the upgrade prompt; the
-enforcement is two layered knobs:
-
-- The **human-readable** `resolve` (no flag) **warns on drift** by default,
-  writing one line per drifted url to `stderr` (e.g. `pin drift for
-  https://...: sha256:pinned -> sha256:fresh`). Exit code is `0` — drift
-  still surfaces loudly on a developer's machine without breaking
-  non-frozen scripted runs.
-- The opt-in `--frozen` flag treats the committed pin set as a lockfile: it
-  **exits non-zero on drift** (so CI gates the upgrade) and **writes
-  nothing** — no absent-pin seeding, no clobbering. An unpinned extension
-  under `--frozen` passes and stays unseeded; failing on unpinned is a
-  stricter mode and out of scope for this knob.
-
-The default behavior — seed absent pins, never clobber, exit `0` — is
-unchanged. `resolve` materializes the surface for the drifted extensions
-either way; only the `package.json` write and the exit code are gated.
-
-## Cache location
-
-Downloaded extension archives are cached so repeated `resolve` runs stay
-offline. The cache lives at
-`$XDG_CACHE_HOME/defold-typescript/extensions` (defaulting to
-`~/.cache/defold-typescript/extensions`). Set `DEFOLD_TYPESCRIPT_CACHE` to
-override the root — the archives then land under
-`$DEFOLD_TYPESCRIPT_CACHE/extensions`.
-
-# Advanced CLI
-
-This page covers `wall`, the opt-in command for narrowing the API surface of a
-source directory to a single script kind. To *add* a surface for native-extension
-namespaces instead of narrowing one, see [`resolve`](./extensions.md#running-resolve).
-
-## Full surface by default
-
-Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a
-`.gui_script`, and `render.*` only inside a `.render_script`. Every other
-namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
-
-By default `defold-typescript` gives you the **full** `@defold-typescript/types`
-surface everywhere. `init`, `build`, and `watch` never change this: they scaffold
-and build against whatever entrypoint your `tsconfig` names and never add, remove,
-or prune a wall. The full surface never rejects a call the engine would allow, but
-it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall
-at compile time, opt in with `wall`.
-
-## What a wall is
-
-A wall is a composite `tsconfig.json` written into a single-kind source directory
-that narrows `compilerOptions.types` to that kind's subpath:
-
-| Script kind | `types` entrypoint | Namespaces |
-| ----------- | ------------------ | ---------- |
-| `.script` | `@defold-typescript/types/script` | universal only |
-| `.gui_script` | `@defold-typescript/types/gui-script` | universal + `gui` |
-| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
-
-The root `tsconfig.json` references each walled directory and excludes it from the
-root program, so `tsc -b --noEmit` builds every walled directory against only its
-narrowed surface — a `render.*` use inside a gui-walled directory becomes a compile
-error, while the rest of the project stays full-surface.
-
-A directory is **eligible** to be walled only when every `.ts` source in it is one
-kind; a directory mixing kinds cannot be walled, because no single narrowing
-applies. `build` and `watch` never touch walls — they are entirely yours to
-manage.
-
-## Interactive
-
-Run `wall` with no arguments in a terminal:
-
-```sh
-bunx @defold-typescript/cli wall
-```
-
-You get a checkbox of every eligible source directory, pre-checked to the
-directories already walled. Checking an unwalled directory walls it; unchecking a
-walled directory removes its wall. Mixed-kind directories appear disabled, with
-their competing kinds shown as the reason. The final selection **is** the desired
-wall set — the command reconciles the project on disk to exactly what you checked.
-
-## Flags
-
-For agents, CI, and scripted use, pass directories explicitly (a bare `wall` with
-no TTY errors rather than hanging on an unrenderable prompt):
-
-```sh
-# Wall these directories (added to any already walled)
-bunx @defold-typescript/cli wall src/ui src/rendering
-
-# Remove a wall
-bunx @defold-typescript/cli wall --remove src/ui
-
-# List current and eligible walls (writes nothing)
-bunx @defold-typescript/cli wall --list
-bunx @defold-typescript/cli wall --list --json
-```
-
-`--json` emits the resulting `directoryWalls` (and, for `--list`, the `eligible`
-set) for machine consumption. `--json` is machine-driven intent, so a bare
-`wall --json` never opens the interactive menu — pass directories or `--list`.
-
-## Import the factory from the kind subpath
-
-A wall only holds if a walled source imports its lifecycle factory from the **kind
-subpath**, not the main entry:
-
-```ts
-// src/ui/hud.ts — inside a gui wall
-import { defineGuiScript } from "@defold-typescript/types/gui-script"; // correct
-```
-
-Importing the same factory from the main `@defold-typescript/types` entry pulls
-*every* `declare global` namespace (including `render`) into the wall's program and
-silently defeats the narrowing — `render.*` would type-check inside a gui wall:
-
-```ts
-// Wrong: re-introduces the full surface, defeating the wall
-import { defineGuiScript } from "@defold-typescript/types";
-```
-
-The interactive snippets scaffolded by `init` already import from the kind
-subpaths. `build` enforces this: a walled source that imports a lifecycle factory
-from the main entry fails the build before transpile, naming the file and the kind
-subpath it should import from instead. (`watch` does not enforce it yet — its
-session path is a separate slice.)
-
-# Agent runbooks
-
-Harness-neutral procedures for driving `defold-typescript` from an automated
-agent. `defold-typescript` is a CLI published to npm (run with `bunx`) plus a
-types package; it ships no
-harness-specific skill or command assets, so the durable interface for an agent
-is the CLI verbs themselves and their machine-readable `--json` output. Every
-runbook below works from any harness: run the command, read the JSON envelope on
-stdout, gate on `ok`.
-
-Each one-shot command (`init`, `build`, `resolve`) prints a single JSON object
-when given `--json`. The envelope is always one of two shapes:
-
-```json
-{ "command": "<verb>", "ok": true, "written": ["<path>", "..."] }
-```
-
-```json
-{ "command": "<verb>", "ok": false, "error": "<message>" }
-```
-
-The agent branches on `ok`: on `true`, read `written` for the paths the command
-created or updated; on `false`, read `error` for the failure reason. Some verbs
-add fields to the success envelope (noted per runbook), but `command`, `ok`, and
-either `written` or `error` are always present.
-
-## Offline knowledge pack
-
-`@defold-typescript/docs` ships two generated, never-hand-edited files at
-`node_modules/@defold-typescript/docs/`:
-
-- `llms.txt` — a curated index (per [llmstxt.org](https://llmstxt.org/)): one
-  link per guide page and per API namespace.
-- `llms-full.txt` — the whole guide inlined plus a compact
-  `namespace.function(signature)` index of the entire API surface.
-
-`llms-full.txt` is self-contained: an agent in a consumer project that has only
-`node_modules` and the in-project source can read every mechanic and signature
-from this one file — no network, no monorepo checkout. The docs site serves the
-same pair at `/llms.txt` and `/llms-full.txt`. Both are regenerated from the
-guide and the typed API on every docs build and drift-gated, so they never go
-stale against the shipped types.
-
-## Verify against the real API surface
-
-This section governs every runbook below it. Before answering any "how do I…"
-question about a Defold symbol, **confirm the symbol against the installed
-surface** — that it exists, its namespace, and its exact signature. An agent's
-default instinct is wrong here: the Lua-first manuals at defold.com and the
-`ts-defold` (`@ts-defold/types`) lore baked into training both describe surfaces
-that **diverge** from this toolchain's. Never emit a signature from training,
-from `ts-defold`, or from a raw Lua doc without first checking it exists in the
-materialized `.defold-types/` surface or the installed `@defold-typescript/types`
-package. When recollection and the on-disk surface disagree, the surface wins.
-
-### Where the truth lives (reachable-surface map)
-
-In a consumer project an agent can read only these; everything else (the
-generation pipeline, fixtures, monorepo planning docs) is contributor-only and
-absent from an install:
-
-| Location                                                                        | What it holds                                                                                                                            | When it exists                        |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `.defold-types/<surfaceId>/*.d.ts`                                              | the pinned ambient engine surface (e.g. `.defold-types/defold-1.12.4/`)                                                                  | after `build`; gitignored but on disk |
-| `node_modules/@defold-typescript/types/generated/*.d.ts`                        | namespace signatures (`go`, `vmath`, `factory`, …)                                                                                       | always, once installed                |
-| `node_modules/@defold-typescript/types/src/`                                    | the three factories (`lifecycle.ts`) and the narrowing guards (`message-guard.d.ts`, `message-dispatch.d.ts`, `window-event-guard.d.ts`) | always, once installed                |
-| `node_modules/@defold-typescript/docs/guide/*.md`                               | this guide, refreshed on every install                                                                                                   | always, once installed                |
-| `packages/types/generated`, `packages/types/fixtures`, `packages/types/scripts` | generator inputs and outputs — **contributor-only**                                                                                      | only in a clone of this monorepo      |
-
-The installed-guide pointer is the one the `init-agents` managed block writes:
-`node_modules/@defold-typescript/docs/guide/README.md`.
-
-### Confirm a signature
-
-Read the signature from the namespace declaration instead of recalling it. Grep
-the generated `.d.ts` for the function:
-
-```sh
-grep -rn "function create" node_modules/@defold-typescript/types/generated/
-```
-
-Quote what the surface declares as authoritative — for `factory.create` it is
-`factory.create(url, position?, rotation?, properties?, scale?): Hash`. If the
-grep returns nothing, the symbol does not exist on this surface; do not invent
-it.
-
-### Reach upstream Lua docs and convert
-
-Defold's own manuals and API reference are Lua-first. When the mechanic you need
-is only documented there, run the conversion loop: **locate the mechanic** in
-the Lua docs -> **find its namespace** in the generated `.d.ts` -> **confirm the
-signature** as above -> **translate the idioms** to the TypeScript surface.
-
-| Lua idiom                         | TypeScript surface                          |
-| --------------------------------- | ------------------------------------------- |
-| `function init(self) … end`       | `defineScript({ init() { … } })`            |
-| `obj:method(a)`                   | `obj.method(a)` (method form)               |
-| `local x, y = f()` (multi-return) | `const [x, y] = f()` / `LuaMultiReturn`     |
-| `hash("player")`                  | `hash("player")`, or a pre-hashed `Hash` id |
-| `msg.post("#comp", "msg", {})`    | `msg.post("#comp", "msg", {})`              |
-
-### Fetch upstream on demand (gitignored, not a submodule)
-
-When you need the engine's own API data or source, pull it on demand into a
-gitignored path — **do not add a `defold/defold` git submodule**. A submodule is
-a multi-GB tree pinned to one engine SHA that every clone then carries; the API
-data you actually need is the few-hundred-KB `ref-doc.zip` the type generator
-already consumes, cached at `~/.cache/defold-typescript/ref-doc/<version>/`
-(`DEFOLD_TYPESCRIPT_CACHE` overrides the cache root). Read the cached
-`ref-doc.zip` there, or for the rare source-reading case shallow-clone
-`defold/defold` into a gitignored dir. This is a cached download, **not a
-submodule** — the on-demand fetch keeps the repo small.
-
-### The verification loop
-
-Once converted, prove it compiles before handing it back: write the snippet, run
-`build --json`, and on `ok: false` read the `error` span, fix the source, and
-rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
-[script lifecycle](./script-lifecycle.md) page covers which hooks and which
-`self` typing each script kind exposes. On `ok: true` the build envelope adds a
-`warnings` array: it lists any generated `.lua`/`.ts.*` output left without a
-TypeScript source (a deleted or renamed source), each naming the stale file and
-the source to restore. Empty when clean; the build never deletes these for you.
-
-## Scaffold a project
-
-**Goal:** create a new TypeScript surface — either a fresh project, or the
-TypeScript layer added to an existing Defold project.
-
-**Command (fresh project, new folder):**
-
-```sh
-bunx @defold-typescript/cli@latest init my-game --json
-```
-
-**Command (existing Defold project — run inside the folder that holds
-`game.project`):**
-
-```sh
-bunx @defold-typescript/cli@latest init . --json
-```
-
-`init` requires an explicit destination folder — pass a path to create it, or `.`
-for the current folder. There is no implicit current-folder default, so an
-invocation with no path fails fast (`ok: false`) rather than scaffolding into the
-working directory by accident. `init` then detects whether a `game.project` is
-already present at the destination and either scaffolds a whole new project or
-adds the TypeScript surface alongside the existing one.
-
-**Returns:**
-
-```json
-{ "command": "init", "ok": true, "written": ["tsconfig.json", "src/main.ts", "..."] }
-```
-
-On failure:
-
-```json
-{ "command": "init", "ok": false, "error": "<message>" }
-```
-
-**Reading `ok`:** if `ok` is `true`, the scaffold succeeded and `written` lists
-every file created or modified — use it to know what to open next. If `ok` is
-`false`, stop and surface `error`; nothing was scaffolded.
-
-## Install the agent contract
-
-**Goal:** drop an agent contract at the project root so any harness (or human)
-opening the repo finds the conventions and a pointer to the installed guide.
-
-**Command:**
-
-```sh
-bunx @defold-typescript/cli@latest init-agents . --json
-```
-
-Like `init`, `init-agents` requires an explicit destination — pass a path or `.`
-for the current folder; a missing path fails fast (`ok: false`). This writes two files. `AGENTS.md` carries a managed block delimited by HTML
-comment markers; `CLAUDE.md` is the single line `@AGENTS.md`, re-exporting it.
-Only the content **between** the markers is ever rewritten, so any notes you add
-above or below the block survive re-runs untouched. If `AGENTS.md` already exists
-without the markers, the block is appended after one blank line and your prior
-content is left intact; a `CLAUDE.md` that already equals `@AGENTS.md` is left
-byte-for-byte unchanged. The block is versionless — its guide pointer resolves to
-`node_modules/@defold-typescript/docs/guide/README.md`, which the install
-swaps under the same path — so the verb is safe to re-run any time.
-
-**Returns:**
-
-```json
-{ "command": "init-agents", "ok": true, "written": ["AGENTS.md", "CLAUDE.md"] }
-```
-
-On failure:
-
-```json
-{ "command": "init-agents", "ok": false, "error": "<message>" }
-```
-
-**Reading `ok`:** if `ok` is `true`, `written` lists the files touched in order;
-a re-run that changes nothing omits the untouched file. If `ok` is `false`, stop
-and surface `error`; nothing was written.
-
-## Regenerate extension types
-
-**Goal:** refresh the ambient TypeScript surface for native extensions after a
-`game.project` `[dependencies]` change, so extension namespaces stay in sync with
-the declared archives. This automates the workflow described in
-[Typing native extensions](./extensions.md).
-
-**Command (run from the project root, after editing `[dependencies]`):**
-
-```sh
-bunx @defold-typescript/cli resolve --json
-```
-
-`resolve` reads each declared extension's `.script_api`, regenerates the
-gitignored `.defold-types/extensions/` ambient surface, and rewrites its index
-and `package.json` to exactly the declared set.
-
-**Returns** the same one-shot envelope keyed `command: "resolve"`, plus an
-`extensions` array reporting provenance for each resolved dependency:
-
-```json
-{
-  "command": "resolve",
-  "ok": true,
-  "written": [],
-  "materializedSurface": ".defold-types/extensions",
-  "extensions": [
-    {
-      "url": "<archive url>",
-      "provenance": "<cache | download>",
-      "namespaces": ["<namespace>"],
-      "scriptApiCount": 1,
-      "assetOnly": false,
-      "resolvedVersion": "<version>",
-      "pinStatus": "<unpinned | match | drift>"
-    }
-  ]
-}
-```
-
-On failure:
-
-```json
-{ "command": "resolve", "ok": false, "error": "<message>" }
-```
-
-**Reading `ok`:** if `ok` is `true`, the extension surface is current —
-`materializedSurface` is the regenerated surface directory
-(`.defold-types/extensions`), and `extensions` records where each dependency
-came from (`provenance`), how many `.script_api` files it contributed
-(`scriptApiCount`; an `assetOnly` dependency contributes no types), and its pin
-state (`resolvedVersion`/`pinStatus`). The `written` array is always empty for
-`resolve`. If `ok` is `false`, surface `error`; the existing surface is left
-untouched.
-
-## Add a script
-
-**Goal:** add a new gameplay script to a TypeScript Defold project and attach it
-so it runs. There is no `add` verb — the workflow composes ordinary file
-creation with the shipped `build` verb, then a scene-file edit to wire the
-compiled component.
-
-**1. Write the source.** One Defold script per file under `src/`, exporting a
-single lifecycle factory as `default` (never two in one file). The factory
-decides the compiled kind:
-
-| Source factory       | Compiled artifact         | Referenced by                                                  |
-| -------------------- | ------------------------- | -------------------------------------------------------------- |
-| `defineScript`       | `<name>.ts.script`        | a game object (`.go` / `.collection`) as a component           |
-| `defineGuiScript`    | `<name>.ts.gui_script`    | a GUI scene (`.gui`), as its **Script** property               |
-| `defineRenderScript` | `<name>.ts.render_script` | the render pipeline (a `.render` file, set via `game.project`) |
-
-A source that calls no factory emits a plain `<name>.lua` module to `import`
-instead. Which hooks to export (`init`, `update`, `fixed_update`, `on_message`,
-`on_input`, `final`, …) and how `self` is typed are covered in
-[Script lifecycle](./script-lifecycle.md).
-
-**2. Build** (from the project root):
-
-```sh
-bunx @defold-typescript/cli build --json
-```
-
-Or, if a [`watch --json`](#fix-the-lua-output) is already running, just save the
-file and read its `rebuild` event instead of invoking `build`.
-
-**Returns** the one-shot envelope keyed `command: "build"`, plus the build
-context fields:
-
-```json
-{
-  "command": "build",
-  "ok": true,
-  "written": ["src/<name>.ts.script", "..."],
-  "defoldVersion": "<version>",
-  "defoldChannel": "<stable | beta | alpha>",
-  "apiSurface": "<surface id>",
-  "materializedSurface": "<path | null>"
-}
-```
-
-On failure:
-
-```json
-{ "command": "build", "ok": false, "error": "<message>" }
-```
-
-**Reading `ok`:** if `ok` is `true`, the script transpiled — `written` lists the
-emitted artifact (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to
-attach next; `defoldVersion` and `apiSurface` record which API surface it was
-built against; `defoldChannel` records the resolved release channel (`stable`
-unless pinned or passed via `--channel`; it does not yet change which surface is
-fetched). If `ok` is `false`, the build failed — surface `error` and follow
-[Fix the Lua output](#fix-the-lua-output).
-
-**What `build` writes.** Each `.ts` source under `src/` produces exactly one
-output in the Defold project tree — a script component or a `<name>.lua` module,
-per the table above. `import` is rewritten to `require("<module>")` resolving
-against the emitted `.lua`, so a shared module must be built for its require to
-resolve at runtime. Two runtime modules are synthesized at the output root on
-demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
-`Object.keys` or spread) and `defold_typescript_timers.lua` (when timers are
-used).
-
-Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
-produces the Lua *content* in memory; the CLI writes the *files*, choosing the
-`.ts.script` / `.ts.gui_script` / `.ts.render_script` / `.lua` name and location.
-TSTL never touches disk — that is why the outputs carry Defold-correct extensions
-instead of plain `.lua`. Treat the `--json` `written` array as the authoritative
-list of what landed; do not infer paths.
-
-**3. Attach the compiled script.** Building only produces the artifact; nothing
-runs until a scene references it as a component. Scene files (`.go`,
-`.collection`, `.gui`, `.render`) reference the **compiled** artifact, never the
-`.ts` source. A game object references a `.ts.script` through a `components { … }`
-entry naming its project-root-absolute path:
-
-```
-components {
-  id: "player"
-  component: "/src/player.ts.script"
-}
-```
-
-In a standalone `.go` the block appears verbatim. When the game object is
-embedded in a `.collection`, Defold stores the same block as an escaped string
-inside an `embedded_instances { data: "…" }` entry — the form to write when
-editing the file directly. The platformer example shows this in
-[`game/player.collection`](../examples/platformer/game/player.collection):
-
-```
-embedded_instances {
-  id: "player"
-  data: "components {\n"
-  "  id: \"player\"\n"
-  "  component: \"/src/player.ts.script\"\n"
-  ...
-  "}\n"
-  ...
-}
-```
-
-A `.ts.gui_script` is referenced by a `.gui` scene's **Script** property and a
-`.ts.render_script` by the render pipeline, the same compiled-artifact rule.
-
-**4. Verify the attachment.** Two checks confirm the script is wired in:
-
-- Grep the scene files for the compiled name:
-
-  ```sh
-  grep -rl "player.ts.script" --include="*.go" --include="*.collection" --include="*.gui" .
-  ```
-
-  A hit means a scene references it; no hit means it is orphaned and will not
-  run.
-
-- Defold compiles only **reachable** resources, so after a Defold build
-  (the CLI's `defold build` subcommand) an attached script produces `build/default/src/player.ts.scriptc`
-  — the path mirrors the source — while an orphaned script never appears under
-  `build/default/` at all. (The `_generated_*` artifacts there are inlined or
-  asset-derived resources — embedded game objects, components, textures — never
-  referenced script files, which keep their source path.)
-
-## Narrow engine callback payloads
-
-**Goal:** type an engine callback's untyped payload without hand-rolling `typeof`/`in`/`as`.
-
-**Rule for clankers:** when an engine callback hands back an untyped or `unknown`
-payload that is discriminated by a *separate* id/event argument, reach for the
-**provided declaration-only guard** before reaching for `typeof`/`in`/`as`.
-TypeScript cannot correlate two independent parameters, and Defold's ids/event
-constants are pre-hashed `Hash` values or branded numbers — neither works as a
-discriminated-union tag. Each guard below re-introduces the discriminant at the
-use site. They are all **declaration-only**: the transpiler lowers each call to
-its runtime comparison, so there is no runtime Lua symbol and **no import to
-add**.
-
-`on_message` — narrow one message with `isMessage`, or route many with `onMessage`:
-
-```ts
-export default defineScript({
-  on_message(self, message_id, message) {
-    if (isMessage(message_id, message, "contact_point_response")) {
-      // message narrowed to the contact_point_response payload — no cast.
-      print(message.distance);
-    }
-  },
-});
-```
-
-`window.set_listener` — narrow the callback's `data` with `isWindowEvent`:
-
-```ts
-window.set_listener((self, event, data) => {
-  if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
-    // data narrowed to { width: number; height: number } — no cast.
-    print(data.width, data.height);
-  }
-});
-```
-
-An unknown id/event constant is a compile error, so the guard also catches typos.
-The full narrowing reference, including `onMessage`'s multi-message dispatcher,
-lives in [Typed messages](./messages.md#receiving-messages-with-type-narrowing)
-and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params).
-
-## Fix the Lua output
-
-**Goal:** recover from a transpile failure reported by `build` or `watch`.
-
-**Command (re-run after each source fix):**
-
-```sh
-bunx @defold-typescript/cli build --json
-```
-
-On a transpile failure the one-shot `build --json` envelope carries the message:
-
-```json
-{ "command": "build", "ok": false, "error": "<message>" }
-```
-
-Under a long-lived `watch --json`, the same failure arrives as an NDJSON event on
-stdout (one JSON object per line) keyed `command: "watch"`:
-
-```json
-{ "command": "watch", "event": "rebuild", "ok": false, "error": "<message>" }
-```
-
-The first build emits `event: "build"`; each later rebuild emits
-`event: "rebuild"`. `build` and the transpile-diagnostics pass share one
-diagnostic run, so the `error` names the offending source span.
-
-**Reading `ok`:** while `ok` is `false`, read `error` for the failing span,
-then fix the source and rebuild. Two pages route the fix:
-[TypeScript gotchas](./typescript-gotchas.md) for the runtime-semantics traps
-that compile clean but surprise under Lua, and
-[Transpile diagnostics](./transpile-diagnostics.md) for what the diagnostic pass
-surfaces. Repeat until `ok` is `true`, then read `written` as in
-[Add a script](#add-a-script).
-
-## Combine components on a game object
-
-**Goal:** put several components — scripts, a sprite, a collision object — on one
-game object and let them cooperate.
-
-One `.go` (or an `embedded_instances` block inside a `.collection`) lists each
-component under its own `id`. A script reaches a *sibling* component on the same
-object by that `#`-prefixed id — no path is needed because they share the object.
-The platformer's [`game/player.collection`](../examples/platformer/game/player.collection)
-embeds the player script next to its sprite and collision object exactly this
-way; the [Add a script](#add-a-script) runbook shows the `embedded_instances`
-form to write when editing the scene file directly.
-
-```ts
-import { defineScript } from "@defold-typescript/types";
-
-export default defineScript({
-  on_input(self, action_id) {
-    if (action_id == hash("jump")) {
-      // "#" addresses a sibling component on this same game object.
-      msg.post("#animator", "play_animation", { id: hash("jump") });
-    }
-  },
-});
-```
-
-Confirm each id names a real component and the snippet builds — see
-[Verify against the real API surface](#verify-against-the-real-api-surface).
-
-## Spawn objects with a factory
-
-**Goal:** create new game objects at runtime from a prototype.
-
-Add a `.factory` component to a game object and point it at the prototype `.go`.
-At runtime, `factory.create(url, position?, rotation?, properties?, scale?)`
-returns the spawned object's id as a `Hash`. The fourth argument, `properties`,
-seeds the new script's `self` before its `init` runs, so each spawned instance
-can start with its own state.
-
-```ts
-import { defineScript } from "@defold-typescript/types";
-
-export default defineScript({
-  init() {
-    // properties (4th arg) seed the spawned script's self before its init runs.
-    const enemy = factory.create("#enemyfactory", undefined, undefined, {
-      health: 100,
-    });
-    return { lastSpawned: enemy };
-  },
-});
-```
-
-Confirm `factory.create` against
-`node_modules/@defold-typescript/types/generated/factory.d.ts` and build the
-snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
-
-## Spawn a hierarchy with a collection factory
-
-**Goal:** spawn a whole tree of game objects in one call.
-
-A `.collectionfactory` component points at a `.collection`. Unlike `factory`,
-`collectionfactory.create(url, position?, rotation?, properties?, scale?)` returns
-a `LuaMap<Hash, Hash>` mapping each prototype id in the collection to the runtime
-id it was spawned as. Read one spawned object out of the map with
-`.get(prototypeId)`, keyed by the `/`-prefixed path the collection gives it.
-
-```ts
-import { defineScript } from "@defold-typescript/types";
-
-export default defineScript({
-  init() {
-    const ids = collectionfactory.create("#levelfactory");
-    // Read one spawned object out of the map by its prototype id.
-    const player = ids.get(hash("/player"));
-    return { player };
-  },
-});
-```
-
-Confirm `collectionfactory.create` against
-`node_modules/@defold-typescript/types/generated/collectionfactory.d.ts` and build
-the snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
-
-## Pass messages between components
-
-**Goal:** send a message from one component to another and receive it typed.
-
-`msg.post(receiver, message_id, message?)` addresses the receiver by a URL
-string. Two forms cover most cases: `"#component"` reaches a sibling component on
-the *same* game object, and `"/object#component"` reaches a named component on a
-*different* object. The receiver handles it in `on_message`; to narrow the
-untyped payload by `message_id` without `typeof`/`as`, reuse the guard from
-[Narrow engine callback payloads](#narrow-engine-callback-payloads) rather than
-re-deriving it here.
-
-```ts
-import { defineScript } from "@defold-typescript/types";
-
-export default defineScript({
-  update(self) {
-    // "#…" → sibling on this object; "/path#…" → a component on another object.
-    msg.post("#health", "damage", { amount: 10 });
-    msg.post("/enemy#ai", "alert");
-  },
-});
-```
-
-Confirm each address resolves and the snippet builds — see
-[Verify against the real API surface](#verify-against-the-real-api-surface).
-
-## Address an object by URL
-
-**Goal:** pick the right URL form for every `msg.post` / `go.get` / `go.set` /
-`msg.url` call, and know when the `socket:` prefix is required.
-
-A Defold URL is `[socket:][path][#fragment]` — the first part is optional. Inside
-a single world (everything in your bootstrap collection) address by relative id,
-absolute path, or sibling component, with **no** `socket:`:
-
-- `"camera"` — a sibling instance by id, resolved relative to the current component.
-- `"/camera"` — the same instance by id, absolute from the current world's root.
-- `"#health"` — a sibling component on the *same* game object.
-- `"/enemy#ai"` — a named component on a different object in the same world.
-
-The `socket:` segment is reserved for crossing into a **collection-proxy-loaded
-world**: `msg.post("level_a:/door#sensor", "open")` reaches `door#sensor` in the
-collection whose `Name` property is `level_a`. That value is the *target*
-collection's `Name`, not the proxy component's id — and a collection's `Name` is
-a field distinct from its folder, so a bare `"main:…"` copied from a Lua example
-is fragile (it assumes your bootstrap collection happens to be named `main`).
-
-The two-arg `msg.url(socket, path, fragment)` call is a runtime error — only
-`msg.url()`, `msg.url(urlstring)`, and the all-required three-arg form are
-supported. The tightened overloads in `msg-overloads.d.ts` reject the two-arg
-form at compile time, so the typings are the warning.
-
-Confirm every address resolves and the snippet builds — see
-[Verify against the real API surface](#verify-against-the-real-api-surface). For
-the full address grammar and the cross-world proxy case, follow up with the
-[TypeScript gotchas URL addressing entry](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds).
-
-## Where script state lives
-
-**Goal:** decide whether a piece of mutable state belongs on `self` or in a
-module.
-
-Per-instance state belongs on the typed `self`: `init`'s returned object is
-copied onto `self` for *that* component instance, so two objects running the same
-script keep independent values. A module-level `let`/`const` behaves differently,
-and the build shows how — this source:
-
-```ts
-import { defineScript } from "@defold-typescript/types";
-
-// Module-level: one value, not per-instance.
-let spawnCount = 0;
-
-export default defineScript({
-  init() {
-    // Per-instance: copied onto this component's self.
-    return { health: 100 };
-  },
-  update(self) {
-    self.health -= 1;
-    spawnCount += 1;
-  },
-});
-```
-
-compiles `spawnCount` to a single Lua **module local** evaluated once, while
-`health` is assigned onto each instance's `self`:
-
-```lua
-local spawnCount = 0
-function init(self)
-    -- self.health is set per instance
-end
-function update(____self)
-    ____self.health = ____self.health - 1
-    spawnCount = spawnCount + 1
-end
-```
-
-Because Defold loads each module once via `require` and caches it, that module
-local is **shared by every component instance that requires the module** — it is
-not per-instance state. Reach for a module local only for constants or a
-deliberately-shared singleton; keep anything each instance must own its own copy
-of on `self`. The full `self` typing model — how `init` infers it and how
-`properties` seed it — is in [Script lifecycle](./script-lifecycle.md).
-
-Above a module local sits one wider tier: a **VM-global** declared with `declare
-global`. The declaration emits no Lua; a use site lowers to a bare Lua global
-shared across the entire VM — no `require`, no module scope:
-
-```lua
-function ____exports.bump()
-    FOO = FOO + 1
-    return FOO
-end
-```
-
-No `local FOO` and no `____exports.` prefix — `FOO` is raw VM-wide state, broader
-than a cached module local. Reach for it only for genuine engine/Lua globals;
-prefer a module singleton for app state. The full four-tier treatment — per-instance
-`self`, shared module local, cross-script module singleton, and VM-global — is in
-[Where script state lives](./script-state.md).
-
 # TypeScript vs Lua
 
 A translation cheat sheet for Defold developers who already know Lua. Lua on the
@@ -2600,6 +1321,1285 @@ Whole-vector operations read left-to-right as a chain of `Vector3` methods (`go.
 TypeScript's binary `+`, `-`, `*`, `/` operators require both operands to be `number` (or `+` accepts `string`). The type-checker rejects `v3a + v3b` with TS2362/TS2365 because `Vector3` is not assignable to either, so writing the operator form fails to compile and you cannot ship code that would crash at runtime.
 
 There is **one** exception: **unary minus**. TypeScript does not flag `-v3a`; it silently produces `number`. This is a TS-level gap the toolchain cannot close with types alone. The typed alternative is `v.unm()`. See [unary minus on Vector3 silently produces number](./typescript-gotchas.md#unary-minus-on-vector3--vector4-silently-produces-number) on the gotchas page for the full story.
+
+# Live transpile diagnostics
+
+`bunx @defold-typescript/cli@latest init .` scaffolds a TypeScript language-service plugin, `@defold-typescript/tstl-plugin`, into the generated `tsconfig.json`:
+
+```jsonc
+{
+  "compilerOptions": {
+    "types": ["@defold-typescript/types"],
+    "plugins": [{ "name": "@defold-typescript/tstl-plugin" }]
+  }
+}
+```
+
+The plugin is added as a managed devDependency at the same time, pinned in lockstep with the other `@defold-typescript/*` packages, so it resolves from your project's `node_modules` once you run `bun install`.
+
+## What it surfaces
+
+The plugin runs the **same TypeScript-to-Lua diagnostic pass the `build` command uses** against the program your editor already has open, and reports anything the transpiler cannot lower — directly on the offending source span. You see the squiggle in the editor as you type, instead of discovering the failure when you run `build`. Because editor and build share one diagnostic source, they cannot disagree about what is unsupported.
+
+## It is advisory, not blocking
+
+Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.
+
+## How it relates to the gotchas guide
+
+This plugin catches constructs the *transpiler* rejects. It does not catch the runtime-semantics traps where valid TypeScript compiles but behaves unexpectedly under Lua — truthiness, `typeof` on engine values, `nil` collapsing, and the rest. Those live in [TypeScript gotchas](./typescript-gotchas.md). The two complement each other: the plugin flags what will not transpile, the gotchas page explains what transpiles but surprises you.
+
+## Build-time diagnostics in the editor
+
+`init` also scaffolds a `.vscode/tasks.json` carrying two managed tasks — `defold-typescript: build` and `defold-typescript: watch` — that invoke the CLI via `bunx @defold-typescript/cli build` / `… watch`. Run them from the command palette (`Tasks: Run Task`, or `Tasks: Run Build Task` for the build task), and a shared `problemMatcher` routes any `build` failure into VS Code's Problems panel.
+
+This is the build-time complement to the live `tstl-plugin` squiggles above: the plugin flags unsupported constructs as you type, while the task surfaces whatever the actual `build` rejects. No editor extension is required — the matcher is wired entirely in `tasks.json`.
+
+The honest limitation: a build `TranspileDiagnostic` carries only a file and a message, with no line or column, so each problem lands at the **head of the offending file**, not a precise span. A column-precise matcher is blocked on positional diagnostics from the transpiler. The merge is additive — your own tasks are preserved; only the two managed labels are reconciled.
+
+# Debugging TypeScript in Defold
+
+Step through your TypeScript with breakpoints set directly in the `.ts` source, even though Defold runs the transpiled Lua. The toolchain already emits the load-bearing piece: every build writes a `<name>.ts.script.map` source map next to the chunk and appends a `--# sourceMappingURL=` trailer. The [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) extension reads that map, so a breakpoint in a `.ts` file resolves to the right generated line with no extra wiring.
+
+## What `init` scaffolds
+
+Running `bunx @defold-typescript/cli@latest init .` sets up the whole debug path:
+
+- `extensions.json` recommends `tomblind.local-lua-debugger-vscode` — the one required third-party extension for debugging. (Defold Kit is no longer recommended; sumneko Lua is an optional aid for reading generated Lua. See [editor setup](editor-setup.md).)
+- `launch.json` adds a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`. It also sets `scriptFiles` (`src/**/*.ts.script`) and `scriptRoots` (`.`, `src`). Local Lua Debugger (>=0.3.0) pre-scans `scriptFiles` for the emitted `--# sourceMappingURL=` trailers to resolve `.ts` breakpoints ahead of time — without it, no source-mapped breakpoint binds — and uses `scriptRoots` to resolve the running Defold chunk path and the map's bare `sources` entry back to files on disk.
+- `defold-debug.ts` is a self-contained Bun launcher that downloads and runs a stock `dmengine` (or your native-extension build engine) with its stdio inherited — the pipe Local Lua Debugger attaches over.
+
+The launcher is **Bun, not a shell script**. The upstream `lua-local` template runs a `bash` script and, on Windows, routes it through Git Bash. This toolchain already mandates Bun and targets Windows, so the launcher uses `process.platform` for the OS, `fetch` for the engine download, and `Bun.spawn` for the run — no `bash`, no Git Bash dependency. All `.vscode` debug files merge additively into any config you already have.
+
+## Automated setup
+
+`init` scaffolds the `.vscode` debug files, but two steps touch your own project files and so are left to a dedicated command:
+
+```
+bunx @defold-typescript/cli setup-debug
+```
+
+`setup-debug` is idempotent and does three things `init` cannot:
+
+- Adds the `lldebugger` library dependency to `game.project` (at the next free `dependencies#N` index, skipped if already present).
+- Writes the ambient `src/lldebugger.debug.d.ts` (the `@noResolution declare module`) alongside the entry-script edit, regenerated whole and skipped when already current.
+- Injects the gated `lldebugger.start()` bootstrap into your entry script inside a managed `BEGIN`/`END` block. A re-run refreshes the block if its wording drifted and is otherwise a no-op; a legacy single-marker block from an older version is upgraded in place. The block is kept in exactly one script: any stale managed block in another `src/` script is stripped on each run.
+
+It selects the entry script from the Defold boot path: starting at `game.project`'s `[bootstrap] main_collection`, it walks the referenced `.collection` files (including nested `collection:` references) and collects every `.ts.script` component, mapping each back to its source `.ts`. A single boot-path script is wired automatically; with several, pass `--script <path>` to choose one or run interactively (without `--json`) to pick from a prompt, and `--json` errors naming the candidates. When the boot path reaches no `.ts.script` (or there is no `[bootstrap]`), it falls back to scanning `src/**/*.ts` for a lifecycle-factory call (`defineScript`/`defineGuiScript`/`defineRenderScript`). The plain output names the script added to, any scripts the block was removed from, and the boot-path trace behind the choice; `--json` emits a machine-readable `{command, ok, written, actions, manualSteps, addedTo, removedFrom, bootPath}` result. The same command is available as the `defold-typescript:setup-debug` mise task.
+
+Two steps still require the Defold editor and VS Code and are reported as remaining manual steps:
+
+- Install the *Local Lua Debugger* VS Code extension.
+- Run *Project -> Fetch Libraries* so the `lldebugger` module is downloaded.
+
+The manual walkthrough below remains the fallback and documents exactly what `setup-debug` automates.
+
+## One-time setup
+
+1. **Install the recommended extension.** Open the project in VS Code and accept the *Local Lua Debugger* recommendation (or install `tomblind.local-lua-debugger-vscode` directly).
+
+2. **Add the `lldebugger` library to Defold.** In `game.project`, add the dependency:
+
+   ```
+   https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip
+   ```
+
+   This is our vendored, MIT-licensed snapshot of `ts-defold/defold-lldebugger`, hosted from this repo's releases — that is why the URL differs from the upstream docs. Then run *Project -> Fetch Libraries* in the Defold editor so the `lldebugger` Lua module is available to `require`.
+
+3. **Start the debugger from your entry script.** First create an ambient declaration at `src/lldebugger.debug.d.ts` so TypeScript and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) both know the module without resolving it:
+
+   ```ts
+   /** @noResolution */
+   declare module "lldebugger.debug" {
+     export function start(): void;
+   }
+   ```
+
+   Then add the debugger entry near the top of your main script, inside the managed block, gated so it only runs in a debug build:
+
+   ```ts
+   // defold-typescript:setup-debug BEGIN — managed block, do not edit
+   import * as lldebugger from "lldebugger.debug";
+
+   if (sys.get_engine_info().is_debug) {
+     lldebugger.start();
+   }
+
+   // defold-typescript:setup-debug END
+   ```
+
+   The `@noResolution` ambient declaration must live in a `.d.ts`, not inline in a `.ts` — under `moduleResolution: "Bundler"` an inline `declare module` augmentation that the entry script also imports fails to type-check. With the declaration in the ambient file, TypeScript leaves the module unresolved and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) keeps the literal path, so the emitted Lua is `require("lldebugger.debug")` followed by `lldebugger.start()`. The `is_debug` guard keeps the call inert in release builds, so the entry is safe to leave in shipped code — it only activates in a debug build with the debugger attached. `setup-debug` writes both files for you; the `BEGIN`/`END` sentinels let a re-run refresh the block if its wording changes.
+
+## Launching a debug session
+
+The launcher runs whatever already sits under `build/`; it does **not** compile the Defold project itself. The CLI build loop produces both artifacts headlessly — no editor required:
+
+1. Transpile your TypeScript so the `.ts.script` and `.ts.script.map` files are current (`bunx @defold-typescript/cli build`, or keep `watch` running).
+2. Compile the Defold project so `build/default/game.projectc` exists:
+
+   ```sh
+   bunx @defold-typescript/cli defold resolve   # first time / after editing dependencies
+   bunx @defold-typescript/cli defold build      # debug build into build/default
+   ```
+
+   `defold build` runs Defold's headless `bob` tool — see [Getting started](getting-started.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
+3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
+4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
+
+The launcher prefers the native-extension build engine at `build/<platform>/dmengine` when it exists and otherwise downloads a stock engine from `d.defold.com` next to the launcher (`.vscode/dmengine`). The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps that binary out of version control.
+
+### Native-extension runtime libraries
+
+On a build-engine run the launcher checks each supported native extension's declared runtime libraries and warns-and-continues if any are missing — it never fetches them, because no extension has a fetchable source yet. OpenAL on Windows is currently the only declared extension: native-extension builds need `OpenAL32.dll` and `wrap_oal.dll` placed by hand next to the build engine (in `build/x86_64-win32/`). The Defold build server does not ship these runtime DLLs and no Defold-hosted archive serves them, so the launcher cannot fetch them; the copy fix is tracked upstream at [defold/defold#11860](https://github.com/defold/defold/issues/11860). When they are missing on a Windows build-engine run the launcher prints a one-line reminder and continues. macOS and Linux declare no native-extension runtime libraries and resolve OpenAL from the system, so nothing needs placing.
+
+### Building from the editor instead
+
+The CLI build loop above is the primary path and needs no editor. If you prefer, you can still produce `build/default/game.projectc` (and any native-extension engine) by building from the Defold editor before launching from VS Code — the launcher runs whatever is already under `build/` either way.
+
+## See also
+
+- [Script lifecycle](script-lifecycle.md) — typing `self` and the lifecycle hooks you will step through.
+- [Code editor setup](editor-setup.md) — the rest of the scaffolded `.vscode/` config and the watch loop.
+
+# Advanced CLI
+
+This page covers `wall`, the opt-in command for narrowing the API surface of a
+source directory to a single script kind. To *add* a surface for native-extension
+namespaces instead of narrowing one, see [`resolve`](./extensions.md#running-resolve).
+
+## Full surface by default
+
+Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a
+`.gui_script`, and `render.*` only inside a `.render_script`. Every other
+namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
+
+By default `defold-typescript` gives you the **full** `@defold-typescript/types`
+surface everywhere. `init`, `build`, and `watch` never change this: they scaffold
+and build against whatever entrypoint your `tsconfig` names and never add, remove,
+or prune a wall. The full surface never rejects a call the engine would allow, but
+it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall
+at compile time, opt in with `wall`.
+
+## What a wall is
+
+A wall is a composite `tsconfig.json` written into a single-kind source directory
+that narrows `compilerOptions.types` to that kind's subpath:
+
+| Script kind | `types` entrypoint | Namespaces |
+| ----------- | ------------------ | ---------- |
+| `.script` | `@defold-typescript/types/script` | universal only |
+| `.gui_script` | `@defold-typescript/types/gui-script` | universal + `gui` |
+| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
+
+The root `tsconfig.json` references each walled directory and excludes it from the
+root program, so `tsc -b --noEmit` builds every walled directory against only its
+narrowed surface — a `render.*` use inside a gui-walled directory becomes a compile
+error, while the rest of the project stays full-surface.
+
+A directory is **eligible** to be walled only when every `.ts` source in it is one
+kind; a directory mixing kinds cannot be walled, because no single narrowing
+applies. `build` and `watch` never touch walls — they are entirely yours to
+manage.
+
+## Interactive
+
+Run `wall` with no arguments in a terminal:
+
+```sh
+bunx @defold-typescript/cli wall
+```
+
+You get a checkbox of every eligible source directory, pre-checked to the
+directories already walled. Checking an unwalled directory walls it; unchecking a
+walled directory removes its wall. Mixed-kind directories appear disabled, with
+their competing kinds shown as the reason. The final selection **is** the desired
+wall set — the command reconciles the project on disk to exactly what you checked.
+
+## Flags
+
+For agents, CI, and scripted use, pass directories explicitly (a bare `wall` with
+no TTY errors rather than hanging on an unrenderable prompt):
+
+```sh
+# Wall these directories (added to any already walled)
+bunx @defold-typescript/cli wall src/ui src/rendering
+
+# Remove a wall
+bunx @defold-typescript/cli wall --remove src/ui
+
+# List current and eligible walls (writes nothing)
+bunx @defold-typescript/cli wall --list
+bunx @defold-typescript/cli wall --list --json
+```
+
+`--json` emits the resulting `directoryWalls` (and, for `--list`, the `eligible`
+set) for machine consumption. `--json` is machine-driven intent, so a bare
+`wall --json` never opens the interactive menu — pass directories or `--list`.
+
+## Import the factory from the kind subpath
+
+A wall only holds if a walled source imports its lifecycle factory from the **kind
+subpath**, not the main entry:
+
+```ts
+// src/ui/hud.ts — inside a gui wall
+import { defineGuiScript } from "@defold-typescript/types/gui-script"; // correct
+```
+
+Importing the same factory from the main `@defold-typescript/types` entry pulls
+*every* `declare global` namespace (including `render`) into the wall's program and
+silently defeats the narrowing — `render.*` would type-check inside a gui wall:
+
+```ts
+// Wrong: re-introduces the full surface, defeating the wall
+import { defineGuiScript } from "@defold-typescript/types";
+```
+
+The interactive snippets scaffolded by `init` already import from the kind
+subpaths. `build` enforces this: a walled source that imports a lifecycle factory
+from the main entry fails the build before transpile, naming the file and the kind
+subpath it should import from instead. (`watch` does not enforce it yet — its
+session path is a separate slice.)
+
+# Agent runbooks
+
+Harness-neutral procedures for driving `defold-typescript` from an automated
+agent. `defold-typescript` is a CLI published to npm (run with `bunx`) plus a
+types package; it ships no
+harness-specific skill or command assets, so the durable interface for an agent
+is the CLI verbs themselves and their machine-readable `--json` output. Every
+runbook below works from any harness: run the command, read the JSON envelope on
+stdout, gate on `ok`.
+
+Each one-shot command (`init`, `build`, `resolve`) prints a single JSON object
+when given `--json`. The envelope is always one of two shapes:
+
+```json
+{ "command": "<verb>", "ok": true, "written": ["<path>", "..."] }
+```
+
+```json
+{ "command": "<verb>", "ok": false, "error": "<message>" }
+```
+
+The agent branches on `ok`: on `true`, read `written` for the paths the command
+created or updated; on `false`, read `error` for the failure reason. Some verbs
+add fields to the success envelope (noted per runbook), but `command`, `ok`, and
+either `written` or `error` are always present.
+
+## Offline knowledge pack
+
+`@defold-typescript/docs` ships two generated, never-hand-edited files at
+`node_modules/@defold-typescript/docs/`:
+
+- `llms.txt` — a curated index (per [llmstxt.org](https://llmstxt.org/)): one
+  link per guide page and per API namespace.
+- `llms-full.txt` — the whole guide inlined plus a compact
+  `namespace.function(signature)` index of the entire API surface.
+
+`llms-full.txt` is self-contained: an agent in a consumer project that has only
+`node_modules` and the in-project source can read every mechanic and signature
+from this one file — no network, no monorepo checkout. The docs site serves the
+same pair at `/llms.txt` and `/llms-full.txt`. Both are regenerated from the
+guide and the typed API on every docs build and drift-gated, so they never go
+stale against the shipped types.
+
+## Verify against the real API surface
+
+This section governs every runbook below it. Before answering any "how do I…"
+question about a Defold symbol, **confirm the symbol against the installed
+surface** — that it exists, its namespace, and its exact signature. An agent's
+default instinct is wrong here: the Lua-first manuals at defold.com and the
+`ts-defold` (`@ts-defold/types`) lore baked into training both describe surfaces
+that **diverge** from this toolchain's. Never emit a signature from training,
+from `ts-defold`, or from a raw Lua doc without first checking it exists in the
+materialized `.defold-types/` surface or the installed `@defold-typescript/types`
+package. When recollection and the on-disk surface disagree, the surface wins.
+
+### Where the truth lives (reachable-surface map)
+
+In a consumer project an agent can read only these; everything else (the
+generation pipeline, fixtures, monorepo planning docs) is contributor-only and
+absent from an install:
+
+| Location                                                                        | What it holds                                                                                                                            | When it exists                        |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `.defold-types/<surfaceId>/*.d.ts`                                              | the pinned ambient engine surface (e.g. `.defold-types/defold-1.12.4/`)                                                                  | after `build`; gitignored but on disk |
+| `node_modules/@defold-typescript/types/generated/*.d.ts`                        | namespace signatures (`go`, `vmath`, `factory`, …)                                                                                       | always, once installed                |
+| `node_modules/@defold-typescript/types/src/`                                    | the three factories (`lifecycle.ts`) and the narrowing guards (`message-guard.d.ts`, `message-dispatch.d.ts`, `window-event-guard.d.ts`) | always, once installed                |
+| `node_modules/@defold-typescript/docs/guide/*.md`                               | this guide, refreshed on every install                                                                                                   | always, once installed                |
+| `packages/types/generated`, `packages/types/fixtures`, `packages/types/scripts` | generator inputs and outputs — **contributor-only**                                                                                      | only in a clone of this monorepo      |
+
+The installed-guide pointer is the one the `init-agents` managed block writes:
+`node_modules/@defold-typescript/docs/guide/README.md`.
+
+### Confirm a signature
+
+Read the signature from the namespace declaration instead of recalling it. Grep
+the generated `.d.ts` for the function:
+
+```sh
+grep -rn "function create" node_modules/@defold-typescript/types/generated/
+```
+
+Quote what the surface declares as authoritative — for `factory.create` it is
+`factory.create(url, position?, rotation?, properties?, scale?): Hash`. If the
+grep returns nothing, the symbol does not exist on this surface; do not invent
+it.
+
+### Reach upstream Lua docs and convert
+
+Defold's own manuals and API reference are Lua-first. When the mechanic you need
+is only documented there, run the conversion loop: **locate the mechanic** in
+the Lua docs -> **find its namespace** in the generated `.d.ts` -> **confirm the
+signature** as above -> **translate the idioms** to the TypeScript surface.
+
+| Lua idiom                         | TypeScript surface                          |
+| --------------------------------- | ------------------------------------------- |
+| `function init(self) … end`       | `defineScript({ init() { … } })`            |
+| `obj:method(a)`                   | `obj.method(a)` (method form)               |
+| `local x, y = f()` (multi-return) | `const [x, y] = f()` / `LuaMultiReturn`     |
+| `hash("player")`                  | `hash("player")`, or a pre-hashed `Hash` id |
+| `msg.post("#comp", "msg", {})`    | `msg.post("#comp", "msg", {})`              |
+
+### Fetch upstream on demand (gitignored, not a submodule)
+
+When you need the engine's own API data or source, pull it on demand into a
+gitignored path — **do not add a `defold/defold` git submodule**. A submodule is
+a multi-GB tree pinned to one engine SHA that every clone then carries; the API
+data you actually need is the few-hundred-KB `ref-doc.zip` the type generator
+already consumes, cached at `~/.cache/defold-typescript/ref-doc/<version>/`
+(`DEFOLD_TYPESCRIPT_CACHE` overrides the cache root). Read the cached
+`ref-doc.zip` there, or for the rare source-reading case shallow-clone
+`defold/defold` into a gitignored dir. This is a cached download, **not a
+submodule** — the on-demand fetch keeps the repo small.
+
+### The verification loop
+
+Once converted, prove it compiles before handing it back: write the snippet, run
+`build --json`, and on `ok: false` read the `error` span, fix the source, and
+rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
+[script lifecycle](./script-lifecycle.md) page covers which hooks and which
+`self` typing each script kind exposes. On `ok: true` the build envelope adds a
+`warnings` array: it lists any generated `.lua`/`.ts.*` output left without a
+TypeScript source (a deleted or renamed source), each naming the stale file and
+the source to restore. Empty when clean; the build never deletes these for you.
+
+## Scaffold a project
+
+**Goal:** create a new TypeScript surface — either a fresh project, or the
+TypeScript layer added to an existing Defold project.
+
+**Command (fresh project, new folder):**
+
+```sh
+bunx @defold-typescript/cli@latest init my-game --json
+```
+
+**Command (existing Defold project — run inside the folder that holds
+`game.project`):**
+
+```sh
+bunx @defold-typescript/cli@latest init . --json
+```
+
+`init` requires an explicit destination folder — pass a path to create it, or `.`
+for the current folder. There is no implicit current-folder default, so an
+invocation with no path fails fast (`ok: false`) rather than scaffolding into the
+working directory by accident. `init` then detects whether a `game.project` is
+already present at the destination and either scaffolds a whole new project or
+adds the TypeScript surface alongside the existing one.
+
+**Returns:**
+
+```json
+{ "command": "init", "ok": true, "written": ["tsconfig.json", "src/main.ts", "..."] }
+```
+
+On failure:
+
+```json
+{ "command": "init", "ok": false, "error": "<message>" }
+```
+
+**Reading `ok`:** if `ok` is `true`, the scaffold succeeded and `written` lists
+every file created or modified — use it to know what to open next. If `ok` is
+`false`, stop and surface `error`; nothing was scaffolded.
+
+## Install the agent contract
+
+**Goal:** drop an agent contract at the project root so any harness (or human)
+opening the repo finds the conventions and a pointer to the installed guide.
+
+**Command:**
+
+```sh
+bunx @defold-typescript/cli@latest init-agents . --json
+```
+
+Like `init`, `init-agents` requires an explicit destination — pass a path or `.`
+for the current folder; a missing path fails fast (`ok: false`). This writes two files. `AGENTS.md` carries a managed block delimited by HTML
+comment markers; `CLAUDE.md` is the single line `@AGENTS.md`, re-exporting it.
+Only the content **between** the markers is ever rewritten, so any notes you add
+above or below the block survive re-runs untouched. If `AGENTS.md` already exists
+without the markers, the block is appended after one blank line and your prior
+content is left intact; a `CLAUDE.md` that already equals `@AGENTS.md` is left
+byte-for-byte unchanged. The block is versionless — its guide pointer resolves to
+`node_modules/@defold-typescript/docs/guide/README.md`, which the install
+swaps under the same path — so the verb is safe to re-run any time.
+
+**Returns:**
+
+```json
+{ "command": "init-agents", "ok": true, "written": ["AGENTS.md", "CLAUDE.md"] }
+```
+
+On failure:
+
+```json
+{ "command": "init-agents", "ok": false, "error": "<message>" }
+```
+
+**Reading `ok`:** if `ok` is `true`, `written` lists the files touched in order;
+a re-run that changes nothing omits the untouched file. If `ok` is `false`, stop
+and surface `error`; nothing was written.
+
+## Regenerate extension types
+
+**Goal:** refresh the ambient TypeScript surface for native extensions after a
+`game.project` `[dependencies]` change, so extension namespaces stay in sync with
+the declared archives. This automates the workflow described in
+[Typing native extensions](./extensions.md).
+
+**Command (run from the project root, after editing `[dependencies]`):**
+
+```sh
+bunx @defold-typescript/cli resolve --json
+```
+
+`resolve` reads each declared extension's `.script_api`, regenerates the
+gitignored `.defold-types/extensions/` ambient surface, and rewrites its index
+and `package.json` to exactly the declared set.
+
+**Returns** the same one-shot envelope keyed `command: "resolve"`, plus an
+`extensions` array reporting provenance for each resolved dependency:
+
+```json
+{
+  "command": "resolve",
+  "ok": true,
+  "written": [],
+  "materializedSurface": ".defold-types/extensions",
+  "extensions": [
+    {
+      "url": "<archive url>",
+      "provenance": "<cache | download>",
+      "namespaces": ["<namespace>"],
+      "scriptApiCount": 1,
+      "assetOnly": false,
+      "resolvedVersion": "<version>",
+      "pinStatus": "<unpinned | match | drift>"
+    }
+  ]
+}
+```
+
+On failure:
+
+```json
+{ "command": "resolve", "ok": false, "error": "<message>" }
+```
+
+**Reading `ok`:** if `ok` is `true`, the extension surface is current —
+`materializedSurface` is the regenerated surface directory
+(`.defold-types/extensions`), and `extensions` records where each dependency
+came from (`provenance`), how many `.script_api` files it contributed
+(`scriptApiCount`; an `assetOnly` dependency contributes no types), and its pin
+state (`resolvedVersion`/`pinStatus`). The `written` array is always empty for
+`resolve`. If `ok` is `false`, surface `error`; the existing surface is left
+untouched.
+
+## Add a script
+
+**Goal:** add a new gameplay script to a TypeScript Defold project and attach it
+so it runs. There is no `add` verb — the workflow composes ordinary file
+creation with the shipped `build` verb, then a scene-file edit to wire the
+compiled component.
+
+**1. Write the source.** One Defold script per file under `src/`, exporting a
+single lifecycle factory as `default` (never two in one file). The factory
+decides the compiled kind:
+
+| Source factory       | Compiled artifact         | Referenced by                                                  |
+| -------------------- | ------------------------- | -------------------------------------------------------------- |
+| `defineScript`       | `<name>.ts.script`        | a game object (`.go` / `.collection`) as a component           |
+| `defineGuiScript`    | `<name>.ts.gui_script`    | a GUI scene (`.gui`), as its **Script** property               |
+| `defineRenderScript` | `<name>.ts.render_script` | the render pipeline (a `.render` file, set via `game.project`) |
+
+A source that calls no factory emits a plain `<name>.lua` module to `import`
+instead. Which hooks to export (`init`, `update`, `fixed_update`, `on_message`,
+`on_input`, `final`, …) and how `self` is typed are covered in
+[Script lifecycle](./script-lifecycle.md).
+
+**2. Build** (from the project root):
+
+```sh
+bunx @defold-typescript/cli build --json
+```
+
+Or, if a [`watch --json`](#fix-the-lua-output) is already running, just save the
+file and read its `rebuild` event instead of invoking `build`.
+
+**Returns** the one-shot envelope keyed `command: "build"`, plus the build
+context fields:
+
+```json
+{
+  "command": "build",
+  "ok": true,
+  "written": ["src/<name>.ts.script", "..."],
+  "defoldVersion": "<version>",
+  "defoldChannel": "<stable | beta | alpha>",
+  "apiSurface": "<surface id>",
+  "materializedSurface": "<path | null>"
+}
+```
+
+On failure:
+
+```json
+{ "command": "build", "ok": false, "error": "<message>" }
+```
+
+**Reading `ok`:** if `ok` is `true`, the script transpiled — `written` lists the
+emitted artifact (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to
+attach next; `defoldVersion` and `apiSurface` record which API surface it was
+built against; `defoldChannel` records the resolved release channel (`stable`
+unless pinned or passed via `--channel`; it does not yet change which surface is
+fetched). If `ok` is `false`, the build failed — surface `error` and follow
+[Fix the Lua output](#fix-the-lua-output).
+
+**What `build` writes.** Each `.ts` source under `src/` produces exactly one
+output in the Defold project tree — a script component or a `<name>.lua` module,
+per the table above. `import` is rewritten to `require("<module>")` resolving
+against the emitted `.lua`, so a shared module must be built for its require to
+resolve at runtime. Two runtime modules are synthesized at the output root on
+demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
+`Object.keys` or spread) and `defold_typescript_timers.lua` (when timers are
+used).
+
+Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
+produces the Lua *content* in memory; the CLI writes the *files*, choosing the
+`.ts.script` / `.ts.gui_script` / `.ts.render_script` / `.lua` name and location.
+TSTL never touches disk — that is why the outputs carry Defold-correct extensions
+instead of plain `.lua`. Treat the `--json` `written` array as the authoritative
+list of what landed; do not infer paths.
+
+**3. Attach the compiled script.** Building only produces the artifact; nothing
+runs until a scene references it as a component. Scene files (`.go`,
+`.collection`, `.gui`, `.render`) reference the **compiled** artifact, never the
+`.ts` source. A game object references a `.ts.script` through a `components { … }`
+entry naming its project-root-absolute path:
+
+```
+components {
+  id: "player"
+  component: "/src/player.ts.script"
+}
+```
+
+In a standalone `.go` the block appears verbatim. When the game object is
+embedded in a `.collection`, Defold stores the same block as an escaped string
+inside an `embedded_instances { data: "…" }` entry — the form to write when
+editing the file directly. The platformer example shows this in
+[`game/player.collection`](../examples/platformer/game/player.collection):
+
+```
+embedded_instances {
+  id: "player"
+  data: "components {\n"
+  "  id: \"player\"\n"
+  "  component: \"/src/player.ts.script\"\n"
+  ...
+  "}\n"
+  ...
+}
+```
+
+A `.ts.gui_script` is referenced by a `.gui` scene's **Script** property and a
+`.ts.render_script` by the render pipeline, the same compiled-artifact rule.
+
+**4. Verify the attachment.** Two checks confirm the script is wired in:
+
+- Grep the scene files for the compiled name:
+
+  ```sh
+  grep -rl "player.ts.script" --include="*.go" --include="*.collection" --include="*.gui" .
+  ```
+
+  A hit means a scene references it; no hit means it is orphaned and will not
+  run.
+
+- Defold compiles only **reachable** resources, so after a Defold build
+  (the CLI's `defold build` subcommand) an attached script produces `build/default/src/player.ts.scriptc`
+  — the path mirrors the source — while an orphaned script never appears under
+  `build/default/` at all. (The `_generated_*` artifacts there are inlined or
+  asset-derived resources — embedded game objects, components, textures — never
+  referenced script files, which keep their source path.)
+
+## Narrow engine callback payloads
+
+**Goal:** type an engine callback's untyped payload without hand-rolling `typeof`/`in`/`as`.
+
+**Rule for clankers:** when an engine callback hands back an untyped or `unknown`
+payload that is discriminated by a *separate* id/event argument, reach for the
+**provided declaration-only guard** before reaching for `typeof`/`in`/`as`.
+TypeScript cannot correlate two independent parameters, and Defold's ids/event
+constants are pre-hashed `Hash` values or branded numbers — neither works as a
+discriminated-union tag. Each guard below re-introduces the discriminant at the
+use site. They are all **declaration-only**: the transpiler lowers each call to
+its runtime comparison, so there is no runtime Lua symbol and **no import to
+add**.
+
+`on_message` — narrow one message with `isMessage`, or route many with `onMessage`:
+
+```ts
+export default defineScript({
+  on_message(self, message_id, message) {
+    if (isMessage(message_id, message, "contact_point_response")) {
+      // message narrowed to the contact_point_response payload — no cast.
+      print(message.distance);
+    }
+  },
+});
+```
+
+`window.set_listener` — narrow the callback's `data` with `isWindowEvent`:
+
+```ts
+window.set_listener((self, event, data) => {
+  if (isWindowEvent(event, data, window.WINDOW_EVENT_RESIZED)) {
+    // data narrowed to { width: number; height: number } — no cast.
+    print(data.width, data.height);
+  }
+});
+```
+
+An unknown id/event constant is a compile error, so the guard also catches typos.
+The full narrowing reference, including `onMessage`'s multi-message dispatcher,
+lives in [Typed messages](./messages.md#receiving-messages-with-type-narrowing)
+and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listener-hands-event-and-data-as-separate-params).
+
+## Fix the Lua output
+
+**Goal:** recover from a transpile failure reported by `build` or `watch`.
+
+**Command (re-run after each source fix):**
+
+```sh
+bunx @defold-typescript/cli build --json
+```
+
+On a transpile failure the one-shot `build --json` envelope carries the message:
+
+```json
+{ "command": "build", "ok": false, "error": "<message>" }
+```
+
+Under a long-lived `watch --json`, the same failure arrives as an NDJSON event on
+stdout (one JSON object per line) keyed `command: "watch"`:
+
+```json
+{ "command": "watch", "event": "rebuild", "ok": false, "error": "<message>" }
+```
+
+The first build emits `event: "build"`; each later rebuild emits
+`event: "rebuild"`. `build` and the transpile-diagnostics pass share one
+diagnostic run, so the `error` names the offending source span.
+
+**Reading `ok`:** while `ok` is `false`, read `error` for the failing span,
+then fix the source and rebuild. Two pages route the fix:
+[TypeScript gotchas](./typescript-gotchas.md) for the runtime-semantics traps
+that compile clean but surprise under Lua, and
+[Transpile diagnostics](./transpile-diagnostics.md) for what the diagnostic pass
+surfaces. Repeat until `ok` is `true`, then read `written` as in
+[Add a script](#add-a-script).
+
+## Combine components on a game object
+
+**Goal:** put several components — scripts, a sprite, a collision object — on one
+game object and let them cooperate.
+
+One `.go` (or an `embedded_instances` block inside a `.collection`) lists each
+component under its own `id`. A script reaches a *sibling* component on the same
+object by that `#`-prefixed id — no path is needed because they share the object.
+The platformer's [`game/player.collection`](../examples/platformer/game/player.collection)
+embeds the player script next to its sprite and collision object exactly this
+way; the [Add a script](#add-a-script) runbook shows the `embedded_instances`
+form to write when editing the scene file directly.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  on_input(self, action_id) {
+    if (action_id == hash("jump")) {
+      // "#" addresses a sibling component on this same game object.
+      msg.post("#animator", "play_animation", { id: hash("jump") });
+    }
+  },
+});
+```
+
+Confirm each id names a real component and the snippet builds — see
+[Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Spawn objects with a factory
+
+**Goal:** create new game objects at runtime from a prototype.
+
+Add a `.factory` component to a game object and point it at the prototype `.go`.
+At runtime, `factory.create(url, position?, rotation?, properties?, scale?)`
+returns the spawned object's id as a `Hash`. The fourth argument, `properties`,
+seeds the new script's `self` before its `init` runs, so each spawned instance
+can start with its own state.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    // properties (4th arg) seed the spawned script's self before its init runs.
+    const enemy = factory.create("#enemyfactory", undefined, undefined, {
+      health: 100,
+    });
+    return { lastSpawned: enemy };
+  },
+});
+```
+
+Confirm `factory.create` against
+`node_modules/@defold-typescript/types/generated/factory.d.ts` and build the
+snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Spawn a hierarchy with a collection factory
+
+**Goal:** spawn a whole tree of game objects in one call.
+
+A `.collectionfactory` component points at a `.collection`. Unlike `factory`,
+`collectionfactory.create(url, position?, rotation?, properties?, scale?)` returns
+a `LuaMap<Hash, Hash>` mapping each prototype id in the collection to the runtime
+id it was spawned as. Read one spawned object out of the map with
+`.get(prototypeId)`, keyed by the `/`-prefixed path the collection gives it.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    const ids = collectionfactory.create("#levelfactory");
+    // Read one spawned object out of the map by its prototype id.
+    const player = ids.get(hash("/player"));
+    return { player };
+  },
+});
+```
+
+Confirm `collectionfactory.create` against
+`node_modules/@defold-typescript/types/generated/collectionfactory.d.ts` and build
+the snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Pass messages between components
+
+**Goal:** send a message from one component to another and receive it typed.
+
+`msg.post(receiver, message_id, message?)` addresses the receiver by a URL
+string. Two forms cover most cases: `"#component"` reaches a sibling component on
+the *same* game object, and `"/object#component"` reaches a named component on a
+*different* object. The receiver handles it in `on_message`; to narrow the
+untyped payload by `message_id` without `typeof`/`as`, reuse the guard from
+[Narrow engine callback payloads](#narrow-engine-callback-payloads) rather than
+re-deriving it here.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  update(self) {
+    // "#…" → sibling on this object; "/path#…" → a component on another object.
+    msg.post("#health", "damage", { amount: 10 });
+    msg.post("/enemy#ai", "alert");
+  },
+});
+```
+
+Confirm each address resolves and the snippet builds — see
+[Verify against the real API surface](#verify-against-the-real-api-surface).
+
+## Address an object by URL
+
+**Goal:** pick the right URL form for every `msg.post` / `go.get` / `go.set` /
+`msg.url` call, and know when the `socket:` prefix is required.
+
+A Defold URL is `[socket:][path][#fragment]` — the first part is optional. Inside
+a single world (everything in your bootstrap collection) address by relative id,
+absolute path, or sibling component, with **no** `socket:`:
+
+- `"camera"` — a sibling instance by id, resolved relative to the current component.
+- `"/camera"` — the same instance by id, absolute from the current world's root.
+- `"#health"` — a sibling component on the *same* game object.
+- `"/enemy#ai"` — a named component on a different object in the same world.
+
+The `socket:` segment is reserved for crossing into a **collection-proxy-loaded
+world**: `msg.post("level_a:/door#sensor", "open")` reaches `door#sensor` in the
+collection whose `Name` property is `level_a`. That value is the *target*
+collection's `Name`, not the proxy component's id — and a collection's `Name` is
+a field distinct from its folder, so a bare `"main:…"` copied from a Lua example
+is fragile (it assumes your bootstrap collection happens to be named `main`).
+
+The two-arg `msg.url(socket, path, fragment)` call is a runtime error — only
+`msg.url()`, `msg.url(urlstring)`, and the all-required three-arg form are
+supported. The tightened overloads in `msg-overloads.d.ts` reject the two-arg
+form at compile time, so the typings are the warning.
+
+Confirm every address resolves and the snippet builds — see
+[Verify against the real API surface](#verify-against-the-real-api-surface). For
+the full address grammar and the cross-world proxy case, follow up with the
+[TypeScript gotchas URL addressing entry](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds).
+
+## Where script state lives
+
+**Goal:** decide whether a piece of mutable state belongs on `self` or in a
+module.
+
+Per-instance state belongs on the typed `self`: `init`'s returned object is
+copied onto `self` for *that* component instance, so two objects running the same
+script keep independent values. A module-level `let`/`const` behaves differently,
+and the build shows how — this source:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+// Module-level: one value, not per-instance.
+let spawnCount = 0;
+
+export default defineScript({
+  init() {
+    // Per-instance: copied onto this component's self.
+    return { health: 100 };
+  },
+  update(self) {
+    self.health -= 1;
+    spawnCount += 1;
+  },
+});
+```
+
+compiles `spawnCount` to a single Lua **module local** evaluated once, while
+`health` is assigned onto each instance's `self`:
+
+```lua
+local spawnCount = 0
+function init(self)
+    -- self.health is set per instance
+end
+function update(____self)
+    ____self.health = ____self.health - 1
+    spawnCount = spawnCount + 1
+end
+```
+
+Because Defold loads each module once via `require` and caches it, that module
+local is **shared by every component instance that requires the module** — it is
+not per-instance state. Reach for a module local only for constants or a
+deliberately-shared singleton; keep anything each instance must own its own copy
+of on `self`. The full `self` typing model — how `init` infers it and how
+`properties` seed it — is in [Script lifecycle](./script-lifecycle.md).
+
+Above a module local sits one wider tier: a **VM-global** declared with `declare
+global`. The declaration emits no Lua; a use site lowers to a bare Lua global
+shared across the entire VM — no `require`, no module scope:
+
+```lua
+function ____exports.bump()
+    FOO = FOO + 1
+    return FOO
+end
+```
+
+No `local FOO` and no `____exports.` prefix — `FOO` is raw VM-wide state, broader
+than a cached module local. Reach for it only for genuine engine/Lua globals;
+prefer a module singleton for app state. The full four-tier treatment — per-instance
+`self`, shared module local, cross-script module singleton, and VM-global — is in
+[Where script state lives](./script-state.md).
+
+# Pinning the Defold API version
+
+`@defold-typescript/types` ships the **latest/current** Defold API surface
+pre-baked, and generates older versioned surfaces on demand. The default import
+is always the current surface; opting into an older version generates that
+version's surface on your machine and materializes it locally. Pinning a surface
+makes the TypeScript compiler reject calls to engine functions that do not exist
+in the Defold version you target, instead of letting them through to fail at
+runtime.
+
+## The default stays current
+
+If you do nothing, you get the current surface — the same behaviour as before
+versioning existed:
+
+```jsonc
+// tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["@defold-typescript/types"]
+  }
+}
+```
+
+This is unchanged for existing projects. The default surface tracks the latest
+generated API.
+
+## Opting into a pinned surface
+
+You do not pin a surface through a package subpath export. Versioned surfaces
+are **not** shipped pre-baked in the npm package — only the current-stable
+surface is. A non-current version's `.d.ts` are generated on your machine the
+moment you pin it (from that version's Defold reference docs) and
+**materialized** into a project-local `.defold-types/<version>/` faux `@types`
+package that your `tsconfig.json` references.
+
+You select the version with the `package.json` pin described below; the
+toolchain resolves it, generates the matching surface, and repoints
+`tsconfig.json` at the materialized package. A function that exists only on the
+current surface is then a compile error against an older pin, while functions
+shared across versions continue to type-check.
+
+## Recording the project's Defold version
+
+A Defold project pins a fixed engine version, but that version is not stored
+anywhere in the project tree — not in `game.project`, not in build artifacts,
+not in editor metadata. You declare it in `package.json` under the
+`defold-typescript` namespace:
+
+```jsonc
+// package.json
+{
+  "defold-typescript": { "defold-version": "1.12.4" }
+}
+```
+
+`bunx @defold-typescript/cli@latest init <folder>` seeds this key with the current-stable version when it
+creates or augments a `package.json`, and leaves an existing pin untouched.
+
+The active version resolves with this precedence:
+
+1. `--defold-version <version>` on the command line (highest),
+2. the `package.json` pin,
+3. the **installed Defold editor's `version`** (lowest-precedence fallback),
+4. the current-stable default.
+
+The installed-editor detection reads the editor bundle's `config` file from
+its conventional per-OS location (for example
+`/Applications/Defold.app/Contents/Resources/config` on macOS,
+`~/Defold/config` on Linux, `%LOCALAPPDATA%\Defold\config` or
+`%PROGRAMFILES%\Defold\config` on Windows), parses the `version = ...` line,
+and uses that value when no flag or pin is present. The first candidate that
+parses wins, and an unknown platform — or no editor installed — reports
+`detected: null` and falls through to the current-stable default. The exact
+bundle paths are pinned for live verification against a real install; the
+probe mechanics (per-OS candidate order, parse, hit/miss) are unit-tested
+synthetically and the production reader is an injectable seam.
+
+The resolved version is reported in `--json` output as `defoldVersion`, and the
+surface it maps to is reported alongside it as `apiSurface`. The current-stable
+version maps to the default surface (`apiSurface: "defold-1.12.4"`); a version with a
+registered reference-doc target maps to `apiSurface: "defold-<version>"` (for
+example `defold-1.9.8`); a version with no matching target reports
+`apiSurface: null`. The source that resolved the version is reported as
+`defoldVersionSource` (`flag` / `pin` / `detected` / `default`), so an agent
+script can tell whether the version came from the command line, the
+`package.json` pin, the installed editor, or the hardcoded default.
+
+## Materializing the pinned surface
+
+`bunx @defold-typescript/cli build` does not only report the surface — it **materializes**
+it. The build writes a project-local `.defold-types/<surface>/` directory (a faux
+`@types` package with its own `index.d.ts` and `package.json`), then repoints
+`tsconfig.json` at it so exactly one surface is the active ambient type surface:
+
+```jsonc
+// tsconfig.json (rewritten by build)
+{
+  "compilerOptions": {
+    "typeRoots": [".defold-types"],
+    "types": ["defold-1.9.8"]
+  }
+}
+```
+
+How the surface is produced depends on the resolved version:
+
+- **Current-stable** copies the pre-baked surface that ships in
+  `@defold-typescript/types` into `.defold-types/defold-1.12.4/`. No network access.
+- **A pinned non-current version** is generated **on the fly** from that
+  version's Defold reference docs and written into
+  `.defold-types/<version>/` (for example `.defold-types/defold-1.9.8/`). The
+  reference docs are downloaded once on first use and cached, so later builds
+  are offline. The generated faux package carries a `core-types.d.ts` that
+  re-exports the installed `@defold-typescript/types/core-types`, so its branded
+  engine types stay unified with the ones your code imports rather than minting a
+  nominally distinct copy. It also carries `engine-globals.d.ts` and side-effect imports it from
+  the surface `index.d.ts`, so the engine types (`Vector3`, `Hash`, `Url`, …)
+  are ambient globals — name them with no import, matching the namespace
+  ergonomics (`vmath`, `go`, …).
+
+The `.defold-types/` directory is generated output, so build adds it to the
+project `.gitignore`. The materialized directory is reported in `--json` output
+as `materializedSurface`. Re-running build is idempotent.
+
+The pinned versioned surface is materialized in full — `build` and `watch` never
+narrow it by script kind. Narrowing a directory to one kind is opt-in via the
+`wall` command; see [Advanced CLI](advanced-cli.md) and the per-kind API wall in
+[Script lifecycle](script-lifecycle.md). (Walls today narrow against the
+installed `@defold-typescript/types` subpaths, not the pinned
+`.defold-types/<version>/` surface.)
+
+If a pinned version cannot be generated — an unknown version, or no network on
+first use — the build does **not** fail. It reports `materializedSurface: null`,
+warns on stderr, leaves `tsconfig.json` untouched, and exits `0`; the default
+committed surface stays usable. Having Bun is enough to compile your project.
+
+## Pinning a release channel
+
+A Defold release channel picks which build of the engine the reference docs
+are fetched from. Three channels are supported — `stable` (the default),
+`beta`, and `alpha`. The `stable` channel is the production release line; the
+`beta` and `alpha` channels are experimental pre-release surfaces that track
+in-development builds and may break at any time. If you do nothing, the
+default stays `stable`; existing projects with no channel pin are unchanged.
+
+You select a channel the same way you select a version — by name — and the
+channel rides the same precedence chain. The `--channel` flag overrides the
+`package.json` pin, and the pin overrides the `stable` default:
+
+1. `--channel <channel>` on the command line (highest),
+2. the `package.json` `defold-typescript.channel` pin,
+3. the `stable` default.
+
+```jsonc
+// package.json
+{
+  "defold-typescript": {
+    "defold-version": "1.12.4",
+    "channel": "stable"
+  }
+}
+```
+
+`bunx @defold-typescript/cli@latest init <folder>` does not seed a `channel` key, so a
+project with no pin behaves exactly as today. The resolved channel is reported
+in `--json` output as `defoldChannel` on `init` and `build`. `init` reports the
+default `stable` without writing the key, so the key stays absent unless you
+pin it yourself.
+
+How the channel affects the doc-source fetch:
+
+- **`stable`** downloads `ref-doc.zip` directly from the pinned `defold-version`'s
+  GitHub release assets (`releases/download/<version>/ref-doc.zip`) — no
+  `engine/share/` path. This is the only path that touches the GitHub release
+  archive directly.
+- **`beta`** and **`alpha`** resolve the channel head via
+  `d.defold.com/<channel>/info.json` and download
+  `archive/<channel>/<sha1>/engine/share/ref-doc.zip`, cached channel-scoped.
+  Each channel's cache directory is independent, so switching channels does
+  not invalidate the `stable` cache.
+
+## Maintainer verification
+
+The public `defold-1.9.8` example target is periodically checked with the
+advisory, network-touching `bun run ref-doc-delta` command. It verifies that the
+live Defold 1.9.8 reference docs still include `label.get_text` and still omit
+`label.set_text`. If the command fails, update the registry target or the example
+delta; do not ignore the drift.
+
+# Typing native extensions
+
+Defold native extensions ship their own Lua API alongside the engine's. When a
+project depends on an extension, `defold-typescript resolve` reads that
+extension's `.script_api` docs and generates an ambient TypeScript namespace for
+it — the same fan-out the built-in engine namespaces (`go`, `vmath`, …) go
+through, applied to whatever extensions your project actually declares. The
+generated surface lands in a project-local, gitignored `.defold-types/` package,
+so extension functions gain autocomplete and `tsc` coverage with no import.
+
+## Declaring an extension
+
+Extensions are declared in `game.project` under `[dependencies]`, one archive
+URL per numbered key — the same INI surface the Defold editor's *Fetch
+Libraries* writes:
+
+```ini
+[project]
+title = My Game
+
+[dependencies]
+dependencies#0 = https://github.com/defold/extension-iap/archive/main.zip
+dependencies#1 = https://github.com/some/asset-pack/archive/main.zip
+```
+
+`resolve` reads every `dependencies#N` URL under `[project]`. A `game.project`
+with no `[project]` section is an error; a `[project]` with no `dependencies#N`
+keys reports `no extension dependencies declared` and exits cleanly.
+
+## Running `resolve`
+
+```sh
+bunx @defold-typescript/cli resolve        # defaults to the current directory
+bunx @defold-typescript/cli resolve path/to/project
+```
+
+For each declared dependency, `resolve`:
+
+1. downloads and caches the archive (later runs are offline),
+2. locates every `.script_api` doc inside it,
+3. emits one ambient namespace per doc into
+   `.defold-types/extensions/<namespace>.d.ts`,
+4. writes an index barrel and a `package.json` for that sibling surface, and
+5. additively appends `"extensions"` to `tsconfig.json`
+   `compilerOptions.types`, so it coexists with the pinned engine surface.
+
+The human-readable output lists each resolved extension and where the surface
+was written:
+
+```
+  iap <- https://github.com/defold/extension-iap/archive/main.zip (1 .script_api, download)
+  <other.url>: asset-only, skipped
+defold-typescript resolve: wrote .defold-types/extensions
+```
+
+The `.defold-types/` directory is generated output and is gitignored. Re-run
+`resolve` whenever you change `[dependencies]`; it reconciles the sibling
+surface to exactly the extensions currently declared.
+
+A running [`watch`](./getting-started.md#iterate) automates that re-run: every
+`game.project` save re-resolves the surface, so editing `[dependencies]` while
+`watch` is up refreshes `.defold-types/extensions/` with no extra command.
+`watch` does not bootstrap the surface, though — it only reconciles on save, so
+run `resolve` once first to materialize the initial extension types.
+
+## Consuming the generated namespace
+
+Each emitted namespace is **ambient**, so you call it with no import — exactly
+like the engine namespaces:
+
+```ts
+// iap is ambient — resolved through the .defold-types/extensions surface.
+iap.set_listener((self, transaction, error) => {
+  // transaction and error are typed from the extension's .script_api
+});
+```
+
+`tsc` picks the surface up through the `"extensions"` entry in
+`compilerOptions.types`.
+
+## Asset-only dependencies
+
+Not every dependency ships a `.script_api` — asset packs, fonts, and other
+content-only archives carry no API. These are **reported and skipped**, never
+treated as a failure:
+
+```
+  https://github.com/some/asset-pack/archive/main.zip: asset-only, skipped
+```
+
+`resolve` still exits `0` and materializes the surface for the extensions that
+do carry docs.
+
+## Machine-readable output
+
+`resolve --json` emits one object describing the run. It reports
+`materializedSurface` (the written directory, or `null` when nothing was
+materialized) and, per extension, the `url`, the generated `namespaces`, the
+`scriptApiCount`, the `provenance` (`cache` or `download`), whether it was
+`assetOnly`, the `resolvedVersion` (sha256 digest of the resolved archive
+bytes), — when the project pins that url — the `pinnedVersion`, and the
+`pinStatus` (`unpinned` / `match` / `drift`):
+
+```jsonc
+{
+  "command": "resolve",
+  "ok": true,
+  "written": [],
+  "materializedSurface": ".defold-types/extensions",
+  "extensions": [
+    {
+      "url": "https://github.com/defold/extension-iap/archive/main.zip",
+      "namespaces": ["iap"],
+      "scriptApiCount": 1,
+      "provenance": "download",
+      "assetOnly": false,
+      "resolvedVersion": "sha256:ab12…",
+      "pinnedVersion": "sha256:ab12…",
+      "pinStatus": "match"
+    }
+  ]
+}
+```
+
+A `pinnedVersion` field is only present when the project's `package.json`
+records a pin for that `url`. The `pinStatus` is always present: `unpinned`
+means the project has no committed pin, `match` means the pin equals
+`resolvedVersion`, and `drift` means the pin exists but no longer matches
+the resolved archive bytes — the explicit upgrade signal.
+
+## Pinning extension versions
+
+A declared `dependencies#N` URL is the only identity `resolve` reads, and it
+is often a **moving** ref (`.../archive/master.zip`) — the same URL can
+resolve to different bytes over time. The reproducible identity of *what was
+actually resolved* is therefore the sha256 digest of the resolved archive
+bytes, not a URL segment. `resolve` records that digest as the extension's
+version and seeds it into the project's `package.json` when absent
+(never clobbering an existing pin):
+
+```jsonc
+"defold-typescript": {
+  "extensions": {
+    "https://github.com/defold/extension-iap/archive/main.zip": "sha256:ab12…"
+  }
+}
+```
+
+A committed pin is human-owned intent. When the URL later yields different
+bytes, the freshly-resolved digest no longer matches the pinned one — the
+`resolvedVersion` and `pinnedVersion` in `--json` differ, and the
+`pinStatus` reports `drift`. The visible signal is the upgrade prompt; the
+enforcement is two layered knobs:
+
+- The **human-readable** `resolve` (no flag) **warns on drift** by default,
+  writing one line per drifted url to `stderr` (e.g. `pin drift for
+  https://...: sha256:pinned -> sha256:fresh`). Exit code is `0` — drift
+  still surfaces loudly on a developer's machine without breaking
+  non-frozen scripted runs.
+- The opt-in `--frozen` flag treats the committed pin set as a lockfile: it
+  **exits non-zero on drift** (so CI gates the upgrade) and **writes
+  nothing** — no absent-pin seeding, no clobbering. An unpinned extension
+  under `--frozen` passes and stays unseeded; failing on unpinned is a
+  stricter mode and out of scope for this knob.
+
+The default behavior — seed absent pins, never clobber, exit `0` — is
+unchanged. `resolve` materializes the surface for the drifted extensions
+either way; only the `package.json` write and the exit code are gated.
+
+## Cache location
+
+Downloaded extension archives are cached so repeated `resolve` runs stay
+offline. The cache lives at
+`$XDG_CACHE_HOME/defold-typescript/extensions` (defaulting to
+`~/.cache/defold-typescript/extensions`). Set `DEFOLD_TYPESCRIPT_CACHE` to
+override the root — the archives then land under
+`$DEFOLD_TYPESCRIPT_CACHE/extensions`.
 
 # TypeScript gotchas
 

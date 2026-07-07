@@ -1,6 +1,9 @@
 import { htmlToDocText } from "@defold-typescript/types";
 import type { ApiPage } from "../lib/api-surface";
 import { withBase } from "../lib/base";
+import type { GuidePage } from "../lib/guide";
+import { groupGuidePages } from "../lib/guide-groups";
+import { humanize } from "../lib/nav";
 import {
   apiPageCardDescription,
   groupApiIndexPages,
@@ -107,6 +110,49 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
           <CardGrid pages={enginePages} />
         </>
       ) : null}
+    </article>
+  );
+}
+
+// Landing-card title precedence mirrors the sidebar: the toc-title override,
+// then the body H1, then a humanized slug for a page that carries neither.
+function guideCardTitle(page: GuidePage): string {
+  return page.tocTitle ?? page.title ?? humanize(page.slug);
+}
+
+// The `/guides` landing page. Renders the four GUIDE_GROUPS as sections — the
+// same shared definition that drives the sidebar subgroups, so the two cannot
+// drift. A card with no derivable summary renders title-only (the CardGrid
+// conditional-description precedent).
+export function GuidesIndex({ pages }: { pages: GuidePage[] }) {
+  const groups = groupGuidePages(pages);
+  return (
+    <article class="prose">
+      <h1>Guides</h1>
+      <p>Learn defold-typescript in order — core concepts first, sharp edges last.</p>
+      {groups.map((group) => (
+        <section>
+          <h2>{group.label}</h2>
+          <p>{group.subtitle}</p>
+          <ul class="not-prose mt-4 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
+            {group.pages.map((page) => (
+              <li>
+                <a
+                  href={withBase(page.route)}
+                  class="block rounded-lg border border-border bg-surface px-4 py-3 transition hover:border-border-strong hover:bg-surface-2"
+                >
+                  <span class="text-[15px] font-semibold text-accent">{guideCardTitle(page)}</span>
+                  {page.summary ? (
+                    <span class="mt-1 block text-sm text-text-muted">
+                      {page.summary.replace(/`/g, "")}
+                    </span>
+                  ) : null}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
     </article>
   );
 }
