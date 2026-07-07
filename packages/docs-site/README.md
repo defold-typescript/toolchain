@@ -25,7 +25,8 @@ bun --filter @defold-typescript/docs-site run dev
 bun --filter @defold-typescript/docs-site run build
 ```
 
-`bun run build` first calls `scripts/build-search-index.ts` to materialise the prose
+`bun run build` first calls `scripts/build-font-fallbacks.ts` to regenerate the
+metric-matched fallback faces, then `scripts/build-search-index.ts` to materialise the prose
 search index, then `scripts/build-symbol-index.ts`, and finally the two-pass Vite build
 (`--mode client` + SSG). The static site is prerendered to `dist/`, one HTML file per
 guide page (`dist/getting-started.html`, `dist/index.html` from the guide `README.md`,
@@ -100,3 +101,7 @@ CI automation for deploys is a later slice.
   tokens, and Shiki theme variables.
 - `scripts/build-search-index.ts` / `scripts/build-symbol-index.ts` — materialise the
   prose search index and the API symbol index the `build` script consumes.
+- `scripts/build-font-fallbacks.ts` — reads the bundled Fontsource `.woff2` files and
+  emits per-weight metric-matched fallback faces + the `--font-*` token stacks to
+  `app/generated/` (consumed by `app/styles.css` and `app/routes/_renderer.tsx`),
+  eliminating font-load layout shift. Regenerate with `bun run build-font-fallbacks`.

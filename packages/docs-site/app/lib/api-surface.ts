@@ -32,8 +32,14 @@ export interface LibraryMeta {
   author: string;
   /** Link to the author's upstream repo (the NOTICE credit URL); `""` when the dir has no credit. */
   authorUrl: string;
-  /** The pinned-commit tree URL (`<repo>/tree/<commit>`). */
-  commitUrl: string;
+  /** The pinned commit sha — abbreviated for display, full inside the link. */
+  commit: string;
+  /**
+   * Link to the exact `.d.ts` the types were generated from, at the pinned
+   * commit (`<repo>/blob/<commit>/<path>`); falls back to the repo tree at the
+   * commit (`<repo>/tree/<commit>`) when the upstream file path is unknown.
+   */
+  sourceUrl: string;
   /** The vendored `import * as <alias> from '<module>'` string. */
   importString: string;
   /** SPDX-style license id from the classification `source`. */

@@ -18,38 +18,17 @@
 @import "@fontsource-variable/spline-sans-mono/index.css";
 
 /*
- * Metric-matched fallback faces. `font-display: swap` paints the local
- * fallback first and swaps to the web font once it loads; if the fallback's
- * line metrics differ, that swap reflows the text (a per-navigation shift).
- * These faces remap a local system font (Arial / Courier New) onto the web
- * font's ascent/descent/advance via overrides, so the swap changes glyph
- * shapes but never layout. Overrides are derived from @capsizecss/metrics
- * (web-font xWidthAvg / fallback xWidthAvg, then ascent ÷ (em × size-adjust)).
+ * Metric-matched fallback faces + the --font-* token stacks, generated per
+ * web-font weight by scripts/build-font-fallbacks.ts. `font-display: swap`
+ * paints the local fallback first and swaps to the web font once it loads; if
+ * the fallback's metrics differ, that swap reflows the text (a per-navigation
+ * shift). The generated faces remap a local system font (Arial / Courier New)
+ * onto each weight's real ascent/descent/advance via overrides, so the swap
+ * changes glyph shapes but never layout. Keep this in sync with the inline
+ * <head> tokens in app/routes/_renderer.tsx, which import the same generator
+ * output (app/generated/fonts.ts).
  */
-@font-face {
-  font-family: "Barlow Fallback";
-  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
-  size-adjust: 96.68%;
-  ascent-override: 103.43%;
-  descent-override: 20.69%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Ubuntu Fallback";
-  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
-  size-adjust: 102.06%;
-  ascent-override: 91.32%;
-  descent-override: 18.52%;
-  line-gap-override: 2.74%;
-}
-@font-face {
-  font-family: "Spline Sans Mono Fallback";
-  src: local("Courier New"), local("Courier");
-  size-adjust: 100%;
-  ascent-override: 96.37%;
-  descent-override: 23.65%;
-  line-gap-override: 0%;
-}
+@import "./generated/fonts.css";
 
 /*
  * Design tokens — the Claude docs look is calm, low-contrast, with a hair of
@@ -61,14 +40,9 @@
  * `rounded-*` utilities automatically.
  */
 @theme {
-  --font-sans:
-    "Barlow", "Barlow Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-heading:
-    "Ubuntu", "Ubuntu Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:
-    "Spline Sans Mono Variable", "Spline Sans Mono Fallback", ui-monospace,
-    SFMono-Regular, Menlo, monospace;
-
+  /* --font-sans / --font-heading / --font-mono are defined in the @theme block
+   * of ./generated/fonts.css (imported above) so the fallback faces and their
+   * token stacks share one source. */
   --color-bg: #ffffff;
   --color-surface: #f7f7f8;
   --color-surface-2: #f0f0f2;
@@ -113,6 +87,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
+    /* Reserve the scrollbar gutter so the fixed-width ::-webkit-scrollbar
+     * toggling between short and long pages never shifts the layout. Mirrors
+     * the rule in critical.css so it holds from the first paint. */
+    scrollbar-gutter: stable;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -242,7 +220,7 @@
   }
 
   .prose h1 {
-    --heading-anchor-bottom: 0.42em;
+    --heading-anchor-line: 1.2;
     position: relative;
     font-size: var(--prose-h1-size);
     line-height: 1.2;
@@ -255,7 +233,7 @@
   }
 
   .prose h2 {
-    --heading-anchor-bottom: 0.24em;
+    --heading-anchor-line: 1.3;
     position: relative;
     font-size: var(--prose-h2-size);
     line-height: 1.3;
@@ -269,7 +247,7 @@
   }
 
   .prose h3 {
-    --heading-anchor-bottom: 0.1em;
+    --heading-anchor-line: 1.4;
     position: relative;
     font-size: var(--prose-h3-size);
     line-height: 1.4;
@@ -317,25 +295,29 @@
     color: var(--color-accent);
   }
 
+  /* Hang the permalink icon in the left margin, centered on the heading's FIRST
+     line. The box is one line-height tall (--heading-anchor-line) anchored at
+     top: 0, so a signature heading that wraps to several lines keeps the icon on
+     the top line instead of dropping to the last. left/width and the glyph size
+     are pinned to --prose-h3-size so horizontal placement and icon size stay
+     uniform across h1/h2/h3 regardless of heading font-size. */
   .heading-anchor-icon {
     position: absolute;
-    bottom: var(--heading-anchor-bottom, 0.1em);
-    left: -1.15em;
+    top: 0;
+    left: calc(-1.15 * var(--prose-h3-size));
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1em;
-    height: 1em;
+    width: var(--prose-h3-size);
+    height: calc(var(--heading-anchor-line, 1.4) * 1em);
     opacity: 0;
     color: var(--color-text-faint);
-    font-size: var(--prose-h3-size);
-    line-height: 1;
     transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
   }
 
   .heading-anchor-icon svg {
-    width: 0.85em;
-    height: 0.85em;
+    width: calc(0.85 * var(--prose-h3-size));
+    height: calc(0.85 * var(--prose-h3-size));
   }
 
   .prose :is(h2, h3)[data-current] {
@@ -423,16 +405,22 @@
     border-top-right-radius: 0;
   }
 
-  /* Copy-to-clipboard button, injected per code block by the CodeCopy island.
-     The `.code-body` wrapper owns the block rhythm so the button can pin to the
-     top-right without scrolling along with the code. */
+  /* Copy-to-clipboard button, injected per code block by the CodeCopy island,
+     which wraps each `<pre>` in a `position: relative` `.code-body` so the button
+     pins to the top-right without scrolling with the code. The wrapper must
+     reproduce the exact vertical box the bare `<pre>` had, or hydration reflows
+     the page. The pre keeps its own margin (16.8px, or 0 inside a `.code-block`)
+     and collapses it out through this zero-margin wrapper. The only wrinkle: a
+     wrapper that is a direct prose child otherwise inherits the `.prose > * + *`
+     owl (18.7px), overriding the collapse — so zero it. Do not zero the inner
+     pre: a pre nested in a list yields a wrapper that is not a direct prose
+     child, so it gets no compensating margin and would lose its spacing.
+     Authoritative copy is the unlayered mirror in critical.css (this @layer
+     components rule loses to that file's unlayered owl). */
   .code-body {
     position: relative;
   }
   .prose > .code-body {
-    margin: 1.2em 0;
-  }
-  .code-body > pre {
     margin: 0;
   }
   .code-clip {
@@ -518,8 +506,12 @@
     padding-left: 0;
   }
 
+  /* Symmetric block margin like hr / admonition / code-block. `margin-top` must
+     be non-zero: `.prose blockquote` out-specifies the `.prose > * + *` owl, so
+     a zero top would leave the blockquote butted against the element above it
+     (most visibly after an image, which has no bottom margin of its own). */
   .prose blockquote {
-    margin: 0 0 1.4em;
+    margin: 1.4em 0;
     padding: 0.4em 1em;
     border-left: 3px solid var(--color-border-strong);
     color: var(--color-text-muted);

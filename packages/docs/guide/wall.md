@@ -1,11 +1,11 @@
 ---
-toc-title: Advanced CLI
+toc-title: wall
 ---
-# Advanced CLI
+# Wall
 
 This page covers `wall`, the opt-in command for narrowing the API surface of a
 source directory to a single script kind. To *add* a surface for native-extension
-namespaces instead of narrowing one, see [`resolve`](./extensions.md#running-resolve).
+namespaces instead of narrowing one, see [`resolve`](./resolve.md).
 
 ## Full surface by default
 
@@ -25,10 +25,10 @@ at compile time, opt in with `wall`.
 A wall is a composite `tsconfig.json` written into a single-kind source directory
 that narrows `compilerOptions.types` to that kind's subpath:
 
-| Script kind | `types` entrypoint | Namespaces |
-| ----------- | ------------------ | ---------- |
-| `.script` | `@defold-typescript/types/script` | universal only |
-| `.gui_script` | `@defold-typescript/types/gui-script` | universal + `gui` |
+| Script kind      | `types` entrypoint                       | Namespaces           |
+| ---------------- | ---------------------------------------- | -------------------- |
+| `.script`        | `@defold-typescript/types/script`        | universal only       |
+| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
 | `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
 
 The root `tsconfig.json` references each walled directory and excludes it from the

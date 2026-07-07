@@ -128,7 +128,7 @@ as `materializedSurface`. Re-running build is idempotent.
 
 The pinned versioned surface is materialized in full — `build` and `watch` never
 narrow it by script kind. Narrowing a directory to one kind is opt-in via the
-`wall` command; see [Advanced CLI](advanced-cli.md) and the per-kind API wall in
+`wall` command; see [Wall](wall.md) and the per-kind API wall in
 [Script lifecycle](script-lifecycle.md). (Walls today narrow against the
 installed `@defold-typescript/types` subpaths, not the pinned
 `.defold-types/<version>/` surface.)

@@ -4,7 +4,11 @@ llms-full: false
 ---
 # Build Tetris
 
-Tetris is a great project: one moving thing, one fixed-step clock, one tiny rules engine, no physics. Patterns carry over. You'll build it from scratch: writing TypeScript, compiling it to Lua, then wiring the scene in the editor.
+This tutorial walks you through building a complete game in [Defold](https://defold.com/) with [TypeScript](https://www.typescriptlang.org/): writing `.ts`, compiling it to Lua, and wiring the scene in the editor. You'll see how `defold-typescript` keeps the workflow organized while you write modern, extensible code that's easy to reason about and navigate.
+
+## Game overview
+
+Tetris may look like a small game — one moving object, no physics, a fixed-step clock. Yet writing it in **TypeScript** has real advantages over **Lua**: every call into the Defold API is type-checked, and the entire project is one codebase to navigate and refactor. The patterns you learn here carry over to most other games.
 
 Here’s our table of tetrominoes — the pieces at the heart of the game:
 
@@ -18,15 +22,13 @@ Here’s our table of tetrominoes — the pieces at the heart of the game:
 | J     | 6     | blue   |
 | L     | 7     | orange |
 
-![Finished Tetris board](img/tetris-tutorial.png#max-width=200)
+What the finished game looks like — full source at [`docs/examples/tetris-tutorial/`](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/tetris-tutorial):
 
-> [!NOTE]
-> **Prereqs**: [Defold](https://defold.com/download/), [Bun](https://bun.sh), and an editor such as [VS Code](https://code.visualstudio.com/).
-
-> The final result can be found at: [`docs/examples/tetris-tutorial/`](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/tetris-tutorial).
-
+![Finished Tetris board](img/tetris-tutorial.png#max-width=300)
 
 ## 01 — Scaffold the project
+
+First make sure you have [Defold](https://defold.com/download/) and [Bun](https://bun.sh) installed, plus an editor with TypeScript support. In this tutorial we'll use [VS Code](https://code.visualstudio.com/).
 
 The npm package [`@defold-typescript/cli`](https://www.npmjs.com/package/@defold-typescript/cli) scaffolds a Defold project with TypeScript that compiles to Lua — no engine fork, no runtime to ship.
 
@@ -34,13 +36,32 @@ The npm package [`@defold-typescript/cli`](https://www.npmjs.com/package/@defold
 
 2. **Scaffold the project.** Open **Terminal → New Terminal** in VS Code and run:
 
-   ```bash
-   bunx @defold-typescript/cli@latest init .
-   ```
+    ```bash
+    bunx @defold-typescript/cli@latest init .
+    ```
 
-   > This scaffolds a new Defold project into the current folder — the same as creating one from the Defold start screen. Prefer to start in Defold? Create the project there first, then run the same `init .` inside it: `init` detects the existing `game.project` and just adds the TypeScript surface, leaving your scene untouched.
+    > This scaffolds a new Defold project into the current folder — the same as creating one from the Defold start screen. Prefer to start in Defold? Create the project there first, then run the same `init .` inside it: `init` detects the existing `game.project` and just adds the TypeScript surface, leaving your scene untouched.
 
-3. **Install the dependencies** `init` declared — they power editor IntelliSense, type-checking, and compilation to Lua:
+    `init .` writes a sample `src/main.ts` and a boot `main/main.collection`. Nothing else is generated — you add the game's files as you go:
+
+    ```text
+    tetris/
+    ├─ .vscode/              # VS Code editor settings, snippets, debug launcher
+    ├─ input/
+    │  └─ game.input_binding # empty binding init writes; you add triggers in Step 02
+    ├─ main/
+    │  └─ main.collection    # boot scene init writes
+    ├─ src/
+    │  └─ main.ts            # sample script — you delete it in Step 06
+    ├─ .gitignore            # files Git should not track
+    ├─ biome.json            # Biome config for checking and formatting the project
+    ├─ game.project          # Defold project settings
+    ├─ mise.toml             # tasks for running common commands with `mise run`
+    ├─ package.json          # Bun package manifest and dependencies
+    └─ tsconfig.json         # TypeScript compiler settings
+    ```
+
+3. **Install the dependencies** that the `init` command added to `package.json`. They power editor IntelliSense, type-checking, and compilation to Lua:
 
    ```bash
    bun install
@@ -56,31 +77,24 @@ The npm package [`@defold-typescript/cli`](https://www.npmjs.com/package/@defold
 
 5. **Open the project in Defold:** **File → Open Project…** (or the start screen) → **Open From Disk** → `tetris/game.project`.
 
-**What you'll have:** `watch` runs in VS Code, and Defold opens `game.project`.
-
-`init .` writes a sample `src/main.ts` and a boot `main/main.collection`. Nothing else is generated — you add the game's files as you go:
-
-```text
-tetris/
-├─ .vscode/              # VS Code editor settings, snippets, debug launcher
-├─ input/
-│  └─ game.input_binding # empty binding init writes; you add triggers in Step 02
-├─ main/
-│  └─ main.collection    # boot scene init writes
-├─ src/
-│  └─ main.ts            # sample script — you replace it in Step 05
-├─ .gitignore            # files Git should not track
-├─ biome.json            # Biome config for checking and formatting the project
-├─ game.project          # Defold project settings
-├─ mise.toml             # tasks for running common commands with `mise run`
-├─ package.json          # Bun package manifest and dependencies
-└─ tsconfig.json         # TypeScript compiler settings
-```
+**What you'll have at this point:**
+* VS Code, with `watch` running in the terminal, where you edit the `.ts` files with full IntelliSense and type-checking
+* Defold, with `game.project` open, where you build the scene and run the game
 
 > [!NOTE]
-> If you run the game from Defold now (**Project → Build**) before `watch` is running, you'll see a black window. The error `"/src/main.ts.script" could not be found.` is a sign you could have forgotten to start the `watch` process.
+> If you run the game from Defold now (**Project → Build**) you'll see a black window.
 
-In **Step 05** you replace `src/main.ts` with `src/board.ts`, and `watch` swaps the generated `src/main.ts.script` for `src/board.ts.gui_script`. You edit `.ts`; Defold runs the generated files.
+> [!WARNING] If you see:
+> * `"/src/main.ts.script" could not be found.` in Defold's console, or
+> * the game doesn't seem to apply changes
+>
+> it is a sign you forgot to start the `watch` process.
+
+Notice that the `watch` process produces two files beside `src/main.ts`:
+* `src/main.ts.script` — the compiled Lua script
+* `src/main.ts.script.map` — a source map linking the Lua back to your TypeScript, so errors and breakpoints land on the `.ts`
+
+These are generated from the sample script. Deleting `main.ts` makes `watch` erase both automatically — but **keep them for now**, because the game's main scene still references `main.ts.script`.
 
 ## 02 — Input bindings
 
@@ -102,37 +116,7 @@ Tetris needs five keys. Defold maps hardware keys to named **actions** through a
 > [!WARNING]
 > Do not forget to save the files you edit. In Defold, Ctrl/Cmd+S saves **all** modified files at once; in VS Code it saves only the currently open one.
 
-Inside the script, we will hash these action names (for example, `hash("left")`) to recognize each key, because Defold sends them to `on_input` in hashed form (for fast `==` checks and lower memory use).
-
-The script side has two halves — hash the names once, then react to them each frame. You write both in **Step 05**, but here is the pipeline they form.
-
-**Input ids, hashed once** — the five names you just bound, pre-hashed at module scope:
-
-```ts title="src/board.ts (partial)"
-// Input ids, hashed once at module scope.
-const LEFT = hash("left");
-const RIGHT = hash("right");
-const SOFT = hash("soft_drop");
-const ROTATE = hash("rotate");
-const HARD = hash("hard_drop");
-```
-
-Defold delivers `action_id` to `on_input` already hashed, so hashing each name once here turns every per-frame comparison into a fast `==` check on a `Hash`, not a string compare.
-
-**`on_input`** — the dispatcher that turns keys into moves:
-
-```ts title="src/board.ts (partial)" {2}
-  on_input(self, action_id, action) {
-    if (self.over || !action.pressed) return;
-    if (action_id == LEFT) tryMove(self, -1, 0);
-    else if (action_id == RIGHT) tryMove(self, 1, 0);
-    else if (action_id == SOFT) tryMove(self, 0, 1);
-    else if (action_id == ROTATE) tryRotate(self);
-    else if (action_id == HARD) hardDrop(self);
-  },
-```
-
-`action_id` is the hashed action name; the chain matches it against the five constants above and calls one helper. `action.pressed` is `true` only on the frame a key first goes down — tap-to-move, which is exactly what Tetris wants — whereas `action.repeated` fires on the engine's held-key auto-repeat (useful for a continuous soft-drop, not used here). One catch: `init` must `msg.post(".", "acquire_input_focus")` or `on_input` never fires at all. You will see `on_input` in full context in **Step 05**, under **The lifecycle**, where the dispatcher runs alongside `update` and `on_message`.
+Inside the script you'll hash these action names (for example, `hash("left")`) in **Step 05**.
 
 ## 03 — Model the grid: `src/grid.ts`
 
@@ -179,7 +163,7 @@ The `emptyGrid` function takes nothing and returns a fresh structure of type `Gr
 
 **`isFree`** — can a square sit here?
 
-```ts title="src/grid.ts (partial)" {3}
+```ts title="src/grid.ts (partial)"
 export function isFree(g: Grid, c: number, r: number): boolean {
   if (c < 0 || c >= COLS || r >= ROWS) return false;
   if (r < 0) return true;
@@ -222,7 +206,7 @@ export function clearLines(g: Grid): number {
 It scans rows from the bottom up; whenever a row has no empty cell it deletes that row (`splice`) and pushes a fresh blank one onto the top (`unshift`) — gravity for the whole stack. It returns how many rows vanished, which **Step 05** turns into score. The `r++` after a clear re-checks the same index, because every row above just shifted down by one.
 
 > [!MORE] Full Script — src/grid.ts
-> ```ts title="src/grid.ts" {33-40}
+> ```ts title="src/grid.ts"
 > export const COLS = 10;
 > export const ROWS = 20;
 >
@@ -325,7 +309,7 @@ Here's the one piece of geometry worth knowing. To rotate any offset 90° **cloc
 // 90° clockwise about the pivot. row grows downward,
 // so this turns "right" into "down", "down" into "left", etc.
 function rotateCW(cells: Offset[]): Offset[] {
-  return cells.map(([c, r]) => [-r, c] as Offset); // [!code highlight]
+  return cells.map(([c, r]) => [-r, c] as Offset);
 }
 
 // Build all 4 states from a base: [base, +90, +180, +270].
@@ -365,7 +349,7 @@ export const PIECES: Piece[] = [
 
 **`cellsCoveredByPiece`** — where a piece sits on the board
 
-```ts title="src/pieces.ts (partial)" {2}
+```ts title="src/pieces.ts (partial)"
 export function cellsCoveredByPiece(piece: number, rot: number, px: number, py: number): Offset[] {
   return PIECES[piece].rots[rot].map(([c, r]) => [px + c, py + r] as Offset);
 }
@@ -567,6 +551,8 @@ const EMPTY_FILL = vmath.vector4(0.1, 0.11, 0.13, 1);
 const EMPTY_BORDER = vmath.vector4(0.18, 0.19, 0.22, 1);
 ```
 
+The `LEFT`/`RIGHT`/`SOFT`/`ROTATE`/`HARD` constants pre-hash the five action names you bound in **Step 02** once, at module scope. Defold delivers `action_id` to `on_input` already hashed, so comparing against these is a fast `==` check on a `Hash`, not a string compare.
+
 Now we'll alias the handle type that `@defold-typescript/types` uses to keep GUI nodes distinct from other engine handles.
 
 ```ts title="src/board.ts (partial)"
@@ -655,7 +641,7 @@ This is the single rule the whole game leans on: given a piece, a rotation, and 
 
 **`canPlace`** — does the piece fit where it is now?
 
-```ts title="src/board.ts (partial)" {2}
+```ts title="src/board.ts (partial)"
 function canPlace(self: BoardSelf): boolean {
   return fits(self, self.piece, self.rot, self.px, self.py);
 }
@@ -665,7 +651,7 @@ A one-line convenience wrapper: it asks `fits` about the piece's **current** pos
 
 **`tryMove`** — commit a shift only if it is legal
 
-```ts title="src/board.ts (partial)" {2}
+```ts title="src/board.ts (partial)"
 function tryMove(self: BoardSelf, dc: number, dr: number): boolean {
   if (fits(self, self.piece, self.rot, self.px + dc, self.py + dr)) {
     self.px += dc;
@@ -697,7 +683,7 @@ Rotating against a wall would normally fail, so before giving up it retries the 
 
 **`hardDrop`** — slam to the bottom
 
-```ts title="src/board.ts (partial)" {2}
+```ts title="src/board.ts (partial)"
 function hardDrop(self: BoardSelf): void {
   while (tryMove(self, 0, 1)) self.score += 1;
   self.timer = self.fall;
@@ -721,7 +707,7 @@ When a piece can fall no further, this writes its color into the model grid perm
 
 **`postHud`** — push score and level to the HUD
 
-```ts title="src/board.ts (partial)" {6}
+```ts title="src/board.ts (partial)"
 function postHud(self: BoardSelf): void {
   // Only post once the HUD has registered. A gui script can't call go.exists
   // (go.* is .script-only), and msg.post to a missing instance errors at
@@ -761,7 +747,7 @@ This is the everything-after-a-lock step. The highlighted `clearLines` collapses
 
 **`stepDown`** — one tick of gravity
 
-```ts title="src/board.ts (partial)" {2}
+```ts title="src/board.ts (partial)"
 function stepDown(self: BoardSelf): void {
   if (tryMove(self, 0, 1)) return;
   lockPiece(self);
@@ -848,7 +834,7 @@ export default defineGuiScript({
 
 - **`init`** builds the grid nodes once, spawns the first piece, and posts `acquire_input_focus` to itself (`.`) — without that, no key ever reaches `on_input`. Its returned object is the `BoardSelf` shape from the top of the file.
 - **`update`** is the clock: every frame it adds `dt` to `timer`, and when that crosses `fall` it runs one `stepDown`; then `redraw` repaints. `if (self.over) return` freezes the game on a loss.
-- **`on_input`** ignores everything until a key is `pressed`, then matches the pre-hashed `action_id` against the five module constants and calls the matching helper — the same five names you bound in **Step 02**.
+- **`on_input`** ignores everything until a key is `pressed` — `action.pressed` is `true` only on the frame a key first goes down (tap-to-move, exactly what Tetris wants; `action.repeated` would fire on held-key auto-repeat, unused here) — then matches the pre-hashed `action_id` against the five module constants and calls the matching helper, the same five names you bound in **Step 02**.
 - **`on_message`** waits for the HUD's `hud_ready` and flips `self.hud`, the register-then-post handshake that `postHud` depends on (**Step 08**).
 
 > [!MORE] Full Script — src/board.ts
@@ -1081,7 +1067,7 @@ export default defineGuiScript({
 > });
 > ```
 
-Then **delete the sample `src/main.ts`** that `init` scaffolded — it was only a placeholder. On the next save `watch` removes the stale `src/main.ts.script` and emits `src/board.ts.gui_script` beside `board.ts`.
+Saving `board.ts` makes `watch` emit `src/board.ts.gui_script` (and its `.map`) beside it.
 
 > [!NOTE]
 > **State tiers**: Three homes, used on purpose: **`self`** for per-playthrough state, **shared modules** for stateless logic, and **module-scope state** (for example, `bag` in `src/pieces.ts`) for things the module owns across playthroughs. Nothing truly global. Pick the narrowest tier that fits.
@@ -1090,12 +1076,31 @@ Then **delete the sample `src/main.ts`** that `init` scaffolded — it was only 
 
 The script exists now, so the editor's picker can find it. The board draws itself from code, so the editor work is small — one project setting, an empty GUI scene, and one game object, no sprite, no atlas, no factory.
 
-1. **Set the window size.** In **Assets**, open **game.project**, and under **Display** set **Width** to `400` and **Height** to `720` (turn **High Dpi** on for crisp cells). `init` leaves the display unset, so Defold defaults to a landscape **960×640**, but Tetris is a tall 10×20 board — `board.ts` centers its 280×560 grid in a **400×720** portrait window (`WINDOW_W`/`WINDOW_H` feed `ORIGIN_X`/`ORIGIN_Y` in **Step 05**). Skip this and the board renders jammed into a corner instead of centered. If you prefer a different size, change `WINDOW_W`/`WINDOW_H` in `board.ts` to match.
-2. **Create the board GUI scene.** In **Assets**, right-click `main` → **New… → GUI**, name it **board.gui**. Open it, select the root **GUI** node in the Outline, and set its **Script** to `/src/board.ts.gui_script`. Leave the node list empty — `board.ts` builds the grid at startup. Raise **Max Nodes** to at least `400` (the board creates `COLS × ROWS × 2` = 400 box nodes).
-3. **Create the board object.** Right-click `main` → **New… → Game Object File**, name it **board.go**. In the **Outline**, right-click root → **Add Component File** → choose **board.gui**, and give the component the **Id** `board`. (A `.gui` is a component; the game object hosts it.)
-4. **Assemble the scene.** Open **main.collection** (already created by `init`). It still holds the scaffold's `main` game object, whose component points at `/src/main.ts.script` — gone once you deleted the sample `src/main.ts` in **Step 05**, so leaving it fails the build with `"/src/main.ts.script" could not be found`. Right-click it → **Delete**. Then right-click root → **Add Game Object File** → choose **board.go**, set its **Id** to `board`. Confirm **game.project → Bootstrap → Main Collection** is `/main/main.collection`.
+1. **Set the window size:**
+   * In **Assets**, open **game.project**.
+   * Under **Display**, set **Width** to `400` and **Height** to `720`.
+   * Turn **High Dpi** on for crisp cells.
 
-That's the entire scene. The script draws every cell.
+   > `init` leaves the display unset, so Defold defaults to a landscape **960×640**, but Tetris is a tall 10×20 board — `board.ts` centers its 280×560 grid in a **400×720** portrait window (`WINDOW_W`/`WINDOW_H` feed `ORIGIN_X`/`ORIGIN_Y` in **Step 05**). Skip this and the board renders jammed into a corner instead of centered. If you prefer a different size, change `WINDOW_W`/`WINDOW_H` in `board.ts` to match.
+2. **Create the board GUI scene:**
+   * In **Assets**, right-click `main` → **New… → GUI**, name it **board.gui**.
+   * Open it, select the root **GUI** node in the Outline, and set its **Script** to `/src/board.ts.gui_script`.
+   * Leave the node list empty — `board.ts` builds the grid at startup.
+   * Raise **Max Nodes** to at least `400` (the board creates `COLS × ROWS × 2` = 400 box nodes).
+3. **Create the board object:**
+   * Right-click `main` → **New… → Game Object File**, name it **board.go**.
+   * In the **Outline**, right-click root → **Add Component File** → choose **board.gui**, and give the component the **Id** `board`. (A `.gui` is a component; the game object hosts it.)
+4. **Assemble the scene.** Open **main.collection** (already created by `init`). It still holds the scaffold's `main` game object, whose component points at `/src/main.ts.script`. Swap it for the board:
+
+    1. Right-click the `main` game object in the Outline → **Delete**.
+    2. Delete the now-unused **`src/main.ts`** itself, from VS Code or Defold's **Assets** window; `watch` clears its stale `src/main.ts.script` and `.map`.
+       > [!TIP] The order isn't critical — Defold flags a dangling reference either way, so you'd catch it. Removing the game object first just spares you the transient "could not be found" error while `src/main.ts.script` is gone but still referenced. 
+       >
+       > Every asset in Defold also has a **Referencing Files…** right-click item, so you can see what points at a file before you delete it.
+    3. Right-click root → **Add Game Object File** → choose **board.go**, and set its **Id** to `board`.
+    4. Confirm that **game.project** under **Bootstrap → Main Collection** is set to `/main/main.collection`.
+
+That's the entire scene — a window size, an empty GUI, and one game object to host it. There is nothing to place by hand: no sprites, no atlas, no pre-built grid of nodes. Every one of the board's 400 cells is created and colored at runtime by `board.ts`, so the editor stays this sparse no matter how much the game grows.
 
 ## 07 — Run it, then ship it
 
@@ -1121,10 +1126,10 @@ The HUD is one small gui script — `src/hud.ts`, just two functions. We'll walk
 ```ts title="src/hud.ts (partial)"
   init() {
     // Hide the game-over banner at startup; on_message re-enables it on game over.
-    gui.set_enabled(gui.get_node("gameover"), false); // [!code highlight]
+    gui.set_enabled(gui.get_node("gameover"), false);
     // A gui script can't be probed with go.exists, so announce ourselves to the
     // board; it posts score/level updates only once we have registered.
-    msg.post("/board#board", "hud_ready"); // [!code highlight]
+    msg.post("/board#board", "hud_ready");
   },
 ```
 
@@ -1134,10 +1139,10 @@ Startup hides the `gameover` node, then posts `hud_ready` to `/board#board`. Tha
 
 ```ts title="src/hud.ts (partial)"
   on_message(_self, message_id, message) {
-    if (message_id == hash("set_hud")) { // [!code highlight]
+    if (message_id == hash("set_hud")) {
       gui.set_text(gui.get_node("score"), `SCORE  ${String(message.score)}`);
       gui.set_text(gui.get_node("level"), `LEVEL  ${String(message.level)}`);
-    } else if (message_id == hash("game_over")) { // [!code highlight]
+    } else if (message_id == hash("game_over")) {
       gui.set_enabled(gui.get_node("gameover"), true);
     }
   },

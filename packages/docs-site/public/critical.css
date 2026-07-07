@@ -32,6 +32,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Reserve the scrollbar gutter always. The site styles ::-webkit-scrollbar with
+ * a fixed width, so the vertical scrollbar occupies layout width instead of
+ * overlaying; without a stable gutter it appears on long pages and vanishes on
+ * short ones, shifting the full-width topbar horizontally on every navigation. */
+html {
+  scrollbar-gutter: stable;
+}
+
 * {
   scrollbar-color: var(--color-border-strong) transparent;
 }
@@ -129,7 +137,7 @@ header.topbar-critical .logo-mark {
   margin-top: 1.1em;
 }
 .prose h1 {
-  --heading-anchor-bottom: 0.42em;
+  --heading-anchor-line: 1.2;
   position: relative;
   font-size: var(--prose-h1-size);
   line-height: 1.2;
@@ -140,7 +148,7 @@ header.topbar-critical .logo-mark {
   scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
 }
 .prose h2 {
-  --heading-anchor-bottom: 0.24em;
+  --heading-anchor-line: 1.3;
   position: relative;
   font-size: var(--prose-h2-size);
   line-height: 1.3;
@@ -152,7 +160,7 @@ header.topbar-critical .logo-mark {
   scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
 }
 .prose h3 {
-  --heading-anchor-bottom: 0.1em;
+  --heading-anchor-line: 1.4;
   position: relative;
   font-size: var(--prose-h3-size);
   line-height: 1.4;
@@ -194,24 +202,28 @@ header.topbar-critical .logo-mark {
 .prose a.heading-anchor:hover {
   color: var(--color-accent);
 }
+/* Hang the permalink icon in the left margin, centered on the heading's FIRST
+   line. The box is one line-height tall (--heading-anchor-line) anchored at
+   top: 0, so a signature heading that wraps to several lines keeps the icon on
+   the top line instead of dropping to the last. left/width and the glyph size
+   are pinned to --prose-h3-size so horizontal placement and icon size stay
+   uniform across h1/h2/h3 regardless of heading font-size. */
 .heading-anchor-icon {
   position: absolute;
-  bottom: var(--heading-anchor-bottom, 0.1em);
-  left: -1.15em;
+  top: 0;
+  left: calc(-1.15 * var(--prose-h3-size));
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1em;
-  height: 1em;
+  width: var(--prose-h3-size);
+  height: calc(var(--heading-anchor-line, 1.4) * 1em);
   opacity: 0;
   color: var(--color-text-faint);
-  font-size: var(--prose-h3-size);
-  line-height: 1;
   transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .heading-anchor-icon svg {
-  width: 0.85em;
-  height: 0.85em;
+  width: calc(0.85 * var(--prose-h3-size));
+  height: calc(0.85 * var(--prose-h3-size));
 }
 .prose :is(h1, h2, h3):hover .heading-anchor-icon,
 .heading-anchor:focus-visible .heading-anchor-icon {
@@ -283,6 +295,20 @@ header.topbar-critical .logo-mark {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+/* The CodeCopy island wraps each <pre> in a `.code-body` on hydration. The pre
+   keeps its own margin (`.prose pre` 16.8px, or 0 inside a `.code-block`) and it
+   collapses out through this zero-margin wrapper, so the block's box is
+   unchanged — as long as the wrapper itself contributes no margin. When the
+   wrapper IS a direct prose child it otherwise picks up the `.prose > * + *` owl
+   (1.1em at the 17px base = 18.7px), overriding the collapse and growing the
+   block; zero it so only the pre's margin shows. Must live here (unlayered): the
+   styles.css mirror is in @layer components and loses to this file's owl.
+   Do NOT zero `.code-body > pre` — a pre nested in a list produces a wrapper
+   that is not a direct prose child, gets no compensating margin, and would lose
+   its spacing entirely. */
+.prose > .code-body {
+  margin: 0;
+}
 .prose ul,
 .prose ol {
   padding-left: 1.4em;
@@ -304,8 +330,11 @@ header.topbar-critical .logo-mark {
   list-style: none;
   padding-left: 0;
 }
+/* Symmetric block margin like hr / admonition; a zero top would leave the
+   blockquote butted against the element above it, because `.prose blockquote`
+   out-specifies the `.prose > * + *` owl. Mirror of the layered rule. */
 .prose blockquote {
-  margin: 0 0 1.4em;
+  margin: 1.4em 0;
   padding: 0.4em 1em;
   border-left: 3px solid var(--color-border-strong);
   color: var(--color-text-muted);

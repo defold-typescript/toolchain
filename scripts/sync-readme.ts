@@ -4,6 +4,11 @@ import { resolve } from "node:path";
 export const SOURCE_README = "packages/docs/guide/README.md";
 export const ROOT_README = "README.md";
 
+// Published docs base. The root README lives on GitHub, where guide-local `.md`
+// links and `/api` routes have no meaning, so both are rewritten to the live
+// site so readers land on the rendered docs.
+export const SITE_BASE = "https://defold-typescript.github.io/toolchain";
+
 const GENERATED_HEADER = `<!-- Generated from ${SOURCE_README} by \`bun run readme:sync\`. Do not edit directly. -->\n\n`;
 
 function stripFrontmatter(markdown: string): string {
@@ -13,11 +18,15 @@ function stripFrontmatter(markdown: string): string {
   return markdown.slice(end + "\n---\n".length);
 }
 
-function rewriteGuideLinksForGitHub(markdown: string): string {
+function rewriteGuideLinksForSite(markdown: string): string {
   return markdown
-    .replace(/\]\(\.\/([^\s)]+\.md(?:#[^)]+)?)\)/g, `](packages/docs/guide/$1)`)
+    .replace(/\]\(\.\/([^\s)#]+)\.md(#[^)]+)?\)/g, (_match, slug, anchor = "") => {
+      // `./getting-started.md` and `./agent-runbooks.md#anchor` map to the guide's
+      // clean site route (`.md` dropped), preserving any fragment.
+      return `](${SITE_BASE}/${slug}${anchor})`;
+    })
     .replace(/\]\(\/api(\/[^)]*)?\)/g, (_match, path = "") => {
-      return `](https://defold-typescript.github.io/toolchain/api${path})`;
+      return `](${SITE_BASE}/api${path})`;
     });
 }
 
@@ -29,7 +38,7 @@ function rewriteGuideImagesForGitHub(markdown: string): string {
 }
 
 export function generateRootReadme(source: string): string {
-  const body = rewriteGuideLinksForGitHub(rewriteGuideImagesForGitHub(stripFrontmatter(source)));
+  const body = rewriteGuideLinksForSite(rewriteGuideImagesForGitHub(stripFrontmatter(source)));
   return `${GENERATED_HEADER}${body.trimEnd()}\n`;
 }
 
