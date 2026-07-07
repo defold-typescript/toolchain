@@ -1,13 +1,15 @@
 import type { ApiPage } from "../lib/api-surface";
+import { libraryCreatorGroups } from "../lib/nav";
 
 // The `/api` index renders one card grid per page category. Membership lives
 // here (a JSX-free module) so the grouping is unit-testable under root
 // `bun test`, which resolves `.tsx` JSX to the React runtime rather than
 // `hono/jsx`. `ApiIndex` maps each non-empty bucket to a labelled section.
 export interface ApiIndexSections {
-  engine: ApiPage[];
+  globals: ApiPage[];
   globalType: ApiPage[];
   luaStdlib: ApiPage[];
+  engine: ApiPage[];
   library: ApiPage[];
 }
 
@@ -25,9 +27,10 @@ export interface LibraryCreatorIndexGroup {
 
 export function groupApiIndexPages(pages: ApiPage[]): ApiIndexSections {
   return {
-    engine: pages.filter((p) => p.category === "engine"),
+    globals: pages.filter((p) => p.namespace === "globals"),
     globalType: pages.filter((p) => p.category === "global-type"),
     luaStdlib: pages.filter((p) => p.category === "lua-stdlib"),
+    engine: pages.filter((p) => p.category === "engine" && p.namespace !== "globals"),
     library: pages.filter((p) => p.category === "library"),
   };
 }
@@ -43,28 +46,21 @@ export function groupLibraryIndexByCreator(
   moduleDir: Map<string, string>,
   ownerByDir: Map<string, string>,
 ): LibraryCreatorIndexGroup[] {
-  const byCreator = new Map<string, Map<string, ApiPage[]>>();
-  for (const page of pages) {
-    if (page.category !== "library") continue;
-    const dir = moduleDir.get(page.namespace) ?? page.namespace;
-    const creator = ownerByDir.get(dir) || dir;
-    const libraries = byCreator.get(creator) ?? new Map<string, ApiPage[]>();
-    const groupPages = libraries.get(dir) ?? [];
-    groupPages.push(page);
-    libraries.set(dir, groupPages);
-    byCreator.set(creator, libraries);
-  }
-  return [...byCreator.entries()]
-    .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: "base" }))
-    .map(([creator, libraries]) => ({
-      creator,
-      label: creator,
-      libraries: [...libraries.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([dir, groupPages]) => ({
-          dir,
-          label: dir,
-          pages: groupPages.sort((a, b) => a.namespace.localeCompare(b.namespace)),
-        })),
-    }));
+  const libraryPages = pages.filter((page) => page.category === "library");
+  const byNamespace = new Map(libraryPages.map((page) => [page.namespace, page]));
+  return libraryCreatorGroups(
+    libraryPages.map((page) => ({ namespace: page.namespace, route: page.route })),
+    moduleDir,
+    ownerByDir,
+  ).map((creator) => ({
+    creator: creator.creator,
+    label: creator.label,
+    libraries: creator.libraries.map((lib) => ({
+      dir: lib.dir,
+      label: lib.label,
+      pages: lib.modules
+        .map((module) => byNamespace.get(module.label))
+        .filter((page): page is ApiPage => page !== undefined),
+    })),
+  }));
 }

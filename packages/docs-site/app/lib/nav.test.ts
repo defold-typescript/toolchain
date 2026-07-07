@@ -35,16 +35,10 @@ function fullNav() {
 }
 
 describe("buildNav", () => {
-  test("returns the five categories in declared order with declared labels", () => {
+  test("returns the four categories in declared order with declared labels", () => {
     const nav = fullNav();
-    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "language", "tutorial", "api"]);
-    expect(nav.map((c) => c.label)).toEqual([
-      "Get started",
-      "Guides",
-      "Language",
-      "Tutorial",
-      "API",
-    ]);
+    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "tutorial", "api"]);
+    expect(nav.map((c) => c.label)).toEqual(["Get started", "Guides", "Tutorial", "API"]);
   });
 
   test("has no lua-stdlib category and links the API category to its index", () => {
@@ -234,7 +228,7 @@ describe("buildNav", () => {
     expect(new Set(guideRoutes)).toEqual(new Set(pages.map((p) => p.route)));
   });
 
-  test("places the script-state page in the Language category, not the guides fallback", () => {
+  test("appends the former language pages to Guides after existing guide articles", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -242,38 +236,24 @@ describe("buildNav", () => {
       engine: [],
       libraries: [],
     });
-    const language = nav.find((c) => c.id === "language");
-    expect(language?.links.find((l) => l.route === "/script-state")).toBeDefined();
     const guides = nav.find((c) => c.id === "guides");
-    expect(guides?.links.find((l) => l.route === "/script-state")).toBeUndefined();
-  });
-
-  test("places the messages page in the Language category, not the guides fallback", () => {
-    const nav = buildNav(realPages(), {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: [],
-      engine: [],
-      libraries: [],
-    });
-    const language = nav.find((c) => c.id === "language");
-    expect(language?.links.find((l) => l.route === "/messages")).toBeDefined();
-    const guides = nav.find((c) => c.id === "guides");
-    expect(guides?.links.find((l) => l.route === "/messages")).toBeUndefined();
-  });
-
-  test("places the data-structures page in the Language category, not the guides fallback", () => {
-    const nav = buildNav(realPages(), {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: [],
-      engine: [],
-      libraries: [],
-    });
-    const language = nav.find((c) => c.id === "language");
-    expect(language?.links.find((l) => l.route === "/data-structures")).toBeDefined();
-    const guides = nav.find((c) => c.id === "guides");
-    expect(guides?.links.find((l) => l.route === "/data-structures")).toBeUndefined();
+    expect(guides?.links.map((l) => l.route)).toEqual([
+      "/transpile-diagnostics",
+      "/debugging",
+      "/pinning-defold-version",
+      "/extensions",
+      "/advanced-cli",
+      "/agent-runbooks",
+      "/typescript-vs-lua",
+      "/script-lifecycle",
+      "/messages",
+      "/script-state",
+      "/data-structures",
+      "/vector-math",
+      "/typescript-gotchas",
+      "/api-docs-vs-ts-defold",
+      "/migrating-from-ts-defold",
+    ]);
   });
 
   test("maps the index page to / under Get started, labeled Overview", () => {
