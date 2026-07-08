@@ -1,32 +1,50 @@
 # @defold-typescript/library-types
 
-Vendored TypeScript types for popular Defold Lua libraries, adapted from
-[ts-defold/library](https://github.com/ts-defold/library) (MIT) so they type-check
-against `@defold-typescript/types` instead of `@ts-defold/types`.
+Vendored TypeScript type declarations for a curated set of popular Defold Lua
+libraries, core-type-renamed against
+[`@defold-typescript/types`](https://www.npmjs.com/package/@defold-typescript/types).
 
-ts-defold's hand-written `declare module` files already model these libraries
-faithfully; the only surface that differs is core-type naming. This package
-re-derives them with a single automated rename and locks the result with a
-type-level proof.
+This is a support package for the
+[`@defold-typescript`](https://github.com/defold-typescript/toolchain) toolchain.
+You normally do not install it directly — it ships as a dependency of
+[`@defold-typescript/cli`](https://www.npmjs.com/package/@defold-typescript/cli),
+which reads it at runtime.
 
-## Layout
+## Why it exists
 
-- `library-targets.json` — the pinned ts-defold/library commit and the source
-  path for each vendored module. This is the reproducibility baseline.
-- `fixtures/ts-defold/` — the upstream `.d.ts` files, committed verbatim at the
-  pinned revision. Never edited by hand; excluded from Biome.
-- `scripts/sync-library-types.ts` — `codemodDeclaration`, the core-type rename,
-  plus `regenerate`, which reads each fixture and writes `generated/`.
-- `generated/` — the renamed, publishable `declare module` files.
-- `test-d/library-types.test-d.ts` — the type-level proof that every generated
-  module compiles against `@defold-typescript/types`.
+Many popular Defold libraries are plain Lua, installed through the editor's
+**Fetch Libraries** and carrying no `.script_api`, so there is nothing for the
+CLI's `resolve` command to extract types from. For a curated set of those, this
+package ships hand-vetted, ready-to-use TypeScript declarations.
 
-## Core-type rename
+When `resolve` encounters a declared dependency with no `.script_api`, it matches
+it against this corpus by source identity, verifies the match against the
+downloaded archive's Lua require paths, and materializes the corresponding
+declaration into the project's `.defold-types/libraries/`. The import specifier is
+the Lua `require` path — e.g. `import * as dicebag from 'dicebag.dicebag'` — so it
+matches what Fetch Libraries installs at runtime.
 
-`codemodDeclaration` walks the TypeScript AST and rewrites **type references
-only** — property names, JSDoc, `declare module`, and passthrough extensions
-(`LuaMultiReturn`, `LuaMap`) are left byte-identical. ts-defold's global
-core-type names map to our surface:
+## What's inside
+
+- `generated/<module>.d.ts` — one ambient `declare module '<require-path>'` per
+  vendored module, core-type-renamed to the `@defold-typescript/types` surface.
+- `library-classification.json`, `library-targets.json` — the registries mapping
+  each module to its upstream source and generated path. The CLI reads these to
+  drive matching and materialization.
+- `api-doc/<module>.json` — ref-doc JSON extracted from each declaration, consumed
+  by the documentation site to render per-library API pages.
+- `NOTICE` — upstream attribution for every vendored library.
+
+## Provenance
+
+Declarations are adapted from
+[`ts-defold/library`](https://github.com/ts-defold/library) (MIT) at a pinned
+commit, recorded per module in `library-targets.json`. ts-defold's hand-written
+`declare module` files already model these libraries faithfully; the only surface
+that differs is core-type naming. A codemod (`scripts/sync-library-types.ts`)
+walks the TypeScript AST and rewrites **type references only** — property names,
+JSDoc, `declare module`, and passthrough extensions (`LuaMultiReturn`, `LuaMap`)
+stay byte-identical:
 
 | ts-defold | `@defold-typescript/types` |
 | --------- | -------------------------- |
@@ -34,17 +52,27 @@ core-type names map to our surface:
 | `vmath.vector3` / `vmath.vector4` / `vmath.matrix4` / `vmath.quat` | `Vector3` / `Vector4` / `Matrix4` / `Quaternion` |
 | `node`, `texture`, … (engine handles) | `Opaque<"node">`, `Opaque<"texture">`, … |
 
-The renamed names resolve against the ambient globals declared in
-`@defold-typescript/types` `engine-globals.d.ts`, so no import injection is
-needed. `table` is intentionally **not** renamed: ts-defold modules declare their
-own local `type table = {}` alias. Any `vmath.*` reference with no mapping is
-reported by `regenerate` (a hard error) so a missing rename fails loud.
+The renamed names resolve against the ambient globals in `@defold-typescript/types`,
+so no import injection is needed. Any `vmath.*` reference with no mapping is a hard
+error at regeneration time, so a missing rename fails loud rather than degrading to
+`any`. Nothing is authored by hand beyond the source pins, and the committed output
+is guarded against drift in CI.
 
-## Regenerate
+Regenerate after changing the rename table or re-pinning a source:
 
 ```sh
 bun run --filter @defold-typescript/library-types regen
 ```
 
-Run after changing the rename table or re-capturing fixtures. The generated
-output is committed.
+## Direct use
+
+The `exports` map exposes each module under a type-only subpath if you want a
+single library's declarations without the CLI. These are ambient type declarations
+only — there is no runtime code in this package. For the normal workflow, prefer
+letting `@defold-typescript/cli resolve` materialize them for you; see the
+[toolchain docs](https://github.com/defold-typescript/toolchain).
+
+## License
+
+MIT. Vendored declarations retain their upstream authors' licenses, credited in
+`NOTICE`.

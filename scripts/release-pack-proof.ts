@@ -23,7 +23,14 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
-export const PACKAGES = ["types", "transpiler", "tstl-plugin", "docs", "cli"] as const;
+export const PACKAGES = [
+  "types",
+  "transpiler",
+  "tstl-plugin",
+  "docs",
+  "library-types",
+  "cli",
+] as const;
 const DEFAULT_VERSION = "9.9.9";
 
 // Extracted from `publish.ts`'s `verifyCoordinated` inner loop so both the
