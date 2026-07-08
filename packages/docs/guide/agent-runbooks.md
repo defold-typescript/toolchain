@@ -133,6 +133,26 @@ same pair at `/llms.txt` and `/llms-full.txt`. Both are regenerated from the
 guide and the typed API on every docs build and drift-gated, so they never go
 stale against the shipped types.
 
+## Helper and codegen scripts (Bun, `/scripts`)
+
+When a task needs a build tool, a codegen pass, or a one-off maintenance script,
+do **not** write it into `src/` and do **not** run it with `node`. Two rules
+keep such scripts off the game's Lua build path:
+
+- **Location:** put the script in a project-root `/scripts` folder. The Defold
+  build selects source by `tsconfig.include` (default `src/**/*.ts`) and ignores
+  `exclude`, so any `.ts` under `src/**` is transpiled to Lua and shipped —
+  `/scripts` is outside that include, and outside the Defold-pinned main
+  `tsconfig.json`.
+- **Runner and typing:** run with `bun scripts/foo.ts` (never `node`); `node:*`
+  builtins work under Bun and are typed by `@types/bun`. Add a
+  `scripts/tsconfig.json` with `"noEmit": true`, `"types": ["bun"]`, and
+  `"include": ["**/*.ts"]` — no Defold pin. Script dependencies go in the root
+  `package.json` `devDependencies`.
+
+See the [Helper scripts](./helper-scripts.md) guide for the full rationale and a
+copy-pasteable config.
+
 ## Verify against the real API surface
 
 This section governs every runbook below it. Before answering any "how do I…"

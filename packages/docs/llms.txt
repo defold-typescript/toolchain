@@ -24,6 +24,7 @@
 - [Transpile diagnostics](/transpile-diagnostics)
 - [Debugging](/debugging)
 - [Agent runbooks](/agent-runbooks)
+- [Helper scripts](/helper-scripts)
 - [Pinning the Defold version](/pinning-defold-version)
 - [Native extensions](/extensions)
 - [API docs vs `ts-defold-types`](/api-docs-vs-ts-defold)
