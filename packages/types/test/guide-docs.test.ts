@@ -1138,3 +1138,55 @@ describe("docs/guide/tetris-tutorial.md", () => {
     }
   });
 });
+
+describe("docs/guide helper scripts", () => {
+  // The fenced code block for the scripts/tsconfig.json shape — the first
+  // fenced block that pins `noEmit` — so the "no Defold re-pin" assertion is
+  // scoped to the config example and not tripped by prose that names the pin.
+  function tsconfigFence(body: string): string {
+    for (const fence of body.split("```").filter((_, i) => i % 2 === 1)) {
+      if (fence.includes("noEmit")) return fence;
+    }
+    throw new Error("no scripts/tsconfig.json fence with noEmit");
+  }
+
+  test("packages/docs/guide/helper-scripts.md exists", async () => {
+    const f = Bun.file(resolve(GUIDE, "helper-scripts.md"));
+    expect(await f.exists()).toBe(true);
+  });
+
+  test("names the /scripts root location and runs with bun, not node", async () => {
+    const body = await readGuide("helper-scripts.md");
+    expect(body).toContain("/scripts");
+    expect(body).toContain("bun scripts/");
+    expect(body).toContain("scripts/tsconfig.json");
+  });
+
+  test("shows the scripts/tsconfig.json shape typed for Bun without the Defold pin", async () => {
+    const body = await readGuide("helper-scripts.md");
+    const fence = tsconfigFence(body);
+    expect(fence).toContain('"noEmit"');
+    expect(fence).toContain('"types"');
+    expect(fence).toContain("bun");
+    expect(fence).not.toContain("@defold-typescript/types");
+  });
+
+  test("routes script dependencies to the root package.json devDependencies", async () => {
+    const body = await readGuide("helper-scripts.md");
+    expect(body).toContain("devDependencies");
+  });
+
+  test("docs/guide/README.md links helper-scripts.md", async () => {
+    const body = await readGuide("README.md");
+    expect(body).toContain("./helper-scripts.md");
+  });
+
+  test("agent-runbooks.md carries the Bun-first /scripts helper-script rule", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const start = body.indexOf("## Helper and codegen scripts");
+    expect(start).toBeGreaterThan(-1);
+    const section = body.slice(start);
+    expect(section).toContain("/scripts");
+    expect(section).toContain("bun");
+  });
+});
