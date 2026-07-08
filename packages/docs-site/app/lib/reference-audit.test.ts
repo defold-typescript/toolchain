@@ -14,6 +14,7 @@ writeFileSync(
   join(fixtureDir, "target.md"),
   "# Target\n\n## First Section\n\nbody\n\n### Nested Heading\n\nmore\n",
 );
+writeFileSync(join(fixtureDir, "asset.json"), "{}\n");
 
 describe("findDanglingReferences — relative .md links", () => {
   test("a link to an existing sibling with a valid anchor is clean", () => {
@@ -38,7 +39,27 @@ describe("findDanglingReferences — relative .md links", () => {
   });
 
   test("external and root-absolute links are ignored", () => {
-    const text = "[ext](https://example.com/x.md) [abs](/foo.md) [code](`x`)";
+    const text = "[ext](https://example.com/x.md) [abs](/foo.md)";
+    expect(findDanglingReferences(text, fixtureDir, REPO_ROOT)).toEqual([]);
+  });
+});
+
+describe("findDanglingReferences — relative non-.md links", () => {
+  test("a link to an existing non-.md repo file is clean", () => {
+    const text = "See the [asset](./asset.json).";
+    expect(findDanglingReferences(text, fixtureDir, REPO_ROOT)).toEqual([]);
+  });
+
+  test("a missing non-.md file (e.g. an example dir) is reported", () => {
+    const text = "The [platformer example](../examples/platformer/) is a worked conversion.";
+    const out = findDanglingReferences(text, fixtureDir, REPO_ROOT);
+    expect(out.length).toBe(1);
+    expect(out[0]?.reference).toBe("../examples/platformer/");
+    expect(out[0]?.reason).toContain("missing file");
+  });
+
+  test("relative image links are skipped (their own asset pipeline, not repo paths)", () => {
+    const text = "![shot](./nope.png) and a [sizing hint](./img/missing.svg#max-width=200)";
     expect(findDanglingReferences(text, fixtureDir, REPO_ROOT)).toEqual([]);
   });
 });

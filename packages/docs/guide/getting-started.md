@@ -68,7 +68,7 @@ bunx @defold-typescript/cli --version
 1. `cd` into the project, such as a clone of [`defold/template-platformer`](https://github.com/defold/template-platformer).
 2. Run `bunx @defold-typescript/cli@latest init .` (the `.` targets the current folder).
 3. Run `bun install`, matching the install reminder printed by `init`.
-4. Hand-convert your Lua scripts to TypeScript — move each Defold lifecycle hook into a `defineScript({...})` method; the [platformer example](../examples/platformer/) is a worked conversion.
+4. Hand-convert your Lua scripts to TypeScript — move each Defold lifecycle hook into a `defineScript({...})` method; the [platformer example](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/platformer) is a worked conversion.
 5. Run `bunx @defold-typescript/cli build` to transpile the converted sources.
 6. Open the project in the Defold editor and Build-and-Run.
 

@@ -22,6 +22,10 @@ const MD_LINK_RE = /\]\(([^)\s]+)\)/g;
 const BACKTICK_RE = /`([^`]+)`/g;
 const HEADING_RE = /^\s*(#{2,3})\s+(.+?)\s*$/;
 const FENCE_RE = /^\s*(```|~~~)/;
+// Images are assets with their own pipeline and carry a `#max-width=` sizing
+// directive (not an anchor), so a relative image link is not audited as a repo
+// file. Everything else non-`.md` and relative is a repo file/dir citation.
+const IMAGE_RE = /\.(png|jpe?g|gif|svg|webp|avif)$/i;
 
 // Mirror `renderMarkdown`'s heading-id rule: only h2/h3 get ids, duplicates
 // gain a `-2`, `-3` suffix, and headings inside code fences are skipped.
@@ -83,7 +87,17 @@ export function findDanglingReferences(
       continue;
     }
     const [path, ...fragmentParts] = href.split("#");
-    if (!path?.endsWith(".md")) continue;
+    if (!path) continue;
+    // A relative link that is not a `.md` guide page points at a repo file or
+    // dir (an example project, a source file). It must resolve on disk relative
+    // to the guide, or it 404s on the deployed site the way `../examples/…` did
+    // (the site hosts only guide routes, not repo paths). Skip images.
+    if (!path.endsWith(".md")) {
+      if (!IMAGE_RE.test(path) && !existsSync(resolve(fileDir, path))) {
+        out.push({ source: fileDir, reference: href, reason: `missing file: ${path}` });
+      }
+      continue;
+    }
     const target = resolve(fileDir, path);
     if (!existsSync(target)) {
       out.push({ source: fileDir, reference: href, reason: `missing file: ${path}` });

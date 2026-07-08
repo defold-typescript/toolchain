@@ -441,7 +441,7 @@ In a standalone `.go` the block appears verbatim. When the game object is
 embedded in a `.collection`, Defold stores the same block as an escaped string
 inside an `embedded_instances { data: "…" }` entry — the form to write when
 editing the file directly. The platformer example shows this in
-[`game/player.collection`](../examples/platformer/game/player.collection):
+[`game/player.collection`](https://github.com/defold-typescript/toolchain/blob/main/docs/examples/platformer/game/player.collection):
 
 ```
 embedded_instances {
@@ -613,7 +613,7 @@ game object and let them cooperate.
 One `.go` (or an `embedded_instances` block inside a `.collection`) lists each
 component under its own `id`. A script reaches a *sibling* component on the same
 object by that `#`-prefixed id — no path is needed because they share the object.
-The platformer's [`game/player.collection`](../examples/platformer/game/player.collection)
+The platformer's [`game/player.collection`](https://github.com/defold-typescript/toolchain/blob/main/docs/examples/platformer/game/player.collection)
 embeds the player script next to its sprite and collision object exactly this
 way; the [Add a script](#add-a-script) runbook shows the `embedded_instances`
 form to write when editing the scene file directly.
