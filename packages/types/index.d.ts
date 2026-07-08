@@ -42,6 +42,7 @@ import "./generated/tilemap";
 import "./generated/timer";
 import "./generated/types";
 import "./generated/vmath";
+import "./src/vmath-overloads";
 import "./generated/webview";
 import "./generated/window";
 import "./generated/zlib";
