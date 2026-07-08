@@ -15,6 +15,8 @@ interface Manifest {
   readonly name?: string;
   readonly private?: boolean;
   readonly dependencies?: Record<string, string>;
+  readonly optionalDependencies?: Record<string, string>;
+  readonly peerDependencies?: Record<string, string>;
 }
 
 function readManifest(dir: string): Manifest {
@@ -183,5 +185,29 @@ describe("pack-proof covers the coordinated release set", () => {
     for (const dir of PACKAGES) {
       expect(readManifest(dir).name).toBe(`@defold-typescript/${dir}`);
     }
+  });
+
+  // Dependency-closure guard: every internal @defold-typescript/* runtime dep of
+  // a published package must itself be published. This is the invariant that
+  // broke when `cli` pinned `library-types` while `library-types` stayed
+  // `private: true` and never published — a 404 on `bunx @defold-typescript/cli`.
+  // Runtime deps only (dependencies/optional/peer); devDependencies never ship.
+  test("every internal runtime dep of a PACKAGES dir is itself in PACKAGES", () => {
+    const published = new Set(PACKAGES.map((dir) => `@defold-typescript/${dir}`));
+    const offenders: string[] = [];
+    for (const dir of PACKAGES) {
+      const m = readManifest(dir);
+      const runtimeDeps = {
+        ...m.dependencies,
+        ...m.optionalDependencies,
+        ...m.peerDependencies,
+      };
+      for (const dep of Object.keys(runtimeDeps)) {
+        if (dep.startsWith("@defold-typescript/") && !published.has(dep)) {
+          offenders.push(`${dir} -> ${dep}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });

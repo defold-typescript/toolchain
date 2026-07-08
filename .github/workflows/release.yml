@@ -26,8 +26,11 @@
 # The real publish is fenced behind the ENABLE_NPM_PUBLISH repo variable for a
 # safe cutover (the dry-run always runs). One-time npm setup: configure a
 # Trusted Publisher for each of
-# @defold-typescript/{types,transpiler,tstl-plugin,docs,cli} -> repo
-# defold-typescript/toolchain, workflow release.yml.
+# @defold-typescript/{types,transpiler,tstl-plugin,docs,library-types,cli} ->
+# repo defold-typescript/toolchain, workflow release.yml. A brand-new package
+# (library-types) has no npm entry to attach a Trusted Publisher to yet, so its
+# first release needs a one-time manual `npm publish` (granular token) to create
+# it; OIDC takes over from the next release.
 
 name: Release
 
@@ -143,11 +146,12 @@ jobs:
             mv "$manifest.tmp" "$manifest"
           done
 
-      # Dependency order: deps before dependents (docs has no internal deps and
-      # is consumed by cli). Dry-run needs no auth and runs on every tag.
+      # Dependency order: deps before dependents (types before library-types;
+      # library-types and docs before cli). Dry-run needs no auth and runs on
+      # every tag.
       - name: Publish (dry-run)
         run: |
-          for pkg in types transpiler tstl-plugin docs cli; do
+          for pkg in types transpiler tstl-plugin docs library-types cli; do
             ( cd "packages/$pkg" && npm publish --dry-run --access public )
           done
 
@@ -156,7 +160,7 @@ jobs:
         run: |
           # Idempotent: skip any package whose target version is already on npm,
           # so re-running the workflow on an existing tag is safe.
-          for pkg in types transpiler tstl-plugin docs cli; do
+          for pkg in types transpiler tstl-plugin docs library-types cli; do
             name="@defold-typescript/$pkg"
             if npm view "$name@$VERSION" version >/dev/null 2>&1; then
               echo "$name@$VERSION already on npm — skipping"
