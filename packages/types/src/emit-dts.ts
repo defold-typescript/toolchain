@@ -167,6 +167,12 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   // msg-overloads.d.ts supplies the typed msg.url shape (0 / 1-string / 3-arg
   // arities; the runtime-invalid two-arg form is intentionally omitted).
   "msg.url",
+  // vmath-overloads.d.ts supplies the generic covariant signatures.
+  "vmath.clamp",
+  "vmath.lerp",
+  "vmath.slerp",
+  "vmath.mul_per_elem",
+  "vmath.normalize",
 ]);
 
 // Element names whose `table` slot is a prose-only `a table mapping X to Y`
