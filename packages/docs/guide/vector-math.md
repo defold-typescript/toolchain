@@ -52,7 +52,7 @@ const transformed: Vector4 = m.mul(vmath.vector4(0, 0, 0, 1));
 
 ## A worked example: the platformer
 
-The eight engine types (`Vector3`, `Hash`, `Url`, `Quaternion`, `Matrix4`, `Vector`, `Vector4`, `Opaque<…>`) are **ambient globals — no import needed**, mirroring the namespace ergonomics (`vmath`, `go`, `sprite`, …). The committed [`docs/examples/platformer/src/player.ts`](../../examples/platformer/src/player.ts) puts the whole pattern on one screen: the `fixed_update` body uses the chained method form for whole-vector arithmetic, plain `+`/`*` on `number` fields for component access, and a `vmath.project` namespace function that returns a scalar with a method-form argument. The last line comes from the `handle_obstacle_contact` collision helper, not the per-frame loop, so the three snippets do not all share one function body.
+The eight engine types (`Vector3`, `Hash`, `Url`, `Quaternion`, `Matrix4`, `Vector`, `Vector4`, `Opaque<…>`) are **ambient globals — no import needed**, mirroring the namespace ergonomics (`vmath`, `go`, `sprite`, …). The committed [`docs/examples/platformer/src/player.ts`](https://github.com/defold-typescript/toolchain/blob/main/docs/examples/platformer/src/player.ts) puts the whole pattern on one screen: the `fixed_update` body uses the chained method form for whole-vector arithmetic, plain `+`/`*` on `number` fields for component access, and a `vmath.project` namespace function that returns a scalar with a method-form argument. The last line comes from the `handle_obstacle_contact` collision helper, not the per-frame loop, so the three snippets do not all share one function body.
 
 ```ts
 // docs/examples/platformer/src/player.ts — `fixed_update(self, dt)`

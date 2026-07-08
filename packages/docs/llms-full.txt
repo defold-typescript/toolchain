@@ -147,7 +147,7 @@ bunx @defold-typescript/cli --version
 1. `cd` into the project, such as a clone of [`defold/template-platformer`](https://github.com/defold/template-platformer).
 2. Run `bunx @defold-typescript/cli@latest init .` (the `.` targets the current folder).
 3. Run `bun install`, matching the install reminder printed by `init`.
-4. Hand-convert your Lua scripts to TypeScript — move each Defold lifecycle hook into a `defineScript({...})` method; the [platformer example](../examples/platformer/) is a worked conversion.
+4. Hand-convert your Lua scripts to TypeScript — move each Defold lifecycle hook into a `defineScript({...})` method; the [platformer example](https://github.com/defold-typescript/toolchain/tree/main/docs/examples/platformer) is a worked conversion.
 5. Run `bunx @defold-typescript/cli build` to transpile the converted sources.
 6. Open the project in the Defold editor and Build-and-Run.
 
@@ -1568,7 +1568,7 @@ const transformed: Vector4 = m.mul(vmath.vector4(0, 0, 0, 1));
 
 ## A worked example: the platformer
 
-The eight engine types (`Vector3`, `Hash`, `Url`, `Quaternion`, `Matrix4`, `Vector`, `Vector4`, `Opaque<…>`) are **ambient globals — no import needed**, mirroring the namespace ergonomics (`vmath`, `go`, `sprite`, …). The committed [`docs/examples/platformer/src/player.ts`](../../examples/platformer/src/player.ts) puts the whole pattern on one screen: the `fixed_update` body uses the chained method form for whole-vector arithmetic, plain `+`/`*` on `number` fields for component access, and a `vmath.project` namespace function that returns a scalar with a method-form argument. The last line comes from the `handle_obstacle_contact` collision helper, not the per-frame loop, so the three snippets do not all share one function body.
+The eight engine types (`Vector3`, `Hash`, `Url`, `Quaternion`, `Matrix4`, `Vector`, `Vector4`, `Opaque<…>`) are **ambient globals — no import needed**, mirroring the namespace ergonomics (`vmath`, `go`, `sprite`, …). The committed [`docs/examples/platformer/src/player.ts`](https://github.com/defold-typescript/toolchain/blob/main/docs/examples/platformer/src/player.ts) puts the whole pattern on one screen: the `fixed_update` body uses the chained method form for whole-vector arithmetic, plain `+`/`*` on `number` fields for component access, and a `vmath.project` namespace function that returns a scalar with a method-form argument. The last line comes from the `handle_obstacle_contact` collision helper, not the per-frame loop, so the three snippets do not all share one function body.
 
 ```ts
 // docs/examples/platformer/src/player.ts — `fixed_update(self, dt)`
@@ -2607,7 +2607,7 @@ In a standalone `.go` the block appears verbatim. When the game object is
 embedded in a `.collection`, Defold stores the same block as an escaped string
 inside an `embedded_instances { data: "…" }` entry — the form to write when
 editing the file directly. The platformer example shows this in
-[`game/player.collection`](../examples/platformer/game/player.collection):
+[`game/player.collection`](https://github.com/defold-typescript/toolchain/blob/main/docs/examples/platformer/game/player.collection):
 
 ```
 embedded_instances {
@@ -2779,7 +2779,7 @@ game object and let them cooperate.
 One `.go` (or an `embedded_instances` block inside a `.collection`) lists each
 component under its own `id`. A script reaches a *sibling* component on the same
 object by that `#`-prefixed id — no path is needed because they share the object.
-The platformer's [`game/player.collection`](../examples/platformer/game/player.collection)
+The platformer's [`game/player.collection`](https://github.com/defold-typescript/toolchain/blob/main/docs/examples/platformer/game/player.collection)
 embeds the player script next to its sprite and collision object exactly this
 way; the [Add a script](#add-a-script) runbook shows the `embedded_instances`
 form to write when editing the scene file directly.
