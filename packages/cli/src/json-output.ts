@@ -1,3 +1,5 @@
+import type { InitOperation } from "./init";
+
 export type CliCommand =
   | "init"
   | "init-agents"
@@ -29,6 +31,7 @@ export interface ResolvedLibraryReportJson {
 export interface RenderResultInput {
   readonly command: CliCommand;
   readonly written?: readonly string[];
+  readonly operations?: readonly InitOperation[];
   readonly error?: string;
   readonly defoldVersion?: string;
   readonly defoldVersionSource?: string;
@@ -91,8 +94,10 @@ export function renderResult(input: RenderResultInput): string {
   const withSub = "subcommand" in input ? { ...withBoot, subcommand: input.subcommand } : withBoot;
   const withExit = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
   const withOutput = "output" in input ? { ...withExit, output: input.output } : withExit;
+  const withOperations =
+    "operations" in input ? { ...withOutput, operations: input.operations } : withOutput;
   const withExtensions =
-    "extensions" in input ? { ...withOutput, extensions: input.extensions } : withOutput;
+    "extensions" in input ? { ...withOperations, extensions: input.extensions } : withOperations;
   const withLibraries =
     "libraries" in input ? { ...withExtensions, libraries: input.libraries } : withExtensions;
   const payload =

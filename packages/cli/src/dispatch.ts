@@ -239,7 +239,7 @@ export function dispatch(
           'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
         );
       }
-      const { written } = runInit({
+      const { written, operations } = runInit({
         cwd,
         force,
         ...(templateFlag !== undefined ? { template: templateFlag } : {}),
@@ -249,6 +249,7 @@ export function dispatch(
           renderResult({
             command: "init",
             written,
+            operations,
             defoldVersion: resolvedVersion,
             defoldVersionSource: resolvedVersionSource,
             defoldChannel: resolvedChannel,
@@ -260,6 +261,9 @@ export function dispatch(
         io.stdout.write(
           `defold-typescript init: wrote ${written.length} files: ${written.join(", ")}\n`,
         );
+        for (const op of operations) {
+          io.stdout.write(`  ${op.target}: ${op.status}${op.detail ? ` — ${op.detail}` : ""}\n`);
+        }
         if (!suppressInstallReminder) {
           io.stdout.write(`Next: run \`${installHint()}\` to install dependencies.\n`);
         }

@@ -242,7 +242,15 @@ adds the TypeScript surface alongside the existing one.
 **Returns:**
 
 ```json
-{ "command": "init", "ok": true, "written": ["tsconfig.json", "src/main.ts", "..."] }
+{
+  "command": "init",
+  "ok": true,
+  "written": ["tsconfig.json", "src/main.ts", "..."],
+  "operations": [
+    { "target": "tsconfig.json", "status": "merged" },
+    { "target": "src/main.ts", "status": "skipped", "detail": "existing project sources present" }
+  ]
+}
 ```
 
 On failure:
@@ -254,6 +262,12 @@ On failure:
 **Reading `ok`:** if `ok` is `true`, the scaffold succeeded and `written` lists
 every file created or modified — use it to know what to open next. If `ok` is
 `false`, stop and surface `error`; nothing was scaffolded.
+
+**Reading `operations`:** each entry pairs a `target` with a `status` of
+`written` (freshly created), `merged` (an existing `tsconfig.json` was preserved
+and refreshed in place), or `skipped` (left untouched, with a `detail` reason —
+e.g. your own `src/main.ts` or engine sources already present). Branch on
+`status` when you need to distinguish a merge from a clobber.
 
 ## Install the agent contract
 
