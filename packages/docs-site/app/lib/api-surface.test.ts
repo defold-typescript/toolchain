@@ -5,6 +5,7 @@ import {
   type ApiFunction,
   hashExampleSource,
   htmlToCodeText,
+  parseDefoldApiDoc,
   type SignatureStore,
 } from "@defold-typescript/types";
 import {
@@ -1027,6 +1028,95 @@ describe("apiModuleSymbols", () => {
     const variable = symbols.find((s) => s.name === "io.stdout");
     expect(variable?.kind).toBe("variable");
     expect(variable?.signature).toBe("io.stdout: number");
+  });
+
+  const VMATH_CLAMP = [
+    "vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number | T, max: number | T): T",
+  ];
+  const VMATH_LERP = [
+    "vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
+    "vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion",
+    "vmath.lerp(t: number, n1: number, n2: number): number",
+  ];
+  const VMATH_SLERP = [
+    "vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
+    "vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion",
+  ];
+  const VMATH_MUL_PER_ELEM = ["vmath.mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T"];
+  const VMATH_NORMALIZE = ["vmath.normalize<T extends Vector3 | Vector4 | Quaternion>(v1: T): T"];
+  const VMATH_OVERRIDES: SignatureStore = {
+    "vmath.clamp": { signatures: VMATH_CLAMP },
+    "vmath.lerp": { signatures: VMATH_LERP },
+    "vmath.slerp": { signatures: VMATH_SLERP },
+    "vmath.mul_per_elem": { signatures: VMATH_MUL_PER_ELEM },
+    "vmath.normalize": { signatures: VMATH_NORMALIZE },
+  };
+  const VMATH_SINGLE: Record<string, string[]> = {
+    "vmath.clamp": VMATH_CLAMP,
+    "vmath.mul_per_elem": VMATH_MUL_PER_ELEM,
+    "vmath.normalize": VMATH_NORMALIZE,
+  };
+
+  function vmathPage(): ApiPage {
+    const raw = JSON.parse(
+      readFileSync(join(REAL_TYPES_DIR, "fixtures", "vmath_doc.json"), "utf8"),
+    );
+    return pageWith(parseDefoldApiDoc(raw));
+  }
+
+  test("collapses a multi-fixture-entry override to one row per authored signature, in order", () => {
+    const symbols = apiModuleSymbols(vmathPage(), {}, VMATH_OVERRIDES);
+
+    const lerp = symbols.filter((s) => s.name === "vmath.lerp");
+    const slerp = symbols.filter((s) => s.name === "vmath.slerp");
+    // The fixture carries 3 `vmath.lerp` and 2 `vmath.slerp` entries; without the
+    // dedupe the override would render once per entry (9 and 4 rows).
+    expect(lerp).toHaveLength(3);
+    expect(slerp).toHaveLength(2);
+    expect(lerp.map((s) => s.signature)).toEqual(VMATH_LERP);
+    expect(slerp.map((s) => s.signature)).toEqual(VMATH_SLERP);
+  });
+
+  test("the primary vmath.lerp row renders the generic override signature", () => {
+    const symbols = apiModuleSymbols(vmathPage(), {}, VMATH_OVERRIDES);
+    const lerp = symbols.filter((s) => s.name === "vmath.lerp");
+    expect(lerp[0]?.signature).toBe(
+      "vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
+    );
+    expect(lerp[0]?.parameters.length).toBeGreaterThan(0);
+    for (const row of lerp.slice(1)) {
+      expect(row.parameters).toEqual([]);
+      expect(row.returnValues).toEqual([]);
+    }
+  });
+
+  test("single-signature vmath overrides each render exactly once as their generic form", () => {
+    const symbols = apiModuleSymbols(vmathPage(), {}, VMATH_OVERRIDES);
+    for (const [fqn, expected] of Object.entries(VMATH_SINGLE)) {
+      const rows = symbols.filter((s) => s.name === fqn);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.signature).toBe(expected[0]);
+    }
+  });
+
+  test("dedupe leaves the single-fixture-entry override path unchanged for distinct FQNs", () => {
+    const store: SignatureStore = {
+      "demo.a": { signatures: ["demo.a(): number"] },
+      "demo.b": { signatures: ["demo.b(): string"] },
+    };
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          { name: "demo.a", brief: "", description: "A.", parameters: [], returnValues: [] },
+          { name: "demo.b", brief: "", description: "B.", parameters: [], returnValues: [] },
+        ],
+      }),
+      {},
+      store,
+    );
+    expect(symbols.filter((s) => s.name === "demo.a")).toHaveLength(1);
+    expect(symbols.filter((s) => s.name === "demo.b")).toHaveLength(1);
+    expect(symbols.map((s) => s.signature)).toEqual(["demo.a(): number", "demo.b(): string"]);
   });
 });
 

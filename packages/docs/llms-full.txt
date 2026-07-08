@@ -4478,28 +4478,28 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### socket
 
-- socket.select(recvt: Record<string | number, unknown>, sendt: Record<string | number, unknown>, timeout?: number): Record<string | number, unknown>, Record<string | number, unknown>, string | nil
-- socket.tcp6(): master | nil, string | nil
-- socket.udp6(): unconnected | nil, string | nil
-- socket.dns.tohostname(address: string): string | nil, Record<string | number, unknown> | string
-- socket.dns.toip(address: string): string | nil, Record<string | number, unknown> | string
+- socket.select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | unknown]>
+- socket.tcp6(): LuaMultiReturn<[master | unknown, string | unknown]>
+- socket.udp6(): LuaMultiReturn<[unconnected | unknown, string | unknown]>
+- socket.dns.tohostname(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>
+- socket.dns.toip(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>
 - socket.dns.gethostname(): string
-- socket.dns.getaddrinfo(address: string): Record<string | number, unknown> | nil, string | nil
-- socket.dns.getnameinfo(address: string): Record<string | number, unknown> | nil, string | nil
-- socket.connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): client | nil, string | nil
-- socket.udp(): unconnected | nil, string | nil
-- socket.skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): unknown | nil, unknown | nil, unknown | nil
-- socket.tcp(): master | nil, string | nil
-- socket.newtry(finalizer: function()): (...args: unknown[]) => unknown
-- socket.protect(func: (...args: unknown[]) => unknown): function(function())
+- socket.dns.getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>
+- socket.dns.getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>
+- socket.connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | unknown, string | unknown]>
+- socket.udp(): LuaMultiReturn<[unconnected | unknown, string | unknown]>
+- socket.skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>
+- socket.tcp(): LuaMultiReturn<[master | unknown, string | unknown]>
+- socket.newtry(finalizer: () => void): (...args: unknown[]) => unknown
+- socket.protect(func: (...args: unknown[]) => unknown): (arg0: unknown) => void
 - socket.gettime(): number
-- socket.sleep(time: number)
-- server:accept(): client | nil, string | nil
-- master:bind(address: string, port: number): number | nil, string | nil
-- master:close()
-- client:close()
-- server:close()
-- master:connect(address: string, port: number): number | nil, string | nil
+- socket.sleep(time: number): void
+- server:accept(): LuaMultiReturn<[client | unknown, string | unknown]>
+- master:bind(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>
+- master:close(): void
+- client:close(): void
+- server:close(): void
+- master:connect(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>
 - client:getpeername(): string
 - master:getsockname(): string
 - client:getsockname(): string
@@ -4507,19 +4507,19 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - master:getstats(): string
 - client:getstats(): string
 - server:getstats(): string
-- master:listen(backlog: number): number | nil, string | nil
-- client:receive(pattern?: string | number, prefix?: string): string | nil, string | nil, string | nil
-- client:send(data: string, i?: number, j?: number): number | nil, string | nil, number | nil
-- client:setoption(option: string, value?: unknown): number | nil, string | nil
-- server:setoption(option: string, value?: unknown): number | nil, string | nil
-- client:getoption(option: string): unknown | nil, string | nil
-- server:getoption(option: string): unknown | nil, string | nil
-- master:setstats(received: number, sent: number, age: number): number | nil
-- client:setstats(received: number, sent: number, age: number): number | nil
-- server:setstats(received: number, sent: number, age: number): number | nil
-- master:settimeout(value: number, mode?: string)
-- client:settimeout(value: number, mode?: string)
-- server:settimeout(value: number, mode?: string)
+- master:listen(backlog: number): LuaMultiReturn<[number | unknown, string | unknown]>
+- client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>
+- client:send(data: string, i?: number, j?: number): LuaMultiReturn<[number | unknown, string | unknown, number | unknown]>
+- client:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>
+- server:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>
+- client:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>
+- server:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>
+- master:setstats(received: number, sent: number, age: number): number | unknown
+- client:setstats(received: number, sent: number, age: number): number | unknown
+- server:setstats(received: number, sent: number, age: number): number | unknown
+- master:settimeout(value: number, mode?: string): void
+- client:settimeout(value: number, mode?: string): void
+- server:settimeout(value: number, mode?: string): void
 - client:shutdown(mode: string): number
 - master:dirty(): boolean
 - client:dirty(): boolean
@@ -4527,28 +4527,28 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - master:getfd(): number
 - client:getfd(): number
 - server:getfd(): number
-- master:setfd(handle: number)
-- client:setfd(handle: number)
-- server:setfd(handle: number)
-- connected:close()
-- unconnected:close()
+- master:setfd(handle: number): void
+- client:setfd(handle: number): void
+- server:setfd(handle: number): void
+- connected:close(): void
+- unconnected:close(): void
 - connected:getpeername(): string
 - connected:getsockname(): string
 - unconnected:getsockname(): string
-- connected:receive(size?: number): string | nil, string | nil
-- unconnected:receive(size?: number): string | nil, string | nil
-- unconnected:receivefrom(size?: number): string | nil, string, number | nil
-- connected:getoption(option: string): unknown | nil, string | nil
-- unconnected:getoption(option: string): unknown | nil, string | nil
-- connected:send(datagram: string): number | nil, string | nil
-- unconnected:sendto(datagram: string, ip: string, port: number): number | nil, string | nil
-- connected:setpeername("*": string): number | nil, string | nil
-- unconnected:setpeername(address: string, port: number): number | nil, string | nil
-- unconnected:setsockname(address: string, port: number): number | nil, string | nil
-- connected:setoption(option: string, value?: unknown): number | nil, string | nil
-- unconnected:setoption(option: string, value?: unknown): number | nil, string | nil
-- connected:settimeout(value: number)
-- unconnected:settimeout(value: number)
+- connected:receive(size?: number): LuaMultiReturn<[string | unknown, string | unknown]>
+- unconnected:receive(size?: number): LuaMultiReturn<[string | unknown, string | unknown]>
+- unconnected:receivefrom(size?: number): LuaMultiReturn<[string | unknown, string, number | unknown]>
+- connected:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>
+- unconnected:getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>
+- connected:send(datagram: string): LuaMultiReturn<[number | unknown, string | unknown]>
+- unconnected:sendto(datagram: string, ip: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>
+- connected:setpeername(arg0: string): LuaMultiReturn<[number | unknown, string | unknown]>
+- unconnected:setpeername(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>
+- unconnected:setsockname(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>
+- connected:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>
+- unconnected:setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>
+- connected:settimeout(value: number): void
+- unconnected:settimeout(value: number): void
 - socket._VERSION
 - socket._SETSIZE
 
@@ -4696,23 +4696,23 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - vmath.dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number
 - vmath.length_sqr(v: Vector3 | Vector4 | Quaternion): number
 - vmath.length(v: Vector3 | Vector4 | Quaternion): number
-- vmath.normalize(v1: Vector3 | Vector4 | Quaternion): Vector3 | Vector4 | Quaternion
+- vmath.normalize<T extends Vector3 | Vector4 | Quaternion>(v1: T): T
 - vmath.cross(v1: Vector3, v2: Vector3): Vector3
-- vmath.lerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4
+- vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
 - vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
 - vmath.lerp(t: number, n1: number, n2: number): number
-- vmath.slerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4
+- vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
 - vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
 - vmath.conj(q1: Quaternion): Quaternion
 - vmath.rotate(q: Quaternion, v1: Vector3): Vector3
 - vmath.project(v1: Vector3, v2: Vector3): number
-- vmath.mul_per_elem(v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4
+- vmath.mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T
 - vmath.quat_matrix4(matrix: Matrix4): Quaternion
 - vmath.matrix4_compose(translation: Vector3 | Vector4, rotation: Quaternion, scale: Vector3): Matrix4
 - vmath.matrix4_scale(scale: Vector3): Matrix4
 - vmath.matrix4_scale(scale: number): Matrix4
 - vmath.matrix4_scale(scale_x: number, scale_y: number, scale_z: number): Matrix4
-- vmath.clamp(value: number | Vector3 | Vector4, min: number | Vector3 | Vector4, max: number | Vector3 | Vector4): number | Vector3 | Vector4
+- vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number | T, max: number | T): T
 - vmath.quat_to_euler(q: Quaternion): number, number, number
 - vmath.euler_to_quat(x: number | Vector3, y: number, z: number): Quaternion
 
@@ -4828,44 +4828,46 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### base
 
-- assert(v: boolean, message?: string)
-- collectgarbage(opt?: Record<string | number, unknown>, arg?: number)
-- dofile(filename?: string)
-- error(message: string, level?: number)
-- getfenv(f?: (...args: unknown[]) => unknown)
-- getmetatable(object: Record<string | number, unknown>)
-- ipairs(t: Record<string | number, unknown>)
-- load(func: (...args: unknown[]) => unknown, chunkname?: string)
-- loadfile(filename?: string)
-- loadstring(string: string, chunkname?: string)
-- next(table: Record<string | number, unknown>, index?: number)
-- pairs(t: string)
-- pcall(f: (...args: unknown[]) => unknown, arg1: unknown, ...: ...)
-- print(...: ...)
-- rawequal(v1: unknown, v2: unknown)
-- rawget(table: Record<string | number, unknown>, index: number)
-- rawset(table: Record<string | number, unknown>, index: number, value: unknown)
-- select(index: number, ...: ...)
-- setfenv(f: (...args: unknown[]) => unknown, table: Record<string | number, unknown>)
-- setmetatable(table: Record<string | number, unknown>, metatable: Record<string | number, unknown>)
-- tonumber(e: string, base?: number)
-- tostring(e: unknown)
-- type(v: unknown)
-- unpack(list: Record<string | number, unknown>, i?: number, j?: number)
-- xpcall(f: (...args: unknown[]) => unknown, err: string)
-- module(name: string, ...?: ...)
-- require(modname: string)
+- assert<T>(v: T, message?: any): Exclude<T, undefined | null | false>
+- collectgarbage(opt?: "collect" | "stop" | "restart" | "count" | "step" | "setpause" | "setstepmul", arg?: number): number
+- dofile(filename?: string): any
+- error(message: string, level?: number): never
+- getfenv(f?: Function | number): any
+- getmetatable<T>(object: T): LuaMetatable<T> | undefined
+- ipairs<T>(t: Record<number, T>): LuaIterable<LuaMultiReturn<[number, NonNullable<T>]>>
+- load(func: () => string | null | undefined, chunkname?: string): LuaMultiReturn<[() => any] | [undefined, string]>
+- loadfile(filename?: string): LuaMultiReturn<[() => any] | [undefined, string]>
+- loadstring(chunk: string | (() => string | null | undefined), chunkname?: string, mode?: "b" | "t" | "bt", env?: object): LuaMultiReturn<[() => any] | [undefined, string]>
+- next(table: object, index?: any): LuaMultiReturn<[any, any] | []>
+- pairs<T>(t: T): LuaIterable<LuaMultiReturn<[keyof T, NonNullable<T[keyof T]>]>>
+- pcall<A extends any[], R>(f: (...args: A) => R, ...args: A): LuaMultiReturn<[true, R] | [false, string]>
+- print(...args: any[]): void
+- rawequal<T>(v1: T, v2: T): boolean
+- rawget<T extends object, K extends keyof T>(table: T, index: K): T[K]
+- rawset<T extends object, K extends keyof T>(table: T, index: K, value: T[K]): T
+- select<T>(index: number, ...args: T[]): LuaMultiReturn<T[]>
+- select<T>(index: "#", ...args: T[]): number
+- setfenv<T extends Function>(f: T, table: object): T
+- setmetatable<T extends object>(table: T, metatable?: LuaMetatable<T> | null): T
+- tonumber(e: any, base?: number): number | undefined
+- tostring(v: any): string
+- type(v: any): "nil" | "number" | "string" | "boolean" | "table" | "function" | "thread" | "userdata"
+- unpack<T extends any[]>(list: T): LuaMultiReturn<T>
+- unpack<T>(list: T[], i: number, j?: number): LuaMultiReturn<T[]>
+- xpcall<R, E>(f: () => R, err: (err: any) => E): LuaMultiReturn<[true, R] | [false, E]>
+- module(name: string, ...options: any[]): void
+- require(modname: string): any
 - _G: unknown
 - _VERSION: unknown
 
 ### bit
 
 - bit.tobit(x: number): number
-- bit.tohex(x: number, n: number): string
+- bit.tohex(x: number, n?: number): string
 - bit.bnot(x: number): number
-- bit.bor(x1: number, x2...?: number): number
-- bit.band(x1: number, x2...?: number): number
-- bit.bxor(x1: number, x2...?: number): number
+- bit.bor(x: number, ...rest: number[]): number
+- bit.band(x: number, ...rest: number[]): number
+- bit.bxor(x: number, ...rest: number[]): number
 - bit.lshift(x: number, n: number): number
 - bit.rshift(x: number, n: number): number
 - bit.arshift(x: number, n: number): number
@@ -4875,129 +4877,138 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### coroutine
 
-- coroutine.create(f: (...args: unknown[]) => unknown)
-- coroutine.resume(co: thread, val1?: unknown, ...?: unknown)
-- coroutine.running()
-- coroutine.status(co: thread)
-- coroutine.wrap(f: (...args: unknown[]) => unknown)
-- coroutine.yield(...: unknown)
+- coroutine.create(f: (...args: any[]) => any): LuaThread
+- coroutine.resume(co: LuaThread, ...val: any[]): LuaMultiReturn<[true, ...any[]] | [false, string]>
+- coroutine.running(): LuaThread | undefined
+- coroutine.status(co: LuaThread): "running" | "suspended" | "normal" | "dead"
+- coroutine.wrap(f: (...args: any[]) => any): (...args: any[]) => LuaMultiReturn<any[]>
+- coroutine.yield(...args: any[]): LuaMultiReturn<any[]>
 
 ### debug
 
-- debug.debug()
-- debug.getfenv(o: unknown)
-- debug.gethook(thread?: thread)
-- debug.getinfo(thread?: thread, function: (...args: unknown[]) => unknown, what?: string)
-- debug.getlocal(thread?: thread, level: number, local: number)
-- debug.getmetatable(object: unknown)
-- debug.getregistry()
-- debug.getupvalue(func: (...args: unknown[]) => unknown, up: number)
-- debug.setfenv(object: unknown, table: Record<string | number, unknown>)
-- debug.sethook(thread?: thread, hook: (...args: unknown[]) => unknown, mask: string, count?: number)
-- debug.setlocal(thread?: thread, level: number, local: number, value: unknown)
-- debug.setmetatable(object: unknown, table: Record<string | number, unknown>)
-- debug.setupvalue(func: (...args: unknown[]) => unknown, up: number, value: unknown)
-- debug.traceback(thread?: thread, message?: string, level?: number)
+- debug.debug(): void
+- debug.getfenv(o: object): any
+- debug.gethook(thread?: LuaThread): LuaMultiReturn<[undefined, 0] | [Function, number, string?]>
+- debug.getinfo(f: Function | number, what?: string): FunctionInfo
+- debug.getlocal(level: number, local: number): LuaMultiReturn<[string, any]>
+- debug.getmetatable<T>(value: T): LuaMetatable<T> | undefined
+- debug.getregistry(): Record<string, any>
+- debug.getupvalue(f: Function, up: number): LuaMultiReturn<[string, any] | []>
+- debug.setfenv<T extends object>(o: T, table: object): T
+- debug.sethook(hook?: (event: "call" | "return" | "line" | "count", line?: number) => any, mask?: string, count?: number): void
+- debug.setlocal(level: number, local: number, value: any): string | undefined
+- debug.setmetatable<T extends object>(value: T, table?: LuaMetatable<T> | null): T
+- debug.setupvalue(f: Function, up: number, value: any): string | undefined
+- debug.traceback(message?: string, level?: number): string
 
 ### io
 
-- io.close(file?: file | nil)
-- io.flush()
-- io.input(file?: string | file)
-- io.lines(filename?: string)
-- io.open(filename: string, mode?: string)
-- io.output(file?: file)
-- io.popen(prog: string, mode?: string)
-- io.read(...: unknown)
-- io.tmpfile()
-- io.type(obj: file)
-- io.write(...: unknown)
-- file:close()
-- file:flush()
-- file:lines()
-- file:read(...: unknown)
-- file:seek(whence?: string, offset?: number)
-- file:setvbuf(mode: string, size?: number)
-- file:write(...: unknown)
+- io.close(file?: LuaFile): boolean
+- io.flush(): boolean
+- io.input(file?: string | LuaFile): LuaFile
+- io.lines(filename?: string, ...formats: ("*n" | "*l" | "*a" | number)[]): LuaIterable<string | number>
+- io.open(filename: string, mode?: string): LuaFile | undefined
+- io.output(file?: string | LuaFile): LuaFile
+- io.popen(prog: string, mode?: "r" | "w"): LuaFile | undefined
+- io.read(): string | undefined
+- io.read(format: "*n" | "*l" | "*a" | number): string | number | undefined
+- io.read(...formats: ("*n" | "*l" | "*a" | number)[]): (string | number | undefined)[]
+- io.tmpfile(): LuaFile
+- io.type(obj: unknown): "file" | "closed file" | undefined
+- io.write(...args: (string | number)[]): LuaFile | undefined
+- file:close(): boolean
+- file:flush(): boolean
+- file:lines(): LuaIterable<string>
+- file:lines(...formats: ("*n" | "*l" | "*a" | number)[]): LuaIterable<string | number>
+- file:read(): string | undefined
+- file:read(format: "*n" | "*l" | "*a" | number): string | number | undefined
+- file:read(...formats: ("*n" | "*l" | "*a" | number)[]): (string | number | undefined)[]
+- file:seek(whence?: "set" | "cur" | "end", offset?: number): number | undefined
+- file:setvbuf(mode: "no" | "full" | "line", size?: number): void
+- file:write(...args: (string | number)[]): LuaFile | undefined
 
 ### math
 
-- math.abs(x: number)
-- math.acos(x: number)
-- math.asin(x: number)
-- math.atan(x: number)
-- math.atan2(y: number, x: number)
-- math.ceil(x: number)
-- math.cos(x: number)
-- math.cosh(x: number)
-- math.deg(x: number)
-- math.exp(x: number)
-- math.floor(x: number)
-- math.fmod(x: number, y: number)
-- math.frexp(x: number)
-- math.ldexp(m: number, e: number)
-- math.log(x: number)
-- math.log10(x: number)
-- math.max(x: number, ...: unknown)
-- math.min(x: number, ...: unknown)
-- math.modf(x: number)
-- math.pow(x: number, y: number)
-- math.rad(x: number)
-- math.random(m?: number, n?: number)
-- math.randomseed(x: number)
-- math.sin(x: number)
-- math.sinh(x: number)
-- math.sqrt(x: number)
-- math.tan(x: number)
-- math.tanh(x: number)
+- math.abs(x: number): number
+- math.acos(x: number): number
+- math.asin(x: number): number
+- math.atan(x: number): number
+- math.atan2(y: number, x: number): number
+- math.ceil(x: number): number
+- math.cos(x: number): number
+- math.cosh(x: number): number
+- math.deg(x: number): number
+- math.exp(x: number): number
+- math.floor(x: number): number
+- math.fmod(x: number, y: number): number
+- math.frexp(x: number): LuaMultiReturn<[number, number]>
+- math.ldexp(m: number, e: number): number
+- math.log(x: number): number
+- math.log10(x: number): number
+- math.max(x: number, ...numbers: number[]): number
+- math.min(x: number, ...numbers: number[]): number
+- math.modf(x: number): LuaMultiReturn<[number, number]>
+- math.pow(x: number, y: number): number
+- math.rad(x: number): number
+- math.random(m?: number, n?: number): number
+- math.randomseed(x: number): number
+- math.sin(x: number): number
+- math.sinh(x: number): number
+- math.sqrt(x: number): number
+- math.tan(x: number): number
+- math.tanh(x: number): number
 - math.huge: unknown
 - math.pi: unknown
 
 ### os
 
-- os.clock()
-- os.date(format?: string, time?: number)
-- os.difftime(t2: number, t1: number)
-- os.execute(command?: string)
-- os.exit(code?: number)
-- os.getenv(varname: string)
-- os.remove(filename: string)
-- os.rename(oldname: string, newname: string)
-- os.setlocale(locale: string, category?: string)
-- os.time(table?: Record<string | number, unknown>)
-- os.tmpname()
+- os.clock(): number
+- os.date(format?: string, time?: number): string
+- os.date(format: "*t", time?: number): LuaDateInfoResult
+- os.difftime(t1: number, t2: number): number
+- os.execute(command?: string): number
+- os.exit(code?: number): never
+- os.getenv(varname: string): string | undefined
+- os.remove(filename: string): LuaMultiReturn<[true] | [undefined, string]>
+- os.rename(oldname: string, newname: string): LuaMultiReturn<[true] | [undefined, string]>
+- os.setlocale(locale?: string, category?: "all" | "collate" | "ctype" | "monetary" | "numeric" | "time"): string | undefined
+- os.time(): number
+- os.time(table: LuaDateInfo): number
+- os.tmpname(): string
 
 ### package
 
-- package.cpath()
-- package.loaded()
-- package.loaders()
-- package.loadlib(libname: string, funcname: string)
-- package.path()
-- package.preload()
-- package.seeall(module: Record<string | number, unknown>)
+- package.cpath: string
+- package.loaded: Record<string, any>
+- package.loaders: (((modname: string) => LuaMultiReturn<[(modname: string) => void]>) | (<T>(modname: string) => LuaMultiReturn<[(modname: string, extra: T) => T, T]>) | string)[]
+- package.loadlib(libname: string, funcname: string): [Function] | [undefined, string, "open" | "init"]
+- package.path: string
+- package.preload: Record<string, (modname: string, fileName?: string) => any>
+- package.seeall(module: object): void
 
 ### string
 
-- string.byte(s: string, i?: number, j?: number)
-- string.char(...: unknown)
-- string.dump(function: (...args: unknown[]) => unknown)
-- string.find(s: string, pattern: string, init?: number, plain?: boolean)
-- string.format(formatstring: string, ...: unknown)
-- string.gmatch(s: string, pattern: string)
-- string.gsub(s: string, pattern: string, repl: string, n?: number)
-- string.len(s: string)
-- string.lower(s: string)
-- string.match(s: string, pattern: string, init?: number)
-- string.rep(s: string, n: number)
-- string.reverse(s: string)
-- string.sub(s: string, i: number, j?: number)
-- string.upper(s: string)
+- string.byte(s: string, i?: number): number
+- string.byte(s: string, i?: number, j?: number): LuaMultiReturn<number[]>
+- string.char(...args: number[]): string
+- string.dump(func: Function): string
+- string.find(s: string, pattern: string, init?: number, plain?: boolean): LuaMultiReturn<[number, number, ...string[]] | []>
+- string.format(formatstring: string, ...args: any[]): string
+- string.gmatch(s: string, pattern: string): LuaIterable<LuaMultiReturn<string[]>>
+- string.gsub(s: string, pattern: string, repl: string | Record<string, string> | ((...matches: string[]) => string), n?: number): LuaMultiReturn<[string, number]>
+- string.len(s: string): number
+- string.lower(s: string): string
+- string.match(s: string, pattern: string, init?: number): LuaMultiReturn<string[]>
+- string.rep(s: string, n: number): string
+- string.reverse(s: string): string
+- string.sub(s: string, i: number, j?: number): string
+- string.upper(s: string): string
 
 ### table
 
-- table.concat(table: Record<string | number, unknown>, sep?: string, i?: number, j?: number)
-- table.insert(table: Record<string | number, unknown>, pos?: number, value: unknown)
-- table.maxn(table: Record<string | number, unknown>)
-- table.remove(table: Record<string | number, unknown>, pos?: number)
-- table.sort(table: Record<string | number, unknown>, comp?: (...args: unknown[]) => unknown)
+- table.concat(list: (string | number)[], sep?: string, i?: number, j?: number): string
+- table.insert<T>(list: T[], value: T): void
+- table.insert<T>(list: T[], pos: number, value: T): void
+- table.maxn(table: object): number
+- table.remove<T>(list: T[], pos?: number): T | undefined
+- table.sort<T>(list: T[], comp?: (a: T, b: T) => boolean): void

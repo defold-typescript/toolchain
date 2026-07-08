@@ -1,0 +1,26 @@
+{
+  "vmath.clamp": {
+    "signatures": [
+      "vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number | T, max: number | T): T"
+    ]
+  },
+  "vmath.lerp": {
+    "signatures": [
+      "vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
+      "vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion",
+      "vmath.lerp(t: number, n1: number, n2: number): number"
+    ]
+  },
+  "vmath.slerp": {
+    "signatures": [
+      "vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
+      "vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion"
+    ]
+  },
+  "vmath.mul_per_elem": {
+    "signatures": ["vmath.mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T"]
+  },
+  "vmath.normalize": {
+    "signatures": ["vmath.normalize<T extends Vector3 | Vector4 | Quaternion>(v1: T): T"]
+  }
+}

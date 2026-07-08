@@ -94,7 +94,7 @@ export function buildLlmsFull(): string {
   lines.push("## API", "");
   for (const page of loadApiSurface(TYPES_DIR)) {
     lines.push(`### ${page.namespace}`, "");
-    for (const symbol of apiModuleSymbols(page)) {
+    for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
       lines.push(`- ${symbol.signature}`);
     }
     lines.push("");
