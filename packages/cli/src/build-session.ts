@@ -21,6 +21,7 @@ import {
 } from "./build-output";
 import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
+import { scanSceneResourceRefs } from "./scene-resource-scan";
 
 export interface CreateBuildSessionOptions {
   readonly cwd: string;
@@ -101,7 +102,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
 
     const result = session.update(files);
     const built = writeOutputs(result, sources, files, true);
-    return { written: built.written, warnings: scanOrphanOutputs(cwd, sources, config) };
+    return {
+      written: built.written,
+      warnings: [...scanOrphanOutputs(cwd, sources, config), ...scanSceneResourceRefs(cwd)],
+    };
   }
 
   function applyEvents(changed: string[], removed: string[]): BuildResult {

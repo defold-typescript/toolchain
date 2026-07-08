@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const PKG_DIR = path.resolve(import.meta.dir, "..");
 const REPO_ROOT = path.resolve(PKG_DIR, "..", "..");
@@ -69,6 +70,42 @@ describe("published bin scaffolds from dist", () => {
       } finally {
         rmSync(cwd, { recursive: true, force: true });
       }
+    },
+    SPAWN_TEST_TIMEOUT_MS,
+  );
+});
+
+// The published CLI runs under plain `node`, where the `Bun` global is absent,
+// so bob-command's spawn/download must use node built-ins. `bun test` executes
+// under Bun (where `Bun` exists), so a `Bun.*` leak on the build path hides from
+// the rest of the suite. This guard spawns a real `node` process and runs the
+// actual spawn implementation through it — regressing to `Bun.spawn` there fails
+// with `Bun is not defined` under node.
+describe("bob-command spawn runs under plain node", () => {
+  build(PKG_DIR);
+
+  test(
+    "defaultDefoldIo().spawn executes a command in both capture modes under node",
+    () => {
+      const distUrl = pathToFileURL(path.join(PKG_DIR, "dist", "index.js")).href;
+      const script = [
+        `const { defaultDefoldIo } = await import(${JSON.stringify(distUrl)});`,
+        "const io = defaultDefoldIo();",
+        "const noop = [process.execPath, '-e', 'process.exit(0)'];",
+        "const cap = await io.spawn(noop, process.cwd(), { capture: true });",
+        "if (cap.exitCode !== 0) { console.error('capture exitCode ' + cap.exitCode); process.exit(2); }",
+        "const inh = await io.spawn(noop, process.cwd(), { capture: false });",
+        "if (inh.exitCode !== 0) { console.error('inherit exitCode ' + inh.exitCode); process.exit(3); }",
+        "console.log('NODE_SPAWN_OK');",
+      ].join("\n");
+      const proc = Bun.spawnSync(["node", "--input-type=module", "-e", script], {
+        cwd: PKG_DIR,
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      const output = `${proc.stdout.toString()}${proc.stderr.toString()}`;
+      expect(output).toContain("NODE_SPAWN_OK");
+      expect(proc.exitCode).toBe(0);
     },
     SPAWN_TEST_TIMEOUT_MS,
   );

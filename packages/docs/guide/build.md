@@ -38,6 +38,13 @@ TypeScript source no longer exists, so a deleted or renamed source's orphaned Lu
 surfaces for you to remove (the warning names the file and the source to restore).
 Hand-authored Lua, which lacks the marker, is never flagged or touched.
 
+A full build also warns when a `.go`/`.collection` `component:` references a mesh
+source asset (`.gltf`/`.glb`/`.dae`) directly. Those are imported *into* a
+`.model` component, not added as components — the editor rejects the direct form,
+but Bob's headless build accepts it and the game object fails at runtime. The
+warning names the scene file and the offending path; wrap the mesh in a `.model`
+(with a `materials` block) and point the component at the `.model`.
+
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
 per-directory narrowing with [`wall`](./wall.md).

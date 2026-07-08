@@ -15,6 +15,7 @@ import {
 } from "./build-output";
 import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
+import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { findWallImportViolations } from "./wall-import-guardrail";
 
 function throwOnWallImportViolations(cwd: string, files: Record<string, string>): void {
@@ -96,6 +97,6 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   }
 
   throwIfFailures(failures);
-  const warnings = scanOrphanOutputs(cwd, sources, config);
+  const warnings = [...scanOrphanOutputs(cwd, sources, config), ...scanSceneResourceRefs(cwd)];
   return { written: written.sort(), warnings };
 }

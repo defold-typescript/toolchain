@@ -1,4 +1,9 @@
 export type {
+  DefoldIo,
+  SpawnResult,
+} from "./bob-command";
+export { defaultDefoldIo } from "./bob-command";
+export type {
   BuildResult,
   BuildSession,
   CreateBuildSessionOptions,
