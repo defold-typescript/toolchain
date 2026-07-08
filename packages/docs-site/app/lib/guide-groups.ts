@@ -39,7 +39,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "toolchain-workflow",
     label: "Toolchain & workflow",
     subtitle: "Build, inspect, and drive the transpiler.",
-    slugs: ["transpile-diagnostics", "debugging", "agent-runbooks"],
+    slugs: ["transpile-diagnostics", "debugging", "agent-runbooks", "helper-scripts"],
   },
   {
     id: "project-configuration",

@@ -293,6 +293,7 @@ describe("buildNav", () => {
       "/transpile-diagnostics",
       "/debugging",
       "/agent-runbooks",
+      "/helper-scripts",
     ]);
     expect(byLabel("Project configuration")?.children?.map((c) => c.route)).toEqual([
       "/pinning-defold-version",
