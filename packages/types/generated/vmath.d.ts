@@ -33,29 +33,6 @@ declare global {
    */
   namespace vmath {
     /**
-     * Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type
-     * return new vector3|vector4 with clamped value at every vector's element.
-     * Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element
-     *
-     * @param value - Input value or vector of values
-     * @param min - Min value(s) border
-     * @param max - Max value(s) border
-     * @returns Clamped value or vector
-     * @example
-     * ```ts
-     * const value1 = 56;
-     * print(vmath.clamp(value1, 89, 134)); // => 89
-     * const v2 = vmath.vector3(190, 190, -10);
-     * print(vmath.clamp(v2, -50, 150)); // => vmath.vector3(150, 150, -10)
-     * const v3 = vmath.vector4(30, -30, 45, 1);
-     * print(vmath.clamp(v3, 0, 20)); // => vmath.vector4(20, 0, 20, 1)
-     *
-     * const min_v = vmath.vector4(0, -10, -10, 1);
-     * print(vmath.clamp(v3, min_v, 20)); // => vmath.vector4(20, -10, 20, 1)
-     * ```
-     */
-    function clamp(value: number | Vector3 | Vector4, min: number | Vector3 | Vector4, max: number | Vector3 | Vector4): number | Vector3 | Vector4;
-    /**
      * Calculates the conjugate of a quaternion. The result is a
      * quaternion with the same magnitudes but with the sign of
      * the imaginary (vector) parts changed:
@@ -185,97 +162,6 @@ declare global {
      * ```
      */
     function length_sqr(v: Vector3 | Vector4 | Quaternion): number;
-    /**
-     * Linearly interpolate between two vectors. The function
-     * treats the vectors as positions and interpolates between
-     * the positions in a straight line. Lerp is useful to describe
-     * transitions from one place to another over time.
-     * The function does not clamp t between 0 and 1.
-     *
-     * @param t - interpolation parameter, 0-1
-     * @param v1 - vector to lerp from
-     * @param v2 - vector to lerp to
-     * @returns the lerped vector
-     * @example
-     * ```ts
-     * export default defineScript({
-     *   init() {
-     *     return { t: 0 };
-     *   },
-     *
-     *   update(self, dt) {
-     *     self.t = self.t + dt;
-     *     if (self.t <= 1) {
-     *       const startpos = vmath.vector3(0, 600, 0);
-     *       const endpos = vmath.vector3(600, 0, 0);
-     *       const pos = vmath.lerp(self.t, startpos, endpos);
-     *       go.set_position(pos, "go");
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    function lerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
-    /**
-     * Linearly interpolate between two quaternions. Linear
-     * interpolation of rotations are only useful for small
-     * rotations. For interpolations of arbitrary rotations,
-     * vmath.slerp yields much better results.
-     * The function does not clamp t between 0 and 1.
-     *
-     * @param t - interpolation parameter, 0-1
-     * @param q1 - quaternion to lerp from
-     * @param q2 - quaternion to lerp to
-     * @returns the lerped quaternion
-     * @example
-     * ```ts
-     * export default defineScript({
-     *   init(self) {
-     *     self.t = 0;
-     *   },
-     *
-     *   update(self, dt) {
-     *     self.t = self.t + dt;
-     *     if (self.t <= 1) {
-     *       const startrot = vmath.quat_rotation_z(0);
-     *       const endrot = vmath.quat_rotation_z(3.141592653);
-     *       const rot = vmath.lerp(self.t, startrot, endrot);
-     *       go.set_rotation(rot, "go");
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    function lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;
-    /**
-     * Linearly interpolate between two values. Lerp is useful
-     * to describe transitions from one value to another over time.
-     * The function does not clamp t between 0 and 1.
-     *
-     * @param t - interpolation parameter, 0-1
-     * @param n1 - number to lerp from
-     * @param n2 - number to lerp to
-     * @returns the lerped number
-     * @example
-     * ```ts
-     * export default defineScript({
-     *   init(self) {
-     *     self.t = 0;
-     *   },
-     *
-     *   update(self, dt) {
-     *     self.t = self.t + dt;
-     *     if (self.t <= 1) {
-     *       const startx = 0;
-     *       const endx = 600;
-     *       const x = vmath.lerp(self.t, startx, endx);
-     *       go.set_position(vmath.vector3(x, 100, 0), "go");
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    function lerp(t: number, n1: number, n2: number): number;
     /**
      * The resulting identity matrix describes a transform with
      * no translation or rotation.
@@ -542,37 +428,6 @@ declare global {
      */
     function matrix4_translation(position: Vector3 | Vector4): Matrix4;
     /**
-     * Performs an element wise multiplication between two vectors of the same type
-     * The returned value is a vector defined as (e.g. for a vector3):
-     * `v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`
-     *
-     * @param v1 - first vector
-     * @param v2 - second vector
-     * @returns multiplied vector
-     * @example
-     * ```ts
-     * const blend_color = vmath.mul_per_elem(color1, color2);
-     * ```
-     */
-    function mul_per_elem(v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
-    /**
-     * Normalizes a vector, i.e. returns a new vector with the same
-     * direction as the input vector, but with length 1.
-     * The length of the vector must be above 0, otherwise a
-     * division-by-zero will occur.
-     *
-     * @param v1 - vector to normalize
-     * @returns new normalized vector
-     * @example
-     * ```ts
-     * const vec = vmath.vector3(1, 2, 3);
-     * const norm_vec = vmath.normalize(vec);
-     * print(norm_vec); // => vmath.vector3(0.26726123690605, 0.5345224738121, 0.80178368091583)
-     * print(vmath.length(norm_vec)); // => 0.99999994039536
-     * ```
-     */
-    function normalize(v1: Vector3 | Vector4 | Quaternion): Vector3 | Vector4 | Quaternion;
-    /**
      * The resulting matrix is the inverse of the supplied matrix.
      * The supplied matrix has to be an ortho-normal matrix, e.g.
      * describe a regular object transformation.
@@ -799,73 +654,6 @@ declare global {
      * ```
      */
     function rotate(q: Quaternion, v1: Vector3): Vector3;
-    /**
-     * Spherically interpolates between two vectors. The difference to
-     * lerp is that slerp treats the vectors as directions instead of
-     * positions in space.
-     * The direction of the returned vector is interpolated by the angle
-     * and the magnitude is interpolated between the magnitudes of the
-     * from and to vectors.
-     * Slerp is computationally more expensive than lerp.
-     * The function does not clamp t between 0 and 1.
-     *
-     * @param t - interpolation parameter, 0-1
-     * @param v1 - vector to slerp from
-     * @param v2 - vector to slerp to
-     * @returns the slerped vector
-     * @example
-     * ```ts
-     * export default defineScript({
-     *   init() {
-     *     return { t: 0 };
-     *   },
-     *
-     *   update(self, dt) {
-     *     self.t = self.t + dt;
-     *     if (self.t <= 1) {
-     *       const startpos = vmath.vector3(0, 600, 0);
-     *       const endpos = vmath.vector3(600, 0, 0);
-     *       const pos = vmath.slerp(self.t, startpos, endpos);
-     *       go.set_position(pos, "go");
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    function slerp(t: number, v1: Vector3 | Vector4, v2: Vector3 | Vector4): Vector3 | Vector4;
-    /**
-     * Slerp travels the torque-minimal path maintaining constant
-     * velocity, which means it travels along the straightest path along
-     * the rounded surface of a sphere. Slerp is useful for interpolation
-     * of rotations.
-     * Slerp travels the torque-minimal path, which means it travels
-     * along the straightest path the rounded surface of a sphere.
-     * The function does not clamp t between 0 and 1.
-     *
-     * @param t - interpolation parameter, 0-1
-     * @param q1 - quaternion to slerp from
-     * @param q2 - quaternion to slerp to
-     * @returns the slerped quaternion
-     * @example
-     * ```ts
-     * export default defineScript({
-     *   init(self) {
-     *     self.t = 0;
-     *   },
-     *
-     *   update(self, dt) {
-     *     self.t = self.t + dt;
-     *     if (self.t <= 1) {
-     *       const startrot = vmath.quat_rotation_z(0);
-     *       const endrot = vmath.quat_rotation_z(3.141592653);
-     *       const rot = vmath.slerp(self.t, startrot, endrot);
-     *       go.set_rotation(rot, "go");
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    function slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;
     /**
      * Creates a vector of arbitrary size. The vector is initialized
      * with numeric values from a table.
