@@ -15,8 +15,15 @@ export interface RunInitOptions {
   readonly template?: string;
 }
 
+export interface InitOperation {
+  readonly target: string;
+  readonly status: "written" | "merged" | "skipped";
+  readonly detail?: string;
+}
+
 export interface RunInitResult {
   readonly written: string[];
+  readonly operations: InitOperation[];
 }
 
 const CONFLICTING_TS_CONFIGS = ["tsconfig.json"];
@@ -727,6 +734,7 @@ function anyFileWithExt(root: string, ext: string, exceptRel = ""): boolean {
 function writeTsSurface(
   cwd: string,
   written: string[],
+  operations: InitOperation[],
   force = false,
   mainTs: string = MAIN_TS_CONTENT,
   writeMainTs = true,
@@ -736,18 +744,61 @@ function writeTsSurface(
     mkdirSync(path.join(cwd, "src"), { recursive: true });
     writeFileSync(mainPath, mainTs);
     written.push("src/main.ts");
+    operations.push({ target: "src/main.ts", status: "written" });
+  } else {
+    operations.push({
+      target: "src/main.ts",
+      status: "skipped",
+      detail: writeMainTs ? "a src/main.ts already exists" : "existing project sources present",
+    });
   }
 
-  const tsconfig = {
-    compilerOptions: {
-      ...TSCONFIG_COMPILER_OPTIONS,
-      types: [DEFAULT_TYPES_ENTRYPOINT],
-      plugins: [{ name: "@defold-typescript/tstl-plugin" }],
-    },
-    include: ["src/**/*.ts"],
+  // init: tsconfig-merge-preserves-config
+  const tsconfigPath = path.join(cwd, "tsconfig.json");
+  const existing = existsSync(tsconfigPath)
+    ? (JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+        compilerOptions?: Record<string, unknown>;
+        include?: unknown;
+        exclude?: unknown;
+      })
+    : undefined;
+  const tstlPlugin = { name: "@defold-typescript/tstl-plugin" };
+  const existingCompiler = existing?.compilerOptions ?? {};
+  const compilerOptions: Record<string, unknown> = {
+    ...TSCONFIG_COMPILER_OPTIONS,
+    types: [DEFAULT_TYPES_ENTRYPOINT],
+    plugins: [tstlPlugin],
+    ...existingCompiler,
   };
-  writeJson(path.join(cwd, "tsconfig.json"), tsconfig);
+  const existingPlugins = Array.isArray(existingCompiler.plugins)
+    ? (existingCompiler.plugins as Array<{ name?: string }>)
+    : [];
+  const plugins = [...existingPlugins];
+  if (!plugins.some((entry) => entry?.name === tstlPlugin.name)) {
+    plugins.push(tstlPlugin);
+  }
+  compilerOptions.plugins = plugins;
+
+  const tsconfig: Record<string, unknown> = {
+    compilerOptions,
+    include: existing?.include ?? ["src/**/*.ts"],
+  };
+  if (!writeMainTs && existing?.include !== undefined) {
+    const existingExclude = Array.isArray(existing.exclude) ? (existing.exclude as unknown[]) : [];
+    const exclude = [...existingExclude];
+    if (!exclude.includes("src/main.ts")) {
+      exclude.push("src/main.ts");
+    }
+    tsconfig.exclude = exclude;
+  } else if (existing?.exclude !== undefined) {
+    tsconfig.exclude = existing.exclude;
+  }
+  writeJson(tsconfigPath, tsconfig);
   written.push("tsconfig.json");
+  operations.push({
+    target: "tsconfig.json",
+    status: existing === undefined ? "written" : "merged",
+  });
 
   const pkgPath = path.join(cwd, "package.json");
   if (existsSync(pkgPath)) {
@@ -788,6 +839,17 @@ function writeTsSurface(
   writeVscodeDebugLauncher(cwd, written);
 }
 
+// Give every scaffolded file that isn't already reported a "written" operation,
+// so callers surface the full write set alongside the merge/skip specifics.
+function withScaffoldOperations(written: string[], operations: InitOperation[]): RunInitResult {
+  for (const target of written) {
+    if (!operations.some((op) => op.target === target)) {
+      operations.push({ target, status: "written" });
+    }
+  }
+  return { written, operations };
+}
+
 export function runNewProjectInit(
   cwd: string,
   force = false,
@@ -805,6 +867,7 @@ export function runNewProjectInit(
   const skipUserAuthored = anyFileWithExt(cwd, ".collection") && anyFileWithExt(cwd, ".ts");
 
   const written: string[] = [];
+  const operations: InitOperation[] = [];
 
   writeFileSync(
     path.join(cwd, "game.project"),
@@ -824,9 +887,9 @@ export function runNewProjectInit(
   writeFileSync(path.join(cwd, "input", "game.input_binding"), GAME_INPUT_BINDING_CONTENT);
   written.push("input/game.input_binding");
 
-  writeTsSurface(cwd, written, force, mainTs, !skipUserAuthored);
+  writeTsSurface(cwd, written, operations, force, mainTs, !skipUserAuthored);
 
-  return { written };
+  return withScaffoldOperations(written, operations);
 }
 
 export function runInit(opts: RunInitOptions): RunInitResult {
@@ -865,6 +928,7 @@ export function runInit(opts: RunInitOptions): RunInitResult {
   const writeMainTs = !(mcExists && !mcRefs) && !otherCollection && !otherTs;
 
   const written: string[] = [];
-  writeTsSurface(cwd, written, force, MAIN_TS_CONTENT, writeMainTs);
-  return { written };
+  const operations: InitOperation[] = [];
+  writeTsSurface(cwd, written, operations, force, MAIN_TS_CONTENT, writeMainTs);
+  return withScaffoldOperations(written, operations);
 }
