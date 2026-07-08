@@ -35,7 +35,7 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
   for (const page of pages) {
     const { namespace, route, module } = page;
     index[namespace] = { brief: htmlToDocText(module.description || module.brief), route };
-    for (const symbol of apiModuleSymbols(page, page.translations)) {
+    for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
       const key = qualify(namespace, symbol.name);
       const anchor = slugify(symbol.signature);
       index[key] = { brief: symbol.docMarkdown, route: `${route}#${anchor}` };
