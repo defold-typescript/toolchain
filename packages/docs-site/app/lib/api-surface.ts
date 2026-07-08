@@ -368,9 +368,13 @@ export function apiModuleSymbols(
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const symbols: ApiSymbol[] = [];
+  const overrideEmitted = new Set<string>();
 
   for (const fn of m.functions) {
     const ov = lookupSignature(signatures, fn.name);
+    // override-covered FQN: render the store signatures once, not per fixture entry
+    // (`vmath.lerp` has 3 ref-doc entries but one authored override set).
+    if (ov !== null && overrideEmitted.has(fn.name)) continue;
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
@@ -389,6 +393,7 @@ export function apiModuleSymbols(
     // distinct-row overload pattern: same description, but no per-parameter block
     // or example since the primary row already carries them.
     if (ov !== null) {
+      overrideEmitted.add(fn.name);
       for (const signature of ov.signatures.slice(1)) {
         symbols.push({
           kind: "function",
