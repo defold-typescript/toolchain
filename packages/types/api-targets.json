@@ -73,7 +73,12 @@
         { "namespace": "tilemap", "fixture": "tilemap_doc.json", "outFile": "tilemap.d.ts" },
         { "namespace": "timer", "fixture": "timer_doc.json", "outFile": "timer.d.ts" },
         { "namespace": "types", "fixture": "types_doc.json", "outFile": "types.d.ts" },
-        { "namespace": "vmath", "fixture": "vmath_doc.json", "outFile": "vmath.d.ts" },
+        {
+          "namespace": "vmath",
+          "fixture": "vmath_doc.json",
+          "outFile": "vmath.d.ts",
+          "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
+        },
         { "namespace": "webview", "fixture": "webview_doc.json", "outFile": "webview.d.ts" },
         { "namespace": "window", "fixture": "window_doc.json", "outFile": "window.d.ts" },
         { "namespace": "zlib", "fixture": "zlib_doc.json", "outFile": "zlib.d.ts" }

@@ -244,6 +244,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../../src/message-guard",
   "../../src/window-event-guard",
   "../../src/go-overloads",
+  "../../src/vmath-overloads",
 ];
 
 export interface KindManifestEntry {
