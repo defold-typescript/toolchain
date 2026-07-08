@@ -41,7 +41,7 @@ bunx @defold-typescript/cli build --json
 
 A failure flips `ok` to `false` and carries an `error` string instead of
 `written`. On [`build`](./build.md), `warnings` carries the sourceless-orphan
-lines (empty when there are none). Optional fields (`defoldVersion`,
+lines and scene-resource-mismatch lines (empty when there are none). Optional fields (`defoldVersion`,
 `defoldChannel`, `apiSurface`, `materializedSurface`, …) appear only when they
 apply.
 
@@ -133,6 +133,13 @@ same pair at `/llms.txt` and `/llms-full.txt`. Both are regenerated from the
 guide and the typed API on every docs build and drift-gated, so they never go
 stale against the shipped types.
 
+This pack documents **this toolchain's TypeScript surface**. Defold's own engine
+docs are a separate, Lua/C++-first set served at `defold.com/llms-*.txt` — reach
+for those (and cross-reference the types) via
+[Reach upstream Lua docs and convert](#reach-upstream-lua-docs-and-convert).
+Do not confuse the two `llms-full.txt` files: this one is the port; `defold.com`'s
+is the engine.
+
 ## Helper and codegen scripts (Bun, `/scripts`)
 
 When a task needs a build tool, a codegen pass, or a one-off maintenance script,
@@ -203,6 +210,24 @@ is only documented there, run the conversion loop: **locate the mechanic** in
 the Lua docs -> **find its namespace** in the generated `.d.ts` -> **confirm the
 signature** as above -> **translate the idioms** to the TypeScript surface.
 
+Defold serves its whole documentation set as agent-ready text — reach for these
+to **locate the mechanic**, never to copy a call signature:
+
+- `https://defold.com/llms-full.txt` — manuals, API reference, and examples combined.
+- `https://defold.com/llms-apis.txt` — the C++/Lua/extension API reference alone.
+- `https://defold.com/llms-manuals.txt` — the conceptual manuals alone.
+- `https://defold.com/llms-examples.txt` — worked examples alone.
+
+These describe the engine's **Lua and C++** surface, not this toolchain's
+TypeScript one: argument order, optionality, and even whether a symbol exists can
+differ, so treat them as a concept-and-mechanic reference only. Once you know
+*what* to call, switch to the generated `.d.ts`
+([Confirm a signature](#confirm-a-signature)) for the actual TypeScript
+signature you author against; when the two disagree, the `.d.ts` wins. A
+namespace in the Lua docs can be absent from TypeScript because it is not a
+scriptable runtime module at all — Defold has no `input` namespace, for example;
+input arrives through the `on_input` hook, not a polling API.
+
 | Lua idiom                         | TypeScript surface                          |
 | --------------------------------- | ------------------------------------------- |
 | `function init(self) … end`       | `defineScript({ init() { … } })`            |
@@ -230,9 +255,18 @@ Once converted, prove it compiles before handing it back: write the snippet, run
 rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
 [script lifecycle](./script-lifecycle.md) page covers which hooks and which
 `self` typing each script kind exposes. On `ok: true` the build envelope adds a
-`warnings` array: it lists any generated `.lua`/`.ts.*` output left without a
-TypeScript source (a deleted or renamed source), each naming the stale file and
-the source to restore. Empty when clean; the build never deletes these for you.
+`warnings` array. It lists two kinds of issue, empty when clean, and the build
+never fixes either for you:
+
+- **Sourceless outputs** — a generated `.lua`/`.ts.*` left without a TypeScript
+  source (a deleted or renamed source), each naming the stale file and the
+  source to restore.
+- **Scene-resource mismatches** — a `.go`/`.collection` whose `component:`
+  points at a mesh source asset (`.gltf`/`.glb`/`.dae`) instead of a `.model`
+  component. Bob builds this silently, but the game object fails at runtime, so
+  the CLI surfaces at build time what only the editor would otherwise catch.
+  Wrap the mesh in a `.model` (with a `materials` block) and point the component
+  at the `.model`.
 
 ## Scaffold a project
 

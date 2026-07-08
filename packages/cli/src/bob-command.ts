@@ -1,4 +1,6 @@
+import { spawn } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { delimiter, dirname, join } from "node:path";
 import { bobCacheDir, bobDownloadUrl, resolveBobJar, resolveJava } from "./bob";
 import { ENGINE_INFO_URL } from "./debug-launcher";
@@ -134,23 +136,41 @@ function javaOnPath(cmd: string, env: NodeJS.ProcessEnv = process.env): boolean 
 // bloat the envelope.
 const OUTPUT_TAIL_LIMIT = 4000;
 
-async function spawnInherit(argv: string[], cwd: string): Promise<SpawnResult> {
-  const proc = Bun.spawn(argv, { cwd, stdio: ["inherit", "inherit", "inherit"] });
-  const exitCode = await proc.exited;
-  return { exitCode };
+function spawnInherit(argv: string[], cwd: string): Promise<SpawnResult> {
+  const [cmd, ...args] = argv;
+  if (cmd === undefined) {
+    throw new Error("defold-typescript: cannot spawn an empty command.");
+  }
+  return new Promise((resolve, reject) => {
+    const proc = spawn(cmd, args, { cwd, stdio: "inherit" });
+    proc.on("error", reject);
+    proc.on("close", (code) => resolve({ exitCode: code ?? 1 }));
+  });
 }
 
-async function spawnCapture(argv: string[], cwd: string): Promise<SpawnResult> {
-  const proc = Bun.spawn(argv, { cwd, stdio: ["ignore", "pipe", "pipe"] });
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ]);
-  const combined = `${stdout}${stderr}`.trim();
-  const output =
-    combined.length > OUTPUT_TAIL_LIMIT ? combined.slice(-OUTPUT_TAIL_LIMIT) : combined;
-  return { exitCode, output };
+function spawnCapture(argv: string[], cwd: string): Promise<SpawnResult> {
+  const [cmd, ...args] = argv;
+  if (cmd === undefined) {
+    throw new Error("defold-typescript: cannot spawn an empty command.");
+  }
+  return new Promise((resolve, reject) => {
+    const proc = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    proc.stdout?.setEncoding("utf8").on("data", (chunk) => {
+      stdout += chunk;
+    });
+    proc.stderr?.setEncoding("utf8").on("data", (chunk) => {
+      stderr += chunk;
+    });
+    proc.on("error", reject);
+    proc.on("close", (code) => {
+      const combined = `${stdout}${stderr}`.trim();
+      const output =
+        combined.length > OUTPUT_TAIL_LIMIT ? combined.slice(-OUTPUT_TAIL_LIMIT) : combined;
+      resolve({ exitCode: code ?? 1, output });
+    });
+  });
 }
 
 async function downloadTo(url: string, dest: string): Promise<void> {
@@ -161,7 +181,7 @@ async function downloadTo(url: string, dest: string): Promise<void> {
     );
   }
   mkdirSync(dirname(dest), { recursive: true });
-  await Bun.write(dest, res);
+  await writeFile(dest, Buffer.from(await res.arrayBuffer()));
 }
 
 export function defaultDefoldIo(): DefoldIo {
