@@ -153,4 +153,19 @@ describe("release workflow publishes via OIDC on tags", () => {
       expect(loopPackages(runCmd(s))).toEqual([...PACKAGES]);
     }
   });
+
+  // Both the dry-run and the real publish must skip versions already on npm.
+  // `npm publish --dry-run` still queries the registry and errors on an
+  // already-published version, so without this guard a re-run of a
+  // partially-published tag dies at the dry-run before the real publish's own
+  // idempotency can complete the remaining packages.
+  test("both npm-publish loops skip versions already on npm (idempotent re-run)", () => {
+    const publishLoops = steps().filter(
+      (s) => /for pkg in /.test(runCmd(s)) && /npm publish/.test(runCmd(s)),
+    );
+    expect(publishLoops.length).toBe(2);
+    for (const s of publishLoops) {
+      expect(runCmd(s)).toMatch(/npm view "\$name@\$VERSION" version/);
+    }
+  });
 });

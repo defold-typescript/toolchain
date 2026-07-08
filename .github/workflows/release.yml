@@ -147,12 +147,21 @@ jobs:
           done
 
       # Dependency order: deps before dependents (types before library-types;
-      # library-types and docs before cli). Dry-run needs no auth and runs on
-      # every tag.
+      # library-types and docs before cli). Idempotent like the real publish
+      # below: `npm publish --dry-run` still queries the registry and errors
+      # ("cannot publish over the previously published versions") on a version
+      # already on npm, so re-running a partially-published tag would die here
+      # before reaching the real publish. Skip versions already on npm; a fresh
+      # tag still dry-runs every package.
       - name: Publish (dry-run)
         run: |
           for pkg in types transpiler tstl-plugin docs library-types cli; do
-            ( cd "packages/$pkg" && npm publish --dry-run --access public )
+            name="@defold-typescript/$pkg"
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "$name@$VERSION already on npm — skipping dry-run"
+            else
+              ( cd "packages/$pkg" && npm publish --dry-run --access public )
+            fi
           done
 
       - name: Publish to npm (OIDC, idempotent)
