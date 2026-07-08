@@ -1653,3 +1653,128 @@ describe("runInit (skips user-authored entry files)", () => {
     expect(result.written).toContain("tsconfig.json");
   });
 });
+
+describe("runInit (merges an existing tsconfig)", () => {
+  const PLUGIN = "@defold-typescript/tstl-plugin";
+
+  // Mirrors what `resolve` leaves on disk: additive `typeRoots`/`types` and a
+  // pinned engine surface that `init --force` must not clobber.
+  const RESOLVE_SHAPED = {
+    compilerOptions: {
+      strict: false,
+      typeRoots: [".defold-types"],
+      types: ["defold-1.12.4", "extensions", "libraries"],
+      plugins: [{ name: "user-plugin" }],
+    },
+    include: ["game/**/*.ts"],
+  };
+
+  function seedExistingTsconfig(tsconfig: unknown): void {
+    touch("game.project", "[project]\n");
+    touch("tsconfig.json", `${JSON.stringify(tsconfig, null, 2)}\n`);
+  }
+
+  function seedUserAuthoredSources(): void {
+    mkdirSync(path.join(cwd, "game"), { recursive: true });
+    writeFileSync(path.join(cwd, "game", "world.collection"), 'name: "world"\n');
+    writeFileSync(path.join(cwd, "game", "player.ts"), "// user code\n");
+  }
+
+  function readTsconfig(): {
+    compilerOptions: {
+      strict?: boolean;
+      typeRoots?: string[];
+      types?: string[];
+      plugins?: Array<{ name: string }>;
+    };
+    include?: string[];
+    exclude?: string[];
+  } {
+    return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
+  }
+
+  test("preserves typeRoots from an existing tsconfig", () => {
+    seedExistingTsconfig(RESOLVE_SHAPED);
+    runInit({ cwd, force: true });
+    expect(readTsconfig().compilerOptions.typeRoots).toEqual([".defold-types"]);
+  });
+
+  test("preserves an existing types array verbatim and does not re-add the default entrypoint", () => {
+    seedExistingTsconfig(RESOLVE_SHAPED);
+    runInit({ cwd, force: true });
+    expect(readTsconfig().compilerOptions.types).toEqual([
+      "defold-1.12.4",
+      "extensions",
+      "libraries",
+    ]);
+  });
+
+  test("unions the tstl-plugin into existing plugins exactly once", () => {
+    seedExistingTsconfig(RESOLVE_SHAPED);
+    runInit({ cwd, force: true });
+    const plugins = readTsconfig().compilerOptions.plugins ?? [];
+    expect(plugins).toContainEqual({ name: "user-plugin" });
+    expect(plugins.filter((p) => p.name === PLUGIN)).toHaveLength(1);
+  });
+
+  test("preserves a user base-option override", () => {
+    seedExistingTsconfig(RESOLVE_SHAPED);
+    runInit({ cwd, force: true });
+    expect(readTsconfig().compilerOptions.strict).toBe(false);
+  });
+
+  test("leaves an existing include untouched", () => {
+    seedExistingTsconfig(RESOLVE_SHAPED);
+    runInit({ cwd, force: true });
+    expect(readTsconfig().include).toEqual(["game/**/*.ts"]);
+  });
+
+  test("adds src/main.ts to exclude for a user-authored project with an existing include", () => {
+    seedExistingTsconfig({
+      compilerOptions: { types: ["defold-1.12.4"] },
+      include: ["game/**/*.ts"],
+      exclude: ["dist"],
+    });
+    seedUserAuthoredSources();
+
+    runInit({ cwd, force: true });
+
+    const exclude = readTsconfig().exclude ?? [];
+    expect(exclude).toContain("dist");
+    expect(exclude.filter((e) => e === "src/main.ts")).toHaveLength(1);
+  });
+
+  test("fresh directory still writes the managed defaults and no exclude", () => {
+    touch("game.project", "[project]\n");
+    runInit({ cwd });
+    const tsconfig = readTsconfig();
+    expect(tsconfig.compilerOptions.types).toEqual(["@defold-typescript/types"]);
+    expect(tsconfig.compilerOptions.plugins).toContainEqual({ name: PLUGIN });
+    expect(tsconfig.include).toEqual(["src/**/*.ts"]);
+    expect(tsconfig.exclude).toBeUndefined();
+  });
+
+  test("reports src/main.ts as skipped with a reason for a user-authored project", () => {
+    seedExistingTsconfig({ compilerOptions: {}, include: ["game/**/*.ts"] });
+    seedUserAuthoredSources();
+
+    const result = runInit({ cwd, force: true });
+
+    const op = result.operations.find((o) => o.target === "src/main.ts");
+    expect(op?.status).toBe("skipped");
+    expect((op?.detail ?? "").length).toBeGreaterThan(0);
+  });
+
+  test("reports the tsconfig as merged when one already exists", () => {
+    seedExistingTsconfig(RESOLVE_SHAPED);
+    const result = runInit({ cwd, force: true });
+    const op = result.operations.find((o) => o.target === "tsconfig.json");
+    expect(op?.status).toBe("merged");
+  });
+
+  test("reports the tsconfig as written for a fresh scaffold", () => {
+    const result = runInit({ cwd });
+    const op = result.operations.find((o) => o.target === "tsconfig.json");
+    expect(op?.status).toBe("written");
+  });
+});

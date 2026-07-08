@@ -43,9 +43,13 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
   shape, never dropping one into a project you have already authored. See
   [Add TypeScript to an existing project](./getting-started.md#add-typescript-to-an-existing-project).
 
-Scaffolded config files (`biome.json`, `.vscode/`, `mise.toml`) merge additively
-into anything you already have, so re-running `init` refreshes the managed blocks
-without disturbing your own entries.
+Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
+merge additively into anything you already have, so re-running `init` refreshes the
+managed blocks without disturbing your own entries. For `tsconfig.json` that means
+an existing `compilerOptions.typeRoots`, `types`, and `include` survive — including
+the `.defold-types` root and pinned engine surface that
+[`resolve`](./resolve.md) writes — while the `@defold-typescript/tstl-plugin`
+language-service plugin is unioned in exactly once.
 
 ## Flags
 
