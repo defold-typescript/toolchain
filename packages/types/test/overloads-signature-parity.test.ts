@@ -46,6 +46,57 @@ function renderVmathOverloadSignatures(source?: string): Record<string, string[]
   return rendered;
 }
 
+// Collapse the JSDoc comment's line structure to the single-line canonical form
+// `signatures/vmath.json` stores in `docs[]`, so the extracted prose and the
+// authored JSON compare 1:1.
+function normalizeDoc(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+// The per-overload JSDoc description (the comment before the `@param`/`@returns`
+// tags) for every `vmath` function declaration, grouped by FQN in declared
+// order — the same walk `renderVmathOverloadSignatures` does, so `docs[i]` lines
+// up with `signatures[i]`. A JSDoc description edited in the `.d.ts` without a
+// matching JSON update drifts.
+function renderVmathOverloadDescriptions(source?: string): Record<string, string[]> {
+  const text = source ?? readFileSync(VMATH_OVERLOADS_PATH, "utf8");
+  const sourceFile = ts.createSourceFile(VMATH_OVERLOADS_PATH, text, ts.ScriptTarget.Latest, true);
+  const rendered: Record<string, string[]> = {};
+
+  function describeFn(fn: ts.FunctionDeclaration): void {
+    if (!fn.name) return;
+    const fqn = `vmath.${fn.name.text}`;
+    let description = "";
+    for (const part of ts.getJSDocCommentsAndTags(fn)) {
+      if (ts.isJSDoc(part)) {
+        const comment = part.comment;
+        description = normalizeDoc(
+          typeof comment === "string" ? comment : (comment ?? []).map((c) => c.text).join(""),
+        );
+        break;
+      }
+    }
+    const forms = rendered[fqn] ?? [];
+    forms.push(description);
+    rendered[fqn] = forms;
+  }
+
+  function visit(node: ts.Node): void {
+    if (ts.isModuleDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === "vmath") {
+      if (node.body && ts.isModuleBlock(node.body)) {
+        for (const statement of node.body.statements) {
+          if (ts.isFunctionDeclaration(statement)) describeFn(statement);
+        }
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return rendered;
+}
+
 const VMATH_FQNS = [
   "vmath.clamp",
   "vmath.lerp",
@@ -75,5 +126,22 @@ describe("vmath overloads signature parity", () => {
     );
     const driftedRendered = renderVmathOverloadSignatures(edited);
     expect(driftedRendered["vmath.normalize"]).not.toEqual(store["vmath.normalize"]?.signatures);
+  });
+
+  const descriptions = renderVmathOverloadDescriptions();
+
+  for (const fqn of VMATH_FQNS) {
+    test(`${fqn} JSON docs equal the rendered vmath-overloads.d.ts JSDoc descriptions`, () => {
+      expect(store[fqn]?.docs).toEqual(descriptions[fqn]);
+    });
+  }
+
+  test("drift simulation: an edited .d.ts JSDoc description no longer matches the committed JSON", () => {
+    const edited = readFileSync(VMATH_OVERLOADS_PATH, "utf8").replace(
+      "Linearly interpolate between two values.",
+      "Linearly interpolate between two scalars.",
+    );
+    const driftedDescriptions = renderVmathOverloadDescriptions(edited);
+    expect(driftedDescriptions["vmath.lerp"]).not.toEqual(store["vmath.lerp"]?.docs);
   });
 });

@@ -375,6 +375,13 @@ export function apiModuleSymbols(
     // override-covered FQN: render the store signatures once, not per fixture entry
     // (`vmath.lerp` has 3 ref-doc entries but one authored override set).
     if (ov !== null && overrideEmitted.has(fn.name)) continue;
+    // per-overload description: each override row keeps its own `docs[i]` prose,
+    // falling back to the shared ref-doc fixture description when absent/`null`.
+    const fixtureDoc = htmlToDocText(fn.description || fn.brief);
+    const overloadDoc = (i: number): string => {
+      const authored = ov?.docs?.[i];
+      return authored != null ? htmlToDocText(authored) : fixtureDoc;
+    };
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
@@ -382,7 +389,7 @@ export function apiModuleSymbols(
         ov === null
           ? functionSignature(fn, mapType)
           : (ov.signatures[0] ?? functionSignature(fn, mapType)),
-      docMarkdown: htmlToDocText(fn.description || fn.brief),
+      docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
       parameters: projectParams(fn.parameters, mapType),
       returnValues: projectParams(fn.returnValues, mapType),
     };
@@ -390,16 +397,17 @@ export function apiModuleSymbols(
     if (example) symbol.exampleMarkdown = example;
     symbols.push(symbol);
     // Each remaining authored overload renders as its own row, reusing the
-    // distinct-row overload pattern: same description, but no per-parameter block
-    // or example since the primary row already carries them.
+    // distinct-row overload pattern: its own `docs[k+1]` prose (else the fixture
+    // description), but no per-parameter block or example since the primary row
+    // already carries them.
     if (ov !== null) {
       overrideEmitted.add(fn.name);
-      for (const signature of ov.signatures.slice(1)) {
+      for (const [k, signature] of ov.signatures.slice(1).entries()) {
         symbols.push({
           kind: "function",
           name: fn.name,
           signature,
-          docMarkdown: symbol.docMarkdown,
+          docMarkdown: overloadDoc(k + 1),
           parameters: [],
           returnValues: [],
         });

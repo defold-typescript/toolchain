@@ -2,6 +2,9 @@
   "vmath.clamp": {
     "signatures": [
       "vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number | T, max: number | T): T"
+    ],
+    "docs": [
+      "Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type return new vector3|vector4 with clamped value at every vector's element. Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element"
     ]
   },
   "vmath.lerp": {
@@ -9,18 +12,33 @@
       "vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
       "vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion",
       "vmath.lerp(t: number, n1: number, n2: number): number"
+    ],
+    "docs": [
+      "Linearly interpolate between two vectors. The function treats the vectors as positions and interpolates between the positions in a straight line. Lerp is useful to describe transitions from one place to another over time. The function does not clamp t between 0 and 1.",
+      "Linearly interpolate between two quaternions. Linear interpolation of rotations are only useful for small rotations. For interpolations of arbitrary rotations, vmath.slerp yields much better results. The function does not clamp t between 0 and 1.",
+      "Linearly interpolate between two values. Lerp is useful to describe transitions from one value to another over time. The function does not clamp t between 0 and 1."
     ]
   },
   "vmath.slerp": {
     "signatures": [
       "vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
       "vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion"
+    ],
+    "docs": [
+      "Spherically interpolates between two vectors. The difference to lerp is that slerp treats the vectors as directions instead of positions in space. The direction of the returned vector is interpolated by the angle and the magnitude is interpolated between the magnitudes of the from and to vectors. Slerp is computationally more expensive than lerp. The function does not clamp t between 0 and 1.",
+      "Slerp travels the torque-minimal path maintaining constant velocity, which means it travels along the straightest path along the rounded surface of a sphere. Slerp is useful for interpolation of rotations. The function does not clamp t between 0 and 1."
     ]
   },
   "vmath.mul_per_elem": {
-    "signatures": ["vmath.mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T"]
+    "signatures": ["vmath.mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T"],
+    "docs": [
+      "Performs an element wise multiplication between two vectors of the same type The returned value is a vector defined as (e.g. for a vector3): `v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`"
+    ]
   },
   "vmath.normalize": {
-    "signatures": ["vmath.normalize<T extends Vector3 | Vector4 | Quaternion>(v1: T): T"]
+    "signatures": ["vmath.normalize<T extends Vector3 | Vector4 | Quaternion>(v1: T): T"],
+    "docs": [
+      "Normalizes a vector, i.e. returns a new vector with the same direction as the input vector, but with length 1. The length of the vector must be above 0, otherwise a division-by-zero will occur."
+    ]
   }
 }
