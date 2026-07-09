@@ -1,6 +1,12 @@
 import { existsSync, watch as fsWatch } from "node:fs";
 import * as path from "node:path";
-import { isFileIncluded, isTranspilerSource, readBuildConfig, toPosix } from "./build-output";
+import {
+  BuildFailureError,
+  isFileIncluded,
+  isTranspilerSource,
+  readBuildConfig,
+  toPosix,
+} from "./build-output";
 import { type BuildSession, createBuildSession } from "./build-session";
 import { renderWatchEvent } from "./json-output";
 import { isComponentPath, isSkipped } from "./script-kind";
@@ -50,6 +56,22 @@ function formatBuildLine(written: readonly string[]): string {
   return `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`;
 }
 
+// Cycle sentinels the VS Code background problemMatcher keys off to clear stale
+// problems and re-anchor them per rebuild (see vscode-tasks.ts).
+const BUILD_STARTED_LINE = "defold-typescript watch: build started\n";
+const BUILD_FINISHED_LINE = "defold-typescript watch: build finished\n";
+
+function formatFailureLine(entry: {
+  readonly file: string;
+  readonly message: string;
+  readonly line?: number;
+  readonly column?: number;
+}): string {
+  return entry.line !== undefined && entry.column !== undefined
+    ? `  ${entry.file}:${entry.line}:${entry.column}: ${entry.message}`
+    : `  ${entry.file}: ${entry.message}`;
+}
+
 function rewrapInitError(err: unknown): Error {
   const message = err instanceof Error ? err.message : String(err);
   return new Error(message.replace(/^defold-typescript build:/, "defold-typescript watch:"));
@@ -67,6 +89,28 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     rejectDone = rej;
   });
 
+  // A BuildFailureError is a compile failure: report every located line (human)
+  // or a structured `errors` event (json), keeping the watcher alive. Any other
+  // error keeps today's single-message behavior.
+  function reportFailure(err: unknown, event: "build" | "rebuild"): void {
+    if (err instanceof BuildFailureError) {
+      if (opts.json) {
+        stdout.write(renderWatchEvent({ event, error: err.message, errors: err.entries }));
+      } else {
+        for (const entry of err.entries) {
+          stderr.write(`${formatFailureLine(entry)}\n`);
+        }
+      }
+      return;
+    }
+    const message = err instanceof Error ? err.message : String(err);
+    if (opts.json) {
+      stdout.write(renderWatchEvent({ event, error: message }));
+    } else {
+      stderr.write(`${message}\n`);
+    }
+  }
+
   let session: BuildSession;
   let config: ReturnType<typeof readBuildConfig>;
   if (opts.json) {
@@ -76,15 +120,24 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     opts.syncSurface?.();
     session = createBuildSession({ cwd });
     config = readBuildConfig(cwd);
-    const { written, warnings } = session.buildAll();
-    if (opts.json) {
-      stdout.write(renderWatchEvent({ event: "build", written, warnings }));
-    } else {
-      stdout.write(formatBuildLine(written));
-      for (const warning of warnings) {
-        stderr.write(`defold-typescript watch: ${warning}\n`);
+    if (!opts.json) stdout.write(BUILD_STARTED_LINE);
+    try {
+      const { written, warnings } = session.buildAll();
+      if (opts.json) {
+        stdout.write(renderWatchEvent({ event: "build", written, warnings }));
+      } else {
+        stdout.write(formatBuildLine(written));
+        for (const warning of warnings) {
+          stderr.write(`defold-typescript watch: ${warning}\n`);
+        }
       }
+    } catch (buildErr) {
+      // A compile failure is non-fatal: report it and fall through to open the
+      // watcher. A genuine setup failure (thrown above) still rejects.
+      if (!(buildErr instanceof BuildFailureError)) throw buildErr;
+      reportFailure(buildErr, "build");
     }
+    if (!opts.json) stdout.write(BUILD_FINISHED_LINE);
   } catch (err) {
     rejectDone(rewrapInitError(err));
     return {
@@ -124,6 +177,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         removed.push(key);
       }
     }
+    if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
       const { written } = session.applyEvents(changed, removed);
       stdout.write(
@@ -132,13 +186,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           : formatBuildLine(written),
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (opts.json) {
-        stdout.write(renderWatchEvent({ event: "rebuild", error: message }));
-      } else {
-        stderr.write(`${message}\n`);
-      }
+      reportFailure(err, "rebuild");
     }
+    if (!opts.json) stdout.write(BUILD_FINISHED_LINE);
     rebuildBusy = false;
     notifyIdle();
   }

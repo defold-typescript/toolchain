@@ -31,15 +31,53 @@ describe("VSCODE_TASKS_CONTENT", () => {
     );
   });
 
-  test("both tasks carry the shared matcher that captures a real failure line only", () => {
+  test("both tasks share the located matcher capturing file, line, column, message", () => {
     for (const label of ["defold-typescript: build", "defold-typescript: watch"]) {
+      const pattern = (
+        taskByLabel(VSCODE_TASKS_CONTENT, label).problemMatcher as Record<string, unknown>
+      ).pattern as Record<string, unknown>;
+      expect(pattern.file).toBe(1);
+      expect(pattern.line).toBe(2);
+      expect(pattern.column).toBe(3);
+      expect(pattern.message).toBe(4);
+
       const re = matcherRegexp(VSCODE_TASKS_CONTENT, label);
-      const failure = "  src/foo.ts: cannot lower X".match(re);
-      expect(failure?.[1]).toBe("src/foo.ts");
-      expect(failure?.[2]).toBe("cannot lower X");
+      const located = "  src/foo.ts:12:5: cannot lower X".match(re);
+      expect(located?.[1]).toBe("src/foo.ts");
+      expect(located?.[2]).toBe("12");
+      expect(located?.[3]).toBe("5");
+      expect(located?.[4]).toBe("cannot lower X");
+
+      // A positionless failure row still lands (at the file head), with no line/column.
+      const positionless = "  src/foo.ts: cannot lower X".match(re);
+      expect(positionless?.[1]).toBe("src/foo.ts");
+      expect(positionless?.[4]).toBe("cannot lower X");
+      expect(positionless?.[2]).toBeUndefined();
+
       expect("defold-typescript build: 2 file(s) failed:".match(re)).toBeNull();
       expect("defold-typescript build: wrote 3 files".match(re)).toBeNull();
     }
+  });
+
+  test("the watch task is an isBackground watcher whose begin/end patterns match the sentinels", () => {
+    const watch = taskByLabel(VSCODE_TASKS_CONTENT, "defold-typescript: watch");
+    expect(watch.isBackground).toBe(true);
+    const background = (watch.problemMatcher as Record<string, unknown>).background as Record<
+      string,
+      unknown
+    >;
+    const begins = new RegExp(background.beginsPattern as string);
+    const ends = new RegExp(background.endsPattern as string);
+    expect("defold-typescript watch: build started").toMatch(begins);
+    expect("defold-typescript watch: build finished").toMatch(ends);
+  });
+
+  test("the build task stays non-background but reuses the located matcher", () => {
+    const build = taskByLabel(VSCODE_TASKS_CONTENT, "defold-typescript: build");
+    expect(build.isBackground).toBeUndefined();
+    expect((build.problemMatcher as Record<string, unknown>).background).toBeUndefined();
+    const re = matcherRegexp(VSCODE_TASKS_CONTENT, "defold-typescript: build");
+    expect("  src/foo.ts:1:2: boom".match(re)?.[1]).toBe("src/foo.ts");
   });
 });
 

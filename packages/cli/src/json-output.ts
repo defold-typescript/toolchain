@@ -107,6 +107,13 @@ export function renderResult(input: RenderResultInput): string {
 
 export type WatchEventName = "build" | "rebuild" | "resolve" | "start" | "stop";
 
+export interface WatchErrorEntry {
+  readonly file?: string;
+  readonly line?: number;
+  readonly column?: number;
+  readonly message: string;
+}
+
 export interface RenderWatchEventInput {
   readonly event: WatchEventName;
   readonly written?: readonly string[];
@@ -114,14 +121,17 @@ export interface RenderWatchEventInput {
   readonly removed?: readonly string[];
   readonly warnings?: readonly string[];
   readonly error?: string;
+  readonly errors?: readonly WatchErrorEntry[];
 }
 
 export function renderWatchEvent(input: RenderWatchEventInput): string {
-  const ok = input.error === undefined;
+  const ok = input.error === undefined && input.errors === undefined;
   const base = ok
     ? { command: "watch" as const, event: input.event, ok, written: input.written ?? [] }
-    : { command: "watch" as const, event: input.event, ok, error: input.error };
-  const withChanged = "changed" in input ? { ...base, changed: input.changed } : base;
+    : { command: "watch" as const, event: input.event, ok };
+  const withError = "error" in input ? { ...base, error: input.error } : base;
+  const withErrors = "errors" in input ? { ...withError, errors: input.errors } : withError;
+  const withChanged = "changed" in input ? { ...withErrors, changed: input.changed } : withErrors;
   const withRemoved = "removed" in input ? { ...withChanged, removed: input.removed } : withChanged;
   const withWarnings =
     "warnings" in input ? { ...withRemoved, warnings: input.warnings } : withRemoved;
