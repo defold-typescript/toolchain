@@ -228,7 +228,7 @@ const NO_OMIT: ReadonlySet<ScriptHookName> = new Set();
 const GUI_OMIT: ReadonlySet<ScriptHookName> = new Set(["fixed_update", "late_update"]);
 const RENDER_OMIT: ReadonlySet<ScriptHookName> = new Set(["on_input"]);
 
-const VSCODE_SNIPPETS_CONTENT: Record<string, VscodeSnippet> = {
+export const VSCODE_SNIPPETS_CONTENT: Record<string, VscodeSnippet> = {
   "Defold script (inferred self)": {
     scope: "typescript",
     prefix: "def-ts-defineScript-inferred-self",
@@ -617,7 +617,26 @@ function writeVscodeSettings(cwd: string, written: string[]): void {
   written.push(".vscode/settings.json");
 }
 
-function writeVscodeSnippets(cwd: string, written: string[]): void {
+// Reconcile the owned snippet keys into an already-parsed file. Missing keys are
+// always added; a present owned key is overwritten only under `force` and only
+// when it drifted from the shipped snippet. Keys absent from
+// VSCODE_SNIPPETS_CONTENT (a user's own snippets) are never touched. Returns
+// whether it mutated `existing`.
+function refreshManagedSnippets(existing: Record<string, unknown>, force: boolean): boolean {
+  let changed = false;
+  for (const [key, snippet] of Object.entries(VSCODE_SNIPPETS_CONTENT)) {
+    if (!(key in existing)) {
+      existing[key] = snippet;
+      changed = true;
+    } else if (force && JSON.stringify(existing[key]) !== JSON.stringify(snippet)) {
+      existing[key] = snippet;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+function writeVscodeSnippets(cwd: string, written: string[], force = false): void {
   const dir = path.join(cwd, ".vscode");
   const filePath = path.join(dir, "defold-typescript.code-snippets");
   if (existsSync(filePath)) {
@@ -625,12 +644,15 @@ function writeVscodeSnippets(cwd: string, written: string[]): void {
     if (existing === null) {
       return;
     }
-    for (const [key, snippet] of Object.entries(VSCODE_SNIPPETS_CONTENT)) {
-      if (!(key in existing)) {
-        existing[key] = snippet;
-      }
+    const changed = refreshManagedSnippets(existing, force);
+    if (changed) {
+      writeJson(filePath, existing);
     }
-    writeJson(filePath, existing);
+    // Non-force merges backfill missing keys silently (as before); a forced
+    // refresh that actually changed the file is surfaced in `written`.
+    if (changed && force) {
+      written.push(".vscode/defold-typescript.code-snippets");
+    }
     return;
   }
   mkdirSync(dir, { recursive: true });
@@ -833,7 +855,7 @@ function writeTsSurface(
 
   writeVscodeExtensions(cwd, written);
   writeVscodeSettings(cwd, written);
-  writeVscodeSnippets(cwd, written);
+  writeVscodeSnippets(cwd, written, force);
   writeVscodeLaunch(cwd, written);
   writeVscodeTasks(cwd, written);
   writeVscodeDebugLauncher(cwd, written);
