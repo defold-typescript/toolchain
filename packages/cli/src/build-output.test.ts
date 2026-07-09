@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import type { TranspileDiagnostic } from "@defold-typescript/transpiler";
 import {
+  BuildFailureError,
+  collectFailures,
   computeOutputRel,
   computeScriptRel,
   detectSourceOutputKind,
@@ -12,6 +15,7 @@ import {
   isTranspilerSource,
   outputRelsForSource,
   pruneAlternativeOutputs,
+  throwIfFailures,
   timersModuleRel,
   toPosix,
   writeScriptFile,
@@ -311,5 +315,61 @@ describe("pruneAlternativeOutputs", () => {
     for (const out of all) {
       expect(existsSync(path.join(cwd, out))).toBe(false);
     }
+  });
+});
+
+describe("collectFailures", () => {
+  test("keeps one entry per diagnostic on the same file, each with its position", () => {
+    const diagnostics: TranspileDiagnostic[] = [
+      { file: "src/main.ts", message: "err one", line: 2, column: 5 },
+      { file: "src/main.ts", message: "err two", line: 7, column: 3 },
+    ];
+    const failures = collectFailures(diagnostics);
+    expect(failures.has("src/main.ts")).toBe(true);
+    const entries = failures.get("src/main.ts");
+    expect(entries).toHaveLength(2);
+    expect(entries?.[0]).toEqual({ message: "err one", line: 2, column: 5 });
+    expect(entries?.[1]).toEqual({ message: "err two", line: 7, column: 3 });
+  });
+});
+
+describe("throwIfFailures", () => {
+  test("throws BuildFailureError with one located line per diagnostic and structured entries", () => {
+    const failures = collectFailures([
+      { file: "src/main.ts", message: "err one", line: 2, column: 5 },
+      { file: "src/main.ts", message: "err two", line: 7, column: 3 },
+    ]);
+
+    let caught: unknown;
+    try {
+      throwIfFailures(failures);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(BuildFailureError);
+    const error = caught as BuildFailureError;
+    expect(error.message).toContain("  src/main.ts:2:5: err one");
+    expect(error.message).toContain("  src/main.ts:7:3: err two");
+    expect(error.entries).toEqual([
+      { file: "src/main.ts", message: "err one", line: 2, column: 5 },
+      { file: "src/main.ts", message: "err two", line: 7, column: 3 },
+    ]);
+  });
+
+  test("renders a positionless project diagnostic without a :line:column suffix", () => {
+    const failures = collectFailures([{ message: "global boom" }]);
+
+    let caught: unknown;
+    try {
+      throwIfFailures(failures);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(BuildFailureError);
+    const error = caught as BuildFailureError;
+    expect(error.message).toContain("global boom");
+    expect(error.message).not.toMatch(/:\d+:\d+:/);
+    expect(error.entries[0]?.line).toBeUndefined();
+    expect(error.entries[0]?.column).toBeUndefined();
   });
 });

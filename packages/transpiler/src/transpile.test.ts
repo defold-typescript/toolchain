@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { transpile, transpileProject } from "./transpile";
+import type * as ts from "typescript";
+import { collectOutputs, transpile, transpileProject } from "./transpile";
 
 describe("transpile", () => {
   test("returns Lua text for a trivial export const", () => {
@@ -168,6 +169,15 @@ describe("transpileProject", () => {
     expect(utilDiag?.message).toMatch(/bad|string|number|assignable/);
   });
 
+  test("diagnostics carry the 1-based source position of the offending expression", () => {
+    const source = "export const bad: number = 'oops';\n";
+    const result = transpileProject({ files: { "util.ts": source } });
+    const utilDiag = result.diagnostics.find((d) => d.file === "util.ts");
+    expect(utilDiag).toBeDefined();
+    expect(utilDiag?.line).toBe(1);
+    expect(utilDiag?.column).toBe(source.indexOf("bad") + 1);
+  });
+
   test("ambient vmath resolves from a non-main entry path", () => {
     const result = transpileProject({
       files: {
@@ -265,5 +275,31 @@ describe("lualib bundle", () => {
     const result = transpileProject({ files: { "main.ts": "export const x = 1;\n" } });
     expect(result.lua["main.ts"]).not.toContain("lualib_bundle");
     expect(result.lualib).toBeUndefined();
+  });
+});
+
+describe("collectOutputs", () => {
+  test("converts a positioned user-file diagnostic to 1-based line/column", () => {
+    const positioned = {
+      file: {
+        fileName: "util.ts",
+        getLineAndCharacterOfPosition: () => ({ line: 4, character: 6 }),
+      },
+      start: 42,
+      messageText: "boom",
+    } as unknown as ts.Diagnostic;
+    const result = collectOutputs([], [positioned], new Set(["util.ts"]));
+    expect(result.diagnostics[0]).toEqual({
+      file: "util.ts",
+      message: "boom",
+      line: 5,
+      column: 7,
+    });
+  });
+
+  test("omits line/column and file for a positionless project diagnostic", () => {
+    const positionless = { messageText: "global boom" } as unknown as ts.Diagnostic;
+    const result = collectOutputs([], [positionless], new Set(["util.ts"]));
+    expect(result.diagnostics[0]).toStrictEqual({ message: "global boom" });
   });
 });

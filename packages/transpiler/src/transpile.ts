@@ -23,6 +23,11 @@ export interface TranspileResult {
 export interface TranspileDiagnostic {
   readonly file?: string;
   readonly message: string;
+  // 1-based source position of the offending expression. Populated only for
+  // user-file diagnostics that carry a TS position; absent means a positionless
+  // project diagnostic (no `file`/`start`).
+  readonly line?: number;
+  readonly column?: number;
   // Present only on advisory diagnostics (e.g. the deprecated direct
   // `go.property` call). Absent means a hard failure, so `collectFailures`
   // keeps treating uncategorized diagnostics as fatal.
@@ -204,9 +209,14 @@ export function collectOutputs(
   const collectedDiagnostics: TranspileDiagnostic[] = diagnostics.map((d) => {
     const fileName = d.file?.fileName;
     const message = flattenDiagnosticMessage(d.messageText);
-    return fileName !== undefined && userKeys.has(fileName)
-      ? { file: fileName, message }
-      : { message };
+    if (fileName === undefined || !userKeys.has(fileName)) {
+      return { message };
+    }
+    if (d.file === undefined || d.start === undefined) {
+      return { file: fileName, message };
+    }
+    const { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
+    return { file: fileName, message, line: line + 1, column: character + 1 };
   });
 
   // Advisory scan of the user TypeScript AST for the deprecated direct
