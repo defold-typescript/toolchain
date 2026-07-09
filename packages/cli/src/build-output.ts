@@ -209,10 +209,42 @@ export function pruneAlternativeOutputs(
   }
 }
 
+export interface FailureEntry {
+  readonly message: string;
+  readonly line?: number;
+  readonly column?: number;
+}
+
+// A build failure carrying one structured entry per diagnostic (position kept),
+// so callers can surface located `file:line:column` rows instead of parsing the
+// combined message string.
+export class BuildFailureError extends Error {
+  readonly entries: ReadonlyArray<{
+    readonly file: string;
+    readonly message: string;
+    readonly line?: number;
+    readonly column?: number;
+  }>;
+
+  constructor(
+    message: string,
+    entries: ReadonlyArray<{
+      readonly file: string;
+      readonly message: string;
+      readonly line?: number;
+      readonly column?: number;
+    }>,
+  ) {
+    super(message);
+    this.name = "BuildFailureError";
+    this.entries = entries;
+  }
+}
+
 export function collectFailures(
   diagnostics: readonly TranspileDiagnostic[],
-): Map<string, string[]> {
-  const failures = new Map<string, string[]>();
+): Map<string, FailureEntry[]> {
+  const failures = new Map<string, FailureEntry[]>();
   for (const diag of diagnostics) {
     // Advisory diagnostics (e.g. the deprecated direct `go.property` call) warn
     // but never fail the build — the call still registers at runtime.
@@ -220,24 +252,39 @@ export function collectFailures(
       continue;
     }
     const bucket = diag.file ?? PROJECT_BUCKET;
+    const entry: FailureEntry = {
+      message: diag.message,
+      ...(diag.line !== undefined ? { line: diag.line } : {}),
+      ...(diag.column !== undefined ? { column: diag.column } : {}),
+    };
     const list = failures.get(bucket);
     if (list) {
-      list.push(diag.message);
+      list.push(entry);
     } else {
-      failures.set(bucket, [diag.message]);
+      failures.set(bucket, [entry]);
     }
   }
   return failures;
 }
 
-export function throwIfFailures(failures: ReadonlyMap<string, string[]>): void {
+export function throwIfFailures(failures: ReadonlyMap<string, FailureEntry[]>): void {
   if (failures.size === 0) {
     return;
   }
-  const formatted = [...failures.entries()]
-    .map(([file, messages]) => `  ${file}: ${messages.join("; ")}`)
+  const entries = [...failures.entries()].flatMap(([file, list]) =>
+    list.map((entry) => ({ file, ...entry })),
+  );
+  const formatted = entries
+    .map(({ file, message, line, column }) =>
+      line !== undefined && column !== undefined
+        ? `  ${file}:${line}:${column}: ${message}`
+        : `  ${file}: ${message}`,
+    )
     .join("\n");
-  throw new Error(`defold-typescript build: ${failures.size} file(s) failed:\n${formatted}`);
+  throw new BuildFailureError(
+    `defold-typescript build: ${failures.size} file(s) failed:\n${formatted}`,
+    entries,
+  );
 }
 
 export function writeScriptFile(

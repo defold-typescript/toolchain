@@ -298,6 +298,25 @@ describe("runBuild", () => {
     expect(caught?.message).toContain("src/b.ts");
   });
 
+  test("surfaces both located lines when a single file has two errors", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", 'const a: number = "bad";\nconst b: string = 42;\n');
+
+    let caught: Error | undefined;
+    try {
+      runBuild({ cwd });
+    } catch (err) {
+      caught = err as Error;
+    }
+    expect(caught).toBeDefined();
+    const lines = (caught?.message ?? "")
+      .split("\n")
+      .filter((l) => /src\/main\.ts:\d+:\d+:/.test(l));
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatch(/src\/main\.ts:1:\d+:/);
+    expect(lines[1]).toMatch(/src\/main\.ts:2:\d+:/);
+  });
+
   const RENDER_SCRIPT =
     'import { defineRenderScript } from "@defold-typescript/types";\nexport default defineRenderScript({});\n';
 
