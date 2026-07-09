@@ -1,8 +1,8 @@
-// The build's `TranspileDiagnostic` carries only `file` + `message`, so the
-// matcher captures `(file, message)` and VS Code anchors the problem at the
+// `TranspileDiagnostic` now also carries optional `line`/`column`, but this
+// matcher still captures only `(file, message)` and anchors the problem at the
 // file head. The leading-`\s+` anchor is load-bearing: it admits the indented
-// `  <file>: <message>` failure rows from `throwIfFailures` while rejecting the
-// column-0 `defold-typescript build: …` header and `wrote N files` lines.
+// `  <file>: …` failure rows from `throwIfFailures` while rejecting the column-0
+// `defold-typescript build: …` header and `wrote N files` lines.
 const PROBLEM_MATCHER = {
   owner: "defold-typescript",
   severity: "error",
