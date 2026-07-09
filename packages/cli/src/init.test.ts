@@ -19,6 +19,7 @@ import {
   reconcileManagedList,
   runInit,
   SCAFFOLD_DEV_DEPS,
+  VSCODE_SNIPPETS_CONTENT,
 } from "./init";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
 
@@ -1416,6 +1417,72 @@ describe("runInit (.vscode script snippets)", () => {
     touch(SNIPPETS_REL, garbage);
 
     runInit({ cwd });
+
+    expect(readFileSync(path.join(cwd, SNIPPETS_REL), "utf8")).toBe(garbage);
+  });
+
+  test("--force refreshes a stale owned key to its canonical prefix", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const key = "Defold script (inferred self)";
+    const canonical = VSCODE_SNIPPETS_CONTENT[key];
+    if (!canonical) {
+      throw new Error(`missing canonical snippet: ${key}`);
+    }
+    const stale = { ...canonical, prefix: "defold-script" };
+    touch(SNIPPETS_REL, `${JSON.stringify({ [key]: stale }, null, 2)}\n`);
+
+    const result = runInit({ cwd, force: true });
+
+    const snippets = readSnippets();
+    expect(snippetOf(snippets, key).prefix).toBe(canonical.prefix);
+    expect(canonical.prefix).toBe("def-ts-defineScript-inferred-self");
+    expect(result.written).toContain(SNIPPETS_REL);
+  });
+
+  test("--force preserves a user's own snippet key while refreshing owned keys", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const staleKey = "Defold script (inferred self)";
+    const stale = { ...VSCODE_SNIPPETS_CONTENT[staleKey], prefix: "defold-script" };
+    const userSnippet = {
+      scope: "typescript",
+      prefix: "my-thing",
+      body: ["// user snippet"],
+    };
+    touch(
+      SNIPPETS_REL,
+      `${JSON.stringify({ "My snippet": userSnippet, [staleKey]: stale }, null, 2)}\n`,
+    );
+
+    runInit({ cwd, force: true });
+
+    const snippets = readSnippets();
+    expect(snippets["My snippet"]).toEqual(userSnippet);
+    for (const key of EXPECTED_KEYS) {
+      expect(snippets[key]).toEqual(VSCODE_SNIPPETS_CONTENT[key] as unknown as Snippet);
+    }
+  });
+
+  test("--force is idempotent on an already-canonical snippet file", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    touch(SNIPPETS_REL, `${JSON.stringify(VSCODE_SNIPPETS_CONTENT, null, 2)}\n`);
+    const before = readFileSync(path.join(cwd, SNIPPETS_REL), "utf8");
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, SNIPPETS_REL), "utf8")).toBe(before);
+    expect(result.written).not.toContain(SNIPPETS_REL);
+  });
+
+  test("--force leaves an unparseable snippet file untouched", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const garbage = "definitely not json {{{\n";
+    touch(SNIPPETS_REL, garbage);
+
+    expect(() => runInit({ cwd, force: true })).not.toThrow();
 
     expect(readFileSync(path.join(cwd, SNIPPETS_REL), "utf8")).toBe(garbage);
   });
