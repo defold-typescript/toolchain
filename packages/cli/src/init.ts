@@ -231,37 +231,37 @@ const RENDER_OMIT: ReadonlySet<ScriptHookName> = new Set(["on_input"]);
 const VSCODE_SNIPPETS_CONTENT: Record<string, VscodeSnippet> = {
   "Defold script (inferred self)": {
     scope: "typescript",
-    prefix: "defold-script",
+    prefix: "def-ts-defineScript-inferred-self",
     body: inlineSnippetBody("defineScript", NO_OMIT),
     description: "Empty Defold script; state inferred from init's return.",
   },
   "Defold script (typed self)": {
     scope: "typescript",
-    prefix: "defold-script-typed",
+    prefix: "def-ts-defineScript-typed-self",
     body: typedSnippetBody("defineScript", NO_OMIT),
     description: "Empty Defold script with an explicit Self type.",
   },
   "Defold GUI script (inferred self)": {
     scope: "typescript",
-    prefix: "defold-gui",
+    prefix: "def-ts-defineGuiScript-inferred-self",
     body: inlineSnippetBody("defineGuiScript", GUI_OMIT),
     description: "Empty Defold GUI script; state inferred from init's return.",
   },
   "Defold GUI script (typed self)": {
     scope: "typescript",
-    prefix: "defold-gui-typed",
+    prefix: "def-ts-defineGuiScript-typed-self",
     body: typedSnippetBody("defineGuiScript", GUI_OMIT),
     description: "Empty Defold GUI script with an explicit Self type.",
   },
   "Defold render script (inferred self)": {
     scope: "typescript",
-    prefix: "defold-render",
+    prefix: "def-ts-defineRenderScript-inferred-self",
     body: inlineSnippetBody("defineRenderScript", RENDER_OMIT),
     description: "Empty Defold render script; state inferred from init's return.",
   },
   "Defold render script (typed self)": {
     scope: "typescript",
-    prefix: "defold-render-typed",
+    prefix: "def-ts-defineRenderScript-typed-self",
     body: typedSnippetBody("defineRenderScript", RENDER_OMIT),
     description: "Empty Defold render script with an explicit Self type.",
   },

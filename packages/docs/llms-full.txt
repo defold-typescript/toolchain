@@ -288,14 +288,14 @@ These files merge additively into any `.vscode/` config you already have, so you
 
 In any `.ts` file, type one of these prefixes and accept the completion to scaffold a whole empty script over `defineScript` / `defineGuiScript` / `defineRenderScript`:
 
-| Prefix                | Scaffolds                                 |
-| --------------------- | ----------------------------------------- |
-| `defold-script`       | script, state inferred from `init`        |
-| `defold-script-typed` | script, explicit `Self` type              |
-| `defold-gui`          | GUI script, state inferred from `init`    |
-| `defold-gui-typed`    | GUI script, explicit `Self` type          |
-| `defold-render`       | render script, state inferred from `init` |
-| `defold-render-typed` | render script, explicit `Self` type       |
+| Prefix                                    | Scaffolds                                 |
+| ----------------------------------------- | ----------------------------------------- |
+| `def-ts-defineScript-inferred-self`       | script, state inferred from `init`        |
+| `def-ts-defineScript-typed-self`          | script, explicit `Self` type              |
+| `def-ts-defineGuiScript-inferred-self`    | GUI script, state inferred from `init`    |
+| `def-ts-defineGuiScript-typed-self`       | GUI script, explicit `Self` type          |
+| `def-ts-defineRenderScript-inferred-self` | render script, state inferred from `init` |
+| `def-ts-defineRenderScript-typed-self`    | render script, explicit `Self` type       |
 
 The two variants mirror the two self-typing idioms (see [Script lifecycle](script-lifecycle.md)). The inferred variant returns an inline object from `init`, and `TSelf` follows that return — the documented default. The typed variant declares a named `Self` type and passes it explicitly as `defineScript<Self>(…)`, the escape hatch for when you want to name the state shape up front. Render snippets omit `on_input`, which `RenderScriptHooks` does not expose.
 
