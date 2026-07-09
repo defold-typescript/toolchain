@@ -753,6 +753,14 @@ function anyFileWithExt(root: string, ext: string, exceptRel = ""): boolean {
   return false;
 }
 
+// The wired entry script belongs in the program; a merge only strips a
+// tool-added exclude, never adds one, so upgrades self-heal bug-41's regression.
+function pruneMainTsExclude(existing: unknown): string[] | undefined {
+  if (!Array.isArray(existing)) return undefined;
+  const remaining = existing.filter((entry) => entry !== "src/main.ts");
+  return remaining.length > 0 ? (remaining as string[]) : undefined;
+}
+
 function writeTsSurface(
   cwd: string,
   written: string[],
@@ -805,15 +813,9 @@ function writeTsSurface(
     compilerOptions,
     include: existing?.include ?? ["src/**/*.ts"],
   };
-  if (!writeMainTs && existing?.include !== undefined) {
-    const existingExclude = Array.isArray(existing.exclude) ? (existing.exclude as unknown[]) : [];
-    const exclude = [...existingExclude];
-    if (!exclude.includes("src/main.ts")) {
-      exclude.push("src/main.ts");
-    }
-    tsconfig.exclude = exclude;
-  } else if (existing?.exclude !== undefined) {
-    tsconfig.exclude = existing.exclude;
+  const pruned = pruneMainTsExclude(existing?.exclude);
+  if (pruned !== undefined) {
+    tsconfig.exclude = pruned;
   }
   writeJson(tsconfigPath, tsconfig);
   written.push("tsconfig.json");
