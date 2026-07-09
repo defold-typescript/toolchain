@@ -559,7 +559,7 @@ export type ScriptPropertiesOf<T extends { properties?: object }> = NonNullable<
  * `fixed_update`, `late_update`, `on_message`, `on_input`, `final`,
  * `on_reload`.
  *
- * Scaffold it with the `defold-script` / `defold-script-typed` VSCode snippets
+ * Scaffold it with the `def-ts-defineScript-inferred-self` / `def-ts-defineScript-typed-self` VSCode snippets
  * from `defold-typescript init`.
  *
  * @param hooks - the `.script` lifecycle hook table to type and return.
@@ -594,7 +594,7 @@ export function defineScript<TProps extends object = Record<never, never>, TInit
  * the rest, all optional: `init`, `update`, `on_message`, `on_input`, `final`,
  * `on_reload`.
  *
- * Scaffold it with the `defold-gui` / `defold-gui-typed` VSCode snippets from
+ * Scaffold it with the `def-ts-defineGuiScript-inferred-self` / `def-ts-defineGuiScript-typed-self` VSCode snippets from
  * `defold-typescript init`.
  *
  * @param hooks - the `.gui_script` lifecycle hook table to type and return.
@@ -628,7 +628,7 @@ export function defineGuiScript<TProps extends object = Record<never, never>, TI
  * receive input. It accepts the rest of the set, all optional: `init`,
  * `update`, `fixed_update`, `late_update`, `on_message`, `final`, `on_reload`.
  *
- * Scaffold it with the `defold-render` / `defold-render-typed` VSCode snippets
+ * Scaffold it with the `def-ts-defineRenderScript-inferred-self` / `def-ts-defineRenderScript-typed-self` VSCode snippets
  * from `defold-typescript init`.
  *
  * @param hooks - the `.render_script` lifecycle hook table to type and return.
