@@ -85,14 +85,29 @@ describe("materializeApiSurface", () => {
     expect(pkg.name.length).toBeGreaterThan(0);
   });
 
-  test("materializes the src-sibling overloads and core-types alongside the modules", () => {
+  test("materializes every kind-imported src overload and core-types alongside the modules", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-typesroot-"));
     try {
       const gen = path.join(root, "generated");
+      const kinds = path.join(gen, "kinds");
       const src = path.join(root, "src");
-      mkdirSync(gen);
+      mkdirSync(kinds, { recursive: true });
       mkdirSync(src);
       writeFileSync(path.join(gen, "msg.d.ts"), "declare const __msg: unknown;\n");
+      // The full-script entrypoint is the single source of truth for the src
+      // augmentation set; engine-globals rides its own copy branch, not overloads.
+      writeFileSync(
+        path.join(kinds, "script.d.ts"),
+        [
+          'import "../../src/engine-globals";',
+          'import "../../src/go-overloads";',
+          'import "../../src/message-guard";',
+          'import "../../src/msg-overloads";',
+          'import "../../src/vmath-overloads";',
+          'import "../../src/window-event-guard";',
+          "",
+        ].join("\n"),
+      );
       writeFileSync(
         path.join(src, "core-types.ts"),
         "export type Hash = { readonly __hash: unique symbol };\n",
@@ -109,6 +124,14 @@ describe("materializeApiSurface", () => {
         path.join(src, "message-guard.d.ts"),
         'import type { Hash } from "./core-types";\ndeclare global {\n  function isMessage(id: Hash, m: Record<string, unknown>, e: string): m is Record<string, unknown>;\n}\nexport {};\n',
       );
+      writeFileSync(
+        path.join(src, "vmath-overloads.d.ts"),
+        "declare global {\n  namespace vmath {\n    function normalize<T>(v: T): T;\n  }\n}\nexport {};\n",
+      );
+      writeFileSync(
+        path.join(src, "window-event-guard.d.ts"),
+        "declare global {\n  function isWindowEvent(e: number): boolean;\n}\nexport {};\n",
+      );
 
       materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: gen });
 
@@ -116,11 +139,82 @@ describe("materializeApiSurface", () => {
       expect(existsSync(path.join(dir, "msg-overloads.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "message-guard.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "go-overloads.d.ts"))).toBe(true);
+      expect(existsSync(path.join(dir, "vmath-overloads.d.ts"))).toBe(true);
+      expect(existsSync(path.join(dir, "window-event-guard.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "core-types.d.ts"))).toBe(true);
       const index = readFileSync(path.join(dir, "index.d.ts"), "utf8");
       expect(index).toContain('import "./msg-overloads";');
       expect(index).toContain('import "./message-guard";');
       expect(index).toContain('import "./go-overloads";');
+      expect(index).toContain('import "./vmath-overloads";');
+      expect(index).toContain('import "./window-event-guard";');
+      // engine-globals is excluded from the derived overloads set — it flows
+      // through the dedicated includeEngineGlobals copy branch, and here its
+      // src file is absent so nothing is copied or imported for it.
+      expect(existsSync(path.join(dir, "engine-globals.d.ts"))).toBe(false);
+      expect(index).not.toContain('import "./engine-globals";');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("drift guard: materializes every src overload the real script kind imports", () => {
+    const pkgRoot = path.resolve(import.meta.dir, "..", "..", "types");
+    const gen = path.join(pkgRoot, "generated");
+    const scriptKind = readFileSync(path.join(gen, "kinds", "script.d.ts"), "utf8");
+    const wanted = [...scriptKind.matchAll(/import "\.\.\/\.\.\/src\/([^"]+)";/g)]
+      .map((m) => m[1])
+      .filter((name) => name !== "engine-globals");
+    expect(wanted).toContain("vmath-overloads");
+    expect(wanted).toContain("window-event-guard");
+
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: gen,
+    });
+    expect(materializedDir).toBe(".defold-types/defold-1.12.4");
+
+    const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+    const index = readFileSync(path.join(dir, "index.d.ts"), "utf8");
+    for (const name of wanted) {
+      expect(existsSync(path.join(dir, `${name}.d.ts`))).toBe(true);
+      expect(index).toContain(`import "./${name}";`);
+    }
+  });
+
+  test("falls back to the historical trio when no generated/kinds/ dir exists", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-typesroot-"));
+    try {
+      const gen = path.join(root, "generated");
+      const src = path.join(root, "src");
+      mkdirSync(gen);
+      mkdirSync(src);
+      writeFileSync(path.join(gen, "msg.d.ts"), "declare const __msg: unknown;\n");
+      writeFileSync(
+        path.join(src, "core-types.ts"),
+        "export type Hash = { readonly __hash: unique symbol };\n",
+      );
+      for (const file of [
+        "msg-overloads.d.ts",
+        "message-guard.d.ts",
+        "go-overloads.d.ts",
+        "vmath-overloads.d.ts",
+        "window-event-guard.d.ts",
+      ]) {
+        writeFileSync(path.join(src, file), "export {};\n");
+      }
+
+      materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: gen });
+
+      const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+      expect(existsSync(path.join(dir, "msg-overloads.d.ts"))).toBe(true);
+      expect(existsSync(path.join(dir, "message-guard.d.ts"))).toBe(true);
+      expect(existsSync(path.join(dir, "go-overloads.d.ts"))).toBe(true);
+      // Without the kinds entrypoint the derivation cannot see these; the
+      // synthetic-fixture fallback intentionally ships only the historical trio.
+      expect(existsSync(path.join(dir, "vmath-overloads.d.ts"))).toBe(false);
+      expect(existsSync(path.join(dir, "window-event-guard.d.ts"))).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

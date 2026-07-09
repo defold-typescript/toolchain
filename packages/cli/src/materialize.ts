@@ -65,16 +65,23 @@ export function materializeApiSurface(
 
   const sources = listDts(sourceGeneratedDir).filter((file) => file !== "index.d.ts");
 
-  // The `*-overloads` augmentations and the `core-types` they import live in the
-  // types package `src/` (sibling of `generated/`), not among the generated
-  // module surfaces. Mirror the per-kind entrypoints, which import them so that
-  // `msg.post`, `go.get`/`set`, etc. resolve; without this the materialized
-  // surface silently drops those globals. Skipped when the source has no
-  // sibling `src/` (e.g. synthetic test fixtures).
+  // The `*-overloads`/guard augmentations and the `core-types` they import live
+  // in the types package `src/` (sibling of `generated/`), not among the
+  // generated module surfaces. The full-script kind entrypoint
+  // (`generated/kinds/script.d.ts`) already enumerates the exact set a complete
+  // surface needs, so derive from it — that single source of truth kills the
+  // drift trap that dropped `vmath-overloads`/`window-event-guard` (bug-42).
+  // `engine-globals` is excluded here; it rides the includeEngineGlobals branch
+  // below. Synthetic fixtures with no kinds entrypoint fall back to the
+  // historical trio; a missing sibling `src/` filters everything out.
   const srcDir = path.resolve(sourceGeneratedDir, "..", "src");
-  const overloads = ["msg-overloads.d.ts", "message-guard.d.ts", "go-overloads.d.ts"].filter(
-    (file) => existsSync(path.join(srcDir, file)),
-  );
+  const scriptKindEntry = path.join(sourceGeneratedDir, "kinds", "script.d.ts");
+  const derivedOverloads = existsSync(scriptKindEntry)
+    ? [...readFileSync(scriptKindEntry, "utf8").matchAll(/import "\.\.\/\.\.\/src\/([^"]+)";/g)]
+        .map((match) => `${match[1]}.d.ts`)
+        .filter((file) => file !== "engine-globals.d.ts")
+    : ["msg-overloads.d.ts", "message-guard.d.ts", "go-overloads.d.ts"];
+  const overloads = derivedOverloads.filter((file) => existsSync(path.join(srcDir, file)));
   const coreTypesSrc = path.join(srcDir, "core-types.ts");
   const includeCoreTypes = overloads.length > 0 && existsSync(coreTypesSrc);
   const engineGlobalsSrc = path.join(srcDir, "engine-globals.d.ts");
