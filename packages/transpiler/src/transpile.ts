@@ -165,6 +165,16 @@ function buildAmbientFiles(): Record<string, string> {
       );
     }
   }
+  // Seed every hand-authored `src/*.d.ts` augmentation (overloads + guards) so
+  // the virtual program mirrors index.d.ts's `import "./src/*"` set. Enumerated
+  // rather than hard-listed so a new augmentation (e.g. socket-types,
+  // vmath-overloads) can't silently drop out of the transpiler surface while
+  // still type-checking under the editor's index.d.ts.
+  for (const entry of readdirSync(path.join(TYPES_PKG_ROOT, "src"))) {
+    if (entry.endsWith(".d.ts")) {
+      files[`node_modules/@defold-typescript/types/src/${entry}`] = readAmbient(`src/${entry}`);
+    }
+  }
   return files;
 }
 
