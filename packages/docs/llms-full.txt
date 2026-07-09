@@ -2068,7 +2068,7 @@ This plugin catches constructs the *transpiler* rejects. It does not catch the r
 
 This is the build-time complement to the live `tstl-plugin` squiggles above: the plugin flags unsupported constructs as you type, while the task surfaces whatever the actual `build` rejects. No editor extension is required — the matcher is wired entirely in `tasks.json`.
 
-The honest limitation: a build `TranspileDiagnostic` carries only a file and a message, with no line or column, so each problem lands at the **head of the offending file**, not a precise span. A column-precise matcher is blocked on positional diagnostics from the transpiler. The merge is additive — your own tasks are preserved; only the two managed labels are reconciled.
+Problems land on the **exact line and column**: each build failure is emitted as a located `  <file>:<line>:<column>: <message>` row, and the matcher captures all four so VS Code anchors the squiggle on the offending span. The `watch` task is a live background watcher — it frames every build cycle with `build started`/`build finished` sentinels, so the Problems panel clears stale entries and re-anchors them on each rebuild. A startup compile error keeps `watch` running: it reports every located error and stays watching, so fixing the file clears the problem in place. The merge is additive — your own tasks are preserved; only the two managed labels are reconciled.
 
 # Debugging TypeScript in Defold
 

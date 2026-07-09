@@ -1,15 +1,31 @@
-// `TranspileDiagnostic` now also carries optional `line`/`column`, but this
-// matcher still captures only `(file, message)` and anchors the problem at the
-// file head. The leading-`\s+` anchor is load-bearing: it admits the indented
-// `  <file>: …` failure rows from `throwIfFailures` while rejecting the column-0
-// `defold-typescript build: …` header and `wrote N files` lines.
+// `throwIfFailures` now emits located `  <file>:<line>:<column>: <message>` rows,
+// so the matcher captures file/line/column/message with the position group
+// optional — a positionless `  <file>: <message>` row still lands at the file
+// head. The leading-`\s+` anchor is load-bearing: it admits the indented failure
+// rows while rejecting the column-0 `defold-typescript …` header, `wrote N files`,
+// and the `build started`/`build finished` cycle sentinels.
 const PROBLEM_MATCHER = {
   owner: "defold-typescript",
   severity: "error",
   // ${workspaceFolder} is VS Code's literal variable token, not a JS template placeholder.
   // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted verbatim into tasks.json
   fileLocation: ["relative", "${workspaceFolder}"],
-  pattern: { regexp: "^\\s+(\\S.*?):\\s+(.+)$", file: 1, message: 2 },
+  pattern: {
+    regexp: "^\\s+(\\S.*?)(?::(\\d+):(\\d+))?:\\s+(.+)$",
+    file: 1,
+    line: 2,
+    column: 3,
+    message: 4,
+  },
+} as const;
+
+// The `watch` task frames each cycle with these lines (see watch.ts); the
+// background matcher clears stale problems on `beginsPattern` and re-anchors
+// them on `endsPattern`.
+const WATCH_BACKGROUND = {
+  activeOnStart: true,
+  beginsPattern: "^defold-typescript watch: build started$",
+  endsPattern: "^defold-typescript watch: build finished$",
 } as const;
 
 const MANAGED_LABELS = ["defold-typescript: build", "defold-typescript: watch"] as const;
@@ -27,7 +43,8 @@ function managedTasks(): Record<string, unknown>[] {
       label: "defold-typescript: watch",
       type: "shell",
       command: "bunx @defold-typescript/cli watch",
-      problemMatcher: PROBLEM_MATCHER,
+      isBackground: true,
+      problemMatcher: { ...PROBLEM_MATCHER, background: WATCH_BACKGROUND },
     },
   ];
 }

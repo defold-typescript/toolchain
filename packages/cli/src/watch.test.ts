@@ -261,6 +261,94 @@ describe("runWatch", () => {
     expect(factory.opened).toBe(false);
   });
 
+  test("initial build compile error keeps the watcher open, reports each located error, and recovers", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/a.ts", 'const x: number = "oops";\n');
+    writeProjectFile("src/b.ts", 'const y: number = "nope";\n');
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    expect(factory.opened).toBe(true);
+    expect(err()).toMatch(/ {2}src\/a\.ts:\d+:\d+: /);
+    expect(err()).toMatch(/ {2}src\/b\.ts:\d+:\d+: /);
+    expect(countMatches(err(), /^ {2}\S.*?:\d+:\d+: /gm)).toBe(2);
+
+    const settled = await Promise.race([
+      handle.done.then(() => "resolved" as const).catch(() => "rejected" as const),
+      new Promise<"pending">((r) => setTimeout(() => r("pending"), 10)),
+    ]);
+    expect(settled).toBe("pending");
+
+    writeProjectFile("src/a.ts", scriptSource(1));
+    writeProjectFile("src/b.ts", scriptSource(2));
+    factory.trigger("change", "src/a.ts");
+    factory.trigger("change", "src/b.ts");
+    await handle.waitForIdle();
+
+    expect(out()).toMatch(/wrote \d+ files/);
+
+    handle.stop();
+    const code = await handle.done;
+    expect(code).toBe(0);
+  });
+
+  test("non-json mode frames each build cycle with begin and end sentinel lines", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    const initial = out();
+    const beginIdx = initial.indexOf("defold-typescript watch: build started");
+    const wroteIdx = initial.indexOf("wrote 1 files");
+    const endIdx = initial.indexOf("defold-typescript watch: build finished");
+    expect(beginIdx).toBeGreaterThanOrEqual(0);
+    expect(beginIdx).toBeLessThan(wroteIdx);
+    expect(wroteIdx).toBeLessThan(endIdx);
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(countMatches(out(), /defold-typescript watch: build started/g)).toBe(2);
+    expect(countMatches(out(), /defold-typescript watch: build finished/g)).toBe(2);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("json mode emits the initial-build compile error as a structured build event with a per-diagnostic list", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/a.ts", 'const x: number = "oops";\n');
+    writeProjectFile("src/b.ts", 'const y: number = "nope";\n');
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, json: true, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    expect(factory.opened).toBe(true);
+    const lines = out().trimEnd().split("\n");
+    const build = JSON.parse(lines[lines.length - 1] as string) as Record<string, unknown>;
+    expect(build.event).toBe("build");
+    expect(build.ok).toBe(false);
+    expect(Array.isArray(build.errors)).toBe(true);
+    const errors = build.errors as Array<Record<string, unknown>>;
+    expect(errors.length).toBe(2);
+    expect(typeof errors[0]?.file).toBe("string");
+    expect(typeof errors[0]?.message).toBe("string");
+    expect(err()).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("a change event rewrites only the event-bearing file, not an un-triggered sibling", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));
