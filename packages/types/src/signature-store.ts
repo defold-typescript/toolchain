@@ -4,6 +4,11 @@
 // so these strengthen the rendered signature while the ref-doc prose stays.
 export interface SignatureOverride {
   signatures: string[];
+  // Optional per-overload descriptions, parallel to `signatures`: entry `i`
+  // overrides row `i`'s rendered doc prose; a `null` entry or an array shorter
+  // than `signatures` keeps the ref-doc fixture description for those rows. Every
+  // existing override omits `docs` and renders exactly as before.
+  docs?: (string | null)[];
 }
 
 // An FQN (`io.open`, `file:read`, …) maps to one override. An element with

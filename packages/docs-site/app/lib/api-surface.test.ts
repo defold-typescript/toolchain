@@ -1118,6 +1118,58 @@ describe("apiModuleSymbols", () => {
     expect(symbols.filter((s) => s.name === "demo.b")).toHaveLength(1);
     expect(symbols.map((s) => s.signature)).toEqual(["demo.a(): number", "demo.b(): string"]);
   });
+
+  // The vector prose the fixture's first `vmath.lerp` entry renders — the doc
+  // every row copies today, and the fallback for any override row without its
+  // own `docs[]` entry.
+  const fixtureLerpVectorDoc =
+    apiModuleSymbols(vmathPage(), {}, {}).find((s) => s.name === "vmath.lerp")?.docMarkdown ?? "";
+
+  test("each override row renders its own docs[] entry, not the shared fixture prose", () => {
+    const store: SignatureStore = {
+      ...VMATH_OVERRIDES,
+      "vmath.lerp": {
+        signatures: VMATH_LERP,
+        docs: [
+          "Linearly interpolate between two vectors.",
+          "Linearly interpolate between two quaternions.",
+          "Linearly interpolate between two values.",
+        ],
+      },
+    };
+    const lerp = apiModuleSymbols(vmathPage(), {}, store).filter((s) => s.name === "vmath.lerp");
+    expect(lerp).toHaveLength(3);
+    expect(lerp.map((s) => s.docMarkdown)).toEqual([
+      "Linearly interpolate between two vectors.",
+      "Linearly interpolate between two quaternions.",
+      "Linearly interpolate between two values.",
+    ]);
+    // the scalar row reads its own "between two values" prose, not the vector one
+    expect(lerp[2]?.docMarkdown).toContain("values");
+    expect(lerp[2]?.docMarkdown).not.toBe(fixtureLerpVectorDoc);
+  });
+
+  test("an override without a docs key renders every row with the fixture description", () => {
+    const lerp = apiModuleSymbols(vmathPage(), {}, VMATH_OVERRIDES).filter(
+      (s) => s.name === "vmath.lerp",
+    );
+    expect(lerp).toHaveLength(3);
+    for (const row of lerp) expect(row.docMarkdown).toBe(fixtureLerpVectorDoc);
+  });
+
+  test("a short or null docs entry falls back to the fixture description for that row only", () => {
+    const store: SignatureStore = {
+      ...VMATH_OVERRIDES,
+      // authored primary, explicit null secondary, and a third row absent (array
+      // shorter than `signatures`) — both untyped rows fall back to the fixture.
+      "vmath.lerp": { signatures: VMATH_LERP, docs: ["Interpolate two vectors.", null] },
+    };
+    const lerp = apiModuleSymbols(vmathPage(), {}, store).filter((s) => s.name === "vmath.lerp");
+    expect(lerp).toHaveLength(3);
+    expect(lerp[0]?.docMarkdown).toBe("Interpolate two vectors.");
+    expect(lerp[1]?.docMarkdown).toBe(fixtureLerpVectorDoc);
+    expect(lerp[2]?.docMarkdown).toBe(fixtureLerpVectorDoc);
+  });
 });
 
 describe("exampleMarkdownFor", () => {
