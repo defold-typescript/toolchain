@@ -1796,7 +1796,7 @@ describe("runInit (merges an existing tsconfig)", () => {
     expect(readTsconfig().include).toEqual(["game/**/*.ts"]);
   });
 
-  test("adds src/main.ts to exclude for a user-authored project with an existing include", () => {
+  test("never adds src/main.ts to exclude for a user-authored project; preserves user exclude", () => {
     seedExistingTsconfig({
       compilerOptions: { types: ["defold-1.12.4"] },
       include: ["game/**/*.ts"],
@@ -1808,7 +1808,51 @@ describe("runInit (merges an existing tsconfig)", () => {
 
     const exclude = readTsconfig().exclude ?? [];
     expect(exclude).toContain("dist");
-    expect(exclude.filter((e) => e === "src/main.ts")).toHaveLength(1);
+    expect(exclude).not.toContain("src/main.ts");
+  });
+
+  test("self-heals a tool-added src/main.ts exclude, dropping the key when it was the sole entry", () => {
+    seedExistingTsconfig({
+      compilerOptions: { types: ["defold-1.12.4"] },
+      include: ["game/**/*.ts"],
+      exclude: ["src/main.ts"],
+    });
+
+    runInit({ cwd, force: true });
+
+    expect(readTsconfig().exclude).toBeUndefined();
+  });
+
+  test("self-heals a tool-added src/main.ts exclude while preserving sibling excludes", () => {
+    seedExistingTsconfig({
+      compilerOptions: { types: ["defold-1.12.4"] },
+      include: ["game/**/*.ts"],
+      exclude: ["dist", "src/main.ts"],
+    });
+
+    runInit({ cwd, force: true });
+
+    expect(readTsconfig().exclude).toEqual(["dist"]);
+  });
+
+  test("keeps a collection-wired src/main.ts in the program (never excluded)", () => {
+    seedExistingTsconfig({
+      compilerOptions: { types: ["defold-1.12.4"] },
+      include: ["src/**/*.ts"],
+    });
+    mkdirSync(path.join(cwd, "main"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "main", "main.collection"),
+      'components {\n  id: "main"\n  component: "/src/main.ts.script"\n}\n',
+    );
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "main.ts"), "// entry\n");
+    writeFileSync(path.join(cwd, "src", "helper.ts"), "// sibling\n");
+
+    runInit({ cwd, force: true });
+
+    const exclude = readTsconfig().exclude ?? [];
+    expect(exclude).not.toContain("src/main.ts");
   });
 
   test("fresh directory still writes the managed defaults and no exclude", () => {
