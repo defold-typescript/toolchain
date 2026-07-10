@@ -166,22 +166,55 @@ export function buildLlmsTxt(target: LlmsTarget = SITE_TARGET): string {
 
 // Guide markdown is authored for the rendered site, so its bodies carry web
 // chrome the agent corpus should not: the index page's logo image and
-// shields.io badges, and a per-page `#` H1 that would sit flat beside the
-// corpus's own `## Guide`/`## API` headers. This drops the images/badges and
-// demotes only the leading H1 (later `# ` lines are code-fence content — shell
-// and JSON comments — and stay verbatim), then tidies the blank lines removals
-// leave behind. It touches the inlined copy alone; `buildLlmsTxt` and the source
-// `.md` files are unchanged, so the site still renders logo, badges, and H1s.
+// shields.io badges, and a heading tree rooted at `#` that would sit flat beside
+// the corpus's own `## Guide`/`## API` headers. This drops the images/badges and
+// shifts each body's whole heading tree down two levels so its `#` title becomes
+// an `###` child of `## Guide` (mirroring how `## API` nests its `###`
+// namespaces) and every sub-heading keeps its relative depth. Headings inside
+// fenced code blocks — shell and JSON comments like `# {...}`, and example
+// markdown — are left verbatim, never shifted. Levels cap at H6. It touches the
+// inlined copy alone; `buildLlmsTxt` and the source `.md` files are unchanged, so
+// the site still renders logo, badges, and its original heading levels.
+const HEADING_SHIFT = 2;
+
 export function stripGuideChrome(body: string): string {
   const badgeLine = /^\s*(\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)\s*)+$/;
   const imageLine = /^\s*!\[[^\]]*\]\([^)]*\)\s*$/;
-  let demoted = false;
+  const heading = /^#{1,6} /;
+  // A fenced-code delimiter is a run of 3+ backticks or tildes. Group 2 is the
+  // info string (openers) or trailing text (closers).
+  const fenceToken = /^\s*(`{3,}|~{3,})(.*)$/;
+  // The open fence's marker run (e.g. "```"), or null when outside a fence.
+  let fence: string | null = null;
   const kept: string[] = [];
   for (const line of body.split("\n")) {
+    const token = fenceToken.exec(line);
+    const marker = token?.[1] ?? "";
+    const rest = token?.[2] ?? "";
+    if (fence === null) {
+      // Valid opener per CommonMark: a backtick fence's info string may not
+      // itself contain a backtick — that rules out prose like ```` ```lua ````
+      // that merely quotes a fence inline and must not open a code block.
+      if (marker && !(marker[0] === "`" && rest.includes("`"))) {
+        fence = marker;
+        kept.push(line);
+        continue;
+      }
+    } else {
+      // Closer: same marker char, run at least as long as the opener, nothing
+      // else on the line.
+      if (marker && marker[0] === fence[0] && marker.length >= fence.length && rest.trim() === "") {
+        fence = null;
+      }
+      kept.push(line);
+      continue;
+    }
     if (badgeLine.test(line) || imageLine.test(line)) continue;
-    if (!demoted && line.startsWith("# ")) {
-      kept.push(`#${line}`);
-      demoted = true;
+    if (heading.test(line)) {
+      let n = 0;
+      while (line[n] === "#") n++;
+      const level = Math.min(n + HEADING_SHIFT, 6);
+      kept.push("#".repeat(level) + line.slice(n));
       continue;
     }
     kept.push(line);
