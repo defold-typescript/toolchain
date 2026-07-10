@@ -15,4 +15,10 @@ export interface GuidePage {
   summary?: string;
   /** Inline this page's body into llms-full.txt; `false` when frontmatter has `llms-full: false`. */
   includeInLlmsFull: boolean;
+  /**
+   * `agent-entry` frontmatter priority for the package llms.txt "Key docs for
+   * agents" list. Lower = higher priority; unset omits the page from that
+   * curated list (it still appears in the full `## Guide` dump).
+   */
+  agentEntry?: number;
 }
