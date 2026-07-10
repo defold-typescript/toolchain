@@ -16,14 +16,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 
 ## Guide
 
-# defold-typescript
-
-![defold-typescript logo](logo-ver-classic.png#max-width=200)
-
-[![npm](https://img.shields.io/npm/v/@defold-typescript/cli)](https://www.npmjs.com/package/@defold-typescript/cli)
-[![GitHub repo](https://img.shields.io/badge/github-repo-181717?logo=github&logoColor=white)](https://github.com/defold-typescript/toolchain)
-[![CI](https://img.shields.io/github/actions/workflow/status/defold-typescript/toolchain/ci.yml?branch=main)](https://github.com/defold-typescript/toolchain/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-defold--typescript.github.io-1f6feb)](https://defold-typescript.github.io/toolchain/)
+## defold-typescript
 
 Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
@@ -96,7 +89,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
     * [`llms.txt`](https://defold-typescript.github.io/toolchain/llms.txt) is the map (start here)
     * [`llms-full.txt`](https://defold-typescript.github.io/toolchain/llms-full.txt) is the full corpus (grep it, never read it whole). The same pair ships into a consumer's `node_modules/@defold-typescript/docs/` on install.
 
-# Getting started
+## Getting started
 
 Scaffold a Defold project with TypeScript sources, write a script, and build to Lua. The whole loop runs on Bun — no `npm` or `node`.
 
@@ -254,7 +247,7 @@ bunx @defold-typescript/cli watch
 
 While you edit, run [`watch`](./watch.md) instead: it rebuilds incrementally on every save and keeps the native-extension surface current (run [`resolve`](./resolve.md) once first). See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
-# Code editor setup
+## Code editor setup
 
 Open the Defold project folder in VSCode or any editor with TypeScript support. Use the folder that contains `game.project`, `src/`, and `tsconfig.json`.
 
@@ -348,7 +341,7 @@ Build and watch carry no version tag, so inside an installed project `bunx` reso
 
 > **Upgrading from a pre-`init .` project.** `init` now requires an explicit destination, but a `mise.toml` scaffolded by an older CLI carries a `:upgrade` task that calls `init --force` with no path. The first `mise run defold-typescript:upgrade` therefore fails with `a destination folder is required`. Run `bunx @defold-typescript/cli@latest init . --force` once by hand: it rewrites the managed `mise.toml` blocks (the refresh runs on every `init`, not just `--force`) so the dotted `:upgrade` task lands on disk and the task works from then on.
 
-# Defold editor
+## Defold editor
 
 Install the Defold editor from [defold.com](https://defold.com/). The editor is the engine UI you use to open the project folder, inspect assets, and run the game.
 
@@ -397,7 +390,7 @@ Driving this without the editor — editing `.go` / `.collection` text directly 
 
 With the project open in Defold, press **Build** or **Project > Build** to run the game. If you change TypeScript code, rebuild with `bunx @defold-typescript/cli build` before running again, or keep `watch` running in a terminal.
 
-# TypeScript vs Lua
+## TypeScript vs Lua
 
 A translation cheat sheet for Defold developers who already know Lua. Lua on the
 left, the TypeScript you write on the right. It is a map, not a tutorial: skim
@@ -612,7 +605,7 @@ a runtime surprise.
 - [Getting started](./getting-started.md) — scaffold, write a script, build to
   Lua.
 
-# TypeScript gotchas
+## TypeScript gotchas
 
 Sharp edges where TypeScript, the TypeScriptToLua transpiler, or the Defold runtime behave in ways the type system cannot fully express. Each entry names the symptom, explains why it happens, and gives the recommended workaround.
 
@@ -1032,7 +1025,7 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 
 **How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate. The prose pins — this section's heading, its front-digest link, and the `agent-runbooks.md` runbook — are asserted structurally in `packages/types/test/guide-docs.test.ts`.
 
-# Data structures: what's built in
+## Data structures: what's built in
 
 TypeScript ships a richer set of containers than Lua's single `table`, and the toolchain lowers each one to code Defold's Lua 5.1 VM runs. Most of them lower to a plain Lua table; the ones with behaviour (`Map`, `Set`, `class`, spread) lean on runtime helpers that TypeScriptToLua emits into `lualib_bundle`. That bundle is pure Lua 5.1 the CLI writes to the output root, pay-for-use: a container that needs a helper pulls it in, the rest cost nothing. Every container below runs unchanged on Defold's VM (LuaJIT on native and desktop, a 5.1 VM on HTML5).
 
@@ -1145,7 +1138,7 @@ Regex is the one that bites most often. `"x".match(/b/)` type-checks but fails t
 - [Where script state lives](./script-state.md) — where to *put* these containers: per-instance `self`, a shared module local, or a module singleton.
 - [TypeScript gotchas](./typescript-gotchas.md) — the runtime sharp edges (truthiness, `nil` collapse) that bite once the data is in a container.
 
-# Script lifecycle helpers
+## Script lifecycle helpers
 
 `@defold-typescript/types` exports identity helpers for Defold script tables. They keep the runtime object unchanged while giving TypeScript a typed `self` and typed lifecycle hook parameters. `self` holds *per-instance* state; for the wider picture — when to reach for a shared module local, a cross-script module singleton, or a VM-global instead — see [Where script state lives](./script-state.md).
 
@@ -1325,7 +1318,7 @@ Under that config `gui.*` and the universal namespaces type-check while `render.
 
 `init`, `build`, and `watch` never narrow the surface for you: they scaffold and build against whatever entrypoint your `tsconfig` names — the full `@defold-typescript/types` by default — and never add, remove, or prune a wall. Narrowing is **opt-in**, managed by the `wall` command: it narrows a single-kind source directory to its kind subpath with a composite `tsconfig.json` that `tsc -b --noEmit` enforces. See [Wall](wall.md) for the interactive menu, the flag forms, and the one constraint that makes a wall actually hold (import the lifecycle factory from the kind subpath, not the main entry).
 
-# Typed messages
+## Typed messages
 
 Defold delivers a message as a hashed id and a plain table, so the payload's shape is invisible to TypeScript by default. `@defold-typescript/types` restores it from both ends: `msg.post` checks the table you send against the built-in message's declared shape, and the `isMessage` guard — plus the `onMessage` dispatcher built on it — narrows a received `message` back to that shape. This page is the canonical home for that model; the `on_message` lifecycle callback itself is covered in [Script lifecycle](./script-lifecycle.md).
 
@@ -1401,7 +1394,7 @@ Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the 
 - [Script lifecycle](./script-lifecycle.md) — the `on_message` lifecycle callback and the other typed script hooks.
 - [TypeScript gotchas](./typescript-gotchas.md) — why a raw `on_message` handler's `message` is an untyped record, and the cast you would otherwise reach for.
 
-# Where script state lives
+## Where script state lives
 
 A Defold game is many script *instances* sharing a few script *modules*. Where you put a piece of mutable state decides who can see it and change it — one component, every component of one script, every script in the game, or the whole Lua VM. This page walks those four tiers from narrowest to widest, each grounded in the Lua the toolchain actually emits.
 
@@ -1528,7 +1521,7 @@ A rule of thumb: `self` for per-instance state; a module singleton for deliberat
 - [TypeScript vs Lua](./typescript-vs-lua.md) — the `require`/`import` mapping and the `declare global` lowering this page builds on.
 - [Agent runbooks](./agent-runbooks.md#where-script-state-lives) — the condensed self-vs-module-local procedure.
 
-# Vector math
+## Vector math
 
 Defold exposes vector arithmetic through Lua metamethods on `vector3`, `vector4`, `quaternion`, and `matrix4`. In TypeScript the same operations are typed as **methods**, not operators: `a.add(b)` instead of `a + b`. The TypeScript-to-Lua transpiler turns these calls into the underlying metamethod invocations at build time, so the runtime cost is identical.
 
@@ -1600,7 +1593,7 @@ TypeScript's binary `+`, `-`, `*`, `/` operators require both operands to be `nu
 
 There is **one** exception: **unary minus**. TypeScript does not flag `-v3a`; it silently produces `number`. This is a TS-level gap the toolchain cannot close with types alone. The typed alternative is `v.unm()`. See [unary minus on Vector3 silently produces number](./typescript-gotchas.md#unary-minus-on-vector3--vector4-silently-produces-number) on the gotchas page for the full story.
 
-# Init
+## Init
 
 `init` scaffolds a Defold project with a TypeScript surface — or adds TypeScript
 to an existing Defold project. It writes the files and stops; run `bun install`
@@ -1699,7 +1692,7 @@ fast and lists the valid templates:
 defold-typescript init: unknown template "foo". Valid templates: default, minimal.
 ```
 
-# Watch
+## Watch
 
 `watch` rebuilds your Lua incrementally on every TypeScript change. Run it in the
 editor's integrated terminal and leave it running while you work; the
@@ -1744,7 +1737,7 @@ loop as `mise run defold-typescript:watch`. Like [`build`](./build.md), it carri
 no version tag, so `bunx` resolves the `@defold-typescript/cli` that `init` pinned
 as a devDependency — the version locked alongside your `@defold-typescript/types`.
 
-# Build
+## Build
 
 `build` transpiles every TypeScript file under `src/` to Lua and writes the result
 into the Defold project tree — a one-shot compile. For the incremental loop you
@@ -1828,7 +1821,7 @@ propagates, so a failed build fails the command.
 Like the engine launcher, the `bob` version tracks the latest stable Defold
 release. A project pinned to an older Defold version is a known limitation.
 
-# Wall
+## Wall
 
 This page covers `wall`, the opt-in command for narrowing the API surface of a
 source directory to a single script kind. To *add* a surface for native-extension
@@ -1928,7 +1921,7 @@ from the main entry fails the build before transpile, naming the file and the ki
 subpath it should import from instead. (`watch` does not enforce it yet — its
 session path is a separate slice.)
 
-# Resolve
+## Resolve
 
 `resolve` reads the Defold dependencies declared in your `game.project`, fetches
 each archive, and generates the TypeScript types for them — so extension
@@ -2060,7 +2053,7 @@ Downloaded archives are cached so repeated runs stay offline, at
 `~/.cache/defold-typescript/extensions`). Set `DEFOLD_TYPESCRIPT_CACHE` to
 override the root; archives then land under `$DEFOLD_TYPESCRIPT_CACHE/extensions`.
 
-# Live transpile diagnostics
+## Live transpile diagnostics
 
 `bunx @defold-typescript/cli@latest init .` scaffolds a TypeScript language-service plugin, `@defold-typescript/tstl-plugin`, into the generated `tsconfig.json`:
 
@@ -2095,7 +2088,7 @@ This is the build-time complement to the live `tstl-plugin` squiggles above: the
 
 Problems land on the **exact line and column**: each build failure is emitted as a located `  <file>:<line>:<column>: <message>` row, and the matcher captures all four so VS Code anchors the squiggle on the offending span. The `watch` task is a live background watcher — it frames every build cycle with `build started`/`build finished` sentinels, so the Problems panel clears stale entries and re-anchors them on each rebuild. A startup compile error keeps `watch` running: it reports every located error and stays watching, so fixing the file clears the problem in place. The merge is additive — your own tasks are preserved; only the two managed labels are reconciled.
 
-# Debugging TypeScript in Defold
+## Debugging TypeScript in Defold
 
 Step through your TypeScript with breakpoints set directly in the `.ts` source, even though Defold runs the transpiled Lua. The toolchain already emits the load-bearing piece: every build writes a `<name>.ts.script.map` source map next to the chunk and appends a `--# sourceMappingURL=` trailer. The [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) extension reads that map, so a breakpoint in a `.ts` file resolves to the right generated line with no extra wiring.
 
@@ -2199,7 +2192,7 @@ The CLI build loop above is the primary path and needs no editor. If you prefer,
 - [Script lifecycle](script-lifecycle.md) — typing `self` and the lifecycle hooks you will step through.
 - [Code editor setup](editor-setup.md) — the rest of the scaffolded `.vscode/` config and the watch loop.
 
-# Agent runbooks
+## Agent runbooks
 
 Harness-neutral procedures for driving `defold-typescript` from an automated
 agent. `defold-typescript` is a CLI published to npm (run with `bunx`) plus a
@@ -3088,7 +3081,7 @@ prefer a module singleton for app state. The full four-tier treatment — per-in
 `self`, shared module local, cross-script module singleton, and VM-global — is in
 [Where script state lives](./script-state.md).
 
-# Helper scripts
+## Helper scripts
 
 Build tools, codegen, and one-off maintenance scripts belong **outside** your
 Defold source tree, in a project-root `/scripts` folder, and run with **Bun**.
@@ -3167,7 +3160,7 @@ console.log(`${files.length} level files`);
 Run it with `bun scripts/count-levels.ts`. It imports a `node:*` builtin, is
 typed by `scripts/tsconfig.json`, and never touches the Lua build.
 
-# Pinning the Defold API version
+## Pinning the Defold API version
 
 `@defold-typescript/types` ships the **latest/current** Defold API surface
 pre-baked, and generates older versioned surfaces on demand. The default import
@@ -3357,7 +3350,7 @@ live Defold 1.9.8 reference docs still include `label.get_text` and still omit
 `label.set_text`. If the command fails, update the registry target or the example
 delta; do not ignore the drift.
 
-# Typing native extensions
+## Typing native extensions
 
 Defold native extensions ship their own Lua API alongside the engine's. When a
 project depends on an extension, `defold-typescript resolve` reads that
@@ -3419,7 +3412,7 @@ iap.set_listener((self, transaction, error) => {
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).
 
-# API docs vs. ts-defold-types
+## API docs vs. ts-defold-types
 
 How the JSDoc that `@defold-typescript/types` emits compares with the incumbent
 hand-and-script-maintained [thinknathan/ts-defold-types](https://github.com/thinknathan/ts-defold-types).
@@ -3548,7 +3541,7 @@ shape you want in your editor:
 This is your call, not a verdict — pick the trade-off that reads best for how you
 work.
 
-# Migrating from ts-defold
+## Migrating from ts-defold
 
 Moving a Defold + TypeScript project from the [ts-defold](https://github.com/ts-defold)
 stack (`@ts-defold/types`, `@ts-defold/create`) to `@defold-typescript/*`.

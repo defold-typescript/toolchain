@@ -164,13 +164,41 @@ export function buildLlmsTxt(target: LlmsTarget = SITE_TARGET): string {
   ].join("\n");
 }
 
+// Guide markdown is authored for the rendered site, so its bodies carry web
+// chrome the agent corpus should not: the index page's logo image and
+// shields.io badges, and a per-page `#` H1 that would sit flat beside the
+// corpus's own `## Guide`/`## API` headers. This drops the images/badges and
+// demotes only the leading H1 (later `# ` lines are code-fence content — shell
+// and JSON comments — and stay verbatim), then tidies the blank lines removals
+// leave behind. It touches the inlined copy alone; `buildLlmsTxt` and the source
+// `.md` files are unchanged, so the site still renders logo, badges, and H1s.
+export function stripGuideChrome(body: string): string {
+  const badgeLine = /^\s*(\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)\s*)+$/;
+  const imageLine = /^\s*!\[[^\]]*\]\([^)]*\)\s*$/;
+  let demoted = false;
+  const kept: string[] = [];
+  for (const line of body.split("\n")) {
+    if (badgeLine.test(line) || imageLine.test(line)) continue;
+    if (!demoted && line.startsWith("# ")) {
+      kept.push(`#${line}`);
+      demoted = true;
+      continue;
+    }
+    kept.push(line);
+  }
+  return kept
+    .join("\n")
+    .replace(/^\n+/, "")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
 export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
   const pages = navOrderedPages();
   const lines: string[] = [...target.header(pages), "## Guide", ""];
   for (const page of pages) {
     if (!page.includeInLlmsFull) continue;
     const body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body.trimEnd();
-    lines.push(body, "");
+    lines.push(stripGuideChrome(body), "");
   }
   lines.push("## API", "");
   for (const page of loadApiSurface(TYPES_DIR)) {
