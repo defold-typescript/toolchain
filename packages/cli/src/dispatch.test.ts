@@ -42,6 +42,21 @@ function captureStreams(): {
   };
 }
 
+// The watch branch lazy-imports its transpiler-bearing modules, so its
+// `onWatchStart` callback fires on a later microtask than the synchronous
+// dispatch() return. This bridges that gap: pass `onWatchStart` into dispatch,
+// then `await ready` to get the handle before driving the watcher.
+function watchHandle(): {
+  onWatchStart: (h: RunWatchHandle) => void;
+  ready: Promise<RunWatchHandle>;
+} {
+  let resolve: (h: RunWatchHandle) => void = () => {};
+  const ready = new Promise<RunWatchHandle>((r) => {
+    resolve = r;
+  });
+  return { onWatchStart: (h) => resolve(h), ready };
+}
+
 let cwd: string;
 
 beforeEach(() => {
@@ -267,6 +282,55 @@ describe("dispatch", () => {
     expect(existsSync(path.join(cwd, "AGENTS.md"))).toBe(false);
   });
 
+  describe("scaffold verbs never load the transpiler graph", () => {
+    const dispatchSource = readFileSync(path.join(import.meta.dir, "dispatch.ts"), "utf8");
+    const LAZY_SPECIFIERS = ["./build", "./watch", "./materialize", "./resolve", "./wall"] as const;
+
+    // A value (runtime) import of a transpiler-bearing module at module scope is
+    // what makes the pure-scaffold verbs inherit a broken toolchain, so the guard
+    // is structural: none of LAZY_SPECIFIERS may appear as a top-level value
+    // import (type-only imports are erased at build and load nothing).
+    function topLevelValueImports(src: string): string[] {
+      return [...src.matchAll(/^import\s+(type\s+)?[\s\S]*?from\s*"([^"]+)";/gm)]
+        .filter((m) => m[1] === undefined)
+        .map((m) => m[2] as string);
+    }
+
+    test("dispatch.ts imports no transpiler-bearing module at module scope", () => {
+      const valueImports = topLevelValueImports(dispatchSource);
+      for (const spec of LAZY_SPECIFIERS) {
+        expect(valueImports).not.toContain(spec);
+      }
+    });
+
+    test("dispatch.ts loads the transpiler-bearing modules via await import()", () => {
+      for (const spec of LAZY_SPECIFIERS) {
+        expect(dispatchSource).toContain(`await import("${spec}")`);
+      }
+    });
+
+    test("init-agents dispatches with no transpiler import required", () => {
+      const { io, err } = captureStreams();
+
+      const code = dispatch(["init-agents", cwd], io);
+
+      expect(code).toBe(0);
+      expect(err()).toBe("");
+      expect(existsSync(path.join(cwd, "AGENTS.md"))).toBe(true);
+      expect(existsSync(path.join(cwd, "CLAUDE.md"))).toBe(true);
+    });
+
+    test("init dispatches with no transpiler import required", () => {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+      const { io, err } = captureStreams();
+
+      const code = dispatch(["init", cwd], io);
+
+      expect(code).toBe(0);
+      expect(err()).toBe("");
+    });
+  });
+
   test("empty argv prints usage to stderr and returns 1", () => {
     const { io, out, err } = captureStreams();
 
@@ -330,7 +394,7 @@ describe("dispatch", () => {
     expect(err()).not.toContain("Usage:");
   });
 
-  test("build <path> runs runBuild and returns 0 on success", () => {
+  test("build <path> runs runBuild and returns 0 on success", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
       null,
@@ -345,7 +409,7 @@ describe("dispatch", () => {
     );
 
     const { io, out, err } = captureStreams();
-    const code = dispatch(["build", cwd], io);
+    const code = await dispatch(["build", cwd], io);
 
     expect(code).toBe(0);
     expect(err()).toBe("");
@@ -353,9 +417,9 @@ describe("dispatch", () => {
     expect(out()).toContain("src/main.ts.script");
   });
 
-  test("build failure writes error message to stderr and returns 1", () => {
+  test("build failure writes error message to stderr and returns 1", async () => {
     const { io, out, err } = captureStreams();
-    const code = dispatch(["build", cwd], io);
+    const code = await dispatch(["build", cwd], io);
 
     expect(code).toBe(1);
     expect(out()).toBe("");
@@ -376,7 +440,7 @@ describe("dispatch", () => {
     expect(parsed.written.length).toBeGreaterThan(0);
   });
 
-  test("build --json before the path resolves the path and emits ok:true JSON", () => {
+  test("build --json before the path resolves the path and emits ok:true JSON", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
       null,
@@ -391,7 +455,7 @@ describe("dispatch", () => {
     );
 
     const { io, out, err } = captureStreams();
-    const code = dispatch(["build", "--json", cwd], io);
+    const code = await dispatch(["build", "--json", cwd], io);
 
     expect(code).toBe(0);
     expect(err()).toBe("");
@@ -401,9 +465,9 @@ describe("dispatch", () => {
     expect(parsed.written).toContain("src/main.ts.script");
   });
 
-  test("build --json on failure writes error JSON to stdout, nothing to stderr, returns 1", () => {
+  test("build --json on failure writes error JSON to stdout, nothing to stderr, returns 1", async () => {
     const { io, out, err } = captureStreams();
-    const code = dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(1);
     expect(err()).toBe("");
@@ -442,77 +506,77 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
-  test("build --defold-version overrides the pin", () => {
+  test("build --defold-version overrides the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
     expect(parsed.defoldVersion).toBe("1.10.0");
   });
 
-  test("build --defold-version=<v> form is honored", () => {
+  test("build --defold-version=<v> form is honored", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--defold-version=1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-version=1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
     expect(parsed.defoldVersion).toBe("1.10.0");
   });
 
-  test("build --json with no pin reports current-stable", () => {
+  test("build --json with no pin reports current-stable", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
     expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
   });
 
-  test("build --json reports the package.json channel pin as defoldChannel", () => {
+  test("build --json reports the package.json channel pin as defoldChannel", async () => {
     scaffoldBuildProject({ "defold-typescript": { channel: "beta" } });
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldChannel: string };
     expect(parsed.defoldChannel).toBe("beta");
   });
 
-  test("build --channel overrides the pin", () => {
+  test("build --channel overrides the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { channel: "beta" } });
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--channel", "alpha", "--json"], io);
+    const code = await dispatch(["build", cwd, "--channel", "alpha", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldChannel: string };
     expect(parsed.defoldChannel).toBe("alpha");
   });
 
-  test("build --json with no channel reports stable", () => {
+  test("build --json with no channel reports stable", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldChannel: string };
     expect(parsed.defoldChannel).toBe("stable");
   });
 
-  test("build --json with no channel still reports defoldVersion alongside defoldChannel", () => {
+  test("build --json with no channel still reports defoldVersion alongside defoldChannel", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string; defoldChannel: string };
@@ -581,11 +645,11 @@ describe("dispatch", () => {
     expect(parsed.defoldVersionSource).toBe("detected");
   });
 
-  test("build --defold-version overrides the installed-editor detection (source: flag)", () => {
+  test("build --defold-version overrides the installed-editor detection (source: flag)", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--defold-version", "1.11.0", "--json"], io, {
+    const code = await dispatch(["build", cwd, "--defold-version", "1.11.0", "--json"], io, {
       detectEditorVersion: () => "1.9.8",
     });
 
@@ -595,11 +659,11 @@ describe("dispatch", () => {
     expect(parsed.defoldVersionSource).toBe("flag");
   });
 
-  test("build --json with no pin and no detection reports source: default", () => {
+  test("build --json with no pin and no detection reports source: default", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--json"], io, {
+    const code = await dispatch(["build", cwd, "--json"], io, {
       detectEditorVersion: () => null,
     });
 
@@ -609,11 +673,11 @@ describe("dispatch", () => {
     expect(parsed.defoldVersionSource).toBe("default");
   });
 
-  test("build --json with no pin reports apiSurface defold-1.12.4", () => {
+  test("build --json with no pin reports apiSurface defold-1.12.4", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string; apiSurface: string | null };
@@ -621,11 +685,11 @@ describe("dispatch", () => {
     expect(parsed.apiSurface).toBe("defold-1.12.4");
   });
 
-  test("build --defold-version with no pre-baked surface reports apiSurface null", () => {
+  test("build --defold-version with no pre-baked surface reports apiSurface null", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { apiSurface: string | null };
@@ -655,7 +719,7 @@ describe("dispatch", () => {
     expect("scriptKind" in parsed).toBe(false);
   });
 
-  test("build --json materializes the selected surface and reports the dir", () => {
+  test("build --json materializes the selected surface and reports the dir", async () => {
     scaffoldBuildProject();
     const pkgRoot = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-pkg-"));
     const sourceGeneratedDir = path.join(pkgRoot, "generated");
@@ -672,7 +736,7 @@ describe("dispatch", () => {
     );
 
     const { io, out } = captureStreams();
-    const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
@@ -687,7 +751,7 @@ describe("dispatch", () => {
     rmSync(pkgRoot, { recursive: true, force: true });
   });
 
-  test("build --json on a single-.script project keeps the full surface and no scriptKind", () => {
+  test("build --json on a single-.script project keeps the full surface and no scriptKind", async () => {
     scaffoldBuildProject();
     writeFileSync(path.join(cwd, "main.script"), "");
     const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
@@ -699,7 +763,7 @@ describe("dispatch", () => {
     }
 
     const { io, out } = captureStreams();
-    const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as Record<string, unknown>;
@@ -716,7 +780,7 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("build --json on a mixed-kind project keeps the full surface and no scriptKind", () => {
+  test("build --json on a mixed-kind project keeps the full surface and no scriptKind", async () => {
     scaffoldBuildProject();
     writeFileSync(path.join(cwd, "main.script"), "");
     writeFileSync(path.join(cwd, "hud.gui_script"), "");
@@ -729,7 +793,7 @@ describe("dispatch", () => {
     }
 
     const { io, out } = captureStreams();
-    const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as Record<string, unknown>;
@@ -746,7 +810,7 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("build --json on a mixed-kind project writes no per-directory wall tsconfigs", () => {
+  test("build --json on a mixed-kind project writes no per-directory wall tsconfigs", async () => {
     scaffoldBuildProject();
     rmSync(path.join(cwd, "src", "main.ts"));
     mkdirSync(path.join(cwd, "src", "ui"), { recursive: true });
@@ -768,7 +832,7 @@ describe("dispatch", () => {
     }
 
     const { io, out } = captureStreams();
-    const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as Record<string, unknown>;
@@ -780,7 +844,7 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("build does not mutate root tsconfig wall wiring written by hand", () => {
+  test("build does not mutate root tsconfig wall wiring written by hand", async () => {
     scaffoldBuildProject();
     rmSync(path.join(cwd, "src", "main.ts"));
     mkdirSync(path.join(cwd, "src", "ui"), { recursive: true });
@@ -813,7 +877,7 @@ describe("dispatch", () => {
     }
 
     const { io } = captureStreams();
-    const code = dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
 
     expect(code).toBe(0);
     const root = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
@@ -831,11 +895,11 @@ describe("dispatch", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  test("build --json on a pinned unavailable version reports materializedSurface null", () => {
+  test("build --json on a pinned unavailable version reports materializedSurface null", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
@@ -1008,17 +1072,16 @@ describe("dispatch", () => {
       close() {},
     });
 
-    let captured: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd], io, {
       watcherFactory: factory,
-      onWatchStart: (h) => {
-        captured = h;
-      },
+      onWatchStart,
     });
 
     expect(result).toBeInstanceOf(Promise);
-    await captured?.waitForIdle();
-    captured?.stop();
+    const captured = await ready;
+    await captured.waitForIdle();
+    captured.stop();
     const code = await result;
 
     expect(code).toBe(0);
@@ -1043,16 +1106,15 @@ describe("dispatch", () => {
       close() {},
     });
 
-    let captured: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd, "--json"], io, {
       watcherFactory: factory,
-      onWatchStart: (h) => {
-        captured = h;
-      },
+      onWatchStart,
     });
 
-    await captured?.waitForIdle();
-    captured?.stop();
+    const captured = await ready;
+    await captured.waitForIdle();
+    captured.stop();
     await result;
 
     expect(err()).toBe("");
@@ -1089,17 +1151,16 @@ describe("dispatch", () => {
     const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
     const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
 
-    let handle: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd], io, {
       watcherFactory: main,
       componentWatcherFactory: component,
       sourceGeneratedDir,
-      onWatchStart: (h) => {
-        handle = h;
-      },
+      onWatchStart,
     });
 
-    await handle?.waitForIdle();
+    const handle = await ready;
+    await handle.waitForIdle();
 
     const index = readFileSync(
       path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"),
@@ -1144,18 +1205,17 @@ describe("dispatch", () => {
       return { close() {} };
     };
 
-    let handle: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd], io, {
       debounceMs: 5,
       watcherFactory: main,
       componentWatcherFactory: component,
       sourceGeneratedDir,
-      onWatchStart: (h) => {
-        handle = h;
-      },
+      onWatchStart,
     });
 
-    await handle?.waitForIdle();
+    const handle = await ready;
+    await handle.waitForIdle();
 
     const indexPath = path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts");
     expect(readFileSync(indexPath, "utf8")).toContain('"./render"');
@@ -1207,17 +1267,16 @@ describe("dispatch", () => {
     const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
     const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
 
-    let handle: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd], io, {
       watcherFactory: main,
       componentWatcherFactory: component,
       sourceGeneratedDir,
-      onWatchStart: (h) => {
-        handle = h;
-      },
+      onWatchStart,
     });
 
-    await handle?.waitForIdle();
+    const handle = await ready;
+    await handle.waitForIdle();
 
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
     expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(false);
@@ -1274,7 +1333,7 @@ describe("dispatch", () => {
     const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
 
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
-    let handle: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd], io, {
       debounceMs: 5,
       watcherFactory: main,
@@ -1293,11 +1352,10 @@ describe("dispatch", () => {
           };
         },
       },
-      onWatchStart: (h) => {
-        handle = h;
-      },
+      onWatchStart,
     });
 
+    const handle = await ready;
     await handle?.waitForIdle();
 
     const extPath = path.join(cwd, ".defold-types", "extensions", "alpha.d.ts");
@@ -1346,7 +1404,7 @@ describe("dispatch", () => {
     const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
 
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
-    let handle: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd], io, {
       debounceMs: 5,
       watcherFactory: main,
@@ -1360,11 +1418,10 @@ describe("dispatch", () => {
           read: () => "",
         }),
       },
-      onWatchStart: (h) => {
-        handle = h;
-      },
+      onWatchStart,
     });
 
+    const handle = await ready;
     await handle?.waitForIdle();
 
     triggerMain?.("change", "game.project");
@@ -1406,7 +1463,7 @@ describe("dispatch", () => {
     };
     const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
 
-    let handle: RunWatchHandle | undefined;
+    const { onWatchStart, ready } = watchHandle();
     const result = dispatch(["watch", cwd, "--json"], io, {
       debounceMs: 5,
       watcherFactory: main,
@@ -1414,11 +1471,10 @@ describe("dispatch", () => {
       sourceGeneratedDir,
       // No `resolveInternals` — production wiring must still build the
       // resolveSurface closure and run it on a game.project change.
-      onWatchStart: (h) => {
-        handle = h;
-      },
+      onWatchStart,
     });
 
+    const handle = await ready;
     await handle?.waitForIdle();
 
     triggerMain?.("change", "game.project");
@@ -1486,11 +1542,11 @@ describe("dispatch wall command", () => {
     return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
   }
 
-  test("wall <dir...> walls exactly those and --json reports directoryWalls", () => {
+  test("wall <dir...> walls exactly those and --json reports directoryWalls", async () => {
     scaffoldWallProject();
     const { io, out } = captureStreams();
 
-    const code = dispatch(["wall", "src/ui", "src/render", "--json"], io, { cwd });
+    const code = await dispatch(["wall", "src/ui", "src/render", "--json"], io, { cwd });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as {
@@ -1505,13 +1561,13 @@ describe("dispatch wall command", () => {
     expect(readRoot().references).toEqual([{ path: "src/render" }, { path: "src/ui" }]);
   });
 
-  test("wall --remove drops that wall and leaves others intact", () => {
+  test("wall --remove drops that wall and leaves others intact", async () => {
     scaffoldWallProject();
     const { io } = captureStreams();
     dispatch(["wall", "src/ui", "src/render"], io, { cwd });
 
     const { io: io2, out } = captureStreams();
-    const code = dispatch(["wall", "--remove", "src/ui", "--json"], io2, { cwd });
+    const code = await dispatch(["wall", "--remove", "src/ui", "--json"], io2, { cwd });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { directoryWalls: { dir: string; kind: string }[] };
@@ -1520,14 +1576,14 @@ describe("dispatch wall command", () => {
     expect(readRoot().references).toEqual([{ path: "src/render" }]);
   });
 
-  test("wall --list --json reports current and eligible walls and writes nothing", () => {
+  test("wall --list --json reports current and eligible walls and writes nothing", async () => {
     scaffoldWallProject();
     const { io } = captureStreams();
     dispatch(["wall", "src/ui"], io, { cwd });
     const renderTsconfigBefore = existsSync(path.join(cwd, "src/render/tsconfig.json"));
 
     const { io: io2, out } = captureStreams();
-    const code = dispatch(["wall", "--list", "--json"], io2, { cwd });
+    const code = await dispatch(["wall", "--list", "--json"], io2, { cwd });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as {
@@ -1542,11 +1598,11 @@ describe("dispatch wall command", () => {
     expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(renderTsconfigBefore);
   });
 
-  test("wall with no dir and no TTY exits non-zero and writes nothing", () => {
+  test("wall with no dir and no TTY exits non-zero and writes nothing", async () => {
     scaffoldWallProject();
     const { io, out, err } = captureStreams();
 
-    const code = dispatch(["wall"], io, { cwd, isTty: false });
+    const code = await dispatch(["wall"], io, { cwd, isTty: false });
 
     expect(code).toBe(1);
     expect(out()).toBe("");
@@ -1554,7 +1610,7 @@ describe("dispatch wall command", () => {
     expect(existsSync(path.join(cwd, "src/ui/tsconfig.json"))).toBe(false);
   });
 
-  test("wall on a mixed-kind directory errors and writes nothing", () => {
+  test("wall on a mixed-kind directory errors and writes nothing", async () => {
     writeFileSync(
       path.join(cwd, "tsconfig.json"),
       `${JSON.stringify({ include: ["src/**/*.ts"] }, null, 2)}\n`,
@@ -1570,7 +1626,7 @@ describe("dispatch wall command", () => {
     );
     const { io, err } = captureStreams();
 
-    const code = dispatch(["wall", "src/mix"], io, { cwd });
+    const code = await dispatch(["wall", "src/mix"], io, { cwd });
 
     expect(code).toBe(1);
     expect(err()).toContain("single-kind source directory");
