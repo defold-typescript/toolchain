@@ -5,6 +5,7 @@ import {
   compareVersions,
   maxVersion,
   parseArgs,
+  releaseTagsAt,
   resolveTarget,
   sleepSync,
 } from "./release.ts";
@@ -77,6 +78,20 @@ describe("resolveTarget", () => {
 
   test("rejects a malformed explicit version", () => {
     expect(() => resolveTarget("0.10.0", "1.2")).toThrow();
+  });
+});
+
+describe("releaseTagsAt", () => {
+  test("keeps only v<x.y.z> release tags", () => {
+    expect(releaseTagsAt(["v0.19.2", "nightly", "v1.2.3"])).toEqual(["v0.19.2", "v1.2.3"]);
+  });
+
+  test("ignores non-release and non-plain-semver tags", () => {
+    expect(releaseTagsAt(["latest", "v1.2", "v1.2.3-rc.1", "release-1", "0.19.2"])).toEqual([]);
+  });
+
+  test("trims entries and drops blanks", () => {
+    expect(releaseTagsAt(["  v2.0.0  ", ""])).toEqual(["v2.0.0"]);
   });
 });
 
