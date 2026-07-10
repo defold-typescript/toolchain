@@ -70,3 +70,16 @@ describe("@defold-typescript/tstl-plugin publish dependencies", () => {
     }
   });
 });
+
+describe("@defold-typescript/tstl-plugin peer dependencies", () => {
+  const manifest = JSON.parse(readFileSync(resolve(PKG_DIR, "package.json"), "utf8")) as {
+    peerDependencies?: Record<string, string>;
+  };
+  const peer = manifest.peerDependencies?.typescript;
+
+  test("the typescript peer excludes the TS7 native port tstl cannot load", () => {
+    expect(peer).toBe(">=5.0.0 <7");
+    expect(Bun.semver.satisfies("6.0.2", peer as string)).toBe(true);
+    expect(Bun.semver.satisfies("7.0.0", peer as string)).toBe(false);
+  });
+});

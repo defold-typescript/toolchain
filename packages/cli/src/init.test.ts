@@ -19,6 +19,7 @@ import {
   reconcileManagedList,
   runInit,
   SCAFFOLD_DEV_DEPS,
+  TYPESCRIPT_SPEC,
   VSCODE_SNIPPETS_CONTENT,
 } from "./init";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
@@ -205,6 +206,7 @@ describe("runInit (add-TS mode)", () => {
       "@biomejs/biome": "^2.5.0",
       "@types/bun": "latest",
       "lua-types": LUA_TYPES_SPEC,
+      typescript: TYPESCRIPT_SPEC,
     });
   });
 
@@ -244,6 +246,70 @@ describe("runInit (add-TS mode)", () => {
       readFileSync(path.join(REPO_ROOT, "packages", "types", "package.json"), "utf8"),
     ) as { dependencies: Record<string, string> };
     expect(SCAFFOLD_DEV_DEPS["lua-types"]).toBe(typesPkg.dependencies["lua-types"]);
+  });
+
+  test("scaffold pins typescript to the concrete version tstl's peer requires", () => {
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg.devDependencies.typescript).toBe("6.0.2");
+  });
+
+  test("scaffold's typescript pin is not the native port and not an unbounded range", () => {
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    const spec = pkg.devDependencies.typescript as string;
+    expect(spec.startsWith("7")).toBe(false);
+    expect(/[>*]|latest/.test(spec)).toBe(false);
+  });
+
+  test("--force migrates a project stuck on an unbounded typescript range", () => {
+    touch("game.project", "[project]\n");
+    const original = {
+      name: "user-project",
+      version: "1.2.3",
+      devDependencies: { typescript: ">=5.0.0" },
+    };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd, force: true });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg.devDependencies.typescript).toBe(TYPESCRIPT_SPEC);
+  });
+
+  test("--force adds a typescript pin to a project that declares none", () => {
+    touch("game.project", "[project]\n");
+    const original = { name: "user-project", version: "1.2.3", devDependencies: {} };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd, force: true });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg.devDependencies.typescript).toBe(TYPESCRIPT_SPEC);
+  });
+
+  test("plain init leaves a user's concrete typescript pin untouched", () => {
+    touch("game.project", "[project]\n");
+    const original = {
+      name: "user-project",
+      version: "1.2.3",
+      devDependencies: { typescript: "6.0.2" },
+    };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg.devDependencies.typescript).toBe("6.0.2");
+  });
+
+  test("scaffold's typescript pin stays in lockstep with @defold-typescript/types", () => {
+    const typesPkg = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, "packages", "types", "package.json"), "utf8"),
+    ) as { devDependencies: Record<string, string> };
+    expect(SCAFFOLD_DEV_DEPS.typescript).toBe(typesPkg.devDependencies.typescript);
   });
 
   test("seeds the defold-version pin with current-stable in a fresh package.json", () => {
