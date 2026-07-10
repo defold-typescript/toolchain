@@ -22,6 +22,12 @@ import {
   TYPESCRIPT_SPEC,
   VSCODE_SNIPPETS_CONTENT,
 } from "./init";
+import {
+  AGENTS_BLOCK_END,
+  AGENTS_BLOCK_START,
+  renderAgentsBlock,
+  renderClaudeBlock,
+} from "./init-agents";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
 
 const CLI_VERSION = (
@@ -79,6 +85,8 @@ describe("runInit (add-TS mode)", () => {
 
     expect(result.written.sort()).toEqual(
       [
+        "AGENTS.md",
+        "CLAUDE.md",
         ".gitignore",
         ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
@@ -123,6 +131,8 @@ describe("runInit (add-TS mode)", () => {
 
     expect(result.written.sort()).toEqual(
       [
+        "AGENTS.md",
+        "CLAUDE.md",
         ".gitignore",
         ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
@@ -659,6 +669,83 @@ describe("runInit (scaffolds the tstl language-service plugin)", () => {
   });
 });
 
+describe("runInit (agent contract)", () => {
+  test("fresh new-project init writes AGENTS.md with the managed block and CLAUDE.md", () => {
+    const result = runInit({ cwd });
+
+    expect(result.written).toContain("AGENTS.md");
+    expect(result.written).toContain("CLAUDE.md");
+
+    const agents = readFileSync(path.join(cwd, "AGENTS.md"), "utf8");
+    expect(agents).toContain(AGENTS_BLOCK_START);
+    expect(agents).toContain(AGENTS_BLOCK_END);
+    expect(agents).toContain(renderAgentsBlock());
+
+    expect(readFileSync(path.join(cwd, "CLAUDE.md"), "utf8")).toBe(`${renderClaudeBlock()}\n`);
+  });
+
+  test("add-to-existing init (a directory with game.project) also writes the contract", () => {
+    touch("game.project", "[project]\n");
+
+    const result = runInit({ cwd });
+
+    expect(result.written).toContain("AGENTS.md");
+    expect(result.written).toContain("CLAUDE.md");
+
+    const agents = readFileSync(path.join(cwd, "AGENTS.md"), "utf8");
+    expect(agents).toContain(AGENTS_BLOCK_START);
+    expect(agents).toContain(renderAgentsBlock());
+    expect(readFileSync(path.join(cwd, "CLAUDE.md"), "utf8")).toBe(`${renderClaudeBlock()}\n`);
+  });
+
+  test("plain init leaves an already-present AGENTS.md untouched; only --force re-syncs it", () => {
+    touch("game.project", "[project]\n");
+    const sentinel = "# my agents\n\nhand-written, no managed block\n";
+    touch("AGENTS.md", sentinel);
+
+    const result = runInit({ cwd });
+
+    expect(readFileSync(path.join(cwd, "AGENTS.md"), "utf8")).toBe(sentinel);
+    expect(result.written).not.toContain("AGENTS.md");
+
+    const forced = runInit({ cwd, force: true });
+
+    const after = readFileSync(path.join(cwd, "AGENTS.md"), "utf8");
+    expect(after).toContain("hand-written, no managed block");
+    expect(after).toContain(renderAgentsBlock());
+    expect(forced.written).toContain("AGENTS.md");
+  });
+
+  test("force re-init is byte-idempotent in the managed block", () => {
+    touch("game.project", "[project]\n");
+    runInit({ cwd });
+    const first = readFileSync(path.join(cwd, "AGENTS.md"), "utf8");
+
+    runInit({ cwd, force: true });
+    expect(readFileSync(path.join(cwd, "AGENTS.md"), "utf8")).toBe(first);
+
+    runInit({ cwd, force: true });
+    expect(readFileSync(path.join(cwd, "AGENTS.md"), "utf8")).toBe(first);
+  });
+
+  test("re-init preserves user content added outside the markers", () => {
+    touch("game.project", "[project]\n");
+    runInit({ cwd });
+
+    const agentsPath = path.join(cwd, "AGENTS.md");
+    const withNotes = `# My notes\n\nkeep me\n\n${readFileSync(agentsPath, "utf8")}\ntrailing note\n`;
+    writeFileSync(agentsPath, withNotes);
+
+    runInit({ cwd, force: true });
+
+    const after = readFileSync(agentsPath, "utf8");
+    expect(after).toContain("# My notes");
+    expect(after).toContain("keep me");
+    expect(after).toContain("trailing note");
+    expect(after).toContain(renderAgentsBlock());
+  });
+});
+
 describe("runInit (new-project mode)", () => {
   const NEW_PROJECT_FILES = [
     "game.project",
@@ -676,6 +763,8 @@ describe("runInit (new-project mode)", () => {
     ".vscode/tasks.json",
     ".vscode/defold-debug.ts",
     "mise.toml",
+    "AGENTS.md",
+    "CLAUDE.md",
   ];
 
   test("missing target directory: creates the directory and writes the scaffold files", () => {

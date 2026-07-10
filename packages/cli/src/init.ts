@@ -5,6 +5,7 @@ import type { ScriptHookName } from "@defold-typescript/types";
 import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
+import { runInitAgents } from "./init-agents";
 import { mergeMiseToml } from "./mise-scaffold";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
@@ -876,6 +877,12 @@ function writeTsSurface(
   writeVscodeLaunch(cwd, written);
   writeVscodeTasks(cwd, written);
   writeVscodeDebugLauncher(cwd, written);
+
+  for (const target of runInitAgents({ cwd, force }).written) {
+    if (!written.includes(target)) {
+      written.push(target);
+    }
+  }
 }
 
 // Give every scaffolded file that isn't already reported a "written" operation,

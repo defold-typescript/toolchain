@@ -6,6 +6,10 @@ export const AGENTS_BLOCK_END = "<!-- defold-typescript:agents:end -->";
 
 export interface RunInitAgentsOptions {
   readonly cwd: string;
+  // Re-sync an already-present contract file. Defaults to true so the standalone
+  // `init-agents` verb always refreshes; the `init` scaffold passes its own
+  // `--force` so a plain re-init leaves an existing contract untouched.
+  readonly force?: boolean;
 }
 
 export interface RunInitAgentsResult {
@@ -70,19 +74,24 @@ function patchManagedBlock(existing: string, body: string): string {
 }
 
 export function runInitAgents(opts: RunInitAgentsOptions): RunInitAgentsResult {
-  const { cwd } = opts;
+  const { cwd, force = true } = opts;
   const written: string[] = [];
 
   const agentsPath = path.join(cwd, "AGENTS.md");
-  const agentsExisting = existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "";
-  writeFileSync(agentsPath, patchManagedBlock(agentsExisting, renderAgentsBlock()));
-  written.push("AGENTS.md");
+  if (!existsSync(agentsPath)) {
+    writeFileSync(agentsPath, patchManagedBlock("", renderAgentsBlock()));
+    written.push("AGENTS.md");
+  } else if (force) {
+    const agentsExisting = readFileSync(agentsPath, "utf8");
+    writeFileSync(agentsPath, patchManagedBlock(agentsExisting, renderAgentsBlock()));
+    written.push("AGENTS.md");
+  }
 
   const claudePath = path.join(cwd, "CLAUDE.md");
   if (!existsSync(claudePath)) {
     writeFileSync(claudePath, `${renderClaudeBlock()}\n`);
     written.push("CLAUDE.md");
-  } else {
+  } else if (force) {
     const claudeExisting = readFileSync(claudePath, "utf8");
     if (claudeExisting.trim() !== renderClaudeBlock()) {
       writeFileSync(claudePath, patchManagedBlock(claudeExisting, renderClaudeBlock()));
