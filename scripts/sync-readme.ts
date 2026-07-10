@@ -27,6 +27,11 @@ function rewriteGuideLinksForSite(markdown: string): string {
     })
     .replace(/\]\(\/api(\/[^)]*)?\)/g, (_match, path = "") => {
       return `](${SITE_BASE}/api${path})`;
+    })
+    .replace(/\]\(\/(llms(?:-full)?\.txt)\)/g, (_match, file) => {
+      // `/llms.txt` and `/llms-full.txt` are static assets served at the site
+      // base root; on GitHub they need the absolute site URL.
+      return `](${SITE_BASE}/${file})`;
     });
 }
 
