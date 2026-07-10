@@ -108,6 +108,8 @@ export function listGuidePages(dir: string): GuidePage[] {
         includeInLlmsFull: data["llms-full"] !== "false",
       };
       if (typeof raw === "string" && raw.length > 0) page.tocTitle = raw;
+      const agentEntry = Number(data["agent-entry"]);
+      if (!Number.isNaN(agentEntry)) page.agentEntry = agentEntry;
       const meta = deriveGuideMeta(body);
       if (meta.title) page.title = meta.title;
       if (meta.summary) page.summary = meta.summary;

@@ -41,6 +41,14 @@ describe("listGuidePages", () => {
     expect(page?.summary?.length).toBeGreaterThan(0);
     expect(page?.summary).toContain("translation cheat sheet");
   });
+
+  test("reads `agent-entry` as a number for a flagged page, undefined otherwise", () => {
+    const pages = listGuidePages(GUIDE_DIR);
+    const flagged = pages.find((p) => p.file === "agent-runbooks.md");
+    const unflagged = pages.find((p) => p.file === "build.md");
+    expect(flagged?.agentEntry).toBe(0);
+    expect(unflagged?.agentEntry).toBeUndefined();
+  });
 });
 
 describe("deriveGuideMeta", () => {
