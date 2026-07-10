@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { apiModuleSymbols } from "../app/lib/api-surface";
+import { type ApiPage, apiModuleSymbols } from "../app/lib/api-surface";
 import { loadApiSurface } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
 import { parseFrontmatter } from "../app/lib/frontmatter";
@@ -15,7 +15,7 @@ const SCRIPTS_DIR = import.meta.dir;
 export const DOCS_DIR = join(SCRIPTS_DIR, "..", "..", "docs");
 export const GUIDE_DIR = join(DOCS_DIR, "guide");
 const TYPES_DIR = join(SCRIPTS_DIR, "..", "..", "types");
-const PUBLIC_DIR = join(SCRIPTS_DIR, "..", "public");
+export const PUBLIC_DIR = join(SCRIPTS_DIR, "..", "public");
 
 const manifest = JSON.parse(readFileSync(join(DOCS_DIR, "package.json"), "utf8")) as {
   name: string;
@@ -61,18 +61,88 @@ function navOrderedPages(): GuidePage[] {
   return ordered;
 }
 
-export function buildLlmsTxt(): string {
-  const guideLinks = navOrderedPages().map(
-    (page) => `- [${navLabel(page)}](${withBase(page.route)})`,
-  );
-  const apiLinks = loadApiSurface(TYPES_DIR).map(
-    (page) => `- [${page.namespace}](${withBase(page.route)})`,
-  );
-  return [
+// One source, two link vocabularies. `guideHref`/`apiHref` turn a page into a
+// link target; `header` is the top block (title + summary or machine preamble)
+// up to and including the blank line before `## Guide`. The site copy is served
+// from a web root, so it links by route; the package copy lands in a consumer's
+// `node_modules`, so it links by repo-local path.
+interface LlmsTarget {
+  guideHref(page: GuidePage): string;
+  apiHref(page: ApiPage): string;
+  header(pages: GuidePage[]): string[];
+}
+
+// The shipped package copy's API links resolve to files `@defold-typescript/types`
+// actually publishes: engine namespaces map to `generated/<file>.d.ts` (dots ->
+// underscores, `b2d.body` -> `b2d_body`), the synthetic globals page to the
+// hand-vendored `src/engine-globals.d.ts`, and the core value types to
+// `src/core-types.ts`. `lua-stdlib` types come from the external `lua-types`
+// dependency and exist nowhere in this repo, so they keep the site route.
+function packageApiHref(page: ApiPage): string {
+  if (page.category === "engine") {
+    if (page.namespace === "globals") return "@defold-typescript/types/src/engine-globals.d.ts";
+    return `@defold-typescript/types/generated/${page.namespace.replace(/\./g, "_")}.d.ts`;
+  }
+  if (page.category === "global-type") return "@defold-typescript/types/src/core-types.ts";
+  return withBase(page.route);
+}
+
+function packageGuideHref(page: GuidePage): string {
+  return page.isIndex ? "guide/README.md" : `guide/${page.slug}.md`;
+}
+
+// A single machine-readable line each, joined with blank separators. Deliberately
+// diverges from the site copy's reused package.json summary (PRD: "either change
+// it or stop using it for the agent copy").
+const PACKAGE_PREAMBLE = [
+  `This is the offline knowledge pack for the ${PRODUCT} toolchain — write Defold game scripts in TypeScript and transpile them to Lua. Links below are repo-local paths you can open directly; the \`.d.ts\`/\`.ts\` targets are the typed API surface shipped in \`@defold-typescript/types\`.`,
+  "",
+  "For the Defold engine's own machine docs, see https://defold.com/llms.txt.",
+  "",
+  "Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: false` (long tutorials) are linked here but omitted from that full-text pack.",
+];
+
+// Agent-priority guide pages, lowest `agentEntry` first; ties keep nav order
+// (`pages` arrives nav-ordered and the sort is stable). Pages with no
+// `agentEntry` are dropped from this curated list but stay in `## Guide`.
+function keyDocsForAgents(pages: GuidePage[]): string[] {
+  return pages
+    .filter((page) => page.agentEntry !== undefined)
+    .sort((a, b) => (a.agentEntry as number) - (b.agentEntry as number))
+    .map((page) => `- [${navLabel(page)}](${packageGuideHref(page)})`);
+}
+
+const SITE_HEADER = [`# ${PRODUCT}`, "", `> ${SUMMARY}`, ""];
+
+export const SITE_TARGET: LlmsTarget = {
+  guideHref: (page) => withBase(page.route),
+  apiHref: (page) => withBase(page.route),
+  header: () => SITE_HEADER,
+};
+
+export const PACKAGE_TARGET: LlmsTarget = {
+  guideHref: packageGuideHref,
+  apiHref: packageApiHref,
+  header: (pages) => [
     `# ${PRODUCT}`,
     "",
-    `> ${SUMMARY}`,
+    ...PACKAGE_PREAMBLE,
     "",
+    "## Key docs for agents",
+    "",
+    ...keyDocsForAgents(pages),
+    "",
+  ],
+};
+
+export function buildLlmsTxt(target: LlmsTarget = SITE_TARGET): string {
+  const pages = navOrderedPages();
+  const guideLinks = pages.map((page) => `- [${navLabel(page)}](${target.guideHref(page)})`);
+  const apiLinks = loadApiSurface(TYPES_DIR).map(
+    (page) => `- [${page.namespace}](${target.apiHref(page)})`,
+  );
+  return [
+    ...target.header(pages),
     "## Guide",
     "",
     ...guideLinks,
@@ -84,9 +154,10 @@ export function buildLlmsTxt(): string {
   ].join("\n");
 }
 
-export function buildLlmsFull(): string {
-  const lines: string[] = [`# ${PRODUCT}`, "", `> ${SUMMARY}`, "", "## Guide", ""];
-  for (const page of navOrderedPages()) {
+export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
+  const pages = navOrderedPages();
+  const lines: string[] = [...target.header(pages), "## Guide", ""];
+  for (const page of pages) {
     if (!page.includeInLlmsFull) continue;
     const body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body.trimEnd();
     lines.push(body, "");
@@ -103,12 +174,16 @@ export function buildLlmsFull(): string {
 }
 
 if (import.meta.main) {
-  const llmsTxt = buildLlmsTxt();
-  const llmsFull = buildLlmsFull();
-  for (const dir of [DOCS_DIR, PUBLIC_DIR]) {
+  const artifacts: [string, LlmsTarget][] = [
+    [DOCS_DIR, PACKAGE_TARGET],
+    [PUBLIC_DIR, SITE_TARGET],
+  ];
+  for (const [dir, target] of artifacts) {
     mkdirSync(dir, { recursive: true });
+    const llmsTxt = buildLlmsTxt(target);
+    const llmsFull = buildLlmsFull(target);
     writeFileSync(join(dir, "llms.txt"), llmsTxt);
     writeFileSync(join(dir, "llms-full.txt"), llmsFull);
+    console.log(`${dir}: llms.txt ${llmsTxt.length} B; llms-full.txt ${llmsFull.length} B`);
   }
-  console.log(`llms.txt: ${llmsTxt.length} bytes; llms-full.txt: ${llmsFull.length} bytes`);
 }

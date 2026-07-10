@@ -1,5 +1,6 @@
 ---
 toc-title: TypeScript gotchas
+agent-entry: 0.1
 ---
 # TypeScript gotchas
 
