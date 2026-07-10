@@ -135,6 +135,14 @@ describe("package target — repo-local, cat-able links", () => {
     expect(txt).toContain("llms-full: false");
   });
 
+  test("preamble spells out the guide-relative vs package-specifier link convention", () => {
+    const txt = buildLlmsTxt(PACKAGE_TARGET);
+    expect(txt).toContain("paths under `guide/` are relative to this file");
+    expect(txt).toContain(
+      "paths starting `@defold-typescript/` or `lua-types/` are package specifiers resolved under `node_modules/`",
+    );
+  });
+
   test("`Key docs for agents` list ordered by agentEntry, unflagged pages excluded", () => {
     const txt = buildLlmsTxt(PACKAGE_TARGET);
     const keyDocs = section(txt, "## Key docs for agents");

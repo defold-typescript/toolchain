@@ -105,7 +105,7 @@ function packageGuideHref(page: GuidePage): string {
 // diverges from the site copy's reused package.json summary (PRD: "either change
 // it or stop using it for the agent copy").
 const PACKAGE_PREAMBLE = [
-  `This is the offline knowledge pack for the ${PRODUCT} toolchain — write Defold game scripts in TypeScript and transpile them to Lua. Links below are repo-local paths you can open directly; the \`.d.ts\`/\`.ts\` targets are the typed API surface shipped in \`@defold-typescript/types\`.`,
+  `This is the offline knowledge pack for the ${PRODUCT} toolchain — write Defold game scripts in TypeScript and transpile them to Lua. Link convention: paths under \`guide/\` are relative to this file; paths starting \`@defold-typescript/\` or \`lua-types/\` are package specifiers resolved under \`node_modules/\`. The \`.d.ts\`/\`.ts\` targets are the authoritative typed API surface.`,
   "",
   "For the Defold engine's own machine docs, see https://defold.com/llms.txt.",
   "",
