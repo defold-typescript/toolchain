@@ -107,8 +107,15 @@ describe("package target — repo-local, cat-able links", () => {
     expect(txt).toContain("](@defold-typescript/types/generated/b2d_body.d.ts)");
     expect(txt).toContain("](@defold-typescript/types/src/engine-globals.d.ts)");
     expect(txt).toContain("](@defold-typescript/types/src/core-types.ts)");
-    // lua-stdlib types live in the external `lua-types` dep — keep the site route.
-    expect(txt).toContain(`](${withBase("/api/base")})`);
+    // lua-stdlib types are shipped by the external `lua-types` dep; link its
+    // repo-local `.d.ts` files (core/<ns>, with base/package/bit overrides).
+    expect(txt).toContain("](lua-types/core/math.d.ts)");
+    expect(txt).toContain("](lua-types/core/table.d.ts)");
+    expect(txt).toContain("](lua-types/core/global.d.ts)"); // base
+    expect(txt).toContain("](lua-types/core/modules.d.ts)"); // package
+    expect(txt).toContain("](lua-types/jit.d.ts)"); // bit
+    // no lua-stdlib namespace should keep a dead `/api/...` site route.
+    expect(txt).not.toContain(`](${withBase("/api/base")})`);
   });
 
   test("machine preamble present on the package copy", () => {

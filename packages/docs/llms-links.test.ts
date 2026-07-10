@@ -19,11 +19,13 @@ function linkTargets(markdown: string): string[] {
   return [...markdown.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1] ?? "");
 }
 
-// A target that no local server is needed to reach — the external Defold engine
-// pointer, and the lua-stdlib site routes whose types live in `lua-types` and
-// exist nowhere in this repo.
+// A target no local server is needed to reach: only an absolute `http(s)://`
+// URL (the external Defold engine pointer). Every repo-local target —
+// `guide/*.md`, `@defold-typescript/types/*`, and the `lua-types/*` stdlib
+// `.d.ts` files — must resolve on disk, so nothing site-relative is exempt; a
+// stray `/api/...` route in the package copy is a dead link and must fail here.
 function isExempt(target: string): boolean {
-  return /^https?:\/\//.test(target) || target.startsWith("/");
+  return /^https?:\/\//.test(target);
 }
 
 function resolveTarget(target: string): { path: string; exists: boolean } {
@@ -34,6 +36,13 @@ function resolveTarget(target: string): { path: string; exists: boolean } {
   if (target === TYPES_PKG || target.startsWith(`${TYPES_PKG}/`)) {
     const rest = target.slice(TYPES_PKG.length).replace(/^\//, "");
     const path = rest ? join(TYPES_ROOT, rest) : TYPES_ROOT;
+    return { path, exists: existsSync(path) };
+  }
+  if (target === "lua-types" || target.startsWith("lua-types/")) {
+    // `lua-types` ships the Lua-stdlib typings; it is a transitive dependency
+    // via `@defold-typescript/types`, symlinked under the types package in-repo
+    // and present in a consumer's `node_modules` the same way.
+    const path = join(TYPES_ROOT, "node_modules", target);
     return { path, exists: existsSync(path) };
   }
   // Anything else is an unexpected shape — treat as unresolved so the guard fails.

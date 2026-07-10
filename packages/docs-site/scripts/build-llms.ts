@@ -72,18 +72,28 @@ interface LlmsTarget {
   header(pages: GuidePage[]): string[];
 }
 
-// The shipped package copy's API links resolve to files `@defold-typescript/types`
-// actually publishes: engine namespaces map to `generated/<file>.d.ts` (dots ->
-// underscores, `b2d.body` -> `b2d_body`), the synthetic globals page to the
-// hand-vendored `src/engine-globals.d.ts`, and the core value types to
-// `src/core-types.ts`. `lua-stdlib` types come from the external `lua-types`
-// dependency and exist nowhere in this repo, so they keep the site route.
+// The shipped package copy's API links resolve to files a consumer install
+// actually publishes: engine namespaces map to `@defold-typescript/types`'s
+// `generated/<file>.d.ts` (dots -> underscores, `b2d.body` -> `b2d_body`), the
+// synthetic globals page to the hand-vendored `src/engine-globals.d.ts`, and the
+// core value types to `src/core-types.ts`. `lua-stdlib` types are shipped by the
+// external `lua-types` dependency, so they resolve to its `.d.ts` files under
+// `lua-types/` — `core/<ns>.d.ts` by default, with three layout exceptions.
+const LUA_STDLIB_DTS_OVERRIDES: Record<string, string> = {
+  base: "core/global",
+  package: "core/modules",
+  bit: "jit",
+};
+
 function packageApiHref(page: ApiPage): string {
   if (page.category === "engine") {
     if (page.namespace === "globals") return "@defold-typescript/types/src/engine-globals.d.ts";
     return `@defold-typescript/types/generated/${page.namespace.replace(/\./g, "_")}.d.ts`;
   }
   if (page.category === "global-type") return "@defold-typescript/types/src/core-types.ts";
+  if (page.category === "lua-stdlib") {
+    return `lua-types/${LUA_STDLIB_DTS_OVERRIDES[page.namespace] ?? `core/${page.namespace}`}.d.ts`;
+  }
   return withBase(page.route);
 }
 
