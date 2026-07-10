@@ -11,7 +11,17 @@ import {
   PACKAGE_TARGET,
   PUBLIC_DIR,
   SITE_TARGET,
+  stripGuideChrome,
 } from "./build-llms";
+
+// The concatenated guide bodies in llms-full: from `## Guide` to `## API`.
+// The per-section `section()` helper stops at the next `## `, which now lands
+// on a demoted page H1, so slice the whole region explicitly.
+function guideCorpus(full: string): string {
+  const start = full.indexOf("## Guide\n");
+  const end = full.indexOf("\n## API\n", start);
+  return full.slice(start, end === -1 ? undefined : end);
+}
 
 // Slice a markdown string from one `## ` heading up to the next `## ` (or EOF).
 function section(text: string, heading: string): string {
@@ -164,6 +174,65 @@ describe("llms-full.txt is the full guide text", () => {
 
   test("omits `llms-full: false` pages — no tutorial body", () => {
     expect(buildLlmsFull(SITE_TARGET)).not.toContain("## 05 — The board script");
+  });
+});
+
+describe("llms-full.txt strips web chrome from inlined guide bodies", () => {
+  test("no shields.io badge or logo image survives (package target)", () => {
+    const full = buildLlmsFull(PACKAGE_TARGET);
+    expect(full).not.toContain("img.shields.io");
+    expect(full).not.toContain("defold-typescript logo");
+  });
+
+  test("no shields.io badge survives (site target)", () => {
+    expect(buildLlmsFull(SITE_TARGET)).not.toContain("img.shields.io");
+  });
+
+  test("each page's leading H1 is demoted to `##`", () => {
+    const corpus = guideCorpus(buildLlmsFull(SITE_TARGET));
+    expect(buildLlmsFull(SITE_TARGET)).toContain("## Guide");
+    // init.md's `# Init` title now sits as a sibling section of `## Guide`.
+    expect(corpus).toContain("## Init");
+    expect(corpus).not.toContain("\n# Init\n");
+  });
+
+  test("code-fence `# ` comments are left intact, never demoted", () => {
+    // agent-runbooks.md inlines JSON event samples whose lines open with `# `.
+    expect(buildLlmsFull(SITE_TARGET)).toContain('# {"command":"build"');
+  });
+
+  test("the chrome strip does not leak into the llms.txt link map", () => {
+    for (const target of [PACKAGE_TARGET, SITE_TARGET]) {
+      const txt = buildLlmsTxt(target);
+      expect(txt).not.toContain("img.shields.io");
+    }
+    // the index guide is still linked (repo-local path on the package copy).
+    expect(buildLlmsTxt(PACKAGE_TARGET)).toContain("](guide/README.md)");
+  });
+});
+
+describe("stripGuideChrome", () => {
+  test("drops a linked-image badge line", () => {
+    const input = "# T\n\n[![npm](https://img.shields.io/x)](https://npmjs.com/y)\n\nbody";
+    expect(stripGuideChrome(input)).toBe("## T\n\nbody");
+  });
+
+  test("drops a standalone image line including a `#attr` src", () => {
+    const input = "# T\n\n![logo alt](logo-ver-classic.png#max-width=200)\n\nbody";
+    expect(stripGuideChrome(input)).toBe("## T\n\nbody");
+  });
+
+  test("demotes only the leading H1, leaving later code-fence `# ` lines", () => {
+    const input = "# T\n\ntext\n\n```sh\n# a comment\n```";
+    const out = stripGuideChrome(input);
+    expect(out.startsWith("## T\n")).toBe(true);
+    expect(out).toContain("# a comment");
+    expect(out).not.toContain("## a comment");
+  });
+
+  test("collapses leading blanks and 3+ blank-line runs left by removals", () => {
+    const input = "\n\n# T\n\n\n\nbody";
+    expect(stripGuideChrome(input)).toBe("## T\n\nbody");
   });
 });
 
