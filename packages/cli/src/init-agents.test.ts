@@ -118,9 +118,11 @@ describe("runInitAgents", () => {
     expect(read("CLAUDE.md")).toBe("@AGENTS.md\n");
   });
 
-  test("renderAgentsBlock points at the on-disk guide index and leaks no planning token", () => {
+  test("renderAgentsBlock names the layered knowledge pack and leaks no planning token", () => {
     const block = renderAgentsBlock();
-    expect(block).toContain("node_modules/@defold-typescript/docs/guide/README.md");
+    expect(block).toContain("node_modules/@defold-typescript/docs/llms.txt");
+    expect(block).toContain("node_modules/@defold-typescript/docs/llms-full.txt");
+    expect(block).not.toContain("guide/README.md");
     // Assemble each forbidden token from fragments so this tracked file does not
     // itself contain the literal planning strings the no-secret-sauce-leak guard
     // scans for.
@@ -133,5 +135,20 @@ describe("runInitAgents", () => {
     ]) {
       expect(block).not.toContain(token);
     }
+  });
+
+  test("renderAgentsBlock names the authoritative typed API and the engine pointer", () => {
+    const block = renderAgentsBlock();
+    expect(block).toContain("@defold-typescript/types/generated");
+    expect(block).toContain("https://defold.com/llms.txt");
+  });
+
+  test("renderAgentsBlock carries the script-factory hard rules", () => {
+    const block = renderAgentsBlock();
+    expect(block).toContain(".ts.script");
+    expect(block).toContain(".ts.gui_script");
+    expect(block).toContain(".ts.render_script");
+    expect(block).toContain("factory per file");
+    expect(block).toContain("defineScript<T>");
   });
 });

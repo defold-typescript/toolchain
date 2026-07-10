@@ -187,8 +187,11 @@ absent from an install:
 | `node_modules/@defold-typescript/docs/guide/*.md`                               | this guide, refreshed on every install                                                                                                   | always, once installed                |
 | `packages/types/generated`, `packages/types/fixtures`, `packages/types/scripts` | generator inputs and outputs — **contributor-only**                                                                                      | only in a clone of this monorepo      |
 
-The installed-guide pointer is the one the `init-agents` managed block writes:
-`node_modules/@defold-typescript/docs/guide/README.md`.
+The pointers the `init-agents` managed block writes are the layered pack:
+`node_modules/@defold-typescript/docs/llms.txt` (the map) and
+`node_modules/@defold-typescript/docs/llms-full.txt` (the grep corpus), with the
+individual `guide/<page>.md` pages and the typed API in
+`@defold-typescript/types/generated/*.d.ts` alongside them.
 
 ### Confirm a signature
 
@@ -342,9 +345,9 @@ Only the content **between** the markers is ever rewritten, so any notes you add
 above or below the block survive re-runs untouched. If `AGENTS.md` already exists
 without the markers, the block is appended after one blank line and your prior
 content is left intact; a `CLAUDE.md` that already equals `@AGENTS.md` is left
-byte-for-byte unchanged. The block is versionless — its guide pointer resolves to
-`node_modules/@defold-typescript/docs/guide/README.md`, which the install
-swaps under the same path — so the verb is safe to re-run any time.
+byte-for-byte unchanged. The block is versionless — its pointers resolve to
+`node_modules/@defold-typescript/docs/llms.txt` and `llms-full.txt`, which the
+install swaps under the same paths — so the verb is safe to re-run any time.
 
 **Returns:**
 
