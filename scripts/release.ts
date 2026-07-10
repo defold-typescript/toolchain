@@ -88,6 +88,12 @@ export function bumpVersion(base: string, kind: Bump): string {
   return `${major}.${minor}.${patch + 1}`;
 }
 
+const RELEASE_TAG = /^v\d+\.\d+\.\d+$/;
+
+export function releaseTagsAt(tags: readonly string[]): string[] {
+  return tags.map((t) => t.trim()).filter((t) => RELEASE_TAG.test(t));
+}
+
 export function resolveTarget(base: string, spec: string): string {
   if (spec === "patch" || spec === "minor" || spec === "major") {
     return bumpVersion(base, spec);
@@ -209,6 +215,17 @@ function main(): void {
   const head = run(["git", "rev-parse", "HEAD"]).output.trim();
   if (run(["git", "merge-base", "--is-ancestor", head, remoteRef]).code !== 0) {
     die(`HEAD ${head.slice(0, 9)} is not on ${remoteRef}; push it first (git push), then re-run`);
+  }
+
+  // A release tag already on HEAD means this exact commit shipped; recovering a
+  // partial publish means re-running the Release workflow on that tag (publish
+  // is idempotent), never cutting a fresh version off the same tree.
+  const releasedTags = releaseTagsAt(run(["git", "tag", "--points-at", "HEAD"]).output.split("\n"));
+  if (releasedTags.length > 0) {
+    die(
+      `HEAD ${head.slice(0, 9)} already carries ${releasedTags.join(", ")}; ` +
+        "re-run the Release workflow on that tag instead of cutting a new version off the same commit",
+    );
   }
 
   const base = publishedBase();
