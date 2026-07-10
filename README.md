@@ -78,3 +78,6 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [API](https://defold-typescript.github.io/toolchain/api) — the generated `@defold-typescript/types` reference: every documented Defold namespace, grouped alphabetically as cards (site-only; built from the typed surface the toolchain ships).
 - [Lua standard library](https://defold-typescript.github.io/toolchain/api/base) — the pure-Lua / LuaJIT reference category (`base`, `bit`, …). Types are owned by the `lua-types` dependency the `lua-stdlib-globals` goal adopted; `@defold-typescript/types` does not re-emit them as generated namespaces.
+- **For AI agents** — machine-readable docs per [llmstxt.org](https://llmstxt.org/):
+    * [`llms.txt`](https://defold-typescript.github.io/toolchain/llms.txt) is the map (start here)
+    * [`llms-full.txt`](https://defold-typescript.github.io/toolchain/llms-full.txt) is the full corpus (grep it, never read it whole). The same pair ships into a consumer's `node_modules/@defold-typescript/docs/` on install.
