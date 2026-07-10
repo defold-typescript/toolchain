@@ -12,21 +12,35 @@ export interface RunInitAgentsResult {
   readonly written: string[];
 }
 
-// Versionless on purpose: every pointer resolves to the installed guide under
-// `node_modules/@defold-typescript/docs/guide/`, which `bun install` swaps
-// under the same path, so re-runs stay byte-identical and nothing drifts.
+// Versionless and path-stable on purpose: every pointer resolves under
+// `node_modules/@defold-typescript/`, which the install command swaps under the
+// same paths, so re-runs stay byte-identical and nothing drifts. Never embed a
+// version number or an absolute host path here.
 export function renderAgentsBlock(): string {
   return [
     "This project uses defold-typescript: author game logic in TypeScript and the",
     "toolchain transpiles it to Lua for Defold.",
     "",
-    "Full agent and CLI guide (refreshed on every install):",
-    "node_modules/@defold-typescript/docs/guide/README.md",
-    "If that path is absent, run the project's install command first.",
+    "Docs (refreshed on every install):",
+    "- node_modules/@defold-typescript/docs/llms.txt — the map; start here.",
+    "- node_modules/@defold-typescript/docs/llms-full.txt — full corpus; grep it, never read it whole.",
+    "- node_modules/@defold-typescript/docs/guide/<page>.md — individual guide pages.",
+    "- Authoritative typed API: @defold-typescript/types/generated/*.d.ts, plus",
+    "  @defold-typescript/types/src/core-types.ts and src/engine-globals.d.ts.",
+    "- Engine and Lua manuals: https://defold.com/llms.txt",
+    "- The Tetris tutorial is a human tutorial, not a reference surface.",
+    "If those paths are absent, run the project's install command first.",
     "",
     "Hard rules:",
-    "- Never hand-edit `build/`; the transpiler generates it.",
-    "- Never hand-edit `.defold-types/`; the resolver generates it.",
+    "- Never hand-edit or commit `build/`; the transpiler generates it.",
+    "- Never hand-edit or commit `.defold-types/`; the resolver generates it.",
+    "- One `defineScript`/`defineGuiScript`/`defineRenderScript` factory per file; a script",
+    "  file compiles to `.ts.script` / `.ts.gui_script` / `.ts.render_script`.",
+    "- Files with no `define*` export are plain modules for shared functions and game state;",
+    "  they compile to `.lua`, which is expected and encouraged.",
+    "- Do not call the generic form `defineScript<T>(...)` / `defineGuiScript<T>(...)`; the factory",
+    "  goes undetected and the file silently compiles to a `.lua` module instead of a script —",
+    "  annotate `init(): T` instead.",
     "- Never commit without an explicit human request.",
   ].join("\n");
 }
