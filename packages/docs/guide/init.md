@@ -30,7 +30,8 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
 - **New project.** In an empty or non-Defold folder it synthesizes a full Defold
   project (`game.project`, `main/main.collection`, `input/game.input_binding`)
   alongside the TypeScript surface (`src/main.ts`, `tsconfig.json`,
-  `package.json`, `.gitignore`, `biome.json`, `mise.toml`, `.vscode/`).
+  `package.json`, `.gitignore`, `biome.json`, `mise.toml`, `.vscode/`) and the
+  agent contract (`AGENTS.md`, `CLAUDE.md`).
   `game.project` boots the collection and points `[input]` at the binding, so a
   fresh scaffold loads in Defold with no missing references. If the target folder
   already holds both a `.collection` and a `.ts` file (a `--force` synthesis into
@@ -42,6 +43,14 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
   assets untouched. It writes a starter `src/main.ts` only for a fresh scaffold
   shape, never dropping one into a project you have already authored. See
   [Add TypeScript to an existing project](./getting-started.md#add-typescript-to-an-existing-project).
+
+Both modes also write the agent contract — `AGENTS.md` (a managed block delimited
+by HTML-comment markers) and `CLAUDE.md` (`@AGENTS.md`) — **when it is absent**. A
+plain re-init leaves a contract you already have untouched; re-syncing the managed
+block after an upgrade is the `--force` path (see the flag below). Content you add
+above or below the markers always survives. This is the same contract the
+standalone [`init-agents`](./agent-runbooks.md#install-the-agent-contract) verb
+writes.
 
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
 merge additively into anything you already have, so re-running `init` refreshes the
@@ -57,9 +66,10 @@ language-service plugin is unioned in exactly once.
   (see below). Rejected in add-TypeScript mode, where there is nothing to
   synthesize.
 - `--force` — refresh managed files: repin the managed `@defold-typescript/types`
-  and `@defold-typescript/cli` dependencies to the CLI's own version and migrate a
-  deprecated Biome `recommended` key, leaving your other settings in place. This is
-  the deliberate upgrade path.
+  and `@defold-typescript/cli` dependencies to the CLI's own version, migrate a
+  deprecated Biome `recommended` key, and re-sync the managed `AGENTS.md` block on a
+  project that already has one, leaving your other settings in place. This is the
+  deliberate upgrade path.
 - `--suppress-install-reminder` — silence the `Next: run <pm> install` line when
   you install through your own tooling.
 - `--json` — emit the result envelope. See

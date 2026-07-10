@@ -349,6 +349,12 @@ byte-for-byte unchanged. The block is versionless — its pointers resolve to
 `node_modules/@defold-typescript/docs/llms.txt` and `llms-full.txt`, which the
 install swaps under the same paths — so the verb is safe to re-run any time.
 
+[`init`](./init.md) writes the same contract as part of its scaffold: a fresh
+project gets `AGENTS.md` + `CLAUDE.md` created, but a plain re-init leaves an
+existing contract untouched. Re-syncing the managed block on a project that
+already has one is the `--force` path — `init . --force` (or the standalone
+`init-agents` verb) refreshes the block after an upgrade.
+
 **Returns:**
 
 ```json
