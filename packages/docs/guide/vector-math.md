@@ -1,5 +1,6 @@
 ---
 toc-title: Vector math
+agent-entry: 1.2
 ---
 # Vector math
 

@@ -1,5 +1,6 @@
 ---
 toc-title: Script lifecycle
+agent-entry: 1
 ---
 # Script lifecycle helpers
 

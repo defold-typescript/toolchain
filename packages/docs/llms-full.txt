@@ -1,6 +1,18 @@
 # defold-typescript
 
-> Human-facing guide for the defold-typescript toolchain.
+This is the offline knowledge pack for the defold-typescript toolchain — write Defold game scripts in TypeScript and transpile them to Lua. Links below are repo-local paths you can open directly; the `.d.ts`/`.ts` targets are the typed API surface shipped in `@defold-typescript/types`.
+
+For the Defold engine's own machine docs, see https://defold.com/llms.txt.
+
+Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: false` (long tutorials) are linked here but omitted from that full-text pack.
+
+## Key docs for agents
+
+- [Agent runbooks](guide/agent-runbooks.md)
+- [TypeScript gotchas](guide/typescript-gotchas.md)
+- [Script lifecycle](guide/script-lifecycle.md)
+- [Messages](guide/messages.md)
+- [Vector math](guide/vector-math.md)
 
 ## Guide
 
