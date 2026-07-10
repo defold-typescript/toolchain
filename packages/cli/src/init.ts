@@ -356,6 +356,13 @@ function typesVersionSpec(): string {
 // guard fails loud if the two diverge.
 export const LUA_TYPES_SPEC = "^2.13.1";
 
+// The exact `typescript` pin `typescript-to-lua`'s peer and `packages/types`
+// require. An unbounded range lets `bun install` resolve the TS7 native port,
+// whose JS surface lacks `ts.DiagnosticCategory` that tstl 1.x reads at
+// module-eval — crashing every command that loads the transpiler (bug-46). Kept
+// in lockstep with `packages/types` by the drift guard.
+export const TYPESCRIPT_SPEC = "6.0.2";
+
 // @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
 // (the local bin the managed `bunx @defold-typescript/cli` mise tasks resolve
 // inside an installed project) both ship into the consumer. The transpiler must NOT be a direct
@@ -372,6 +379,7 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   // `@defold-typescript/types`, so these never leak into the `src/` Defold compile.
   "@types/bun": "latest",
   "lua-types": LUA_TYPES_SPEC,
+  typescript: TYPESCRIPT_SPEC,
 };
 
 // Older scaffolds wrote the managed `@defold-typescript/*` devDeps as
@@ -392,6 +400,13 @@ function repairManagedDevDeps(devDeps: Record<string, string>, force = false): v
     if (force || devDeps[name]?.startsWith("workspace:")) {
       devDeps[name] = typesVersionSpec();
     }
+  }
+  // typescript is managed too, but tracks TYPESCRIPT_SPEC (tstl's peer), not
+  // this CLI's version. Repin under --force or a stale workspace: spec so an
+  // upgrade migrates a project off an unbounded range that resolves the TS7
+  // native port; a user's concrete pin is left alone on plain init.
+  if (force || devDeps.typescript?.startsWith("workspace:")) {
+    devDeps.typescript = TYPESCRIPT_SPEC;
   }
 }
 
