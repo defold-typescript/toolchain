@@ -8,7 +8,6 @@ import {
   isDefoldSubcommand,
   runDefoldCommand,
 } from "./bob-command";
-import { runBuild } from "./build";
 import { readCliVersion } from "./cli-version";
 import { type DefoldChannel, readDefoldChannelPin, resolveDefoldChannel } from "./defold-channel";
 import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
@@ -19,24 +18,10 @@ import { installHint } from "./install-reminder";
 import { detectInstalledEditorVersion } from "./installed-editor-version";
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
-import {
-  ensureMaterializedReference,
-  materializeApiSurface,
-  materializeRefDocSurface,
-  type RefDocResolveOptions,
-  resolveCurrentSurfaceGeneratedDir,
-} from "./materialize";
-import { runResolve } from "./resolve";
+import type { RefDocResolveOptions } from "./materialize";
 import { runSetupDebug } from "./setup-debug";
-import { applyWallSelection, currentWalledDirs, eligibleWalls } from "./wall";
-import { type CheckboxPrompt, runWallInteractive } from "./wall-interactive";
-import {
-  type RunWatchHandle,
-  type RunWatchOptions,
-  recursiveWatcherFactory,
-  runWatch,
-  type WatcherFactory,
-} from "./watch";
+import type { CheckboxPrompt } from "./wall-interactive";
+import type { RunWatchHandle, RunWatchOptions, WatcherFactory } from "./watch";
 
 export interface DispatchIo {
   readonly stdout: NodeJS.WritableStream;
@@ -355,54 +340,62 @@ export function dispatch(
   }
 
   if (command === "build") {
-    const reportBuild = (
-      written: readonly string[],
-      warnings: readonly string[],
-      materializedDir: string | null,
-    ): number => {
-      ensureMaterializedReference(cwd, materializedDir);
-      // walls are opt-in via the wall command
-      if (json) {
-        io.stdout.write(
-          renderResult({
-            command: "build",
-            written,
-            warnings,
-            defoldVersion: resolvedVersion,
-            defoldVersionSource: resolvedVersionSource,
-            defoldChannel: resolvedChannel,
-            apiSurface,
-            materializedSurface: materializedDir,
-          }),
-        );
-      } else {
-        io.stdout.write(
-          `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
-        );
-        for (const warning of warnings) {
-          io.stderr.write(`defold-typescript build: ${warning}\n`);
+    return (async (): Promise<number> => {
+      const { runBuild } = await import("./build");
+      const {
+        ensureMaterializedReference,
+        materializeApiSurface,
+        materializeRefDocSurface,
+        resolveCurrentSurfaceGeneratedDir,
+      } = await import("./materialize");
+
+      const reportBuild = (
+        written: readonly string[],
+        warnings: readonly string[],
+        materializedDir: string | null,
+      ): number => {
+        ensureMaterializedReference(cwd, materializedDir);
+        // walls are opt-in via the wall command
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "build",
+              written,
+              warnings,
+              defoldVersion: resolvedVersion,
+              defoldVersionSource: resolvedVersionSource,
+              defoldChannel: resolvedChannel,
+              apiSurface,
+              materializedSurface: materializedDir,
+            }),
+          );
+        } else {
+          io.stdout.write(
+            `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
+          );
+          for (const warning of warnings) {
+            io.stderr.write(`defold-typescript build: ${warning}\n`);
+          }
         }
-      }
-      return 0;
-    };
-    const reportError = (err: unknown): number => {
-      const message = err instanceof Error ? err.message : String(err);
-      if (json) {
-        io.stdout.write(renderResult({ command: "build", error: message }));
-      } else {
-        io.stderr.write(`${message}\n`);
-      }
-      return 1;
-    };
+        return 0;
+      };
+      const reportError = (err: unknown): number => {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "build", error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
+      };
 
-    const isRefDocSurface =
-      surface.available &&
-      surface.surfaceId !== null &&
-      surface.surfaceId !== CURRENT_STABLE_SURFACE_ID;
+      const isRefDocSurface =
+        surface.available &&
+        surface.surfaceId !== null &&
+        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID;
 
-    if (isRefDocSurface) {
-      const surfaceId = surface.surfaceId as string;
-      return (async (): Promise<number> => {
+      if (isRefDocSurface) {
+        const surfaceId = surface.surfaceId as string;
         try {
           const { written, warnings } = runBuild({ cwd });
           const { materializedDir } = await materializeRefDocSurface({
@@ -420,115 +413,124 @@ export function dispatch(
         } catch (err) {
           return reportError(err);
         }
-      })();
-    }
+      }
 
-    try {
-      const { written, warnings } = runBuild({ cwd });
-      const sourceGeneratedDir =
-        internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
-      const { materializedDir } = materializeApiSurface({
-        cwd,
-        surface,
-        sourceGeneratedDir,
-      });
-      return reportBuild(written, warnings, materializedDir);
-    } catch (err) {
-      return reportError(err);
-    }
-  }
-
-  if (command === "watch") {
-    const isRefDocSurface =
-      surface.available &&
-      surface.surfaceId !== null &&
-      surface.surfaceId !== CURRENT_STABLE_SURFACE_ID;
-
-    let syncSurface: (() => void) | undefined;
-    let componentWatcherFactory: WatcherFactory | undefined;
-    let resolveSurface: (() => void | Promise<void>) | undefined;
-    if (!isRefDocSurface) {
-      const sourceGeneratedDir =
-        internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
-      syncSurface = (): void => {
+      try {
+        const { written, warnings } = runBuild({ cwd });
+        const sourceGeneratedDir =
+          internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
         const { materializedDir } = materializeApiSurface({
           cwd,
           surface,
           sourceGeneratedDir,
         });
-        ensureMaterializedReference(cwd, materializedDir);
-        // walls are opt-in via the wall command
-      };
-      componentWatcherFactory = internals
-        ? internals.componentWatcherFactory
-        : recursiveWatcherFactory;
-      const resolveSeams = internals?.resolveInternals;
-      resolveSurface = async (): Promise<void> => {
-        const result = await runResolve({
-          cwd,
-          ...(resolveSeams?.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
-          ...(resolveSeams?.download ? { download: resolveSeams.download } : {}),
-          ...(resolveSeams?.readZip ? { readZip: resolveSeams.readZip } : {}),
-          ...(resolveSeams?.libraryRegistry
-            ? { libraryRegistry: resolveSeams.libraryRegistry }
-            : {}),
-          ...(resolveSeams?.libraryGeneratedDir !== undefined
-            ? { libraryGeneratedDir: resolveSeams.libraryGeneratedDir }
-            : {}),
-        });
-        if (json) {
-          io.stdout.write(
-            renderResult(
-              result.ok
-                ? {
-                    command: "resolve",
-                    materializedSurface: result.materializedSurface,
-                    extensions: result.extensions,
-                    libraries: result.libraries,
-                  }
-                : { command: "resolve", error: result.error ?? "resolve failed" },
-            ),
-          );
-        } else if (!result.ok) {
-          io.stderr.write(`${result.error ?? "resolve failed"}\n`);
-        } else if (result.materializedSurface !== null) {
-          io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
-        }
-      };
-    }
-
-    const launchWatch = (): Promise<number> => {
-      const watchOpts: RunWatchOptions = {
-        cwd,
-        stdout: io.stdout,
-        stderr: io.stderr,
-        ...(internals?.watcherFactory ? { watcherFactory: internals.watcherFactory } : {}),
-        ...(internals?.debounceMs !== undefined ? { debounceMs: internals.debounceMs } : {}),
-        ...(syncSurface ? { syncSurface } : {}),
-        ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
-        ...(resolveSurface ? { resolveSurface } : {}),
-        ...(json ? { json: true } : {}),
-      };
-      const handle = runWatch(watchOpts);
-      if (internals) {
-        internals.onWatchStart?.(handle);
-      } else {
-        process.once("SIGINT", () => handle.stop());
+        return reportBuild(written, warnings, materializedDir);
+      } catch (err) {
+        return reportError(err);
       }
-      return handle.done.catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : String(err);
-        io.stderr.write(`${message}\n`);
-        return 1;
-      });
-    };
+    })();
+  }
 
-    // A pinned ref-doc surface is generated on the fly, so it has no
-    // `syncSurface`; generate it once at startup the same way `build` does, then
-    // start the watcher. The full surface materializes; walls are opt-in via the
-    // wall command.
-    if (isRefDocSurface) {
-      const surfaceId = surface.surfaceId as string;
-      return (async (): Promise<number> => {
+  if (command === "watch") {
+    return (async (): Promise<number> => {
+      const { recursiveWatcherFactory, runWatch } = await import("./watch");
+      const {
+        ensureMaterializedReference,
+        materializeApiSurface,
+        materializeRefDocSurface,
+        resolveCurrentSurfaceGeneratedDir,
+      } = await import("./materialize");
+      const { runResolve } = await import("./resolve");
+
+      const isRefDocSurface =
+        surface.available &&
+        surface.surfaceId !== null &&
+        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID;
+
+      let syncSurface: (() => void) | undefined;
+      let componentWatcherFactory: WatcherFactory | undefined;
+      let resolveSurface: (() => void | Promise<void>) | undefined;
+      if (!isRefDocSurface) {
+        const sourceGeneratedDir =
+          internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
+        syncSurface = (): void => {
+          const { materializedDir } = materializeApiSurface({
+            cwd,
+            surface,
+            sourceGeneratedDir,
+          });
+          ensureMaterializedReference(cwd, materializedDir);
+          // walls are opt-in via the wall command
+        };
+        componentWatcherFactory = internals
+          ? internals.componentWatcherFactory
+          : recursiveWatcherFactory;
+        const resolveSeams = internals?.resolveInternals;
+        resolveSurface = async (): Promise<void> => {
+          const result = await runResolve({
+            cwd,
+            ...(resolveSeams?.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
+            ...(resolveSeams?.download ? { download: resolveSeams.download } : {}),
+            ...(resolveSeams?.readZip ? { readZip: resolveSeams.readZip } : {}),
+            ...(resolveSeams?.libraryRegistry
+              ? { libraryRegistry: resolveSeams.libraryRegistry }
+              : {}),
+            ...(resolveSeams?.libraryGeneratedDir !== undefined
+              ? { libraryGeneratedDir: resolveSeams.libraryGeneratedDir }
+              : {}),
+          });
+          if (json) {
+            io.stdout.write(
+              renderResult(
+                result.ok
+                  ? {
+                      command: "resolve",
+                      materializedSurface: result.materializedSurface,
+                      extensions: result.extensions,
+                      libraries: result.libraries,
+                    }
+                  : { command: "resolve", error: result.error ?? "resolve failed" },
+              ),
+            );
+          } else if (!result.ok) {
+            io.stderr.write(`${result.error ?? "resolve failed"}\n`);
+          } else if (result.materializedSurface !== null) {
+            io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
+          }
+        };
+      }
+
+      const launchWatch = (): Promise<number> => {
+        const watchOpts: RunWatchOptions = {
+          cwd,
+          stdout: io.stdout,
+          stderr: io.stderr,
+          ...(internals?.watcherFactory ? { watcherFactory: internals.watcherFactory } : {}),
+          ...(internals?.debounceMs !== undefined ? { debounceMs: internals.debounceMs } : {}),
+          ...(syncSurface ? { syncSurface } : {}),
+          ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
+          ...(resolveSurface ? { resolveSurface } : {}),
+          ...(json ? { json: true } : {}),
+        };
+        const handle = runWatch(watchOpts);
+        if (internals) {
+          internals.onWatchStart?.(handle);
+        } else {
+          process.once("SIGINT", () => handle.stop());
+        }
+        return handle.done.catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          io.stderr.write(`${message}\n`);
+          return 1;
+        });
+      };
+
+      // A pinned ref-doc surface is generated on the fly, so it has no
+      // `syncSurface`; generate it once at startup the same way `build` does,
+      // then start the watcher. The full surface materializes; walls are opt-in
+      // via the wall command.
+      if (isRefDocSurface) {
+        const surfaceId = surface.surfaceId as string;
         const { materializedDir } = await materializeRefDocSurface({
           cwd,
           surfaceId,
@@ -537,79 +539,81 @@ export function dispatch(
         });
         ensureMaterializedReference(cwd, materializedDir);
         return launchWatch();
-      })();
-    }
+      }
 
-    return launchWatch();
+      return launchWatch();
+    })();
   }
 
   if (command === "wall") {
-    const wallCwd = internals?.cwd ?? process.cwd();
-    const dirs = rest;
-    const toJsonWall = (w: { dir: string; kind: string }): { dir: string; kind: string } => ({
-      dir: w.dir,
-      kind: w.kind,
-    });
-    const reportWalls = (walls: { dir: string; kind: string }[]): void => {
-      if (json) {
-        io.stdout.write(renderResult({ command: "wall", directoryWalls: walls.map(toJsonWall) }));
-      } else if (walls.length === 0) {
-        io.stdout.write("defold-typescript wall: no directories walled\n");
-      } else {
-        io.stdout.write(`defold-typescript wall: walled ${walls.map((w) => w.dir).join(", ")}\n`);
-      }
-    };
-
-    if (wallList) {
-      const current = currentWalledDirs(wallCwd);
-      const eligible = eligibleWalls(wallCwd);
-      const currentWalls = eligible.filter((w) => current.includes(w.dir));
-      if (json) {
-        io.stdout.write(
-          renderResult({
-            command: "wall",
-            directoryWalls: currentWalls.map(toJsonWall),
-            eligible: eligible.map(toJsonWall),
-          }),
-        );
-      } else {
-        io.stdout.write(
-          `defold-typescript wall: walled [${current.join(", ")}]; eligible [${eligible
-            .map((w) => w.dir)
-            .join(", ")}]\n`,
-        );
-      }
-      return 0;
-    }
-
-    if (dirs.length > 0) {
-      try {
-        const current = currentWalledDirs(wallCwd);
-        const desired = wallRemove
-          ? current.filter((d) => !dirs.includes(d))
-          : [...current, ...dirs];
-        reportWalls(applyWallSelection(wallCwd, desired));
-        return 0;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+    return (async (): Promise<number> => {
+      const { applyWallSelection, currentWalledDirs, eligibleWalls } = await import("./wall");
+      const wallCwd = internals?.cwd ?? process.cwd();
+      const dirs = rest;
+      const toJsonWall = (w: { dir: string; kind: string }): { dir: string; kind: string } => ({
+        dir: w.dir,
+        kind: w.kind,
+      });
+      const reportWalls = (walls: { dir: string; kind: string }[]): void => {
         if (json) {
-          io.stdout.write(renderResult({ command: "wall", error: message }));
+          io.stdout.write(renderResult({ command: "wall", directoryWalls: walls.map(toJsonWall) }));
+        } else if (walls.length === 0) {
+          io.stdout.write("defold-typescript wall: no directories walled\n");
         } else {
-          io.stderr.write(`${message}\n`);
+          io.stdout.write(`defold-typescript wall: walled ${walls.map((w) => w.dir).join(", ")}\n`);
         }
+      };
+
+      if (wallList) {
+        const current = currentWalledDirs(wallCwd);
+        const eligible = eligibleWalls(wallCwd);
+        const currentWalls = eligible.filter((w) => current.includes(w.dir));
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "wall",
+              directoryWalls: currentWalls.map(toJsonWall),
+              eligible: eligible.map(toJsonWall),
+            }),
+          );
+        } else {
+          io.stdout.write(
+            `defold-typescript wall: walled [${current.join(", ")}]; eligible [${eligible
+              .map((w) => w.dir)
+              .join(", ")}]\n`,
+          );
+        }
+        return 0;
+      }
+
+      if (dirs.length > 0) {
+        try {
+          const current = currentWalledDirs(wallCwd);
+          const desired = wallRemove
+            ? current.filter((d) => !dirs.includes(d))
+            : [...current, ...dirs];
+          reportWalls(applyWallSelection(wallCwd, desired));
+          return 0;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (json) {
+            io.stdout.write(renderResult({ command: "wall", error: message }));
+          } else {
+            io.stderr.write(`${message}\n`);
+          }
+          return 1;
+        }
+      }
+
+      // `--json` is machine-driven intent, so it never prompts even on a TTY.
+      const interactive = !json && (internals?.isTty ?? Boolean(process.stdout.isTTY));
+      if (!interactive) {
+        io.stderr.write(
+          "defold-typescript wall: no directory given; pass <dir> or run in a terminal for the interactive menu\n",
+        );
         return 1;
       }
-    }
-
-    // `--json` is machine-driven intent, so it never prompts even on a TTY.
-    const interactive = !json && (internals?.isTty ?? Boolean(process.stdout.isTTY));
-    if (!interactive) {
-      io.stderr.write(
-        "defold-typescript wall: no directory given; pass <dir> or run in a terminal for the interactive menu\n",
-      );
-      return 1;
-    }
-    return (async (): Promise<number> => {
+      const { runWallInteractive } = await import("./wall-interactive");
       try {
         reportWalls(
           await runWallInteractive(
@@ -628,6 +632,7 @@ export function dispatch(
   if (command === "resolve") {
     const seams = internals?.resolveInternals;
     return (async (): Promise<number> => {
+      const { runResolve } = await import("./resolve");
       const result = await runResolve({
         cwd,
         ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
