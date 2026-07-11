@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
+import {
+  CURRENT_STABLE_SURFACE_ID,
+  selectApiSurface,
+  selectApiSurfaceForTarget,
+} from "./api-surface";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 
 describe("selectApiSurface", () => {
@@ -34,6 +38,48 @@ describe("selectApiSurface", () => {
     expect(selectApiSurface("0.0.0")).toEqual({
       surfaceId: null,
       available: false,
+    });
+  });
+});
+
+describe("selectApiSurfaceForTarget", () => {
+  const io = {
+    fetchChannelInfo: async () => {
+      throw new Error("fetchChannelInfo should not be called for a version target");
+    },
+  };
+
+  test("a fixed-version target maps to its registry surface without fetching", async () => {
+    expect(await selectApiSurfaceForTarget({ kind: "version", version: "1.9.8" }, io)).toEqual({
+      surfaceId: "defold-1.9.8",
+      available: true,
+      head: { version: "1.9.8", channel: null, sha: null },
+    });
+  });
+
+  test("a channel head drives the surface id off the resolved head version, not a pin", async () => {
+    const channelIo = {
+      fetchChannelInfo: async () => ({ version: "1.9.8", sha1: "deadbeef" }),
+    };
+    expect(
+      await selectApiSurfaceForTarget({ kind: "channel", channel: "beta" }, channelIo),
+    ).toEqual({
+      surfaceId: "defold-1.9.8",
+      available: true,
+      head: { version: "1.9.8", channel: "beta", sha: "deadbeef" },
+    });
+  });
+
+  test("a resolved head with no registry target is unavailable", async () => {
+    const channelIo = {
+      fetchChannelInfo: async () => ({ version: "0.0.0", sha1: "deadbeef" }),
+    };
+    expect(
+      await selectApiSurfaceForTarget({ kind: "channel", channel: "alpha" }, channelIo),
+    ).toEqual({
+      surfaceId: null,
+      available: false,
+      head: { version: "0.0.0", channel: "alpha", sha: "deadbeef" },
     });
   });
 });
