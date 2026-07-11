@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { bobCachePath } from "./bob";
-import { composeBobArgv, type DefoldIo, reportBobStatus, runBobCommand } from "./bob-command";
+import { bobCachePath, engineCachePath } from "./bob";
+import {
+  composeBobArgv,
+  type DefoldIo,
+  prepareBobRun,
+  reportBobStatus,
+  runBobCommand,
+} from "./bob-command";
+import { engineDownloadUrl } from "./debug-launcher";
 import type { DefoldTarget } from "./defold-target";
 
 const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
@@ -268,5 +275,167 @@ describe("reportBobStatus", () => {
     expect(status.sha).toBeNull();
     expect(status.bobJar.path).toBeNull();
     expect(status.error).toContain("offline");
+  });
+});
+
+describe("prepareBobRun", () => {
+  const RUN_CWD = "/proj";
+  const jar = bobCachePath({ sha1: SHA, cacheDir: "/c" });
+  const projectc = join(RUN_CWD, "build", "default", "game.projectc");
+  const buildEngine = join(RUN_CWD, "build", "arm64-macos", "dmengine");
+  const engineCache = engineCachePath({
+    sha: SHA,
+    enginePlatform: "arm64-macos",
+    executable: "dmengine",
+    cacheDir: "/engine",
+  });
+  const engineUrl = engineDownloadUrl(SHA, "arm64-macos", "dmengine");
+
+  test("a native-extension build engine is returned as-is with no download or marker", async () => {
+    const spawned: string[][] = [];
+    const downloaded: Array<{ url: string; dest: string }> = [];
+    const markerWrites: Array<{ cwd: string; enginePath: string }> = [];
+    const result = await prepareBobRun({
+      cwd: RUN_CWD,
+      head: HEAD,
+      io: {
+        cacheDir: "/c",
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === buildEngine || p === jar,
+        javaProbe: () => true,
+        spawn: async (argv) => {
+          spawned.push(argv);
+          return { exitCode: 0 };
+        },
+        download: async (url, dest) => {
+          downloaded.push({ url, dest });
+        },
+      },
+      writeMarker: async (cwd, enginePath) => {
+        markerWrites.push({ cwd, enginePath });
+      },
+    });
+    expect(result).toMatchObject({ ok: true, buildExitCode: 0 });
+    expect(result.runnable?.enginePath).toBe(buildEngine);
+    expect(downloaded).toEqual([]);
+    expect(markerWrites).toEqual([]);
+    expect(spawned).toHaveLength(1);
+    expect(spawned[0]).toContain("build");
+  });
+
+  test("a plain project downloads the stock engine, writes the marker, and returns that engine", async () => {
+    const present = new Set<string>([projectc, jar]);
+    const downloaded: Array<{ url: string; dest: string }> = [];
+    const markerWrites: Array<{ cwd: string; enginePath: string }> = [];
+    const result = await prepareBobRun({
+      cwd: RUN_CWD,
+      head: HEAD,
+      io: {
+        cacheDir: "/c",
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => present.has(p),
+        javaProbe: () => true,
+        spawn: async () => ({ exitCode: 0 }),
+        download: async (url, dest) => {
+          downloaded.push({ url, dest });
+          present.add(dest);
+        },
+      },
+      writeMarker: async (cwd, enginePath) => {
+        markerWrites.push({ cwd, enginePath });
+      },
+      readEngineMarker: () => engineCache,
+    });
+    expect(downloaded).toEqual([{ url: engineUrl, dest: engineCache }]);
+    expect(markerWrites).toEqual([{ cwd: RUN_CWD, enginePath: engineCache }]);
+    expect(result.ok).toBe(true);
+    expect(result.runnable?.enginePath).toBe(engineCache);
+  });
+
+  test("a build failure returns the bob exit code with no runnable, download, or marker", async () => {
+    const downloaded: unknown[] = [];
+    const markerWrites: unknown[] = [];
+    const result = await prepareBobRun({
+      cwd: RUN_CWD,
+      head: HEAD,
+      io: {
+        cacheDir: "/c",
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => true,
+        javaProbe: () => true,
+        spawn: async () => ({ exitCode: 5 }),
+        download: async (url, dest) => {
+          downloaded.push({ url, dest });
+        },
+      },
+      writeMarker: async () => {
+        markerWrites.push(1);
+      },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.buildExitCode).toBe(5);
+    expect(result.runnable).toBeUndefined();
+    expect(downloaded).toEqual([]);
+    expect(markerWrites).toEqual([]);
+  });
+
+  test("threads --java and --build-server into the build argv and a cached engine skips the download", async () => {
+    const spawned: string[][] = [];
+    const downloaded: unknown[] = [];
+    const result = await prepareBobRun({
+      cwd: RUN_CWD,
+      head: HEAD,
+      java: "/jdk/bin/java",
+      buildServer: "https://build.example",
+      io: {
+        cacheDir: "/c",
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engineCache || p === jar,
+        javaProbe: () => true,
+        spawn: async (argv) => {
+          spawned.push(argv);
+          return { exitCode: 0 };
+        },
+        download: async (url, dest) => {
+          downloaded.push({ url, dest });
+        },
+      },
+      writeMarker: async () => {},
+      readEngineMarker: () => engineCache,
+    });
+    const argv = spawned[0] ?? [];
+    expect(argv[0]).toBe("/jdk/bin/java");
+    expect(argv).toContain("--build-server");
+    expect(argv).toContain("https://build.example");
+    expect(downloaded).toEqual([]);
+    expect(result.runnable?.enginePath).toBe(engineCache);
+  });
+
+  test("an offline engine download returns ok:false with an actionable error and no runnable", async () => {
+    const result = await prepareBobRun({
+      cwd: RUN_CWD,
+      head: HEAD,
+      io: {
+        cacheDir: "/c",
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === jar,
+        javaProbe: () => true,
+        spawn: async () => ({ exitCode: 0 }),
+        download: async () => {
+          throw new Error("offline: getaddrinfo ENOTFOUND d.defold.com");
+        },
+      },
+      writeMarker: async () => {},
+    });
+    expect(result.ok).toBe(false);
+    expect(result.runnable).toBeUndefined();
+    expect(result.buildExitCode).toBe(0);
+    expect(result.error).toBeDefined();
+    expect(result.error).toContain("offline");
   });
 });

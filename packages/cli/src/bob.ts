@@ -26,6 +26,33 @@ export function bobCachePath(opts: { sha1: string; cacheDir: string }): string {
   return path.join(opts.cacheDir, opts.sha1, "bob.jar");
 }
 
+// Sibling of `bobCacheDir`: `bob run` caches the sha-matched stock engine here so
+// a later `run` finds it. Same override precedence as the jar cache.
+export function engineCacheDir(
+  env: NodeJS.ProcessEnv = process.env,
+  home: () => string = homedir,
+): string {
+  if (env.DEFOLD_TYPESCRIPT_CACHE) {
+    return path.join(env.DEFOLD_TYPESCRIPT_CACHE, "engine");
+  }
+  return path.join(
+    env.XDG_CACHE_HOME ?? path.join(home(), ".cache"),
+    "defold-typescript",
+    "engine",
+  );
+}
+
+// Sha- and platform-keyed engine location, sibling to `bobCachePath`. No I/O:
+// the caller downloads to this path only when `probe` reports it absent.
+export function engineCachePath(opts: {
+  sha: string;
+  enginePlatform: string;
+  executable: string;
+  cacheDir: string;
+}): string {
+  return path.join(opts.cacheDir, opts.sha, opts.enginePlatform, opts.executable);
+}
+
 export interface ResolvedBobJar {
   readonly jarPath: string;
   readonly cached: boolean;

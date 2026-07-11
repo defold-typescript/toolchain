@@ -6,6 +6,7 @@ import {
   type DefoldIo,
   defaultDefoldIo,
   isBobSubcommand,
+  prepareBobRun,
   reportBobStatus,
   runBobCommand,
 } from "./bob-command";
@@ -90,7 +91,7 @@ export interface DispatchInternals {
 
 const USAGE =
   "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n";
-const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle> [path]\n";
+const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n";
 
 function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
   let script: string | undefined;
@@ -859,6 +860,80 @@ export function dispatch(
           }
         }
         return status.ok ? 0 : 1;
+      })();
+    }
+
+    if (subcommand === "run") {
+      const runEngine: RunEngine = { ...defaultRunEngine(), ...internals?.runInternals };
+      const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
+      return (async (): Promise<number> => {
+        try {
+          const head = await resolveHead();
+          if (head.sha === null) {
+            throw new Error(
+              `defold-typescript bob: could not resolve an artifact sha for Defold ${head.version}.`,
+            );
+          }
+          const prepared = await prepareBobRun({
+            cwd: bobCwd,
+            head: { version: head.version, channel: head.channel, sha: head.sha },
+            ...(javaOverride !== undefined ? { java: javaOverride } : {}),
+            ...(buildServerFlag !== undefined ? { buildServer: buildServerFlag } : {}),
+            io: { ...defoldIo, platform: runEngine.platform, arch: runEngine.arch },
+          });
+          if (!prepared.ok || prepared.runnable === undefined) {
+            // A failed build short-circuits with Bob's exit code; an engine-ensure
+            // failure (download offline, no engine) returns 1 with its error.
+            const failedBuild = prepared.buildExitCode !== 0;
+            if (json) {
+              io.stdout.write(
+                renderResult({
+                  command: "bob",
+                  subcommand: "run",
+                  build: { exitCode: prepared.buildExitCode },
+                  error: prepared.error ?? `bob build exited with code ${prepared.buildExitCode}`,
+                }),
+              );
+            } else {
+              io.stderr.write(
+                `${
+                  prepared.error ??
+                  `defold-typescript bob run: bob build exited with code ${prepared.buildExitCode}`
+                }\n`,
+              );
+            }
+            return failedBuild ? prepared.buildExitCode : 1;
+          }
+          const { runnable } = prepared;
+          for (const warning of runnable.warnings) {
+            io.stderr.write(`defold-typescript bob run: ${warning}\n`);
+          }
+          const exitCode = await launchEngine(runnable, {
+            platform: runEngine.platform,
+            spawn: runEngine.spawn,
+            copyAside: runEngine.copyAside,
+            chmod: runEngine.chmod,
+          });
+          if (json) {
+            io.stdout.write(
+              renderResult({
+                command: "bob",
+                subcommand: "run",
+                build: { exitCode: prepared.buildExitCode },
+                launch: { enginePath: runnable.enginePath, exitCode },
+              }),
+            );
+          }
+          return exitCode;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (json) {
+            io.stdout.write(renderResult({ command: "bob", subcommand: "run", error: message }));
+          } else {
+            io.stderr.write(`${message}\n`);
+          }
+          return 1;
+        }
       })();
     }
 
