@@ -1,3 +1,15 @@
+export {
+  type ApiAvailability,
+  type ApiMigrationCatalog,
+  type ApiMigrationEntry,
+  type ApiSymbolIdentity,
+  applyMigrationOverlay,
+  type Box2dBackend,
+  collectSymbolIdentities,
+  deriveAvailability,
+  symbolIdentityKey,
+  validateAvailability,
+} from "./api-availability";
 export type { ApiFunction, ApiModule, ApiParameter, ApiVariable } from "./api-doc";
 export { parseDefoldApiDoc } from "./api-doc";
 export {
