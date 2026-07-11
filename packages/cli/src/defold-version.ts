@@ -1,1 +1,1 @@
-export const CURRENT_STABLE_DEFOLD_VERSION = "1.12.4";
+export const CURRENT_STABLE_DEFOLD_VERSION = "1.13.0";

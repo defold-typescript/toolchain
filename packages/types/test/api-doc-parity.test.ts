@@ -31,6 +31,14 @@ async function loadOurSurface(): Promise<Map<string, SymbolDoc>> {
 }
 
 describe("api-doc parity — coverage superset over pinned ts-defold-types", () => {
+  test("the extractor preserves dotted namespace paths", () => {
+    const surface = extractSurface(
+      "declare namespace b2d.fixture {\n  function set_shape(): void;\n}\n",
+    );
+    expect(surface.has("b2d.fixture.set_shape")).toBe(true);
+    expect(surface.has("set_shape")).toBe(false);
+  });
+
   test("the extractor finds buffer.get_bytes with a description, two params, and a returns", async () => {
     const theirs = extractSurface(await Bun.file(FIXTURE).text());
     const sample = theirs.get("buffer.get_bytes");

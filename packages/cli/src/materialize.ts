@@ -74,8 +74,19 @@ export function materializeApiSurface(
   // `engine-globals` is excluded here; it rides the includeEngineGlobals branch
   // below. Synthetic fixtures with no kinds entrypoint fall back to the
   // historical trio; a missing sibling `src/` filters everything out.
-  const srcDir = path.resolve(sourceGeneratedDir, "..", "src");
-  const scriptKindEntry = path.join(sourceGeneratedDir, "kinds", "script.d.ts");
+  const typesRoot = resolveTypesPackageRoot();
+  const relativeToTypesRoot = typesRoot ? path.relative(typesRoot, sourceGeneratedDir) : "..";
+  const usesPackagedSurface =
+    typesRoot !== null &&
+    !path.isAbsolute(relativeToTypesRoot) &&
+    relativeToTypesRoot !== ".." &&
+    !relativeToTypesRoot.startsWith(`..${path.sep}`);
+  const srcDir = usesPackagedSurface
+    ? path.join(typesRoot, "src")
+    : path.resolve(sourceGeneratedDir, "..", "src");
+  const scriptKindEntry = usesPackagedSurface
+    ? path.join(typesRoot, "generated", "kinds", "script.d.ts")
+    : path.join(sourceGeneratedDir, "kinds", "script.d.ts");
   const derivedOverloads = existsSync(scriptKindEntry)
     ? [...readFileSync(scriptKindEntry, "utf8").matchAll(/import "\.\.\/\.\.\/src\/([^"]+)";/g)]
         .map((match) => `${match[1]}.d.ts`)
@@ -105,10 +116,11 @@ export function materializeApiSurface(
   }
 
   for (const file of sources) {
-    writeFileSync(
-      path.join(absDir, file),
-      readFileSync(path.join(sourceGeneratedDir, file), "utf8"),
+    const declaration = readFileSync(path.join(sourceGeneratedDir, file), "utf8").replace(
+      /from "[^"]*\/src\/core-types"/g,
+      'from "./core-types"',
     );
+    writeFileSync(path.join(absDir, file), declaration);
   }
   if (includeCoreTypes) {
     writeFileSync(path.join(absDir, "core-types.d.ts"), CORE_TYPES_REEXPORT);
@@ -191,9 +203,18 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
   ensureGitignoreLine(cwd, `${MATERIALIZED_ROOT}/`);
 }
 
-export function resolveCurrentSurfaceGeneratedDir(): string | null {
+export function resolveRegisteredSurfaceGeneratedDir(surfaceId: string | null): string | null {
+  if (surfaceId === null) return null;
   const root = resolveTypesPackageRoot();
-  return root === null ? null : path.join(root, "generated");
+  if (root === null) return null;
+  const target = loadApiTargetsRegistry().find((candidate) => candidate.id === surfaceId);
+  if (!target || target.source != null || typeof target.generatedDir !== "string") return null;
+  return path.join(root, target.generatedDir);
+}
+
+export function resolveCurrentSurfaceGeneratedDir(): string | null {
+  const target = loadApiTargetsRegistry().find((candidate) => candidate.default === true);
+  return resolveRegisteredSurfaceGeneratedDir(target?.id ?? null);
 }
 
 export interface RefDocResolveOptions {
@@ -243,10 +264,10 @@ export interface MaterializeRefDocSurfaceOptions {
   readonly registry?: readonly RegistryTarget[];
 }
 
-// Generate a pinned, ref-doc-sourced surface on the fly into the project's
-// `.defold-types/<id>/`. The generator (`materializeVersionedSurface`) ships in
-// the `@defold-typescript/types` tarball; it is imported by resolved path so the
-// `current` build path never pulls in its fixture-reading module side effects.
+// Generate a pinned non-current surface on the fly into the project's
+// `.defold-types/<id>/`. The target may use committed fixtures or resolved
+// reference docs. The generator ships in the types package and is imported by
+// resolved path so the current build path avoids fixture-reading side effects.
 // The faux package is made self-contained by emitting core-type imports as a
 // sibling `./core-types` and copying `core-types.d.ts` in, so the surface
 // resolves from a real `.defold-types/<id>/` regardless of dest depth.
@@ -260,7 +281,7 @@ export async function materializeRefDocSurface(
   }
   const registry = opts.registry ?? loadApiTargetsRegistry();
   const target = registry.find((t) => t.id === surfaceId);
-  if (target?.source?.kind !== "ref-doc") {
+  if (!target) {
     return { materializedDir: null, active: null };
   }
 

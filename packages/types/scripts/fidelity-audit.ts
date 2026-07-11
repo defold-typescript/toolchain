@@ -18,9 +18,9 @@ import {
 import { parseMessagesDoc } from "../src/emit-messages";
 import {
   collectConstantFqns,
+  FIDELITY_BASELINE_MANIFEST,
   generateModuleDeclaration,
   MESSAGES_MANIFEST,
-  MODULE_MANIFEST,
   type ModuleManifestEntry,
 } from "./regen";
 
@@ -382,7 +382,7 @@ function tableSlotKey(elementName: string, slotKind: "param" | "return", slotNam
 }
 
 export function buildFidelityReport(
-  manifest: readonly ModuleManifestEntry[] = MODULE_MANIFEST,
+  manifest: readonly ModuleManifestEntry[] = FIDELITY_BASELINE_MANIFEST,
 ): Record<string, FidelityEntry> {
   const report: Record<string, FidelityEntry> = {};
   const knownConstantFqns = collectConstantFqns(manifest);

@@ -2,10 +2,16 @@
 /// <reference types="lua-types/special/jit-only" />
 import "../b2d";
 import "../b2d_body";
+import "../b2d_chain";
+import "../b2d_fixture";
+import "../b2d_joint";
+import "../b2d_shape";
+import "../b2d_world";
 import "../buffer";
 import "../camera";
 import "../collectionfactory";
 import "../collectionproxy";
+import "../compute";
 import "../crash";
 import "../factory";
 import "../font";
@@ -19,6 +25,7 @@ import "../image";
 import "../json";
 import "../label";
 import "../liveupdate";
+import "../material";
 import "../model";
 import "../msg";
 import "../particlefx";

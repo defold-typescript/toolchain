@@ -14,7 +14,8 @@ interface ParsedDoc {
   hasExample: boolean;
 }
 
-const NAMESPACE_OPEN = /(?:export |declare )?namespace\s+([A-Za-z_$][\w$]*)\s*\{/;
+const NAMESPACE_OPEN =
+  /(?:export |declare )?namespace\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*\{/;
 const GLOBAL_OPEN = /\bdeclare\s+global\s*\{/;
 const FN_DECL = /(?:export\s+|declare\s+)?function\s+([A-Za-z_$][\w$]*)\s*[(<]/;
 const VAR_DECL = /(?:export\s+|declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[:=]/;

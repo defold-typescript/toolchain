@@ -8,7 +8,7 @@ import {
 } from "./fidelity-audit";
 import baseline from "./fidelity-baseline.json" with { type: "json" };
 import type { ModuleManifestEntry } from "./regen";
-import { MODULE_MANIFEST } from "./regen";
+import { FIDELITY_BASELINE_MANIFEST as MODULE_MANIFEST } from "./regen";
 
 function manifestOf(doc: unknown): readonly ModuleManifestEntry[] {
   return [{ namespace: "test", doc, outFile: "test.d.ts" }];

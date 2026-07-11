@@ -3,9 +3,7 @@ import type { Hash, Matrix4, Opaque, Quaternion, Url, Vector, Vector3, Vector4 }
 
 declare global {
   /**
-   * Functions, core hooks, messages and constants for manipulation of
-   * game objects. The "go" namespace is accessible from game object script
-   * files.
+   * Game object API documentation
    */
   namespace go {
     /**
@@ -650,8 +648,14 @@ declare global {
      * `userid`
      * Id of the user associated with the controller. Usually only relevant on consoles.
      *
+     * `gamepad_guid`
+     * The guid of the gamepad controller. Only passed with "connected" action.
+     *
+     * `gamepad_guid_info`
+     * Parsed guid info table. Only passed with "connected" action. See table below.
+     *
      * `gamepad_unknown`
-     * True if the inout originated from an unknown/unmapped gamepad.
+     * True if the input originated from an unknown/unmapped gamepad.
      *
      * `gamepad_name`
      * Name of the gamepad
@@ -702,6 +706,27 @@ declare global {
      *
      * `acc_z`
      * Accelerometer z value (if present).
+     *
+     * Guid info table:
+     * This info is only passed with a `connected` action.
+     *
+     * Field
+     * Description
+     *
+     * `vendor`
+     * USB vendor id. E.g. Nintendo 0x057e, Sony 0x054c, or Microsoft 0x045e
+     *
+     * `product`
+     * USB product id
+     *
+     * `bus`
+     * How device is communicating. E.g.0x0003 for USB devices and 0x0005 for Bluetooth devices.
+     *
+     * `crc`
+     * SDL CRC16 signature, typically used when vendor and product ids are unavailable
+     *
+     * `version`
+     * The device or firmware version
      *
      * @param self - reference to the script state to be used for storing data
      * @param action_id - id of the received input action, as mapped in the input_binding-file

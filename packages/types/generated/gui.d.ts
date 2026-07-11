@@ -3,9 +3,7 @@ import type { Hash, Opaque, Quaternion, Url, Vector, Vector3, Vector4 } from "..
 
 declare global {
   /**
-   * GUI core hooks, functions, messages, properties and constants for
-   * creation and manipulation of GUI nodes. The "gui" namespace is
-   * accessible only from gui scripts.
+   * GUI API documentation
    */
   namespace gui {
     /**

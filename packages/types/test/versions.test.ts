@@ -70,7 +70,7 @@ async function materializeProofSurface(): Promise<{ root: string; cacheDir: stri
   return { root, cacheDir };
 }
 
-function writeProofConfig(root: string, proof: string): string {
+function writeProofConfig(root: string, proof: string, surfaceId = "defold-1.9.8"): string {
   writeFileSync(resolve(root, "proof.ts"), proof);
   const tsconfigPath = resolve(root, "tsconfig.json");
   writeFileSync(
@@ -78,7 +78,7 @@ function writeProofConfig(root: string, proof: string): string {
     `${JSON.stringify(
       {
         extends: "../../../tsconfig.json",
-        compilerOptions: { noEmit: true, typeRoots: ["versions"], types: ["defold-1.9.8"] },
+        compilerOptions: { noEmit: true, typeRoots: ["versions"], types: [surfaceId] },
         include: ["proof.ts"],
       },
       null,
@@ -118,6 +118,27 @@ describe("versioned API surface — consumer tsconfig proof", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
       rmSync(cacheDir, { recursive: true, force: true });
+    }
+  });
+
+  test("committed defold-1.12.4 remains selectable and rejects 1.13-only APIs", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
+    if (!target) throw new Error("no defold-1.12.4 target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
+    try {
+      await materializeVersionedSurface(target, {
+        destDir: resolve(root, "versions", "defold-1.12.4"),
+      });
+      const tsconfigPath = writeProofConfig(
+        root,
+        `export {};\nconst _fov: number = camera.get_fov();\nvoid _fov;\n// @ts-expect-error get_orthographic_auto_zoom is new in 1.13.0\ncamera.get_orthographic_auto_zoom();\n`,
+        "defold-1.12.4",
+      );
+      const { exitCode, output } = typecheck(tsconfigPath);
+      if (exitCode !== 0) throw new Error(`defold-1.12.4 proof failed:\n${output}`);
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
     }
   });
 

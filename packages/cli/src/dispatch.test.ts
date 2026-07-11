@@ -590,7 +590,9 @@ describe("dispatch", () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
@@ -646,7 +648,9 @@ describe("dispatch", () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string; defoldChannel: string | null };
@@ -716,17 +720,27 @@ describe("dispatch", () => {
       defoldVersion: string;
       defoldChannel: string | null;
       defoldSha: string | null;
+      materializedSurface: string | null;
     };
     expect(parsed.defoldVersion).toBe("1.12.4");
     expect(parsed.defoldChannel).toBeNull();
     expect(parsed.defoldSha).toBeNull();
+    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.12.4");
+    const camera = readFileSync(
+      path.join(cwd, ".defold-types", "defold-1.12.4", "camera.d.ts"),
+      "utf8",
+    );
+    expect(camera).toContain('from "./core-types"');
+    expect(camera).not.toContain("get_orthographic_auto_zoom");
   });
 
   test("init --json reports the seeded current-stable defoldVersion", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();
 
-    const code = dispatch(["init", cwd, "--json"], io);
+    const code = dispatch(["init", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
@@ -793,16 +807,18 @@ describe("dispatch", () => {
     expect(parsed.defoldVersionSource).toBe("default");
   });
 
-  test("build --json with no pin reports apiSurface defold-1.12.4", async () => {
+  test("build --json with no pin reports apiSurface defold-1.13.0", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string; apiSurface: string | null };
     expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
-    expect(parsed.apiSurface).toBe("defold-1.12.4");
+    expect(parsed.apiSurface).toBe("defold-1.13.0");
   });
 
   test("build --defold-target with no pre-baked surface reports apiSurface null", async () => {
@@ -816,15 +832,17 @@ describe("dispatch", () => {
     expect(parsed.apiSurface).toBeNull();
   });
 
-  test("init --json reports apiSurface defold-1.12.4", () => {
+  test("init --json reports apiSurface defold-1.13.0", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();
 
-    const code = dispatch(["init", cwd, "--json"], io);
+    const code = dispatch(["init", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { apiSurface: string | null };
-    expect(parsed.apiSurface).toBe("defold-1.12.4");
+    expect(parsed.apiSurface).toBe("defold-1.13.0");
   });
 
   test("init --json carries no scriptKind field even for a single-gui_script project", () => {
@@ -1110,11 +1128,15 @@ describe("dispatch", () => {
     };
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir, resolveOpts });
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      sourceGeneratedDir,
+      resolveOpts,
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.12.4");
+    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.13.0");
     expect(downloadCalled).toBe(false);
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
@@ -1469,6 +1491,7 @@ describe("dispatch", () => {
       watcherFactory: main,
       componentWatcherFactory: component,
       sourceGeneratedDir,
+      detectEditorVersion: () => null,
       resolveInternals: {
         cacheDir,
         download: async () => new TextEncoder().encode("z"),
@@ -1599,6 +1622,7 @@ describe("dispatch", () => {
       watcherFactory: main,
       componentWatcherFactory: component,
       sourceGeneratedDir,
+      detectEditorVersion: () => null,
       // No `resolveInternals` — production wiring must still build the
       // resolveSurface closure and run it on a game.project change.
       onWatchStart,
@@ -2361,9 +2385,9 @@ describe("dispatch resolve", () => {
     expect(parsed.defoldVersion).toBe("1.13.0");
     expect(parsed.defoldChannel).toBe("beta");
     expect(parsed.defoldSha).toBe("abc123");
-    // 1.13.0 has no registered surface, so the id derives to null from the head
-    // version — never from the pin.
-    expect(parsed.apiSurface).toBeNull();
+    // The registered 1.13.0 surface derives from the resolved head version,
+    // never from the channel pin token.
+    expect(parsed.apiSurface).toBe("defold-1.13.0");
   });
 
   test("--json includes pinnedVersion when the project pins the url", async () => {
