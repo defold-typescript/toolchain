@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { composeBobArgv, type DefoldIo, runDefoldCommand } from "./bob-command";
+import { composeBobArgv, type DefoldIo, runBobCommand } from "./bob-command";
 
 const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
 
@@ -43,6 +43,9 @@ describe("composeBobArgv", () => {
     expect(() => composeBobArgv({ java: "java", jar: "/c/bob.jar", subcommand: "frob" })).toThrow(
       /resolve\|build\|bundle/,
     );
+    expect(() => composeBobArgv({ java: "java", jar: "/c/bob.jar", subcommand: "frob" })).toThrow(
+      /unknown bob subcommand/,
+    );
   });
 });
 
@@ -74,25 +77,25 @@ function fakeIo(overrides: Partial<DefoldIo> = {}): DefoldIo & {
   };
 }
 
-describe("runDefoldCommand", () => {
+describe("runBobCommand", () => {
   const jar = join("/c", SHA, "bob.jar");
 
   test("spawns the composed argv and reports ok on a zero exit", async () => {
     const io = fakeIo();
-    const result = await runDefoldCommand({ cwd: "/proj", subcommand: "resolve", io });
+    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", io });
     expect(io.spawned).toEqual([["java", "-jar", jar, "resolve"]]);
     expect(result).toMatchObject({ ok: true, subcommand: "resolve", exitCode: 0 });
   });
 
   test("does not download when the jar is already cached", async () => {
     const io = fakeIo({ probe: () => true });
-    await runDefoldCommand({ cwd: "/proj", subcommand: "build", io });
+    await runBobCommand({ cwd: "/proj", subcommand: "build", io });
     expect(io.downloaded).toEqual([]);
   });
 
   test("downloads the jar to its cache target when absent", async () => {
     const io = fakeIo({ probe: () => false });
-    await runDefoldCommand({ cwd: "/proj", subcommand: "build", io });
+    await runBobCommand({ cwd: "/proj", subcommand: "build", io });
     expect(io.downloaded).toEqual([
       { url: `https://d.defold.com/archive/stable/${SHA}/bob/bob.jar`, dest: jar },
     ]);
@@ -100,14 +103,14 @@ describe("runDefoldCommand", () => {
 
   test("propagates a non-zero bob exit code as a failed result", async () => {
     const io = fakeIo({ spawn: async () => ({ exitCode: 17 }) });
-    const result = await runDefoldCommand({ cwd: "/proj", subcommand: "bundle", io });
+    const result = await runBobCommand({ cwd: "/proj", subcommand: "bundle", io });
     expect(result.ok).toBe(false);
     expect(result.exitCode).toBe(17);
   });
 
   test("uses the java override and threads --build-server", async () => {
     const io = fakeIo();
-    await runDefoldCommand({
+    await runBobCommand({
       cwd: "/proj",
       subcommand: "build",
       java: "/jdk/bin/java",
@@ -122,7 +125,7 @@ describe("runDefoldCommand", () => {
 
   test("selects inherit mode by default and carries no captured output", async () => {
     const io = fakeIo();
-    const result = await runDefoldCommand({ cwd: "/proj", subcommand: "resolve", io });
+    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", io });
     expect(io.captures).toEqual([false]);
     expect(result.output).toBeUndefined();
   });
@@ -135,7 +138,7 @@ describe("runDefoldCommand", () => {
         return { exitCode: 0, output: "bob: done" };
       },
     });
-    const result = await runDefoldCommand({
+    const result = await runBobCommand({
       cwd: "/proj",
       subcommand: "build",
       capture: true,
