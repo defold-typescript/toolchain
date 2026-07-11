@@ -2841,6 +2841,7 @@ command-line builder) turns the project tree into engine output.
 **Commands (run from the project root):**
 
 ```sh
+bunx @defold-typescript/cli bob status --json    # dry-run: report the resolved target/jar/Java
 bunx @defold-typescript/cli bob resolve --json   # fetch native extension deps
 bunx @defold-typescript/cli bob build --json     # compile to build/default
 bunx @defold-typescript/cli bob bundle --json     # produce a platform bundle
@@ -2875,6 +2876,19 @@ a caller can confirm exactly which engine build bob ran against.
 and the CLI's exit code is `0`. On `ok: false`, the CLI exit code **is** bob's
 own `exitCode` (not a flat `1`), so a caller can distinguish bob failures by
 code; read `output` for the tail of what bob printed and `error` for the summary.
+
+**Pre-flight with `bob status`:** `bob status` is a read-only dry-run — it
+resolves the `--defold-target` and reports the selected version/channel/SHA, the
+sha-keyed `bob.jar` path and whether it is cached, and the resolved Java runtime,
+**without downloading the jar or running bob**. It is fully offline for a pinned
+version and touches the network only to resolve a moving channel's head; an
+offline channel resolution exits non-zero with an actionable `error`. A missing
+Java runtime is reported (`java: null`), not fatal. Use it to confirm
+preconditions before a `resolve`/`build`:
+
+```json
+{ "command": "bob", "subcommand": "status", "ok": true, "defoldVersion": "1.12.4", "defoldChannel": null, "defoldSha": "402218d…", "bobJar": { "path": "~/.cache/defold-typescript/bob/402218d…/bob.jar", "cached": true }, "java": "java" }
+```
 
 **Preconditions — now satisfied autonomously:** two setup steps that used to
 require a human are handled for you. bob needs a Java runtime, and `bob`

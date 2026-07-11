@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { composeBobArgv, type DefoldIo, runBobCommand } from "./bob-command";
+import { bobCachePath } from "./bob";
+import { composeBobArgv, type DefoldIo, reportBobStatus, runBobCommand } from "./bob-command";
+import type { DefoldTarget } from "./defold-target";
 
 const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
 
@@ -179,5 +181,92 @@ describe("runBobCommand", () => {
       defoldChannel: "beta",
       defoldSha: "beta-sha",
     });
+  });
+});
+
+const NOT_CALLED = (): never => {
+  throw new Error("fetch should not run for this target kind");
+};
+
+interface StatusIo {
+  fetchChannelInfo: (
+    channel: "stable" | "beta" | "alpha",
+  ) => Promise<{ version: string; sha1: string }>;
+  fetchVersionInfo: (version: string) => Promise<{ sha1: string }>;
+  probe: (candidate: string) => boolean;
+  javaProbe: (cmd: string) => boolean;
+  bundledJava?: () => string | null;
+}
+
+function statusIo(overrides: Partial<StatusIo> = {}): StatusIo {
+  return {
+    fetchChannelInfo: async (channel) => ({ version: "1.13.0", sha1: `sha-${channel}` }),
+    fetchVersionInfo: async () => ({ sha1: "s1" }),
+    probe: () => true,
+    javaProbe: () => true,
+    ...overrides,
+  };
+}
+
+describe("reportBobStatus", () => {
+  const version: DefoldTarget = { kind: "version", version: "1.12.4" };
+
+  test("reports a version target's resolved head, cached jar, and java without fetching a channel", async () => {
+    const status = await reportBobStatus({
+      target: version,
+      cacheDir: "/c",
+      io: statusIo({ fetchChannelInfo: NOT_CALLED, probe: () => true, javaProbe: () => true }),
+    });
+    expect(status).toMatchObject({
+      ok: true,
+      version: "1.12.4",
+      channel: null,
+      sha: "s1",
+      bobJar: { path: bobCachePath({ sha1: "s1", cacheDir: "/c" }), cached: true },
+      java: "java",
+    });
+  });
+
+  test("resolves a channel target via fetchChannelInfo and reports an absent jar as uncached", async () => {
+    const status = await reportBobStatus({
+      target: { kind: "channel", channel: "beta" },
+      cacheDir: "/c",
+      io: statusIo({ fetchVersionInfo: NOT_CALLED, probe: () => false }),
+    });
+    expect(status).toMatchObject({
+      ok: true,
+      version: "1.13.0",
+      channel: "beta",
+      sha: "sha-beta",
+      bobJar: { cached: false },
+    });
+  });
+
+  test("reports java as not-found without failing when no runtime resolves", async () => {
+    const status = await reportBobStatus({
+      target: version,
+      cacheDir: "/c",
+      io: statusIo({ fetchChannelInfo: NOT_CALLED, javaProbe: () => false }),
+    });
+    expect(status.ok).toBe(true);
+    expect(status.java).toBeNull();
+  });
+
+  test("returns ok:false with unresolved head fields and an error when the channel fetch rejects", async () => {
+    const status = await reportBobStatus({
+      target: { kind: "channel", channel: "stable" },
+      cacheDir: "/c",
+      io: statusIo({
+        fetchVersionInfo: NOT_CALLED,
+        fetchChannelInfo: async () => {
+          throw new Error("offline: could not resolve the stable Defold head");
+        },
+      }),
+    });
+    expect(status.ok).toBe(false);
+    expect(status.version).toBeNull();
+    expect(status.sha).toBeNull();
+    expect(status.bobJar.path).toBeNull();
+    expect(status.error).toContain("offline");
   });
 });
