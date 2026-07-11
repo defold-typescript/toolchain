@@ -646,23 +646,23 @@ command-line builder) turns the project tree into engine output.
 **Commands (run from the project root):**
 
 ```sh
-bunx @defold-typescript/cli defold resolve --json   # fetch native extension deps
-bunx @defold-typescript/cli defold build --json     # compile to build/default
-bunx @defold-typescript/cli defold bundle --json     # produce a platform bundle
+bunx @defold-typescript/cli bob resolve --json   # fetch native extension deps
+bunx @defold-typescript/cli bob build --json     # compile to build/default
+bunx @defold-typescript/cli bob bundle --json     # produce a platform bundle
 ```
 
-Each `defold <sub>` verb shells out to bob and, under `--json`, keeps stdout to
+Each `bob <sub>` verb shells out to bob and, under `--json`, keeps stdout to
 **exactly one JSON object** — bob's own chatter is captured, not streamed, so a
 line-reader can `JSON.parse` stdout deterministically. The envelope is:
 
 ```json
-{ "command": "defold", "subcommand": "build", "ok": true, "exitCode": 0, "output": "<bob tail>" }
+{ "command": "bob", "subcommand": "build", "ok": true, "exitCode": 0, "output": "<bob tail>" }
 ```
 
 On a non-zero bob exit:
 
 ```json
-{ "command": "defold", "subcommand": "build", "ok": false, "exitCode": 17, "error": "bob build exited with code 17", "output": "<bob tail>" }
+{ "command": "bob", "subcommand": "build", "ok": false, "exitCode": 17, "error": "bob build exited with code 17", "output": "<bob tail>" }
 ```
 
 `output` is a trimmed tail of bob's combined stdout/stderr, present for
@@ -675,12 +675,12 @@ own `exitCode` (not a flat `1`), so a caller can distinguish bob failures by
 code; read `output` for the tail of what bob printed and `error` for the summary.
 
 **Preconditions — now satisfied autonomously:** two setup steps that used to
-require a human are handled for you. bob needs a Java runtime, and `defold`
+require a human are handled for you. bob needs a Java runtime, and `bob`
 resolves one in order (`--java`/`DEFOLD_JAVA` override → `java` on `PATH` → the
 installed editor's bundled JDK), so a machine with only the Defold editor
 installed builds with no separate JDK. bob itself (`bob.jar`) is auto-downloaded
 to the cache on first use and reused thereafter. The one precondition still
-required is **network egress**: the first `defold resolve`/`build` fetches
+required is **network egress**: the first `bob resolve`/`build` fetches
 `bob.jar` and any native extension archives, so an air-gapped run fails until the
 cache is warmed.
 

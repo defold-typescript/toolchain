@@ -81,9 +81,9 @@ const COMMANDS: readonly HelpCommand[] = [
     ],
   },
   {
-    name: "defold",
-    summary: "Run headless Defold (bob.jar) resolve/build/bundle commands.",
-    usage: "bunx @defold-typescript/cli defold <resolve|build|bundle> [path]",
+    name: "bob",
+    summary: "Run Defold's headless bob.jar resolve/build/bundle commands.",
+    usage: "bunx @defold-typescript/cli bob <resolve|build|bundle> [path]",
     flags: [
       {
         flag: "--defold-target <version|stable|beta|alpha>",
