@@ -1,0 +1,99 @@
+import { describe, expect, test } from "bun:test";
+import { classifyDefoldTarget, readDefoldTargetPin, resolveDefoldTarget } from "./defold-target";
+import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
+
+describe("classifyDefoldTarget", () => {
+  test("a semantic version classifies as a fixed version", () => {
+    expect(classifyDefoldTarget("1.12.4")).toEqual({ kind: "version", version: "1.12.4" });
+  });
+
+  test("each channel name classifies as a moving channel", () => {
+    expect(classifyDefoldTarget("stable")).toEqual({ kind: "channel", channel: "stable" });
+    expect(classifyDefoldTarget("beta")).toEqual({ kind: "channel", channel: "beta" });
+    expect(classifyDefoldTarget("alpha")).toEqual({ kind: "channel", channel: "alpha" });
+  });
+
+  test("an unknown token throws, naming --defold-target and the accepted forms", () => {
+    for (const bad of ["nightly", ""]) {
+      let message = "";
+      try {
+        classifyDefoldTarget(bad);
+      } catch (err) {
+        message = err instanceof Error ? err.message : String(err);
+      }
+      expect(message).toContain("--defold-target");
+      expect(message).toContain("1.12.4");
+      expect(message).toContain("stable|beta|alpha");
+    }
+  });
+});
+
+describe("readDefoldTargetPin", () => {
+  test("returns the pinned target for a well-formed package.json", () => {
+    expect(readDefoldTargetPin({ "defold-typescript": { "defold-target": "beta" } })).toBe("beta");
+  });
+
+  test("returns undefined for a missing target key", () => {
+    expect(readDefoldTargetPin({ "defold-typescript": {} })).toBeUndefined();
+  });
+
+  test("returns undefined for a missing namespace", () => {
+    expect(readDefoldTargetPin({ name: "x" })).toBeUndefined();
+  });
+
+  test("returns undefined for a non-object namespace", () => {
+    expect(readDefoldTargetPin({ "defold-typescript": "beta" })).toBeUndefined();
+  });
+
+  test("returns undefined for a non-string target value", () => {
+    expect(readDefoldTargetPin({ "defold-typescript": { "defold-target": 12 } })).toBeUndefined();
+  });
+
+  test("returns undefined for a non-object input", () => {
+    expect(readDefoldTargetPin(null)).toBeUndefined();
+    expect(readDefoldTargetPin("nope")).toBeUndefined();
+    expect(readDefoldTargetPin(undefined)).toBeUndefined();
+  });
+});
+
+describe("resolveDefoldTarget", () => {
+  test("flag wins over pin", () => {
+    expect(resolveDefoldTarget({ flag: "beta", pin: "1.10.0" })).toEqual({
+      kind: "channel",
+      channel: "beta",
+      source: "flag",
+    });
+  });
+
+  test("pin wins when no flag", () => {
+    expect(resolveDefoldTarget({ pin: "1.10.0" })).toEqual({
+      kind: "version",
+      version: "1.10.0",
+      source: "pin",
+    });
+  });
+
+  test("detected wins over default, resolves as a fixed version", () => {
+    expect(resolveDefoldTarget({ detected: "1.9.8" })).toEqual({
+      kind: "version",
+      version: "1.9.8",
+      source: "detected",
+    });
+  });
+
+  test("default fixed version when nothing is set", () => {
+    expect(resolveDefoldTarget({})).toEqual({
+      kind: "version",
+      version: CURRENT_STABLE_DEFOLD_VERSION,
+      source: "default",
+    });
+  });
+
+  test("flag still wins over detected", () => {
+    expect(resolveDefoldTarget({ flag: "alpha", detected: "1.9.8" })).toEqual({
+      kind: "channel",
+      channel: "alpha",
+      source: "flag",
+    });
+  });
+});
