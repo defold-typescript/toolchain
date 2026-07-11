@@ -3485,6 +3485,26 @@ live Defold 1.9.8 reference docs still include `label.get_text` and still omit
 `label.set_text`. If the command fails, update the registry target or the example
 delta; do not ignore the drift.
 
+Before promoting a new stable Defold release, inventory its reference archive
+and inspect the deterministic readiness report:
+
+```sh
+bun run import-defold-release -- 1.13.0 --check --json
+```
+
+This form may download the release archive and cache it under the normal
+Defold TypeScript cache. For offline verification, inject an archive already on
+disk:
+
+```sh
+bun run import-defold-release -- 1.13.0 --check --json --zip /path/to/ref-doc.zip
+```
+
+Remove `--check` to write the audited fixtures and `import-manifest.json` into
+the version-named Defold 1.13.0 fixture directory. The importer does not change
+the default target. A report is blocked when a function-bearing namespace has no
+output mapping or a mapped symbol uses an unknown ref-doc type token.
+
 ### Typing native extensions
 
 Defold native extensions ship their own Lua API alongside the engine's. When a
