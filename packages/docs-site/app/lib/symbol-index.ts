@@ -43,3 +43,54 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
   }
   return index;
 }
+
+const DEFAULT_SYMBOL_INDEX_FILE = "symbol-index.json";
+
+/**
+ * The symbol-index file the client tooltip must fetch for a given page route,
+ * mirroring {@link searchIndexFileForRoute}: a historical `/api/<version-id>/...`
+ * route resolves to `symbol-index-<version-id>.json` so same-name symbols whose
+ * signatures differ across releases tool-tip against the page's own version; a
+ * canonical route (or an unknown prefix) resolves to the default file. The
+ * tooltip must never load the default index on a historical page.
+ */
+export function symbolIndexFileForRoute(route: string, versionIds: readonly string[]): string {
+  const path = route.split(/[?#]/, 1)[0] ?? "";
+  const segments = path.split("/").filter(Boolean);
+  const apiIndex = segments.indexOf("api");
+  const candidate = apiIndex >= 0 ? segments[apiIndex + 1] : undefined;
+  return candidate && versionIds.includes(candidate)
+    ? `symbol-index-${candidate}.json`
+    : DEFAULT_SYMBOL_INDEX_FILE;
+}
+
+// Minimal version shape, declared locally rather than imported from
+// `api-surface-loader` so the client tooltip's import graph stays node-free
+// (mirrors `SearchIndexVersion` in `search-index.ts`).
+export interface SymbolIndexVersion {
+  id: string;
+  isDefault: boolean;
+}
+
+export interface VersionSymbolIndex {
+  version: string;
+  index: Record<string, SymbolEntry>;
+}
+
+/**
+ * One version-correct symbol index per non-default version, built from that
+ * version's own prefixed pages so no entry silently points at a canonical route.
+ * The default version keeps the flat `symbol-index.json`; these are the
+ * `symbol-index-<version-id>.json` siblings the build script emits alongside it.
+ */
+export function versionSymbolIndexRecords(
+  versions: readonly SymbolIndexVersion[],
+  pagesForVersion: (versionId: string) => ApiPage[],
+): VersionSymbolIndex[] {
+  return versions
+    .filter((version) => !version.isDefault)
+    .map((version) => ({
+      version: version.id,
+      index: buildSymbolIndex(pagesForVersion(version.id)),
+    }));
+}

@@ -31,6 +31,8 @@ import {
 } from "./api-surface-loader";
 import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
+import { buildReleaseRouteManifest, validateReleaseRouteManifest } from "./release-manifest";
+import { versionLabel } from "./version-switch";
 
 function fnSymbol(name: string, overrides: Partial<ApiSymbol> = {}): ApiSymbol {
   return {
@@ -1647,5 +1649,92 @@ describe("availability join", () => {
       (s) => s.availability?.since === "1.13.0",
     );
     expect(labelled.length).toBeGreaterThan(0);
+  });
+});
+
+describe("complete release snapshots", () => {
+  interface RegistryTarget {
+    id: string;
+    default?: boolean;
+    modules: { namespace: string }[];
+    luaStdlib?: { namespace: string }[];
+  }
+
+  function registryTargets(): RegistryTarget[] {
+    const { targets } = JSON.parse(
+      readFileSync(join(REAL_TYPES_DIR, "api-targets.json"), "utf8"),
+    ) as { targets: RegistryTarget[] };
+    return targets;
+  }
+
+  // The materialized registry targets — canonical 1.13.0 and historical 1.12.4.
+  // A ref-doc-sourced target with no committed fixtures is not a release
+  // snapshot and is excluded by `versionsWithDiskFixtures`.
+  const completeTargets = versionsWithDiskFixtures(REAL_TYPES_DIR);
+
+  function pagesForCompleteTargets(): Record<string, ApiPage[]> {
+    const pagesByVersion: Record<string, ApiPage[]> = {};
+    for (const version of completeTargets) {
+      pagesByVersion[version.id] = loadApiSurfaceForVersion(
+        REAL_TYPES_DIR,
+        version.id,
+        REAL_LIBRARY_TYPES_DIR,
+      );
+    }
+    return pagesByVersion;
+  }
+
+  test("both complete targets are present: canonical default plus historical 1.12.4", () => {
+    expect(completeTargets.some((v) => v.id === "defold-1.13.0" && v.isDefault)).toBe(true);
+    expect(completeTargets.some((v) => v.id === "defold-1.12.4" && !v.isDefault)).toBe(true);
+  });
+
+  test("every registry-declared module of each complete target materializes at its exact route", () => {
+    const targets = registryTargets();
+    const pagesByVersion = pagesForCompleteTargets();
+    for (const version of completeTargets) {
+      const target = targets.find((t) => t.id === version.id);
+      expect(target).toBeDefined();
+      if (!target) continue;
+      const declared = [
+        ...target.modules.map((m) => m.namespace),
+        ...(target.luaStdlib?.map((m) => m.namespace) ?? []),
+      ];
+      const routeByNamespace = new Map(
+        pagesByVersion[version.id]?.map((p) => [p.namespace, p.route]),
+      );
+      const prefix = version.isDefault ? "/api" : `/api/${version.id}`;
+      for (const namespace of declared) {
+        expect(routeByNamespace.get(namespace)).toBe(`${prefix}/${namespace}`);
+      }
+    }
+  });
+
+  test("canonical 1.13.0 stays unprefixed while historical 1.12.4 keeps its exact id prefix", () => {
+    const canonical = loadApiSurfaceForVersion(
+      REAL_TYPES_DIR,
+      "defold-1.13.0",
+      REAL_LIBRARY_TYPES_DIR,
+    );
+    const historical = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4");
+    expect(canonical.find((p) => p.namespace === "go")?.route).toBe("/api/go");
+    expect(historical.find((p) => p.namespace === "go")?.route).toBe("/api/defold-1.12.4/go");
+  });
+
+  test("each complete target carries a human version label", () => {
+    expect(versionLabel("defold-1.13.0")).toBe("Defold 1.13.0");
+    expect(versionLabel("defold-1.12.4")).toBe("Defold 1.12.4");
+  });
+
+  test("the release-route manifest for both complete targets validates clean", () => {
+    const manifest = buildReleaseRouteManifest({
+      versions: completeTargets,
+      pagesByVersion: pagesForCompleteTargets(),
+    });
+    expect(validateReleaseRouteManifest(manifest)).toEqual([]);
+    expect(manifest.canonicalRoutes).toContain("/api/go");
+    expect(manifest.historicalRoutes).toContain("/api/defold-1.12.4/go");
+    expect(manifest.searchRoutes).toContain("search-index.json");
+    expect(manifest.searchRoutes).toContain("search-index-defold-1.12.4.json");
   });
 });
