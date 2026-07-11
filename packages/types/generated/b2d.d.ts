@@ -16,6 +16,12 @@ declare global {
      */
     function get_body(url: string | Hash | Url): Opaque<"b2Body">;
     /**
+     * Get the Box2D version information for the active backend.
+     *
+     * @returns version info with fields `version`, `major`, `middle`, and `minor`
+     */
+    function get_version(): Record<string | number, unknown>;
+    /**
      * Get the Box2D world from the current collection
      *
      * @returns the world if successful. Otherwise `nil`.

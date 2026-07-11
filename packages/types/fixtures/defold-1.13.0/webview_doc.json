@@ -1,0 +1,116 @@
+{
+  "info": {
+    "namespace": "webview",
+    "brief": "Functions and constants for interacting with webview APIs",
+    "description": "Functions and constants for interacting with webview APIs"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "webview.create",
+      "description": "Creates a webview instance. It can show HTML pages as well as evaluate Javascript. The view remains hidden until the first call. There can exist a maximum of 4 webviews at the same time.\nOn iOS, the callback will never get a `webview.CALLBACK_RESULT_EVAL_ERROR`, due to the iOS SDK implementation.\"",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "A callback which receives info about finished requests taking the following parameters:",
+          "types": ["function"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webview.destroy",
+      "description": "Destroys an instance of a webview.",
+      "parameters": [
+        {
+          "name": "webview_id",
+          "doc": "The webview id (returned by the `webview.create()` call)",
+          "types": ["number"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webview.open_raw",
+      "description": "Opens a web page in the webview, using HTML data. Once the request is done, the callback (registered in `webview.create()`) is invoked.",
+      "parameters": [
+        { "name": "webview_id", "doc": "The webview id", "types": ["number"] },
+        { "name": "html", "doc": "The HTML data to display", "types": ["string"] },
+        {
+          "name": "options",
+          "doc": "A table of options for the request. See `webview.open()`",
+          "types": ["table"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webview.eval",
+      "description": "Evaluates JavaScript within the context of the currently loaded page (if any). Once the request is done, the callback (registered in `webview.create()`) is invoked. The callback will get the result in the `data[\"result\"]` field.",
+      "parameters": [
+        { "name": "webview_id", "doc": "The webview id", "types": ["number"] },
+        { "name": "code", "doc": "The JavaScript code to evaluate", "types": ["string"] }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webview.set_transparent",
+      "description": "Set transparency of webview background",
+      "parameters": [
+        { "name": "webview_id", "doc": "The webview id", "types": ["number"] },
+        {
+          "name": "transparent",
+          "doc": "If `true`, the webview background becomes transparent, otherwise opaque.",
+          "types": ["boolean"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webview.set_visible",
+      "description": "Shows or hides a webview",
+      "parameters": [
+        { "name": "webview_id", "doc": "The webview id", "types": ["number"] },
+        {
+          "name": "visible",
+          "doc": "If `0`, hides the webview. If non zero, shows the view",
+          "types": ["number"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webview.is_visible",
+      "description": "Returns the visibility state of the webview.",
+      "parameters": [{ "name": "webview_id", "doc": "The webview id", "types": ["number"] }],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webview.set_position",
+      "description": "Sets the position and size of the webview",
+      "parameters": [
+        { "name": "webview_id", "doc": "The webview id", "types": ["number"] },
+        { "name": "x", "doc": "The x position of the webview", "types": ["number"] },
+        { "name": "y", "doc": "The y position of the webview", "types": ["number"] },
+        {
+          "name": "width",
+          "doc": "The width of the webview (-1 to match screen width)",
+          "types": ["number"]
+        },
+        {
+          "name": "height",
+          "doc": "The height of the webview (-1 to match screen height)",
+          "types": ["number"]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

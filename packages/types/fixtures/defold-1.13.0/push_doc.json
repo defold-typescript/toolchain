@@ -1,0 +1,135 @@
+{
+  "info": {
+    "namespace": "push",
+    "brief": "Functions and constants for interacting with local, as well as Apple''s and Google''s push notification services. These API's only exist on mobile platforms. [icon:ios] [icon:android]",
+    "description": "Functions and constants for interacting with local, as well as Apple''s and Google''s push notification services. These API's only exist on mobile platforms. [icon:ios] [icon:android]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "push.register",
+      "description": "Send a request for push notifications. Note that the notifications table parameter is iOS only and will be ignored on Android.",
+      "parameters": [
+        {
+          "name": "notifications",
+          "doc": "The types of notifications to listen to. [icon:ios]",
+          "types": ["table"]
+        },
+        { "name": "callback", "doc": "Register callback function.", "types": ["function"] }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.set_listener",
+      "description": "Sets a listener function to listen to push notifications.",
+      "parameters": [
+        { "name": "listener", "doc": "Listener callback function.", "types": ["function"] }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.set_badge_count",
+      "description": "Set the badge count for application icon. This function is only available on iOS. [icon:ios]",
+      "parameters": [{ "name": "count", "doc": "Badge count", "types": ["number"] }],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.schedule",
+      "description": "Local push notifications are scheduled with this function.\nThe returned `id` value is uniquely identifying the scheduled notification and can be stored for later reference.",
+      "parameters": [
+        {
+          "name": "time",
+          "doc": "Number of seconds into the future until the notification should be triggered.",
+          "types": ["number"]
+        },
+        {
+          "name": "title",
+          "doc": "Localized title to be displayed to the user if the application is not running.",
+          "types": ["string"]
+        },
+        {
+          "name": "alert",
+          "doc": "Localized body message of the notification to be displayed to the user if the application is not running.",
+          "types": ["string"]
+        },
+        {
+          "name": "payload",
+          "doc": "JSON string to be passed to the registered listener function.",
+          "types": ["string"]
+        },
+        {
+          "name": "notification_settings",
+          "doc": "Table with notification and platform specific fields",
+          "types": ["table"]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Unique id that can be used to cancel or inspect the notification",
+          "types": ["number"]
+        },
+        {
+          "name": "",
+          "doc": "Error string if something went wrong, otherwise nil",
+          "types": ["string"]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.cancel",
+      "description": "Use this function to cancel a previously scheduled local push notification.\nThe notification is identified by a numeric id as returned by `push.schedule()`.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The numeric id of the local push notification",
+          "types": ["number"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.cancel_all_issued",
+      "description": "Use this function to cancel a previously issued local push notifications.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.get_scheduled",
+      "description": "Returns a table with all data associated with a specified local push notification.\nThe notification is identified by a numeric id as returned by `push.schedule()`.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The numeric id of the local push notification.",
+          "types": ["number"]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Table with all data associated with the notification.",
+          "types": ["table"]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.get_all_scheduled",
+      "description": "Returns a table with all data associated with all scheduled local push notifications.\nThe table contains key, value pairs where the key is the push notification id and the value is a table with the notification data, corresponding to the data given by `push.get_scheduled(id)`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Table with all data associated with all scheduled notifications.",
+          "types": ["table"]
+        }
+      ]
+    }
+  ]
+}

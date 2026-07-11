@@ -4,6 +4,11 @@ declare global {
    * Graphics functions and constants.
    */
   namespace graphics {
+    const BLEND_EQUATION_ADD: number & { readonly __brand: "graphics.BLEND_EQUATION_ADD" };
+    const BLEND_EQUATION_MAX: number & { readonly __brand: "graphics.BLEND_EQUATION_MAX" };
+    const BLEND_EQUATION_MIN: number & { readonly __brand: "graphics.BLEND_EQUATION_MIN" };
+    const BLEND_EQUATION_REVERSE_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_REVERSE_SUBTRACT" };
+    const BLEND_EQUATION_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_SUBTRACT" };
     const BLEND_FACTOR_CONSTANT_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_ALPHA" };
     const BLEND_FACTOR_CONSTANT_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_COLOR" };
     const BLEND_FACTOR_DST_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_DST_ALPHA" };
@@ -47,6 +52,44 @@ declare global {
     const COMPRESSION_TYPE_DEFAULT: number & { readonly __brand: "graphics.COMPRESSION_TYPE_DEFAULT" };
     const COMPRESSION_TYPE_WEBP: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP" };
     const COMPRESSION_TYPE_WEBP_LOSSY: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP_LOSSY" };
+    /**
+     * Context feature flag indicating support for 3D (volume) textures.
+     */
+    const CONTEXT_FEATURE_3D_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_3D_TEXTURES" };
+    /**
+     * Context feature flag indicating support for ASTC compressed 2D array textures.
+     * Some WebGL/GLES drivers fail array texture ASTC uploads while 2D ASTC works.
+     */
+    const CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES" };
+    /**
+     * Context feature flag indicating support for min/max blend equations.
+     * Requires GLES3+ or EXT_blend_minmax.
+     */
+    const CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX" };
+    /**
+     * Context feature flag indicating support for compute shaders.
+     */
+    const CONTEXT_FEATURE_COMPUTE_SHADER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_COMPUTE_SHADER" };
+    /**
+     * Context feature flag indicating support for hardware instancing.
+     */
+    const CONTEXT_FEATURE_INSTANCING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_INSTANCING" };
+    /**
+     * Context feature flag indicating support for rendering to multiple color targets simultaneously.
+     */
+    const CONTEXT_FEATURE_MULTI_TARGET_RENDERING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING" };
+    /**
+     * Context feature flag indicating support for storage buffers.
+     */
+    const CONTEXT_FEATURE_STORAGE_BUFFER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_STORAGE_BUFFER" };
+    /**
+     * Context feature flag indicating support for texture arrays.
+     */
+    const CONTEXT_FEATURE_TEXTURE_ARRAY: number & { readonly __brand: "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY" };
+    /**
+     * Context feature flag indicating support for vertical sync (vsync).
+     */
+    const CONTEXT_FEATURE_VSYNC: number & { readonly __brand: "graphics.CONTEXT_FEATURE_VSYNC" };
     const FACE_TYPE_BACK: number & { readonly __brand: "graphics.FACE_TYPE_BACK" };
     const FACE_TYPE_FRONT: number & { readonly __brand: "graphics.FACE_TYPE_FRONT" };
     const FACE_TYPE_FRONT_AND_BACK: number & { readonly __brand: "graphics.FACE_TYPE_FRONT_AND_BACK" };
@@ -220,6 +263,58 @@ declare global {
     const TEXTURE_WRAP_CLAMP_TO_EDGE: number & { readonly __brand: "graphics.TEXTURE_WRAP_CLAMP_TO_EDGE" };
     const TEXTURE_WRAP_MIRRORED_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_MIRRORED_REPEAT" };
     const TEXTURE_WRAP_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_REPEAT" };
+    /**
+     * Returns a table describing the active graphics context: the adapter family,
+     * its hardware limits, the list of driver-reported extensions, and the set of
+     * optional context features supported by the backend.
+     *
+     * @returns table with the following fields:
+     * `family` string adapter family name (e.g. "opengl", "vulkan")
+     * `version_major` number adapter API major version (e.g. 1 for Vulkan 1.4)
+     * `version_minor` number adapter API minor version (e.g. 4 for Vulkan 1.4)
+     * `limits` table hardware/driver limits:
+     *
+     * ``max_texture_size_2d` [type:number] max 2D texture dimension in texels
+     * `max_texture_size_3d` [type:number] max 3D (volume) texture dimension in texels
+     * `max_texture_size_cube` [type:number] max cube map face dimension in texels
+     * `max_texture_array_layers` [type:number] max layers in an array texture
+     * `max_framebuffer_width` [type:number] max framebuffer width in pixels
+     * `max_framebuffer_height` [type:number] max framebuffer height in pixels
+     * `max_color_attachments` [type:number] max simultaneous color attachments
+     * `max_samplers_per_stage` [type:number] max texture samplers per shader stage
+     * `max_textures_per_stage` [type:number] max sampled textures per shader stage
+     * `max_vertex_attributes` [type:number] max vertex attributes
+     * `max_vertex_buffers` [type:number] max vertex buffer bindings
+     * `max_compute_workgroup_size_x` [type:number] max compute workgroup size (X)
+     * `max_compute_workgroup_size_y` [type:number] max compute workgroup size (Y)
+     * `max_compute_workgroup_size_z` [type:number] max compute workgroup size (Z)
+     * `max_compute_workgroup_invocations` [type:number] max invocations per compute workgroup
+     * `max_compute_shared_memory_size` [type:number] max shared memory per compute workgroup (bytes)
+     * `max_uniform_buffer_range` [type:number] max bindable uniform buffer range (bytes)
+     * `max_storage_buffer_range` [type:number] max bindable storage buffer range (bytes)
+     * `
+     *
+     * `extensions` table array of driver-reported extension name strings
+     * `features` table array of supported context feature ids:
+     *
+     * ``graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING` multi-target rendering
+     * `graphics.CONTEXT_FEATURE_TEXTURE_ARRAY` texture arrays
+     * `graphics.CONTEXT_FEATURE_COMPUTE_SHADER` compute shaders
+     * `graphics.CONTEXT_FEATURE_STORAGE_BUFFER` storage buffers
+     * `graphics.CONTEXT_FEATURE_VSYNC` vertical sync
+     * `graphics.CONTEXT_FEATURE_INSTANCING` hardware instancing
+     * `graphics.CONTEXT_FEATURE_3D_TEXTURES` 3D (volume) textures
+     * `graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES` ASTC compressed 2D array textures
+     * `graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX` min/max blend equations
+     * `
+     */
+    function get_adapter_info(): Record<string | number, unknown>;
+    /**
+     * get the list of graphics adapters that have been registered with the engine
+     *
+     * @returns array of adapter family name strings (e.g. "opengl", "vulkan", "webgpu")
+     */
+    function get_engine_adapters(): Record<string | number, unknown>;
   }
 }
 

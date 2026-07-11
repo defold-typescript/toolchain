@@ -1,5 +1,44 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { loadApiTargets } from "../scripts/regen";
 import { enumerateDeclaredSymbols } from "./fixture-surface-enumerate";
+
+const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+
+describe("committed release surfaces", () => {
+  test("1.13.0 and 1.12.4 include every function-bearing mapped namespace", () => {
+    const required = [
+      "b2d.fixture",
+      "b2d.shape",
+      "b2d.joint",
+      "b2d.chain",
+      "b2d.world",
+      "compute",
+      "material",
+    ];
+
+    const targets = loadApiTargets().filter((target) =>
+      ["defold-1.13.0", "defold-1.12.4"].includes(target.id),
+    );
+    expect(targets).toHaveLength(2);
+    const current = targets.find((target) => target.id === "defold-1.13.0");
+    if (!current) throw new Error("missing defold-1.13.0 target");
+    const currentNamespaces = new Set(current.modules.map((module) => module.namespace));
+    for (const namespace of required) expect(currentNamespaces.has(namespace)).toBe(true);
+
+    for (const target of targets) {
+      for (const module of target.modules) {
+        const generated = resolve(PACKAGE_ROOT, target.generatedDir, module.outFile);
+        const symbols = enumerateDeclaredSymbols(readFileSync(generated, "utf8"));
+        const ownsSymbol = [...symbols.keys()].some((name) =>
+          name.startsWith(`${module.namespace}.`),
+        );
+        expect(ownsSymbol || (module.skipFunctions?.length ?? 0) > 0).toBe(true);
+      }
+    }
+  });
+});
 
 describe("enumerateDeclaredSymbols — AST presence enumeration", () => {
   test("captures a type alias and a function inside a namespace with the right kinds", () => {

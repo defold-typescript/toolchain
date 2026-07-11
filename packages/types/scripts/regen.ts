@@ -143,6 +143,12 @@ const DEFAULT_TARGET = API_TARGETS.find((t) => t.default === true) as ApiTarget;
 
 export const MODULE_MANIFEST: readonly ModuleManifestEntry[] = loadTargetModules(DEFAULT_TARGET);
 
+const FIDELITY_BASELINE_TARGET = API_TARGETS.find(
+  (target) => target.id === "defold-1.12.4",
+) as ApiTarget;
+export const FIDELITY_BASELINE_MANIFEST: readonly ModuleManifestEntry[] =
+  loadTargetModules(FIDELITY_BASELINE_TARGET);
+
 export interface MessagesManifestEntry {
   readonly doc: unknown;
   readonly outFile: string;

@@ -3,7 +3,7 @@ import type { Hash, Url, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
   /**
-   * Functions to manipulate a label component.
+   * Label API documentation
    */
   namespace label {
     /**

@@ -15,6 +15,16 @@ const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
+export const DEFOLD_1_13_PROMOTED_NAMESPACES = [
+  "b2d.chain",
+  "b2d.fixture",
+  "b2d.joint",
+  "b2d.shape",
+  "b2d.world",
+  "compute",
+  "material",
+] as const;
+
 interface RawElement extends Record<string, unknown> {
   type?: string;
   name?: string;
@@ -417,11 +427,20 @@ function loadBaseline(packageRoot = PACKAGE_ROOT): ReleaseBaseline {
     ...module,
     doc: JSON.parse(readFileSync(resolve(packageRoot, target.fixturesDir, module.fixture), "utf8")),
   });
+  const modules = target.modules
+    .filter((module) => SYNC_MANIFEST.some((source) => source.namespace === module.namespace))
+    .map(load);
+  for (const namespace of DEFOLD_1_13_PROMOTED_NAMESPACES) {
+    if (modules.some((module) => module.namespace === namespace)) continue;
+    modules.push({
+      namespace,
+      fixture: `${namespace.replace(/\./g, "_")}_doc.json`,
+      doc: { info: { namespace }, elements: [] },
+    });
+  }
   return {
     id: target.id,
-    modules: target.modules
-      .filter((module) => SYNC_MANIFEST.some((source) => source.namespace === module.namespace))
-      .map(load),
+    modules,
     luaStdlib: (target.luaStdlib ?? []).map(load),
   };
 }

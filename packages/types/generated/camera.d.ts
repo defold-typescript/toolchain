@@ -3,17 +3,19 @@ import type { Matrix4, Url, Vector3 } from "../src/core-types";
 
 declare global {
   /**
-   * Camera functions, messages and constants.
+   * Messages to control camera components and camera focus.
    */
   namespace camera {
     /**
      * Computes zoom so the original display area covers the entire window while preserving aspect ratio.
      * Equivalent to using max(window_width/width, window_height/height).
+     * The result is multiplied by the user-controlled orthographic zoom.
      */
     const ORTHO_MODE_AUTO_COVER: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_COVER" };
     /**
      * Computes zoom so the original display area (game.project width/height) fits inside the window
      * while preserving aspect ratio. Equivalent to using min(window_width/width, window_height/height).
+     * The result is multiplied by the user-controlled orthographic zoom.
      */
     const ORTHO_MODE_AUTO_FIT: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_FIT" };
     /**
@@ -82,6 +84,14 @@ declare global {
      */
     function get_near_z(camera?: Url | number): number;
     /**
+     * Gets the orthographic zoom calculated from the current window and project dimensions
+     * in auto-fit and auto-cover modes. Returns 1.0 in fixed mode.
+     *
+     * @param camera - camera id
+     * @returns the calculated orthographic auto zoom.
+     */
+    function get_orthographic_auto_zoom(camera?: Url | number): number;
+    /**
      * get orthographic zoom mode
      *
      * @param camera - camera id
@@ -90,10 +100,11 @@ declare global {
      */
     function get_orthographic_mode(camera?: Url | number): number;
     /**
-     * get orthographic zoom
+     * Gets the positive user-controlled orthographic zoom multiplier. In auto-fit and auto-cover
+     * modes, this value is multiplied with camera.get_orthographic_auto_zoom(camera).
      *
      * @param camera - camera id
-     * @returns the zoom level when the camera uses orthographic projection.
+     * @returns the positive zoom multiplier when the camera uses orthographic projection.
      */
     function get_orthographic_zoom(camera?: Url | number): number;
     /**
@@ -214,10 +225,11 @@ declare global {
      */
     function set_orthographic_mode(camera: Url | number | undefined, mode: number): void;
     /**
-     * set orthographic zoom
+     * Sets the positive user-controlled orthographic zoom multiplier. In auto-fit and auto-cover
+     * modes, this value is multiplied with camera.get_orthographic_auto_zoom(camera).
      *
      * @param camera - camera id
-     * @param orthographic_zoom - the zoom level when the camera uses orthographic projection.
+     * @param orthographic_zoom - the positive zoom multiplier when the camera uses orthographic projection.
      */
     function set_orthographic_zoom(camera: Url | number | undefined, orthographic_zoom: number): void;
     /**
@@ -239,6 +251,51 @@ declare global {
      * ```
      */
     function world_to_screen(world_pos: Vector3, camera?: Url | number): Vector3;
+    interface properties {
+      /**
+       * The ratio between the frustum width and height. Used when calculating the
+       * projection of a perspective camera.
+       * The type of the property is number.
+       */
+      aspect_ratio: unknown;
+      /**
+       * Camera frustum far plane.
+       * The type of the property is float.
+       */
+      far_z: unknown;
+      /**
+       * Vertical field of view of the camera.
+       * The type of the property is float.
+       */
+      fov: unknown;
+      /**
+       * Camera frustum near plane.
+       * The type of the property is float.
+       */
+      near_z: unknown;
+      /**
+       * READ ONLY The zoom calculated from the current window and project dimensions
+       * in auto fit and auto cover modes. The value is 1.0 in fixed mode.
+       * The type of the property is float.
+       */
+      orthographic_auto_zoom: unknown;
+      /**
+       * Positive zoom multiplier when using an orthographic projection. In auto fit and auto cover
+       * modes, this value is multiplied with the calculated orthographic_auto_zoom value.
+       * The type of the property is float.
+       */
+      orthographic_zoom: unknown;
+      /**
+       * READ ONLY The calculated projection matrix of the camera.
+       * The type of the property is matrix4.
+       */
+      projection: unknown;
+      /**
+       * READ ONLY The calculated view matrix of the camera.
+       * The type of the property is matrix4.
+       */
+      view: unknown;
+    }
   }
 }
 

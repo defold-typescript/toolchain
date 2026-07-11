@@ -3,15 +3,7 @@ import type { Hash, Matrix4, Opaque, Url, Vector4 } from "../src/core-types";
 
 declare global {
   /**
-   * Rendering functions, messages and constants. The "render" namespace is
-   * accessible only from render scripts.
-   *
-   * The rendering API was originally built on top of OpenGL ES 2.0, and it uses a subset of the
-   * OpenGL computer graphics rendering API for rendering 2D and 3D computer
-   * graphics. Our current target is OpenGLES 3.0 with fallbacks to 2.0 on some platforms.
-   *
-   * [icon:attention] It is possible to create materials and write shaders that
-   * require features not in OpenGL ES 2.0, but those will not work cross platform.
+   * Rendering API documentation
    */
   namespace render {
     type constant_buffer = Opaque<"constant_buffer">;
@@ -659,6 +651,17 @@ declare global {
      */
     function render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">;
     /**
+     * Sets the blend equation with separate equations for the color and alpha channels.
+     *
+     * @param equation_color - color blend equation
+     * @param equation_alpha - alpha blend equation
+     * @example
+     * ```ts
+     * render.set_blend_equation_separate(graphics.BLEND_EQUATION_ADD, graphics.BLEND_EQUATION_REVERSE_SUBTRACT);
+     * ```
+     */
+    function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;
+    /**
      * Specifies the arithmetic used when computing pixel values that are written to the frame
      * buffer. In RGBA mode, pixels can be drawn using a function that blends the source RGBA
      * pixel values with the destination pixel values already in the frame buffer.
@@ -745,6 +748,19 @@ declare global {
      * ```
      */
     function set_blend_func(source_factor: number, destination_factor: number): void;
+    /**
+     * Sets the blend function with separate blend factors for the color and alpha channels.
+     *
+     * @param source_factor_color - source color blend factor
+     * @param destination_factor_color - destination color blend factor
+     * @param source_factor_alpha - source alpha blend factor
+     * @param destination_factor_alpha - destination alpha blend factor
+     * @example
+     * ```ts
+     * render.set_blend_func_separate(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+     * ```
+     */
+    function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;
     /**
      * Sets the current render camera to be used for rendering. If a render camera
      * has been set by the render script, the renderer will be using its projection and view matrix

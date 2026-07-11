@@ -79,8 +79,7 @@ declare global {
      */
     function get_cpu_usage(): number;
     /**
-     * Get the amount of memory used (resident/working set) by the application in bytes, as reported by the OS.
-     * This function is not available on HTML5.
+     * Get the detailed amount of memory used by the application in bytes, as reported by the platform.
      * The values are gathered from internal OS functions which correspond to the following;
      *
      * OS
@@ -97,7 +96,7 @@ declare global {
      * Working set
      *
      * HTML5
-     * Not available
+     * Allocated bytes reported by `mallinfo().uordblks`
      *
      * @returns used by the application
      * @example

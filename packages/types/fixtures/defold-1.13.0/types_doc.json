@@ -1,0 +1,212 @@
+{
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "types.is_vector",
+      "brief": "Check if passed type is vector.",
+      "description": "Check if passed type is vector.",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if passed type is vector",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "var",
+          "doc": "Variable to check type",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [
+        "'vector3' and 'vector4' types is not a 'vector' type under the hood.\nSo if called `types.is_vector(vmath.vector3())` it returns 'false'"
+      ],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "types.is_matrix4",
+      "brief": "Check if passed type is matrix4.",
+      "description": "Check if passed type is matrix4.",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if passed type is matrix4",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "var",
+          "doc": "Variable to check type",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "types.is_vector3",
+      "brief": "Check if passed type is vector3.",
+      "description": "Check if passed type is vector3.",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if passed type is vector3",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "var",
+          "doc": "Variable to check type",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "types.is_vector4",
+      "brief": "Check if passed type is vector4.",
+      "description": "Check if passed type is vector4.",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if passed type is vector4",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "var",
+          "doc": "Variable to check type",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "types.is_quat",
+      "brief": "Check if passed type is quaternion.",
+      "description": "Check if passed type is quaternion.",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if passed type is quaternion",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "var",
+          "doc": "Variable to check type",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "types.is_hash",
+      "brief": "Check if passed type is hash.",
+      "description": "Check if passed type is hash.",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if passed type is hash",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "var",
+          "doc": "Variable to check type",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "types.is_url",
+      "brief": "Check if passed type is URL.",
+      "description": "Check if passed type is URL.",
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if passed type is URL",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "var",
+          "doc": "Variable to check type",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "types",
+    "name": "Types",
+    "brief": "Types API documentation",
+    "description": "Functions for checking Defold userdata types.",
+    "path": "engine/script/src/script_types.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

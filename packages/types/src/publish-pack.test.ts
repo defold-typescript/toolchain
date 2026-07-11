@@ -26,6 +26,9 @@ describe("@defold-typescript/types publish surface", () => {
     expect(paths).toContain("package.json");
     expect(paths).toContain("index.d.ts");
     expect(paths).toContain("generated/vmath.d.ts");
+    expect(paths).toContain("generated/compute.d.ts");
+    expect(paths).toContain("generated/versions/defold-1.12.4/camera.d.ts");
+    expect(paths).toContain("generated/versions/defold-1.12.4/index.d.ts");
     expect(paths).toContain("src/index.ts");
     expect(paths).toContain("src/msg-overloads.d.ts");
     expect(paths).toContain("src/go-overloads.d.ts");

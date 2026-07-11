@@ -111,6 +111,20 @@ declare global {
      */
     function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;
     /**
+     * Resets a shader constant for a tile map component.
+     * The constant must be defined in the material assigned to the tile map.
+     * Resetting a constant through this function implies that the value defined in the material will be used.
+     * Which tile map to reset a constant for is identified by the URL.
+     *
+     * @param url - the tile map that should have a constant reset
+     * @param constant - name of the constant
+     * @example
+     * ```ts
+     * tilemap.reset_constant("#tilemap", "tint");
+     * ```
+     */
+    function reset_constant(url: string | Hash | Url, constant: string | Hash): void;
+    /**
      * Replace a tile in a tile map with a new tile.
      * The coordinates of the tiles are indexed so that the "first" tile just
      * above and to the right of origin has coordinates 1,1.

@@ -1,0 +1,806 @@
+/** @noSelfInFile */
+import type { Matrix4, Quaternion, Vector, Vector3, Vector4 } from "../../../src/core-types";
+
+declare global {
+  /**
+   * Functions for mathematical operations on vectors, matrices and quaternions.
+   *
+   * - The vector types (`vmath.vector3` and `vmath.vector4`) supports addition and subtraction
+   * with vectors of the same type. Vectors can be negated and multiplied (scaled) or divided by numbers.
+   * - The quaternion type (`vmath.quat`) supports multiplication with other quaternions.
+   * - The matrix type (`vmath.matrix4`) can be multiplied with numbers, other matrices
+   * and `vmath.vector4` values.
+   * - All types performs equality comparison by each component value.
+   *
+   * The following components are available for the various types:
+   *
+   * vector3
+   * : `x`, `y` and `z`. Example: `v.y`
+   *
+   * vector4
+   * : `x`, `y`, `z`, and `w`. Example: `v.w`
+   *
+   * quaternion
+   * : `x`, `y`, `z`, and `w`. Example: `q.w`
+   *
+   * matrix4
+   * : `m00` to `m33` where the first number is the row (starting from 0) and the second
+   * number is the column. Columns can be accessed with `c0` to `c3`, returning a `vector4`.
+   * Example: `m.m21` which is equal to `m.c1.z`
+   *
+   * vector
+   * : indexed by number 1 to the vector length. Example: `v[3]`
+   */
+  namespace vmath {
+    /**
+     * Calculates the conjugate of a quaternion. The result is a
+     * quaternion with the same magnitudes but with the sign of
+     * the imaginary (vector) parts changed:
+     * `q* = [w, -v]`
+     *
+     * @param q1 - quaternion of which to calculate the conjugate
+     * @returns the conjugate
+     * @example
+     * ```ts
+     * const quat = vmath.quat(1, 2, 3, 4);
+     * print(vmath.conj(quat)); // => vmath.quat(-1, -2, -3, 4)
+     * ```
+     */
+    function conj(q1: Quaternion): Quaternion;
+    /**
+     * Given two linearly independent vectors P and Q, the cross product,
+     * P &#x00D7; Q, is a vector that is perpendicular to both P and Q and
+     * therefore normal to the plane containing them.
+     * If the two vectors have the same direction (or have the exact
+     * opposite direction from one another, i.e. are not linearly independent)
+     * or if either one has zero length, then their cross product is zero.
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns a new vector representing the cross product
+     * @example
+     * ```ts
+     * const vec1 = vmath.vector3(1, 0, 0);
+     * const vec2 = vmath.vector3(0, 1, 0);
+     * print(vmath.cross(vec1, vec2)); // => vmath.vector3(0, 0, 1)
+     * const vec3 = vmath.vector3(-1, 0, 0);
+     * print(vmath.cross(vec1, vec3)); // => vmath.vector3(0, -0, 0)
+     * ```
+     */
+    function cross(v1: Vector3, v2: Vector3): Vector3;
+    /**
+     * The returned value is a scalar defined as:
+     * `P &#x22C5; Q = |P| |Q| cos &#x03B8;`
+     * where &#x03B8; is the angle between the vectors P and Q.
+     *
+     * - If the dot product is positive then the angle between the vectors is below 90 degrees.
+     *
+     * - If the dot product is zero the vectors are perpendicular (at right-angles to each other).
+     *
+     * - If the dot product is negative then the angle between the vectors is more than 90 degrees.
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns dot product
+     * @example
+     * ```ts
+     * if (vmath.dot(vector1, vector2) === 0) {
+     *   // The two vectors are perpendicular (at right-angles to each other)
+     *   // ...
+     * }
+     * ```
+     */
+    function dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number;
+    /**
+     * Converts euler angles (x, y, z) in degrees into a quaternion
+     * The error is guaranteed to be less than 0.001.
+     * If the first argument is vector3, its values are used as x, y, z angles.
+     *
+     * @param x - rotation around x-axis in degrees or vector3 with euler angles in degrees
+     * @param y - rotation around y-axis in degrees
+     * @param z - rotation around z-axis in degrees
+     * @returns quaternion describing an equivalent rotation (231 (YZX) rotation sequence)
+     * @example
+     * ```ts
+     * const q = vmath.euler_to_quat(0, 45, 90);
+     * print(q); // => vmath.quat(0.27059805393219, 0.27059805393219, 0.65328145027161, 0.65328145027161)
+     *
+     * const v = vmath.vector3(0, 0, 90);
+     * print(vmath.euler_to_quat(v)); // => vmath.quat(0, 0, 0.70710676908493, 0.70710676908493)
+     * ```
+     */
+    function euler_to_quat(x: number | Vector3, y: number, z: number): Quaternion;
+    /**
+     * The resulting matrix is the inverse of the supplied matrix.
+     * For ortho-normal matrices, e.g. regular object transformation,
+     * use `vmath.ortho_inv()` instead.
+     * The specialized inverse for ortho-normalized matrices is much faster
+     * than the general inverse.
+     *
+     * @param m1 - matrix to invert
+     * @returns inverse of the supplied matrix
+     * @example
+     * ```ts
+     * const mat1 = vmath.matrix4_rotation_z(3.141592653);
+     * const mat2 = vmath.inv(mat1);
+     * // M * inv(M) = identity matrix
+     * print(mat1.mul(mat2)); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+     * ```
+     */
+    function inv(m1: Matrix4): Matrix4;
+    /**
+     * Returns the length of the supplied vector or quaternion.
+     * If you are comparing the lengths of vectors or quaternions, you should compare
+     * the length squared instead as it is slightly more efficient to calculate
+     * (it eliminates a square root calculation).
+     *
+     * @param v - value of which to calculate the length
+     * @returns length
+     * @example
+     * ```ts
+     * if (vmath.length(self.velocity) < max_velocity) {
+     *   // The speed (velocity vector) is below max.
+     *
+     *   // TODO: max_velocity can be expressed as squared
+     *   // so we can compare with length_sqr() instead.
+     *   // ...
+     * }
+     * ```
+     */
+    function length(v: Vector3 | Vector4 | Quaternion): number;
+    /**
+     * Returns the squared length of the supplied vector or quaternion.
+     *
+     * @param v - value of which to calculate the squared length
+     * @returns squared length
+     * @example
+     * ```ts
+     * if (vmath.length_sqr(vector1) < vmath.length_sqr(vector2)) {
+     *   // Vector 1 has less magnitude than vector 2
+     *   // ...
+     * }
+     * ```
+     */
+    function length_sqr(v: Vector3 | Vector4 | Quaternion): number;
+    /**
+     * The resulting identity matrix describes a transform with
+     * no translation or rotation.
+     *
+     * @returns identity matrix
+     * @example
+     * ```ts
+     * const mat = vmath.matrix4();
+     * print(mat); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+     * // get column 0:
+     * print(mat.c0); // => vmath.vector4(1, 0, 0, 0)
+     * // get the value in row 3 and column 2:
+     * print(mat.m32); // => 0
+     * ```
+     */
+    function matrix4(): Matrix4;
+    /**
+     * Creates a new matrix with all components set to the
+     * corresponding values from the supplied matrix. I.e.
+     * the function creates a copy of the given matrix.
+     *
+     * @param m1 - existing matrix
+     * @returns matrix which is a copy of the specified matrix
+     * @example
+     * ```ts
+     * const mat1 = vmath.matrix4_rotation_x(3.141592653);
+     * const mat2 = vmath.matrix4(mat1);
+     * if (mat1 === mat2) {
+     *   // yes, they are equal
+     *   print(mat2); // => vmath.matrix4(1, 0, 0, 0, 0, -1, 8.7422776573476e-08, 0, 0, -8.7422776573476e-08, -1, 0, 0, 0, 0, 1)
+     * }
+     * ```
+     */
+    function matrix4(m1: Matrix4): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the axis by the specified angle.
+     *
+     * @param v - axis
+     * @param angle - angle in radians
+     * @returns matrix represented by axis and angle
+     * @example
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const axis = vmath.vector3(0, 0, 1); // z-axis
+     * const mat = vmath.matrix4_axis_angle(axis, 3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)
+     * ```
+     */
+    function matrix4_axis_angle(v: Vector3, angle: number): Matrix4;
+    /**
+     * Creates a new matrix constructed from separate
+     * translation vector, roation quaternion and scale vector
+     *
+     * @param translation - translation
+     * @param rotation - rotation
+     * @param scale - scale
+     * @returns new matrix4
+     * @example
+     * ```ts
+     * const translation = vmath.vector3(103, -95, 14);
+     * const quat = vmath.quat(1, 2, 3, 4);
+     * const scale = vmath.vector3(1, 0.5, 0.5);
+     * const result = vmath.matrix4_compose(translation, quat, scale);
+     * print(result); // => vmath.matrix4(-25, -10, 11, 103, 28, -9.5, 2, -95, -10, 10, -4.5, 14, 0, 0, 0, 1)
+     * ```
+     */
+    function matrix4_compose(translation: Vector3 | Vector4, rotation: Quaternion, scale: Vector3): Matrix4;
+    /**
+     * Constructs a frustum matrix from the given values. The left, right,
+     * top and bottom coordinates of the view cone are expressed as distances
+     * from the center of the near clipping plane. The near and far coordinates
+     * are expressed as distances from the tip of the view frustum cone.
+     *
+     * @param left - coordinate for left clipping plane
+     * @param right - coordinate for right clipping plane
+     * @param bottom - coordinate for bottom clipping plane
+     * @param top - coordinate for top clipping plane
+     * @param near - coordinate for near clipping plane
+     * @param far - coordinate for far clipping plane
+     * @returns matrix representing the frustum
+     * @example
+     * ```ts
+     * // Construct a projection frustum with a vertical and horizontal FOV of
+     * // 45 degrees. Useful for rendering a square view.
+     * const proj = vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000);
+     * render.set_projection(proj);
+     * ```
+     */
+    function matrix4_frustum(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4;
+    /**
+     * The resulting matrix is created from the supplied look-at parameters.
+     * This is useful for constructing a view matrix for a camera or
+     * rendering in general.
+     *
+     * @param eye - eye position
+     * @param look_at - look-at position
+     * @param up - up vector
+     * @returns look-at matrix
+     * @example
+     * ```ts
+     * // Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV, aspect ratio 4:3.
+     * const eye = vmath.vector3(0, 0, 100);
+     * const look_at = vmath.vector3(0, 0, 0);
+     * const up = vmath.vector3(0, 1, 0);
+     * const view = vmath.matrix4_look_at(eye, look_at, up);
+     * render.set_view(view);
+     * const proj = vmath.matrix4_perspective(3.141592 / 2, 4 / 3, 1, 1000);
+     * render.set_projection(proj);
+     * ```
+     */
+    function matrix4_look_at(eye: Vector3, look_at: Vector3, up: Vector3): Matrix4;
+    /**
+     * Creates an orthographic projection matrix.
+     * This is useful to construct a projection matrix for a camera or rendering in general.
+     *
+     * @param left - coordinate for left clipping plane
+     * @param right - coordinate for right clipping plane
+     * @param bottom - coordinate for bottom clipping plane
+     * @param top - coordinate for top clipping plane
+     * @param near - coordinate for near clipping plane
+     * @param far - coordinate for far clipping plane
+     * @returns orthographic projection matrix
+     * @example
+     * ```ts
+     * // Set up an orthographic projection based on the width and height of the
+     * // game window.
+     * const w = render.get_width();
+     * const h = render.get_height();
+     * const proj = vmath.matrix4_orthographic(-w / 2, w / 2, -h / 2, h / 2, -1000, 1000);
+     * render.set_projection(proj);
+     * ```
+     */
+    function matrix4_orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4;
+    /**
+     * Creates a perspective projection matrix.
+     * This is useful to construct a projection matrix for a camera or rendering in general.
+     *
+     * @param fov - angle of the full vertical field of view in radians
+     * @param aspect - aspect ratio
+     * @param near - coordinate for near clipping plane
+     * @param far - coordinate for far clipping plane
+     * @returns perspective projection matrix
+     * @example
+     * ```ts
+     * // Set up a perspective camera at z 100 with 45 degrees (pi/2) FOV, aspect ratio 4:3.
+     * const eye = vmath.vector3(0, 0, 100);
+     * const look_at = vmath.vector3(0, 0, 0);
+     * const up = vmath.vector3(0, 1, 0);
+     * const view = vmath.matrix4_look_at(eye, look_at, up);
+     * render.set_view(view);
+     * const proj = vmath.matrix4_perspective(3.141592 / 2, 4 / 3, 1, 1000);
+     * render.set_projection(proj);
+     * ```
+     */
+    function matrix4_perspective(fov: number, aspect: number, near: number, far: number): Matrix4;
+    /**
+     * The resulting matrix describes the same rotation as the quaternion, but does not have any translation (also like the quaternion).
+     *
+     * @param q - quaternion to create matrix from
+     * @returns matrix represented by quaternion
+     * @example
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const quat = vmath.quat_rotation_z(3.141592653);
+     * const mat = vmath.matrix4_quat(quat);
+     * print(mat.mul(vec)); // => vmath.matrix4_frustum(-1, 1, -1, 1, 1, 1000)
+     * ```
+     */
+    function matrix4_quat(q: Quaternion): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the x-axis
+     * by the specified angle.
+     *
+     * @param angle - angle in radians around x-axis
+     * @returns matrix from rotation around x-axis
+     * @example
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const mat = vmath.matrix4_rotation_x(3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(1, -1, -8.7422776573476e-08, 0)
+     * ```
+     */
+    function matrix4_rotation_x(angle: number): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the y-axis
+     * by the specified angle.
+     *
+     * @param angle - angle in radians around y-axis
+     * @returns matrix from rotation around y-axis
+     * @example
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const mat = vmath.matrix4_rotation_y(3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(-1, 1, 8.7422776573476e-08, 0)
+     * ```
+     */
+    function matrix4_rotation_y(angle: number): Matrix4;
+    /**
+     * The resulting matrix describes a rotation around the z-axis
+     * by the specified angle.
+     *
+     * @param angle - angle in radians around z-axis
+     * @returns matrix from rotation around z-axis
+     * @example
+     * ```ts
+     * const vec = vmath.vector4(1, 1, 0, 0);
+     * const mat = vmath.matrix4_rotation_z(3.141592653);
+     * print(mat.mul(vec)); // => vmath.vector4(-0.99999994039536, -1.0000001192093, 0, 0)
+     * ```
+     */
+    function matrix4_rotation_z(angle: number): Matrix4;
+    /**
+     * Creates a new matrix constructed from scale vector
+     *
+     * @param scale - scale
+     * @returns new matrix4
+     * @example
+     * ```ts
+     * const scale = vmath.vector3(1, 0.5, 0.5);
+     * const result = vmath.matrix4_scale(scale);
+     * print(result); // => vmath.matrix4(1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
+     * ```
+     */
+    function matrix4_scale(scale: Vector3): Matrix4;
+    /**
+     * creates a new matrix4 from uniform scale
+     *
+     * @param scale - scale
+     * @returns new matrix4
+     * @example
+     * ```ts
+     * const result = vmath.matrix4_scale(0.5);
+     * print(result); // => vmath.matrix4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
+     * ```
+     */
+    function matrix4_scale(scale: number): Matrix4;
+    /**
+     * Creates a new matrix4 from three scale components
+     *
+     * @param scale_x - scale along X axis
+     * @param scale_y - sclae along Y axis
+     * @param scale_z - scale along Z asis
+     * @returns new matrix4
+     * @example
+     * ```ts
+     * const result = vmath.matrix4_scale(1, 0.5, 0.5);
+     * print(result); // => vmath.matrix4(1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)
+     * ```
+     */
+    function matrix4_scale(scale_x: number, scale_y: number, scale_z: number): Matrix4;
+    /**
+     * The resulting matrix describes a translation of a point
+     * in euclidean space.
+     *
+     * @param position - position vector to create matrix from
+     * @returns matrix from the supplied position vector
+     * @example
+     * ```ts
+     * // Set camera view from custom view and translation matrices.
+     * const mat_trans = vmath.matrix4_translation(vmath.vector3(0, 10, 100));
+     * const mat_view = vmath.matrix4_rotation_y(-3.141592 / 4);
+     * render.set_view(mat_view.mul(mat_trans));
+     * ```
+     */
+    function matrix4_translation(position: Vector3 | Vector4): Matrix4;
+    /**
+     * The resulting matrix is the inverse of the supplied matrix.
+     * The supplied matrix has to be an ortho-normal matrix, e.g.
+     * describe a regular object transformation.
+     * For matrices that are not ortho-normal
+     * use the general inverse `vmath.inv()` instead.
+     *
+     * @param m1 - ortho-normalized matrix to invert
+     * @returns inverse of the supplied matrix
+     * @example
+     * ```ts
+     * const mat1 = vmath.matrix4_rotation_z(3.141592653);
+     * const mat2 = vmath.ortho_inv(mat1);
+     * // M * inv(M) = identity matrix
+     * print(mat1.mul(mat2)); // => vmath.matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+     * ```
+     */
+    function ortho_inv(m1: Matrix4): Matrix4;
+    /**
+     * Calculates the extent the projection of the first vector onto the second.
+     * The returned value is a scalar p defined as:
+     * `p = |P| cos &#x03B8; / |Q|`
+     * where &#x03B8; is the angle between the vectors P and Q.
+     *
+     * @param v1 - vector to be projected on the second
+     * @param v2 - vector onto which the first will be projected, must not have zero length
+     * @returns the projected extent of the first vector onto the second
+     * @example
+     * ```ts
+     * const v1 = vmath.vector3(1, 1, 0);
+     * const v2 = vmath.vector3(2, 0, 0);
+     * print(vmath.project(v1, v2)); // => 0.5
+     * ```
+     */
+    function project(v1: Vector3, v2: Vector3): number;
+    /**
+     * Creates a new identity quaternion. The identity
+     * quaternion is equal to:
+     * `vmath.quat(0, 0, 0, 1)`
+     *
+     * @returns new identity quaternion
+     * @example
+     * ```ts
+     * const quat = vmath.quat();
+     * print(quat); // => vmath.quat(0, 0, 0, 1)
+     * print(quat.w); // => 1
+     * ```
+     */
+    function quat(): Quaternion;
+    /**
+     * Creates a new quaternion with all components set to the
+     * corresponding values from the supplied quaternion. I.e.
+     * This function creates a copy of the given quaternion.
+     *
+     * @param q1 - existing quaternion
+     * @returns new quaternion
+     * @example
+     * ```ts
+     * const quat1 = vmath.quat(1, 2, 3, 4);
+     * const quat2 = vmath.quat(quat1);
+     * if (quat1 === quat2) {
+     *   // yes, they are equal
+     *   print(quat2); // => vmath.quat(1, 2, 3, 4)
+     * }
+     * ```
+     */
+    function quat(q1: Quaternion): Quaternion;
+    /**
+     * Creates a new quaternion with the components set
+     * according to the supplied parameter values.
+     *
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @param z - z coordinate
+     * @param w - w coordinate
+     * @returns new quaternion
+     * @example
+     * ```ts
+     * const quat = vmath.quat(1, 2, 3, 4);
+     * print(quat); // => vmath.quat(1, 2, 3, 4)
+     * ```
+     */
+    function quat(x: number, y: number, z: number, w: number): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the axis described by the unit vector `v`.
+     *
+     * @param v - axis
+     * @param angle - angle
+     * @returns quaternion representing the axis-angle rotation
+     * @example
+     * ```ts
+     * const axis = vmath.vector3(1, 0, 0);
+     * const rot = vmath.quat_axis_angle(axis, 3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(1, -1, -8.7422776573476e-08)
+     * ```
+     */
+    function quat_axis_angle(v: Vector3, angle: number): Quaternion;
+    /**
+     * The resulting quaternion describes the rotation from the
+     * identity quaternion (no rotation) to the coordinate system
+     * as described by the given x, y and z base unit vectors.
+     *
+     * @param x - x base vector
+     * @param y - y base vector
+     * @param z - z base vector
+     * @returns quaternion representing the rotation of the specified base vectors
+     * @example
+     * ```ts
+     * // Axis rotated 90 degrees around z.
+     * const rot_x = vmath.vector3(0, -1, 0);
+     * const rot_y = vmath.vector3(1, 0, 0);
+     * const z = vmath.vector3(0, 0, 1);
+     * const rot1 = vmath.quat_basis(rot_x, rot_y, z);
+     * const rot2 = vmath.quat_from_to(vmath.vector3(0, 1, 0), vmath.vector3(1, 0, 0));
+     * if (rot1 === rot2) {
+     *   // These quaternions are equal!
+     *   print(rot2); // => vmath.quat(0, 0, -0.70710676908493, 0.70710676908493)
+     * }
+     * ```
+     */
+    function quat_basis(x: Vector3, y: Vector3, z: Vector3): Quaternion;
+    /**
+     * The resulting quaternion describes the rotation that,
+     * if applied to the first vector, would rotate the first
+     * vector to the second. The two vectors must be unit
+     * vectors (of length 1).
+     * The result is undefined if the two vectors point in opposite directions
+     *
+     * @param v1 - first unit vector, before rotation
+     * @param v2 - second unit vector, after rotation
+     * @returns quaternion representing the rotation from first to second vector
+     * @example
+     * ```ts
+     * const v1 = vmath.vector3(1, 0, 0);
+     * const v2 = vmath.vector3(0, 1, 0);
+     * const rot = vmath.quat_from_to(v1, v2);
+     * print(vmath.rotate(rot, v1)); // => vmath.vector3(0, 0.99999994039536, 0)
+     * ```
+     */
+    function quat_from_to(v1: Vector3, v2: Vector3): Quaternion;
+    /**
+     * Creates a new quaternion with the components set
+     * according to the supplied parameter values.
+     *
+     * @param matrix - source matrix4
+     * @returns new quaternion
+     */
+    function quat_matrix4(matrix: Matrix4): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the x-axis.
+     *
+     * @param angle - angle in radians around x-axis
+     * @returns quaternion representing the rotation around the x-axis
+     * @example
+     * ```ts
+     * const rot = vmath.quat_rotation_x(3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(1, -1, -8.7422776573476e-08)
+     * ```
+     */
+    function quat_rotation_x(angle: number): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the y-axis.
+     *
+     * @param angle - angle in radians around y-axis
+     * @returns quaternion representing the rotation around the y-axis
+     * @example
+     * ```ts
+     * const rot = vmath.quat_rotation_y(3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(-1, 1, 8.7422776573476e-08)
+     * ```
+     */
+    function quat_rotation_y(angle: number): Quaternion;
+    /**
+     * The resulting quaternion describes a rotation of `angle`
+     * radians around the z-axis.
+     *
+     * @param angle - angle in radians around z-axis
+     * @returns quaternion representing the rotation around the z-axis
+     * @example
+     * ```ts
+     * const rot = vmath.quat_rotation_z(3.141592653);
+     * const vec = vmath.vector3(1, 1, 0);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(-0.99999988079071, -1, 0)
+     * ```
+     */
+    function quat_rotation_z(angle: number): Quaternion;
+    /**
+     * Converts a quaternion into euler angles (r0, r1, r2), based on YZX rotation order.
+     * To handle gimbal lock (singularity at r1 ~ +/- 90 degrees), the cut off is at r0 = +/- 88.85 degrees, which snaps to +/- 90.
+     * The provided quaternion is expected to be normalized.
+     * The error is guaranteed to be less than +/- 0.02 degrees
+     *
+     * @param q - source quaternion
+     * @example
+     * ```ts
+     * const q = vmath.quat_rotation_z(math.rad(90));
+     * print(vmath.quat_to_euler(q)); // => 0 0 90
+     *
+     * const q2 = vmath.quat_rotation_y(math.rad(45)).mul(vmath.quat_rotation_z(math.rad(90)));
+     * const [ex, ey, ez] = vmath.quat_to_euler(q2);
+     * const v = vmath.vector3(ex, ey, ez);
+     * print(v); // => vmath.vector3(0, 45, 90)
+     * ```
+     */
+    function quat_to_euler(q: Quaternion): LuaMultiReturn<[number, number, number]>;
+    /**
+     * Returns a new vector from the supplied vector that is
+     * rotated by the rotation described by the supplied
+     * quaternion.
+     *
+     * @param q - quaternion
+     * @param v1 - vector to rotate
+     * @returns the rotated vector
+     * @example
+     * ```ts
+     * const vec = vmath.vector3(1, 1, 0);
+     * const rot = vmath.quat_rotation_z(3.141592563);
+     * print(vmath.rotate(rot, vec)); // => vmath.vector3(-1.0000002384186, -0.99999988079071, 0)
+     * ```
+     */
+    function rotate(q: Quaternion, v1: Vector3): Vector3;
+    /**
+     * Creates a vector of arbitrary size. The vector is initialized
+     * with numeric values from a table.
+     * The table values are converted to floating point
+     * values. If a value cannot be converted, a 0 is stored in that
+     * value position in the vector.
+     *
+     * @param t - table of numbers
+     * @returns new vector
+     * @example
+     * ```ts
+     * // How to create a vector with custom data to be used for animation easing:
+     * const values = [0, 0.5, 0];
+     * const vec = vmath.vector(values);
+     * print(vec); // => vmath.vector (size: 3)
+     * print(vec[2]); // => 0.5
+     * ```
+     */
+    function vector(t: number[]): Vector;
+    /**
+     * Creates a new zero vector with all components set to 0.
+     *
+     * @returns new zero vector
+     * @example
+     * ```ts
+     * const vec = vmath.vector3();
+     * pprint(vec); // => vmath.vector3(0, 0, 0)
+     * print(vec.x); // => 0
+     * ```
+     */
+    function vector3(): Vector3;
+    /**
+     * Creates a new vector with all components set to the
+     * supplied scalar value.
+     *
+     * @param n - scalar value to splat
+     * @returns new vector
+     * @example
+     * ```ts
+     * const vec = vmath.vector3(1.0);
+     * print(vec); // => vmath.vector3(1, 1, 1)
+     * print(vec.x); // => 1
+     * ```
+     */
+    function vector3(n: number): Vector3;
+    /**
+     * Creates a new vector with all components set to the
+     * corresponding values from the supplied vector. I.e.
+     * This function creates a copy of the given vector.
+     *
+     * @param v1 - existing vector
+     * @returns new vector
+     * @example
+     * ```ts
+     * const vec1 = vmath.vector3(1.0);
+     * const vec2 = vmath.vector3(vec1);
+     * if (vec1 === vec2) {
+     *   // yes, they are equal
+     *   print(vec2); // => vmath.vector3(1, 1, 1)
+     * }
+     * ```
+     */
+    function vector3(v1: Vector3): Vector3;
+    /**
+     * Creates a new vector with the components set to the
+     * supplied values.
+     *
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @param z - z coordinate
+     * @returns new vector
+     * @example
+     * ```ts
+     * const vec = vmath.vector3(1.0, 2.0, 3.0);
+     * print(vec); // => vmath.vector3(1, 2, 3)
+     * print(vec.unm()); // => vmath.vector3(-1, -2, -3)
+     * print(vec.mul(2)); // => vmath.vector3(2, 4, 6)
+     * print(vec.add(vmath.vector3(2.0))); // => vmath.vector3(3, 4, 5)
+     * print(vec.sub(vmath.vector3(2.0))); // => vmath.vector3(-1, 0, 1)
+     * ```
+     */
+    function vector3(x: number, y: number, z: number): Vector3;
+    /**
+     * Creates a new zero vector with all components set to 0.
+     *
+     * @returns new zero vector
+     * @example
+     * ```ts
+     * const vec = vmath.vector4();
+     * print(vec); // => vmath.vector4(0, 0, 0, 0)
+     * print(vec.w); // => 0
+     * ```
+     */
+    function vector4(): Vector4;
+    /**
+     * Creates a new vector with all components set to the
+     * supplied scalar value.
+     *
+     * @param n - scalar value to splat
+     * @returns new vector
+     * @example
+     * ```ts
+     * const vec = vmath.vector4(1.0);
+     * print(vec); // => vmath.vector4(1, 1, 1, 1)
+     * print(vec.w); // => 1
+     * ```
+     */
+    function vector4(n: number): Vector4;
+    /**
+     * Creates a new vector with all components set to the
+     * corresponding values from the supplied vector. I.e.
+     * This function creates a copy of the given vector.
+     *
+     * @param v1 - existing vector
+     * @returns new vector
+     * @example
+     * ```ts
+     * const vec1 = vmath.vector4(1.0);
+     * const vec2 = vmath.vector4(vec1);
+     * if (vec1 === vec2) {
+     *   // yes, they are equal
+     *   print(vec2); // => vmath.vector4(1, 1, 1, 1)
+     * }
+     * ```
+     */
+    function vector4(v1: Vector4): Vector4;
+    /**
+     * Creates a new vector with the components set to the
+     * supplied values.
+     *
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @param z - z coordinate
+     * @param w - w coordinate
+     * @returns new vector
+     * @example
+     * ```ts
+     * const vec = vmath.vector4(1.0, 2.0, 3.0, 4.0);
+     * print(vec); // => vmath.vector4(1, 2, 3, 4)
+     * print(vec.unm()); // => vmath.vector4(-1, -2, -3, -4)
+     * print(vec.mul(2)); // => vmath.vector4(2, 4, 6, 8)
+     * print(vec.add(vmath.vector4(2.0))); // => vmath.vector4(3, 4, 5, 6)
+     * print(vec.sub(vmath.vector4(2.0))); // => vmath.vector4(-1, 0, 1, 2)
+     * ```
+     */
+    function vector4(x: number, y: number, z: number, w: number): Vector4;
+  }
+}
+
+export {};

@@ -188,6 +188,9 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   vector4: "Vector4",
   quaternion: "Quaternion",
   matrix4: "Matrix4",
+  "vmath.vector3": "Vector3",
+  "vmath.vector4": "Vector4",
+  "vmath.matrix4": "Matrix4",
   hash: "Hash",
   url: "Url",
   node: 'Opaque<"node">',
@@ -201,6 +204,12 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   resource: 'Opaque<"resource">',
   b2World: 'Opaque<"b2World">',
   b2Body: 'Opaque<"b2Body">',
+  b2Chain: 'Opaque<"b2Chain">',
+  b2Shape: 'Opaque<"b2Shape">',
+  b2Joint: 'Opaque<"b2Joint">',
+  b2ContactEdge: 'Opaque<"b2ContactEdge">',
+  b2MassData: 'Opaque<"b2MassData">',
+  b2Transform: 'Opaque<"b2Transform">',
   b2BodyType:
     '(number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })',
   // socket handle types resolve to the method-bearing `interface <receiver>`
