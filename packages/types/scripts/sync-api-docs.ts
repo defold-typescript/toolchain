@@ -249,22 +249,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-// Concatenate the `elements` of every doc into the first doc, deduping by
-// (name, type) with first occurrence winning, and keep the first doc's `info`.
-// First-wins guards the `b2d.body` `_defold` duplicate-`get_world_center`
-// hazard. Operates on the raw ref-doc JSON shape (`{ info, elements }`), so the
-// result is still parseable by `parseDefoldApiDoc`.
+// Concatenate the `elements` of every doc into the first doc, deduping exact
+// API signatures with first occurrence winning, and keep the first doc's
+// `info`. Function signatures include parameters and returns because the same
+// namespace can expose backend-specific overloads under one function name.
 export function mergeApiDocs(docs: readonly unknown[]): unknown {
   const first = docs[0];
   const seen = new Set<string>();
   const elements: unknown[] = [];
   for (const doc of docs) {
     if (!isRecord(doc) || !Array.isArray(doc.elements)) continue;
+    const info = isRecord(doc.info) ? doc.info : null;
+    const namespace = info && typeof info.namespace === "string" ? info.namespace : "";
     for (const element of doc.elements) {
-      const key =
-        isRecord(element) && typeof element.name === "string" && typeof element.type === "string"
-          ? `${element.type} ${element.name}`
-          : null;
+      const key = apiElementIdentity(namespace, element);
       if (key !== null) {
         if (seen.has(key)) continue;
         seen.add(key);
@@ -273,6 +271,31 @@ export function mergeApiDocs(docs: readonly unknown[]): unknown {
     }
   }
   return isRecord(first) ? { ...first, elements } : { elements };
+}
+
+export function apiElementIdentity(namespace: string, element: unknown): string | null {
+  if (!isRecord(element) || typeof element.name !== "string" || typeof element.type !== "string") {
+    return null;
+  }
+  const base = `${namespace}\0${element.type}\0${element.name}`;
+  if (element.type !== "FUNCTION") return base;
+  return `${base}\0${normalizedArguments(element.parameters)}\0${normalizedArguments(element.returnvalues)}`;
+}
+
+function normalizedArguments(value: unknown): string {
+  if (!Array.isArray(value)) return "[]";
+  return JSON.stringify(
+    value.map((argument) => {
+      if (!isRecord(argument)) return argument;
+      const types = Array.isArray(argument.types)
+        ? argument.types.filter((type): type is string => typeof type === "string").sort()
+        : [];
+      return {
+        types,
+        ...(argument.is_optional === undefined ? {} : { is_optional: argument.is_optional }),
+      };
+    }),
+  );
 }
 
 export function extractFixtures(

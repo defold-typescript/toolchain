@@ -382,7 +382,7 @@ describe("mergeApiDocs", () => {
     expect(merged.elements.map((e) => e.name)).toEqual(["sys.a", "sys.b"]);
   });
 
-  test("dedups by name+type with first occurrence winning (b2d.body _defold hazard)", () => {
+  test("dedups matching signatures with first occurrence winning (b2d.body _defold hazard)", () => {
     const a = {
       info: { namespace: "b2d.body" },
       elements: [{ type: "FUNCTION", name: "get_world_center", doc: "first" }],
