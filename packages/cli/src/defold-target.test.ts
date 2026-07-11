@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { classifyDefoldTarget, readDefoldTargetPin, resolveDefoldTarget } from "./defold-target";
+import {
+  classifyDefoldTarget,
+  readDefoldTargetPin,
+  resolveDefoldTarget,
+  resolveTargetHead,
+} from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 
 describe("classifyDefoldTarget", () => {
@@ -95,5 +100,33 @@ describe("resolveDefoldTarget", () => {
       channel: "alpha",
       source: "flag",
     });
+  });
+});
+
+describe("resolveTargetHead", () => {
+  test("a fixed version resolves with no channel, no sha, and never fetches", async () => {
+    let fetched = false;
+    const io = {
+      fetchChannelInfo: async () => {
+        fetched = true;
+        return { version: "unused", sha1: "unused" };
+      },
+    };
+    const head = await resolveTargetHead({ kind: "version", version: "1.12.4" }, io);
+    expect(head).toEqual({ version: "1.12.4", channel: null, sha: null });
+    expect(fetched).toBe(false);
+  });
+
+  test("a channel resolves its head via fetchChannelInfo", async () => {
+    const calls: string[] = [];
+    const io = {
+      fetchChannelInfo: async (channel: string) => {
+        calls.push(channel);
+        return { version: "1.13.0", sha1: "abc123" };
+      },
+    };
+    const head = await resolveTargetHead({ kind: "channel", channel: "beta" }, io);
+    expect(calls).toEqual(["beta"]);
+    expect(head).toEqual({ version: "1.13.0", channel: "beta", sha: "abc123" });
   });
 });
