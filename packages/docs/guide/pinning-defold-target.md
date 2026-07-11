@@ -253,3 +253,38 @@ Curated entries must resolve to exactly one known symbol, and a symbol marked
 generation. A drift test keeps the committed artifact byte-equal to a fresh
 derivation, so run this whenever the target snapshots or the migration catalog
 change.
+
+## Release-promotion gate
+
+A single deterministic gate aggregates the committed evidence a promotion
+depends on and fails closed when any dimension is absent or stale:
+
+```sh
+bun run release-readiness        # or: mise run release-readiness
+bun scripts/defold-release-readiness.ts --check --json
+```
+
+The `--check --json` form is offline and deterministic — it reads only committed
+artifacts (the import manifest, `api-availability.json`, `api-targets.json`, the
+`upgrading-to-defold-<version>.md` migration guide, and the docs search
+machinery) plus the static `RELEASE_TARGET_MATRIX`, and prints
+`{"ok":…,"problems":[…]}`. Each blocker is tagged by category: `import`,
+`unknown-type`, `declaration`, `docs-route`, `search`, `migration-guide`,
+`target`, and `integration`. Because it reuses the artifacts the unit suite
+already produced, it adds little to a CI run.
+
+The deterministic command matrix behind the `integration` dimension —
+`init`, `build`, `watch`, `resolve`, and the `bob status`/`resolve`/`build`/
+`bundle` subcommands against both the current-stable and previous release, with
+injected archive downloads and process spawns — runs in `bun test`
+(`packages/cli/src/release-target-matrix.test.ts`). Real engine and Bob
+execution stays behind the advisory, network-touching `--live` flag, which
+refreshes the archive SHA out of band and never enters CI:
+
+```sh
+bun scripts/defold-release-readiness.ts --check --live
+```
+
+The end-to-end maintainer flow for a new stable release is: import the archive,
+review the report, regenerate availability, audit fidelity, run the offline gate
+above, optionally run the advisory live matrix, then promote the default target.
