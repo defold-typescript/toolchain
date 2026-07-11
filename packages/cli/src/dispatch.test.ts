@@ -403,7 +403,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     const text = out();
-    expect(text).toContain("Usage: defold-typescript");
+    expect(text).toContain("Usage: bunx @defold-typescript/cli");
     expect(text).toContain("build");
     expect(text).toContain("watch");
     expect(err()).toBe("");
@@ -415,7 +415,7 @@ describe("dispatch", () => {
     const code = dispatch(["-h"], io);
 
     expect(code).toBe(0);
-    expect(out()).toContain("Usage: defold-typescript");
+    expect(out()).toContain("Usage: bunx @defold-typescript/cli");
     expect(err()).toBe("");
   });
 
