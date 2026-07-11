@@ -1,7 +1,12 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { apiPagesForVersion, TYPES_DIR } from "../../../lib/api-content";
-import { apiLinkify, apiPageMarkdown, versionedApiParams } from "../../../lib/api-page-render";
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  apiReplacementResolver,
+  versionedApiParams,
+} from "../../../lib/api-page-render";
 import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
 
@@ -20,7 +25,8 @@ export default createRoute(
     if (!page) return c.notFound();
 
     const linkify = apiLinkify(pages);
-    const html = await renderMarkdown(apiPageMarkdown(page, linkify), {
+    const resolveReplacement = apiReplacementResolver(pages);
+    const html = await renderMarkdown(apiPageMarkdown(page, linkify, { resolveReplacement }), {
       highlightSignatureHeadings: true,
     });
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
