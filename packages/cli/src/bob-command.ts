@@ -3,6 +3,13 @@ import { existsSync, mkdirSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { delimiter, dirname, join } from "node:path";
 import { bobCacheDir, bobDownloadUrl, resolveBobJar, resolveJava } from "./bob";
+import type {
+  ChannelInfoIo,
+  DefoldChannel,
+  DefoldTarget,
+  ResolvedTargetHead,
+} from "./defold-target";
+import { resolveTargetHead } from "./defold-target";
 import { detectEditorBundledJava } from "./installed-editor-version";
 
 export const BOB_SUBCOMMANDS = ["resolve", "build", "bundle"] as const;
@@ -105,6 +112,77 @@ export async function runBobCommand(opts: {
     defoldChannel: head.channel,
     defoldSha: head.sha,
     ...(output !== undefined ? { output } : {}),
+  };
+}
+
+export interface BobStatusIo extends ChannelInfoIo {
+  readonly probe: (candidate: string) => boolean;
+  readonly javaProbe: (cmd: string) => boolean;
+  readonly bundledJava?: () => string | null;
+}
+
+export interface BobStatus {
+  readonly ok: boolean;
+  readonly target: DefoldTarget;
+  readonly version: string | null;
+  readonly channel: DefoldChannel | null;
+  readonly sha: string | null;
+  readonly bobJar: { readonly path: string | null; readonly cached: boolean };
+  readonly java: string | null;
+  readonly error?: string;
+}
+
+// resolveJava throws when nothing is found; status reports Java as absent
+// rather than failing, so a missing runtime is never fatal here.
+function resolveJavaOrNull(io: BobStatusIo): string | null {
+  try {
+    return resolveJava({
+      probe: io.javaProbe,
+      ...(io.bundledJava !== undefined ? { bundledJava: io.bundledJava } : {}),
+    });
+  } catch {
+    return null;
+  }
+}
+
+// Read-only pre-flight: resolve the target head, locate the sha-keyed jar, and
+// report Java, without downloading the jar or running Bob. A channel resolves
+// its head via a metadata fetch; offline leaves the sha-dependent fields
+// unresolved and marks the report not-ok.
+export async function reportBobStatus(opts: {
+  target: DefoldTarget;
+  cacheDir: string;
+  io: BobStatusIo;
+}): Promise<BobStatus> {
+  const { target, cacheDir, io } = opts;
+  const java = resolveJavaOrNull(io);
+  const channel = target.kind === "channel" ? target.channel : null;
+  let head: ResolvedTargetHead;
+  try {
+    head = await resolveTargetHead(target, io);
+  } catch (err) {
+    return {
+      ok: false,
+      target,
+      version: target.kind === "version" ? target.version : null,
+      channel,
+      sha: null,
+      bobJar: { path: null, cached: false },
+      java,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+  const jar = head.sha
+    ? resolveBobJar({ sha1: head.sha, cacheDir, probe: io.probe })
+    : { jarPath: null, cached: false };
+  return {
+    ok: true,
+    target,
+    version: head.version,
+    channel: head.channel,
+    sha: head.sha,
+    bobJar: { path: jar.jarPath, cached: jar.cached },
+    java,
   };
 }
 

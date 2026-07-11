@@ -2113,6 +2113,57 @@ describe("dispatch bob", () => {
     expect(parsed.defoldSha).toBe("fixed-sha");
   });
 
+  test("bob status reports the resolved state, returns 0, and runs neither download nor bob", async () => {
+    const { io, out } = captureStreams();
+    const { internals, spawned, downloaded } = defoldInternals();
+
+    const code = await dispatch(["bob", "status", cwd, "--defold-target", "1.12.4"], io, internals);
+
+    expect(code).toBe(0);
+    expect(spawned).toEqual([]);
+    expect(downloaded).toEqual([]);
+    expect(out()).toContain("1.12.4");
+    expect(out()).toContain(SHA);
+  });
+
+  test("bob status --json emits a status envelope and runs nothing", async () => {
+    const { io, out } = captureStreams();
+    const { internals, spawned, downloaded } = defoldInternals();
+
+    const code = await dispatch(
+      ["bob", "status", cwd, "--defold-target", "1.12.4", "--json"],
+      io,
+      internals,
+    );
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as {
+      command: string;
+      subcommand: string;
+      ok: boolean;
+    };
+    expect(parsed).toMatchObject({ command: "bob", subcommand: "status", ok: true });
+    expect(spawned).toEqual([]);
+    expect(downloaded).toEqual([]);
+  });
+
+  test("bob status --json on an offline channel exits non-zero with an error", async () => {
+    const { io, out } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "status", cwd, "--defold-target", "beta", "--json"], io, {
+      ...internals,
+      fetchChannelInfo: async () => {
+        throw new Error("offline: could not resolve the beta Defold head");
+      },
+    });
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out().trim()) as { ok: boolean; error?: string };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toBeDefined();
+  });
+
   test("unknown bob subcommand prints usage listing resolve|build|bundle", async () => {
     const { io, err } = captureStreams();
     const { internals } = defoldInternals();
