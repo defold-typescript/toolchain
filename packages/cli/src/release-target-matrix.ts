@@ -2,7 +2,7 @@ import { Writable } from "node:stream";
 import { selectApiSurface } from "./api-surface";
 import { bobCachePath, resolveBobJar } from "./bob";
 import type { DefoldIo } from "./bob-command";
-import { CURRENT_STABLE_DEFOLD_VERSION, PREVIOUS_STABLE_DEFOLD_VERSION } from "./defold-version";
+import { DEFOLD_VERSIONS } from "./defold-version";
 import { type DispatchInternals, dispatch } from "./dispatch";
 import { resolveRegisteredSurfaceGeneratedDir } from "./materialize";
 import type { RunWatchHandle, Watcher, WatcherFactory } from "./watch";
@@ -15,18 +15,13 @@ export interface ReleaseTargetSpec {
   readonly isCurrentStable: boolean;
 }
 
-export const RELEASE_TARGET_MATRIX: readonly ReleaseTargetSpec[] = [
-  {
-    version: CURRENT_STABLE_DEFOLD_VERSION,
-    surfaceId: `defold-${CURRENT_STABLE_DEFOLD_VERSION}`,
-    isCurrentStable: true,
-  },
-  {
-    version: PREVIOUS_STABLE_DEFOLD_VERSION,
-    surfaceId: `defold-${PREVIOUS_STABLE_DEFOLD_VERSION}`,
-    isCurrentStable: false,
-  },
-];
+export const RELEASE_TARGET_MATRIX: readonly ReleaseTargetSpec[] = DEFOLD_VERSIONS.map(
+  (version, i) => ({
+    version,
+    surfaceId: `defold-${version}`,
+    isCurrentStable: i === 0,
+  }),
+);
 
 export const MATRIX_COMMANDS = [
   "init",
