@@ -66,7 +66,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 ### Project configuration
 
-- [Pinning the Defold version](https://defold-typescript.github.io/toolchain/pinning-defold-version) — keep the default latest surface, or pin an older Defold version whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
+- [Pinning the Defold target](https://defold-typescript.github.io/toolchain/pinning-defold-target) — keep the default latest surface, or pin a fixed version or release channel (`stable`/`beta`/`alpha`) whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
 - [Native extensions](https://defold-typescript.github.io/toolchain/extensions) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](https://defold-typescript.github.io/toolchain/resolve) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
 
 ### Migration

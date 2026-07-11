@@ -37,7 +37,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Debugging](guide/debugging.md)
 - [Agent runbooks](guide/agent-runbooks.md)
 - [Helper scripts](guide/helper-scripts.md)
-- [Pinning the Defold version](guide/pinning-defold-version.md)
+- [Pinning the Defold target](guide/pinning-defold-target.md)
 - [Native extensions](guide/extensions.md)
 - [API docs vs `ts-defold-types`](guide/api-docs-vs-ts-defold.md)
 - [Migrating from `ts-defold`](guide/migrating-from-ts-defold.md)

@@ -481,9 +481,10 @@ On failure:
 **Reading `ok`:** if `ok` is `true`, the script transpiled — `written` lists the
 emitted artifact (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to
 attach next; `defoldVersion` and `apiSurface` record which API surface it was
-built against; `defoldChannel` records the resolved release channel (`stable`
-unless pinned or passed via `--channel`; it does not yet change which surface is
-fetched). If `ok` is `false`, the build failed — surface `error` and follow
+built against; `defoldChannel` and `defoldSha` record the resolved release
+channel and head sha (both `null` for a fixed-version target, set when a channel
+target like `beta` is pinned or passed via `--defold-target`). If `ok` is
+`false`, the build failed — surface `error` and follow
 [Fix the Lua output](#fix-the-lua-output).
 
 **What `build` writes.** Each `.ts` source under `src/` produces exactly one

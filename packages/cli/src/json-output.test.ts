@@ -46,6 +46,25 @@ describe("renderResult", () => {
     expect("scriptKind" in parsed).toBe(false);
   });
 
+  test("round-trips a string defoldSha when present", () => {
+    const out = renderResult({ command: "resolve", written: [], defoldSha: "abc123" });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect(parsed.defoldSha).toBe("abc123");
+  });
+
+  test("emits an explicit null defoldSha when present", () => {
+    const out = renderResult({ command: "build", written: [], defoldSha: null });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect("defoldSha" in parsed).toBe(true);
+    expect(parsed.defoldSha).toBeNull();
+  });
+
+  test("omits defoldSha when undefined", () => {
+    const out = renderResult({ command: "build", written: [] });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect("defoldSha" in parsed).toBe(false);
+  });
+
   test("round-trips a resolve result with a per-extension report", () => {
     const out = renderResult({
       command: "resolve",
