@@ -7,6 +7,7 @@ export {
   type Box2dBackend,
   collectSymbolIdentities,
   deriveAvailability,
+  normalizedFunctionSignature,
   symbolIdentityKey,
   validateAvailability,
 } from "./api-availability";

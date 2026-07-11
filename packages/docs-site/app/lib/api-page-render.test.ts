@@ -1,12 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import {
+  type ApiAvailability,
+  type ApiFunction,
+  normalizedFunctionSignature,
+  symbolIdentityKey,
+} from "@defold-typescript/types";
+import {
   apiLinkify,
   apiPageMarkdown,
+  apiReplacementResolver,
   isKnownVersionId,
   versionedApiParams,
 } from "./api-page-render";
-import { type ApiPage, apiModuleSymbols } from "./api-surface";
+import { type ApiPage, type AvailabilityLookup, apiModuleSymbols } from "./api-surface";
 import { loadApiSurface } from "./api-surface-loader";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
@@ -468,5 +475,137 @@ describe("isKnownVersionId", () => {
 
   test("is false for the default version id (served at /api, not a version index)", () => {
     expect(isKnownVersionId("cur", versions)).toBe(false);
+  });
+});
+
+describe("availability badges", () => {
+  const setTexture: ApiFunction = {
+    name: "model.set_texture",
+    brief: "",
+    description: "New texture accessor.",
+    parameters: [{ name: "url", doc: "", types: ["url"], isOptional: false }],
+    returnValues: [],
+  };
+
+  function lookup(records: ApiAvailability[]): AvailabilityLookup {
+    return new Map(records.map((r) => [symbolIdentityKey(r.identity), r]));
+  }
+
+  function modelPage(
+    fn: ApiFunction,
+    record: Omit<ApiAvailability, "identity">,
+    route = "/api/model",
+  ): ApiPage {
+    const identity = {
+      namespace: "model",
+      kind: "FUNCTION",
+      name: fn.name,
+      signature: normalizedFunctionSignature(fn),
+    };
+    return {
+      namespace: "model",
+      route,
+      brief: "",
+      module: {
+        namespace: "model",
+        brief: "",
+        description: "Model component.",
+        functions: [fn],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      availability: lookup([{ identity, ...record }]),
+    };
+  }
+
+  const material: ApiFunction = {
+    name: "model.material",
+    brief: "",
+    description: "Old material accessor.",
+    parameters: [{ name: "url", doc: "", types: ["url"], isOptional: false }],
+    returnValues: [],
+  };
+  const replacement = {
+    namespace: "model",
+    kind: "FUNCTION",
+    name: "model.set_texture",
+    signature: normalizedFunctionSignature(setTexture),
+  };
+
+  const noLink = (text: string) => text;
+
+  test("renders a since badge with accessible text", () => {
+    const md = apiPageMarkdown(modelPage(setTexture, { since: "1.13.0" }), noLink);
+    expect(md).toContain("Since 1.13.0");
+    expect(md).toContain('aria-label="Availability"');
+  });
+
+  test("renders deprecated-since and removed-in badges", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { deprecatedSince: "1.12.0", removedIn: "1.13.0" }),
+      noLink,
+    );
+    expect(md).toContain("Deprecated since 1.12.0");
+    expect(md).toContain("Removed in 1.13.0");
+  });
+
+  test("renders Box2D backend applicability", () => {
+    const md = apiPageMarkdown(modelPage(material, { box2d: ["v2", "v3"] }), noLink);
+    expect(md).toContain("Box2D: v2, v3");
+  });
+
+  test("links a replacement that resolves within the surface", () => {
+    const md = apiPageMarkdown(modelPage(material, { removedIn: "1.13.0", replacement }), noLink, {
+      resolveReplacement: (id) =>
+        id.name === "model.set_texture" ? "/api/model#model-set-texture" : undefined,
+    });
+    expect(md).toContain("[model.set_texture](/api/model#model-set-texture)");
+  });
+
+  test("falls back to the default surface API index when a replacement is unresolved", () => {
+    const md = apiPageMarkdown(modelPage(material, { replacement }), noLink, {
+      resolveReplacement: () => undefined,
+    });
+    expect(md).toContain("[model.set_texture](/api)");
+  });
+
+  test("an unresolved replacement on a versioned page never crosses versions", () => {
+    const md = apiPageMarkdown(modelPage(material, { replacement }, "/api/1.12.4/model"), noLink, {
+      resolveReplacement: () => undefined,
+    });
+    expect(md).toContain("[model.set_texture](/api/1.12.4)");
+    expect(md).not.toContain("](/api/model");
+  });
+
+  test("a symbol with no availability record renders no badge block", () => {
+    const page = modelPage(material, {});
+    page.availability = new Map();
+    const md = apiPageMarkdown(page, noLink);
+    expect(md).not.toContain('aria-label="Availability"');
+  });
+});
+
+describe("apiReplacementResolver", () => {
+  test("resolves a known member to its page route with anchor and returns undefined otherwise", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const resolve = apiReplacementResolver(pages);
+    const go = pages.find((p) => p.namespace === "go");
+    expect(go).toBeDefined();
+    const route = resolve({
+      namespace: "go",
+      kind: "FUNCTION",
+      name: "go.get_position",
+      signature: "",
+    });
+    expect(route).toBeDefined();
+    expect(route?.startsWith("/api/go")).toBe(true);
+    expect(
+      resolve({ namespace: "go", kind: "FUNCTION", name: "go.nonexistent_symbol", signature: "" }),
+    ).toBeUndefined();
   });
 });

@@ -8,7 +8,12 @@ import {
   libraryDirs,
   libraryOwners,
 } from "../../lib/api-content";
-import { apiLinkify, apiPageMarkdown, isKnownVersionId } from "../../lib/api-page-render";
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  apiReplacementResolver,
+  isKnownVersionId,
+} from "../../lib/api-page-render";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
 
@@ -44,15 +49,17 @@ export default createRoute(
     // `/api/camera` is too broad; only qualified member keys like
     // `camera.screen_to_world` (with the heading-slug anchor) are linked.
     const linkify = apiLinkify(pages);
+    const resolveReplacement = apiReplacementResolver(pages);
 
     // Library pages render their heading as the styled `creator/dir/namespace`
     // path (matching the /libraries index), so the markdown body omits its H1.
     if (page.category === "library") {
       const dir = libraryDirs().get(page.namespace) ?? page.namespace;
       const creator = libraryOwners().get(dir) ?? dir;
-      const body = await renderMarkdown(apiPageMarkdown(page, linkify, { omitHeading: true }), {
-        highlightSignatureHeadings: true,
-      });
+      const body = await renderMarkdown(
+        apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
+        { highlightSignatureHeadings: true },
+      );
       return c.render(
         <article class="prose">
           <h1>
@@ -64,7 +71,7 @@ export default createRoute(
       );
     }
 
-    const html = await renderMarkdown(apiPageMarkdown(page, linkify), {
+    const html = await renderMarkdown(apiPageMarkdown(page, linkify, { resolveReplacement }), {
       highlightSignatureHeadings: true,
     });
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
