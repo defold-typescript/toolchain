@@ -11,6 +11,10 @@ makes the TypeScript compiler reject calls to engine functions that do not exist
 in the Defold version you target, instead of letting them through to fail at
 runtime.
 
+Moving a project from 1.12.4 to the current 1.13.0 surface removes some Lua APIs
+and changes a few asset and platform defaults — see [Upgrading to Defold
+1.13.0](./upgrading-to-defold-1-13-0.md) for the per-change migration steps.
+
 A **target** is a single selector — `--defold-target <version|stable|beta|alpha>`
 — that replaces the older two-flag selector (a fixed version plus a separate
 release channel). A target is one of two things:
