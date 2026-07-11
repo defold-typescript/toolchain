@@ -1,21 +1,58 @@
 {
   "targets": [
     {
-      "id": "defold-1.12.4",
+      "id": "defold-1.13.0",
       "default": true,
-      "fixturesDir": "fixtures",
+      "fixturesDir": "fixtures/defold-1.13.0",
       "generatedDir": "generated",
       "coreTypesImport": "../src/core-types",
       "source": null,
       "modules": [
-        { "namespace": "b2d", "fixture": "b2d_doc.json", "outFile": "b2d.d.ts" },
+        {
+          "namespace": "b2d",
+          "fixture": "b2d_doc.json",
+          "outFile": "b2d.d.ts"
+        },
         {
           "namespace": "b2d.body",
           "fixture": "b2d_body_doc.json",
           "outFile": "b2d_body.d.ts"
         },
-        { "namespace": "buffer", "fixture": "buffer_doc.json", "outFile": "buffer.d.ts" },
-        { "namespace": "camera", "fixture": "camera_doc.json", "outFile": "camera.d.ts" },
+        {
+          "namespace": "b2d.chain",
+          "fixture": "b2d_chain_doc.json",
+          "outFile": "b2d_chain.d.ts"
+        },
+        {
+          "namespace": "b2d.fixture",
+          "fixture": "b2d_fixture_doc.json",
+          "outFile": "b2d_fixture.d.ts"
+        },
+        {
+          "namespace": "b2d.joint",
+          "fixture": "b2d_joint_doc.json",
+          "outFile": "b2d_joint.d.ts"
+        },
+        {
+          "namespace": "b2d.shape",
+          "fixture": "b2d_shape_doc.json",
+          "outFile": "b2d_shape.d.ts"
+        },
+        {
+          "namespace": "b2d.world",
+          "fixture": "b2d_world_doc.json",
+          "outFile": "b2d_world.d.ts"
+        },
+        {
+          "namespace": "buffer",
+          "fixture": "buffer_doc.json",
+          "outFile": "buffer.d.ts"
+        },
+        {
+          "namespace": "camera",
+          "fixture": "camera_doc.json",
+          "outFile": "camera.d.ts"
+        },
         {
           "namespace": "collectionfactory",
           "fixture": "collectionfactory_doc.json",
@@ -26,30 +63,92 @@
           "fixture": "collectionproxy_doc.json",
           "outFile": "collectionproxy.d.ts"
         },
-        { "namespace": "crash", "fixture": "crash_doc.json", "outFile": "crash.d.ts" },
-        { "namespace": "factory", "fixture": "factory_doc.json", "outFile": "factory.d.ts" },
-        { "namespace": "font", "fixture": "font_doc.json", "outFile": "font.d.ts" },
+        {
+          "namespace": "compute",
+          "fixture": "compute_doc.json",
+          "outFile": "compute.d.ts"
+        },
+        {
+          "namespace": "crash",
+          "fixture": "crash_doc.json",
+          "outFile": "crash.d.ts"
+        },
+        {
+          "namespace": "factory",
+          "fixture": "factory_doc.json",
+          "outFile": "factory.d.ts"
+        },
+        {
+          "namespace": "font",
+          "fixture": "font_doc.json",
+          "outFile": "font.d.ts"
+        },
         {
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
           "skipFunctions": ["get", "set", "property"]
         },
-        { "namespace": "graphics", "fixture": "graphics_doc.json", "outFile": "graphics.d.ts" },
-        { "namespace": "gui", "fixture": "gui_doc.json", "outFile": "gui.d.ts" },
-        { "namespace": "html5", "fixture": "html5_doc.json", "outFile": "html5.d.ts" },
-        { "namespace": "http", "fixture": "http_doc.json", "outFile": "http.d.ts" },
-        { "namespace": "iac", "fixture": "iac_doc.json", "outFile": "iac.d.ts" },
-        { "namespace": "iap", "fixture": "iap_doc.json", "outFile": "iap.d.ts" },
-        { "namespace": "image", "fixture": "image_doc.json", "outFile": "image.d.ts" },
-        { "namespace": "json", "fixture": "json_doc.json", "outFile": "json.d.ts" },
-        { "namespace": "label", "fixture": "label_doc.json", "outFile": "label.d.ts" },
+        {
+          "namespace": "graphics",
+          "fixture": "graphics_doc.json",
+          "outFile": "graphics.d.ts"
+        },
+        {
+          "namespace": "gui",
+          "fixture": "gui_doc.json",
+          "outFile": "gui.d.ts"
+        },
+        {
+          "namespace": "html5",
+          "fixture": "html5_doc.json",
+          "outFile": "html5.d.ts"
+        },
+        {
+          "namespace": "http",
+          "fixture": "http_doc.json",
+          "outFile": "http.d.ts"
+        },
+        {
+          "namespace": "iac",
+          "fixture": "iac_doc.json",
+          "outFile": "iac.d.ts"
+        },
+        {
+          "namespace": "iap",
+          "fixture": "iap_doc.json",
+          "outFile": "iap.d.ts"
+        },
+        {
+          "namespace": "image",
+          "fixture": "image_doc.json",
+          "outFile": "image.d.ts"
+        },
+        {
+          "namespace": "json",
+          "fixture": "json_doc.json",
+          "outFile": "json.d.ts"
+        },
+        {
+          "namespace": "label",
+          "fixture": "label_doc.json",
+          "outFile": "label.d.ts"
+        },
         {
           "namespace": "liveupdate",
           "fixture": "liveupdate_doc.json",
           "outFile": "liveupdate.d.ts"
         },
-        { "namespace": "model", "fixture": "model_doc.json", "outFile": "model.d.ts" },
+        {
+          "namespace": "material",
+          "fixture": "material_doc.json",
+          "outFile": "material.d.ts"
+        },
+        {
+          "namespace": "model",
+          "fixture": "model_doc.json",
+          "outFile": "model.d.ts"
+        },
         {
           "namespace": "msg",
           "fixture": "msg_doc.json",
@@ -61,39 +160,379 @@
           "fixture": "particlefx_doc.json",
           "outFile": "particlefx.d.ts"
         },
-        { "namespace": "physics", "fixture": "physics_doc.json", "outFile": "physics.d.ts" },
-        { "namespace": "profiler", "fixture": "profiler_doc.json", "outFile": "profiler.d.ts" },
-        { "namespace": "push", "fixture": "push_doc.json", "outFile": "push.d.ts" },
-        { "namespace": "render", "fixture": "render_doc.json", "outFile": "render.d.ts" },
-        { "namespace": "resource", "fixture": "resource_doc.json", "outFile": "resource.d.ts" },
-        { "namespace": "socket", "fixture": "socket_doc.json", "outFile": "socket.d.ts" },
-        { "namespace": "sound", "fixture": "sound_doc.json", "outFile": "sound.d.ts" },
-        { "namespace": "sprite", "fixture": "sprite_doc.json", "outFile": "sprite.d.ts" },
-        { "namespace": "sys", "fixture": "sys_doc.json", "outFile": "sys.d.ts" },
-        { "namespace": "tilemap", "fixture": "tilemap_doc.json", "outFile": "tilemap.d.ts" },
-        { "namespace": "timer", "fixture": "timer_doc.json", "outFile": "timer.d.ts" },
-        { "namespace": "types", "fixture": "types_doc.json", "outFile": "types.d.ts" },
+        {
+          "namespace": "physics",
+          "fixture": "physics_doc.json",
+          "outFile": "physics.d.ts"
+        },
+        {
+          "namespace": "profiler",
+          "fixture": "profiler_doc.json",
+          "outFile": "profiler.d.ts"
+        },
+        {
+          "namespace": "push",
+          "fixture": "push_doc.json",
+          "outFile": "push.d.ts"
+        },
+        {
+          "namespace": "render",
+          "fixture": "render_doc.json",
+          "outFile": "render.d.ts"
+        },
+        {
+          "namespace": "resource",
+          "fixture": "resource_doc.json",
+          "outFile": "resource.d.ts"
+        },
+        {
+          "namespace": "socket",
+          "fixture": "socket_doc.json",
+          "outFile": "socket.d.ts"
+        },
+        {
+          "namespace": "sound",
+          "fixture": "sound_doc.json",
+          "outFile": "sound.d.ts"
+        },
+        {
+          "namespace": "sprite",
+          "fixture": "sprite_doc.json",
+          "outFile": "sprite.d.ts"
+        },
+        {
+          "namespace": "sys",
+          "fixture": "sys_doc.json",
+          "outFile": "sys.d.ts"
+        },
+        {
+          "namespace": "tilemap",
+          "fixture": "tilemap_doc.json",
+          "outFile": "tilemap.d.ts"
+        },
+        {
+          "namespace": "timer",
+          "fixture": "timer_doc.json",
+          "outFile": "timer.d.ts"
+        },
+        {
+          "namespace": "types",
+          "fixture": "types_doc.json",
+          "outFile": "types.d.ts"
+        },
         {
           "namespace": "vmath",
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
           "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
         },
-        { "namespace": "webview", "fixture": "webview_doc.json", "outFile": "webview.d.ts" },
-        { "namespace": "window", "fixture": "window_doc.json", "outFile": "window.d.ts" },
-        { "namespace": "zlib", "fixture": "zlib_doc.json", "outFile": "zlib.d.ts" }
+        {
+          "namespace": "webview",
+          "fixture": "webview_doc.json",
+          "outFile": "webview.d.ts"
+        },
+        {
+          "namespace": "window",
+          "fixture": "window_doc.json",
+          "outFile": "window.d.ts"
+        },
+        {
+          "namespace": "zlib",
+          "fixture": "zlib_doc.json",
+          "outFile": "zlib.d.ts"
+        }
       ],
       "luaStdlib": [
-        { "namespace": "base", "fixture": "base_doc.json" },
-        { "namespace": "bit", "fixture": "bit_doc.json" },
-        { "namespace": "math", "fixture": "math_doc.json" },
-        { "namespace": "os", "fixture": "os_doc.json" },
-        { "namespace": "string", "fixture": "string_doc.json" },
-        { "namespace": "table", "fixture": "table_doc.json" },
-        { "namespace": "coroutine", "fixture": "coroutine_doc.json" },
-        { "namespace": "debug", "fixture": "debug_doc.json" },
-        { "namespace": "io", "fixture": "io_doc.json" },
-        { "namespace": "package", "fixture": "package_doc.json" }
+        {
+          "namespace": "base",
+          "fixture": "base_doc.json"
+        },
+        {
+          "namespace": "bit",
+          "fixture": "bit_doc.json"
+        },
+        {
+          "namespace": "math",
+          "fixture": "math_doc.json"
+        },
+        {
+          "namespace": "os",
+          "fixture": "os_doc.json"
+        },
+        {
+          "namespace": "string",
+          "fixture": "string_doc.json"
+        },
+        {
+          "namespace": "table",
+          "fixture": "table_doc.json"
+        },
+        {
+          "namespace": "coroutine",
+          "fixture": "coroutine_doc.json"
+        },
+        {
+          "namespace": "debug",
+          "fixture": "debug_doc.json"
+        },
+        {
+          "namespace": "io",
+          "fixture": "io_doc.json"
+        },
+        {
+          "namespace": "package",
+          "fixture": "package_doc.json"
+        }
+      ]
+    },
+    {
+      "id": "defold-1.12.4",
+      "default": false,
+      "fixturesDir": "fixtures/defold-1.12.4",
+      "generatedDir": "generated/versions/defold-1.12.4",
+      "coreTypesImport": "../../../src/core-types",
+      "source": null,
+      "modules": [
+        {
+          "namespace": "b2d",
+          "fixture": "b2d_doc.json",
+          "outFile": "b2d.d.ts"
+        },
+        {
+          "namespace": "b2d.body",
+          "fixture": "b2d_body_doc.json",
+          "outFile": "b2d_body.d.ts"
+        },
+        {
+          "namespace": "buffer",
+          "fixture": "buffer_doc.json",
+          "outFile": "buffer.d.ts"
+        },
+        {
+          "namespace": "camera",
+          "fixture": "camera_doc.json",
+          "outFile": "camera.d.ts"
+        },
+        {
+          "namespace": "collectionfactory",
+          "fixture": "collectionfactory_doc.json",
+          "outFile": "collectionfactory.d.ts"
+        },
+        {
+          "namespace": "collectionproxy",
+          "fixture": "collectionproxy_doc.json",
+          "outFile": "collectionproxy.d.ts"
+        },
+        {
+          "namespace": "crash",
+          "fixture": "crash_doc.json",
+          "outFile": "crash.d.ts"
+        },
+        {
+          "namespace": "factory",
+          "fixture": "factory_doc.json",
+          "outFile": "factory.d.ts"
+        },
+        {
+          "namespace": "font",
+          "fixture": "font_doc.json",
+          "outFile": "font.d.ts"
+        },
+        {
+          "namespace": "go",
+          "fixture": "go_doc.json",
+          "outFile": "go.d.ts",
+          "skipFunctions": ["get", "set", "property"]
+        },
+        {
+          "namespace": "graphics",
+          "fixture": "graphics_doc.json",
+          "outFile": "graphics.d.ts"
+        },
+        {
+          "namespace": "gui",
+          "fixture": "gui_doc.json",
+          "outFile": "gui.d.ts"
+        },
+        {
+          "namespace": "html5",
+          "fixture": "html5_doc.json",
+          "outFile": "html5.d.ts"
+        },
+        {
+          "namespace": "http",
+          "fixture": "http_doc.json",
+          "outFile": "http.d.ts"
+        },
+        {
+          "namespace": "iac",
+          "fixture": "iac_doc.json",
+          "outFile": "iac.d.ts"
+        },
+        {
+          "namespace": "iap",
+          "fixture": "iap_doc.json",
+          "outFile": "iap.d.ts"
+        },
+        {
+          "namespace": "image",
+          "fixture": "image_doc.json",
+          "outFile": "image.d.ts"
+        },
+        {
+          "namespace": "json",
+          "fixture": "json_doc.json",
+          "outFile": "json.d.ts"
+        },
+        {
+          "namespace": "label",
+          "fixture": "label_doc.json",
+          "outFile": "label.d.ts"
+        },
+        {
+          "namespace": "liveupdate",
+          "fixture": "liveupdate_doc.json",
+          "outFile": "liveupdate.d.ts"
+        },
+        {
+          "namespace": "model",
+          "fixture": "model_doc.json",
+          "outFile": "model.d.ts"
+        },
+        {
+          "namespace": "msg",
+          "fixture": "msg_doc.json",
+          "outFile": "msg.d.ts",
+          "skipFunctions": ["post", "url"]
+        },
+        {
+          "namespace": "particlefx",
+          "fixture": "particlefx_doc.json",
+          "outFile": "particlefx.d.ts"
+        },
+        {
+          "namespace": "physics",
+          "fixture": "physics_doc.json",
+          "outFile": "physics.d.ts"
+        },
+        {
+          "namespace": "profiler",
+          "fixture": "profiler_doc.json",
+          "outFile": "profiler.d.ts"
+        },
+        {
+          "namespace": "push",
+          "fixture": "push_doc.json",
+          "outFile": "push.d.ts"
+        },
+        {
+          "namespace": "render",
+          "fixture": "render_doc.json",
+          "outFile": "render.d.ts"
+        },
+        {
+          "namespace": "resource",
+          "fixture": "resource_doc.json",
+          "outFile": "resource.d.ts"
+        },
+        {
+          "namespace": "socket",
+          "fixture": "socket_doc.json",
+          "outFile": "socket.d.ts"
+        },
+        {
+          "namespace": "sound",
+          "fixture": "sound_doc.json",
+          "outFile": "sound.d.ts"
+        },
+        {
+          "namespace": "sprite",
+          "fixture": "sprite_doc.json",
+          "outFile": "sprite.d.ts"
+        },
+        {
+          "namespace": "sys",
+          "fixture": "sys_doc.json",
+          "outFile": "sys.d.ts"
+        },
+        {
+          "namespace": "tilemap",
+          "fixture": "tilemap_doc.json",
+          "outFile": "tilemap.d.ts"
+        },
+        {
+          "namespace": "timer",
+          "fixture": "timer_doc.json",
+          "outFile": "timer.d.ts"
+        },
+        {
+          "namespace": "types",
+          "fixture": "types_doc.json",
+          "outFile": "types.d.ts"
+        },
+        {
+          "namespace": "vmath",
+          "fixture": "vmath_doc.json",
+          "outFile": "vmath.d.ts",
+          "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
+        },
+        {
+          "namespace": "webview",
+          "fixture": "webview_doc.json",
+          "outFile": "webview.d.ts"
+        },
+        {
+          "namespace": "window",
+          "fixture": "window_doc.json",
+          "outFile": "window.d.ts"
+        },
+        {
+          "namespace": "zlib",
+          "fixture": "zlib_doc.json",
+          "outFile": "zlib.d.ts"
+        }
+      ],
+      "luaStdlib": [
+        {
+          "namespace": "base",
+          "fixture": "base_doc.json"
+        },
+        {
+          "namespace": "bit",
+          "fixture": "bit_doc.json"
+        },
+        {
+          "namespace": "math",
+          "fixture": "math_doc.json"
+        },
+        {
+          "namespace": "os",
+          "fixture": "os_doc.json"
+        },
+        {
+          "namespace": "string",
+          "fixture": "string_doc.json"
+        },
+        {
+          "namespace": "table",
+          "fixture": "table_doc.json"
+        },
+        {
+          "namespace": "coroutine",
+          "fixture": "coroutine_doc.json"
+        },
+        {
+          "namespace": "debug",
+          "fixture": "debug_doc.json"
+        },
+        {
+          "namespace": "io",
+          "fixture": "io_doc.json"
+        },
+        {
+          "namespace": "package",
+          "fixture": "package_doc.json"
+        }
       ]
     },
     {
@@ -102,8 +541,17 @@
       "fixturesDir": "fixtures/defold-1.9.8",
       "generatedDir": "generated/versions/defold-1.9.8",
       "coreTypesImport": "../../../src/core-types",
-      "source": { "kind": "ref-doc", "version": "1.9.8" },
-      "modules": [{ "namespace": "label", "fixture": "label_doc.json", "outFile": "label.d.ts" }]
+      "source": {
+        "kind": "ref-doc",
+        "version": "1.9.8"
+      },
+      "modules": [
+        {
+          "namespace": "label",
+          "fixture": "label_doc.json",
+          "outFile": "label.d.ts"
+        }
+      ]
     }
   ]
 }

@@ -6,7 +6,7 @@ import { DEFOLD_TYPE_MAP } from "../src/core-types";
 import { parseScriptApi } from "../src/script-api";
 import { MODULE_MANIFEST } from "./regen";
 
-export const DEFOLD_VERSION = "1.12.4";
+export const DEFOLD_VERSION = "1.13.0";
 export const refDocUrl = (version = DEFOLD_VERSION): string =>
   `https://github.com/defold/defold/releases/download/${version}/ref-doc.zip`;
 
@@ -26,52 +26,71 @@ export interface SyncManifestEntry {
 // so each path is confirmed against the pinned release artifact, not derived.
 export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
   entry("b2d", "doc/scripts-box2d-script_box2d.cpp_doc.json"),
-  // On-disk name uses underscores to avoid a double-dotted filename; the namespace
-  // string stays `b2d.body` so /api/b2d.body routes correctly and the emitter
-  // produces `declare global { namespace b2d.body { ... } }`. Use the non-`_defold`
-  // variant — the `_defold` variant has duplicate `get_world_center` elements.
-  entry(
-    "b2d.body",
-    "doc/scripts-box2d-script_box2d_body.cpp_doc.json",
-    "fixtures/b2d_body_doc.json",
-  ),
+  // Box2D 1.13.0 documents the v2 and v3 backends separately. On-disk dotted
+  // namespaces use underscores while the namespace itself stays dotted.
+  entry("b2d.body", "doc/scripts-box2d-v2-script_box2d_body_v2.cpp_doc.json", undefined, [
+    "doc/scripts-box2d-v3-script_box2d_body_v3.cpp_doc.json",
+  ]),
+  entry("b2d.chain", "doc/scripts-box2d-v3-script_box2d_chain_v3.cpp_doc.json"),
+  entry("b2d.fixture", "doc/scripts-box2d-v2-script_box2d_fixture_v2.cpp_doc.json"),
+  entry("b2d.joint", "doc/scripts-box2d-v2-script_box2d_joint_v2.cpp_doc.json", undefined, [
+    "doc/scripts-box2d-v3-script_box2d_joint_v3.cpp_doc.json",
+  ]),
+  entry("b2d.shape", "doc/scripts-box2d-v2-script_box2d_shape_v2.cpp_doc.json", undefined, [
+    "doc/scripts-box2d-v3-script_box2d_shape_v3.cpp_doc.json",
+  ]),
+  entry("b2d.world", "doc/scripts-box2d-v2-script_box2d_world_v2.cpp_doc.json", undefined, [
+    "doc/scripts-box2d-v3-script_box2d_world_v3.cpp_doc.json",
+  ]),
   entry("buffer", "doc/scripts-script_buffer.cpp_doc.json"),
-  // camera's Lua surface lives in the render-script doc, not the scripts-script
-  // one (`doc/scripts-script_camera.cpp_doc.json` is empty upstream in 1.12.4).
-  entry("camera", "doc/render-render_script_camera.cpp_doc.json"),
+  // Camera and component namespaces merge their DDF messages/properties into
+  // the callable script API so release snapshots retain every declared symbol.
+  entry("camera", "doc/gamesys-camera_ddf.proto_doc.json", undefined, [
+    "doc/render-render_script_camera.cpp_doc.json",
+  ]),
   entry("collectionfactory", "doc/scripts-script_collection_factory.cpp_doc.json"),
   entry("collectionproxy", "doc/scripts-script_collectionproxy.cpp_doc.json"),
+  entry("compute", "doc/scripts-script_compute.cpp_doc.json"),
   entry("crash", "doc/script_crash.cpp_doc.json"),
   entry("factory", "doc/scripts-script_factory.cpp_doc.json"),
   entry("font", "doc/scripts-script_font.cpp_doc.json"),
-  entry("go", "doc/gameobject_script.cpp_doc.json"),
+  entry("go", "doc/gameobject-gameobject_ddf.proto_doc.json", undefined, [
+    "doc/gameobject_script.cpp_doc.json",
+  ]),
   entry("graphics", "doc/src-script_graphics.cpp_doc.json"),
-  entry("gui", "doc/gui_script.cpp_doc.json"),
+  entry("gui", "doc/gamesys-gui_ddf.proto_doc.json", undefined, ["doc/gui_script.cpp_doc.json"]),
   entry("html5", "doc/src-script_html5_js.cpp_doc.json"),
   entry("http", "doc/scripts-script_http.cpp_doc.json"),
   entry("image", "doc/scripts-script_image.cpp_doc.json"),
   entry("json", "doc/src-script_json.cpp_doc.json"),
-  entry("label", "doc/scripts-script_label.cpp_doc.json"),
+  entry("label", "doc/gamesys-label_ddf.proto_doc.json", undefined, [
+    "doc/scripts-script_label.cpp_doc.json",
+  ]),
   entry("liveupdate", "doc/src-script_liveupdate.h_doc.json"),
-  entry("model", "doc/scripts-script_model.cpp_doc.json"),
+  entry("material", "doc/scripts-script_material.cpp_doc.json"),
+  entry("model", "doc/gamesys-model_ddf.proto_doc.json", undefined, [
+    "doc/scripts-script_model.cpp_doc.json",
+  ]),
   entry("msg", "doc/src-script_msg.cpp_doc.json"),
   entry("particlefx", "doc/scripts-script_particlefx.cpp_doc.json"),
-  entry("physics", "doc/scripts-script_physics.cpp_doc.json"),
+  entry("physics", "doc/gamesys-physics_ddf.proto_doc.json", undefined, [
+    "doc/scripts-script_physics.cpp_doc.json",
+  ]),
   entry("profiler", "doc/profiler.cpp_doc.json"),
-  entry("render", "doc/render-render_script.cpp_doc.json"),
+  entry("render", "doc/render-render_ddf.proto_doc.json", undefined, [
+    "doc/render-render_script.cpp_doc.json",
+  ]),
   entry("resource", "doc/scripts-script_resource.cpp_doc.json"),
   entry("socket", "doc/luasocket-luasocket.doc_h_doc.json"),
   entry("sound", "doc/scripts-script_sound.cpp_doc.json"),
-  entry("sprite", "doc/scripts-script_sprite.cpp_doc.json"),
-  // The `sys` Lua surface is split across three docs in ref-doc.zip: the core
-  // (src-script_sys), the gamesys subset (`load_buffer`/`load_buffer_async` plus
-  // the `REQUEST_STATUS_*` constants), and the engine doc (`set_engine_throttle`/
-  // `set_render_enable`). `mergeEntries` folds all three into one fixture at sync
-  // time. The `*_ddf.proto` doc is deliberately excluded — it is message-shaped
-  // and owned by the builtin-messages catalog.
-  entry("sys", "doc/src-script_sys.cpp_doc.json", "fixtures/sys_doc.json", [
+  entry("sprite", "doc/gamesys-sprite_ddf.proto_doc.json", undefined, [
+    "doc/scripts-script_sprite.cpp_doc.json",
+  ]),
+  // The sys surface spans core, gamesys, engine, and DDF documents in 1.13.0.
+  entry("sys", "doc/script-script_engine.cpp_doc.json", undefined, [
+    "doc/script-sys_ddf.proto_doc.json",
     "doc/scripts-script_sys_gamesys.cpp_doc.json",
-    "doc/script-script_engine.cpp_doc.json",
+    "doc/src-script_sys.cpp_doc.json",
   ]),
   entry("tilemap", "doc/scripts-script_tilemap.cpp_doc.json"),
   entry("timer", "doc/src-script_timer.cpp_doc.json"),
@@ -118,7 +137,7 @@ export const IGNORED_UPSTREAM: ReadonlyMap<string, string> = new Map([
 export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
   entry("base", "doc/lua_base.doc_h_doc.json"),
   entry("bit", "doc/src-script_bitop.cpp_doc.json"),
-  // Core Lua stdlib docs. The 1.12.4 release names these `doc/lua_<ns>.doc_h_doc.json`
+  // Core Lua stdlib docs. The 1.13.0 release names these `doc/lua_<ns>.doc_h_doc.json`
   // (confirmed against the pinned ref-doc.zip, not derived — the naming drifted from
   // the 1.9.8 `doc/<ns>_doc.json` form). Typed by the lua-types dependency, so docs-only.
   entry("math", "doc/lua_math.doc_h_doc.json"),
@@ -127,7 +146,7 @@ export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
   entry("table", "doc/lua_table.doc_h_doc.json"),
   entry("coroutine", "doc/lua_coroutine.doc_h_doc.json"),
   // Sandboxed-runtime stdlib surfaces. Defold sandboxes the Lua VM, but the pinned
-  // 1.12.4 ref-doc.zip documents all three with real function elements; types stay
+  // 1.13.0 ref-doc.zip documents all three with real function elements; types stay
   // owned by lua-types (core/{debug,io}.d.ts + core/modules.d.ts for `package`).
   entry("debug", "doc/lua_debug.doc_h_doc.json"),
   entry("io", "doc/lua_io.doc_h_doc.json"),
@@ -137,7 +156,7 @@ export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
 function entry(
   namespace: string,
   zipEntry: string,
-  fixture: string = `fixtures/${namespace}_doc.json`,
+  fixture: string = `fixtures/defold-1.13.0/${namespace.replace(/\./g, "_")}_doc.json`,
   mergeEntries?: readonly string[],
 ): SyncManifestEntry {
   return { namespace, zipEntry, fixture, ...(mergeEntries ? { mergeEntries } : {}) };
@@ -163,7 +182,13 @@ export const EXTENSION_MANIFEST: readonly ExtensionManifestEntry[] = [
 ];
 
 function ext(namespace: string, repo: string, tag: string, path: string): ExtensionManifestEntry {
-  return { namespace, repo, tag, path, fixture: `fixtures/${namespace}_doc.json` };
+  return {
+    namespace,
+    repo,
+    tag,
+    path,
+    fixture: `fixtures/defold-1.13.0/${namespace}_doc.json`,
+  };
 }
 
 export const extensionRawUrl = (e: ExtensionManifestEntry): string =>

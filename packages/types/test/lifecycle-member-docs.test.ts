@@ -240,7 +240,7 @@ describe("lifecycle hook-member docs", () => {
   test("every InputAction field carries a preceding JSDoc block", () => {
     const span = interfaceBraceSpan(lifecycleSource, "InputAction");
     const fields = interfaceFieldNames(span);
-    expect(fields.length).toBe(22);
+    expect(fields.length).toBe(24);
     for (const f of fields) {
       expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\?:`))).toBe(true);
     }

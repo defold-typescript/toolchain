@@ -1,0 +1,579 @@
+{
+  "info": {
+    "namespace": "builtin_messages",
+    "version": "1.12.4",
+    "description": "Defold's built-in message ids and the payload shape each one carries."
+  },
+  "messages": [
+    {
+      "name": "acquire_input_focus",
+      "origin": "go",
+      "description": "Acquire input focus for the current game object.",
+      "payload": []
+    },
+    {
+      "name": "release_input_focus",
+      "origin": "go",
+      "description": "Release input focus held by the current game object.",
+      "payload": []
+    },
+    {
+      "name": "enable",
+      "origin": "go",
+      "description": "Enable the receiving component.",
+      "payload": []
+    },
+    {
+      "name": "disable",
+      "origin": "go",
+      "description": "Disable the receiving component.",
+      "payload": []
+    },
+    {
+      "name": "set_parent",
+      "origin": "go",
+      "description": "Re-parent the receiving game object.",
+      "payload": [
+        {
+          "name": "parent_id",
+          "types": ["hash"],
+          "optional": true,
+          "doc": "Hash of the new parent (omit or nil to clear)."
+        },
+        {
+          "name": "keep_world_transform",
+          "types": ["0", "1"],
+          "optional": true,
+          "doc": "1 to preserve world transform; 0 (default) to keep local transform."
+        }
+      ]
+    },
+    {
+      "name": "play_animation",
+      "origin": "sprite",
+      "description": "Play a flipbook/model animation.",
+      "payload": [
+        { "name": "id", "types": ["hash"], "optional": false, "doc": "Hashed animation id." }
+      ]
+    },
+    {
+      "name": "animation_done",
+      "origin": "sprite",
+      "description": "Sent back when a one-shot animation finishes.",
+      "payload": [
+        {
+          "name": "current_tile",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Tile index when the animation ended."
+        },
+        {
+          "name": "id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Hashed animation id that finished."
+        }
+      ]
+    },
+    {
+      "name": "collision_response",
+      "origin": "physics",
+      "description": "Reported once per collision pair per frame.",
+      "payload": [
+        {
+          "name": "other_id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Id of the other colliding object."
+        },
+        {
+          "name": "other_position",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World position of the other object."
+        },
+        {
+          "name": "other_group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group of the other object."
+        },
+        {
+          "name": "own_group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group of this object."
+        }
+      ]
+    },
+    {
+      "name": "trigger_response",
+      "origin": "physics",
+      "description": "Reported when a trigger overlap begins or ends.",
+      "payload": [
+        {
+          "name": "other_id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Id of the object entering/leaving the trigger."
+        },
+        {
+          "name": "enter",
+          "types": ["boolean"],
+          "optional": false,
+          "doc": "true on enter, false on exit."
+        },
+        {
+          "name": "other_group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group of the other object."
+        },
+        {
+          "name": "own_group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group of this object."
+        }
+      ]
+    },
+    {
+      "name": "contact_point_response",
+      "origin": "physics",
+      "description": "Reported once per contact point per frame.",
+      "payload": [
+        {
+          "name": "position",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "Contact point position."
+        },
+        { "name": "normal", "types": ["vector3"], "optional": false, "doc": "Contact normal." },
+        {
+          "name": "relative_velocity",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "Relative velocity at the contact point."
+        },
+        {
+          "name": "distance",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Penetration distance."
+        },
+        {
+          "name": "applied_impulse",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Impulse applied to resolve the contact."
+        },
+        {
+          "name": "life_time",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Contact life time."
+        },
+        { "name": "mass", "types": ["number"], "optional": false, "doc": "Mass of this object." },
+        {
+          "name": "other_mass",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Mass of the other object."
+        },
+        {
+          "name": "other_id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Id of the other object."
+        },
+        {
+          "name": "other_position",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World position of the other object."
+        },
+        {
+          "name": "other_group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group of the other object."
+        },
+        {
+          "name": "own_group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group of this object."
+        }
+      ]
+    },
+    {
+      "name": "apply_force",
+      "origin": "physics",
+      "description": "Apply a force at a world position on a collision object.",
+      "payload": [
+        {
+          "name": "force",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "Force vector in Newtons."
+        },
+        {
+          "name": "position",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World position at which the force is applied."
+        }
+      ]
+    },
+    {
+      "name": "ray_cast_response",
+      "origin": "physics",
+      "description": "Reported when an asynchronous ray cast hits a collision object.",
+      "payload": [
+        {
+          "name": "fraction",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Fraction of the ray length at which the hit occurred (0..1)."
+        },
+        {
+          "name": "position",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World position of the hit."
+        },
+        {
+          "name": "normal",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World-space surface normal at the hit."
+        },
+        {
+          "name": "id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Id of the hit collision object."
+        },
+        {
+          "name": "group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group of the hit object."
+        },
+        {
+          "name": "request_id",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Request id passed to physics.raycast_async."
+        }
+      ]
+    },
+    {
+      "name": "ray_cast_missed",
+      "origin": "physics",
+      "description": "Reported when an asynchronous ray cast hits nothing.",
+      "payload": [
+        {
+          "name": "group",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Collision group mask used for the ray cast."
+        },
+        {
+          "name": "request_id",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Request id passed to physics.raycast_async."
+        }
+      ]
+    },
+    {
+      "name": "proxy_loaded",
+      "origin": "collectionproxy",
+      "description": "Sent by a collection proxy once its collection finished loading.",
+      "payload": []
+    },
+    {
+      "name": "load",
+      "origin": "collectionproxy",
+      "description": "Tell a collection proxy to start loading its collection.",
+      "payload": []
+    },
+    {
+      "name": "unload",
+      "origin": "collectionproxy",
+      "description": "Tell a collection proxy to unload its collection.",
+      "payload": []
+    },
+    {
+      "name": "init",
+      "origin": "collectionproxy",
+      "description": "Initialize the loaded collection inside a collection proxy.",
+      "payload": []
+    },
+    {
+      "name": "final",
+      "origin": "collectionproxy",
+      "description": "Finalize the loaded collection inside a collection proxy.",
+      "payload": []
+    },
+    {
+      "name": "play_sound",
+      "origin": "sound",
+      "description": "Play the sound attached to the receiving sound component.",
+      "payload": [
+        {
+          "name": "delay",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Delay in seconds before the sound starts (default 0)."
+        },
+        {
+          "name": "gain",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Sound gain between 0 and 1 (default 1)."
+        },
+        {
+          "name": "play_id",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Caller-chosen id echoed back in sound_done / sound_stopped."
+        },
+        {
+          "name": "start_time",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Optional start offset (seconds). Mutually exclusive with start_frame."
+        },
+        {
+          "name": "start_frame",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Optional start offset (frames). If both are provided, start_frame is used."
+        }
+      ]
+    },
+    {
+      "name": "stop_sound",
+      "origin": "sound",
+      "description": "Stop all instances playing on the receiving sound component.",
+      "payload": []
+    },
+    {
+      "name": "set_gain",
+      "origin": "sound",
+      "description": "Set the gain on the receiving sound component.",
+      "payload": [
+        {
+          "name": "gain",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Target gain between 0 and 1."
+        }
+      ]
+    },
+    {
+      "name": "sound_done",
+      "origin": "sound",
+      "description": "Sent back when a sound started with play_sound finishes playing.",
+      "payload": [
+        {
+          "name": "play_id",
+          "types": ["number"],
+          "optional": false,
+          "doc": "The id passed to play_sound."
+        }
+      ]
+    },
+    {
+      "name": "sound_stopped",
+      "origin": "sound",
+      "description": "Sent back when a sound started with play_sound is stopped via stop_sound.",
+      "payload": [
+        {
+          "name": "play_id",
+          "types": ["number"],
+          "optional": false,
+          "doc": "The id passed to play_sound."
+        }
+      ]
+    },
+    {
+      "name": "model_animation_done",
+      "origin": "model",
+      "description": "Sent back when a play-once animation started with model.play_anim finishes.",
+      "payload": [
+        {
+          "name": "animation_id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Hashed id of the completed animation."
+        },
+        {
+          "name": "playback",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Playback mode constant of the completed animation."
+        }
+      ]
+    },
+    {
+      "name": "set_time_step",
+      "origin": "collectionproxy",
+      "description": "Set the time-step scaling and mode for the collection inside a collection proxy.",
+      "payload": [
+        {
+          "name": "factor",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Time-step scaling factor."
+        },
+        {
+          "name": "mode",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Time-step mode: 0 for continuous, 1 for discrete."
+        }
+      ]
+    },
+    {
+      "name": "async_load",
+      "origin": "collectionproxy",
+      "description": "Tell a collection proxy to start loading its collection in the background.",
+      "payload": []
+    },
+    {
+      "name": "proxy_unloaded",
+      "origin": "collectionproxy",
+      "description": "Sent back to the initiating script once a collection proxy finished unloading its collection.",
+      "payload": []
+    },
+    {
+      "name": "clear_color",
+      "origin": "render",
+      "description": "Set the colour the render target is cleared to.",
+      "payload": [
+        {
+          "name": "color",
+          "types": ["vector4"],
+          "optional": false,
+          "doc": "Clear colour as an RGBA vector4."
+        }
+      ]
+    },
+    {
+      "name": "set_view_projection",
+      "origin": "render",
+      "description": "Posted automatically by camera components to the render script with the active view and projection matrices.",
+      "payload": [
+        {
+          "name": "id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Id of the camera component that posted the matrices."
+        },
+        {
+          "name": "view",
+          "types": ["matrix4"],
+          "optional": false,
+          "doc": "View matrix of the camera."
+        },
+        {
+          "name": "projection",
+          "types": ["matrix4"],
+          "optional": false,
+          "doc": "Projection matrix of the camera."
+        }
+      ]
+    },
+    {
+      "name": "draw_line",
+      "origin": "render",
+      "description": "Request a debug line to be drawn for the current frame.",
+      "payload": [
+        {
+          "name": "start_point",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World-space start point of the line."
+        },
+        {
+          "name": "end_point",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World-space end point of the line."
+        },
+        {
+          "name": "color",
+          "types": ["vector4"],
+          "optional": false,
+          "doc": "Line colour as an RGBA vector4."
+        }
+      ]
+    },
+    {
+      "name": "draw_debug_text",
+      "origin": "render",
+      "description": "Request debug text to be drawn for the current frame.",
+      "payload": [
+        {
+          "name": "position",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "World-space position to draw the text at."
+        },
+        {
+          "name": "text",
+          "types": ["string"],
+          "optional": false,
+          "doc": "The text to draw."
+        },
+        {
+          "name": "color",
+          "types": ["vector4"],
+          "optional": false,
+          "doc": "Text colour as an RGBA vector4."
+        }
+      ]
+    },
+    {
+      "name": "window_resized",
+      "origin": "render",
+      "description": "Received by the render script and listeners when the application window changes size.",
+      "payload": [
+        {
+          "name": "height",
+          "types": ["number"],
+          "optional": false,
+          "doc": "New window height in pixels."
+        },
+        {
+          "name": "width",
+          "types": ["number"],
+          "optional": false,
+          "doc": "New window width in pixels."
+        }
+      ]
+    },
+    {
+      "name": "layout_changed",
+      "origin": "gui",
+      "description": "Sent to a gui script when the layout changes, for example when the orientation changes or the device profile is switched.",
+      "payload": [
+        {
+          "name": "id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "The id of the layout the gui switched to."
+        },
+        {
+          "name": "previous_id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "The id of the layout the gui switched from."
+        }
+      ]
+    }
+  ]
+}

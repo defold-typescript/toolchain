@@ -6,10 +6,10 @@
  * the gate fails. Every entry must also still match at least one current
  * theirs-only symbol (hygiene assertion forces stale entries to be pruned).
  *
- * Seed (30 theirs-only symbols at time of authoring):
- *   delegated   — 12 (bit.*)
- *   tracked-gap —  8 (b2d.body.* + the flattened b2d.body_is_fixed_rotation)
- *   intentional — 10 (modeling/casing/reserved-word differences)
+ * Seed after the 1.13.0 promotion:
+ *   delegated   — bit.*
+ *   tracked-gap — the flattened b2d.body_is_fixed_rotation alias
+ *   intentional — modeling/casing/reserved-word differences
  */
 
 export type ParityCategory = "delegated" | "intentional" | "tracked-gap";
@@ -26,12 +26,6 @@ export const PARITY_ALLOWLIST: ParityAllowEntry[] = [
     pattern: "bit.*",
     category: "delegated",
     reason: "lua-types owns the entire bit namespace; we deliberately never declare it.",
-  },
-  {
-    pattern: "b2d.body.*",
-    category: "tracked-gap",
-    reason:
-      "b2d.body ref-doc variant (bug-23): hand-authored in ts-defold-types, absent from the Defold ref-doc JSON our pipeline reads.",
   },
   {
     pattern: "b2d.body_is_fixed_rotation",

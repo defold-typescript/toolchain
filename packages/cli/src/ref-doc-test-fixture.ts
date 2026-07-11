@@ -14,10 +14,10 @@ interface FakeZip {
 // namespace -> ref-doc.zip entry for the multi-kind fixture. Mirrors the
 // types-package SYNC_MANIFEST so the fake zip serves docs under the same keys
 // `resolveTargetModules` reads.
-const MULTI_KIND_ZIP_ENTRIES: Record<string, string> = {
-  gui: "doc/gui_script.cpp_doc.json",
-  render: "doc/render-render_script.cpp_doc.json",
-  sprite: "doc/scripts-script_sprite.cpp_doc.json",
+const MULTI_KIND_ZIP_ENTRIES: Record<string, readonly string[]> = {
+  gui: ["doc/gamesys-gui_ddf.proto_doc.json", "doc/gui_script.cpp_doc.json"],
+  render: ["doc/render-render_ddf.proto_doc.json", "doc/render-render_script.cpp_doc.json"],
+  sprite: ["doc/gamesys-sprite_ddf.proto_doc.json", "doc/scripts-script_sprite.cpp_doc.json"],
 };
 
 export const noDownload = async (): Promise<Uint8Array> => {
@@ -55,8 +55,9 @@ export function multiKindRefDocResolveOpts(): {
 } {
   const version = "1.9.8";
   const docs: Record<string, string> = {};
-  for (const [namespace, zipEntry] of Object.entries(MULTI_KIND_ZIP_ENTRIES)) {
-    docs[zipEntry] = readFileSync(path.join(TYPES_FIXTURES, `${namespace}_doc.json`), "utf8");
+  for (const [namespace, zipEntries] of Object.entries(MULTI_KIND_ZIP_ENTRIES)) {
+    const fixture = readFileSync(path.join(TYPES_FIXTURES, `${namespace}_doc.json`), "utf8");
+    for (const zipEntry of zipEntries) docs[zipEntry] = fixture;
   }
   const fakeZip: FakeZip = {
     has: (entry) => entry in docs,

@@ -15,7 +15,7 @@ declare global {
      * @param json - json data
      * @param options - table with decode options
      *
-     * - boolean `decode_null_as_userdata`: wether to decode a JSON null value as json.null or nil (default is nil)
+     * - boolean `decode_null_as_userdata`: whether to decode a JSON null value as json.null or nil (default is nil)
      * @returns decoded json
      * @example
      * ```ts
@@ -49,7 +49,7 @@ declare global {
      * @param tbl - lua table to encode
      * @param options - table with encode options
      *
-     * - string `encode_empty_table_as_object`: wether to encode an empty table as an JSON object or array (default is object)
+     * - string `encode_empty_table_as_object`: whether to encode an empty table as an JSON object or array (default is object)
      * @returns encoded json
      * @example
      * ```ts

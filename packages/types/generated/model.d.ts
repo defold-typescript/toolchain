@@ -3,7 +3,7 @@ import type { Hash, Opaque, Url, Vector3 } from "../src/core-types";
 
 declare global {
   /**
-   * Functions and messages for interacting with model components.
+   * Model API documentation
    */
   namespace model {
     /**
@@ -25,6 +25,21 @@ declare global {
      * ```
      */
     function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };
+    /**
+     * Returns a table of numbers with one entry per morph target on the first mesh of the model that has morph targets.
+     * Values reflect the rig state at call time (after animation, and any active script override from model.set_blend_weights).
+     *
+     * @param url - the model component
+     * @returns array of weight values, or empty table if the model has no morph targets
+     * @example
+     * ```ts
+     * const weights = model.get_blend_weights("#model");
+     * weights[1] = 0.75;
+     * weights[2] = 0.25;
+     * model.set_blend_weights("#model", weights);
+     * ```
+     */
+    function get_blend_weights(url: string | Hash | Url): Record<string | number, unknown>;
     /**
      * Gets the id of the game object that corresponds to a model skeleton bone.
      * The returned game object can be used for parenting and transform queries.
@@ -160,6 +175,36 @@ declare global {
      */
     function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Opaque<"constant">, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
     /**
+     * Resets a shader constant for a model component.
+     * The constant must be defined in the material assigned to the model.
+     * Resetting a constant through this function implies that the value defined in the material will be used.
+     * Which model to reset a constant for is identified by the URL.
+     *
+     * @param url - the model that should have a constant reset.
+     * @param constant - name of the constant.
+     * @example
+     * ```ts
+     * model.reset_constant("#model", "tint");
+     * ```
+     */
+    function reset_constant(url: string | Hash | Url, constant: string | Hash): void;
+    /**
+     * Copies numeric values from `weights` into each morph target slot for every mesh on the model that has morph targets.
+     * At most as many weights are applied as each mesh has morph targets; extra entries in the table are ignored.
+     * Missing weights leave the tail zero-filled for meshes with more targets than entries.
+     * The override is re-applied every frame after animations run, until cleared by omitting `weights` or passing `nil`.
+     * To reset the weights, use `model.set_blend_weights(url)` or `model.set_blend_weights(url, nil)`.
+     *
+     * @param url - the model component
+     * @param weights - array of weight values (1-based indices). Omit or pass `nil` to clear the override and return morphs to animation only
+     * @example
+     * ```ts
+     * model.set_blend_weights("#model", [0, 1, 0.5, 0]);
+     * model.set_blend_weights("#model");
+     * ```
+     */
+    function set_blend_weights(url: string | Hash | Url, weights?: Record<string | number, unknown>): void;
+    /**
      * Enable or disable visibility of a mesh
      *
      * @param url - the model
@@ -186,10 +231,6 @@ declare global {
        * Please note that model events may not fire as expected when the cursor is manipulated directly.
        */
       cursor: number;
-      /**
-       * The material used when rendering the model. The type of the property is hash.
-       */
-      material: Hash;
       /**
        * The animation playback rate. A multiplier to the animation playback rate. The type of the property is number.
        */

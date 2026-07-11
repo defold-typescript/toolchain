@@ -1,7 +1,7 @@
 {
   "info": {
     "namespace": "builtin_messages",
-    "version": "1.12.4",
+    "version": "1.13.0",
     "description": "Defold's built-in message ids and the payload shape each one carries."
   },
   "messages": [
@@ -53,7 +53,12 @@
       "origin": "sprite",
       "description": "Play a flipbook/model animation.",
       "payload": [
-        { "name": "id", "types": ["hash"], "optional": false, "doc": "Hashed animation id." }
+        {
+          "name": "id",
+          "types": ["hash"],
+          "optional": false,
+          "doc": "Hashed animation id."
+        }
       ]
     },
     {
@@ -148,7 +153,12 @@
           "optional": false,
           "doc": "Contact point position."
         },
-        { "name": "normal", "types": ["vector3"], "optional": false, "doc": "Contact normal." },
+        {
+          "name": "normal",
+          "types": ["vector3"],
+          "optional": false,
+          "doc": "Contact normal."
+        },
         {
           "name": "relative_velocity",
           "types": ["vector3"],
@@ -173,7 +183,12 @@
           "optional": false,
           "doc": "Contact life time."
         },
-        { "name": "mass", "types": ["number"], "optional": false, "doc": "Mass of this object." },
+        {
+          "name": "mass",
+          "types": ["number"],
+          "optional": false,
+          "doc": "Mass of this object."
+        },
         {
           "name": "other_mass",
           "types": ["number"],
@@ -574,6 +589,292 @@
           "doc": "The id of the layout the gui switched from."
         }
       ]
+    },
+    {
+      "name": "set_camera",
+      "origin": "camera",
+      "description": "Post this message to a camera-component to set its properties at run-time.",
+      "payload": [
+        {
+          "name": "aspect_ratio",
+          "types": ["number"],
+          "optional": false,
+          "doc": "aspect ratio of the screen (width divided by height)"
+        },
+        {
+          "name": "fov",
+          "types": ["number"],
+          "optional": false,
+          "doc": "field of view of the lens, measured as the angle in radians between the right and left edge"
+        },
+        {
+          "name": "near_z",
+          "types": ["number"],
+          "optional": false,
+          "doc": "position of the near clipping plane (distance from camera along relative z)"
+        },
+        {
+          "name": "far_z",
+          "types": ["number"],
+          "optional": false,
+          "doc": "position of the far clipping plane (distance from camera along relative z)"
+        },
+        {
+          "name": "orthographic_projection",
+          "types": ["boolean"],
+          "optional": false,
+          "doc": "set to use an orthographic projection"
+        },
+        {
+          "name": "orthographic_zoom",
+          "types": ["number"],
+          "optional": false,
+          "doc": "positive zoom multiplier when the camera is using an orthographic projection"
+        },
+        {
+          "name": "orthographic_mode",
+          "types": ["number"],
+          "optional": false,
+          "doc": "orthographic zoom behavior when orthographic_projection is enabled"
+        }
+      ]
+    },
+    {
+      "name": "acquire_camera_focus",
+      "origin": "camera",
+      "description": "Post this message to a camera-component to activate it.\nSeveral cameras can be active at the same time, but only the camera that was last activated will be used for rendering.\nWhen the camera is deactivated (see <code>release_camera_focus</code>), the previously activated camera will again be used for rendering automatically.\nThe reason it is called \"camera focus\" is the similarity to how acquiring input focus works (see <code>acquire_input_focus</code>).",
+      "payload": []
+    },
+    {
+      "name": "release_camera_focus",
+      "origin": "camera",
+      "description": "Post this message to a camera-component to deactivate it. The camera is then removed from the active cameras.\nSee <code>acquire_camera_focus</code> for more information how the active cameras are used in rendering.",
+      "payload": []
+    },
+    {
+      "name": "contact_point_event",
+      "origin": "physics",
+      "description": "See <a href=\"/ref/physics#physics.set_event_listener\">physics.set_event_listener</a>.\nThis message is sent to a function specified in <a href=\"/ref/physics#physics.set_event_listener\">physics.set_event_listener</a> when\na collision object has contact points with another collision object.\nSince multiple contact points can occur for two colliding objects, this event can be sent\nmultiple times in the same frame for the same two colliding objects. To only be notified once\nwhen the collision occurs, check for the <a href=\"#collision_event\">collision_event</a> event instead.",
+      "payload": [
+        {
+          "name": "applied_impulse",
+          "types": ["number"],
+          "optional": false,
+          "doc": "the impulse the contact resulted in"
+        },
+        {
+          "name": "distance",
+          "types": ["number"],
+          "optional": false,
+          "doc": "the penetration distance between the objects, which is always positive"
+        },
+        {
+          "name": "a",
+          "types": ["table"],
+          "optional": false,
+          "doc": "contact point information for object A\n<dl>\n<dt><code>position</code></dt>\n<dd><span class=\"type\">vector3</span> The world position of object A</dd>\n<dt><code>id</code></dt>\n<dd><span class=\"type\">hash</span> The ID of object A</dd>\n<dt><code>group</code></dt>\n<dd><span class=\"type\">hash</span> The collision group of object A</dd>\n<dt><code>relative_velocity</code></dt>\n<dd><span class=\"type\">vector3</span> The relative velocity of the collision object A as observed from B object</dd>\n<dt><code>mass</code></dt>\n<dd><span class=\"type\">number</span> The mass of the collision object A in kg</dd>\n<dt><code>normal</code></dt>\n<dd><span class=\"type\">vector3</span> normal in world space of the contact point, which points from B object towards A object</dd>\n</dl>"
+        },
+        {
+          "name": "b",
+          "types": ["table"],
+          "optional": false,
+          "doc": "contact point information for object B\n<dl>\n<dt><code>position</code></dt>\n<dd><span class=\"type\">vector3</span> The world position of object B</dd>\n<dt><code>id</code></dt>\n<dd><span class=\"type\">hash</span> The ID of object B</dd>\n<dt><code>group</code></dt>\n<dd><span class=\"type\">hash</span> The collision group of object B</dd>\n<dt><code>relative_velocity</code></dt>\n<dd><span class=\"type\">vector3</span> The relative velocity of the collision object B as observed from A object</dd>\n<dt><code>mass</code></dt>\n<dd><span class=\"type\">number</span> The mass of the collision object B in kg</dd>\n<dt><code>normal</code></dt>\n<dd><span class=\"type\">vector3</span> normal in world space of the contact point, which points from A object towards B object</dd>\n</dl>"
+        }
+      ]
+    },
+    {
+      "name": "collision_event",
+      "origin": "physics",
+      "description": "See <a href=\"/ref/physics#physics.set_event_listener\">physics.set_event_listener</a>.\nThis message is sent to a function specified in <a href=\"/ref/physics#physics.set_event_listener\">physics.set_event_listener</a>\nwhen two collision objects collide.\nThis message only reports that a collision has occurred and will be sent once per frame and per colliding pair.\nFor more detailed information, check for the <a href=\"#contact_point_event\">contact_point_event</a>.",
+      "payload": [
+        {
+          "name": "a",
+          "types": ["table"],
+          "optional": false,
+          "doc": "collision information for object A\n<dl>\n<dt><code>position</code></dt>\n<dd><span class=\"type\">vector3</span> The world position of object A</dd>\n<dt><code>id</code></dt>\n<dd><span class=\"type\">hash</span> The ID of object A</dd>\n<dt><code>group</code></dt>\n<dd><span class=\"type\">hash</span> The collision group of object A</dd>\n</dl>"
+        },
+        {
+          "name": "b",
+          "types": ["table"],
+          "optional": false,
+          "doc": "collision information for object B\n<dl>\n<dt><code>position</code></dt>\n<dd><span class=\"type\">vector3</span> The world position of object B</dd>\n<dt><code>id</code></dt>\n<dd><span class=\"type\">hash</span> The ID of object B</dd>\n<dt><code>group</code></dt>\n<dd><span class=\"type\">hash</span> The collision group of object B</dd>\n</dl>"
+        }
+      ]
+    },
+    {
+      "name": "trigger_event",
+      "origin": "physics",
+      "description": "See <a href=\"/ref/physics#physics.set_event_listener\">physics.set_event_listener</a>.\nThis message is sent to a function specified in <a href=\"/ref/physics#physics.set_event_listener\">physics.set_event_listener</a>\nwhen a collision object interacts with another collision object and one of them is a trigger.\nThis message only reports that an interaction actually happened and will be sent once per colliding pair and frame.\nFor more detailed information, check for the <a href=\"#contact_point_event\">contact_point_event</a>.",
+      "payload": [
+        {
+          "name": "enter",
+          "types": ["boolean"],
+          "optional": false,
+          "doc": "if the interaction was an entry or not"
+        },
+        {
+          "name": "a",
+          "types": ["table"],
+          "optional": false,
+          "doc": "<dl>\n<dt>interaction information for object A</dt>\n<dt><code>id</code></dt>\n<dd><span class=\"type\">hash</span> The ID of object A</dd>\n<dt><code>group</code></dt>\n<dd><span class=\"type\">hash</span> The collision group of object A</dd>\n</dl>"
+        },
+        {
+          "name": "b",
+          "types": ["table"],
+          "optional": false,
+          "doc": "collision information for object B\n<dl>\n<dt><code>id</code></dt>\n<dd><span class=\"type\">hash</span> The ID of object B</dd>\n<dt><code>group</code></dt>\n<dd><span class=\"type\">hash</span> The collision group of object B</dd>\n</dl>"
+        }
+      ]
+    },
+    {
+      "name": "resize",
+      "origin": "render",
+      "description": "Set the size of the game window. Only works on desktop platforms.",
+      "payload": [
+        {
+          "name": "height",
+          "types": ["number"],
+          "optional": false,
+          "doc": "the new window height"
+        },
+        {
+          "name": "width",
+          "types": ["number"],
+          "optional": false,
+          "doc": "the new window width"
+        }
+      ]
+    },
+    {
+      "name": "exit",
+      "origin": "sys",
+      "description": "Terminates the game application and reports the specified <code>code</code> to the OS.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": [
+        {
+          "name": "code",
+          "types": ["number"],
+          "optional": false,
+          "doc": "exit code to report to the OS, 0 means clean exit"
+        }
+      ]
+    },
+    {
+      "name": "toggle_profile",
+      "origin": "sys",
+      "description": "Toggles the on-screen profiler.\nThe profiler is a real-time tool that shows the numbers of milliseconds spent\nin each scope per frame as well as counters. The profiler is very useful for\ntracking down performance and resource problems.\nIn addition to the on-screen profiler, Defold includes a web-based profiler that\nallows you to sample a series of data points and then analyze them in detail.\nThe web profiler is available at <code>http://&lt;device IP&gt;:8002</code> where <device IP> is\nthe IP address of the device you are running your game on.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": []
+    },
+    {
+      "name": "toggle_physics_debug",
+      "origin": "sys",
+      "description": "Toggles the on-screen physics visual debugging mode which is very useful for\ntracking down issues related to physics. This mode visualizes\nall collision object shapes and normals at detected contact points. Toggling\nthis mode on is equal to setting <code>physics.debug</code> in the \"game.project\" settings,\nbut set in run-time.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": []
+    },
+    {
+      "name": "start_record",
+      "origin": "sys",
+      "description": "Starts video recording of the game frame-buffer to file. Current video format is the\nopen vp8 codec in the ivf container. It's possible to upload this format directly\nto YouTube. The VLC video player has native support but with the known issue that\nnot the entire file is played back. It's probably an issue with VLC.\nThe Miro Video Converter has support for vp8/ivf.\n<span class=\"icon-macos\"></span> <span class=\"icon-windows\"></span> <span class=\"icon-linux\"></span> Video recording is only supported on desktop platforms.\n<span class=\"icon-attention\"></span> Audio is currently not supported\n<span class=\"icon-attention\"></span> Window width and height must be a multiple of 8 to be able to record video.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": [
+        {
+          "name": "file_name",
+          "types": ["string"],
+          "optional": false,
+          "doc": "file name to write the video to"
+        },
+        {
+          "name": "frame_period",
+          "types": ["number"],
+          "optional": false,
+          "doc": "frame period to record, ie write every nth frame. Default value is <code>2</code>"
+        },
+        {
+          "name": "fps",
+          "types": ["number"],
+          "optional": false,
+          "doc": "frames per second. Playback speed for the video. Default value is <code>30</code>. The fps value doens't affect the recording. It's only meta-data in the written video file."
+        }
+      ]
+    },
+    {
+      "name": "stop_record",
+      "origin": "sys",
+      "description": "Stops the currently active video recording.\n<span class=\"icon-macos\"></span> <span class=\"icon-windows\"></span> <span class=\"icon-linux\"></span> Video recording is only supported on desktop platforms.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": []
+    },
+    {
+      "name": "reboot",
+      "origin": "sys",
+      "description": "Reboots the game engine with a specified set of arguments.\nArguments will be translated into command line arguments. Sending the reboot\ncommand is equivalent to starting the engine with the same arguments.\nOn startup the engine reads configuration from \"game.project\" in the\nproject root.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": [
+        {
+          "name": "arg1",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 1"
+        },
+        {
+          "name": "arg2",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 2"
+        },
+        {
+          "name": "arg3",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 3"
+        },
+        {
+          "name": "arg4",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 4"
+        },
+        {
+          "name": "arg5",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 5"
+        },
+        {
+          "name": "arg6",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 6"
+        }
+      ]
+    },
+    {
+      "name": "set_vsync",
+      "origin": "sys",
+      "description": "Set the vsync swap interval. The interval with which to swap the front and back buffers\nin sync with vertical blanks (v-blank), the hardware event where the screen image is updated\nwith data from the front buffer. A value of 1 swaps the buffers at every v-blank, a value of\n2 swaps the buffers every other v-blank and so on. A value of 0 disables waiting for v-blank\nbefore swapping the buffers. Default value is 1.\nWhen setting the swap interval to 0 and having <code>vsync</code> disabled in\n\"game.project\", the engine will try to respect the set frame cap value from\n\"game.project\" in software instead.\nThis setting may be overridden by driver settings.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": [
+        {
+          "name": "swap_interval",
+          "types": ["number"],
+          "optional": false,
+          "doc": "target swap interval."
+        }
+      ]
+    },
+    {
+      "name": "set_update_frequency",
+      "origin": "sys",
+      "description": "Set game update-frequency (frame cap). This option is equivalent to <code>display.update_frequency</code> in\nthe \"game.project\" settings but set in run-time. If <code>Vsync</code> checked in \"game.project\", the rate will\nbe clamped to a swap interval that matches any detected main monitor refresh rate. If <code>Vsync</code> is\nunchecked the engine will try to respect the rate in software using timers. There is no\nguarantee that the frame cap will be achieved depending on platform specifics and hardware settings.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": [
+        {
+          "name": "frequency",
+          "types": ["number"],
+          "optional": false,
+          "doc": "target frequency. 60 for 60 fps"
+        }
+      ]
+    },
+    {
+      "name": "resume_rendering",
+      "origin": "sys",
+      "description": "Resume rendering.\nThis message can only be sent to the designated <code>@system</code> socket.",
+      "payload": []
     }
   ]
 }

@@ -3,7 +3,7 @@ import type { Hash, Url, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
   /**
-   * Functions, messages and properties used to manipulate sprite components.
+   * Sprite API documentation
    */
   namespace sprite {
     /**
@@ -53,6 +53,20 @@ declare global {
      * ```
      */
     function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
+    /**
+     * Resets a shader constant for a sprite component.
+     * The constant must be defined in the material assigned to the sprite.
+     * Resetting a constant through this function implies that the value defined in the material will be used.
+     * Which sprite to reset a constant for is identified by the URL.
+     *
+     * @param url - the sprite that should have a constant reset
+     * @param constant - name of the constant
+     * @example
+     * ```ts
+     * sprite.reset_constant("#sprite", "tint");
+     * ```
+     */
+    function reset_constant(url: string | Hash | Url, constant: string | Hash): void;
     /**
      * Sets horizontal flipping of the provided sprite's animations.
      * The sprite is identified by its URL.

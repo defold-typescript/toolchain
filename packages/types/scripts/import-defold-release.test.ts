@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   applyReleaseImport,
   buildReleaseImportPlan,
+  DEFOLD_1_13_PROMOTED_NAMESPACES,
   parseReleaseImportArgs,
   releaseImportReportJson,
 } from "./import-defold-release";
@@ -47,6 +48,18 @@ function fn(
 }
 
 describe("buildReleaseImportPlan", () => {
+  test("the 1.13 promotion explicitly covers every new runtime namespace", () => {
+    expect(DEFOLD_1_13_PROMOTED_NAMESPACES).toEqual([
+      "b2d.chain",
+      "b2d.fixture",
+      "b2d.joint",
+      "b2d.shape",
+      "b2d.world",
+      "compute",
+      "material",
+    ]);
+  });
+
   test("inventories parsed namespaces rather than paths and reports namespace and symbol deltas", () => {
     const zip = fakeZip({
       "unexpected/location-one.json": apiDoc("alpha", [fn("alpha.old"), fn("alpha.added")]),

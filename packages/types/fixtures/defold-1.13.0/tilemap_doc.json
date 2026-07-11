@@ -1,0 +1,402 @@
+{
+  "elements": [
+    {
+      "type": "PROPERTY",
+      "name": "tile_source",
+      "brief": "<span class=\"type\">hash</span> tile source",
+      "description": "The tile source used when rendering the tile map. The type of the property is hash.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "How to set tile source using a script property (see <a href=\"/ref/resource#resource.tile_source\">resource.tile_source</a>)\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_tile_source&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">tile_source</span><span class=\"p\">(</span><span class=\"s2\">&quot;/tilesource.tilesource&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;tile_source&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_tile_source</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "PROPERTY",
+      "name": "material",
+      "brief": "<span class=\"type\">hash</span> tile map material",
+      "description": "The material used when rendering the tile map. The type of the property is hash.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "How to set material using a script property (see <a href=\"/ref/resource#resource.material\">resource.material</a>)\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">(</span><span class=\"s2\">&quot;/material.material&quot;</span><span class=\"p\">))</span>\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n  <span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">set</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;material&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tilemap.reset_constant",
+      "brief": "DEPRECATED! reset a shader constant for a tile map",
+      "description": "Resets a shader constant for a tile map component.\nThe constant must be defined in the material assigned to the tile map.\nResetting a constant through this function implies that the value defined in the material will be used.\nWhich tile map to reset a constant for is identified by the URL.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the tile map that should have a constant reset",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "constant",
+          "doc": "name of the constant",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "The following examples assumes that the tile map has id \"tilemap\" and that the default-material in builtins is used, which defines the constant \"tint\".\nIf you assign a custom material to the tile map, you can reset the constants defined there in the same manner.\nHow to reset the tinting of a tile map:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">reset_constant</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;tint&quot;</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tilemap.set_tile",
+      "brief": "set a tile in a tile map",
+      "description": "Replace a tile in a tile map with a new tile.\nThe coordinates of the tiles are indexed so that the \"first\" tile just\nabove and to the right of origin has coordinates 1,1.\nTiles to the left of and below origin are indexed 0, -1, -2 and so forth.\n<pre>\n+-------+-------+------+------+\n|  0,3  |  1,3  | 2,3  | 3,3  |\n+-------+-------+------+------+\n|  0,2  |  1,2  | 2,2  | 3,2  |\n+-------+-------+------+------+\n|  0,1  |  1,1  | 2,1  | 3,1  |\n+-------O-------+------+------+\n|  0,0  |  1,0  | 2,0  | 3,0  |\n+-------+-------+------+------+\n</pre>\n\nThe coordinates must be within the bounds of the tile map as it were created.\nThat is, it is not possible to extend the size of a tile map by setting tiles outside the edges.\nTo clear a tile, set the tile to number 0. Which tile map and layer to manipulate is identified by the URL and the layer name parameters.\nTransform bitmask is arithmetic sum of one or both FLIP constants (<code>tilemap.H_FLIP</code>, <code>tilemap.V_FLIP</code>) and/or one of ROTATION constants\n(<code>tilemap.ROTATE_90</code>, <code>tilemap.ROTATE_180</code>, <code>tilemap.ROTATE_270</code>).\nFlip always applies before rotation (clockwise).",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the tile map",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "layer",
+          "doc": "name of the layer for the tile",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "x-coordinate of the tile",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "y-coordinate of the tile",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "tile",
+          "doc": "index of new tile to set. 0 resets the cell",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "transform_bitmask",
+          "doc": "optional flip and/or rotation should be applied to the tile",
+          "types": ["number"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- Clear the tile under the player.</span>\n<span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">set_tile</span><span class=\"p\">(</span><span class=\"s2\">&quot;/level#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;foreground&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">player_x</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">player_y</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">)</span>\n\n<span class=\"c1\">-- Set tile with different combination of flip and rotation</span>\n<span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">set_tile</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;layer1&quot;</span><span class=\"p\">,</span> <span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">y</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">H_FLIP</span> <span class=\"o\">+</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">V_FLIP</span> <span class=\"o\">+</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">ROTATE_90</span><span class=\"p\">)</span>\n<span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">set_tile</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;layer1&quot;</span><span class=\"p\">,</span> <span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">y</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">H_FLIP</span> <span class=\"o\">+</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">ROTATE_270</span><span class=\"p\">)</span>\n<span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">set_tile</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;layer1&quot;</span><span class=\"p\">,</span> <span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">y</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">V_FLIP</span> <span class=\"o\">+</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">H_FLIP</span><span class=\"p\">)</span>\n<span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">set_tile</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;layer1&quot;</span><span class=\"p\">,</span> <span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">y</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">ROTATE_180</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tilemap.get_tile",
+      "brief": "get a tile from a tile map",
+      "description": "Get the tile set at the specified position in the tilemap.\nThe position is identified by the tile index starting at origin\nwith index 1, 1. (see <a href=\"/ref/tilemap#tilemap.set_tile()\">tilemap.set_tile()</a>)\nWhich tile map and layer to query is identified by the URL and the\nlayer name parameters.",
+      "returnvalues": [
+        {
+          "name": "tile",
+          "doc": "index of the tile",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the tile map",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "layer",
+          "doc": "name of the layer for the tile",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "x-coordinate of the tile",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "y-coordinate of the tile",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- get the tile under the player.</span>\n<span class=\"kd\">local</span> <span class=\"n\">tileno</span> <span class=\"o\">=</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">get_tile</span><span class=\"p\">(</span><span class=\"s2\">&quot;/level#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;foreground&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">player_x</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">player_y</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tilemap.get_tile_info",
+      "brief": "get full information for a tile from a tile map",
+      "description": "Get the tile information at the specified position in the tilemap.\nThe position is identified by the tile index starting at origin\nwith index 1, 1. (see <a href=\"/ref/tilemap#tilemap.set_tile()\">tilemap.set_tile()</a>)\nWhich tile map and layer to query is identified by the URL and the\nlayer name parameters.",
+      "returnvalues": [
+        {
+          "name": "tile_info",
+          "doc": "index of the tile",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the tile map",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "layer",
+          "doc": "name of the layer for the tile",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "x-coordinate of the tile",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "y-coordinate of the tile",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- get the tile under the player.</span>\n<span class=\"kd\">local</span> <span class=\"n\">tile_info</span> <span class=\"o\">=</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">get_tile_info</span><span class=\"p\">(</span><span class=\"s2\">&quot;/level#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;foreground&quot;</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">player_x</span><span class=\"p\">,</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">player_y</span><span class=\"p\">)</span>\n<span class=\"n\">pprint</span><span class=\"p\">(</span><span class=\"n\">tile_info</span><span class=\"p\">)</span>\n<span class=\"c1\">-- {</span>\n<span class=\"c1\">--    index = 0,</span>\n<span class=\"c1\">--    h_flip = false,</span>\n<span class=\"c1\">--    v_flip = true,</span>\n<span class=\"c1\">--    rotate_90 = false</span>\n<span class=\"c1\">-- }</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tilemap.get_tiles",
+      "brief": "get all the tiles from a layer in a tilemap",
+      "description": "Retrieves all the tiles for the specified layer in the tilemap.\nIt returns a table of rows where the keys are the\ntile positions (see <a href=\"/ref/tilemap#tilemap.get_bounds()\">tilemap.get_bounds()</a>).\nYou can iterate it using <code>tiles[row_index][column_index]</code>.",
+      "returnvalues": [
+        {
+          "name": "tiles",
+          "doc": "a table of rows representing the layer",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the tilemap",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "layer",
+          "doc": "the name of the layer for the tiles",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">left</span><span class=\"p\">,</span> <span class=\"n\">bottom</span><span class=\"p\">,</span> <span class=\"n\">columns_count</span><span class=\"p\">,</span> <span class=\"n\">rows_count</span> <span class=\"o\">=</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">get_bounds</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">tiles</span> <span class=\"o\">=</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">get_tiles</span><span class=\"p\">(</span><span class=\"s2\">&quot;#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;layer&quot;</span><span class=\"p\">)</span>\n<span class=\"kd\">local</span> <span class=\"n\">tile</span><span class=\"p\">,</span> <span class=\"n\">count</span> <span class=\"o\">=</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span>\n<span class=\"kr\">for</span> <span class=\"n\">row_index</span> <span class=\"o\">=</span> <span class=\"n\">bottom</span><span class=\"p\">,</span> <span class=\"n\">bottom</span> <span class=\"o\">+</span> <span class=\"n\">rows_count</span> <span class=\"o\">-</span> <span class=\"mi\">1</span> <span class=\"kr\">do</span>\n    <span class=\"kr\">for</span> <span class=\"n\">column_index</span> <span class=\"o\">=</span> <span class=\"n\">left</span><span class=\"p\">,</span> <span class=\"n\">left</span> <span class=\"o\">+</span> <span class=\"n\">columns_count</span> <span class=\"o\">-</span> <span class=\"mi\">1</span> <span class=\"kr\">do</span>\n        <span class=\"n\">tile</span> <span class=\"o\">=</span> <span class=\"n\">tiles</span><span class=\"p\">[</span><span class=\"n\">row_index</span><span class=\"p\">][</span><span class=\"n\">column_index</span><span class=\"p\">]</span>\n        <span class=\"n\">count</span> <span class=\"o\">=</span> <span class=\"n\">count</span> <span class=\"o\">+</span> <span class=\"mi\">1</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tilemap.get_bounds",
+      "brief": "get the bounds of a tile map",
+      "description": "Get the bounds for a tile map. This function returns multiple values:\nThe lower left corner index x and y coordinates (1-indexed),\nthe tile map width and the tile map height.\nThe resulting values take all tile map layers into account, meaning that\nthe bounds are calculated as if all layers were collapsed into one.",
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "x coordinate of the bottom left corner",
+          "types": ["number"]
+        },
+        {
+          "name": "y",
+          "doc": "y coordinate of the bottom left corner",
+          "types": ["number"]
+        },
+        {
+          "name": "w",
+          "doc": "number of columns (width) in the tile map",
+          "types": ["number"]
+        },
+        {
+          "name": "h",
+          "doc": "number of rows (height) in the tile map",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the tile map",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- get the level bounds.</span>\n<span class=\"kd\">local</span> <span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">y</span><span class=\"p\">,</span> <span class=\"n\">w</span><span class=\"p\">,</span> <span class=\"n\">h</span> <span class=\"o\">=</span> <span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">get_bounds</span><span class=\"p\">(</span><span class=\"s2\">&quot;/level#tilemap&quot;</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tilemap.set_visible",
+      "brief": "set the visibility of a layer",
+      "description": "Sets the visibility of the tilemap layer",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the tile map",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        },
+        {
+          "name": "layer",
+          "doc": "name of the layer for the tile",
+          "types": ["string", "hash"],
+          "is_optional": "False"
+        },
+        {
+          "name": "visible",
+          "doc": "should the layer be visible",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"c1\">-- Disable rendering of the layer</span>\n<span class=\"n\">tilemap</span><span class=\"p\">.</span><span class=\"n\">set_visible</span><span class=\"p\">(</span><span class=\"s2\">&quot;/level#tilemap&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;foreground&quot;</span><span class=\"p\">,</span> <span class=\"kc\">false</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "tilemap.H_FLIP",
+      "brief": "flip tile horizontally",
+      "description": "flip tile horizontally",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "tilemap.V_FLIP",
+      "brief": "flip tile vertically",
+      "description": "flip tile vertically",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "tilemap.ROTATE_90",
+      "brief": "rotate tile 90 degrees clockwise",
+      "description": "rotate tile 90 degrees clockwise",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "tilemap.ROTATE_180",
+      "brief": "rotate tile 180 degrees clockwise",
+      "description": "rotate tile 180 degrees clockwise",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "tilemap.ROTATE_270",
+      "brief": "rotate tile 270 degrees clockwise",
+      "description": "rotate tile 270 degrees clockwise",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "tilemap",
+    "name": "Tilemap",
+    "brief": "Tilemap API documentation",
+    "description": "Functions and messages used to manipulate tile map components.",
+    "path": "engine/gamesys/src/gamesys/scripts/script_tilemap.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

@@ -10,7 +10,7 @@ import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 
 describe("selectApiSurface", () => {
   test("CURRENT_STABLE_SURFACE_ID is the absolute-versioned default id", () => {
-    expect(CURRENT_STABLE_SURFACE_ID).toBe("defold-1.12.4");
+    expect(CURRENT_STABLE_SURFACE_ID).toBe("defold-1.13.0");
   });
 
   test("current-stable version maps to the default surface", () => {
@@ -24,6 +24,13 @@ describe("selectApiSurface", () => {
     expect(selectApiSurface("1.10.0")).toEqual({
       surfaceId: null,
       available: false,
+    });
+  });
+
+  test("the previous complete release remains selectable", () => {
+    expect(selectApiSurface("1.12.4")).toEqual({
+      surfaceId: "defold-1.12.4",
+      available: true,
     });
   });
 
