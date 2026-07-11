@@ -3,7 +3,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { DefoldIo } from "./bob-command";
-import { CURRENT_STABLE_DEFOLD_VERSION, PREVIOUS_STABLE_DEFOLD_VERSION } from "./defold-version";
+import {
+  CURRENT_STABLE_DEFOLD_VERSION,
+  DEFOLD_VERSIONS,
+  PREVIOUS_STABLE_DEFOLD_VERSION,
+} from "./defold-version";
 import {
   bobArtifactIdentity,
   isReusableBobArtifact,
@@ -47,6 +51,17 @@ describe("RELEASE_TARGET_MATRIX", () => {
     expect(current?.surfaceId).toBe(`defold-${CURRENT_STABLE_DEFOLD_VERSION}`);
     const previous = RELEASE_TARGET_MATRIX.find((s) => !s.isCurrentStable);
     expect(previous?.surfaceId).toBe(`defold-${PREVIOUS_STABLE_DEFOLD_VERSION}`);
+  });
+
+  test("is derived one-per-version from DEFOLD_VERSIONS, in order", () => {
+    expect(RELEASE_TARGET_MATRIX).toHaveLength(DEFOLD_VERSIONS.length);
+    DEFOLD_VERSIONS.forEach((version, i) => {
+      const spec = RELEASE_TARGET_MATRIX[i];
+      expect(spec).toBeDefined();
+      expect(spec?.version).toBe(version);
+      expect(spec?.surfaceId).toBe(`defold-${version}`);
+      expect(spec?.isCurrentStable).toBe(i === 0);
+    });
   });
 });
 
