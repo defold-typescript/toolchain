@@ -650,6 +650,7 @@ bunx @defold-typescript/cli bob status --json    # dry-run: report the resolved 
 bunx @defold-typescript/cli bob resolve --json   # fetch native extension deps
 bunx @defold-typescript/cli bob build --json     # compile to build/default
 bunx @defold-typescript/cli bob bundle --json     # produce a platform bundle
+bunx @defold-typescript/cli bob run --json       # debug build, then launch the game
 ```
 
 Each `bob <sub>` verb shells out to bob and, under `--json`, keeps stdout to
@@ -704,6 +705,24 @@ to the cache on first use and reused thereafter. The one precondition still
 required is **network egress**: the first `bob resolve`/`build` fetches
 `bob.jar` and any native extension archives, so an air-gapped run fails until the
 cache is warmed.
+
+**Composite build+launch with `bob run`:** `bob run` is the one convenience verb
+that combines steps — Bob has no native run, so the CLI composes it: download the
+target-matched `bob.jar`, debug-build into `build/default`, ensure a
+target-matched engine (the native-extension `build/<platform>/dmengine` when the
+build produced one, else the stock engine fetched by the resolved SHA into a
+sibling engine cache next to the jar cache and recorded so a later `run` reuses
+it), then launch. bob, the typings, and the running engine all share the one
+resolved SHA. `--java`/`--build-server` thread into the build as for `bob build`;
+a cache hit skips the engine download; an offline download reports an actionable
+`error`. A failed build **short-circuits with Bob's exit code and never
+launches** — the CLI exit code is that build code. Because a live game cannot be
+captured, its output streams to the terminal even under `--json`; the composite
+envelope prints on exit:
+
+```json
+{ "command": "bob", "subcommand": "run", "ok": true, "build": { "exitCode": 0 }, "launch": { "enginePath": "build/arm64-macos/dmengine", "exitCode": 0 } }
+```
 
 **Launch an existing build with `run`:** once `build/default` holds a compiled
 project, the top-level `run` command launches it directly — **no transpile, no
