@@ -3,7 +3,6 @@ import { existsSync, mkdirSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { delimiter, dirname, join } from "node:path";
 import { bobCacheDir, bobDownloadUrl, resolveBobJar, resolveJava } from "./bob";
-import { ENGINE_INFO_URL } from "./debug-launcher";
 import { detectEditorBundledJava } from "./installed-editor-version";
 
 export const BOB_SUBCOMMANDS = ["resolve", "build", "bundle"] as const;
@@ -45,7 +44,6 @@ export interface SpawnResult {
 
 export interface DefoldIo {
   readonly cacheDir: string;
-  readonly fetchSha: () => Promise<string>;
   readonly probe: (candidate: string) => boolean;
   readonly javaProbe: (cmd: string) => boolean;
   readonly bundledJava?: () => string | null;
@@ -62,6 +60,9 @@ export interface BobCommandResult {
   readonly subcommand: string;
   readonly exitCode: number;
   readonly argv: string[];
+  readonly defoldVersion: string;
+  readonly defoldChannel: string | null;
+  readonly defoldSha: string;
   readonly output?: string;
 }
 
@@ -71,17 +72,17 @@ export async function runBobCommand(opts: {
   java?: string;
   buildServer?: string;
   capture?: boolean;
+  head: { readonly version: string; readonly channel: string | null; readonly sha: string };
   io: DefoldIo;
 }): Promise<BobCommandResult> {
-  const { io } = opts;
-  const sha = await io.fetchSha();
+  const { io, head } = opts;
   const { jarPath, cached } = resolveBobJar({
-    sha1: sha,
+    sha1: head.sha,
     cacheDir: io.cacheDir,
     probe: io.probe,
   });
   if (!cached) {
-    await io.download(bobDownloadUrl(sha), jarPath);
+    await io.download(bobDownloadUrl(head.sha), jarPath);
   }
   const java = resolveJava({
     ...(opts.java !== undefined ? { override: opts.java } : {}),
@@ -100,22 +101,11 @@ export async function runBobCommand(opts: {
     subcommand: opts.subcommand,
     exitCode,
     argv,
+    defoldVersion: head.version,
+    defoldChannel: head.channel,
+    defoldSha: head.sha,
     ...(output !== undefined ? { output } : {}),
   };
-}
-
-async function fetchStableSha(): Promise<string> {
-  const res = await fetch(ENGINE_INFO_URL);
-  if (!res.ok) {
-    throw new Error(
-      `defold-typescript: could not resolve the stable Defold sha (${ENGINE_INFO_URL} -> ${res.status} ${res.statusText}).`,
-    );
-  }
-  const info = (await res.json()) as { sha1?: string };
-  if (!info.sha1) {
-    throw new Error(`defold-typescript: ${ENGINE_INFO_URL} returned no sha1.`);
-  }
-  return info.sha1;
 }
 
 function javaOnPath(cmd: string, env: NodeJS.ProcessEnv = process.env): boolean {
@@ -187,7 +177,6 @@ async function downloadTo(url: string, dest: string): Promise<void> {
 export function defaultDefoldIo(): DefoldIo {
   return {
     cacheDir: bobCacheDir(),
-    fetchSha: fetchStableSha,
     probe: existsSync,
     javaProbe: (cmd) => javaOnPath(cmd),
     bundledJava: () => detectEditorBundledJava(),

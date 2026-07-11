@@ -47,19 +47,23 @@ describe("selectApiSurfaceForTarget", () => {
     fetchChannelInfo: async () => {
       throw new Error("fetchChannelInfo should not be called for a version target");
     },
+    fetchVersionInfo: async () => ({ sha1: "cafebabe" }),
   };
 
-  test("a fixed-version target maps to its registry surface without fetching", async () => {
+  test("a fixed-version target maps to its registry surface off the resolved head", async () => {
     expect(await selectApiSurfaceForTarget({ kind: "version", version: "1.9.8" }, io)).toEqual({
       surfaceId: "defold-1.9.8",
       available: true,
-      head: { version: "1.9.8", channel: null, sha: null },
+      head: { version: "1.9.8", channel: null, sha: "cafebabe" },
     });
   });
 
   test("a channel head drives the surface id off the resolved head version, not a pin", async () => {
     const channelIo = {
       fetchChannelInfo: async () => ({ version: "1.9.8", sha1: "deadbeef" }),
+      fetchVersionInfo: async () => {
+        throw new Error("fetchVersionInfo should not be called for a channel target");
+      },
     };
     expect(
       await selectApiSurfaceForTarget({ kind: "channel", channel: "beta" }, channelIo),
@@ -73,6 +77,9 @@ describe("selectApiSurfaceForTarget", () => {
   test("a resolved head with no registry target is unavailable", async () => {
     const channelIo = {
       fetchChannelInfo: async () => ({ version: "0.0.0", sha1: "deadbeef" }),
+      fetchVersionInfo: async () => {
+        throw new Error("fetchVersionInfo should not be called for a channel target");
+      },
     };
     expect(
       await selectApiSurfaceForTarget({ kind: "channel", channel: "alpha" }, channelIo),

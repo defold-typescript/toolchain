@@ -656,18 +656,25 @@ Each `bob <sub>` verb shells out to bob and, under `--json`, keeps stdout to
 line-reader can `JSON.parse` stdout deterministically. The envelope is:
 
 ```json
-{ "command": "bob", "subcommand": "build", "ok": true, "exitCode": 0, "output": "<bob tail>" }
+{ "command": "bob", "subcommand": "build", "ok": true, "exitCode": 0, "defoldVersion": "1.12.4", "defoldChannel": null, "defoldSha": "402218d…", "output": "<bob tail>" }
 ```
 
 On a non-zero bob exit:
 
 ```json
-{ "command": "bob", "subcommand": "build", "ok": false, "exitCode": 17, "error": "bob build exited with code 17", "output": "<bob tail>" }
+{ "command": "bob", "subcommand": "build", "ok": false, "exitCode": 17, "error": "bob build exited with code 17", "defoldVersion": "1.12.4", "defoldChannel": null, "defoldSha": "402218d…", "output": "<bob tail>" }
 ```
 
 `output` is a trimmed tail of bob's combined stdout/stderr, present for
 diagnostics on both outcomes. Without `--json`, bob's output streams live to the
 terminal instead and no JSON is written.
+
+**Target-driven artifact:** bob downloads the `bob.jar` that matches the resolved
+`--defold-target`, not a fixed stable head — a pinned version resolves to that
+version's artifact SHA, a channel (`stable`/`beta`/`alpha`) resolves to the
+channel head by SHA. Under `--json` the envelope reports the resolved
+`defoldVersion`, `defoldChannel` (null for a pinned version), and `defoldSha`, so
+a caller can confirm exactly which engine build bob ran against.
 
 **Reading `ok` / `exitCode`:** branch on `ok` first — `true` means bob succeeded
 and the CLI's exit code is `0`. On `ok: false`, the CLI exit code **is** bob's
