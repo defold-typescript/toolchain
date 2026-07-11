@@ -2,15 +2,19 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  type ApiAvailability,
   type ApiFunction,
   hashExampleSource,
   htmlToCodeText,
+  normalizedFunctionSignature,
   parseDefoldApiDoc,
   type SignatureStore,
+  symbolIdentityKey,
 } from "@defold-typescript/types";
 import {
   type ApiPage,
   type ApiSymbol,
+  type AvailabilityLookup,
   apiModuleMarkdown,
   apiModuleSymbols,
   exampleMarkdownFor,
@@ -1522,5 +1526,126 @@ describe("functionOverviewCards", () => {
     const html = await renderMarkdown(list, { highlightSignatureHeadings: true });
     expect(html).toContain('<code class="api-signature');
     expect(html).toContain("--shiki-light:");
+  });
+});
+
+describe("availability join", () => {
+  const fooOverloadA: ApiFunction = {
+    name: "b2d.body.foo",
+    brief: "",
+    description: "First overload.",
+    parameters: [{ name: "body", doc: "", types: ["b2Body"], isOptional: false }],
+    returnValues: [],
+  };
+  const fooOverloadB: ApiFunction = {
+    name: "b2d.body.foo",
+    brief: "",
+    description: "Second overload.",
+    parameters: [
+      { name: "body", doc: "", types: ["b2Body"], isOptional: false },
+      { name: "flag", doc: "", types: ["boolean"], isOptional: false },
+    ],
+    returnValues: [],
+  };
+
+  function pageWith(module: Partial<ApiPage["module"]>, availability: AvailabilityLookup): ApiPage {
+    return {
+      namespace: "b2d.body",
+      route: "/api/b2d.body",
+      brief: "",
+      module: {
+        namespace: "b2d.body",
+        brief: "",
+        description: "Physics body.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+        ...module,
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      availability,
+    };
+  }
+
+  function lookup(records: ApiAvailability[]): AvailabilityLookup {
+    return new Map(records.map((r) => [symbolIdentityKey(r.identity), r]));
+  }
+
+  test("attaches availability to the exact overload and leaves the sibling unlabelled", () => {
+    const availability = lookup([
+      {
+        identity: {
+          namespace: "b2d.body",
+          kind: "FUNCTION",
+          name: "b2d.body.foo",
+          signature: normalizedFunctionSignature(fooOverloadA),
+        },
+        since: "1.13.0",
+      },
+    ]);
+    const symbols = apiModuleSymbols(
+      pageWith({ functions: [fooOverloadA, fooOverloadB] }, availability),
+    );
+    expect(symbols).toHaveLength(2);
+    expect(symbols[0]?.availability?.since).toBe("1.13.0");
+    expect(symbols[1]?.availability).toBeUndefined();
+  });
+
+  test("joins a non-function symbol by its empty-signature identity", () => {
+    const availability = lookup([
+      {
+        identity: {
+          namespace: "b2d.body",
+          kind: "CONSTANT",
+          name: "b2d.body.STATIC",
+          signature: "",
+        },
+        deprecatedSince: "1.12.0",
+      },
+    ]);
+    const symbols = apiModuleSymbols(
+      pageWith(
+        { constants: [{ name: "b2d.body.STATIC", brief: "", description: "Static body." }] },
+        availability,
+      ),
+    );
+    expect(symbols[0]?.availability?.deprecatedSince).toBe("1.12.0");
+  });
+
+  test("no availability lookup leaves every symbol unlabelled", () => {
+    const symbols = apiModuleSymbols(pageWith({ functions: [fooOverloadA] }, new Map()));
+    expect(symbols[0]?.availability).toBeUndefined();
+  });
+
+  test("apiModuleMarkdown threads lifecycle prose so the search projection carries it", () => {
+    const availability = lookup([
+      {
+        identity: {
+          namespace: "b2d.body",
+          kind: "FUNCTION",
+          name: "b2d.body.foo",
+          signature: normalizedFunctionSignature(fooOverloadA),
+        },
+        removedIn: "1.13.0",
+      },
+    ]);
+    const md = apiModuleMarkdown(pageWith({ functions: [fooOverloadA] }, availability));
+    expect(md).toContain("Removed in 1.13.0");
+  });
+
+  test("the real default surface joins a since-1.13.0 symbol onto its b2d.body page", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const body = pages.find((p) => p.namespace === "b2d.body");
+    expect(body).toBeDefined();
+    if (!body) return;
+    expect(body.availability?.size ?? 0).toBeGreaterThan(0);
+    const labelled = apiModuleSymbols(body, body.translations, body.signatures).filter(
+      (s) => s.availability?.since === "1.13.0",
+    );
+    expect(labelled.length).toBeGreaterThan(0);
   });
 });

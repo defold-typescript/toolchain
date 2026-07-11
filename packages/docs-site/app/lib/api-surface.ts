@@ -1,4 +1,5 @@
 import {
+  type ApiAvailability,
   type ApiFunction,
   type ApiModule,
   type ApiParameter,
@@ -10,10 +11,65 @@ import {
   htmlToDocText,
   lookupSignature,
   lookupTranslation,
+  normalizedFunctionSignature,
   type SignatureStore,
+  symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
+
+/**
+ * Per-surface availability index, keyed by {@link symbolIdentityKey} so a symbol
+ * joins its `api-availability.json` record at exact namespace/kind/name/overload-
+ * signature granularity — adding or removing one overload never relabels its
+ * siblings. Shared by every page of a version's surface; a symbol only carries a
+ * badge when its identity is present, so the same lookup is safe on the canonical
+ * and historical surfaces at once.
+ */
+export type AvailabilityLookup = ReadonlyMap<string, ApiAvailability>;
+
+type IdentityKind = "FUNCTION" | "CONSTANT" | "VARIABLE" | "PROPERTY" | "TYPEDEF";
+
+function joinAvailability(
+  availability: AvailabilityLookup | undefined,
+  namespace: string,
+  kind: IdentityKind,
+  name: string,
+  signature: string,
+): ApiAvailability | undefined {
+  if (!availability) return undefined;
+  return availability.get(symbolIdentityKey({ namespace, kind, name, signature }));
+}
+
+/**
+ * The lifecycle labels rendered as compact text badges and threaded into the
+ * search projection. Text, never color alone, so the facts stay accessible. The
+ * replacement link is rendered separately (it needs version-correct resolution);
+ * {@link availabilityProse} appends its plain name for the search text.
+ */
+export function availabilityLabels(av: ApiAvailability): string[] {
+  const labels: string[] = [];
+  if (av.since) labels.push(`Since ${av.since}`);
+  if (av.deprecatedSince) labels.push(`Deprecated since ${av.deprecatedSince}`);
+  if (av.removedIn) labels.push(`Removed in ${av.removedIn}`);
+  if (av.box2d && av.box2d.length > 0) labels.push(`Box2D: ${av.box2d.join(", ")}`);
+  return labels;
+}
+
+// Flat prose form for the search index: the badge labels plus the replacement's
+// plain name, so a reader searching "removed" or a replacement symbol finds the
+// historical page. Empty when the record carries no renderable fact.
+function availabilityProse(av: ApiAvailability): string {
+  const labels = availabilityLabels(av);
+  if (av.replacement) labels.push(`Replaced by ${av.replacement.name}`);
+  return labels.length > 0 ? `${labels.join(". ")}.` : "";
+}
+
+function pushAvailabilityProse(lines: string[], av: ApiAvailability | undefined): void {
+  if (!av) return;
+  const prose = availabilityProse(av);
+  if (prose) lines.push(prose, "");
+}
 
 export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type" | "library";
 
@@ -70,6 +126,12 @@ export interface ApiPage {
    * and surfaced default-only under the "Libraries" reference category.
    */
   category: ApiPageCategory;
+  /**
+   * Version-correct symbol availability for this surface, joined from
+   * `api-availability.json`. Absent when the artifact is missing (the surface
+   * renders exactly as before). The same lookup rides on every page of a version.
+   */
+  availability?: AvailabilityLookup;
   /** Structured provenance for a `library` page; absent for every other category. */
   libraryMeta?: LibraryMeta;
   /**
@@ -103,6 +165,12 @@ export interface ApiSymbol {
   parameters: ApiSymbolParam[];
   /** Structured return values; always present, empty for non-functions. */
   returnValues: ApiSymbolParam[];
+  /**
+   * Version-correct lifecycle/backend metadata joined by exact overload identity;
+   * absent when the symbol has no availability record. The render layer turns it
+   * into text badges and a resolved replacement link.
+   */
+  availability?: ApiAvailability;
 }
 
 export interface ApiSymbolGroup {
@@ -267,7 +335,7 @@ export function exampleMarkdownFor(
 }
 
 export function apiModuleMarkdown(
-  page: Pick<ApiPage, "namespace" | "module" | "displayName" | "category">,
+  page: Pick<ApiPage, "namespace" | "module" | "displayName" | "category" | "availability">,
   translations: TranslationStore = {},
 ): string {
   const m = page.module;
@@ -287,6 +355,16 @@ export function apiModuleMarkdown(
       lines.push(`### \`${functionSignature(fn, mapType)}\``, "");
       const doc = htmlToDocText(fn.description || fn.brief);
       if (doc) lines.push(doc, "");
+      pushAvailabilityProse(
+        lines,
+        joinAvailability(
+          page.availability,
+          m.namespace,
+          "FUNCTION",
+          fn.name,
+          normalizedFunctionSignature(fn),
+        ),
+      );
       const example = exampleMarkdownFor(fn, translations);
       if (example) lines.push(example, "");
       for (const p of [...fn.parameters, ...fn.returnValues]) {
@@ -303,6 +381,10 @@ export function apiModuleMarkdown(
       lines.push(`### \`${variableSignature(v, mapType)}\``, "");
       const doc = htmlToDocText(v.description || v.brief);
       if (doc) lines.push(doc, "");
+      pushAvailabilityProse(
+        lines,
+        joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, ""),
+      );
     }
   }
 
@@ -312,6 +394,10 @@ export function apiModuleMarkdown(
       lines.push(`### \`${constantSignature(cst)}\``, "");
       const doc = htmlToDocText(cst.description || cst.brief);
       if (doc) lines.push(doc, "");
+      pushAvailabilityProse(
+        lines,
+        joinAvailability(page.availability, m.namespace, "CONSTANT", cst.name, ""),
+      );
     }
   }
 
@@ -321,6 +407,10 @@ export function apiModuleMarkdown(
       lines.push(`### \`${propertySignature(prop, mapType)}\``, "");
       const doc = htmlToDocText(prop.description || prop.brief);
       if (doc) lines.push(doc, "");
+      pushAvailabilityProse(
+        lines,
+        joinAvailability(page.availability, m.namespace, "PROPERTY", prop.name, ""),
+      );
     }
   }
 
@@ -359,7 +449,7 @@ export function apiModuleMarkdown(
  * rows. `apiModuleMarkdown` stays the flat search/index projection.
  */
 export function apiModuleSymbols(
-  page: Pick<ApiPage, "module" | "category">,
+  page: Pick<ApiPage, "module" | "category" | "availability">,
   translations: TranslationStore = {},
   signatures: SignatureStore = {},
 ): ApiSymbol[] {
@@ -395,6 +485,18 @@ export function apiModuleSymbols(
     };
     const example = exampleMarkdownFor(fn, translations);
     if (example) symbol.exampleMarkdown = example;
+    // The join keys off the raw ref-doc overload signature — the exact value
+    // `api-availability.json` was derived with — so a badge lands on the one
+    // overload it identifies. Authored-override extra rows below share the raw
+    // symbol and carry no badge of their own.
+    const av = joinAvailability(
+      page.availability,
+      m.namespace,
+      "FUNCTION",
+      fn.name,
+      normalizedFunctionSignature(fn),
+    );
+    if (av) symbol.availability = av;
     symbols.push(symbol);
     // Each remaining authored overload renders as its own row, reusing the
     // distinct-row overload pattern: its own `docs[k+1]` prose (else the fixture
@@ -416,36 +518,45 @@ export function apiModuleSymbols(
   }
 
   for (const v of m.variables) {
-    symbols.push({
+    const symbol: ApiSymbol = {
       kind: "variable",
       name: v.name,
       signature: variableSignature(v, mapType),
       docMarkdown: htmlToDocText(v.description || v.brief),
       parameters: [],
       returnValues: [],
-    });
+    };
+    const av = joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, "");
+    if (av) symbol.availability = av;
+    symbols.push(symbol);
   }
 
   for (const cst of m.constants) {
-    symbols.push({
+    const symbol: ApiSymbol = {
       kind: "constant",
       name: cst.name,
       signature: constantSignature(cst),
       docMarkdown: htmlToDocText(cst.description || cst.brief),
       parameters: [],
       returnValues: [],
-    });
+    };
+    const av = joinAvailability(page.availability, m.namespace, "CONSTANT", cst.name, "");
+    if (av) symbol.availability = av;
+    symbols.push(symbol);
   }
 
   for (const prop of m.properties) {
-    symbols.push({
+    const symbol: ApiSymbol = {
       kind: "property",
       name: prop.name,
       signature: propertySignature(prop, mapType),
       docMarkdown: htmlToDocText(prop.description || prop.brief),
       parameters: [],
       returnValues: [],
-    });
+    };
+    const av = joinAvailability(page.availability, m.namespace, "PROPERTY", prop.name, "");
+    if (av) symbol.availability = av;
+    symbols.push(symbol);
   }
 
   for (const td of memberBearingTypedefs(m.typedefs)) {
