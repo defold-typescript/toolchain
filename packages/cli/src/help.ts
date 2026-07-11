@@ -94,6 +94,12 @@ const COMMANDS: readonly HelpCommand[] = [
       { flag: "--build-server <url>", desc: "native-extension build-server URL" },
     ],
   },
+  {
+    name: "run",
+    summary: "Launch an existing build/default build without Bob.",
+    usage: "bunx @defold-typescript/cli run [path] [-- <engine args>]",
+    flags: [{ flag: "-- <args>", desc: "pass everything after -- through to the engine" }],
+  },
 ];
 
 const GLOBAL_FLAGS: readonly HelpFlag[] = [

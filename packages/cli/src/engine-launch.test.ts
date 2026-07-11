@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
-import { resolveRunnable } from "./engine-launch";
+import { targetPlatform } from "./debug-launcher";
+import { launchEngine, type Runnable, resolveRunnable } from "./engine-launch";
 
 const cwd = "/proj";
 const projectc = path.join(cwd, "build/default/game.projectc");
@@ -77,5 +78,78 @@ describe("resolveRunnable", () => {
     expect(runnable.enginePath).toBe(buildEngine);
     expect(runnable.warnings).toHaveLength(1);
     expect(runnable.warnings[0]).toContain("OpenAL32.dll");
+  });
+});
+
+const runnable: Runnable = {
+  enginePath: path.join(cwd, "build/arm64-macos/dmengine"),
+  projectcPath: projectc,
+  target: targetPlatform("darwin", "arm64"),
+  warnings: [],
+};
+
+function recordingSpawn(code: number) {
+  const calls: string[][] = [];
+  const kills: NodeJS.Signals[] = [];
+  let resolveExit: (c: number) => void = () => {};
+  const exited = new Promise<number>((r) => {
+    resolveExit = r;
+  });
+  const spawn = (argv: string[]) => {
+    calls.push(argv);
+    return { kill: (sig: NodeJS.Signals) => kills.push(sig), exited };
+  };
+  return { spawn, calls, kills, finish: () => resolveExit(code) };
+}
+
+describe("launchEngine", () => {
+  test("spawns [enginePath, projectcPath, ...extraArgs] and returns the child exit code", async () => {
+    const rec = recordingSpawn(4);
+    const done = launchEngine(runnable, {
+      spawn: rec.spawn,
+      platform: "linux",
+      extraArgs: ["--verbose"],
+    });
+    rec.finish();
+    const code = await done;
+    expect(rec.calls[0]).toEqual([runnable.enginePath, projectc, "--verbose"]);
+    expect(code).toBe(4);
+  });
+
+  test("forwards an observed SIGINT to the child and removes its listeners after exit", async () => {
+    const rec = recordingSpawn(0);
+    const before = process.listeners("SIGINT");
+    const done = launchEngine(runnable, { spawn: rec.spawn, platform: "linux" });
+    const added = process.listeners("SIGINT").filter((l) => !before.includes(l));
+    for (const listener of added) {
+      (listener as () => void)();
+    }
+    rec.finish();
+    await done;
+    expect(rec.kills).toContain("SIGINT");
+    expect(process.listeners("SIGINT")).toEqual(before);
+  });
+
+  test("copies the engine aside before spawn on darwin, not off darwin", async () => {
+    const copied: string[] = [];
+    const copyAside = (p: string) => {
+      copied.push(p);
+      return `${p}.aside`;
+    };
+
+    const mac = recordingSpawn(0);
+    const macDone = launchEngine(runnable, { spawn: mac.spawn, platform: "darwin", copyAside });
+    mac.finish();
+    await macDone;
+    expect(copied).toEqual([runnable.enginePath]);
+    expect(mac.calls[0]?.[0]).toBe(`${runnable.enginePath}.aside`);
+
+    copied.length = 0;
+    const lin = recordingSpawn(0);
+    const linDone = launchEngine(runnable, { spawn: lin.spawn, platform: "linux", copyAside });
+    lin.finish();
+    await linDone;
+    expect(copied).toEqual([]);
+    expect(lin.calls[0]?.[0]).toBe(runnable.enginePath);
   });
 });

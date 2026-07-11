@@ -7,7 +7,8 @@ export type CliCommand =
   | "setup-debug"
   | "bob"
   | "wall"
-  | "resolve";
+  | "resolve"
+  | "run";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;
@@ -55,6 +56,8 @@ export interface RenderResultInput {
   readonly extensions?: readonly ResolvedExtensionReportJson[];
   readonly libraries?: readonly ResolvedLibraryReportJson[];
   readonly warnings?: readonly string[];
+  readonly enginePath?: string;
+  readonly projectc?: string;
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -107,8 +110,12 @@ export function renderResult(input: RenderResultInput): string {
     "extensions" in input ? { ...withOperations, extensions: input.extensions } : withOperations;
   const withLibraries =
     "libraries" in input ? { ...withExtensions, libraries: input.libraries } : withExtensions;
-  const payload =
+  const withWarnings =
     "warnings" in input ? { ...withLibraries, warnings: input.warnings } : withLibraries;
+  const withEnginePath =
+    "enginePath" in input ? { ...withWarnings, enginePath: input.enginePath } : withWarnings;
+  const payload =
+    "projectc" in input ? { ...withEnginePath, projectc: input.projectc } : withEnginePath;
   return `${JSON.stringify(payload)}\n`;
 }
 
