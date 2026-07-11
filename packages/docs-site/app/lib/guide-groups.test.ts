@@ -63,11 +63,11 @@ describe("groupGuidePages", () => {
     }
   });
 
-  test("the union of grouped routes is exactly the 21 guide-tab routes, tutorial first", () => {
+  test("the union of grouped routes is exactly the 22 guide-tab routes, tutorial first", () => {
     const groups = groupGuidePages(pages);
     const routes = groups.flatMap((g) => g.pages.map((p) => p.route));
-    expect(routes.length).toBe(21);
-    expect(new Set(routes).size).toBe(21);
+    expect(routes.length).toBe(22);
+    expect(new Set(routes).size).toBe(22);
     // the Tetris tutorial now leads the guide list as its own first subgroup
     expect(routes[0]).toBe("/tetris-tutorial");
     expect(new Set(routes)).toEqual(
@@ -90,6 +90,7 @@ describe("groupGuidePages", () => {
         "/agent-runbooks",
         "/helper-scripts",
         "/pinning-defold-target",
+        "/upgrading-to-defold-1-13-0",
         "/extensions",
         "/api-docs-vs-ts-defold",
         "/migrating-from-ts-defold",
