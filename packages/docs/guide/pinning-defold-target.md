@@ -231,3 +231,21 @@ Remove `--check` to write the audited fixtures and `import-manifest.json` into
 the version-named Defold 1.13.0 fixture directory. The importer does not change
 the default target. A report is blocked when a function-bearing namespace has no
 output mapping or a mapped symbol uses an unknown ref-doc type token.
+
+Once the default target is promoted, regenerate the versioned availability
+metadata:
+
+```sh
+bun run generate-api-availability -- --write
+```
+
+This diffs the default target against the highest committed baseline target at
+overload-signature granularity — deriving `since` for promoted symbols and
+`removedIn` for dropped ones — then overlays the curated `api-migrations.json`
+catalog (`deprecatedSince`, replacement links, Box2D `v2`/`v3` applicability,
+which upstream ref-doc JSON does not carry) and writes `api-availability.json`.
+Curated entries must resolve to exactly one known symbol, and a symbol marked
+`removedIn` may not remain callable in the current surface; both are enforced at
+generation. A drift test keeps the committed artifact byte-equal to a fresh
+derivation, so run this whenever the target snapshots or the migration catalog
+change.
