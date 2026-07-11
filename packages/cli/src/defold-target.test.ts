@@ -104,29 +104,41 @@ describe("resolveDefoldTarget", () => {
 });
 
 describe("resolveTargetHead", () => {
-  test("a fixed version resolves with no channel, no sha, and never fetches", async () => {
-    let fetched = false;
+  test("a fixed version resolves its artifact sha via fetchVersionInfo, never a channel", async () => {
+    let channelFetched = false;
+    const versions: string[] = [];
     const io = {
       fetchChannelInfo: async () => {
-        fetched = true;
+        channelFetched = true;
         return { version: "unused", sha1: "unused" };
+      },
+      fetchVersionInfo: async (version: string) => {
+        versions.push(version);
+        return { sha1: "version-sha" };
       },
     };
     const head = await resolveTargetHead({ kind: "version", version: "1.12.4" }, io);
-    expect(head).toEqual({ version: "1.12.4", channel: null, sha: null });
-    expect(fetched).toBe(false);
+    expect(head).toEqual({ version: "1.12.4", channel: null, sha: "version-sha" });
+    expect(versions).toEqual(["1.12.4"]);
+    expect(channelFetched).toBe(false);
   });
 
-  test("a channel resolves its head via fetchChannelInfo", async () => {
+  test("a channel resolves its head via fetchChannelInfo, never a version", async () => {
     const calls: string[] = [];
+    let versionFetched = false;
     const io = {
       fetchChannelInfo: async (channel: string) => {
         calls.push(channel);
         return { version: "1.13.0", sha1: "abc123" };
       },
+      fetchVersionInfo: async () => {
+        versionFetched = true;
+        return { sha1: "unused" };
+      },
     };
     const head = await resolveTargetHead({ kind: "channel", channel: "beta" }, io);
     expect(calls).toEqual(["beta"]);
     expect(head).toEqual({ version: "1.13.0", channel: "beta", sha: "abc123" });
+    expect(versionFetched).toBe(false);
   });
 });

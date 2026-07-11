@@ -82,5 +82,8 @@ resolve, the command errors and names all three. Native-extension projects can
 pass `--build-server <url>`. `bob`'s exit code
 propagates, so a failed build fails the command.
 
-Like the engine launcher, the `bob` version tracks the latest stable Defold
-release. A project pinned to an older Defold version is a known limitation.
+`bob` downloads the `bob.jar` matching the resolved `--defold-target`: a pinned
+version resolves to that version's artifact SHA, a channel (`stable`/`beta`/
+`alpha`) resolves to the channel head. Under `--json` the result reports the
+resolved `defoldVersion`, `defoldChannel` (null for a pinned version), and
+`defoldSha`, so you can confirm which engine build bob ran against.
