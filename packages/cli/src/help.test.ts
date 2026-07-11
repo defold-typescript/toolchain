@@ -38,6 +38,20 @@ describe("renderHelp", () => {
     }
   });
 
+  test("the headless build command is named bob, not defold", () => {
+    const top = renderHelp(null);
+    expect(top).toContain("bob");
+    expect(top).not.toContain(" defold ");
+    expect(COMMAND_NAMES.has("bob")).toBe(true);
+    expect(COMMAND_NAMES.has("defold")).toBe(false);
+
+    const text = renderHelp("bob");
+    expect(text).toContain("bob");
+    expect(text).toContain("Usage:");
+    expect(text).toContain("--defold-target");
+    expect(text.endsWith("\n")).toBe(true);
+  });
+
   test("init help names both the new-project and existing-project role", () => {
     const text = renderHelp("init");
 

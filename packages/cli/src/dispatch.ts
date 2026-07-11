@@ -2,12 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import type { RegistryTarget } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
-import {
-  type DefoldIo,
-  defaultDefoldIo,
-  isDefoldSubcommand,
-  runDefoldCommand,
-} from "./bob-command";
+import { type DefoldIo, defaultDefoldIo, isBobSubcommand, runBobCommand } from "./bob-command";
 import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
@@ -72,8 +67,8 @@ export interface DispatchInternals {
 }
 
 const USAGE =
-  "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|defold> [path]\n";
-const DEFOLD_USAGE = "Usage: defold-typescript defold <resolve|build|bundle> [path]\n";
+  "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n";
+const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle> [path]\n";
 
 function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
   let script: string | undefined;
@@ -786,19 +781,19 @@ export function dispatch(
     })();
   }
 
-  if (command === "defold") {
+  if (command === "bob") {
     const subcommand = rest[0];
-    const defoldCwd = rest[1] ? path.resolve(rest[1]) : process.cwd();
-    if (!isDefoldSubcommand(subcommand)) {
-      io.stderr.write(DEFOLD_USAGE);
+    const bobCwd = rest[1] ? path.resolve(rest[1]) : process.cwd();
+    if (!isBobSubcommand(subcommand)) {
+      io.stderr.write(BOB_USAGE);
       return 1;
     }
     const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
     const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
     return (async (): Promise<number> => {
       try {
-        const result = await runDefoldCommand({
-          cwd: defoldCwd,
+        const result = await runBobCommand({
+          cwd: bobCwd,
           subcommand,
           capture: json,
           ...(javaOverride !== undefined ? { java: javaOverride } : {}),
@@ -811,13 +806,13 @@ export function dispatch(
             renderResult(
               result.ok
                 ? {
-                    command: "defold",
+                    command: "bob",
                     subcommand: result.subcommand,
                     exitCode: result.exitCode,
                     ...withOutput,
                   }
                 : {
-                    command: "defold",
+                    command: "bob",
                     subcommand: result.subcommand,
                     exitCode: result.exitCode,
                     error: `bob ${result.subcommand} exited with code ${result.exitCode}`,
@@ -827,14 +822,14 @@ export function dispatch(
           );
         } else if (!result.ok) {
           io.stderr.write(
-            `defold-typescript defold ${result.subcommand}: bob exited with code ${result.exitCode}\n`,
+            `defold-typescript bob ${result.subcommand}: bob exited with code ${result.exitCode}\n`,
           );
         }
         return result.exitCode;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (json) {
-          io.stdout.write(renderResult({ command: "defold", subcommand, error: message }));
+          io.stdout.write(renderResult({ command: "bob", subcommand, error: message }));
         } else {
           io.stderr.write(`${message}\n`);
         }
