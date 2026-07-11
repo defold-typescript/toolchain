@@ -64,12 +64,12 @@ version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 
 `build` transpiles TypeScript to Lua; to compile and run the Defold project itself
 from the command line — no editor — drive Defold's headless build tool (`bob`)
-through the `defold` subcommand:
+through the `bob` subcommand:
 
 ```sh
-bunx @defold-typescript/cli defold resolve   # fetch library dependencies
-bunx @defold-typescript/cli defold build     # debug build into build/default
-bunx @defold-typescript/cli defold bundle    # bundle a platform target
+bunx @defold-typescript/cli bob resolve   # fetch library dependencies
+bunx @defold-typescript/cli bob build     # debug build into build/default
+bunx @defold-typescript/cli bob bundle    # bundle a platform target
 ```
 
 The first run downloads a version-matched `bob.jar` into a cache dir

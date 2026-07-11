@@ -6,11 +6,11 @@ import { bobCacheDir, bobDownloadUrl, resolveBobJar, resolveJava } from "./bob";
 import { ENGINE_INFO_URL } from "./debug-launcher";
 import { detectEditorBundledJava } from "./installed-editor-version";
 
-export const DEFOLD_SUBCOMMANDS = ["resolve", "build", "bundle"] as const;
-export type DefoldSubcommand = (typeof DEFOLD_SUBCOMMANDS)[number];
+export const BOB_SUBCOMMANDS = ["resolve", "build", "bundle"] as const;
+export type BobSubcommand = (typeof BOB_SUBCOMMANDS)[number];
 
-export function isDefoldSubcommand(value: string | undefined): value is DefoldSubcommand {
-  return value !== undefined && (DEFOLD_SUBCOMMANDS as readonly string[]).includes(value);
+export function isBobSubcommand(value: string | undefined): value is BobSubcommand {
+  return value !== undefined && (BOB_SUBCOMMANDS as readonly string[]).includes(value);
 }
 
 // bob takes options before the trailing command verb. `build` uses the debug
@@ -33,7 +33,7 @@ export function composeBobArgv(opts: {
       return [...base, ...server, "bundle"];
     default:
       throw new Error(
-        `defold-typescript: unknown defold subcommand "${opts.subcommand}"; expected resolve|build|bundle.`,
+        `defold-typescript: unknown bob subcommand "${opts.subcommand}"; expected resolve|build|bundle.`,
       );
   }
 }
@@ -57,7 +57,7 @@ export interface DefoldIo {
   readonly download: (url: string, dest: string) => Promise<void>;
 }
 
-export interface DefoldCommandResult {
+export interface BobCommandResult {
   readonly ok: boolean;
   readonly subcommand: string;
   readonly exitCode: number;
@@ -65,14 +65,14 @@ export interface DefoldCommandResult {
   readonly output?: string;
 }
 
-export async function runDefoldCommand(opts: {
+export async function runBobCommand(opts: {
   cwd: string;
   subcommand: string;
   java?: string;
   buildServer?: string;
   capture?: boolean;
   io: DefoldIo;
-}): Promise<DefoldCommandResult> {
+}): Promise<BobCommandResult> {
   const { io } = opts;
   const sha = await io.fetchSha();
   const { jarPath, cached } = resolveBobJar({

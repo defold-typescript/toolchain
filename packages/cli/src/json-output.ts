@@ -5,7 +5,7 @@ export type CliCommand =
   | "init-agents"
   | "build"
   | "setup-debug"
-  | "defold"
+  | "bob"
   | "wall"
   | "resolve";
 

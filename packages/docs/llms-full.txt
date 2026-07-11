@@ -1802,12 +1802,12 @@ version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 
 `build` transpiles TypeScript to Lua; to compile and run the Defold project itself
 from the command line — no editor — drive Defold's headless build tool (`bob`)
-through the `defold` subcommand:
+through the `bob` subcommand:
 
 ```sh
-bunx @defold-typescript/cli defold resolve   # fetch library dependencies
-bunx @defold-typescript/cli defold build     # debug build into build/default
-bunx @defold-typescript/cli defold bundle    # bundle a platform target
+bunx @defold-typescript/cli bob resolve   # fetch library dependencies
+bunx @defold-typescript/cli bob build     # debug build into build/default
+bunx @defold-typescript/cli bob bundle    # bundle a platform target
 ```
 
 The first run downloads a version-matched `bob.jar` into a cache dir
@@ -2171,11 +2171,11 @@ The launcher runs whatever already sits under `build/`; it does **not** compile 
 2. Compile the Defold project so `build/default/game.projectc` exists:
 
    ```sh
-   bunx @defold-typescript/cli defold resolve   # first time / after editing dependencies
-   bunx @defold-typescript/cli defold build      # debug build into build/default
+   bunx @defold-typescript/cli bob resolve   # first time / after editing dependencies
+   bunx @defold-typescript/cli bob build      # debug build into build/default
    ```
 
-   `defold build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
+   `bob build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
 3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
 4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
 
@@ -2838,23 +2838,23 @@ command-line builder) turns the project tree into engine output.
 **Commands (run from the project root):**
 
 ```sh
-bunx @defold-typescript/cli defold resolve --json   # fetch native extension deps
-bunx @defold-typescript/cli defold build --json     # compile to build/default
-bunx @defold-typescript/cli defold bundle --json     # produce a platform bundle
+bunx @defold-typescript/cli bob resolve --json   # fetch native extension deps
+bunx @defold-typescript/cli bob build --json     # compile to build/default
+bunx @defold-typescript/cli bob bundle --json     # produce a platform bundle
 ```
 
-Each `defold <sub>` verb shells out to bob and, under `--json`, keeps stdout to
+Each `bob <sub>` verb shells out to bob and, under `--json`, keeps stdout to
 **exactly one JSON object** — bob's own chatter is captured, not streamed, so a
 line-reader can `JSON.parse` stdout deterministically. The envelope is:
 
 ```json
-{ "command": "defold", "subcommand": "build", "ok": true, "exitCode": 0, "output": "<bob tail>" }
+{ "command": "bob", "subcommand": "build", "ok": true, "exitCode": 0, "output": "<bob tail>" }
 ```
 
 On a non-zero bob exit:
 
 ```json
-{ "command": "defold", "subcommand": "build", "ok": false, "exitCode": 17, "error": "bob build exited with code 17", "output": "<bob tail>" }
+{ "command": "bob", "subcommand": "build", "ok": false, "exitCode": 17, "error": "bob build exited with code 17", "output": "<bob tail>" }
 ```
 
 `output` is a trimmed tail of bob's combined stdout/stderr, present for
@@ -2867,12 +2867,12 @@ own `exitCode` (not a flat `1`), so a caller can distinguish bob failures by
 code; read `output` for the tail of what bob printed and `error` for the summary.
 
 **Preconditions — now satisfied autonomously:** two setup steps that used to
-require a human are handled for you. bob needs a Java runtime, and `defold`
+require a human are handled for you. bob needs a Java runtime, and `bob`
 resolves one in order (`--java`/`DEFOLD_JAVA` override → `java` on `PATH` → the
 installed editor's bundled JDK), so a machine with only the Defold editor
 installed builds with no separate JDK. bob itself (`bob.jar`) is auto-downloaded
 to the cache on first use and reused thereafter. The one precondition still
-required is **network egress**: the first `defold resolve`/`build` fetches
+required is **network egress**: the first `bob resolve`/`build` fetches
 `bob.jar` and any native extension archives, so an air-gapped run fails until the
 cache is warmed.
 
@@ -3607,8 +3607,8 @@ tooling and configuration, not a rewrite.
 | — (no first-party editor-diagnostics package verified)                                                                  | `@defold-typescript/tstl-plugin` — live transpile diagnostics in the editor                                                         |
 
 The full `defold-typescript` command surface is
-`init | init-agents | build | watch | wall | setup-debug | resolve | defold`
-(and `defold <resolve|build|bundle>`).
+`init | init-agents | build | watch | wall | setup-debug | resolve | bob`
+(and `bob <resolve|build|bundle>`).
 
 #### In-place adoption is a migration strength
 

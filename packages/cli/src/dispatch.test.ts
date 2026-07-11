@@ -341,7 +341,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|defold> [path]\n",
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n",
     );
   });
 
@@ -353,7 +353,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|defold> [path]\n",
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n",
     );
   });
 
@@ -1903,7 +1903,7 @@ describe("dispatch setup-debug", () => {
   });
 });
 
-describe("dispatch defold", () => {
+describe("dispatch bob", () => {
   const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
 
   function defoldInternals(overrides: Partial<DefoldIo> = {}): {
@@ -1932,22 +1932,22 @@ describe("dispatch defold", () => {
     };
   }
 
-  test("defold resolve spawns bob and returns 0", async () => {
+  test("bob resolve spawns bob and returns 0", async () => {
     const { io } = captureStreams();
     const { defoldIo, spawned } = defoldInternals();
 
-    const code = await dispatch(["defold", "resolve", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd], io, { defoldIo });
 
     expect(code).toBe(0);
     expect(spawned[0]).toContain("resolve");
     expect(spawned[0]).toContain("-jar");
   });
 
-  test("defold build composes a debug-variant build", async () => {
+  test("bob build composes a debug-variant build", async () => {
     const { io } = captureStreams();
     const { defoldIo, spawned } = defoldInternals();
 
-    await dispatch(["defold", "build", cwd], io, { defoldIo });
+    await dispatch(["bob", "build", cwd], io, { defoldIo });
 
     expect(spawned[0]).toContain("--variant");
     expect(spawned[0]).toContain("debug");
@@ -1958,7 +1958,7 @@ describe("dispatch defold", () => {
     const { io } = captureStreams();
     const { defoldIo, spawned } = defoldInternals();
 
-    await dispatch(["defold", "build", cwd, "--build-server", "https://build.example"], io, {
+    await dispatch(["bob", "build", cwd, "--build-server", "https://build.example"], io, {
       defoldIo,
     });
 
@@ -1970,7 +1970,7 @@ describe("dispatch defold", () => {
     const { io, err } = captureStreams();
     const { defoldIo } = defoldInternals({ spawn: async () => ({ exitCode: 17 }) });
 
-    const code = await dispatch(["defold", "bundle", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "bundle", cwd], io, { defoldIo });
 
     expect(code).toBe(17);
     expect(err()).not.toContain("\n    at ");
@@ -1982,7 +1982,7 @@ describe("dispatch defold", () => {
       spawn: async () => ({ exitCode: 0, output: "bob: building\nbob: done" }),
     });
 
-    const code = await dispatch(["defold", "resolve", cwd, "--json"], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd, "--json"], io, { defoldIo });
 
     expect(code).toBe(0);
     const lines = out().trim().split("\n");
@@ -1995,7 +1995,7 @@ describe("dispatch defold", () => {
       output: string;
     };
     expect(parsed).toMatchObject({
-      command: "defold",
+      command: "bob",
       subcommand: "resolve",
       ok: true,
       exitCode: 0,
@@ -2009,7 +2009,7 @@ describe("dispatch defold", () => {
       spawn: async () => ({ exitCode: 5, output: "bob: fatal error" }),
     });
 
-    const code = await dispatch(["defold", "build", cwd, "--json"], io, { defoldIo });
+    const code = await dispatch(["bob", "build", cwd, "--json"], io, { defoldIo });
 
     expect(code).toBe(5);
     const parsed = JSON.parse(out().trim()) as {
@@ -2028,7 +2028,7 @@ describe("dispatch defold", () => {
     const { io } = captureStreams();
     const { defoldIo, captures } = defoldInternals();
 
-    await dispatch(["defold", "resolve", cwd, "--json"], io, { defoldIo });
+    await dispatch(["bob", "resolve", cwd, "--json"], io, { defoldIo });
 
     expect(captures).toEqual([true]);
   });
@@ -2037,18 +2037,18 @@ describe("dispatch defold", () => {
     const { io, out } = captureStreams();
     const { defoldIo, captures } = defoldInternals();
 
-    const code = await dispatch(["defold", "resolve", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd], io, { defoldIo });
 
     expect(code).toBe(0);
     expect(captures).toEqual([false]);
     expect(out()).toBe("");
   });
 
-  test("--json emits a defold result via renderResult", async () => {
+  test("--json emits a bob result via renderResult", async () => {
     const { io, out } = captureStreams();
     const { defoldIo } = defoldInternals();
 
-    const code = await dispatch(["defold", "resolve", cwd, "--json"], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd, "--json"], io, { defoldIo });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as {
@@ -2057,20 +2057,41 @@ describe("dispatch defold", () => {
       subcommand: string;
       exitCode: number;
     };
-    expect(parsed.command).toBe("defold");
+    expect(parsed.command).toBe("bob");
     expect(parsed.subcommand).toBe("resolve");
     expect(parsed.ok).toBe(true);
     expect(parsed.exitCode).toBe(0);
   });
 
-  test("unknown defold subcommand prints usage listing resolve|build|bundle", async () => {
+  test("unknown bob subcommand prints usage listing resolve|build|bundle", async () => {
     const { io, err } = captureStreams();
     const { defoldIo } = defoldInternals();
 
-    const code = await dispatch(["defold", "frobnicate", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "frobnicate", cwd], io, { defoldIo });
 
     expect(code).toBe(1);
     expect(err()).toMatch(/resolve\|build\|bundle/);
+  });
+
+  test("a missing bob subcommand prints the bob usage string", async () => {
+    const { io, err } = captureStreams();
+    const { defoldIo } = defoldInternals();
+
+    const code = await dispatch(["bob"], io, { defoldIo });
+
+    expect(code).toBe(1);
+    expect(err()).toBe("Usage: defold-typescript bob <resolve|build|bundle> [path]\n");
+  });
+
+  test("the removed defold command is unknown and falls through to top-level usage", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["defold", "resolve", cwd], io);
+
+    expect(code).toBe(1);
+    expect(err()).toBe(
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n",
+    );
   });
 });
 
