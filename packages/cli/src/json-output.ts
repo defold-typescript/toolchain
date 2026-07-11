@@ -50,6 +50,8 @@ export interface RenderResultInput {
   readonly subcommand?: string;
   readonly exitCode?: number;
   readonly output?: string;
+  readonly bobJar?: { readonly path: string | null; readonly cached: boolean };
+  readonly java?: string | null;
   readonly extensions?: readonly ResolvedExtensionReportJson[];
   readonly libraries?: readonly ResolvedLibraryReportJson[];
   readonly warnings?: readonly string[];
@@ -97,8 +99,10 @@ export function renderResult(input: RenderResultInput): string {
   const withSub = "subcommand" in input ? { ...withBoot, subcommand: input.subcommand } : withBoot;
   const withExit = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
   const withOutput = "output" in input ? { ...withExit, output: input.output } : withExit;
+  const withBobJar = "bobJar" in input ? { ...withOutput, bobJar: input.bobJar } : withOutput;
+  const withJava = "java" in input ? { ...withBobJar, java: input.java } : withBobJar;
   const withOperations =
-    "operations" in input ? { ...withOutput, operations: input.operations } : withOutput;
+    "operations" in input ? { ...withJava, operations: input.operations } : withJava;
   const withExtensions =
     "extensions" in input ? { ...withOperations, extensions: input.extensions } : withOperations;
   const withLibraries =

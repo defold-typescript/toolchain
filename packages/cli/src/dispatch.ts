@@ -2,7 +2,13 @@ import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import type { RegistryTarget } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
-import { type DefoldIo, defaultDefoldIo, isBobSubcommand, runBobCommand } from "./bob-command";
+import {
+  type DefoldIo,
+  defaultDefoldIo,
+  isBobSubcommand,
+  reportBobStatus,
+  runBobCommand,
+} from "./bob-command";
 import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
@@ -790,12 +796,66 @@ export function dispatch(
   if (command === "bob") {
     const subcommand = rest[0];
     const bobCwd = rest[1] ? path.resolve(rest[1]) : process.cwd();
+    const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
+
+    if (subcommand === "status") {
+      return (async (): Promise<number> => {
+        const status = await reportBobStatus({
+          target,
+          cacheDir: defoldIo.cacheDir,
+          io: {
+            fetchChannelInfo: channelFetch,
+            fetchVersionInfo: versionFetch,
+            probe: defoldIo.probe,
+            javaProbe: defoldIo.javaProbe,
+            ...(defoldIo.bundledJava !== undefined ? { bundledJava: defoldIo.bundledJava } : {}),
+          },
+        });
+        if (json) {
+          io.stdout.write(
+            renderResult(
+              status.ok
+                ? {
+                    command: "bob",
+                    subcommand: "status",
+                    ...(status.version !== null ? { defoldVersion: status.version } : {}),
+                    defoldVersionSource: targetSource,
+                    defoldChannel: status.channel,
+                    defoldSha: status.sha,
+                    bobJar: status.bobJar,
+                    java: status.java,
+                  }
+                : {
+                    command: "bob",
+                    subcommand: "status",
+                    error: status.error ?? "bob status failed",
+                  },
+            ),
+          );
+        } else {
+          const selector = target.kind === "version" ? target.version : target.channel;
+          io.stdout.write("defold-typescript bob status:\n");
+          io.stdout.write(`  target: ${selector} (${targetSource})\n`);
+          io.stdout.write(`  version: ${status.version ?? "(unresolved)"}\n`);
+          io.stdout.write(`  channel: ${status.channel ?? "(none)"}\n`);
+          io.stdout.write(`  sha: ${status.sha ?? "(unresolved)"}\n`);
+          io.stdout.write(
+            `  bob.jar: ${status.bobJar.path ?? "(unresolved)"} ${status.bobJar.cached ? "(cached)" : "(not cached)"}\n`,
+          );
+          io.stdout.write(`  java: ${status.java ?? "(not found)"}\n`);
+          if (!status.ok) {
+            io.stderr.write(`${status.error ?? "bob status failed"}\n`);
+          }
+        }
+        return status.ok ? 0 : 1;
+      })();
+    }
+
     if (!isBobSubcommand(subcommand)) {
       io.stderr.write(BOB_USAGE);
       return 1;
     }
     const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
-    const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
     return (async (): Promise<number> => {
       try {
         const head = await resolveHead();
