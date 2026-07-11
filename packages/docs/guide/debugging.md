@@ -86,7 +86,7 @@ The launcher runs whatever already sits under `build/`; it does **not** compile 
    bunx @defold-typescript/cli bob build      # debug build into build/default
    ```
 
-   `bob build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
+   `bob build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely. To debug-build and launch in one step (outside the editor debugger), `bunx @defold-typescript/cli bob run` composes the build with an engine launch, pinning bob, typings, and the running engine to one resolved SHA.
 3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
 4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
 

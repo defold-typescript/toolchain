@@ -49,6 +49,7 @@ describe("renderHelp", () => {
     expect(text).toContain("bob");
     expect(text).toContain("Usage:");
     expect(text).toContain("--defold-target");
+    expect(text).toContain("run");
     expect(text.endsWith("\n")).toBe(true);
   });
 

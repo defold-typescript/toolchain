@@ -1808,6 +1808,7 @@ through the `bob` subcommand:
 bunx @defold-typescript/cli bob resolve   # fetch library dependencies
 bunx @defold-typescript/cli bob build     # debug build into build/default
 bunx @defold-typescript/cli bob bundle    # bundle a platform target
+bunx @defold-typescript/cli bob run       # debug build, then launch the game
 ```
 
 The first run downloads a version-matched `bob.jar` into a cache dir
@@ -1825,6 +1826,24 @@ version resolves to that version's artifact SHA, a channel (`stable`/`beta`/
 `alpha`) resolves to the channel head. Under `--json` the result reports the
 resolved `defoldVersion`, `defoldChannel` (null for a pinned version), and
 `defoldSha`, so you can confirm which engine build bob ran against.
+
+`bob run` is the convenience composite (Bob has no native run verb): it
+downloads the target-matched `bob.jar`, debug-builds into `build/default`, then
+launches the game — all pinned to the one resolved SHA, so bob, your typings,
+and the running engine agree. A native-extension build already produced
+`build/<platform>/dmengine`, so `bob run` launches that; a plain project has no
+build engine, so `bob run` fetches the stock engine for the resolved SHA into a
+sibling engine cache (`$DEFOLD_TYPESCRIPT_CACHE/engine`, else
+`$XDG_CACHE_HOME/defold-typescript/engine`, else `~/.cache/defold-typescript/engine`)
+and records it so a later `run` reuses it. `--java`/`--build-server` thread into
+the build exactly as for `bob build`; a cache hit skips the engine download, and
+an offline download reports an actionable error. A failed build short-circuits
+with Bob's exit code and never launches. Under `--json` the composite emits one
+envelope:
+
+```json
+{ "command": "bob", "subcommand": "run", "ok": true, "build": { "exitCode": 0 }, "launch": { "enginePath": "build/arm64-macos/dmengine", "exitCode": 0 } }
+```
 
 #### Run an existing build (no Bob)
 
@@ -2204,7 +2223,7 @@ The launcher runs whatever already sits under `build/`; it does **not** compile 
    bunx @defold-typescript/cli bob build      # debug build into build/default
    ```
 
-   `bob build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
+   `bob build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely. To debug-build and launch in one step (outside the editor debugger), `bunx @defold-typescript/cli bob run` composes the build with an engine launch, pinning bob, typings, and the running engine to one resolved SHA.
 3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
 4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
 
@@ -2871,6 +2890,7 @@ bunx @defold-typescript/cli bob status --json    # dry-run: report the resolved 
 bunx @defold-typescript/cli bob resolve --json   # fetch native extension deps
 bunx @defold-typescript/cli bob build --json     # compile to build/default
 bunx @defold-typescript/cli bob bundle --json     # produce a platform bundle
+bunx @defold-typescript/cli bob run --json       # debug build, then launch the game
 ```
 
 Each `bob <sub>` verb shells out to bob and, under `--json`, keeps stdout to
@@ -2925,6 +2945,24 @@ to the cache on first use and reused thereafter. The one precondition still
 required is **network egress**: the first `bob resolve`/`build` fetches
 `bob.jar` and any native extension archives, so an air-gapped run fails until the
 cache is warmed.
+
+**Composite build+launch with `bob run`:** `bob run` is the one convenience verb
+that combines steps — Bob has no native run, so the CLI composes it: download the
+target-matched `bob.jar`, debug-build into `build/default`, ensure a
+target-matched engine (the native-extension `build/<platform>/dmengine` when the
+build produced one, else the stock engine fetched by the resolved SHA into a
+sibling engine cache next to the jar cache and recorded so a later `run` reuses
+it), then launch. bob, the typings, and the running engine all share the one
+resolved SHA. `--java`/`--build-server` thread into the build as for `bob build`;
+a cache hit skips the engine download; an offline download reports an actionable
+`error`. A failed build **short-circuits with Bob's exit code and never
+launches** — the CLI exit code is that build code. Because a live game cannot be
+captured, its output streams to the terminal even under `--json`; the composite
+envelope prints on exit:
+
+```json
+{ "command": "bob", "subcommand": "run", "ok": true, "build": { "exitCode": 0 }, "launch": { "enginePath": "build/arm64-macos/dmengine", "exitCode": 0 } }
+```
 
 **Launch an existing build with `run`:** once `build/default` holds a compiled
 project, the top-level `run` command launches it directly — **no transpile, no

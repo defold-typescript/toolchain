@@ -2181,7 +2181,71 @@ describe("dispatch bob", () => {
     const code = await dispatch(["bob"], io, internals);
 
     expect(code).toBe(1);
-    expect(err()).toBe("Usage: defold-typescript bob <resolve|build|bundle> [path]\n");
+    expect(err()).toBe("Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n");
+  });
+
+  test("bob run builds then launches and returns the engine exit code with a composite --json envelope", async () => {
+    const { io, out } = captureStreams();
+    const { internals } = defoldInternals();
+    const engineSpawned: string[][] = [];
+
+    const code = await dispatch(["bob", "run", cwd, "--defold-target", "1.12.4", "--json"], io, {
+      ...internals,
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => true,
+        spawn: (argv) => {
+          engineSpawned.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(engineSpawned).toHaveLength(1);
+    const parsed = JSON.parse(out().trim()) as {
+      command: string;
+      subcommand: string;
+      ok: boolean;
+      build: { exitCode: number };
+      launch: { enginePath: string; exitCode: number };
+    };
+    expect(parsed).toMatchObject({
+      command: "bob",
+      subcommand: "run",
+      ok: true,
+      build: { exitCode: 0 },
+      launch: { exitCode: 0 },
+    });
+    expect(parsed.launch.enginePath).toBe(path.join(cwd, "build", "arm64-macos", "dmengine"));
+  });
+
+  test("bob run with a failing build returns the bob exit code and never launches", async () => {
+    const { io, err } = captureStreams();
+    const { internals } = defoldInternals({ spawn: async () => ({ exitCode: 5 }) });
+    const engineSpawned: string[][] = [];
+
+    const code = await dispatch(["bob", "run", cwd, "--defold-target", "1.12.4"], io, {
+      ...internals,
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => true,
+        spawn: (argv) => {
+          engineSpawned.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(5);
+    expect(engineSpawned).toEqual([]);
+    expect(err()).toContain("5");
   });
 
   test("the removed defold command is unknown and falls through to top-level usage", async () => {
