@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   type EngineTarget,
@@ -64,4 +65,96 @@ export function resolveRunnable(opts: ResolveRunnableOptions): Runnable {
   throw new Error(
     `defold-typescript run: no engine for ${target.enginePlatform}; run "bob run" to download and cache one.`,
   );
+}
+
+// A launched engine, controllable while it runs: `kill` forwards a signal, and
+// `exited` resolves to the process exit code. Injected in tests; the default
+// wraps `child_process`.
+export interface EngineProcess {
+  readonly kill: (signal: NodeJS.Signals) => void;
+  readonly exited: Promise<number>;
+}
+
+export type EngineSpawn = (argv: string[]) => EngineProcess;
+
+export interface LaunchEngineOptions {
+  readonly platform: NodeJS.Platform;
+  readonly spawn: EngineSpawn;
+  readonly extraArgs?: readonly string[];
+  // macOS-only: a build engine launched in place attaches to the editor
+  // process, so it is copied aside first and the returned path is spawned.
+  readonly copyAside?: (enginePath: string) => string;
+  readonly chmod?: (enginePath: string, mode: number) => void;
+}
+
+// Launch the resolved engine in the foreground: mirror the debug launcher's
+// runtime steps (macOS copy-aside, non-Windows chmod), forward SIGINT/SIGTERM to
+// the child so Ctrl-C reaches the game, and propagate the child's exit code. The
+// game streams to the inherited terminal; nothing here captures its output.
+export async function launchEngine(runnable: Runnable, opts: LaunchEngineOptions): Promise<number> {
+  const extraArgs = opts.extraArgs ?? [];
+  let enginePath = runnable.enginePath;
+  if (opts.platform === "darwin" && opts.copyAside) {
+    enginePath = opts.copyAside(enginePath);
+  }
+  if (opts.platform !== "win32" && opts.chmod) {
+    opts.chmod(enginePath, 0o755);
+  }
+
+  const child = opts.spawn([enginePath, runnable.projectcPath, ...extraArgs]);
+  const forward = (signal: NodeJS.Signals) => (): void => child.kill(signal);
+  const onSigint = forward("SIGINT");
+  const onSigterm = forward("SIGTERM");
+  process.on("SIGINT", onSigint);
+  process.on("SIGTERM", onSigterm);
+  try {
+    return await child.exited;
+  } finally {
+    process.removeListener("SIGINT", onSigint);
+    process.removeListener("SIGTERM", onSigterm);
+  }
+}
+
+// macOS standalone copy: place the engine under `temp/` beside itself so it runs
+// detached from the editor, matching the embedded debug launcher.
+function copyEngineAside(enginePath: string): string {
+  const aside = path.join(path.dirname(enginePath), "temp", path.basename(enginePath));
+  mkdirSync(path.dirname(aside), { recursive: true });
+  copyFileSync(enginePath, aside);
+  return aside;
+}
+
+function spawnEngineInherit(argv: string[]): EngineProcess {
+  const [cmd, ...args] = argv;
+  if (cmd === undefined) {
+    throw new Error("defold-typescript run: cannot launch an empty engine command.");
+  }
+  const proc = spawn(cmd, args, { stdio: "inherit" });
+  const exited = new Promise<number>((resolve, reject) => {
+    proc.on("error", reject);
+    proc.on("close", (code) => resolve(code ?? 1));
+  });
+  return { kill: (signal) => void proc.kill(signal), exited };
+}
+
+// The live seams the `run` dispatch branch launches through; tests inject a
+// deterministic subset, mirroring `defaultDefoldIo`.
+export interface RunEngine {
+  readonly platform: NodeJS.Platform;
+  readonly arch: string;
+  readonly probe: (candidate: string) => boolean;
+  readonly spawn: EngineSpawn;
+  readonly copyAside: (enginePath: string) => string;
+  readonly chmod: (enginePath: string, mode: number) => void;
+}
+
+export function defaultRunEngine(): RunEngine {
+  return {
+    platform: process.platform,
+    arch: process.arch,
+    probe: (candidate) => existsSync(candidate),
+    spawn: spawnEngineInherit,
+    copyAside: copyEngineAside,
+    chmod: (enginePath, mode) => chmodSync(enginePath, mode),
+  };
 }
