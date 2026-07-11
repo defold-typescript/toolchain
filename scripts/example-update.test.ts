@@ -35,11 +35,9 @@ describe("expectedFreshArtifacts", () => {
     ).toBe(true);
   });
 
-  test("keys the types dir off the imported constant, not a hardcoded version", () => {
+  test("does not retain the previous default surface id", () => {
     const artifacts = expectedFreshArtifacts(EXAMPLE);
-    expect(artifacts.some((p) => p.includes(".defold-types/defold-1.12.4"))).toBe(
-      CURRENT_STABLE_DEFOLD_VERSION === "1.12.4",
-    );
+    expect(artifacts.some((p) => p.includes(".defold-types/defold-1.12.4"))).toBe(false);
   });
 });
 

@@ -255,7 +255,7 @@ declare global {
      * -
      *
      * `transfer_ownership`
-     * boolean optional flag to determine wether or not the resource should take over ownership of the buffer object (default true)
+     * boolean optional flag to determine whether or not the resource should take over ownership of the buffer object (default true)
      * @returns Returns the buffer resource path
      * @example
      * ```ts
@@ -1224,7 +1224,7 @@ declare global {
      * -
      *
      * `transfer_ownership`
-     * boolean optional flag to determine wether or not the resource should take over ownership of the buffer object (default false)
+     * boolean optional flag to determine whether or not the resource should take over ownership of the buffer object (default false)
      * @example
      * ```ts
      * // How to set the data from a buffer

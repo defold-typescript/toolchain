@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { buildFidelityReport } from "../scripts/fidelity-audit";
 import {
   generateModuleDeclaration,
   generateVersionIndex,
@@ -40,6 +41,24 @@ const noDownload = async (): Promise<Uint8Array> => {
 };
 
 describe("api-targets registry", () => {
+  test("1.13.0 is the sole default and 1.12.4 remains a complete committed target", () => {
+    const targets = loadApiTargets();
+    const current = targets.find((target) => target.id === "defold-1.13.0");
+    const previous = targets.find((target) => target.id === "defold-1.12.4");
+
+    expect(targets.filter((target) => target.default === true).map((target) => target.id)).toEqual([
+      "defold-1.13.0",
+    ]);
+    expect(current?.source).toBeNull();
+    expect(previous?.default).toBe(false);
+    expect(previous?.source).toBeNull();
+    const currentNamespaces = new Set(current?.modules.map((module) => module.namespace));
+    for (const module of previous?.modules ?? []) {
+      expect(currentNamespaces.has(module.namespace)).toBe(true);
+    }
+    expect(previous?.modules.length).toBeGreaterThanOrEqual(39);
+  });
+
   test("registry parses and shape is valid", () => {
     const targets = loadApiTargets();
     expect(targets.length).toBeGreaterThanOrEqual(1);
@@ -87,6 +106,15 @@ describe("api-targets registry", () => {
         ).text();
         expect(committed).toBe(fresh);
       }
+    }
+  });
+
+  test("the promoted surface has no unknown tokens or uncovered dropped declarations", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    for (const entry of Object.values(report)) {
+      expect(entry.unknownTokens).toEqual([]);
+      expect(entry.droppedElements).toBe(0);
+      expect(entry.droppedMembers).toBe(0);
     }
   });
 
@@ -176,8 +204,13 @@ describe("api-targets registry", () => {
     expect(() => loadTargetModules(target, tmp)).toThrow(/broken.*nope.*does_not_exist\.json/);
   });
 
-  test("VERSIONED_MODULE_MANIFEST is empty — every versioned surface is ref-doc-sourced", () => {
-    expect(VERSIONED_MODULE_MANIFEST).toEqual([]);
+  test("VERSIONED_MODULE_MANIFEST contains the complete committed 1.12.4 surface only", () => {
+    expect(new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))).toEqual(
+      new Set(["defold-1.12.4"]),
+    );
+    expect(VERSIONED_MODULE_MANIFEST).toHaveLength(
+      loadApiTargets().find((target) => target.id === "defold-1.12.4")?.modules.length ?? 0,
+    );
   });
 
   test("resolveTargetModules delegates to loadTargetModules for a null-source target", async () => {

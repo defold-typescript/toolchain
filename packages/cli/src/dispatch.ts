@@ -391,7 +391,7 @@ export function dispatch(
         ensureMaterializedReference,
         materializeApiSurface,
         materializeRefDocSurface,
-        resolveCurrentSurfaceGeneratedDir,
+        resolveRegisteredSurfaceGeneratedDir,
       } = await import("./materialize");
 
       let head: ResolvedTargetHead;
@@ -409,6 +409,8 @@ export function dispatch(
       const surface = selectApiSurface(head.version);
       const apiSurface = surface.surfaceId;
       const refDocResolveOpts = refDocOptsFor(head);
+      const sourceGeneratedDir =
+        internals?.sourceGeneratedDir ?? resolveRegisteredSurfaceGeneratedDir(surface.surfaceId);
 
       const reportBuild = (
         written: readonly string[],
@@ -454,7 +456,8 @@ export function dispatch(
       const isRefDocSurface =
         surface.available &&
         surface.surfaceId !== null &&
-        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID;
+        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID &&
+        sourceGeneratedDir === null;
 
       if (isRefDocSurface) {
         const surfaceId = surface.surfaceId as string;
@@ -479,8 +482,6 @@ export function dispatch(
 
       try {
         const { written, warnings } = runBuild({ cwd });
-        const sourceGeneratedDir =
-          internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
         const { materializedDir } = materializeApiSurface({
           cwd,
           surface,
@@ -500,7 +501,7 @@ export function dispatch(
         ensureMaterializedReference,
         materializeApiSurface,
         materializeRefDocSurface,
-        resolveCurrentSurfaceGeneratedDir,
+        resolveRegisteredSurfaceGeneratedDir,
       } = await import("./materialize");
       const { runResolve } = await import("./resolve");
 
@@ -514,18 +515,19 @@ export function dispatch(
       }
       const surface = selectApiSurface(head.version);
       const refDocResolveOpts = refDocOptsFor(head);
+      const sourceGeneratedDir =
+        internals?.sourceGeneratedDir ?? resolveRegisteredSurfaceGeneratedDir(surface.surfaceId);
 
       const isRefDocSurface =
         surface.available &&
         surface.surfaceId !== null &&
-        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID;
+        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID &&
+        sourceGeneratedDir === null;
 
       let syncSurface: (() => void) | undefined;
       let componentWatcherFactory: WatcherFactory | undefined;
       let resolveSurface: (() => void | Promise<void>) | undefined;
       if (!isRefDocSurface) {
-        const sourceGeneratedDir =
-          internals?.sourceGeneratedDir ?? resolveCurrentSurfaceGeneratedDir();
         syncSurface = (): void => {
           const { materializedDir } = materializeApiSurface({
             cwd,

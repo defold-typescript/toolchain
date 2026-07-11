@@ -1,0 +1,205 @@
+/** @noSelfInFile */
+import type { Hash, Opaque, Url, Vector3 } from "../../../src/core-types";
+
+declare global {
+  /**
+   * Functions and messages for interacting with model components.
+   */
+  namespace model {
+    /**
+     * Cancels all animation on a model component.
+     *
+     * @param url - the model for which to cancel the animation
+     */
+    function cancel(url: string | Hash | Url): void;
+    /**
+     * Get AABB of the whole model in local coordinate space.
+     * AABB information return as a table with `min` and `max` fields, where `min` and `max` has type `vmath.vector3`.
+     *
+     * @param url - the model
+     * @returns A table containing AABB of the model. If model has no meshes - return vmath.vector3(0,0,0) for min and max fields.
+     * @example
+     * ```ts
+     * model.get_aabb("#model"); // => { min = vmath.vector3(-2.5, -3.0, 0), max = vmath.vector3(1.5, 5.5, 0) }
+     * model.get_aabb("#empty"); // => { min = vmath.vector3(0, 0, 0), max = vmath.vector3(0, 0, 0) }
+     * ```
+     */
+    function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };
+    /**
+     * Gets the id of the game object that corresponds to a model skeleton bone.
+     * The returned game object can be used for parenting and transform queries.
+     * This function has complexity `O(n)`, where `n` is the number of bones in the model skeleton.
+     * Game objects corresponding to a model skeleton bone can not be individually deleted.
+     *
+     * @param url - the model to query
+     * @param bone_id - id of the corresponding bone
+     * @returns id of the game object
+     * @example
+     * ```ts
+     * // The following examples assume that the model component has id "model".
+     * // How to parent the game object of the calling script to the "right_hand" bone
+     * // of the model in a player game object:
+     * export default defineScript({
+     *   init(self) {
+     *     const parent = model.get_go("player#model", "right_hand");
+     *     msg.post(".", "set_parent", { parent_id: parent });
+     *   },
+     * });
+     * ```
+     */
+    function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
+    /**
+     * Get AABB of all meshes.
+     * AABB information return as a table with `min` and `max` fields, where `min` and `max` has type `vmath.vector3`.
+     *
+     * @param url - the model
+     * @returns A table containing info about all AABB in the format
+     * @example
+     * ```ts
+     * model.get_mesh_aabb("#model"); // => { hash("Sword") = { min = vmath.vector3(-0.5, -0.5, 0), max = vmath.vector3(0.5, 0.5, 0) }, hash("Shield") = { min = vmath.vector3(-0.5, -0.5, -0.5), max = vmath.vector3(0.5, 0.5, 0.5) } }
+     * ```
+     */
+    function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
+    /**
+     * Get the enabled state of a mesh
+     *
+     * @param url - the model
+     * @param mesh_id - the id of the mesh
+     * @returns true if the mesh is visible, false otherwise
+     * @example
+     * ```ts
+     * export default defineScript({
+     *   init(self) {
+     *     if (model.get_mesh_enabled("#model", "Sword")) {
+     *       // set properties specific for the sword
+     *       self.weapon_properties = game.data.weapons["Sword"];
+     *     }
+     *   },
+     * });
+     * ```
+     */
+    function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean;
+    /**
+     * Plays an animation on a model component with specified playback
+     * mode and parameters.
+     * An optional completion callback function can be provided that will be called when
+     * the animation has completed playing. If no function is provided,
+     * a model_animation_done message is sent to the script that started the animation.
+     * The callback is not called (or message sent) if the animation is
+     * cancelled with model.cancel. The callback is called (or message sent) only for
+     * animations that play with the following playback modes:
+     *
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     *
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     *
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     *
+     * @param url - the model for which to play the animation
+     * @param anim_id - id of the animation to play
+     * @param playback - playback mode of the animation
+     *
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     *
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     *
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     *
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     *
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     *
+     * - `go.PLAYBACK_LOOP_PINGPONG`
+     * @param play_properties - optional table with properties
+     * Play properties table:
+     *
+     * `blend_duration`
+     * number Duration of a linear blend between the current and new animation.
+     * `offset`
+     * number The normalized initial value of the animation cursor when the animation starts playing.
+     * `playback_rate`
+     * number The rate with which the animation will be played. Must be positive.
+     * @param complete_function - function to call when the animation has completed.
+     *
+     * `self`
+     * object The current object.
+     * `message_id`
+     * hash The name of the completion message, `"model_animation_done"`.
+     * `message`
+     * table Information about the completion:
+     *
+     * - hash `animation_id` - the animation that was completed.
+     *
+     * - constant `playback` - the playback mode for the animation.
+     *
+     * `sender`
+     * url The invoker of the callback: the model component.
+     * @example
+     * ```ts
+     * // The following examples assume that the model has id "model".
+     * // How to play the "jump" animation followed by the "run" animation:
+     * function anim_done(self, message_id, message, sender) {
+     *   if (message_id === hash("model_animation_done")) {
+     *     if (message.animation_id === hash("jump")) {
+     *       // open animation done, chain with "run"
+     *       const properties = { blend_duration: 0.2 };
+     *       model.play_anim(url, "run", go.PLAYBACK_LOOP_FORWARD, properties, anim_done);
+     *     }
+     *   }
+     * }
+     *
+     * export default defineScript({
+     *   init(self) {
+     *     const url = msg.url("#model");
+     *     const play_properties = { blend_duration: 0.1 };
+     *     // first blend during 0.1 sec into the jump, then during 0.2 s into the run animation
+     *     model.play_anim(url, "jump", go.PLAYBACK_ONCE_FORWARD, play_properties, anim_done);
+     *   },
+     * });
+     * ```
+     */
+    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Opaque<"constant">, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
+    /**
+     * Enable or disable visibility of a mesh
+     *
+     * @param url - the model
+     * @param mesh_id - the id of the mesh
+     * @param enabled - true if the mesh should be visible, false if it should be hideen
+     * @example
+     * ```ts
+     * export default defineScript({
+     *   init(self) {
+     *     model.set_mesh_enabled("#model", "Sword", false); // hide the sword
+     *     model.set_mesh_enabled("#model", "Axe", true); // show the axe
+     *   },
+     * });
+     * ```
+     */
+    function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean): void;
+    interface properties {
+      /**
+       * The current animation set on the component. The type of the property is hash.
+       */
+      animation: Hash;
+      /**
+       * The normalized animation cursor. The type of the property is number.
+       * Please note that model events may not fire as expected when the cursor is manipulated directly.
+       */
+      cursor: number;
+      /**
+       * The material used when rendering the model. The type of the property is hash.
+       */
+      material: Hash;
+      /**
+       * The animation playback rate. A multiplier to the animation playback rate. The type of the property is number.
+       */
+      playback_rate: number;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      textureN: Hash;
+    }
+  }
+}
+
+export {};

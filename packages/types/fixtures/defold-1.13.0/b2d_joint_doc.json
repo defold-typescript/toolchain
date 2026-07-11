@@ -1,0 +1,3315 @@
+{
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "b2Joint",
+      "brief": "Box2D joint",
+      "description": "Box2D joint",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_UNKNOWN",
+      "brief": "Unknown joint type.",
+      "description": "Unknown joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_REVOLUTE",
+      "brief": "Revolute joint type.",
+      "description": "Revolute joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_PRISMATIC",
+      "brief": "Prismatic joint type.",
+      "description": "Prismatic joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_DISTANCE",
+      "brief": "Distance joint type.",
+      "description": "Distance joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_PULLEY",
+      "brief": "Pulley joint type.",
+      "description": "Pulley joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_MOUSE",
+      "brief": "Mouse joint type.",
+      "description": "Mouse joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_GEAR",
+      "brief": "Gear joint type.",
+      "description": "Gear joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_WHEEL",
+      "brief": "Wheel joint type.",
+      "description": "Wheel joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_WELD",
+      "brief": "Weld joint type.",
+      "description": "Weld joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_FRICTION",
+      "brief": "Friction joint type.",
+      "description": "Friction joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_ROPE",
+      "brief": "Rope joint type.",
+      "description": "Rope joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.LIMIT_STATE_INACTIVE",
+      "brief": "Inactive limit state.",
+      "description": "Inactive limit state.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.LIMIT_STATE_AT_LOWER",
+      "brief": "At lower limit state.",
+      "description": "At lower limit state.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.LIMIT_STATE_AT_UPPER",
+      "brief": "At upper limit state.",
+      "description": "At upper limit state.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.LIMIT_STATE_EQUAL",
+      "brief": "Equal limits state.",
+      "description": "Equal limits state.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.destroy",
+      "brief": "Destroy a joint created by <code>b2d.joint</code>.",
+      "description": "Destroy a joint created by <code>b2d.joint</code>.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_type",
+      "brief": "Get the joint type.",
+      "description": "Get the joint type.",
+      "returnvalues": [
+        {
+          "name": "type",
+          "doc": "one of the <code>JOINT_TYPE_*</code> constants",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_body_a",
+      "brief": "Get the first body connected to a joint.",
+      "description": "Get the first body connected to a joint.",
+      "returnvalues": [
+        {
+          "name": "body",
+          "doc": "body A",
+          "types": ["b2Body"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_body_b",
+      "brief": "Get the second body connected to a joint.",
+      "description": "Get the second body connected to a joint.",
+      "returnvalues": [
+        {
+          "name": "body",
+          "doc": "body B",
+          "types": ["b2Body"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_local_anchor_a",
+      "brief": "Get the local anchor on body A.",
+      "description": "Get the local anchor on body A.",
+      "returnvalues": [
+        {
+          "name": "anchor",
+          "doc": "local anchor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_local_anchor_b",
+      "brief": "Get the local anchor on body B.",
+      "description": "Get the local anchor on body B.",
+      "returnvalues": [
+        {
+          "name": "anchor",
+          "doc": "local anchor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_anchor_a",
+      "brief": "Get the world anchor on body A.",
+      "description": "Get the world anchor on body A.",
+      "returnvalues": [
+        {
+          "name": "anchor",
+          "doc": "world anchor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_anchor_b",
+      "brief": "Get the world anchor on body B.",
+      "description": "Get the world anchor on body B.",
+      "returnvalues": [
+        {
+          "name": "anchor",
+          "doc": "world anchor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.is_active",
+      "brief": "Get whether the joint is active.",
+      "description": "Get whether the joint is active.",
+      "returnvalues": [
+        {
+          "name": "active",
+          "doc": "true if the joint is active",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_collide_connected",
+      "brief": "Get whether connected bodies can collide.",
+      "description": "Get whether connected bodies can collide.",
+      "returnvalues": [
+        {
+          "name": "collide",
+          "doc": "true if connected bodies can collide",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_mouse_target",
+      "brief": "Set the target for a mouse joint.",
+      "description": "Set the target for a mouse joint.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "mouse joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "target",
+          "doc": "world target",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_mouse_target",
+      "brief": "Get the target for a mouse joint.",
+      "description": "Get the target for a mouse joint.",
+      "returnvalues": [
+        {
+          "name": "target",
+          "doc": "world target",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "mouse joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_length",
+      "brief": "Set the distance joint length.",
+      "description": "Set the distance joint length.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "length",
+          "doc": "length in project units",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_length",
+      "brief": "Get the distance joint length.",
+      "description": "Get the distance joint length.",
+      "returnvalues": [
+        {
+          "name": "length",
+          "doc": "length in project units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_frequency",
+      "brief": "Set spring frequency.",
+      "description": "Set spring frequency.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "frequency",
+          "doc": "frequency in hertz",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_frequency",
+      "brief": "Get spring frequency.",
+      "description": "Get spring frequency.",
+      "returnvalues": [
+        {
+          "name": "frequency",
+          "doc": "frequency in hertz",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_hertz",
+      "brief": "Alias for <code>b2d.joint.set_frequency</code>.",
+      "description": "Alias for <code>b2d.joint.set_frequency</code>.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_hertz",
+      "brief": "Alias for <code>b2d.joint.get_frequency</code>.",
+      "description": "Alias for <code>b2d.joint.get_frequency</code>.",
+      "returnvalues": [
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_damping_ratio",
+      "brief": "Set spring damping ratio.",
+      "description": "Set spring damping ratio.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_damping_ratio",
+      "brief": "Get spring damping ratio.",
+      "description": "Get spring damping ratio.",
+      "returnvalues": [
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_spring_damping_ratio",
+      "brief": "Alias for <code>b2d.joint.set_damping_ratio</code>.",
+      "description": "Alias for <code>b2d.joint.set_damping_ratio</code>.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_spring_damping_ratio",
+      "brief": "Alias for <code>b2d.joint.get_damping_ratio</code>.",
+      "description": "Alias for <code>b2d.joint.get_damping_ratio</code>.",
+      "returnvalues": [
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, weld, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_local_axis_a",
+      "brief": "Get the local axis on body A.",
+      "description": "Get the local axis on body A.",
+      "returnvalues": [
+        {
+          "name": "axis",
+          "doc": "local axis",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_reference_angle",
+      "brief": "Get the reference angle.",
+      "description": "Get the reference angle.",
+      "returnvalues": [
+        {
+          "name": "angle",
+          "doc": "reference angle in radians",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic, revolute, or weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_joint_translation",
+      "brief": "Get joint translation.",
+      "description": "Get joint translation.",
+      "returnvalues": [
+        {
+          "name": "translation",
+          "doc": "translation in project units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_joint_speed",
+      "brief": "Get joint speed.",
+      "description": "Get joint speed.",
+      "returnvalues": [
+        {
+          "name": "speed",
+          "doc": "joint speed",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_joint_angle",
+      "brief": "Get revolute joint angle.",
+      "description": "Get revolute joint angle.",
+      "returnvalues": [
+        {
+          "name": "angle",
+          "doc": "angle in radians",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "revolute joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.enable_limit",
+      "brief": "Enable or disable joint limits.",
+      "description": "Enable or disable joint limits.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic or revolute joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "true to enable limits",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.is_limit_enabled",
+      "brief": "Get whether joint limits are enabled.",
+      "description": "Get whether joint limits are enabled.",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "true if limits are enabled",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic or revolute joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_limits",
+      "brief": "Set joint limits.",
+      "description": "Set joint limits.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic or revolute joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "lower",
+          "doc": "lower limit",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "upper",
+          "doc": "upper limit",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_lower_limit",
+      "brief": "Get the lower joint limit.",
+      "description": "Get the lower joint limit.",
+      "returnvalues": [
+        {
+          "name": "lower",
+          "doc": "lower limit",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic or revolute joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_upper_limit",
+      "brief": "Get the upper joint limit.",
+      "description": "Get the upper joint limit.",
+      "returnvalues": [
+        {
+          "name": "upper",
+          "doc": "upper limit",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic or revolute joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.enable_motor",
+      "brief": "Enable or disable the joint motor.",
+      "description": "Enable or disable the joint motor.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "true to enable the motor",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.is_motor_enabled",
+      "brief": "Get whether the joint motor is enabled.",
+      "description": "Get whether the joint motor is enabled.",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "true if the motor is enabled",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_motor_speed",
+      "brief": "Set motor speed.",
+      "description": "Set motor speed.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "motor speed",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_motor_speed",
+      "brief": "Get motor speed.",
+      "description": "Get motor speed.",
+      "returnvalues": [
+        {
+          "name": "speed",
+          "doc": "motor speed",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_max_motor_force",
+      "brief": "Set maximum motor force.",
+      "description": "Set maximum motor force.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "maximum motor force",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_max_motor_force",
+      "brief": "Get maximum motor force.",
+      "description": "Get maximum motor force.",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "maximum motor force",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_motor_force",
+      "brief": "Get current motor force.",
+      "description": "Get current motor force.",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "motor force",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "prismatic joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "inv_dt",
+          "doc": "inverse time step",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_max_motor_torque",
+      "brief": "Set maximum motor torque.",
+      "description": "Set maximum motor torque.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "revolute or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "torque",
+          "doc": "maximum motor torque",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_max_motor_torque",
+      "brief": "Get maximum motor torque.",
+      "description": "Get maximum motor torque.",
+      "returnvalues": [
+        {
+          "name": "torque",
+          "doc": "maximum motor torque",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "revolute or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_motor_torque",
+      "brief": "Get current motor torque.",
+      "description": "Get current motor torque.",
+      "returnvalues": [
+        {
+          "name": "torque",
+          "doc": "motor torque",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "revolute or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "inv_dt",
+          "doc": "inverse time step",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_max_force",
+      "brief": "Set maximum force.",
+      "description": "Set maximum force.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "mouse or friction joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "maximum force",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_max_force",
+      "brief": "Get maximum force.",
+      "description": "Get maximum force.",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "maximum force",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "mouse or friction joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_max_torque",
+      "brief": "Set maximum torque.",
+      "description": "Set maximum torque.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "friction joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "torque",
+          "doc": "maximum torque",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_max_torque",
+      "brief": "Get maximum torque.",
+      "description": "Get maximum torque.",
+      "returnvalues": [
+        {
+          "name": "torque",
+          "doc": "maximum torque",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "friction joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_max_length",
+      "brief": "Set rope maximum length.",
+      "description": "Set rope maximum length.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "rope joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "length",
+          "doc": "maximum length in project units",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_max_length",
+      "brief": "Get rope maximum length.",
+      "description": "Get rope maximum length.",
+      "returnvalues": [
+        {
+          "name": "length",
+          "doc": "maximum length in project units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "rope joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_limit_state",
+      "brief": "Get rope limit state.",
+      "description": "Get rope limit state.",
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "one of the <code>LIMIT_STATE_*</code> constants",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "rope joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_ground_anchor_a",
+      "brief": "Get pulley ground anchor A.",
+      "description": "Get pulley ground anchor A.",
+      "returnvalues": [
+        {
+          "name": "anchor",
+          "doc": "world anchor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "pulley joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_ground_anchor_b",
+      "brief": "Get pulley ground anchor B.",
+      "description": "Get pulley ground anchor B.",
+      "returnvalues": [
+        {
+          "name": "anchor",
+          "doc": "world anchor",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "pulley joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_length_a",
+      "brief": "Get pulley segment length A.",
+      "description": "Get pulley segment length A.",
+      "returnvalues": [
+        {
+          "name": "length",
+          "doc": "length in project units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "pulley joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_length_b",
+      "brief": "Get pulley segment length B.",
+      "description": "Get pulley segment length B.",
+      "returnvalues": [
+        {
+          "name": "length",
+          "doc": "length in project units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "pulley joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_ratio",
+      "brief": "Set gear joint ratio.",
+      "description": "Set gear joint ratio.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "gear joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "ratio",
+          "doc": "gear ratio",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_ratio",
+      "brief": "Get joint ratio.",
+      "description": "Get joint ratio.",
+      "returnvalues": [
+        {
+          "name": "ratio",
+          "doc": "joint ratio",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "pulley or gear joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_joint1",
+      "brief": "Get the first joint connected to a gear joint.",
+      "description": "Get the first joint connected to a gear joint.",
+      "returnvalues": [
+        {
+          "name": "joint1",
+          "doc": "first connected joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "gear joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_joint2",
+      "brief": "Get the second joint connected to a gear joint.",
+      "description": "Get the second joint connected to a gear joint.",
+      "returnvalues": [
+        {
+          "name": "joint2",
+          "doc": "second connected joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "gear joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_reaction_force",
+      "brief": "Get reaction force.",
+      "description": "Get reaction force.",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "reaction force",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "inv_dt",
+          "doc": "inverse time step",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_reaction_torque",
+      "brief": "Get reaction torque.",
+      "description": "Get reaction torque.",
+      "returnvalues": [
+        {
+          "name": "torque",
+          "doc": "reaction torque",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "inv_dt",
+          "doc": "inverse time step",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_distance",
+      "brief": "Create a distance joint.",
+      "description": "Create a distance joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>length</code>, <code>frequency</code>, <code>damping_ratio</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_mouse",
+      "brief": "Create a mouse joint.",
+      "description": "Create a mouse joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>target</code>, <code>max_force</code>, <code>frequency</code>, <code>damping_ratio</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_prismatic",
+      "brief": "Create a prismatic joint.",
+      "description": "Create a prismatic joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>local_axis_a</code>, <code>reference_angle</code>, <code>enable_limit</code>, <code>lower_translation</code>, <code>upper_translation</code>, <code>enable_motor</code>, <code>max_motor_force</code>, <code>motor_speed</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_revolute",
+      "brief": "Create a revolute joint.",
+      "description": "Create a revolute joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>reference_angle</code>, <code>enable_limit</code>, <code>lower_angle</code>, <code>upper_angle</code>, <code>enable_motor</code>, <code>max_motor_torque</code>, <code>motor_speed</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_weld",
+      "brief": "Create a weld joint.",
+      "description": "Create a weld joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>reference_angle</code>, <code>frequency</code>, <code>damping_ratio</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_wheel",
+      "brief": "Create a wheel joint.",
+      "description": "Create a wheel joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>local_axis_a</code>, <code>enable_motor</code>, <code>max_motor_torque</code>, <code>motor_speed</code>, <code>frequency</code>, <code>damping_ratio</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_friction",
+      "brief": "Create a friction joint.",
+      "description": "Create a friction joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>max_force</code>, <code>max_torque</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_rope",
+      "brief": "Create a rope joint.",
+      "description": "Create a rope joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>max_length</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_pulley",
+      "brief": "Create a pulley joint.",
+      "description": "Create a pulley joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>ground_anchor_a</code>, <code>ground_anchor_b</code>, <code>local_anchor_a</code>, <code>local_anchor_b</code>, <code>length_a</code>, <code>length_b</code>, <code>ratio</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_gear",
+      "brief": "Create a gear joint.",
+      "description": "Create a gear joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint1",
+          "doc": "first revolute or prismatic joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "joint2",
+          "doc": "second revolute or prismatic joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>ratio</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_FILTER",
+      "brief": "Filter joint type.",
+      "description": "Filter joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.joint.JOINT_TYPE_MOTOR",
+      "brief": "Motor joint type.",
+      "description": "Motor joint type.",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.is_valid",
+      "brief": "Validate a joint handle.",
+      "description": "Validate a joint handle.",
+      "returnvalues": [
+        {
+          "name": "valid",
+          "doc": "true if the joint handle still refers to a live Box2D joint",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_world",
+      "brief": "Get the world owning a joint.",
+      "description": "Get the world owning a joint.",
+      "returnvalues": [
+        {
+          "name": "world",
+          "doc": "owning world",
+          "types": ["b2World"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_collide_connected",
+      "brief": "Set whether connected bodies can collide.",
+      "description": "Set whether connected bodies can collide.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "collide",
+          "doc": "true if connected bodies can collide",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.wake_bodies",
+      "brief": "Wake the bodies connected to a joint.",
+      "description": "Wake the bodies connected to a joint.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.enable_spring",
+      "brief": "Enable or disable joint spring behavior.",
+      "description": "Enable or disable joint spring behavior.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "true to enable the spring",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.is_spring_enabled",
+      "brief": "Get whether joint spring behavior is enabled.",
+      "description": "Get whether joint spring behavior is enabled.",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "true if the spring is enabled",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_spring_hertz",
+      "brief": "Set spring frequency.",
+      "description": "Set spring frequency.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_spring_hertz",
+      "brief": "Get spring frequency.",
+      "description": "Get spring frequency.",
+      "returnvalues": [
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance, mouse, prismatic, revolute, or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_length_range",
+      "brief": "Set the distance joint length range.",
+      "description": "Set the distance joint length range.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "min_length",
+          "doc": "minimum length in project units",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_length",
+          "doc": "maximum length in project units",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_min_length",
+      "brief": "Set the distance joint minimum length.",
+      "description": "Set the distance joint minimum length.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "length",
+          "doc": "minimum length in project units",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_min_length",
+      "brief": "Get the distance joint minimum length.",
+      "description": "Get the distance joint minimum length.",
+      "returnvalues": [
+        {
+          "name": "length",
+          "doc": "minimum length in project units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_current_length",
+      "brief": "Get the current distance joint length.",
+      "description": "Get the current distance joint length.",
+      "returnvalues": [
+        {
+          "name": "length",
+          "doc": "current length in project units",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_motor_force",
+      "brief": "Get current motor force.",
+      "description": "Get current motor force.",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "motor force",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "distance or prismatic joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_motor_torque",
+      "brief": "Get current motor torque.",
+      "description": "Get current motor torque.",
+      "returnvalues": [
+        {
+          "name": "torque",
+          "doc": "motor torque",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "revolute or wheel joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_linear_offset",
+      "brief": "Set motor joint linear offset.",
+      "description": "Set motor joint linear offset.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "motor joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "offset",
+          "doc": "linear offset in project units",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_linear_offset",
+      "brief": "Get motor joint linear offset.",
+      "description": "Get motor joint linear offset.",
+      "returnvalues": [
+        {
+          "name": "offset",
+          "doc": "linear offset in project units",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "motor joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_angular_offset",
+      "brief": "Set motor joint angular offset.",
+      "description": "Set motor joint angular offset.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "motor joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "offset",
+          "doc": "angular offset in radians",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_angular_offset",
+      "brief": "Get motor joint angular offset.",
+      "description": "Get motor joint angular offset.",
+      "returnvalues": [
+        {
+          "name": "offset",
+          "doc": "angular offset in radians",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "motor joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_correction_factor",
+      "brief": "Set motor joint correction factor.",
+      "description": "Set motor joint correction factor.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "motor joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "factor",
+          "doc": "correction factor",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_correction_factor",
+      "brief": "Get motor joint correction factor.",
+      "description": "Get motor joint correction factor.",
+      "returnvalues": [
+        {
+          "name": "factor",
+          "doc": "correction factor",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "motor joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_reference_angle",
+      "brief": "Set weld joint reference angle.",
+      "description": "Set weld joint reference angle.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "angle",
+          "doc": "reference angle in radians",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_linear_hertz",
+      "brief": "Set weld joint linear frequency.",
+      "description": "Set weld joint linear frequency.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_linear_hertz",
+      "brief": "Get weld joint linear frequency.",
+      "description": "Get weld joint linear frequency.",
+      "returnvalues": [
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_linear_damping_ratio",
+      "brief": "Set weld joint linear damping ratio.",
+      "description": "Set weld joint linear damping ratio.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_linear_damping_ratio",
+      "brief": "Get weld joint linear damping ratio.",
+      "description": "Get weld joint linear damping ratio.",
+      "returnvalues": [
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_angular_hertz",
+      "brief": "Set weld joint angular frequency.",
+      "description": "Set weld joint angular frequency.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_angular_hertz",
+      "brief": "Get weld joint angular frequency.",
+      "description": "Get weld joint angular frequency.",
+      "returnvalues": [
+        {
+          "name": "hertz",
+          "doc": "frequency in hertz",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.set_angular_damping_ratio",
+      "brief": "Set weld joint angular damping ratio.",
+      "description": "Set weld joint angular damping ratio.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        },
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_angular_damping_ratio",
+      "brief": "Get weld joint angular damping ratio.",
+      "description": "Get weld joint angular damping ratio.",
+      "returnvalues": [
+        {
+          "name": "ratio",
+          "doc": "damping ratio",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "weld joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_reaction_force",
+      "brief": "Get reaction force.",
+      "description": "Get reaction force.",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "reaction force",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.get_reaction_torque",
+      "brief": "Get reaction torque.",
+      "description": "Get reaction torque.",
+      "returnvalues": [
+        {
+          "name": "torque",
+          "doc": "reaction torque",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "joint",
+          "doc": "joint",
+          "types": ["b2Joint"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_motor",
+      "brief": "Create a motor joint.",
+      "description": "Create a motor joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition with <code>linear_offset</code>, <code>angular_offset</code>, <code>max_force</code>, <code>max_torque</code>, <code>correction_factor</code>, and <code>collide_connected</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.joint.create_filter",
+      "brief": "Create a filter joint.",
+      "description": "Create a filter joint.",
+      "returnvalues": [
+        {
+          "name": "joint",
+          "doc": "created joint",
+          "types": ["b2Joint"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body_a",
+          "doc": "first body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "body_b",
+          "doc": "second body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "optional definition table",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "b2d.joint",
+    "name": "b2d.joint",
+    "brief": "Box2D b2Joint documentation",
+    "description": "Functions for interacting with native Box2D joints.",
+    "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_joint_v2.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

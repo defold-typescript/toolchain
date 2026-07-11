@@ -1,4 +1,6 @@
 /** @noSelfInFile */
+import type { Hash } from "../src/core-types";
+
 declare global {
   /**
    * Functions and constants to access resources.
@@ -58,13 +60,15 @@ declare global {
     const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_VERSION_MISMATCH" };
     /**
      * Adds a resource mount to the resource system.
-     * The mounts are persisted between sessions.
      * After the mount succeeded, the resources are available to load. (i.e. no reboot required)
      *
      * @param name - Unique name of the mount
      * @param uri - The uri of the mount, including the scheme. Currently supported schemes are 'zip' and 'archive'.
      * @param priority - Priority of mount. Larger priority takes prescedence
      * @param callback - Callback after the asynchronous request completed
+     * - `name` hash Unique name of the mount
+     * - `uri` string The uri of the mount
+     * - `result` number The result of the request
      * @returns The result of the request
      * @example
      * ```ts
@@ -74,7 +78,7 @@ declare global {
      * liveupdate.add_mount("season_pack_1", "zip:/path/to/easter_pack_1.zip", 30, (result) => {}); // season pack, overriding content in the other packs
      * ```
      */
-    function add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number;
+    function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number;
     /**
      * Get an array of the current mounts
      * This can be used to determine if a new mount is needed or not
@@ -103,8 +107,22 @@ declare global {
      */
     function get_mounts(): { name: string; uri: string; priority: number }[];
     /**
+     * Checks if the bundled application was built with one or more resources
+     * excluded from the main bundle, through a collection proxy with
+     * `Exclude` enabled.
+     * This value is based on metadata in the bundled manifest. It does not check
+     * whether any live update archive has been mounted or whether the excluded
+     * resources are currently available on device.
+     *
+     * @returns true if the bundled application was built with excluded files
+     * @example
+     * ```ts
+     * if (liveupdate.is_built_with_excluded_files()) print("The bundle expects live update content.");
+     * ```
+     */
+    function is_built_with_excluded_files(): boolean;
+    /**
      * Remove a mount the resource system.
-     * The remaining mounts are persisted between sessions.
      * Removing a mount does not affect any loaded resources.
      *
      * @param name - Unique name of the mount
@@ -115,7 +133,7 @@ declare global {
      * liveupdate.remove_mount("season_pack_1");
      * ```
      */
-    function remove_mount(name: string): number;
+    function remove_mount(name: string | Hash): number;
   }
 }
 

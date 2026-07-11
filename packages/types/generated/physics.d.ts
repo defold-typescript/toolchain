@@ -3,9 +3,7 @@ import type { Hash, Url, Vector3 } from "../src/core-types";
 
 declare global {
   /**
-   * Functions and messages for collision object physics interaction
-   * with other objects (collisions and ray-casting) and control of
-   * physical behaviors.
+   * Collision object physics API documentation
    */
   namespace physics {
     /**

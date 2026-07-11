@@ -3,10 +3,10 @@ toc-title: Pinning the Defold target
 ---
 # Pinning the Defold API target
 
-`@defold-typescript/types` ships the **latest/current** Defold API surface
-pre-baked, and generates older versioned surfaces on demand. The default import
-is always the current surface; opting into another target generates that
-target's surface on your machine and materializes it locally. Pinning a surface
+`@defold-typescript/types` ships the **latest/current** Defold API surface and
+the complete previous 1.12.4 surface pre-baked; other older surfaces are
+generated on demand. The default import is always current. Selecting another
+target materializes its version-owned surface locally. Pinning a surface
 makes the TypeScript compiler reject calls to engine functions that do not exist
 in the Defold version you target, instead of letting them through to fail at
 runtime.
@@ -40,10 +40,9 @@ generated API.
 
 ## Opting into a pinned surface
 
-You do not pin a surface through a package subpath export. Versioned surfaces
-are **not** shipped pre-baked in the npm package — only the current-stable
-surface is. A non-current surface's `.d.ts` are generated on your machine the
-moment you pin it (from that version's Defold reference docs) and
+You do not pin a surface through a package subpath export. The current 1.13.0 and historical 1.12.4 surfaces are shipped pre-baked in the
+npm package. Other registered non-current surfaces are generated on your
+machine from that version's Defold reference docs. Either form is
 **materialized** into a project-local `.defold-types/<version>/` faux `@types`
 package that your `tsconfig.json` references.
 
@@ -63,7 +62,7 @@ not in editor metadata. You declare the target in `package.json` under the
 ```jsonc
 // package.json
 {
-  "defold-typescript": { "defold-target": "1.12.4" }
+  "defold-typescript": { "defold-target": "1.13.0" }
 }
 ```
 
@@ -116,7 +115,7 @@ The resolved target is reported in `--json` output:
   for a fixed-version target.
 - `apiSurface` — the surface the resolved head version maps to. The
   current-stable version maps to the default surface
-  (`apiSurface: "defold-1.12.4"`); a version with a registered reference-doc
+  (`apiSurface: "defold-1.13.0"`); a version with a registered reference-doc
   target maps to `apiSurface: "defold-<version>"` (for example `defold-1.9.8`);
   a version with no matching target reports `apiSurface: null`. The surface id
   always derives from the resolved head version, never from the pin token.
@@ -143,8 +142,10 @@ it. The build writes a project-local `.defold-types/<surface>/` directory (a fau
 How the surface is produced depends on the resolved version:
 
 - **Current-stable** copies the pre-baked surface that ships in
-  `@defold-typescript/types` into `.defold-types/defold-1.12.4/`. No network access.
-- **A pinned non-current version** is generated **on the fly** from that
+  `@defold-typescript/types` into `.defold-types/defold-1.13.0/`. No network access.
+- **The previous 1.12.4 version** copies its complete committed declaration
+  snapshot and requires no network access.
+- **Another pinned non-current version** is generated **on the fly** from that
   version's Defold reference docs and written into
   `.defold-types/<version>/` (for example `.defold-types/defold-1.9.8/`). The
   reference docs are downloaded once on first use and cached, so later builds
