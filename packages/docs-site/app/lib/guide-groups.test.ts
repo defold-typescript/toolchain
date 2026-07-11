@@ -89,7 +89,7 @@ describe("groupGuidePages", () => {
         "/debugging",
         "/agent-runbooks",
         "/helper-scripts",
-        "/pinning-defold-version",
+        "/pinning-defold-target",
         "/extensions",
         "/api-docs-vs-ts-defold",
         "/migrating-from-ts-defold",

@@ -401,58 +401,64 @@ describe("docs/guide/vector-math.md worked example", () => {
   });
 });
 
-describe("docs/guide/pinning-defold-version.md release-channel section", () => {
+describe("docs/guide/pinning-defold-target.md release-channel section", () => {
   test("contains the channel section heading", async () => {
-    const body = await readGuide("pinning-defold-version.md");
-    expect(body).toContain("## Pinning a release channel");
+    const body = await readGuide("pinning-defold-target.md");
+    expect(body).toContain("## Targeting a release channel");
   });
 
-  test("names all three channels and the stable default", async () => {
-    const body = await readGuide("pinning-defold-version.md");
+  test("names all three channels", async () => {
+    const body = await readGuide("pinning-defold-target.md");
     expect(body).toContain("stable");
     expect(body).toContain("beta");
     expect(body).toContain("alpha");
-    expect(body).toContain("default stays `stable`");
   });
 
-  test("documents the --channel flag and the package.json channel pin precedence", async () => {
-    const body = await readGuide("pinning-defold-version.md");
-    expect(body).toContain("--channel");
-    expect(body).toContain('"channel"');
+  test("documents the --defold-target flag and the package.json target pin", async () => {
+    const body = await readGuide("pinning-defold-target.md");
+    expect(body).toContain("--defold-target");
+    expect(body).toContain('"defold-target"');
   });
 
-  test("documents --json reporting the channel", async () => {
-    const body = await readGuide("pinning-defold-version.md");
+  test("documents --json reporting the channel and the resolved head sha", async () => {
+    const body = await readGuide("pinning-defold-target.md");
     expect(body).toContain("defoldChannel");
+    expect(body).toContain("defoldSha");
+  });
+
+  test("carries no reference to the removed --defold-version/--channel flags", async () => {
+    const body = await readGuide("pinning-defold-target.md");
+    expect(body).not.toContain("--defold-version");
+    expect(body).not.toContain("--channel");
   });
 
   test("states beta/alpha are experimental pre-release surfaces", async () => {
-    const body = await readGuide("pinning-defold-version.md");
+    const body = await readGuide("pinning-defold-target.md");
     expect(body).toContain("experimental");
   });
 });
 
-describe("docs/guide/pinning-defold-version.md installed-editor detection tier", () => {
+describe("docs/guide/pinning-defold-target.md installed-editor detection tier", () => {
   test("names the installed-editor detection as a pin-tier between pin and default", async () => {
-    const body = await readGuide("pinning-defold-version.md");
+    const body = await readGuide("pinning-defold-target.md");
     expect(body).toContain("installed Defold editor");
     // Precedence chain has four tiers, with detection the lowest-precedence
     // fallback.
-    expect(body).toMatch(/1\..*--defold-version/);
-    expect(body).toMatch(/2\..*`package\.json` pin/);
+    expect(body).toMatch(/1\..*--defold-target/);
+    expect(body).toMatch(/2\..*`package\.json`/);
     expect(body).toMatch(/3\..*installed Defold editor/);
     expect(body).toMatch(/4\..*current-stable default/);
   });
 
   test("names the per-OS candidate paths the probe checks", async () => {
-    const body = await readGuide("pinning-defold-version.md");
+    const body = await readGuide("pinning-defold-target.md");
     expect(body).toContain("Defold.app/Contents/Resources/config");
     expect(body).toContain("~/Defold/config");
     expect(body).toContain("%LOCALAPPDATA%");
   });
 
   test("reports defoldVersionSource in --json with the four source values", async () => {
-    const body = await readGuide("pinning-defold-version.md");
+    const body = await readGuide("pinning-defold-target.md");
     expect(body).toContain("defoldVersionSource");
     expect(body).toContain("`flag`");
     expect(body).toContain("`pin`");

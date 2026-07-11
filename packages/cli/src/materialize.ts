@@ -14,7 +14,7 @@ import {
   resolveTypesPackageRoot,
 } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
-import type { DefoldChannel } from "./defold-channel";
+import type { DefoldChannel } from "./defold-target";
 import { formatJsonLikeBiome } from "./format-json";
 
 export const MATERIALIZED_ROOT = ".defold-types";

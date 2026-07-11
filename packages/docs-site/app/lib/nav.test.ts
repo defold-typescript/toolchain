@@ -296,7 +296,7 @@ describe("buildNav", () => {
       "/helper-scripts",
     ]);
     expect(byLabel("Project configuration")?.children?.map((c) => c.route)).toEqual([
-      "/pinning-defold-version",
+      "/pinning-defold-target",
       "/extensions",
     ]);
     expect(byLabel("Migration")?.children?.map((c) => c.route)).toEqual([
