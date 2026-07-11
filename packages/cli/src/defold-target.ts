@@ -53,3 +53,41 @@ export function resolveDefoldTarget(opts: {
   }
   return { kind: "version", version: CURRENT_STABLE_DEFOLD_VERSION, source: "default" };
 }
+
+export interface ResolvedTargetHead {
+  version: string;
+  channel: DefoldChannel | null;
+  sha: string | null;
+}
+
+export interface ChannelInfoIo {
+  fetchChannelInfo: (channel: DefoldChannel) => Promise<{ version: string; sha1: string }>;
+}
+
+export async function resolveTargetHead(
+  target: DefoldTarget,
+  io: ChannelInfoIo,
+): Promise<ResolvedTargetHead> {
+  if (target.kind === "version") {
+    return { version: target.version, channel: null, sha: null };
+  }
+  const info = await io.fetchChannelInfo(target.channel);
+  return { version: info.version, channel: target.channel, sha: info.sha1 };
+}
+
+export async function fetchChannelInfo(
+  channel: DefoldChannel,
+): Promise<{ version: string; sha1: string }> {
+  const url = `https://d.defold.com/${channel}/info.json`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(
+      `defold-typescript: could not resolve the ${channel} Defold head (${url} -> ${res.status} ${res.statusText}).`,
+    );
+  }
+  const info = (await res.json()) as { version?: string; sha1?: string };
+  if (!info.version || !info.sha1) {
+    throw new Error(`defold-typescript: ${url} returned no version/sha1.`);
+  }
+  return { version: info.version, sha1: info.sha1 };
+}
