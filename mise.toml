@@ -11,6 +11,10 @@ description = "Check Defold 1.13.0 release docs and emit deterministic import ev
 dir = "{{config_root}}/packages/types"
 run = "bun run import-defold-release -- 1.13.0 --check"
 
+[tasks.release-readiness]
+description = "Offline Defold release-promotion gate over committed evidence (deterministic, fails closed). Add --live for the advisory network archive refresh."
+run = "bun scripts/defold-release-readiness.ts --check"
+
 [tasks.current-version]
 description = "Show the currently-published npm version of each workspace package"
 run = "bun scripts/current-version.ts"
