@@ -6,6 +6,11 @@ description = "Check vendored Defold API fixtures for drift against the pinned r
 dir = "{{config_root}}/packages/types"
 run = "bun run sync-api-docs --check"
 
+[tasks.import-defold-release]
+description = "Check Defold 1.13.0 release docs and emit deterministic import evidence"
+dir = "{{config_root}}/packages/types"
+run = "bun run import-defold-release -- 1.13.0 --check"
+
 [tasks.current-version]
 description = "Show the currently-published npm version of each workspace package"
 run = "bun scripts/current-version.ts"
