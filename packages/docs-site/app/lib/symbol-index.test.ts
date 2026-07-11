@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage } from "./api-surface";
-import { buildSymbolIndex } from "./symbol-index";
+import type { ApiVersion } from "./api-surface-loader";
+import {
+  buildSymbolIndex,
+  symbolIndexFileForRoute,
+  versionSymbolIndexRecords,
+} from "./symbol-index";
 
 function emptyModule(namespace: string): ApiModule {
   return {
@@ -128,5 +133,45 @@ describe("buildSymbolIndex", () => {
     ]);
     expect(index.hash).toEqual({ brief: "Hashes a string", route: "/api/globals#hash" });
     expect(index["globals.hash"]).toBeUndefined();
+  });
+});
+
+describe("symbolIndexFileForRoute", () => {
+  const versionIds = ["defold-1.12.4"];
+
+  test("selects the default file on a canonical, unprefixed API route", () => {
+    expect(symbolIndexFileForRoute("/api/go", versionIds)).toBe("symbol-index.json");
+  });
+
+  test("selects the version file on a historical route", () => {
+    expect(symbolIndexFileForRoute("/api/defold-1.12.4/go", versionIds)).toBe(
+      "symbol-index-defold-1.12.4.json",
+    );
+  });
+
+  test("ignores a query/hash suffix and an unknown version prefix", () => {
+    expect(symbolIndexFileForRoute("/api/go?x=1#y", versionIds)).toBe("symbol-index.json");
+    expect(symbolIndexFileForRoute("/api/defold-9.9.9/go", versionIds)).toBe("symbol-index.json");
+  });
+});
+
+describe("versionSymbolIndexRecords", () => {
+  const versions: ApiVersion[] = [
+    { id: "cur", isDefault: true },
+    { id: "old", isDefault: false },
+  ];
+
+  function pagesForVersion(versionId: string): ApiPage[] {
+    const prefix = versionId === "cur" ? "" : `/${versionId}`;
+    const ns = versionId === "cur" ? "go" : "wmath";
+    return [{ ...page(ns, { brief: `${ns} brief` }), route: `/api${prefix}/${ns}` }];
+  }
+
+  test("emits one version-correct index per non-default version, keyed to its prefixed routes", () => {
+    const records = versionSymbolIndexRecords(versions, pagesForVersion);
+    expect(records.map((r) => r.version)).toEqual(["old"]);
+    expect(records[0]?.index.wmath).toEqual({ brief: "wmath brief", route: "/api/old/wmath" });
+    // never silently falls back to the default surface
+    expect(records[0]?.index.go).toBeUndefined();
   });
 });
