@@ -21,10 +21,21 @@ describe("renderHelp", () => {
 
     expect(text).toContain("build");
     expect(text).toContain("Usage:");
-    expect(text).toContain("--defold-version");
+    expect(text).toContain("--defold-target");
+    expect(text).not.toContain("--defold-version");
+    expect(text).not.toContain("--channel");
     expect(text).not.toContain("init-agents");
     expect(text).not.toContain("setup-debug");
     expect(text.endsWith("\n")).toBe(true);
+  });
+
+  test("watch and resolve help name --defold-target, not the removed flags", () => {
+    for (const subject of ["watch", "resolve"]) {
+      const text = renderHelp(subject);
+      expect(text).toContain("--defold-target");
+      expect(text).not.toContain("--defold-version");
+      expect(text).not.toContain("--channel");
+    }
   });
 
   test("init help names both the new-project and existing-project role", () => {

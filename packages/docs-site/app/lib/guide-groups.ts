@@ -45,7 +45,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "project-configuration",
     label: "Project configuration",
     subtitle: "Pin the engine and add native code.",
-    slugs: ["pinning-defold-version", "extensions"],
+    slugs: ["pinning-defold-target", "extensions"],
   },
   {
     id: "migration",

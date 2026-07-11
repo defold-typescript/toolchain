@@ -322,14 +322,14 @@ describe("runInit (add-TS mode)", () => {
     expect(SCAFFOLD_DEV_DEPS.typescript).toBe(typesPkg.devDependencies.typescript);
   });
 
-  test("seeds the defold-version pin with current-stable in a fresh package.json", () => {
+  test("seeds the defold-target pin with current-stable in a fresh package.json", () => {
     touch("game.project", "[project]\n");
 
     runInit({ cwd });
 
     const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
     expect(pkg["defold-typescript"]).toEqual({
-      "defold-version": CURRENT_STABLE_DEFOLD_VERSION,
+      "defold-target": CURRENT_STABLE_DEFOLD_VERSION,
     });
   });
 
@@ -344,19 +344,19 @@ describe("runInit (add-TS mode)", () => {
     expect(pkg.name).toBe("user-project");
     expect(pkg.keywords).toEqual(["defold"]);
     expect(pkg["defold-typescript"]).toEqual({
-      "defold-version": CURRENT_STABLE_DEFOLD_VERSION,
+      "defold-target": CURRENT_STABLE_DEFOLD_VERSION,
     });
   });
 
-  test("does not overwrite an existing defold-version pin", () => {
+  test("does not overwrite an existing defold-target pin", () => {
     touch("game.project", "[project]\n");
-    const original = { name: "user-project", "defold-typescript": { "defold-version": "1.9.8" } };
+    const original = { name: "user-project", "defold-typescript": { "defold-target": "1.9.8" } };
     touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
 
     runInit({ cwd });
 
     const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
-    expect(pkg["defold-typescript"]).toEqual({ "defold-version": "1.9.8" });
+    expect(pkg["defold-typescript"]).toEqual({ "defold-target": "1.9.8" });
   });
 
   test("emitted tsconfig.json references @defold-typescript/types and main.ts uses defineScript", () => {

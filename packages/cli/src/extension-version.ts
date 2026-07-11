@@ -1,4 +1,4 @@
-// Per-extension version pin alongside the engine `--defold-version` pin. The
+// Per-extension version pin alongside the engine `--defold-target` pin. The
 // declared identity of a `[dependencies]` URL is often a moving ref
 // (`.../archive/master.zip`), so the reproducible identity of *what was
 // resolved* is the sha256 digest of the resolved archive bytes, not a URL

@@ -1,20 +1,30 @@
 ---
-toc-title: Pinning the Defold version
+toc-title: Pinning the Defold target
 ---
-# Pinning the Defold API version
+# Pinning the Defold API target
 
 `@defold-typescript/types` ships the **latest/current** Defold API surface
 pre-baked, and generates older versioned surfaces on demand. The default import
-is always the current surface; opting into an older version generates that
-version's surface on your machine and materializes it locally. Pinning a surface
+is always the current surface; opting into another target generates that
+target's surface on your machine and materializes it locally. Pinning a surface
 makes the TypeScript compiler reject calls to engine functions that do not exist
 in the Defold version you target, instead of letting them through to fail at
 runtime.
 
+A **target** is a single selector — `--defold-target <version|stable|beta|alpha>`
+— that replaces the older two-flag selector (a fixed version plus a separate
+release channel). A target is one of two things:
+
+- a **fixed version** (a semver token such as `1.12.4`): the surface is that
+  exact release; nothing is fetched from a channel;
+- a **release channel** (`stable`, `beta`, or `alpha`): the channel head is
+  resolved to a concrete `{version, sha}` at build time, and the surface derives
+  from that resolved head version.
+
 ## The default stays current
 
 If you do nothing, you get the current surface — the same behaviour as before
-versioning existed:
+targeting existed:
 
 ```jsonc
 // tsconfig.json
@@ -32,38 +42,48 @@ generated API.
 
 You do not pin a surface through a package subpath export. Versioned surfaces
 are **not** shipped pre-baked in the npm package — only the current-stable
-surface is. A non-current version's `.d.ts` are generated on your machine the
+surface is. A non-current surface's `.d.ts` are generated on your machine the
 moment you pin it (from that version's Defold reference docs) and
 **materialized** into a project-local `.defold-types/<version>/` faux `@types`
 package that your `tsconfig.json` references.
 
-You select the version with the `package.json` pin described below; the
+You select the target with the `package.json` pin described below; the
 toolchain resolves it, generates the matching surface, and repoints
 `tsconfig.json` at the materialized package. A function that exists only on the
-current surface is then a compile error against an older pin, while functions
+current surface is then a compile error against an older target, while functions
 shared across versions continue to type-check.
 
-## Recording the project's Defold version
+## Recording the project's Defold target
 
 A Defold project pins a fixed engine version, but that version is not stored
 anywhere in the project tree — not in `game.project`, not in build artifacts,
-not in editor metadata. You declare it in `package.json` under the
+not in editor metadata. You declare the target in `package.json` under the
 `defold-typescript` namespace:
 
 ```jsonc
 // package.json
 {
-  "defold-typescript": { "defold-version": "1.12.4" }
+  "defold-typescript": { "defold-target": "1.12.4" }
 }
 ```
 
-`bunx @defold-typescript/cli@latest init <folder>` seeds this key with the current-stable version when it
-creates or augments a `package.json`, and leaves an existing pin untouched.
+A channel is spelled the same way — swap the version for a channel name:
 
-The active version resolves with this precedence:
+```jsonc
+// package.json
+{
+  "defold-typescript": { "defold-target": "beta" }
+}
+```
 
-1. `--defold-version <version>` on the command line (highest),
-2. the `package.json` pin,
+`bunx @defold-typescript/cli@latest init <folder>` seeds `defold-target` with
+the current-stable version when it creates or augments a `package.json`, and
+leaves an existing pin untouched.
+
+The active target resolves with this precedence:
+
+1. `--defold-target <version|stable|beta|alpha>` on the command line (highest),
+2. the `package.json` `defold-typescript.defold-target` pin,
 3. the **installed Defold editor's `version`** (lowest-precedence fallback),
 4. the current-stable default.
 
@@ -79,15 +99,29 @@ bundle paths are pinned for live verification against a real install; the
 probe mechanics (per-OS candidate order, parse, hit/miss) are unit-tested
 synthetically and the production reader is an injectable seam.
 
-The resolved version is reported in `--json` output as `defoldVersion`, and the
-surface it maps to is reported alongside it as `apiSurface`. The current-stable
-version maps to the default surface (`apiSurface: "defold-1.12.4"`); a version with a
-registered reference-doc target maps to `apiSurface: "defold-<version>"` (for
-example `defold-1.9.8`); a version with no matching target reports
-`apiSurface: null`. The source that resolved the version is reported as
-`defoldVersionSource` (`flag` / `pin` / `detected` / `default`), so an agent
-script can tell whether the version came from the command line, the
-`package.json` pin, the installed editor, or the hardcoded default.
+## What `--json` reports
+
+The resolved target is reported in `--json` output:
+
+- `defoldVersion` — the concrete version. For a fixed-version target it is the
+  version you named; for a channel target it is the head version the channel
+  resolved to.
+- `defoldVersionSource` — which tier resolved the target (`flag` / `pin` /
+  `detected` / `default`), so an agent script can tell whether it came from the
+  command line, the `package.json` pin, the installed editor, or the hardcoded
+  default.
+- `defoldChannel` — the channel name for a channel target, or `null` for a
+  fixed-version target.
+- `defoldSha` — the resolved channel-head sha for a channel target, or `null`
+  for a fixed-version target.
+- `apiSurface` — the surface the resolved head version maps to. The
+  current-stable version maps to the default surface
+  (`apiSurface: "defold-1.12.4"`); a version with a registered reference-doc
+  target maps to `apiSurface: "defold-<version>"` (for example `defold-1.9.8`);
+  a version with no matching target reports `apiSurface: null`. The surface id
+  always derives from the resolved head version, never from the pin token.
+
+`build`, `watch`, `resolve`, and `init` all report these fields.
 
 ## Materializing the pinned surface
 
@@ -133,55 +167,41 @@ narrow it by script kind. Narrowing a directory to one kind is opt-in via the
 installed `@defold-typescript/types` subpaths, not the pinned
 `.defold-types/<version>/` surface.)
 
-If a pinned version cannot be generated — an unknown version, or no network on
+If a pinned target cannot be generated — an unknown version, or no network on
 first use — the build does **not** fail. It reports `materializedSurface: null`,
 warns on stderr, leaves `tsconfig.json` untouched, and exits `0`; the default
 committed surface stays usable. Having Bun is enough to compile your project.
 
-## Pinning a release channel
+## Targeting a release channel
 
 A Defold release channel picks which build of the engine the reference docs
-are fetched from. Three channels are supported — `stable` (the default),
-`beta`, and `alpha`. The `stable` channel is the production release line; the
-`beta` and `alpha` channels are experimental pre-release surfaces that track
-in-development builds and may break at any time. If you do nothing, the
-default stays `stable`; existing projects with no channel pin are unchanged.
+are fetched from. Three channels are supported — `stable`, `beta`, and `alpha`.
+The `stable` channel is the production release line; the `beta` and `alpha`
+channels are experimental pre-release surfaces that track in-development builds
+and may break at any time.
 
-You select a channel the same way you select a version — by name — and the
-channel rides the same precedence chain. The `--channel` flag overrides the
-`package.json` pin, and the pin overrides the `stable` default:
+Unlike a fixed version, a channel does not name a release up front — it resolves
+its head at build time. `stable`, `beta`, and `alpha` resolve the channel head
+via `d.defold.com/<channel>/info.json` to a concrete `{version, sha}`; the
+surface then derives from that resolved head version, and `--json` reports the
+head version as `defoldVersion`, the channel as `defoldChannel`, and the head
+sha as `defoldSha`.
 
-1. `--channel <channel>` on the command line (highest),
-2. the `package.json` `defold-typescript.channel` pin,
-3. the `stable` default.
-
-```jsonc
-// package.json
-{
-  "defold-typescript": {
-    "defold-version": "1.12.4",
-    "channel": "stable"
-  }
-}
-```
-
-`bunx @defold-typescript/cli@latest init <folder>` does not seed a `channel` key, so a
-project with no pin behaves exactly as today. The resolved channel is reported
-in `--json` output as `defoldChannel` on `init` and `build`. `init` reports the
-default `stable` without writing the key, so the key stays absent unless you
-pin it yourself.
+`bunx @defold-typescript/cli@latest init <folder>` seeds `defold-target` with a
+fixed version, so a freshly scaffolded project has no channel and reports
+`defoldChannel: null`, `defoldSha: null`. Opt into a channel by pinning it or
+passing `--defold-target <channel>` yourself.
 
 How the channel affects the doc-source fetch:
 
-- **`stable`** downloads `ref-doc.zip` directly from the pinned `defold-version`'s
+- **`stable`** downloads `ref-doc.zip` from the resolved head version's
   GitHub release assets (`releases/download/<version>/ref-doc.zip`) — no
   `engine/share/` path. This is the only path that touches the GitHub release
   archive directly.
-- **`beta`** and **`alpha`** resolve the channel head via
-  `d.defold.com/<channel>/info.json` and download
-  `archive/<channel>/<sha1>/engine/share/ref-doc.zip`, cached channel-scoped.
-  Each channel's cache directory is independent, so switching channels does
-  not invalidate the `stable` cache.
+- **`beta`** and **`alpha`** download
+  `archive/<channel>/<sha1>/engine/share/ref-doc.zip`, cached channel-scoped by
+  the resolved head sha. Each channel's cache directory is independent, so
+  switching channels does not invalidate the others.
 
 ## Maintainer verification
 

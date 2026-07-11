@@ -551,7 +551,7 @@ describe("dispatch", () => {
   }
 
   test("build --json reports the package.json pin as defoldVersion", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const resolveOpts = labelRefDocResolveOpts();
     const { io, out } = captureStreams();
 
@@ -564,22 +564,22 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
-  test("build --defold-version overrides the pin", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+  test("build --defold-target overrides the pin", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-target", "1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
     expect(parsed.defoldVersion).toBe("1.10.0");
   });
 
-  test("build --defold-version=<v> form is honored", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+  test("build --defold-target=<v> form is honored", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--defold-version=1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-target=1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
@@ -597,60 +597,73 @@ describe("dispatch", () => {
     expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
   });
 
-  test("build --json reports the package.json channel pin as defoldChannel", async () => {
-    scaffoldBuildProject({ "defold-typescript": { channel: "beta" } });
+  test("build --json resolves a channel-target pin's head and reports channel/version/sha", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "beta" } });
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--json"], io);
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+    });
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { defoldChannel: string };
+    const parsed = JSON.parse(out()) as {
+      defoldVersion: string;
+      defoldChannel: string | null;
+      defoldSha: string | null;
+    };
     expect(parsed.defoldChannel).toBe("beta");
+    expect(parsed.defoldVersion).toBe("1.10.0");
+    expect(parsed.defoldSha).toBe("abc123");
   });
 
-  test("build --channel overrides the pin", async () => {
-    scaffoldBuildProject({ "defold-typescript": { channel: "beta" } });
+  test("build --defold-target flag overrides a channel pin", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "beta" } });
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--channel", "alpha", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-target", "alpha", "--json"], io, {
+      fetchChannelInfo: async (channel) => ({ version: "1.10.0", sha1: `sha-${channel}` }),
+    });
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { defoldChannel: string };
+    const parsed = JSON.parse(out()) as { defoldChannel: string; defoldSha: string };
     expect(parsed.defoldChannel).toBe("alpha");
+    expect(parsed.defoldSha).toBe("sha-alpha");
   });
 
-  test("build --json with no channel reports stable", async () => {
+  test("build --json with a version target reports a null channel and sha", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
     const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { defoldChannel: string };
-    expect(parsed.defoldChannel).toBe("stable");
+    const parsed = JSON.parse(out()) as { defoldChannel: string | null; defoldSha: string | null };
+    expect(parsed.defoldChannel).toBeNull();
+    expect(parsed.defoldSha).toBeNull();
   });
 
-  test("build --json with no channel still reports defoldVersion alongside defoldChannel", async () => {
+  test("build --json reports defoldVersion alongside a null channel for the default target", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
     const code = await dispatch(["build", cwd, "--json"], io);
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldChannel: string };
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldChannel: string | null };
     expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
-    expect(parsed.defoldChannel).toBe("stable");
+    expect(parsed.defoldChannel).toBeNull();
   });
 
-  test("init --json reports the default stable channel without seeding it", () => {
+  test("init --json reports a null channel and sha for the default version target", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();
 
     const code = dispatch(["init", cwd, "--json"], io);
 
     expect(code).toBe(0);
-    const parsed = JSON.parse(out()) as { defoldChannel: string };
-    expect(parsed.defoldChannel).toBe("stable");
+    const parsed = JSON.parse(out()) as { defoldChannel: string | null; defoldSha: string | null };
+    expect(parsed.defoldChannel).toBeNull();
+    expect(parsed.defoldSha).toBeNull();
     const pkgPath = path.join(cwd, "package.json");
     if (existsSync(pkgPath)) {
       const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
@@ -658,6 +671,55 @@ describe("dispatch", () => {
       };
       expect(pkg["defold-typescript"]?.channel).toBeUndefined();
     }
+  });
+
+  test("build --defold-version is rejected with a pointer to --defold-target", async () => {
+    scaffoldBuildProject();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-version", "1.12.4"], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("--defold-target");
+  });
+
+  test("build --channel is rejected with a pointer to --defold-target", async () => {
+    scaffoldBuildProject();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--channel", "beta"], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("--defold-target");
+  });
+
+  test("build --json --defold-version rejection reports the error in the JSON envelope", async () => {
+    scaffoldBuildProject();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-version=1.12.4", "--json"], io);
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as { ok: boolean; error: string };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toContain("--defold-target");
+  });
+
+  test("build --defold-target with a fixed version reports version with null channel and sha", async () => {
+    scaffoldBuildProject();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", "1.12.4", "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      defoldVersion: string;
+      defoldChannel: string | null;
+      defoldSha: string | null;
+    };
+    expect(parsed.defoldVersion).toBe("1.12.4");
+    expect(parsed.defoldChannel).toBeNull();
+    expect(parsed.defoldSha).toBeNull();
   });
 
   test("init --json reports the seeded current-stable defoldVersion", () => {
@@ -703,11 +765,11 @@ describe("dispatch", () => {
     expect(parsed.defoldVersionSource).toBe("detected");
   });
 
-  test("build --defold-version overrides the installed-editor detection (source: flag)", async () => {
+  test("build --defold-target overrides the installed-editor detection (source: flag)", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--defold-version", "1.11.0", "--json"], io, {
+    const code = await dispatch(["build", cwd, "--defold-target", "1.11.0", "--json"], io, {
       detectEditorVersion: () => "1.9.8",
     });
 
@@ -743,11 +805,11 @@ describe("dispatch", () => {
     expect(parsed.apiSurface).toBe("defold-1.12.4");
   });
 
-  test("build --defold-version with no pre-baked surface reports apiSurface null", async () => {
+  test("build --defold-target with no pre-baked surface reports apiSurface null", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-target", "1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { apiSurface: string | null };
@@ -957,7 +1019,7 @@ describe("dispatch", () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--defold-version", "1.10.0", "--json"], io);
+    const code = await dispatch(["build", cwd, "--defold-target", "1.10.0", "--json"], io);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
@@ -966,7 +1028,7 @@ describe("dispatch", () => {
   });
 
   test("build --json on a pinned ref-doc version generates the surface on the fly", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const resolveOpts = labelRefDocResolveOpts();
     const { io, out } = captureStreams();
 
@@ -994,8 +1056,8 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
-  test("build --channel beta materializes the ref-doc surface from the beta channel archive", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+  test("build --defold-target beta materializes the ref-doc surface off the resolved head", async () => {
+    scaffoldBuildProject();
     const base = labelRefDocResolveOpts();
     let downloadedUrl: string | undefined;
     let infoChannel: string | undefined;
@@ -1004,7 +1066,7 @@ describe("dispatch", () => {
       readZip: base.readZip,
       fetchChannelInfo: async (channel: "stable" | "beta" | "alpha") => {
         infoChannel = channel;
-        return { version: "1.13.0", sha1: "deadbeef" };
+        return { version: "1.9.8", sha1: "deadbeef" };
       },
       download: async (url: string): Promise<Uint8Array> => {
         downloadedUrl = url;
@@ -1013,13 +1075,23 @@ describe("dispatch", () => {
     };
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--channel", "beta", "--json"], io, { resolveOpts });
+    const code = await dispatch(["build", cwd, "--defold-target", "beta", "--json"], io, {
+      resolveOpts,
+    });
 
     expect(code).toBe(0);
     expect(infoChannel).toBe("beta");
     expect(downloadedUrl).toContain("/archive/beta/deadbeef/");
-    const parsed = JSON.parse(out()) as { materializedSurface: string | null };
+    const parsed = JSON.parse(out()) as {
+      materializedSurface: string | null;
+      defoldVersion: string;
+      defoldChannel: string | null;
+      defoldSha: string | null;
+    };
     expect(parsed.materializedSurface).toBe(".defold-types/defold-1.9.8");
+    expect(parsed.defoldVersion).toBe("1.9.8");
+    expect(parsed.defoldChannel).toBe("beta");
+    expect(parsed.defoldSha).toBe("deadbeef");
 
     rmSync(base.cacheDir, { recursive: true, force: true });
   });
@@ -1050,7 +1122,7 @@ describe("dispatch", () => {
   });
 
   test("build --json on a ref-doc version whose generation fails reports null and exits 0", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const emptyCache = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ref-doc-"));
     const resolveOpts = { cacheDir: emptyCache, download: noDownload };
     const { io, out, err } = captureStreams();
@@ -1067,7 +1139,7 @@ describe("dispatch", () => {
   });
 
   test("build keeps the full pinned ref-doc surface for a single-.script project", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     writeFileSync(path.join(cwd, "main.script"), "");
     const resolveOpts = multiKindRefDocResolveOpts();
     const { io } = captureStreams();
@@ -1087,7 +1159,7 @@ describe("dispatch", () => {
   });
 
   test("watch keeps the full pinned ref-doc surface at startup for a single-.script project", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.9.8" } });
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     writeFileSync(path.join(cwd, "main.script"), "");
     const resolveOpts = multiKindRefDocResolveOpts();
 
@@ -2081,6 +2153,31 @@ describe("dispatch resolve", () => {
         pinStatus: "unpinned",
       },
     ] as unknown as typeof parsed.extensions);
+  });
+
+  test("--json reports the resolved head version/channel/sha for a channel target", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(["resolve", cwd, "--defold-target", "beta", "--json"], io, {
+      ...resolveInternals(url),
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc123" }),
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      defoldVersion: string;
+      defoldChannel: string | null;
+      defoldSha: string | null;
+      apiSurface: string | null;
+    };
+    expect(parsed.defoldVersion).toBe("1.13.0");
+    expect(parsed.defoldChannel).toBe("beta");
+    expect(parsed.defoldSha).toBe("abc123");
+    // 1.13.0 has no registered surface, so the id derives to null from the head
+    // version — never from the pin.
+    expect(parsed.apiSurface).toBeNull();
   });
 
   test("--json includes pinnedVersion when the project pins the url", async () => {
