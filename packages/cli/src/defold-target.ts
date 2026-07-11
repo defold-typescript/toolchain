@@ -62,6 +62,7 @@ export interface ResolvedTargetHead {
 
 export interface ChannelInfoIo {
   fetchChannelInfo: (channel: DefoldChannel) => Promise<{ version: string; sha1: string }>;
+  fetchVersionInfo: (version: string) => Promise<{ sha1: string }>;
 }
 
 export async function resolveTargetHead(
@@ -69,7 +70,8 @@ export async function resolveTargetHead(
   io: ChannelInfoIo,
 ): Promise<ResolvedTargetHead> {
   if (target.kind === "version") {
-    return { version: target.version, channel: null, sha: null };
+    const info = await io.fetchVersionInfo(target.version);
+    return { version: target.version, channel: null, sha: info.sha1 };
   }
   const info = await io.fetchChannelInfo(target.channel);
   return { version: info.version, channel: target.channel, sha: info.sha1 };
@@ -90,4 +92,34 @@ export async function fetchChannelInfo(
     throw new Error(`defold-typescript: ${url} returned no version/sha1.`);
   }
   return { version: info.version, sha1: info.sha1 };
+}
+
+const DEFOLD_TAG_REF_BASE = "https://api.github.com/repos/defold/defold/git";
+
+// d.defold.com exposes only channel-head info.json files, so a pinned version's
+// archive sha comes from its git tag: `refs/tags/<version>` dereferenced to the
+// tagged commit. Defold's release archive (bobDownloadUrl) is keyed by that
+// commit sha, so it is exactly the artifact key.
+async function fetchGitObject(url: string): Promise<{ type: string; sha: string }> {
+  const res = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
+  if (!res.ok) {
+    throw new Error(
+      `defold-typescript: could not resolve the Defold version tag (${url} -> ${res.status} ${res.statusText}).`,
+    );
+  }
+  const body = (await res.json()) as { object?: { type?: string; sha?: string } };
+  if (!body.object?.type || !body.object.sha) {
+    throw new Error(`defold-typescript: ${url} returned no tag object.`);
+  }
+  return { type: body.object.type, sha: body.object.sha };
+}
+
+export async function fetchVersionInfo(version: string): Promise<{ sha1: string }> {
+  const ref = await fetchGitObject(`${DEFOLD_TAG_REF_BASE}/refs/tags/${version}`);
+  // Annotated tags point at a tag object; dereference it to the commit sha.
+  const sha1 =
+    ref.type === "tag"
+      ? (await fetchGitObject(`${DEFOLD_TAG_REF_BASE}/tags/${ref.sha}`)).sha
+      : ref.sha;
+  return { sha1 };
 }

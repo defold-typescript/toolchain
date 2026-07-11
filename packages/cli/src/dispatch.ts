@@ -7,6 +7,7 @@ import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
   fetchChannelInfo,
+  fetchVersionInfo,
   type ResolvedTargetHead,
   readDefoldTargetPin,
   resolveDefoldTarget,
@@ -64,6 +65,10 @@ export interface DispatchInternals {
   readonly fetchChannelInfo?: (
     channel: DefoldChannel,
   ) => Promise<{ version: string; sha1: string }>;
+  // Resolves a pinned version to its archive sha via the Defold git tag. Injected
+  // by tests so the bob artifact probe stays deterministic and offline. Channel
+  // targets never call it.
+  readonly fetchVersionInfo?: (version: string) => Promise<{ sha1: string }>;
 }
 
 const USAGE =
@@ -219,12 +224,13 @@ export function dispatch(
   const targetSource = target.source;
   const channelFetch =
     internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
+  const versionFetch = internals?.fetchVersionInfo ?? fetchVersionInfo;
   // A version target's head is synchronous (no channel info.json probe); a
   // channel target resolves its head — `{version, sha}` — via the fetch above.
   const syncHead: ResolvedTargetHead | undefined =
     target.kind === "version" ? { version: target.version, channel: null, sha: null } : undefined;
   const resolveHead = (): Promise<ResolvedTargetHead> =>
-    resolveTargetHead(target, { fetchChannelInfo: channelFetch });
+    resolveTargetHead(target, { fetchChannelInfo: channelFetch, fetchVersionInfo: versionFetch });
   // Ref-doc resolution addresses the channel head; the fetch seam in
   // `internals.resolveOpts` (spread last) still wins for tests.
   const refDocOptsFor = (head: ResolvedTargetHead): RefDocResolveOptions => ({
@@ -792,16 +798,29 @@ export function dispatch(
     const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
     return (async (): Promise<number> => {
       try {
+        const head = await resolveHead();
+        if (head.sha === null) {
+          throw new Error(
+            `defold-typescript bob: could not resolve an artifact sha for Defold ${head.version}.`,
+          );
+        }
         const result = await runBobCommand({
           cwd: bobCwd,
           subcommand,
           capture: json,
           ...(javaOverride !== undefined ? { java: javaOverride } : {}),
           ...(buildServerFlag !== undefined ? { buildServer: buildServerFlag } : {}),
+          head: { version: head.version, channel: head.channel, sha: head.sha },
           io: defoldIo,
         });
         if (json) {
           const withOutput = result.output !== undefined ? { output: result.output } : {};
+          const headFields = {
+            defoldVersion: result.defoldVersion,
+            defoldVersionSource: targetSource,
+            defoldChannel: result.defoldChannel,
+            defoldSha: result.defoldSha,
+          };
           io.stdout.write(
             renderResult(
               result.ok
@@ -809,6 +828,7 @@ export function dispatch(
                     command: "bob",
                     subcommand: result.subcommand,
                     exitCode: result.exitCode,
+                    ...headFields,
                     ...withOutput,
                   }
                 : {
@@ -816,6 +836,7 @@ export function dispatch(
                     subcommand: result.subcommand,
                     exitCode: result.exitCode,
                     error: `bob ${result.subcommand} exited with code ${result.exitCode}`,
+                    ...headFields,
                     ...withOutput,
                   },
             ),
