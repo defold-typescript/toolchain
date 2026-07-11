@@ -1512,6 +1512,14 @@ function unionFromTokens(tokens: readonly string[], mapType: (t: string) => stri
   return mapped.join(" | ");
 }
 
+export function isKnownDefoldTypeToken(token: string): boolean {
+  return (
+    token === "nil" ||
+    Object.hasOwn(DEFOLD_TYPE_MAP, token) ||
+    recoverCallbackSignature(token) !== null
+  );
+}
+
 function defaultMapType(token: string): string {
   if (Object.hasOwn(DEFOLD_TYPE_MAP, token)) {
     const mapped = DEFOLD_TYPE_MAP[token];
