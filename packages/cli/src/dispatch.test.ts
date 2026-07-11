@@ -341,7 +341,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n",
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n",
     );
   });
 
@@ -353,7 +353,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n",
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n",
     );
   });
 
@@ -2191,7 +2191,7 @@ describe("dispatch bob", () => {
 
     expect(code).toBe(1);
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n",
+      "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n",
     );
   });
 });
@@ -2675,5 +2675,105 @@ describe("dispatch init --template", () => {
     expect(out()).toMatch(/defold-typescript init: wrote/);
     expect(existsSync(path.join(target, "game.project"))).toBe(true);
     expect(existsSync(path.join(cwd, "minimal"))).toBe(false);
+  });
+
+  test("run propagates the engine exit code", async () => {
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["run", cwd], io, {
+      detectEditorVersion: () => null,
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(7) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(7);
+    expect(err()).toBe("");
+  });
+
+  test("run with no compiled project returns 1 with an actionable error", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["run", cwd], io, {
+      detectEditorVersion: () => null,
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => false,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("build/default");
+    expect(err()).toMatch(/bob build|bob run/);
+  });
+
+  test("run --json on a missing build emits ok:false with the error", async () => {
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => false,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as { command: string; ok: boolean; error: string };
+    expect(parsed.command).toBe("run");
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toContain("build/default");
+  });
+
+  test("run passes post-`--` args through and emits the run envelope on --json", async () => {
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/x86_64-linux/dmengine");
+    const spawned: string[][] = [];
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--json", "--", "--windowed"], io, {
+      detectEditorVersion: () => null,
+      runInternals: {
+        platform: "linux",
+        arch: "x64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: (argv) => {
+          spawned.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(spawned[0]).toEqual([engine, projectc, "--windowed"]);
+    const parsed = JSON.parse(out()) as {
+      command: string;
+      ok: boolean;
+      enginePath: string;
+      projectc: string;
+      exitCode: number;
+    };
+    expect(parsed.command).toBe("run");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.enginePath).toBe(engine);
+    expect(parsed.projectc).toBe(projectc);
+    expect(parsed.exitCode).toBe(0);
   });
 });

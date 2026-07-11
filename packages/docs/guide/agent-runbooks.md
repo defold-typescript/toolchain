@@ -705,6 +705,30 @@ required is **network egress**: the first `bob resolve`/`build` fetches
 `bob.jar` and any native extension archives, so an air-gapped run fails until the
 cache is warmed.
 
+**Launch an existing build with `run`:** once `build/default` holds a compiled
+project, the top-level `run` command launches it directly — **no transpile, no
+Bob, no engine download, no Java**. It reuses the native-extension build engine
+(`build/<platform>/dmengine`) when present, otherwise the stock engine a prior
+`bob run` cached; when neither the compiled project nor an engine is found it
+errors and names the `bob build` / `bob run` that would produce them.
+
+```sh
+bunx @defold-typescript/cli run --json           # launch build/default
+bunx @defold-typescript/cli run -- --windowed    # engine args pass through after --
+```
+
+The engine's exit code becomes the command's exit code, and `Ctrl-C`
+(SIGINT/SIGTERM) forwards to the engine for a clean shutdown. Unlike `bob`,
+**`run` streams the game live even under `--json`** — a running game is not
+capturable — and prints one envelope on exit:
+
+```json
+{ "command": "run", "ok": true, "enginePath": "build/arm64-macos/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
+```
+
+On a missing build or engine, `run --json` emits `{ "command": "run", "ok":
+false, "error": "…" }` and exits `1`.
+
 ## Combine components on a game object
 
 **Goal:** put several components — scripts, a sprite, a collision object — on one

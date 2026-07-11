@@ -19,6 +19,13 @@ import {
   resolveDefoldTarget,
   resolveTargetHead,
 } from "./defold-target";
+import {
+  defaultRunEngine,
+  launchEngine,
+  type RunEngine,
+  type Runnable,
+  resolveRunnable,
+} from "./engine-launch";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { COMMAND_NAMES, renderHelp, renderHelpJson } from "./help";
 import { runInit } from "./init";
@@ -75,10 +82,14 @@ export interface DispatchInternals {
   // by tests so the bob artifact probe stays deterministic and offline. Channel
   // targets never call it.
   readonly fetchVersionInfo?: (version: string) => Promise<{ sha1: string }>;
+  // Launch seams for the top-level `run` command: platform/arch/probe drive the
+  // pure `resolveRunnable`, and spawn/copyAside/chmod drive `launchEngine`. Tests
+  // inject a deterministic subset over `defaultRunEngine`, mirroring `defoldIo`.
+  readonly runInternals?: Partial<RunEngine>;
 }
 
 const USAGE =
-  "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob> [path]\n";
+  "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n";
 const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle> [path]\n";
 
 function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
@@ -917,6 +928,56 @@ export function dispatch(
         return 1;
       }
     })();
+  }
+
+  if (command === "run") {
+    const engine: RunEngine = { ...defaultRunEngine(), ...internals?.runInternals };
+    const dashIndex = rest.indexOf("--");
+    const runArgs = dashIndex === -1 ? rest : rest.slice(0, dashIndex);
+    const extraArgs = dashIndex === -1 ? [] : rest.slice(dashIndex + 1);
+    const runCwd = runArgs[0] ? path.resolve(runArgs[0]) : process.cwd();
+
+    let runnable: Runnable;
+    try {
+      runnable = resolveRunnable({
+        cwd: runCwd,
+        platform: engine.platform,
+        arch: engine.arch,
+        probe: engine.probe,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (json) {
+        io.stdout.write(renderResult({ command: "run", error: message }));
+      } else {
+        io.stderr.write(`${message}\n`);
+      }
+      return 1;
+    }
+
+    for (const warning of runnable.warnings) {
+      io.stderr.write(`defold-typescript run: ${warning}\n`);
+    }
+
+    return launchEngine(runnable, {
+      platform: engine.platform,
+      spawn: engine.spawn,
+      extraArgs,
+      copyAside: engine.copyAside,
+      chmod: engine.chmod,
+    }).then((exitCode) => {
+      if (json) {
+        io.stdout.write(
+          renderResult({
+            command: "run",
+            enginePath: runnable.enginePath,
+            projectc: runnable.projectcPath,
+            exitCode,
+          }),
+        );
+      }
+      return exitCode;
+    });
   }
 
   io.stderr.write(USAGE);
