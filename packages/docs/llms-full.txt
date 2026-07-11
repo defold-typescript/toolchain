@@ -247,7 +247,7 @@ bunx @defold-typescript/cli watch
 
 While you edit, run [`watch`](./watch.md) instead: it rebuilds incrementally on every save and keeps the native-extension surface current (run [`resolve`](./resolve.md) once first). See [code editor setup](./editor-setup.md) for the VSCode and integrated-terminal loop.
 
-Run `defold-typescript --help` for the command list and global flags, or `defold-typescript <command> --help` for a single command's usage and flags; add `--json` for machine-readable help.
+Run `bunx @defold-typescript/cli --help` for the command list and global flags, or `bunx @defold-typescript/cli <command> --help` for a single command's usage and flags; add `--json` for machine-readable help. The bare `defold-typescript …` form works after a global install.
 
 ### Code editor setup
 
