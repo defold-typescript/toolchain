@@ -10,13 +10,14 @@ interface HelpCommand {
   readonly flags: readonly HelpFlag[];
 }
 
-const BANNER = "Usage: defold-typescript <command> [options]";
+const BANNER = "Usage: bunx @defold-typescript/cli <command> [options]";
 
 const COMMANDS: readonly HelpCommand[] = [
   {
     name: "init",
-    summary: "Add TypeScript scaffolding to an existing Defold project.",
-    usage: "defold-typescript init [path]",
+    summary:
+      "Scaffold a new Defold-compatible project, or add TypeScript to an existing Defold project.",
+    usage: "bunx @defold-typescript/cli init [path]",
     flags: [
       { flag: "--force", desc: "overwrite existing scaffolding files" },
       { flag: "--template <name>", desc: "scaffold from a named template" },
@@ -26,13 +27,13 @@ const COMMANDS: readonly HelpCommand[] = [
   {
     name: "init-agents",
     summary: "Write the AGENTS.md and CLAUDE.md agent guides.",
-    usage: "defold-typescript init-agents [path]",
-    flags: [{ flag: "--force", desc: "overwrite existing agent guides" }],
+    usage: "bunx @defold-typescript/cli init-agents [path]",
+    flags: [],
   },
   {
     name: "build",
     summary: "Transpile TypeScript under src/ to Lua once.",
-    usage: "defold-typescript build [path]",
+    usage: "bunx @defold-typescript/cli build [path]",
     flags: [
       { flag: "--defold-version <v>", desc: "override the resolved Defold version" },
       { flag: "--channel <c>", desc: "override the resolved Defold channel" },
@@ -42,13 +43,13 @@ const COMMANDS: readonly HelpCommand[] = [
   {
     name: "watch",
     summary: "Rebuild incrementally on every save.",
-    usage: "defold-typescript watch [path]",
+    usage: "bunx @defold-typescript/cli watch [path]",
     flags: [{ flag: "--defold-version <v>", desc: "override the resolved Defold version" }],
   },
   {
     name: "wall",
     summary: "Manage generated-file walls in target directories.",
-    usage: "defold-typescript wall [dir...]",
+    usage: "bunx @defold-typescript/cli wall [dir...]",
     flags: [
       { flag: "--list", desc: "list existing walls instead of writing" },
       { flag: "--remove", desc: "remove walls instead of writing" },
@@ -57,13 +58,13 @@ const COMMANDS: readonly HelpCommand[] = [
   {
     name: "setup-debug",
     summary: "Configure editor debugging support.",
-    usage: "defold-typescript setup-debug [path]",
+    usage: "bunx @defold-typescript/cli setup-debug [path]",
     flags: [],
   },
   {
     name: "resolve",
     summary: "Download and cache native-extension type surfaces.",
-    usage: "defold-typescript resolve [path]",
+    usage: "bunx @defold-typescript/cli resolve [path]",
     flags: [
       { flag: "--defold-version <v>", desc: "override the resolved Defold version" },
       { flag: "--channel <c>", desc: "override the resolved Defold channel" },
@@ -73,7 +74,7 @@ const COMMANDS: readonly HelpCommand[] = [
   {
     name: "defold",
     summary: "Run headless Defold (bob.jar) resolve/build/bundle commands.",
-    usage: "defold-typescript defold <resolve|build|bundle> [path]",
+    usage: "bunx @defold-typescript/cli defold <resolve|build|bundle> [path]",
     flags: [
       { flag: "--defold-version <v>", desc: "override the resolved Defold version" },
       { flag: "--java <path>", desc: "path to the Java runtime used for bob.jar" },
@@ -112,7 +113,7 @@ export function renderHelp(subject: string | null): string {
       "Global flags:",
       ...flagLines(GLOBAL_FLAGS),
       "",
-      "Run `defold-typescript <command> --help` for command-specific help.",
+      "Run `bunx @defold-typescript/cli <command> --help` for command-specific help.",
     ];
     return `${lines.join("\n")}\n`;
   }
