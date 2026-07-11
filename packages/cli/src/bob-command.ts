@@ -2,7 +2,8 @@ import { spawn } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { delimiter, dirname, join } from "node:path";
-import { bobCacheDir, bobDownloadUrl, resolveBobJar, resolveJava } from "./bob";
+import { bobCacheDir, bobDownloadUrl, engineCachePath, resolveBobJar, resolveJava } from "./bob";
+import { engineDownloadUrl, targetPlatform } from "./debug-launcher";
 import type {
   ChannelInfoIo,
   DefoldChannel,
@@ -10,6 +11,7 @@ import type {
   ResolvedTargetHead,
 } from "./defold-target";
 import { resolveTargetHead } from "./defold-target";
+import { ENGINE_MARKER_REL, type Runnable, resolveRunnable } from "./engine-launch";
 import { detectEditorBundledJava } from "./installed-editor-version";
 
 export const BOB_SUBCOMMANDS = ["resolve", "build", "bundle"] as const;
@@ -113,6 +115,98 @@ export async function runBobCommand(opts: {
     defoldSha: head.sha,
     ...(output !== undefined ? { output } : {}),
   };
+}
+
+export interface PrepareBobRunResult {
+  readonly ok: boolean;
+  readonly buildExitCode: number;
+  readonly runnable?: Runnable;
+  readonly error?: string;
+}
+
+// Persist the resolved engine path where the `run` resolver reads it, so a later
+// top-level `run` finds the same cached engine.
+async function writeEngineMarker(cwd: string, enginePath: string): Promise<void> {
+  const markerPath = join(cwd, ENGINE_MARKER_REL);
+  mkdirSync(dirname(markerPath), { recursive: true });
+  await writeFile(markerPath, `${enginePath}\n`);
+}
+
+// `bob run` composite (Bob has no native run): debug-build, ensure a
+// target-matched engine exists — a native-extension build engine, else the stock
+// engine fetched by the resolved sha — and resolve the same Runnable `run`
+// launches. A build failure short-circuits with Bob's exit code. No interactive
+// spawn here; the dispatch branch drives `launchEngine` so exit-code/signal
+// semantics match top-level run.
+export async function prepareBobRun(opts: {
+  cwd: string;
+  head: { readonly version: string; readonly channel: string | null; readonly sha: string };
+  java?: string;
+  buildServer?: string;
+  io: DefoldIo & { readonly platform: NodeJS.Platform; readonly arch: string };
+  writeMarker?: (cwd: string, enginePath: string) => Promise<void>;
+  readEngineMarker?: (cwd: string) => string | null;
+}): Promise<PrepareBobRunResult> {
+  const { cwd, head, io } = opts;
+  const writeMarker = opts.writeMarker ?? writeEngineMarker;
+
+  const build = await runBobCommand({
+    cwd,
+    subcommand: "build",
+    ...(opts.java !== undefined ? { java: opts.java } : {}),
+    ...(opts.buildServer !== undefined ? { buildServer: opts.buildServer } : {}),
+    head,
+    io,
+  });
+  if (build.exitCode !== 0) {
+    return { ok: false, buildExitCode: build.exitCode };
+  }
+
+  const target = targetPlatform(io.platform, io.arch);
+  const buildEnginePath = join(cwd, "build", target.buildFolder, target.executable);
+  if (!io.probe(buildEnginePath)) {
+    // The engine cache is a sibling of the injected bob cacheDir, so tests reach
+    // it through the same seam and stay offline.
+    const enginePath = engineCachePath({
+      sha: head.sha,
+      enginePlatform: target.enginePlatform,
+      executable: target.executable,
+      cacheDir: join(dirname(io.cacheDir), "engine"),
+    });
+    if (!io.probe(enginePath)) {
+      try {
+        await io.download(
+          engineDownloadUrl(head.sha, target.enginePlatform, target.executable),
+          enginePath,
+        );
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        return {
+          ok: false,
+          buildExitCode: build.exitCode,
+          error: `defold-typescript bob run: could not download the Defold engine for ${target.enginePlatform} at ${head.sha}: ${detail}`,
+        };
+      }
+    }
+    await writeMarker(cwd, enginePath);
+  }
+
+  try {
+    const runnable = resolveRunnable({
+      cwd,
+      platform: io.platform,
+      arch: io.arch,
+      probe: io.probe,
+      ...(opts.readEngineMarker !== undefined ? { readEngineMarker: opts.readEngineMarker } : {}),
+    });
+    return { ok: true, buildExitCode: build.exitCode, runnable };
+  } catch (err) {
+    return {
+      ok: false,
+      buildExitCode: build.exitCode,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 export interface BobStatusIo extends ChannelInfoIo {

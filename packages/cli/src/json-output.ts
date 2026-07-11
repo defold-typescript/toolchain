@@ -58,6 +58,8 @@ export interface RenderResultInput {
   readonly warnings?: readonly string[];
   readonly enginePath?: string;
   readonly projectc?: string;
+  readonly build?: { readonly exitCode: number };
+  readonly launch?: { readonly enginePath: string; readonly exitCode: number };
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -114,8 +116,10 @@ export function renderResult(input: RenderResultInput): string {
     "warnings" in input ? { ...withLibraries, warnings: input.warnings } : withLibraries;
   const withEnginePath =
     "enginePath" in input ? { ...withWarnings, enginePath: input.enginePath } : withWarnings;
-  const payload =
+  const withProjectc =
     "projectc" in input ? { ...withEnginePath, projectc: input.projectc } : withEnginePath;
+  const withBuild = "build" in input ? { ...withProjectc, build: input.build } : withProjectc;
+  const payload = "launch" in input ? { ...withBuild, launch: input.launch } : withBuild;
   return `${JSON.stringify(payload)}\n`;
 }
 
