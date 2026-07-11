@@ -1907,36 +1907,46 @@ describe("dispatch bob", () => {
   const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
 
   function defoldInternals(overrides: Partial<DefoldIo> = {}): {
-    defoldIo: Partial<DefoldIo>;
+    internals: {
+      defoldIo: Partial<DefoldIo>;
+      fetchVersionInfo: (version: string) => Promise<{ sha1: string }>;
+    };
     spawned: string[][];
     captures: boolean[];
+    downloaded: string[];
   } {
     const spawned: string[][] = [];
     const captures: boolean[] = [];
+    const downloaded: string[] = [];
     return {
       spawned,
       captures,
-      defoldIo: {
-        cacheDir: "/c",
-        fetchSha: async () => SHA,
-        probe: () => true,
-        javaProbe: () => true,
-        spawn: async (argv, _cwd, opts) => {
-          spawned.push(argv);
-          captures.push(opts?.capture ?? false);
-          return { exitCode: 0 };
+      downloaded,
+      internals: {
+        fetchVersionInfo: async () => ({ sha1: SHA }),
+        defoldIo: {
+          cacheDir: "/c",
+          probe: () => true,
+          javaProbe: () => true,
+          spawn: async (argv, _cwd, opts) => {
+            spawned.push(argv);
+            captures.push(opts?.capture ?? false);
+            return { exitCode: 0 };
+          },
+          download: async (url) => {
+            downloaded.push(url);
+          },
+          ...overrides,
         },
-        download: async () => {},
-        ...overrides,
       },
     };
   }
 
   test("bob resolve spawns bob and returns 0", async () => {
     const { io } = captureStreams();
-    const { defoldIo, spawned } = defoldInternals();
+    const { internals, spawned } = defoldInternals();
 
-    const code = await dispatch(["bob", "resolve", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd], io, internals);
 
     expect(code).toBe(0);
     expect(spawned[0]).toContain("resolve");
@@ -1945,9 +1955,9 @@ describe("dispatch bob", () => {
 
   test("bob build composes a debug-variant build", async () => {
     const { io } = captureStreams();
-    const { defoldIo, spawned } = defoldInternals();
+    const { internals, spawned } = defoldInternals();
 
-    await dispatch(["bob", "build", cwd], io, { defoldIo });
+    await dispatch(["bob", "build", cwd], io, internals);
 
     expect(spawned[0]).toContain("--variant");
     expect(spawned[0]).toContain("debug");
@@ -1956,11 +1966,9 @@ describe("dispatch bob", () => {
 
   test("--build-server is threaded into bob's argv", async () => {
     const { io } = captureStreams();
-    const { defoldIo, spawned } = defoldInternals();
+    const { internals, spawned } = defoldInternals();
 
-    await dispatch(["bob", "build", cwd, "--build-server", "https://build.example"], io, {
-      defoldIo,
-    });
+    await dispatch(["bob", "build", cwd, "--build-server", "https://build.example"], io, internals);
 
     expect(spawned[0]).toContain("--build-server");
     expect(spawned[0]).toContain("https://build.example");
@@ -1968,9 +1976,9 @@ describe("dispatch bob", () => {
 
   test("a non-zero bob exit becomes the CLI exit code", async () => {
     const { io, err } = captureStreams();
-    const { defoldIo } = defoldInternals({ spawn: async () => ({ exitCode: 17 }) });
+    const { internals } = defoldInternals({ spawn: async () => ({ exitCode: 17 }) });
 
-    const code = await dispatch(["bob", "bundle", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "bundle", cwd], io, internals);
 
     expect(code).toBe(17);
     expect(err()).not.toContain("\n    at ");
@@ -1978,11 +1986,11 @@ describe("dispatch bob", () => {
 
   test("--json keeps stdout to exactly one JSON object with bob chatter in the envelope", async () => {
     const { io, out } = captureStreams();
-    const { defoldIo } = defoldInternals({
+    const { internals } = defoldInternals({
       spawn: async () => ({ exitCode: 0, output: "bob: building\nbob: done" }),
     });
 
-    const code = await dispatch(["bob", "resolve", cwd, "--json"], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd, "--json"], io, internals);
 
     expect(code).toBe(0);
     const lines = out().trim().split("\n");
@@ -2005,11 +2013,11 @@ describe("dispatch bob", () => {
 
   test("--json surfaces a failing bob's captured output and marks ok:false", async () => {
     const { io, out } = captureStreams();
-    const { defoldIo } = defoldInternals({
+    const { internals } = defoldInternals({
       spawn: async () => ({ exitCode: 5, output: "bob: fatal error" }),
     });
 
-    const code = await dispatch(["bob", "build", cwd, "--json"], io, { defoldIo });
+    const code = await dispatch(["bob", "build", cwd, "--json"], io, internals);
 
     expect(code).toBe(5);
     const parsed = JSON.parse(out().trim()) as {
@@ -2026,18 +2034,18 @@ describe("dispatch bob", () => {
 
   test("--json runs bob in capture mode", async () => {
     const { io } = captureStreams();
-    const { defoldIo, captures } = defoldInternals();
+    const { internals, captures } = defoldInternals();
 
-    await dispatch(["bob", "resolve", cwd, "--json"], io, { defoldIo });
+    await dispatch(["bob", "resolve", cwd, "--json"], io, internals);
 
     expect(captures).toEqual([true]);
   });
 
   test("without --json bob runs in inherit mode and no JSON is written", async () => {
     const { io, out } = captureStreams();
-    const { defoldIo, captures } = defoldInternals();
+    const { internals, captures } = defoldInternals();
 
-    const code = await dispatch(["bob", "resolve", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd], io, internals);
 
     expect(code).toBe(0);
     expect(captures).toEqual([false]);
@@ -2046,9 +2054,9 @@ describe("dispatch bob", () => {
 
   test("--json emits a bob result via renderResult", async () => {
     const { io, out } = captureStreams();
-    const { defoldIo } = defoldInternals();
+    const { internals } = defoldInternals();
 
-    const code = await dispatch(["bob", "resolve", cwd, "--json"], io, { defoldIo });
+    const code = await dispatch(["bob", "resolve", cwd, "--json"], io, internals);
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as {
@@ -2063,11 +2071,53 @@ describe("dispatch bob", () => {
     expect(parsed.exitCode).toBe(0);
   });
 
+  test("--defold-target beta drives the head sha into the bob.jar download and --json report", async () => {
+    const { io, out } = captureStreams();
+    const { internals, downloaded } = defoldInternals({ probe: () => false });
+
+    const code = await dispatch(["bob", "build", cwd, "--defold-target", "beta", "--json"], io, {
+      ...internals,
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc" }),
+    });
+
+    expect(code).toBe(0);
+    expect(downloaded).toEqual(["https://d.defold.com/archive/stable/abc/bob/bob.jar"]);
+    const parsed = JSON.parse(out().trim()) as {
+      defoldVersion: string;
+      defoldChannel: string | null;
+      defoldSha: string | null;
+    };
+    expect(parsed.defoldVersion).toBe("1.13.0");
+    expect(parsed.defoldChannel).toBe("beta");
+    expect(parsed.defoldSha).toBe("abc");
+  });
+
+  test("--defold-target with a fixed version resolves that version's artifact sha", async () => {
+    const { io, out } = captureStreams();
+    const { internals, downloaded } = defoldInternals({ probe: () => false });
+
+    const code = await dispatch(["bob", "build", cwd, "--defold-target", "1.12.4", "--json"], io, {
+      ...internals,
+      fetchVersionInfo: async () => ({ sha1: "fixed-sha" }),
+    });
+
+    expect(code).toBe(0);
+    expect(downloaded).toEqual(["https://d.defold.com/archive/stable/fixed-sha/bob/bob.jar"]);
+    const parsed = JSON.parse(out().trim()) as {
+      defoldVersion: string;
+      defoldChannel: string | null;
+      defoldSha: string | null;
+    };
+    expect(parsed.defoldVersion).toBe("1.12.4");
+    expect(parsed.defoldChannel).toBeNull();
+    expect(parsed.defoldSha).toBe("fixed-sha");
+  });
+
   test("unknown bob subcommand prints usage listing resolve|build|bundle", async () => {
     const { io, err } = captureStreams();
-    const { defoldIo } = defoldInternals();
+    const { internals } = defoldInternals();
 
-    const code = await dispatch(["bob", "frobnicate", cwd], io, { defoldIo });
+    const code = await dispatch(["bob", "frobnicate", cwd], io, internals);
 
     expect(code).toBe(1);
     expect(err()).toMatch(/resolve\|build\|bundle/);
@@ -2075,9 +2125,9 @@ describe("dispatch bob", () => {
 
   test("a missing bob subcommand prints the bob usage string", async () => {
     const { io, err } = captureStreams();
-    const { defoldIo } = defoldInternals();
+    const { internals } = defoldInternals();
 
-    const code = await dispatch(["bob"], io, { defoldIo });
+    const code = await dispatch(["bob"], io, internals);
 
     expect(code).toBe(1);
     expect(err()).toBe("Usage: defold-typescript bob <resolve|build|bundle> [path]\n");

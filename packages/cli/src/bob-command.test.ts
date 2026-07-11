@@ -49,6 +49,8 @@ describe("composeBobArgv", () => {
   });
 });
 
+const HEAD = { version: "1.12.4", channel: null, sha: SHA } as const;
+
 function fakeIo(overrides: Partial<DefoldIo> = {}): DefoldIo & {
   spawned: string[][];
   captures: boolean[];
@@ -62,7 +64,6 @@ function fakeIo(overrides: Partial<DefoldIo> = {}): DefoldIo & {
     captures,
     downloaded,
     cacheDir: "/c",
-    fetchSha: async () => SHA,
     probe: () => true,
     javaProbe: () => true,
     spawn: async (argv, _cwd, opts) => {
@@ -82,20 +83,20 @@ describe("runBobCommand", () => {
 
   test("spawns the composed argv and reports ok on a zero exit", async () => {
     const io = fakeIo();
-    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", io });
+    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", head: HEAD, io });
     expect(io.spawned).toEqual([["java", "-jar", jar, "resolve"]]);
     expect(result).toMatchObject({ ok: true, subcommand: "resolve", exitCode: 0 });
   });
 
   test("does not download when the jar is already cached", async () => {
     const io = fakeIo({ probe: () => true });
-    await runBobCommand({ cwd: "/proj", subcommand: "build", io });
+    await runBobCommand({ cwd: "/proj", subcommand: "build", head: HEAD, io });
     expect(io.downloaded).toEqual([]);
   });
 
   test("downloads the jar to its cache target when absent", async () => {
     const io = fakeIo({ probe: () => false });
-    await runBobCommand({ cwd: "/proj", subcommand: "build", io });
+    await runBobCommand({ cwd: "/proj", subcommand: "build", head: HEAD, io });
     expect(io.downloaded).toEqual([
       { url: `https://d.defold.com/archive/stable/${SHA}/bob/bob.jar`, dest: jar },
     ]);
@@ -103,7 +104,7 @@ describe("runBobCommand", () => {
 
   test("propagates a non-zero bob exit code as a failed result", async () => {
     const io = fakeIo({ spawn: async () => ({ exitCode: 17 }) });
-    const result = await runBobCommand({ cwd: "/proj", subcommand: "bundle", io });
+    const result = await runBobCommand({ cwd: "/proj", subcommand: "bundle", head: HEAD, io });
     expect(result.ok).toBe(false);
     expect(result.exitCode).toBe(17);
   });
@@ -115,6 +116,7 @@ describe("runBobCommand", () => {
       subcommand: "build",
       java: "/jdk/bin/java",
       buildServer: "https://build.example",
+      head: HEAD,
       io,
     });
     const argv = io.spawned[0] ?? [];
@@ -125,7 +127,7 @@ describe("runBobCommand", () => {
 
   test("selects inherit mode by default and carries no captured output", async () => {
     const io = fakeIo();
-    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", io });
+    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", head: HEAD, io });
     expect(io.captures).toEqual([false]);
     expect(result.output).toBeUndefined();
   });
@@ -142,9 +144,40 @@ describe("runBobCommand", () => {
       cwd: "/proj",
       subcommand: "build",
       capture: true,
+      head: HEAD,
       io,
     });
     expect(seenCapture).toBe(true);
     expect(result.output).toBe("bob: done");
+  });
+
+  test("downloads the bob.jar for the resolved head sha, not a stable head", async () => {
+    const io = fakeIo({ probe: () => false });
+    const head = { version: "1.13.0", channel: "beta", sha: "beta-sha" } as const;
+    await runBobCommand({ cwd: "/proj", subcommand: "build", head, io });
+    expect(io.downloaded).toEqual([
+      {
+        url: "https://d.defold.com/archive/stable/beta-sha/bob/bob.jar",
+        dest: join("/c", "beta-sha", "bob.jar"),
+      },
+    ]);
+  });
+
+  test("skips download when the head-sha jar is already cached", async () => {
+    const io = fakeIo({ probe: () => true });
+    const head = { version: "1.13.0", channel: "beta", sha: "beta-sha" } as const;
+    await runBobCommand({ cwd: "/proj", subcommand: "build", head, io });
+    expect(io.downloaded).toEqual([]);
+  });
+
+  test("carries the resolved version, channel, and sha on the result", async () => {
+    const io = fakeIo();
+    const head = { version: "1.13.0", channel: "beta", sha: "beta-sha" } as const;
+    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", head, io });
+    expect(result).toMatchObject({
+      defoldVersion: "1.13.0",
+      defoldChannel: "beta",
+      defoldSha: "beta-sha",
+    });
   });
 });
