@@ -377,7 +377,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
             </div>
           </main>
         </div>
-        <SymbolTooltip />
+        <SymbolTooltip versionIds={versionIds} />
         <CodeCopy />
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
         <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />
@@ -396,10 +396,11 @@ function VersionSelector({
   entries: readonly VersionSwitcherEntry[];
   currentId: string;
 }) {
+  const currentLabel = entries.find((entry) => entry.id === currentId)?.label ?? currentId;
   return (
     <details class="group relative">
       <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text [&::-webkit-details-marker]:hidden">
-        <span>{currentId}</span>
+        <span>{currentLabel}</span>
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -424,7 +425,7 @@ function VersionSelector({
               (entry.isCurrent ? "bg-accent-soft text-accent" : "")
             }
           >
-            <span>{entry.id}</span>
+            <span>{entry.label}</span>
             {entry.isCurrent ? (
               <span aria-hidden="true" class="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
             ) : null}

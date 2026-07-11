@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from "hono/jsx";
 import { withBase } from "../lib/base";
-import type { SymbolEntry } from "../lib/symbol-index";
+import { type SymbolEntry, symbolIndexFileForRoute } from "../lib/symbol-index";
 import { isSelfReference, normalizeSymbolKey } from "../lib/symbol-self";
 import { tooltipPosition } from "../lib/tooltip-position";
+
+interface SymbolTooltipProps {
+  /** Non-default version ids, so a historical page loads its own symbol index. */
+  versionIds: string[];
+}
 
 type ActiveTip = {
   brief: string;
@@ -21,7 +26,7 @@ function ownerSignature(el: Element): string {
   return heading?.querySelector(".api-signature")?.textContent ?? "";
 }
 
-export default function SymbolTooltip() {
+export default function SymbolTooltip({ versionIds }: SymbolTooltipProps) {
   const [tip, setTip] = useState<ActiveTip>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -41,11 +46,16 @@ export default function SymbolTooltip() {
     const cleanups: (() => void)[] = [];
     (async () => {
       try {
-        // Dev appends a per-load `?t=` so Safari can't serve a stale index after
-        // a regen; prod uses the stable cached path. The Vite dev server only
-        // whitelists `?t=` on `/symbol-index.json` — any other query string
-        // (e.g. `?v=…`) 404s and aborts the IIFE before listeners attach.
-        const base = withBase("/symbol-index.json");
+        // Resolve the version-correct index for this page: a historical
+        // `/api/<version-id>/…` route loads `symbol-index-<version-id>.json`, a
+        // canonical route the default `symbol-index.json`, so same-name symbols
+        // whose signatures differ across releases tool-tip against their own
+        // version rather than silently against the default surface. Dev appends a
+        // per-load `?t=` so Safari can't serve a stale index after a regen (only
+        // `?t=` is whitelisted — any other query string 404s and aborts the IIFE
+        // before listeners attach); prod uses the stable cached path.
+        const indexFile = symbolIndexFileForRoute(window.location.pathname, versionIds);
+        const base = withBase(`/${indexFile}`);
         const url = import.meta.env.DEV ? `${base}?t=${Date.now()}` : base;
         const response = await fetch(url);
         if (!response.ok) {
@@ -150,7 +160,7 @@ export default function SymbolTooltip() {
       cancelHide();
       for (const cleanup of cleanups) cleanup();
     };
-  }, []);
+  }, [versionIds]);
 
   // The component always renders a host element so hydration reliably attaches
   // the useEffect above even on the very first paint, when no tip is active.
