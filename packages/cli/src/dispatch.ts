@@ -12,6 +12,7 @@ import { readCliVersion } from "./cli-version";
 import { type DefoldChannel, readDefoldChannelPin, resolveDefoldChannel } from "./defold-channel";
 import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
+import { COMMAND_NAMES, renderHelp, renderHelpJson } from "./help";
 import { runInit } from "./init";
 import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
@@ -156,6 +157,12 @@ export function dispatch(
         ? `{"command":"version","ok":true,"version":${JSON.stringify(version)}}\n`
         : `defold-typescript ${version}\n`,
     );
+    return 0;
+  }
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    const subject = argv.find((a) => COMMAND_NAMES.has(a)) ?? null;
+    io.stdout.write(json ? renderHelpJson(subject) : renderHelp(subject));
     return 0;
   }
 
