@@ -55,6 +55,12 @@ import "./generated/webview";
 import "./generated/window";
 import "./generated/zlib";
 
+export {
+  type ApiAvailability,
+  type ApiSymbolIdentity,
+  normalizedFunctionSignature,
+  symbolIdentityKey,
+} from "./src/api-availability";
 export type { ApiFunction, ApiModule, ApiParameter, ApiVariable } from "./src/api-doc";
 export { parseDefoldApiDoc } from "./src/api-doc";
 export {

@@ -1,11 +1,13 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  type ApiAvailability,
   parseDefoldApiDoc,
   type SignatureStore,
+  symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
-import type { ApiPage, ApiPageCategory, LibraryMeta } from "./api-surface";
+import type { ApiPage, ApiPageCategory, AvailabilityLookup, LibraryMeta } from "./api-surface";
 import { parseGlobalTypes } from "./global-types";
 
 interface ApiTarget {
@@ -43,6 +45,21 @@ function loadSignatureStore(typesDir: string): SignatureStore {
     .filter((file) => file.endsWith(".json"))
     .map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as SignatureStore);
   return Object.assign({}, ...stores);
+}
+
+// The committed `api-availability.json` (derived 1.13.0-vs-1.12.4 delta plus the
+// curated migration overlay), read into an identity-keyed lookup the projection
+// joins by exact overload identity. A missing file degrades to `undefined` — the
+// surface renders with no lifecycle badges, exactly as before the artifact
+// existed. The same lookup is attached to every page of every version: a `since`
+// record only matches on a surface that actually contains the new symbol, and a
+// `removedIn` record only on one that still contains the removed symbol, so
+// sharing it across the canonical and historical surfaces is safe.
+function loadAvailability(typesDir: string): AvailabilityLookup | undefined {
+  const path = join(typesDir, "api-availability.json");
+  if (!existsSync(path)) return undefined;
+  const { records } = JSON.parse(readFileSync(path, "utf8")) as { records: ApiAvailability[] };
+  return new Map(records.map((record) => [symbolIdentityKey(record.identity), record]));
 }
 
 function readTargets(typesDir: string): ApiTarget[] {
@@ -376,6 +393,14 @@ function loadTargetPages(
   // surface only, so they never appear under a versioned `/api/<version>` route.
   if (opts.libraryTypesDir) {
     pages.push(...loadLibraryPages(opts.libraryTypesDir));
+  }
+
+  // Join the version-correct availability lookup onto every page; the projection
+  // only surfaces a badge where a symbol's identity is present, so pages of other
+  // categories (library, lua-stdlib, global-type) carry it harmlessly.
+  const availability = loadAvailability(typesDir);
+  if (availability) {
+    for (const page of pages) page.availability = availability;
   }
 
   const categoryRank: Record<ApiPageCategory, number> = {

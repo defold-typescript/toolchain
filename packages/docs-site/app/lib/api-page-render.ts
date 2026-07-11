@@ -1,9 +1,14 @@
-import { htmlToDocText } from "@defold-typescript/types";
+import {
+  type ApiAvailability,
+  type ApiSymbolIdentity,
+  htmlToDocText,
+} from "@defold-typescript/types";
 import {
   type ApiPage,
   type ApiSymbol,
   type ApiSymbolParam,
   apiModuleSymbols,
+  availabilityLabels,
   functionOverviewCards,
   groupFunctionSymbols,
   type LibraryMeta,
@@ -69,15 +74,60 @@ function paramSection(label: string, params: ApiSymbolParam[]): string {
   return [`**${label}**`, "", ...params.map(paramBullet)].join("\n");
 }
 
+/**
+ * Resolves a replacement symbol identity to an in-surface route (with heading
+ * anchor). Built by {@link apiReplacementResolver} from the *same* surface's
+ * pages, so a resolved link never crosses versions; an unresolved identity
+ * returns `undefined` and the caller falls back to that version's API index.
+ */
+export type ReplacementResolver = (id: ApiSymbolIdentity) => string | undefined;
+
+// The compact lifecycle/backend badges for one symbol: an accessible text list
+// (labels, never color alone) plus a version-correct replacement link. The
+// replacement resolves within the current surface when possible, else falls back
+// to `indexRoute` (this version's `/api[/version]` index) rather than pointing at
+// another version. Returns `""` when the symbol carries no availability facts.
+function availabilityBadges(
+  av: ApiAvailability | undefined,
+  resolveReplacement: ReplacementResolver,
+  indexRoute: string,
+): string {
+  if (!av) return "";
+  const items = availabilityLabels(av);
+  if (av.replacement) {
+    const route = resolveReplacement(av.replacement) ?? indexRoute;
+    items.push(`Replaced by [${av.replacement.name}](${route})`);
+  }
+  if (items.length === 0) return "";
+  return [
+    '<div class="api-availability" aria-label="Availability">',
+    "",
+    ...items.map((item) => `- ${item}`),
+    "",
+    "</div>",
+  ].join("\n");
+}
+
+// The `/api` or `/api/<version>` index route for a page: its route with the
+// trailing `/<namespace>` segment dropped. Used as the replacement fallback so an
+// unresolved link stays on this version's surface.
+function apiIndexRoute(route: string): string {
+  const cut = route.lastIndexOf("/");
+  return cut > 0 ? route.slice(0, cut) : route;
+}
+
 // One symbol, single column: the `### signature` heading is the title, and the
 // description + example are wrapped in an indented `.api-symbol-body` so the body
 // reads as subordinate to the title. The signature is not repeated as a code
 // block — the heading already shows it. The blank lines around the inner markdown
-// let markdown-it parse it inside the raw HTML wrapper.
-function symbolBlock(symbol: ApiSymbol): string {
+// let markdown-it parse it inside the raw HTML wrapper. `badges` (the availability
+// block) sits right after the description so lifecycle facts read before the
+// example and parameter tables.
+function symbolBlock(symbol: ApiSymbol, badges = ""): string {
   const heading = `### \`${symbol.signature}\``;
   const body: string[] = [];
   if (symbol.docMarkdown) body.push(symbol.docMarkdown);
+  if (badges) body.push(badges);
   if (symbol.exampleMarkdown) body.push(symbol.exampleMarkdown);
   if (symbol.parameters.length > 0) body.push(paramSection("Parameters", symbol.parameters));
   if (symbol.returnValues.length > 0) body.push(paramSection("Returns", symbol.returnValues));
@@ -150,14 +200,27 @@ function libraryMetaBlock(meta: LibraryMeta): string[] {
 export function apiPageMarkdown(
   page: Pick<
     ApiPage,
-    "module" | "translations" | "signatures" | "category" | "libraryMeta" | "displayName"
+    | "module"
+    | "translations"
+    | "signatures"
+    | "category"
+    | "libraryMeta"
+    | "displayName"
+    | "availability"
+    | "route"
   >,
   linkify: (text: string) => string,
   // Library pages render their heading as the styled `creator/dir/namespace`
   // path component in the route, so the markdown starts at the intro.
-  { omitHeading = false }: { omitHeading?: boolean } = {},
+  // `resolveReplacement` links a symbol's replacement within this surface;
+  // it defaults to always-unresolved, which lands the fallback on the API index.
+  {
+    omitHeading = false,
+    resolveReplacement = () => undefined,
+  }: { omitHeading?: boolean; resolveReplacement?: ReplacementResolver } = {},
 ): string {
   const m = page.module;
+  const indexRoute = apiIndexRoute(page.route);
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
   const lines: string[] = [];
   if (!omitHeading) {
@@ -184,7 +247,8 @@ export function apiPageMarkdown(
       parameters: symbol.parameters.map(linkifyParam),
       returnValues: symbol.returnValues.map(linkifyParam),
     };
-    lines.push(symbolBlock(linkified), "");
+    const badges = availabilityBadges(symbol.availability, resolveReplacement, indexRoute);
+    lines.push(symbolBlock(linkified, badges), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);
@@ -215,6 +279,16 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
     Object.entries(buildSymbolIndex(pages)).map(([k, v]) => [k, v.route] as const),
   );
   return (text: string) => linkifySymbolMentions(text, registry);
+}
+
+// A replacement-link resolver scoped to one surface's pages. `buildSymbolIndex`
+// keys every member by its qualified name to a route that already carries the
+// surface's version prefix, so a resolved replacement is version-correct by
+// construction and an off-surface identity returns `undefined` (the caller then
+// falls back to this version's API index rather than crossing versions).
+export function apiReplacementResolver(pages: ApiPage[]): ReplacementResolver {
+  const index = buildSymbolIndex(pages);
+  return (id) => index[id.name]?.route ?? index[`${id.namespace}.${id.name}`]?.route;
 }
 
 // SSG params for the per-version namespace pages: one entry per page of every
