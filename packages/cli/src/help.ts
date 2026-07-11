@@ -35,8 +35,10 @@ const COMMANDS: readonly HelpCommand[] = [
     summary: "Transpile TypeScript under src/ to Lua once.",
     usage: "bunx @defold-typescript/cli build [path]",
     flags: [
-      { flag: "--defold-version <v>", desc: "override the resolved Defold version" },
-      { flag: "--channel <c>", desc: "override the resolved Defold channel" },
+      {
+        flag: "--defold-target <version|stable|beta|alpha>",
+        desc: "override the resolved Defold target",
+      },
       { flag: "--force", desc: "rebuild even when outputs look current" },
     ],
   },
@@ -44,7 +46,12 @@ const COMMANDS: readonly HelpCommand[] = [
     name: "watch",
     summary: "Rebuild incrementally on every save.",
     usage: "bunx @defold-typescript/cli watch [path]",
-    flags: [{ flag: "--defold-version <v>", desc: "override the resolved Defold version" }],
+    flags: [
+      {
+        flag: "--defold-target <version|stable|beta|alpha>",
+        desc: "override the resolved Defold target",
+      },
+    ],
   },
   {
     name: "wall",
@@ -66,8 +73,10 @@ const COMMANDS: readonly HelpCommand[] = [
     summary: "Download and cache native-extension type surfaces.",
     usage: "bunx @defold-typescript/cli resolve [path]",
     flags: [
-      { flag: "--defold-version <v>", desc: "override the resolved Defold version" },
-      { flag: "--channel <c>", desc: "override the resolved Defold channel" },
+      {
+        flag: "--defold-target <version|stable|beta|alpha>",
+        desc: "override the resolved Defold target",
+      },
       { flag: "--frozen", desc: "fail instead of fetching when the cache misses" },
     ],
   },
@@ -76,7 +85,10 @@ const COMMANDS: readonly HelpCommand[] = [
     summary: "Run headless Defold (bob.jar) resolve/build/bundle commands.",
     usage: "bunx @defold-typescript/cli defold <resolve|build|bundle> [path]",
     flags: [
-      { flag: "--defold-version <v>", desc: "override the resolved Defold version" },
+      {
+        flag: "--defold-target <version|stable|beta|alpha>",
+        desc: "override the resolved Defold target",
+      },
       { flag: "--java <path>", desc: "path to the Java runtime used for bob.jar" },
       { flag: "--build-server <url>", desc: "native-extension build-server URL" },
     ],

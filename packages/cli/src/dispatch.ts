@@ -9,8 +9,14 @@ import {
   runDefoldCommand,
 } from "./bob-command";
 import { readCliVersion } from "./cli-version";
-import { type DefoldChannel, readDefoldChannelPin, resolveDefoldChannel } from "./defold-channel";
-import { readDefoldVersionPin, resolveDefoldVersion } from "./defold-version";
+import {
+  type DefoldChannel,
+  fetchChannelInfo,
+  type ResolvedTargetHead,
+  readDefoldTargetPin,
+  resolveDefoldTarget,
+  resolveTargetHead,
+} from "./defold-target";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { COMMAND_NAMES, renderHelp, renderHelpJson } from "./help";
 import { runInit } from "./init";
@@ -57,28 +63,17 @@ export interface DispatchInternals {
   readonly cwd?: string;
   readonly isTty?: boolean;
   readonly wallCheckbox?: CheckboxPrompt;
+  // Resolves a channel (stable/beta/alpha) to its head `{version, sha1}` via
+  // `d.defold.com/<channel>/info.json`. Injected by tests so the `--defold-target`
+  // head probe stays deterministic and offline. Version targets never call it.
+  readonly fetchChannelInfo?: (
+    channel: DefoldChannel,
+  ) => Promise<{ version: string; sha1: string }>;
 }
 
 const USAGE =
   "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|defold> [path]\n";
 const DEFOLD_USAGE = "Usage: defold-typescript defold <resolve|build|bundle> [path]\n";
-
-function parseDefoldVersionFlag(argv: string[]): { flag: string | undefined; rest: string[] } {
-  let flag: string | undefined;
-  const rest: string[] = [];
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === "--defold-version") {
-      flag = argv[i + 1];
-      i++;
-    } else if (arg?.startsWith("--defold-version=")) {
-      flag = arg.slice("--defold-version=".length);
-    } else if (arg !== undefined) {
-      rest.push(arg);
-    }
-  }
-  return { flag, rest };
-}
 
 function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
   let script: string | undefined;
@@ -119,25 +114,13 @@ function parseValueFlag(
   return { value, rest };
 }
 
-function readProjectPin(cwd: string): string | undefined {
+function readTargetPin(cwd: string): string | undefined {
   const pkgPath = path.join(cwd, "package.json");
   if (!existsSync(pkgPath)) {
     return undefined;
   }
   try {
-    return readDefoldVersionPin(JSON.parse(readFileSync(pkgPath, "utf8")));
-  } catch {
-    return undefined;
-  }
-}
-
-function readProjectChannelPin(cwd: string): DefoldChannel | undefined {
-  const pkgPath = path.join(cwd, "package.json");
-  if (!existsSync(pkgPath)) {
-    return undefined;
-  }
-  try {
-    return readDefoldChannelPin(JSON.parse(readFileSync(pkgPath, "utf8")));
+    return readDefoldTargetPin(JSON.parse(readFileSync(pkgPath, "utf8")));
   } catch {
     return undefined;
   }
@@ -171,18 +154,17 @@ export function dispatch(
   const wallRemove = argv.includes("--remove");
   const wallList = argv.includes("--list");
   const frozen = argv.includes("--frozen");
-  const { flag: defoldVersionFlag, rest: afterVersionArgs } = parseDefoldVersionFlag(argv);
-  const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterVersionArgs);
+  const { value: defoldTargetFlag, rest: afterTargetArgs } = parseValueFlag(argv, "defold-target");
+  const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterTargetArgs);
   const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
   const { value: buildServerFlag, rest: afterBuildServerArgs } = parseValueFlag(
     afterJavaArgs,
     "build-server",
   );
-  const { value: channelFlag, rest: afterChannelArgs } = parseValueFlag(
+  const { value: templateFlag, rest: nonFlagArgs } = parseValueFlag(
     afterBuildServerArgs,
-    "channel",
+    "template",
   );
-  const { value: templateFlag, rest: nonFlagArgs } = parseValueFlag(afterChannelArgs, "template");
   const positional = nonFlagArgs.filter(
     (a) =>
       a !== "--json" &&
@@ -195,81 +177,118 @@ export function dispatch(
   const [command, ...rest] = positional;
   const cwd = rest[0] ? path.resolve(rest[0]) : process.cwd();
 
-  const pin = readProjectPin(cwd);
+  // Hard cutover: the two-flag surface collapsed into `--defold-target`. Reject
+  // the removed flags before any resolution so the pointer is unambiguous.
+  const removedTargetFlag = argv.find(
+    (a) =>
+      a === "--defold-version" ||
+      a === "--channel" ||
+      a.startsWith("--defold-version=") ||
+      a.startsWith("--channel="),
+  );
+  if (removedTargetFlag !== undefined) {
+    const message =
+      "defold-typescript: --defold-version/--channel were removed; use --defold-target <version|stable|beta|alpha>";
+    if (json) {
+      io.stdout.write(renderResult({ command: "build", error: message }));
+    } else {
+      io.stderr.write(`${message}\n`);
+    }
+    return 1;
+  }
+
+  const pin = readTargetPin(cwd);
   let detected: string | undefined;
-  if (defoldVersionFlag === undefined && pin === undefined) {
+  if (defoldTargetFlag === undefined && pin === undefined) {
     const result = (internals?.detectEditorVersion ?? detectInstalledEditorVersion)();
     if (result !== null) {
       detected = result;
     }
   }
-  const resolved = resolveDefoldVersion({
-    ...(defoldVersionFlag !== undefined ? { flag: defoldVersionFlag } : {}),
-    ...(pin !== undefined ? { pin } : {}),
-    ...(detected !== undefined ? { detected } : {}),
-  });
-  const resolvedVersion = resolved.version;
-  const resolvedVersionSource = resolved.source;
-  const channelPin = readProjectChannelPin(cwd);
-  const resolvedChannel = resolveDefoldChannel({
-    ...(channelFlag !== undefined ? { flag: channelFlag } : {}),
-    ...(channelPin !== undefined ? { pin: channelPin } : {}),
-  }).channel;
-  // Thread the resolved channel into ref-doc resolution; any test-injected
-  // download/readZip/fetchChannelInfo still wins (spread after).
-  const refDocResolveOpts: RefDocResolveOptions = {
-    channel: resolvedChannel,
+  let target: ReturnType<typeof resolveDefoldTarget>;
+  try {
+    target = resolveDefoldTarget({
+      ...(defoldTargetFlag !== undefined ? { flag: defoldTargetFlag } : {}),
+      ...(pin !== undefined ? { pin } : {}),
+      ...(detected !== undefined ? { detected } : {}),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (json) {
+      io.stdout.write(renderResult({ command: "build", error: message }));
+    } else {
+      io.stderr.write(`${message}\n`);
+    }
+    return 1;
+  }
+  const targetSource = target.source;
+  const channelFetch =
+    internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
+  // A version target's head is synchronous (no channel info.json probe); a
+  // channel target resolves its head — `{version, sha}` — via the fetch above.
+  const syncHead: ResolvedTargetHead | undefined =
+    target.kind === "version" ? { version: target.version, channel: null, sha: null } : undefined;
+  const resolveHead = (): Promise<ResolvedTargetHead> =>
+    resolveTargetHead(target, { fetchChannelInfo: channelFetch });
+  // Ref-doc resolution addresses the channel head; the fetch seam in
+  // `internals.resolveOpts` (spread last) still wins for tests.
+  const refDocOptsFor = (head: ResolvedTargetHead): RefDocResolveOptions => ({
+    ...(head.channel ? { channel: head.channel } : {}),
     ...internals?.resolveOpts,
-  };
-  const surface = selectApiSurface(resolvedVersion);
-  const apiSurface = surface.surfaceId;
+  });
 
   if (command === "init") {
-    try {
-      if (rest[0] === undefined) {
-        throw new Error(
-          'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
-        );
-      }
-      const { written, operations } = runInit({
-        cwd,
-        force,
-        ...(templateFlag !== undefined ? { template: templateFlag } : {}),
-      });
-      if (json) {
-        io.stdout.write(
-          renderResult({
-            command: "init",
-            written,
-            operations,
-            defoldVersion: resolvedVersion,
-            defoldVersionSource: resolvedVersionSource,
-            defoldChannel: resolvedChannel,
-            apiSurface,
-            installCommand: installHint(),
-          }),
-        );
-      } else {
-        io.stdout.write(
-          `defold-typescript init: wrote ${written.length} files: ${written.join(", ")}\n`,
-        );
-        for (const op of operations) {
-          io.stdout.write(`  ${op.target}: ${op.status}${op.detail ? ` — ${op.detail}` : ""}\n`);
+    const runInitFlow = (head: ResolvedTargetHead): number => {
+      try {
+        if (rest[0] === undefined) {
+          throw new Error(
+            'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
+          );
         }
-        if (!suppressInstallReminder) {
-          io.stdout.write(`Next: run \`${installHint()}\` to install dependencies.\n`);
+        const { written, operations } = runInit({
+          cwd,
+          force,
+          ...(templateFlag !== undefined ? { template: templateFlag } : {}),
+        });
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "init",
+              written,
+              operations,
+              defoldVersion: head.version,
+              defoldVersionSource: targetSource,
+              defoldChannel: head.channel,
+              defoldSha: head.sha,
+              apiSurface: selectApiSurface(head.version).surfaceId,
+              installCommand: installHint(),
+            }),
+          );
+        } else {
+          io.stdout.write(
+            `defold-typescript init: wrote ${written.length} files: ${written.join(", ")}\n`,
+          );
+          for (const op of operations) {
+            io.stdout.write(`  ${op.target}: ${op.status}${op.detail ? ` — ${op.detail}` : ""}\n`);
+          }
+          if (!suppressInstallReminder) {
+            io.stdout.write(`Next: run \`${installHint()}\` to install dependencies.\n`);
+          }
         }
+        return 0;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "init", error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
       }
-      return 0;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (json) {
-        io.stdout.write(renderResult({ command: "init", error: message }));
-      } else {
-        io.stderr.write(`${message}\n`);
-      }
-      return 1;
-    }
+    };
+    return syncHead !== undefined
+      ? runInitFlow(syncHead)
+      : (async (): Promise<number> => runInitFlow(await resolveHead()))();
   }
 
   if (command === "init-agents") {
@@ -356,6 +375,22 @@ export function dispatch(
         resolveCurrentSurfaceGeneratedDir,
       } = await import("./materialize");
 
+      let head: ResolvedTargetHead;
+      try {
+        head = syncHead ?? (await resolveHead());
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "build", error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
+      }
+      const surface = selectApiSurface(head.version);
+      const apiSurface = surface.surfaceId;
+      const refDocResolveOpts = refDocOptsFor(head);
+
       const reportBuild = (
         written: readonly string[],
         warnings: readonly string[],
@@ -369,9 +404,10 @@ export function dispatch(
               command: "build",
               written,
               warnings,
-              defoldVersion: resolvedVersion,
-              defoldVersionSource: resolvedVersionSource,
-              defoldChannel: resolvedChannel,
+              defoldVersion: head.version,
+              defoldVersionSource: targetSource,
+              defoldChannel: head.channel,
+              defoldSha: head.sha,
               apiSurface,
               materializedSurface: materializedDir,
             }),
@@ -448,6 +484,17 @@ export function dispatch(
         resolveCurrentSurfaceGeneratedDir,
       } = await import("./materialize");
       const { runResolve } = await import("./resolve");
+
+      let head: ResolvedTargetHead;
+      try {
+        head = syncHead ?? (await resolveHead());
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        io.stderr.write(`${message}\n`);
+        return 1;
+      }
+      const surface = selectApiSurface(head.version);
+      const refDocResolveOpts = refDocOptsFor(head);
 
       const isRefDocSurface =
         surface.available &&
@@ -640,6 +687,18 @@ export function dispatch(
     const seams = internals?.resolveInternals;
     return (async (): Promise<number> => {
       const { runResolve } = await import("./resolve");
+      let head: ResolvedTargetHead;
+      try {
+        head = syncHead ?? (await resolveHead());
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "resolve", error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
+      }
       const result = await runResolve({
         cwd,
         ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
@@ -657,6 +716,11 @@ export function dispatch(
             result.ok
               ? {
                   command: "resolve",
+                  defoldVersion: head.version,
+                  defoldVersionSource: targetSource,
+                  defoldChannel: head.channel,
+                  defoldSha: head.sha,
+                  apiSurface: selectApiSurface(head.version).surfaceId,
                   materializedSurface: result.materializedSurface,
                   extensions: result.extensions,
                   libraries: result.libraries,

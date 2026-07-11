@@ -330,7 +330,7 @@ interface PackageJson {
   version?: string;
   type?: string;
   devDependencies?: Record<string, string>;
-  "defold-typescript"?: { "defold-version"?: string };
+  "defold-typescript"?: { "defold-target"?: string };
   [key: string]: unknown;
 }
 
@@ -851,7 +851,7 @@ function writeTsSurface(
     }
     repairManagedDevDeps(devDeps, force);
     existing.devDependencies = devDeps;
-    existing["defold-typescript"] ??= { "defold-version": CURRENT_STABLE_DEFOLD_VERSION };
+    existing["defold-typescript"] ??= { "defold-target": CURRENT_STABLE_DEFOLD_VERSION };
     writeJson(pkgPath, existing);
   } else {
     const fresh: PackageJson = {
@@ -859,7 +859,7 @@ function writeTsSurface(
       version: "0.0.0",
       type: "module",
       devDependencies: { ...SCAFFOLD_DEV_DEPS },
-      "defold-typescript": { "defold-version": CURRENT_STABLE_DEFOLD_VERSION },
+      "defold-typescript": { "defold-target": CURRENT_STABLE_DEFOLD_VERSION },
     };
     writeJson(pkgPath, fresh);
   }

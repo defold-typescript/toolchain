@@ -90,12 +90,12 @@ describe("readExtensionVersionPins", () => {
 describe("mergeResolvedVersionPins", () => {
   test("adds a pin when the url is absent", () => {
     const merged = mergeResolvedVersionPins(
-      { "defold-typescript": { "defold-version": "1.9.8" } },
+      { "defold-typescript": { "defold-target": "1.9.8" } },
       { [URL_A]: "sha256:new" },
     );
     expect(merged).toEqual({
       "defold-typescript": {
-        "defold-version": "1.9.8",
+        "defold-target": "1.9.8",
         extensions: { [URL_A]: "sha256:new" },
       },
     });
@@ -111,17 +111,17 @@ describe("mergeResolvedVersionPins", () => {
     });
   });
 
-  test("preserves unrelated defold-typescript keys (defold-version)", () => {
+  test("preserves unrelated defold-typescript keys (defold-target)", () => {
     const merged = mergeResolvedVersionPins(
       {
-        "defold-typescript": { "defold-version": "1.9.8" },
+        "defold-typescript": { "defold-target": "1.9.8" },
         name: "my-game",
       },
       { [URL_A]: "sha256:abc" },
     );
     expect(merged).toEqual({
       "defold-typescript": {
-        "defold-version": "1.9.8",
+        "defold-target": "1.9.8",
         extensions: { [URL_A]: "sha256:abc" },
       },
       name: "my-game",
@@ -153,7 +153,7 @@ describe("mergeResolvedVersionPins", () => {
   });
 
   test("returns a fresh object, not a reference to the input", () => {
-    const original = { "defold-typescript": { "defold-version": "1.9.8" } };
+    const original = { "defold-typescript": { "defold-target": "1.9.8" } };
     const merged = mergeResolvedVersionPins(original, { [URL_A]: "sha256:abc" });
     expect(merged).not.toBe(original);
     expect(merged["defold-typescript"]).not.toBe(original["defold-typescript"]);
