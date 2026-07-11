@@ -396,6 +396,62 @@ describe("dispatch", () => {
     expect(err()).not.toContain("Usage:");
   });
 
+  test("--help prints top-level help to stdout and returns 0", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["--help"], io);
+
+    expect(code).toBe(0);
+    const text = out();
+    expect(text).toContain("Usage: defold-typescript");
+    expect(text).toContain("build");
+    expect(text).toContain("watch");
+    expect(err()).toBe("");
+  });
+
+  test("-h behaves identically to --help", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["-h"], io);
+
+    expect(code).toBe(0);
+    expect(out()).toContain("Usage: defold-typescript");
+    expect(err()).toBe("");
+  });
+
+  test("build --help prints build help and never treats --help as a path", () => {
+    const { io, out, err } = captureStreams();
+
+    const code = dispatch(["build", "--help"], io);
+
+    expect(code).toBe(0);
+    const text = out();
+    expect(text).toContain("build");
+    expect(text).not.toContain("tsconfig");
+    expect(err()).toBe("");
+  });
+
+  test("build --help --json emits the machine-readable help shape", () => {
+    const { io, out } = captureStreams();
+
+    const code = dispatch(["build", "--help", "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out());
+    expect(parsed.command).toBe("help");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.subject).toBe("build");
+  });
+
+  test("--help short-circuits before command resolution and writes no usage error", () => {
+    const { io, err } = captureStreams();
+
+    const code = dispatch(["--help"], io);
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+  });
+
   test("build <path> runs runBuild and returns 0 on success", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
