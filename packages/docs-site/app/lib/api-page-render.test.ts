@@ -487,8 +487,13 @@ describe("availability badges", () => {
     returnValues: [],
   };
 
+  const VERSIONS = ["1.13.0", "1.12.4"];
+
   function lookup(records: ApiAvailability[]): AvailabilityLookup {
-    return new Map(records.map((r) => [symbolIdentityKey(r.identity), r]));
+    return {
+      versions: VERSIONS,
+      records: new Map(records.map((r) => [symbolIdentityKey(r.identity), r])),
+    };
   }
 
   function modelPage(
@@ -539,52 +544,65 @@ describe("availability badges", () => {
 
   const noLink = (text: string) => text;
 
-  test("renders a since badge with accessible text", () => {
-    const md = apiPageMarkdown(modelPage(setTexture, { since: "1.13.0" }), noLink);
-    expect(md).toContain("Since 1.13.0");
+  test("renders a since-newest span badge with accessible text", () => {
+    const md = apiPageMarkdown(modelPage(setTexture, { availableIn: ["1.13.0"] }), noLink);
+    expect(md).toContain("Since Defold 1.13.0");
     expect(md).toContain('aria-label="Availability"');
   });
 
-  test("renders deprecated-since and removed-in badges", () => {
+  test("renders deprecated-since and through-oldest span badges", () => {
     const md = apiPageMarkdown(
-      modelPage(material, { deprecatedSince: "1.12.0", removedIn: "1.13.0" }),
+      modelPage(material, { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" }),
       noLink,
     );
     expect(md).toContain("Deprecated since 1.12.0");
-    expect(md).toContain("Removed in 1.13.0");
+    expect(md).toContain("Available through Defold 1.12.4");
   });
 
-  test("renders Box2D backend applicability", () => {
-    const md = apiPageMarkdown(modelPage(material, { box2d: ["v2", "v3"] }), noLink);
+  test("renders Box2D backend applicability with no span badge for an all-versions symbol", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: VERSIONS, box2d: ["v2", "v3"] }),
+      noLink,
+    );
     expect(md).toContain("Box2D: v2, v3");
   });
 
   test("links a replacement that resolves within the surface", () => {
-    const md = apiPageMarkdown(modelPage(material, { removedIn: "1.13.0", replacement }), noLink, {
-      resolveReplacement: (id) =>
-        id.name === "model.set_texture" ? "/api/model#model-set-texture" : undefined,
-    });
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"], replacement }),
+      noLink,
+      {
+        resolveReplacement: (id) =>
+          id.name === "model.set_texture" ? "/api/model#model-set-texture" : undefined,
+      },
+    );
     expect(md).toContain("[model.set_texture](/api/model#model-set-texture)");
   });
 
   test("falls back to the default surface API index when a replacement is unresolved", () => {
-    const md = apiPageMarkdown(modelPage(material, { replacement }), noLink, {
-      resolveReplacement: () => undefined,
-    });
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: VERSIONS, replacement }),
+      noLink,
+      {
+        resolveReplacement: () => undefined,
+      },
+    );
     expect(md).toContain("[model.set_texture](/api)");
   });
 
   test("an unresolved replacement on a versioned page never crosses versions", () => {
-    const md = apiPageMarkdown(modelPage(material, { replacement }, "/api/1.12.4/model"), noLink, {
-      resolveReplacement: () => undefined,
-    });
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"], replacement }, "/api/1.12.4/model"),
+      noLink,
+      { resolveReplacement: () => undefined },
+    );
     expect(md).toContain("[model.set_texture](/api/1.12.4)");
     expect(md).not.toContain("](/api/model");
   });
 
   test("a symbol with no availability record renders no badge block", () => {
-    const page = modelPage(material, {});
-    page.availability = new Map();
+    const page = modelPage(material, { availableIn: VERSIONS });
+    page.availability = { versions: VERSIONS, records: new Map() };
     const md = apiPageMarkdown(page, noLink);
     expect(md).not.toContain('aria-label="Availability"');
   });

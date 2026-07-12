@@ -1,11 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import {
+  type ApiAvailability,
   type ApiMigrationCatalog,
   type ApiSymbolIdentity,
   applyMigrationOverlay,
+  availabilityLabel,
   collectSymbolIdentities,
-  deriveAvailability,
+  deriveAvailabilityMatrix,
+  groupByLogicalName,
+  isSignatureTransition,
   symbolIdentityKey,
+  type VersionSurface,
   validateAvailability,
 } from "./api-availability";
 import type { ApiFunction, ApiModule, ApiParameter } from "./api-doc";
@@ -38,6 +43,10 @@ function moduleOf(namespace: string, overrides: Partial<ApiModule> = {}): ApiMod
 
 function keys(ids: readonly ApiSymbolIdentity[]): Set<string> {
   return new Set(ids.map(symbolIdentityKey));
+}
+
+function surface(version: string, modules: ApiModule[]): VersionSurface {
+  return { version, modules };
 }
 
 describe("symbol identity", () => {
@@ -92,54 +101,130 @@ describe("symbol identity", () => {
   });
 });
 
-describe("deriveAvailability", () => {
-  test("derives since for new symbols and removedIn for dropped symbols", () => {
-    const baseline = [
+describe("deriveAvailabilityMatrix", () => {
+  const V = ["1.13.0", "1.12.4", "1.11.0"];
+  const surfaces = [
+    surface(V[0] as string, [
       moduleOf("m", {
-        functions: [fn("m.stable", [param("x", ["number"])]), fn("m.gone", [])],
+        functions: [fn("m.everywhere", []), fn("m.new", [])],
       }),
-    ];
-    const current = [
+    ]),
+    surface(V[1] as string, [moduleOf("m", { functions: [fn("m.everywhere", [])] })]),
+    surface(V[2] as string, [
       moduleOf("m", {
-        functions: [fn("m.stable", [param("x", ["number"])]), fn("m.fresh", [])],
+        functions: [fn("m.everywhere", []), fn("m.gap", [])],
+        constants: [{ name: "m.OLD", brief: "", description: "" }],
       }),
-    ];
-    const records = deriveAvailability({ baseline, current, version: "1.13.0" });
+    ]),
+  ];
+
+  test("omits an all-versions symbol and records a subset symbol with ordered availableIn", () => {
+    const records = deriveAvailabilityMatrix({ surfaces });
     const byName = new Map(records.map((r) => [r.identity.name, r]));
-    expect(byName.get("m.fresh")?.since).toBe("1.13.0");
-    expect(byName.get("m.fresh")?.removedIn).toBeUndefined();
-    expect(byName.get("m.gone")?.removedIn).toBe("1.13.0");
-    expect(byName.get("m.gone")?.since).toBeUndefined();
-    expect(byName.has("m.stable")).toBe(false);
+    expect(byName.has("m.everywhere")).toBe(false);
+    expect(byName.get("m.new")?.availableIn).toEqual(["1.13.0"]);
+    expect(byName.get("m.OLD")?.availableIn).toEqual(["1.11.0"]);
   });
 
-  test("a changed overload signature yields both a removedIn and a since record for the same name", () => {
-    const baseline = [moduleOf("m", { functions: [fn("m.f", [param("x", ["number"])])] })];
-    const current = [moduleOf("m", { functions: [fn("m.f", [param("x", ["hash"])])] })];
-    const records = deriveAvailability({ baseline, current, version: "1.13.0" });
-    expect(
-      records.filter((r) => r.identity.name === "m.f" && r.removedIn === "1.13.0"),
-    ).toHaveLength(1);
-    expect(records.filter((r) => r.identity.name === "m.f" && r.since === "1.13.0")).toHaveLength(
-      1,
-    );
+  test("a symbol present in the newest and oldest but absent in the middle is not collapsed to a range", () => {
+    const gapSurfaces = [
+      surface(V[0] as string, [moduleOf("m", { functions: [fn("m.gap", [])] })]),
+      surface(V[1] as string, [moduleOf("m", {})]),
+      surface(V[2] as string, [moduleOf("m", { functions: [fn("m.gap", [])] })]),
+    ];
+    const records = deriveAvailabilityMatrix({ surfaces: gapSurfaces });
+    const gap = records.find((r) => r.identity.name === "m.gap");
+    expect(gap?.availableIn).toEqual(["1.13.0", "1.11.0"]);
   });
 
   test("output is deterministic and sorted by identity key", () => {
-    const baseline = [moduleOf("m", {})];
-    const current = [
-      moduleOf("m", {
-        functions: [fn("m.b", []), fn("m.a", [])],
-        constants: [{ name: "m.Z", brief: "", description: "" }],
-      }),
-    ];
-    const records = deriveAvailability({ baseline, current, version: "1.13.0" });
+    const records = deriveAvailabilityMatrix({ surfaces });
     const rendered = records.map((r) => symbolIdentityKey(r.identity));
     expect(rendered).toEqual([...rendered].sort());
   });
 });
 
+describe("availabilityLabel", () => {
+  const versions = ["1.13.0", "1.12.4", "1.11.0", "1.10.0"];
+
+  test("classifies an all-tracked span", () => {
+    expect(availabilityLabel(versions, versions).kind).toBe("all");
+  });
+
+  test("classifies a since-newest block", () => {
+    expect(availabilityLabel(["1.13.0"], versions)).toMatchObject({
+      kind: "since",
+      label: "Since Defold 1.13.0",
+    });
+    expect(availabilityLabel(["1.13.0", "1.12.4"], versions)).toMatchObject({
+      kind: "since",
+      label: "Since Defold 1.12.4",
+    });
+  });
+
+  test("classifies a through-oldest block", () => {
+    expect(availabilityLabel(["1.10.0"], versions)).toMatchObject({
+      kind: "through",
+      label: "Available through Defold 1.10.0",
+    });
+    expect(availabilityLabel(["1.11.0", "1.10.0"], versions)).toMatchObject({
+      kind: "through",
+      label: "Available through Defold 1.11.0",
+    });
+  });
+
+  test("classifies an interior contiguous block as a range", () => {
+    expect(availabilityLabel(["1.12.4", "1.11.0"], versions)).toMatchObject({
+      kind: "range",
+      label: "Available in Defold 1.11.0–1.12.4",
+    });
+  });
+
+  test("classifies a non-contiguous span discretely with no false range", () => {
+    const label = availabilityLabel(["1.13.0", "1.11.0"], versions);
+    expect(label.kind).toBe("discrete");
+    expect(label.label).toBe("Available in tracked versions: 1.13.0, 1.11.0");
+  });
+});
+
+describe("groupByLogicalName / isSignatureTransition", () => {
+  const versions = ["1.13.0", "1.12.4"];
+
+  test("classifies disjoint-overload spans as a signature transition, oldest overload first", () => {
+    const oldSig = fn("m.f", [param("name", ["string"])]);
+    const newSig = fn("m.f", [param("name", ["string", "hash"])]);
+    const [oldId] = collectSymbolIdentities([moduleOf("m", { functions: [oldSig] })]);
+    const [newId] = collectSymbolIdentities([moduleOf("m", { functions: [newSig] })]);
+    const records: ApiAvailability[] = [
+      { identity: newId as ApiSymbolIdentity, availableIn: ["1.13.0"] },
+      { identity: oldId as ApiSymbolIdentity, availableIn: ["1.12.4"] },
+    ];
+    const groups = groupByLogicalName(records, versions);
+    expect(groups).toHaveLength(1);
+    const group = groups[0] as (typeof groups)[number];
+    expect(group.name).toBe("m.f");
+    expect(group.overloads[0]?.availableIn).toEqual(["1.12.4"]);
+    expect(isSignatureTransition(group, versions)).toBe(true);
+  });
+
+  test("classifies a single oldest-only overload as a removal, not a transition", () => {
+    const [id] = collectSymbolIdentities([
+      moduleOf("model", {
+        properties: [{ name: "model.material", types: ["hash"], brief: "", description: "" }],
+      }),
+    ]);
+    const records: ApiAvailability[] = [
+      { identity: id as ApiSymbolIdentity, availableIn: ["1.12.4"] },
+    ];
+    const group = groupByLogicalName(records, versions)[0] as ReturnType<
+      typeof groupByLogicalName
+    >[number];
+    expect(isSignatureTransition(group, versions)).toBe(false);
+  });
+});
+
 describe("applyMigrationOverlay", () => {
+  const versions = ["1.13.0", "1.12.4"];
   const universe = collectSymbolIdentities([
     moduleOf("m", {
       functions: [fn("m.stable", [param("x", ["number"])]), fn("m.repl", [])],
@@ -148,7 +233,7 @@ describe("applyMigrationOverlay", () => {
     moduleOf("b2d.world", { functions: [fn("b2d.world.step", [])] }),
   ]);
 
-  test("overlays deprecatedSince, replacement, and box2d onto matched records", () => {
+  test("overlays deprecatedSince, replacement, and box2d, defaulting availableIn to all versions", () => {
     const stableId = universe.find((id) => id.name === "m.stable") as ApiSymbolIdentity;
     const replId = universe.find((id) => id.name === "m.repl") as ApiSymbolIdentity;
     const b2dId = universe.find((id) => id.name === "b2d.world.step") as ApiSymbolIdentity;
@@ -158,11 +243,12 @@ describe("applyMigrationOverlay", () => {
         { identity: b2dId, box2d: ["v3"] },
       ],
     };
-    const merged = applyMigrationOverlay({ derived: [], catalog, universe });
+    const merged = applyMigrationOverlay({ derived: [], catalog, universe, versions });
     const stable = merged.find(
       (r) => symbolIdentityKey(r.identity) === symbolIdentityKey(stableId),
     );
     expect(stable?.deprecatedSince).toBe("1.13.0");
+    expect(stable?.availableIn).toEqual(versions);
     expect(stable?.replacement && symbolIdentityKey(stable.replacement)).toBe(
       symbolIdentityKey(replId),
     );
@@ -170,15 +256,15 @@ describe("applyMigrationOverlay", () => {
     expect(b2d?.box2d).toEqual(["v3"]);
   });
 
-  test("merges curated fields onto an already-derived record without dropping since", () => {
+  test("merges curated fields onto an already-derived record without dropping availableIn", () => {
     const constId = universe.find((id) => id.name === "m.OLD") as ApiSymbolIdentity;
-    const derived = [{ identity: constId, since: "1.13.0" as const }];
+    const derived: ApiAvailability[] = [{ identity: constId, availableIn: ["1.12.4"] }];
     const catalog: ApiMigrationCatalog = {
       migrations: [{ identity: constId, deprecatedSince: "1.13.0" }],
     };
-    const merged = applyMigrationOverlay({ derived, catalog, universe });
+    const merged = applyMigrationOverlay({ derived, catalog, universe, versions });
     const record = merged.find((r) => symbolIdentityKey(r.identity) === symbolIdentityKey(constId));
-    expect(record?.since).toBe("1.13.0");
+    expect(record?.availableIn).toEqual(["1.12.4"]);
     expect(record?.deprecatedSince).toBe("1.13.0");
   });
 
@@ -191,7 +277,9 @@ describe("applyMigrationOverlay", () => {
         },
       ],
     };
-    expect(() => applyMigrationOverlay({ derived: [], catalog, universe })).toThrow(/unknown/i);
+    expect(() => applyMigrationOverlay({ derived: [], catalog, universe, versions })).toThrow(
+      /unknown/i,
+    );
   });
 
   test("rejects a catalog identity that is ambiguous across overloads", () => {
@@ -208,13 +296,14 @@ describe("applyMigrationOverlay", () => {
         },
       ],
     };
-    expect(() => applyMigrationOverlay({ derived: [], catalog, universe: overloaded })).toThrow(
-      /ambiguous/i,
-    );
+    expect(() =>
+      applyMigrationOverlay({ derived: [], catalog, universe: overloaded, versions }),
+    ).toThrow(/ambiguous/i);
   });
 });
 
 describe("validateAvailability", () => {
+  const versions = ["1.13.0", "1.12.4"];
   const stableId: ApiSymbolIdentity = {
     namespace: "m",
     kind: "FUNCTION",
@@ -238,22 +327,53 @@ describe("validateAvailability", () => {
   test("accepts a well-formed record set", () => {
     const errors = validateAvailability({
       records: [
-        { identity: removedId, removedIn: "1.13.0" },
-        { identity: stableId, deprecatedSince: "1.13.0", replacement: replId },
+        { identity: removedId, availableIn: ["1.12.4"] },
+        {
+          identity: stableId,
+          availableIn: versions,
+          deprecatedSince: "1.13.0",
+          replacement: replId,
+        },
       ],
+      versions,
       currentSurface: new Set([stableId, replId].map(symbolIdentityKey)),
       knownIdentities: known,
     });
     expect(errors).toEqual([]);
   });
 
-  test("rejects a removed symbol that is still callable in the current surface", () => {
+  test("rejects a symbol absent from the newest version that is still callable", () => {
     const errors = validateAvailability({
-      records: [{ identity: removedId, removedIn: "1.13.0" }],
+      records: [{ identity: removedId, availableIn: ["1.12.4"] }],
+      versions,
       currentSurface: new Set([removedId].map(symbolIdentityKey)),
       knownIdentities: known,
     });
     expect(errors.some((e) => /callable/i.test(e))).toBe(true);
+  });
+
+  test("rejects an empty, out-of-set, or duplicated availableIn", () => {
+    const empty = validateAvailability({
+      records: [{ identity: stableId, availableIn: [] }],
+      versions,
+      currentSurface: new Set([stableId].map(symbolIdentityKey)),
+      knownIdentities: known,
+    });
+    expect(empty.some((e) => /empty availableIn/i.test(e))).toBe(true);
+    const outside = validateAvailability({
+      records: [{ identity: stableId, availableIn: ["9.9.9"] }],
+      versions,
+      currentSurface: new Set<string>(),
+      knownIdentities: known,
+    });
+    expect(outside.some((e) => /outside the tracked set/i.test(e))).toBe(true);
+    const dup = validateAvailability({
+      records: [{ identity: stableId, availableIn: ["1.12.4", "1.12.4"] }],
+      versions,
+      currentSurface: new Set<string>(),
+      knownIdentities: known,
+    });
+    expect(dup.some((e) => /duplicated availableIn/i.test(e))).toBe(true);
   });
 
   test("rejects a replacement that resolves to no known symbol", () => {
@@ -261,9 +381,11 @@ describe("validateAvailability", () => {
       records: [
         {
           identity: stableId,
+          availableIn: versions,
           replacement: { namespace: "m", kind: "FUNCTION", name: "m.nowhere", signature: "()" },
         },
       ],
+      versions,
       currentSurface: new Set([stableId].map(symbolIdentityKey)),
       knownIdentities: known,
     });
@@ -272,13 +394,15 @@ describe("validateAvailability", () => {
 
   test("rejects empty and overlapping (duplicated) backend availability", () => {
     const empty = validateAvailability({
-      records: [{ identity: stableId, box2d: [] }],
+      records: [{ identity: stableId, availableIn: versions, box2d: [] }],
+      versions,
       currentSurface: new Set([stableId].map(symbolIdentityKey)),
       knownIdentities: known,
     });
     expect(empty.some((e) => /backend/i.test(e))).toBe(true);
     const dup = validateAvailability({
-      records: [{ identity: stableId, box2d: ["v2", "v2"] }],
+      records: [{ identity: stableId, availableIn: versions, box2d: ["v2", "v2"] }],
+      versions,
       currentSurface: new Set([stableId].map(symbolIdentityKey)),
       knownIdentities: known,
     });

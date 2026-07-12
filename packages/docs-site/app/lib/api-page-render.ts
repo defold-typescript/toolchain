@@ -89,11 +89,12 @@ export type ReplacementResolver = (id: ApiSymbolIdentity) => string | undefined;
 // another version. Returns `""` when the symbol carries no availability facts.
 function availabilityBadges(
   av: ApiAvailability | undefined,
+  versions: readonly string[],
   resolveReplacement: ReplacementResolver,
   indexRoute: string,
 ): string {
   if (!av) return "";
-  const items = availabilityLabels(av);
+  const items = availabilityLabels(av, versions);
   if (av.replacement) {
     const route = resolveReplacement(av.replacement) ?? indexRoute;
     items.push(`Replaced by [${av.replacement.name}](${route})`);
@@ -247,7 +248,12 @@ export function apiPageMarkdown(
       parameters: symbol.parameters.map(linkifyParam),
       returnValues: symbol.returnValues.map(linkifyParam),
     };
-    const badges = availabilityBadges(symbol.availability, resolveReplacement, indexRoute);
+    const badges = availabilityBadges(
+      symbol.availability,
+      page.availability?.versions ?? [],
+      resolveReplacement,
+      indexRoute,
+    );
     lines.push(symbolBlock(linkified, badges), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {

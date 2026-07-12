@@ -1573,8 +1573,13 @@ describe("availability join", () => {
     };
   }
 
+  const AV_VERSIONS = ["1.13.0", "1.12.4"];
+
   function lookup(records: ApiAvailability[]): AvailabilityLookup {
-    return new Map(records.map((r) => [symbolIdentityKey(r.identity), r]));
+    return {
+      versions: AV_VERSIONS,
+      records: new Map(records.map((r) => [symbolIdentityKey(r.identity), r])),
+    };
   }
 
   test("attaches availability to the exact overload and leaves the sibling unlabelled", () => {
@@ -1586,14 +1591,14 @@ describe("availability join", () => {
           name: "b2d.body.foo",
           signature: normalizedFunctionSignature(fooOverloadA),
         },
-        since: "1.13.0",
+        availableIn: ["1.13.0"],
       },
     ]);
     const symbols = apiModuleSymbols(
       pageWith({ functions: [fooOverloadA, fooOverloadB] }, availability),
     );
     expect(symbols).toHaveLength(2);
-    expect(symbols[0]?.availability?.since).toBe("1.13.0");
+    expect(symbols[0]?.availability?.availableIn).toEqual(["1.13.0"]);
     expect(symbols[1]?.availability).toBeUndefined();
   });
 
@@ -1606,6 +1611,7 @@ describe("availability join", () => {
           name: "b2d.body.STATIC",
           signature: "",
         },
+        availableIn: AV_VERSIONS,
         deprecatedSince: "1.12.0",
       },
     ]);
@@ -1619,7 +1625,9 @@ describe("availability join", () => {
   });
 
   test("no availability lookup leaves every symbol unlabelled", () => {
-    const symbols = apiModuleSymbols(pageWith({ functions: [fooOverloadA] }, new Map()));
+    const symbols = apiModuleSymbols(
+      pageWith({ functions: [fooOverloadA] }, { versions: [], records: new Map() }),
+    );
     expect(symbols[0]?.availability).toBeUndefined();
   });
 
@@ -1632,11 +1640,11 @@ describe("availability join", () => {
           name: "b2d.body.foo",
           signature: normalizedFunctionSignature(fooOverloadA),
         },
-        removedIn: "1.13.0",
+        availableIn: ["1.12.4"],
       },
     ]);
     const md = apiModuleMarkdown(pageWith({ functions: [fooOverloadA] }, availability));
-    expect(md).toContain("Removed in 1.13.0");
+    expect(md).toContain("Available through Defold 1.12.4");
   });
 
   test("the real default surface joins a since-1.13.0 symbol onto its b2d.body page", () => {
@@ -1644,9 +1652,9 @@ describe("availability join", () => {
     const body = pages.find((p) => p.namespace === "b2d.body");
     expect(body).toBeDefined();
     if (!body) return;
-    expect(body.availability?.size ?? 0).toBeGreaterThan(0);
+    expect(body.availability?.records.size ?? 0).toBeGreaterThan(0);
     const labelled = apiModuleSymbols(body, body.translations, body.signatures).filter(
-      (s) => s.availability?.since === "1.13.0",
+      (s) => s.availability?.availableIn.length === 1 && s.availability.availableIn[0] === "1.13.0",
     );
     expect(labelled.length).toBeGreaterThan(0);
   });
