@@ -75,12 +75,29 @@ const POSITIVE_FILES: Record<string, string> = {
     // A keyed-by-constant-name table of args tables (the documented example).
     'compute.set_constants("/my_compute.computec", { tint: { value: vmath.vector4(1, 0, 0, 1) } });',
     'compute.set_samplers("/my_compute.computec", { texture_sampler: { u_wrap: 0 } });',
+    // The getters return arrays of records — index and iterate every one.
+    'const cc = compute.get_constants("/my_compute.computec");',
+    "const ccName: Hash = cc[0].name;",
+    "const ccVal = cc[0].value;",
+    'for (const s of compute.get_samplers("/my_compute.computec")) { const nm: Hash = s.name; }',
+    'const ct = compute.get_textures("/my_compute.computec")[0].width;',
+    "void ccVal;",
+    "void ct;",
   ].join("\n"),
   "material.ts": [
     'material.set_constants("/m.materialc", { tint: { value: vmath.vector4(1, 0, 0, 1) } });',
     'material.set_vertex_attributes("/m.materialc", { position: { normalize: true } });',
     // The value field's documented array branch (a table of numbers).
     'material.set_vertex_attributes("/m.materialc", { color: { value: [1, 0, 0, 1] } });',
+    // The getters return arrays of records — index and iterate every one.
+    'const mc = material.get_constants("/m.materialc");',
+    "const mcName: Hash = mc[0].name;",
+    'for (const s of material.get_samplers("/m.materialc")) { const nm: Hash = s.name; }',
+    'const mt: number = material.get_textures("/m.materialc")[0].width;',
+    'const norm: boolean = material.get_vertex_attributes("/m.materialc")[0].normalize;',
+    "void mcName;",
+    "void mt;",
+    "void norm;",
   ].join("\n"),
   "model.ts": [
     'const w = model.get_blend_weights("#model");',
@@ -137,6 +154,10 @@ const NEGATIVE_CASES: Record<string, string> = {
   ].join("\n"),
   "graphics adapter limit is a number, not a string":
     "const bad: string = graphics.get_adapter_info().limits.max_texture_size_2d;",
+  "compute.get_constants returns an array, not a record":
+    'const n: Hash = compute.get_constants("/c.computec").name;',
+  "material.get_vertex_attributes returns an array, not a record":
+    'const b: boolean = material.get_vertex_attributes("/m.materialc").normalize;',
 };
 
 describe("promoted 1.13.0 surface — negative controls fail the same compile", () => {

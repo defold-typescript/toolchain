@@ -248,6 +248,51 @@ describe("multi-return recovery", () => {
   });
 });
 
+describe("records-collection outer-layer counting", () => {
+  const fieldList =
+    '<dl><dt><code>a</code></dt><dd><span class="type">string</span> a field</dd>' +
+    '<dt><code>n</code></dt><dd><span class="type">number</span> n field</dd></dl>';
+
+  function returnDoc(prose: string): unknown {
+    return {
+      info: { namespace: "test" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "test.fn",
+          parameters: [],
+          returnvalues: [{ name: "r", types: ["table"], doc: `${prose} ${fieldList}` }],
+        },
+      ],
+    };
+  }
+
+  test("a records-collection the emitter does not wrap counts an outer-layer loss", () => {
+    // "collection of tables" is a records-collection (the oracle matches) that
+    // SLOT_LEVEL_LIST_PROSE deliberately does not wrap, so the emitted bare
+    // object dropped its outer array — a counted loss.
+    const entry = requireEntry(
+      buildFidelityReport(manifestOf(returnDoc("A collection of tables, where each entry:"))),
+      "test",
+    );
+    expect(entry.recordTables).toBeGreaterThanOrEqual(1);
+  });
+
+  test("a table-of-tables the emitter wraps is recovered and counts nothing", () => {
+    const entry = requireEntry(
+      buildFidelityReport(manifestOf(returnDoc("A table of tables, where each entry:"))),
+      "test",
+    );
+    expect(entry.recordTables).toBe(0);
+  });
+
+  test("compute and material record-collection getters audit to recordTables 0", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    expect(requireEntry(report, "compute").recordTables).toBe(0);
+    expect(requireEntry(report, "material").recordTables).toBe(0);
+  });
+});
+
 describe("fidelity drift gate", () => {
   test("live report over MODULE_MANIFEST equals the committed baseline", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);

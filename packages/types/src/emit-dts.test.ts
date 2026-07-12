@@ -2832,7 +2832,78 @@ describe("slot-level array-of-object recovery", () => {
   test("SLOT_LEVEL_LIST_PROSE matches array/list markers", () => {
     expect(SLOT_LEVEL_LIST_PROSE.test("an array of tables")).toBe(true);
     expect(SLOT_LEVEL_LIST_PROSE.test("a list of things")).toBe(true);
+    expect(
+      SLOT_LEVEL_LIST_PROSE.test("A table of tables, where each entry contains info about the X:"),
+    ).toBe(true);
     expect(SLOT_LEVEL_LIST_PROSE.test("a single table")).toBe(false);
+  });
+
+  test("table-of-tables prose before the field list wraps the recovered object in []", () => {
+    const out = emitDeclarations(
+      moduleOf("demo", [
+        {
+          name: "demo.f",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [
+            {
+              name: "r",
+              doc: `A table of tables, where each entry: ${fieldList}`,
+              types: ["table"],
+              isOptional: false,
+            },
+          ],
+        },
+      ]),
+    );
+    expect(out).toContain("function f(): { a: string; n: number }[];");
+  });
+
+  test("compute records-collection getters emit arrays of records", () => {
+    const module = parseDefoldApiDoc(computeDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "compute.get_constants"),
+        requireFunction(module, "compute.get_samplers"),
+        requireFunction(module, "compute.get_textures"),
+      ],
+    });
+    expect(out).toContain(
+      "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
+    );
+    expect(out).toContain(
+      "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
+    );
+    expect(out).toContain(
+      "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
+    );
+  });
+
+  test("material records-collection getters emit arrays of records", () => {
+    const module = parseDefoldApiDoc(materialDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "material.get_constants"),
+        requireFunction(module, "material.get_samplers"),
+        requireFunction(module, "material.get_textures"),
+        requireFunction(module, "material.get_vertex_attributes"),
+      ],
+    });
+    expect(out).toContain(
+      "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
+    );
+    expect(out).toContain(
+      "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
+    );
+    expect(out).toContain(
+      "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
+    );
+    expect(out).toContain(
+      "function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[];",
+    );
   });
 
   test("array prose before the field list wraps the recovered object in []", () => {
