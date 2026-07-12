@@ -36,6 +36,8 @@
     "./timers": {
       "types": "./src/timers.d.ts"
     },
+    "./api-availability.json": "./api-availability.json",
+    "./api-signatures.json": "./api-signatures.json",
     "./package.json": "./package.json"
   },
   "files": [
@@ -45,6 +47,7 @@
     "api-targets.json",
     "api-migrations.json",
     "api-availability.json",
+    "api-signatures.json",
     "index.d.ts",
     "!src/**/*.test.ts",
     "!scripts/**/*.test.ts",

@@ -1,8 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type ApiPage, apiModuleSymbols } from "../app/lib/api-surface";
-import { loadApiSurface } from "../app/lib/api-surface-loader";
+import { loadApiSurface, loadCombinedSurface } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
+import { compactAvailability } from "../app/lib/combined-surface";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
 import { listGuidePages } from "../app/lib/guide-loader";
@@ -225,16 +226,77 @@ export function stripGuideChrome(body: string): string {
     .replace(/\n{3,}/g, "\n\n");
 }
 
+// Frames the whole llms-full document for an agent: which versions are tracked
+// and how to read the Combined `## API` (resolve the project's target, filter
+// entries by their Availability tag, trust the materialized `.defold-types/`).
+// Lives in the header block, before `## Guide`.
+function agentContract(versions: readonly string[]): string[] {
+  return [
+    `> Tracked Defold versions: ${versions.join(", ")} (newest first).`,
+    "",
+    "The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature followed by a compact **Availability** tag — `[since X]`, `[through X]`, `[versions: …]`, or none when the symbol exists in every tracked version. To target one project: (1) resolve the project's configured Defold target and its `.defold-types/<surfaceId>/`, (2) filter Combined entries by Availability down to that version, (3) treat the materialized `.defold-types/<surfaceId>/*.d.ts` as the final callable truth.",
+    "",
+  ];
+}
+
 export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
   const pages = navOrderedPages();
-  const lines: string[] = [...target.header(pages), "## Guide", ""];
+  const combined = loadCombinedSurface(TYPES_DIR);
+  const lines: string[] = [
+    ...target.header(pages),
+    ...agentContract(combined.versions),
+    "## Guide",
+    "",
+  ];
   for (const page of pages) {
     if (!page.includeInLlmsFull) continue;
     const body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body.trimEnd();
     lines.push(stripGuideChrome(body), "");
   }
   lines.push("## API", "");
-  for (const page of loadApiSurface(TYPES_DIR)) {
+  const defaultSurface = loadApiSurface(TYPES_DIR);
+  // Symbols authored in override `.d.ts` (excluded from auto-emit — the vmath
+  // generics, msg/go overloads, socket aliases) are absent from
+  // `api-signatures.json`, so their Combined entry carries no authoritative
+  // signature. They are present in every tracked version, so fall back to the
+  // same declaration-backed signature the default `/api` surface renders,
+  // keyed by `namespace::name` and emitted once so no callable symbol is lost.
+  const authoredEngine = new Map<string, string[]>();
+  for (const page of defaultSurface) {
+    if (page.category !== "engine") continue;
+    for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+      const key = `${page.namespace}::${symbol.name}`;
+      const list = authoredEngine.get(key) ?? [];
+      list.push(symbol.signature);
+      authoredEngine.set(key, list);
+    }
+  }
+  // Engine namespaces are the versioned surface: serialize the shared Combined
+  // projection (authoritative signatures + compact availability). The union and
+  // the availability axis are owned by `loadCombinedSurface` — no independent
+  // version-merge is re-derived here.
+  for (const ns of combined.namespaces) {
+    lines.push(`### ${ns.namespace}`, "");
+    const fallbackEmitted = new Set<string>();
+    for (const entry of ns.entries) {
+      if (entry.authoritativeSignature) {
+        const tag = compactAvailability(entry);
+        lines.push(
+          tag ? `- ${entry.authoritativeSignature} ${tag}` : `- ${entry.authoritativeSignature}`,
+        );
+        continue;
+      }
+      const key = `${ns.namespace}::${entry.identity.name}`;
+      if (fallbackEmitted.has(key)) continue;
+      fallbackEmitted.add(key);
+      for (const signature of authoredEngine.get(key) ?? []) lines.push(`- ${signature}`);
+    }
+    lines.push("");
+  }
+  // Version-independent namespaces (Lua stdlib, global value types) carry no
+  // availability axis, so they keep their plain per-symbol signature dump.
+  for (const page of defaultSurface) {
+    if (page.category === "engine") continue;
     lines.push(`### ${page.namespace}`, "");
     for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
       lines.push(`- ${symbol.signature}`);

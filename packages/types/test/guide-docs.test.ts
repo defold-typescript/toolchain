@@ -1195,4 +1195,13 @@ describe("docs/guide helper scripts", () => {
     expect(section).toContain("/scripts");
     expect(section).toContain("bun");
   });
+
+  test("reachable-surface map lists the offline api-availability.json artifact", async () => {
+    const body = await readGuide("agent-runbooks.md");
+    const start = body.indexOf("(reachable-surface map)");
+    expect(start).toBeGreaterThan(-1);
+    const nextSection = body.indexOf("\n### ", start + 1);
+    const map = body.slice(start, nextSection === -1 ? undefined : nextSection);
+    expect(map).toContain("@defold-typescript/types/api-availability.json");
+  });
 });

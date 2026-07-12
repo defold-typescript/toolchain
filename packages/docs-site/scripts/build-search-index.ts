@@ -1,11 +1,18 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { apiPages, apiPagesForVersion, apiVersions, TYPES_DIR } from "../app/lib/api-content";
+import {
+  apiPages,
+  apiPagesForVersion,
+  apiVersions,
+  combinedSurface,
+  TYPES_DIR,
+} from "../app/lib/api-content";
 import { GUIDE_DIR, guidePages } from "../app/lib/content";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import {
   apiSearchRecords,
   buildSearchIndex,
+  combinedSearchRecords,
   versionSearchIndexRecords,
 } from "../app/lib/search-index";
 
@@ -26,6 +33,10 @@ mkdirSync(OUTPUT_DIR, { recursive: true });
 writeFileSync(join(OUTPUT_DIR, "search-index.json"), JSON.stringify(records));
 
 console.log(`search-index.json: ${records.length} records`);
+
+const combinedRecords = combinedSearchRecords(combinedSurface());
+writeFileSync(join(OUTPUT_DIR, "search-index-combined.json"), JSON.stringify(combinedRecords));
+console.log(`search-index-combined.json: ${combinedRecords.length} records`);
 
 for (const { version, records: versionRecords } of versionSearchIndexRecords(
   TYPES_DIR,
