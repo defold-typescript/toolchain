@@ -15,9 +15,17 @@ export interface VersionSwitcherEntry {
  * future non-Defold targets stay readable without a lookup table.
  */
 export function versionLabel(id: string): string {
+  if (id === COMBINED_VERSION_ID) return "Combined";
   const match = /^defold-(.+)$/.exec(id);
   return match ? `Defold ${match[1]}` : id;
 }
+
+/**
+ * The virtual, documentation-only version id for the union surface. It exists
+ * only in the docs-site selector and `/api/combined` routes — never in
+ * `api-targets.json`, a package export, or a materialized `.defold-types` surface.
+ */
+export const COMBINED_VERSION_ID = "combined";
 
 /**
  * The one explicit active-version context for a route: the version whose surface
@@ -44,6 +52,13 @@ export interface BuildVersionSwitcherInput {
   versions: readonly ApiVersion[];
   namespacesByVersion: Record<string, readonly string[]>;
   route: string;
+  /**
+   * The union namespaces of the Combined surface. When present a virtual
+   * `Combined` entry is appended after the concrete versions (it switches to
+   * `/api/combined/<namespace>` when the current namespace exists there, else the
+   * `/api/combined` index). Omitted (the default) keeps the switcher versions-only.
+   */
+  combinedNamespaces?: readonly string[];
 }
 
 export function isApiRoute(route: string): boolean {
@@ -54,6 +69,7 @@ export function buildVersionSwitcher({
   versions,
   namespacesByVersion,
   route,
+  combinedNamespaces,
 }: BuildVersionSwitcherInput): VersionSwitcherEntry[] {
   const defaultVersion = versions.find((version) => version.isDefault) ?? versions[0];
   if (!defaultVersion) return [];
@@ -61,12 +77,17 @@ export function buildVersionSwitcher({
   const knownVersionIds = new Set(versions.map((version) => version.id));
   const segments = route.replace(/\/+$/, "").split("/").filter(Boolean);
   const firstApiSegment = segments[1];
+  const onCombined = firstApiSegment === COMBINED_VERSION_ID;
   const routeHasVersionPrefix =
     firstApiSegment !== undefined && knownVersionIds.has(firstApiSegment);
-  const currentVersionId = routeHasVersionPrefix ? firstApiSegment : defaultVersion.id;
-  const currentNamespace = routeHasVersionPrefix ? segments[2] : firstApiSegment;
+  const currentVersionId = onCombined
+    ? COMBINED_VERSION_ID
+    : routeHasVersionPrefix
+      ? firstApiSegment
+      : defaultVersion.id;
+  const currentNamespace = onCombined || routeHasVersionPrefix ? segments[2] : firstApiSegment;
 
-  return versions.map((version) => ({
+  const entries: VersionSwitcherEntry[] = versions.map((version) => ({
     id: version.id,
     label: versionLabel(version.id),
     route: routeForVersion(
@@ -77,6 +98,21 @@ export function buildVersionSwitcher({
     ),
     isCurrent: version.id === currentVersionId,
   }));
+
+  if (combinedNamespaces) {
+    const namespace =
+      currentNamespace && combinedNamespaces.includes(currentNamespace)
+        ? currentNamespace
+        : undefined;
+    entries.push({
+      id: COMBINED_VERSION_ID,
+      label: "Combined",
+      route: namespace ? `/api/${COMBINED_VERSION_ID}/${namespace}` : `/api/${COMBINED_VERSION_ID}`,
+      isCurrent: currentVersionId === COMBINED_VERSION_ID,
+    });
+  }
+
+  return entries;
 }
 
 function routeForVersion(

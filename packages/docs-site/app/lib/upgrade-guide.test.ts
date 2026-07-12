@@ -157,4 +157,22 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
     const broken = targets.filter((href) => !routes.has(href.split("#")[0] ?? href));
     expect(broken).toEqual([]);
   });
+
+  // Step 1 proved the Live Update mounts are signature transitions (the `name`
+  // parameter widened to accept a hash), not removed symbols.
+  test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
+    const collapsed = guideBody.replace(/\s+/g, " ");
+    expect(collapsed).toContain("## Changed Lua API signatures");
+    expect(collapsed).toContain("`liveupdate.add_mount` was **not** removed");
+    expect(collapsed).toContain("widened from `string` to `string | Hash`");
+    expect(collapsed).not.toContain("auto-mount API is gone");
+    expect(collapsed).not.toContain("no longer exists on the 1.13.0");
+    expect(collapsed).not.toContain("is removed alongside `add_mount`");
+  });
+
+  test("still describes model.material as removed", () => {
+    expect(guideBody.replace(/\s+/g, " ")).toContain(
+      "The single-slot `model.material` property is removed",
+    );
+  });
 });
