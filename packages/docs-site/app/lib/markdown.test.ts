@@ -272,6 +272,29 @@ describe("renderMarkdown", () => {
     expect(idOf(on)).toBe(idOf(off));
   });
 
+  test("ignores trailing empty badge-dot spans when slugging a signature heading", async () => {
+    const idOf = (html: string) => html.match(/<h3[^>]*\sid="([^"]+)"/)?.[1];
+    const plain = await renderMarkdown(`### \`${SIGNATURE}\`\n`);
+    const dotted = await renderMarkdown(
+      `### \`${SIGNATURE}\` <span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New"></span>\n`,
+    );
+    expect(idOf(dotted)).toBe(idOf(plain));
+    // The permalink label is the bare signature, not the span markup.
+    expect(dotted).not.toContain('aria-label="Permalink to `foo.bar(x: string): number` <span');
+    // The dot itself still renders inside the heading.
+    expect(dotted).toContain('class="api-badge-dot api-badge-dot--new"');
+  });
+
+  test("a signature heading carrying a generic `<...>` token keeps its slug intact", async () => {
+    const idOf = (html: string) => html.match(/<h3[^>]*\sid="([^"]+)"/)?.[1];
+    const sig = 'gui.get_node(id: string | Hash): Opaque<"node">';
+    const bare = await renderMarkdown(`### \`${sig}\`\n`);
+    const dotted = await renderMarkdown(
+      `### \`${sig}\` <span class="api-badge-dot api-badge-dot--changed" aria-label="Changed" title="Changed"></span>\n`,
+    );
+    expect(idOf(dotted)).toBe(idOf(bare));
+  });
+
   test("leaves h3 inline code plain when the highlight option is off", async () => {
     const html = await renderMarkdown(`### \`${SIGNATURE}\`\n`);
     expect(html).not.toContain("api-signature");

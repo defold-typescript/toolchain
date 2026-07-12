@@ -4,6 +4,7 @@ import {
   type ApiModule,
   type ApiParameter,
   type ApiVariable,
+  type AvailabilityLabelKind,
   availabilityLabel,
   DEFOLD_TYPE_MAP,
   examplesHtmlToMarkdown,
@@ -66,6 +67,50 @@ export function availabilityLabels(av: ApiAvailability, versions: readonly strin
   if (av.deprecatedSince) labels.push(`Deprecated since ${av.deprecatedSince}`);
   if (av.box2d && av.box2d.length > 0) labels.push(`Box2D: ${av.box2d.join(", ")}`);
   return labels;
+}
+
+/**
+ * The three independent, co-occurring availability categories a symbol can carry,
+ * driving the glanceable color layer (per-symbol heading dots, namespace count
+ * pills). `isNew`/`isChanged` come from the availability span; `isDeprecated` is
+ * orthogonal, so a changed-and-deprecated symbol carries both.
+ */
+export interface BadgeCategory {
+  readonly isNew: boolean;
+  readonly isChanged: boolean;
+  readonly isDeprecated: boolean;
+}
+
+/**
+ * Core span-to-category mapping, kept in one place so the per-symbol dots and the
+ * namespace counts agree byte-for-byte: a `since` span is New, any bounded/partial
+ * span (`through`/`range`/`discrete`) is Changed, an all-versions span is neither.
+ * Deprecation is an independent flag the caller supplies.
+ */
+export function badgeCategoryFromLabel(
+  kind: AvailabilityLabelKind,
+  isDeprecated: boolean,
+): BadgeCategory {
+  return {
+    isNew: kind === "since",
+    isChanged: kind === "through" || kind === "range" || kind === "discrete",
+    isDeprecated,
+  };
+}
+
+/**
+ * Categorize a symbol's availability record for the color-badge layer. Absent
+ * availability (a symbol present everywhere with no curated fact) is all-false.
+ */
+export function badgeCategory(
+  av: ApiAvailability | undefined,
+  versions: readonly string[],
+): BadgeCategory {
+  if (!av) return badgeCategoryFromLabel("all", false);
+  return badgeCategoryFromLabel(
+    availabilityLabel(av.availableIn, versions).kind,
+    av.deprecatedSince !== undefined,
+  );
 }
 
 // Flat prose form for the search index: the badge labels plus the replacement's

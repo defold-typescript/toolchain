@@ -9,6 +9,8 @@ import {
   type ApiSymbolParam,
   apiModuleSymbols,
   availabilityLabels,
+  type BadgeCategory,
+  badgeCategory,
   functionOverviewCards,
   groupFunctionSymbols,
   type LibraryMeta,
@@ -18,6 +20,7 @@ import {
   loadApiSurfaceForVersion,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
+import type { NamespaceBadgeCounts } from "./combined-surface";
 import { buildSymbolIndex } from "./symbol-index";
 import { linkifySymbolMentions } from "./symbol-linkify";
 
@@ -117,6 +120,53 @@ function apiIndexRoute(route: string): string {
   return cut > 0 ? route.slice(0, cut) : route;
 }
 
+const BADGE_KINDS: {
+  readonly flag: keyof BadgeCategory;
+  readonly kind: string;
+  readonly label: string;
+}[] = [
+  { flag: "isNew", kind: "new", label: "New" },
+  { flag: "isChanged", kind: "changed", label: "Changed" },
+  { flag: "isDeprecated", kind: "deprecated", label: "Deprecated" },
+];
+
+// The glanceable color dots for one symbol heading: one empty `<span>` per active
+// category, ordered new -> changed -> deprecated. The `aria-label`/`title` carry
+// the meaning so color stays additive, never the sole signal. The span is empty
+// so the shared heading slugger strips it and the function-overview anchors keep
+// keying off the bare signature. Returns `""` for a symbol with no category.
+function badgeDots(category: BadgeCategory): string {
+  return BADGE_KINDS.filter((b) => category[b.flag])
+    .map(
+      (b) =>
+        `<span class="api-badge-dot api-badge-dot--${b.kind}" aria-label="${b.label}" title="${b.label}"></span>`,
+    )
+    .join("");
+}
+
+const COUNT_KINDS: {
+  readonly flag: keyof NamespaceBadgeCounts;
+  readonly kind: string;
+  readonly noun: string;
+}[] = [
+  { flag: "new", kind: "new", noun: "new" },
+  { flag: "changed", kind: "changed", noun: "changed" },
+  { flag: "deprecated", kind: "deprecated", noun: "deprecated" },
+];
+
+// The count pills injected after a Combined namespace's H1: one pill per non-zero
+// category showing its tally, the `aria-label` naming the category so color stays
+// additive. Returns `""` when every count is zero (a fully stable namespace shows
+// nothing).
+export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
+  const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
+    (c) =>
+      `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]}</span>`,
+  );
+  if (pills.length === 0) return "";
+  return `<div class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</div>`;
+}
+
 // One symbol, single column: the `### signature` heading is the title, and the
 // description + example are wrapped in an indented `.api-symbol-body` so the body
 // reads as subordinate to the title. The signature is not repeated as a code
@@ -124,8 +174,8 @@ function apiIndexRoute(route: string): string {
 // let markdown-it parse it inside the raw HTML wrapper. `badges` (the availability
 // block) sits right after the description so lifecycle facts read before the
 // example and parameter tables.
-function symbolBlock(symbol: ApiSymbol, badges = ""): string {
-  const heading = `### \`${symbol.signature}\``;
+function symbolBlock(symbol: ApiSymbol, badges = "", dots = ""): string {
+  const heading = dots ? `### \`${symbol.signature}\` ${dots}` : `### \`${symbol.signature}\``;
   const body: string[] = [];
   if (symbol.docMarkdown) body.push(symbol.docMarkdown);
   if (badges) body.push(badges);
@@ -218,7 +268,14 @@ export function apiPageMarkdown(
   {
     omitHeading = false,
     resolveReplacement = () => undefined,
-  }: { omitHeading?: boolean; resolveReplacement?: ReplacementResolver } = {},
+    titleBadges = "",
+  }: {
+    omitHeading?: boolean;
+    resolveReplacement?: ReplacementResolver;
+    // Namespace-title count pills injected immediately after the H1 (Combined
+    // pages pass the `namespaceCountBadges` HTML); empty leaves the heading as-is.
+    titleBadges?: string;
+  } = {},
 ): string {
   const m = page.module;
   const indexRoute = apiIndexRoute(page.route);
@@ -230,6 +287,7 @@ export function apiPageMarkdown(
       lines.push(`\`${m.namespace}\``, "");
     }
   }
+  if (titleBadges) lines.push(titleBadges, "");
   const raw = m.description || m.brief;
   const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
   if (intro) lines.push(linkify(intro), "");
@@ -254,7 +312,8 @@ export function apiPageMarkdown(
       resolveReplacement,
       indexRoute,
     );
-    lines.push(symbolBlock(linkified, badges), "");
+    const dots = badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []));
+    lines.push(symbolBlock(linkified, badges, dots), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);
