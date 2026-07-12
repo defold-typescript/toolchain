@@ -15,6 +15,46 @@
     "droppedMembers": 0,
     "optionalAsRequired": 0
   },
+  "b2d.chain": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
+  "b2d.fixture": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
+  "b2d.joint": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
+  "b2d.shape": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
+  "b2d.world": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
   "buffer": {
     "droppedElements": 0,
     "unknownTokens": [],
@@ -40,6 +80,14 @@
     "optionalAsRequired": 0
   },
   "collectionproxy": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
+  "compute": {
     "droppedElements": 0,
     "unknownTokens": [],
     "recordTables": 0,
@@ -152,6 +200,14 @@
     "optionalAsRequired": 0
   },
   "liveupdate": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0
+  },
+  "material": {
     "droppedElements": 0,
     "unknownTokens": [],
     "recordTables": 0,
