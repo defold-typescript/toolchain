@@ -17,6 +17,13 @@ import {
   libraryDirs,
   libraryOwners,
 } from "../lib/api-content";
+import {
+  API_SURFACE_STORAGE_KEY,
+  type ApiSurfaceConfig,
+  activeSurfaceForPath,
+  resolveApiSurfaceRedirect,
+  rewriteApiNavForSurface,
+} from "../lib/api-surface-pref";
 import { withBase } from "../lib/base";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
@@ -29,7 +36,11 @@ import {
   type NavLink,
 } from "../lib/nav";
 import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
-import { buildVersionSwitcher, type VersionSwitcherEntry } from "../lib/version-switch";
+import {
+  buildVersionSwitcher,
+  COMBINED_VERSION_ID,
+  type VersionSwitcherEntry,
+} from "../lib/version-switch";
 
 declare module "hono" {
   // Must stay an interface: module augmentation merges into hono's ContextRenderer.
@@ -238,10 +249,9 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
       .map(toNamespace),
     libraries,
   });
-  const activeId = activeCategoryId(path, nav) ?? nav[0]?.id;
-  const activeCategory = nav.find((category) => category.id === activeId) ?? nav[0];
   const versions = apiVersions();
   const versionIds = versions.filter((version) => !version.isDefault).map((version) => version.id);
+  const defaultVersion = versions.find((version) => version.isDefault) ?? versions[0];
   const namespacesByVersion = Object.fromEntries(
     versions.map((version) => [
       version.id,
@@ -250,16 +260,41 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
       ),
     ]),
   );
+  const combinedNs = combinedNamespaces();
+
+  // One surface-preference config drives both the pre-paint redirect (new users
+  // default to Combined; returning users keep their last choice) and the
+  // version-aware sidebar rewrite below, so navigating between API links no longer
+  // drops the selected surface.
+  const surfaceConfig: ApiSurfaceConfig = {
+    base: withBase("/").replace(/\/$/, ""),
+    defaultVersionId: defaultVersion?.id ?? "",
+    versionIds,
+    combinedNamespaces: combinedNs,
+  };
+  const activeSurface = activeSurfaceForPath(path, surfaceConfig);
+  const surfaceNamespaces =
+    activeSurface === COMBINED_VERSION_ID ? combinedNs : (namespacesByVersion[activeSurface] ?? []);
+  const surfaceNav = rewriteApiNavForSurface(nav, activeSurface, surfaceNamespaces, surfaceConfig);
+
+  const activeId = activeCategoryId(path, surfaceNav) ?? surfaceNav[0]?.id;
+  const activeCategory = surfaceNav.find((category) => category.id === activeId) ?? surfaceNav[0];
   const versionSwitcher =
     versions.length > 1
       ? buildVersionSwitcher({
           versions,
           namespacesByVersion,
           route: path,
-          combinedNamespaces: combinedNamespaces(),
+          combinedNamespaces: combinedNs,
         })
       : [];
   const currentVersion = versionSwitcher.find((entry) => entry.isCurrent) ?? versionSwitcher[0];
+
+  // Serialize the tested redirect decision into a pre-paint script (the theme-init
+  // pattern) so a new user's un-prefixed API page swaps to Combined before first
+  // paint; a capture-phase listener records the surface a selector link chooses so
+  // the choice survives later navigation.
+  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${JSON.stringify(API_SURFACE_STORAGE_KEY)}),${JSON.stringify(surfaceConfig)});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${JSON.stringify(API_SURFACE_STORAGE_KEY)},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}})();`;
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();
@@ -280,6 +315,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           />
         ))}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        <script dangerouslySetInnerHTML={{ __html: surfaceInit }} />
         <style dangerouslySetInnerHTML={{ __html: THEME_TOKENS }} />
         {styles.fonts.map((href) => (
           <link key={href} rel="preload" as="font" type="font/woff2" href={href} crossorigin="" />
@@ -336,7 +372,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
                 data-topic-scroll
                 class="flex w-full items-center gap-1 overflow-x-auto overflow-y-hidden text-[length:var(--nav-top-size)] leading-5 lg:overflow-visible"
               >
-                {nav.map((category) => (
+                {surfaceNav.map((category) => (
                   <CategoryLink
                     key={category.id}
                     category={category}
@@ -373,7 +409,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               <article class={`min-w-0 flex-1 ${contentClass ?? ""}`}>
                 {showToc ? <InlineToc headings={tocHeadings} /> : null}
                 {children}
-                <Pager pager={buildPager(nav, path)} />
+                <Pager pager={buildPager(surfaceNav, path)} />
               </article>
               {showToc ? (
                 <aside data-testid="toc-rail" class="hidden xl:block">
@@ -427,6 +463,7 @@ function VersionSelector({
           <a
             key={entry.id}
             href={withBase(entry.route)}
+            data-api-surface={entry.id}
             aria-current={entry.isCurrent ? "page" : undefined}
             class={
               "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-text-muted transition hover:bg-surface hover:text-text " +
