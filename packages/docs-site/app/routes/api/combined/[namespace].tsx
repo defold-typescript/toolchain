@@ -1,7 +1,18 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { apiPages, combinedApiPages, combinedParams } from "../../../lib/api-content";
-import { apiLinkify, apiPageMarkdown, apiReplacementResolver } from "../../../lib/api-page-render";
+import {
+  apiPages,
+  combinedApiPages,
+  combinedParams,
+  combinedSurface,
+} from "../../../lib/api-content";
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  apiReplacementResolver,
+  namespaceCountBadges,
+} from "../../../lib/api-page-render";
+import { namespaceBadgeCounts } from "../../../lib/combined-surface";
 import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
 
@@ -25,9 +36,15 @@ export default createRoute(
     const linkify = apiLinkify(pages);
     const resolveReplacement = apiReplacementResolver(apiPages());
 
-    const html = await renderMarkdown(apiPageMarkdown(page, linkify, { resolveReplacement }), {
-      highlightSignatureHeadings: true,
-    });
+    // Namespace-title count pills glance-summarize the per-symbol dots; the model
+    // comes from the same cached Combined surface the pages are projected from.
+    const model = combinedSurface().namespaces.find((n) => n.namespace === namespace);
+    const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model)) : "";
+
+    const html = await renderMarkdown(
+      apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges }),
+      { highlightSignatureHeadings: true },
+    );
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${namespace} API (combined)`,
       headings: pageHeadings(html),

@@ -606,6 +606,67 @@ describe("availability badges", () => {
     const md = apiPageMarkdown(page, noLink);
     expect(md).not.toContain('aria-label="Availability"');
   });
+
+  const headingLineOf = (md: string, prefix: string) =>
+    md.split("\n").find((line) => line.startsWith(prefix));
+
+  test("marks a since symbol with a New dot on its signature heading", () => {
+    const md = apiPageMarkdown(modelPage(setTexture, { availableIn: ["1.13.0"] }), noLink);
+    const heading = headingLineOf(md, "### `model.set_texture");
+    expect(heading).toContain(
+      '<span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New"></span>',
+    );
+  });
+
+  test("marks a deprecated symbol with a Deprecated dot and no span dot", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: VERSIONS, deprecatedSince: "1.12.0" }),
+      noLink,
+    );
+    const heading = headingLineOf(md, "### `model.material");
+    expect(heading).toContain('api-badge-dot--deprecated" aria-label="Deprecated"');
+    expect(heading).not.toContain("api-badge-dot--new");
+    expect(heading).not.toContain("api-badge-dot--changed");
+  });
+
+  test("a universal symbol carrying no lifecycle fact emits no dot", () => {
+    const md = apiPageMarkdown(modelPage(material, { availableIn: VERSIONS }), noLink);
+    expect(md).not.toContain("api-badge-dot");
+  });
+
+  test("two co-occurring categories emit two dots on the one heading, changed before deprecated", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" }),
+      noLink,
+    );
+    const heading = headingLineOf(md, "### `model.material");
+    expect(heading).toBeDefined();
+    if (!heading) return;
+    expect(heading).toContain("api-badge-dot--changed");
+    expect(heading).toContain("api-badge-dot--deprecated");
+    expect(heading).not.toContain("api-badge-dot--new");
+    expect(heading.indexOf("--changed")).toBeLessThan(heading.indexOf("--deprecated"));
+  });
+});
+
+describe("apiPageMarkdown title badges", () => {
+  test("injects titleBadges immediately after the H1 and before the intro", () => {
+    const md = apiPageMarkdown(versionedWmathPage(), (t) => t, {
+      titleBadges: '<div class="api-badge-counts">PILLS</div>',
+    });
+    const iH1 = md.indexOf("# wmath");
+    const iBadges = md.indexOf('<div class="api-badge-counts">PILLS</div>');
+    const iIntro = md.indexOf("Old-version math helpers.");
+    expect(iH1).toBe(0);
+    expect(iBadges).toBeGreaterThan(iH1);
+    expect(iBadges).toBeLessThan(iIntro);
+  });
+
+  test("omitting titleBadges leaves the heading unchanged", () => {
+    const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
+    expect(md).not.toContain("api-badge-counts");
+    expect(md.startsWith("# wmath")).toBe(true);
+  });
 });
 
 describe("apiReplacementResolver", () => {

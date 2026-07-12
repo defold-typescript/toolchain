@@ -13,6 +13,7 @@ import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loade
 import {
   buildCombinedSurface,
   type CombinedVersionSurface,
+  namespaceBadgeCounts,
   type SignaturesArtifact,
 } from "./combined-surface";
 
@@ -253,5 +254,42 @@ describe("loadCombinedSurface (committed artifacts)", () => {
         expect(entry.authoritativeSignature).toBe(authoritative as string);
       }
     }
+  });
+});
+
+describe("namespaceBadgeCounts", () => {
+  test("tallies a namespace new in the newest version as new-only", () => {
+    expect(namespaceBadgeCounts(nsOf("compute"))).toEqual({ new: 1, changed: 0, deprecated: 0 });
+  });
+
+  test("counts each category independently — a changed+deprecated symbol bumps both", () => {
+    expect(namespaceBadgeCounts(nsOf("model"))).toEqual({ new: 0, changed: 1, deprecated: 1 });
+  });
+
+  test("a fully-stable namespace carries no badges", () => {
+    expect(namespaceBadgeCounts(nsOf("go"))).toEqual({ new: 0, changed: 0, deprecated: 0 });
+  });
+});
+
+describe("namespaceBadgeCounts (committed artifacts)", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const real = (name: string) => {
+    const found = surface.namespaces.find((n) => n.namespace === name);
+    if (!found) throw new Error(`namespace ${name} missing from combined surface`);
+    return found;
+  };
+
+  test("compute (all-new) has new > 0 and changed 0", () => {
+    const counts = namespaceBadgeCounts(real("compute"));
+    expect(counts.new).toBeGreaterThan(0);
+    expect(counts.changed).toBe(0);
+  });
+
+  test("a stable namespace (vmath) is {0,0,0}", () => {
+    expect(namespaceBadgeCounts(real("vmath"))).toEqual({ new: 0, changed: 0, deprecated: 0 });
+  });
+
+  test("a namespace with a transitioned symbol (liveupdate) has changed > 0", () => {
+    expect(namespaceBadgeCounts(real("liveupdate")).changed).toBeGreaterThan(0);
   });
 });

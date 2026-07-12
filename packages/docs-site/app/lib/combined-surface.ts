@@ -11,7 +11,7 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import type { ApiPage, AvailabilityLookup } from "./api-surface";
+import { type ApiPage, type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
 
 type ApiConstant = ApiModule["constants"][number];
 type ApiProperty = ApiModule["properties"][number];
@@ -130,6 +130,33 @@ export function compactAvailability(entry: CombinedEntry): string {
     default:
       return "";
   }
+}
+
+/** Per-category badge tallies for a Combined namespace title. */
+export interface NamespaceBadgeCounts {
+  readonly new: number;
+  readonly changed: number;
+  readonly deprecated: number;
+}
+
+/**
+ * Tally the color-badge categories over a Combined namespace's entries: each
+ * entry adds to every category it carries (a changed-and-deprecated symbol bumps
+ * both). Derives from the entry's already-computed `label.kind` + `deprecatedSince`
+ * via the shared {@link badgeCategoryFromLabel}, so the title pills and the
+ * per-symbol dots can never disagree.
+ */
+export function namespaceBadgeCounts(ns: CombinedNamespace): NamespaceBadgeCounts {
+  let isNew = 0;
+  let changed = 0;
+  let deprecated = 0;
+  for (const entry of ns.entries) {
+    const category = badgeCategoryFromLabel(entry.label.kind, entry.deprecatedSince !== undefined);
+    if (category.isNew) isNew += 1;
+    if (category.isChanged) changed += 1;
+    if (category.isDeprecated) deprecated += 1;
+  }
+  return { new: isNew, changed, deprecated };
 }
 
 function compareSemverDesc(a: string, b: string): number {
