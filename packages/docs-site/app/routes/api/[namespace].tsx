@@ -1,14 +1,16 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { ApiIndex, LibraryPath } from "../../components/api-index";
+import { ApiIndex, CombinedIndex, LibraryPath } from "../../components/api-index";
 import { withGlobalTypes } from "../../components/api-index-sections";
 import {
   apiPages,
   apiPagesForVersion,
   apiVersions,
+  combinedSurface,
   defaultGlobalTypePages,
   libraryDirs,
   libraryOwners,
+  toCombinedApiPage,
 } from "../../lib/api-content";
 import {
   apiLinkify,
@@ -18,6 +20,7 @@ import {
 } from "../../lib/api-page-render";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
+import { COMBINED_VERSION_ID } from "../../lib/version-switch";
 
 // honox flat routing collapses `api/[version]/index.tsx` to `/api/:version`,
 // which collides with this `/api/:namespace` route (the shallower one wins). So
@@ -31,10 +34,25 @@ export default createRoute(
     ...apiVersions()
       .filter((v) => !v.isDefault)
       .map((v) => ({ namespace: v.id })),
+    // honox collapses `api/combined/index.tsx` to `/api/combined`, which the
+    // shallower `/api/:namespace` route shadows — so the Combined index is
+    // folded in here alongside the per-version index, one extra param.
+    { namespace: COMBINED_VERSION_ID },
   ]),
   async (c) => {
     const param = c.req.param("namespace");
     if (!param) return c.notFound();
+
+    if (param === COMBINED_VERSION_ID) {
+      const surface = combinedSurface();
+      return c.render(
+        <CombinedIndex
+          pages={surface.namespaces.map(toCombinedApiPage)}
+          versions={surface.versions}
+        />,
+        { title: "API reference (combined)" },
+      );
+    }
 
     if (isKnownVersionId(param, apiVersions())) {
       return c.render(

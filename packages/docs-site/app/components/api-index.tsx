@@ -160,6 +160,48 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
   );
 }
 
+// The `/api/combined` landing: every engine namespace across the tracked Defold
+// versions in one surface. Documentation-only — the same card grid as the
+// per-version index, but the lead names the versions the union spans and the
+// availability convention (a symbol present in every version carries no badge).
+export function CombinedIndex({
+  pages,
+  versions,
+}: {
+  pages: ApiPage[];
+  versions: readonly string[];
+}) {
+  return (
+    <LandingPage
+      title="Combined API reference"
+      lead={
+        <p>
+          Every engine namespace across the tracked Defold versions ({versions.join(", ")}), unified
+          into one surface. Each symbol is annotated with the versions it is available in; a symbol
+          present in every version carries no badge.
+          <span class="mt-1 block text-sm text-text-faint">
+            {pages.length} namespace{pages.length === 1 ? "" : "s"} documented.
+          </span>
+        </p>
+      }
+    >
+      {pages.length > 0 ? (
+        <LandingSection
+          heading="Defold engine"
+          subtitle={
+            <>
+              Namespaces emitted by <code>@defold-typescript/types</code>, merged across every
+              tracked reference-documentation version.
+            </>
+          }
+        >
+          <ApiCards pages={pages} />
+        </LandingSection>
+      ) : null}
+    </LandingPage>
+  );
+}
+
 // The `/guides` landing. Renders the GUIDE_GROUPS as sections — the same shared
 // definition that drives the sidebar subgroups, so the two cannot drift.
 export function GuidesIndex({ pages }: { pages: GuidePage[] }) {

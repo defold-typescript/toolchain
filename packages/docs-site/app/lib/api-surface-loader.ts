@@ -8,6 +8,11 @@ import {
   type TranslationStore,
 } from "@defold-typescript/types";
 import type { ApiPage, ApiPageCategory, AvailabilityLookup, LibraryMeta } from "./api-surface";
+import {
+  buildCombinedSurface,
+  type CombinedSurface,
+  type SignaturesArtifact,
+} from "./combined-surface";
 import { parseGlobalTypes } from "./global-types";
 
 interface ApiTarget {
@@ -478,4 +483,36 @@ export function versionsWithDiskFixtures(typesDir: string): ApiVersion[] {
   return orderedTargets(typesDir)
     .filter((t) => t.default === true || targetIsMaterialized(typesDir, t))
     .map((t) => ({ id: t.id, isDefault: t.default === true }));
+}
+
+// The bare semver a target's availability/signature records are keyed by
+// (`defold-1.13.0` -> `1.13.0`); a non-`defold-` id passes through unchanged.
+function bareVersion(id: string): string {
+  return id.replace(/^defold-/, "");
+}
+
+// The authoritative `api-signatures.json` artifact (version -> identity-key ->
+// TS signature). Missing file degrades to an empty artifact, so the Combined
+// projection renders with no authoritative-signature guarantee rather than
+// throwing — matching how `loadAvailability` tolerates an absent overlay.
+export function loadSignaturesArtifact(typesDir: string): SignaturesArtifact {
+  const path = join(typesDir, "api-signatures.json");
+  if (!existsSync(path)) return { versions: {} };
+  return JSON.parse(readFileSync(path, "utf8")) as SignaturesArtifact;
+}
+
+// The union "Combined" projection over every materialized version's engine
+// surface. Documentation-only: it reuses the same committed artifacts the
+// per-version routes read (there is no `combined` api-target, export, or
+// materialized surface) and is rebuilt on demand.
+export function loadCombinedSurface(typesDir: string): CombinedSurface {
+  const overlay = loadAvailability(typesDir);
+  const signatures = loadSignaturesArtifact(typesDir);
+  const surfaces = versionsWithDiskFixtures(typesDir).map((version) => ({
+    version: bareVersion(version.id),
+    modules: loadApiSurfaceForVersion(typesDir, version.id)
+      .filter((page) => page.category === "engine")
+      .map((page) => page.module),
+  }));
+  return buildCombinedSurface({ surfaces, signatures, ...(overlay ? { overlay } : {}) });
 }
