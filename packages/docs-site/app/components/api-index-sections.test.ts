@@ -6,6 +6,7 @@ import {
   apiPageCardDescription,
   groupApiIndexPages,
   groupLibraryIndexByCreator,
+  withGlobalTypes,
 } from "./api-index-sections";
 
 function page(
@@ -170,5 +171,47 @@ describe("groupApiIndexPages", () => {
   test("yields an empty library section when no library pages are present", () => {
     const sections = groupApiIndexPages([page("go", "engine", "/api/go")]);
     expect(sections.library).toEqual([]);
+  });
+});
+
+describe("withGlobalTypes", () => {
+  test("re-adds global-type pages so the version index renders the section", () => {
+    const versionPages = [page("go", "engine", "/api/go"), page("base", "lua-stdlib", "/api/base")];
+    const globalTypePages = [
+      page("Vector3", "global-type", "/api/Vector3"),
+      page("Hash", "global-type", "/api/Hash"),
+    ];
+
+    const sections = groupApiIndexPages(withGlobalTypes(versionPages, globalTypePages));
+
+    expect(sections.globalType.map((p) => p.namespace)).toEqual(["Vector3", "Hash"]);
+    expect(sections.engine.map((p) => p.namespace)).toEqual(["go"]);
+    expect(sections.luaStdlib.map((p) => p.namespace)).toEqual(["base"]);
+  });
+
+  test("appends global-type pages after the version pages in original order", () => {
+    const versionPages = [page("go", "engine", "/api/go"), page("base", "lua-stdlib", "/api/base")];
+    const globalTypePages = [
+      page("Vector3", "global-type", "/api/Vector3"),
+      page("Hash", "global-type", "/api/Hash"),
+    ];
+
+    expect(withGlobalTypes(versionPages, globalTypePages).map((p) => p.namespace)).toEqual([
+      "go",
+      "base",
+      "Vector3",
+      "Hash",
+    ]);
+  });
+
+  test("dedupes by namespace so the default surface never double-renders a global type", () => {
+    const shared = page("Hash", "global-type", "/api/Hash");
+    const versionPages = [page("go", "engine", "/api/go"), shared];
+    const globalTypePages = [shared, page("Vector3", "global-type", "/api/Vector3")];
+
+    const merged = withGlobalTypes(versionPages, globalTypePages);
+
+    expect(merged.filter((p) => p.namespace === "Hash")).toHaveLength(1);
+    expect(merged.map((p) => p.namespace)).toEqual(["go", "Hash", "Vector3"]);
   });
 });

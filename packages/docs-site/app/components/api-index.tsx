@@ -77,9 +77,10 @@ export function GetStartedIndex({ pages }: { pages: GuidePage[] }) {
 // The category-grouped API index body, shared by the default `/api` route and
 // the per-version `/api/<version>` index. Libraries are intentionally excluded
 // here because they have their own top-level `/libraries` index; with `version`
-// set the intro names the version and only the non-empty categories render (a
-// non-default surface carries engine pages only — the shared core-types stay
-// default-only).
+// set the intro names the version and only the non-empty categories render. A
+// non-default surface carries engine pages plus the version-independent Global
+// types, which the route re-adds for display (they keep their default routes and
+// stay out of per-version routing/search).
 export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: string }) {
   const {
     globals: globalsPages,

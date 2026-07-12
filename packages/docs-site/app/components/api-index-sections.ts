@@ -35,6 +35,13 @@ export function groupApiIndexPages(pages: ApiPage[]): ApiIndexSections {
   };
 }
 
+// Global types are version-independent and kept off `apiPagesForVersion` for
+// routing/search, so the version index re-adds them here for display only.
+export function withGlobalTypes(versionPages: ApiPage[], globalTypePages: ApiPage[]): ApiPage[] {
+  const present = new Set(versionPages.map((p) => p.namespace));
+  return [...versionPages, ...globalTypePages.filter((p) => !present.has(p.namespace))];
+}
+
 export function apiPageCardDescription(page: ApiPage): string {
   if (page.brief) return page.brief;
   if (page.category === "library") return page.module.description;
