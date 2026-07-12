@@ -1132,15 +1132,29 @@ export function recoverCallbackSignature(token: string): string | null {
 const TABLE_FIELD =
   /<dt>\s*<code>([^<]+)<\/code>\s*<\/dt>\s*<dd>\s*<span class="type">([^<]+)<\/span>([^<]*)/g;
 const LIST_PROSE = /\ba list of\b/i;
-// The slot-level array signal ("an array of …" / "a list of …") lives in the
-// prose preceding the field list, never in a field's own `<dd>` (that is the
-// per-field `LIST_PROSE` path). `isSlotLevelList` therefore tests only the
-// substring before the first `<dl>`/`<ul>`/`<li>`, so a field-internal list
-// marker can never wrap the whole slot.
-export const SLOT_LEVEL_LIST_PROSE = /\b(an?\s+array of|a\s+list of)\b/i;
-function isSlotLevelList(doc: string): boolean {
+// The slot-level array signal ("an array of …" / "a list of …" / the
+// records-collection "table of tables" form) lives in the prose preceding the
+// field list, never in a field's own `<dd>` (that is the per-field `LIST_PROSE`
+// path). `isSlotLevelList` therefore tests only the substring before the first
+// `<dl>`/`<ul>`/`<li>`, so a field-internal list marker can never wrap the whole
+// slot. The `tables? of tables?` clause wraps the compute/material getters whose
+// return doc opens "A table of tables, where each entry …".
+export const SLOT_LEVEL_LIST_PROSE = /\b(an?\s+array of|a\s+list of|tables?\s+of\s+tables?)\b/i;
+export function isSlotLevelList(doc: string): boolean {
   const prefix = doc.split(/<dl>|<ul>|<li>/i)[0] ?? "";
   return SLOT_LEVEL_LIST_PROSE.test(prefix);
+}
+// The oracle for the fidelity audit: a records-collection return slot is any
+// "array/list/collection of tables" or "table of tables" form. Intentionally
+// broader than `SLOT_LEVEL_LIST_PROSE` (which names only the forms the emitter
+// actually wraps) so a records-collection wording the wrap trigger stops
+// recognizing re-surfaces as a counted loss, keeping the gate and the emitted
+// surface coupled. Scoped to the prose before the field list, same as above.
+export const RECORDS_COLLECTION_PROSE =
+  /\b(an?\s+(?:array|list|collection)\s+of\s+tables?|tables?\s+of\s+tables?)\b/i;
+export function isRecordsCollectionSlot(doc: string): boolean {
+  const prefix = doc.split(/<dl>|<ul>|<li>/i)[0] ?? "";
+  return RECORDS_COLLECTION_PROSE.test(prefix);
 }
 const FLATTENED_TABLE = /<li>\s*<dl>/;
 // A number-list slot's element type is read from the brace form a "a list of …"

@@ -3,6 +3,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  generateModuleDeclaration,
+  loadApiTargets,
+  loadTargetModules,
+} from "../packages/types/scripts/regen.ts";
+import {
   collectEvidence,
   collectTargets,
   type DocsEvidence,
@@ -127,6 +132,28 @@ describe("evaluateReleaseReadiness", () => {
     expect(decl?.message).toMatch(/compute\.d\.ts/);
   });
 
+  test("rejects when a default-target declaration mismatches its regeneration", () => {
+    const e = passingEvidence();
+    const result = evaluateReleaseReadiness({
+      ...e,
+      targets: [
+        {
+          id: "defold-1.13.0",
+          isDefault: true,
+          hasCommittedSurface: false,
+          missingDeclarations: [],
+          mismatchedDeclarations: ["compute.d.ts"],
+        },
+        { id: "defold-1.12.4", isDefault: false, hasCommittedSurface: true },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    const decl = result.problems.find(
+      (p) => p.category === "declaration" && /does not match/.test(p.message),
+    );
+    expect(decl?.message).toMatch(/compute\.d\.ts/);
+  });
+
   test("rejects when the historical docs route family is missing", () => {
     const e = passingEvidence();
     const result = evaluateReleaseReadiness({
@@ -206,9 +233,59 @@ describe("evaluateReleaseReadiness", () => {
 });
 
 describe("collectTargets — physical committed-surface verification", () => {
+  const TARGET_ID = "defold-1.13.0";
+  const FIXTURES_DIR = "fixtures/test";
+
+  // A minimal but real Defold doc (one namespace, one function) so the
+  // production emitter regenerates a genuine declaration, not an `export {}`
+  // stub — the comparison must exercise real bytes.
+  function fixtureDoc(namespace: string, fn: string, retType: string): string {
+    return JSON.stringify({
+      info: { namespace },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: `${namespace}.${fn}`,
+          parameters: [],
+          returnvalues: [{ name: "", types: [retType] }],
+        },
+      ],
+    });
+  }
+
+  const twoModuleTargets = [
+    {
+      id: TARGET_ID,
+      default: true,
+      source: null,
+      generatedDir: "generated",
+      fixturesDir: FIXTURES_DIR,
+      coreTypesImport: "../src/core-types",
+      modules: [
+        { namespace: "compute", fixture: "compute_doc.json", outFile: "compute.d.ts" },
+        { namespace: "model", fixture: "model_doc.json", outFile: "model.d.ts" },
+      ],
+    },
+  ];
+
+  // The production regeneration for one registered outFile inside a temp root,
+  // driven by the same offline path collectTargets uses.
+  function regenExpected(root: string, outFile: string): string {
+    const target = loadApiTargets(join(root, "packages", "types", "api-targets.json")).find(
+      (t) => t.id === TARGET_ID,
+    );
+    if (target === undefined) throw new Error(`target ${TARGET_ID} not found`);
+    const entry = loadTargetModules(target, join(root, "packages", "types")).find(
+      (e) => e.outFile === outFile,
+    );
+    if (entry === undefined) throw new Error(`module ${outFile} not found`);
+    return generateModuleDeclaration(entry).contents;
+  }
+
   function withRoot(
     targets: unknown,
-    layout: (typesDir: string) => void,
+    fixtures: Record<string, string>,
+    layout: (typesDir: string, root: string) => void,
     run: (root: string) => void,
   ): void {
     const root = mkdtempSync(join(tmpdir(), "readiness-targets-"));
@@ -216,29 +293,27 @@ describe("collectTargets — physical committed-surface verification", () => {
       const typesDir = join(root, "packages", "types");
       mkdirSync(typesDir, { recursive: true });
       writeFileSync(join(typesDir, "api-targets.json"), JSON.stringify({ targets }));
-      layout(typesDir);
+      const fixturesDir = join(typesDir, FIXTURES_DIR);
+      mkdirSync(fixturesDir, { recursive: true });
+      for (const [name, content] of Object.entries(fixtures)) {
+        writeFileSync(join(fixturesDir, name), content);
+      }
+      layout(typesDir, root);
       run(root);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   }
 
-  const oneModuleTarget = [
-    {
-      id: "defold-1.13.0",
-      default: true,
-      source: null,
-      generatedDir: "generated",
-      modules: [
-        { namespace: "compute", outFile: "compute.d.ts" },
-        { namespace: "model", outFile: "model.d.ts" },
-      ],
-    },
-  ];
+  const baseFixtures = (): Record<string, string> => ({
+    "compute_doc.json": fixtureDoc("compute", "ping", "number"),
+    "model_doc.json": fixtureDoc("model", "ping", "number"),
+  });
 
   test("a target whose generatedDir does not exist has no committed surface", () => {
     withRoot(
-      oneModuleTarget,
+      twoModuleTargets,
+      baseFixtures(),
       () => {
         // deliberately do not create generated/
       },
@@ -252,11 +327,12 @@ describe("collectTargets — physical committed-surface verification", () => {
 
   test("a target missing one registered outFile has no committed surface and names it", () => {
     withRoot(
-      oneModuleTarget,
-      (typesDir) => {
+      twoModuleTargets,
+      baseFixtures(),
+      (typesDir, root) => {
         const gen = join(typesDir, "generated");
         mkdirSync(gen, { recursive: true });
-        writeFileSync(join(gen, "compute.d.ts"), "export {};\n");
+        writeFileSync(join(gen, "compute.d.ts"), regenExpected(root, "compute.d.ts"));
         // model.d.ts intentionally absent
       },
       (root) => {
@@ -267,19 +343,66 @@ describe("collectTargets — physical committed-surface verification", () => {
     );
   });
 
-  test("a target with every registered outFile present has a real committed surface", () => {
+  test("a declaration with unrelated content is a mismatch, not a real surface", () => {
     withRoot(
-      oneModuleTarget,
-      (typesDir) => {
+      twoModuleTargets,
+      baseFixtures(),
+      (typesDir, root) => {
         const gen = join(typesDir, "generated");
         mkdirSync(gen, { recursive: true });
+        // Unrelated bytes where the fixture regenerates to a real namespace.
         writeFileSync(join(gen, "compute.d.ts"), "export {};\n");
-        writeFileSync(join(gen, "model.d.ts"), "export {};\n");
+        writeFileSync(join(gen, "model.d.ts"), regenExpected(root, "model.d.ts"));
+      },
+      (root) => {
+        const target = collectTargets(root)?.[0];
+        expect(target?.hasCommittedSurface).toBe(false);
+        expect(target?.missingDeclarations).toEqual([]);
+        expect(target?.mismatchedDeclarations).toEqual(["compute.d.ts"]);
+      },
+    );
+  });
+
+  test("a declaration stale against a changed fixture is a mismatch", () => {
+    withRoot(
+      twoModuleTargets,
+      baseFixtures(),
+      (typesDir, root) => {
+        const gen = join(typesDir, "generated");
+        mkdirSync(gen, { recursive: true });
+        // Commit the regeneration of the ORIGINAL fixtures, then change the
+        // compute fixture on disk so the registry now resolves to different
+        // bytes — the committed file is stale.
+        writeFileSync(join(gen, "compute.d.ts"), regenExpected(root, "compute.d.ts"));
+        writeFileSync(join(gen, "model.d.ts"), regenExpected(root, "model.d.ts"));
+        writeFileSync(
+          join(typesDir, FIXTURES_DIR, "compute_doc.json"),
+          fixtureDoc("compute", "pong", "string"),
+        );
+      },
+      (root) => {
+        const target = collectTargets(root)?.[0];
+        expect(target?.hasCommittedSurface).toBe(false);
+        expect(target?.mismatchedDeclarations).toEqual(["compute.d.ts"]);
+      },
+    );
+  });
+
+  test("a target whose committed files match their regeneration has a real surface", () => {
+    withRoot(
+      twoModuleTargets,
+      baseFixtures(),
+      (typesDir, root) => {
+        const gen = join(typesDir, "generated");
+        mkdirSync(gen, { recursive: true });
+        writeFileSync(join(gen, "compute.d.ts"), regenExpected(root, "compute.d.ts"));
+        writeFileSync(join(gen, "model.d.ts"), regenExpected(root, "model.d.ts"));
       },
       (root) => {
         const target = collectTargets(root)?.[0];
         expect(target?.hasCommittedSurface).toBe(true);
         expect(target?.missingDeclarations).toEqual([]);
+        expect(target?.mismatchedDeclarations).toEqual([]);
       },
     );
   });
