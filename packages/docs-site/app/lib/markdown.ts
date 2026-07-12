@@ -208,7 +208,12 @@ export async function renderMarkdown(
       if (level < 1 || level > 3) continue;
       const inline = state.tokens[i + 1];
       if (inline?.type !== "inline" || !inline.children) continue;
-      const text = inline.content;
+      // Availability badge dots (see api-page-render) are decorative empty
+      // `<span>`s a symbol heading carries; drop them so the slug and the
+      // permalink label stay the bare signature and keep matching the
+      // function-overview anchors. A generic `<...>` inside a code span is not an
+      // empty span, so signatures like `Opaque<"node">` are untouched.
+      const text = inline.content.replace(/\s*<span\b[^>]*><\/span>/g, "");
       const base = slugify(text);
       const n = slugCounts.get(base) ?? 0;
       slugCounts.set(base, n + 1);

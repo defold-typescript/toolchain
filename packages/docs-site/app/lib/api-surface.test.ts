@@ -17,6 +17,7 @@ import {
   type AvailabilityLookup,
   apiModuleMarkdown,
   apiModuleSymbols,
+  badgeCategory,
   exampleMarkdownFor,
   functionOverviewCards,
   groupFunctionSymbols,
@@ -1657,6 +1658,80 @@ describe("availability join", () => {
       (s) => s.availability?.availableIn.length === 1 && s.availability.availableIn[0] === "1.13.0",
     );
     expect(labelled.length).toBeGreaterThan(0);
+  });
+});
+
+describe("badgeCategory", () => {
+  const VERSIONS = ["1.13.0", "1.12.4"];
+  const V3 = ["1.14.0", "1.13.0", "1.12.4"];
+  const identity = { namespace: "m", kind: "FUNCTION", name: "m.f", signature: "" };
+  const av = (availableIn: string[], deprecatedSince?: string): ApiAvailability =>
+    deprecatedSince === undefined
+      ? { identity, availableIn }
+      : { identity, availableIn, deprecatedSince };
+
+  test("a since-newest span is New only", () => {
+    expect(badgeCategory(av(["1.13.0"]), VERSIONS)).toEqual({
+      isNew: true,
+      isChanged: false,
+      isDeprecated: false,
+    });
+  });
+
+  test("a through-oldest span is Changed only", () => {
+    expect(badgeCategory(av(["1.12.4"]), VERSIONS)).toEqual({
+      isNew: false,
+      isChanged: true,
+      isDeprecated: false,
+    });
+  });
+
+  test("a contiguous mid-range span is Changed", () => {
+    expect(badgeCategory(av(["1.13.0"]), V3)).toEqual({
+      isNew: false,
+      isChanged: true,
+      isDeprecated: false,
+    });
+  });
+
+  test("a discrete (non-contiguous) span is Changed", () => {
+    expect(badgeCategory(av(["1.14.0", "1.12.4"]), V3)).toEqual({
+      isNew: false,
+      isChanged: true,
+      isDeprecated: false,
+    });
+  });
+
+  test("an all-versions span carries no category", () => {
+    expect(badgeCategory(av(VERSIONS), VERSIONS)).toEqual({
+      isNew: false,
+      isChanged: false,
+      isDeprecated: false,
+    });
+  });
+
+  test("deprecation co-occurs with a changed span", () => {
+    expect(badgeCategory(av(["1.12.4"], "1.12.0"), VERSIONS)).toEqual({
+      isNew: false,
+      isChanged: true,
+      isDeprecated: true,
+    });
+  });
+
+  test("deprecation applies regardless of span (all-versions and deprecated)", () => {
+    expect(badgeCategory(av(VERSIONS, "1.12.0"), VERSIONS)).toEqual({
+      isNew: false,
+      isChanged: false,
+      isDeprecated: true,
+    });
+  });
+
+  test("undefined availability yields all false", () => {
+    expect(badgeCategory(undefined, VERSIONS)).toEqual({
+      isNew: false,
+      isChanged: false,
+      isDeprecated: false,
+    });
   });
 });
 

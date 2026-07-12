@@ -57,6 +57,12 @@
   --color-code-bg: #f6f6f7;
   --color-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
+  /* Availability badge colors — additive over accessible text labels. New/
+   * changed/deprecated map to green/orange/red; the pill/dot rules read these. */
+  --color-badge-new: #1a7f37;
+  --color-badge-changed: #bc4c00;
+  --color-badge-deprecated: #cf222e;
+
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -76,6 +82,10 @@
   --color-accent-strong: #a9c4ff;
   --color-code-bg: #161618;
   --color-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  --color-badge-new: #3fb950;
+  --color-badge-changed: #db6d28;
+  --color-badge-deprecated: #f85149;
 }
 
 @layer base {
@@ -784,6 +794,61 @@
 
   .prose .api-symbol-body > :first-child {
     margin-top: 0;
+  }
+
+  /* Availability color layer — a small dot per active category on a symbol
+   * heading, additive over the accessible `aria-label`/`title` text. */
+  .prose .api-badge-dot {
+    display: inline-block;
+    width: 0.5em;
+    height: 0.5em;
+    margin-left: 0.3em;
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+
+  .prose .api-badge-dot--new {
+    background: var(--color-badge-new);
+  }
+
+  .prose .api-badge-dot--changed {
+    background: var(--color-badge-changed);
+  }
+
+  .prose .api-badge-dot--deprecated {
+    background: var(--color-badge-deprecated);
+  }
+
+  /* Namespace-title count pills: one per non-zero category, sitting under the H1. */
+  .prose .api-badge-counts {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .prose .api-badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4em;
+    height: 1.4em;
+    padding: 0 0.4em;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .prose .api-badge-count--new {
+    background: var(--color-badge-new);
+  }
+
+  .prose .api-badge-count--changed {
+    background: var(--color-badge-changed);
+  }
+
+  .prose .api-badge-count--deprecated {
+    background: var(--color-badge-deprecated);
   }
 }
 
