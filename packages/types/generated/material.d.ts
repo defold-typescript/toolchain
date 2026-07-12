@@ -244,7 +244,7 @@ declare global {
      * const vertex_attributes = material.get_vertex_attributes(resource.material("/my_material.materialc"));
      * ```
      */
-    function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | Record<string | number, unknown>; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number };
+    function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number };
     /**
      * Sets shader constants in a material, if the constants exist.
      *
@@ -295,7 +295,7 @@ declare global {
      * material.set_constants(resource.material("/my_material.materialc"), { tint: { value: vmath.vector4(1, 0, 0, 1) } });
      * ```
      */
-    function set_constants(path: Hash | string, constants: { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | Record<string | number, unknown> }): void;
+    function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;
     /**
      * Sets texture samplers in a material, if the samplers exist. Use this function to change the settings of texture samplers.
      * To set actual textures that should be bound to the samplers, use the `material.set_textures` function instead.
@@ -358,7 +358,7 @@ declare global {
      * material.set_samplers(resource.material("/my_material.materialc"), { texture_sampler: { u_wrap: graphics.TEXTURE_WRAP_REPEAT, v_wrap: graphics.TEXTURE_WRAP_MIRRORED_REPEAT } });
      * ```
      */
-    function set_samplers(path: Hash | string, samplers: { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }): void;
+    function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;
     /**
      * Sets textures in a material, if the samplers exist.
      *
@@ -369,7 +369,7 @@ declare global {
      * material.set_textures(resource.material("/my_material.materialc"), { my_texture: resource.texture() });
      * ```
      */
-    function set_textures(path: Hash | string, textures: Record<string | number, unknown>): void;
+    function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;
     /**
      * Sets vertex attributes in a material, if the vertex attributes exist.
      *
@@ -437,7 +437,7 @@ declare global {
      * material.set_vertex_attributes(resource.material("/my_material.materialc"), { tint_attribute: { value: vmath.vector4(1, 0, 0, 1), semantic_type: graphics.SEMANTIC_TYPE_COLOR } });
      * ```
      */
-    function set_vertex_attributes(path: Hash | string, attributes: { value?: Vector4 | Vector3 | Matrix4 | number | Record<string | number, unknown>; normalize?: boolean; data_type?: number; coordinate_space?: number; semantic_type?: number }): void;
+    function set_vertex_attributes(path: Hash | string, attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[]; normalize?: boolean; data_type?: number; coordinate_space?: number; semantic_type?: number }>): void;
   }
 }
 

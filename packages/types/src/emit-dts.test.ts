@@ -2,6 +2,11 @@ import { describe, expect, test } from "bun:test";
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
+import b2dWorldDoc from "../fixtures/defold-1.13.0/b2d_world_doc.json" with { type: "json" };
+import computeDoc from "../fixtures/defold-1.13.0/compute_doc.json" with { type: "json" };
+import graphicsDoc from "../fixtures/defold-1.13.0/graphics_doc.json" with { type: "json" };
+import materialDoc from "../fixtures/defold-1.13.0/material_doc.json" with { type: "json" };
+import model113Doc from "../fixtures/defold-1.13.0/model_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
@@ -1936,244 +1941,219 @@ describe("MAPPING_TABLE_SLOTS", () => {
 
 describe("TABLE_SLOT_CURATIONS", () => {
   test("holds exactly the mixed-slot table recoveries", () => {
-    expect([...TABLE_SLOT_CURATIONS]).toEqual([
-      ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
-      [
-        "font.get_info:return:info",
-        {
-          kind: "object",
-          fields: [
-            { name: "path", types: ["hash"] },
-            {
-              name: "fonts",
-              types: ["table"],
-              isList: true,
-              fields: [
-                { name: "path", types: ["string"] },
-                { name: "path_hash", types: ["hash"] },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        "iap.finish:param:transaction",
-        {
-          kind: "object",
-          fields: [
-            { name: "ident", types: ["string"] },
-            { name: "state", types: ["number"] },
-            { name: "trans_ident", types: ["string"] },
-            { name: "date", types: ["string"] },
-            { name: "original_trans", types: ["string"] },
-            { name: "receipt", types: ["string"] },
-            { name: "signature", types: ["string"] },
-            { name: "user_id", types: ["string"] },
-          ],
-        },
-      ],
-      [
-        "iap.acknowledge:param:transaction",
-        {
-          kind: "object",
-          fields: [
-            { name: "ident", types: ["string"] },
-            { name: "state", types: ["number"] },
-            { name: "trans_ident", types: ["string"] },
-            { name: "date", types: ["string"] },
-            { name: "original_trans", types: ["string"] },
-            { name: "receipt", types: ["string"] },
-            { name: "signature", types: ["string"] },
-            { name: "user_id", types: ["string"] },
-          ],
-        },
-      ],
-      [
-        "iap.buy:param:options",
-        {
-          kind: "object",
-          fields: [
-            { name: "request_id", types: ["string"] },
-            { name: "token", types: ["string"] },
-          ],
-        },
-      ],
-      [
-        "liveupdate.get_mounts:return:mounts",
-        {
-          kind: "array-object",
-          fields: [
-            { name: "name", types: ["string"] },
-            { name: "uri", types: ["string"] },
-            { name: "priority", types: ["number"] },
-          ],
-        },
-      ],
-      [
-        "model.get_aabb:return:aabb",
-        {
-          kind: "object",
-          fields: [
-            { name: "min", types: ["vector3"] },
-            { name: "max", types: ["vector3"] },
-          ],
-        },
-      ],
-      [
-        "model.get_mesh_aabb:return:aabb",
-        {
-          kind: "mapping",
-          key: "hash",
-          value: [
-            { name: "min", types: ["vector3"] },
-            { name: "max", types: ["vector3"] },
-          ],
-        },
-      ],
-      ["physics.raycast:param:groups", { kind: "array", element: "hash" }],
-      ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
-      [
-        "push.schedule:param:notification_settings",
-        {
-          kind: "object",
-          fields: [
-            { name: "action", types: ["string"] },
-            { name: "badge_count", types: ["number"] },
-            { name: "priority", types: ["number"] },
-          ],
-        },
-      ],
-      [
-        "socket.select:param:recvt",
-        { kind: "array", element: ["client", "master", "unconnected"] },
-      ],
-      [
-        "socket.select:param:sendt",
-        { kind: "array", element: ["client", "master", "unconnected"] },
-      ],
-      [
-        "socket.select:return:sockets_r",
-        { kind: "array", element: ["client", "master", "unconnected"] },
-      ],
-      [
-        "socket.select:return:sockets_w",
-        { kind: "array", element: ["client", "master", "unconnected"] },
-      ],
-      [
-        "tilemap.get_tile_info:return:tile_info",
-        {
-          kind: "object",
-          fields: [
-            { name: "index", types: ["number"] },
-            { name: "h_flip", types: ["boolean"] },
-            { name: "v_flip", types: ["boolean"] },
-            { name: "rotate_90", types: ["boolean"] },
-          ],
-        },
-      ],
-      [
-        "tilemap.get_tiles:return:tiles",
-        { kind: "mapping", key: "number", value: { key: "number", value: "number" } },
-      ],
-      [
-        "resource.get_text_metrics:return:metrics",
-        {
-          kind: "object",
-          fields: [
-            { name: "width", types: ["number"] },
-            { name: "height", types: ["number"] },
-            { name: "max_ascent", types: ["number"] },
-            { name: "max_descent", types: ["number"] },
-          ],
-        },
-      ],
-      [
-        "profiler.view_recorded_frame:param:frame_index",
-        {
-          kind: "object",
-          fields: [
-            { name: "distance", types: ["number"] },
-            { name: "frame", types: ["number"] },
-          ],
-        },
-      ],
-      ["http.request:param:headers", { kind: "mapping", key: "string", value: "string" }],
-      ["collectionproxy.get_resources:return:resources", { kind: "array", element: "hash" }],
-      ["render.predicate:param:tags", { kind: "array", element: ["string", "hash"] }],
-      ["render.clear:param:buffers", { kind: "mapping", key: "number", value: "number | vector4" }],
-      [
-        "on_input:param:action",
-        {
-          kind: "object",
-          fields: [
-            { name: "value", types: ["number"], optional: true },
-            { name: "pressed", types: ["boolean"], optional: true },
-            { name: "released", types: ["boolean"], optional: true },
-            { name: "repeated", types: ["boolean"], optional: true },
-            { name: "x", types: ["number"], optional: true },
-            { name: "y", types: ["number"], optional: true },
-            { name: "screen_x", types: ["number"], optional: true },
-            { name: "screen_y", types: ["number"], optional: true },
-            { name: "dx", types: ["number"], optional: true },
-            { name: "dy", types: ["number"], optional: true },
-            { name: "screen_dx", types: ["number"], optional: true },
-            { name: "screen_dy", types: ["number"], optional: true },
-            { name: "gamepad", types: ["number"], optional: true },
-            { name: "gamepad_axis", types: ["vector3"], optional: true },
-            {
-              name: "touch",
-              types: ["table"],
-              optional: true,
-              isList: true,
-              fields: [
-                { name: "id", types: ["number"] },
-                { name: "pressed", types: ["boolean"] },
-                { name: "released", types: ["boolean"] },
-                { name: "tap_count", types: ["number"] },
-                { name: "x", types: ["number"] },
-                { name: "y", types: ["number"] },
-                { name: "dx", types: ["number"] },
-                { name: "dy", types: ["number"] },
-                { name: "acc_x", types: ["number"] },
-                { name: "acc_y", types: ["number"] },
-                { name: "acc_z", types: ["number"] },
-              ],
-            },
-            { name: "text", types: ["string"], optional: true },
-          ],
-        },
-      ],
-      [
-        "physics.create_joint:param:properties",
-        {
-          kind: "object",
-          fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
-        },
-      ],
-      [
-        "physics.set_joint_properties:param:properties",
-        {
-          kind: "object",
-          fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
-        },
-      ],
-      [
-        "physics.raycast:return:result",
-        {
-          kind: "array-object",
-          fields: [
-            { name: "fraction", types: ["number"] },
-            { name: "position", types: ["vector3"] },
-            { name: "normal", types: ["vector3"] },
-            { name: "id", types: ["hash"] },
-            { name: "group", types: ["hash"] },
-            { name: "request_id", types: ["number"] },
-          ],
-        },
-      ],
+    // The exact ordered curation keys. Full per-entry field shapes are validated
+    // by the regen byte-compare (test/regen.test.ts) and the fidelity audit
+    // (scripts/fidelity-audit.test.ts); this guards that no curation slot is
+    // silently added, removed, or reordered. Representative entries are
+    // spot-checked structurally below, one per curation kind the promoted 1.13.0
+    // surface introduced.
+    expect([...TABLE_SLOT_CURATIONS.keys()]).toEqual([
+      "collectionfactory.create:return:ids",
+      "font.get_info:return:info",
+      "iap.finish:param:transaction",
+      "iap.acknowledge:param:transaction",
+      "iap.buy:param:options",
+      "liveupdate.get_mounts:return:mounts",
+      "model.get_aabb:return:aabb",
+      "model.get_mesh_aabb:return:aabb",
+      "physics.raycast:param:groups",
+      "physics.raycast_async:param:groups",
+      "push.schedule:param:notification_settings",
+      "socket.select:param:recvt",
+      "socket.select:param:sendt",
+      "socket.select:return:sockets_r",
+      "socket.select:return:sockets_w",
+      "tilemap.get_tile_info:return:tile_info",
+      "tilemap.get_tiles:return:tiles",
+      "resource.get_text_metrics:return:metrics",
+      "profiler.view_recorded_frame:param:frame_index",
+      "http.request:param:headers",
+      "collectionproxy.get_resources:return:resources",
+      "render.predicate:param:tags",
+      "render.clear:param:buffers",
+      "on_input:param:action",
+      "physics.create_joint:param:properties",
+      "physics.set_joint_properties:param:properties",
+      "physics.raycast:return:result",
+      "compute.set_constants:param:constants",
+      "compute.set_samplers:param:samplers",
+      "material.set_constants:param:constants",
+      "material.set_samplers:param:samplers",
+      "material.set_vertex_attributes:param:attributes",
+      "compute.set_textures:param:textures",
+      "material.set_textures:param:textures",
+      "model.get_blend_weights:return:weights",
+      "model.set_blend_weights:param:weights",
+      "graphics.get_engine_adapters:return:adapters",
+      "graphics.get_adapter_info:return:info",
+      "b2d.get_version:return:info",
+      "b2d.body.compute_aabb:return:aabb",
+      "b2d.body.create_fixture:param:definition",
+      "b2d.body.create_fixture:return:fixture",
+      "b2d.body.create_chain:return:segments",
+      "b2d.body.get_fixtures:return:fixtures",
+      "b2d.body.get_joints:return:joints",
+      "b2d.body.get_mass_data:return:data",
+      "b2d.body.set_mass_data:param:data",
+      "b2d.body.get_shapes:return:shapes",
+      "b2d.body.get_transform:return:transform",
+      "b2d.chain.get_segments:return:segments",
+      "b2d.fixture.get_aabb:return:aabb",
+      "b2d.fixture.get_filter_data:return:filter",
+      "b2d.fixture.set_filter_data:param:filter",
+      "b2d.fixture.get_shape:return:shape",
+      "b2d.fixture.set_shape:param:shape",
+      "b2d.shape.get_shape:return:shape",
+      "b2d.shape.set_shape:param:definition",
+      "b2d.shape.get_mass_data:return:data",
+      "b2d.shape.get_sensor_overlaps:return:overlaps",
+      "b2d.shape.ray_cast:return:hit",
+      "b2d.joint.create_distance:param:definition",
+      "b2d.joint.create_mouse:param:definition",
+      "b2d.joint.create_prismatic:param:definition",
+      "b2d.joint.create_revolute:param:definition",
+      "b2d.joint.create_weld:param:definition",
+      "b2d.joint.create_wheel:param:definition",
+      "b2d.joint.create_friction:param:definition",
+      "b2d.joint.create_rope:param:definition",
+      "b2d.joint.create_pulley:param:definition",
+      "b2d.joint.create_gear:param:definition",
+      "b2d.joint.create_motor:param:definition",
+      "b2d.world.overlap_aabb:param:aabb",
+      "b2d.world.overlap_aabb:param:filter",
+      "b2d.world.overlap_aabb:return:fixtures",
+      "b2d.world.overlap_aabb:return:hits",
+      "b2d.world.overlap_aabb:return:stats",
+      "b2d.world.overlap_shape:param:shape",
+      "b2d.world.overlap_shape:param:filter",
+      "b2d.world.overlap_shape:return:fixtures",
+      "b2d.world.overlap_shape:return:hits",
+      "b2d.world.overlap_shape:return:stats",
+      "b2d.world.cast_ray:param:filter",
+      "b2d.world.cast_ray:return:hits",
+      "b2d.world.cast_ray:return:stats",
+      "b2d.world.cast_ray_closest:param:filter",
+      "b2d.world.cast_ray_closest:return:hit",
+      "b2d.world.cast_shape:param:shape",
+      "b2d.world.cast_shape:param:filter",
+      "b2d.world.cast_shape:return:hits",
+      "b2d.world.cast_shape:return:stats",
+      "b2d.world.cast_mover:param:capsule",
+      "b2d.world.cast_mover:param:filter",
+      "b2d.world.collide_mover:param:capsule",
+      "b2d.world.collide_mover:param:filter",
     ]);
+    expect(TABLE_SLOT_CURATIONS.size).toBe(94);
+    expect(TABLE_SLOT_CURATIONS.get("compute.set_constants:param:constants")).toEqual({
+      kind: "keyed-object",
+    });
+    expect(TABLE_SLOT_CURATIONS.get("compute.set_textures:param:textures")).toEqual({
+      kind: "mapping",
+      key: "string",
+      value: "hash",
+    });
+    expect(TABLE_SLOT_CURATIONS.get("model.get_blend_weights:return:weights")).toEqual({
+      kind: "array",
+      element: "number",
+    });
+    expect(TABLE_SLOT_CURATIONS.get("graphics.get_engine_adapters:return:adapters")).toEqual({
+      kind: "array",
+      element: "string",
+    });
+    expect(TABLE_SLOT_CURATIONS.get("b2d.world.cast_ray:return:hits")).toEqual({
+      kind: "array-object",
+      fields: [
+        { name: "fixture", types: ["number"] },
+        { name: "shape", types: ["number"] },
+        { name: "point", types: ["vector3"] },
+        { name: "normal", types: ["vector3"] },
+        { name: "fraction", types: ["number"] },
+      ],
+    });
     expect(MAPPING_TABLE_SLOTS.size).toBe(3);
     expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(8);
+  });
+
+  test("keyed-object curation re-keys the parser-recovered args table by name", () => {
+    const module = parseDefoldApiDoc(computeDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "compute.set_constants"),
+        requireFunction(module, "compute.set_samplers"),
+        requireFunction(module, "compute.set_textures"),
+      ],
+    });
+    // set_constants keeps the keyed-by-name layer, and the value field's
+    // documented array branch is pinned via TABLE_FIELD_TYPE_OVERRIDES.
+    expect(out).toContain(
+      "constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>",
+    );
+    // set_samplers has only numeric inner fields.
+    expect(out).toContain(
+      "samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>",
+    );
+    // set_textures maps sampler names to resource-path hashes.
+    expect(out).toContain("textures: LuaMap<string, Hash>");
+  });
+
+  test("material vertex-attribute value override emits the number[] array branch", () => {
+    const module = parseDefoldApiDoc(materialDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "material.set_vertex_attributes"),
+        requireFunction(module, "material.get_vertex_attributes"),
+      ],
+    });
+    expect(out).toContain(
+      "attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[];",
+    );
+    // get_vertex_attributes returns the same value shape (non-keyed array-of-object).
+    expect(out).toContain("value: Vector4 | Vector3 | Matrix4 | number | number[];");
+  });
+
+  test("model blend weights emit as numeric arrays", () => {
+    const module = parseDefoldApiDoc(model113Doc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "model.get_blend_weights"),
+        requireFunction(module, "model.set_blend_weights"),
+      ],
+    });
+    expect(out).toContain("function get_blend_weights(url: string | Hash | Url): number[];");
+    expect(out).toContain("weights?: number[]");
+  });
+
+  test("graphics adapter inspection emits typed objects and arrays", () => {
+    const module = parseDefoldApiDoc(graphicsDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [
+        requireFunction(module, "graphics.get_engine_adapters"),
+        requireFunction(module, "graphics.get_adapter_info"),
+      ],
+    });
+    expect(out).toContain("function get_engine_adapters(): string[];");
+    expect(out).toContain("family: string; version_major: number; version_minor: number;");
+    expect(out).toContain("max_texture_size_2d: number;");
+    expect(out).toContain("extensions: string[]; features: number[]");
+  });
+
+  test("b2d.world queries emit typed filters, hit arrays, and query stats", () => {
+    const module = parseDefoldApiDoc(b2dWorldDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "b2d.world.cast_ray")],
+    });
+    expect(out).toContain(
+      "filter: { category_bits?: number; mask_bits?: number; group_index?: number }",
+    );
+    expect(out).toContain(
+      "{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[]",
+    );
+    expect(out).toContain("{ node_visits: number; leaf_visits: number }");
   });
 
   test("collectionfactory.create recovers only the ids return", () => {

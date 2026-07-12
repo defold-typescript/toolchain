@@ -143,9 +143,12 @@ const DEFAULT_TARGET = API_TARGETS.find((t) => t.default === true) as ApiTarget;
 
 export const MODULE_MANIFEST: readonly ModuleManifestEntry[] = loadTargetModules(DEFAULT_TARGET);
 
-const FIDELITY_BASELINE_TARGET = API_TARGETS.find(
-  (target) => target.id === "defold-1.12.4",
-) as ApiTarget;
+// The fidelity audit runs over the promoted default surface (the `default: true`
+// target) so the 1.13-only modules (b2d.*, compute, material) and the 1.13 model
+// additions are audited too — auditing the older 1.12.4 target left them unseen,
+// which is how the promoted surface shipped opaque `Record` fallbacks while the
+// gate read `recordTables: 0`.
+const FIDELITY_BASELINE_TARGET = DEFAULT_TARGET;
 export const FIDELITY_BASELINE_MANIFEST: readonly ModuleManifestEntry[] =
   loadTargetModules(FIDELITY_BASELINE_TARGET);
 

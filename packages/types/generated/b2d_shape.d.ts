@@ -131,7 +131,7 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns table with `mass`, `center`, and `inertia`
      */
-    function get_mass_data(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>;
+    function get_mass_data(shape_id: Opaque<"b2Shape">): { mass: number; center: Vector3; inertia: number };
     /**
      * Get shape material id.
      *
@@ -152,14 +152,14 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns array of shape info tables
      */
-    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>;
+    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[];
     /**
      * Get a shape's geometry.
      *
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
-    function get_shape(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>;
+    function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
     /**
      * Get the world owning a shape.
      *
@@ -183,7 +183,7 @@ declare global {
      * @param max_fraction - optional maximum translation fraction, defaults to 1
      * @returns hit table with `point`, `normal`, `fraction`, and `iterations`, or nil
      */
-    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction: number): Record<string | number, unknown>;
+    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
     /**
      * Set shape material id.
      *
@@ -208,7 +208,7 @@ declare global {
      * b2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });
      * ```
      */
-    function set_shape(shape_id: Opaque<"b2Shape">, definition: Record<string | number, unknown>, update_mass: boolean): void;
+    function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void;
   }
 }
 

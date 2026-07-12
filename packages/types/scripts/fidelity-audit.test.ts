@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
+import { ARBITRARY_TABLE_SLOT_KEYS } from "../src/emit-dts";
 import {
   buildFidelityReport,
   countDroppedHandleMethods,
@@ -1106,5 +1107,85 @@ describe("socket handle methods are accounted for as members", () => {
   test("the audit counts colon methods: 55 dropped with emission off, 0 with emission on", () => {
     expect(countDroppedHandleMethods(socketDoc, "socket", false)).toBe(55);
     expect(countDroppedHandleMethods(socketDoc, "socket", true)).toBe(0);
+  });
+});
+
+describe("promoted default surface coverage and record-table gate", () => {
+  test("the audit runs over the promoted default target and covers all 46 modules", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    // The 1.13-only modules are audited now (they were unseen under 1.12.4).
+    for (const ns of [
+      "compute",
+      "material",
+      "b2d.chain",
+      "b2d.fixture",
+      "b2d.joint",
+      "b2d.shape",
+      "b2d.world",
+    ]) {
+      expect(requireEntry(report, ns)).toBeDefined();
+    }
+    expect(Object.keys(report).length).toBe(46);
+  });
+
+  test("every module in the promoted target is present in the report (no silent escape)", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    for (const entry of MODULE_MANIFEST) {
+      if (!report[entry.namespace]) {
+        throw new Error(`promoted module ${entry.namespace} is missing from the fidelity report`);
+      }
+    }
+  });
+
+  test("the promoted report holds recordTablesTotal === 0", () => {
+    const report = buildFidelityReport(MODULE_MANIFEST);
+    const total = Object.values(report).reduce((sum, e) => sum + e.recordTables, 0);
+    expect(total).toBe(0);
+  });
+
+  test("ARBITRARY_TABLE_SLOT_KEYS is an intentional per-slot allowlist, not a blanket", () => {
+    // Every residual opaque slot is an explicit, rationale-commented entry; the
+    // set membership is pinned so a future blanket-suppress cannot slip in.
+    expect([...ARBITRARY_TABLE_SLOT_KEYS].sort()).toEqual(
+      [
+        "b2d.body.create_chain:param:definition",
+        "b2d.body.create_shape:param:definition",
+        "b2d.chain.get_geometry:return:geometry",
+        "b2d.body.get_contact_data:return:contacts",
+        "b2d.shape.get_contact_data:return:contacts",
+        "b2d.world.collide_mover:return:planes",
+        "b2d.world.explode:param:definition",
+        "b2d.world.get_counters:return:counters",
+        "b2d.world.get_profile:return:profile",
+        "b2d.joint.create_filter:param:definition",
+      ].sort(),
+    );
+  });
+
+  test("a keyed-object slot does not count under recordTables, but an unmapped inner token still surfaces", () => {
+    // Reuse the real compute.set_constants curation (keyed-object) but inject a
+    // fabricated inner token: the slot must not count as a Record, yet the
+    // unmapped token still flows through unknownTokens.
+    const doc = {
+      info: { namespace: "compute" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "compute.set_constants",
+          parameters: [
+            {
+              name: "constants",
+              types: ["table"],
+              is_optional: "False",
+              doc: '<dl><dt><code>kind</code></dt><dd><span class="type">mystery</span> a fabricated inner field</dd></dl>',
+            },
+          ],
+          returnvalues: [],
+        },
+      ],
+    };
+    const entry = requireEntry(buildFidelityReport(manifestOf(doc)), "test");
+    expect(entry.recordTables).toBe(0);
+    expect(entry.unknownTokens).toContain("mystery");
   });
 });
