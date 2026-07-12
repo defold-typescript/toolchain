@@ -83,7 +83,7 @@ declare global {
      * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `length`, `frequency`, `damping_ratio`, and `collide_connected`
      * @returns created joint
      */
-    function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a filter joint.
      *
@@ -101,7 +101,7 @@ declare global {
      * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `max_force`, `max_torque`, and `collide_connected`
      * @returns created joint
      */
-    function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a gear joint.
      *
@@ -110,7 +110,7 @@ declare global {
      * @param definition - optional definition with `ratio`
      * @returns created joint
      */
-    function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition: { ratio?: number }): Opaque<"b2Joint">;
     /**
      * Create a motor joint.
      *
@@ -119,7 +119,7 @@ declare global {
      * @param definition - optional definition with `linear_offset`, `angular_offset`, `max_force`, `max_torque`, `correction_factor`, and `collide_connected`
      * @returns created joint
      */
-    function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a mouse joint.
      *
@@ -128,7 +128,7 @@ declare global {
      * @param definition - optional definition with `target`, `max_force`, `frequency`, `damping_ratio`, and `collide_connected`
      * @returns created joint
      */
-    function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { target?: Vector3; max_force?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a prismatic joint.
      *
@@ -137,7 +137,7 @@ declare global {
      * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `local_axis_a`, `reference_angle`, `enable_limit`, `lower_translation`, `upper_translation`, `enable_motor`, `max_motor_force`, `motor_speed`, and `collide_connected`
      * @returns created joint
      */
-    function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a pulley joint.
      *
@@ -146,7 +146,7 @@ declare global {
      * @param definition - optional definition with `ground_anchor_a`, `ground_anchor_b`, `local_anchor_a`, `local_anchor_b`, `length_a`, `length_b`, `ratio`, and `collide_connected`
      * @returns created joint
      */
-    function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a revolute joint.
      *
@@ -155,7 +155,7 @@ declare global {
      * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `reference_angle`, `enable_limit`, `lower_angle`, `upper_angle`, `enable_motor`, `max_motor_torque`, `motor_speed`, and `collide_connected`
      * @returns created joint
      */
-    function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a rope joint.
      *
@@ -164,7 +164,7 @@ declare global {
      * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `max_length`, and `collide_connected`
      * @returns created joint
      */
-    function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a weld joint.
      *
@@ -173,7 +173,7 @@ declare global {
      * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `reference_angle`, `frequency`, `damping_ratio`, and `collide_connected`
      * @returns created joint
      */
-    function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Create a wheel joint.
      *
@@ -182,7 +182,7 @@ declare global {
      * @param definition - optional definition with `local_anchor_a`, `local_anchor_b`, `local_axis_a`, `enable_motor`, `max_motor_torque`, `motor_speed`, `frequency`, `damping_ratio`, and `collide_connected`
      * @returns created joint
      */
-    function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">;
     /**
      * Destroy a joint created by `b2d.joint`.
      *

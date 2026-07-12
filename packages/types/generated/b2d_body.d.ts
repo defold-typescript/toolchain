@@ -76,7 +76,7 @@ declare global {
      * @param body - body
      * @returns table with `lower` and `upper` vector3 fields
      */
-    function compute_aabb(body: Opaque<"b2Body">): Record<string | number, unknown>;
+    function compute_aabb(body: Opaque<"b2Body">): { lower: Vector3; upper: Vector3 };
     /**
      * Chains are one-sided connected segments with optional ghost vertices at
      * the ends of open chains. Ghost vertices are creation-time chain data only and
@@ -111,7 +111,7 @@ declare global {
      * });
      * ```
      */
-    function create_chain(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): LuaMultiReturn<[Opaque<"b2Chain">, Record<string | number, unknown>]>;
+    function create_chain(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>;
     /**
      * Creates a fixture and attach it to this body. Use this function if you need
      * to set some fixture parameters, like friction. Otherwise you can create the
@@ -139,7 +139,7 @@ declare global {
      * });
      * ```
      */
-    function create_fixture(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): Record<string | number, unknown>;
+    function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };
     /**
      * Creates a fixture from a shape and attach it to this body.
      * This is a convenience function. Use b2FixtureDef if you need to set parameters
@@ -249,7 +249,7 @@ declare global {
      * @param body - body
      * @returns array of fixture info tables with `index`, `type`, `sensor`, `density`, `friction`, `restitution`, and `child_count`
      */
-    function get_fixtures(body: Opaque<"b2Body">): Record<string | number, unknown>;
+    function get_fixtures(body: Opaque<"b2Body">): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[];
     /**
      * Get the total force currently applied on this object
      *
@@ -276,7 +276,7 @@ declare global {
      * @param body - body
      * @returns array of `b2Joint` handles created by `b2d.joint`
      */
-    function get_joints(body: Opaque<"b2Body">): Record<string | number, unknown>;
+    function get_joints(body: Opaque<"b2Body">): number[];
     /**
      * Get the linear damping of the body.
      *
@@ -350,7 +350,7 @@ declare global {
      * @param body - body
      * @returns table with `mass`, `center` in local coordinates, and `inertia`.
      */
-    function get_mass_data(body: Opaque<"b2Body">): Record<string | number, unknown>;
+    function get_mass_data(body: Opaque<"b2Body">): { mass: number; center: Vector3; inertia: number };
     /**
      * Get the mass data of the body.
      *
@@ -392,7 +392,7 @@ declare global {
      * @param body - body
      * @returns a table of shape info entries. Each entry includes `shape_id` for use with `b2d.shape` functions.
      */
-    function get_shapes(body: Opaque<"b2Body">): Record<string | number, unknown>;
+    function get_shapes(body: Opaque<"b2Body">): { shape_id: number }[];
     /**
      * Get the sleep velocity threshold.
      *
@@ -406,7 +406,7 @@ declare global {
      * @param body - body
      * @returns table with `position` and `angle` in radians.
      */
-    function get_transform(body: Opaque<"b2Body">): Record<string | number, unknown>;
+    function get_transform(body: Opaque<"b2Body">): { position: Vector3; angle: number };
     /**
      * Get the body transform for the body's origin.
      *
@@ -608,7 +608,7 @@ declare global {
      * @param body - body
      * @param data - table with `mass`, `center` in local coordinates, and `inertia`.
      */
-    function set_mass_data(body: Opaque<"b2Body">, data: Record<string | number, unknown>): void;
+    function set_mass_data(body: Opaque<"b2Body">, data: { mass?: number; center?: Vector3; inertia?: number }): void;
     /**
      * Set the mass properties to override the mass properties of the shapes.
      *

@@ -20,7 +20,7 @@ declare global {
      *
      * @returns version info with fields `version`, `major`, `middle`, and `minor`
      */
-    function get_version(): Record<string | number, unknown>;
+    function get_version(): { version: number; major: number; middle: number; minor: number };
     /**
      * Get the Box2D world from the current collection
      *

@@ -225,7 +225,7 @@ declare global {
      * compute.set_constants("/my_compute.computec", { tint: { value: vmath.vector4(1, 0, 0, 1) } });
      * ```
      */
-    function set_constants(path: Hash | string, constants: { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | Record<string | number, unknown> }): void;
+    function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;
     /**
      * Sets texture samplers in a compute program, if the samplers exist. Use this function to change the settings of texture samplers.
      * To set actual textures that should be bound to the samplers, use the `compute.set_textures` function instead.
@@ -288,7 +288,7 @@ declare global {
      * compute.set_samplers("/my_compute.computec", { texture_sampler: { u_wrap: graphics.TEXTURE_WRAP_REPEAT, v_wrap: graphics.TEXTURE_WRAP_MIRRORED_REPEAT } });
      * ```
      */
-    function set_samplers(path: Hash | string, samplers: { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }): void;
+    function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;
     /**
      * Sets textures in a compute program, if the samplers exist.
      *
@@ -299,7 +299,7 @@ declare global {
      * compute.set_textures("/my_compute.computec", { my_texture: resource.texture() });
      * ```
      */
-    function set_textures(path: Hash | string, textures: Record<string | number, unknown>): void;
+    function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;
   }
 }
 

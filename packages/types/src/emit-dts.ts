@@ -150,6 +150,28 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   "render.set_render_target",
 ]);
 
+// Per-slot companion to ARBITRARY_TABLE_SLOTS (`element:kind:name`), for a
+// genuinely-undocumented table slot on an element whose *other* slots are
+// documented — an element-level entry would wrongly suppress those. Each slot's
+// doc names no fields (Box2D internal/opaque structs), so `Record` is faithful,
+// not a loss. The audit skips counting these; the emitter already leaves an
+// uncurated slot as `Record`. Add deliberately, one rationale per line.
+export const ARBITRARY_TABLE_SLOT_KEYS = new Set([
+  // "the chain definition" / "the shape definition" / "explosion definition" —
+  // create-side option tables with no documented field list at this slot.
+  "b2d.body.create_chain:param:definition",
+  "b2d.body.create_shape:param:definition",
+  "b2d.world.explode:param:definition",
+  "b2d.joint.create_filter:param:definition", // "optional definition table"
+  // opaque Box2D result structs: the doc names no fields.
+  "b2d.chain.get_geometry:return:geometry", // "chain geometry table"
+  "b2d.body.get_contact_data:return:contacts", // "array of contact tables"
+  "b2d.shape.get_contact_data:return:contacts", // "array of contact tables"
+  "b2d.world.collide_mover:return:planes", // "array of plane result tables"
+  "b2d.world.get_profile:return:profile", // "world profiling data"
+  "b2d.world.get_counters:return:counters", // "world counters"
+]);
+
 // skipFunction FQNs (see `api-targets.json`'s `skipFunctions`) whose absence
 // from the generated surface is *not* a fidelity loss — each is replaced by a
 // hand-written, better-typed overload in the cited `*-overloads.d.ts`, so the
@@ -256,9 +278,98 @@ export type TableSlotCuration =
   | { kind: "mapping"; key: string; value: string | readonly TableField[] | NestedMapping }
   | { kind: "array"; element: string | readonly string[] }
   | { kind: "object"; fields: readonly TableField[] }
-  | { kind: "array-object"; fields: readonly TableField[] };
+  | { kind: "array-object"; fields: readonly TableField[] }
+  // A `<key> -> <args table>` slot: the doc's `<dl>` describes the *value* shape,
+  // keyed by an arbitrary name (constant/sampler/attribute). The parser recovers
+  // the inner args fields; emit wraps them as `Record<string, { <fields> }>`,
+  // restoring the keyed-by-name layer the flat object curation drops.
+  | { kind: "keyed-object" };
 
 export const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const;
+
+// Shared Box2D (b2d.*) table shapes, curated from the ref-doc prose (the docs
+// name fields in running text, not a machine-readable `<dl>`). Reused across the
+// b2d submodule curations below so a single shape is defined once.
+//
+// The shape table is a discriminated union of circle/edge/polygon/box/chain
+// forms keyed by `type` (a b2d.shape.SHAPE_TYPE_* constant); every kind-specific
+// field is optional because only one form's fields are present per value.
+const B2D_SHAPE_TABLE_FIELDS: readonly TableField[] = [
+  { name: "type", types: ["number"] },
+  { name: "radius", types: ["number"], optional: true },
+  { name: "center", types: ["vector3"], optional: true },
+  { name: "v0", types: ["vector3"], optional: true },
+  { name: "v1", types: ["vector3"], optional: true },
+  { name: "v2", types: ["vector3"], optional: true },
+  { name: "v3", types: ["vector3"], optional: true },
+  { name: "vertices", types: ["table"], tsType: "Vector3[]", optional: true },
+  { name: "hx", types: ["number"], optional: true },
+  { name: "hy", types: ["number"], optional: true },
+  { name: "angle", types: ["number"], optional: true },
+  { name: "loop", types: ["boolean"], optional: true },
+  { name: "prev_vertex", types: ["vector3"], optional: true },
+  { name: "next_vertex", types: ["vector3"], optional: true },
+];
+// A fixture info entry (index/type/sensor/density/friction/restitution/child_count).
+const B2D_FIXTURE_INFO_FIELDS: readonly TableField[] = [
+  { name: "index", types: ["number"] },
+  { name: "type", types: ["number"] },
+  { name: "sensor", types: ["boolean"] },
+  { name: "density", types: ["number"] },
+  { name: "friction", types: ["number"] },
+  { name: "restitution", types: ["number"] },
+  { name: "child_count", types: ["number"] },
+];
+// A shape info entry: only `shape_id` is documented ("Each entry includes
+// shape_id"); other members are engine-internal and left untyped.
+const B2D_SHAPE_INFO_FIELDS: readonly TableField[] = [{ name: "shape_id", types: ["number"] }];
+// mass properties: mass/inertia scalars plus the local-space center point.
+const B2D_MASS_DATA_FIELDS: readonly TableField[] = [
+  { name: "mass", types: ["number"] },
+  { name: "center", types: ["vector3"] },
+  { name: "inertia", types: ["number"] },
+];
+// an AABB corner pair.
+const B2D_AABB_FIELDS: readonly TableField[] = [
+  { name: "lower", types: ["vector3"] },
+  { name: "upper", types: ["vector3"] },
+];
+// a broad-phase query filter. group_index is optional on the query side.
+const B2D_QUERY_FILTER_FIELDS: readonly TableField[] = [
+  { name: "category_bits", types: ["number"] },
+  { name: "mask_bits", types: ["number"] },
+  { name: "group_index", types: ["number"], optional: true },
+];
+// the fixture filter data: category/mask bits plus a group index (all documented).
+const B2D_FILTER_DATA_FIELDS: readonly TableField[] = [
+  { name: "category_bits", types: ["number"] },
+  { name: "mask_bits", types: ["number"] },
+  { name: "group_index", types: ["number"] },
+];
+// the mover filter: category/mask bits only (no group index).
+const B2D_MOVER_FILTER_FIELDS: readonly TableField[] = [
+  { name: "category_bits", types: ["number"] },
+  { name: "mask_bits", types: ["number"] },
+];
+// tree traversal stats reported by a broad-phase query.
+const B2D_QUERY_STATS_FIELDS: readonly TableField[] = [
+  { name: "node_visits", types: ["number"] },
+  { name: "leaf_visits", types: ["number"] },
+];
+// a mover capsule.
+const B2D_CAPSULE_FIELDS: readonly TableField[] = [
+  { name: "center1", types: ["vector3"] },
+  { name: "center2", types: ["vector3"] },
+  { name: "radius", types: ["number"] },
+];
+// a raycast/shapecast hit entry.
+const B2D_CAST_HIT_FIELDS: readonly TableField[] = [
+  { name: "fixture", types: ["number"] },
+  { name: "shape", types: ["number"] },
+  { name: "point", types: ["vector3"] },
+  { name: "normal", types: ["vector3"] },
+  { name: "fraction", types: ["number"] },
+];
 
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
@@ -560,6 +671,359 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
+  // compute/material shader-constant, sampler, and vertex-attribute setters take
+  // "a table keyed by <name> with args tables as values": the `<dl>` documents
+  // the *value* shape, keyed by an arbitrary constant/sampler/attribute name.
+  // The keyed-object curation re-keys the parser-recovered args fields as
+  // `Record<string, { … }>`, restoring the keyed-by-name layer a flat object
+  // curation drops — so the documented `{ tint: { value: … } }` call compiles.
+  ["compute.set_constants:param:constants", { kind: "keyed-object" }],
+  ["compute.set_samplers:param:samplers", { kind: "keyed-object" }],
+  ["material.set_constants:param:constants", { kind: "keyed-object" }],
+  ["material.set_samplers:param:samplers", { kind: "keyed-object" }],
+  ["material.set_vertex_attributes:param:attributes", { kind: "keyed-object" }],
+  // compute/material texture setters take "a table keyed by sampler name with
+  // texture resources as values" — a name-keyed map to a resource-path hash.
+  ["compute.set_textures:param:textures", { kind: "mapping", key: "string", value: "hash" }],
+  ["material.set_textures:param:textures", { kind: "mapping", key: "string", value: "hash" }],
+  // model blend weights are a numeric Lua array ("array of weight values"), not
+  // an opaque record; get returns the array, set takes it (optional on the param
+  // side — omitting it resets the weights).
+  ["model.get_blend_weights:return:weights", { kind: "array", element: "number" }],
+  ["model.set_blend_weights:param:weights", { kind: "array", element: "number" }],
+  // graphics adapter inspection. get_engine_adapters returns "array of adapter
+  // family name strings"; get_adapter_info returns a documented object whose
+  // `limits` sub-table is a flat number map, `extensions` a string array, and
+  // `features` an array of graphics.CONTEXT_FEATURE_* ids (numbers). The
+  // `limits`/`extensions`/`features` shapes live in codehilite blocks the parser
+  // cannot read, so the whole object is curated from the prose field list.
+  ["graphics.get_engine_adapters:return:adapters", { kind: "array", element: "string" }],
+  [
+    "graphics.get_adapter_info:return:info",
+    {
+      kind: "object",
+      fields: [
+        { name: "family", types: ["string"] },
+        { name: "version_major", types: ["number"] },
+        { name: "version_minor", types: ["number"] },
+        {
+          name: "limits",
+          types: ["table"],
+          fields: [
+            { name: "max_texture_size_2d", types: ["number"] },
+            { name: "max_texture_size_3d", types: ["number"] },
+            { name: "max_texture_size_cube", types: ["number"] },
+            { name: "max_texture_array_layers", types: ["number"] },
+            { name: "max_framebuffer_width", types: ["number"] },
+            { name: "max_framebuffer_height", types: ["number"] },
+            { name: "max_color_attachments", types: ["number"] },
+            { name: "max_samplers_per_stage", types: ["number"] },
+            { name: "max_textures_per_stage", types: ["number"] },
+            { name: "max_vertex_attributes", types: ["number"] },
+            { name: "max_vertex_buffers", types: ["number"] },
+            { name: "max_compute_workgroup_size_x", types: ["number"] },
+            { name: "max_compute_workgroup_size_y", types: ["number"] },
+            { name: "max_compute_workgroup_size_z", types: ["number"] },
+            { name: "max_compute_workgroup_invocations", types: ["number"] },
+            { name: "max_compute_shared_memory_size", types: ["number"] },
+            { name: "max_uniform_buffer_range", types: ["number"] },
+            { name: "max_storage_buffer_range", types: ["number"] },
+          ],
+        },
+        { name: "extensions", types: ["table"], tsType: "string[]" },
+        { name: "features", types: ["table"], tsType: "number[]" },
+      ],
+    },
+  ],
+  // ---- Box2D (b2d.*) curated table shapes ----------------------------------
+  // All field names come from the ref-doc prose; genuinely-undocumented slots
+  // (chain/shape/explosion definitions, contact/plane/profile/counter structs)
+  // are per-slot-arbitrary via ARBITRARY_TABLE_SLOT_KEYS, not curated here.
+  //
+  // b2d root: version info table.
+  [
+    "b2d.get_version:return:info",
+    {
+      kind: "object",
+      fields: [
+        { name: "version", types: ["number"] },
+        { name: "major", types: ["number"] },
+        { name: "middle", types: ["number"] },
+        { name: "minor", types: ["number"] },
+      ],
+    },
+  ],
+  // b2d.body
+  ["b2d.body.compute_aabb:return:aabb", { kind: "object", fields: B2D_AABB_FIELDS }],
+  [
+    "b2d.body.create_fixture:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "shape", types: ["table"], fields: [...B2D_SHAPE_TABLE_FIELDS] },
+        { name: "friction", types: ["number"] },
+        { name: "restitution", types: ["number"] },
+        { name: "density", types: ["number"] },
+        { name: "sensor", types: ["boolean"] },
+        { name: "filter", types: ["table"], fields: [...B2D_FILTER_DATA_FIELDS] },
+      ],
+    },
+  ],
+  ["b2d.body.create_fixture:return:fixture", { kind: "object", fields: B2D_FIXTURE_INFO_FIELDS }],
+  [
+    "b2d.body.create_chain:return:segments",
+    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
+  ],
+  [
+    "b2d.body.get_fixtures:return:fixtures",
+    { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
+  ],
+  // get_joints returns an array of opaque b2Joint handles (numbers).
+  ["b2d.body.get_joints:return:joints", { kind: "array", element: "number" }],
+  ["b2d.body.get_mass_data:return:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
+  ["b2d.body.set_mass_data:param:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
+  ["b2d.body.get_shapes:return:shapes", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
+  [
+    "b2d.body.get_transform:return:transform",
+    {
+      kind: "object",
+      fields: [
+        { name: "position", types: ["vector3"] },
+        { name: "angle", types: ["number"] },
+      ],
+    },
+  ],
+  // b2d.chain
+  [
+    "b2d.chain.get_segments:return:segments",
+    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
+  ],
+  // b2d.fixture
+  ["b2d.fixture.get_aabb:return:aabb", { kind: "object", fields: B2D_AABB_FIELDS }],
+  ["b2d.fixture.get_filter_data:return:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
+  ["b2d.fixture.set_filter_data:param:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
+  ["b2d.fixture.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.fixture.set_shape:param:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  // b2d.shape
+  ["b2d.shape.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.shape.set_shape:param:definition", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.shape.get_mass_data:return:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
+  [
+    "b2d.shape.get_sensor_overlaps:return:overlaps",
+    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
+  ],
+  [
+    "b2d.shape.ray_cast:return:hit",
+    {
+      kind: "object",
+      fields: [
+        { name: "point", types: ["vector3"] },
+        { name: "normal", types: ["vector3"] },
+        { name: "fraction", types: ["number"] },
+        { name: "iterations", types: ["number"] },
+      ],
+    },
+  ],
+  // b2d.joint create_* definitions (each an optional, joint-type-specific option
+  // table; every field is optional because the whole `definition` param is).
+  [
+    "b2d.joint.create_distance:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "length", types: ["number"] },
+        { name: "frequency", types: ["number"] },
+        { name: "damping_ratio", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_mouse:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "target", types: ["vector3"] },
+        { name: "max_force", types: ["number"] },
+        { name: "frequency", types: ["number"] },
+        { name: "damping_ratio", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_prismatic:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "local_axis_a", types: ["vector3"] },
+        { name: "reference_angle", types: ["number"] },
+        { name: "enable_limit", types: ["boolean"] },
+        { name: "lower_translation", types: ["number"] },
+        { name: "upper_translation", types: ["number"] },
+        { name: "enable_motor", types: ["boolean"] },
+        { name: "max_motor_force", types: ["number"] },
+        { name: "motor_speed", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_revolute:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "reference_angle", types: ["number"] },
+        { name: "enable_limit", types: ["boolean"] },
+        { name: "lower_angle", types: ["number"] },
+        { name: "upper_angle", types: ["number"] },
+        { name: "enable_motor", types: ["boolean"] },
+        { name: "max_motor_torque", types: ["number"] },
+        { name: "motor_speed", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_weld:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "reference_angle", types: ["number"] },
+        { name: "frequency", types: ["number"] },
+        { name: "damping_ratio", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_wheel:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "local_axis_a", types: ["vector3"] },
+        { name: "enable_motor", types: ["boolean"] },
+        { name: "max_motor_torque", types: ["number"] },
+        { name: "motor_speed", types: ["number"] },
+        { name: "frequency", types: ["number"] },
+        { name: "damping_ratio", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_friction:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "max_force", types: ["number"] },
+        { name: "max_torque", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_rope:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "max_length", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_pulley:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "ground_anchor_a", types: ["vector3"] },
+        { name: "ground_anchor_b", types: ["vector3"] },
+        { name: "local_anchor_a", types: ["vector3"] },
+        { name: "local_anchor_b", types: ["vector3"] },
+        { name: "length_a", types: ["number"] },
+        { name: "length_b", types: ["number"] },
+        { name: "ratio", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  [
+    "b2d.joint.create_gear:param:definition",
+    { kind: "object", fields: [{ name: "ratio", types: ["number"] }] },
+  ],
+  [
+    "b2d.joint.create_motor:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "linear_offset", types: ["vector3"] },
+        { name: "angular_offset", types: ["number"] },
+        { name: "max_force", types: ["number"] },
+        { name: "max_torque", types: ["number"] },
+        { name: "correction_factor", types: ["number"] },
+        { name: "collide_connected", types: ["boolean"] },
+      ],
+    },
+  ],
+  // b2d.world broad-phase queries + movers.
+  ["b2d.world.overlap_aabb:param:aabb", { kind: "object", fields: B2D_AABB_FIELDS }],
+  ["b2d.world.overlap_aabb:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  [
+    "b2d.world.overlap_aabb:return:fixtures",
+    { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
+  ],
+  ["b2d.world.overlap_aabb:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
+  ["b2d.world.overlap_aabb:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
+  ["b2d.world.overlap_shape:param:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.world.overlap_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  [
+    "b2d.world.overlap_shape:return:fixtures",
+    { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
+  ],
+  ["b2d.world.overlap_shape:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
+  ["b2d.world.overlap_shape:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
+  ["b2d.world.cast_ray:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  ["b2d.world.cast_ray:return:hits", { kind: "array-object", fields: B2D_CAST_HIT_FIELDS }],
+  ["b2d.world.cast_ray:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
+  ["b2d.world.cast_ray_closest:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  [
+    "b2d.world.cast_ray_closest:return:hit",
+    {
+      kind: "object",
+      fields: [
+        { name: "fixture", types: ["number"] },
+        { name: "shape", types: ["number"] },
+        { name: "point", types: ["vector3"] },
+        { name: "normal", types: ["vector3"] },
+        { name: "fraction", types: ["number"] },
+        { name: "node_visits", types: ["number"] },
+        { name: "leaf_visits", types: ["number"] },
+      ],
+    },
+  ],
+  ["b2d.world.cast_shape:param:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.world.cast_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  ["b2d.world.cast_shape:return:hits", { kind: "array-object", fields: B2D_CAST_HIT_FIELDS }],
+  ["b2d.world.cast_shape:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
+  ["b2d.world.cast_mover:param:capsule", { kind: "object", fields: B2D_CAPSULE_FIELDS }],
+  ["b2d.world.cast_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
+  ["b2d.world.collide_mover:param:capsule", { kind: "object", fields: B2D_CAPSULE_FIELDS }],
+  ["b2d.world.collide_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
 ]);
 
 // Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements
@@ -599,6 +1063,43 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
   ["resource.set_atlas:param:table:geometries", ATLAS_GEOMETRY_MEMBERS],
   ["resource.get_atlas:return:data:geometries", ATLAS_GEOMETRY_MEMBERS],
 ]);
+
+// The shader-constant / vertex-attribute `value` field is documented as
+// `vmath.vector4 | vmath.vector3 | vmath.matrix4 | number | table`, where the
+// trailing `table` is the *array* form ("a table of vmath.vector4 or
+// vmath.matrix4" for constants, "a table of numbers" for matrix attributes). The
+// parser recovers every other field faithfully but leaves that `table` token as
+// a bare `Record`; this pins only the `value` field's TS type to the documented
+// array union while every sibling field stays parser-authoritative. Keyed by
+// `<element>:<kind>:<slot>:<field>`, mirroring NESTED_FIELD_CURATIONS.
+const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
+const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
+export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
+  ["compute.set_constants:param:constants:value", CONSTANT_VALUE_TS],
+  ["material.set_constants:param:constants:value", CONSTANT_VALUE_TS],
+  ["material.set_vertex_attributes:param:attributes:value", ATTRIBUTE_VALUE_TS],
+  ["material.get_vertex_attributes:return:table:value", ATTRIBUTE_VALUE_TS],
+]);
+
+// Pin a parser-recovered field's TS type from TABLE_FIELD_TYPE_OVERRIDES,
+// leaving every other field parser-authoritative. A field the override does not
+// name is returned unchanged; a field it names gains a `tsType` (emitted
+// verbatim, treated as recovered by the audit). Returns a new array; never
+// mutates the parser's result. Mirrors applyNestedFieldCurations.
+export function applyFieldTypeOverrides(
+  elementName: string,
+  slotKind: "param" | "return" | undefined,
+  slotName: string | undefined,
+  fields: readonly TableField[],
+): TableField[] {
+  if (slotKind === undefined || slotName === undefined) return [...fields];
+  return fields.map((field) => {
+    const override = TABLE_FIELD_TYPE_OVERRIDES.get(
+      `${elementName}:${slotKind}:${slotName}:${field.name}`,
+    );
+    return override === undefined ? field : { ...field, tsType: override };
+  });
+}
 
 /**
  * Recover a Defold `function(...)` callback-signature token into a TypeScript
@@ -726,6 +1227,12 @@ export interface TableField {
   isList?: boolean;
   numberList?: boolean;
   optional?: boolean;
+  // A hand-curated field whose faithful TS shape is not a plain token union
+  // (e.g. a nested vector array, or a documented value union with an array
+  // branch): inlineTableType emits this verbatim and the audit treats it as
+  // recovered. Only ever set on a curation-authored field, with already-mapped
+  // TS names — never from the parser — so it introduces no unmapped token.
+  tsType?: string;
 }
 
 function parseUlFields(doc: string): TableField[] {
@@ -1403,10 +1910,24 @@ function mapSlotUnion(
       } else if (curation?.kind === "object" || curation?.kind === "array-object") {
         const object = inlineTableType(curation.fields, mapType, optionalFields);
         ts = curation.kind === "array-object" ? `${object}[]` : object;
+      } else if (curation?.kind === "keyed-object") {
+        // The doc's `<dl>` describes the value shape; parse it and re-key by an
+        // arbitrary name. Reusing the parser keeps the inner fields in lockstep
+        // with the doc instead of a hand-listed drift-prone copy; a documented
+        // array-form field is pinned via TABLE_FIELD_TYPE_OVERRIDES.
+        const parsed = applyFieldTypeOverrides(
+          elementName,
+          slotKind,
+          slotName,
+          parseTableFields(doc, resolver) ?? [],
+        );
+        const object = inlineTableType(parsed, mapType, optionalFields);
+        ts = `Record<string, ${object}>`;
       } else {
         const parsed = parseTableFields(doc, resolver);
         if (parsed !== null) {
-          const fields = applyNestedFieldCurations(elementName, slotKind, slotName, parsed);
+          const nested = applyNestedFieldCurations(elementName, slotKind, slotName, parsed);
+          const fields = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);
           const object = inlineTableType(fields, mapType, optionalFields);
           ts = isSlotLevelList(doc) ? `${object}[]` : object;
         } else {
@@ -1488,14 +2009,19 @@ export function inlineTableType(
     // number-list field carries no member shape but a machine-readable numeric
     // element type ("in the form {px0, …}"), so it emits `number[]`.
     const ts =
-      field.fields !== undefined
-        ? `${inlineTableType(field.fields, mapType, optionalFields)}${field.isList ? "[]" : ""}`
-        : field.numberList === true
-          ? "number[]"
-          : field.types.length > 0
-            ? unionFromTokens(field.types, mapType)
-            : "unknown";
-    return `${key}${optionalFields ? "?" : ""}: ${ts}`;
+      field.tsType !== undefined
+        ? field.tsType
+        : field.fields !== undefined
+          ? `${inlineTableType(field.fields, mapType, optionalFields)}${field.isList ? "[]" : ""}`
+          : field.numberList === true
+            ? "number[]"
+            : field.types.length > 0
+              ? unionFromTokens(field.types, mapType)
+              : "unknown";
+    // A field is optional when the whole slot is param-side (optionalFields) or
+    // when the curation marks that individual field optional (a return-side
+    // variant field present only for some shape kinds, e.g. a b2d shape table).
+    return `${key}${optionalFields || field.optional === true ? "?" : ""}: ${ts}`;
   });
   return `{ ${members.join("; ")} }`;
 }
