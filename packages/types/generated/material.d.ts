@@ -59,7 +59,7 @@ declare global {
      * const constants = material.get_constants(resource.material("/my_material.materialc"));
      * ```
      */
-    function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 };
+    function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];
     /**
      * Returns a table of all the texture samplers in the material. This function will return all the texture samplers
      * that are used in both the vertex and the fragment shaders.
@@ -124,7 +124,7 @@ declare global {
      * const samplers = material.get_samplers(resource.material("/my_material.materialc"));
      * ```
      */
-    function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number };
+    function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];
     /**
      * Returns a table of all the textures from the material.
      *
@@ -175,7 +175,7 @@ declare global {
      * const textures = material.get_textures(resource.material("/my_material.materialc"));
      * ```
      */
-    function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number };
+    function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];
     /**
      * Returns a table of all the vertex attributes in the material. This function will return all the vertex attributes
      * that are used in the vertex shader of the material.
@@ -244,7 +244,7 @@ declare global {
      * const vertex_attributes = material.get_vertex_attributes(resource.material("/my_material.materialc"));
      * ```
      */
-    function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number };
+    function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[];
     /**
      * Sets shader constants in a material, if the constants exist.
      *

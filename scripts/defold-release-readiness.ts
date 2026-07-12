@@ -6,6 +6,12 @@ import {
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "../packages/cli/src/defold-version.ts";
 import { RELEASE_TARGET_MATRIX } from "../packages/cli/src/release-target-matrix.ts";
+import {
+  type ApiTarget,
+  generateModuleDeclaration,
+  loadApiTargets,
+  loadTargetModules,
+} from "../packages/types/scripts/regen.ts";
 
 // Aggregates the committed, offline evidence a Defold release promotion is gated
 // on and fails closed when any dimension is absent or stale. Each blocker is
@@ -58,6 +64,11 @@ export interface TargetEvidence {
   // generatedDir (empty when the surface is fully committed). Optional so
   // hand-built evidence bundles in tests may omit it.
   readonly missingDeclarations?: readonly string[];
+  // Registered outFile declarations present on disk whose bytes differ from the
+  // in-memory regeneration of their fixture through the production path (stale
+  // or unrelated content). Empty when every committed declaration corresponds.
+  // Optional so hand-built evidence bundles in tests may omit it.
+  readonly mismatchedDeclarations?: readonly string[];
 }
 
 export interface MigrationGuideEvidence {
@@ -138,6 +149,12 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
     } else {
       for (const outFile of declDefault.missingDeclarations ?? []) {
         add("declaration", `committed declaration missing for default target: ${outFile}`);
+      }
+      for (const outFile of declDefault.mismatchedDeclarations ?? []) {
+        add(
+          "declaration",
+          `committed declaration does not match regeneration for default target: ${outFile}`,
+        );
       }
     }
   }
@@ -294,32 +311,81 @@ export function collectTargets(root: string): TargetEvidence[] | null {
   if (raw?.targets === undefined) {
     return null;
   }
+  const packageRoot = path.join(root, "packages/types");
+  // Load the typed registry once for the offline regeneration comparison. A
+  // malformed registry (or a bad fixture, handled per-target below) degrades a
+  // committed-meta target to "content unproven" rather than throwing — the gate
+  // fails closed, it never crashes.
+  let apiTargets: ApiTarget[] | null;
+  try {
+    apiTargets = loadApiTargets(path.join(packageRoot, "api-targets.json"));
+  } catch {
+    apiTargets = null;
+  }
   return raw.targets.map((t) => {
     // A committed-surface target is one Defold ships no live import for
     // (`source === null`) with a registered output directory. Its evidence is
-    // only real when that directory and every registered declaration exist on
-    // disk — registry metadata alone is not proof.
+    // only real when that directory exists, every registered declaration is
+    // present, and each present declaration's bytes match the in-memory
+    // regeneration of its fixture — registry metadata and mere presence are not
+    // proof.
     const committedMeta = t.source === null && typeof t.generatedDir === "string";
     const missingDeclarations: string[] = [];
+    const mismatchedDeclarations: string[] = [];
     let surfaceReal = false;
     if (committedMeta && typeof t.generatedDir === "string") {
       const dir = path.join(root, "packages/types", t.generatedDir);
       const dirExists = existsSync(dir);
+      const regenerated = regenerateTargetDeclarations(apiTargets, t.id, packageRoot);
       for (const module of t.modules ?? []) {
         if (typeof module.outFile !== "string") continue;
-        if (!dirExists || !existsSync(path.join(dir, module.outFile))) {
+        const file = path.join(dir, module.outFile);
+        if (!dirExists || !existsSync(file)) {
           missingDeclarations.push(module.outFile);
+          continue;
+        }
+        // Present but unprovable (regen unavailable) or bytes differ from the
+        // production regeneration -> a content mismatch, not a real surface.
+        const expected = regenerated?.get(module.outFile);
+        if (expected === undefined || readFileSync(file, "utf8") !== expected) {
+          mismatchedDeclarations.push(module.outFile);
         }
       }
-      surfaceReal = dirExists && missingDeclarations.length === 0;
+      surfaceReal =
+        dirExists && missingDeclarations.length === 0 && mismatchedDeclarations.length === 0;
     }
     return {
       id: t.id,
       isDefault: t.default === true,
       hasCommittedSurface: surfaceReal,
       missingDeclarations,
+      mismatchedDeclarations,
     };
   });
+}
+
+// Regenerate every module of a `source === null` target in memory through the
+// production path (loadTargetModules + generateModuleDeclaration), keyed by
+// outFile, for byte-for-byte comparison against the committed declarations. A
+// missing target or a fixture/registry failure returns null so the caller marks
+// content unproven instead of throwing.
+function regenerateTargetDeclarations(
+  apiTargets: ApiTarget[] | null,
+  id: string,
+  packageRoot: string,
+): Map<string, string> | null {
+  if (apiTargets === null) return null;
+  const target = apiTargets.find((t) => t.id === id);
+  if (target === undefined) return null;
+  try {
+    const byOutFile = new Map<string, string>();
+    for (const entry of loadTargetModules(target, packageRoot)) {
+      byOutFile.set(entry.outFile, generateModuleDeclaration(entry).contents);
+    }
+    return byOutFile;
+  } catch {
+    return null;
+  }
 }
 
 function collectMigrationGuide(root: string, release: string): MigrationGuideEvidence | null {
