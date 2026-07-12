@@ -1,6 +1,5 @@
 {
-  "current": "1.13.0",
-  "baseline": "1.12.4",
+  "versions": ["1.13.0", "1.12.4"],
   "records": [
     {
       "identity": {
@@ -9,7 +8,7 @@
         "name": "b2d.body.apply_linear_impulse_to_center",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -18,7 +17,7 @@
         "name": "b2d.body.compute_aabb",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -27,7 +26,7 @@
         "name": "b2d.body.create_chain",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Chain\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -36,7 +35,7 @@
         "name": "b2d.body.create_fixture",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -45,7 +44,7 @@
         "name": "b2d.body.create_fixture",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -54,7 +53,7 @@
         "name": "b2d.body.create_shape",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -63,7 +62,7 @@
         "name": "b2d.body.destroy_fixture",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -72,7 +71,7 @@
         "name": "b2d.body.destroy_shape",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -81,7 +80,7 @@
         "name": "b2d.body.dump",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -90,7 +89,7 @@
         "name": "b2d.body.enable_contact_events",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -99,7 +98,7 @@
         "name": "b2d.body.enable_hit_events",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -108,7 +107,7 @@
         "name": "b2d.body.get_contact_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -117,7 +116,7 @@
         "name": "b2d.body.get_contact_list",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"b2ContactEdge\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -126,7 +125,7 @@
         "name": "b2d.body.get_fixtures",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -135,7 +134,7 @@
         "name": "b2d.body.get_force",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -144,7 +143,7 @@
         "name": "b2d.body.get_inertia",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -153,7 +152,7 @@
         "name": "b2d.body.get_joints",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -162,7 +161,7 @@
         "name": "b2d.body.get_local_center",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -171,7 +170,7 @@
         "name": "b2d.body.get_mass_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"b2MassData\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -180,7 +179,7 @@
         "name": "b2d.body.get_mass_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -189,7 +188,7 @@
         "name": "b2d.body.get_name",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -198,7 +197,7 @@
         "name": "b2d.body.get_next",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -207,7 +206,7 @@
         "name": "b2d.body.get_shapes",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -216,7 +215,7 @@
         "name": "b2d.body.get_sleep_threshold",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -225,7 +224,7 @@
         "name": "b2d.body.get_transform",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"b2Transform\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -234,7 +233,7 @@
         "name": "b2d.body.get_transform",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -243,7 +242,7 @@
         "name": "b2d.body.get_user_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"hash\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -252,7 +251,7 @@
         "name": "b2d.body.get_world_center",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -261,7 +260,7 @@
         "name": "b2d.body.get_world_center",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -270,7 +269,7 @@
         "name": "b2d.body.is_sleeping_allowed",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -279,7 +278,7 @@
         "name": "b2d.body.is_valid",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -288,7 +287,7 @@
         "name": "b2d.body.set_mass_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2MassData\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -297,7 +296,7 @@
         "name": "b2d.body.set_mass_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -306,7 +305,7 @@
         "name": "b2d.body.set_name",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -315,7 +314,7 @@
         "name": "b2d.body.set_sleep_threshold",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -324,7 +323,7 @@
         "name": "b2d.body.set_sleeping_allowed",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -333,7 +332,7 @@
         "name": "b2d.body.set_target_transform",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -342,7 +341,7 @@
         "name": "b2d.body.set_user_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -351,7 +350,7 @@
         "name": "b2d.chain.destroy",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -360,7 +359,7 @@
         "name": "b2d.chain.from_shape",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"b2Chain\",\"nil\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -369,7 +368,7 @@
         "name": "b2d.chain.get_friction",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -378,7 +377,7 @@
         "name": "b2d.chain.get_geometry",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -387,7 +386,7 @@
         "name": "b2d.chain.get_material",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -396,7 +395,7 @@
         "name": "b2d.chain.get_restitution",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -405,7 +404,7 @@
         "name": "b2d.chain.get_segment_count",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -414,7 +413,7 @@
         "name": "b2d.chain.get_segments",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -423,7 +422,7 @@
         "name": "b2d.chain.get_world",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"b2World\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -432,7 +431,7 @@
         "name": "b2d.chain.is_valid",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -441,7 +440,7 @@
         "name": "b2d.chain.set_friction",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -450,7 +449,7 @@
         "name": "b2d.chain.set_material",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -459,7 +458,7 @@
         "name": "b2d.chain.set_restitution",
         "signature": "[{\"types\":[\"b2Chain\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -468,7 +467,7 @@
         "name": "b2Chain",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -477,7 +476,7 @@
         "name": "b2d.fixture.get_aabb",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -486,7 +485,7 @@
         "name": "b2d.fixture.get_density",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -495,7 +494,7 @@
         "name": "b2d.fixture.get_filter_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -504,7 +503,7 @@
         "name": "b2d.fixture.get_friction",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -513,7 +512,7 @@
         "name": "b2d.fixture.get_restitution",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -522,7 +521,7 @@
         "name": "b2d.fixture.get_shape",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -531,7 +530,7 @@
         "name": "b2d.fixture.get_type",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -540,7 +539,7 @@
         "name": "b2d.fixture.is_sensor",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -549,7 +548,7 @@
         "name": "b2d.fixture.refilter",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -558,7 +557,7 @@
         "name": "b2d.fixture.set_density",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -567,7 +566,7 @@
         "name": "b2d.fixture.set_filter_data",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -576,7 +575,7 @@
         "name": "b2d.fixture.set_friction",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -585,7 +584,7 @@
         "name": "b2d.fixture.set_restitution",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -594,7 +593,7 @@
         "name": "b2d.fixture.set_sensor",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -603,7 +602,7 @@
         "name": "b2d.fixture.set_shape",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -612,7 +611,7 @@
         "name": "b2d.fixture.test_point",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -621,7 +620,7 @@
         "name": "b2d.joint.JOINT_TYPE_DISTANCE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -630,7 +629,7 @@
         "name": "b2d.joint.JOINT_TYPE_FILTER",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -639,7 +638,7 @@
         "name": "b2d.joint.JOINT_TYPE_FRICTION",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -648,7 +647,7 @@
         "name": "b2d.joint.JOINT_TYPE_GEAR",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -657,7 +656,7 @@
         "name": "b2d.joint.JOINT_TYPE_MOTOR",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -666,7 +665,7 @@
         "name": "b2d.joint.JOINT_TYPE_MOUSE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -675,7 +674,7 @@
         "name": "b2d.joint.JOINT_TYPE_PRISMATIC",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -684,7 +683,7 @@
         "name": "b2d.joint.JOINT_TYPE_PULLEY",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -693,7 +692,7 @@
         "name": "b2d.joint.JOINT_TYPE_REVOLUTE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -702,7 +701,7 @@
         "name": "b2d.joint.JOINT_TYPE_ROPE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -711,7 +710,7 @@
         "name": "b2d.joint.JOINT_TYPE_UNKNOWN",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -720,7 +719,7 @@
         "name": "b2d.joint.JOINT_TYPE_WELD",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -729,7 +728,7 @@
         "name": "b2d.joint.JOINT_TYPE_WHEEL",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -738,7 +737,7 @@
         "name": "b2d.joint.LIMIT_STATE_AT_LOWER",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -747,7 +746,7 @@
         "name": "b2d.joint.LIMIT_STATE_AT_UPPER",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -756,7 +755,7 @@
         "name": "b2d.joint.LIMIT_STATE_EQUAL",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -765,7 +764,7 @@
         "name": "b2d.joint.LIMIT_STATE_INACTIVE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -774,7 +773,7 @@
         "name": "b2d.joint.create_distance",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -783,7 +782,7 @@
         "name": "b2d.joint.create_filter",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -792,7 +791,7 @@
         "name": "b2d.joint.create_friction",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -801,7 +800,7 @@
         "name": "b2d.joint.create_gear",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -810,7 +809,7 @@
         "name": "b2d.joint.create_motor",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -819,7 +818,7 @@
         "name": "b2d.joint.create_mouse",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -828,7 +827,7 @@
         "name": "b2d.joint.create_prismatic",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -837,7 +836,7 @@
         "name": "b2d.joint.create_pulley",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -846,7 +845,7 @@
         "name": "b2d.joint.create_revolute",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -855,7 +854,7 @@
         "name": "b2d.joint.create_rope",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -864,7 +863,7 @@
         "name": "b2d.joint.create_weld",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -873,7 +872,7 @@
         "name": "b2d.joint.create_wheel",
         "signature": "[{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"b2Body\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -882,7 +881,7 @@
         "name": "b2d.joint.destroy",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -891,7 +890,7 @@
         "name": "b2d.joint.enable_limit",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -900,7 +899,7 @@
         "name": "b2d.joint.enable_motor",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -909,7 +908,7 @@
         "name": "b2d.joint.enable_spring",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -918,7 +917,7 @@
         "name": "b2d.joint.get_anchor_a",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -927,7 +926,7 @@
         "name": "b2d.joint.get_anchor_b",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -936,7 +935,7 @@
         "name": "b2d.joint.get_angular_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -945,7 +944,7 @@
         "name": "b2d.joint.get_angular_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -954,7 +953,7 @@
         "name": "b2d.joint.get_angular_offset",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -963,7 +962,7 @@
         "name": "b2d.joint.get_body_a",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -972,7 +971,7 @@
         "name": "b2d.joint.get_body_b",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -981,7 +980,7 @@
         "name": "b2d.joint.get_collide_connected",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -990,7 +989,7 @@
         "name": "b2d.joint.get_correction_factor",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -999,7 +998,7 @@
         "name": "b2d.joint.get_current_length",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1008,7 +1007,7 @@
         "name": "b2d.joint.get_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1017,7 +1016,7 @@
         "name": "b2d.joint.get_frequency",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1026,7 +1025,7 @@
         "name": "b2d.joint.get_ground_anchor_a",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1035,7 +1034,7 @@
         "name": "b2d.joint.get_ground_anchor_b",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1044,7 +1043,7 @@
         "name": "b2d.joint.get_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1053,7 +1052,7 @@
         "name": "b2d.joint.get_joint_angle",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1062,7 +1061,7 @@
         "name": "b2d.joint.get_joint_speed",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1071,7 +1070,7 @@
         "name": "b2d.joint.get_joint_translation",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1080,7 +1079,7 @@
         "name": "b2d.joint.get_joint1",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1089,7 +1088,7 @@
         "name": "b2d.joint.get_joint2",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"b2Joint\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1098,7 +1097,7 @@
         "name": "b2d.joint.get_length_a",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1107,7 +1106,7 @@
         "name": "b2d.joint.get_length_b",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1116,7 +1115,7 @@
         "name": "b2d.joint.get_length",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1125,7 +1124,7 @@
         "name": "b2d.joint.get_limit_state",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1134,7 +1133,7 @@
         "name": "b2d.joint.get_linear_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1143,7 +1142,7 @@
         "name": "b2d.joint.get_linear_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1152,7 +1151,7 @@
         "name": "b2d.joint.get_linear_offset",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1161,7 +1160,7 @@
         "name": "b2d.joint.get_local_anchor_a",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1170,7 +1169,7 @@
         "name": "b2d.joint.get_local_anchor_b",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1179,7 +1178,7 @@
         "name": "b2d.joint.get_local_axis_a",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1188,7 +1187,7 @@
         "name": "b2d.joint.get_lower_limit",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1197,7 +1196,7 @@
         "name": "b2d.joint.get_max_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1206,7 +1205,7 @@
         "name": "b2d.joint.get_max_length",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1215,7 +1214,7 @@
         "name": "b2d.joint.get_max_motor_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1224,7 +1223,7 @@
         "name": "b2d.joint.get_max_motor_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1233,7 +1232,7 @@
         "name": "b2d.joint.get_max_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1242,7 +1241,7 @@
         "name": "b2d.joint.get_min_length",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1251,7 +1250,7 @@
         "name": "b2d.joint.get_motor_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1260,7 +1259,7 @@
         "name": "b2d.joint.get_motor_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1269,7 +1268,7 @@
         "name": "b2d.joint.get_motor_speed",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1278,7 +1277,7 @@
         "name": "b2d.joint.get_motor_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1287,7 +1286,7 @@
         "name": "b2d.joint.get_motor_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1296,7 +1295,7 @@
         "name": "b2d.joint.get_mouse_target",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1305,7 +1304,7 @@
         "name": "b2d.joint.get_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1314,7 +1313,7 @@
         "name": "b2d.joint.get_reaction_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1323,7 +1322,7 @@
         "name": "b2d.joint.get_reaction_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1332,7 +1331,7 @@
         "name": "b2d.joint.get_reaction_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1341,7 +1340,7 @@
         "name": "b2d.joint.get_reaction_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1350,7 +1349,7 @@
         "name": "b2d.joint.get_reference_angle",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1359,7 +1358,7 @@
         "name": "b2d.joint.get_spring_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1368,7 +1367,7 @@
         "name": "b2d.joint.get_spring_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1377,7 +1376,7 @@
         "name": "b2d.joint.get_type",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1386,7 +1385,7 @@
         "name": "b2d.joint.get_upper_limit",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1395,7 +1394,7 @@
         "name": "b2d.joint.get_world",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"b2World\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1404,7 +1403,7 @@
         "name": "b2d.joint.is_active",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1413,7 +1412,7 @@
         "name": "b2d.joint.is_limit_enabled",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1422,7 +1421,7 @@
         "name": "b2d.joint.is_motor_enabled",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1431,7 +1430,7 @@
         "name": "b2d.joint.is_spring_enabled",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1440,7 +1439,7 @@
         "name": "b2d.joint.is_valid",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1449,7 +1448,7 @@
         "name": "b2d.joint.set_angular_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1458,7 +1457,7 @@
         "name": "b2d.joint.set_angular_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1467,7 +1466,7 @@
         "name": "b2d.joint.set_angular_offset",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1476,7 +1475,7 @@
         "name": "b2d.joint.set_collide_connected",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1485,7 +1484,7 @@
         "name": "b2d.joint.set_correction_factor",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1494,7 +1493,7 @@
         "name": "b2d.joint.set_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1503,7 +1502,7 @@
         "name": "b2d.joint.set_frequency",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1512,7 +1511,7 @@
         "name": "b2d.joint.set_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1521,7 +1520,7 @@
         "name": "b2d.joint.set_length_range",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1530,7 +1529,7 @@
         "name": "b2d.joint.set_length",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1539,7 +1538,7 @@
         "name": "b2d.joint.set_limits",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1548,7 +1547,7 @@
         "name": "b2d.joint.set_linear_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1557,7 +1556,7 @@
         "name": "b2d.joint.set_linear_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1566,7 +1565,7 @@
         "name": "b2d.joint.set_linear_offset",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1575,7 +1574,7 @@
         "name": "b2d.joint.set_max_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1584,7 +1583,7 @@
         "name": "b2d.joint.set_max_length",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1593,7 +1592,7 @@
         "name": "b2d.joint.set_max_motor_force",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1602,7 +1601,7 @@
         "name": "b2d.joint.set_max_motor_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1611,7 +1610,7 @@
         "name": "b2d.joint.set_max_torque",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1620,7 +1619,7 @@
         "name": "b2d.joint.set_min_length",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1629,7 +1628,7 @@
         "name": "b2d.joint.set_motor_speed",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1638,7 +1637,7 @@
         "name": "b2d.joint.set_mouse_target",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1647,7 +1646,7 @@
         "name": "b2d.joint.set_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1656,7 +1655,7 @@
         "name": "b2d.joint.set_reference_angle",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1665,7 +1664,7 @@
         "name": "b2d.joint.set_spring_damping_ratio",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1674,7 +1673,7 @@
         "name": "b2d.joint.set_spring_hertz",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1683,7 +1682,7 @@
         "name": "b2d.joint.wake_bodies",
         "signature": "[{\"types\":[\"b2Joint\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1692,7 +1691,7 @@
         "name": "b2Joint",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1701,7 +1700,7 @@
         "name": "b2d.shape.SHAPE_TYPE_BOX",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1710,7 +1709,7 @@
         "name": "b2d.shape.SHAPE_TYPE_CAPSULE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1719,7 +1718,7 @@
         "name": "b2d.shape.SHAPE_TYPE_CHAIN",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1728,7 +1727,7 @@
         "name": "b2d.shape.SHAPE_TYPE_CIRCLE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1737,7 +1736,7 @@
         "name": "b2d.shape.SHAPE_TYPE_EDGE",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1746,7 +1745,7 @@
         "name": "b2d.shape.SHAPE_TYPE_GRID",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1755,7 +1754,7 @@
         "name": "b2d.shape.SHAPE_TYPE_POLYGON",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1764,7 +1763,7 @@
         "name": "b2d.shape.SHAPE_TYPE_SEGMENT",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1773,7 +1772,7 @@
         "name": "b2d.shape.are_contact_events_enabled",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1782,7 +1781,7 @@
         "name": "b2d.shape.are_hit_events_enabled",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1791,7 +1790,7 @@
         "name": "b2d.shape.are_pre_solve_events_enabled",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1800,7 +1799,7 @@
         "name": "b2d.shape.are_sensor_events_enabled",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1809,7 +1808,7 @@
         "name": "b2d.shape.enable_contact_events",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1818,7 +1817,7 @@
         "name": "b2d.shape.enable_hit_events",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1827,7 +1826,7 @@
         "name": "b2d.shape.enable_pre_solve_events",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1836,7 +1835,7 @@
         "name": "b2d.shape.enable_sensor_events",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1845,7 +1844,7 @@
         "name": "b2d.shape.get_body",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1854,7 +1853,7 @@
         "name": "b2d.shape.get_closest_point",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1863,7 +1862,7 @@
         "name": "b2d.shape.get_contact_capacity",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1872,7 +1871,7 @@
         "name": "b2d.shape.get_contact_data",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1881,7 +1880,7 @@
         "name": "b2d.shape.get_mass_data",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1890,7 +1889,7 @@
         "name": "b2d.shape.get_material",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1899,7 +1898,7 @@
         "name": "b2d.shape.get_sensor_capacity",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1908,7 +1907,7 @@
         "name": "b2d.shape.get_sensor_overlaps",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1917,7 +1916,7 @@
         "name": "b2d.shape.get_shape",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1926,7 +1925,7 @@
         "name": "b2d.shape.get_world",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"b2World\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1935,7 +1934,7 @@
         "name": "b2d.shape.is_valid",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1944,7 +1943,7 @@
         "name": "b2d.shape.ray_cast",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1953,7 +1952,7 @@
         "name": "b2d.shape.set_material",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1962,7 +1961,7 @@
         "name": "b2d.shape.set_shape",
         "signature": "[{\"types\":[\"b2Shape\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1971,7 +1970,7 @@
         "name": "b2Shape",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1980,7 +1979,7 @@
         "name": "b2d.world.cast_mover",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1989,7 +1988,7 @@
         "name": "b2d.world.cast_ray_closest",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -1998,7 +1997,7 @@
         "name": "b2d.world.cast_ray_closest",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2007,7 +2006,7 @@
         "name": "b2d.world.cast_ray",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2016,7 +2015,7 @@
         "name": "b2d.world.cast_ray",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2025,7 +2024,7 @@
         "name": "b2d.world.cast_shape",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2034,7 +2033,7 @@
         "name": "b2d.world.cast_shape",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2043,7 +2042,7 @@
         "name": "b2d.world.collide_mover",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2052,7 +2051,7 @@
         "name": "b2d.world.enable_continuous",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2061,7 +2060,7 @@
         "name": "b2d.world.enable_sleeping",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2070,7 +2069,7 @@
         "name": "b2d.world.enable_speculative",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2079,7 +2078,7 @@
         "name": "b2d.world.enable_warm_starting",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2088,7 +2087,7 @@
         "name": "b2d.world.explode",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2097,7 +2096,7 @@
         "name": "b2d.world.get_awake_body_count",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2106,7 +2105,7 @@
         "name": "b2d.world.get_counters",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2115,7 +2114,7 @@
         "name": "b2d.world.get_gravity",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2124,7 +2123,7 @@
         "name": "b2d.world.get_hit_event_threshold",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2133,7 +2132,7 @@
         "name": "b2d.world.get_maximum_linear_speed",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2142,7 +2141,7 @@
         "name": "b2d.world.get_profile",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2151,7 +2150,7 @@
         "name": "b2d.world.get_restitution_threshold",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2160,7 +2159,7 @@
         "name": "b2d.world.is_continuous_enabled",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2169,7 +2168,7 @@
         "name": "b2d.world.is_locked",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2178,7 +2177,7 @@
         "name": "b2d.world.is_sleeping_enabled",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2187,7 +2186,7 @@
         "name": "b2d.world.is_valid",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2196,7 +2195,7 @@
         "name": "b2d.world.is_warm_starting_enabled",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2205,7 +2204,7 @@
         "name": "b2d.world.overlap_aabb",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2214,7 +2213,7 @@
         "name": "b2d.world.overlap_aabb",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2223,7 +2222,7 @@
         "name": "b2d.world.overlap_shape",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2232,7 +2231,7 @@
         "name": "b2d.world.overlap_shape",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2241,7 +2240,7 @@
         "name": "b2d.world.rebuild_static_tree",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2250,7 +2249,7 @@
         "name": "b2d.world.set_contact_tuning",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2259,7 +2258,7 @@
         "name": "b2d.world.set_gravity",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2268,7 +2267,7 @@
         "name": "b2d.world.set_hit_event_threshold",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2277,7 +2276,7 @@
         "name": "b2d.world.set_joint_tuning",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2286,7 +2285,7 @@
         "name": "b2d.world.set_maximum_linear_speed",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2295,7 +2294,7 @@
         "name": "b2d.world.set_restitution_threshold",
         "signature": "[{\"types\":[\"b2World\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2304,7 +2303,7 @@
         "name": "b2d.get_version",
         "signature": "[]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2313,7 +2312,7 @@
         "name": "camera.get_orthographic_auto_zoom",
         "signature": "[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2322,19 +2321,19 @@
         "name": "aspect_ratio",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": { "namespace": "camera", "kind": "PROPERTY", "name": "far_z", "signature": "" },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": { "namespace": "camera", "kind": "PROPERTY", "name": "fov", "signature": "" },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": { "namespace": "camera", "kind": "PROPERTY", "name": "near_z", "signature": "" },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2343,7 +2342,7 @@
         "name": "orthographic_auto_zoom",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2352,7 +2351,7 @@
         "name": "orthographic_zoom",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2361,11 +2360,11 @@
         "name": "projection",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": { "namespace": "camera", "kind": "PROPERTY", "name": "view", "signature": "" },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2374,7 +2373,7 @@
         "name": "compute.get_constants",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2383,7 +2382,7 @@
         "name": "compute.get_samplers",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2392,7 +2391,7 @@
         "name": "compute.get_textures",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2401,7 +2400,7 @@
         "name": "compute.set_constants",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2410,7 +2409,7 @@
         "name": "compute.set_samplers",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2419,7 +2418,7 @@
         "name": "compute.set_textures",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2428,7 +2427,7 @@
         "name": "graphics.BLEND_EQUATION_ADD",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2437,7 +2436,7 @@
         "name": "graphics.BLEND_EQUATION_MAX",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2446,7 +2445,7 @@
         "name": "graphics.BLEND_EQUATION_MIN",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2455,7 +2454,7 @@
         "name": "graphics.BLEND_EQUATION_REVERSE_SUBTRACT",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2464,7 +2463,7 @@
         "name": "graphics.BLEND_EQUATION_SUBTRACT",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2473,7 +2472,7 @@
         "name": "graphics.CONTEXT_FEATURE_3D_TEXTURES",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2482,7 +2481,7 @@
         "name": "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2491,7 +2490,7 @@
         "name": "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2500,7 +2499,7 @@
         "name": "graphics.CONTEXT_FEATURE_COMPUTE_SHADER",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2509,7 +2508,7 @@
         "name": "graphics.CONTEXT_FEATURE_INSTANCING",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2518,7 +2517,7 @@
         "name": "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2527,7 +2526,7 @@
         "name": "graphics.CONTEXT_FEATURE_STORAGE_BUFFER",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2536,7 +2535,7 @@
         "name": "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2545,7 +2544,7 @@
         "name": "graphics.CONTEXT_FEATURE_VSYNC",
         "signature": ""
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2554,7 +2553,7 @@
         "name": "graphics.get_adapter_info",
         "signature": "[]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2563,7 +2562,7 @@
         "name": "graphics.get_engine_adapters",
         "signature": "[]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2572,7 +2571,7 @@
         "name": "liveupdate.add_mount",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function(self, name, uri, result)\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2581,7 +2580,7 @@
         "name": "liveupdate.add_mount",
         "signature": "[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "removedIn": "1.13.0"
+      "availableIn": ["1.12.4"]
     },
     {
       "identity": {
@@ -2590,7 +2589,7 @@
         "name": "liveupdate.is_built_with_excluded_files",
         "signature": "[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2599,7 +2598,7 @@
         "name": "liveupdate.remove_mount",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2608,7 +2607,7 @@
         "name": "liveupdate.remove_mount",
         "signature": "[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
-      "removedIn": "1.13.0"
+      "availableIn": ["1.12.4"]
     },
     {
       "identity": {
@@ -2617,7 +2616,7 @@
         "name": "material.get_constants",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2626,7 +2625,7 @@
         "name": "material.get_samplers",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2635,7 +2634,7 @@
         "name": "material.get_textures",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2644,7 +2643,7 @@
         "name": "material.get_vertex_attributes",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2653,7 +2652,7 @@
         "name": "material.set_constants",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2662,7 +2661,7 @@
         "name": "material.set_samplers",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2671,7 +2670,7 @@
         "name": "material.set_textures",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2680,7 +2679,7 @@
         "name": "material.set_vertex_attributes",
         "signature": "[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2689,7 +2688,7 @@
         "name": "model.get_blend_weights",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2698,7 +2697,7 @@
         "name": "model.reset_constant",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2707,11 +2706,11 @@
         "name": "model.set_blend_weights",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": { "namespace": "model", "kind": "PROPERTY", "name": "material", "signature": "" },
-      "removedIn": "1.13.0"
+      "availableIn": ["1.12.4"]
     },
     {
       "identity": {
@@ -2720,7 +2719,7 @@
         "name": "render.set_blend_equation_separate",
         "signature": "[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2729,7 +2728,7 @@
         "name": "render.set_blend_func_separate",
         "signature": "[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2738,7 +2737,7 @@
         "name": "sprite.reset_constant",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     },
     {
       "identity": {
@@ -2747,7 +2746,7 @@
         "name": "tilemap.reset_constant",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]"
       },
-      "since": "1.13.0"
+      "availableIn": ["1.13.0"]
     }
   ]
 }

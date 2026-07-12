@@ -4,6 +4,7 @@ import {
   type ApiModule,
   type ApiParameter,
   type ApiVariable,
+  availabilityLabel,
   DEFOLD_TYPE_MAP,
   examplesHtmlToMarkdown,
   hashExampleSource,
@@ -26,7 +27,16 @@ import { slugify } from "./headings";
  * badge when its identity is present, so the same lookup is safe on the canonical
  * and historical surfaces at once.
  */
-export type AvailabilityLookup = ReadonlyMap<string, ApiAvailability>;
+/**
+ * A version's availability index: the ordered tracked `versions` axis (newest
+ * first) plus the identity-keyed record map. The versions axis rides on the
+ * lookup so a friendly label (`Since Defold X`, `Available through Defold X`)
+ * can be computed from a symbol's `availableIn` at render and search time.
+ */
+export interface AvailabilityLookup {
+  readonly versions: readonly string[];
+  readonly records: ReadonlyMap<string, ApiAvailability>;
+}
 
 type IdentityKind = "FUNCTION" | "CONSTANT" | "VARIABLE" | "PROPERTY" | "TYPEDEF";
 
@@ -38,36 +48,42 @@ function joinAvailability(
   signature: string,
 ): ApiAvailability | undefined {
   if (!availability) return undefined;
-  return availability.get(symbolIdentityKey({ namespace, kind, name, signature }));
+  return availability.records.get(symbolIdentityKey({ namespace, kind, name, signature }));
 }
 
 /**
  * The lifecycle labels rendered as compact text badges and threaded into the
- * search projection. Text, never color alone, so the facts stay accessible. The
- * replacement link is rendered separately (it needs version-correct resolution);
- * {@link availabilityProse} appends its plain name for the search text.
+ * search projection. The availability span is turned into a friendly label
+ * against the ordered `versions` (an all-versions span carries none — it is
+ * implied); deprecation and Box2D facts follow. Text, never color alone, so the
+ * facts stay accessible. The replacement link is rendered separately (it needs
+ * version-correct resolution); {@link availabilityProse} appends its plain name.
  */
-export function availabilityLabels(av: ApiAvailability): string[] {
+export function availabilityLabels(av: ApiAvailability, versions: readonly string[]): string[] {
   const labels: string[] = [];
-  if (av.since) labels.push(`Since ${av.since}`);
+  const span = availabilityLabel(av.availableIn, versions);
+  if (span.kind !== "all") labels.push(span.label);
   if (av.deprecatedSince) labels.push(`Deprecated since ${av.deprecatedSince}`);
-  if (av.removedIn) labels.push(`Removed in ${av.removedIn}`);
   if (av.box2d && av.box2d.length > 0) labels.push(`Box2D: ${av.box2d.join(", ")}`);
   return labels;
 }
 
 // Flat prose form for the search index: the badge labels plus the replacement's
-// plain name, so a reader searching "removed" or a replacement symbol finds the
-// historical page. Empty when the record carries no renderable fact.
-function availabilityProse(av: ApiAvailability): string {
-  const labels = availabilityLabels(av);
+// plain name, so a reader searching "available through" or a replacement symbol
+// finds the historical page. Empty when the record carries no renderable fact.
+function availabilityProse(av: ApiAvailability, versions: readonly string[]): string {
+  const labels = availabilityLabels(av, versions);
   if (av.replacement) labels.push(`Replaced by ${av.replacement.name}`);
   return labels.length > 0 ? `${labels.join(". ")}.` : "";
 }
 
-function pushAvailabilityProse(lines: string[], av: ApiAvailability | undefined): void {
+function pushAvailabilityProse(
+  lines: string[],
+  av: ApiAvailability | undefined,
+  versions: readonly string[],
+): void {
   if (!av) return;
-  const prose = availabilityProse(av);
+  const prose = availabilityProse(av, versions);
   if (prose) lines.push(prose, "");
 }
 
@@ -364,6 +380,7 @@ export function apiModuleMarkdown(
           fn.name,
           normalizedFunctionSignature(fn),
         ),
+        page.availability?.versions ?? [],
       );
       const example = exampleMarkdownFor(fn, translations);
       if (example) lines.push(example, "");
@@ -384,6 +401,7 @@ export function apiModuleMarkdown(
       pushAvailabilityProse(
         lines,
         joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, ""),
+        page.availability?.versions ?? [],
       );
     }
   }
@@ -397,6 +415,7 @@ export function apiModuleMarkdown(
       pushAvailabilityProse(
         lines,
         joinAvailability(page.availability, m.namespace, "CONSTANT", cst.name, ""),
+        page.availability?.versions ?? [],
       );
     }
   }
@@ -410,6 +429,7 @@ export function apiModuleMarkdown(
       pushAvailabilityProse(
         lines,
         joinAvailability(page.availability, m.namespace, "PROPERTY", prop.name, ""),
+        page.availability?.versions ?? [],
       );
     }
   }

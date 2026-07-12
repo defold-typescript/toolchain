@@ -58,8 +58,16 @@ import "./generated/zlib";
 export {
   type ApiAvailability,
   type ApiSymbolIdentity,
+  type AvailabilityLabel,
+  type AvailabilityLabelKind,
+  availabilityLabel,
+  deriveAvailabilityMatrix,
+  groupByLogicalName,
+  isSignatureTransition,
+  type LogicalNameGroup,
   normalizedFunctionSignature,
   symbolIdentityKey,
+  type VersionSurface,
 } from "./src/api-availability";
 export type { ApiFunction, ApiModule, ApiParameter, ApiVariable } from "./src/api-doc";
 export { parseDefoldApiDoc } from "./src/api-doc";

@@ -3,12 +3,19 @@ export {
   type ApiMigrationCatalog,
   type ApiMigrationEntry,
   type ApiSymbolIdentity,
+  type AvailabilityLabel,
+  type AvailabilityLabelKind,
   applyMigrationOverlay,
+  availabilityLabel,
   type Box2dBackend,
   collectSymbolIdentities,
-  deriveAvailability,
+  deriveAvailabilityMatrix,
+  groupByLogicalName,
+  isSignatureTransition,
+  type LogicalNameGroup,
   normalizedFunctionSignature,
   symbolIdentityKey,
+  type VersionSurface,
   validateAvailability,
 } from "./api-availability";
 export type { ApiFunction, ApiModule, ApiParameter, ApiVariable } from "./api-doc";
@@ -30,7 +37,12 @@ export {
   htmlToDocText,
   renderDocComment,
 } from "./doc-comment";
-export { type EmitOptions, emitDeclarations } from "./emit-dts";
+export {
+  type EmitOptions,
+  emitDeclarations,
+  emitSymbolSignatures,
+  type SymbolSignature,
+} from "./emit-dts";
 export {
   hashExampleSource,
   lookupTranslation,

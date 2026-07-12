@@ -2,59 +2,81 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import committed from "../api-availability.json" with { type: "json" };
-import { collectSymbolIdentities, symbolIdentityKey } from "../src/api-availability";
-import { parseDefoldApiDoc } from "../src/api-doc";
+import { groupByLogicalName, isSignatureTransition } from "../src/api-availability";
 import {
   type AvailabilityArtifact,
   buildAvailabilityArtifact,
-  selectCompleteTargets,
+  selectCompleteVersionSurfaces,
   serializeAvailabilityArtifact,
+  versionOf,
 } from "./generate-api-availability";
-import { loadApiTargets, loadTargetModules } from "./regen";
+import { loadApiTargets } from "./regen";
 
 const AVAILABILITY_PATH = resolve(import.meta.dir, "..", "api-availability.json");
 
 describe("availability derivation over the committed target snapshots", () => {
   const artifact = buildAvailabilityArtifact();
 
-  test("diffs the default target against the highest committed baseline", () => {
-    expect(artifact.current).toBe("1.13.0");
-    expect(artifact.baseline).toBe("1.12.4");
-    const { current, baseline } = selectCompleteTargets(loadApiTargets());
-    expect(current.default).toBe(true);
-    expect(baseline.id).toBe("defold-1.12.4");
+  test("emits an N-version matrix keyed by the ordered committed version axis, no pairwise keys", () => {
+    expect(artifact.versions).toEqual(["1.13.0", "1.12.4"]);
+    expect((artifact as unknown as { current?: string }).current).toBeUndefined();
+    expect((artifact as unknown as { baseline?: string }).baseline).toBeUndefined();
+    expect(
+      artifact.records.every(
+        (r) =>
+          Array.isArray(r.availableIn) &&
+          (r as unknown as { since?: string }).since === undefined &&
+          (r as unknown as { removedIn?: string }).removedIn === undefined,
+      ),
+    ).toBe(true);
   });
 
-  test("marks a promoted 1.13.0 symbol with since and never removedIn", () => {
-    const promoted = artifact.records.filter(
-      (r) => r.identity.namespace === "b2d.world" && r.since,
-    );
+  test("the version axis equals the committed (source == null) targets, newest first", () => {
+    const committedVersions = selectCompleteVersionSurfaces(loadApiTargets()).map(versionOf);
+    expect(artifact.versions).toEqual(committedVersions);
+  });
+
+  test("a promoted 1.13.0-only symbol becomes availableIn:[1.13.0] (since:X migration)", () => {
+    const promoted = artifact.records.filter((r) => r.identity.namespace === "b2d.world");
     expect(promoted.length).toBeGreaterThan(0);
-    expect(promoted.every((r) => r.removedIn === undefined)).toBe(true);
+    expect(promoted.every((r) => r.availableIn.length === 1 && r.availableIn[0] === "1.13.0")).toBe(
+      true,
+    );
   });
 
-  test("marks a dropped symbol removedIn 1.13.0 and keeps it out of the current callable surface", () => {
-    const removed = artifact.records.filter((r) => r.removedIn === "1.13.0");
-    expect(removed.length).toBeGreaterThan(0);
-    const dropped = removed.find(
+  test("a genuinely removed symbol becomes availableIn:[1.12.4] (removedIn:X migration)", () => {
+    const material = artifact.records.find(
       (r) => r.identity.namespace === "model" && r.identity.name === "material",
     );
-    expect(dropped?.identity.kind).toBe("PROPERTY");
-    const { current } = selectCompleteTargets(loadApiTargets());
-    const currentSurface = new Set(
-      collectSymbolIdentities(
-        loadTargetModules(current).map((entry) => parseDefoldApiDoc(entry.doc)),
-      ).map(symbolIdentityKey),
+    expect(material?.identity.kind).toBe("PROPERTY");
+    expect(material?.availableIn).toEqual(["1.12.4"]);
+    const group = groupByLogicalName(
+      [material as (typeof artifact.records)[number]],
+      artifact.versions,
     );
-    for (const record of removed) {
-      expect(currentSurface.has(symbolIdentityKey(record.identity))).toBe(false);
-    }
+    expect(isSignatureTransition(group[0] as (typeof group)[number], artifact.versions)).toBe(
+      false,
+    );
   });
 
-  test("tracks a changed-signature symbol as both a removedIn and a since overload of one name", () => {
+  test("a changed-signature symbol keeps one overload per version and reads as a transition", () => {
     const mount = artifact.records.filter((r) => r.identity.name === "liveupdate.add_mount");
-    expect(mount.some((r) => r.removedIn === "1.13.0")).toBe(true);
-    expect(mount.some((r) => r.since === "1.13.0")).toBe(true);
+    expect(mount.some((r) => r.availableIn.length === 1 && r.availableIn[0] === "1.12.4")).toBe(
+      true,
+    );
+    expect(mount.some((r) => r.availableIn.length === 1 && r.availableIn[0] === "1.13.0")).toBe(
+      true,
+    );
+    const group = groupByLogicalName(mount, artifact.versions);
+    expect(group).toHaveLength(1);
+    expect(isSignatureTransition(group[0] as (typeof group)[number], artifact.versions)).toBe(true);
+  });
+
+  test("a symbol present in every tracked version carries no record (available-in-all)", () => {
+    const bothVersions = artifact.records.filter(
+      (r) => r.availableIn.length === artifact.versions.length,
+    );
+    expect(bothVersions).toHaveLength(0);
   });
 });
 
