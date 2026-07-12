@@ -1,10 +1,12 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { ApiIndex, LibraryPath } from "../../components/api-index";
+import { withGlobalTypes } from "../../components/api-index-sections";
 import {
   apiPages,
   apiPagesForVersion,
   apiVersions,
+  defaultGlobalTypePages,
   libraryDirs,
   libraryOwners,
 } from "../../lib/api-content";
@@ -35,9 +37,15 @@ export default createRoute(
     if (!param) return c.notFound();
 
     if (isKnownVersionId(param, apiVersions())) {
-      return c.render(<ApiIndex pages={apiPagesForVersion(param)} version={param} />, {
-        title: `API reference (${param})`,
-      });
+      return c.render(
+        <ApiIndex
+          pages={withGlobalTypes(apiPagesForVersion(param), defaultGlobalTypePages())}
+          version={param}
+        />,
+        {
+          title: `API reference (${param})`,
+        },
+      );
     }
 
     const pages = apiPages();

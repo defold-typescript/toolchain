@@ -27,6 +27,10 @@ export function apiPagesForVersion(versionId: string): ApiPage[] {
   return loadApiSurfaceForVersion(TYPES_DIR, versionId);
 }
 
+export function defaultGlobalTypePages(): ApiPage[] {
+  return apiPages().filter((p) => p.category === "global-type");
+}
+
 // Module -> upstream-library `dir` map for the vendored library surface, used to
 // group Libraries nav and index pages by library.
 export function libraryDirs(): Map<string, string> {
