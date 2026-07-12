@@ -5014,12 +5014,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### liveupdate
 
-- function add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number; [through 1.12.4]
-- function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number; [since 1.13.0]
+- function add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number; [through 1.12.4] [signature transition]
+- function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number; [since 1.13.0] [signature transition]
 - function get_mounts(): { name: string; uri: string; priority: number }[];
 - function is_built_with_excluded_files(): boolean; [since 1.13.0]
-- function remove_mount(name: string): number; [through 1.12.4]
-- function remove_mount(name: string | Hash): number; [since 1.13.0]
+- function remove_mount(name: string): number; [through 1.12.4] [signature transition]
+- function remove_mount(name: string | Hash): number; [since 1.13.0] [signature transition]
 - const LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH" };
 - const LIVEUPDATE_ENGINE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH" };
 - const LIVEUPDATE_FORMAT_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_FORMAT_ERROR" };

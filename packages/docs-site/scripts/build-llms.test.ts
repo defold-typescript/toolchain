@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { loadCombinedSurface } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
 import { listGuidePages } from "../app/lib/guide-loader";
 import {
@@ -13,6 +14,8 @@ import {
   SITE_TARGET,
   stripGuideChrome,
 } from "./build-llms";
+
+const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
 
 // The concatenated guide bodies in llms-full: from `## Guide` to `## API`.
 // The per-section `section()` helper stops at the next `## `, which now lands
@@ -80,11 +83,13 @@ describe("llms.txt regeneration drift guard", () => {
   });
 });
 
-describe("site target — byte-compatible with the pre-change form", () => {
-  test("guide and API links stay site-absolute", () => {
+describe("site target — repo-local guide links, Combined engine links", () => {
+  test("guide links stay site-absolute; engine API links point at the Combined surface", () => {
     const txt = buildLlmsTxt(SITE_TARGET);
     expect(txt).toContain(`](${withBase("/script-lifecycle")})`);
-    expect(txt).toContain(`](${withBase("/api/gui")})`);
+    expect(txt).toContain(`](${withBase("/api/combined/gui")})`);
+    // the pre-change default (single-version) engine route is gone from the map.
+    expect(txt).not.toContain(`](${withBase("/api/gui")})`);
   });
 
   test("leads with the `> ` package.json summary and carries none of the machine preamble", () => {
@@ -111,11 +116,15 @@ describe("package target — repo-local, cat-able links", () => {
     }
   });
 
-  test("API links resolve by category to shipped repo files", () => {
+  test("API links resolve by category: engine to the llms-full anchor, others to shipped files", () => {
     const txt = buildLlmsTxt(PACKAGE_TARGET);
-    expect(txt).toContain("](@defold-typescript/types/generated/gui.d.ts)");
-    expect(txt).toContain("](@defold-typescript/types/generated/b2d_body.d.ts)");
-    expect(txt).toContain("](@defold-typescript/types/src/engine-globals.d.ts)");
+    // Engine namespaces are the Combined surface: link their `llms-full.txt`
+    // anchor rather than a default (single-version) `.d.ts`.
+    expect(txt).toContain("](llms-full.txt#gui)");
+    expect(txt).toContain("](llms-full.txt#b2d.body)");
+    expect(txt).toContain("](llms-full.txt#globals)");
+    expect(txt).not.toContain("](@defold-typescript/types/generated/gui.d.ts)");
+    // global value types stay a repo-local `.ts` (version-independent).
     expect(txt).toContain("](@defold-typescript/types/src/core-types.ts)");
     // lua-stdlib types are shipped by the external `lua-types` dep; link its
     // repo-local `.d.ts` files (core/<ns>, with base/package/bit overrides).
@@ -298,6 +307,46 @@ describe("llms-full ## API serializes the Combined projection", () => {
   test("keeps the version-independent namespaces (lua-stdlib, global types) covered", () => {
     expect(api).toContain("### string");
     expect(api).toContain("### Vector3");
+  });
+});
+
+describe("llms.txt ## API engine links come from the Combined surface", () => {
+  const combinedNamespaces = () =>
+    loadCombinedSurface(TYPES_DIR).namespaces.map((n) => n.namespace);
+  const engineLinkTargets = (txt: string) =>
+    (section(txt, "## API").match(LINK) ?? []).map((line) =>
+      line.replace(/^- \[.*\]\((.*)\)$/, "$1"),
+    );
+
+  test("every Combined engine namespace is linked, so a historical-only namespace would be too", () => {
+    const site = buildLlmsTxt(SITE_TARGET);
+    const targets = new Set(engineLinkTargets(site));
+    for (const ns of combinedNamespaces()) {
+      expect(targets.has(withBase(`/api/combined/${ns}`))).toBe(true);
+    }
+  });
+
+  test("the package engine anchors resolve to a real `### <namespace>` in llms-full.txt", () => {
+    const full = buildLlmsFull(PACKAGE_TARGET);
+    const txt = buildLlmsTxt(PACKAGE_TARGET);
+    for (const ns of ["gui", "b2d.body", "globals"]) {
+      expect(txt).toContain(`](llms-full.txt#${ns})`);
+      expect(full).toContain(`\n### ${ns}\n`);
+    }
+  });
+
+  test("lua-stdlib and global-type links stay present under both targets", () => {
+    for (const target of [SITE_TARGET, PACKAGE_TARGET]) {
+      const api = section(buildLlmsTxt(target), "## API");
+      expect(api).toContain("[string]("); // lua-stdlib
+      expect(api).toContain("[Vector3]("); // global-type
+    }
+  });
+
+  test("llms-full tags a signature-transition arm with [signature transition]", () => {
+    const api = section(buildLlmsFull(SITE_TARGET), "## API");
+    expect(api).toContain("[signature transition]");
+    expect(api).toMatch(/add_mount\([^\n]*\[through 1\.12\.4\] \[signature transition\]/);
   });
 });
 
