@@ -50,7 +50,14 @@ export interface AvailabilityEvidence {
 export interface TargetEvidence {
   readonly id: string;
   readonly isDefault: boolean;
+  // True only when a committed-surface target's generatedDir exists on disk AND
+  // every registered module outFile is present under it — not merely asserted by
+  // registry metadata.
   readonly hasCommittedSurface: boolean;
+  // Registered outFile declarations that are absent under the target's
+  // generatedDir (empty when the surface is fully committed). Optional so
+  // hand-built evidence bundles in tests may omit it.
+  readonly missingDeclarations?: readonly string[];
 }
 
 export interface MigrationGuideEvidence {
@@ -118,10 +125,21 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
     );
   }
 
-  if (im === null) {
-    add("declaration", "declaration evidence absent: no import manifest");
-  } else if (im.declarationNamespaceCount <= 0) {
-    add("declaration", "no declaration snapshots produced by the importer");
+  // Declaration evidence is the committed `generated/*.d.ts` for the default
+  // target, not the importer's in-manifest snapshot count: a target could carry
+  // snapshots yet ship no committed declarations. Validate the physical files.
+  const declTargets = evidence.targets;
+  if (declTargets === null) {
+    add("declaration", "declaration evidence absent: no target registry");
+  } else {
+    const declDefault = declTargets.find((t) => t.isDefault);
+    if (declDefault === undefined) {
+      add("declaration", "declaration evidence absent: no default target");
+    } else {
+      for (const outFile of declDefault.missingDeclarations ?? []) {
+        add("declaration", `committed declaration missing for default target: ${outFile}`);
+      }
+    }
   }
 
   const docs = evidence.docs;
@@ -263,18 +281,45 @@ function collectAvailability(root: string, release: string): AvailabilityEvidenc
   };
 }
 
-function collectTargets(root: string): TargetEvidence[] | null {
+export function collectTargets(root: string): TargetEvidence[] | null {
   const raw = readJson<{
-    targets?: { id: string; default?: boolean; source?: unknown; generatedDir?: string | null }[];
+    targets?: {
+      id: string;
+      default?: boolean;
+      source?: unknown;
+      generatedDir?: string | null;
+      modules?: { outFile?: string }[];
+    }[];
   }>(path.join(root, "packages/types/api-targets.json"));
   if (raw?.targets === undefined) {
     return null;
   }
-  return raw.targets.map((t) => ({
-    id: t.id,
-    isDefault: t.default === true,
-    hasCommittedSurface: t.source === null && typeof t.generatedDir === "string",
-  }));
+  return raw.targets.map((t) => {
+    // A committed-surface target is one Defold ships no live import for
+    // (`source === null`) with a registered output directory. Its evidence is
+    // only real when that directory and every registered declaration exist on
+    // disk — registry metadata alone is not proof.
+    const committedMeta = t.source === null && typeof t.generatedDir === "string";
+    const missingDeclarations: string[] = [];
+    let surfaceReal = false;
+    if (committedMeta && typeof t.generatedDir === "string") {
+      const dir = path.join(root, "packages/types", t.generatedDir);
+      const dirExists = existsSync(dir);
+      for (const module of t.modules ?? []) {
+        if (typeof module.outFile !== "string") continue;
+        if (!dirExists || !existsSync(path.join(dir, module.outFile))) {
+          missingDeclarations.push(module.outFile);
+        }
+      }
+      surfaceReal = dirExists && missingDeclarations.length === 0;
+    }
+    return {
+      id: t.id,
+      isDefault: t.default === true,
+      hasCommittedSurface: surfaceReal,
+      missingDeclarations,
+    };
+  });
 }
 
 function collectMigrationGuide(root: string, release: string): MigrationGuideEvidence | null {
