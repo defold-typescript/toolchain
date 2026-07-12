@@ -70,10 +70,68 @@ describe("buildVersionSwitcher", () => {
   });
 });
 
+describe("buildVersionSwitcher combined option", () => {
+  const combinedNamespaces = ["camera", "shared", "wmath"];
+
+  test("appends a Combined entry after the concrete versions, preserving the namespace", () => {
+    expect(
+      buildVersionSwitcher({
+        versions,
+        namespacesByVersion,
+        combinedNamespaces,
+        route: "/api/camera",
+      }),
+    ).toEqual([
+      { id: "cur", label: "cur", route: "/api/camera", isCurrent: true },
+      { id: "old", label: "old", route: "/api/old", isCurrent: false },
+      { id: "combined", label: "Combined", route: "/api/combined/camera", isCurrent: false },
+    ]);
+  });
+
+  test("marks Combined current on a combined route and preserves the namespace across versions", () => {
+    expect(
+      buildVersionSwitcher({
+        versions,
+        namespacesByVersion,
+        combinedNamespaces,
+        route: "/api/combined/shared",
+      }),
+    ).toEqual([
+      { id: "cur", label: "cur", route: "/api/shared", isCurrent: false },
+      { id: "old", label: "old", route: "/api/old/shared", isCurrent: false },
+      { id: "combined", label: "Combined", route: "/api/combined/shared", isCurrent: true },
+    ]);
+  });
+
+  test("drops to /api/combined when the namespace is unknown to the combined surface", () => {
+    const entries = buildVersionSwitcher({
+      versions,
+      namespacesByVersion,
+      combinedNamespaces,
+      route: "/api/combined",
+    });
+    expect(entries.find((e) => e.id === "combined")).toEqual({
+      id: "combined",
+      label: "Combined",
+      route: "/api/combined",
+      isCurrent: true,
+    });
+  });
+
+  test("omits the Combined entry when no combinedNamespaces are given", () => {
+    const entries = buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/camera" });
+    expect(entries.some((e) => e.id === "combined")).toBe(false);
+  });
+});
+
 describe("versionLabel", () => {
   test("derives 'Defold <semver>' from a defold-<semver> id", () => {
     expect(versionLabel("defold-1.13.0")).toBe("Defold 1.13.0");
     expect(versionLabel("defold-1.12.4")).toBe("Defold 1.12.4");
+  });
+
+  test("labels the combined virtual id", () => {
+    expect(versionLabel("combined")).toBe("Combined");
   });
 
   test("passes a non-defold id through unchanged", () => {

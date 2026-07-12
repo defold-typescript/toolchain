@@ -4,17 +4,17 @@ toc-title: Upgrading to Defold 1.13.0
 # Upgrading to Defold 1.13.0
 
 Defold 1.13.0 is the current stable release and the toolchain's default API
-target. Moving a project from 1.12.4 removes a handful of Lua APIs, changes some
-source/asset expectations, and shifts a few rendering and platform defaults.
-This page lists each change with actionable migration guidance and a way to
-verify it.
+target. Moving a project from 1.12.4 removes a handful of Lua APIs, re-signatures
+a few others, changes some source/asset expectations, and shifts a few rendering
+and platform defaults. This page lists each change with actionable migration
+guidance and a way to verify it.
 
 Pair this with [Pinning the Defold target](./pinning-defold-target.md): pin the
 old surface first to reproduce today's build, then flip the pin to `1.13.0` and
 let the compiler point at everything that moved. The curated availability facts
-behind the removed-symbol sections below live in
-`packages/types/api-availability.json`; each removed symbol keeps a stable
-heading here so the API lifecycle badges can link a reader straight to it.
+behind the lifecycle sections below live in
+`packages/types/api-availability.json`; each symbol keeps a stable heading here
+so the API lifecycle badges can link a reader straight to it.
 
 ## Reproduce, then flip the target
 
@@ -39,29 +39,36 @@ later `build`, `watch`, and `resolve` agrees:
 }
 ```
 
+## Changed Lua API signatures
+
+These Lua APIs still exist on the 1.13.0 surface — one or more parameter types
+changed rather than the symbol being removed, so a call written against 1.12.4
+keeps compiling. The Combined API surface (`/api/combined`) renders both
+signatures adjacently; the per-version pages show each in isolation.
+
+### liveupdate.add_mount
+
+Despite the old Live Update **auto-mount** framing, `liveupdate.add_mount` was
+**not** removed — it remains an imperative runtime API on the 1.13.0
+[`liveupdate`](/api/liveupdate) surface. Its `name` parameter widened from
+`string` to `string | Hash`, so a hashed mount name is now accepted alongside a
+plain string, and the mount callback is typed more precisely. Compare the current
+signature with the historical one on the [1.12.4 `liveupdate`
+page](/api/defold-1.12.4/liveupdate).
+
+### liveupdate.remove_mount
+
+`liveupdate.remove_mount` likewise remains; its `name` parameter widened from
+`string` to `string | Hash` so a hashed mount name resolves the mount to tear
+down. The [1.12.4 `liveupdate` page](/api/defold-1.12.4/liveupdate) keeps the old
+single-string signature for comparison.
+
 ## Removed Lua APIs and constants
 
 Each removed symbol is a compile error against the 1.13.0 surface. Its frozen
 signature stays discoverable on the historical [1.12.4 API
-pages](/api/defold-1.12.4/liveupdate); the current-surface namespace pages linked
+pages](/api/defold-1.12.4/model); the current-surface namespace pages linked
 below show what replaced it.
-
-### liveupdate.add_mount
-
-The old Live Update auto-mount API is gone. `liveupdate.add_mount` — historical
-reference on the [1.12.4 `liveupdate` page](/api/defold-1.12.4/liveupdate) — no
-longer exists on the 1.13.0 [`liveupdate`](/api/liveupdate) surface. Mounts are
-now declared through the resource-system mount configuration rather than added
-imperatively at runtime, and mount names are hashed (see the source migrations
-below). Remove the runtime `add_mount` call and move the mount into the project's
-Live Update configuration.
-
-### liveupdate.remove_mount
-
-`liveupdate.remove_mount` is removed alongside `add_mount`. Manage mounts through
-the configured mount set on the current [`liveupdate`](/api/liveupdate) surface
-instead of tearing one down imperatively; the historical signature stays on the
-[1.12.4 `liveupdate` page](/api/defold-1.12.4/liveupdate).
 
 ### model.material
 

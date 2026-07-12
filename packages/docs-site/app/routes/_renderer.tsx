@@ -13,6 +13,7 @@ import {
   apiPages,
   apiPagesForVersion,
   apiVersions,
+  combinedNamespaces,
   libraryDirs,
   libraryOwners,
 } from "../lib/api-content";
@@ -250,7 +251,14 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     ]),
   );
   const versionSwitcher =
-    versions.length > 1 ? buildVersionSwitcher({ versions, namespacesByVersion, route: path }) : [];
+    versions.length > 1
+      ? buildVersionSwitcher({
+          versions,
+          namespacesByVersion,
+          route: path,
+          combinedNamespaces: combinedNamespaces(),
+        })
+      : [];
   const currentVersion = versionSwitcher.find((entry) => entry.isCurrent) ?? versionSwitcher[0];
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
