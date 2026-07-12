@@ -58,7 +58,7 @@ declare global {
      * const constants = compute.get_constants("/my_compute.computec");
      * ```
      */
-    function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 };
+    function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];
     /**
      * Returns a table of all the texture samplers in the compute program. This function will return all the texture samplers
      * that are available, even the ones that have not been specified in the compute resource.
@@ -123,7 +123,7 @@ declare global {
      * const samplers = compute.get_samplers("/my_compute.computec");
      * ```
      */
-    function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number };
+    function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];
     /**
      * Returns a table of all the textures from the compute program.
      *
@@ -174,7 +174,7 @@ declare global {
      * const textures = compute.get_textures("/my_compute.computec");
      * ```
      */
-    function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number };
+    function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];
     /**
      * Sets shader constants in a compute program, if the constants exist.
      *

@@ -8,6 +8,8 @@ import {
   buildTableDocResolver,
   HANDLE_METHOD_LOCAL,
   HOMOGENEOUS_ARRAY_SLOTS,
+  isRecordsCollectionSlot,
+  isSlotLevelList,
   MAPPING_TABLE_SLOTS,
   type NestedMapping,
   OVERLOAD_COVERED_SKIPS,
@@ -272,6 +274,23 @@ function auditEntry(
             } else {
               considerTypes(field.types, undefined, arbitraryTable);
             }
+          }
+          // A records-collection return slot ("… of tables" / "table of tables")
+          // whose inner record the parser recovered but the emitter did not wrap
+          // (isSlotLevelList false) still lost its outer array layer — the emitted
+          // shape is a bare object. The oracle (isRecordsCollectionSlot) is
+          // intentionally broader than the emitter's wrap trigger (isSlotLevelList):
+          // a records-collection wording the trigger stops recognizing re-surfaces
+          // here as a counted loss, keeping the gate coupled to the emitted surface.
+          // array / array-object / mapping / homogeneous curations already
+          // `continue`d above, so reaching here means none applied.
+          if (
+            slot?.kind === "return" &&
+            doc !== undefined &&
+            isRecordsCollectionSlot(doc) &&
+            !isSlotLevelList(doc)
+          ) {
+            recordTables += 1;
           }
           continue;
         }
