@@ -280,21 +280,31 @@ function collectImportManifest(root: string, release: string): ImportManifestEvi
   };
 }
 
-function collectAvailability(root: string, release: string): AvailabilityEvidence | null {
+function collectAvailability(root: string): AvailabilityEvidence | null {
   const raw = readJson<{
-    current?: string;
-    baseline?: string;
-    records?: { identity: { name: string }; since?: string; removedIn?: string }[];
+    versions?: string[];
+    records?: { identity: { name: string }; availableIn?: string[] }[];
   }>(path.join(root, "packages/types/api-availability.json"));
   if (raw === null) {
     return null;
   }
+  const versions = raw.versions ?? [];
   const records = raw.records ?? [];
+  // `current` is the newest tracked version; `baseline` the immediately-preceding
+  // one (`PREVIOUS_STABLE`). A "removed" symbol is one absent from the newest
+  // version (`availableIn` omits it) — this spans genuine removals and the retired
+  // side of a signature transition, exactly what the migration guide must cover.
+  const newest = versions[0];
+  const baseline = versions[1];
+  const has = (r: { availableIn?: string[] }, version: string | undefined): boolean =>
+    version !== undefined && (r.availableIn ?? []).includes(version);
   return {
-    current: raw.current,
-    baseline: raw.baseline,
-    removedSymbols: records.filter((r) => r.removedIn === release).map((r) => r.identity.name),
-    sinceCurrentSymbols: records.filter((r) => r.since === release).map((r) => r.identity.name),
+    current: newest,
+    baseline,
+    removedSymbols: records.filter((r) => !has(r, newest)).map((r) => r.identity.name),
+    sinceCurrentSymbols: records
+      .filter((r) => has(r, newest) && !has(r, baseline))
+      .map((r) => r.identity.name),
   };
 }
 
@@ -427,7 +437,7 @@ export function collectEvidence(
   return {
     expected,
     importManifest: collectImportManifest(root, expected.release),
-    availability: collectAvailability(root, expected.release),
+    availability: collectAvailability(root),
     targets: collectTargets(root),
     migrationGuide: collectMigrationGuide(root, expected.release),
     docs: collectDocs(root, expected.release, expected.baseline),

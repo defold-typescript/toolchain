@@ -5,8 +5,9 @@ import {
   type ApiMigrationCatalog,
   applyMigrationOverlay,
   collectSymbolIdentities,
-  deriveAvailability,
+  deriveAvailabilityMatrix,
   symbolIdentityKey,
+  type VersionSurface,
   validateAvailability,
 } from "../src/api-availability";
 import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
@@ -19,12 +20,11 @@ const AVAILABILITY_PATH = resolve(PACKAGE_ROOT, "api-availability.json");
 const VERSION_FROM_ID = /^defold-(\d+\.\d+\.\d+)$/;
 
 export interface AvailabilityArtifact {
-  readonly current: string;
-  readonly baseline: string;
+  readonly versions: readonly string[];
   readonly records: readonly ApiAvailability[];
 }
 
-function versionOf(target: ApiTarget): string {
+export function versionOf(target: ApiTarget): string {
   const match = VERSION_FROM_ID.exec(target.id);
   if (!match?.[1]) throw new Error(`cannot derive a release version from target id "${target.id}"`);
   return match[1];
@@ -43,29 +43,20 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-// The complete pair to diff: the default target is the current stable surface;
-// the baseline is the highest committed-fixture (source == null) target below
-// it. ref-doc-sourced historical targets are resolved on demand and never a
-// committed-derivation input.
-export function selectCompleteTargets(targets: readonly ApiTarget[]): {
-  current: ApiTarget;
-  baseline: ApiTarget;
-} {
-  const current = targets.find((target) => target.default === true);
-  if (!current) throw new Error("api-targets.json has no default target");
-  const currentVersion = versionOf(current);
-  const baseline = targets
-    .filter(
-      (target) =>
-        target.default !== true &&
-        (target.source ?? null) == null &&
-        compareVersions(versionOf(target), currentVersion) < 0,
-    )
-    .sort((a, b) => compareVersions(versionOf(b), versionOf(a)))[0];
-  if (!baseline) {
-    throw new Error(`api-targets.json has no committed baseline target below ${currentVersion}`);
+// Every complete committed surface, newest first. The committed targets are the
+// `source == null` entries of `api-targets.json` (ref-doc-sourced historical
+// targets are resolved on demand and never a committed-derivation input). This
+// registry-derived, version-desc list is the single source for the availability
+// version axis — it mirrors the CLI `DEFOLD_VERSIONS` order without inverting
+// the package layering (`types` must not import `cli`).
+export function selectCompleteVersionSurfaces(targets: readonly ApiTarget[]): ApiTarget[] {
+  const complete = targets
+    .filter((target) => (target.source ?? null) == null)
+    .sort((a, b) => compareVersions(versionOf(b), versionOf(a)));
+  if (complete.length === 0) {
+    throw new Error("api-targets.json has no committed (source == null) targets");
   }
-  return { current, baseline };
+  return complete;
 }
 
 export function loadMigrationCatalog(path: string = MIGRATIONS_PATH): ApiMigrationCatalog {
@@ -92,31 +83,32 @@ export function buildAvailabilityArtifact(
   const packageRoot = options.packageRoot ?? PACKAGE_ROOT;
   const registryPath = options.registryPath ?? resolve(packageRoot, "api-targets.json");
   const targets = loadApiTargets(registryPath);
-  const { current, baseline } = selectCompleteTargets(targets);
+  const completeTargets = selectCompleteVersionSurfaces(targets);
   const parse = (target: ApiTarget): ApiModule[] =>
     loadTargetModules(target, packageRoot).map((entry) => parseDefoldApiDoc(entry.doc));
-  const currentModules = parse(current);
-  const baselineModules = parse(baseline);
-  const version = versionOf(current);
+  const surfaces: VersionSurface[] = completeTargets.map((target) => ({
+    version: versionOf(target),
+    modules: parse(target),
+  }));
+  const versions = surfaces.map((surface) => surface.version);
 
-  const derived = deriveAvailability({
-    baseline: baselineModules,
-    current: currentModules,
-    version,
-  });
+  const derived = deriveAvailabilityMatrix({ surfaces });
   const catalog =
     options.catalog ?? loadMigrationCatalog(resolve(packageRoot, "api-migrations.json"));
-  const universe = collectSymbolIdentities([...baselineModules, ...currentModules]);
-  const records = applyMigrationOverlay({ derived, catalog, universe });
+  const universe = collectSymbolIdentities(surfaces.flatMap((surface) => surface.modules));
+  const records = applyMigrationOverlay({ derived, catalog, universe, versions });
 
-  const currentSurface = new Set(collectSymbolIdentities(currentModules).map(symbolIdentityKey));
+  const newestSurface = surfaces[0] as VersionSurface;
+  const currentSurface = new Set(
+    collectSymbolIdentities(newestSurface.modules).map(symbolIdentityKey),
+  );
   const knownIdentities = new Set(universe.map(symbolIdentityKey));
-  const errors = validateAvailability({ records, currentSurface, knownIdentities });
+  const errors = validateAvailability({ records, versions, currentSurface, knownIdentities });
   if (errors.length > 0) {
     throw new Error(`api-availability validation failed:\n  ${errors.join("\n  ")}`);
   }
 
-  return { current: version, baseline: versionOf(baseline), records };
+  return { versions, records };
 }
 
 function biomeFormatJson(raw: string): string {

@@ -47,19 +47,24 @@ function loadSignatureStore(typesDir: string): SignatureStore {
   return Object.assign({}, ...stores);
 }
 
-// The committed `api-availability.json` (derived 1.13.0-vs-1.12.4 delta plus the
-// curated migration overlay), read into an identity-keyed lookup the projection
-// joins by exact overload identity. A missing file degrades to `undefined` — the
-// surface renders with no lifecycle badges, exactly as before the artifact
-// existed. The same lookup is attached to every page of every version: a `since`
-// record only matches on a surface that actually contains the new symbol, and a
-// `removedIn` record only on one that still contains the removed symbol, so
-// sharing it across the canonical and historical surfaces is safe.
+// The committed `api-availability.json` (the N-version presence matrix plus the
+// curated migration overlay), read into a versions-axis + identity-keyed lookup
+// the projection joins by exact overload identity. A missing file degrades to
+// `undefined` — the surface renders with no lifecycle badges, exactly as before
+// the artifact existed. The same lookup is attached to every page of every
+// version: a record only matches on a surface that actually contains that
+// identity, so sharing it across the canonical and historical surfaces is safe.
 function loadAvailability(typesDir: string): AvailabilityLookup | undefined {
   const path = join(typesDir, "api-availability.json");
   if (!existsSync(path)) return undefined;
-  const { records } = JSON.parse(readFileSync(path, "utf8")) as { records: ApiAvailability[] };
-  return new Map(records.map((record) => [symbolIdentityKey(record.identity), record]));
+  const { versions, records } = JSON.parse(readFileSync(path, "utf8")) as {
+    versions: string[];
+    records: ApiAvailability[];
+  };
+  return {
+    versions,
+    records: new Map(records.map((record) => [symbolIdentityKey(record.identity), record])),
+  };
 }
 
 function readTargets(typesDir: string): ApiTarget[] {

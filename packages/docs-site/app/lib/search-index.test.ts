@@ -248,19 +248,19 @@ describe("apiSearchRecords", () => {
     const defaultRecords = apiSearchRecords(loadApiSurface(REAL_TYPES_DIR));
     const body = defaultRecords.find((r) => r.title === "b2d.body API");
     expect(body).toBeDefined();
-    expect(body?.text).toContain("Since 1.13.0");
+    expect(body?.text).toContain("Since Defold 1.13.0");
 
-    // `model.material` was removed in 1.13.0, so the canonical surface neither
-    // renders it nor carries its removal badge.
+    // `model.material` is available through 1.12.4 only, so the canonical surface
+    // neither renders it nor carries its through-oldest badge.
     const defaultModel = defaultRecords.find((r) => r.title === "model API");
     expect(defaultModel).toBeDefined();
-    expect(defaultModel?.text).not.toContain("Removed in 1.13.0");
+    expect(defaultModel?.text).not.toContain("Available through Defold 1.12.4");
 
     const historicalRecords = apiSearchRecords(
       loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4"),
     );
     const historicalModel = historicalRecords.find((r) => r.title === "model API");
     expect(historicalModel).toBeDefined();
-    expect(historicalModel?.text).toContain("Removed in 1.13.0");
+    expect(historicalModel?.text).toContain("Available through Defold 1.12.4");
   });
 });
