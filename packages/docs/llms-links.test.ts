@@ -21,9 +21,10 @@ function linkTargets(markdown: string): string[] {
 
 // A target no local server is needed to reach: only an absolute `http(s)://`
 // URL (the external Defold engine pointer). Every repo-local target —
-// `guide/*.md`, `@defold-typescript/types/*`, and the `lua-types/*` stdlib
-// `.d.ts` files — must resolve on disk, so nothing site-relative is exempt; a
-// stray `/api/...` route in the package copy is a dead link and must fail here.
+// `guide/*.md`, `@defold-typescript/types/*`, the `lua-types/*` stdlib `.d.ts`
+// files, and the Combined engine `llms-full.txt#<namespace>` anchors — must
+// resolve on disk, so nothing site-relative is exempt; a stray `/api/...` route
+// in the package copy is a dead link and must fail here.
 function isExempt(target: string): boolean {
   return /^https?:\/\//.test(target);
 }
@@ -32,6 +33,18 @@ function resolveTarget(target: string): { path: string; exists: boolean } {
   if (target.startsWith("guide/")) {
     const path = join(PKG_DIR, target);
     return { path, exists: existsSync(path) };
+  }
+  // Combined engine namespaces link to their `### <namespace>` section in the
+  // inlined `llms-full.txt` (which serializes the same Combined projection), so
+  // the anchor resolves only when that heading is really present in the file.
+  if (target === "llms-full.txt" || target.startsWith("llms-full.txt#")) {
+    const path = join(PKG_DIR, "llms-full.txt");
+    if (!existsSync(path)) return { path, exists: false };
+    const hash = target.indexOf("#");
+    if (hash === -1) return { path, exists: true };
+    const anchor = target.slice(hash + 1);
+    const body = readFileSync(path, "utf8");
+    return { path: `${path}#${anchor}`, exists: body.includes(`\n### ${anchor}\n`) };
   }
   if (target === TYPES_PKG || target.startsWith(`${TYPES_PKG}/`)) {
     const rest = target.slice(TYPES_PKG.length).replace(/^\//, "");
@@ -72,5 +85,14 @@ describe("shipped packages/docs/llms.txt link resolution", () => {
     expect(local.length).toBeGreaterThan(0);
     expect(local.some((t) => t.startsWith("guide/"))).toBe(true);
     expect(local.some((t) => t.startsWith(`${TYPES_PKG}/`))).toBe(true);
+  });
+
+  test("the Combined engine anchors point at real llms-full.txt sections", () => {
+    const markdown = readFileSync(join(PKG_DIR, "llms.txt"), "utf8");
+    const anchors = linkTargets(markdown).filter((t) => t.startsWith("llms-full.txt#"));
+    expect(anchors.length).toBeGreaterThan(0);
+    for (const target of anchors) {
+      expect(resolveTarget(target).exists).toBe(true);
+    }
   });
 });
