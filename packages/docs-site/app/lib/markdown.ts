@@ -208,12 +208,17 @@ export async function renderMarkdown(
       if (level < 1 || level > 3) continue;
       const inline = state.tokens[i + 1];
       if (inline?.type !== "inline" || !inline.children) continue;
-      // Availability badge dots (see api-page-render) are decorative empty
-      // `<span>`s a symbol heading carries; drop them so the slug and the
-      // permalink label stay the bare signature and keep matching the
-      // function-overview anchors. A generic `<...>` inside a code span is not an
-      // empty span, so signatures like `Opaque<"node">` are untouched.
-      const text = inline.content.replace(/\s*<span\b[^>]*><\/span>/g, "");
+      // Availability badge markers (see api-page-render) are decorative `<span>`s
+      // a symbol heading carries after its signature; drop them so the slug and
+      // the permalink label stay the bare signature and keep matching the
+      // function-overview anchors. The `api-badge-dot` marker now carries a
+      // visible `N`/`C`/`D` glyph, so it is stripped by class regardless of
+      // content; any other empty decorative span is stripped too. A generic
+      // `<...>` inside a code span is neither, so signatures like `Opaque<"node">`
+      // are untouched.
+      const text = inline.content
+        .replace(/\s*<span class="api-badge-dot[^"]*"[^>]*>[^<]*<\/span>/g, "")
+        .replace(/\s*<span\b[^>]*><\/span>/g, "");
       const base = slugify(text);
       const n = slugCounts.get(base) ?? 0;
       slugCounts.set(base, n + 1);

@@ -796,14 +796,22 @@
     margin-top: 0;
   }
 
-  /* Availability color layer — a small dot per active category on a symbol
-   * heading, additive over the accessible `aria-label`/`title` text. */
+  /* Availability category layer — one compact labeled chip per active category
+   * on a symbol heading, carrying a visible `N`/`C`/`D` glyph so the category is
+   * legible without color, additive over the accessible `aria-label`/`title`. */
   .prose .api-badge-dot {
-    display: inline-block;
-    width: 0.5em;
-    height: 0.5em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15em;
+    height: 1.15em;
     margin-left: 0.3em;
-    border-radius: 50%;
+    padding: 0 0.25em;
+    border-radius: 0.3em;
+    font-size: 0.7em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
     vertical-align: middle;
   }
 

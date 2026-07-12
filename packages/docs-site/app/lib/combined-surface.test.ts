@@ -13,6 +13,9 @@ import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loade
 import {
   buildCombinedSurface,
   type CombinedVersionSurface,
+  combinedAuthoritativeSignatures,
+  combinedNamespaceToApiPage,
+  compactAvailability,
   namespaceBadgeCounts,
   type SignaturesArtifact,
 } from "./combined-surface";
@@ -268,6 +271,110 @@ describe("namespaceBadgeCounts", () => {
 
   test("a fully-stable namespace carries no badges", () => {
     expect(namespaceBadgeCounts(nsOf("go"))).toEqual({ new: 0, changed: 0, deprecated: 0 });
+  });
+});
+
+describe("compactAvailability", () => {
+  const entryOf = (namespace: string, name: string) => {
+    const entry = nsOf(namespace).entries.find((e) => e.identity.name === name);
+    if (!entry) throw new Error(`entry ${name} missing from ${namespace}`);
+    return entry;
+  };
+
+  test("a universal symbol with no curated facts carries no tag", () => {
+    expect(compactAvailability(entryOf("go", "go.get_position"))).toBe("");
+  });
+
+  test("both signature-transition arms carry [signature transition] after their span", () => {
+    const live = nsOf("liveupdate");
+    const arms = live.entries.filter((e) => e.identity.name === "liveupdate.add_mount");
+    const tags = arms.map(compactAvailability).sort();
+    expect(tags).toEqual([
+      "[since 1.13.0] [signature transition]",
+      "[through 1.12.4] [signature transition]",
+    ]);
+  });
+
+  test("a removed+deprecated symbol renders span, deprecation, and replacement, no transition", () => {
+    expect(compactAvailability(entryOf("model", "model.material"))).toBe(
+      "[through 1.12.4] [deprecated since 1.12.0] [replaced by go.get_position]",
+    );
+  });
+
+  test("a Box2D-specific symbol renders [Box2D: …]", () => {
+    const b2 = func("b2d.get_gravity", [], [param("", ["vector3"])]);
+    const surface = buildCombinedSurface({
+      surfaces: [
+        { version: "1.13.0", modules: [mod("b2d", [b2])] },
+        { version: "1.12.4", modules: [mod("b2d", [b2])] },
+      ],
+      signatures: {
+        versions: {
+          "1.13.0": { [symbolIdentityKey(funcId("b2d", b2))]: "function get_gravity(): vector3;" },
+          "1.12.4": { [symbolIdentityKey(funcId("b2d", b2))]: "function get_gravity(): vector3;" },
+        },
+      },
+      overlay: {
+        versions: ["1.13.0", "1.12.4"],
+        records: new Map([
+          [
+            symbolIdentityKey(funcId("b2d", b2)),
+            { identity: funcId("b2d", b2), availableIn: ["1.13.0", "1.12.4"], box2d: ["v3"] },
+          ],
+        ]),
+      },
+    });
+    const entry = surface.namespaces
+      .find((n) => n.namespace === "b2d")
+      ?.entries.find((e) => e.identity.name === "b2d.get_gravity");
+    expect(entry).toBeDefined();
+    expect(compactAvailability(entry as NonNullable<typeof entry>)).toBe("[Box2D: v3]");
+  });
+});
+
+describe("combinedAuthoritativeSignatures", () => {
+  test("maps each function identity to its authoritative inner render form", () => {
+    const map = combinedAuthoritativeSignatures(nsOf("go"));
+    expect(map.get(symbolIdentityKey(funcId("go", getPos)))).toBe(
+      "go.get_position(id: string): vector3",
+    );
+  });
+
+  test("keys by exact overload so both add_mount arms resolve distinctly", () => {
+    const map = combinedAuthoritativeSignatures(nsOf("liveupdate"));
+    const oldSig = map.get(symbolIdentityKey(funcId("liveupdate", addMountOld)));
+    const newSig = map.get(symbolIdentityKey(funcId("liveupdate", addMountNew)));
+    expect(oldSig).toBe("liveupdate.add_mount(name: string, uri: string): void");
+    expect(newSig).toBe("liveupdate.add_mount(name: string, uri: string, priority: number): void");
+    expect(oldSig).not.toBe(newSig);
+  });
+
+  test("combinedNamespaceToApiPage attaches the identity-keyed signature map", () => {
+    const page = combinedNamespaceToApiPage(nsOf("go"));
+    expect(page.authoritativeSignatures?.get(symbolIdentityKey(funcId("go", getPos)))).toBe(
+      "go.get_position(id: string): vector3",
+    );
+  });
+});
+
+describe("combinedAuthoritativeSignatures (committed artifacts)", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const real = (name: string) => {
+    const found = surface.namespaces.find((n) => n.namespace === name);
+    if (!found) throw new Error(`namespace ${name} missing from combined surface`);
+    return found;
+  };
+
+  test("compute.get_constants maps to the authoritative structured record-array return", () => {
+    const compute = real("compute");
+    const map = combinedNamespaceToApiPage(compute).authoritativeSignatures;
+    const entry = compute.entries.find((e) => e.identity.name === "compute.get_constants");
+    expect(entry).toBeDefined();
+    const inner = map?.get(symbolIdentityKey((entry as NonNullable<typeof entry>).identity));
+    expect(inner).toBe(
+      "compute.get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]",
+    );
+    expect(inner).not.toContain("Record<string | number, unknown>");
   });
 });
 

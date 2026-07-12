@@ -42,7 +42,7 @@ export default createRoute(
     const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model)) : "";
 
     const html = await renderMarkdown(
-      apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges }),
+      apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges, combinedMarkers: true }),
       { highlightSignatureHeadings: true },
     );
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {

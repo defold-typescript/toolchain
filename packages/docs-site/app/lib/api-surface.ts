@@ -52,6 +52,21 @@ function joinAvailability(
   return availability.records.get(symbolIdentityKey({ namespace, kind, name, signature }));
 }
 
+// The authoritative inner signature for one symbol, or `undefined` when the page
+// carries no Combined signature map or the identity is absent. Functions key by
+// their normalized overload signature (so both arms of a transition resolve
+// distinctly); members key with the empty signature. A miss falls back to the
+// token-derived render, so exact-version pages (no map) are unaffected.
+function authoritativeSignatureFor(
+  authoritative: ReadonlyMap<string, string> | undefined,
+  namespace: string,
+  kind: IdentityKind,
+  name: string,
+  signature: string,
+): string | undefined {
+  return authoritative?.get(symbolIdentityKey({ namespace, kind, name, signature }));
+}
+
 /**
  * The lifecycle labels rendered as compact text badges and threaded into the
  * search projection. The availability span is turned into a friendly label
@@ -172,6 +187,15 @@ export interface ApiPage {
   translations: TranslationStore;
   /** Hand-authored `lua-types`-derived signature overrides, keyed by FQN, shared across the surface. */
   signatures: SignatureStore;
+  /**
+   * Exact-identity ({@link symbolIdentityKey}) to inner-render-form signature
+   * map, present only on Combined pages. When a symbol's identity is in the map
+   * the render/index/search layers use its authoritative declaration text
+   * verbatim instead of re-deriving the signature from ref-doc tokens (which can
+   * drift from the shipped `generated/*.d.ts`). A symbol absent from the map
+   * falls back to the token-derived `functionSignature`.
+   */
+  authoritativeSignatures?: ReadonlyMap<string, string>;
   /**
    * `engine` for Defold-engine namespaces emitted from `api-targets.json` `modules`
    * and the synthetic globals page; `lua-stdlib` for pure-Lua / LuaJIT surfaces
@@ -396,10 +420,14 @@ export function exampleMarkdownFor(
 }
 
 export function apiModuleMarkdown(
-  page: Pick<ApiPage, "namespace" | "module" | "displayName" | "category" | "availability">,
+  page: Pick<
+    ApiPage,
+    "namespace" | "module" | "displayName" | "category" | "availability" | "authoritativeSignatures"
+  >,
   translations: TranslationStore = {},
 ): string {
   const m = page.module;
+  const authoritative = page.authoritativeSignatures;
   // `library` JSON tokens are already TypeScript, so re-mapping them through the
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
@@ -413,7 +441,14 @@ export function apiModuleMarkdown(
   if (m.functions.length > 0) {
     lines.push("## Functions", "");
     for (const fn of m.functions) {
-      lines.push(`### \`${functionSignature(fn, mapType)}\``, "");
+      const authSig = authoritativeSignatureFor(
+        authoritative,
+        m.namespace,
+        "FUNCTION",
+        fn.name,
+        normalizedFunctionSignature(fn),
+      );
+      lines.push(`### \`${authSig ?? functionSignature(fn, mapType)}\``, "");
       const doc = htmlToDocText(fn.description || fn.brief);
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
@@ -514,7 +549,7 @@ export function apiModuleMarkdown(
  * rows. `apiModuleMarkdown` stays the flat search/index projection.
  */
 export function apiModuleSymbols(
-  page: Pick<ApiPage, "module" | "category" | "availability">,
+  page: Pick<ApiPage, "module" | "category" | "availability" | "authoritativeSignatures">,
   translations: TranslationStore = {},
   signatures: SignatureStore = {},
 ): ApiSymbol[] {
@@ -522,6 +557,7 @@ export function apiModuleSymbols(
   // `library` JSON tokens are already TypeScript, so re-mapping them through the
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
+  const authoritative = page.authoritativeSignatures;
   const symbols: ApiSymbol[] = [];
   const overrideEmitted = new Set<string>();
 
@@ -537,13 +573,24 @@ export function apiModuleSymbols(
       const authored = ov?.docs?.[i];
       return authored != null ? htmlToDocText(authored) : fixtureDoc;
     };
+    // The authoritative Combined signature wins over both the token render and
+    // the authored override store; on exact-version pages the map is absent, so
+    // the existing override/token precedence is unchanged.
+    const authSig = authoritativeSignatureFor(
+      authoritative,
+      m.namespace,
+      "FUNCTION",
+      fn.name,
+      normalizedFunctionSignature(fn),
+    );
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
       signature:
-        ov === null
+        authSig ??
+        (ov === null
           ? functionSignature(fn, mapType)
-          : (ov.signatures[0] ?? functionSignature(fn, mapType)),
+          : (ov.signatures[0] ?? functionSignature(fn, mapType))),
       docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
       parameters: projectParams(fn.parameters, mapType),
       returnValues: projectParams(fn.returnValues, mapType),
@@ -586,7 +633,9 @@ export function apiModuleSymbols(
     const symbol: ApiSymbol = {
       kind: "variable",
       name: v.name,
-      signature: variableSignature(v, mapType),
+      signature:
+        authoritativeSignatureFor(authoritative, m.namespace, "VARIABLE", v.name, "") ??
+        variableSignature(v, mapType),
       docMarkdown: htmlToDocText(v.description || v.brief),
       parameters: [],
       returnValues: [],
@@ -600,7 +649,9 @@ export function apiModuleSymbols(
     const symbol: ApiSymbol = {
       kind: "constant",
       name: cst.name,
-      signature: constantSignature(cst),
+      signature:
+        authoritativeSignatureFor(authoritative, m.namespace, "CONSTANT", cst.name, "") ??
+        constantSignature(cst),
       docMarkdown: htmlToDocText(cst.description || cst.brief),
       parameters: [],
       returnValues: [],
@@ -614,7 +665,9 @@ export function apiModuleSymbols(
     const symbol: ApiSymbol = {
       kind: "property",
       name: prop.name,
-      signature: propertySignature(prop, mapType),
+      signature:
+        authoritativeSignatureFor(authoritative, m.namespace, "PROPERTY", prop.name, "") ??
+        propertySignature(prop, mapType),
       docMarkdown: htmlToDocText(prop.description || prop.brief),
       parameters: [],
       returnValues: [],

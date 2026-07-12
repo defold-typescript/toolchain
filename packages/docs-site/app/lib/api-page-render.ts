@@ -124,22 +124,25 @@ const BADGE_KINDS: {
   readonly flag: keyof BadgeCategory;
   readonly kind: string;
   readonly label: string;
+  readonly glyph: string;
 }[] = [
-  { flag: "isNew", kind: "new", label: "New" },
-  { flag: "isChanged", kind: "changed", label: "Changed" },
-  { flag: "isDeprecated", kind: "deprecated", label: "Deprecated" },
+  { flag: "isNew", kind: "new", label: "New", glyph: "N" },
+  { flag: "isChanged", kind: "changed", label: "Changed", glyph: "C" },
+  { flag: "isDeprecated", kind: "deprecated", label: "Deprecated", glyph: "D" },
 ];
 
-// The glanceable color dots for one symbol heading: one empty `<span>` per active
-// category, ordered new -> changed -> deprecated. The `aria-label`/`title` carry
-// the meaning so color stays additive, never the sole signal. The span is empty
-// so the shared heading slugger strips it and the function-overview anchors keep
-// keying off the bare signature. Returns `""` for a symbol with no category.
+// The glanceable category markers for one symbol heading: one `<span>` per active
+// category, ordered new -> changed -> deprecated, each carrying a visible
+// `N`/`C`/`D` glyph so the category is distinguishable without perceiving color;
+// the `aria-label`/`title` name it in full. The marker sits after the signature
+// and the heading slugger drops every `api-badge-dot` span (glyph and all — see
+// `markdown.ts`), so the id and the function-overview anchors keep keying off the
+// bare signature. Returns `""` for a symbol with no category.
 function badgeDots(category: BadgeCategory): string {
   return BADGE_KINDS.filter((b) => category[b.flag])
     .map(
       (b) =>
-        `<span class="api-badge-dot api-badge-dot--${b.kind}" aria-label="${b.label}" title="${b.label}"></span>`,
+        `<span class="api-badge-dot api-badge-dot--${b.kind}" aria-label="${b.label}" title="${b.label}">${b.glyph}</span>`,
     )
     .join("");
 }
@@ -155,13 +158,14 @@ const COUNT_KINDS: {
 ];
 
 // The count pills injected after a Combined namespace's H1: one pill per non-zero
-// category showing its tally, the `aria-label` naming the category so color stays
-// additive. Returns `""` when every count is zero (a fully stable namespace shows
-// nothing).
+// category showing its tally and category noun as visible text (`12 new`), the
+// `aria-label` spelling it out for assistive tech so color stays additive rather
+// than the sole signal. Returns `""` when every count is zero (a fully stable
+// namespace shows nothing).
 export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
   const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
     (c) =>
-      `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]}</span>`,
+      `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]} ${c.noun}</span>`,
   );
   if (pills.length === 0) return "";
   return `<div class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</div>`;
@@ -269,12 +273,18 @@ export function apiPageMarkdown(
     omitHeading = false,
     resolveReplacement = () => undefined,
     titleBadges = "",
+    combinedMarkers = false,
   }: {
     omitHeading?: boolean;
     resolveReplacement?: ReplacementResolver;
     // Namespace-title count pills injected immediately after the H1 (Combined
     // pages pass the `namespaceCountBadges` HTML); empty leaves the heading as-is.
     titleBadges?: string;
+    // The per-symbol color/category marker layer is Combined-only: the union
+    // surface is the one place comparison across versions is meaningful. Only the
+    // `/api/combined` route passes `true`; exact-version pages keep the textual
+    // availability prose with no dots.
+    combinedMarkers?: boolean;
   } = {},
 ): string {
   const m = page.module;
@@ -312,7 +322,9 @@ export function apiPageMarkdown(
       resolveReplacement,
       indexRoute,
     );
-    const dots = badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []));
+    const dots = combinedMarkers
+      ? badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []))
+      : "";
     lines.push(symbolBlock(linkified, badges, dots), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {

@@ -1179,6 +1179,73 @@ describe("apiModuleSymbols", () => {
   });
 });
 
+describe("apiModuleSymbols / apiModuleMarkdown authoritative signatures", () => {
+  const getConstants: ApiFunction = {
+    name: "compute.get_constants",
+    brief: "",
+    description: "Gets constants.",
+    parameters: [{ name: "path", doc: "", types: ["hash", "string"], isOptional: false }],
+    returnValues: [{ name: "", doc: "", types: ["table"], isOptional: false }],
+  };
+  const AUTH_SIG =
+    "compute.get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]";
+  function computePage(withMap: boolean): ApiPage {
+    const key = symbolIdentityKey({
+      namespace: "compute",
+      kind: "FUNCTION",
+      name: getConstants.name,
+      signature: normalizedFunctionSignature(getConstants),
+    });
+    return {
+      namespace: "compute",
+      route: "/api/combined/compute",
+      brief: "",
+      module: {
+        namespace: "compute",
+        brief: "",
+        description: "",
+        functions: [getConstants],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      ...(withMap ? { authoritativeSignatures: new Map([[key, AUTH_SIG]]) } : {}),
+    };
+  }
+
+  test("apiModuleSymbols renders the authoritative structured return, not the ref-doc token", () => {
+    const symbol = apiModuleSymbols(computePage(true))[0];
+    expect(symbol?.signature).toBe(AUTH_SIG);
+    expect(symbol?.signature).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("apiModuleMarkdown heading uses the same authoritative signature", () => {
+    const md = apiModuleMarkdown(computePage(true));
+    expect(md).toContain(`### \`${AUTH_SIG}\``);
+  });
+
+  test("a symbol absent from the map falls back to the token-derived functionSignature", () => {
+    const withEmpty = { ...computePage(true), authoritativeSignatures: new Map<string, string>() };
+    const fallback = apiModuleSymbols(computePage(false))[0]?.signature;
+    expect(apiModuleSymbols(withEmpty)[0]?.signature).toBe(fallback);
+    expect(fallback).not.toBe(AUTH_SIG);
+  });
+
+  test("an exact-version page (no map) renders the token-derived signature, not the authoritative one", () => {
+    const noMap = computePage(false);
+    const rendered = apiModuleSymbols(noMap)[0]?.signature;
+    expect(rendered).not.toBe(AUTH_SIG);
+    expect(rendered).toBe(
+      "compute.get_constants(path: Hash | string): Record<string | number, unknown>",
+    );
+    expect(apiModuleMarkdown(noMap)).toContain(`### \`${rendered}\``);
+  });
+});
+
 describe("exampleMarkdownFor", () => {
   const luaExample =
     '<div class="codehilite"><pre><code><span class="n">demo</span><span class="p">.</span><span class="n">run</span><span class="p">()</span></code></pre></div>';
