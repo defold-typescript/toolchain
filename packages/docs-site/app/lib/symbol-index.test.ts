@@ -1,12 +1,16 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage } from "./api-surface";
-import type { ApiVersion } from "./api-surface-loader";
+import { type ApiVersion, loadCombinedSurface } from "./api-surface-loader";
 import {
   buildSymbolIndex,
+  combinedSymbolIndexRecords,
   symbolIndexFileForRoute,
   versionSymbolIndexRecords,
 } from "./symbol-index";
+
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 function emptyModule(namespace: string): ApiModule {
   return {
@@ -153,6 +157,15 @@ describe("symbolIndexFileForRoute", () => {
     expect(symbolIndexFileForRoute("/api/go?x=1#y", versionIds)).toBe("symbol-index.json");
     expect(symbolIndexFileForRoute("/api/defold-9.9.9/go", versionIds)).toBe("symbol-index.json");
   });
+
+  test("routes Combined pages to the Combined symbol index", () => {
+    expect(symbolIndexFileForRoute("/api/combined/go", versionIds)).toBe(
+      "symbol-index-combined.json",
+    );
+    expect(symbolIndexFileForRoute("/api/combined/go#anchor", versionIds)).toBe(
+      "symbol-index-combined.json",
+    );
+  });
 });
 
 describe("versionSymbolIndexRecords", () => {
@@ -173,5 +186,29 @@ describe("versionSymbolIndexRecords", () => {
     expect(records[0]?.index.wmath).toEqual({ brief: "wmath brief", route: "/api/old/wmath" });
     // never silently falls back to the default surface
     expect(records[0]?.index.go).toBeUndefined();
+  });
+});
+
+describe("combinedSymbolIndexRecords", () => {
+  const combined = loadCombinedSurface(REAL_TYPES_DIR);
+
+  test("maps every symbol to its /api/combined/<namespace> route", () => {
+    const index = combinedSymbolIndexRecords(combined);
+    // the namespace key routes to the bare combined page
+    expect(index.compute?.route).toBe("/api/combined/compute");
+    // a member routes to the combined page with a heading anchor, never a
+    // version-prefixed or default-surface route
+    for (const entry of Object.values(index)) {
+      expect(entry.route.startsWith("/api/combined/")).toBe(true);
+    }
+    // a known member key resolves under its combined namespace
+    expect(index["go.get_position"]?.route.startsWith("/api/combined/go#")).toBe(true);
+  });
+
+  test("is derived from the projection, covering every combined namespace key", () => {
+    const index = combinedSymbolIndexRecords(combined);
+    for (const ns of combined.namespaces) {
+      expect(index[ns.namespace]?.route).toBe(`/api/combined/${ns.namespace}`);
+    }
   });
 });

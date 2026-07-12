@@ -11,7 +11,7 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import type { AvailabilityLookup } from "./api-surface";
+import type { ApiPage, AvailabilityLookup } from "./api-surface";
 
 type ApiConstant = ApiModule["constants"][number];
 type ApiProperty = ApiModule["properties"][number];
@@ -81,6 +81,55 @@ export interface CombinedNamespace {
 export interface CombinedSurface {
   readonly versions: readonly string[];
   readonly namespaces: readonly CombinedNamespace[];
+}
+
+/**
+ * Project one Combined namespace as an `ApiPage` for the shared render / index /
+ * search machinery: an `engine` page routed under `/api/combined`, carrying the
+ * union `module` and the synthetic availability lookup. Combined omits example
+ * translations (they render as their Lua fallback) and signature overrides. Pure
+ * — the node-free counterpart the `/api/combined` routes, the search index, and
+ * the symbol index all reuse so none re-walks the raw per-version surfaces.
+ */
+export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
+  return {
+    namespace: ns.namespace,
+    route: `/api/combined/${ns.namespace}`,
+    brief: ns.module.brief,
+    module: ns.module,
+    translations: {},
+    signatures: {},
+    category: "engine",
+    availability: ns.availability,
+  };
+}
+
+/** Every Combined namespace projected as an `ApiPage`, in projection order. */
+export function combinedApiPages(combined: CombinedSurface): ApiPage[] {
+  return combined.namespaces.map(combinedNamespaceToApiPage);
+}
+
+/**
+ * The compact, machine-readable availability tail an agent-facing artifact
+ * appends to a Combined entry's authoritative signature — `[since X]`,
+ * `[through X]`, `[versions: …]`, or the closed-range `[X–Y]`. An entry present
+ * in every tracked version carries no tag (the empty string), so the absence of
+ * a tag reads as "available in all tracked versions".
+ */
+export function compactAvailability(entry: CombinedEntry): string {
+  const { label } = entry;
+  switch (label.kind) {
+    case "since":
+      return `[since ${label.from}]`;
+    case "through":
+      return `[through ${label.to}]`;
+    case "range":
+      return `[${label.from}–${label.to}]`;
+    case "discrete":
+      return `[versions: ${(label.versions ?? []).join(", ")}]`;
+    default:
+      return "";
+  }
 }
 
 function compareSemverDesc(a: string, b: string): number {

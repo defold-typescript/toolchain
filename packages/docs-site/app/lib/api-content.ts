@@ -9,7 +9,11 @@ import {
   loadCombinedSurface,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
-import type { CombinedNamespace, CombinedSurface } from "./combined-surface";
+import {
+  type CombinedNamespace,
+  type CombinedSurface,
+  combinedNamespaceToApiPage,
+} from "./combined-surface";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
 export const LIBRARY_TYPES_DIR = join(process.cwd(), "../library-types");
@@ -51,16 +55,7 @@ export function combinedSurface(): CombinedSurface {
 // module and the synthetic availability lookup. Combined omits example
 // translations (they render as their Lua fallback) and signature overrides.
 export function toCombinedApiPage(ns: CombinedNamespace): ApiPage {
-  return {
-    namespace: ns.namespace,
-    route: `/api/combined/${ns.namespace}`,
-    brief: ns.module.brief,
-    module: ns.module,
-    translations: {},
-    signatures: {},
-    category: "engine",
-    availability: ns.availability,
-  };
+  return combinedNamespaceToApiPage(ns);
 }
 
 export function combinedApiPages(): ApiPage[] {
