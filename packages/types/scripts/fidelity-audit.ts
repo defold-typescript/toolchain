@@ -1,7 +1,9 @@
 import { resolve } from "node:path";
 import { DEFOLD_TYPE_MAP } from "../src/core-types";
 import {
+  ARBITRARY_TABLE_SLOT_KEYS,
   ARBITRARY_TABLE_SLOTS,
+  applyFieldTypeOverrides,
   applyNestedFieldCurations,
   buildTableDocResolver,
   HANDLE_METHOD_LOCAL,
@@ -163,10 +165,10 @@ function auditEntry(
             for (const field of tableSlotCuration.value) {
               if (field.fields !== undefined) {
                 for (const nested of field.fields) {
-                  if (nested.numberList === true) continue;
+                  if (nested.numberList === true || nested.tsType !== undefined) continue;
                   considerTypes(nested.types);
                 }
-              } else if (field.numberList !== true) {
+              } else if (field.numberList !== true && field.tsType === undefined) {
                 considerTypes(field.types);
               }
             }
@@ -197,11 +199,33 @@ function auditEntry(
           for (const field of tableSlotCuration.fields) {
             if (field.fields !== undefined) {
               for (const nested of field.fields) {
-                if (nested.numberList === true) continue;
+                if (nested.numberList === true || nested.tsType !== undefined) continue;
                 considerTypes(nested.types);
               }
-            } else if (field.numberList !== true) {
+            } else if (field.numberList !== true && field.tsType === undefined) {
               considerTypes(field.types);
+            }
+          }
+          continue;
+        }
+        // A keyed-object slot is recovered by emit-dts into `Record<string, { … }>`
+        // where the inner fields are parser-recovered — not a bare `Record`, so
+        // don't count it. Feed the parsed inner field types back through
+        // considerTypes so an unmapped inner token still surfaces under
+        // unknownTokens (mirrors the parser-recovered branch below).
+        if (tableSlotCuration?.kind === "keyed-object") {
+          const rawParsed = doc !== undefined ? parseTableFields(doc, resolver) : null;
+          if (rawParsed !== null && slot !== undefined) {
+            const parsed = applyFieldTypeOverrides(slot.element, slot.kind, slot.name, rawParsed);
+            for (const field of parsed) {
+              if (field.fields !== undefined) {
+                for (const nested of field.fields) {
+                  if (nested.numberList === true || nested.tsType !== undefined) continue;
+                  considerTypes(nested.types);
+                }
+              } else if (field.numberList !== true && field.tsType === undefined) {
+                considerTypes(field.types);
+              }
             }
           }
           continue;
@@ -215,7 +239,12 @@ function auditEntry(
         const parsed = doc !== undefined ? parseTableFields(doc, resolver) : null;
         const fields =
           parsed !== null && slot !== undefined
-            ? applyNestedFieldCurations(slot.element, slot.kind, slot.name, parsed)
+            ? applyFieldTypeOverrides(
+                slot.element,
+                slot.kind,
+                slot.name,
+                applyNestedFieldCurations(slot.element, slot.kind, slot.name, parsed),
+              )
             : parsed;
         if (fields !== null) {
           // A recovered field carrying nested fields (the mixed `<dl>`+`<ul>`
@@ -232,13 +261,14 @@ function auditEntry(
           for (const field of fields) {
             if (field.fields !== undefined) {
               for (const nested of field.fields) {
-                if (nested.numberList === true) continue;
+                if (nested.numberList === true || nested.tsType !== undefined) continue;
                 considerTypes(nested.types, undefined, arbitraryTable);
               }
-            } else if (field.numberList === true) {
-              // Recovered as `number[]` by inlineTableType — no longer a
-              // `Record`, so skip it. Re-counting its `table` token here would
-              // double-count a slot the emitted surface no longer loses.
+            } else if (field.numberList === true || field.tsType !== undefined) {
+              // Recovered as `number[]` (numberList) or pinned via a field-type
+              // override (tsType) by inlineTableType — no longer a `Record`, so
+              // skip it. Re-counting its `table` token here would double-count a
+              // slot the emitted surface no longer loses.
             } else {
               considerTypes(field.types, undefined, arbitraryTable);
             }
@@ -249,6 +279,14 @@ function auditEntry(
         // arbitrary lua table — its emitted `Record<string | number, unknown>`
         // is faithful, not a loss — so it is not counted under recordTables.
         if (arbitraryTable) continue;
+        // A per-slot arbitrary allowlist entry (an undocumented table slot on an
+        // otherwise-documented element) is faithful `Record` too — not a loss.
+        if (
+          slot !== undefined &&
+          ARBITRARY_TABLE_SLOT_KEYS.has(`${slot.element}:${slot.kind}:${slot.name}`)
+        ) {
+          continue;
+        }
         recordTables += 1;
         continue;
       }

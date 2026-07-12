@@ -15,7 +15,7 @@ declare global {
      * @param child_index - 1-based child shape index
      * @returns table with `lower` and `upper`
      */
-    function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): Record<string | number, unknown>;
+    function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { lower: Vector3; upper: Vector3 };
     /**
      * Get fixture density.
      *
@@ -32,7 +32,7 @@ declare global {
      * @param child_index - 1-based child shape index
      * @returns table with `category_bits`, `mask_bits`, and `group_index`
      */
-    function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): Record<string | number, unknown>;
+    function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { category_bits: number; mask_bits: number; group_index: number };
     /**
      * Get fixture friction.
      *
@@ -58,7 +58,7 @@ declare global {
      * polygon shapes use `vertices`, and chain shapes use `vertices`, `loop`, optional `prev_vertex`, and `next_vertex`.
      * Any angle values are in radians.
      */
-    function get_shape(body: Opaque<"b2Body">, fixture_index: number): Record<string | number, unknown>;
+    function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
     /**
      * Get the fixture type.
      *
@@ -98,7 +98,7 @@ declare global {
      * @param child_index - 1-based child shape index
      * @param filter - table with `category_bits`, `mask_bits`, and `group_index`
      */
-    function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: Record<string | number, unknown>): void;
+    function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): void;
     /**
      * Set fixture friction.
      *
@@ -140,7 +140,7 @@ declare global {
      * b2d.fixture.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_EDGE, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });
      * ```
      */
-    function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: Record<string | number, unknown>, update_mass: boolean): void;
+    function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void;
     /**
      * Test a point against a fixture.
      *

@@ -17,7 +17,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @returns travel fraction before collision
      */
-    function cast_mover(world: Opaque<"b2World">, capsule: Record<string | number, unknown>, translation: Vector3, filter?: Record<string | number, unknown>): number;
+    function cast_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number }): number;
     /**
      * Cast a ray.
      *
@@ -27,7 +27,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @param max_results - optional maximum result count
      */
-    function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: Record<string | number, unknown>, max_results: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * The translation is the ray displacement from `origin`. Result order is not
      * guaranteed by Box2D.
@@ -38,7 +38,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: Record<string | number, unknown>, max_results?: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * Cast a ray and return the closest hit.
      *
@@ -48,7 +48,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @returns hit table with `fixture`, `shape`, `point`, `normal`, `fraction`, `node_visits`, and `leaf_visits`, or nil
      */
-    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: Record<string | number, unknown>): Record<string | number, unknown>;
+    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number };
     /**
      * The translation is the ray displacement from `origin`.
      *
@@ -58,7 +58,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @returns closest cast hit table with `node_visits` and `leaf_visits`, or `nil` on miss
      */
-    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: Record<string | number, unknown>): Record<string | number, unknown> | unknown;
+    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | unknown;
     /**
      * Uses Box2D v2 time-of-impact for fixture child shapes that support distance proxies.
      * Grid fixture children are skipped.
@@ -69,7 +69,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @param max_results - optional maximum result count
      */
-    function cast_shape(world: Opaque<"b2World">, shape: Record<string | number, unknown>, translation: Vector3, filter: Record<string | number, unknown>, max_results: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * The shape table uses the same circle, capsule, segment, polygon, and box formats
      * as `b2d.body.create_shape`. The translation is the shape displacement.
@@ -80,7 +80,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function cast_shape(world: Opaque<"b2World">, shape: Record<string | number, unknown>, translation: Vector3, filter?: Record<string | number, unknown>, max_results?: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * The capsule table has `center1`, `center2`, and `radius` fields. Plane result
      * tables include `shape`, `normal`, `offset`, and `hit`.
@@ -91,7 +91,7 @@ declare global {
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      * @returns array of plane result tables
      */
-    function collide_mover(world: Opaque<"b2World">, capsule: Record<string | number, unknown>, filter?: Record<string | number, unknown>, max_results?: number): Record<string | number, unknown>;
+    function collide_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, filter?: { category_bits?: number; mask_bits?: number }, max_results?: number): Record<string | number, unknown>;
     /**
      * Enable or disable continuous collision.
      *
@@ -228,7 +228,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @param max_results - optional maximum result count
      */
-    function overlap_aabb(world: Opaque<"b2World">, aabb: Record<string | number, unknown>, filter: Record<string | number, unknown>, max_results: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * The AABB table has `lower` and `upper` `vector3` fields.
      *
@@ -237,7 +237,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function overlap_aabb(world: Opaque<"b2World">, aabb: Record<string | number, unknown>, filter?: Record<string | number, unknown>, max_results?: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * Overlap a shape.
      *
@@ -246,7 +246,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @param max_results - optional maximum result count
      */
-    function overlap_shape(world: Opaque<"b2World">, shape: Record<string | number, unknown>, filter: Record<string | number, unknown>, max_results: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * The shape table uses the same circle, capsule, segment, polygon, and box formats
      * as `b2d.body.create_shape`.
@@ -256,7 +256,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function overlap_shape(world: Opaque<"b2World">, shape: Record<string | number, unknown>, filter?: Record<string | number, unknown>, max_results?: number): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;
+    function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * Rebuild the static broad-phase tree.
      *

@@ -308,13 +308,13 @@ declare global {
      * `graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX` min/max blend equations
      * `
      */
-    function get_adapter_info(): Record<string | number, unknown>;
+    function get_adapter_info(): { family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] };
     /**
      * get the list of graphics adapters that have been registered with the engine
      *
      * @returns array of adapter family name strings (e.g. "opengl", "vulkan", "webgpu")
      */
-    function get_engine_adapters(): Record<string | number, unknown>;
+    function get_engine_adapters(): string[];
   }
 }
 

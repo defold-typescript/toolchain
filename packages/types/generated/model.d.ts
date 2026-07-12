@@ -39,7 +39,7 @@ declare global {
      * model.set_blend_weights("#model", weights);
      * ```
      */
-    function get_blend_weights(url: string | Hash | Url): Record<string | number, unknown>;
+    function get_blend_weights(url: string | Hash | Url): number[];
     /**
      * Gets the id of the game object that corresponds to a model skeleton bone.
      * The returned game object can be used for parenting and transform queries.
@@ -203,7 +203,7 @@ declare global {
      * model.set_blend_weights("#model");
      * ```
      */
-    function set_blend_weights(url: string | Hash | Url, weights?: Record<string | number, unknown>): void;
+    function set_blend_weights(url: string | Hash | Url, weights?: number[]): void;
     /**
      * Enable or disable visibility of a mesh
      *
