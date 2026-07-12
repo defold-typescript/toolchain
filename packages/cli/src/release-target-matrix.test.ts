@@ -1,13 +1,19 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { selectApiSurface } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
 import {
   CURRENT_STABLE_DEFOLD_VERSION,
   DEFOLD_VERSIONS,
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "./defold-version";
+import {
+  ensureMaterializedReference,
+  materializeApiSurface,
+  resolveRegisteredSurfaceGeneratedDir,
+} from "./materialize";
 import {
   bobArtifactIdentity,
   isReusableBobArtifact,
@@ -17,6 +23,71 @@ import {
   runMatrixCommand,
   selectMatrixSurface,
 } from "./release-target-matrix";
+
+const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
+const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
+const TSC_BIN = path.join(REPO_ROOT, "node_modules", ".bin", "tsc");
+
+function linkTypes(cwd: string): void {
+  const scope = path.join(cwd, "node_modules", "@defold-typescript");
+  mkdirSync(scope, { recursive: true });
+  symlinkSync(TYPES_PKG, path.join(scope, "types"), "dir");
+}
+
+function runTsc(cwd: string): { code: number; output: string } {
+  const proc = Bun.spawnSync([TSC_BIN, "--noEmit", "-p", "tsconfig.json"], {
+    cwd,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  return { code: proc.exitCode, output: `${proc.stdout.toString()}${proc.stderr.toString()}` };
+}
+
+// Materialize a registered surface into a fresh consumer project through the
+// production seam (selectApiSurface -> resolveRegisteredSurfaceGeneratedDir ->
+// materializeApiSurface -> ensureMaterializedReference), link the shared types
+// package, and run a real offline `tsc --noEmit` against the given source.
+function compileAgainstSurface(version: string, source: string): { code: number; output: string } {
+  const cwd = mkdtempSync(path.join(os.tmpdir(), `matrix-compile-${version}-`));
+  try {
+    const surface = selectApiSurface(version);
+    const sourceGeneratedDir = resolveRegisteredSurfaceGeneratedDir(surface.surfaceId);
+    // Correspondence check (mirrors the readiness physical-surface verification):
+    // the materialization source must physically exist before we lean on it.
+    if (sourceGeneratedDir === null || !existsSync(sourceGeneratedDir)) {
+      throw new Error(`surface for ${version} has no committed generated directory`);
+    }
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "main.ts"), `${source}\n`);
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            module: "ESNext",
+            moduleResolution: "bundler",
+            lib: ["ES2022"],
+            skipLibCheck: true,
+            strict: true,
+            noEmit: true,
+          },
+          include: ["src/**/*.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    linkTypes(cwd);
+    const { materializedDir } = materializeApiSurface({ cwd, surface, sourceGeneratedDir });
+    if (materializedDir === null) {
+      throw new Error(`materialization produced no surface for ${version}`);
+    }
+    ensureMaterializedReference(cwd, materializedDir);
+    return runTsc(cwd);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+}
 
 function scaffoldProject(dir: string, main = "export const answer = 1;\n"): void {
   writeFileSync(path.join(dir, "game.project"), "[project]\ntitle = matrix\n");
@@ -138,13 +209,54 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
     }
   });
 
-  test("a 1.13-only project compiles only on 1.13.0, not on the previous release", () => {
-    // The deterministic proxy for "compiles only on 1.13.0": a symbol introduced
-    // in 1.13.0 is present in the current surface and absent from the previous one.
-    // The real cross-target compile is exercised by the advisory live matrix.
-    const current = selectMatrixSurface(CURRENT_STABLE_DEFOLD_VERSION);
-    const previous = selectMatrixSurface(PREVIOUS_STABLE_DEFOLD_VERSION);
-    expect(current.generatedDir).not.toBe(previous.generatedDir);
-    expect(current.available && previous.available).toBe(true);
-  });
+  test("cross-version compile proof: shared code compiles on both; 1.13-only code compiles on 1.13.0 and fails on 1.12.4", () => {
+    // Deterministic, fully offline cross-version proof. Each surface is reached
+    // through the production materialization/selection seam (selectApiSurface +
+    // resolveRegisteredSurfaceGeneratedDir + materializeApiSurface +
+    // ensureMaterializedReference), then a real `tsc --noEmit` runs against the
+    // materialized ambient surface. Real Bob/engine cross-compilation remains the
+    // advisory live matrix's job; this proves the committed type surfaces.
+    const currentSurface = selectMatrixSurface(CURRENT_STABLE_DEFOLD_VERSION);
+    const previousSurface = selectMatrixSurface(PREVIOUS_STABLE_DEFOLD_VERSION);
+    expect(currentSurface.available && previousSurface.available).toBe(true);
+    expect(currentSurface.generatedDir).not.toBe(previousSurface.generatedDir);
+
+    // A shared snippet using APIs present in both releases.
+    const sharedSource = [
+      'go.set_position(vmath.vector3(1, 2, 3), "#go");',
+      'msg.post("#other", "hello", {});',
+    ].join("\n");
+
+    // A 1.13-only snippet exercising the reverified areas; every symbol is absent
+    // from the 1.12.4 surface, so it must compile on 1.13.0 and fail on 1.12.4.
+    const only113Source = [
+      "declare const world: Parameters<typeof b2d.world.cast_ray>[0];",
+      'compute.set_constants("/c.computec", { tint: { value: vmath.vector4(1, 0, 0, 1) } });',
+      'material.set_vertex_attributes("/m.materialc", { position: { normalize: true } });',
+      'model.set_blend_weights("#model", [0, 1]);',
+      "b2d.world.cast_ray(world, vmath.vector3(), vmath.vector3(), { category_bits: 1, mask_bits: 1 }, 4);",
+      "const info = graphics.get_adapter_info();",
+      "void info.family;",
+      "render.set_blend_func_separate(1, 1, 1, 1);",
+      "void camera.get_orthographic_auto_zoom();",
+      "void liveupdate.is_built_with_excluded_files();",
+      'sprite.reset_constant("#sprite", "tint");',
+    ].join("\n");
+
+    const sharedOnCurrent = compileAgainstSurface(CURRENT_STABLE_DEFOLD_VERSION, sharedSource);
+    const sharedOnPrevious = compileAgainstSurface(PREVIOUS_STABLE_DEFOLD_VERSION, sharedSource);
+    if (sharedOnCurrent.code !== 0) {
+      throw new Error(`shared snippet must compile on current:\n${sharedOnCurrent.output}`);
+    }
+    if (sharedOnPrevious.code !== 0) {
+      throw new Error(`shared snippet must compile on previous:\n${sharedOnPrevious.output}`);
+    }
+
+    const onlyOnCurrent = compileAgainstSurface(CURRENT_STABLE_DEFOLD_VERSION, only113Source);
+    const onlyOnPrevious = compileAgainstSurface(PREVIOUS_STABLE_DEFOLD_VERSION, only113Source);
+    if (onlyOnCurrent.code !== 0) {
+      throw new Error(`1.13-only snippet must compile on 1.13.0:\n${onlyOnCurrent.output}`);
+    }
+    expect(onlyOnPrevious.code).not.toBe(0);
+  }, 180_000);
 });

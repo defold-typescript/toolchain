@@ -1,11 +1,18 @@
 import { describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
+  collectEvidence,
+  collectTargets,
   type DocsEvidence,
   evaluateReleaseReadiness,
   type ImportManifestEvidence,
   type ReadinessCategory,
   type ReadinessEvidence,
 } from "./defold-release-readiness.ts";
+
+const REPO_ROOT = join(import.meta.dir, "..");
 
 function baseImportManifest(): ImportManifestEvidence {
   return {
@@ -101,14 +108,23 @@ describe("evaluateReleaseReadiness", () => {
     expect(result.problems.find((p) => p.category === "unknown-type")?.message).toMatch(/3/);
   });
 
-  test("rejects when no declaration evidence was produced", () => {
+  test("rejects when a registered declaration is missing for the default target", () => {
     const e = passingEvidence();
     const result = evaluateReleaseReadiness({
       ...e,
-      importManifest: { ...baseImportManifest(), declarationNamespaceCount: 0 },
+      targets: [
+        {
+          id: "defold-1.13.0",
+          isDefault: true,
+          hasCommittedSurface: false,
+          missingDeclarations: ["compute.d.ts"],
+        },
+        { id: "defold-1.12.4", isDefault: false, hasCommittedSurface: true },
+      ],
     });
     expect(result.ok).toBe(false);
-    expect(result.problems.map((p) => p.category)).toContain("declaration");
+    const decl = result.problems.find((p) => p.category === "declaration");
+    expect(decl?.message).toMatch(/compute\.d\.ts/);
   });
 
   test("rejects when the historical docs route family is missing", () => {
@@ -186,5 +202,94 @@ describe("evaluateReleaseReadiness", () => {
     ] satisfies ReadinessCategory[]) {
       expect(cats.has(c)).toBe(true);
     }
+  });
+});
+
+describe("collectTargets — physical committed-surface verification", () => {
+  function withRoot(
+    targets: unknown,
+    layout: (typesDir: string) => void,
+    run: (root: string) => void,
+  ): void {
+    const root = mkdtempSync(join(tmpdir(), "readiness-targets-"));
+    try {
+      const typesDir = join(root, "packages", "types");
+      mkdirSync(typesDir, { recursive: true });
+      writeFileSync(join(typesDir, "api-targets.json"), JSON.stringify({ targets }));
+      layout(typesDir);
+      run(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  const oneModuleTarget = [
+    {
+      id: "defold-1.13.0",
+      default: true,
+      source: null,
+      generatedDir: "generated",
+      modules: [
+        { namespace: "compute", outFile: "compute.d.ts" },
+        { namespace: "model", outFile: "model.d.ts" },
+      ],
+    },
+  ];
+
+  test("a target whose generatedDir does not exist has no committed surface", () => {
+    withRoot(
+      oneModuleTarget,
+      () => {
+        // deliberately do not create generated/
+      },
+      (root) => {
+        const target = collectTargets(root)?.[0];
+        expect(target?.hasCommittedSurface).toBe(false);
+        expect(target?.missingDeclarations).toEqual(["compute.d.ts", "model.d.ts"]);
+      },
+    );
+  });
+
+  test("a target missing one registered outFile has no committed surface and names it", () => {
+    withRoot(
+      oneModuleTarget,
+      (typesDir) => {
+        const gen = join(typesDir, "generated");
+        mkdirSync(gen, { recursive: true });
+        writeFileSync(join(gen, "compute.d.ts"), "export {};\n");
+        // model.d.ts intentionally absent
+      },
+      (root) => {
+        const target = collectTargets(root)?.[0];
+        expect(target?.hasCommittedSurface).toBe(false);
+        expect(target?.missingDeclarations).toEqual(["model.d.ts"]);
+      },
+    );
+  });
+
+  test("a target with every registered outFile present has a real committed surface", () => {
+    withRoot(
+      oneModuleTarget,
+      (typesDir) => {
+        const gen = join(typesDir, "generated");
+        mkdirSync(gen, { recursive: true });
+        writeFileSync(join(gen, "compute.d.ts"), "export {};\n");
+        writeFileSync(join(gen, "model.d.ts"), "export {};\n");
+      },
+      (root) => {
+        const target = collectTargets(root)?.[0];
+        expect(target?.hasCommittedSurface).toBe(true);
+        expect(target?.missingDeclarations).toEqual([]);
+      },
+    );
+  });
+
+  test("regression lock: the real repo tree at HEAD reports ready", () => {
+    const evidence = collectEvidence(REPO_ROOT, { release: "1.13.0", baseline: "1.12.4" });
+    const result = evaluateReleaseReadiness(evidence);
+    if (!result.ok) {
+      throw new Error(`expected ready, got blockers:\n${JSON.stringify(result.problems, null, 2)}`);
+    }
+    expect(result.ok).toBe(true);
   });
 });
