@@ -1,5 +1,6 @@
 import { htmlToDocText } from "@defold-typescript/types";
 import { type ApiPage, apiModuleSymbols } from "./api-surface";
+import { type CombinedSurface, combinedApiPages } from "./combined-surface";
 import { slugify } from "./headings";
 
 export interface SymbolEntry {
@@ -44,7 +45,21 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
   return index;
 }
 
+/**
+ * The single Combined symbol index, derived from the shared
+ * {@link CombinedSurface} projection rather than a re-walk of raw surfaces. Every
+ * key routes to its `/api/combined/<namespace>` page (members carry the heading
+ * anchor), so a tooltip on a Combined page resolves against the union surface.
+ */
+export function combinedSymbolIndexRecords(combined: CombinedSurface): Record<string, SymbolEntry> {
+  return buildSymbolIndex(combinedApiPages(combined));
+}
+
 const DEFAULT_SYMBOL_INDEX_FILE = "symbol-index.json";
+// Mirrors `search-index.ts`: the `/api/combined/*` union surface resolves to its
+// own symbol index, never a tracked-version or the default file.
+const COMBINED_SEGMENT = "combined";
+const COMBINED_SYMBOL_INDEX_FILE = "symbol-index-combined.json";
 
 /**
  * The symbol-index file the client tooltip must fetch for a given page route,
@@ -59,6 +74,7 @@ export function symbolIndexFileForRoute(route: string, versionIds: readonly stri
   const segments = path.split("/").filter(Boolean);
   const apiIndex = segments.indexOf("api");
   const candidate = apiIndex >= 0 ? segments[apiIndex + 1] : undefined;
+  if (candidate === COMBINED_SEGMENT) return COMBINED_SYMBOL_INDEX_FILE;
   return candidate && versionIds.includes(candidate)
     ? `symbol-index-${candidate}.json`
     : DEFAULT_SYMBOL_INDEX_FILE;

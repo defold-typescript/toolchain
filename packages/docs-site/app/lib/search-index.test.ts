@@ -1,11 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { ApiPage } from "./api-surface";
-import { listApiVersions, loadApiSurface, loadApiSurfaceForVersion } from "./api-surface-loader";
+import {
+  listApiVersions,
+  loadApiSurface,
+  loadApiSurfaceForVersion,
+  loadCombinedSurface,
+} from "./api-surface-loader";
 import type { GuidePage } from "./guide";
 import {
   apiSearchRecords,
   buildSearchIndex,
+  combinedSearchRecords,
   searchIndexFileForRoute,
   versionSearchIndexRecords,
 } from "./search-index";
@@ -101,6 +107,13 @@ describe("searchIndexFileForRoute", () => {
 
   test("keeps unknown version-looking API routes on the default index", () => {
     expect(searchIndexFileForRoute("/api/foo/bar", versions)).toBe("search-index.json");
+  });
+
+  test("routes the Combined surface to its own index regardless of tracked versions", () => {
+    expect(searchIndexFileForRoute("/api/combined/model", versions)).toBe(
+      "search-index-combined.json",
+    );
+    expect(searchIndexFileForRoute("/api/combined", versions)).toBe("search-index-combined.json");
   });
 });
 
@@ -262,5 +275,38 @@ describe("apiSearchRecords", () => {
     const historicalModel = historicalRecords.find((r) => r.title === "model API");
     expect(historicalModel).toBeDefined();
     expect(historicalModel?.text).toContain("Available through Defold 1.12.4");
+  });
+});
+
+describe("combinedSearchRecords", () => {
+  const combined = loadCombinedSurface(REAL_TYPES_DIR);
+
+  test("emits one record per Combined namespace, routed under /api/combined", () => {
+    const records = combinedSearchRecords(combined);
+    expect(records).toHaveLength(combined.namespaces.length);
+    const routes = records.map((r) => r.route);
+    expect(routes).toEqual([...routes].sort());
+    for (const ns of combined.namespaces) {
+      const record = records.find((r) => r.route === `/api/combined/${ns.namespace}`);
+      expect(record).toBeDefined();
+      expect(record?.title).toBe(`${ns.namespace} API`);
+    }
+  });
+
+  test("sources text from the projection's authoritative signatures", () => {
+    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/combined/model");
+    expect(model).toBeDefined();
+    // the declaration-backed, drift-free shape — not the ref-doc token form
+    expect(model?.text).toContain(
+      "set_blend_weights(url: string | Hash | Url, weights?: number[])",
+    );
+  });
+
+  test("threads availability prose for symbols that are not present in every version", () => {
+    const records = combinedSearchRecords(combined);
+    const compute = records.find((r) => r.route === "/api/combined/compute");
+    expect(compute?.text).toContain("Since Defold 1.13.0");
+    const live = records.find((r) => r.route === "/api/combined/liveupdate");
+    expect(live?.text).toContain("Available through Defold 1.12.4");
   });
 });

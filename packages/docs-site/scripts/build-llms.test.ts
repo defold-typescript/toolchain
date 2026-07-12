@@ -278,3 +278,51 @@ describe("llms.txt still links excluded pages", () => {
     expect(buildLlmsTxt(SITE_TARGET)).toContain(`](${withBase("/tetris-tutorial")})`);
   });
 });
+
+describe("llms-full ## API serializes the Combined projection", () => {
+  const api = section(buildLlmsFull(SITE_TARGET), "## API");
+
+  test("emits authoritative, declaration-backed signatures (no ref-doc token drift)", () => {
+    expect(api).toContain("### compute");
+    // the curated shape the drift audit fixed, straight from api-signatures.json
+    expect(api).toContain("set_blend_weights(url: string | Hash | Url, weights?: number[]): void;");
+  });
+
+  test("tags each entry with compact machine-readable availability, only when not all-tracked", () => {
+    expect(api).toContain("[since 1.13.0]");
+    expect(api).toContain("[through 1.12.4]");
+    // a universally-present symbol carries a bare signature with no availability tag
+    expect(api).toMatch(/^- [^\n[]*;$/m);
+  });
+
+  test("keeps the version-independent namespaces (lua-stdlib, global types) covered", () => {
+    expect(api).toContain("### string");
+    expect(api).toContain("### Vector3");
+  });
+});
+
+describe("llms-full header carries the Combined-surface agent contract", () => {
+  const full = buildLlmsFull(SITE_TARGET);
+  const header = full.slice(0, full.indexOf("## Guide"));
+
+  test("enumerates the tracked versions", () => {
+    expect(header).toContain("1.13.0");
+    expect(header).toContain("1.12.4");
+  });
+
+  test("instructs agents to resolve the target, filter by availability, and trust .defold-types", () => {
+    expect(header).toContain("resolve");
+    expect(header).toContain("Availability");
+    expect(header).toContain(".defold-types/");
+  });
+});
+
+describe("no duplicated version-merge logic", () => {
+  test("the builder serializes the shared Combined projection rather than re-merging surfaces", () => {
+    const source = readFileSync(join(import.meta.dir, "build-llms.ts"), "utf8");
+    // structural guard: the ## API dump is fed by the one shared projection loader
+    expect(source).toContain("loadCombinedSurface");
+    // and it does not re-derive the availability matrix on its own
+    expect(source).not.toContain("deriveAvailabilityMatrix");
+  });
+});
