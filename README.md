@@ -67,7 +67,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 ### Project configuration
 
 - [Pinning the Defold target](https://defold-typescript.github.io/toolchain/pinning-defold-target) — keep the default latest surface, or pin a fixed version or release channel (`stable`/`beta`/`alpha`) whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
-- [Upgrading to Defold 1.13.0](https://defold-typescript.github.io/toolchain/upgrading-to-defold-1-13-0) — move a project from 1.12.4: the removed Lua APIs (`liveupdate.add_mount`, `model.material`, …), the source/asset migrations (Collada removal, glTF re-centering, Spine 4.6.0), and the rendering/platform default changes, each with a way to verify.
+- [Upgrading to Defold 1.13.0](https://defold-typescript.github.io/toolchain/upgrading-to-defold-1-13-0) — move a project from 1.12.4: the removed and re-signatured Lua APIs (`model.material` removed, `liveupdate.add_mount` re-signatured, …), the source/asset migrations (Collada removal, glTF re-centering, Spine 4.6.0), and the rendering/platform default changes, each with a way to verify.
 - [Native extensions](https://defold-typescript.github.io/toolchain/extensions) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](https://defold-typescript.github.io/toolchain/resolve) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
 
 ### Migration
