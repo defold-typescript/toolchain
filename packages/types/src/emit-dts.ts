@@ -1,3 +1,4 @@
+import { type ApiSymbolIdentity, normalizedFunctionSignature } from "./api-availability";
 import type {
   ApiConstant,
   ApiFunction,
@@ -1588,6 +1589,114 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
 
   lines.push("}");
   return `${lines.join("\n")}\n`;
+}
+
+/** One emitted symbol's identity paired with its rendered TS signature text. */
+export interface SymbolSignature {
+  readonly identity: ApiSymbolIdentity;
+  readonly tsSignature: string;
+}
+
+/**
+ * Render each emitted symbol's authoritative TS signature through the same
+ * prepare/emit helpers {@link emitDeclarations} uses, keyed by the identity the
+ * availability matrix joins on. This is the single declaration-backed source for
+ * the shared `api-signatures.json` artifact: the same `mapType` (constant
+ * branding) and table-doc resolver produce text that appears verbatim in the
+ * committed `.d.ts`. The caller applies the same `skipFunctions` filter the
+ * `.d.ts` generation does, so a dropped member never yields a signature.
+ */
+export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): SymbolSignature[] {
+  const prefix = `${module.namespace}.`;
+  const constantFqns = new Set(module.constants.map((c) => c.name));
+  const knownConstantFqns = options?.knownConstantFqns;
+  const baseMapType = options?.mapType ?? defaultMapType;
+  const mapType = (token: string): string =>
+    constantFqns.has(token) || knownConstantFqns?.has(token)
+      ? brandType(token)
+      : baseMapType(token);
+  const resolver = buildTableDocResolver(
+    module.functions.map((fn) => ({
+      name: fn.name,
+      slots: [...fn.parameters, ...fn.returnValues],
+    })),
+  );
+
+  const out: SymbolSignature[] = [];
+  const fnIdentity = (fn: ApiFunction): ApiSymbolIdentity => ({
+    namespace: module.namespace,
+    kind: "FUNCTION",
+    name: fn.name,
+    signature: normalizedFunctionSignature(fn),
+  });
+  const emitName = (name: string): string => (TS_RESERVED_NAMES.has(name) ? `_${name}` : name);
+
+  for (const fn of module.functions) {
+    const prepared = prepareFunction(fn, prefix);
+    if (prepared === null) continue;
+    out.push({
+      identity: fnIdentity(fn),
+      tsSignature: emitFunction(prepared, emitName(prepared.name), mapType, resolver),
+    });
+  }
+
+  const nestedFunctionLocal = /^[A-Za-z_$][\w$]*\.[A-Za-z_$][\w$]*$/;
+  for (const fn of module.functions) {
+    const local = stripPrefix(fn.name, prefix);
+    if (!nestedFunctionLocal.test(local)) continue;
+    const segment = local.slice(0, local.indexOf("."));
+    const prepared = prepareFunction(fn, `${module.namespace}.${segment}.`);
+    if (prepared === null) continue;
+    out.push({
+      identity: fnIdentity(fn),
+      tsSignature: emitFunction(prepared, prepared.name, mapType, resolver),
+    });
+  }
+
+  const handleGroups = collectHandleMethodGroups(module);
+  for (const group of handleGroups.values()) {
+    for (const prepared of group) {
+      out.push({
+        identity: fnIdentity(prepared.original),
+        tsSignature: emitMethod(prepared, mapType, resolver),
+      });
+    }
+  }
+
+  for (const c of module.constants) {
+    const prepared = prepareConstant(c, prefix);
+    if (prepared === null) continue;
+    out.push({
+      identity: { namespace: module.namespace, kind: "CONSTANT", name: c.name, signature: "" },
+      tsSignature: `const ${prepared.name}: ${brandType(prepared.fqn)};`,
+    });
+  }
+
+  for (const v of module.variables) {
+    const prepared = prepareVariable(v, prefix);
+    if (prepared === null) continue;
+    out.push({
+      identity: { namespace: module.namespace, kind: "VARIABLE", name: v.name, signature: "" },
+      tsSignature: emitVariable(prepared, emitName(prepared.name), mapType),
+    });
+  }
+
+  for (const p of module.properties) {
+    out.push({
+      identity: { namespace: module.namespace, kind: "PROPERTY", name: p.name, signature: "" },
+      tsSignature: emitPropertyMember(p, mapType),
+    });
+  }
+
+  for (const t of module.typedefs) {
+    if (!TS_IDENTIFIER.test(t.name) || handleGroups.has(t.name)) continue;
+    out.push({
+      identity: { namespace: module.namespace, kind: "TYPEDEF", name: t.name, signature: "" },
+      tsSignature: `type ${t.name} = Opaque<"${t.name}">;`,
+    });
+  }
+
+  return out;
 }
 
 interface PreparedConstant {

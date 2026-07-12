@@ -14,15 +14,27 @@ const guideBody = readFileSync(join(GUIDE_DIR, `${SLUG}.md`), "utf8");
 
 interface AvailabilityRecord {
   identity: { namespace: string; kind: string; name: string; signature: string };
-  since?: string;
+  availableIn: string[];
   deprecatedSince?: string;
-  removedIn?: string;
   replacement?: { namespace: string; kind: string; name: string; signature: string };
 }
 
-function availabilityRecords(): AvailabilityRecord[] {
-  const doc = JSON.parse(readFileSync(join(TYPES_DIR, "api-availability.json"), "utf8"));
-  return doc.records as AvailabilityRecord[];
+interface AvailabilityDoc {
+  versions: string[];
+  records: AvailabilityRecord[];
+}
+
+function availabilityDoc(): AvailabilityDoc {
+  return JSON.parse(readFileSync(join(TYPES_DIR, "api-availability.json"), "utf8"));
+}
+
+// A symbol whose old signature no longer exists in the newest tracked version:
+// its `availableIn` omits the newest version (`versions[0]`). This spans both a
+// genuine removal and the retired side of a signature transition — both need a
+// migration note in the upgrade guide.
+function absentFromNewest(doc: AvailabilityDoc): (r: AvailabilityRecord) => boolean {
+  const newest = doc.versions[0];
+  return (r) => newest !== undefined && !r.availableIn.includes(newest);
 }
 
 // A record's fully-qualified symbol id: functions already carry the namespace in
@@ -104,7 +116,9 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
     const noAction = new Set(
       [...guideBody.matchAll(/<!--\s*no-action:\s*([^\s]+)\s*-->/g)].map((m) => m[1] ?? ""),
     );
-    const catalog = availabilityRecords().filter((r) => r.removedIn || r.deprecatedSince);
+    const doc = availabilityDoc();
+    const removed = absentFromNewest(doc);
+    const catalog = doc.records.filter((r) => removed(r) || r.deprecatedSince);
     expect(catalog.length).toBeGreaterThan(0);
     const uncovered = catalog.filter((r) => {
       const qualified = qualifiedName(r);
@@ -119,10 +133,9 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
   });
 
   test("links every removed symbol to its historical 1.12.4 API page", () => {
+    const doc = availabilityDoc();
     const namespaces = new Set(
-      availabilityRecords()
-        .filter((r) => r.removedIn)
-        .map((r) => r.identity.namespace),
+      doc.records.filter(absentFromNewest(doc)).map((r) => r.identity.namespace),
     );
     expect(namespaces.size).toBeGreaterThan(0);
     for (const namespace of namespaces) {

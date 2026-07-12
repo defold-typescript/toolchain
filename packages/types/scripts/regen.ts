@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
-import { parseDefoldApiDoc } from "../src/api-doc";
-import { emitDeclarations } from "../src/emit-dts";
+import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
+import { emitDeclarations, emitSymbolSignatures, type SymbolSignature } from "../src/emit-dts";
 import { emitBuiltinMessages, parseMessagesDoc } from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
 import { wrapAsAmbientGlobal } from "../src/publish-dts";
@@ -194,10 +194,21 @@ export interface GenerateOptions {
   translations?: TranslationStore;
 }
 
-export function generateModuleDeclaration(
+interface PreparedGeneratedModule {
+  module: ApiModule;
+  knownConstantFqns: ReadonlySet<string>;
+  translations: TranslationStore;
+  dropped: string[];
+}
+
+// Parse a manifest entry, apply its `skipFunctions` filter, and resolve the
+// shared constant-brand universe and translations. Both the `.d.ts` emit and
+// the authoritative-signature emit run off this identical prepared module, so a
+// dropped member never appears in either surface.
+function prepareGeneratedModule(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
-): GenerateResult {
+): PreparedGeneratedModule {
   const module = parseDefoldApiDoc(entry.doc);
   const prefix = `${module.namespace}.`;
   const dropped: string[] = [];
@@ -212,6 +223,17 @@ export function generateModuleDeclaration(
   });
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
+  return { module, knownConstantFqns, translations, dropped };
+}
+
+export function generateModuleDeclaration(
+  entry: ModuleManifestEntry,
+  options?: GenerateOptions,
+): GenerateResult {
+  const { module, knownConstantFqns, translations, dropped } = prepareGeneratedModule(
+    entry,
+    options,
+  );
   const emitted = emitDeclarations(module, { knownConstantFqns, translations });
   const contents = wrapAsAmbientGlobal({
     namespace: module.namespace,
@@ -219,6 +241,18 @@ export function generateModuleDeclaration(
     importsFrom: entry.importsFrom ?? "../src/core-types",
   });
   return { contents, dropped };
+}
+
+// The authoritative per-symbol signatures for a manifest entry, rendered through
+// the same prepared module (skip filter + constant branding) as
+// `generateModuleDeclaration`, so every signature corresponds to the committed
+// `.d.ts` byte-for-byte.
+export function generateModuleSignatures(
+  entry: ModuleManifestEntry,
+  options?: GenerateOptions,
+): SymbolSignature[] {
+  const { module, knownConstantFqns } = prepareGeneratedModule(entry, options);
+  return emitSymbolSignatures(module, { knownConstantFqns });
 }
 
 export interface VersionedModuleManifestEntry extends ModuleManifestEntry {
