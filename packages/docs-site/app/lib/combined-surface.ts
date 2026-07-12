@@ -101,7 +101,43 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     signatures: {},
     category: "engine",
     availability: ns.availability,
+    authoritativeSignatures: combinedAuthoritativeSignatures(ns),
   };
+}
+
+/**
+ * Reduce an authoritative declaration (`function get_constants(…): …;` from
+ * `api-signatures.json`) to the inner form the `/api` render layer emits
+ * (`compute.get_constants(…): …`): drop the leading `function ` and trailing
+ * `;`, then splice the namespace-qualified `identity.name` before the first
+ * `(`. Only callable declarations carry a re-renderable signature — members
+ * render by name (or their own override store) and never drift through
+ * `functionSignature`, so a non-`function ` declaration yields `""` (skipped).
+ */
+function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string): string {
+  if (!declaration.startsWith("function ")) return "";
+  const body = declaration.replace(/^function /, "").replace(/;\s*$/, "");
+  const paren = body.indexOf("(");
+  if (paren === -1) return "";
+  return `${identity.name}${body.slice(paren)}`;
+}
+
+/**
+ * The exact-identity ({@link symbolIdentityKey}) to inner-render-form signature
+ * map a Combined `ApiPage` carries. Keyed by the entry's identity so two arms of
+ * a signature transition resolve to their own distinct authoritative signature;
+ * entries with no (or non-function) authoritative declaration are skipped, so a
+ * lookup miss falls the render layer back to the token-derived signature.
+ */
+export function combinedAuthoritativeSignatures(
+  ns: CombinedNamespace,
+): ReadonlyMap<string, string> {
+  const map = new Map<string, string>();
+  for (const entry of ns.entries) {
+    const inner = innerRenderSignature(entry.identity, entry.authoritativeSignature);
+    if (inner) map.set(symbolIdentityKey(entry.identity), inner);
+  }
+  return map;
 }
 
 /** Every Combined namespace projected as an `ApiPage`, in projection order. */
@@ -110,14 +146,11 @@ export function combinedApiPages(combined: CombinedSurface): ApiPage[] {
 }
 
 /**
- * The compact, machine-readable availability tail an agent-facing artifact
- * appends to a Combined entry's authoritative signature — `[since X]`,
- * `[through X]`, `[versions: …]`, or the closed-range `[X–Y]`. An entry present
- * in every tracked version carries no tag (the empty string), so the absence of
- * a tag reads as "available in all tracked versions".
+ * The availability span tag alone — `[since X]`, `[through X]`, `[versions: …]`,
+ * or the closed-range `[X–Y]`; `""` for an all-versions span. The lifecycle
+ * tail ({@link compactAvailability}) builds on this.
  */
-export function compactAvailability(entry: CombinedEntry): string {
-  const { label } = entry;
+function spanTag(label: AvailabilityLabel): string {
   switch (label.kind) {
     case "since":
       return `[since ${label.from}]`;
@@ -130,6 +163,27 @@ export function compactAvailability(entry: CombinedEntry): string {
     default:
       return "";
   }
+}
+
+/**
+ * The compact, machine-readable availability tail an agent-facing artifact
+ * appends to a Combined entry's authoritative signature: the span tag, then any
+ * curated lifecycle facts — `[signature transition]` (one arm of a same-name
+ * overload change), `[deprecated since X]`, `[replaced by namespace.symbol]`,
+ * `[Box2D: …]` — in that deterministic order, space-joined and text-only. An
+ * entry present in every tracked version and carrying no curated fact yields the
+ * empty string, so the absence of a tag reads as "available in every tracked
+ * version, no lifecycle caveat".
+ */
+export function compactAvailability(entry: CombinedEntry): string {
+  const tags: string[] = [];
+  const span = spanTag(entry.label);
+  if (span) tags.push(span);
+  if (entry.transition) tags.push("[signature transition]");
+  if (entry.deprecatedSince) tags.push(`[deprecated since ${entry.deprecatedSince}]`);
+  if (entry.replacement) tags.push(`[replaced by ${entry.replacement.name}]`);
+  if (entry.box2d && entry.box2d.length > 0) tags.push(`[Box2D: ${entry.box2d.join(", ")}]`);
+  return tags.join(" ");
 }
 
 /** Per-category badge tallies for a Combined namespace title. */

@@ -158,8 +158,9 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
     expect(broken).toEqual([]);
   });
 
-  // Step 1 proved the Live Update mounts are signature transitions (the `name`
-  // parameter widened to accept a hash), not removed symbols.
+  // The availability model classifies the Live Update mounts as a signature
+  // transition — the `name` parameter widened to accept a hash — not as removed
+  // symbols, so the guide must describe a parameter-type change.
   test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
     const collapsed = guideBody.replace(/\s+/g, " ");
     expect(collapsed).toContain("## Changed Lua API signatures");

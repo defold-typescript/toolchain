@@ -70,6 +70,11 @@ function navOrderedPages(): GuidePage[] {
 interface LlmsTarget {
   guideHref(page: GuidePage): string;
   apiHref(page: ApiPage): string;
+  // Engine namespaces are the Combined (union-of-versions) surface, so their
+  // link differs from `apiHref`: the site points at the `/api/combined/<ns>`
+  // page; the package points at that namespace's anchor in the inlined
+  // `llms-full.txt` (which serializes the same Combined projection).
+  combinedApiHref(namespace: string): string;
   header(pages: GuidePage[]): string[];
 }
 
@@ -128,12 +133,14 @@ const SITE_HEADER = [`# ${PRODUCT}`, "", `> ${SUMMARY}`, ""];
 export const SITE_TARGET: LlmsTarget = {
   guideHref: (page) => withBase(page.route),
   apiHref: (page) => withBase(page.route),
+  combinedApiHref: (namespace) => withBase(`/api/combined/${namespace}`),
   header: () => SITE_HEADER,
 };
 
 export const PACKAGE_TARGET: LlmsTarget = {
   guideHref: packageGuideHref,
   apiHref: packageApiHref,
+  combinedApiHref: (namespace) => `llms-full.txt#${namespace}`,
   header: (pages) => [
     `# ${PRODUCT}`,
     "",
@@ -149,9 +156,19 @@ export const PACKAGE_TARGET: LlmsTarget = {
 export function buildLlmsTxt(target: LlmsTarget = SITE_TARGET): string {
   const pages = navOrderedPages();
   const guideLinks = pages.map((page) => `- [${navLabel(page)}](${target.guideHref(page)})`);
-  const apiLinks = loadApiSurface(TYPES_DIR).map(
-    (page) => `- [${page.namespace}](${target.apiHref(page)})`,
+  // Engine namespaces are the versioned surface: link the Combined union page
+  // (site) or its `llms-full.txt` anchor (package), sourced from the same
+  // projection `llms-full` serializes — so a namespace present only in a
+  // historical tracked version still gets a link. Non-engine pages (lua-stdlib,
+  // global value types, vendored libraries) are version-independent and keep
+  // their default source and `apiHref`.
+  const engineLinks = loadCombinedSurface(TYPES_DIR).namespaces.map(
+    (ns) => `- [${ns.namespace}](${target.combinedApiHref(ns.namespace)})`,
   );
+  const otherLinks = loadApiSurface(TYPES_DIR)
+    .filter((page) => page.category !== "engine")
+    .map((page) => `- [${page.namespace}](${target.apiHref(page)})`);
+  const apiLinks = [...engineLinks, ...otherLinks];
   return [
     ...target.header(pages),
     "## Guide",

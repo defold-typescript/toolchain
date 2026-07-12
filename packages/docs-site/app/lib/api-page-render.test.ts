@@ -11,10 +11,14 @@ import {
   apiPageMarkdown,
   apiReplacementResolver,
   isKnownVersionId,
+  namespaceCountBadges,
   versionedApiParams,
 } from "./api-page-render";
 import { type ApiPage, type AvailabilityLookup, apiModuleSymbols } from "./api-surface";
-import { loadApiSurface } from "./api-surface-loader";
+import { loadApiSurface, loadCombinedSurface } from "./api-surface-loader";
+import { combinedNamespaceToApiPage } from "./combined-surface";
+import { slugify } from "./headings";
+import { renderMarkdown } from "./markdown";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const MISSING_VERSION_FIXTURE_DIR = join(
@@ -610,34 +614,42 @@ describe("availability badges", () => {
   const headingLineOf = (md: string, prefix: string) =>
     md.split("\n").find((line) => line.startsWith(prefix));
 
-  test("marks a since symbol with a New dot on its signature heading", () => {
-    const md = apiPageMarkdown(modelPage(setTexture, { availableIn: ["1.13.0"] }), noLink);
+  test("marks a since symbol with a New glyph chip on its signature heading (Combined only)", () => {
+    const md = apiPageMarkdown(modelPage(setTexture, { availableIn: ["1.13.0"] }), noLink, {
+      combinedMarkers: true,
+    });
     const heading = headingLineOf(md, "### `model.set_texture");
     expect(heading).toContain(
-      '<span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New"></span>',
+      '<span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New">N</span>',
     );
   });
 
-  test("marks a deprecated symbol with a Deprecated dot and no span dot", () => {
+  test("marks a deprecated symbol with a Deprecated glyph chip and no other marker", () => {
     const md = apiPageMarkdown(
       modelPage(material, { availableIn: VERSIONS, deprecatedSince: "1.12.0" }),
       noLink,
+      { combinedMarkers: true },
     );
     const heading = headingLineOf(md, "### `model.material");
-    expect(heading).toContain('api-badge-dot--deprecated" aria-label="Deprecated"');
+    expect(heading).toContain(
+      'api-badge-dot--deprecated" aria-label="Deprecated" title="Deprecated">D</span>',
+    );
     expect(heading).not.toContain("api-badge-dot--new");
     expect(heading).not.toContain("api-badge-dot--changed");
   });
 
-  test("a universal symbol carrying no lifecycle fact emits no dot", () => {
-    const md = apiPageMarkdown(modelPage(material, { availableIn: VERSIONS }), noLink);
+  test("a universal symbol carrying no lifecycle fact emits no marker", () => {
+    const md = apiPageMarkdown(modelPage(material, { availableIn: VERSIONS }), noLink, {
+      combinedMarkers: true,
+    });
     expect(md).not.toContain("api-badge-dot");
   });
 
-  test("two co-occurring categories emit two dots on the one heading, changed before deprecated", () => {
+  test("two co-occurring categories emit two glyph chips, changed before deprecated", () => {
     const md = apiPageMarkdown(
       modelPage(material, { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" }),
       noLink,
+      { combinedMarkers: true },
     );
     const heading = headingLineOf(md, "### `model.material");
     expect(heading).toBeDefined();
@@ -646,6 +658,16 @@ describe("availability badges", () => {
     expect(heading).toContain("api-badge-dot--deprecated");
     expect(heading).not.toContain("api-badge-dot--new");
     expect(heading.indexOf("--changed")).toBeLessThan(heading.indexOf("--deprecated"));
+  });
+
+  test("an exact-version page (no combinedMarkers) keeps availability prose but emits no markers", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" }),
+      noLink,
+    );
+    expect(md).toContain('aria-label="Availability"');
+    expect(md).toContain("Deprecated since 1.12.0");
+    expect(md).not.toContain("api-badge-dot");
   });
 });
 
@@ -666,6 +688,80 @@ describe("apiPageMarkdown title badges", () => {
     const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
     expect(md).not.toContain("api-badge-counts");
     expect(md.startsWith("# wmath")).toBe(true);
+  });
+});
+
+describe("namespaceCountBadges visible text", () => {
+  test("each pill shows its tally and category noun as visible text", () => {
+    const html = namespaceCountBadges({ new: 12, changed: 3, deprecated: 1 });
+    expect(html).toContain(">12 new</span>");
+    expect(html).toContain(">3 changed</span>");
+    expect(html).toContain(">1 deprecated</span>");
+  });
+
+  test("a zero category is omitted; an all-zero namespace shows nothing", () => {
+    expect(namespaceCountBadges({ new: 2, changed: 0, deprecated: 0 })).not.toContain("changed");
+    expect(namespaceCountBadges({ new: 0, changed: 0, deprecated: 0 })).toBe("");
+  });
+});
+
+describe("Combined page authoritative render + markers", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const combinedPage = (namespace: string): ApiPage => {
+    const ns = surface.namespaces.find((n) => n.namespace === namespace);
+    if (!ns) throw new Error(`namespace ${namespace} missing from combined surface`);
+    return combinedNamespaceToApiPage(ns);
+  };
+  const noLink = (t: string) => t;
+
+  test("compute page heading and its function-overview anchor slugify the authoritative signature", () => {
+    const md = apiPageMarkdown(combinedPage("compute"), noLink, { combinedMarkers: true });
+    const authoritative =
+      "compute.get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]";
+    const headingLine = md
+      .split("\n")
+      .find((l) => l.startsWith("### `") && l.includes("compute.get_constants("));
+    expect(headingLine).toBeDefined();
+    expect(headingLine).toContain(`### \`${authoritative}\``);
+    // The rendered signature never falls back to the ref-doc token form; the
+    // Returns detail table (a separate ref-doc projection) is out of scope.
+    expect(headingLine).not.toContain("Record<string | number, unknown>");
+    // The function-overview card links the same authoritative signature by its slug.
+    expect(md).toContain(`(#${slugify(authoritative)})`);
+  });
+
+  test("both liveupdate.add_mount arms render distinctly and adjacently, oldest-first", () => {
+    const md = apiPageMarkdown(combinedPage("liveupdate"), noLink, { combinedMarkers: true });
+    const headings = md
+      .split("\n")
+      .filter((l) => l.startsWith("### `") && l.includes("liveupdate.add_mount("));
+    expect(headings).toHaveLength(2);
+    expect(headings[0]).not.toBe(headings[1]);
+    // Oldest arm (fewer params) leads.
+    expect((headings[0] as string).length).toBeLessThan((headings[1] as string).length);
+  });
+
+  test("the authoritative-signature heading id drops the marker glyph and matches the overview anchor", async () => {
+    const html = await renderMarkdown(
+      apiPageMarkdown(combinedPage("compute"), noLink, { combinedMarkers: true }),
+      { highlightSignatureHeadings: true },
+    );
+    const authoritative =
+      "compute.get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]";
+    const slug = slugify(authoritative);
+    expect(html).toContain(`id="${slug}"`);
+    expect(html).toContain(`href="#${slug}"`);
+    // The glyph chip must not leak into the slug.
+    expect(html).not.toContain(`id="${slug}n"`);
+    expect(html).not.toContain(`id="${slug}-n"`);
+  });
+
+  test("an exact-version page renders no markers even with availability records present", () => {
+    const defaultPages = loadApiSurface(REAL_TYPES_DIR);
+    const enginePage = defaultPages.find((p) => p.category === "engine" && p.availability);
+    expect(enginePage).toBeDefined();
+    const md = apiPageMarkdown(enginePage as ApiPage, noLink);
+    expect(md).not.toContain("api-badge-dot");
   });
 });
 
