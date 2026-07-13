@@ -11,6 +11,7 @@ import combinedNamespaceRoute from "../routes/api/combined/[namespace]";
 import { canonicalApiPages, combinedApiPages } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
 import { combinedRedirect, redirectHtml } from "./api-redirect";
+import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import { type ApiSurfaceConfig, resolveApiSurfaceRedirect } from "./api-surface-pref";
 import { searchIndexFileForRoute } from "./search-index";
@@ -211,9 +212,13 @@ describe("api routing migration — version-independent pages never 404 under a 
 // enumerates — the production seams a reader and the router hit, not a hand-built
 // `CombinedVersionSurface`. All four classes share one hermetic temp types dir so
 // the identities and the fixtures are the same surface: `go` universal (both
-// versions), `camera` current-only, `wmath` historical-only, `liveupdate`
-// changed-signature (add_mount gains a param in `cur`). The shared
+// versions), `camera` current-only, `wmath` historical-only (enriched here with
+// `wmath.length` so the historical-only class has a concrete symbol to project),
+// `liveupdate` changed-signature (add_mount gains a param in `cur`). The shared
 // `__fixtures__/api-surface` dir is never mutated (six test files read it).
+// Each class asserts its namespace's function symbol on Combined and the owning
+// exact page(s), and proves absence on the non-owning version by a missing page —
+// not merely a missing route string.
 describe("api routing migration — identity placement across four classes via routed projections", () => {
   const mkParam = (name: string, types: string[]) => ({
     name,
@@ -229,12 +234,17 @@ describe("api routing migration — identity placement across four classes via r
   });
   const mkDoc = (namespace: string, elements: unknown[]): string =>
     JSON.stringify({ info: { namespace }, elements });
+  const fnNames = (pages: ApiPage[], ns: string): string[] =>
+    (pages.find((p) => p.namespace === ns)?.module.functions ?? []).map((f) => f.name);
 
   let dir = "";
   let canonical: Set<string>;
   let curExact: Set<string>;
   let oldExact: Set<string>;
   let params: Set<string>;
+  let combinedPages: ApiPage[];
+  let curPages: ApiPage[];
+  let oldPages: ApiPage[];
 
   beforeAll(() => {
     dir = mkdtempSync(join(tmpdir(), "api-routing-identity-"));
@@ -246,6 +256,16 @@ describe("api routing migration — identity placement across four classes via r
     ]);
     writeFileSync(join(dir, "cur-fixtures/go_doc.json"), goDoc);
     writeFileSync(join(dir, "old-fixtures/go_doc.json"), goDoc);
+
+    // Historical-only `wmath`: the base fixture is an empty-elements namespace, so
+    // enrich the temp copy with a concrete symbol to prove member projection. `wmath`
+    // is already a declared `old` module, so no api-targets edit is needed.
+    writeFileSync(
+      join(dir, "old-fixtures/wmath_doc.json"),
+      mkDoc("wmath", [
+        mkFn("wmath.length", [mkParam("v", ["vector3"])], [mkParam("n", ["number"])]),
+      ]),
+    );
 
     // Changed-signature `liveupdate`: add_mount gains a param in `cur`, so the two
     // arms carry distinct normalized signatures -> both on Combined, one per exact.
@@ -274,9 +294,12 @@ describe("api routing migration — identity placement across four classes via r
     }
     writeFileSync(join(dir, "api-targets.json"), JSON.stringify(targets));
 
+    combinedPages = combinedApiPages(dir);
+    curPages = loadApiSurfaceForVersion(dir, "cur");
+    oldPages = loadApiSurfaceForVersion(dir, "old");
     canonical = routesOf(canonicalApiPages(dir));
-    curExact = routesOf(loadApiSurfaceForVersion(dir, "cur"));
-    oldExact = routesOf(loadApiSurfaceForVersion(dir, "old"));
+    curExact = routesOf(curPages);
+    oldExact = routesOf(oldPages);
     params = new Set(versionedApiParams(dir).map((p) => `${p.version}/${p.namespace}`));
   });
 
@@ -293,6 +316,10 @@ describe("api routing migration — identity placement across four classes via r
     // the canonical projection never leaks a version prefix or the compat segment
     expect(canonical.has("/api/cur/go")).toBe(false);
     expect(canonical.has("/api/combined/go")).toBe(false);
+    // the symbol itself lands on Combined and on both exact pages
+    expect(fnNames(combinedPages, "go")).toContain("go.get_position");
+    expect(fnNames(curPages, "go")).toContain("go.get_position");
+    expect(fnNames(oldPages, "go")).toContain("go.get_position");
   });
 
   test("current-only: canonical AND on the current exact family, never the historical one", () => {
@@ -301,6 +328,11 @@ describe("api routing migration — identity placement across four classes via r
     expect(params.has("cur/camera")).toBe(true);
     expect(oldExact.has("/api/old/camera")).toBe(false);
     expect(params.has("old/camera")).toBe(false);
+    // the symbol lands on Combined and the current exact page; the historical
+    // version owns no `camera` page at all (absence, not merely a missing route)
+    expect(fnNames(combinedPages, "camera")).toContain("camera.get_projection");
+    expect(fnNames(curPages, "camera")).toContain("camera.get_projection");
+    expect(oldPages.find((p) => p.namespace === "camera")).toBeUndefined();
   });
 
   test("historical-only: canonical AND on the historical exact family, never the current one", () => {
@@ -309,6 +341,11 @@ describe("api routing migration — identity placement across four classes via r
     expect(params.has("old/wmath")).toBe(true);
     expect(curExact.has("/api/cur/wmath")).toBe(false);
     expect(params.has("cur/wmath")).toBe(false);
+    // the symbol lands on Combined and the historical exact page; the current
+    // version owns no `wmath` page at all (absence, not merely a missing route)
+    expect(fnNames(combinedPages, "wmath")).toContain("wmath.length");
+    expect(fnNames(oldPages, "wmath")).toContain("wmath.length");
+    expect(curPages.find((p) => p.namespace === "wmath")).toBeUndefined();
   });
 
   test("changed-signature: Combined carries both arms; each exact page carries only its own", () => {

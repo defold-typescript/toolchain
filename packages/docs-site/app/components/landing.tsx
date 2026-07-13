@@ -1,3 +1,5 @@
+/** @jsxImportSource hono/jsx */
+// Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
 import type { Child } from "hono/jsx";
 import { withBase } from "../lib/base";
 
