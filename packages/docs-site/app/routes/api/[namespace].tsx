@@ -20,7 +20,7 @@ import {
   isKnownVersionId,
   namespaceCountBadges,
 } from "../../lib/api-page-render";
-import { redirectHtml } from "../../lib/api-redirect";
+import { combinedRedirect, redirectHtml } from "../../lib/api-redirect";
 import { withBase } from "../../lib/base";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
 import { pageHeadings } from "../../lib/headings";
@@ -49,7 +49,8 @@ export default createRoute(
 
     // The old Combined index is now a permanent compat redirect to canonical /api.
     if (param === COMBINED_VERSION_ID) {
-      return c.html(redirectHtml("/api/combined", "/api", base));
+      const { from, to } = combinedRedirect();
+      return c.html(redirectHtml(from, to, base));
     }
 
     // A known version id (the default included now that it owns an explicit

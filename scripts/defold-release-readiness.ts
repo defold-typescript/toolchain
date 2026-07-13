@@ -11,7 +11,13 @@ import {
   loadApiSurfaceForVersion,
   versionsWithDiskFixtures,
 } from "../packages/docs-site/app/lib/api-surface-loader.ts";
-import { buildReleaseRouteManifest } from "../packages/docs-site/app/lib/release-manifest.ts";
+import {
+  buildReleaseRouteManifest,
+  type ReleaseRouteManifest,
+  validateReleaseRouteManifest,
+} from "../packages/docs-site/app/lib/release-manifest.ts";
+import { searchIndexOutputs } from "../packages/docs-site/scripts/build-search-index.ts";
+import { symbolIndexOutputs } from "../packages/docs-site/scripts/build-symbol-index.ts";
 import {
   type ApiTarget,
   generateModuleDeclaration,
@@ -85,14 +91,24 @@ export interface DocsEvidence {
   readonly canonicalRoutes: readonly string[];
   readonly historicalRoutes: readonly string[];
   readonly searchMachinery: boolean;
+  // The complete versions a release MUST publish in full: the current release and
+  // every materialized historical version. The evaluator iterates this set rather
+  // than whatever `exactRoutesByVersion` keys happen to exist, so an entirely
+  // absent family (a missing key, not just an empty array) still fails closed.
+  readonly requiredVersionIds: readonly string[];
   // Structural route/index families derived from the release route manifest over
   // the real docs-site surfaces: each complete version's exact `/api/<id>/…` route
-  // family and the search index file assigned to it. Distinct from the
+  // family and the search / symbol index files assigned to it. Distinct from the
   // guide-scraped canonical/historical route coverage above — the guide prose may
   // legitimately name the `/api/combined` compat route, so the structural checks
   // never read it.
   readonly exactRoutesByVersion: Readonly<Record<string, readonly string[]>>;
   readonly searchIndexByVersion: Readonly<Record<string, string>>;
+  readonly symbolIndexByVersion: Readonly<Record<string, string>>;
+  // Every problem `validateReleaseRouteManifest` plus the generated-index
+  // comparison (`releaseIndexProblems`) return for the real manifest; the
+  // evaluator rejects each one, so structural route/index drift is a blocker.
+  readonly manifestProblems: readonly string[];
 }
 
 export interface MatrixTargetEvidence {
@@ -193,21 +209,33 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
         add("docs-route", `canonical route emitted under /api/combined: ${route}`);
       }
     }
-    // Every complete version, the current one included, owns a non-empty exact
-    // family, and each exact route carries its own `/api/<id>/` prefix.
+    // Every REQUIRED complete version, the current one included, owns a non-empty
+    // exact family, and each exact route carries its own `/api/<id>/` prefix.
+    // Iterate the required-id set, not the object entries that happen to exist, so
+    // an entirely absent family (a missing key) is caught, not only an empty one.
     const wantCurrent = `defold-${expected.release}`;
-    if ((docs.exactRoutesByVersion[wantCurrent] ?? []).length === 0) {
-      add("docs-route", `current version ${wantCurrent} has no exact route family`);
+    if (!docs.requiredVersionIds.includes(wantCurrent)) {
+      add(
+        "docs-route",
+        `current version ${wantCurrent} is not among the required complete versions`,
+      );
     }
-    for (const [version, routes] of Object.entries(docs.exactRoutesByVersion)) {
+    for (const version of docs.requiredVersionIds) {
+      const routes = docs.exactRoutesByVersion[version] ?? [];
       if (routes.length === 0) {
         add("docs-route", `version ${version} has no exact route family`);
+        continue;
       }
       for (const route of routes) {
         if (!route.startsWith(`/api/${version}/`)) {
           add("docs-route", `exact route missing its ${version} prefix: ${route}`);
         }
       }
+    }
+    // Every structural route/index problem the manifest validation and the
+    // generated-index comparison surfaced is a blocker.
+    for (const problem of docs.manifestProblems) {
+      add("docs-route", problem);
     }
   }
 
@@ -217,9 +245,21 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
     if (!docs.searchMachinery) {
       add("search", "search index machinery is not committed");
     }
-    for (const [version, file] of Object.entries(docs.searchIndexByVersion)) {
-      if (file !== `search-index-${version}.json`) {
-        add("search", `version ${version} search index assignment is stale: ${file}`);
+    // Every required complete version must carry a fresh search AND symbol index
+    // assignment; a missing assignment (absent key) is as much a blocker as a
+    // stale one.
+    for (const version of docs.requiredVersionIds) {
+      const searchFile = docs.searchIndexByVersion[version];
+      if (searchFile === undefined) {
+        add("search", `version ${version} has no search index assignment`);
+      } else if (searchFile !== `search-index-${version}.json`) {
+        add("search", `version ${version} search index assignment is stale: ${searchFile}`);
+      }
+      const symbolFile = docs.symbolIndexByVersion[version];
+      if (symbolFile === undefined) {
+        add("search", `version ${version} has no symbol index assignment`);
+      } else if (symbolFile !== `symbol-index-${version}.json`) {
+        add("search", `version ${version} symbol index assignment is stale: ${symbolFile}`);
       }
     }
   }
@@ -280,6 +320,38 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
   }
 
   return { ok: problems.length === 0, problems };
+}
+
+export interface ReleaseIndexOutputs {
+  readonly searchFiles: readonly string[];
+  readonly symbolFiles: readonly string[];
+}
+
+// Compare the release manifest's per-version and shared index assignments against
+// the filenames the pure search / symbol generators actually emit. A required file
+// the generators do not produce is a blocker. This reads the in-memory generator
+// output only — never the ignored, build-time `public/*.json` — so a docs build is
+// not a precondition of the gate.
+export function releaseIndexProblems(
+  manifest: ReleaseRouteManifest,
+  outputs: ReleaseIndexOutputs,
+): string[] {
+  const problems: string[] = [];
+  const search = new Set(outputs.searchFiles);
+  const symbol = new Set(outputs.symbolFiles);
+  const requireSearch = (file: string): void => {
+    if (!search.has(file)) problems.push(`generated search outputs omit ${file}`);
+  };
+  const requireSymbol = (file: string): void => {
+    if (!symbol.has(file)) problems.push(`generated symbol outputs omit ${file}`);
+  };
+  for (const version of manifest.versions) {
+    requireSearch(version.searchIndexFile);
+    requireSymbol(version.symbolIndexFile);
+  }
+  requireSearch(manifest.combinedSearchIndexFile);
+  requireSymbol(manifest.combinedSymbolIndexFile);
+  return problems;
 }
 
 function readJson<T>(abs: string): T | null {
@@ -469,11 +541,17 @@ function collectDocs(root: string, release: string, baseline: string): DocsEvide
   // The structural canonical/exact split and the per-version index assignments
   // come from the release route manifest built over the real docs-site surfaces —
   // Combined is canonical, every version owns an exact `/api/defold-<version>/…`
-  // family. A malformed surface degrades to empty families (the gate then fails
-  // closed) rather than crashing.
+  // family. Structural drift is caught by validating the manifest and comparing
+  // its index assignments against the pure generators' actual outputs (never the
+  // ignored, build-time `public/*.json`). A malformed surface degrades to empty
+  // families with a synthetic problem (the gate then fails closed) rather than
+  // crashing.
   let canonicalRoutes: readonly string[] = [];
+  let requiredVersionIds: readonly string[] = [];
   let exactRoutesByVersion: Record<string, readonly string[]> = {};
   let searchIndexByVersion: Record<string, string> = {};
+  let symbolIndexByVersion: Record<string, string> = {};
+  let manifestProblems: readonly string[] = [];
   try {
     const typesDir = path.join(root, "packages/types");
     const libraryTypesDir = path.join(root, "packages/library-types");
@@ -486,22 +564,41 @@ function collectDocs(root: string, release: string, baseline: string): DocsEvide
       ),
     });
     canonicalRoutes = manifest.canonicalRoutes;
+    requiredVersionIds = manifest.versions.map((v) => v.id);
     exactRoutesByVersion = Object.fromEntries(manifest.versions.map((v) => [v.id, v.routes]));
     searchIndexByVersion = Object.fromEntries(
       manifest.versions.map((v) => [v.id, v.searchIndexFile]),
     );
-  } catch {
+    symbolIndexByVersion = Object.fromEntries(
+      manifest.versions.map((v) => [v.id, v.symbolIndexFile]),
+    );
+    manifestProblems = [
+      ...validateReleaseRouteManifest(manifest),
+      ...releaseIndexProblems(manifest, {
+        searchFiles: searchIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
+        symbolFiles: symbolIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
+      }),
+    ];
+  } catch (err) {
     canonicalRoutes = [];
+    requiredVersionIds = [];
     exactRoutesByVersion = {};
     searchIndexByVersion = {};
+    symbolIndexByVersion = {};
+    manifestProblems = [
+      `release route manifest could not be built: ${err instanceof Error ? err.message : String(err)}`,
+    ];
   }
 
   return {
     canonicalRoutes,
     historicalRoutes,
     searchMachinery,
+    requiredVersionIds,
     exactRoutesByVersion,
     searchIndexByVersion,
+    symbolIndexByVersion,
+    manifestProblems,
   };
 }
 
