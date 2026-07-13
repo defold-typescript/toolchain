@@ -244,14 +244,18 @@ export function stripGuideChrome(body: string): string {
 }
 
 // Frames the whole llms-full document for an agent: which versions are tracked
-// and how to read the Combined `## API` (resolve the project's target, filter
-// entries by their Availability tag, trust the materialized `.defold-types/`).
-// Lives in the header block, before `## Guide`.
+// and how to read the Combined `## API` (every compact Availability tag it may
+// carry, then resolve the project's target, filter by tag, trust the
+// materialized `.defold-types/`). The tag forms are copied byte-for-byte from
+// `compactAvailability`/`spanTag` (`combined-surface.ts`) so the contract never
+// drifts from the serializer. Lives in the header block, before `## Guide`.
 function agentContract(versions: readonly string[]): string[] {
   return [
     `> Tracked Defold versions: ${versions.join(", ")} (newest first).`,
     "",
-    "The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature followed by a compact **Availability** tag — `[since X]`, `[through X]`, `[versions: …]`, or none when the symbol exists in every tracked version. To target one project: (1) resolve the project's configured Defold target and its `.defold-types/<surfaceId>/`, (2) filter Combined entries by Availability down to that version, (3) treat the materialized `.defold-types/<surfaceId>/*.d.ts` as the final callable truth.",
+    "The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature, optionally followed by one or more compact **Availability** tags in this order: a version span — `[since X]`, `[through X]`, the closed range `[X–Y]`, or the discrete list `[versions: …]` — then any curated lifecycle facts: `[signature transition]` (one arm of a same-name overload change), `[deprecated since X]`, `[replaced by namespace.symbol]`, and `[Box2D: …]` (the backend a symbol applies to). No tag means the symbol exists in every tracked version with no curated lifecycle caveat. Multiple tags may coexist on one line, and each tag applies to the exact signature it follows, not to the symbol name in general.",
+    "",
+    "To target one project: (1) resolve the project's configured Defold target and its `.defold-types/<surfaceId>/`, (2) filter Combined entries by Availability down to that version, (3) treat the materialized `.defold-types/<surfaceId>/*.d.ts` as the final callable truth.",
     "",
   ];
 }

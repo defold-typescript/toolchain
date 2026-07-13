@@ -16,7 +16,9 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 
 > Tracked Defold versions: 1.13.0, 1.12.4 (newest first).
 
-The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature followed by a compact **Availability** tag — `[since X]`, `[through X]`, `[versions: …]`, or none when the symbol exists in every tracked version. To target one project: (1) resolve the project's configured Defold target and its `.defold-types/<surfaceId>/`, (2) filter Combined entries by Availability down to that version, (3) treat the materialized `.defold-types/<surfaceId>/*.d.ts` as the final callable truth.
+The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature, optionally followed by one or more compact **Availability** tags in this order: a version span — `[since X]`, `[through X]`, the closed range `[X–Y]`, or the discrete list `[versions: …]` — then any curated lifecycle facts: `[signature transition]` (one arm of a same-name overload change), `[deprecated since X]`, `[replaced by namespace.symbol]`, and `[Box2D: …]` (the backend a symbol applies to). No tag means the symbol exists in every tracked version with no curated lifecycle caveat. Multiple tags may coexist on one line, and each tag applies to the exact signature it follows, not to the symbol name in general.
+
+To target one project: (1) resolve the project's configured Defold target and its `.defold-types/<surfaceId>/`, (2) filter Combined entries by Availability down to that version, (3) treat the materialized `.defold-types/<surfaceId>/*.d.ts` as the final callable truth.
 
 ## Guide
 
