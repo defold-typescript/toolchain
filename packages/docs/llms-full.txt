@@ -4066,8 +4066,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_body(url: string | Hash | Url): Opaque<"b2Body">;
 - function get_version(): { version: number; major: number; middle: number; minor: number }; [since 1.13.0]
 - function get_world(): Opaque<"b2World">;
-- type b2Body = Opaque<"b2Body">;
-- type b2World = Opaque<"b2World">;
+- type b2Body = Opaque<"b2Body">
+- type b2World = Opaque<"b2World">
 
 ### b2d.body
 
@@ -4151,11 +4151,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_transform(body: Opaque<"b2Body">, position: Vector3, angle: number): void;
 - function set_type(body: Opaque<"b2Body">, type: (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })): void;
 - function set_user_data(body: Opaque<"b2Body">, id: Hash): void; [since 1.13.0]
-- const B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" };
-- const B2_KINEMATIC_BODY: number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" };
-- const B2_STATIC_BODY: number & { readonly __brand: "b2d.body.B2_STATIC_BODY" };
-- type b2Body = Opaque<"b2Body">;
-- type b2World = Opaque<"b2World">;
+- b2d.body.B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }
+- b2d.body.B2_KINEMATIC_BODY: number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }
+- b2d.body.B2_STATIC_BODY: number & { readonly __brand: "b2d.body.B2_STATIC_BODY" }
+- type b2Body = Opaque<"b2Body">
+- type b2World = Opaque<"b2World">
 
 ### b2d.chain
 
@@ -4172,7 +4172,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_friction(chain: Opaque<"b2Chain">, friction: number): void; [since 1.13.0]
 - function set_material(chain: Opaque<"b2Chain">, material: number): void; [since 1.13.0]
 - function set_restitution(chain: Opaque<"b2Chain">, restitution: number): void; [since 1.13.0]
-- type b2Chain = Opaque<"b2Chain">; [since 1.13.0]
+- type b2Chain = Opaque<"b2Chain"> [since 1.13.0]
 
 ### b2d.fixture
 
@@ -4297,24 +4297,24 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_spring_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.0]
 - function set_spring_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.0]
 - function wake_bodies(joint: Opaque<"b2Joint">): void; [since 1.13.0]
-- const JOINT_TYPE_DISTANCE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_DISTANCE" }; [since 1.13.0]
-- const JOINT_TYPE_FILTER: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FILTER" }; [since 1.13.0]
-- const JOINT_TYPE_FRICTION: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FRICTION" }; [since 1.13.0]
-- const JOINT_TYPE_GEAR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_GEAR" }; [since 1.13.0]
-- const JOINT_TYPE_MOTOR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOTOR" }; [since 1.13.0]
-- const JOINT_TYPE_MOUSE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOUSE" }; [since 1.13.0]
-- const JOINT_TYPE_PRISMATIC: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PRISMATIC" }; [since 1.13.0]
-- const JOINT_TYPE_PULLEY: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PULLEY" }; [since 1.13.0]
-- const JOINT_TYPE_REVOLUTE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_REVOLUTE" }; [since 1.13.0]
-- const JOINT_TYPE_ROPE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_ROPE" }; [since 1.13.0]
-- const JOINT_TYPE_UNKNOWN: number & { readonly __brand: "b2d.joint.JOINT_TYPE_UNKNOWN" }; [since 1.13.0]
-- const JOINT_TYPE_WELD: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WELD" }; [since 1.13.0]
-- const JOINT_TYPE_WHEEL: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WHEEL" }; [since 1.13.0]
-- const LIMIT_STATE_AT_LOWER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_LOWER" }; [since 1.13.0]
-- const LIMIT_STATE_AT_UPPER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_UPPER" }; [since 1.13.0]
-- const LIMIT_STATE_EQUAL: number & { readonly __brand: "b2d.joint.LIMIT_STATE_EQUAL" }; [since 1.13.0]
-- const LIMIT_STATE_INACTIVE: number & { readonly __brand: "b2d.joint.LIMIT_STATE_INACTIVE" }; [since 1.13.0]
-- type b2Joint = Opaque<"b2Joint">; [since 1.13.0]
+- b2d.joint.JOINT_TYPE_DISTANCE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_DISTANCE" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_FILTER: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FILTER" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_FRICTION: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FRICTION" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_GEAR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_GEAR" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_MOTOR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOTOR" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_MOUSE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOUSE" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_PRISMATIC: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PRISMATIC" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_PULLEY: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PULLEY" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_REVOLUTE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_REVOLUTE" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_ROPE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_ROPE" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_UNKNOWN: number & { readonly __brand: "b2d.joint.JOINT_TYPE_UNKNOWN" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_WELD: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WELD" } [since 1.13.0]
+- b2d.joint.JOINT_TYPE_WHEEL: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WHEEL" } [since 1.13.0]
+- b2d.joint.LIMIT_STATE_AT_LOWER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_LOWER" } [since 1.13.0]
+- b2d.joint.LIMIT_STATE_AT_UPPER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_UPPER" } [since 1.13.0]
+- b2d.joint.LIMIT_STATE_EQUAL: number & { readonly __brand: "b2d.joint.LIMIT_STATE_EQUAL" } [since 1.13.0]
+- b2d.joint.LIMIT_STATE_INACTIVE: number & { readonly __brand: "b2d.joint.LIMIT_STATE_INACTIVE" } [since 1.13.0]
+- type b2Joint = Opaque<"b2Joint"> [since 1.13.0]
 
 ### b2d.shape
 
@@ -4340,15 +4340,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number }; [since 1.13.0]
 - function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.0]
 - function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void; [since 1.13.0]
-- const SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" }; [since 1.13.0]
-- const SHAPE_TYPE_CAPSULE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CAPSULE" }; [since 1.13.0]
-- const SHAPE_TYPE_CHAIN: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CHAIN" }; [since 1.13.0]
-- const SHAPE_TYPE_CIRCLE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CIRCLE" }; [since 1.13.0]
-- const SHAPE_TYPE_EDGE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_EDGE" }; [since 1.13.0]
-- const SHAPE_TYPE_GRID: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_GRID" }; [since 1.13.0]
-- const SHAPE_TYPE_POLYGON: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_POLYGON" }; [since 1.13.0]
-- const SHAPE_TYPE_SEGMENT: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_SEGMENT" }; [since 1.13.0]
-- type b2Shape = Opaque<"b2Shape">; [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" } [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_CAPSULE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CAPSULE" } [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_CHAIN: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CHAIN" } [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_CIRCLE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CIRCLE" } [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_EDGE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_EDGE" } [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_GRID: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_GRID" } [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_POLYGON: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_POLYGON" } [since 1.13.0]
+- b2d.shape.SHAPE_TYPE_SEGMENT: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_SEGMENT" } [since 1.13.0]
+- type b2Shape = Opaque<"b2Shape"> [since 1.13.0]
 
 ### b2d.world
 
@@ -4398,15 +4398,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | unknown, Opaque<"constant"> | unknown]>;
 - function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number };
 - function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: Opaque<"constant">): void;
-- const VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" };
-- const VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" };
-- const VALUE_TYPE_INT32: number & { readonly __brand: "buffer.VALUE_TYPE_INT32" };
-- const VALUE_TYPE_INT64: number & { readonly __brand: "buffer.VALUE_TYPE_INT64" };
-- const VALUE_TYPE_INT8: number & { readonly __brand: "buffer.VALUE_TYPE_INT8" };
-- const VALUE_TYPE_UINT16: number & { readonly __brand: "buffer.VALUE_TYPE_UINT16" };
-- const VALUE_TYPE_UINT32: number & { readonly __brand: "buffer.VALUE_TYPE_UINT32" };
-- const VALUE_TYPE_UINT64: number & { readonly __brand: "buffer.VALUE_TYPE_UINT64" };
-- const VALUE_TYPE_UINT8: number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" };
+- buffer.VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" }
+- buffer.VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" }
+- buffer.VALUE_TYPE_INT32: number & { readonly __brand: "buffer.VALUE_TYPE_INT32" }
+- buffer.VALUE_TYPE_INT64: number & { readonly __brand: "buffer.VALUE_TYPE_INT64" }
+- buffer.VALUE_TYPE_INT8: number & { readonly __brand: "buffer.VALUE_TYPE_INT8" }
+- buffer.VALUE_TYPE_UINT16: number & { readonly __brand: "buffer.VALUE_TYPE_UINT16" }
+- buffer.VALUE_TYPE_UINT32: number & { readonly __brand: "buffer.VALUE_TYPE_UINT32" }
+- buffer.VALUE_TYPE_UINT64: number & { readonly __brand: "buffer.VALUE_TYPE_UINT64" }
+- buffer.VALUE_TYPE_UINT8: number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" }
 
 ### camera
 
@@ -4432,17 +4432,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_orthographic_mode(camera: Url | number | undefined, mode: number): void;
 - function set_orthographic_zoom(camera: Url | number | undefined, orthographic_zoom: number): void;
 - function world_to_screen(world_pos: Vector3, camera?: Url | number): Vector3;
-- const ORTHO_MODE_AUTO_COVER: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_COVER" };
-- const ORTHO_MODE_AUTO_FIT: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_FIT" };
-- const ORTHO_MODE_FIXED: number & { readonly __brand: "camera.ORTHO_MODE_FIXED" };
-- aspect_ratio: unknown; [since 1.13.0]
-- far_z: unknown; [since 1.13.0]
-- fov: unknown; [since 1.13.0]
-- near_z: unknown; [since 1.13.0]
-- orthographic_auto_zoom: unknown; [since 1.13.0]
-- orthographic_zoom: unknown; [since 1.13.0]
-- projection: unknown; [since 1.13.0]
-- view: unknown; [since 1.13.0]
+- camera.ORTHO_MODE_AUTO_COVER: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_COVER" }
+- camera.ORTHO_MODE_AUTO_FIT: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_FIT" }
+- camera.ORTHO_MODE_FIXED: number & { readonly __brand: "camera.ORTHO_MODE_FIXED" }
+- aspect_ratio: unknown [since 1.13.0]
+- far_z: unknown [since 1.13.0]
+- fov: unknown [since 1.13.0]
+- near_z: unknown [since 1.13.0]
+- orthographic_auto_zoom: unknown [since 1.13.0]
+- orthographic_zoom: unknown [since 1.13.0]
+- projection: unknown [since 1.13.0]
+- view: unknown [since 1.13.0]
 
 ### collectionfactory
 
@@ -4451,17 +4451,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;
 - function set_prototype(url?: string | Hash | Url, prototype?: string): void;
 - function unload(url?: string | Hash | Url): void;
-- const STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" };
-- const STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" };
-- const STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" };
+- collectionfactory.STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" }
+- collectionfactory.STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" }
+- collectionfactory.STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" }
 
 ### collectionproxy
 
 - function get_resources(collectionproxy: Url): Hash[];
 - function set_collection(url?: string | Hash | Url, prototype?: string): LuaMultiReturn<[boolean, number]>;
-- const RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" };
-- const RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" };
-- const RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" };
+- collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
+- collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
+- collectionproxy.RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" }
 
 ### compute
 
@@ -4485,19 +4485,19 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_file_path(path: string): void;
 - function set_user_field(index: number, value: string): void;
 - function write_dump(): void;
-- const SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: "crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT" };
-- const SYSFIELD_DEVICE_LANGUAGE: number & { readonly __brand: "crash.SYSFIELD_DEVICE_LANGUAGE" };
-- const SYSFIELD_DEVICE_MODEL: number & { readonly __brand: "crash.SYSFIELD_DEVICE_MODEL" };
-- const SYSFIELD_ENGINE_HASH: number & { readonly __brand: "crash.SYSFIELD_ENGINE_HASH" };
-- const SYSFIELD_ENGINE_VERSION: number & { readonly __brand: "crash.SYSFIELD_ENGINE_VERSION" };
-- const SYSFIELD_LANGUAGE: number & { readonly __brand: "crash.SYSFIELD_LANGUAGE" };
-- const SYSFIELD_MANUFACTURER: number & { readonly __brand: "crash.SYSFIELD_MANUFACTURER" };
-- const SYSFIELD_MAX: number & { readonly __brand: "crash.SYSFIELD_MAX" };
-- const SYSFIELD_SYSTEM_NAME: number & { readonly __brand: "crash.SYSFIELD_SYSTEM_NAME" };
-- const SYSFIELD_SYSTEM_VERSION: number & { readonly __brand: "crash.SYSFIELD_SYSTEM_VERSION" };
-- const SYSFIELD_TERRITORY: number & { readonly __brand: "crash.SYSFIELD_TERRITORY" };
-- const USERFIELD_MAX: number & { readonly __brand: "crash.USERFIELD_MAX" };
-- const USERFIELD_SIZE: number & { readonly __brand: "crash.USERFIELD_SIZE" };
+- crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: "crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT" }
+- crash.SYSFIELD_DEVICE_LANGUAGE: number & { readonly __brand: "crash.SYSFIELD_DEVICE_LANGUAGE" }
+- crash.SYSFIELD_DEVICE_MODEL: number & { readonly __brand: "crash.SYSFIELD_DEVICE_MODEL" }
+- crash.SYSFIELD_ENGINE_HASH: number & { readonly __brand: "crash.SYSFIELD_ENGINE_HASH" }
+- crash.SYSFIELD_ENGINE_VERSION: number & { readonly __brand: "crash.SYSFIELD_ENGINE_VERSION" }
+- crash.SYSFIELD_LANGUAGE: number & { readonly __brand: "crash.SYSFIELD_LANGUAGE" }
+- crash.SYSFIELD_MANUFACTURER: number & { readonly __brand: "crash.SYSFIELD_MANUFACTURER" }
+- crash.SYSFIELD_MAX: number & { readonly __brand: "crash.SYSFIELD_MAX" }
+- crash.SYSFIELD_SYSTEM_NAME: number & { readonly __brand: "crash.SYSFIELD_SYSTEM_NAME" }
+- crash.SYSFIELD_SYSTEM_VERSION: number & { readonly __brand: "crash.SYSFIELD_SYSTEM_VERSION" }
+- crash.SYSFIELD_TERRITORY: number & { readonly __brand: "crash.SYSFIELD_TERRITORY" }
+- crash.USERFIELD_MAX: number & { readonly __brand: "crash.USERFIELD_MAX" }
+- crash.USERFIELD_SIZE: number & { readonly __brand: "crash.USERFIELD_SIZE" }
 
 ### factory
 
@@ -4506,9 +4506,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;
 - function set_prototype(url?: string | Hash | Url, prototype?: string): void;
 - function unload(url?: string | Hash | Url): void;
-- const STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" };
-- const STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" };
-- const STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" };
+- factory.STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" }
+- factory.STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" }
+- factory.STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" }
 
 ### font
 
@@ -4559,185 +4559,185 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;
 - function on_reload(self: Opaque<"userdata">): void;
 - function update(self: Opaque<"userdata">, dt: number): void;
-- const EASING_INBACK: number & { readonly __brand: "go.EASING_INBACK" };
-- const EASING_INBOUNCE: number & { readonly __brand: "go.EASING_INBOUNCE" };
-- const EASING_INCIRC: number & { readonly __brand: "go.EASING_INCIRC" };
-- const EASING_INCUBIC: number & { readonly __brand: "go.EASING_INCUBIC" };
-- const EASING_INELASTIC: number & { readonly __brand: "go.EASING_INELASTIC" };
-- const EASING_INEXPO: number & { readonly __brand: "go.EASING_INEXPO" };
-- const EASING_INOUTBACK: number & { readonly __brand: "go.EASING_INOUTBACK" };
-- const EASING_INOUTBOUNCE: number & { readonly __brand: "go.EASING_INOUTBOUNCE" };
-- const EASING_INOUTCIRC: number & { readonly __brand: "go.EASING_INOUTCIRC" };
-- const EASING_INOUTCUBIC: number & { readonly __brand: "go.EASING_INOUTCUBIC" };
-- const EASING_INOUTELASTIC: number & { readonly __brand: "go.EASING_INOUTELASTIC" };
-- const EASING_INOUTEXPO: number & { readonly __brand: "go.EASING_INOUTEXPO" };
-- const EASING_INOUTQUAD: number & { readonly __brand: "go.EASING_INOUTQUAD" };
-- const EASING_INOUTQUART: number & { readonly __brand: "go.EASING_INOUTQUART" };
-- const EASING_INOUTQUINT: number & { readonly __brand: "go.EASING_INOUTQUINT" };
-- const EASING_INOUTSINE: number & { readonly __brand: "go.EASING_INOUTSINE" };
-- const EASING_INQUAD: number & { readonly __brand: "go.EASING_INQUAD" };
-- const EASING_INQUART: number & { readonly __brand: "go.EASING_INQUART" };
-- const EASING_INQUINT: number & { readonly __brand: "go.EASING_INQUINT" };
-- const EASING_INSINE: number & { readonly __brand: "go.EASING_INSINE" };
-- const EASING_LINEAR: number & { readonly __brand: "go.EASING_LINEAR" };
-- const EASING_OUTBACK: number & { readonly __brand: "go.EASING_OUTBACK" };
-- const EASING_OUTBOUNCE: number & { readonly __brand: "go.EASING_OUTBOUNCE" };
-- const EASING_OUTCIRC: number & { readonly __brand: "go.EASING_OUTCIRC" };
-- const EASING_OUTCUBIC: number & { readonly __brand: "go.EASING_OUTCUBIC" };
-- const EASING_OUTELASTIC: number & { readonly __brand: "go.EASING_OUTELASTIC" };
-- const EASING_OUTEXPO: number & { readonly __brand: "go.EASING_OUTEXPO" };
-- const EASING_OUTINBACK: number & { readonly __brand: "go.EASING_OUTINBACK" };
-- const EASING_OUTINBOUNCE: number & { readonly __brand: "go.EASING_OUTINBOUNCE" };
-- const EASING_OUTINCIRC: number & { readonly __brand: "go.EASING_OUTINCIRC" };
-- const EASING_OUTINCUBIC: number & { readonly __brand: "go.EASING_OUTINCUBIC" };
-- const EASING_OUTINELASTIC: number & { readonly __brand: "go.EASING_OUTINELASTIC" };
-- const EASING_OUTINEXPO: number & { readonly __brand: "go.EASING_OUTINEXPO" };
-- const EASING_OUTINQUAD: number & { readonly __brand: "go.EASING_OUTINQUAD" };
-- const EASING_OUTINQUART: number & { readonly __brand: "go.EASING_OUTINQUART" };
-- const EASING_OUTINQUINT: number & { readonly __brand: "go.EASING_OUTINQUINT" };
-- const EASING_OUTINSINE: number & { readonly __brand: "go.EASING_OUTINSINE" };
-- const EASING_OUTQUAD: number & { readonly __brand: "go.EASING_OUTQUAD" };
-- const EASING_OUTQUART: number & { readonly __brand: "go.EASING_OUTQUART" };
-- const EASING_OUTQUINT: number & { readonly __brand: "go.EASING_OUTQUINT" };
-- const EASING_OUTSINE: number & { readonly __brand: "go.EASING_OUTSINE" };
-- const PLAYBACK_LOOP_BACKWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" };
-- const PLAYBACK_LOOP_FORWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" };
-- const PLAYBACK_LOOP_PINGPONG: number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" };
-- const PLAYBACK_NONE: number & { readonly __brand: "go.PLAYBACK_NONE" };
-- const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" };
-- const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" };
-- const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" };
-- euler: Vector3;
-- position: Vector3;
-- rotation: Quaternion;
-- scale: number;
+- go.EASING_INBACK: number & { readonly __brand: "go.EASING_INBACK" }
+- go.EASING_INBOUNCE: number & { readonly __brand: "go.EASING_INBOUNCE" }
+- go.EASING_INCIRC: number & { readonly __brand: "go.EASING_INCIRC" }
+- go.EASING_INCUBIC: number & { readonly __brand: "go.EASING_INCUBIC" }
+- go.EASING_INELASTIC: number & { readonly __brand: "go.EASING_INELASTIC" }
+- go.EASING_INEXPO: number & { readonly __brand: "go.EASING_INEXPO" }
+- go.EASING_INOUTBACK: number & { readonly __brand: "go.EASING_INOUTBACK" }
+- go.EASING_INOUTBOUNCE: number & { readonly __brand: "go.EASING_INOUTBOUNCE" }
+- go.EASING_INOUTCIRC: number & { readonly __brand: "go.EASING_INOUTCIRC" }
+- go.EASING_INOUTCUBIC: number & { readonly __brand: "go.EASING_INOUTCUBIC" }
+- go.EASING_INOUTELASTIC: number & { readonly __brand: "go.EASING_INOUTELASTIC" }
+- go.EASING_INOUTEXPO: number & { readonly __brand: "go.EASING_INOUTEXPO" }
+- go.EASING_INOUTQUAD: number & { readonly __brand: "go.EASING_INOUTQUAD" }
+- go.EASING_INOUTQUART: number & { readonly __brand: "go.EASING_INOUTQUART" }
+- go.EASING_INOUTQUINT: number & { readonly __brand: "go.EASING_INOUTQUINT" }
+- go.EASING_INOUTSINE: number & { readonly __brand: "go.EASING_INOUTSINE" }
+- go.EASING_INQUAD: number & { readonly __brand: "go.EASING_INQUAD" }
+- go.EASING_INQUART: number & { readonly __brand: "go.EASING_INQUART" }
+- go.EASING_INQUINT: number & { readonly __brand: "go.EASING_INQUINT" }
+- go.EASING_INSINE: number & { readonly __brand: "go.EASING_INSINE" }
+- go.EASING_LINEAR: number & { readonly __brand: "go.EASING_LINEAR" }
+- go.EASING_OUTBACK: number & { readonly __brand: "go.EASING_OUTBACK" }
+- go.EASING_OUTBOUNCE: number & { readonly __brand: "go.EASING_OUTBOUNCE" }
+- go.EASING_OUTCIRC: number & { readonly __brand: "go.EASING_OUTCIRC" }
+- go.EASING_OUTCUBIC: number & { readonly __brand: "go.EASING_OUTCUBIC" }
+- go.EASING_OUTELASTIC: number & { readonly __brand: "go.EASING_OUTELASTIC" }
+- go.EASING_OUTEXPO: number & { readonly __brand: "go.EASING_OUTEXPO" }
+- go.EASING_OUTINBACK: number & { readonly __brand: "go.EASING_OUTINBACK" }
+- go.EASING_OUTINBOUNCE: number & { readonly __brand: "go.EASING_OUTINBOUNCE" }
+- go.EASING_OUTINCIRC: number & { readonly __brand: "go.EASING_OUTINCIRC" }
+- go.EASING_OUTINCUBIC: number & { readonly __brand: "go.EASING_OUTINCUBIC" }
+- go.EASING_OUTINELASTIC: number & { readonly __brand: "go.EASING_OUTINELASTIC" }
+- go.EASING_OUTINEXPO: number & { readonly __brand: "go.EASING_OUTINEXPO" }
+- go.EASING_OUTINQUAD: number & { readonly __brand: "go.EASING_OUTINQUAD" }
+- go.EASING_OUTINQUART: number & { readonly __brand: "go.EASING_OUTINQUART" }
+- go.EASING_OUTINQUINT: number & { readonly __brand: "go.EASING_OUTINQUINT" }
+- go.EASING_OUTINSINE: number & { readonly __brand: "go.EASING_OUTINSINE" }
+- go.EASING_OUTQUAD: number & { readonly __brand: "go.EASING_OUTQUAD" }
+- go.EASING_OUTQUART: number & { readonly __brand: "go.EASING_OUTQUART" }
+- go.EASING_OUTQUINT: number & { readonly __brand: "go.EASING_OUTQUINT" }
+- go.EASING_OUTSINE: number & { readonly __brand: "go.EASING_OUTSINE" }
+- go.PLAYBACK_LOOP_BACKWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" }
+- go.PLAYBACK_LOOP_FORWARD: number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" }
+- go.PLAYBACK_LOOP_PINGPONG: number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" }
+- go.PLAYBACK_NONE: number & { readonly __brand: "go.PLAYBACK_NONE" }
+- go.PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" }
+- go.PLAYBACK_ONCE_FORWARD: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" }
+- go.PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" }
+- euler: Vector3
+- position: Vector3
+- rotation: Quaternion
+- scale: number
 
 ### graphics
 
 - function get_adapter_info(): { family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] }; [since 1.13.0]
 - function get_engine_adapters(): string[]; [since 1.13.0]
-- const BLEND_EQUATION_ADD: number & { readonly __brand: "graphics.BLEND_EQUATION_ADD" }; [since 1.13.0]
-- const BLEND_EQUATION_MAX: number & { readonly __brand: "graphics.BLEND_EQUATION_MAX" }; [since 1.13.0]
-- const BLEND_EQUATION_MIN: number & { readonly __brand: "graphics.BLEND_EQUATION_MIN" }; [since 1.13.0]
-- const BLEND_EQUATION_REVERSE_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_REVERSE_SUBTRACT" }; [since 1.13.0]
-- const BLEND_EQUATION_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_SUBTRACT" }; [since 1.13.0]
-- const BLEND_FACTOR_CONSTANT_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_ALPHA" };
-- const BLEND_FACTOR_CONSTANT_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_COLOR" };
-- const BLEND_FACTOR_DST_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_DST_ALPHA" };
-- const BLEND_FACTOR_DST_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_DST_COLOR" };
-- const BLEND_FACTOR_ONE: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE" };
-- const BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA" };
-- const BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR" };
-- const BLEND_FACTOR_ONE_MINUS_DST_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA" };
-- const BLEND_FACTOR_ONE_MINUS_DST_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR" };
-- const BLEND_FACTOR_ONE_MINUS_SRC_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA" };
-- const BLEND_FACTOR_ONE_MINUS_SRC_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR" };
-- const BLEND_FACTOR_SRC_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_SRC_ALPHA" };
-- const BLEND_FACTOR_SRC_ALPHA_SATURATE: number & { readonly __brand: "graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE" };
-- const BLEND_FACTOR_SRC_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_SRC_COLOR" };
-- const BLEND_FACTOR_ZERO: number & { readonly __brand: "graphics.BLEND_FACTOR_ZERO" };
-- const BUFFER_TYPE_COLOR0_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" };
-- const BUFFER_TYPE_COLOR1_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR1_BIT" };
-- const BUFFER_TYPE_COLOR2_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR2_BIT" };
-- const BUFFER_TYPE_COLOR3_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR3_BIT" };
-- const BUFFER_TYPE_DEPTH_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" };
-- const BUFFER_TYPE_STENCIL_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" };
-- const COMPARE_FUNC_ALWAYS: number & { readonly __brand: "graphics.COMPARE_FUNC_ALWAYS" };
-- const COMPARE_FUNC_EQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_EQUAL" };
-- const COMPARE_FUNC_GEQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_GEQUAL" };
-- const COMPARE_FUNC_GREATER: number & { readonly __brand: "graphics.COMPARE_FUNC_GREATER" };
-- const COMPARE_FUNC_LEQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_LEQUAL" };
-- const COMPARE_FUNC_LESS: number & { readonly __brand: "graphics.COMPARE_FUNC_LESS" };
-- const COMPARE_FUNC_NEVER: number & { readonly __brand: "graphics.COMPARE_FUNC_NEVER" };
-- const COMPARE_FUNC_NOTEQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_NOTEQUAL" };
-- const COMPRESSION_TYPE_BASIS_ETC1S: number & { readonly __brand: "graphics.COMPRESSION_TYPE_BASIS_ETC1S" };
-- const COMPRESSION_TYPE_BASIS_UASTC: number & { readonly __brand: "graphics.COMPRESSION_TYPE_BASIS_UASTC" };
-- const COMPRESSION_TYPE_DEFAULT: number & { readonly __brand: "graphics.COMPRESSION_TYPE_DEFAULT" };
-- const COMPRESSION_TYPE_WEBP: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP" };
-- const COMPRESSION_TYPE_WEBP_LOSSY: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP_LOSSY" };
-- const CONTEXT_FEATURE_3D_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_3D_TEXTURES" }; [since 1.13.0]
-- const CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES" }; [since 1.13.0]
-- const CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX" }; [since 1.13.0]
-- const CONTEXT_FEATURE_COMPUTE_SHADER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_COMPUTE_SHADER" }; [since 1.13.0]
-- const CONTEXT_FEATURE_INSTANCING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_INSTANCING" }; [since 1.13.0]
-- const CONTEXT_FEATURE_MULTI_TARGET_RENDERING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING" }; [since 1.13.0]
-- const CONTEXT_FEATURE_STORAGE_BUFFER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_STORAGE_BUFFER" }; [since 1.13.0]
-- const CONTEXT_FEATURE_TEXTURE_ARRAY: number & { readonly __brand: "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY" }; [since 1.13.0]
-- const CONTEXT_FEATURE_VSYNC: number & { readonly __brand: "graphics.CONTEXT_FEATURE_VSYNC" }; [since 1.13.0]
-- const FACE_TYPE_BACK: number & { readonly __brand: "graphics.FACE_TYPE_BACK" };
-- const FACE_TYPE_FRONT: number & { readonly __brand: "graphics.FACE_TYPE_FRONT" };
-- const FACE_TYPE_FRONT_AND_BACK: number & { readonly __brand: "graphics.FACE_TYPE_FRONT_AND_BACK" };
-- const STATE_ALPHA_TEST: number & { readonly __brand: "graphics.STATE_ALPHA_TEST" };
-- const STATE_ALPHA_TEST_SUPPORTED: number & { readonly __brand: "graphics.STATE_ALPHA_TEST_SUPPORTED" };
-- const STATE_BLEND: number & { readonly __brand: "graphics.STATE_BLEND" };
-- const STATE_CULL_FACE: number & { readonly __brand: "graphics.STATE_CULL_FACE" };
-- const STATE_DEPTH_TEST: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" };
-- const STATE_POLYGON_OFFSET_FILL: number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" };
-- const STATE_SCISSOR_TEST: number & { readonly __brand: "graphics.STATE_SCISSOR_TEST" };
-- const STATE_STENCIL_TEST: number & { readonly __brand: "graphics.STATE_STENCIL_TEST" };
-- const STENCIL_OP_DECR: number & { readonly __brand: "graphics.STENCIL_OP_DECR" };
-- const STENCIL_OP_DECR_WRAP: number & { readonly __brand: "graphics.STENCIL_OP_DECR_WRAP" };
-- const STENCIL_OP_INCR: number & { readonly __brand: "graphics.STENCIL_OP_INCR" };
-- const STENCIL_OP_INCR_WRAP: number & { readonly __brand: "graphics.STENCIL_OP_INCR_WRAP" };
-- const STENCIL_OP_INVERT: number & { readonly __brand: "graphics.STENCIL_OP_INVERT" };
-- const STENCIL_OP_KEEP: number & { readonly __brand: "graphics.STENCIL_OP_KEEP" };
-- const STENCIL_OP_REPLACE: number & { readonly __brand: "graphics.STENCIL_OP_REPLACE" };
-- const STENCIL_OP_ZERO: number & { readonly __brand: "graphics.STENCIL_OP_ZERO" };
-- const TEXTURE_FILTER_DEFAULT: number & { readonly __brand: "graphics.TEXTURE_FILTER_DEFAULT" };
-- const TEXTURE_FILTER_LINEAR: number & { readonly __brand: "graphics.TEXTURE_FILTER_LINEAR" };
-- const TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR: number & { readonly __brand: "graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR" };
-- const TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST: number & { readonly __brand: "graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST" };
-- const TEXTURE_FILTER_NEAREST: number & { readonly __brand: "graphics.TEXTURE_FILTER_NEAREST" };
-- const TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR: number & { readonly __brand: "graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR" };
-- const TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST: number & { readonly __brand: "graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST" };
-- const TEXTURE_FORMAT_BGRA8U: number & { readonly __brand: "graphics.TEXTURE_FORMAT_BGRA8U" };
-- const TEXTURE_FORMAT_DEPTH: number & { readonly __brand: "graphics.TEXTURE_FORMAT_DEPTH" };
-- const TEXTURE_FORMAT_LUMINANCE: number & { readonly __brand: "graphics.TEXTURE_FORMAT_LUMINANCE" };
-- const TEXTURE_FORMAT_LUMINANCE_ALPHA: number & { readonly __brand: "graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA" };
-- const TEXTURE_FORMAT_R_BC4: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R_BC4" };
-- const TEXTURE_FORMAT_R_ETC2: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R_ETC2" };
-- const TEXTURE_FORMAT_R16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R16F" };
-- const TEXTURE_FORMAT_R32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R32F" };
-- const TEXTURE_FORMAT_R32UI: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R32UI" };
-- const TEXTURE_FORMAT_RG_BC5: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG_BC5" };
-- const TEXTURE_FORMAT_RG_ETC2: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG_ETC2" };
-- const TEXTURE_FORMAT_RG16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG16F" };
-- const TEXTURE_FORMAT_RG32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG32F" };
-- const TEXTURE_FORMAT_RGB: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB" };
-- const TEXTURE_FORMAT_RGB_16BPP: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_16BPP" };
-- const TEXTURE_FORMAT_RGB_BC1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_BC1" };
-- const TEXTURE_FORMAT_RGB_ETC1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_ETC1" };
-- const TEXTURE_FORMAT_RGB_PVRTC_2BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1" };
-- const TEXTURE_FORMAT_RGB_PVRTC_4BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1" };
-- const TEXTURE_FORMAT_RGB16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB16F" };
-- const TEXTURE_FORMAT_RGB32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB32F" };
-- const TEXTURE_FORMAT_RGBA: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA" };
-- const TEXTURE_FORMAT_RGBA_16BPP: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_16BPP" };
-- const TEXTURE_FORMAT_RGBA_ASTC_4X4: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4" };
-- const TEXTURE_FORMAT_RGBA_BC3: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_BC3" };
-- const TEXTURE_FORMAT_RGBA_BC7: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_BC7" };
-- const TEXTURE_FORMAT_RGBA_ETC2: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_ETC2" };
-- const TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1" };
-- const TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1" };
-- const TEXTURE_FORMAT_RGBA16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA16F" };
-- const TEXTURE_FORMAT_RGBA32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA32F" };
-- const TEXTURE_FORMAT_RGBA32UI: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA32UI" };
-- const TEXTURE_FORMAT_STENCIL: number & { readonly __brand: "graphics.TEXTURE_FORMAT_STENCIL" };
-- const TEXTURE_TYPE_2D: number & { readonly __brand: "graphics.TEXTURE_TYPE_2D" };
-- const TEXTURE_TYPE_2D_ARRAY: number & { readonly __brand: "graphics.TEXTURE_TYPE_2D_ARRAY" };
-- const TEXTURE_TYPE_3D: number & { readonly __brand: "graphics.TEXTURE_TYPE_3D" };
-- const TEXTURE_TYPE_CUBE_MAP: number & { readonly __brand: "graphics.TEXTURE_TYPE_CUBE_MAP" };
-- const TEXTURE_TYPE_IMAGE_2D: number & { readonly __brand: "graphics.TEXTURE_TYPE_IMAGE_2D" };
-- const TEXTURE_TYPE_IMAGE_3D: number & { readonly __brand: "graphics.TEXTURE_TYPE_IMAGE_3D" };
-- const TEXTURE_USAGE_FLAG_COLOR: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_COLOR" };
-- const TEXTURE_USAGE_FLAG_INPUT: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_INPUT" };
-- const TEXTURE_USAGE_FLAG_MEMORYLESS: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_MEMORYLESS" };
-- const TEXTURE_USAGE_FLAG_SAMPLE: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_SAMPLE" };
-- const TEXTURE_USAGE_FLAG_STORAGE: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_STORAGE" };
-- const TEXTURE_WRAP_CLAMP_TO_BORDER: number & { readonly __brand: "graphics.TEXTURE_WRAP_CLAMP_TO_BORDER" };
-- const TEXTURE_WRAP_CLAMP_TO_EDGE: number & { readonly __brand: "graphics.TEXTURE_WRAP_CLAMP_TO_EDGE" };
-- const TEXTURE_WRAP_MIRRORED_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_MIRRORED_REPEAT" };
-- const TEXTURE_WRAP_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_REPEAT" };
+- graphics.BLEND_EQUATION_ADD: number & { readonly __brand: "graphics.BLEND_EQUATION_ADD" } [since 1.13.0]
+- graphics.BLEND_EQUATION_MAX: number & { readonly __brand: "graphics.BLEND_EQUATION_MAX" } [since 1.13.0]
+- graphics.BLEND_EQUATION_MIN: number & { readonly __brand: "graphics.BLEND_EQUATION_MIN" } [since 1.13.0]
+- graphics.BLEND_EQUATION_REVERSE_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_REVERSE_SUBTRACT" } [since 1.13.0]
+- graphics.BLEND_EQUATION_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_SUBTRACT" } [since 1.13.0]
+- graphics.BLEND_FACTOR_CONSTANT_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_ALPHA" }
+- graphics.BLEND_FACTOR_CONSTANT_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_COLOR" }
+- graphics.BLEND_FACTOR_DST_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_DST_ALPHA" }
+- graphics.BLEND_FACTOR_DST_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_DST_COLOR" }
+- graphics.BLEND_FACTOR_ONE: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE" }
+- graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA" }
+- graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR" }
+- graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA" }
+- graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR" }
+- graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA" }
+- graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR" }
+- graphics.BLEND_FACTOR_SRC_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_SRC_ALPHA" }
+- graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE: number & { readonly __brand: "graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE" }
+- graphics.BLEND_FACTOR_SRC_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_SRC_COLOR" }
+- graphics.BLEND_FACTOR_ZERO: number & { readonly __brand: "graphics.BLEND_FACTOR_ZERO" }
+- graphics.BUFFER_TYPE_COLOR0_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" }
+- graphics.BUFFER_TYPE_COLOR1_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR1_BIT" }
+- graphics.BUFFER_TYPE_COLOR2_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR2_BIT" }
+- graphics.BUFFER_TYPE_COLOR3_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR3_BIT" }
+- graphics.BUFFER_TYPE_DEPTH_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" }
+- graphics.BUFFER_TYPE_STENCIL_BIT: number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }
+- graphics.COMPARE_FUNC_ALWAYS: number & { readonly __brand: "graphics.COMPARE_FUNC_ALWAYS" }
+- graphics.COMPARE_FUNC_EQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_EQUAL" }
+- graphics.COMPARE_FUNC_GEQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_GEQUAL" }
+- graphics.COMPARE_FUNC_GREATER: number & { readonly __brand: "graphics.COMPARE_FUNC_GREATER" }
+- graphics.COMPARE_FUNC_LEQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_LEQUAL" }
+- graphics.COMPARE_FUNC_LESS: number & { readonly __brand: "graphics.COMPARE_FUNC_LESS" }
+- graphics.COMPARE_FUNC_NEVER: number & { readonly __brand: "graphics.COMPARE_FUNC_NEVER" }
+- graphics.COMPARE_FUNC_NOTEQUAL: number & { readonly __brand: "graphics.COMPARE_FUNC_NOTEQUAL" }
+- graphics.COMPRESSION_TYPE_BASIS_ETC1S: number & { readonly __brand: "graphics.COMPRESSION_TYPE_BASIS_ETC1S" }
+- graphics.COMPRESSION_TYPE_BASIS_UASTC: number & { readonly __brand: "graphics.COMPRESSION_TYPE_BASIS_UASTC" }
+- graphics.COMPRESSION_TYPE_DEFAULT: number & { readonly __brand: "graphics.COMPRESSION_TYPE_DEFAULT" }
+- graphics.COMPRESSION_TYPE_WEBP: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP" }
+- graphics.COMPRESSION_TYPE_WEBP_LOSSY: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP_LOSSY" }
+- graphics.CONTEXT_FEATURE_3D_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_3D_TEXTURES" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_COMPUTE_SHADER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_COMPUTE_SHADER" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_INSTANCING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_INSTANCING" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_STORAGE_BUFFER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_STORAGE_BUFFER" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_TEXTURE_ARRAY: number & { readonly __brand: "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_VSYNC: number & { readonly __brand: "graphics.CONTEXT_FEATURE_VSYNC" } [since 1.13.0]
+- graphics.FACE_TYPE_BACK: number & { readonly __brand: "graphics.FACE_TYPE_BACK" }
+- graphics.FACE_TYPE_FRONT: number & { readonly __brand: "graphics.FACE_TYPE_FRONT" }
+- graphics.FACE_TYPE_FRONT_AND_BACK: number & { readonly __brand: "graphics.FACE_TYPE_FRONT_AND_BACK" }
+- graphics.STATE_ALPHA_TEST: number & { readonly __brand: "graphics.STATE_ALPHA_TEST" }
+- graphics.STATE_ALPHA_TEST_SUPPORTED: number & { readonly __brand: "graphics.STATE_ALPHA_TEST_SUPPORTED" }
+- graphics.STATE_BLEND: number & { readonly __brand: "graphics.STATE_BLEND" }
+- graphics.STATE_CULL_FACE: number & { readonly __brand: "graphics.STATE_CULL_FACE" }
+- graphics.STATE_DEPTH_TEST: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" }
+- graphics.STATE_POLYGON_OFFSET_FILL: number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" }
+- graphics.STATE_SCISSOR_TEST: number & { readonly __brand: "graphics.STATE_SCISSOR_TEST" }
+- graphics.STATE_STENCIL_TEST: number & { readonly __brand: "graphics.STATE_STENCIL_TEST" }
+- graphics.STENCIL_OP_DECR: number & { readonly __brand: "graphics.STENCIL_OP_DECR" }
+- graphics.STENCIL_OP_DECR_WRAP: number & { readonly __brand: "graphics.STENCIL_OP_DECR_WRAP" }
+- graphics.STENCIL_OP_INCR: number & { readonly __brand: "graphics.STENCIL_OP_INCR" }
+- graphics.STENCIL_OP_INCR_WRAP: number & { readonly __brand: "graphics.STENCIL_OP_INCR_WRAP" }
+- graphics.STENCIL_OP_INVERT: number & { readonly __brand: "graphics.STENCIL_OP_INVERT" }
+- graphics.STENCIL_OP_KEEP: number & { readonly __brand: "graphics.STENCIL_OP_KEEP" }
+- graphics.STENCIL_OP_REPLACE: number & { readonly __brand: "graphics.STENCIL_OP_REPLACE" }
+- graphics.STENCIL_OP_ZERO: number & { readonly __brand: "graphics.STENCIL_OP_ZERO" }
+- graphics.TEXTURE_FILTER_DEFAULT: number & { readonly __brand: "graphics.TEXTURE_FILTER_DEFAULT" }
+- graphics.TEXTURE_FILTER_LINEAR: number & { readonly __brand: "graphics.TEXTURE_FILTER_LINEAR" }
+- graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR: number & { readonly __brand: "graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR" }
+- graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST: number & { readonly __brand: "graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST" }
+- graphics.TEXTURE_FILTER_NEAREST: number & { readonly __brand: "graphics.TEXTURE_FILTER_NEAREST" }
+- graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR: number & { readonly __brand: "graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR" }
+- graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST: number & { readonly __brand: "graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST" }
+- graphics.TEXTURE_FORMAT_BGRA8U: number & { readonly __brand: "graphics.TEXTURE_FORMAT_BGRA8U" }
+- graphics.TEXTURE_FORMAT_DEPTH: number & { readonly __brand: "graphics.TEXTURE_FORMAT_DEPTH" }
+- graphics.TEXTURE_FORMAT_LUMINANCE: number & { readonly __brand: "graphics.TEXTURE_FORMAT_LUMINANCE" }
+- graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA: number & { readonly __brand: "graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA" }
+- graphics.TEXTURE_FORMAT_R_BC4: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R_BC4" }
+- graphics.TEXTURE_FORMAT_R_ETC2: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R_ETC2" }
+- graphics.TEXTURE_FORMAT_R16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R16F" }
+- graphics.TEXTURE_FORMAT_R32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R32F" }
+- graphics.TEXTURE_FORMAT_R32UI: number & { readonly __brand: "graphics.TEXTURE_FORMAT_R32UI" }
+- graphics.TEXTURE_FORMAT_RG_BC5: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG_BC5" }
+- graphics.TEXTURE_FORMAT_RG_ETC2: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG_ETC2" }
+- graphics.TEXTURE_FORMAT_RG16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG16F" }
+- graphics.TEXTURE_FORMAT_RG32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RG32F" }
+- graphics.TEXTURE_FORMAT_RGB: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB" }
+- graphics.TEXTURE_FORMAT_RGB_16BPP: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_16BPP" }
+- graphics.TEXTURE_FORMAT_RGB_BC1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_BC1" }
+- graphics.TEXTURE_FORMAT_RGB_ETC1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_ETC1" }
+- graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1" }
+- graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1" }
+- graphics.TEXTURE_FORMAT_RGB16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB16F" }
+- graphics.TEXTURE_FORMAT_RGB32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGB32F" }
+- graphics.TEXTURE_FORMAT_RGBA: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA" }
+- graphics.TEXTURE_FORMAT_RGBA_16BPP: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_16BPP" }
+- graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4" }
+- graphics.TEXTURE_FORMAT_RGBA_BC3: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_BC3" }
+- graphics.TEXTURE_FORMAT_RGBA_BC7: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_BC7" }
+- graphics.TEXTURE_FORMAT_RGBA_ETC2: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_ETC2" }
+- graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1" }
+- graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1" }
+- graphics.TEXTURE_FORMAT_RGBA16F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA16F" }
+- graphics.TEXTURE_FORMAT_RGBA32F: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA32F" }
+- graphics.TEXTURE_FORMAT_RGBA32UI: number & { readonly __brand: "graphics.TEXTURE_FORMAT_RGBA32UI" }
+- graphics.TEXTURE_FORMAT_STENCIL: number & { readonly __brand: "graphics.TEXTURE_FORMAT_STENCIL" }
+- graphics.TEXTURE_TYPE_2D: number & { readonly __brand: "graphics.TEXTURE_TYPE_2D" }
+- graphics.TEXTURE_TYPE_2D_ARRAY: number & { readonly __brand: "graphics.TEXTURE_TYPE_2D_ARRAY" }
+- graphics.TEXTURE_TYPE_3D: number & { readonly __brand: "graphics.TEXTURE_TYPE_3D" }
+- graphics.TEXTURE_TYPE_CUBE_MAP: number & { readonly __brand: "graphics.TEXTURE_TYPE_CUBE_MAP" }
+- graphics.TEXTURE_TYPE_IMAGE_2D: number & { readonly __brand: "graphics.TEXTURE_TYPE_IMAGE_2D" }
+- graphics.TEXTURE_TYPE_IMAGE_3D: number & { readonly __brand: "graphics.TEXTURE_TYPE_IMAGE_3D" }
+- graphics.TEXTURE_USAGE_FLAG_COLOR: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_COLOR" }
+- graphics.TEXTURE_USAGE_FLAG_INPUT: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_INPUT" }
+- graphics.TEXTURE_USAGE_FLAG_MEMORYLESS: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_MEMORYLESS" }
+- graphics.TEXTURE_USAGE_FLAG_SAMPLE: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_SAMPLE" }
+- graphics.TEXTURE_USAGE_FLAG_STORAGE: number & { readonly __brand: "graphics.TEXTURE_USAGE_FLAG_STORAGE" }
+- graphics.TEXTURE_WRAP_CLAMP_TO_BORDER: number & { readonly __brand: "graphics.TEXTURE_WRAP_CLAMP_TO_BORDER" }
+- graphics.TEXTURE_WRAP_CLAMP_TO_EDGE: number & { readonly __brand: "graphics.TEXTURE_WRAP_CLAMP_TO_EDGE" }
+- graphics.TEXTURE_WRAP_MIRRORED_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_MIRRORED_REPEAT" }
+- graphics.TEXTURE_WRAP_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_REPEAT" }
 
 ### gui
 
@@ -4867,114 +4867,114 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>): void;
 - function on_reload(self: Opaque<"userdata">): void;
 - function update(self: Opaque<"userdata">, dt: number): void;
-- const ADJUST_FIT: number & { readonly __brand: "gui.ADJUST_FIT" };
-- const ADJUST_STRETCH: number & { readonly __brand: "gui.ADJUST_STRETCH" };
-- const ADJUST_ZOOM: number & { readonly __brand: "gui.ADJUST_ZOOM" };
-- const ANCHOR_BOTTOM: number & { readonly __brand: "gui.ANCHOR_BOTTOM" };
-- const ANCHOR_LEFT: number & { readonly __brand: "gui.ANCHOR_LEFT" };
-- const ANCHOR_NONE: number & { readonly __brand: "gui.ANCHOR_NONE" };
-- const ANCHOR_RIGHT: number & { readonly __brand: "gui.ANCHOR_RIGHT" };
-- const ANCHOR_TOP: number & { readonly __brand: "gui.ANCHOR_TOP" };
-- const BLEND_ADD: number & { readonly __brand: "gui.BLEND_ADD" };
-- const BLEND_ADD_ALPHA: number & { readonly __brand: "gui.BLEND_ADD_ALPHA" };
-- const BLEND_ALPHA: number & { readonly __brand: "gui.BLEND_ALPHA" };
-- const BLEND_MULT: number & { readonly __brand: "gui.BLEND_MULT" };
-- const BLEND_SCREEN: number & { readonly __brand: "gui.BLEND_SCREEN" };
-- const CLIPPING_MODE_NONE: number & { readonly __brand: "gui.CLIPPING_MODE_NONE" };
-- const CLIPPING_MODE_STENCIL: number & { readonly __brand: "gui.CLIPPING_MODE_STENCIL" };
-- const EASING_INBACK: number & { readonly __brand: "gui.EASING_INBACK" };
-- const EASING_INBOUNCE: number & { readonly __brand: "gui.EASING_INBOUNCE" };
-- const EASING_INCIRC: number & { readonly __brand: "gui.EASING_INCIRC" };
-- const EASING_INCUBIC: number & { readonly __brand: "gui.EASING_INCUBIC" };
-- const EASING_INELASTIC: number & { readonly __brand: "gui.EASING_INELASTIC" };
-- const EASING_INEXPO: number & { readonly __brand: "gui.EASING_INEXPO" };
-- const EASING_INOUTBACK: number & { readonly __brand: "gui.EASING_INOUTBACK" };
-- const EASING_INOUTBOUNCE: number & { readonly __brand: "gui.EASING_INOUTBOUNCE" };
-- const EASING_INOUTCIRC: number & { readonly __brand: "gui.EASING_INOUTCIRC" };
-- const EASING_INOUTCUBIC: number & { readonly __brand: "gui.EASING_INOUTCUBIC" };
-- const EASING_INOUTELASTIC: number & { readonly __brand: "gui.EASING_INOUTELASTIC" };
-- const EASING_INOUTEXPO: number & { readonly __brand: "gui.EASING_INOUTEXPO" };
-- const EASING_INOUTQUAD: number & { readonly __brand: "gui.EASING_INOUTQUAD" };
-- const EASING_INOUTQUART: number & { readonly __brand: "gui.EASING_INOUTQUART" };
-- const EASING_INOUTQUINT: number & { readonly __brand: "gui.EASING_INOUTQUINT" };
-- const EASING_INOUTSINE: number & { readonly __brand: "gui.EASING_INOUTSINE" };
-- const EASING_INQUAD: number & { readonly __brand: "gui.EASING_INQUAD" };
-- const EASING_INQUART: number & { readonly __brand: "gui.EASING_INQUART" };
-- const EASING_INQUINT: number & { readonly __brand: "gui.EASING_INQUINT" };
-- const EASING_INSINE: number & { readonly __brand: "gui.EASING_INSINE" };
-- const EASING_LINEAR: number & { readonly __brand: "gui.EASING_LINEAR" };
-- const EASING_OUTBACK: number & { readonly __brand: "gui.EASING_OUTBACK" };
-- const EASING_OUTBOUNCE: number & { readonly __brand: "gui.EASING_OUTBOUNCE" };
-- const EASING_OUTCIRC: number & { readonly __brand: "gui.EASING_OUTCIRC" };
-- const EASING_OUTCUBIC: number & { readonly __brand: "gui.EASING_OUTCUBIC" };
-- const EASING_OUTELASTIC: number & { readonly __brand: "gui.EASING_OUTELASTIC" };
-- const EASING_OUTEXPO: number & { readonly __brand: "gui.EASING_OUTEXPO" };
-- const EASING_OUTINBACK: number & { readonly __brand: "gui.EASING_OUTINBACK" };
-- const EASING_OUTINBOUNCE: number & { readonly __brand: "gui.EASING_OUTINBOUNCE" };
-- const EASING_OUTINCIRC: number & { readonly __brand: "gui.EASING_OUTINCIRC" };
-- const EASING_OUTINCUBIC: number & { readonly __brand: "gui.EASING_OUTINCUBIC" };
-- const EASING_OUTINELASTIC: number & { readonly __brand: "gui.EASING_OUTINELASTIC" };
-- const EASING_OUTINEXPO: number & { readonly __brand: "gui.EASING_OUTINEXPO" };
-- const EASING_OUTINQUAD: number & { readonly __brand: "gui.EASING_OUTINQUAD" };
-- const EASING_OUTINQUART: number & { readonly __brand: "gui.EASING_OUTINQUART" };
-- const EASING_OUTINQUINT: number & { readonly __brand: "gui.EASING_OUTINQUINT" };
-- const EASING_OUTINSINE: number & { readonly __brand: "gui.EASING_OUTINSINE" };
-- const EASING_OUTQUAD: number & { readonly __brand: "gui.EASING_OUTQUAD" };
-- const EASING_OUTQUART: number & { readonly __brand: "gui.EASING_OUTQUART" };
-- const EASING_OUTQUINT: number & { readonly __brand: "gui.EASING_OUTQUINT" };
-- const EASING_OUTSINE: number & { readonly __brand: "gui.EASING_OUTSINE" };
-- const KEYBOARD_TYPE_DEFAULT: number & { readonly __brand: "gui.KEYBOARD_TYPE_DEFAULT" };
-- const KEYBOARD_TYPE_EMAIL: number & { readonly __brand: "gui.KEYBOARD_TYPE_EMAIL" };
-- const KEYBOARD_TYPE_NUMBER_PAD: number & { readonly __brand: "gui.KEYBOARD_TYPE_NUMBER_PAD" };
-- const KEYBOARD_TYPE_PASSWORD: number & { readonly __brand: "gui.KEYBOARD_TYPE_PASSWORD" };
-- const PIEBOUNDS_ELLIPSE: number & { readonly __brand: "gui.PIEBOUNDS_ELLIPSE" };
-- const PIEBOUNDS_RECTANGLE: number & { readonly __brand: "gui.PIEBOUNDS_RECTANGLE" };
-- const PIVOT_CENTER: number & { readonly __brand: "gui.PIVOT_CENTER" };
-- const PIVOT_E: number & { readonly __brand: "gui.PIVOT_E" };
-- const PIVOT_N: number & { readonly __brand: "gui.PIVOT_N" };
-- const PIVOT_NE: number & { readonly __brand: "gui.PIVOT_NE" };
-- const PIVOT_NW: number & { readonly __brand: "gui.PIVOT_NW" };
-- const PIVOT_S: number & { readonly __brand: "gui.PIVOT_S" };
-- const PIVOT_SE: number & { readonly __brand: "gui.PIVOT_SE" };
-- const PIVOT_SW: number & { readonly __brand: "gui.PIVOT_SW" };
-- const PIVOT_W: number & { readonly __brand: "gui.PIVOT_W" };
-- const PLAYBACK_LOOP_BACKWARD: number & { readonly __brand: "gui.PLAYBACK_LOOP_BACKWARD" };
-- const PLAYBACK_LOOP_FORWARD: number & { readonly __brand: "gui.PLAYBACK_LOOP_FORWARD" };
-- const PLAYBACK_LOOP_PINGPONG: number & { readonly __brand: "gui.PLAYBACK_LOOP_PINGPONG" };
-- const PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: "gui.PLAYBACK_ONCE_BACKWARD" };
-- const PLAYBACK_ONCE_FORWARD: number & { readonly __brand: "gui.PLAYBACK_ONCE_FORWARD" };
-- const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "gui.PLAYBACK_ONCE_PINGPONG" };
-- const PROP_COLOR: number & { readonly __brand: "gui.PROP_COLOR" };
-- const PROP_EULER: number & { readonly __brand: "gui.PROP_EULER" };
-- const PROP_FILL_ANGLE: number & { readonly __brand: "gui.PROP_FILL_ANGLE" };
-- const PROP_INNER_RADIUS: number & { readonly __brand: "gui.PROP_INNER_RADIUS" };
-- const PROP_LEADING: number & { readonly __brand: "gui.PROP_LEADING" };
-- const PROP_OUTLINE: number & { readonly __brand: "gui.PROP_OUTLINE" };
-- const PROP_POSITION: number & { readonly __brand: "gui.PROP_POSITION" };
-- const PROP_ROTATION: number & { readonly __brand: "gui.PROP_ROTATION" };
-- const PROP_SCALE: number & { readonly __brand: "gui.PROP_SCALE" };
-- const PROP_SHADOW: number & { readonly __brand: "gui.PROP_SHADOW" };
-- const PROP_SIZE: number & { readonly __brand: "gui.PROP_SIZE" };
-- const PROP_SLICE9: number & { readonly __brand: "gui.PROP_SLICE9" };
-- const PROP_TRACKING: number & { readonly __brand: "gui.PROP_TRACKING" };
-- const RESULT_DATA_ERROR: number & { readonly __brand: "gui.RESULT_DATA_ERROR" };
-- const RESULT_OUT_OF_RESOURCES: number & { readonly __brand: "gui.RESULT_OUT_OF_RESOURCES" };
-- const RESULT_TEXTURE_ALREADY_EXISTS: number & { readonly __brand: "gui.RESULT_TEXTURE_ALREADY_EXISTS" };
-- const SAFE_AREA_BOTH: number & { readonly __brand: "gui.SAFE_AREA_BOTH" };
-- const SAFE_AREA_LONG: number & { readonly __brand: "gui.SAFE_AREA_LONG" };
-- const SAFE_AREA_NONE: number & { readonly __brand: "gui.SAFE_AREA_NONE" };
-- const SAFE_AREA_SHORT: number & { readonly __brand: "gui.SAFE_AREA_SHORT" };
-- const SIZE_MODE_AUTO: number & { readonly __brand: "gui.SIZE_MODE_AUTO" };
-- const SIZE_MODE_MANUAL: number & { readonly __brand: "gui.SIZE_MODE_MANUAL" };
-- const TYPE_BOX: number & { readonly __brand: "gui.TYPE_BOX" };
-- const TYPE_CUSTOM: number & { readonly __brand: "gui.TYPE_CUSTOM" };
-- const TYPE_PARTICLEFX: number & { readonly __brand: "gui.TYPE_PARTICLEFX" };
-- const TYPE_PIE: number & { readonly __brand: "gui.TYPE_PIE" };
-- const TYPE_TEXT: number & { readonly __brand: "gui.TYPE_TEXT" };
-- fonts: Hash;
-- material: Hash;
-- materials: Hash;
-- textures: Hash;
+- gui.ADJUST_FIT: number & { readonly __brand: "gui.ADJUST_FIT" }
+- gui.ADJUST_STRETCH: number & { readonly __brand: "gui.ADJUST_STRETCH" }
+- gui.ADJUST_ZOOM: number & { readonly __brand: "gui.ADJUST_ZOOM" }
+- gui.ANCHOR_BOTTOM: number & { readonly __brand: "gui.ANCHOR_BOTTOM" }
+- gui.ANCHOR_LEFT: number & { readonly __brand: "gui.ANCHOR_LEFT" }
+- gui.ANCHOR_NONE: number & { readonly __brand: "gui.ANCHOR_NONE" }
+- gui.ANCHOR_RIGHT: number & { readonly __brand: "gui.ANCHOR_RIGHT" }
+- gui.ANCHOR_TOP: number & { readonly __brand: "gui.ANCHOR_TOP" }
+- gui.BLEND_ADD: number & { readonly __brand: "gui.BLEND_ADD" }
+- gui.BLEND_ADD_ALPHA: number & { readonly __brand: "gui.BLEND_ADD_ALPHA" }
+- gui.BLEND_ALPHA: number & { readonly __brand: "gui.BLEND_ALPHA" }
+- gui.BLEND_MULT: number & { readonly __brand: "gui.BLEND_MULT" }
+- gui.BLEND_SCREEN: number & { readonly __brand: "gui.BLEND_SCREEN" }
+- gui.CLIPPING_MODE_NONE: number & { readonly __brand: "gui.CLIPPING_MODE_NONE" }
+- gui.CLIPPING_MODE_STENCIL: number & { readonly __brand: "gui.CLIPPING_MODE_STENCIL" }
+- gui.EASING_INBACK: number & { readonly __brand: "gui.EASING_INBACK" }
+- gui.EASING_INBOUNCE: number & { readonly __brand: "gui.EASING_INBOUNCE" }
+- gui.EASING_INCIRC: number & { readonly __brand: "gui.EASING_INCIRC" }
+- gui.EASING_INCUBIC: number & { readonly __brand: "gui.EASING_INCUBIC" }
+- gui.EASING_INELASTIC: number & { readonly __brand: "gui.EASING_INELASTIC" }
+- gui.EASING_INEXPO: number & { readonly __brand: "gui.EASING_INEXPO" }
+- gui.EASING_INOUTBACK: number & { readonly __brand: "gui.EASING_INOUTBACK" }
+- gui.EASING_INOUTBOUNCE: number & { readonly __brand: "gui.EASING_INOUTBOUNCE" }
+- gui.EASING_INOUTCIRC: number & { readonly __brand: "gui.EASING_INOUTCIRC" }
+- gui.EASING_INOUTCUBIC: number & { readonly __brand: "gui.EASING_INOUTCUBIC" }
+- gui.EASING_INOUTELASTIC: number & { readonly __brand: "gui.EASING_INOUTELASTIC" }
+- gui.EASING_INOUTEXPO: number & { readonly __brand: "gui.EASING_INOUTEXPO" }
+- gui.EASING_INOUTQUAD: number & { readonly __brand: "gui.EASING_INOUTQUAD" }
+- gui.EASING_INOUTQUART: number & { readonly __brand: "gui.EASING_INOUTQUART" }
+- gui.EASING_INOUTQUINT: number & { readonly __brand: "gui.EASING_INOUTQUINT" }
+- gui.EASING_INOUTSINE: number & { readonly __brand: "gui.EASING_INOUTSINE" }
+- gui.EASING_INQUAD: number & { readonly __brand: "gui.EASING_INQUAD" }
+- gui.EASING_INQUART: number & { readonly __brand: "gui.EASING_INQUART" }
+- gui.EASING_INQUINT: number & { readonly __brand: "gui.EASING_INQUINT" }
+- gui.EASING_INSINE: number & { readonly __brand: "gui.EASING_INSINE" }
+- gui.EASING_LINEAR: number & { readonly __brand: "gui.EASING_LINEAR" }
+- gui.EASING_OUTBACK: number & { readonly __brand: "gui.EASING_OUTBACK" }
+- gui.EASING_OUTBOUNCE: number & { readonly __brand: "gui.EASING_OUTBOUNCE" }
+- gui.EASING_OUTCIRC: number & { readonly __brand: "gui.EASING_OUTCIRC" }
+- gui.EASING_OUTCUBIC: number & { readonly __brand: "gui.EASING_OUTCUBIC" }
+- gui.EASING_OUTELASTIC: number & { readonly __brand: "gui.EASING_OUTELASTIC" }
+- gui.EASING_OUTEXPO: number & { readonly __brand: "gui.EASING_OUTEXPO" }
+- gui.EASING_OUTINBACK: number & { readonly __brand: "gui.EASING_OUTINBACK" }
+- gui.EASING_OUTINBOUNCE: number & { readonly __brand: "gui.EASING_OUTINBOUNCE" }
+- gui.EASING_OUTINCIRC: number & { readonly __brand: "gui.EASING_OUTINCIRC" }
+- gui.EASING_OUTINCUBIC: number & { readonly __brand: "gui.EASING_OUTINCUBIC" }
+- gui.EASING_OUTINELASTIC: number & { readonly __brand: "gui.EASING_OUTINELASTIC" }
+- gui.EASING_OUTINEXPO: number & { readonly __brand: "gui.EASING_OUTINEXPO" }
+- gui.EASING_OUTINQUAD: number & { readonly __brand: "gui.EASING_OUTINQUAD" }
+- gui.EASING_OUTINQUART: number & { readonly __brand: "gui.EASING_OUTINQUART" }
+- gui.EASING_OUTINQUINT: number & { readonly __brand: "gui.EASING_OUTINQUINT" }
+- gui.EASING_OUTINSINE: number & { readonly __brand: "gui.EASING_OUTINSINE" }
+- gui.EASING_OUTQUAD: number & { readonly __brand: "gui.EASING_OUTQUAD" }
+- gui.EASING_OUTQUART: number & { readonly __brand: "gui.EASING_OUTQUART" }
+- gui.EASING_OUTQUINT: number & { readonly __brand: "gui.EASING_OUTQUINT" }
+- gui.EASING_OUTSINE: number & { readonly __brand: "gui.EASING_OUTSINE" }
+- gui.KEYBOARD_TYPE_DEFAULT: number & { readonly __brand: "gui.KEYBOARD_TYPE_DEFAULT" }
+- gui.KEYBOARD_TYPE_EMAIL: number & { readonly __brand: "gui.KEYBOARD_TYPE_EMAIL" }
+- gui.KEYBOARD_TYPE_NUMBER_PAD: number & { readonly __brand: "gui.KEYBOARD_TYPE_NUMBER_PAD" }
+- gui.KEYBOARD_TYPE_PASSWORD: number & { readonly __brand: "gui.KEYBOARD_TYPE_PASSWORD" }
+- gui.PIEBOUNDS_ELLIPSE: number & { readonly __brand: "gui.PIEBOUNDS_ELLIPSE" }
+- gui.PIEBOUNDS_RECTANGLE: number & { readonly __brand: "gui.PIEBOUNDS_RECTANGLE" }
+- gui.PIVOT_CENTER: number & { readonly __brand: "gui.PIVOT_CENTER" }
+- gui.PIVOT_E: number & { readonly __brand: "gui.PIVOT_E" }
+- gui.PIVOT_N: number & { readonly __brand: "gui.PIVOT_N" }
+- gui.PIVOT_NE: number & { readonly __brand: "gui.PIVOT_NE" }
+- gui.PIVOT_NW: number & { readonly __brand: "gui.PIVOT_NW" }
+- gui.PIVOT_S: number & { readonly __brand: "gui.PIVOT_S" }
+- gui.PIVOT_SE: number & { readonly __brand: "gui.PIVOT_SE" }
+- gui.PIVOT_SW: number & { readonly __brand: "gui.PIVOT_SW" }
+- gui.PIVOT_W: number & { readonly __brand: "gui.PIVOT_W" }
+- gui.PLAYBACK_LOOP_BACKWARD: number & { readonly __brand: "gui.PLAYBACK_LOOP_BACKWARD" }
+- gui.PLAYBACK_LOOP_FORWARD: number & { readonly __brand: "gui.PLAYBACK_LOOP_FORWARD" }
+- gui.PLAYBACK_LOOP_PINGPONG: number & { readonly __brand: "gui.PLAYBACK_LOOP_PINGPONG" }
+- gui.PLAYBACK_ONCE_BACKWARD: number & { readonly __brand: "gui.PLAYBACK_ONCE_BACKWARD" }
+- gui.PLAYBACK_ONCE_FORWARD: number & { readonly __brand: "gui.PLAYBACK_ONCE_FORWARD" }
+- gui.PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "gui.PLAYBACK_ONCE_PINGPONG" }
+- gui.PROP_COLOR: number & { readonly __brand: "gui.PROP_COLOR" }
+- gui.PROP_EULER: number & { readonly __brand: "gui.PROP_EULER" }
+- gui.PROP_FILL_ANGLE: number & { readonly __brand: "gui.PROP_FILL_ANGLE" }
+- gui.PROP_INNER_RADIUS: number & { readonly __brand: "gui.PROP_INNER_RADIUS" }
+- gui.PROP_LEADING: number & { readonly __brand: "gui.PROP_LEADING" }
+- gui.PROP_OUTLINE: number & { readonly __brand: "gui.PROP_OUTLINE" }
+- gui.PROP_POSITION: number & { readonly __brand: "gui.PROP_POSITION" }
+- gui.PROP_ROTATION: number & { readonly __brand: "gui.PROP_ROTATION" }
+- gui.PROP_SCALE: number & { readonly __brand: "gui.PROP_SCALE" }
+- gui.PROP_SHADOW: number & { readonly __brand: "gui.PROP_SHADOW" }
+- gui.PROP_SIZE: number & { readonly __brand: "gui.PROP_SIZE" }
+- gui.PROP_SLICE9: number & { readonly __brand: "gui.PROP_SLICE9" }
+- gui.PROP_TRACKING: number & { readonly __brand: "gui.PROP_TRACKING" }
+- gui.RESULT_DATA_ERROR: number & { readonly __brand: "gui.RESULT_DATA_ERROR" }
+- gui.RESULT_OUT_OF_RESOURCES: number & { readonly __brand: "gui.RESULT_OUT_OF_RESOURCES" }
+- gui.RESULT_TEXTURE_ALREADY_EXISTS: number & { readonly __brand: "gui.RESULT_TEXTURE_ALREADY_EXISTS" }
+- gui.SAFE_AREA_BOTH: number & { readonly __brand: "gui.SAFE_AREA_BOTH" }
+- gui.SAFE_AREA_LONG: number & { readonly __brand: "gui.SAFE_AREA_LONG" }
+- gui.SAFE_AREA_NONE: number & { readonly __brand: "gui.SAFE_AREA_NONE" }
+- gui.SAFE_AREA_SHORT: number & { readonly __brand: "gui.SAFE_AREA_SHORT" }
+- gui.SIZE_MODE_AUTO: number & { readonly __brand: "gui.SIZE_MODE_AUTO" }
+- gui.SIZE_MODE_MANUAL: number & { readonly __brand: "gui.SIZE_MODE_MANUAL" }
+- gui.TYPE_BOX: number & { readonly __brand: "gui.TYPE_BOX" }
+- gui.TYPE_CUSTOM: number & { readonly __brand: "gui.TYPE_CUSTOM" }
+- gui.TYPE_PARTICLEFX: number & { readonly __brand: "gui.TYPE_PARTICLEFX" }
+- gui.TYPE_PIE: number & { readonly __brand: "gui.TYPE_PIE" }
+- gui.TYPE_TEXT: number & { readonly __brand: "gui.TYPE_TEXT" }
+- fonts: Hash
+- material: Hash
+- materials: Hash
+- textures: Hash
 
 ### html5
 
@@ -5004,31 +5004,31 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | unknown;
 - function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | unknown;
 - function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | unknown;
-- const TYPE_LUMINANCE: number & { readonly __brand: "image.TYPE_LUMINANCE" };
-- const TYPE_LUMINANCE_ALPHA: number & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" };
-- const TYPE_RGB: number & { readonly __brand: "image.TYPE_RGB" };
-- const TYPE_RGBA: number & { readonly __brand: "image.TYPE_RGBA" };
+- image.TYPE_LUMINANCE: number & { readonly __brand: "image.TYPE_LUMINANCE" }
+- image.TYPE_LUMINANCE_ALPHA: number & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" }
+- image.TYPE_RGB: number & { readonly __brand: "image.TYPE_RGB" }
+- image.TYPE_RGBA: number & { readonly __brand: "image.TYPE_RGBA" }
 
 ### json
 
 - function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;
 - function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string;
-- const _null: unknown;
+- json.null: unknown
 
 ### label
 
 - function get_text(url: string | Hash | Url): string;
 - function set_text(url: string | Hash | Url, text: string | number): void;
-- color: Vector4;
-- font: Hash;
-- leading: number;
-- line_break: boolean;
-- material: Hash;
-- outline: Vector4;
-- scale: number | Vector3;
-- shadow: Vector4;
-- size: Vector3;
-- tracking: number;
+- color: Vector4
+- font: Hash
+- leading: number
+- line_break: boolean
+- material: Hash
+- outline: Vector4
+- scale: number | Vector3
+- shadow: Vector4
+- size: Vector3
+- tracking: number
 
 ### liveupdate
 
@@ -5038,19 +5038,19 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_built_with_excluded_files(): boolean; [since 1.13.0]
 - function remove_mount(name: string): number; [through 1.12.4] [signature transition]
 - function remove_mount(name: string | Hash): number; [since 1.13.0] [signature transition]
-- const LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH" };
-- const LIVEUPDATE_ENGINE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH" };
-- const LIVEUPDATE_FORMAT_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_FORMAT_ERROR" };
-- const LIVEUPDATE_INVAL: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVAL" };
-- const LIVEUPDATE_INVALID_HEADER: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVALID_HEADER" };
-- const LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVALID_RESOURCE" };
-- const LIVEUPDATE_IO_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_IO_ERROR" };
-- const LIVEUPDATE_MEM_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_MEM_ERROR" };
-- const LIVEUPDATE_OK: number & { readonly __brand: "liveupdate.LIVEUPDATE_OK" };
-- const LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SCHEME_MISMATCH" };
-- const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH" };
-- const LIVEUPDATE_UNKNOWN: number & { readonly __brand: "liveupdate.LIVEUPDATE_UNKNOWN" };
-- const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_VERSION_MISMATCH" };
+- liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH" }
+- liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH" }
+- liveupdate.LIVEUPDATE_FORMAT_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_FORMAT_ERROR" }
+- liveupdate.LIVEUPDATE_INVAL: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVAL" }
+- liveupdate.LIVEUPDATE_INVALID_HEADER: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVALID_HEADER" }
+- liveupdate.LIVEUPDATE_INVALID_RESOURCE: number & { readonly __brand: "liveupdate.LIVEUPDATE_INVALID_RESOURCE" }
+- liveupdate.LIVEUPDATE_IO_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_IO_ERROR" }
+- liveupdate.LIVEUPDATE_MEM_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_MEM_ERROR" }
+- liveupdate.LIVEUPDATE_OK: number & { readonly __brand: "liveupdate.LIVEUPDATE_OK" }
+- liveupdate.LIVEUPDATE_SCHEME_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SCHEME_MISMATCH" }
+- liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH" }
+- liveupdate.LIVEUPDATE_UNKNOWN: number & { readonly __brand: "liveupdate.LIVEUPDATE_UNKNOWN" }
+- liveupdate.LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_VERSION_MISMATCH" }
 
 ### material
 
@@ -5075,11 +5075,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0] [deprecated since 1.13.0]
 - function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.0]
 - function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean): void;
-- animation: Hash;
-- cursor: number;
-- material: Hash; [through 1.12.4]
-- playback_rate: number;
-- textureN: Hash;
+- animation: Hash
+- cursor: number
+- material: Hash [through 1.12.4]
+- playback_rate: number
+- textureN: Hash
 
 ### msg
 
@@ -5094,13 +5094,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;
 - function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4): void;
 - function stop(url: string | Hash | Url, options?: { clear?: boolean }): void;
-- const EMITTER_STATE_POSTSPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_POSTSPAWN" };
-- const EMITTER_STATE_PRESPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_PRESPAWN" };
-- const EMITTER_STATE_SLEEPING: number & { readonly __brand: "particlefx.EMITTER_STATE_SLEEPING" };
-- const EMITTER_STATE_SPAWNING: number & { readonly __brand: "particlefx.EMITTER_STATE_SPAWNING" };
-- animation: Hash;
-- image: Hash;
-- material: Hash;
+- particlefx.EMITTER_STATE_POSTSPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_POSTSPAWN" }
+- particlefx.EMITTER_STATE_PRESPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_PRESPAWN" }
+- particlefx.EMITTER_STATE_SLEEPING: number & { readonly __brand: "particlefx.EMITTER_STATE_SLEEPING" }
+- particlefx.EMITTER_STATE_SPAWNING: number & { readonly __brand: "particlefx.EMITTER_STATE_SPAWNING" }
+- animation: Hash
+- image: Hash
+- material: Hash
 
 ### physics
 
@@ -5125,21 +5125,21 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
 - function update_mass(collisionobject: string | Hash | Url, mass: number): void;
 - function wakeup(url: string | Hash | Url): void;
-- const JOINT_TYPE_FIXED: number & { readonly __brand: "physics.JOINT_TYPE_FIXED" };
-- const JOINT_TYPE_HINGE: number & { readonly __brand: "physics.JOINT_TYPE_HINGE" };
-- const JOINT_TYPE_SLIDER: number & { readonly __brand: "physics.JOINT_TYPE_SLIDER" };
-- const JOINT_TYPE_SPRING: number & { readonly __brand: "physics.JOINT_TYPE_SPRING" };
-- const JOINT_TYPE_WELD: number & { readonly __brand: "physics.JOINT_TYPE_WELD" };
-- const JOINT_TYPE_WHEEL: number & { readonly __brand: "physics.JOINT_TYPE_WHEEL" };
-- const SHAPE_TYPE_BOX: number & { readonly __brand: "physics.SHAPE_TYPE_BOX" };
-- const SHAPE_TYPE_CAPSULE: number & { readonly __brand: "physics.SHAPE_TYPE_CAPSULE" };
-- const SHAPE_TYPE_HULL: number & { readonly __brand: "physics.SHAPE_TYPE_HULL" };
-- const SHAPE_TYPE_SPHERE: number & { readonly __brand: "physics.SHAPE_TYPE_SPHERE" };
-- angular_damping: number;
-- angular_velocity: Vector3;
-- linear_damping: number;
-- linear_velocity: Vector3;
-- mass: number;
+- physics.JOINT_TYPE_FIXED: number & { readonly __brand: "physics.JOINT_TYPE_FIXED" }
+- physics.JOINT_TYPE_HINGE: number & { readonly __brand: "physics.JOINT_TYPE_HINGE" }
+- physics.JOINT_TYPE_SLIDER: number & { readonly __brand: "physics.JOINT_TYPE_SLIDER" }
+- physics.JOINT_TYPE_SPRING: number & { readonly __brand: "physics.JOINT_TYPE_SPRING" }
+- physics.JOINT_TYPE_WELD: number & { readonly __brand: "physics.JOINT_TYPE_WELD" }
+- physics.JOINT_TYPE_WHEEL: number & { readonly __brand: "physics.JOINT_TYPE_WHEEL" }
+- physics.SHAPE_TYPE_BOX: number & { readonly __brand: "physics.SHAPE_TYPE_BOX" }
+- physics.SHAPE_TYPE_CAPSULE: number & { readonly __brand: "physics.SHAPE_TYPE_CAPSULE" }
+- physics.SHAPE_TYPE_HULL: number & { readonly __brand: "physics.SHAPE_TYPE_HULL" }
+- physics.SHAPE_TYPE_SPHERE: number & { readonly __brand: "physics.SHAPE_TYPE_SPHERE" }
+- angular_damping: number
+- angular_velocity: Vector3
+- linear_damping: number
+- linear_velocity: Vector3
+- mass: number
 
 ### profiler
 
@@ -5156,12 +5156,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_ui_view_mode(mode: Opaque<"constant">): void;
 - function set_ui_vsync_wait_visible(visible: boolean): void;
 - function view_recorded_frame(frame_index: { distance?: number; frame?: number }): void;
-- const MODE_PAUSE: number & { readonly __brand: "profiler.MODE_PAUSE" };
-- const MODE_RECORD: number & { readonly __brand: "profiler.MODE_RECORD" };
-- const MODE_RUN: number & { readonly __brand: "profiler.MODE_RUN" };
-- const MODE_SHOW_PEAK_FRAME: number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" };
-- const VIEW_MODE_FULL: number & { readonly __brand: "profiler.VIEW_MODE_FULL" };
-- const VIEW_MODE_MINIMIZED: number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" };
+- profiler.MODE_PAUSE: number & { readonly __brand: "profiler.MODE_PAUSE" }
+- profiler.MODE_RECORD: number & { readonly __brand: "profiler.MODE_RECORD" }
+- profiler.MODE_RUN: number & { readonly __brand: "profiler.MODE_RUN" }
+- profiler.MODE_SHOW_PEAK_FRAME: number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" }
+- profiler.VIEW_MODE_FULL: number & { readonly __brand: "profiler.VIEW_MODE_FULL" }
+- profiler.VIEW_MODE_MINIMIZED: number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" }
 
 ### push
 
@@ -5215,15 +5215,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_stencil_op(sfail: number, dpfail: number, dppass: number): void;
 - function set_view(matrix: Matrix4): void;
 - function set_viewport(x: number, y: number, width: number, height: number): void;
-- const FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" };
-- const FRUSTUM_PLANES_SIDES: number & { readonly __brand: "render.FRUSTUM_PLANES_SIDES" };
-- const RENDER_TARGET_DEFAULT: number & { readonly __brand: "render.RENDER_TARGET_DEFAULT" };
-- const SORT_BACK_TO_FRONT: number & { readonly __brand: "render.SORT_BACK_TO_FRONT" };
-- const SORT_FRONT_TO_BACK: number & { readonly __brand: "render.SORT_FRONT_TO_BACK" };
-- const SORT_NONE: number & { readonly __brand: "render.SORT_NONE" };
-- type constant_buffer = Opaque<"constant_buffer">;
-- type render_target = Opaque<"render_target">;
-- type texture = Opaque<"texture">;
+- render.FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" }
+- render.FRUSTUM_PLANES_SIDES: number & { readonly __brand: "render.FRUSTUM_PLANES_SIDES" }
+- render.RENDER_TARGET_DEFAULT: number & { readonly __brand: "render.RENDER_TARGET_DEFAULT" }
+- render.SORT_BACK_TO_FRONT: number & { readonly __brand: "render.SORT_BACK_TO_FRONT" }
+- render.SORT_FRONT_TO_BACK: number & { readonly __brand: "render.SORT_FRONT_TO_BACK" }
+- render.SORT_NONE: number & { readonly __brand: "render.SORT_NONE" }
+- type constant_buffer = Opaque<"constant_buffer">
+- type render_target = Opaque<"render_target">
+- type texture = Opaque<"texture">
 
 ### resource
 
@@ -5325,8 +5325,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - setpeername(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>;
 - setsockname(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>;
 - settimeout(value: number): void;
-- const _SETSIZE: number & { readonly __brand: "socket._SETSIZE" };
-- const _VERSION: number & { readonly __brand: "socket._VERSION" };
+- socket._SETSIZE: number & { readonly __brand: "socket._SETSIZE" }
+- socket._VERSION: number & { readonly __brand: "socket._VERSION" }
 
 ### sound
 
@@ -5343,10 +5343,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_group_gain(group: string | Hash, gain: number): void;
 - function set_pan(url: string | Hash | Url, pan?: number): void;
 - function stop(url: string | Hash | Url, stop_properties?: { play_id?: number }): void;
-- gain: number;
-- pan: number;
-- sound: Hash;
-- speed: number;
+- gain: number
+- pan: number
+- sound: Hash
+- speed: number
 
 ### sprite
 
@@ -5354,15 +5354,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0] [deprecated since 1.13.0]
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
-- animation: Hash;
-- cursor: number;
-- frame_count: Hash;
-- image: Hash;
-- material: Hash;
-- playback_rate: number;
-- scale: Vector3;
-- size: Vector3;
-- slice: Vector4;
+- animation: Hash
+- cursor: number
+- frame_count: Hash
+- image: Hash
+- material: Hash
+- playback_rate: number
+- scale: Vector3
+- size: Vector3
+- slice: Vector4
 
 ### sys
 
@@ -5395,12 +5395,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_render_enable(enable: boolean): void;
 - function set_update_frequency(frequency: number): void;
 - function set_vsync_swap_interval(swap_interval: number): void;
-- const NETWORK_CONNECTED: number & { readonly __brand: "sys.NETWORK_CONNECTED" };
-- const NETWORK_CONNECTED_CELLULAR: number & { readonly __brand: "sys.NETWORK_CONNECTED_CELLULAR" };
-- const NETWORK_DISCONNECTED: number & { readonly __brand: "sys.NETWORK_DISCONNECTED" };
-- const REQUEST_STATUS_ERROR_IO_ERROR: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_IO_ERROR" };
-- const REQUEST_STATUS_ERROR_NOT_FOUND: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_NOT_FOUND" };
-- const REQUEST_STATUS_FINISHED: number & { readonly __brand: "sys.REQUEST_STATUS_FINISHED" };
+- sys.NETWORK_CONNECTED: number & { readonly __brand: "sys.NETWORK_CONNECTED" }
+- sys.NETWORK_CONNECTED_CELLULAR: number & { readonly __brand: "sys.NETWORK_CONNECTED_CELLULAR" }
+- sys.NETWORK_DISCONNECTED: number & { readonly __brand: "sys.NETWORK_DISCONNECTED" }
+- sys.REQUEST_STATUS_ERROR_IO_ERROR: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_IO_ERROR" }
+- sys.REQUEST_STATUS_ERROR_NOT_FOUND: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_NOT_FOUND" }
+- sys.REQUEST_STATUS_FINISHED: number & { readonly __brand: "sys.REQUEST_STATUS_FINISHED" }
 
 ### tilemap
 
@@ -5411,13 +5411,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0] [deprecated since 1.13.0]
 - function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): void;
 - function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
-- const H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" };
-- const ROTATE_180: number & { readonly __brand: "tilemap.ROTATE_180" };
-- const ROTATE_270: number & { readonly __brand: "tilemap.ROTATE_270" };
-- const ROTATE_90: number & { readonly __brand: "tilemap.ROTATE_90" };
-- const V_FLIP: number & { readonly __brand: "tilemap.V_FLIP" };
-- material: Hash;
-- tile_source: Hash;
+- tilemap.H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" }
+- tilemap.ROTATE_180: number & { readonly __brand: "tilemap.ROTATE_180" }
+- tilemap.ROTATE_270: number & { readonly __brand: "tilemap.ROTATE_270" }
+- tilemap.ROTATE_90: number & { readonly __brand: "tilemap.ROTATE_90" }
+- tilemap.V_FLIP: number & { readonly __brand: "tilemap.V_FLIP" }
+- material: Hash
+- tile_source: Hash
 
 ### timer
 
@@ -5425,7 +5425,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;
 - function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | unknown;
 - function trigger(handle: number): boolean;
-- const INVALID_TIMER_HANDLE: number & { readonly __brand: "timer.INVALID_TIMER_HANDLE" };
+- timer.INVALID_TIMER_HANDLE: number & { readonly __brand: "timer.INVALID_TIMER_HANDLE" }
 
 ### types
 
@@ -5518,14 +5518,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_position(x: number, y: number): void;
 - function set_size(width: number, height: number): void;
 - function set_title(title: string): void;
-- const DIMMING_OFF: number & { readonly __brand: "window.DIMMING_OFF" };
-- const DIMMING_ON: number & { readonly __brand: "window.DIMMING_ON" };
-- const DIMMING_UNKNOWN: number & { readonly __brand: "window.DIMMING_UNKNOWN" };
-- const WINDOW_EVENT_DEICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_DEICONIFIED" };
-- const WINDOW_EVENT_FOCUS_GAINED: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_GAINED" };
-- const WINDOW_EVENT_FOCUS_LOST: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_LOST" };
-- const WINDOW_EVENT_ICONFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONFIED" };
-- const WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" };
+- window.DIMMING_OFF: number & { readonly __brand: "window.DIMMING_OFF" }
+- window.DIMMING_ON: number & { readonly __brand: "window.DIMMING_ON" }
+- window.DIMMING_UNKNOWN: number & { readonly __brand: "window.DIMMING_UNKNOWN" }
+- window.WINDOW_EVENT_DEICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_DEICONIFIED" }
+- window.WINDOW_EVENT_FOCUS_GAINED: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_GAINED" }
+- window.WINDOW_EVENT_FOCUS_LOST: number & { readonly __brand: "window.WINDOW_EVENT_FOCUS_LOST" }
+- window.WINDOW_EVENT_ICONFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONFIED" }
+- window.WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" }
 
 ### zlib
 
