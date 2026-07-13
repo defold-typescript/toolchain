@@ -1,3 +1,5 @@
+/** @jsxImportSource hono/jsx */
+// Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
 import { htmlToDocText } from "@defold-typescript/types";
 import type { ApiPage } from "../lib/api-surface";
 import { renderCardSummary } from "../lib/card-summary";
