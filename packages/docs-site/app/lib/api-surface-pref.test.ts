@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   type ApiSurfaceConfig,
   activeSurfaceForPath,
+  currentSurfaceForRoute,
   resolveApiSurfaceRedirect,
   rewriteApiNavForSurface,
   surfacePathForNamespace,
@@ -13,6 +14,10 @@ const CONFIG: ApiSurfaceConfig = {
   defaultVersionId: "defold-1.13.0",
   versionIds: ["defold-1.12.4"],
   combinedNamespaces: ["go", "vmath", "compute"],
+  // 1.12.4 owns these namespaces; global types (`Hash`, `Vector3`) and
+  // default-only libraries are intentionally absent, so they never gain a
+  // version prefix.
+  namespacesByVersion: { "defold-1.12.4": ["go", "model", "base"] },
 };
 
 const BASED: ApiSurfaceConfig = { ...CONFIG, base: "/toolchain" };
@@ -69,6 +74,59 @@ describe("resolveApiSurfaceRedirect — stored preference", () => {
 
   test("an unknown preference is ignored", () => {
     expect(resolveApiSurfaceRedirect("/api/go", "bogus-surface", CONFIG)).toBeNull();
+  });
+});
+
+describe("resolveApiSurfaceRedirect — version-ownership guard (bug-48)", () => {
+  test("a global type the target version does not own stays put (no version-prefixed 404)", () => {
+    expect(resolveApiSurfaceRedirect("/api/Hash", "defold-1.12.4", CONFIG)).toBeNull();
+    expect(resolveApiSurfaceRedirect("/api/Vector3", "defold-1.12.4", CONFIG)).toBeNull();
+  });
+
+  test("a default-only slug (unowned by the version) is not prefixed", () => {
+    expect(
+      resolveApiSurfaceRedirect("/api/orthographic.camera", "defold-1.12.4", CONFIG),
+    ).toBeNull();
+  });
+
+  test("an owned engine namespace still redirects to its version route", () => {
+    expect(resolveApiSurfaceRedirect("/api/model", "defold-1.12.4", CONFIG)).toBe(
+      "/api/defold-1.12.4/model",
+    );
+  });
+
+  test("the combined branch is unaffected by the ownership guard", () => {
+    expect(resolveApiSurfaceRedirect("/api/base", "combined", CONFIG)).toBeNull();
+    expect(resolveApiSurfaceRedirect("/api/go", "combined", CONFIG)).toBe("/api/combined/go");
+  });
+});
+
+describe("currentSurfaceForRoute (bug-48 — selector preservation)", () => {
+  test("an explicit prefix wins over the stored preference", () => {
+    expect(currentSurfaceForRoute("/api/combined/go", "defold-1.12.4", CONFIG)).toBe("combined");
+    expect(currentSurfaceForRoute("/api/defold-1.12.4/model", "combined", CONFIG)).toBe(
+      "defold-1.12.4",
+    );
+  });
+
+  test("an un-prefixed page keeps the stored surface (no flip to default)", () => {
+    expect(currentSurfaceForRoute("/api/base", "combined", CONFIG)).toBe("combined");
+    expect(currentSurfaceForRoute("/api/base", "defold-1.12.4", CONFIG)).toBe("defold-1.12.4");
+  });
+
+  test("a new user (no stored pref) and non-API routes fall back to the default surface id", () => {
+    expect(currentSurfaceForRoute("/api/model", null, CONFIG)).toBe("defold-1.13.0");
+    expect(currentSurfaceForRoute("/guides/intro", "combined", CONFIG)).toBe("defold-1.13.0");
+  });
+
+  test("honors the deploy base prefix", () => {
+    expect(currentSurfaceForRoute("/toolchain/api/base", "combined", BASED)).toBe("combined");
+  });
+
+  test("is serializable — references no module-scope identifiers", () => {
+    const source = currentSurfaceForRoute.toString();
+    expect(source).not.toContain("COMBINED_VERSION_ID");
+    expect(source).toContain('"combined"');
   });
 });
 
