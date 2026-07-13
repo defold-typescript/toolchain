@@ -358,16 +358,32 @@ describe("combinedAuthoritativeSignatures", () => {
 });
 
 describe("combinedAuthoritativeSignatures (members)", () => {
-  const constId: ApiSymbolIdentity = {
+  // Real member identities: constants/variables carry the namespace-qualified
+  // public identity name; properties are bare. The declaration binding a
+  // reserved word forces (`_null`, `_delete`) is an emitter-safe alias that must
+  // never reach a rendered member surface.
+  const brandedConstId: ApiSymbolIdentity = {
     namespace: "b2d.body",
     kind: "CONSTANT",
-    name: "B2_DYNAMIC_BODY",
+    name: "b2d.body.B2_DYNAMIC_BODY",
     signature: "",
   };
-  const varId: ApiSymbolIdentity = {
-    namespace: "demo",
+  const jsonNullId: ApiSymbolIdentity = {
+    namespace: "json",
     kind: "VARIABLE",
-    name: "spin",
+    name: "json.null",
+    signature: "",
+  };
+  const reservedVarId: ApiSymbolIdentity = {
+    namespace: "foo",
+    kind: "VARIABLE",
+    name: "foo.delete",
+    signature: "",
+  };
+  const propId: ApiSymbolIdentity = {
+    namespace: "model",
+    kind: "PROPERTY",
+    name: "material",
     signature: "",
   };
   const typedefId: ApiSymbolIdentity = {
@@ -376,24 +392,42 @@ describe("combinedAuthoritativeSignatures (members)", () => {
     name: "Handle",
     signature: "",
   };
-  const constDecl =
+  const brandedDecl =
     'const B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" };';
   const bodyModule = (): ApiModule =>
-    mod("b2d.body", [], { constants: [{ name: "B2_DYNAMIC_BODY", brief: "", description: "" }] });
-  const demoModule = (): ApiModule =>
-    mod("demo", [], {
-      variables: [{ name: "spin", brief: "", description: "", types: ["number"] }],
-      typedefs: [{ name: "Handle" }],
+    mod("b2d.body", [], {
+      constants: [{ name: "b2d.body.B2_DYNAMIC_BODY", brief: "", description: "" }],
     });
+  const jsonModule = (): ApiModule =>
+    mod("json", [], {
+      variables: [{ name: "json.null", brief: "", description: "", types: ["unknown"] }],
+    });
+  const fooModule = (): ApiModule =>
+    mod("foo", [], {
+      variables: [{ name: "foo.delete", brief: "", description: "", types: ["number"] }],
+    });
+  const modelModule = (): ApiModule =>
+    mod("model", [], {
+      properties: [{ name: "material", brief: "", description: "", types: ["Hash"] }],
+    });
+  const demoModule = (): ApiModule => mod("demo", [], { typedefs: [{ name: "Handle" }] });
   const memberSignatures = (): Record<string, string> => ({
-    [symbolIdentityKey(constId)]: constDecl,
-    [symbolIdentityKey(varId)]: "spin: number;",
+    [symbolIdentityKey(brandedConstId)]: brandedDecl,
+    [symbolIdentityKey(jsonNullId)]: "const _null: unknown;",
+    [symbolIdentityKey(reservedVarId)]: "const _delete: number;",
+    [symbolIdentityKey(propId)]: "material: Hash;",
     [symbolIdentityKey(typedefId)]: 'type Handle = Opaque<number, "Handle">;',
   });
   const memberSurface = buildCombinedSurface({
     surfaces: [
-      { version: "1.13.0", modules: [bodyModule(), demoModule()] },
-      { version: "1.12.4", modules: [bodyModule(), demoModule()] },
+      {
+        version: "1.13.0",
+        modules: [bodyModule(), jsonModule(), fooModule(), modelModule(), demoModule()],
+      },
+      {
+        version: "1.12.4",
+        modules: [bodyModule(), jsonModule(), fooModule(), modelModule(), demoModule()],
+      },
     ],
     signatures: { versions: { "1.13.0": memberSignatures(), "1.12.4": memberSignatures() } },
   });
@@ -403,20 +437,37 @@ describe("combinedAuthoritativeSignatures (members)", () => {
     return ns;
   };
 
-  test("a branded Box2D constant maps to its bare-name authoritative inner form", () => {
+  test("a reserved-name variable maps to its qualified public name, never the _null alias", () => {
+    const map = combinedAuthoritativeSignatures(memberNs("json"));
+    const inner = map.get(symbolIdentityKey(jsonNullId));
+    expect(inner).toBe("json.null: unknown");
+    expect(inner).not.toContain("_null");
+  });
+
+  test("a branded Box2D constant maps to its qualified public name with the authoritative type", () => {
     const map = combinedAuthoritativeSignatures(memberNs("b2d.body"));
-    expect(map.get(symbolIdentityKey(constId))).toBe(
-      'B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }',
+    expect(map.get(symbolIdentityKey(brandedConstId))).toBe(
+      'b2d.body.B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }',
     );
   });
 
-  test("variable (name: T) and typedef (type Name = T) forms both resolve through the map builder", () => {
+  test("a bare-name property yields <publicName>: T; a synthetic reserved variable never leaks _delete", () => {
+    expect(combinedAuthoritativeSignatures(memberNs("model")).get(symbolIdentityKey(propId))).toBe(
+      "material: Hash",
+    );
+    const reserved = combinedAuthoritativeSignatures(memberNs("foo")).get(
+      symbolIdentityKey(reservedVarId),
+    );
+    expect(reserved).toBe("foo.delete: number");
+    expect(reserved).not.toContain("_delete");
+  });
+
+  test("typedef (type Name = T) form still resolves through the map builder", () => {
     const map = combinedAuthoritativeSignatures(memberNs("demo"));
-    expect(map.get(symbolIdentityKey(varId))).toBe("spin: number");
     expect(map.get(symbolIdentityKey(typedefId))).toBe('type Handle = Opaque<number, "Handle">');
   });
 
-  test("function entries keep their qualified inner form after the member extension", () => {
+  test("both function transition arms keep their own distinct qualified inner form", () => {
     const map = combinedAuthoritativeSignatures(nsOf("liveupdate"));
     expect(map.get(symbolIdentityKey(funcId("liveupdate", addMountOld)))).toBe(
       "liveupdate.add_mount(name: string, uri: string): void",

@@ -308,6 +308,18 @@ describe("llms-full ## API serializes the Combined projection", () => {
     expect(api).toContain("### string");
     expect(api).toContain("### Vector3");
   });
+
+  test("emits members as the public identity-name inner form, never the emitter alias", () => {
+    // A reserved-name variable prints its public name, not the `const _null` binding.
+    expect(api).toContain("- json.null: unknown");
+    expect(api).not.toContain("const _null");
+    // A branded constant is qualified with its namespace.
+    expect(api).toContain(
+      '- b2d.body.B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }',
+    );
+    // Function lines keep their full `function …;` declaration verbatim.
+    expect(api).toMatch(/^- function [^\n]*;/m);
+  });
 });
 
 describe("llms.txt ## API engine links come from the Combined surface", () => {

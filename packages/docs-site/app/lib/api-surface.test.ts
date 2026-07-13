@@ -1250,10 +1250,12 @@ describe("apiModuleSymbols / apiModuleMarkdown authoritative signatures", () => 
 
 describe("apiModuleSymbols / apiModuleMarkdown authoritative member signatures", () => {
   const NS = "demo";
+  // Constants carry the namespace-qualified public identity name; properties are
+  // bare. The rendered signature is the map's identity-name inner form.
   const constKey = symbolIdentityKey({
     namespace: NS,
     kind: "CONSTANT",
-    name: "B2_DYNAMIC_BODY",
+    name: "demo.B2_DYNAMIC_BODY",
     signature: "",
   });
   const propKey = symbolIdentityKey({
@@ -1262,7 +1264,7 @@ describe("apiModuleSymbols / apiModuleMarkdown authoritative member signatures",
     name: "material",
     signature: "",
   });
-  const CONST_SIG = 'B2_DYNAMIC_BODY: number & { readonly __brand: "demo.B2_DYNAMIC_BODY" }';
+  const CONST_SIG = 'demo.B2_DYNAMIC_BODY: number & { readonly __brand: "demo.B2_DYNAMIC_BODY" }';
   const PROP_SIG = 'material: Hash & { readonly __brand: "demo.material" }';
 
   function memberPage(withMap: boolean): ApiPage {
@@ -1277,7 +1279,7 @@ describe("apiModuleSymbols / apiModuleMarkdown authoritative member signatures",
         functions: [],
         // `spin` is deliberately absent from the map to prove the fallback path.
         variables: [{ name: "spin", brief: "", description: "", types: ["number"] }],
-        constants: [{ name: "B2_DYNAMIC_BODY", brief: "", description: "" }],
+        constants: [{ name: "demo.B2_DYNAMIC_BODY", brief: "", description: "" }],
         properties: [{ name: "material", types: ["hash"], brief: "", description: "" }],
         typedefs: [],
       },
@@ -1297,7 +1299,7 @@ describe("apiModuleSymbols / apiModuleMarkdown authoritative member signatures",
 
   test("apiModuleSymbols renders authoritative constant/property signatures, not the token form", () => {
     const symbols = apiModuleSymbols(memberPage(true));
-    expect(symbols.find((s) => s.name === "B2_DYNAMIC_BODY")?.signature).toBe(CONST_SIG);
+    expect(symbols.find((s) => s.name === "demo.B2_DYNAMIC_BODY")?.signature).toBe(CONST_SIG);
     expect(symbols.find((s) => s.name === "material")?.signature).toBe(PROP_SIG);
   });
 

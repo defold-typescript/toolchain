@@ -105,9 +105,10 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
   };
 }
 
-// A member inner form is `<bareName>: T` — the declaration's own name kept,
-// keyword and trailing `;` dropped, so its heading slug stays keyed off the same
-// token the token-fallback used, now enriched with the authoritative type.
+// Validates that a keyword/`;`-stripped member declaration is a well-formed
+// `<binding>: T` before its type portion is spliced after the public identity
+// name. The binding token itself is discarded (it may be an emitter-safe alias
+// such as `_null`); only the type after the first `:` is kept.
 const memberInnerFormShape = /^[A-Za-z_$][\w$]*\s*:/;
 
 /**
@@ -117,9 +118,10 @@ const memberInnerFormShape = /^[A-Za-z_$][\w$]*\s*:/;
  * - `FUNCTION` (`function get_constants(…): …;`) drops `function `/`;` and
  *   splices the namespace-qualified `identity.name` before the first `(`, so
  *   both arms of a signature transition re-qualify to their own overload.
- * - `CONSTANT`/`VARIABLE` (`const NAME: T;`, `const _mangled: T;`) drop an
- *   optional binding keyword and `;`, keeping the declaration's bare name.
- * - `PROPERTY` (`name: T;`) drops the trailing `;`.
+ * - `CONSTANT`/`VARIABLE` (`const NAME: T;`, `const _mangled: T;`) and
+ *   `PROPERTY` (`name: T;`) drop an optional binding keyword and `;`, then
+ *   splice the namespace-qualified public `identity.name` before the type
+ *   portion, so an emitter-safe binding alias (`_null`, `_delete`) never leaks.
  * - `TYPEDEF` (`type Name = T;`) drops the trailing `;` (dormant: pure aliases
  *   are not rendered as page symbols today, so nothing displays this yet).
  *
@@ -140,7 +142,8 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
     case "VARIABLE":
     case "PROPERTY": {
       const body = decl.replace(/^(?:const|let|var)\s+/, "").replace(/;\s*$/, "");
-      return memberInnerFormShape.test(body) ? body : "";
+      if (!memberInnerFormShape.test(body)) return "";
+      return `${identity.name}: ${body.slice(body.indexOf(":") + 1).trim()}`;
     }
     case "TYPEDEF": {
       if (!decl.startsWith("type ")) return "";
@@ -155,9 +158,10 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
  * The exact-identity ({@link symbolIdentityKey}) to inner-render-form signature
  * map a Combined `ApiPage` carries. Keyed by the entry's identity so two arms of
  * a signature transition resolve to their own distinct authoritative signature.
- * Every kind is emitted (functions qualified, members bare); an entry whose
- * declaration does not match its kind's expected shape is skipped, so a lookup
- * miss falls the render layer back to the token-derived signature.
+ * Every kind is emitted with its namespace-qualified public identity name
+ * (functions and members alike); an entry whose declaration does not match its
+ * kind's expected shape is skipped, so a lookup miss falls the render layer back
+ * to the token-derived signature.
  */
 export function combinedAuthoritativeSignatures(
   ns: CombinedNamespace,
@@ -168,6 +172,22 @@ export function combinedAuthoritativeSignatures(
     if (inner) map.set(symbolIdentityKey(entry.identity), inner);
   }
   return map;
+}
+
+/**
+ * The llms-full line body for a Combined entry, kind-aware so the agent contract
+ * never carries an emitter-safe binding alias. A `FUNCTION` keeps its full
+ * authoritative declaration (`function …;`) verbatim; a member (constant,
+ * variable, property) emits the shared public inner form (`json.null: unknown`,
+ * not `const _null`). Falls back to the raw declaration only for a member whose
+ * declaration does not match its expected shape.
+ */
+export function llmsSignatureForEntry(entry: CombinedEntry): string {
+  if (entry.identity.kind === "FUNCTION") return entry.authoritativeSignature;
+  return (
+    innerRenderSignature(entry.identity, entry.authoritativeSignature) ||
+    entry.authoritativeSignature
+  );
 }
 
 /** Every Combined namespace projected as an `ApiPage`, in projection order. */
