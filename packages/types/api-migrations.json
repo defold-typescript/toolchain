@@ -1,3 +1,31 @@
 {
-  "migrations": []
+  "migrations": [
+    {
+      "identity": {
+        "namespace": "model",
+        "kind": "FUNCTION",
+        "name": "model.reset_constant",
+        "signature": ""
+      },
+      "deprecatedSince": "1.13.0"
+    },
+    {
+      "identity": {
+        "namespace": "sprite",
+        "kind": "FUNCTION",
+        "name": "sprite.reset_constant",
+        "signature": ""
+      },
+      "deprecatedSince": "1.13.0"
+    },
+    {
+      "identity": {
+        "namespace": "tilemap",
+        "kind": "FUNCTION",
+        "name": "tilemap.reset_constant",
+        "signature": ""
+      },
+      "deprecatedSince": "1.13.0"
+    }
+  ]
 }

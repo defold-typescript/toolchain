@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   type ApiAvailability,
   type ApiMigrationCatalog,
@@ -407,5 +409,58 @@ describe("validateAvailability", () => {
       knownIdentities: known,
     });
     expect(dup.some((e) => /backend/i.test(e))).toBe(true);
+  });
+});
+
+describe("committed deprecation catalog (1.12.4 / 1.13.0 audit outcome)", () => {
+  const catalog = JSON.parse(
+    readFileSync(join(import.meta.dir, "..", "api-migrations.json"), "utf8"),
+  ) as ApiMigrationCatalog;
+
+  test("holds only the verified reset_constant deprecations (deprecatedSince 1.13.0, no replacement)", () => {
+    const names = catalog.migrations.map((m) => m.identity.name).sort();
+    expect(names).toEqual([
+      "model.reset_constant",
+      "sprite.reset_constant",
+      "tilemap.reset_constant",
+    ]);
+    for (const migration of catalog.migrations) {
+      expect(migration.identity.kind).toBe("FUNCTION");
+      expect(migration.deprecatedSince).toBe("1.13.0");
+      // The 1.13.0 ref-doc marks these DEPRECATED! but names no replacement API,
+      // so the catalog carries deprecatedSince only (no fabricated `replacement`).
+      expect(migration.replacement).toBeUndefined();
+    }
+  });
+
+  test("a catalog entry joins only its exact identity through applyMigrationOverlay", () => {
+    const target = fn("model.reset_constant", [
+      param("url", ["string"]),
+      param("constant", ["hash"]),
+    ]);
+    const sibling = fn("model.set_mesh_enabled", [param("url", ["string"])]);
+    const universe = collectSymbolIdentities([moduleOf("model", { functions: [target, sibling] })]);
+    const merged = applyMigrationOverlay({
+      derived: [],
+      catalog: {
+        migrations: [
+          {
+            identity: {
+              namespace: "model",
+              kind: "FUNCTION",
+              name: "model.reset_constant",
+              signature: "",
+            },
+            deprecatedSince: "1.13.0",
+          },
+        ],
+      },
+      universe,
+      versions: ["1.13.0", "1.12.4"],
+    });
+    const deprecated = merged.filter((record) => record.deprecatedSince !== undefined);
+    expect(deprecated).toHaveLength(1);
+    expect(deprecated[0]?.identity.name).toBe("model.reset_constant");
+    expect(deprecated[0]?.deprecatedSince).toBe("1.13.0");
   });
 });

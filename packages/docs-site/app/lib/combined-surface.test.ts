@@ -448,6 +448,37 @@ describe("combinedAuthoritativeSignatures (committed artifacts)", () => {
   });
 });
 
+describe("verified deprecations on the committed Combined surface", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const real = (name: string) => {
+    const found = surface.namespaces.find((n) => n.namespace === name);
+    if (!found) throw new Error(`namespace ${name} missing from combined surface`);
+    return found;
+  };
+
+  test("a reset_constant carries deprecatedSince and the [deprecated since 1.13.0] tag", () => {
+    const entry = real("model").entries.find((e) => e.identity.name === "model.reset_constant");
+    expect(entry).toBeDefined();
+    expect((entry as NonNullable<typeof entry>).deprecatedSince).toBe("1.13.0");
+    expect(compactAvailability(entry as NonNullable<typeof entry>)).toContain(
+      "[deprecated since 1.13.0]",
+    );
+  });
+
+  test("a changed symbol (add_mount) and a removed symbol (model.material) are never deprecated", () => {
+    const arms = real("liveupdate").entries.filter(
+      (e) => e.identity.name === "liveupdate.add_mount",
+    );
+    expect(arms.length).toBeGreaterThan(0);
+    for (const arm of arms) {
+      expect(arm.transition).toBe(true);
+      expect(arm.deprecatedSince).toBeUndefined();
+    }
+    const material = real("model").entries.find((e) => e.identity.name === "model.material");
+    expect(material?.deprecatedSince).toBeUndefined();
+  });
+});
+
 describe("namespaceBadgeCounts (committed artifacts)", () => {
   const surface = loadCombinedSurface(REAL_TYPES_DIR);
   const real = (name: string) => {
