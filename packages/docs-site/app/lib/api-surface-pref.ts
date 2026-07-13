@@ -12,12 +12,15 @@ export const API_SURFACE_STORAGE_KEY = "apiSurface";
 // root, e.g. "/toolchain" on a project site); `defaultVersionId` is the version
 // served at the un-prefixed `/api`; `versionIds` are the non-default versions that
 // own an `/api/<id>/…` prefix; `combinedNamespaces` are the engine namespaces with
-// a `/api/combined/<ns>` page.
+// a `/api/combined/<ns>` page; `namespacesByVersion` lists the namespaces each
+// version actually generates a page for, so an un-prefixed version-independent page
+// (a global type, a default-only library) is never rewritten to a 404 route.
 export interface ApiSurfaceConfig {
   readonly base: string;
   readonly defaultVersionId: string;
   readonly versionIds: readonly string[];
   readonly combinedNamespaces: readonly string[];
+  readonly namespacesByVersion: Record<string, readonly string[]>;
 }
 
 /**
@@ -57,6 +60,9 @@ export function resolveApiSurfaceRedirect(
     if (namespace && config.combinedNamespaces.indexOf(namespace) < 0) return null;
     target = `/api/combined${namespace ? `/${namespace}` : ""}`;
   } else if (config.versionIds.indexOf(want) >= 0) {
+    // A version-independent page (global type, default-only library) has no
+    // `/api/<version>/<ns>` route, so prefixing it would 404; leave it put.
+    if (namespace && (config.namespacesByVersion[want] ?? []).indexOf(namespace) < 0) return null;
     target = `/api/${want}${namespace ? `/${namespace}` : ""}`;
   } else {
     return null;
@@ -80,6 +86,35 @@ export function activeSurfaceForPath(pathname: string, config: ApiSurfaceConfig)
   if (first === COMBINED_VERSION_ID) return COMBINED_VERSION_ID;
   if (first && config.versionIds.includes(first)) return first;
   return config.defaultVersionId;
+}
+
+/**
+ * The surface the version selector should mark current for a route, honoring the
+ * client-persisted preference the server cannot read. An explicit `/api/combined/…`
+ * or `/api/<version>/…` prefix wins outright; an un-prefixed API page keeps the
+ * stored surface (so browsing a version-independent page from Combined does not
+ * flip the selector back to the default version); a new user (no stored pref) and
+ * any non-API route fall back to the default surface id.
+ *
+ * SELF-CONTAINED ON PURPOSE: like {@link resolveApiSurfaceRedirect}, this inlines
+ * the `combined` literal and its own path parsing so the renderer can serialize it
+ * with `.toString()` into the pre-paint surface-init script. Keep it dependency-free.
+ */
+export function currentSurfaceForRoute(
+  pathname: string,
+  storedPref: string | null,
+  config: ApiSurfaceConfig,
+): string {
+  const base = config.base;
+  let path = pathname;
+  if (base && path.indexOf(base) === 0) path = path.slice(base.length);
+  if (path.charAt(0) !== "/") path = `/${path}`;
+  const seg = path.replace(/\/+$/, "").split("/").filter(Boolean);
+  if (seg[0] !== "api") return config.defaultVersionId;
+  const first = seg[1] ?? "";
+  if (first === "combined") return "combined";
+  if (config.versionIds.indexOf(first) >= 0) return first;
+  return storedPref || config.defaultVersionId;
 }
 
 /** The (base-less) route for a namespace on a surface, matching the version switcher. */
