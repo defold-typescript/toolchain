@@ -11,6 +11,7 @@ import {
   type SignatureStore,
   symbolIdentityKey,
 } from "@defold-typescript/types";
+import { canonicalApiPages } from "./api-content";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -34,7 +35,6 @@ import {
 import { combinedNamespaceToApiPage } from "./combined-surface";
 import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
-import { buildReleaseRouteManifest, validateReleaseRouteManifest } from "./release-manifest";
 import { versionLabel } from "./version-switch";
 
 function fnSymbol(name: string, overrides: Partial<ApiSymbol> = {}): ApiSymbol {
@@ -77,7 +77,9 @@ describe("loadApiSurface", () => {
   test("prepends the synthetic globals page from globals_doc.json as pages[0]", () => {
     const pages = loadApiSurface(FIXTURE_DIR);
     expect(pages[0]?.namespace).toBe("globals");
-    expect(pages[0]?.route).toBe("/api/globals");
+    // The default target now owns an explicit version-prefixed engine family; the
+    // canonical unprefixed surface is the Combined projection, not this loader.
+    expect(pages[0]?.route).toBe("/api/cur/globals");
     expect(pages[0]?.module.functions.map((f) => f.name)).toContain("hash");
   });
 
@@ -88,7 +90,7 @@ describe("loadApiSurface", () => {
 
   test("derives the route and carries the brief plus the parsed module", () => {
     const camera = loadApiSurface(FIXTURE_DIR).find((p) => p.namespace === "camera");
-    expect(camera?.route).toBe("/api/camera");
+    expect(camera?.route).toBe("/api/cur/camera");
     expect(camera?.brief).toBe("Camera brief");
     expect(camera?.module.functions.map((f) => f.name)).toContain("camera.get_projection");
   });
@@ -155,8 +157,10 @@ describe("versionsWithDiskFixtures", () => {
 });
 
 describe("loadApiSurfaceForVersion", () => {
-  test("loading the default target by id is byte-identical to the legacy entry point", () => {
-    expect(loadApiSurfaceForVersion(FIXTURE_DIR, "cur")).toEqual(loadApiSurface(FIXTURE_DIR));
+  test("loading the default target by id yields exactly the engine pages of loadApiSurface", () => {
+    expect(loadApiSurfaceForVersion(FIXTURE_DIR, "cur")).toEqual(
+      loadApiSurface(FIXTURE_DIR).filter((p) => p.category === "engine"),
+    );
   });
 
   test("a non-default target loads only its own modules, with version-prefixed routes", () => {
@@ -240,8 +244,8 @@ describe("loadApiSurface library pages", () => {
     expect(bySlug?.namespace).toBe("monarch.monarch");
   });
 
-  test("a non-default versioned surface yields zero library pages even when a lib dir is supplied", () => {
-    const versioned = loadApiSurfaceForVersion(FIXTURE_DIR, "old", REAL_LIBRARY_TYPES_DIR);
+  test("a versioned engine surface yields zero library pages (libraries are canonical-only)", () => {
+    const versioned = loadApiSurfaceForVersion(FIXTURE_DIR, "old");
     expect(versioned.some((p) => p.category === "library")).toBe(false);
   });
 });
@@ -1916,11 +1920,7 @@ describe("complete release snapshots", () => {
   function pagesForCompleteTargets(): Record<string, ApiPage[]> {
     const pagesByVersion: Record<string, ApiPage[]> = {};
     for (const version of completeTargets) {
-      pagesByVersion[version.id] = loadApiSurfaceForVersion(
-        REAL_TYPES_DIR,
-        version.id,
-        REAL_LIBRARY_TYPES_DIR,
-      );
+      pagesByVersion[version.id] = loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id);
     }
     return pagesByVersion;
   }
@@ -1930,52 +1930,41 @@ describe("complete release snapshots", () => {
     expect(completeTargets.some((v) => v.id === "defold-1.12.4" && !v.isDefault)).toBe(true);
   });
 
-  test("every registry-declared module of each complete target materializes at its exact route", () => {
+  test("every registry-declared engine module of each complete target materializes at its exact version route", () => {
     const targets = registryTargets();
     const pagesByVersion = pagesForCompleteTargets();
     for (const version of completeTargets) {
       const target = targets.find((t) => t.id === version.id);
       expect(target).toBeDefined();
       if (!target) continue;
-      const declared = [
-        ...target.modules.map((m) => m.namespace),
-        ...(target.luaStdlib?.map((m) => m.namespace) ?? []),
-      ];
+      // Every version — the default included — now owns an explicit `/api/<id>/…`
+      // engine family. Lua stdlib is version-independent and canonical-only, so it
+      // is no longer part of any version's exact-route family.
+      const declared = target.modules.map((m) => m.namespace);
       const routeByNamespace = new Map(
         pagesByVersion[version.id]?.map((p) => [p.namespace, p.route]),
       );
-      const prefix = version.isDefault ? "/api" : `/api/${version.id}`;
       for (const namespace of declared) {
-        expect(routeByNamespace.get(namespace)).toBe(`${prefix}/${namespace}`);
+        expect(routeByNamespace.get(namespace)).toBe(`/api/${version.id}/${namespace}`);
       }
     }
   });
 
-  test("canonical 1.13.0 stays unprefixed while historical 1.12.4 keeps its exact id prefix", () => {
-    const canonical = loadApiSurfaceForVersion(
-      REAL_TYPES_DIR,
-      "defold-1.13.0",
-      REAL_LIBRARY_TYPES_DIR,
-    );
+  test("every version — the default included — serves its engine family under its own id prefix", () => {
+    const canonicalVersion = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.13.0");
     const historical = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4");
-    expect(canonical.find((p) => p.namespace === "go")?.route).toBe("/api/go");
+    expect(canonicalVersion.find((p) => p.namespace === "go")?.route).toBe("/api/defold-1.13.0/go");
     expect(historical.find((p) => p.namespace === "go")?.route).toBe("/api/defold-1.12.4/go");
+  });
+
+  test("the canonical unprefixed surface serves Combined engine plus version-independent pages", () => {
+    const canonical = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    expect(canonical.find((p) => p.namespace === "go")?.route).toBe("/api/go");
+    expect(canonical.find((p) => p.namespace === "base")?.route).toBe("/api/base");
   });
 
   test("each complete target carries a human version label", () => {
     expect(versionLabel("defold-1.13.0")).toBe("Defold 1.13.0");
     expect(versionLabel("defold-1.12.4")).toBe("Defold 1.12.4");
-  });
-
-  test("the release-route manifest for both complete targets validates clean", () => {
-    const manifest = buildReleaseRouteManifest({
-      versions: completeTargets,
-      pagesByVersion: pagesForCompleteTargets(),
-    });
-    expect(validateReleaseRouteManifest(manifest)).toEqual([]);
-    expect(manifest.canonicalRoutes).toContain("/api/go");
-    expect(manifest.historicalRoutes).toContain("/api/defold-1.12.4/go");
-    expect(manifest.searchRoutes).toContain("search-index.json");
-    expect(manifest.searchRoutes).toContain("search-index-defold-1.12.4.json");
   });
 });

@@ -6,6 +6,8 @@ import {
   libraryModuleDirs,
   libraryOwnerByDir,
   loadApiSurface,
+  loadApiSurfaceForVersion,
+  loadVersionIndependentPages,
 } from "./api-surface-loader";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
@@ -62,6 +64,44 @@ describe("libraryDisplayName", () => {
   test("missing owner falls back to the dir with no owner prefix", () => {
     expect(libraryDisplayName("orphan.orphan", "orphan", "", 1)).toBe("orphan");
     expect(libraryDisplayName("multi.child", "multi", "", 2)).toBe("multi · child");
+  });
+});
+
+describe("loadApiSurfaceForVersion — engine + globals only, always prefixed", () => {
+  test("the default target's engine pages take the version prefix, with no version-independent page", () => {
+    const pages = loadApiSurfaceForVersion(ENGINE_FIXTURE_DIR, "cur");
+    for (const page of pages) {
+      expect(page.category).toBe("engine");
+      expect(page.route).toBe(`/api/cur/${page.namespace}`);
+    }
+    expect(pages.some((p) => p.category === "lua-stdlib")).toBe(false);
+    expect(pages.some((p) => p.category === "global-type")).toBe(false);
+    expect(pages.some((p) => p.category === "library")).toBe(false);
+    expect(pages.some((p) => p.namespace === "camera")).toBe(true);
+    expect(pages.some((p) => p.namespace === "globals")).toBe(true);
+  });
+
+  test("a non-default target emits no lua-stdlib copy", () => {
+    const pages = loadApiSurfaceForVersion(ENGINE_FIXTURE_DIR, "old");
+    expect(pages.some((p) => p.category === "lua-stdlib")).toBe(false);
+    expect(pages.find((p) => p.namespace === "wmath")?.route).toBe("/api/old/wmath");
+  });
+});
+
+describe("loadVersionIndependentPages", () => {
+  test("emits the default target's lua-stdlib at canonical /api/<ns>, no engine page", () => {
+    const pages = loadVersionIndependentPages(ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR);
+    const lua = pages.filter((p) => p.category === "lua-stdlib");
+    expect(lua.map((p) => p.namespace).sort()).toEqual(["base", "bit"]);
+    expect(lua.find((p) => p.namespace === "base")?.route).toBe("/api/base");
+    expect(pages.some((p) => p.category === "engine")).toBe(false);
+  });
+
+  test("includes the vendored library pages at canonical /api/<ns>", () => {
+    const pages = loadVersionIndependentPages(ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR);
+    const library = pages.filter((p) => p.category === "library");
+    expect(library.length).toBeGreaterThan(0);
+    for (const page of library) expect(page.route).toBe(`/api/${page.namespace}`);
   });
 });
 

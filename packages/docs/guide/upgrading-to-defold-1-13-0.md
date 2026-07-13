@@ -43,8 +43,10 @@ later `build`, `watch`, and `resolve` agrees:
 
 These Lua APIs still exist on the 1.13.0 surface — one or more parameter types
 changed rather than the symbol being removed, so a call written against 1.12.4
-keeps compiling. The Combined API surface (`/api/combined`) renders both
-signatures adjacently; the per-version pages show each in isolation.
+keeps compiling. The Combined API surface — now canonical at the unprefixed `/api`
+(the old `/api/combined` links redirect there) — renders both signatures
+adjacently; the exact-version pages (`/api/defold-1.13.0/…`, `/api/defold-1.12.4/…`)
+show each in isolation.
 
 ### liveupdate.add_mount
 

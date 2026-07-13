@@ -23,9 +23,9 @@ const namespacesByVersion = {
 };
 
 describe("buildVersionSwitcher", () => {
-  test("uses the default version on unprefixed API pages", () => {
+  test("no concrete version is current on an unprefixed (Combined) page; every version route is prefixed", () => {
     expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/camera" })).toEqual([
-      { id: "cur", label: "cur", route: "/api/camera", isCurrent: true },
+      { id: "cur", label: "cur", route: "/api/cur/camera", isCurrent: false },
       { id: "old", label: "old", route: "/api/old", isCurrent: false },
     ]);
   });
@@ -34,28 +34,28 @@ describe("buildVersionSwitcher", () => {
     expect(
       buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/old/wmath" }),
     ).toEqual([
-      { id: "cur", label: "cur", route: "/api", isCurrent: false },
+      { id: "cur", label: "cur", route: "/api/cur", isCurrent: false },
       { id: "old", label: "old", route: "/api/old/wmath", isCurrent: true },
     ]);
   });
 
-  test("preserves a shared namespace when switching versions", () => {
+  test("preserves a shared namespace when switching versions (both prefixed)", () => {
     expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/shared" })).toEqual([
-      { id: "cur", label: "cur", route: "/api/shared", isCurrent: true },
+      { id: "cur", label: "cur", route: "/api/cur/shared", isCurrent: false },
       { id: "old", label: "old", route: "/api/old/shared", isCurrent: false },
     ]);
   });
 
-  test("links indexes from the default index", () => {
+  test("links each version's own prefixed index from the canonical index", () => {
     expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/api" })).toEqual([
-      { id: "cur", label: "cur", route: "/api", isCurrent: true },
+      { id: "cur", label: "cur", route: "/api/cur", isCurrent: false },
       { id: "old", label: "old", route: "/api/old", isCurrent: false },
     ]);
   });
 
-  test("links each version's API index from a non-API route", () => {
+  test("links each version's prefixed index from a non-API route", () => {
     expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/guide/x" })).toEqual([
-      { id: "cur", label: "cur", route: "/api", isCurrent: true },
+      { id: "cur", label: "cur", route: "/api/cur", isCurrent: false },
       { id: "old", label: "old", route: "/api/old", isCurrent: false },
     ]);
   });
@@ -67,13 +67,14 @@ describe("buildVersionSwitcher", () => {
       route: "/api/go",
     });
     expect(entries.map((e) => e.label)).toEqual(["Defold 1.13.0", "Defold 1.12.4"]);
+    expect(entries.map((e) => e.route)).toEqual(["/api/defold-1.13.0/go", "/api/defold-1.12.4/go"]);
   });
 });
 
 describe("buildVersionSwitcher combined option", () => {
   const combinedNamespaces = ["camera", "shared", "wmath"];
 
-  test("appends a Combined entry after the concrete versions, preserving the namespace", () => {
+  test("appends a Combined entry, current on an unprefixed page, routed to the canonical /api/<ns>", () => {
     expect(
       buildVersionSwitcher({
         versions,
@@ -82,40 +83,51 @@ describe("buildVersionSwitcher combined option", () => {
         route: "/api/camera",
       }),
     ).toEqual([
-      { id: "cur", label: "cur", route: "/api/camera", isCurrent: true },
+      { id: "cur", label: "cur", route: "/api/cur/camera", isCurrent: false },
       { id: "old", label: "old", route: "/api/old", isCurrent: false },
-      { id: "combined", label: "Combined", route: "/api/combined/camera", isCurrent: false },
+      { id: "combined", label: "Combined", route: "/api/camera", isCurrent: true },
     ]);
   });
 
-  test("marks Combined current on a combined route and preserves the namespace across versions", () => {
+  test("preserves the namespace across versions while Combined stays canonical", () => {
     expect(
       buildVersionSwitcher({
         versions,
         namespacesByVersion,
         combinedNamespaces,
-        route: "/api/combined/shared",
+        route: "/api/shared",
       }),
     ).toEqual([
-      { id: "cur", label: "cur", route: "/api/shared", isCurrent: false },
+      { id: "cur", label: "cur", route: "/api/cur/shared", isCurrent: false },
       { id: "old", label: "old", route: "/api/old/shared", isCurrent: false },
-      { id: "combined", label: "Combined", route: "/api/combined/shared", isCurrent: true },
+      { id: "combined", label: "Combined", route: "/api/shared", isCurrent: true },
     ]);
   });
 
-  test("drops to /api/combined when the namespace is unknown to the combined surface", () => {
+  test("drops to the /api index when the namespace is unknown to the combined surface", () => {
     const entries = buildVersionSwitcher({
       versions,
       namespacesByVersion,
       combinedNamespaces,
-      route: "/api/combined",
+      route: "/api",
     });
     expect(entries.find((e) => e.id === "combined")).toEqual({
       id: "combined",
       label: "Combined",
-      route: "/api/combined",
+      route: "/api",
       isCurrent: true,
     });
+  });
+
+  test("marks the concrete version current on its prefixed route, not Combined", () => {
+    const entries = buildVersionSwitcher({
+      versions,
+      namespacesByVersion,
+      combinedNamespaces,
+      route: "/api/old/wmath",
+    });
+    expect(entries.find((e) => e.isCurrent)?.id).toBe("old");
+    expect(entries.find((e) => e.id === "combined")?.isCurrent).toBe(false);
   });
 
   test("omits the Combined entry when no combinedNamespaces are given", () => {

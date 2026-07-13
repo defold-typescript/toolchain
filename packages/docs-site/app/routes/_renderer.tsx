@@ -10,9 +10,9 @@ import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import {
-  apiPages,
   apiPagesForVersion,
   apiVersions,
+  canonicalApiPages,
   combinedNamespaces,
   libraryDirs,
   libraryOwners,
@@ -22,6 +22,7 @@ import {
   type ApiSurfaceConfig,
   activeSurfaceForPath,
   currentSurfaceForRoute,
+  reconcileSurfaceSelector,
   resolveApiSurfaceRedirect,
   rewriteApiNavForSurface,
 } from "../lib/api-surface-pref";
@@ -228,7 +229,10 @@ interface RendererProps {
 
 export default jsxRenderer(({ children, title, headings, contentClass }: RendererProps, c) => {
   const path = c.req.path;
-  const allApiPages = apiPages();
+  // The canonical un-prefixed surface (Combined engine + version-independent) is
+  // what the sidebar nav and index render; each version's prefixed family is
+  // reached from the selector.
+  const allApiPages = canonicalApiPages();
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
 
   // Vendored library pages grouped by creator and upstream `dir` for the
@@ -251,14 +255,13 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     libraries,
   });
   const versions = apiVersions();
-  const versionIds = versions.filter((version) => !version.isDefault).map((version) => version.id);
+  // Every tracked version — the default included — now owns a prefixed family.
+  const versionIds = versions.map((version) => version.id);
   const defaultVersion = versions.find((version) => version.isDefault) ?? versions[0];
   const namespacesByVersion = Object.fromEntries(
     versions.map((version) => [
       version.id,
-      (version.isDefault ? allApiPages : apiPagesForVersion(version.id)).map(
-        (page) => page.namespace,
-      ),
+      apiPagesForVersion(version.id).map((page) => page.namespace),
     ]),
   );
   const combinedNs = combinedNamespaces();
@@ -277,7 +280,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const activeSurface = activeSurfaceForPath(path, surfaceConfig);
   const surfaceNamespaces =
     activeSurface === COMBINED_VERSION_ID ? combinedNs : (namespacesByVersion[activeSurface] ?? []);
-  const surfaceNav = rewriteApiNavForSurface(nav, activeSurface, surfaceNamespaces, surfaceConfig);
+  const surfaceNav = rewriteApiNavForSurface(nav, activeSurface, surfaceNamespaces);
 
   const activeId = activeCategoryId(path, surfaceNav) ?? surfaceNav[0]?.id;
   const activeCategory = surfaceNav.find((category) => category.id === activeId) ?? surfaceNav[0];
@@ -299,12 +302,13 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const surfaceKey = JSON.stringify(API_SURFACE_STORAGE_KEY);
   const surfaceConfigJson = JSON.stringify(surfaceConfig);
   // Pre-paint: (1) redirect an un-prefixed API page to the persisted surface,
-  // (2) record surface-selector clicks, (3) reconcile the selector highlight to
-  // the persisted surface via `currentSurfaceForRoute` so a version-independent
-  // page keeps the user's Combined/version choice current instead of flipping to
-  // the route-derived default. The options live inside a closed `<details>`, so
-  // the highlight move is unseen until the user opens the dropdown.
-  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${surfaceKey},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var g=${currentSurfaceForRoute.toString()};var apply=function(){var s;try{s=g(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});}catch(_){return;}var opts=document.querySelectorAll('[data-api-surface]');for(var i=0;i<opts.length;i++){var o=opts[i],on=o.getAttribute('data-api-surface')===s,dd=o.querySelector('[data-surface-dot]');if(on){o.setAttribute('aria-current','page');o.classList.add('bg-accent-soft','text-accent');if(!dd){var d=document.createElement('span');d.setAttribute('aria-hidden','true');d.setAttribute('data-surface-dot','');d.className='h-1.5 w-1.5 shrink-0 rounded-full bg-current';o.appendChild(d);}}else{o.removeAttribute('aria-current');o.classList.remove('bg-accent-soft','text-accent');if(dd&&dd.parentNode){dd.parentNode.removeChild(dd);}}}};if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}}catch(e){}})();`;
+  // (2) record surface-selector clicks, (3) reconcile the selector highlight AND
+  // its summary label to the persisted surface via `currentSurfaceForRoute` +
+  // `reconcileSurfaceSelector`, so a version-independent page keeps the user's
+  // Combined/version choice current instead of flipping to the route-derived
+  // default. The options live inside a closed `<details>`, so the move is unseen
+  // until the user opens the dropdown.
+  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${surfaceKey},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var g=${currentSurfaceForRoute.toString()};var r=${reconcileSurfaceSelector.toString()};var apply=function(){var s;try{s=g(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});}catch(_){return;}try{r(document,s);}catch(_){}};if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}}catch(e){}})();`;
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();
@@ -454,7 +458,7 @@ function VersionSelector({
   return (
     <details class="group relative">
       <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text [&::-webkit-details-marker]:hidden">
-        <span>{currentLabel}</span>
+        <span data-surface-summary="">{currentLabel}</span>
         <svg
           viewBox="0 0 24 24"
           fill="none"

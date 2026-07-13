@@ -7,6 +7,7 @@ import {
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
+  loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import {
@@ -58,8 +59,93 @@ export function toCombinedApiPage(ns: CombinedNamespace): ApiPage {
   return combinedNamespaceToApiPage(ns);
 }
 
-export function combinedApiPages(): ApiPage[] {
-  return combinedSurface().namespaces.map(toCombinedApiPage);
+// The Combined namespaces projected as pages under their `/api/combined/<ns>`
+// identity. This projection route is retained for the search / symbol manifests
+// (which stay valid via the compat redirect and are canonicalized in a later
+// step); the canonical route/nav surface reads `canonicalApiPages` instead. An
+// explicit `typesDir` bypasses the module cache for deterministic tests.
+export function combinedApiPages(typesDir?: string): ApiPage[] {
+  const surface = typesDir ? loadCombinedSurface(typesDir) : combinedSurface();
+  return surface.namespaces.map(toCombinedApiPage);
+}
+
+// The version-independent reference pages (core value types, Lua standard
+// library, vendored libraries), each canonical at `/api/<ns>` with no version
+// tie. Defaults to the real types/library dirs; an explicit dir pair drives
+// deterministic tests.
+export function versionIndependentPages(
+  typesDir: string = TYPES_DIR,
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): ApiPage[] {
+  return loadVersionIndependentPages(typesDir, libraryTypesDir);
+}
+
+// The Combined engine namespaces re-routed from their `/api/combined/<ns>`
+// projection identity onto the canonical unprefixed `/api/<ns>`, so the canonical
+// route and its linkify/replacement registry resolve within the unprefixed
+// surface.
+function canonicalCombinedPages(typesDir?: string): ApiPage[] {
+  return combinedApiPages(typesDir).map((page) => ({ ...page, route: `/api/${page.namespace}` }));
+}
+
+// Which surface owns a canonical namespace: a Combined engine namespace, or a
+// version-independent one (global type, Lua stdlib, library).
+export type ApiNamespaceOwner = "combined-engine" | "version-independent";
+
+// Assign each canonical namespace to exactly one owning surface, throwing on a
+// collision so an engine namespace can never silently shadow a version-independent
+// one (or the reverse). Both `canonicalApiPages` and `apiNamespaceOwner` derive
+// their ownership from this single map.
+export function apiNamespaceOwners(
+  combinedPages: ApiPage[],
+  versionIndependent: ApiPage[],
+): Map<string, ApiNamespaceOwner> {
+  const owners = new Map<string, ApiNamespaceOwner>();
+  for (const page of combinedPages) owners.set(page.namespace, "combined-engine");
+  for (const page of versionIndependent) {
+    if (owners.has(page.namespace)) {
+      throw new Error(
+        `api namespace collision: "${page.namespace}" is claimed by both the combined-engine and version-independent surfaces`,
+      );
+    }
+    owners.set(page.namespace, "version-independent");
+  }
+  return owners;
+}
+
+// The canonical unprefixed API surface: the Combined engine pages (at `/api/<ns>`)
+// unioned with the version-independent pages, guarded so no namespace is claimed
+// by both. This is what the `/api` route, the sidebar nav, and the renderer read.
+export function canonicalApiPages(
+  typesDir?: string,
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): ApiPage[] {
+  const engine = canonicalCombinedPages(typesDir);
+  const independent = versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir);
+  apiNamespaceOwners(engine, independent);
+  return [...engine, ...independent];
+}
+
+// The canonical namespaces, in canonical-page order, for the 2-segment
+// `/api/<namespace>` route's static params.
+export function canonicalNamespaces(
+  typesDir?: string,
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): string[] {
+  return canonicalApiPages(typesDir, libraryTypesDir).map((page) => page.namespace);
+}
+
+// The owning surface for one canonical namespace, or `undefined` for an unknown
+// namespace. The 2-segment route dispatches on this: a `combined-engine` namespace
+// renders its Combined page, a `version-independent` one its canonical page.
+export function apiNamespaceOwner(
+  namespace: string,
+  typesDir?: string,
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): ApiNamespaceOwner | undefined {
+  const engine = canonicalCombinedPages(typesDir);
+  const independent = versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir);
+  return apiNamespaceOwners(engine, independent).get(namespace);
 }
 
 // Union namespaces of the Combined surface, for the version-selector's Combined
