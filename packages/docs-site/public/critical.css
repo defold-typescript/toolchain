@@ -406,6 +406,35 @@ header.topbar-critical .logo-mark {
 .prose .api-overview a:focus-visible .api-signature {
   background: var(--color-accent-soft);
 }
+/* Sidebar namespace count pills (Combined-only) — kept in sync with the
+ * `nav-badge-*` rules in `app/styles.css`. Sidebar sits outside `.prose`. */
+.nav-badge-counts {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+.nav-badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25em;
+  height: 1.25em;
+  padding: 0 0.35em;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+}
+.nav-badge-count--new {
+  background: var(--color-badge-new);
+}
+.nav-badge-count--changed {
+  background: var(--color-badge-changed);
+}
+.nav-badge-count--deprecated {
+  background: var(--color-badge-deprecated);
+}
 .prose img {
   max-width: 100%;
   margin-top: 0.75rem;

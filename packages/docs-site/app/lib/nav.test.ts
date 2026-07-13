@@ -109,6 +109,33 @@ describe("buildNav", () => {
     expect(defold?.children?.every((c) => typeof c.labelHtml === "string")).toBe(true);
   });
 
+  test("engine leaves carry the supplied Namespace.badgeHtml; a bare namespace leaves it unset", () => {
+    const nav = buildNav(realPages(), {
+      globals: GLOBALS,
+      globalTypes: [],
+      luaStdlib: LUA_STDLIB,
+      engine: [
+        { label: "camera", route: "/api/camera", badgeHtml: "<span>PILL</span>" },
+        { label: "go", route: "/api/go" },
+      ],
+      libraries: [],
+    });
+    const defold = nav.find((c) => c.id === "api")?.links.find((l) => l.label === "Defold");
+    expect(defold?.children?.find((c) => c.label === "camera")?.badgeHtml).toBe(
+      "<span>PILL</span>",
+    );
+    expect(defold?.children?.find((c) => c.label === "go")?.badgeHtml).toBeUndefined();
+  });
+
+  test("non-engine reference leaves never gain a badgeHtml", () => {
+    const api = fullNav().find((c) => c.id === "api");
+    const globals = api?.links.find((l) => l.label === "Globals");
+    const lua = api?.links.find((l) => l.label === "Lua Standard");
+    for (const leaf of [...(globals?.children ?? []), ...(lua?.children ?? [])]) {
+      expect(leaf.badgeHtml).toBeUndefined();
+    }
+  });
+
   test("Libraries is a top-level category with creator, library, and namespace levels", () => {
     const nav = buildNav(realPages(), {
       globals: GLOBALS,

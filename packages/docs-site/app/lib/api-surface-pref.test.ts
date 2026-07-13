@@ -214,6 +214,46 @@ describe("rewriteApiNavForSurface", () => {
     const input = nav();
     expect(rewriteApiNavForSurface(input, "combined", ["go"])).toBe(input);
   });
+
+  const badgedNav = (): NavCategory[] => [
+    {
+      id: "api",
+      label: "API",
+      route: "/api",
+      links: [
+        {
+          label: "Defold",
+          labelHtml: "Defold",
+          children: [
+            { label: "go", labelHtml: "go", route: "/api/go", badgeHtml: "<span>PILL</span>" },
+            {
+              label: "model",
+              labelHtml: "model",
+              route: "/api/model",
+              badgeHtml: "<span>M</span>",
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  test("drops the Combined-only badgeHtml from engine leaves on an exact-version surface", () => {
+    const out = rewriteApiNavForSurface(badgedNav(), "defold-1.12.4", ["go", "model"]);
+    const leaves = out.find((c) => c.id === "api")?.links[0]?.children ?? [];
+    for (const leaf of leaves) {
+      expect(leaf.route?.startsWith("/api/defold-1.12.4/")).toBe(true);
+      expect(leaf.badgeHtml).toBeUndefined();
+    }
+  });
+
+  test("leaves the Combined surface's badgeHtml untouched", () => {
+    const input = badgedNav();
+    const out = rewriteApiNavForSurface(input, "combined", ["go", "model"]);
+    expect(out).toBe(input);
+    const leaves = out.find((c) => c.id === "api")?.links[0]?.children ?? [];
+    expect(leaves.find((l) => l.label === "go")?.badgeHtml).toBe("<span>PILL</span>");
+  });
 });
 
 // A minimal hand-rolled DOM the serializable selector reconciliation can drive,
