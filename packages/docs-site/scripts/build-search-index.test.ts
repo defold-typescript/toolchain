@@ -44,4 +44,38 @@ describe("searchIndexOutputs", () => {
   test("emits no search-index-combined.json", () => {
     expect(files).not.toContain("search-index-combined.json");
   });
+
+  test("every version index carries the version-independent reference records at canonical /api/<ns> routes", () => {
+    const sharedRoutes = loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR).map(
+      (page) => page.route,
+    );
+    expect(sharedRoutes.length).toBeGreaterThan(0);
+    for (const version of versionsWithDiskFixtures(TYPES_DIR)) {
+      const output = outputs.find((o) => o.file === `search-index-${version.id}.json`);
+      expect(output).toBeDefined();
+      const routes = new Set(output?.records.map((record) => record.route));
+      for (const route of sharedRoutes) {
+        // A version-independent route is canonical (`/api/<ns>`) and must appear
+        // verbatim in the version index, never re-prefixed with the version id.
+        expect(route.startsWith(`/api/${version.id}/`)).toBe(false);
+        expect(routes.has(route)).toBe(true);
+      }
+    }
+  });
+
+  test("exact engine records stay version-prefixed and no shared route is version-prefixed", () => {
+    const sharedRoutes = new Set(
+      loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR).map((page) => page.route),
+    );
+    for (const version of versionsWithDiskFixtures(TYPES_DIR)) {
+      const output = outputs.find((o) => o.file === `search-index-${version.id}.json`);
+      const apiRecords = (output?.records ?? []).filter((r) => r.route.startsWith("/api/"));
+      const prefixed = apiRecords.filter((r) => r.route.startsWith(`/api/${version.id}/`));
+      expect(prefixed.length).toBeGreaterThan(0);
+      // No version-independent (shared) route was re-emitted under the version prefix.
+      for (const record of prefixed) {
+        expect(sharedRoutes.has(record.route)).toBe(false);
+      }
+    }
+  });
 });

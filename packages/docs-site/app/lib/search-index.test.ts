@@ -6,6 +6,7 @@ import {
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
+  loadVersionIndependentPages,
 } from "./api-surface-loader";
 import type { GuidePage } from "./guide";
 import {
@@ -122,11 +123,15 @@ describe("searchIndexFileForRoute", () => {
 });
 
 describe("versionSearchIndexRecords", () => {
-  test("returns a guide-plus-API record set per version, the default included", () => {
+  const sharedPages = loadVersionIndependentPages(API_FIXTURE_DIR);
+  const sharedRecords = apiSearchRecords(sharedPages);
+
+  test("returns a guide-plus-shared-plus-API record set per version, the default included", () => {
     const guideRecords = [{ route: "/", title: "Overview", text: "Guide prose" }];
     const entries = versionSearchIndexRecords(API_FIXTURE_DIR, guideRecords, {
       versions: listApiVersions(API_FIXTURE_DIR),
       pagesForVersion: loadApiSurfaceForVersion,
+      sharedPages,
     });
     const versionIds = entries.map((entry) => entry.version);
     expect(versionIds).toContain("cur");
@@ -135,6 +140,7 @@ describe("versionSearchIndexRecords", () => {
     const old = entries.find((entry) => entry.version === "old");
     expect(old?.records).toEqual([
       ...guideRecords,
+      ...sharedRecords,
       ...apiSearchRecords(loadApiSurfaceForVersion(API_FIXTURE_DIR, "old")),
     ]);
     expect(old?.records.some((record) => record.route === "/api/old/wmath")).toBe(true);
@@ -144,9 +150,24 @@ describe("versionSearchIndexRecords", () => {
     const cur = entries.find((entry) => entry.version === "cur");
     expect(cur?.records).toEqual([
       ...guideRecords,
+      ...sharedRecords,
       ...apiSearchRecords(loadApiSurfaceForVersion(API_FIXTURE_DIR, "cur")),
     ]);
     expect(cur?.records.some((record) => record.route.startsWith("/api/cur/"))).toBe(true);
+  });
+
+  test("carries the shared version-independent records at canonical routes in every version", () => {
+    const entries = versionSearchIndexRecords(API_FIXTURE_DIR, [], {
+      versions: listApiVersions(API_FIXTURE_DIR),
+      pagesForVersion: loadApiSurfaceForVersion,
+      sharedPages,
+    });
+    const sharedRoutes = sharedPages.map((p) => p.route);
+    expect(sharedRoutes.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      const routes = new Set(entry.records.map((r) => r.route));
+      for (const route of sharedRoutes) expect(routes.has(route)).toBe(true);
+    }
   });
 });
 

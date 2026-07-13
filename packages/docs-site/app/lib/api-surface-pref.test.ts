@@ -6,17 +6,17 @@ import {
   reconcileSurfaceSelector,
   resolveApiSurfaceRedirect,
   rewriteApiNavForSurface,
+  showApiSurfaceSelector,
   surfacePathForNamespace,
 } from "./api-surface-pref";
 import type { NavCategory } from "./nav";
+import { buildVersionSwitcher } from "./version-switch";
 
 // Combined is the canonical un-prefixed surface; `versionIds` now lists EVERY
 // tracked version — the default (1.13.0) included — each owning a prefixed family.
 const CONFIG: ApiSurfaceConfig = {
   base: "",
-  defaultVersionId: "defold-1.13.0",
   versionIds: ["defold-1.13.0", "defold-1.12.4"],
-  combinedNamespaces: ["camera", "go", "vmath"],
   // Each version's engine namespaces; version-independent namespaces (`Hash`,
   // `base`) are intentionally absent, so a version preference never prefixes them.
   namespacesByVersion: {
@@ -135,6 +135,28 @@ describe("currentSurfaceForRoute", () => {
     const source = currentSurfaceForRoute.toString();
     expect(source).not.toContain("COMBINED_VERSION_ID");
     expect(source).toContain('"combined"');
+  });
+});
+
+describe("showApiSurfaceSelector — Combined is an additional surface", () => {
+  test("shows the selector as soon as one tracked engine version exists", () => {
+    expect(showApiSurfaceSelector(1)).toBe(true);
+    expect(showApiSurfaceSelector(2)).toBe(true);
+  });
+
+  test("hides the selector only when there is no tracked engine version", () => {
+    expect(showApiSurfaceSelector(0)).toBe(false);
+  });
+
+  test("with one tracked engine version, the selector model still has two choices: Combined and that exact version", () => {
+    const entries = buildVersionSwitcher({
+      versions: [{ id: "defold-1.13.0", isDefault: true }],
+      namespacesByVersion: { "defold-1.13.0": ["go"] },
+      combinedNamespaces: ["go"],
+      route: "/api/go",
+    });
+    expect(entries.map((e) => e.id)).toEqual(["defold-1.13.0", "combined"]);
+    expect(entries.find((e) => e.id === "combined")?.route).toBe("/api/go");
   });
 });
 

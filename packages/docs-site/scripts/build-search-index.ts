@@ -34,25 +34,42 @@ export interface SearchIndexOutput {
   records: SearchRecord[];
 }
 
+// The directory dependencies each build resolves against. Defaults to the
+// committed types/library/guide trees; a caller (a migration test) supplies a
+// synthetic set so the same production code path generates real files from a
+// fixture registry, not merely a selected filename.
+export interface SearchIndexDeps {
+  typesDir?: string;
+  libraryTypesDir?: string;
+  guideDir?: string;
+}
+
 // The full set of search-index files a release emits: the shared canonical
 // `search-index.json` (guide + Combined engine records + version-independent
 // reference pages, all routed at `/api/<ns>`), plus one `search-index-<id>.json`
-// per tracked version — the current version included. There is no
+// per tracked version — the current version included. Each version file also
+// carries the shared version-independent reference records at their canonical
+// routes, so an in-page lookup resolves both. There is no
 // `search-index-combined.json`: Combined IS the shared canonical index now.
-export function searchIndexOutputs(): SearchIndexOutput[] {
+export function searchIndexOutputs(deps: SearchIndexDeps = {}): SearchIndexOutput[] {
+  const typesDir = deps.typesDir ?? TYPES_DIR;
+  const libraryTypesDir = deps.libraryTypesDir ?? LIBRARY_TYPES_DIR;
+  const guideDir = deps.guideDir ?? GUIDE_DIR;
   const guideRecords = buildSearchIndex(
-    listGuidePages(GUIDE_DIR),
-    (page) => parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body,
+    listGuidePages(guideDir),
+    (page) => parseFrontmatter(readFileSync(join(guideDir, page.file), "utf8")).body,
   );
+  const sharedPages = loadVersionIndependentPages(typesDir, libraryTypesDir);
   const shared: SearchRecord[] = [
     ...guideRecords,
-    ...combinedSearchRecords(loadCombinedSurface(TYPES_DIR)),
-    ...apiSearchRecords(loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR)),
+    ...combinedSearchRecords(loadCombinedSurface(typesDir)),
+    ...apiSearchRecords(sharedPages),
   ];
   const outputs: SearchIndexOutput[] = [{ file: "search-index.json", records: shared }];
-  for (const { version, records } of versionSearchIndexRecords(TYPES_DIR, guideRecords, {
-    versions: versionsWithDiskFixtures(TYPES_DIR),
+  for (const { version, records } of versionSearchIndexRecords(typesDir, guideRecords, {
+    versions: versionsWithDiskFixtures(typesDir),
     pagesForVersion: loadApiSurfaceForVersion,
+    sharedPages,
   })) {
     outputs.push({ file: `search-index-${version}.json`, records });
   }
