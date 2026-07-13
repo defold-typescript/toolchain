@@ -316,13 +316,11 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const surfaceKey = JSON.stringify(API_SURFACE_STORAGE_KEY);
   const surfaceConfigJson = JSON.stringify(surfaceConfig);
   // Pre-paint: (1) redirect an un-prefixed API page to the persisted surface,
-  // (2) record surface-selector clicks, (3) reconcile the selector highlight AND
-  // its summary label to the persisted surface via `currentSurfaceForRoute` +
-  // `reconcileSurfaceSelector`, so a version-independent page keeps the user's
-  // Combined/version choice current instead of flipping to the route-derived
-  // default. The options live inside a closed `<details>`, so the move is unseen
-  // until the user opens the dropdown.
-  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${surfaceKey},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var g=${currentSurfaceForRoute.toString()};var r=${reconcileSurfaceSelector.toString()};var apply=function(){var s;try{s=g(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});}catch(_){return;}try{r(document,s);}catch(_){}};if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}}catch(e){}})();`;
+  // (2) record surface-selector clicks, (3) expose the reconciled surface on the
+  // document element before CSS loads, then reconcile the selector highlight and
+  // summary once its DOM exists. A version-independent page therefore keeps the
+  // user's Combined/version choice without briefly showing Combined-only chrome.
+  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${surfaceKey},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var g=${currentSurfaceForRoute.toString()};var r=${reconcileSurfaceSelector.toString()};var s;try{s=g(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});}catch(_){return;}try{r(document,s);}catch(_){}var apply=function(){try{r(document,s);}catch(_){}};if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}}catch(e){}})();`;
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();

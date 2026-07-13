@@ -868,6 +868,10 @@
     align-items: center;
   }
 
+  html[data-api-surface-current]:not([data-api-surface-current="combined"]) .nav-badge-counts {
+    display: none;
+  }
+
   .nav-badge-count {
     display: inline-flex;
     align-items: center;
