@@ -22,7 +22,7 @@ import {
   loadApiSurfaceForVersion,
   loadCombinedSurface,
 } from "./api-surface-loader";
-import { combinedNamespaceToApiPage } from "./combined-surface";
+import { buildCombinedSurface, combinedNamespaceToApiPage } from "./combined-surface";
 import { slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { buildSymbolIndex } from "./symbol-index";
@@ -690,6 +690,61 @@ describe("availability badges", () => {
     expect(md).toContain('aria-label="Availability"');
     expect(md).toContain("Deprecated since 1.12.0");
     expect(md).not.toContain("api-badge-dot");
+  });
+
+  test("Combined: a newest-only symbol deprecated as of the newest version renders Deprecated, not New", () => {
+    const resetConstant: ApiFunction = {
+      name: "model.reset_constant",
+      brief: "",
+      description: "Reset a shader constant.",
+      parameters: [{ name: "url", doc: "", types: ["url"], isOptional: false }],
+      returnValues: [],
+    };
+    const identity = {
+      namespace: "model",
+      kind: "FUNCTION",
+      name: resetConstant.name,
+      signature: normalizedFunctionSignature(resetConstant),
+    };
+    const emptyModel = {
+      namespace: "model",
+      brief: "",
+      description: "Model.",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const combined = buildCombinedSurface({
+      surfaces: [
+        { version: "1.13.0", modules: [{ ...emptyModel, functions: [resetConstant] }] },
+        { version: "1.12.4", modules: [emptyModel] },
+      ],
+      signatures: {
+        versions: {
+          "1.13.0": { [symbolIdentityKey(identity)]: "function reset_constant(url: url): void;" },
+        },
+      },
+      overlay: {
+        versions: ["1.13.0", "1.12.4"],
+        records: new Map([
+          [
+            symbolIdentityKey(identity),
+            { identity, availableIn: ["1.13.0"], deprecatedSince: "1.13.0" },
+          ],
+        ]),
+      },
+    });
+    const ns = combined.namespaces.find((n) => n.namespace === "model");
+    if (!ns) throw new Error("model namespace missing from combined surface");
+    const md = apiPageMarkdown(combinedNamespaceToApiPage(ns), noLink, { combinedMarkers: true });
+    const heading = headingLineOf(md, "### `model.reset_constant");
+    expect(heading).toBeDefined();
+    expect(heading).toContain("api-badge-dot--deprecated");
+    expect(heading).not.toContain("api-badge-dot--new");
+    expect(md).toContain("Deprecated since 1.13.0");
+    expect(md).not.toContain("Since Defold");
   });
 
   const overviewRegion = (md: string): string => {

@@ -279,6 +279,27 @@ function compareSemverDesc(a: string, b: string): number {
   return 0;
 }
 
+/**
+ * Widen a presence-derived `availableIn` with the existence a curated
+ * `deprecatedSince` proves: a symbol deprecated as of `D` existed in every
+ * tracked version `<= D`, even those whose (incomplete) typings omit it. Unions
+ * every such version into `availableIn` and returns the result in the canonical
+ * newest-first axis order. With no `deprecatedSince` the presence set is returned
+ * unchanged, so a genuinely-new symbol never over-widens.
+ */
+function availableWithDeprecation(
+  availableIn: readonly string[],
+  deprecatedSince: string | undefined,
+  versions: readonly string[],
+): string[] {
+  if (deprecatedSince === undefined) return [...availableIn];
+  const covered = new Set(availableIn);
+  for (const version of versions) {
+    if (compareSemverDesc(version, deprecatedSince) >= 0) covered.add(version);
+  }
+  return versions.filter((version) => covered.has(version));
+}
+
 function nameKey(id: Pick<ApiSymbolIdentity, "namespace" | "kind" | "name">): string {
   return `${id.namespace} ${id.kind} ${id.name}`;
 }
@@ -431,15 +452,19 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
 
   const entryFor = (identity: ApiSymbolIdentity): CombinedEntry => {
     const key = symbolIdentityKey(identity);
-    const availableIn = presence.get(key)?.availableIn ?? [];
-    const newest = versions.find((version) => availableIn.includes(version)) ?? versions[0] ?? "";
+    const presenceIn = presence.get(key)?.availableIn ?? [];
+    // The signature lookup stays on real presence — a widened version has no
+    // typings to draw a declaration from.
+    const newest = versions.find((version) => presenceIn.includes(version)) ?? versions[0] ?? "";
+    const facts = curatedFacts(overlayRecords?.get(key));
+    const availableIn = availableWithDeprecation(presenceIn, facts.deprecatedSince, versions);
     return {
       identity,
       authoritativeSignature: input.signatures.versions[newest]?.[key] ?? "",
       availableIn,
       label: availabilityLabel(availableIn, versions),
       transition: transitionNames.has(nameKey(identity)),
-      ...curatedFacts(overlayRecords?.get(key)),
+      ...facts,
     };
   };
 
@@ -463,12 +488,16 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
     const records = new Map<string, ApiAvailability>();
     for (const identity of identities) {
       const key = symbolIdentityKey(identity);
-      const availableIn = presence.get(key)?.availableIn ?? [];
+      const presenceIn = presence.get(key)?.availableIn ?? [];
       const curated = overlayRecords?.get(key);
       // A symbol present in every version and carrying no curated fact needs no
-      // badge, so it holds no record — the render layer then shows nothing.
-      if (availableIn.length === versions.length && !curated) continue;
-      records.set(key, { identity, availableIn, ...curatedFacts(curated) });
+      // badge, so it holds no record — the render layer then shows nothing. The
+      // skip keys on real presence: a deprecated symbol always carries a curated
+      // fact, so widening never sneaks it past this guard.
+      if (presenceIn.length === versions.length && !curated) continue;
+      const facts = curatedFacts(curated);
+      const availableIn = availableWithDeprecation(presenceIn, facts.deprecatedSince, versions);
+      records.set(key, { identity, availableIn, ...facts });
     }
 
     result.push({
