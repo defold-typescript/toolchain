@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { emitBuiltinMessages, type MessageCatalog, parseMessagesDoc } from "./emit-messages";
+import {
+  applyMessageDeprecations,
+  emitBuiltinMessages,
+  MESSAGE_DEPRECATIONS,
+  type MessageCatalog,
+  parseMessagesDoc,
+} from "./emit-messages";
 
 const TWO_ENTRY_RAW: unknown = {
   info: { namespace: "builtin_messages" },
@@ -123,5 +129,93 @@ describe("emitBuiltinMessages", () => {
     const out = emitBuiltinMessages(catalog);
     const transpiler = new Bun.Transpiler({ loader: "ts" });
     expect(() => transpiler.scan(out)).not.toThrow();
+  });
+
+  test("emits an @deprecated JSDoc immediately above a message whose deprecatedSince is set", () => {
+    const catalog: MessageCatalog = {
+      entries: [
+        {
+          name: "acquire_camera_focus",
+          origin: "camera",
+          description: "",
+          payload: [],
+          deprecatedSince: "1.13.0",
+        },
+      ],
+    };
+    const out = emitBuiltinMessages(catalog);
+    expect(out).toContain(
+      "    /** @deprecated since 1.13.0 */\n    acquire_camera_focus: Record<string, never>;",
+    );
+  });
+
+  test("a deprecated message keeps its key quoting and payload shape unchanged", () => {
+    const catalog: MessageCatalog = {
+      entries: [
+        {
+          name: "release_camera_focus",
+          origin: "camera",
+          description: "",
+          payload: [{ name: "id", types: ["hash"], optional: false, doc: "" }],
+          deprecatedSince: "1.13.0",
+        },
+      ],
+    };
+    const out = emitBuiltinMessages(catalog);
+    expect(out).toContain(
+      "    /** @deprecated since 1.13.0 */\n    release_camera_focus: { id: Hash };",
+    );
+  });
+
+  test("a non-deprecated message emits no @deprecated JSDoc", () => {
+    const catalog = parseMessagesDoc(TWO_ENTRY_RAW);
+    const out = emitBuiltinMessages(catalog);
+    expect(out).not.toContain("@deprecated");
+  });
+});
+
+describe("applyMessageDeprecations", () => {
+  const catalog: MessageCatalog = {
+    entries: [
+      { name: "acquire_camera_focus", origin: "camera", description: "", payload: [] },
+      { name: "release_camera_focus", origin: "camera", description: "", payload: [] },
+      // Same message name under a different origin must not be matched by a camera key.
+      { name: "acquire_camera_focus", origin: "go", description: "", payload: [] },
+    ],
+  };
+
+  test("sets deprecatedSince on the exact (origin, name) match only", () => {
+    const out = applyMessageDeprecations(catalog, [
+      { origin: "camera", name: "acquire_camera_focus", deprecatedSince: "1.13.0" },
+    ]);
+    const camera = out.entries.find(
+      (e) => e.origin === "camera" && e.name === "acquire_camera_focus",
+    );
+    const go = out.entries.find((e) => e.origin === "go" && e.name === "acquire_camera_focus");
+    expect(camera?.deprecatedSince).toBe("1.13.0");
+    expect(go?.deprecatedSince).toBeUndefined();
+  });
+
+  test("fails closed when an overlay identity is absent from the catalog", () => {
+    expect(() =>
+      applyMessageDeprecations(catalog, [
+        { origin: "camera", name: "no_such_message", deprecatedSince: "1.13.0" },
+      ]),
+    ).toThrow();
+  });
+
+  test("does not mutate the input catalog entries", () => {
+    applyMessageDeprecations(catalog, [
+      { origin: "camera", name: "acquire_camera_focus", deprecatedSince: "1.13.0" },
+    ]);
+    expect(catalog.entries[0]?.deprecatedSince).toBeUndefined();
+  });
+
+  test("default MESSAGE_DEPRECATIONS curates exactly the two 1.13.0 camera-focus messages", () => {
+    expect(MESSAGE_DEPRECATIONS.map((d) => `${d.origin} ${d.name}`).sort()).toEqual([
+      "camera acquire_camera_focus",
+      "camera release_camera_focus",
+    ]);
+    for (const dep of MESSAGE_DEPRECATIONS) expect(dep.deprecatedSince).toBe("1.13.0");
   });
 });
