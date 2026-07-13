@@ -218,4 +218,55 @@ describe("applyMessageDeprecations", () => {
     ]);
     for (const dep of MESSAGE_DEPRECATIONS) expect(dep.deprecatedSince).toBe("1.13.0");
   });
+
+  test("throws an actionable error when two catalog entries share an (origin, name)", () => {
+    const ambiguous: MessageCatalog = {
+      entries: [
+        { name: "acquire_camera_focus", origin: "camera", description: "", payload: [] },
+        { name: "acquire_camera_focus", origin: "camera", description: "", payload: [] },
+      ],
+    };
+    expect(() =>
+      applyMessageDeprecations(ambiguous, [
+        { origin: "camera", name: "acquire_camera_focus", deprecatedSince: "1.13.0" },
+      ]),
+    ).toThrow(/duplicate catalog message identity.*origin=camera.*name=acquire_camera_focus/);
+  });
+
+  test("throws when two overlay entries share an (origin, name) rather than writing it twice", () => {
+    expect(() =>
+      applyMessageDeprecations(catalog, [
+        { origin: "camera", name: "acquire_camera_focus", deprecatedSince: "1.13.0" },
+        { origin: "camera", name: "acquire_camera_focus", deprecatedSince: "1.13.0" },
+      ]),
+    ).toThrow(/duplicate overlay message identity.*origin=camera.*name=acquire_camera_focus/);
+  });
+
+  test("equal names under different origins stay distinct and the two curated camera entries resolve", () => {
+    const out = applyMessageDeprecations(catalog);
+    const cameraAcquire = out.entries.find(
+      (e) => e.origin === "camera" && e.name === "acquire_camera_focus",
+    );
+    const cameraRelease = out.entries.find(
+      (e) => e.origin === "camera" && e.name === "release_camera_focus",
+    );
+    const goAcquire = out.entries.find(
+      (e) => e.origin === "go" && e.name === "acquire_camera_focus",
+    );
+    expect(cameraAcquire?.deprecatedSince).toBe("1.13.0");
+    expect(cameraRelease?.deprecatedSince).toBe("1.13.0");
+    expect(goAcquire?.deprecatedSince).toBeUndefined();
+  });
+
+  test("applying the default overlay then emitting the fixture preserves the generated declaration bytes", async () => {
+    const raw = JSON.parse(
+      await Bun.file(new URL("../fixtures/messages_doc.json", import.meta.url)).text(),
+    );
+    const catalog = applyMessageDeprecations(parseMessagesDoc(raw));
+    const emitted = emitBuiltinMessages(catalog);
+    const generated = await Bun.file(
+      new URL("../generated/builtin-messages.d.ts", import.meta.url),
+    ).text();
+    expect(emitted).toBe(generated);
+  });
 });
