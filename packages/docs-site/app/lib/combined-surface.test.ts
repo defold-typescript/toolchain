@@ -357,6 +357,16 @@ describe("combinedAuthoritativeSignatures", () => {
   });
 });
 
+describe("combinedNamespaceToApiPage canonical route", () => {
+  test("routes a Combined namespace to /api/<namespace>, never /api/combined/<namespace>", () => {
+    for (const ns of combined.namespaces) {
+      const page = combinedNamespaceToApiPage(ns);
+      expect(page.route).toBe(`/api/${ns.namespace}`);
+      expect(page.route.startsWith("/api/combined/")).toBe(false);
+    }
+  });
+});
+
 describe("combinedAuthoritativeSignatures (members)", () => {
   // Real member identities: constants/variables carry the namespace-qualified
   // public identity name; properties are bare. The declaration binding a

@@ -30,20 +30,35 @@ export interface SymbolIndexOutput {
   index: Record<string, SymbolEntry>;
 }
 
+// The directory dependencies each build resolves against. Defaults to the
+// committed types/library trees; a caller (a migration test) supplies a synthetic
+// set so the same production code path generates real files from a fixture
+// registry, not merely a selected filename.
+export interface SymbolIndexDeps {
+  typesDir?: string;
+  libraryTypesDir?: string;
+}
+
 // The full set of symbol-index files a release emits: the shared canonical
 // `symbol-index.json` (Combined engine symbols + version-independent reference
 // symbols, all routed at `/api/<ns>`), plus one `symbol-index-<id>.json` per
-// tracked version — the current version included. There is no
+// tracked version — the current version included. Each version file also carries
+// the shared version-independent reference symbols at their canonical routes,
+// alongside that version's own prefixed engine symbols. There is no
 // `symbol-index-combined.json`: the Combined symbols live in the shared file now.
-export function symbolIndexOutputs(): SymbolIndexOutput[] {
+export function symbolIndexOutputs(deps: SymbolIndexDeps = {}): SymbolIndexOutput[] {
+  const typesDir = deps.typesDir ?? TYPES_DIR;
+  const libraryTypesDir = deps.libraryTypesDir ?? LIBRARY_TYPES_DIR;
+  const sharedPages = loadVersionIndependentPages(typesDir, libraryTypesDir);
   const shared: Record<string, SymbolEntry> = {
-    ...buildSymbolIndex(loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR)),
-    ...combinedSymbolIndexRecords(loadCombinedSurface(TYPES_DIR)),
+    ...buildSymbolIndex(sharedPages),
+    ...combinedSymbolIndexRecords(loadCombinedSurface(typesDir)),
   };
   const outputs: SymbolIndexOutput[] = [{ file: "symbol-index.json", index: shared }];
   for (const { version, index } of versionSymbolIndexRecords(
-    versionsWithDiskFixtures(TYPES_DIR),
-    (versionId) => loadApiSurfaceForVersion(TYPES_DIR, versionId),
+    versionsWithDiskFixtures(typesDir),
+    (versionId) => loadApiSurfaceForVersion(typesDir, versionId),
+    sharedPages,
   )) {
     outputs.push({ file: `symbol-index-${version}.json`, index });
   }

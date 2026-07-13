@@ -5,6 +5,7 @@ import {
   apiNamespaceOwners,
   canonicalApiPages,
   canonicalNamespaces,
+  combinedApiPages,
   versionIndependentPages,
 } from "./api-content";
 import type { ApiPage } from "./api-surface";
@@ -73,6 +74,34 @@ describe("canonicalApiPages", () => {
     const namespaces = new Set(pages().map((p) => p.namespace));
     expect(namespaces.has("camera")).toBe(true);
     expect(namespaces.has("base")).toBe(true);
+  });
+
+  test("its engine pages carry the same canonical routes combinedApiPages already emits (no second rewrite)", () => {
+    const engine = pages().filter((p) => p.category === "engine");
+    const combined = combinedApiPages(ENGINE_FIXTURE_DIR);
+    const byNamespace = new Map(combined.map((p) => [p.namespace, p.route]));
+    expect(engine.length).toBeGreaterThan(0);
+    for (const p of engine) {
+      expect(p.route).toBe(`/api/${p.namespace}`);
+      expect(byNamespace.get(p.namespace)).toBe(p.route);
+    }
+  });
+});
+
+describe("combinedApiPages", () => {
+  test("emits canonical /api/<ns> routes directly, never the /api/combined compat prefix", () => {
+    const pages = combinedApiPages(ENGINE_FIXTURE_DIR);
+    expect(pages.length).toBeGreaterThan(0);
+    for (const p of pages) {
+      expect(p.route).toBe(`/api/${p.namespace}`);
+      expect(p.route.startsWith("/api/combined/")).toBe(false);
+    }
+  });
+});
+
+describe("canonicalApiPages — namespace collision guard", () => {
+  test("throws when a Combined engine namespace also exists as a version-independent page", () => {
+    expect(() => apiNamespaceOwners([page("camera")], [page("camera")])).toThrow(/collision/);
   });
 });
 

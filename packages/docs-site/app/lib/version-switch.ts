@@ -27,27 +27,6 @@ export function versionLabel(id: string): string {
  */
 export const COMBINED_VERSION_ID = "combined";
 
-/**
- * The one explicit active-version context for a route: the version whose surface
- * a page, its sidebar, its symbol/tooltip lookups, and its search index must all
- * resolve against. A `/api/<version-id>/...` route selects that exact version; a
- * canonical `/api/...` route, an unknown version prefix, and any non-API route
- * all resolve to the default version. No caller may silently fall back to the
- * default surface on a historical route — they read this instead.
- */
-export function activeVersionForRoute(route: string, versions: readonly ApiVersion[]): ApiVersion {
-  const defaultVersion = versions.find((version) => version.isDefault) ?? versions[0];
-  if (!defaultVersion) {
-    throw new Error("activeVersionForRoute: no versions provided");
-  }
-  const path = route.split(/[?#]/, 1)[0] ?? "";
-  const segments = path.replace(/\/+$/, "").split("/").filter(Boolean);
-  if (segments[0] !== "api") return defaultVersion;
-  const candidate = segments[1];
-  const match = candidate ? versions.find((version) => version.id === candidate) : undefined;
-  return match ?? defaultVersion;
-}
-
 export interface BuildVersionSwitcherInput {
   versions: readonly ApiVersion[];
   namespacesByVersion: Record<string, readonly string[]>;

@@ -10,10 +10,11 @@ import {
 import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
 
-// The 3-segment `/api/:version/:namespace` route — one page per namespace of a
-// materialized non-default version. `versionedApiParams` is filtered to versions
-// whose fixtures are on disk, so with no committed non-default fixture this route
-// emits nothing and the build stays clean.
+// The 3-segment `/api/:version/:namespace` route — one page per engine namespace
+// of every tracked version, the current (default) version included, since each
+// version now owns an explicit `/api/<id>/…` family. `versionedApiParams` is
+// filtered to versions whose fixtures are on disk, so an unmaterialized ref-doc
+// target contributes nothing and the build stays clean until its fixtures land.
 export default createRoute(
   ssgParams(() => versionedApiParams(TYPES_DIR)),
   async (c) => {

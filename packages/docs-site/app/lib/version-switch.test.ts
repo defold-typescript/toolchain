@@ -1,11 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiVersion } from "./api-surface-loader";
-import {
-  activeVersionForRoute,
-  buildVersionSwitcher,
-  isApiRoute,
-  versionLabel,
-} from "./version-switch";
+import { buildVersionSwitcher, isApiRoute, versionLabel } from "./version-switch";
 
 const versions: ApiVersion[] = [
   { id: "cur", isDefault: true },
@@ -149,36 +144,6 @@ describe("versionLabel", () => {
   test("passes a non-defold id through unchanged", () => {
     expect(versionLabel("cur")).toBe("cur");
     expect(versionLabel("old")).toBe("old");
-  });
-});
-
-describe("activeVersionForRoute", () => {
-  test("resolves the default version on an unprefixed API route", () => {
-    expect(activeVersionForRoute("/api/go", realVersions)).toEqual({
-      id: "defold-1.13.0",
-      isDefault: true,
-    });
-  });
-
-  test("resolves the prefixed version on a historical route", () => {
-    expect(activeVersionForRoute("/api/defold-1.12.4/go", realVersions)).toEqual({
-      id: "defold-1.12.4",
-      isDefault: false,
-    });
-  });
-
-  test("falls back to the default version on a non-API route", () => {
-    expect(activeVersionForRoute("/guide/x", realVersions)).toEqual({
-      id: "defold-1.13.0",
-      isDefault: true,
-    });
-  });
-
-  test("treats an unknown version prefix as the default version, never a silent miss", () => {
-    expect(activeVersionForRoute("/api/defold-9.9.9/go", realVersions)).toEqual({
-      id: "defold-1.13.0",
-      isDefault: true,
-    });
   });
 });
 
