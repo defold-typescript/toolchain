@@ -8,7 +8,7 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import type { AvailabilityLookup } from "./api-surface";
+import { type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
 import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loader";
 import {
   buildCombinedSurface,
@@ -560,5 +560,89 @@ describe("namespaceBadgeCounts (committed artifacts)", () => {
 
   test("a namespace with a transitioned symbol (liveupdate) has changed > 0", () => {
     expect(namespaceBadgeCounts(real("liveupdate")).changed).toBeGreaterThan(0);
+  });
+});
+
+describe("curated deprecation widens availableIn", () => {
+  const resetConstant = func("model.reset_constant", [param("url", ["url"])]);
+  const axis = ["1.13.0", "1.12.4"];
+  const key = symbolIdentityKey(funcId("model", resetConstant));
+  const sigs: SignaturesArtifact = {
+    versions: {
+      "1.13.0": { [key]: "function reset_constant(url: url): void;" },
+    },
+  };
+  const build = (deprecatedSince?: string) =>
+    buildCombinedSurface({
+      surfaces: [
+        { version: "1.13.0", modules: [mod("model", [resetConstant])] },
+        { version: "1.12.4", modules: [mod("model", [])] },
+      ],
+      signatures: sigs,
+      overlay: {
+        versions: axis,
+        records: new Map(
+          deprecatedSince
+            ? [
+                [
+                  key,
+                  {
+                    identity: funcId("model", resetConstant),
+                    availableIn: ["1.13.0"],
+                    deprecatedSince,
+                  },
+                ],
+              ]
+            : [],
+        ),
+      },
+    });
+  const entryOf = (surface: ReturnType<typeof buildCombinedSurface>) => {
+    const entry = surface.namespaces
+      .find((n) => n.namespace === "model")
+      ?.entries.find((e) => e.identity.name === "model.reset_constant");
+    if (!entry) throw new Error("model.reset_constant entry missing");
+    return entry;
+  };
+  const recordOf = (surface: ReturnType<typeof buildCombinedSurface>) =>
+    surface.namespaces.find((n) => n.namespace === "model")?.availability.records.get(key);
+
+  test("deprecatedSince == newest covers every tracked version, labels 'all', is deprecated not new", () => {
+    const surface = build("1.13.0");
+    const entry = entryOf(surface);
+    expect(entry.availableIn).toEqual(axis);
+    expect(entry.label.kind).toBe("all");
+    expect(recordOf(surface)?.availableIn).toEqual(axis);
+    expect(badgeCategoryFromLabel(entry.label.kind, entry.deprecatedSince !== undefined)).toEqual({
+      isNew: false,
+      isChanged: false,
+      isDeprecated: true,
+    });
+  });
+
+  test("no deprecatedSince leaves a newest-only symbol as 'since' / New — no over-widening", () => {
+    const entry = entryOf(build(undefined));
+    expect(entry.availableIn).toEqual(["1.13.0"]);
+    expect(entry.label.kind).toBe("since");
+    expect(badgeCategoryFromLabel(entry.label.kind, false).isNew).toBe(true);
+  });
+
+  test("a future deprecatedSince still covers every tracked version <= D, so no 'since' contradiction", () => {
+    const entry = entryOf(build("1.14.0"));
+    expect(entry.availableIn).toEqual(axis);
+    expect(entry.label.kind).not.toBe("since");
+  });
+});
+
+describe("curated deprecation widens availableIn (committed model.reset_constant)", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const entry = surface.namespaces
+    .find((n) => n.namespace === "model")
+    ?.entries.find((e) => e.identity.name === "model.reset_constant");
+
+  test("the bug-49 symbol is deprecated and no longer labeled 'since'", () => {
+    expect(entry).toBeDefined();
+    expect(entry?.deprecatedSince).toBeDefined();
+    expect(entry?.label.kind).not.toBe("since");
   });
 });
