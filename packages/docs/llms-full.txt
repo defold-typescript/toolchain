@@ -3648,6 +3648,22 @@ current [`model`](/api/model) surface instead of the one blanket property; the
 removed property's frozen shape stays on the [1.12.4 `model`
 page](/api/defold-1.12.4/model).
 
+#### Deprecated Lua APIs
+
+These APIs still compile and run against the 1.13.0 surface but are marked
+**deprecated** in the engine reference. No replacement is announced upstream, so
+nothing is forced right now — treat them as candidates for removal in a future
+release and avoid them in new code.
+
+- **`model.reset_constant`, `sprite.reset_constant`, `tilemap.reset_constant`.**
+  The per-component "reset a shader constant" helpers are deprecated in 1.13.0.
+  They keep working and there is no documented successor to migrate to yet, so no
+  action is required today.
+
+<!-- no-action: model.reset_constant -->
+<!-- no-action: sprite.reset_constant -->
+<!-- no-action: tilemap.reset_constant -->
+
 #### Source and project migrations
 
 These changes touch assets and project configuration rather than the typed Lua
@@ -5056,7 +5072,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
 - function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean;
 - function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Opaque<"constant">, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
-- function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0]
+- function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0] [deprecated since 1.13.0]
 - function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.0]
 - function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean): void;
 - animation: Hash;
@@ -5335,7 +5351,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### sprite
 
 - function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
-- function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0]
+- function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0] [deprecated since 1.13.0]
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
 - animation: Hash;
@@ -5392,7 +5408,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;
 - function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };
 - function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;
-- function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0]
+- function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [since 1.13.0] [deprecated since 1.13.0]
 - function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): void;
 - function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
 - const H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" };
