@@ -2697,7 +2697,8 @@
         "name": "model.reset_constant",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]"
       },
-      "availableIn": ["1.13.0"]
+      "availableIn": ["1.13.0"],
+      "deprecatedSince": "1.13.0"
     },
     {
       "identity": {
@@ -2737,7 +2738,8 @@
         "name": "sprite.reset_constant",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]"
       },
-      "availableIn": ["1.13.0"]
+      "availableIn": ["1.13.0"],
+      "deprecatedSince": "1.13.0"
     },
     {
       "identity": {
@@ -2746,7 +2748,8 @@
         "name": "tilemap.reset_constant",
         "signature": "[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]"
       },
-      "availableIn": ["1.13.0"]
+      "availableIn": ["1.13.0"],
+      "deprecatedSince": "1.13.0"
     }
   ]
 }

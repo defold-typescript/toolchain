@@ -78,6 +78,22 @@ current [`model`](/api/model) surface instead of the one blanket property; the
 removed property's frozen shape stays on the [1.12.4 `model`
 page](/api/defold-1.12.4/model).
 
+## Deprecated Lua APIs
+
+These APIs still compile and run against the 1.13.0 surface but are marked
+**deprecated** in the engine reference. No replacement is announced upstream, so
+nothing is forced right now — treat them as candidates for removal in a future
+release and avoid them in new code.
+
+- **`model.reset_constant`, `sprite.reset_constant`, `tilemap.reset_constant`.**
+  The per-component "reset a shader constant" helpers are deprecated in 1.13.0.
+  They keep working and there is no documented successor to migrate to yet, so no
+  action is required today.
+
+<!-- no-action: model.reset_constant -->
+<!-- no-action: sprite.reset_constant -->
+<!-- no-action: tilemap.reset_constant -->
+
 ## Source and project migrations
 
 These changes touch assets and project configuration rather than the typed Lua

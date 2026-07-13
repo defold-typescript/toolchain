@@ -309,4 +309,9 @@ describe("combinedSearchRecords", () => {
     const live = records.find((r) => r.route === "/api/combined/liveupdate");
     expect(live?.text).toContain("Available through Defold 1.12.4");
   });
+
+  test("threads a verified upstream deprecation into the Combined search text", () => {
+    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/combined/model");
+    expect(model?.text).toContain("Deprecated since 1.13.0");
+  });
 });
