@@ -3,6 +3,7 @@ import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage } from "./api-surface";
 import type { ApiVersion } from "./api-surface-loader";
 import {
+  type BuildReleaseRouteManifestInput,
   buildReleaseRouteManifest,
   type ReleaseRouteManifest,
   validateReleaseRouteManifest,
@@ -35,78 +36,131 @@ const versions: ApiVersion[] = [
   { id: "defold-1.12.4", isDefault: false },
 ];
 
+// Canonical = the Combined engine surface (unprefixed) unioned with the
+// version-independent reference pages (`base`, `Hash`).
+const canonicalPages: ApiPage[] = [
+  apiPage("/api/go", "go"),
+  apiPage("/api/vmath", "vmath"),
+  apiPage("/api/base", "base"),
+  apiPage("/api/Hash", "Hash"),
+];
+
+// Every version, the current (default) one included, owns a prefixed family.
 const pagesByVersion: Record<string, ApiPage[]> = {
-  "defold-1.13.0": [apiPage("/api/go", "go"), apiPage("/api/vmath", "vmath")],
+  "defold-1.13.0": [
+    apiPage("/api/defold-1.13.0/go", "go"),
+    apiPage("/api/defold-1.13.0/vmath", "vmath"),
+  ],
   "defold-1.12.4": [
     apiPage("/api/defold-1.12.4/go", "go"),
     apiPage("/api/defold-1.12.4/vmath", "vmath"),
   ],
 };
 
+const input: BuildReleaseRouteManifestInput = { versions, canonicalPages, pagesByVersion };
+
 describe("buildReleaseRouteManifest", () => {
-  test("splits canonical (default, unprefixed) from historical (prefixed) routes", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
-    expect(m.canonicalRoutes).toEqual(["/api/go", "/api/vmath"]);
-    expect(m.historicalRoutes).toEqual(["/api/defold-1.12.4/go", "/api/defold-1.12.4/vmath"]);
+  test("canonical routes are the Combined + version-independent snapshot, all unprefixed", () => {
+    const m = buildReleaseRouteManifest(input);
+    expect(m.canonicalRoutes).toEqual(["/api/base", "/api/go", "/api/Hash", "/api/vmath"]);
+    for (const route of m.canonicalRoutes) {
+      expect(route.startsWith("/api/combined/")).toBe(false);
+    }
   });
 
-  test("derives the human label and search index file per version", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
+  test("exact routes carry a non-empty prefixed family for every version, current included", () => {
+    const m = buildReleaseRouteManifest(input);
+    expect(m.exactRoutes).toEqual([
+      "/api/defold-1.12.4/go",
+      "/api/defold-1.12.4/vmath",
+      "/api/defold-1.13.0/go",
+      "/api/defold-1.13.0/vmath",
+    ]);
+    const current = m.versions.find((v) => v.id === "defold-1.13.0");
+    expect(current?.routes.length).toBeGreaterThan(0);
+  });
+
+  test("assigns every version its own prefixed index; the shared file is the Combined index", () => {
+    const m = buildReleaseRouteManifest(input);
     expect(m.versions.map((v) => [v.id, v.label, v.searchIndexFile])).toEqual([
-      ["defold-1.13.0", "Defold 1.13.0", "search-index.json"],
+      ["defold-1.13.0", "Defold 1.13.0", "search-index-defold-1.13.0.json"],
       ["defold-1.12.4", "Defold 1.12.4", "search-index-defold-1.12.4.json"],
     ]);
-    expect(m.searchRoutes).toEqual(["search-index-defold-1.12.4.json", "search-index.json"]);
+    expect(m.combinedSearchIndexFile).toBe("search-index.json");
+    expect(m.searchRoutes).toEqual([
+      "search-index-defold-1.12.4.json",
+      "search-index-defold-1.13.0.json",
+      "search-index.json",
+    ]);
   });
 
   test("mirrors the canonical routes as the sidebar routes", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
-    expect(m.sidebarRoutes).toEqual(["/api/go", "/api/vmath"]);
+    const m = buildReleaseRouteManifest(input);
+    expect(m.sidebarRoutes).toEqual(m.canonicalRoutes);
   });
 
   test("is deterministic — routes and search files come out sorted", () => {
-    const shuffled: Record<string, ApiPage[]> = {
-      "defold-1.13.0": [apiPage("/api/vmath", "vmath"), apiPage("/api/go", "go")],
-      "defold-1.12.4": [
-        apiPage("/api/defold-1.12.4/vmath", "vmath"),
-        apiPage("/api/defold-1.12.4/go", "go"),
+    const shuffled: BuildReleaseRouteManifestInput = {
+      versions,
+      canonicalPages: [
+        apiPage("/api/vmath", "vmath"),
+        apiPage("/api/go", "go"),
+        apiPage("/api/Hash", "Hash"),
+        apiPage("/api/base", "base"),
       ],
+      pagesByVersion: {
+        "defold-1.13.0": [
+          apiPage("/api/defold-1.13.0/vmath", "vmath"),
+          apiPage("/api/defold-1.13.0/go", "go"),
+        ],
+        "defold-1.12.4": [
+          apiPage("/api/defold-1.12.4/vmath", "vmath"),
+          apiPage("/api/defold-1.12.4/go", "go"),
+        ],
+      },
     };
-    expect(buildReleaseRouteManifest({ versions, pagesByVersion: shuffled })).toEqual(
-      buildReleaseRouteManifest({ versions, pagesByVersion }),
-    );
+    expect(buildReleaseRouteManifest(shuffled)).toEqual(buildReleaseRouteManifest(input));
   });
 });
 
 describe("validateReleaseRouteManifest", () => {
   test("a well-formed manifest reports no problems", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
-    expect(validateReleaseRouteManifest(m)).toEqual([]);
+    expect(validateReleaseRouteManifest(buildReleaseRouteManifest(input))).toEqual([]);
   });
 
-  test("rejects a duplicate canonical route", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
+  test("rejects a missing exact family for the current version", () => {
+    const m = buildReleaseRouteManifest(input);
     const corrupt: ReleaseRouteManifest = {
       ...m,
-      canonicalRoutes: [...m.canonicalRoutes, "/api/go"],
-    };
-    const problems = validateReleaseRouteManifest(corrupt);
-    expect(problems.length).toBeGreaterThan(0);
-    expect(problems.join(" ")).toContain("/api/go");
-  });
-
-  test("rejects a historical route missing its version prefix", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
-    const corrupt: ReleaseRouteManifest = {
-      ...m,
-      versions: m.versions.map((v) => (v.isDefault ? v : { ...v, routes: ["/api/go"] })),
-      historicalRoutes: ["/api/go"],
+      versions: m.versions.map((v) => (v.id === "defold-1.13.0" ? { ...v, routes: [] } : v)),
+      exactRoutes: m.exactRoutes.filter((r) => !r.startsWith("/api/defold-1.13.0/")),
     };
     expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
   });
 
+  test("rejects an exact route lacking its defold-<version> prefix", () => {
+    const m = buildReleaseRouteManifest(input);
+    const corrupt: ReleaseRouteManifest = {
+      ...m,
+      versions: m.versions.map((v) =>
+        v.id === "defold-1.12.4" ? { ...v, routes: ["/api/go"] } : v,
+      ),
+    };
+    expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
+  });
+
+  test("rejects a Combined engine route emitted under /api/combined as canonical", () => {
+    const m = buildReleaseRouteManifest(input);
+    const corrupt: ReleaseRouteManifest = {
+      ...m,
+      canonicalRoutes: [...m.canonicalRoutes, "/api/combined/go"],
+      sidebarRoutes: [...m.sidebarRoutes, "/api/combined/go"],
+    };
+    expect(validateReleaseRouteManifest(corrupt).join(" ")).toContain("/api/combined");
+  });
+
   test("rejects a canonical route that carries a version prefix", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
+    const m = buildReleaseRouteManifest(input);
     const corrupt: ReleaseRouteManifest = {
       ...m,
       canonicalRoutes: ["/api/defold-1.12.4/go", "/api/vmath"],
@@ -114,18 +168,28 @@ describe("validateReleaseRouteManifest", () => {
     expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
   });
 
-  test("rejects a version snapshot with no routes", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
+  test("rejects a route duplicated across the canonical and exact families", () => {
+    const m = buildReleaseRouteManifest(input);
     const corrupt: ReleaseRouteManifest = {
       ...m,
-      versions: m.versions.map((v) => (v.isDefault ? v : { ...v, routes: [] })),
-      historicalRoutes: [],
+      canonicalRoutes: [...m.canonicalRoutes, "/api/defold-1.12.4/go"],
+    };
+    expect(validateReleaseRouteManifest(corrupt).join(" ")).toContain("across canonical and exact");
+  });
+
+  test("rejects a version whose search index file assignment is stale", () => {
+    const m = buildReleaseRouteManifest(input);
+    const corrupt: ReleaseRouteManifest = {
+      ...m,
+      versions: m.versions.map((v) =>
+        v.isDefault ? { ...v, searchIndexFile: "search-index.json" } : v,
+      ),
     };
     expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
   });
 
   test("rejects a duplicate search route", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
+    const m = buildReleaseRouteManifest(input);
     const corrupt: ReleaseRouteManifest = {
       ...m,
       searchRoutes: [...m.searchRoutes, "search-index.json"],
@@ -134,7 +198,7 @@ describe("validateReleaseRouteManifest", () => {
   });
 
   test("rejects a sidebar route absent from the canonical snapshot", () => {
-    const m = buildReleaseRouteManifest({ versions, pagesByVersion });
+    const m = buildReleaseRouteManifest(input);
     const corrupt: ReleaseRouteManifest = {
       ...m,
       sidebarRoutes: [...m.sidebarRoutes, "/api/ghost"],

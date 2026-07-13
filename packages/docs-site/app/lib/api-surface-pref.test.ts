@@ -177,6 +177,17 @@ describe("rewriteApiNavForSurface", () => {
     expect(leaves.find((l) => l.label === "base")?.route).toBe("/api/base");
   });
 
+  test("prefixes the current version's engine leaves too, leaving version-independent leaves canonical", () => {
+    const out = rewriteApiNavForSurface(nav(), "defold-1.13.0", ["go", "camera", "model"]);
+    const api = out.find((c) => c.id === "api");
+    expect(api?.route).toBe("/api/defold-1.13.0");
+    const leaves = api?.links[0]?.children ?? [];
+    expect(leaves.find((l) => l.label === "go")?.route).toBe("/api/defold-1.13.0/go");
+    // The current version is no longer special: `base` is version-independent, so
+    // it stays canonical even under the current-version surface.
+    expect(leaves.find((l) => l.label === "base")?.route).toBe("/api/base");
+  });
+
   test("is a no-op on the canonical Combined surface", () => {
     const input = nav();
     expect(rewriteApiNavForSurface(input, "combined", ["go"])).toBe(input);
