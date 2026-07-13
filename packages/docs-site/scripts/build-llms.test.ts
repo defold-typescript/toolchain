@@ -87,9 +87,10 @@ describe("site target — repo-local guide links, Combined engine links", () => 
   test("guide links stay site-absolute; engine API links point at the Combined surface", () => {
     const txt = buildLlmsTxt(SITE_TARGET);
     expect(txt).toContain(`](${withBase("/script-lifecycle")})`);
-    expect(txt).toContain(`](${withBase("/api/combined/gui")})`);
-    // the pre-change default (single-version) engine route is gone from the map.
-    expect(txt).not.toContain(`](${withBase("/api/gui")})`);
+    expect(txt).toContain(`](${withBase("/api/gui")})`);
+    // Combined is canonical now: the site links the unprefixed engine route, and
+    // the old /api/combined/<ns> compat route never appears in the map.
+    expect(txt).not.toContain(`](${withBase("/api/combined/gui")})`);
   });
 
   test("leads with the `> ` package.json summary and carries none of the machine preamble", () => {
@@ -330,11 +331,12 @@ describe("llms.txt ## API engine links come from the Combined surface", () => {
       line.replace(/^- \[.*\]\((.*)\)$/, "$1"),
     );
 
-  test("every Combined engine namespace is linked, so a historical-only namespace would be too", () => {
+  test("every Combined engine namespace is linked at its canonical /api/<ns> route", () => {
     const site = buildLlmsTxt(SITE_TARGET);
     const targets = new Set(engineLinkTargets(site));
     for (const ns of combinedNamespaces()) {
-      expect(targets.has(withBase(`/api/combined/${ns}`))).toBe(true);
+      expect(targets.has(withBase(`/api/${ns}`))).toBe(true);
+      expect(targets.has(withBase(`/api/combined/${ns}`))).toBe(false);
     }
   });
 
@@ -364,6 +366,15 @@ describe("llms.txt ## API engine links come from the Combined surface", () => {
   test("llms-full tags a verified deprecation with [deprecated since 1.13.0]", () => {
     const api = section(buildLlmsFull(SITE_TARGET), "## API");
     expect(api).toMatch(/reset_constant\([^\n]*\[deprecated since 1\.13\.0\]/);
+  });
+
+  test("the llms-full preamble documents the Combined-vs-exact-vs-.defold-types routing contract", () => {
+    const full = buildLlmsFull(SITE_TARGET);
+    // unprefixed canonical routes are Combined; each exact version carries its prefix
+    expect(full).toContain("/api/<namespace>");
+    expect(full).toContain("/api/defold-<version>/<namespace>");
+    // the materialized types remain the final callable truth
+    expect(full).toContain(".defold-types/<surfaceId>/");
   });
 });
 

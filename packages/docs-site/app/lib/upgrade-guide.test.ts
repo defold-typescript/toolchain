@@ -69,7 +69,11 @@ function headingAnchors(markdown: string): Set<string> {
 
 function apiRoutes(): Set<string> {
   const routes = new Set<string>();
-  for (const file of ["search-index.json", "search-index-defold-1.12.4.json"]) {
+  for (const file of [
+    "search-index.json",
+    "search-index-defold-1.13.0.json",
+    "search-index-defold-1.12.4.json",
+  ]) {
     const items = JSON.parse(readFileSync(join(PUBLIC_DIR, file), "utf8")) as { route: string }[];
     for (const item of items) routes.add(item.route);
   }
@@ -143,11 +147,13 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
     }
   });
 
-  test("points at current canonical namespace pages for where the surface lives now", () => {
-    // Canonical (current-surface) links carry no version prefix, so a reader
-    // lands on the 1.13.0 page, not the frozen historical one.
-    expect(guideBody).toContain("/api/liveupdate");
-    expect(guideBody).toContain("/api/model");
+  test("points 1.13.0-specific claims at the exact-version pages", () => {
+    // The upgrade guide's current-surface claims are version-specific to 1.13.0,
+    // so they resolve to the exact-version pages, not the unprefixed Combined page.
+    expect(guideBody).toContain("/api/defold-1.13.0/liveupdate");
+    expect(guideBody).toContain("/api/defold-1.13.0/model");
+    expect(guideBody).not.toContain("](/api/liveupdate)");
+    expect(guideBody).not.toContain("](/api/model)");
   });
 
   test("carries no broken API links", () => {
