@@ -35,6 +35,14 @@ function baseDocs(): DocsEvidence {
     canonicalRoutes: ["/api/liveupdate", "/api/model"],
     historicalRoutes: ["/api/defold-1.12.4/liveupdate", "/api/defold-1.12.4/model"],
     searchMachinery: true,
+    exactRoutesByVersion: {
+      "defold-1.13.0": ["/api/defold-1.13.0/liveupdate", "/api/defold-1.13.0/model"],
+      "defold-1.12.4": ["/api/defold-1.12.4/liveupdate", "/api/defold-1.12.4/model"],
+    },
+    searchIndexByVersion: {
+      "defold-1.13.0": "search-index-defold-1.13.0.json",
+      "defold-1.12.4": "search-index-defold-1.12.4.json",
+    },
   };
 }
 
@@ -169,6 +177,65 @@ describe("evaluateReleaseReadiness", () => {
     const result = evaluateReleaseReadiness({
       ...e,
       docs: { ...baseDocs(), searchMachinery: false },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.problems.map((p) => p.category)).toContain("search");
+  });
+
+  test("rejects when the current version has no exact route family", () => {
+    const e = passingEvidence();
+    const docs = baseDocs();
+    const result = evaluateReleaseReadiness({
+      ...e,
+      docs: {
+        ...docs,
+        exactRoutesByVersion: { ...docs.exactRoutesByVersion, "defold-1.13.0": [] },
+      },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.problems.map((p) => p.category)).toContain("docs-route");
+  });
+
+  test("rejects when an exact-version route is emitted without its defold-<version> prefix", () => {
+    const e = passingEvidence();
+    const docs = baseDocs();
+    const result = evaluateReleaseReadiness({
+      ...e,
+      docs: {
+        ...docs,
+        exactRoutesByVersion: {
+          ...docs.exactRoutesByVersion,
+          "defold-1.12.4": ["/api/liveupdate"],
+        },
+      },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.problems.map((p) => p.category)).toContain("docs-route");
+  });
+
+  test("rejects when a Combined engine route is emitted under /api/combined as canonical", () => {
+    const e = passingEvidence();
+    const docs = baseDocs();
+    const result = evaluateReleaseReadiness({
+      ...e,
+      docs: { ...docs, canonicalRoutes: [...docs.canonicalRoutes, "/api/combined/model"] },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.problems.map((p) => p.category)).toContain("docs-route");
+  });
+
+  test("rejects when a version's search index assignment is stale", () => {
+    const e = passingEvidence();
+    const docs = baseDocs();
+    const result = evaluateReleaseReadiness({
+      ...e,
+      docs: {
+        ...docs,
+        searchIndexByVersion: {
+          ...docs.searchIndexByVersion,
+          "defold-1.13.0": "search-index.json",
+        },
+      },
     });
     expect(result.ok).toBe(false);
     expect(result.problems.map((p) => p.category)).toContain("search");

@@ -71,9 +71,10 @@ interface LlmsTarget {
   guideHref(page: GuidePage): string;
   apiHref(page: ApiPage): string;
   // Engine namespaces are the Combined (union-of-versions) surface, so their
-  // link differs from `apiHref`: the site points at the `/api/combined/<ns>`
-  // page; the package points at that namespace's anchor in the inlined
-  // `llms-full.txt` (which serializes the same Combined projection).
+  // link differs from `apiHref`: the site points at the canonical unprefixed
+  // `/api/<ns>` page (Combined is canonical now); the package points at that
+  // namespace's anchor in the inlined `llms-full.txt` (which serializes the same
+  // Combined projection).
   combinedApiHref(namespace: string): string;
   header(pages: GuidePage[]): string[];
 }
@@ -133,7 +134,7 @@ const SITE_HEADER = [`# ${PRODUCT}`, "", `> ${SUMMARY}`, ""];
 export const SITE_TARGET: LlmsTarget = {
   guideHref: (page) => withBase(page.route),
   apiHref: (page) => withBase(page.route),
-  combinedApiHref: (namespace) => withBase(`/api/combined/${namespace}`),
+  combinedApiHref: (namespace) => withBase(`/api/${namespace}`),
   header: () => SITE_HEADER,
 };
 
@@ -254,6 +255,8 @@ function agentContract(versions: readonly string[]): string[] {
     `> Tracked Defold versions: ${versions.join(", ")} (newest first).`,
     "",
     "The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature, optionally followed by one or more compact **Availability** tags in this order: a version span — `[since X]`, `[through X]`, the closed range `[X–Y]`, or the discrete list `[versions: …]` — then any curated lifecycle facts: `[signature transition]` (one arm of a same-name overload change), `[deprecated since X]`, `[replaced by namespace.symbol]`, and `[Box2D: …]` (the backend a symbol applies to). No tag means the symbol exists in every tracked version with no curated lifecycle caveat. Multiple tags may coexist on one line, and each tag applies to the exact signature it follows, not to the symbol name in general.",
+    "",
+    "On the website these Combined entries are canonical at the unprefixed route `/api/<namespace>`; each exact engine version is served under `/api/defold-<version>/<namespace>`, and the old `/api/combined/<namespace>` links are compatibility redirects to the canonical `/api/<namespace>`. Whatever route a reader lands on, the materialized `.defold-types/<surfaceId>/*.d.ts` for a project's resolved target is the final callable truth.",
     "",
     "To target one project: (1) resolve the project's configured Defold target and its `.defold-types/<surfaceId>/`, (2) filter Combined entries by Availability down to that version, (3) treat the materialized `.defold-types/<surfaceId>/*.d.ts` as the final callable truth.",
     "",
