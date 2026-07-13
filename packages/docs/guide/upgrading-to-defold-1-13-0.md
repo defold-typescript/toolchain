@@ -52,7 +52,7 @@ show each in isolation.
 
 Despite the old Live Update **auto-mount** framing, `liveupdate.add_mount` was
 **not** removed — it remains an imperative runtime API on the 1.13.0
-[`liveupdate`](/api/liveupdate) surface. Its `name` parameter widened from
+[`liveupdate`](/api/defold-1.13.0/liveupdate) surface. Its `name` parameter widened from
 `string` to `string | Hash`, so a hashed mount name is now accepted alongside a
 plain string, and the mount callback is typed more precisely. Compare the current
 signature with the historical one on the [1.12.4 `liveupdate`
@@ -76,7 +76,7 @@ below show what replaced it.
 
 The single-slot `model.material` property is removed. A model can carry several
 material slots, so address a slot by name with the component material APIs on the
-current [`model`](/api/model) surface instead of the one blanket property; the
+current [`model`](/api/defold-1.13.0/model) surface instead of the one blanket property; the
 removed property's frozen shape stays on the [1.12.4 `model`
 page](/api/defold-1.12.4/model).
 

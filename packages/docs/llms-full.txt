@@ -18,6 +18,8 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 
 The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature, optionally followed by one or more compact **Availability** tags in this order: a version span — `[since X]`, `[through X]`, the closed range `[X–Y]`, or the discrete list `[versions: …]` — then any curated lifecycle facts: `[signature transition]` (one arm of a same-name overload change), `[deprecated since X]`, `[replaced by namespace.symbol]`, and `[Box2D: …]` (the backend a symbol applies to). No tag means the symbol exists in every tracked version with no curated lifecycle caveat. Multiple tags may coexist on one line, and each tag applies to the exact signature it follows, not to the symbol name in general.
 
+On the website these Combined entries are canonical at the unprefixed route `/api/<namespace>`; each exact engine version is served under `/api/defold-<version>/<namespace>`, and the old `/api/combined/<namespace>` links are compatibility redirects to the canonical `/api/<namespace>`. Whatever route a reader lands on, the materialized `.defold-types/<surfaceId>/*.d.ts` for a project's resolved target is the final callable truth.
+
 To target one project: (1) resolve the project's configured Defold target and its `.defold-types/<surfaceId>/`, (2) filter Combined entries by Availability down to that version, (3) treat the materialized `.defold-types/<surfaceId>/*.d.ts` as the final callable truth.
 
 ## Guide
@@ -3622,7 +3624,7 @@ show each in isolation.
 
 Despite the old Live Update **auto-mount** framing, `liveupdate.add_mount` was
 **not** removed — it remains an imperative runtime API on the 1.13.0
-[`liveupdate`](/api/liveupdate) surface. Its `name` parameter widened from
+[`liveupdate`](/api/defold-1.13.0/liveupdate) surface. Its `name` parameter widened from
 `string` to `string | Hash`, so a hashed mount name is now accepted alongside a
 plain string, and the mount callback is typed more precisely. Compare the current
 signature with the historical one on the [1.12.4 `liveupdate`
@@ -3646,7 +3648,7 @@ below show what replaced it.
 
 The single-slot `model.material` property is removed. A model can carry several
 material slots, so address a slot by name with the component material APIs on the
-current [`model`](/api/model) surface instead of the one blanket property; the
+current [`model`](/api/defold-1.13.0/model) surface instead of the one blanket property; the
 removed property's frozen shape stays on the [1.12.4 `model`
 page](/api/defold-1.12.4/model).
 

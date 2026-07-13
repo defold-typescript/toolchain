@@ -6,6 +6,12 @@ import {
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "../packages/cli/src/defold-version.ts";
 import { RELEASE_TARGET_MATRIX } from "../packages/cli/src/release-target-matrix.ts";
+import { canonicalApiPages } from "../packages/docs-site/app/lib/api-content.ts";
+import {
+  loadApiSurfaceForVersion,
+  versionsWithDiskFixtures,
+} from "../packages/docs-site/app/lib/api-surface-loader.ts";
+import { buildReleaseRouteManifest } from "../packages/docs-site/app/lib/release-manifest.ts";
 import {
   type ApiTarget,
   generateModuleDeclaration,
@@ -79,6 +85,14 @@ export interface DocsEvidence {
   readonly canonicalRoutes: readonly string[];
   readonly historicalRoutes: readonly string[];
   readonly searchMachinery: boolean;
+  // Structural route/index families derived from the release route manifest over
+  // the real docs-site surfaces: each complete version's exact `/api/<id>/…` route
+  // family and the search index file assigned to it. Distinct from the
+  // guide-scraped canonical/historical route coverage above — the guide prose may
+  // legitimately name the `/api/combined` compat route, so the structural checks
+  // never read it.
+  readonly exactRoutesByVersion: Readonly<Record<string, readonly string[]>>;
+  readonly searchIndexByVersion: Readonly<Record<string, string>>;
 }
 
 export interface MatrixTargetEvidence {
@@ -169,12 +183,45 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
     if (docs.historicalRoutes.length === 0) {
       add("docs-route", `no historical /api/defold-${expected.baseline} routes referenced`);
     }
+    // Canonical is the Combined/unprefixed surface: no canonical route may carry a
+    // version prefix, and none may be the `/api/combined` compatibility route.
+    for (const route of docs.canonicalRoutes) {
+      if (/^\/api\/defold-/.test(route)) {
+        add("docs-route", `canonical route carries a version prefix: ${route}`);
+      }
+      if (/^\/api\/combined(\/|$)/.test(route)) {
+        add("docs-route", `canonical route emitted under /api/combined: ${route}`);
+      }
+    }
+    // Every complete version, the current one included, owns a non-empty exact
+    // family, and each exact route carries its own `/api/<id>/` prefix.
+    const wantCurrent = `defold-${expected.release}`;
+    if ((docs.exactRoutesByVersion[wantCurrent] ?? []).length === 0) {
+      add("docs-route", `current version ${wantCurrent} has no exact route family`);
+    }
+    for (const [version, routes] of Object.entries(docs.exactRoutesByVersion)) {
+      if (routes.length === 0) {
+        add("docs-route", `version ${version} has no exact route family`);
+      }
+      for (const route of routes) {
+        if (!route.startsWith(`/api/${version}/`)) {
+          add("docs-route", `exact route missing its ${version} prefix: ${route}`);
+        }
+      }
+    }
   }
 
   if (docs === null) {
     add("search", "search evidence absent: migration guide not readable");
-  } else if (!docs.searchMachinery) {
-    add("search", "search index machinery is not committed");
+  } else {
+    if (!docs.searchMachinery) {
+      add("search", "search index machinery is not committed");
+    }
+    for (const [version, file] of Object.entries(docs.searchIndexByVersion)) {
+      if (file !== `search-index-${version}.json`) {
+        add("search", `version ${version} search index assignment is stale: ${file}`);
+      }
+    }
   }
 
   const av = evidence.availability;
@@ -415,11 +462,47 @@ function collectDocs(root: string, release: string, baseline: string): DocsEvide
   const routes = [...text.matchAll(/\/api\/[a-z0-9._/-]+/g)].map((m) => m[0]);
   const historicalPrefix = `/api/defold-${baseline}/`;
   const historicalRoutes = [...new Set(routes.filter((r) => r.startsWith(historicalPrefix)))];
-  const canonicalRoutes = [...new Set(routes.filter((r) => !/^\/api\/defold-/.test(r)))];
   const searchMachinery =
     existsSync(path.join(root, "packages/docs-site/scripts/build-search-index.ts")) &&
     existsSync(path.join(root, "packages/docs-site/app/lib/release-manifest.ts"));
-  return { canonicalRoutes, historicalRoutes, searchMachinery };
+
+  // The structural canonical/exact split and the per-version index assignments
+  // come from the release route manifest built over the real docs-site surfaces —
+  // Combined is canonical, every version owns an exact `/api/defold-<version>/…`
+  // family. A malformed surface degrades to empty families (the gate then fails
+  // closed) rather than crashing.
+  let canonicalRoutes: readonly string[] = [];
+  let exactRoutesByVersion: Record<string, readonly string[]> = {};
+  let searchIndexByVersion: Record<string, string> = {};
+  try {
+    const typesDir = path.join(root, "packages/types");
+    const libraryTypesDir = path.join(root, "packages/library-types");
+    const versions = versionsWithDiskFixtures(typesDir);
+    const manifest = buildReleaseRouteManifest({
+      versions,
+      canonicalPages: canonicalApiPages(typesDir, libraryTypesDir),
+      pagesByVersion: Object.fromEntries(
+        versions.map((v) => [v.id, loadApiSurfaceForVersion(typesDir, v.id)]),
+      ),
+    });
+    canonicalRoutes = manifest.canonicalRoutes;
+    exactRoutesByVersion = Object.fromEntries(manifest.versions.map((v) => [v.id, v.routes]));
+    searchIndexByVersion = Object.fromEntries(
+      manifest.versions.map((v) => [v.id, v.searchIndexFile]),
+    );
+  } catch {
+    canonicalRoutes = [];
+    exactRoutesByVersion = {};
+    searchIndexByVersion = {};
+  }
+
+  return {
+    canonicalRoutes,
+    historicalRoutes,
+    searchMachinery,
+    exactRoutesByVersion,
+    searchIndexByVersion,
+  };
 }
 
 function collectMatrix(): MatrixTargetEvidence[] {
