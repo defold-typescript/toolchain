@@ -21,6 +21,7 @@ import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
   activeSurfaceForPath,
+  currentSurfaceForRoute,
   resolveApiSurfaceRedirect,
   rewriteApiNavForSurface,
 } from "../lib/api-surface-pref";
@@ -271,6 +272,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     defaultVersionId: defaultVersion?.id ?? "",
     versionIds,
     combinedNamespaces: combinedNs,
+    namespacesByVersion,
   };
   const activeSurface = activeSurfaceForPath(path, surfaceConfig);
   const surfaceNamespaces =
@@ -294,7 +296,15 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // pattern) so a new user's un-prefixed API page swaps to Combined before first
   // paint; a capture-phase listener records the surface a selector link chooses so
   // the choice survives later navigation.
-  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${JSON.stringify(API_SURFACE_STORAGE_KEY)}),${JSON.stringify(surfaceConfig)});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${JSON.stringify(API_SURFACE_STORAGE_KEY)},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}})();`;
+  const surfaceKey = JSON.stringify(API_SURFACE_STORAGE_KEY);
+  const surfaceConfigJson = JSON.stringify(surfaceConfig);
+  // Pre-paint: (1) redirect an un-prefixed API page to the persisted surface,
+  // (2) record surface-selector clicks, (3) reconcile the selector highlight to
+  // the persisted surface via `currentSurfaceForRoute` so a version-independent
+  // page keeps the user's Combined/version choice current instead of flipping to
+  // the route-derived default. The options live inside a closed `<details>`, so
+  // the highlight move is unseen until the user opens the dropdown.
+  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${surfaceKey},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var g=${currentSurfaceForRoute.toString()};var apply=function(){var s;try{s=g(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});}catch(_){return;}var opts=document.querySelectorAll('[data-api-surface]');for(var i=0;i<opts.length;i++){var o=opts[i],on=o.getAttribute('data-api-surface')===s,dd=o.querySelector('[data-surface-dot]');if(on){o.setAttribute('aria-current','page');o.classList.add('bg-accent-soft','text-accent');if(!dd){var d=document.createElement('span');d.setAttribute('aria-hidden','true');d.setAttribute('data-surface-dot','');d.className='h-1.5 w-1.5 shrink-0 rounded-full bg-current';o.appendChild(d);}}else{o.removeAttribute('aria-current');o.classList.remove('bg-accent-soft','text-accent');if(dd&&dd.parentNode){dd.parentNode.removeChild(dd);}}}};if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}}catch(e){}})();`;
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();
@@ -472,7 +482,11 @@ function VersionSelector({
           >
             <span>{entry.label}</span>
             {entry.isCurrent ? (
-              <span aria-hidden="true" class="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+              <span
+                aria-hidden="true"
+                data-surface-dot=""
+                class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
+              />
             ) : null}
           </a>
         ))}
