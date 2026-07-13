@@ -209,7 +209,10 @@ export function reconcileSurfaceSelector(root: SurfaceSelectorRoot, surface: str
 // recursing into groups. Only namespaces the surface actually owns are moved;
 // every other route (guides, libraries, non-engine reference) is returned as-is.
 function rewriteLink(link: NavLink, surface: string, namespaces: ReadonlySet<string>): NavLink {
-  const remapped: NavLink = { ...link };
+  // The rewrite path is entirely non-Combined (Combined returns early), so the
+  // Combined-only sidebar count pills must not survive onto an exact-version leaf.
+  const { badgeHtml: _badgeHtml, ...base } = link;
+  const remapped: NavLink = { ...base };
   const match = link.route ? /^\/api\/([^/]+)$/.exec(link.route) : null;
   if (match && namespaces.has(match[1] as string)) {
     remapped.route = surfacePathForNamespace(surface, match[1]);

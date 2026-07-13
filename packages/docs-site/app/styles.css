@@ -858,6 +858,41 @@
   .prose .api-badge-count--deprecated {
     background: var(--color-badge-deprecated);
   }
+
+  /* Sidebar namespace count pills (Combined-only). Not `.prose`-scoped — the
+   * sidebar tree sits outside prose. Compact: only the tally shows, the category
+   * lives in the `aria-label`, so color stays additive rather than the sole cue. */
+  .nav-badge-counts {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
+  .nav-badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25em;
+    height: 1.25em;
+    padding: 0 0.35em;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .nav-badge-count--new {
+    background: var(--color-badge-new);
+  }
+
+  .nav-badge-count--changed {
+    background: var(--color-badge-changed);
+  }
+
+  .nav-badge-count--deprecated {
+    background: var(--color-badge-deprecated);
+  }
 }
 
 /*

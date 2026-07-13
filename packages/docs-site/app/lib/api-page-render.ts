@@ -171,6 +171,20 @@ export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
   return `<div class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</div>`;
 }
 
+// The compact count pills for a sidebar namespace leaf: one span per non-zero
+// category showing just the tally as visible text (space is tight in the tree),
+// with the category spelled out in the `aria-label` so color stays additive. The
+// spans are sidebar-scoped (`nav-badge-*`, outside `.prose`) rather than the H1
+// pills' `.prose .api-badge-*`. Returns `""` for a fully stable namespace.
+export function navNamespaceBadges(counts: NamespaceBadgeCounts): string {
+  const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
+    (c) =>
+      `<span class="nav-badge-count nav-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]}</span>`,
+  );
+  if (pills.length === 0) return "";
+  return `<span class="nav-badge-counts">${pills.join("")}</span>`;
+}
+
 // One symbol, single column: the `### signature` heading is the title, and the
 // description + example are wrapped in an indented `.api-symbol-body` so the body
 // reads as subordinate to the title. The signature is not repeated as a code
@@ -334,9 +348,13 @@ export function apiPageMarkdown(
     // Colon-named handle methods (`file:read`, `client:send`) get their own
     // `<receiver> methods` heading so they read apart from the module table.
     if (kind === "function") {
+      const overviewMarker = combinedMarkers
+        ? (s: ApiSymbol) =>
+            badgeDots(badgeCategory(s.availability, page.availability?.versions ?? []))
+        : undefined;
       for (const fnGroup of groupFunctionSymbols(group)) {
         lines.push(`## ${fnGroup.label}`, "");
-        lines.push(functionOverviewCards(fnGroup.symbols), "");
+        lines.push(functionOverviewCards(fnGroup.symbols, overviewMarker), "");
         for (const symbol of fnGroup.symbols) emitSymbol(symbol);
       }
       continue;

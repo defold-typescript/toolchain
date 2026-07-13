@@ -13,6 +13,7 @@ import {
   apiReplacementResolver,
   isKnownVersionId,
   namespaceCountBadges,
+  navNamespaceBadges,
   versionedApiParams,
 } from "./api-page-render";
 import { type ApiPage, type AvailabilityLookup, apiModuleSymbols } from "./api-surface";
@@ -690,6 +691,27 @@ describe("availability badges", () => {
     expect(md).toContain("Deprecated since 1.12.0");
     expect(md).not.toContain("api-badge-dot");
   });
+
+  const overviewRegion = (md: string): string => {
+    const start = md.indexOf('<div class="api-overview"');
+    const end = md.indexOf("</div>", start);
+    return md.slice(start, end);
+  };
+
+  test("a Combined page appends the category dot after the function-overview signature link", () => {
+    const md = apiPageMarkdown(modelPage(setTexture, { availableIn: ["1.13.0"] }), noLink, {
+      combinedMarkers: true,
+    });
+    const overview = overviewRegion(md);
+    expect(overview).toContain('api-badge-dot api-badge-dot--new" aria-label="New"');
+    // The dot follows the signature link, not before it, inside the same item.
+    expect(overview.indexOf("](#")).toBeLessThan(overview.indexOf("api-badge-dot"));
+  });
+
+  test("the same page without combinedMarkers renders the overview list with no dots", () => {
+    const md = apiPageMarkdown(modelPage(setTexture, { availableIn: ["1.13.0"] }), noLink);
+    expect(overviewRegion(md)).not.toContain("api-badge-dot");
+  });
 });
 
 describe("apiPageMarkdown authoritative member signatures", () => {
@@ -794,6 +816,34 @@ describe("namespaceCountBadges visible text", () => {
   test("a zero category is omitted; an all-zero namespace shows nothing", () => {
     expect(namespaceCountBadges({ new: 2, changed: 0, deprecated: 0 })).not.toContain("changed");
     expect(namespaceCountBadges({ new: 0, changed: 0, deprecated: 0 })).toBe("");
+  });
+});
+
+describe("navNamespaceBadges (sidebar count pills)", () => {
+  test("an all-zero namespace renders nothing", () => {
+    expect(navNamespaceBadges({ new: 0, changed: 0, deprecated: 0 })).toBe("");
+  });
+
+  test("one nav-badge-count span per non-zero category, compact tally text + category aria-label", () => {
+    const html = navNamespaceBadges({ new: 12, changed: 3, deprecated: 1 });
+    expect(html).toContain(
+      '<span class="nav-badge-count nav-badge-count--new" aria-label="12 new symbols">12</span>',
+    );
+    expect(html).toContain(
+      '<span class="nav-badge-count nav-badge-count--changed" aria-label="3 changed symbols">3</span>',
+    );
+    expect(html).toContain(
+      '<span class="nav-badge-count nav-badge-count--deprecated" aria-label="1 deprecated symbols">1</span>',
+    );
+    // Exactly three pills for three non-zero categories.
+    expect(html.match(/nav-badge-count nav-badge-count--/g)).toHaveLength(3);
+  });
+
+  test("a zero category emits no pill", () => {
+    const html = navNamespaceBadges({ new: 2, changed: 0, deprecated: 0 });
+    expect(html).toContain("nav-badge-count--new");
+    expect(html).not.toContain("nav-badge-count--changed");
+    expect(html).not.toContain("nav-badge-count--deprecated");
   });
 });
 
