@@ -25,19 +25,17 @@ interface VersionSearchIndexDeps {
 }
 
 const DEFAULT_SEARCH_INDEX_FILE = "search-index.json";
-// The `/api/combined/*` union surface, like a historical version, has its own
-// index so its authoritative-signature search records never bleed into (or get
-// masked by) the default surface. It is not a tracked version id, so it needs
-// its own recognized segment.
-const COMBINED_SEGMENT = "combined";
-const COMBINED_SEARCH_INDEX_FILE = "search-index-combined.json";
 
+// Combined is the canonical surface, so the shared `search-index.json` IS the
+// Combined index. A `/api/defold-<version>/…` route (the current version
+// included) resolves to that version's own `search-index-<id>.json`. The
+// `/api/combined/*` compat route is not a tracked version id, so it falls
+// through to the shared canonical index — exactly where its redirect lands.
 export function searchIndexFileForRoute(route: string, versionIds: readonly string[]): string {
   const path = route.split(/[?#]/, 1)[0] ?? "";
   const segments = path.split("/").filter(Boolean);
   const apiIndex = segments.indexOf("api");
   const candidate = apiIndex >= 0 ? segments[apiIndex + 1] : undefined;
-  if (candidate === COMBINED_SEGMENT) return COMBINED_SEARCH_INDEX_FILE;
   return candidate && versionIds.includes(candidate)
     ? `search-index-${candidate}.json`
     : DEFAULT_SEARCH_INDEX_FILE;
@@ -70,30 +68,31 @@ function combinedNamespaceText(ns: CombinedNamespace): string {
 /**
  * One search record per Combined namespace, sourced entirely from the shared
  * {@link CombinedSurface} projection — authoritative signatures and availability
- * prose, never a re-walk of the raw per-version surfaces. Routed under
- * `/api/combined/<namespace>` so a hit lands on the union page.
+ * prose, never a re-walk of the raw per-version surfaces. Routed at the canonical
+ * unprefixed `/api/<namespace>` so a hit lands on the Combined page.
  */
 export function combinedSearchRecords(combined: CombinedSurface): SearchRecord[] {
   return combined.namespaces
     .map((ns) => ({
-      route: `/api/combined/${ns.namespace}`,
+      route: `/api/${ns.namespace}`,
       title: `${ns.namespace} API`,
       text: combinedNamespaceText(ns),
     }))
     .sort((a, b) => a.route.localeCompare(b.route));
 }
 
+// One prefixed record set per version, the current (default) version included —
+// it no longer borrows the unversioned `search-index.json`, which is now the
+// Combined canonical index.
 export function versionSearchIndexRecords(
   typesDir: string,
   guideRecords: SearchRecord[],
   deps: VersionSearchIndexDeps,
 ): VersionSearchIndex[] {
-  return deps.versions
-    .filter((version) => !version.isDefault)
-    .map((version) => ({
-      version: version.id,
-      records: [...guideRecords, ...apiSearchRecords(deps.pagesForVersion(typesDir, version.id))],
-    }));
+  return deps.versions.map((version) => ({
+    version: version.id,
+    records: [...guideRecords, ...apiSearchRecords(deps.pagesForVersion(typesDir, version.id))],
+  }));
 }
 
 function humanize(slug: string): string {

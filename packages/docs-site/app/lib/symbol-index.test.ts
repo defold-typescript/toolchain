@@ -141,13 +141,17 @@ describe("buildSymbolIndex", () => {
 });
 
 describe("symbolIndexFileForRoute", () => {
-  const versionIds = ["defold-1.12.4"];
+  // versionIds now carries the current (default) engine version too.
+  const versionIds = ["defold-1.13.0", "defold-1.12.4"];
 
-  test("selects the default file on a canonical, unprefixed API route", () => {
+  test("selects the shared Combined index on a canonical, unprefixed API route", () => {
     expect(symbolIndexFileForRoute("/api/go", versionIds)).toBe("symbol-index.json");
   });
 
-  test("selects the version file on a historical route", () => {
+  test("selects the version file on any prefixed route, the current version included", () => {
+    expect(symbolIndexFileForRoute("/api/defold-1.13.0/go", versionIds)).toBe(
+      "symbol-index-defold-1.13.0.json",
+    );
     expect(symbolIndexFileForRoute("/api/defold-1.12.4/go", versionIds)).toBe(
       "symbol-index-defold-1.12.4.json",
     );
@@ -158,12 +162,10 @@ describe("symbolIndexFileForRoute", () => {
     expect(symbolIndexFileForRoute("/api/defold-9.9.9/go", versionIds)).toBe("symbol-index.json");
   });
 
-  test("routes Combined pages to the Combined symbol index", () => {
-    expect(symbolIndexFileForRoute("/api/combined/go", versionIds)).toBe(
-      "symbol-index-combined.json",
-    );
+  test("resolves the /api/combined compat route to the canonical Combined index", () => {
+    expect(symbolIndexFileForRoute("/api/combined/go", versionIds)).toBe("symbol-index.json");
     expect(symbolIndexFileForRoute("/api/combined/go#anchor", versionIds)).toBe(
-      "symbol-index-combined.json",
+      "symbol-index.json",
     );
   });
 });
@@ -175,40 +177,45 @@ describe("versionSymbolIndexRecords", () => {
   ];
 
   function pagesForVersion(versionId: string): ApiPage[] {
-    const prefix = versionId === "cur" ? "" : `/${versionId}`;
     const ns = versionId === "cur" ? "go" : "wmath";
-    return [{ ...page(ns, { brief: `${ns} brief` }), route: `/api${prefix}/${ns}` }];
+    return [{ ...page(ns, { brief: `${ns} brief` }), route: `/api/${versionId}/${ns}` }];
   }
 
-  test("emits one version-correct index per non-default version, keyed to its prefixed routes", () => {
+  test("emits one version-correct index per version, the default included, keyed to prefixed routes", () => {
     const records = versionSymbolIndexRecords(versions, pagesForVersion);
-    expect(records.map((r) => r.version)).toEqual(["old"]);
-    expect(records[0]?.index.wmath).toEqual({ brief: "wmath brief", route: "/api/old/wmath" });
-    // never silently falls back to the default surface
-    expect(records[0]?.index.go).toBeUndefined();
+    expect(records.map((r) => r.version)).toEqual(["cur", "old"]);
+
+    const old = records.find((r) => r.version === "old");
+    expect(old?.index.wmath).toEqual({ brief: "wmath brief", route: "/api/old/wmath" });
+
+    // The default version is no longer special — it too gets a prefixed index
+    // rather than borrowing the canonical surface.
+    const cur = records.find((r) => r.version === "cur");
+    expect(cur?.index.go).toEqual({ brief: "go brief", route: "/api/cur/go" });
   });
 });
 
 describe("combinedSymbolIndexRecords", () => {
   const combined = loadCombinedSurface(REAL_TYPES_DIR);
 
-  test("maps every symbol to its /api/combined/<namespace> route", () => {
+  test("maps every symbol to its canonical /api/<namespace> route", () => {
     const index = combinedSymbolIndexRecords(combined);
-    // the namespace key routes to the bare combined page
-    expect(index.compute?.route).toBe("/api/combined/compute");
-    // a member routes to the combined page with a heading anchor, never a
-    // version-prefixed or default-surface route
+    // the namespace key routes to the canonical unprefixed page
+    expect(index.compute?.route).toBe("/api/compute");
+    // a member routes to the canonical page with a heading anchor, never the
+    // /api/combined compat prefix nor a version-prefixed route
     for (const entry of Object.values(index)) {
-      expect(entry.route.startsWith("/api/combined/")).toBe(true);
+      expect(entry.route.startsWith("/api/")).toBe(true);
+      expect(entry.route.startsWith("/api/combined/")).toBe(false);
     }
-    // a known member key resolves under its combined namespace
-    expect(index["go.get_position"]?.route.startsWith("/api/combined/go#")).toBe(true);
+    // a known member key resolves under its canonical namespace
+    expect(index["go.get_position"]?.route.startsWith("/api/go#")).toBe(true);
   });
 
   test("is derived from the projection, covering every combined namespace key", () => {
     const index = combinedSymbolIndexRecords(combined);
     for (const ns of combined.namespaces) {
-      expect(index[ns.namespace]?.route).toBe(`/api/combined/${ns.namespace}`);
+      expect(index[ns.namespace]?.route).toBe(`/api/${ns.namespace}`);
     }
   });
 });
