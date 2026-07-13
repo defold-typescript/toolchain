@@ -52,18 +52,18 @@ export function combinedSurface(): CombinedSurface {
 }
 
 // A Combined namespace projected as an `ApiPage` for the existing render/index
-// components: an `engine` page routed under `/api/combined`, carrying the union
-// module and the synthetic availability lookup. Combined omits example
+// components: an `engine` page routed at the canonical `/api/<ns>`, carrying the
+// union module and the synthetic availability lookup. Combined omits example
 // translations (they render as their Lua fallback) and signature overrides.
 export function toCombinedApiPage(ns: CombinedNamespace): ApiPage {
   return combinedNamespaceToApiPage(ns);
 }
 
-// The Combined namespaces projected as pages under their `/api/combined/<ns>`
-// identity. This projection route is retained for the search / symbol manifests
-// (which stay valid via the compat redirect and are canonicalized in a later
-// step); the canonical route/nav surface reads `canonicalApiPages` instead. An
-// explicit `typesDir` bypasses the module cache for deterministic tests.
+// The Combined namespaces projected as pages at their canonical `/api/<ns>`
+// identity — the projection owns the canonical route at its source, so this is
+// the surface the canonical route, the nav, and the search / symbol manifests all
+// read directly (no post-projection route rewrite). An explicit `typesDir`
+// bypasses the module cache for deterministic tests.
 export function combinedApiPages(typesDir?: string): ApiPage[] {
   const surface = typesDir ? loadCombinedSurface(typesDir) : combinedSurface();
   return surface.namespaces.map(toCombinedApiPage);
@@ -78,14 +78,6 @@ export function versionIndependentPages(
   libraryTypesDir: string = LIBRARY_TYPES_DIR,
 ): ApiPage[] {
   return loadVersionIndependentPages(typesDir, libraryTypesDir);
-}
-
-// The Combined engine namespaces re-routed from their `/api/combined/<ns>`
-// projection identity onto the canonical unprefixed `/api/<ns>`, so the canonical
-// route and its linkify/replacement registry resolve within the unprefixed
-// surface.
-function canonicalCombinedPages(typesDir?: string): ApiPage[] {
-  return combinedApiPages(typesDir).map((page) => ({ ...page, route: `/api/${page.namespace}` }));
 }
 
 // Which surface owns a canonical namespace: a Combined engine namespace, or a
@@ -120,7 +112,7 @@ export function canonicalApiPages(
   typesDir?: string,
   libraryTypesDir: string = LIBRARY_TYPES_DIR,
 ): ApiPage[] {
-  const engine = canonicalCombinedPages(typesDir);
+  const engine = combinedApiPages(typesDir);
   const independent = versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir);
   apiNamespaceOwners(engine, independent);
   return [...engine, ...independent];
@@ -143,7 +135,7 @@ export function apiNamespaceOwner(
   typesDir?: string,
   libraryTypesDir: string = LIBRARY_TYPES_DIR,
 ): ApiNamespaceOwner | undefined {
-  const engine = canonicalCombinedPages(typesDir);
+  const engine = combinedApiPages(typesDir);
   const independent = versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir);
   return apiNamespaceOwners(engine, independent).get(namespace);
 }

@@ -22,6 +22,14 @@ export interface VersionSearchIndex {
 interface VersionSearchIndexDeps {
   versions: SearchIndexVersion[];
   pagesForVersion: (typesDir: string, versionId: string) => ApiPage[];
+  /**
+   * The version-independent reference pages (core value types, Lua stdlib,
+   * vendored libraries) shared across every version, each already at its canonical
+   * `/api/<ns>` route. Composed into every version index so a lookup from a
+   * version page still finds shared reference content without a version-prefixed
+   * copy. Loaded once by the caller and passed to every version output.
+   */
+  sharedPages: ApiPage[];
 }
 
 const DEFAULT_SEARCH_INDEX_FILE = "search-index.json";
@@ -81,17 +89,26 @@ export function combinedSearchRecords(combined: CombinedSurface): SearchRecord[]
     .sort((a, b) => a.route.localeCompare(b.route));
 }
 
-// One prefixed record set per version, the current (default) version included —
-// it no longer borrows the unversioned `search-index.json`, which is now the
-// Combined canonical index.
+// One record set per tracked version, the current (default) version included: the
+// guide records, the shared version-independent reference records (at their
+// canonical `/api/<ns>` routes), and that version's own engine pages (at their
+// `/api/<id>/<ns>` prefixed routes). The version file no longer borrows the
+// unversioned `search-index.json` (now the Combined canonical index); it composes
+// its own engine surface with the shared reference content so an in-page lookup
+// resolves both.
 export function versionSearchIndexRecords(
   typesDir: string,
   guideRecords: SearchRecord[],
   deps: VersionSearchIndexDeps,
 ): VersionSearchIndex[] {
+  const sharedRecords = apiSearchRecords(deps.sharedPages);
   return deps.versions.map((version) => ({
     version: version.id,
-    records: [...guideRecords, ...apiSearchRecords(deps.pagesForVersion(typesDir, version.id))],
+    records: [
+      ...guideRecords,
+      ...sharedRecords,
+      ...apiSearchRecords(deps.pagesForVersion(typesDir, version.id)),
+    ],
   }));
 }
 

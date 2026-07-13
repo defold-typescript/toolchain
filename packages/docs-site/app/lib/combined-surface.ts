@@ -85,16 +85,18 @@ export interface CombinedSurface {
 
 /**
  * Project one Combined namespace as an `ApiPage` for the shared render / index /
- * search machinery: an `engine` page routed under `/api/combined`, carrying the
- * union `module` and the synthetic availability lookup. Combined omits example
+ * search machinery: an `engine` page routed at the canonical `/api/<namespace>`,
+ * carrying the union `module` and the synthetic availability lookup. Combined is
+ * the canonical unprefixed surface, so the projection owns the canonical route at
+ * its source — no consumer re-maps it afterward. Combined omits example
  * translations (they render as their Lua fallback) and signature overrides. Pure
- * — the node-free counterpart the `/api/combined` routes, the search index, and
+ * — the node-free counterpart the canonical `/api` routes, the search index, and
  * the symbol index all reuse so none re-walks the raw per-version surfaces.
  */
 export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
   return {
     namespace: ns.namespace,
-    route: `/api/combined/${ns.namespace}`,
+    route: `/api/${ns.namespace}`,
     brief: ns.module.brief,
     module: ns.module,
     translations: {},

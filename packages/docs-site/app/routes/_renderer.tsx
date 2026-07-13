@@ -25,6 +25,7 @@ import {
   reconcileSurfaceSelector,
   resolveApiSurfaceRedirect,
   rewriteApiNavForSurface,
+  showApiSurfaceSelector,
 } from "../lib/api-surface-pref";
 import { withBase } from "../lib/base";
 import { guidePages } from "../lib/content";
@@ -257,7 +258,6 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   const versions = apiVersions();
   // Every tracked version — the default included — now owns a prefixed family.
   const versionIds = versions.map((version) => version.id);
-  const defaultVersion = versions.find((version) => version.isDefault) ?? versions[0];
   const namespacesByVersion = Object.fromEntries(
     versions.map((version) => [
       version.id,
@@ -272,9 +272,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // drops the selected surface.
   const surfaceConfig: ApiSurfaceConfig = {
     base: withBase("/").replace(/\/$/, ""),
-    defaultVersionId: defaultVersion?.id ?? "",
     versionIds,
-    combinedNamespaces: combinedNs,
     namespacesByVersion,
   };
   const activeSurface = activeSurfaceForPath(path, surfaceConfig);
@@ -284,15 +282,17 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
 
   const activeId = activeCategoryId(path, surfaceNav) ?? surfaceNav[0]?.id;
   const activeCategory = surfaceNav.find((category) => category.id === activeId) ?? surfaceNav[0];
-  const versionSwitcher =
-    versions.length > 1
-      ? buildVersionSwitcher({
-          versions,
-          namespacesByVersion,
-          route: path,
-          combinedNamespaces: combinedNs,
-        })
-      : [];
+  // Combined is an additional surface beyond the tracked engine versions, so the
+  // selector shows as soon as one engine version exists — a single-version registry
+  // still offers the Combined-vs-exact choice.
+  const versionSwitcher = showApiSurfaceSelector(versions.length)
+    ? buildVersionSwitcher({
+        versions,
+        namespacesByVersion,
+        route: path,
+        combinedNamespaces: combinedNs,
+      })
+    : [];
   const currentVersion = versionSwitcher.find((entry) => entry.isCurrent) ?? versionSwitcher[0];
 
   // Serialize the tested redirect decision into a pre-paint script (the theme-init
