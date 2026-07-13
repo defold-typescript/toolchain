@@ -80,22 +80,17 @@ export function buildVersionSwitcher({
   const onCombined = firstApiSegment === COMBINED_VERSION_ID;
   const routeHasVersionPrefix =
     firstApiSegment !== undefined && knownVersionIds.has(firstApiSegment);
-  const currentVersionId = onCombined
-    ? COMBINED_VERSION_ID
-    : routeHasVersionPrefix
-      ? firstApiSegment
-      : defaultVersion.id;
+  // Combined owns the canonical un-prefixed surface, so an un-prefixed API route
+  // (a canonical namespace), the old `/api/combined/…` route, and any non-API
+  // route all resolve to the Combined pseudo-surface; only an explicit
+  // `/api/<version>/…` prefix selects a concrete version.
+  const currentVersionId = routeHasVersionPrefix ? firstApiSegment : COMBINED_VERSION_ID;
   const currentNamespace = onCombined || routeHasVersionPrefix ? segments[2] : firstApiSegment;
 
   const entries: VersionSwitcherEntry[] = versions.map((version) => ({
     id: version.id,
     label: versionLabel(version.id),
-    route: routeForVersion(
-      version,
-      defaultVersion,
-      namespacesByVersion[version.id] ?? [],
-      currentNamespace,
-    ),
+    route: routeForVersion(version, namespacesByVersion[version.id] ?? [], currentNamespace),
     isCurrent: version.id === currentVersionId,
   }));
 
@@ -104,10 +99,12 @@ export function buildVersionSwitcher({
       currentNamespace && combinedNamespaces.includes(currentNamespace)
         ? currentNamespace
         : undefined;
+    // The Combined entry routes to the canonical un-prefixed page (or the `/api`
+    // index) — never the old `/api/combined/…` route, which is now a redirect stub.
     entries.push({
       id: COMBINED_VERSION_ID,
       label: "Combined",
-      route: namespace ? `/api/${COMBINED_VERSION_ID}/${namespace}` : `/api/${COMBINED_VERSION_ID}`,
+      route: namespace ? `/api/${namespace}` : "/api",
       isCurrent: currentVersionId === COMBINED_VERSION_ID,
     });
   }
@@ -115,13 +112,15 @@ export function buildVersionSwitcher({
   return entries;
 }
 
+// Every version — the default included — owns an explicit `/api/<id>/…` family, so
+// the route always carries the version prefix; the namespace is preserved only
+// when that version actually has a page for it.
 function routeForVersion(
   version: ApiVersion,
-  defaultVersion: ApiVersion,
   namespaces: readonly string[],
   namespace: string | undefined,
 ): string {
-  const prefix = version.id === defaultVersion.id ? "/api" : `/api/${version.id}`;
+  const prefix = `/api/${version.id}`;
   if (namespace && namespaces.includes(namespace)) return `${prefix}/${namespace}`;
   return prefix;
 }
