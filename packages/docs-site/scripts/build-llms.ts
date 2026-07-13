@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { type ApiPage, apiModuleSymbols } from "../app/lib/api-surface";
 import { loadApiSurface, loadCombinedSurface } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
-import { compactAvailability } from "../app/lib/combined-surface";
+import { compactAvailability, llmsSignatureForEntry } from "../app/lib/combined-surface";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
 import { listGuidePages } from "../app/lib/guide-loader";
@@ -301,10 +301,9 @@ export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
     const fallbackEmitted = new Set<string>();
     for (const entry of ns.entries) {
       if (entry.authoritativeSignature) {
+        const signature = llmsSignatureForEntry(entry);
         const tag = compactAvailability(entry);
-        lines.push(
-          tag ? `- ${entry.authoritativeSignature} ${tag}` : `- ${entry.authoritativeSignature}`,
-        );
+        lines.push(tag ? `- ${signature} ${tag}` : `- ${signature}`);
         continue;
       }
       const key = `${ns.namespace}::${entry.identity.name}`;
