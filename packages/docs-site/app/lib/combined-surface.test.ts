@@ -357,6 +357,76 @@ describe("combinedAuthoritativeSignatures", () => {
   });
 });
 
+describe("combinedAuthoritativeSignatures (members)", () => {
+  const constId: ApiSymbolIdentity = {
+    namespace: "b2d.body",
+    kind: "CONSTANT",
+    name: "B2_DYNAMIC_BODY",
+    signature: "",
+  };
+  const varId: ApiSymbolIdentity = {
+    namespace: "demo",
+    kind: "VARIABLE",
+    name: "spin",
+    signature: "",
+  };
+  const typedefId: ApiSymbolIdentity = {
+    namespace: "demo",
+    kind: "TYPEDEF",
+    name: "Handle",
+    signature: "",
+  };
+  const constDecl =
+    'const B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" };';
+  const bodyModule = (): ApiModule =>
+    mod("b2d.body", [], { constants: [{ name: "B2_DYNAMIC_BODY", brief: "", description: "" }] });
+  const demoModule = (): ApiModule =>
+    mod("demo", [], {
+      variables: [{ name: "spin", brief: "", description: "", types: ["number"] }],
+      typedefs: [{ name: "Handle" }],
+    });
+  const memberSignatures = (): Record<string, string> => ({
+    [symbolIdentityKey(constId)]: constDecl,
+    [symbolIdentityKey(varId)]: "spin: number;",
+    [symbolIdentityKey(typedefId)]: 'type Handle = Opaque<number, "Handle">;',
+  });
+  const memberSurface = buildCombinedSurface({
+    surfaces: [
+      { version: "1.13.0", modules: [bodyModule(), demoModule()] },
+      { version: "1.12.4", modules: [bodyModule(), demoModule()] },
+    ],
+    signatures: { versions: { "1.13.0": memberSignatures(), "1.12.4": memberSignatures() } },
+  });
+  const memberNs = (name: string) => {
+    const ns = memberSurface.namespaces.find((n) => n.namespace === name);
+    if (!ns) throw new Error(`namespace ${name} missing from member surface`);
+    return ns;
+  };
+
+  test("a branded Box2D constant maps to its bare-name authoritative inner form", () => {
+    const map = combinedAuthoritativeSignatures(memberNs("b2d.body"));
+    expect(map.get(symbolIdentityKey(constId))).toBe(
+      'B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }',
+    );
+  });
+
+  test("variable (name: T) and typedef (type Name = T) forms both resolve through the map builder", () => {
+    const map = combinedAuthoritativeSignatures(memberNs("demo"));
+    expect(map.get(symbolIdentityKey(varId))).toBe("spin: number");
+    expect(map.get(symbolIdentityKey(typedefId))).toBe('type Handle = Opaque<number, "Handle">');
+  });
+
+  test("function entries keep their qualified inner form after the member extension", () => {
+    const map = combinedAuthoritativeSignatures(nsOf("liveupdate"));
+    expect(map.get(symbolIdentityKey(funcId("liveupdate", addMountOld)))).toBe(
+      "liveupdate.add_mount(name: string, uri: string): void",
+    );
+    expect(map.get(symbolIdentityKey(funcId("liveupdate", addMountNew)))).toBe(
+      "liveupdate.add_mount(name: string, uri: string, priority: number): void",
+    );
+  });
+});
+
 describe("combinedAuthoritativeSignatures (committed artifacts)", () => {
   const surface = loadCombinedSurface(REAL_TYPES_DIR);
   const real = (name: string) => {

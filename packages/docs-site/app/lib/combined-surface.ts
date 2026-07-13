@@ -105,29 +105,59 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
   };
 }
 
+// A member inner form is `<bareName>: T` — the declaration's own name kept,
+// keyword and trailing `;` dropped, so its heading slug stays keyed off the same
+// token the token-fallback used, now enriched with the authoritative type.
+const memberInnerFormShape = /^[A-Za-z_$][\w$]*\s*:/;
+
 /**
- * Reduce an authoritative declaration (`function get_constants(…): …;` from
- * `api-signatures.json`) to the inner form the `/api` render layer emits
- * (`compute.get_constants(…): …`): drop the leading `function ` and trailing
- * `;`, then splice the namespace-qualified `identity.name` before the first
- * `(`. Only callable declarations carry a re-renderable signature — members
- * render by name (or their own override store) and never drift through
- * `functionSignature`, so a non-`function ` declaration yields `""` (skipped).
+ * Reduce an authoritative declaration from `api-signatures.json` to the inner
+ * form the `/api` render layer emits, dispatching on the symbol's kind:
+ *
+ * - `FUNCTION` (`function get_constants(…): …;`) drops `function `/`;` and
+ *   splices the namespace-qualified `identity.name` before the first `(`, so
+ *   both arms of a signature transition re-qualify to their own overload.
+ * - `CONSTANT`/`VARIABLE` (`const NAME: T;`, `const _mangled: T;`) drop an
+ *   optional binding keyword and `;`, keeping the declaration's bare name.
+ * - `PROPERTY` (`name: T;`) drops the trailing `;`.
+ * - `TYPEDEF` (`type Name = T;`) drops the trailing `;` (dormant: pure aliases
+ *   are not rendered as page symbols today, so nothing displays this yet).
+ *
+ * Returns `""` when the declaration does not match its kind's expected shape, so
+ * an unrenderable entry falls the render layer back to the token-derived form.
  */
 function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string): string {
-  if (!declaration.startsWith("function ")) return "";
-  const body = declaration.replace(/^function /, "").replace(/;\s*$/, "");
-  const paren = body.indexOf("(");
-  if (paren === -1) return "";
-  return `${identity.name}${body.slice(paren)}`;
+  const decl = declaration.trim();
+  switch (identity.kind) {
+    case "FUNCTION": {
+      if (!decl.startsWith("function ")) return "";
+      const body = decl.replace(/^function /, "").replace(/;\s*$/, "");
+      const paren = body.indexOf("(");
+      if (paren === -1) return "";
+      return `${identity.name}${body.slice(paren)}`;
+    }
+    case "CONSTANT":
+    case "VARIABLE":
+    case "PROPERTY": {
+      const body = decl.replace(/^(?:const|let|var)\s+/, "").replace(/;\s*$/, "");
+      return memberInnerFormShape.test(body) ? body : "";
+    }
+    case "TYPEDEF": {
+      if (!decl.startsWith("type ")) return "";
+      return decl.replace(/;\s*$/, "");
+    }
+    default:
+      return "";
+  }
 }
 
 /**
  * The exact-identity ({@link symbolIdentityKey}) to inner-render-form signature
  * map a Combined `ApiPage` carries. Keyed by the entry's identity so two arms of
- * a signature transition resolve to their own distinct authoritative signature;
- * entries with no (or non-function) authoritative declaration are skipped, so a
- * lookup miss falls the render layer back to the token-derived signature.
+ * a signature transition resolve to their own distinct authoritative signature.
+ * Every kind is emitted (functions qualified, members bare); an entry whose
+ * declaration does not match its kind's expected shape is skipped, so a lookup
+ * miss falls the render layer back to the token-derived signature.
  */
 export function combinedAuthoritativeSignatures(
   ns: CombinedNamespace,

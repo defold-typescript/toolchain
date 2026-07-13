@@ -19,6 +19,7 @@ import { loadApiSurface, loadCombinedSurface } from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
 import { slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
+import { buildSymbolIndex } from "./symbol-index";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const MISSING_VERSION_FIXTURE_DIR = join(
@@ -668,6 +669,65 @@ describe("availability badges", () => {
     expect(md).toContain('aria-label="Availability"');
     expect(md).toContain("Deprecated since 1.12.0");
     expect(md).not.toContain("api-badge-dot");
+  });
+});
+
+describe("apiPageMarkdown authoritative member signatures", () => {
+  const CONST_SIG = 'B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }';
+  const constKey = symbolIdentityKey({
+    namespace: "b2d.body",
+    kind: "CONSTANT",
+    name: "B2_DYNAMIC_BODY",
+    signature: "",
+  });
+  const noLink = (text: string) => text;
+
+  function combinedConstPage(): ApiPage {
+    return {
+      namespace: "b2d.body",
+      route: "/api/combined/b2d.body",
+      brief: "",
+      module: {
+        namespace: "b2d.body",
+        brief: "",
+        description: "Box2D body.",
+        functions: [],
+        variables: [],
+        constants: [{ name: "B2_DYNAMIC_BODY", brief: "", description: "A dynamic body." }],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      authoritativeSignatures: new Map([[constKey, CONST_SIG]]),
+    };
+  }
+
+  test("a Combined constant heading and its symbol-index anchor slugify the authoritative form and agree", () => {
+    const page = combinedConstPage();
+    const md = apiPageMarkdown(page, noLink, { combinedMarkers: true });
+    expect(md).toContain(`### \`${CONST_SIG}\``);
+    const index = buildSymbolIndex([page]);
+    expect(index["b2d.body.B2_DYNAMIC_BODY"]?.route).toBe(
+      `/api/combined/b2d.body#${slugify(CONST_SIG)}`,
+    );
+  });
+
+  test("an exact-version member page (no authoritative map) renders the token signature byte-for-byte", () => {
+    const withMap = combinedConstPage();
+    const page: ApiPage = {
+      namespace: withMap.namespace,
+      route: "/api/1.12.4/b2d.body",
+      brief: withMap.brief,
+      module: withMap.module,
+      translations: {},
+      signatures: {},
+      category: "engine",
+    };
+    const md = apiPageMarkdown(page, noLink);
+    expect(md).toContain("### `B2_DYNAMIC_BODY`");
+    expect(md).not.toContain(CONST_SIG);
   });
 });
 
