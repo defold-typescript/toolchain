@@ -364,6 +364,24 @@ describe("llms-full header carries the Combined-surface agent contract", () => {
     expect(header).toContain("Availability");
     expect(header).toContain(".defold-types/");
   });
+
+  test("names every tag category compactAvailability may emit", () => {
+    expect(header).toContain("[since X]");
+    expect(header).toContain("[through X]");
+    expect(header).toContain("[X–Y]");
+    expect(header).toContain("[versions: …]");
+    expect(header).toContain("[signature transition]");
+    expect(header).toContain("[deprecated since X]");
+    expect(header).toContain("[replaced by namespace.symbol]");
+    expect(header).toContain("[Box2D: …]");
+  });
+
+  test("defines the no-tag meaning, tag coexistence, and exact-signature scope", () => {
+    expect(header).toContain("No tag means");
+    expect(header).toContain("every tracked version");
+    expect(header).toContain("coexist");
+    expect(header).toContain("exact signature");
+  });
 });
 
 describe("no duplicated version-merge logic", () => {

@@ -475,7 +475,10 @@ export function apiModuleMarkdown(
   if (m.variables.length > 0) {
     lines.push("## Variables", "");
     for (const v of m.variables) {
-      lines.push(`### \`${variableSignature(v, mapType)}\``, "");
+      const authSig =
+        authoritativeSignatureFor(authoritative, m.namespace, "VARIABLE", v.name, "") ??
+        variableSignature(v, mapType);
+      lines.push(`### \`${authSig}\``, "");
       const doc = htmlToDocText(v.description || v.brief);
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
@@ -489,7 +492,10 @@ export function apiModuleMarkdown(
   if (m.constants.length > 0) {
     lines.push("## Constants", "");
     for (const cst of m.constants) {
-      lines.push(`### \`${constantSignature(cst)}\``, "");
+      const authSig =
+        authoritativeSignatureFor(authoritative, m.namespace, "CONSTANT", cst.name, "") ??
+        constantSignature(cst);
+      lines.push(`### \`${authSig}\``, "");
       const doc = htmlToDocText(cst.description || cst.brief);
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
@@ -503,7 +509,10 @@ export function apiModuleMarkdown(
   if (m.properties.length > 0) {
     lines.push("## Properties", "");
     for (const prop of m.properties) {
-      lines.push(`### \`${propertySignature(prop, mapType)}\``, "");
+      const authSig =
+        authoritativeSignatureFor(authoritative, m.namespace, "PROPERTY", prop.name, "") ??
+        propertySignature(prop, mapType);
+      lines.push(`### \`${authSig}\``, "");
       const doc = htmlToDocText(prop.description || prop.brief);
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
