@@ -673,11 +673,12 @@ describe("availability badges", () => {
 });
 
 describe("apiPageMarkdown authoritative member signatures", () => {
-  const CONST_SIG = 'B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }';
+  const CONST_SIG =
+    'b2d.body.B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }';
   const constKey = symbolIdentityKey({
     namespace: "b2d.body",
     kind: "CONSTANT",
-    name: "B2_DYNAMIC_BODY",
+    name: "b2d.body.B2_DYNAMIC_BODY",
     signature: "",
   });
   const noLink = (text: string) => text;
@@ -693,7 +694,9 @@ describe("apiPageMarkdown authoritative member signatures", () => {
         description: "Box2D body.",
         functions: [],
         variables: [],
-        constants: [{ name: "B2_DYNAMIC_BODY", brief: "", description: "A dynamic body." }],
+        constants: [
+          { name: "b2d.body.B2_DYNAMIC_BODY", brief: "", description: "A dynamic body." },
+        ],
         properties: [],
         typedefs: [],
       },
@@ -704,7 +707,7 @@ describe("apiPageMarkdown authoritative member signatures", () => {
     };
   }
 
-  test("a Combined constant heading and its symbol-index anchor slugify the authoritative form and agree", () => {
+  test("a Combined constant heading and its symbol-index anchor slugify the authoritative identity-name form and agree", () => {
     const page = combinedConstPage();
     const md = apiPageMarkdown(page, noLink, { combinedMarkers: true });
     expect(md).toContain(`### \`${CONST_SIG}\``);
@@ -726,8 +729,17 @@ describe("apiPageMarkdown authoritative member signatures", () => {
       category: "engine",
     };
     const md = apiPageMarkdown(page, noLink);
-    expect(md).toContain("### `B2_DYNAMIC_BODY`");
+    expect(md).toContain("### `b2d.body.B2_DYNAMIC_BODY`");
     expect(md).not.toContain(CONST_SIG);
+  });
+
+  test("on the committed surface a Combined json.null variable heading never emits the _null alias", () => {
+    const json = loadCombinedSurface(REAL_TYPES_DIR).namespaces.find((n) => n.namespace === "json");
+    if (!json) throw new Error("json namespace missing from combined surface");
+    const md = apiPageMarkdown(combinedNamespaceToApiPage(json), noLink, { combinedMarkers: true });
+    expect(md).toContain("### `json.null: unknown`");
+    // The `_null` emitter alias must not reach the rendered member form.
+    expect(md).not.toContain("_null: unknown");
   });
 });
 
