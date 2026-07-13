@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage } from "./api-surface";
 import { type ApiVersion, loadCombinedSurface } from "./api-surface-loader";
+import { combinedApiPages } from "./combined-surface";
 import {
   buildSymbolIndex,
   combinedSymbolIndexRecords,
@@ -181,8 +182,12 @@ describe("versionSymbolIndexRecords", () => {
     return [{ ...page(ns, { brief: `${ns} brief` }), route: `/api/${versionId}/${ns}` }];
   }
 
+  // A version-independent reference page, canonical at `/api/Hash`, shared across
+  // every version index.
+  const sharedPages: ApiPage[] = [page("Hash", { brief: "Hash type" })];
+
   test("emits one version-correct index per version, the default included, keyed to prefixed routes", () => {
-    const records = versionSymbolIndexRecords(versions, pagesForVersion);
+    const records = versionSymbolIndexRecords(versions, pagesForVersion, sharedPages);
     expect(records.map((r) => r.version)).toEqual(["cur", "old"]);
 
     const old = records.find((r) => r.version === "old");
@@ -192,6 +197,13 @@ describe("versionSymbolIndexRecords", () => {
     // rather than borrowing the canonical surface.
     const cur = records.find((r) => r.version === "cur");
     expect(cur?.index.go).toEqual({ brief: "go brief", route: "/api/cur/go" });
+  });
+
+  test("composes the shared reference pages into every version at their canonical route", () => {
+    const records = versionSymbolIndexRecords(versions, pagesForVersion, sharedPages);
+    for (const record of records) {
+      expect(record.index.Hash).toEqual({ brief: "Hash type", route: "/api/Hash" });
+    }
   });
 });
 
@@ -217,5 +229,18 @@ describe("combinedSymbolIndexRecords", () => {
     for (const ns of combined.namespaces) {
       expect(index[ns.namespace]?.route).toBe(`/api/${ns.namespace}`);
     }
+  });
+
+  test("inherits the projection's own page route directly — no independent rewrite", () => {
+    const index = combinedSymbolIndexRecords(combined);
+    // The namespace key must equal the ApiPage route the projection already
+    // emits; a member key is that same route plus the heading anchor.
+    for (const page of combinedApiPages(combined)) {
+      expect(index[page.namespace]?.route).toBe(page.route);
+    }
+    const getPos = index["go.get_position"];
+    const goPage = combinedApiPages(combined).find((p) => p.namespace === "go");
+    expect(goPage).toBeDefined();
+    expect(getPos?.route.startsWith(`${goPage?.route}#`)).toBe(true);
   });
 });

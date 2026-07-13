@@ -144,9 +144,7 @@ describe("api routing migration — a synthetic third complete version needs no 
 describe("api routing migration — version-independent pages never 404 under a persisted pref", () => {
   const config: ApiSurfaceConfig = {
     base: "",
-    defaultVersionId: "cur",
     versionIds: ["cur", "old"],
-    combinedNamespaces: ["alpha", "camera", "globals", "wmath"],
     // `base`/`Hash`/libraries are intentionally absent: the ownership guard then
     // leaves them canonical under any version preference.
     namespacesByVersion: { cur: ["alpha", "camera", "globals"], old: ["wmath"] },

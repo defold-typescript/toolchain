@@ -10,18 +10,14 @@ export const API_SURFACE_STORAGE_KEY = "apiSurface";
 // The data the client-side redirect and the server-side nav rewrite both need to
 // map a URL to a surface and back. `base` is the deploy prefix ("" at a domain
 // root, e.g. "/toolchain" on a project site); the canonical un-prefixed `/api`
-// surface is the literal `combined`, not any single version. `defaultVersionId`
-// is retained only for version chrome labeling (the newest tracked release);
-// `versionIds` are every tracked version — the default included — each owning an
-// `/api/<id>/…` prefixed family; `combinedNamespaces` are the engine namespaces
-// present on the Combined surface; `namespacesByVersion` lists the namespaces each
-// version actually generates a page for, so a version preference never steers a
+// surface is the literal `combined`, not any single version. `versionIds` are
+// every tracked version — the default included — each owning an `/api/<id>/…`
+// prefixed family; `namespacesByVersion` lists the namespaces each version
+// actually generates a page for, so a version preference never steers a
 // version-independent page to a 404 `/api/<version>/<ns>` route.
 export interface ApiSurfaceConfig {
   readonly base: string;
-  readonly defaultVersionId: string;
   readonly versionIds: readonly string[];
-  readonly combinedNamespaces: readonly string[];
   readonly namespacesByVersion: Record<string, readonly string[]>;
 }
 
@@ -128,6 +124,17 @@ export function surfacePathForNamespace(surface: string, namespace: string | und
   const nsPart = namespace ? `/${namespace}` : "";
   if (surface === COMBINED_VERSION_ID) return `/api${nsPart}`;
   return `/api/${surface}${nsPart}`;
+}
+
+/**
+ * Whether the API surface selector should render. Combined is an additional
+ * surface beyond the tracked engine versions, so the selector is meaningful as
+ * soon as one engine version exists — a single-version registry still offers the
+ * Combined-vs-exact-version choice. Only a registry with no tracked engine
+ * version hides it.
+ */
+export function showApiSurfaceSelector(trackedVersionCount: number): boolean {
+  return trackedVersionCount >= 1;
 }
 
 // A minimal structural view of the DOM the surface-selector reconciliation reads.

@@ -50,15 +50,11 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
  * {@link CombinedSurface} projection rather than a re-walk of raw surfaces. Every
  * key routes to its canonical `/api/<namespace>` page (members carry the heading
  * anchor), so a tooltip on a canonical page resolves against the union surface.
- * The projection carries the `/api/combined/<ns>` compat identity, so the routes
- * are re-mapped onto the canonical unprefixed surface here.
+ * The projection already owns the canonical route, so the pages feed the index
+ * directly with no route rewrite.
  */
 export function combinedSymbolIndexRecords(combined: CombinedSurface): Record<string, SymbolEntry> {
-  const canonicalPages = combinedApiPages(combined).map((page) => ({
-    ...page,
-    route: `/api/${page.namespace}`,
-  }));
-  return buildSymbolIndex(canonicalPages);
+  return buildSymbolIndex(combinedApiPages(combined));
 }
 
 const DEFAULT_SYMBOL_INDEX_FILE = "symbol-index.json";
@@ -97,18 +93,22 @@ export interface VersionSymbolIndex {
 }
 
 /**
- * One version-correct symbol index per version, the current (default) version
- * included, built from that version's own prefixed pages so no entry silently
- * points at a canonical route. The default no longer borrows the flat
- * `symbol-index.json` (now the Combined canonical index); it gets its own
- * `symbol-index-<version-id>.json` like every other version.
+ * One symbol index per tracked version, the current (default) version included:
+ * that version's own prefixed engine pages (`/api/<id>/<ns>`) composed with the
+ * shared version-independent reference pages, which keep their canonical
+ * `/api/<ns>` routes. The default no longer borrows the flat `symbol-index.json`
+ * (now the Combined canonical index); it gets its own `symbol-index-<version-id>.json`
+ * that carries both the version's engine symbols and the shared reference symbols.
+ * The two page sets own disjoint namespaces (the canonical ownership guard), so
+ * neither shadows the other. `sharedPages` is loaded once and reused per version.
  */
 export function versionSymbolIndexRecords(
   versions: readonly SymbolIndexVersion[],
   pagesForVersion: (versionId: string) => ApiPage[],
+  sharedPages: ApiPage[],
 ): VersionSymbolIndex[] {
   return versions.map((version) => ({
     version: version.id,
-    index: buildSymbolIndex(pagesForVersion(version.id)),
+    index: buildSymbolIndex([...pagesForVersion(version.id), ...sharedPages]),
   }));
 }
