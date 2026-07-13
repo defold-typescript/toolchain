@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { groupGuidePages } from "./guide-groups";
 import { listGuidePages } from "./guide-loader";
 import { slugify } from "./headings";
@@ -8,7 +9,6 @@ import { slugify } from "./headings";
 const SLUG = "upgrading-to-defold-1-13-0";
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const TYPES_DIR = join(import.meta.dir, "../../../../packages/types");
-const PUBLIC_DIR = join(import.meta.dir, "../../public");
 
 const guideBody = readFileSync(join(GUIDE_DIR, `${SLUG}.md`), "utf8");
 
@@ -67,15 +67,15 @@ function headingAnchors(markdown: string): Set<string> {
   return out;
 }
 
+// The full route set the guide may link, built from the pure search-index
+// generator (committed types + guide trees) rather than the ignored, build-only
+// `public/search-index*.json`. Covers the shared canonical index plus every
+// per-version family, so canonical, current, and historical guide links all
+// resolve without a prior docs build.
 function apiRoutes(): Set<string> {
   const routes = new Set<string>();
-  for (const file of [
-    "search-index.json",
-    "search-index-defold-1.13.0.json",
-    "search-index-defold-1.12.4.json",
-  ]) {
-    const items = JSON.parse(readFileSync(join(PUBLIC_DIR, file), "utf8")) as { route: string }[];
-    for (const item of items) routes.add(item.route);
+  for (const { records } of searchIndexOutputs()) {
+    for (const record of records) routes.add(record.route);
   }
   return routes;
 }

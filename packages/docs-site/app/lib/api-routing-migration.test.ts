@@ -10,9 +10,11 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
+import { searchIndexOutputs } from "../../scripts/build-search-index";
+import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
 import { canonicalApiPages, combinedApiPages } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
-import { redirectHtml } from "./api-redirect";
+import { combinedRedirect, redirectHtml } from "./api-redirect";
 import type { AvailabilityLookup } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import { type ApiSurfaceConfig, resolveApiSurfaceRedirect } from "./api-surface-pref";
@@ -84,17 +86,33 @@ describe("api routing migration — every complete version owns a family and an 
 });
 
 describe("api routing migration — /api/combined compatibility redirects", () => {
-  test("the Combined index redirects to canonical /api", () => {
-    expect(redirectHtml("/api/combined", "/api", "")).toContain('location.replace("/api")');
+  test("the shared target helper maps the Combined index to canonical /api", () => {
+    const { from, to } = combinedRedirect();
+    expect(from).toBe("/api/combined");
+    expect(to).toBe("/api");
+    expect(redirectHtml(from, to, "")).toContain('location.replace("/api")');
   });
 
-  test("each /api/combined/<ns> redirects to its canonical /api/<ns>", () => {
+  test("the shared target helper maps each /api/combined/<ns> to canonical /api/<ns>", () => {
     const namespaces = combinedApiPages(FIXTURE_DIR).map((page) => page.namespace);
     expect(namespaces.length).toBeGreaterThan(0);
     for (const namespace of namespaces) {
-      const html = redirectHtml(`/api/combined/${namespace}`, `/api/${namespace}`, "");
-      expect(html).toContain(`location.replace("/api/${namespace}")`);
+      const { from, to } = combinedRedirect(namespace);
+      expect(from).toBe(`/api/combined/${namespace}`);
+      expect(to).toBe(`/api/${namespace}`);
+      expect(redirectHtml(from, to, "")).toContain(`location.replace("/api/${namespace}")`);
     }
+  });
+
+  // Wiring guard: both `/api/combined*` handlers must consume the single shared
+  // target helper. A handler that recomputes its own (miswired) target drops the
+  // `combinedRedirect` reference and trips this check.
+  test("both /api/combined route handlers consume the shared combinedRedirect helper", () => {
+    const routesDir = join(import.meta.dir, "..", "routes", "api");
+    const nsHandler = readFileSync(join(routesDir, "combined", "[namespace].tsx"), "utf8");
+    const indexHandler = readFileSync(join(routesDir, "[namespace].tsx"), "utf8");
+    expect(nsHandler).toContain("combinedRedirect");
+    expect(indexHandler).toContain("combinedRedirect");
   });
 });
 
@@ -131,6 +149,20 @@ describe("api routing migration — a synthetic third complete version needs no 
       expect(searchIndexFileForRoute("/api/next/camera", versionIds)).toBe(
         "search-index-next.json",
       );
+
+      // The injectable generators, pointed at the synthetic types dir, emit real
+      // per-version outputs for `next` — file AND contents, not merely a selected
+      // filename. No committed `public/*.json` is read.
+      const searchOutputs = searchIndexOutputs({ typesDir: dir });
+      const nextSearch = searchOutputs.find((o) => o.file === "search-index-next.json");
+      expect(nextSearch).toBeDefined();
+      expect(nextSearch?.records.some((r) => r.route.startsWith("/api/next/"))).toBe(true);
+
+      const symbolOutputs = symbolIndexOutputs({ typesDir: dir });
+      const nextSymbol = symbolOutputs.find((o) => o.file === "symbol-index-next.json");
+      expect(nextSymbol).toBeDefined();
+      expect(Object.keys(nextSymbol?.index ?? {}).length).toBeGreaterThan(0);
+      expect(JSON.stringify(nextSymbol?.index ?? {})).toContain("/api/next/");
 
       // camera lives in both `cur` and `next`, so the Combined union carries it once.
       const cameraNamespaces = combinedApiPages(dir).filter((page) => page.namespace === "camera");
@@ -269,5 +301,33 @@ describe("api routing migration — identity placement (Combined vs exact)", () 
       normalizedFunctionSignature(addMountOld),
       normalizedFunctionSignature(addMountNew),
     ]);
+  });
+});
+
+// The membership assertions above prove availability on the raw Combined surface;
+// these prove where each identity actually lands once projected to routed
+// `ApiPage`s and the static param set the SSG enumerates — the production seams a
+// reader and the router hit.
+describe("api routing migration — identity placement via routed page projections", () => {
+  const canonical = routesOf(canonicalApiPages(FIXTURE_DIR));
+  const curExact = routesOf(loadApiSurfaceForVersion(FIXTURE_DIR, "cur"));
+  const oldExact = routesOf(loadApiSurfaceForVersion(FIXTURE_DIR, "old"));
+  const params = new Set(versionedApiParams(FIXTURE_DIR).map((p) => `${p.version}/${p.namespace}`));
+
+  test("a current-version engine namespace is canonical unprefixed AND exact under its version", () => {
+    expect(canonical.has("/api/camera")).toBe(true);
+    expect(curExact.has("/api/cur/camera")).toBe(true);
+    expect(params.has("cur/camera")).toBe(true);
+    // the canonical projection never leaks a version prefix or the compat segment
+    expect(canonical.has("/api/cur/camera")).toBe(false);
+    expect(canonical.has("/api/combined/camera")).toBe(false);
+  });
+
+  test("a historical-only engine namespace stays canonical AND owns its historical exact page", () => {
+    expect(canonical.has("/api/wmath")).toBe(true);
+    expect(oldExact.has("/api/old/wmath")).toBe(true);
+    expect(params.has("old/wmath")).toBe(true);
+    // it is not published under the current version's exact family
+    expect(curExact.has("/api/cur/wmath")).toBe(false);
   });
 });

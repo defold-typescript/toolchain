@@ -9,6 +9,24 @@
 // site); it is prepended to the target so the redirect stays within the mount.
 // Pure and dependency-free so a route handler can emit it via `c.html(...)`,
 // bypassing the shared renderer whose chrome would make the stub indexable.
+export interface CombinedRedirect {
+  /** The old `/api/combined…` route that materializes the stub. */
+  from: string;
+  /** The canonical `/api…` route it redirects to. */
+  to: string;
+}
+
+// The single source of truth for where every `/api/combined*` compatibility route
+// points: the Combined index maps to canonical `/api`, and each
+// `/api/combined/<namespace>` maps to the unprefixed canonical `/api/<namespace>`.
+// Both the `/api/combined` and `/api/combined/<namespace>` route handlers consume
+// this, so a miswired target is a one-place fix (and the migration test pins it).
+export function combinedRedirect(namespace?: string): CombinedRedirect {
+  return namespace
+    ? { from: `/api/combined/${namespace}`, to: `/api/${namespace}` }
+    : { from: "/api/combined", to: "/api" };
+}
+
 export function redirectHtml(fromPath: string, toPath: string, base = ""): string {
   const to = `${base}${toPath}`;
   const attr = to.replace(/&/g, "&amp;").replace(/"/g, "&quot;");

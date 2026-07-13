@@ -1,7 +1,7 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { combinedParams } from "../../../lib/api-content";
-import { redirectHtml } from "../../../lib/api-redirect";
+import { combinedRedirect, redirectHtml } from "../../../lib/api-redirect";
 import { withBase } from "../../../lib/base";
 
 // `/api/combined/<namespace>` is now a permanent compatibility redirect to the
@@ -15,6 +15,7 @@ export default createRoute(
     const namespace = c.req.param("namespace");
     if (!namespace) return c.notFound();
     const base = withBase("/").replace(/\/$/, "");
-    return c.html(redirectHtml(`/api/combined/${namespace}`, `/api/${namespace}`, base));
+    const { from, to } = combinedRedirect(namespace);
+    return c.html(redirectHtml(from, to, base));
   },
 );

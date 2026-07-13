@@ -10,7 +10,6 @@ import {
   DOCS_DIR,
   GUIDE_DIR,
   PACKAGE_TARGET,
-  PUBLIC_DIR,
   SITE_TARGET,
   stripGuideChrome,
 } from "./build-llms";
@@ -60,26 +59,20 @@ describe("llms.txt regeneration drift guard", () => {
     expect(committed).toBe(fresh);
   });
 
-  test("committed public/llms.txt matches the site-target build", () => {
-    const committed = readFileSync(join(PUBLIC_DIR, "llms.txt"), "utf8");
-    const fresh = buildLlmsTxt(SITE_TARGET);
-    if (committed !== fresh) {
-      throw new Error(
-        "public/llms.txt is stale — run `bun scripts/build-llms.ts` in packages/docs-site/",
-      );
-    }
-    expect(committed).toBe(fresh);
+  // The site artifacts are build-generated into the gitignored `public/` tree, so
+  // they are never committed and there is no on-disk copy to drift-guard. Assert
+  // instead that the site-target build is deterministic and populated purely in
+  // memory — never reading an ignored `public/llms*.txt`.
+  test("the site-target llms.txt build is deterministic and non-empty in memory", () => {
+    const first = buildLlmsTxt(SITE_TARGET);
+    expect(first.length).toBeGreaterThan(0);
+    expect(buildLlmsTxt(SITE_TARGET)).toBe(first);
   });
 
-  test("committed public/llms-full.txt matches the site-target build", () => {
-    const committed = readFileSync(join(PUBLIC_DIR, "llms-full.txt"), "utf8");
-    const fresh = buildLlmsFull(SITE_TARGET);
-    if (committed !== fresh) {
-      throw new Error(
-        "public/llms-full.txt is stale — run `bun scripts/build-llms.ts` in packages/docs-site/",
-      );
-    }
-    expect(committed).toBe(fresh);
+  test("the site-target llms-full.txt build is deterministic and non-empty in memory", () => {
+    const first = buildLlmsFull(SITE_TARGET);
+    expect(first.length).toBeGreaterThan(0);
+    expect(buildLlmsFull(SITE_TARGET)).toBe(first);
   });
 });
 

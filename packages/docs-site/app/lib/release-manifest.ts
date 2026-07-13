@@ -2,9 +2,11 @@ import type { ApiPage } from "./api-surface";
 import type { ApiVersion } from "./api-surface-loader";
 import { versionLabel } from "./version-switch";
 
-// Combined is the canonical surface, so the unversioned `search-index.json` IS the
-// Combined index; the `/api/combined/*` segment is compat-only and never canonical.
+// Combined is the canonical surface, so the unversioned `search-index.json` /
+// `symbol-index.json` ARE the Combined indexes; the `/api/combined/*` segment is
+// compat-only and never canonical.
 const COMBINED_SEARCH_INDEX_FILE = "search-index.json";
+const COMBINED_SYMBOL_INDEX_FILE = "symbol-index.json";
 const COMBINED_SEGMENT = "combined";
 
 export interface ReleaseVersionRoutes {
@@ -16,6 +18,8 @@ export interface ReleaseVersionRoutes {
   routes: string[];
   /** This version's search index file: `search-index-<id>.json` for every version. */
   searchIndexFile: string;
+  /** This version's symbol index file: `symbol-index-<id>.json` for every version. */
+  symbolIndexFile: string;
 }
 
 /**
@@ -34,9 +38,14 @@ export interface ReleaseRouteManifest {
   /** Every version's prefixed `/api/<id>/…` family, the current version included. */
   exactRoutes: string[];
   sidebarRoutes: string[];
+  /** Every search index file: the shared Combined index plus one per version. */
   searchRoutes: string[];
-  /** The unversioned shared index — the Combined index now. */
+  /** Every symbol index file: the shared Combined index plus one per version. */
+  symbolRoutes: string[];
+  /** The unversioned shared search index — the Combined index now. */
   combinedSearchIndexFile: string;
+  /** The unversioned shared symbol index — the Combined index now. */
+  combinedSymbolIndexFile: string;
 }
 
 export interface BuildReleaseRouteManifestInput {
@@ -52,9 +61,14 @@ function sorted(routes: readonly string[]): string[] {
 }
 
 // Every version, the default included, owns its own prefixed index; the
-// unversioned `search-index.json` is reserved for the Combined canonical surface.
+// unversioned `search-index.json` / `symbol-index.json` are reserved for the
+// Combined canonical surface.
 function searchIndexFileFor(version: ApiVersion): string {
   return `search-index-${version.id}.json`;
+}
+
+function symbolIndexFileFor(version: ApiVersion): string {
+  return `symbol-index-${version.id}.json`;
 }
 
 export function buildReleaseRouteManifest({
@@ -68,6 +82,7 @@ export function buildReleaseRouteManifest({
     isDefault: version.isDefault,
     routes: sorted((pagesByVersion[version.id] ?? []).map((page) => page.route)),
     searchIndexFile: searchIndexFileFor(version),
+    symbolIndexFile: symbolIndexFileFor(version),
   }));
 
   const canonicalRoutes = sorted(canonicalPages.map((page) => page.route));
@@ -75,6 +90,10 @@ export function buildReleaseRouteManifest({
   const searchRoutes = sorted([
     COMBINED_SEARCH_INDEX_FILE,
     ...new Set(versionRoutes.map((version) => version.searchIndexFile)),
+  ]);
+  const symbolRoutes = sorted([
+    COMBINED_SYMBOL_INDEX_FILE,
+    ...new Set(versionRoutes.map((version) => version.symbolIndexFile)),
   ]);
 
   return {
@@ -85,7 +104,9 @@ export function buildReleaseRouteManifest({
     // canonical snapshot; the guard rejects any drift between the two.
     sidebarRoutes: [...canonicalRoutes],
     searchRoutes,
+    symbolRoutes,
     combinedSearchIndexFile: COMBINED_SEARCH_INDEX_FILE,
+    combinedSymbolIndexFile: COMBINED_SYMBOL_INDEX_FILE,
   };
 }
 
@@ -110,9 +131,10 @@ function firstApiSegment(route: string): string | undefined {
  * formed. The guard rejects a duplicate within any route list, a canonical route
  * that carries a version prefix or the `/api/combined` prefix, an exact route
  * that lacks its `defold-<version>` prefix, a version with no routes (a missing
- * exact family — the current version included), a search index file that does not
- * match its version, a route duplicated across the canonical and exact families,
- * and a sidebar route absent from the canonical snapshot.
+ * exact family — the current version included), a search or symbol index file that
+ * does not match its version (or is absent from its route list), a mismatched or
+ * unlisted shared Combined index, a route duplicated across the canonical and exact
+ * families, and a sidebar route absent from the canonical snapshot.
  */
 export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): string[] {
   const problems: string[] = [];
@@ -123,6 +145,7 @@ export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): st
     ["exact", manifest.exactRoutes],
     ["sidebar", manifest.sidebarRoutes],
     ["search", manifest.searchRoutes],
+    ["symbol", manifest.symbolRoutes],
   ];
   for (const [label, routes] of lists) {
     for (const dup of duplicates(routes)) problems.push(`duplicate ${label} route: ${dup}`);
@@ -152,6 +175,13 @@ export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): st
     if (!manifest.searchRoutes.includes(version.searchIndexFile)) {
       problems.push(`version ${version.id} search index file absent from searchRoutes`);
     }
+    const expectedSymbol = `symbol-index-${version.id}.json`;
+    if (version.symbolIndexFile !== expectedSymbol) {
+      problems.push(`version ${version.id} symbol index file mismatch: ${version.symbolIndexFile}`);
+    }
+    if (!manifest.symbolRoutes.includes(version.symbolIndexFile)) {
+      problems.push(`version ${version.id} symbol index file absent from symbolRoutes`);
+    }
     for (const route of version.routes) {
       if (firstApiSegment(route) !== version.id) {
         problems.push(`version ${version.id} route missing its prefix: ${route}`);
@@ -164,6 +194,12 @@ export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): st
   }
   if (!manifest.searchRoutes.includes(manifest.combinedSearchIndexFile)) {
     problems.push("combined search index file absent from searchRoutes");
+  }
+  if (manifest.combinedSymbolIndexFile !== COMBINED_SYMBOL_INDEX_FILE) {
+    problems.push(`combined symbol index file mismatch: ${manifest.combinedSymbolIndexFile}`);
+  }
+  if (!manifest.symbolRoutes.includes(manifest.combinedSymbolIndexFile)) {
+    problems.push("combined symbol index file absent from symbolRoutes");
   }
 
   const canonicalSet = new Set(manifest.canonicalRoutes);
