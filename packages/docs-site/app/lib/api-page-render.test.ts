@@ -16,7 +16,11 @@ import {
   versionedApiParams,
 } from "./api-page-render";
 import { type ApiPage, type AvailabilityLookup, apiModuleSymbols } from "./api-surface";
-import { loadApiSurface, loadCombinedSurface } from "./api-surface-loader";
+import {
+  loadApiSurface,
+  loadApiSurfaceForVersion,
+  loadCombinedSurface,
+} from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
 import { slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
@@ -471,6 +475,13 @@ describe("apiLinkify", () => {
     const linkify = apiLinkify([]);
     expect(linkify("plain wmath.dot text")).toBe("plain wmath.dot text");
   });
+
+  test("links members of an exact-version surface to that version's prefixed route", () => {
+    const linkify = apiLinkify(loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4"));
+    const out = linkify("call go.get_position each frame");
+    expect(out).toContain('href="/api/defold-1.12.4/go#');
+    expect(out).not.toContain('href="/api/go#');
+  });
 });
 
 describe("isKnownVersionId", () => {
@@ -863,5 +874,18 @@ describe("apiReplacementResolver", () => {
     expect(
       resolve({ namespace: "go", kind: "FUNCTION", name: "go.nonexistent_symbol", signature: "" }),
     ).toBeUndefined();
+  });
+
+  test("resolves against an exact-version surface to that version's prefixed route", () => {
+    const pages = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4");
+    const resolve = apiReplacementResolver(pages);
+    expect(pages.find((p) => p.namespace === "go")).toBeDefined();
+    const route = resolve({
+      namespace: "go",
+      kind: "FUNCTION",
+      name: "go.get_position",
+      signature: "",
+    });
+    expect(route?.startsWith("/api/defold-1.12.4/go")).toBe(true);
   });
 });

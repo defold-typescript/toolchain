@@ -48,33 +48,36 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
 /**
  * The single Combined symbol index, derived from the shared
  * {@link CombinedSurface} projection rather than a re-walk of raw surfaces. Every
- * key routes to its `/api/combined/<namespace>` page (members carry the heading
- * anchor), so a tooltip on a Combined page resolves against the union surface.
+ * key routes to its canonical `/api/<namespace>` page (members carry the heading
+ * anchor), so a tooltip on a canonical page resolves against the union surface.
+ * The projection carries the `/api/combined/<ns>` compat identity, so the routes
+ * are re-mapped onto the canonical unprefixed surface here.
  */
 export function combinedSymbolIndexRecords(combined: CombinedSurface): Record<string, SymbolEntry> {
-  return buildSymbolIndex(combinedApiPages(combined));
+  const canonicalPages = combinedApiPages(combined).map((page) => ({
+    ...page,
+    route: `/api/${page.namespace}`,
+  }));
+  return buildSymbolIndex(canonicalPages);
 }
 
 const DEFAULT_SYMBOL_INDEX_FILE = "symbol-index.json";
-// Mirrors `search-index.ts`: the `/api/combined/*` union surface resolves to its
-// own symbol index, never a tracked-version or the default file.
-const COMBINED_SEGMENT = "combined";
-const COMBINED_SYMBOL_INDEX_FILE = "symbol-index-combined.json";
 
 /**
  * The symbol-index file the client tooltip must fetch for a given page route,
- * mirroring {@link searchIndexFileForRoute}: a historical `/api/<version-id>/...`
- * route resolves to `symbol-index-<version-id>.json` so same-name symbols whose
- * signatures differ across releases tool-tip against the page's own version; a
- * canonical route (or an unknown prefix) resolves to the default file. The
- * tooltip must never load the default index on a historical page.
+ * mirroring {@link searchIndexFileForRoute}: a `/api/defold-<version>/...` route
+ * (the current version included) resolves to `symbol-index-<version-id>.json` so
+ * same-name symbols whose signatures differ across releases tool-tip against the
+ * page's own version; a canonical unprefixed route (or an unknown prefix)
+ * resolves to the shared Combined `symbol-index.json`. The `/api/combined/*`
+ * compat route is not a tracked version id, so it falls through to that shared
+ * canonical index. The tooltip must never load the shared index on a version page.
  */
 export function symbolIndexFileForRoute(route: string, versionIds: readonly string[]): string {
   const path = route.split(/[?#]/, 1)[0] ?? "";
   const segments = path.split("/").filter(Boolean);
   const apiIndex = segments.indexOf("api");
   const candidate = apiIndex >= 0 ? segments[apiIndex + 1] : undefined;
-  if (candidate === COMBINED_SEGMENT) return COMBINED_SYMBOL_INDEX_FILE;
   return candidate && versionIds.includes(candidate)
     ? `symbol-index-${candidate}.json`
     : DEFAULT_SYMBOL_INDEX_FILE;
@@ -94,19 +97,18 @@ export interface VersionSymbolIndex {
 }
 
 /**
- * One version-correct symbol index per non-default version, built from that
- * version's own prefixed pages so no entry silently points at a canonical route.
- * The default version keeps the flat `symbol-index.json`; these are the
- * `symbol-index-<version-id>.json` siblings the build script emits alongside it.
+ * One version-correct symbol index per version, the current (default) version
+ * included, built from that version's own prefixed pages so no entry silently
+ * points at a canonical route. The default no longer borrows the flat
+ * `symbol-index.json` (now the Combined canonical index); it gets its own
+ * `symbol-index-<version-id>.json` like every other version.
  */
 export function versionSymbolIndexRecords(
   versions: readonly SymbolIndexVersion[],
   pagesForVersion: (versionId: string) => ApiPage[],
 ): VersionSymbolIndex[] {
-  return versions
-    .filter((version) => !version.isDefault)
-    .map((version) => ({
-      version: version.id,
-      index: buildSymbolIndex(pagesForVersion(version.id)),
-    }));
+  return versions.map((version) => ({
+    version: version.id,
+    index: buildSymbolIndex(pagesForVersion(version.id)),
+  }));
 }

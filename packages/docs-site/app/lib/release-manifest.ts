@@ -2,35 +2,48 @@ import type { ApiPage } from "./api-surface";
 import type { ApiVersion } from "./api-surface-loader";
 import { versionLabel } from "./version-switch";
 
+// Combined is the canonical surface, so the unversioned `search-index.json` IS the
+// Combined index; the `/api/combined/*` segment is compat-only and never canonical.
+const COMBINED_SEARCH_INDEX_FILE = "search-index.json";
+const COMBINED_SEGMENT = "combined";
+
 export interface ReleaseVersionRoutes {
   id: string;
   /** Human chrome label derived from the id via {@link versionLabel}. */
   label: string;
   isDefault: boolean;
-  /** This version's page routes, sorted — unprefixed for the default, `/api/<id>/…` otherwise. */
+  /** This version's page routes, sorted — always `/api/<id>/…`, the default included. */
   routes: string[];
-  /** The version's search index file: `search-index.json` for the default, `search-index-<id>.json` otherwise. */
+  /** This version's search index file: `search-index-<id>.json` for every version. */
   searchIndexFile: string;
 }
 
 /**
  * A deterministic snapshot of every documentation route a release produces:
- * canonical (default, unprefixed) pages, historical (version-prefixed) pages,
- * the canonical sidebar routes, and the per-version search index files. Derived
- * purely from the loaded surfaces of the complete registry targets, it is the
- * fixture a build/unit guard compares against so a missing, duplicated, or
- * cross-version-mislabelled route fails fast rather than shipping.
+ * canonical (Combined engine + version-independent, unprefixed) pages, the exact
+ * per-version (`/api/<id>/…`) families for every tracked version, the canonical
+ * sidebar routes, and the search index files (per-version plus the shared
+ * Combined index). Derived purely from the loaded surfaces, it is the fixture a
+ * build/unit guard compares against so a missing, duplicated, or
+ * cross-family-mislabelled route fails fast rather than shipping.
  */
 export interface ReleaseRouteManifest {
   versions: ReleaseVersionRoutes[];
+  /** Combined engine + version-independent routes, all unprefixed, none under `/api/combined`. */
   canonicalRoutes: string[];
-  historicalRoutes: string[];
+  /** Every version's prefixed `/api/<id>/…` family, the current version included. */
+  exactRoutes: string[];
   sidebarRoutes: string[];
   searchRoutes: string[];
+  /** The unversioned shared index — the Combined index now. */
+  combinedSearchIndexFile: string;
 }
 
 export interface BuildReleaseRouteManifestInput {
   versions: readonly ApiVersion[];
+  /** The canonical surface: Combined engine pages (at `/api/<ns>`) plus version-independent pages. */
+  canonicalPages: readonly ApiPage[];
+  /** Each version's prefixed page family, keyed by version id — the current version included. */
   pagesByVersion: Record<string, ApiPage[]>;
 }
 
@@ -38,12 +51,15 @@ function sorted(routes: readonly string[]): string[] {
   return [...routes].sort((a, b) => a.localeCompare(b));
 }
 
+// Every version, the default included, owns its own prefixed index; the
+// unversioned `search-index.json` is reserved for the Combined canonical surface.
 function searchIndexFileFor(version: ApiVersion): string {
-  return version.isDefault ? "search-index.json" : `search-index-${version.id}.json`;
+  return `search-index-${version.id}.json`;
 }
 
 export function buildReleaseRouteManifest({
   versions,
+  canonicalPages,
   pagesByVersion,
 }: BuildReleaseRouteManifestInput): ReleaseRouteManifest {
   const versionRoutes: ReleaseVersionRoutes[] = versions.map((version) => ({
@@ -54,24 +70,22 @@ export function buildReleaseRouteManifest({
     searchIndexFile: searchIndexFileFor(version),
   }));
 
-  const canonicalRoutes = sorted(
-    versionRoutes.filter((version) => version.isDefault).flatMap((version) => version.routes),
-  );
-  const historicalRoutes = sorted(
-    versionRoutes.filter((version) => !version.isDefault).flatMap((version) => version.routes),
-  );
+  const canonicalRoutes = sorted(canonicalPages.map((page) => page.route));
+  const exactRoutes = sorted(versionRoutes.flatMap((version) => version.routes));
   const searchRoutes = sorted([
+    COMBINED_SEARCH_INDEX_FILE,
     ...new Set(versionRoutes.map((version) => version.searchIndexFile)),
   ]);
 
   return {
     versions: versionRoutes,
     canonicalRoutes,
-    historicalRoutes,
+    exactRoutes,
     // The left sidebar is the canonical surface, so its routes are exactly the
     // canonical snapshot; the guard rejects any drift between the two.
     sidebarRoutes: [...canonicalRoutes],
     searchRoutes,
+    combinedSearchIndexFile: COMBINED_SEARCH_INDEX_FILE,
   };
 }
 
@@ -94,9 +108,11 @@ function firstApiSegment(route: string): string | undefined {
 /**
  * Return every problem a manifest carries; an empty array means it is well
  * formed. The guard rejects a duplicate within any route list, a canonical route
- * that carries a version prefix, a historical route that lacks one, a version
- * with no routes (a missing release snapshot), a search index file that does not
- * match its version, and a sidebar route absent from the canonical snapshot.
+ * that carries a version prefix or the `/api/combined` prefix, an exact route
+ * that lacks its `defold-<version>` prefix, a version with no routes (a missing
+ * exact family — the current version included), a search index file that does not
+ * match its version, a route duplicated across the canonical and exact families,
+ * and a sidebar route absent from the canonical snapshot.
  */
 export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): string[] {
   const problems: string[] = [];
@@ -104,15 +120,15 @@ export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): st
 
   const lists: [string, readonly string[]][] = [
     ["canonical", manifest.canonicalRoutes],
-    ["historical", manifest.historicalRoutes],
+    ["exact", manifest.exactRoutes],
     ["sidebar", manifest.sidebarRoutes],
     ["search", manifest.searchRoutes],
   ];
   for (const [label, routes] of lists) {
     for (const dup of duplicates(routes)) problems.push(`duplicate ${label} route: ${dup}`);
   }
-  for (const dup of duplicates([...manifest.canonicalRoutes, ...manifest.historicalRoutes])) {
-    problems.push(`duplicate release route across versions: ${dup}`);
+  for (const dup of duplicates([...manifest.canonicalRoutes, ...manifest.exactRoutes])) {
+    problems.push(`duplicate release route across canonical and exact families: ${dup}`);
   }
 
   for (const route of manifest.canonicalRoutes) {
@@ -120,21 +136,16 @@ export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): st
     if (segment && versionIds.has(segment)) {
       problems.push(`canonical route carries a version prefix: ${route}`);
     }
-  }
-  for (const route of manifest.historicalRoutes) {
-    const segment = firstApiSegment(route);
-    if (!segment || !versionIds.has(segment)) {
-      problems.push(`historical route missing a version prefix: ${route}`);
+    if (segment === COMBINED_SEGMENT) {
+      problems.push(`canonical route emitted under /api/combined: ${route}`);
     }
   }
 
   for (const version of manifest.versions) {
     if (version.routes.length === 0) {
-      problems.push(`version ${version.id} has no routes (missing snapshot)`);
+      problems.push(`version ${version.id} has no routes (missing exact family)`);
     }
-    const expectedSearch = version.isDefault
-      ? "search-index.json"
-      : `search-index-${version.id}.json`;
+    const expectedSearch = `search-index-${version.id}.json`;
     if (version.searchIndexFile !== expectedSearch) {
       problems.push(`version ${version.id} search index file mismatch: ${version.searchIndexFile}`);
     }
@@ -142,15 +153,17 @@ export function validateReleaseRouteManifest(manifest: ReleaseRouteManifest): st
       problems.push(`version ${version.id} search index file absent from searchRoutes`);
     }
     for (const route of version.routes) {
-      const segment = firstApiSegment(route);
-      if (version.isDefault) {
-        if (segment && versionIds.has(segment)) {
-          problems.push(`default version ${version.id} route carries a version prefix: ${route}`);
-        }
-      } else if (segment !== version.id) {
+      if (firstApiSegment(route) !== version.id) {
         problems.push(`version ${version.id} route missing its prefix: ${route}`);
       }
     }
+  }
+
+  if (manifest.combinedSearchIndexFile !== COMBINED_SEARCH_INDEX_FILE) {
+    problems.push(`combined search index file mismatch: ${manifest.combinedSearchIndexFile}`);
+  }
+  if (!manifest.searchRoutes.includes(manifest.combinedSearchIndexFile)) {
+    problems.push("combined search index file absent from searchRoutes");
   }
 
   const canonicalSet = new Set(manifest.canonicalRoutes);
