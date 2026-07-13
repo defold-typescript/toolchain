@@ -28,8 +28,10 @@ import {
   listApiVersions,
   loadApiSurface,
   loadApiSurfaceForVersion,
+  loadCombinedSurface,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
+import { combinedNamespaceToApiPage } from "./combined-surface";
 import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { buildReleaseRouteManifest, validateReleaseRouteManifest } from "./release-manifest";
@@ -1243,6 +1245,93 @@ describe("apiModuleSymbols / apiModuleMarkdown authoritative signatures", () => 
       "compute.get_constants(path: Hash | string): Record<string | number, unknown>",
     );
     expect(apiModuleMarkdown(noMap)).toContain(`### \`${rendered}\``);
+  });
+});
+
+describe("apiModuleSymbols / apiModuleMarkdown authoritative member signatures", () => {
+  const NS = "demo";
+  const constKey = symbolIdentityKey({
+    namespace: NS,
+    kind: "CONSTANT",
+    name: "B2_DYNAMIC_BODY",
+    signature: "",
+  });
+  const propKey = symbolIdentityKey({
+    namespace: NS,
+    kind: "PROPERTY",
+    name: "material",
+    signature: "",
+  });
+  const CONST_SIG = 'B2_DYNAMIC_BODY: number & { readonly __brand: "demo.B2_DYNAMIC_BODY" }';
+  const PROP_SIG = 'material: Hash & { readonly __brand: "demo.material" }';
+
+  function memberPage(withMap: boolean): ApiPage {
+    return {
+      namespace: NS,
+      route: "/api/combined/demo",
+      brief: "",
+      module: {
+        namespace: NS,
+        brief: "",
+        description: "",
+        functions: [],
+        // `spin` is deliberately absent from the map to prove the fallback path.
+        variables: [{ name: "spin", brief: "", description: "", types: ["number"] }],
+        constants: [{ name: "B2_DYNAMIC_BODY", brief: "", description: "" }],
+        properties: [{ name: "material", types: ["hash"], brief: "", description: "" }],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      ...(withMap
+        ? {
+            authoritativeSignatures: new Map([
+              [constKey, CONST_SIG],
+              [propKey, PROP_SIG],
+            ]),
+          }
+        : {}),
+    };
+  }
+
+  test("apiModuleSymbols renders authoritative constant/property signatures, not the token form", () => {
+    const symbols = apiModuleSymbols(memberPage(true));
+    expect(symbols.find((s) => s.name === "B2_DYNAMIC_BODY")?.signature).toBe(CONST_SIG);
+    expect(symbols.find((s) => s.name === "material")?.signature).toBe(PROP_SIG);
+  });
+
+  test("a member absent from the map falls back to its token-derived signature unchanged", () => {
+    const withMap = apiModuleSymbols(memberPage(true));
+    const fallback = apiModuleSymbols(memberPage(false));
+    const varWith = withMap.find((s) => s.name === "spin")?.signature;
+    const varFallback = fallback.find((s) => s.name === "spin")?.signature;
+    expect(varWith).toBe(varFallback);
+    expect(varFallback).toBe("spin: number");
+  });
+
+  test("apiModuleMarkdown renders the same authoritative member signatures in its headings", () => {
+    const md = apiModuleMarkdown(memberPage(true));
+    expect(md).toContain(`### \`${CONST_SIG}\``);
+    expect(md).toContain(`### \`${PROP_SIG}\``);
+  });
+
+  test("correspondence guard: every rendered signature with a map entry equals its Combined inner form", () => {
+    const surface = loadCombinedSurface(REAL_TYPES_DIR);
+    for (const ns of surface.namespaces) {
+      const page = combinedNamespaceToApiPage(ns);
+      const map = page.authoritativeSignatures;
+      if (!map) continue;
+      const rendered = new Set(apiModuleSymbols(page).map((s) => s.signature));
+      for (const entry of ns.entries) {
+        // Standalone typedef aliases carry a (dormant) map entry but are never
+        // rendered as page symbols; the guard covers the rendered kinds only.
+        if (entry.identity.kind === "TYPEDEF") continue;
+        const inner = map.get(symbolIdentityKey(entry.identity));
+        if (inner === undefined) continue;
+        expect(rendered.has(inner)).toBe(true);
+      }
+    }
   });
 });
 
