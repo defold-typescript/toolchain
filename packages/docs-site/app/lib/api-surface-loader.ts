@@ -321,16 +321,45 @@ function loadLibraryDescriptions(libraryTypesDir: string): Map<string, string> |
   return new Map(Object.entries(raw));
 }
 
-// Assemble one target's pages: engine modules, the presence-gated globals page,
-// the target's `luaStdlib` pages, and (default only) the shared core-types
-// global-type pages. `routePrefix` is `""` for the default target and
-// `/<version>` for a non-default one, so every page's route reads
-// `/api${routePrefix}/<namespace>` and all downstream link derivation follows.
-function loadTargetPages(
-  typesDir: string,
-  target: ApiTarget,
-  opts: { routePrefix: string; includeCoreTypes: boolean; libraryTypesDir: string | undefined },
-): ApiPage[] {
+// Join the version-correct availability lookup onto every page; the projection
+// only surfaces a badge where a symbol's identity is present, so pages of other
+// categories (library, lua-stdlib, global-type) carry it harmlessly.
+function attachAvailability(typesDir: string, pages: ApiPage[]): void {
+  const availability = loadAvailability(typesDir);
+  if (availability) {
+    for (const page of pages) page.availability = availability;
+  }
+}
+
+const CATEGORY_RANK: Record<ApiPageCategory, number> = {
+  engine: 0,
+  "global-type": 1,
+  "lua-stdlib": 2,
+  library: 3,
+};
+
+// Category-then-namespace ordering shared by the engine and version-independent
+// surfaces, with the `globals` engine page hoisted to the top of its category.
+function sortApiPages(pages: ApiPage[]): ApiPage[] {
+  return pages.sort((a, b) => {
+    if (a.category !== b.category) return CATEGORY_RANK[a.category] - CATEGORY_RANK[b.category];
+    if (a.namespace === b.namespace) return 0;
+    if (a.category === "engine") {
+      if (a.namespace === "globals") return -1;
+      if (b.namespace === "globals") return 1;
+    }
+    return a.namespace.localeCompare(b.namespace);
+  });
+}
+
+// One target's engine surface: its declared modules plus the presence-gated
+// globals page, every route carrying the version prefix (`/api/<id>/<namespace>`).
+// Every tracked version — the default included — owns an explicit prefixed engine
+// family; the canonical unprefixed `/api/<namespace>` surface is the Combined
+// projection, not any single version. Version-independent categories (core types,
+// Lua stdlib, libraries) are excluded here and sourced once by
+// {@link loadVersionIndependentPages}.
+function loadEnginePages(typesDir: string, target: ApiTarget, routePrefix: string): ApiPage[] {
   const translations = loadTranslationStore(typesDir);
   const signatures = loadSignatureStore(typesDir);
 
@@ -339,7 +368,7 @@ function loadTargetPages(
     const module = parseDefoldApiDoc(raw);
     return {
       namespace: mod.namespace,
-      route: `/api${opts.routePrefix}/${mod.namespace}`,
+      route: `/api${routePrefix}/${mod.namespace}`,
       brief: module.brief,
       module,
       translations,
@@ -355,7 +384,7 @@ function loadTargetPages(
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(globalsPath, "utf8")));
     pages.push({
       namespace: "globals",
-      route: `/api${opts.routePrefix}/globals`,
+      route: `/api${routePrefix}/globals`,
       brief: module.brief,
       module,
       translations,
@@ -364,14 +393,33 @@ function loadTargetPages(
     });
   }
 
-  // Docs-only Lua standard library pages (`base`, `bit`, …): types are owned
-  // by the `lua-types` dependency the `lua-stdlib-globals` goal adopted, so
-  // these fixtures never feed regen / `MODULE_MANIFEST`; docs-site reads them
-  // directly to render the "Lua standard library" reference category. The
-  // per-namespace page also leads with a provenance note so a reader landing
-  // on `/api/base` sees *why* this surface is not generated like the rest.
-  for (const mod of target.luaStdlib ?? []) {
-    const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
+  attachAvailability(typesDir, pages);
+  return sortApiPages(pages);
+}
+
+// The version-independent reference surface, sourced ONCE and emitted at the
+// canonical `/api/<namespace>` — never under a version prefix. It carries the
+// default target's Lua standard library pages (types owned by the `lua-types`
+// dependency, not the engine), the hand-curated core value types, and the
+// vendored third-party library pages. A non-default target's `luaStdlib` entries
+// are deliberately ignored: a version-prefixed lua-stdlib copy would be a fake
+// version of a version-independent namespace, exactly the copy the canonical
+// route model forbids.
+export function loadVersionIndependentPages(typesDir: string, libraryTypesDir?: string): ApiPage[] {
+  const translations = loadTranslationStore(typesDir);
+  const signatures = loadSignatureStore(typesDir);
+  const pages: ApiPage[] = [];
+
+  // Docs-only Lua standard library pages (`base`, `bit`, …): types are owned by
+  // the `lua-types` dependency, so these fixtures never feed regen /
+  // `MODULE_MANIFEST`; docs-site reads them directly. Each page leads with a
+  // provenance note so a reader landing on `/api/base` sees *why* this surface
+  // is not generated like the rest.
+  const defaultTarget = readTargets(typesDir).find((t) => t.default === true);
+  for (const mod of defaultTarget?.luaStdlib ?? []) {
+    const raw = JSON.parse(
+      readFileSync(join(typesDir, defaultTarget?.fixturesDir ?? "", mod.fixture), "utf8"),
+    );
     const module = parseDefoldApiDoc(raw);
     const provenanceNote =
       "Types for this namespace are provided by the `lua-types` dependency " +
@@ -379,7 +427,7 @@ function loadTargetPages(
     module.description = provenanceNote + (module.description ? `\n\n${module.description}` : "");
     pages.push({
       namespace: mod.namespace,
-      route: `/api${opts.routePrefix}/${mod.namespace}`,
+      route: `/api/${mod.namespace}`,
       brief: module.brief,
       module,
       translations,
@@ -390,73 +438,51 @@ function loadTargetPages(
 
   // Hand-curated core value types (`Vector3`, `Hash`, …), parsed from the
   // typings source string rather than a ref-doc fixture so they never feed
-  // regen / `MODULE_MANIFEST`; presence-gated like the `globals` block. These
-  // are version-independent and stay on the default surface only.
+  // regen / `MODULE_MANIFEST`; each already routes to its canonical `/api/<name>`.
   const coreTypesPath = join(typesDir, "src", "core-types.ts");
-  if (opts.includeCoreTypes && existsSync(coreTypesPath)) {
+  if (existsSync(coreTypesPath)) {
     for (const page of parseGlobalTypes(readFileSync(coreTypesPath, "utf8"))) {
       pages.push({ ...page, translations, signatures });
     }
   }
 
-  // Vendored third-party library pages ride on the default, core-types-including
-  // surface only, so they never appear under a versioned `/api/<version>` route.
-  if (opts.libraryTypesDir) {
-    pages.push(...loadLibraryPages(opts.libraryTypesDir));
+  // Vendored third-party library pages, pinned to a ts-defold/library commit
+  // rather than a Defold version, so they are canonical-only too.
+  if (libraryTypesDir) {
+    pages.push(...loadLibraryPages(libraryTypesDir));
   }
 
-  // Join the version-correct availability lookup onto every page; the projection
-  // only surfaces a badge where a symbol's identity is present, so pages of other
-  // categories (library, lua-stdlib, global-type) carry it harmlessly.
-  const availability = loadAvailability(typesDir);
-  if (availability) {
-    for (const page of pages) page.availability = availability;
-  }
-
-  const categoryRank: Record<ApiPageCategory, number> = {
-    engine: 0,
-    "global-type": 1,
-    "lua-stdlib": 2,
-    library: 3,
-  };
-  return pages.sort((a, b) => {
-    if (a.category !== b.category) return categoryRank[a.category] - categoryRank[b.category];
-    if (a.namespace === b.namespace) return 0;
-    if (a.category === "engine") {
-      if (a.namespace === "globals") return -1;
-      if (b.namespace === "globals") return 1;
-    }
-    return a.namespace.localeCompare(b.namespace);
-  });
+  attachAvailability(typesDir, pages);
+  return sortApiPages(pages);
 }
 
-export function loadApiSurfaceForVersion(
-  typesDir: string,
-  versionId: string,
-  libraryTypesDir?: string,
-): ApiPage[] {
+// One tracked version's engine + globals surface, routed under its own
+// `/api/<id>/…` prefix. The default version is no longer special: it too owns an
+// explicit prefixed family, and its version-independent content is sourced
+// separately by {@link loadVersionIndependentPages}.
+export function loadApiSurfaceForVersion(typesDir: string, versionId: string): ApiPage[] {
   const target = readTargets(typesDir).find((t) => t.id === versionId);
   if (!target) {
     throw new Error(
       `loadApiSurfaceForVersion: no target with id "${versionId}" in api-targets.json`,
     );
   }
-  const isDefault = target.default === true;
-  return loadTargetPages(typesDir, target, {
-    routePrefix: isDefault ? "" : `/${target.id}`,
-    includeCoreTypes: isDefault,
-    // Library pages are default-surface only; a versioned target never gets them
-    // even when a library dir is supplied.
-    libraryTypesDir: isDefault ? libraryTypesDir : undefined,
-  });
+  return loadEnginePages(typesDir, target, `/${target.id}`);
 }
 
+// The default version's engine surface plus the canonical version-independent
+// pages. Retained for the back-compat callers (library index, global-type
+// filter) that predate the canonical/exact-version split; the canonical route
+// and nav surface is assembled by `canonicalApiPages` in `api-content.ts`.
 export function loadApiSurface(typesDir: string, libraryTypesDir?: string): ApiPage[] {
   const target = readTargets(typesDir).find((t) => t.default === true);
   if (!target) {
     throw new Error("loadApiSurface: no target marked default: true in api-targets.json");
   }
-  return loadApiSurfaceForVersion(typesDir, target.id, libraryTypesDir);
+  return [
+    ...loadApiSurfaceForVersion(typesDir, target.id),
+    ...loadVersionIndependentPages(typesDir, libraryTypesDir),
+  ];
 }
 
 function orderedTargets(typesDir: string): ApiTarget[] {

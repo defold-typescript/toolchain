@@ -368,25 +368,24 @@ export function apiReplacementResolver(pages: ApiPage[]): ReplacementResolver {
   return (id) => index[id.name]?.route ?? index[`${id.namespace}.${id.name}`]?.route;
 }
 
-// SSG params for the per-version namespace pages: one entry per page of every
-// materialized non-default version. Filtered through `versionsWithDiskFixtures`
-// so an unmaterialized ref-doc target contributes nothing and the build stays
-// clean until its fixtures land.
+// SSG params for the per-version namespace pages: one entry per engine page of
+// every materialized version — the default included, since it now owns an
+// explicit `/api/defold-<default>/…` family alongside the historical versions.
+// Filtered through `versionsWithDiskFixtures` so an unmaterialized ref-doc target
+// contributes nothing and the build stays clean until its fixtures land.
 export function versionedApiParams(typesDir: string): { version: string; namespace: string }[] {
-  return versionsWithDiskFixtures(typesDir)
-    .filter((v) => !v.isDefault)
-    .flatMap((v) =>
-      loadApiSurfaceForVersion(typesDir, v.id).map((page) => ({
-        version: v.id,
-        namespace: page.namespace,
-      })),
-    );
+  return versionsWithDiskFixtures(typesDir).flatMap((v) =>
+    loadApiSurfaceForVersion(typesDir, v.id).map((page) => ({
+      version: v.id,
+      namespace: page.namespace,
+    })),
+  );
 }
 
-// The `/api/:param` route branches on this: a known non-default version id
-// renders that version's index; anything else is treated as a default-surface
-// namespace. The default version is served at bare `/api`, so its id is not a
-// version-index target.
+// The `/api/:param` route branches on this: a known version id (default included,
+// now that every version owns a `/api/defold-<version>` index) renders that
+// version's index; anything else is a canonical namespace or the `combined`
+// redirect param.
 export function isKnownVersionId(param: string, versions: ApiVersion[]): boolean {
-  return versions.some((v) => !v.isDefault && v.id === param);
+  return versions.some((v) => v.id === param);
 }
