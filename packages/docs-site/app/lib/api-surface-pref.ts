@@ -156,6 +156,7 @@ interface SurfaceSelectorElement {
 }
 
 interface SurfaceSelectorRoot {
+  documentElement?: SurfaceSelectorElement;
   querySelectorAll(selectors: string): ArrayLike<SurfaceSelectorElement>;
   querySelector(selectors: string): SurfaceSelectorElement | null;
   createElement(tag: string): SurfaceSelectorElement;
@@ -165,15 +166,17 @@ interface SurfaceSelectorRoot {
  * Reflect the active surface into the version selector's DOM: the matching option
  * gets `aria-current="page"`, the accent classes, and a dot; every other option is
  * cleared; and the selector's `[data-surface-summary]` label is set from the active
- * option's label span. The server renders the summary and active option for the
- * JS-disabled fallback; this reconciles them to the client-persisted surface that
- * the server could not read.
+ * option's label span. The document element also records the reconciled surface so
+ * CSS can hide Combined-only chrome under an exact persisted preference. The server
+ * renders the summary and active option for the JS-disabled fallback; this reconciles
+ * them to the client-persisted surface that the server could not read.
  *
  * SELF-CONTAINED ON PURPOSE: references only its two arguments and the DOM, so the
  * renderer can serialize it with `.toString()` into the pre-paint surface-init
  * script. `root` is the document (or a subtree) to query; keep it dependency-free.
  */
 export function reconcileSurfaceSelector(root: SurfaceSelectorRoot, surface: string): void {
+  root.documentElement?.setAttribute("data-api-surface-current", surface);
   const options = root.querySelectorAll("[data-api-surface]");
   let active: SurfaceSelectorElement | undefined;
   for (let i = 0; i < options.length; i += 1) {

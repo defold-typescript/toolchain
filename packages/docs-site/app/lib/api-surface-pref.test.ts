@@ -264,6 +264,7 @@ class FakeEl {
   attrs: Record<string, string> = {};
   classes = new Set<string>();
   children: FakeEl[] = [];
+  documentElement?: FakeEl;
   parentNode: FakeEl | null = null;
   textContent = "";
   constructor(tag: string, doc: FakeDoc) {
@@ -338,6 +339,7 @@ describe("reconcileSurfaceSelector (DOM contract)", () => {
   function selectorDom() {
     const doc = new FakeDoc();
     const root = doc.createElement("div");
+    root.documentElement = root;
     const labels: Record<string, string> = {
       combined: "Combined",
       "defold-1.13.0": "Defold 1.13.0",
@@ -381,6 +383,14 @@ describe("reconcileSurfaceSelector (DOM contract)", () => {
     const combined = optionFor("combined");
     expect(combined?.getAttribute("aria-current")).toBeNull();
     expect(combined?.querySelector("[data-surface-dot]")).toBeNull();
+  });
+
+  test("exposes the reconciled surface on the document element", () => {
+    const { root } = selectorDom();
+    reconcileSurfaceSelector(root, "defold-1.12.4");
+    expect(root.getAttribute("data-api-surface-current")).toBe("defold-1.12.4");
+    reconcileSurfaceSelector(root, "combined");
+    expect(root.getAttribute("data-api-surface-current")).toBe("combined");
   });
 
   test("is serializable — references no module-scope identifiers", () => {
