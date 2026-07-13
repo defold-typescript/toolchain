@@ -1,28 +1,18 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  type ApiFunction,
-  type ApiModule,
-  type ApiParameter,
-  type ApiSymbolIdentity,
-  normalizedFunctionSignature,
-  symbolIdentityKey,
-} from "@defold-typescript/types";
+import { normalizedFunctionSignature } from "@defold-typescript/types";
+import { Hono } from "hono";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
+import apiNamespaceRoute from "../routes/api/[namespace]";
+import combinedNamespaceRoute from "../routes/api/combined/[namespace]";
 import { canonicalApiPages, combinedApiPages } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
 import { combinedRedirect, redirectHtml } from "./api-redirect";
-import type { AvailabilityLookup } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import { type ApiSurfaceConfig, resolveApiSurfaceRedirect } from "./api-surface-pref";
-import {
-  buildCombinedSurface,
-  type CombinedVersionSurface,
-  type SignaturesArtifact,
-} from "./combined-surface";
 import { searchIndexFileForRoute } from "./search-index";
 import { symbolIndexFileForRoute } from "./symbol-index";
 
@@ -104,15 +94,35 @@ describe("api routing migration — /api/combined compatibility redirects", () =
     }
   });
 
-  // Wiring guard: both `/api/combined*` handlers must consume the single shared
-  // target helper. A handler that recomputes its own (miswired) target drops the
-  // `combinedRedirect` reference and trips this check.
-  test("both /api/combined route handlers consume the shared combinedRedirect helper", () => {
-    const routesDir = join(import.meta.dir, "..", "routes", "api");
-    const nsHandler = readFileSync(join(routesDir, "combined", "[namespace].tsx"), "utf8");
-    const indexHandler = readFileSync(join(routesDir, "[namespace].tsx"), "utf8");
-    expect(nsHandler).toContain("combinedRedirect");
-    expect(indexHandler).toContain("combinedRedirect");
+  // The canonical target a `/api/combined*` stub JS-redirects to, parsed from the
+  // emitted `location.replace("…")`. A handler that renders instead of redirecting
+  // (no `location.replace`) yields null and fails the assertion.
+  const redirectTarget = (html: string): string | null =>
+    html.match(/location\.replace\("([^"]+)"\)/)?.[1] ?? null;
+
+  // Behavioral wiring guard: mount each real `/api/combined*` handler on a fresh
+  // Hono app and drive it with `app.request`, then assert the emitted stub
+  // redirects to the canonical `/api`(`/<ns>`) target — `to !== from`, so a
+  // handler that self-redirects or drops the shared target fails on the response
+  // body, not merely on a source grep.
+  test("the /api/combined index handler redirects to canonical /api", async () => {
+    const app = new Hono();
+    app.get("/api/:namespace", ...apiNamespaceRoute);
+    const res = await app.request("/api/combined");
+    const to = redirectTarget(await res.text());
+    expect(to).toBe("/api");
+    expect(to).not.toBe("/api/combined");
+  });
+
+  test("each /api/combined/<ns> handler redirects to the canonical /api/<ns>", async () => {
+    const app = new Hono();
+    app.get("/api/combined/:namespace", ...combinedNamespaceRoute);
+    for (const namespace of ["camera", "wmath"]) {
+      const res = await app.request(`/api/combined/${namespace}`);
+      const to = redirectTarget(await res.text());
+      expect(to).toBe(`/api/${namespace}`);
+      expect(to).not.toBe(`/api/combined/${namespace}`);
+    }
   });
 });
 
@@ -196,138 +206,127 @@ describe("api routing migration — version-independent pages never 404 under a 
   });
 });
 
-describe("api routing migration — identity placement (Combined vs exact)", () => {
-  const param = (name: string, types: string[]): ApiParameter => ({
+// Each identity class is proven where it actually lands once projected to the
+// routed `ApiPage`s, the Combined page, and the static param set the SSG
+// enumerates — the production seams a reader and the router hit, not a hand-built
+// `CombinedVersionSurface`. All four classes share one hermetic temp types dir so
+// the identities and the fixtures are the same surface: `go` universal (both
+// versions), `camera` current-only, `wmath` historical-only, `liveupdate`
+// changed-signature (add_mount gains a param in `cur`). The shared
+// `__fixtures__/api-surface` dir is never mutated (six test files read it).
+describe("api routing migration — identity placement across four classes via routed projections", () => {
+  const mkParam = (name: string, types: string[]) => ({
     name,
     doc: "",
     types,
-    isOptional: false,
+    is_optional: "False",
   });
-  const func = (
-    name: string,
-    parameters: ApiParameter[],
-    returnValues: ApiParameter[] = [],
-  ): ApiFunction => ({
+  const mkFn = (name: string, parameters: unknown[], returnvalues: unknown[] = []) => ({
+    type: "FUNCTION",
     name,
-    brief: "",
-    description: "",
     parameters,
-    returnValues,
+    returnvalues,
   });
-  const mod = (namespace: string, functions: ApiFunction[]): ApiModule => ({
-    namespace,
-    brief: "",
-    description: "",
-    functions,
-    variables: [],
-    constants: [],
-    properties: [],
-    typedefs: [],
-  });
-  const funcId = (namespace: string, fn: ApiFunction): ApiSymbolIdentity => ({
-    namespace,
-    kind: "FUNCTION",
-    name: fn.name,
-    signature: normalizedFunctionSignature(fn),
-  });
+  const mkDoc = (namespace: string, elements: unknown[]): string =>
+    JSON.stringify({ info: { namespace }, elements });
 
-  const getPos = func("go.get_position", [param("id", ["string"])], [param("", ["vector3"])]);
-  const dispatch = func("compute.dispatch", [param("x", ["number"])]);
-  const material = func("model.material", [param("url", ["url"])]);
-  const addMountOld = func("liveupdate.add_mount", [param("name", ["string"])]);
-  const addMountNew = func("liveupdate.add_mount", [
-    param("name", ["string"]),
-    param("priority", ["number"]),
-  ]);
+  let dir = "";
+  let canonical: Set<string>;
+  let curExact: Set<string>;
+  let oldExact: Set<string>;
+  let params: Set<string>;
 
-  const current: CombinedVersionSurface = {
-    version: "1.13.0",
-    modules: [mod("go", [getPos]), mod("compute", [dispatch]), mod("liveupdate", [addMountNew])],
-  };
-  const historical: CombinedVersionSurface = {
-    version: "1.12.4",
-    modules: [mod("go", [getPos]), mod("model", [material]), mod("liveupdate", [addMountOld])],
-  };
-  const signatures: SignaturesArtifact = {
-    versions: {
-      "1.13.0": {
-        [symbolIdentityKey(funcId("go", getPos))]: "function get_position(id: string): vector3;",
-        [symbolIdentityKey(funcId("compute", dispatch))]: "function dispatch(x: number): void;",
-        [symbolIdentityKey(funcId("liveupdate", addMountNew))]:
-          "function add_mount(name: string, priority: number): void;",
-      },
-      "1.12.4": {
-        [symbolIdentityKey(funcId("go", getPos))]: "function get_position(id: string): vector3;",
-        [symbolIdentityKey(funcId("model", material))]: "function material(url: url): void;",
-        [symbolIdentityKey(funcId("liveupdate", addMountOld))]:
-          "function add_mount(name: string): void;",
-      },
-    },
-  };
-  const overlay: AvailabilityLookup = { versions: ["1.13.0", "1.12.4"], records: new Map() };
-  const combined = buildCombinedSurface({ surfaces: [current, historical], signatures, overlay });
-  const nsOf = (name: string) => combined.namespaces.find((n) => n.namespace === name);
-  const hasNamespace = (surface: CombinedVersionSurface, name: string): boolean =>
-    surface.modules.some((m) => m.namespace === name);
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), "api-routing-identity-"));
+    cpSync(FIXTURE_DIR, dir, { recursive: true });
 
-  test("a symbol in every version lands once on the Combined page and on each exact page", () => {
-    const go = nsOf("go");
-    expect(go?.module.functions).toHaveLength(1);
-    expect(go?.entries.find((e) => e.identity.name === "go.get_position")?.label.kind).toBe("all");
-    expect(hasNamespace(current, "go")).toBe(true);
-    expect(hasNamespace(historical, "go")).toBe(true);
-  });
-
-  test("a current-only symbol lands on the Combined page and only the current exact page", () => {
-    expect(
-      nsOf("compute")?.entries.find((e) => e.identity.name === "compute.dispatch")?.availableIn,
-    ).toEqual(["1.13.0"]);
-    expect(hasNamespace(current, "compute")).toBe(true);
-    expect(hasNamespace(historical, "compute")).toBe(false);
-  });
-
-  test("a historical-only symbol lands on the Combined page and only the historical exact page", () => {
-    expect(
-      nsOf("model")?.entries.find((e) => e.identity.name === "model.material")?.availableIn,
-    ).toEqual(["1.12.4"]);
-    expect(hasNamespace(current, "model")).toBe(false);
-    expect(hasNamespace(historical, "model")).toBe(true);
-  });
-
-  test("a changed-signature symbol shows both arms on Combined, one per exact page", () => {
-    const live = nsOf("liveupdate");
-    const arms = live?.module.functions.map((fn) => normalizedFunctionSignature(fn));
-    expect(arms).toEqual([
-      normalizedFunctionSignature(addMountOld),
-      normalizedFunctionSignature(addMountNew),
+    // Universal `go`: identical function in both versions -> one Combined arm.
+    const goDoc = mkDoc("go", [
+      mkFn("go.get_position", [mkParam("id", ["string"])], [mkParam("pos", ["vector3"])]),
     ]);
+    writeFileSync(join(dir, "cur-fixtures/go_doc.json"), goDoc);
+    writeFileSync(join(dir, "old-fixtures/go_doc.json"), goDoc);
+
+    // Changed-signature `liveupdate`: add_mount gains a param in `cur`, so the two
+    // arms carry distinct normalized signatures -> both on Combined, one per exact.
+    writeFileSync(
+      join(dir, "old-fixtures/liveupdate_doc.json"),
+      mkDoc("liveupdate", [mkFn("liveupdate.add_mount", [mkParam("name", ["string"])])]),
+    );
+    writeFileSync(
+      join(dir, "cur-fixtures/liveupdate_doc.json"),
+      mkDoc("liveupdate", [
+        mkFn("liveupdate.add_mount", [
+          mkParam("name", ["string"]),
+          mkParam("priority", ["number"]),
+        ]),
+      ]),
+    );
+
+    const targets = JSON.parse(readFileSync(join(dir, "api-targets.json"), "utf8")) as {
+      targets: { modules: { namespace: string; fixture: string }[] }[];
+    };
+    for (const target of targets.targets) {
+      target.modules.push(
+        { namespace: "go", fixture: "go_doc.json" },
+        { namespace: "liveupdate", fixture: "liveupdate_doc.json" },
+      );
+    }
+    writeFileSync(join(dir, "api-targets.json"), JSON.stringify(targets));
+
+    canonical = routesOf(canonicalApiPages(dir));
+    curExact = routesOf(loadApiSurfaceForVersion(dir, "cur"));
+    oldExact = routesOf(loadApiSurfaceForVersion(dir, "old"));
+    params = new Set(versionedApiParams(dir).map((p) => `${p.version}/${p.namespace}`));
   });
-});
 
-// The membership assertions above prove availability on the raw Combined surface;
-// these prove where each identity actually lands once projected to routed
-// `ApiPage`s and the static param set the SSG enumerates — the production seams a
-// reader and the router hit.
-describe("api routing migration — identity placement via routed page projections", () => {
-  const canonical = routesOf(canonicalApiPages(FIXTURE_DIR));
-  const curExact = routesOf(loadApiSurfaceForVersion(FIXTURE_DIR, "cur"));
-  const oldExact = routesOf(loadApiSurfaceForVersion(FIXTURE_DIR, "old"));
-  const params = new Set(versionedApiParams(FIXTURE_DIR).map((p) => `${p.version}/${p.namespace}`));
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
 
-  test("a current-version engine namespace is canonical unprefixed AND exact under its version", () => {
+  test("universal: canonical unprefixed AND owns both exact families and both params", () => {
+    expect(canonical.has("/api/go")).toBe(true);
+    expect(curExact.has("/api/cur/go")).toBe(true);
+    expect(oldExact.has("/api/old/go")).toBe(true);
+    expect(params.has("cur/go")).toBe(true);
+    expect(params.has("old/go")).toBe(true);
+    // the canonical projection never leaks a version prefix or the compat segment
+    expect(canonical.has("/api/cur/go")).toBe(false);
+    expect(canonical.has("/api/combined/go")).toBe(false);
+  });
+
+  test("current-only: canonical AND on the current exact family, never the historical one", () => {
     expect(canonical.has("/api/camera")).toBe(true);
     expect(curExact.has("/api/cur/camera")).toBe(true);
     expect(params.has("cur/camera")).toBe(true);
-    // the canonical projection never leaks a version prefix or the compat segment
-    expect(canonical.has("/api/cur/camera")).toBe(false);
-    expect(canonical.has("/api/combined/camera")).toBe(false);
+    expect(oldExact.has("/api/old/camera")).toBe(false);
+    expect(params.has("old/camera")).toBe(false);
   });
 
-  test("a historical-only engine namespace stays canonical AND owns its historical exact page", () => {
+  test("historical-only: canonical AND on the historical exact family, never the current one", () => {
     expect(canonical.has("/api/wmath")).toBe(true);
     expect(oldExact.has("/api/old/wmath")).toBe(true);
     expect(params.has("old/wmath")).toBe(true);
-    // it is not published under the current version's exact family
     expect(curExact.has("/api/cur/wmath")).toBe(false);
+    expect(params.has("cur/wmath")).toBe(false);
+  });
+
+  test("changed-signature: Combined carries both arms; each exact page carries only its own", () => {
+    const combinedLive = combinedApiPages(dir).find((page) => page.namespace === "liveupdate");
+    const curLive = loadApiSurfaceForVersion(dir, "cur").find((p) => p.namespace === "liveupdate");
+    const oldLive = loadApiSurfaceForVersion(dir, "old").find((p) => p.namespace === "liveupdate");
+
+    const curArms = (curLive?.module.functions ?? []).map((fn) => normalizedFunctionSignature(fn));
+    const oldArms = (oldLive?.module.functions ?? []).map((fn) => normalizedFunctionSignature(fn));
+    const combinedArms = (combinedLive?.module.functions ?? []).map((fn) =>
+      normalizedFunctionSignature(fn),
+    );
+
+    expect(curArms).toHaveLength(1);
+    expect(oldArms).toHaveLength(1);
+    expect(curArms).not.toEqual(oldArms);
+    // Both arms land once on the Combined page; each exact page keeps only its own.
+    expect(combinedArms).toHaveLength(2);
+    expect(new Set(combinedArms)).toEqual(new Set([...curArms, ...oldArms]));
   });
 });

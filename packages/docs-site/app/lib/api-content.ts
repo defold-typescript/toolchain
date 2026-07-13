@@ -39,8 +39,8 @@ export function defaultGlobalTypePages(): ApiPage[] {
 }
 
 // The union "Combined" projection across every materialized version's engine
-// surface — the reusable domain model shared by the `/api/combined` routes and
-// (later) the Combined search / LLM serialization. Memoized because the renderer
+// surface — the canonical `/api/<ns>` domain model, which also feeds the Combined
+// search / LLM serialization. Memoized because the renderer
 // (which needs the union namespaces for the selector) runs once per page, and a
 // full multi-version rebuild on every page would dominate the SSG build. The
 // committed artifacts are fixed for a build; the dev server reloads the module
