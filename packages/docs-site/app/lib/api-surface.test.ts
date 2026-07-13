@@ -1692,6 +1692,27 @@ describe("functionOverviewCards", () => {
     expect(html).toContain('<code class="api-signature');
     expect(html).toContain("--shiki-light:");
   });
+
+  test("a markerFor callback appends its HTML after each signature link in the same item", () => {
+    const list = functionOverviewCards(
+      [
+        fnSymbol("go.get_position", { signature: "go.get_position(): vector3" }),
+        fnSymbol("go.set_position", { signature: "go.set_position(position: vector3): void" }),
+      ],
+      (s) => `<i data-mark="${s.name}"></i>`,
+    );
+    expect(list).toContain(
+      '- [`go.get_position(): vector3`](#goget_position-vector3)<i data-mark="go.get_position"></i>',
+    );
+    expect(list).toContain(
+      '- [`go.set_position(position: vector3): void`](#goset_positionposition-vector3-void)<i data-mark="go.set_position"></i>',
+    );
+  });
+
+  test("an empty markerFor return leaves output byte-identical to the no-callback form", () => {
+    const symbols = [fnSymbol("go.get_position", { signature: "go.get_position(): vector3" })];
+    expect(functionOverviewCards(symbols, () => "")).toBe(functionOverviewCards(symbols));
+  });
 });
 
 describe("availability join", () => {

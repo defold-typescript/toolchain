@@ -7,6 +7,9 @@ export interface NavLink {
   labelHtml: string;
   route?: string;
   children?: NavLink[];
+  // Combined-only sidebar count pills (pre-rendered HTML), appended after the
+  // label; stripped when the nav is rewritten onto an exact-version surface.
+  badgeHtml?: string;
 }
 
 export interface NavCategory {
@@ -28,6 +31,8 @@ interface CategorySpec {
 export interface Namespace {
   label: string;
   route: string;
+  // Pre-rendered Combined-only count-pill HTML for this namespace's sidebar leaf.
+  badgeHtml?: string;
 }
 
 /** One upstream library: its `modules` render as namespace leaves under a route-less library header. */
@@ -87,8 +92,13 @@ function stripBackticks(text: string): string {
   return text.replace(/`/g, "");
 }
 
-function toNavLink(label: string, route: string): NavLink {
-  return { label: stripBackticks(label), labelHtml: renderNavLabel(label), route };
+function toNavLink(label: string, route: string, badgeHtml?: string): NavLink {
+  return {
+    label: stripBackticks(label),
+    labelHtml: renderNavLabel(label),
+    route,
+    ...(badgeHtml ? { badgeHtml } : {}),
+  };
 }
 
 function toNavGroup(label: string, children: NavLink[]): NavLink {
@@ -156,7 +166,7 @@ export function buildNav(
     .map(([label, namespaces]) =>
       toNavGroup(
         label,
-        namespaces.map(({ label, route }) => toNavLink(label, route)),
+        namespaces.map(({ label, route, badgeHtml }) => toNavLink(label, route, badgeHtml)),
       ),
     );
   categories.push({ id: "api", label: "API", route: "/api", links: referenceLinks });

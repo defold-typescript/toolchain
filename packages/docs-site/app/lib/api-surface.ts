@@ -307,9 +307,17 @@ export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
  * Presentation-only — no new heading, so the "On this page" TOC is unchanged.
  * Returns `""` for an empty list so the caller emits nothing.
  */
-export function functionOverviewCards(symbols: ApiSymbol[]): string {
+export function functionOverviewCards(
+  symbols: ApiSymbol[],
+  // Optional per-symbol marker HTML appended after the signature link in the same
+  // list item (Combined pages pass the `badgeDots` category glyphs). An empty
+  // return — and the default of no callback — leaves the row byte-unchanged.
+  markerFor?: (symbol: ApiSymbol) => string,
+): string {
   if (symbols.length === 0) return "";
-  const rows = symbols.map((s) => `- [\`${s.signature}\`](#${slugify(s.signature)})`);
+  const rows = symbols.map(
+    (s) => `- [\`${s.signature}\`](#${slugify(s.signature)})${markerFor ? markerFor(s) : ""}`,
+  );
   return [
     '<div class="api-overview" aria-label="Function overview">',
     "",
