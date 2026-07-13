@@ -281,9 +281,10 @@ export function apiPageMarkdown(
     // pages pass the `namespaceCountBadges` HTML); empty leaves the heading as-is.
     titleBadges?: string;
     // The per-symbol color/category marker layer is Combined-only: the union
-    // surface is the one place comparison across versions is meaningful. Only the
-    // `/api/combined` route passes `true`; exact-version pages keep the textual
-    // availability prose with no dots.
+    // surface is the one place comparison across versions is meaningful. The
+    // canonical `/api/<ns>` route passes `true` when it renders a Combined engine
+    // page (`/api/combined` is a redirect stub that renders nothing); exact-version
+    // pages keep the textual availability prose with no dots.
     combinedMarkers?: boolean;
   } = {},
 ): string {

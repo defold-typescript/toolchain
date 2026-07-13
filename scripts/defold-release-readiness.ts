@@ -220,6 +220,13 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
         `current version ${wantCurrent} is not among the required complete versions`,
       );
     }
+    const wantBaseline = `defold-${expected.baseline}`;
+    if (!docs.requiredVersionIds.includes(wantBaseline)) {
+      add(
+        "docs-route",
+        `baseline version ${wantBaseline} is not among the required complete versions`,
+      );
+    }
     for (const version of docs.requiredVersionIds) {
       const routes = docs.exactRoutesByVersion[version] ?? [];
       if (routes.length === 0) {
@@ -352,6 +359,70 @@ export function releaseIndexProblems(
   requireSearch(manifest.combinedSearchIndexFile);
   requireSymbol(manifest.combinedSymbolIndexFile);
   return problems;
+}
+
+// The structural docs-route dimensions derived purely from an already-built
+// release route manifest.
+export type DocsRouteEvidence = Pick<
+  DocsEvidence,
+  | "canonicalRoutes"
+  | "exactRoutesByVersion"
+  | "searchIndexByVersion"
+  | "symbolIndexByVersion"
+  | "manifestProblems"
+>;
+
+export interface DocsRouteEvidenceInput {
+  // The complete versions the release MUST publish, derived independently of the
+  // manifest (from the disk fixtures) so a manifest that drops a family cannot
+  // also drop it from the set the evaluator iterates.
+  readonly requiredVersionIds: readonly string[];
+  readonly manifest: ReleaseRouteManifest;
+  readonly generatedSearchFiles: readonly string[];
+  readonly generatedSymbolFiles: readonly string[];
+}
+
+// Fold the manifest's per-version route/index maps, its structural validation,
+// the generated-index comparison, and a version-set divergence check into a
+// single docs-route evidence bundle. The required-version set — not the manifest
+// — is the source of truth for which complete versions must ship, so a family the
+// manifest omits, or one it carries that the release does not require, is a
+// blocker regardless of how well-formed the manifest is on its own.
+export function docsRouteEvidence({
+  requiredVersionIds,
+  manifest,
+  generatedSearchFiles,
+  generatedSymbolFiles,
+}: DocsRouteEvidenceInput): DocsRouteEvidence {
+  const required = new Set(requiredVersionIds);
+  const manifestIds = new Set(manifest.versions.map((v) => v.id));
+  const divergence: string[] = [];
+  for (const id of requiredVersionIds) {
+    if (!manifestIds.has(id)) divergence.push(`manifest omits required version ${id}`);
+  }
+  for (const id of manifestIds) {
+    if (!required.has(id)) {
+      divergence.push(`manifest carries version ${id} not among the required complete versions`);
+    }
+  }
+  return {
+    canonicalRoutes: manifest.canonicalRoutes,
+    exactRoutesByVersion: Object.fromEntries(manifest.versions.map((v) => [v.id, v.routes])),
+    searchIndexByVersion: Object.fromEntries(
+      manifest.versions.map((v) => [v.id, v.searchIndexFile]),
+    ),
+    symbolIndexByVersion: Object.fromEntries(
+      manifest.versions.map((v) => [v.id, v.symbolIndexFile]),
+    ),
+    manifestProblems: [
+      ...validateReleaseRouteManifest(manifest),
+      ...releaseIndexProblems(manifest, {
+        searchFiles: generatedSearchFiles,
+        symbolFiles: generatedSymbolFiles,
+      }),
+      ...divergence,
+    ],
+  };
 }
 
 function readJson<T>(abs: string): T | null {
@@ -556,6 +627,11 @@ function collectDocs(root: string, release: string, baseline: string): DocsEvide
     const typesDir = path.join(root, "packages/types");
     const libraryTypesDir = path.join(root, "packages/library-types");
     const versions = versionsWithDiskFixtures(typesDir);
+    // Derive the required complete-version set straight from the disk fixtures,
+    // before and independent of the manifest we then validate against it. A
+    // manifest that omits a family diverges from this set rather than silently
+    // shrinking the set the evaluator iterates.
+    requiredVersionIds = versions.map((v) => v.id);
     const manifest = buildReleaseRouteManifest({
       versions,
       canonicalPages: canonicalApiPages(typesDir, libraryTypesDir),
@@ -563,22 +639,17 @@ function collectDocs(root: string, release: string, baseline: string): DocsEvide
         versions.map((v) => [v.id, loadApiSurfaceForVersion(typesDir, v.id)]),
       ),
     });
-    canonicalRoutes = manifest.canonicalRoutes;
-    requiredVersionIds = manifest.versions.map((v) => v.id);
-    exactRoutesByVersion = Object.fromEntries(manifest.versions.map((v) => [v.id, v.routes]));
-    searchIndexByVersion = Object.fromEntries(
-      manifest.versions.map((v) => [v.id, v.searchIndexFile]),
-    );
-    symbolIndexByVersion = Object.fromEntries(
-      manifest.versions.map((v) => [v.id, v.symbolIndexFile]),
-    );
-    manifestProblems = [
-      ...validateReleaseRouteManifest(manifest),
-      ...releaseIndexProblems(manifest, {
-        searchFiles: searchIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
-        symbolFiles: symbolIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
-      }),
-    ];
+    const evidence = docsRouteEvidence({
+      requiredVersionIds,
+      manifest,
+      generatedSearchFiles: searchIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
+      generatedSymbolFiles: symbolIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
+    });
+    canonicalRoutes = evidence.canonicalRoutes;
+    exactRoutesByVersion = { ...evidence.exactRoutesByVersion };
+    searchIndexByVersion = { ...evidence.searchIndexByVersion };
+    symbolIndexByVersion = { ...evidence.symbolIndexByVersion };
+    manifestProblems = evidence.manifestProblems;
   } catch (err) {
     canonicalRoutes = [];
     requiredVersionIds = [];

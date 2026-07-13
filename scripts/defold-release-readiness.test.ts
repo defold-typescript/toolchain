@@ -15,6 +15,7 @@ import {
   collectEvidence,
   collectTargets,
   type DocsEvidence,
+  docsRouteEvidence,
   evaluateReleaseReadiness,
   type ImportManifestEvidence,
   type ReadinessCategory,
@@ -349,6 +350,132 @@ describe("evaluateReleaseReadiness", () => {
     ] satisfies ReadinessCategory[]) {
       expect(cats.has(c)).toBe(true);
     }
+  });
+
+  test("rejects when the baseline id is absent from the required complete versions", () => {
+    // The baseline disk fixture is missing, so it never enters the independently
+    // derived required set — symmetric to the current-version check.
+    const docs: DocsEvidence = { ...baseDocs(), requiredVersionIds: ["defold-1.13.0"] };
+    const result = evaluateReleaseReadiness({ ...passingEvidence(), docs });
+    expect(result.ok).toBe(false);
+    expect(
+      result.problems.some(
+        (p) =>
+          p.category === "docs-route" &&
+          p.message ===
+            "baseline version defold-1.12.4 is not among the required complete versions",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("docsRouteEvidence — structural docs-route seam over a built manifest", () => {
+  function page(route: string, namespace: string): ApiPage {
+    const module: ApiModule = {
+      namespace,
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    return {
+      namespace,
+      route,
+      brief: "",
+      module,
+      translations: {},
+      signatures: {},
+      category: "engine",
+    };
+  }
+
+  const indexFiles = (ids: readonly string[]) => ({
+    generatedSearchFiles: ["search-index.json", ...ids.map((id) => `search-index-${id}.json`)],
+    generatedSymbolFiles: ["symbol-index.json", ...ids.map((id) => `symbol-index-${id}.json`)],
+  });
+
+  test("required set names the baseline but the built manifest omits its family entirely", () => {
+    // The independent required set names both versions; the manifest is built from
+    // the current version only, so the baseline family is absent — proven through
+    // the seam, never a hand-set exactRoutesByVersion.
+    const requiredVersionIds = ["defold-1.13.0", "defold-1.12.4"];
+    const manifest = buildReleaseRouteManifest({
+      versions: [{ id: "defold-1.13.0", isDefault: true }],
+      canonicalPages: [page("/api/go", "go")],
+      pagesByVersion: { "defold-1.13.0": [page("/api/defold-1.13.0/go", "go")] },
+    });
+    const seam = docsRouteEvidence({
+      requiredVersionIds,
+      manifest,
+      ...indexFiles(["defold-1.13.0"]),
+    });
+    expect(
+      seam.manifestProblems.some((p) => /omits required version defold-1\.12\.4/.test(p)),
+    ).toBe(true);
+
+    const docs: DocsEvidence = { ...baseDocs(), requiredVersionIds, ...seam };
+    const result = evaluateReleaseReadiness({ ...passingEvidence(), docs });
+    expect(result.ok).toBe(false);
+    expect(
+      result.problems.some(
+        (p) =>
+          p.category === "docs-route" &&
+          p.message.includes("defold-1.12.4") &&
+          /no exact route family/.test(p.message),
+      ),
+    ).toBe(true);
+  });
+
+  test("flags a manifest carrying a version id absent from the independent required set", () => {
+    const requiredVersionIds = ["defold-1.13.0", "defold-1.12.4"];
+    const manifest = buildReleaseRouteManifest({
+      versions: [
+        { id: "defold-1.13.0", isDefault: true },
+        { id: "defold-1.12.4", isDefault: false },
+        { id: "defold-1.99.0", isDefault: false },
+      ],
+      canonicalPages: [page("/api/go", "go")],
+      pagesByVersion: {
+        "defold-1.13.0": [page("/api/defold-1.13.0/go", "go")],
+        "defold-1.12.4": [page("/api/defold-1.12.4/go", "go")],
+        "defold-1.99.0": [page("/api/defold-1.99.0/go", "go")],
+      },
+    });
+    const seam = docsRouteEvidence({
+      requiredVersionIds,
+      manifest,
+      ...indexFiles(["defold-1.13.0", "defold-1.12.4", "defold-1.99.0"]),
+    });
+    expect(
+      seam.manifestProblems.some(
+        (p) => /defold-1\.99\.0/.test(p) && /not among the required complete versions/.test(p),
+      ),
+    ).toBe(true);
+  });
+
+  test("a required, present family yields no divergence problem", () => {
+    const requiredVersionIds = ["defold-1.13.0", "defold-1.12.4"];
+    const manifest = buildReleaseRouteManifest({
+      versions: [
+        { id: "defold-1.13.0", isDefault: true },
+        { id: "defold-1.12.4", isDefault: false },
+      ],
+      canonicalPages: [page("/api/go", "go")],
+      pagesByVersion: {
+        "defold-1.13.0": [page("/api/defold-1.13.0/go", "go")],
+        "defold-1.12.4": [page("/api/defold-1.12.4/go", "go")],
+      },
+    });
+    const seam = docsRouteEvidence({
+      requiredVersionIds,
+      manifest,
+      ...indexFiles(["defold-1.13.0", "defold-1.12.4"]),
+    });
+    expect(seam.manifestProblems).toEqual([]);
+    expect(seam.exactRoutesByVersion["defold-1.12.4"]).toEqual(["/api/defold-1.12.4/go"]);
   });
 });
 
