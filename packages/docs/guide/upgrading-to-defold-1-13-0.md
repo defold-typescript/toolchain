@@ -89,10 +89,17 @@ release and avoid them in new code.
   The per-component "reset a shader constant" helpers are deprecated in 1.13.0.
   They keep working and there is no documented successor to migrate to yet, so no
   action is required today.
+- **`acquire_camera_focus`, `release_camera_focus` (camera messages).** The two
+  camera-focus messages are deprecated in 1.13.0. They still post and route with
+  their existing payloads, and `builtin-messages.d.ts` now marks them
+  `@deprecated`, so `msg.post` calls that name them keep compiling. No successor
+  is announced, so no action is required today — avoid them in new code.
 
 <!-- no-action: model.reset_constant -->
 <!-- no-action: sprite.reset_constant -->
 <!-- no-action: tilemap.reset_constant -->
+<!-- no-action: acquire_camera_focus -->
+<!-- no-action: release_camera_focus -->
 
 ## Source and project migrations
 

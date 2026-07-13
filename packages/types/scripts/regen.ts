@@ -3,7 +3,11 @@ import { resolve } from "node:path";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
 import { emitDeclarations, emitSymbolSignatures, type SymbolSignature } from "../src/emit-dts";
-import { emitBuiltinMessages, parseMessagesDoc } from "../src/emit-messages";
+import {
+  applyMessageDeprecations,
+  emitBuiltinMessages,
+  parseMessagesDoc,
+} from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
 import { wrapAsAmbientGlobal } from "../src/publish-dts";
 import {
@@ -167,7 +171,7 @@ export const MESSAGES_MANIFEST: MessagesManifestEntry = {
 };
 
 export function generateBuiltinMessagesDeclaration(entry: MessagesManifestEntry): string {
-  return emitBuiltinMessages(parseMessagesDoc(entry.doc));
+  return emitBuiltinMessages(applyMessageDeprecations(parseMessagesDoc(entry.doc)));
 }
 
 export interface GenerateResult {

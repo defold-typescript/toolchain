@@ -2,6 +2,7 @@ import type { Hash, Matrix4, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
   interface BuiltinMessages {
+    /** @deprecated since 1.13.0 */
     acquire_camera_focus: Record<string, never>;
     acquire_input_focus: Record<string, never>;
     animation_done: { current_tile: number; id: Hash };
@@ -29,6 +30,7 @@ declare global {
     ray_cast_missed: { group: Hash; request_id: number };
     ray_cast_response: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number };
     reboot: { arg1: string; arg2: string; arg3: string; arg4: string; arg5: string; arg6: string };
+    /** @deprecated since 1.13.0 */
     release_camera_focus: Record<string, never>;
     release_input_focus: Record<string, never>;
     resize: { height: number; width: number };
