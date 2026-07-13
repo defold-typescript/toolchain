@@ -91,45 +91,62 @@ describe("buildSearchIndex", () => {
 });
 
 describe("searchIndexFileForRoute", () => {
-  const versions = ["defold-1.9.8"];
+  // versionIds now carries the current (default) engine version too — every
+  // version, the current one included, owns an explicit prefixed index.
+  const versions = ["defold-1.13.0", "defold-1.12.4"];
 
-  test("maps versioned API routes to their version-specific index", () => {
-    expect(searchIndexFileForRoute("/api/defold-1.9.8/label", versions)).toBe(
-      "search-index-defold-1.9.8.json",
+  test("maps every versioned API route to its version-specific index, current included", () => {
+    expect(searchIndexFileForRoute("/api/defold-1.13.0/camera", versions)).toBe(
+      "search-index-defold-1.13.0.json",
+    );
+    expect(searchIndexFileForRoute("/api/defold-1.12.4/camera", versions)).toBe(
+      "search-index-defold-1.12.4.json",
     );
   });
 
-  test("maps default and non-API routes to the default index", () => {
-    expect(searchIndexFileForRoute("/api/go", versions)).toBe("search-index.json");
+  test("maps unprefixed canonical and non-API routes to the shared Combined index", () => {
+    expect(searchIndexFileForRoute("/api/camera", versions)).toBe("search-index.json");
+    expect(searchIndexFileForRoute("/api/Hash", versions)).toBe("search-index.json");
     expect(searchIndexFileForRoute("/guide/x", versions)).toBe("search-index.json");
     expect(searchIndexFileForRoute("/", versions)).toBe("search-index.json");
   });
 
-  test("keeps unknown version-looking API routes on the default index", () => {
+  test("keeps unknown version-looking API routes on the shared index", () => {
     expect(searchIndexFileForRoute("/api/foo/bar", versions)).toBe("search-index.json");
   });
 
-  test("routes the Combined surface to its own index regardless of tracked versions", () => {
-    expect(searchIndexFileForRoute("/api/combined/model", versions)).toBe(
-      "search-index-combined.json",
-    );
-    expect(searchIndexFileForRoute("/api/combined", versions)).toBe("search-index-combined.json");
+  test("resolves the /api/combined compat route to the canonical Combined index", () => {
+    expect(searchIndexFileForRoute("/api/combined/model", versions)).toBe("search-index.json");
+    expect(searchIndexFileForRoute("/api/combined", versions)).toBe("search-index.json");
   });
 });
 
 describe("versionSearchIndexRecords", () => {
-  test("returns one guide-plus-API record set per non-default version", () => {
+  test("returns a guide-plus-API record set per version, the default included", () => {
     const guideRecords = [{ route: "/", title: "Overview", text: "Guide prose" }];
-    const [entry] = versionSearchIndexRecords(API_FIXTURE_DIR, guideRecords, {
+    const entries = versionSearchIndexRecords(API_FIXTURE_DIR, guideRecords, {
       versions: listApiVersions(API_FIXTURE_DIR),
       pagesForVersion: loadApiSurfaceForVersion,
     });
-    expect(entry?.version).toBe("old");
-    expect(entry?.records).toEqual([
+    const versionIds = entries.map((entry) => entry.version);
+    expect(versionIds).toContain("cur");
+    expect(versionIds).toContain("old");
+
+    const old = entries.find((entry) => entry.version === "old");
+    expect(old?.records).toEqual([
       ...guideRecords,
       ...apiSearchRecords(loadApiSurfaceForVersion(API_FIXTURE_DIR, "old")),
     ]);
-    expect(entry?.records.some((record) => record.route === "/api/old/wmath")).toBe(true);
+    expect(old?.records.some((record) => record.route === "/api/old/wmath")).toBe(true);
+
+    // The default version no longer borrows the unversioned file: it gets its
+    // own prefixed record set keyed to `/api/cur/<ns>`.
+    const cur = entries.find((entry) => entry.version === "cur");
+    expect(cur?.records).toEqual([
+      ...guideRecords,
+      ...apiSearchRecords(loadApiSurfaceForVersion(API_FIXTURE_DIR, "cur")),
+    ]);
+    expect(cur?.records.some((record) => record.route.startsWith("/api/cur/"))).toBe(true);
   });
 });
 
@@ -281,20 +298,20 @@ describe("apiSearchRecords", () => {
 describe("combinedSearchRecords", () => {
   const combined = loadCombinedSurface(REAL_TYPES_DIR);
 
-  test("emits one record per Combined namespace, routed under /api/combined", () => {
+  test("emits one record per Combined namespace, routed under canonical /api", () => {
     const records = combinedSearchRecords(combined);
     expect(records).toHaveLength(combined.namespaces.length);
     const routes = records.map((r) => r.route);
     expect(routes).toEqual([...routes].sort());
     for (const ns of combined.namespaces) {
-      const record = records.find((r) => r.route === `/api/combined/${ns.namespace}`);
+      const record = records.find((r) => r.route === `/api/${ns.namespace}`);
       expect(record).toBeDefined();
       expect(record?.title).toBe(`${ns.namespace} API`);
     }
   });
 
   test("sources text from the projection's authoritative signatures", () => {
-    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/combined/model");
+    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/model");
     expect(model).toBeDefined();
     // the declaration-backed, drift-free shape — not the ref-doc token form
     expect(model?.text).toContain(
@@ -304,14 +321,14 @@ describe("combinedSearchRecords", () => {
 
   test("threads availability prose for symbols that are not present in every version", () => {
     const records = combinedSearchRecords(combined);
-    const compute = records.find((r) => r.route === "/api/combined/compute");
+    const compute = records.find((r) => r.route === "/api/compute");
     expect(compute?.text).toContain("Since Defold 1.13.0");
-    const live = records.find((r) => r.route === "/api/combined/liveupdate");
+    const live = records.find((r) => r.route === "/api/liveupdate");
     expect(live?.text).toContain("Available through Defold 1.12.4");
   });
 
   test("threads a verified upstream deprecation into the Combined search text", () => {
-    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/combined/model");
+    const model = combinedSearchRecords(combined).find((r) => r.route === "/api/model");
     expect(model?.text).toContain("Deprecated since 1.13.0");
   });
 });

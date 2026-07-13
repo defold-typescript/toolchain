@@ -3,9 +3,9 @@ import SearchResults from "../islands/search-results";
 import { apiVersions } from "../lib/api-content";
 
 export default createRoute((c) => {
-  const versionIds = apiVersions()
-    .filter((version) => !version.isDefault)
-    .map((version) => version.id);
+  // Every version, the current one included, owns an explicit prefixed index now,
+  // so the island's `?index=` allowlist and route-based selection must see them all.
+  const versionIds = apiVersions().map((version) => version.id);
   // SSG cannot bake per-query results, so the page prerenders as a stable shell
   // and the island reads `?q=` and renders the matches in the browser.
   return c.render(
