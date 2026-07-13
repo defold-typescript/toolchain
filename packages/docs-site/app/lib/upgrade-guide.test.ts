@@ -176,4 +176,14 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
       "The single-slot `model.material` property is removed",
     );
   });
+
+  // Camera-focus messages are deprecated in 1.13.0 but live outside the typed
+  // identity surface (no MESSAGE kind in api-availability.json), so the guide is
+  // their user-facing surface, mirroring the reset_constant no-action entries.
+  test("documents the deprecated 1.13.0 camera-focus messages with no-action markers", () => {
+    for (const name of ["acquire_camera_focus", "release_camera_focus"]) {
+      expect(guideBody).toContain(name);
+      expect(guideBody).toContain(`<!-- no-action: ${name} -->`);
+    }
+  });
 });
