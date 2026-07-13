@@ -14,9 +14,11 @@ import {
   apiVersions,
   canonicalApiPages,
   combinedNamespaces,
+  combinedSurface,
   libraryDirs,
   libraryOwners,
 } from "../lib/api-content";
+import { navNamespaceBadges } from "../lib/api-page-render";
 import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
@@ -28,6 +30,7 @@ import {
   showApiSurfaceSelector,
 } from "../lib/api-surface-pref";
 import { withBase } from "../lib/base";
+import { namespaceBadgeCounts } from "../lib/combined-surface";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
@@ -235,6 +238,17 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // reached from the selector.
   const allApiPages = canonicalApiPages();
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
+  // Combined per-namespace availability tallies drive the sidebar count pills; the
+  // pills are Combined-only, so they attach to engine leaves here and are stripped
+  // when the nav is rewritten onto an exact-version surface.
+  const badgeCountsByNamespace = new Map(
+    combinedSurface().namespaces.map((ns) => [ns.namespace, namespaceBadgeCounts(ns)]),
+  );
+  const toEngineNamespace = (p: (typeof allApiPages)[number]) => {
+    const counts = badgeCountsByNamespace.get(p.namespace);
+    const badgeHtml = counts ? navNamespaceBadges(counts) : "";
+    return { label: p.namespace, route: p.route, ...(badgeHtml ? { badgeHtml } : {}) };
+  };
 
   // Vendored library pages grouped by creator and upstream `dir` for the
   // Libraries tab; namespace leaves keep the dotted route slug.
@@ -252,7 +266,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     luaStdlib: allApiPages.filter((p) => p.category === "lua-stdlib").map(toNamespace),
     engine: allApiPages
       .filter((p) => p.category === "engine" && p.namespace !== "globals")
-      .map(toNamespace),
+      .map(toEngineNamespace),
     libraries,
   });
   const versions = apiVersions();
@@ -662,14 +676,29 @@ function SidebarItems({
 
 function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
   if (!link.route) return null;
+  const base =
+    "rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
+    (active ? "bg-accent-soft text-accent" : "");
+  // A namespace leaf with Combined count pills becomes a flex row so the label
+  // truncates while the badges stay visible; a plain leaf keeps the single-node
+  // truncating anchor unchanged.
+  if (link.badgeHtml) {
+    return (
+      <a
+        href={withBase(link.route)}
+        aria-current={active ? "page" : undefined}
+        class={`flex items-center gap-1 ${base}`}
+      >
+        <span class="truncate min-w-0" dangerouslySetInnerHTML={{ __html: link.labelHtml }} />
+        <span class="shrink-0" dangerouslySetInnerHTML={{ __html: link.badgeHtml }} />
+      </a>
+    );
+  }
   return (
     <a
       href={withBase(link.route)}
       aria-current={active ? "page" : undefined}
-      class={
-        "block truncate rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
-        (active ? "bg-accent-soft text-accent" : "")
-      }
+      class={`block truncate ${base}`}
       dangerouslySetInnerHTML={{ __html: link.labelHtml }}
     />
   );
