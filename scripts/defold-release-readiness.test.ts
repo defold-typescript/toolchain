@@ -2,11 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { ApiPage } from "../packages/docs-site/app/lib/api-surface.ts";
+import type { ApiVersion } from "../packages/docs-site/app/lib/api-surface-loader.ts";
+import { buildReleaseRouteManifest } from "../packages/docs-site/app/lib/release-manifest.ts";
 import {
   generateModuleDeclaration,
   loadApiTargets,
   loadTargetModules,
 } from "../packages/types/scripts/regen.ts";
+import type { ApiModule } from "../packages/types/src/api-doc.ts";
 import {
   collectEvidence,
   collectTargets,
@@ -15,6 +19,7 @@ import {
   type ImportManifestEvidence,
   type ReadinessCategory,
   type ReadinessEvidence,
+  releaseIndexProblems,
 } from "./defold-release-readiness.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..");
@@ -35,6 +40,7 @@ function baseDocs(): DocsEvidence {
     canonicalRoutes: ["/api/liveupdate", "/api/model"],
     historicalRoutes: ["/api/defold-1.12.4/liveupdate", "/api/defold-1.12.4/model"],
     searchMachinery: true,
+    requiredVersionIds: ["defold-1.13.0", "defold-1.12.4"],
     exactRoutesByVersion: {
       "defold-1.13.0": ["/api/defold-1.13.0/liveupdate", "/api/defold-1.13.0/model"],
       "defold-1.12.4": ["/api/defold-1.12.4/liveupdate", "/api/defold-1.12.4/model"],
@@ -43,6 +49,11 @@ function baseDocs(): DocsEvidence {
       "defold-1.13.0": "search-index-defold-1.13.0.json",
       "defold-1.12.4": "search-index-defold-1.12.4.json",
     },
+    symbolIndexByVersion: {
+      "defold-1.13.0": "symbol-index-defold-1.13.0.json",
+      "defold-1.12.4": "symbol-index-defold-1.12.4.json",
+    },
+    manifestProblems: [],
   };
 }
 
@@ -239,6 +250,48 @@ describe("evaluateReleaseReadiness", () => {
     });
     expect(result.ok).toBe(false);
     expect(result.problems.map((p) => p.category)).toContain("search");
+  });
+
+  test("rejects when a required version's exact-route family is entirely absent, not merely empty", () => {
+    const e = passingEvidence();
+    const docs = baseDocs();
+    // Drop the baseline family's KEY (not just empty it): the required-id iteration
+    // must still catch it — the old entry-only loop would silently pass.
+    const { "defold-1.12.4": _dropped, ...exactRoutesByVersion } = docs.exactRoutesByVersion;
+    const result = evaluateReleaseReadiness({ ...e, docs: { ...docs, exactRoutesByVersion } });
+    expect(result.ok).toBe(false);
+    expect(
+      result.problems.some(
+        (p) => p.category === "docs-route" && p.message.includes("defold-1.12.4"),
+      ),
+    ).toBe(true);
+  });
+
+  test("rejects when a required version's search or symbol index assignment is missing", () => {
+    const e = passingEvidence();
+    const docs = baseDocs();
+    const { "defold-1.12.4": _s, ...searchIndexByVersion } = docs.searchIndexByVersion;
+    const { "defold-1.13.0": _y, ...symbolIndexByVersion } = docs.symbolIndexByVersion;
+    const result = evaluateReleaseReadiness({
+      ...e,
+      docs: { ...docs, searchIndexByVersion, symbolIndexByVersion },
+    });
+    expect(result.ok).toBe(false);
+    const search = result.problems.filter((p) => p.category === "search");
+    expect(search.some((p) => p.message.includes("defold-1.12.4"))).toBe(true);
+    expect(search.some((p) => p.message.includes("defold-1.13.0"))).toBe(true);
+  });
+
+  test("rejects every release-route-manifest validation problem it is handed", () => {
+    const e = passingEvidence();
+    const docs = baseDocs();
+    const problem = "duplicate release route across canonical and exact families: /api/model";
+    const result = evaluateReleaseReadiness({
+      ...e,
+      docs: { ...docs, manifestProblems: [problem] },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.problems.some((p) => p.message === problem)).toBe(true);
   });
 
   test("rejects when a removed symbol is not covered by the migration guide", () => {
@@ -481,5 +534,73 @@ describe("collectTargets — physical committed-surface verification", () => {
       throw new Error(`expected ready, got blockers:\n${JSON.stringify(result.problems, null, 2)}`);
     }
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("releaseIndexProblems — the generated index set must cover every manifest family", () => {
+  function page(route: string, namespace: string): ApiPage {
+    const module: ApiModule = {
+      namespace,
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    return {
+      namespace,
+      route,
+      brief: "",
+      module,
+      translations: {},
+      signatures: {},
+      category: "engine",
+    };
+  }
+  const versions: ApiVersion[] = [
+    { id: "defold-1.13.0", isDefault: true },
+    { id: "defold-1.12.4", isDefault: false },
+  ];
+  const manifest = buildReleaseRouteManifest({
+    versions,
+    canonicalPages: [page("/api/go", "go")],
+    pagesByVersion: {
+      "defold-1.13.0": [page("/api/defold-1.13.0/go", "go")],
+      "defold-1.12.4": [page("/api/defold-1.12.4/go", "go")],
+    },
+  });
+  const fullSearch = [
+    "search-index.json",
+    "search-index-defold-1.13.0.json",
+    "search-index-defold-1.12.4.json",
+  ];
+  const fullSymbol = [
+    "symbol-index.json",
+    "symbol-index-defold-1.13.0.json",
+    "symbol-index-defold-1.12.4.json",
+  ];
+
+  test("a complete generated set matches the manifest with no problems", () => {
+    expect(
+      releaseIndexProblems(manifest, { searchFiles: fullSearch, symbolFiles: fullSymbol }),
+    ).toEqual([]);
+  });
+
+  test("flags a generated search set that omits a required version file", () => {
+    const problems = releaseIndexProblems(manifest, {
+      searchFiles: fullSearch.filter((f) => f !== "search-index-defold-1.12.4.json"),
+      symbolFiles: fullSymbol,
+    });
+    expect(problems.some((p) => p.includes("search-index-defold-1.12.4.json"))).toBe(true);
+  });
+
+  test("flags a generated symbol set that omits a required version file", () => {
+    const problems = releaseIndexProblems(manifest, {
+      searchFiles: fullSearch,
+      symbolFiles: fullSymbol.filter((f) => f !== "symbol-index-defold-1.13.0.json"),
+    });
+    expect(problems.some((p) => p.includes("symbol-index-defold-1.13.0.json"))).toBe(true);
   });
 });

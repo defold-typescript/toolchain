@@ -94,6 +94,20 @@ describe("buildReleaseRouteManifest", () => {
     ]);
   });
 
+  test("carries both a per-version search AND symbol index, plus a shared Combined symbol index", () => {
+    const m = buildReleaseRouteManifest(input);
+    for (const v of m.versions) {
+      expect(v.searchIndexFile).toBe(`search-index-${v.id}.json`);
+      expect(v.symbolIndexFile).toBe(`symbol-index-${v.id}.json`);
+    }
+    expect(m.combinedSymbolIndexFile).toBe("symbol-index.json");
+    expect(m.symbolRoutes).toEqual([
+      "symbol-index-defold-1.12.4.json",
+      "symbol-index-defold-1.13.0.json",
+      "symbol-index.json",
+    ]);
+  });
+
   test("mirrors the canonical routes as the sidebar routes", () => {
     const m = buildReleaseRouteManifest(input);
     expect(m.sidebarRoutes).toEqual(m.canonicalRoutes);
@@ -202,6 +216,44 @@ describe("validateReleaseRouteManifest", () => {
     const corrupt: ReleaseRouteManifest = {
       ...m,
       sidebarRoutes: [...m.sidebarRoutes, "/api/ghost"],
+    };
+    expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
+  });
+
+  test("rejects a version whose symbol index file assignment is stale", () => {
+    const m = buildReleaseRouteManifest(input);
+    const corrupt: ReleaseRouteManifest = {
+      ...m,
+      versions: m.versions.map((v) =>
+        v.isDefault ? { ...v, symbolIndexFile: "symbol-index.json" } : v,
+      ),
+    };
+    expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
+  });
+
+  test("rejects a version whose symbol index file is absent from symbolRoutes", () => {
+    const m = buildReleaseRouteManifest(input);
+    const corrupt: ReleaseRouteManifest = {
+      ...m,
+      symbolRoutes: m.symbolRoutes.filter((f) => f !== "symbol-index-defold-1.13.0.json"),
+    };
+    expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
+  });
+
+  test("rejects a mismatched shared Combined symbol index file", () => {
+    const m = buildReleaseRouteManifest(input);
+    const corrupt: ReleaseRouteManifest = {
+      ...m,
+      combinedSymbolIndexFile: "symbol-index-defold-1.13.0.json",
+    };
+    expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
+  });
+
+  test("rejects a duplicate symbol route", () => {
+    const m = buildReleaseRouteManifest(input);
+    const corrupt: ReleaseRouteManifest = {
+      ...m,
+      symbolRoutes: [...m.symbolRoutes, "symbol-index.json"],
     };
     expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
   });
