@@ -6,6 +6,7 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
+import { canonicalApiPages } from "./api-content";
 import {
   apiLinkify,
   apiPageMarkdown,
@@ -27,6 +28,7 @@ const MISSING_VERSION_FIXTURE_DIR = join(
   "__fixtures__/api-surface-missing-version",
 );
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 // A non-default surface page: its route already carries the version prefix, so
 // any link derived from it must stay version-scoped.
@@ -182,12 +184,19 @@ function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
 }
 
 describe("versionedApiParams", () => {
-  test("yields one {version, namespace} per on-disk non-default page", () => {
-    expect(versionedApiParams(FIXTURE_DIR)).toEqual([{ version: "old", namespace: "wmath" }]);
+  test("yields one {version, namespace} per on-disk engine page of every materialized version, default included", () => {
+    expect(versionedApiParams(FIXTURE_DIR)).toEqual([
+      { version: "cur", namespace: "globals" },
+      { version: "cur", namespace: "alpha" },
+      { version: "cur", namespace: "camera" },
+      { version: "old", namespace: "wmath" },
+    ]);
   });
 
-  test("is empty when no non-default version has on-disk fixtures (slice ships standalone)", () => {
-    expect(versionedApiParams(MISSING_VERSION_FIXTURE_DIR)).toEqual([]);
+  test("an unmaterialized non-default version contributes nothing; the default still materializes", () => {
+    expect(versionedApiParams(MISSING_VERSION_FIXTURE_DIR)).toEqual([
+      { version: "cur", namespace: "camera" },
+    ]);
   });
 });
 
@@ -478,8 +487,8 @@ describe("isKnownVersionId", () => {
     expect(isKnownVersionId("camera", versions)).toBe(false);
   });
 
-  test("is false for the default version id (served at /api, not a version index)", () => {
-    expect(isKnownVersionId("cur", versions)).toBe(false);
+  test("is true for the default version id (it now owns an explicit /api/<default> index)", () => {
+    expect(isKnownVersionId("cur", versions)).toBe(true);
   });
 });
 
@@ -839,7 +848,7 @@ describe("Combined page authoritative render + markers", () => {
 
 describe("apiReplacementResolver", () => {
   test("resolves a known member to its page route with anchor and returns undefined otherwise", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR);
+    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const resolve = apiReplacementResolver(pages);
     const go = pages.find((p) => p.namespace === "go");
     expect(go).toBeDefined();

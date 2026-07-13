@@ -1,59 +1,60 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { ApiIndex, CombinedIndex, LibraryPath } from "../../components/api-index";
+import { ApiIndex, LibraryPath } from "../../components/api-index";
 import { withGlobalTypes } from "../../components/api-index-sections";
 import {
-  apiPages,
+  apiNamespaceOwner,
   apiPagesForVersion,
   apiVersions,
+  canonicalApiPages,
+  canonicalNamespaces,
   combinedSurface,
   defaultGlobalTypePages,
   libraryDirs,
   libraryOwners,
-  toCombinedApiPage,
 } from "../../lib/api-content";
 import {
   apiLinkify,
   apiPageMarkdown,
   apiReplacementResolver,
   isKnownVersionId,
+  namespaceCountBadges,
 } from "../../lib/api-page-render";
+import { redirectHtml } from "../../lib/api-redirect";
+import { withBase } from "../../lib/base";
+import { namespaceBadgeCounts } from "../../lib/combined-surface";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
 import { COMBINED_VERSION_ID } from "../../lib/version-switch";
 
 // honox flat routing collapses `api/[version]/index.tsx` to `/api/:version`,
 // which collides with this `/api/:namespace` route (the shallower one wins). So
-// the per-version index is folded in here: one `/api/:param` route that renders
-// the version index when the param is a known non-default version id, and the
-// namespace page otherwise. The 3-segment `/api/:version/:namespace` route lives
-// in its own file and does not collide.
+// three page kinds are folded into one `/api/:param` route: the `combined` compat
+// redirect, a known-version exact index (default included), and — otherwise — a
+// canonical namespace page (a Combined engine page, or a version-independent one).
+// The 3-segment `/api/:version/:namespace` route lives in its own file.
 export default createRoute(
   ssgParams(() => [
-    ...apiPages().map((page) => ({ namespace: page.namespace })),
-    ...apiVersions()
-      .filter((v) => !v.isDefault)
-      .map((v) => ({ namespace: v.id })),
+    ...canonicalNamespaces().map((namespace) => ({ namespace })),
+    ...apiVersions().map((v) => ({ namespace: v.id })),
     // honox collapses `api/combined/index.tsx` to `/api/combined`, which the
-    // shallower `/api/:namespace` route shadows — so the Combined index is
-    // folded in here alongside the per-version index, one extra param.
+    // shallower `/api/:namespace` route shadows — so the Combined redirect param
+    // is folded in here alongside the per-version index params.
     { namespace: COMBINED_VERSION_ID },
   ]),
   async (c) => {
     const param = c.req.param("namespace");
     if (!param) return c.notFound();
+    const base = withBase("/").replace(/\/$/, "");
 
+    // The old Combined index is now a permanent compat redirect to canonical /api.
     if (param === COMBINED_VERSION_ID) {
-      const surface = combinedSurface();
-      return c.render(
-        <CombinedIndex
-          pages={surface.namespaces.map(toCombinedApiPage)}
-          versions={surface.versions}
-        />,
-        { title: "API reference (combined)" },
-      );
+      return c.html(redirectHtml("/api/combined", "/api", base));
     }
 
+    // A known version id (the default included now that it owns an explicit
+    // `/api/<default>` family) renders that version's exact-version index; its
+    // version-independent entries link back to their canonical routes.
     if (isKnownVersionId(param, apiVersions())) {
       return c.render(
         <ApiIndex
@@ -66,14 +67,17 @@ export default createRoute(
       );
     }
 
-    const pages = apiPages();
+    // Otherwise a canonical namespace: dispatch on its owning surface. An unknown
+    // namespace 404s.
+    const owner = apiNamespaceOwner(param);
+    if (!owner) return c.notFound();
+
+    const pages = canonicalApiPages();
     const page = pages.find((entry) => entry.namespace === param);
     if (!page) return c.notFound();
 
-    // Build the linkify registry from the full surface. `linkifySymbolMentions`
-    // itself drops bare-namespace keys (no `.`) — pointing a prose mention at
-    // `/api/camera` is too broad; only qualified member keys like
-    // `camera.screen_to_world` (with the heading-slug anchor) are linked.
+    // The linkify + replacement registry span the whole canonical surface, so a
+    // prose mention or a deprecation replacement resolves to its canonical route.
     const linkify = apiLinkify(pages);
     const resolveReplacement = apiReplacementResolver(pages);
 
@@ -97,9 +101,19 @@ export default createRoute(
       );
     }
 
-    const html = await renderMarkdown(apiPageMarkdown(page, linkify, { resolveReplacement }), {
-      highlightSignatureHeadings: true,
-    });
+    // A Combined engine namespace renders with the availability markers and the
+    // namespace-title count pills; a version-independent namespace (global type,
+    // Lua stdlib) renders plainly.
+    const combinedMarkers = owner === "combined-engine";
+    const model = combinedMarkers
+      ? combinedSurface().namespaces.find((n) => n.namespace === param)
+      : undefined;
+    const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model)) : "";
+
+    const html = await renderMarkdown(
+      apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges, combinedMarkers }),
+      { highlightSignatureHeadings: true },
+    );
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${page.module.namespace} API`,
       headings: pageHeadings(html),
