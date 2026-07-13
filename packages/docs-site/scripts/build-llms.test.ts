@@ -348,6 +348,11 @@ describe("llms.txt ## API engine links come from the Combined surface", () => {
     expect(api).toContain("[signature transition]");
     expect(api).toMatch(/add_mount\([^\n]*\[through 1\.12\.4\] \[signature transition\]/);
   });
+
+  test("llms-full tags a verified deprecation with [deprecated since 1.13.0]", () => {
+    const api = section(buildLlmsFull(SITE_TARGET), "## API");
+    expect(api).toMatch(/reset_constant\([^\n]*\[deprecated since 1\.13\.0\]/);
+  });
 });
 
 describe("llms-full header carries the Combined-surface agent contract", () => {
