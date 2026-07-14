@@ -1087,6 +1087,7 @@ export function dispatch(
         const outcome = await runUpgrade({
           cwd,
           running,
+          capture: json,
           ...(internals?.upgradeInternals ? { io: internals.upgradeInternals } : {}),
         });
         if (json) {
@@ -1098,6 +1099,7 @@ export function dispatch(
               to: outcome.to,
               handedOff: outcome.handedOff,
               ...(outcome.error !== undefined ? { error: outcome.error } : {}),
+              ...(outcome.output !== undefined ? { output: outcome.output } : {}),
             }),
           );
         } else if (outcome.error !== undefined) {
