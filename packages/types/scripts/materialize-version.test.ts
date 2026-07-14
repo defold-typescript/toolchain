@@ -1,9 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { materializeVersionedSurface, renderMaterializedKindIndex } from "./materialize-version";
-import { type ApiTarget, loadApiTargets } from "./regen";
+import {
+  buildVersionedSurfaceFiles,
+  materializeVersionedSurface,
+  renderMaterializedKindIndex,
+} from "./materialize-version";
+import {
+  type ApiTarget,
+  generateModuleDeclaration,
+  generateVersionIndex,
+  loadApiTargets,
+  resolveTargetModules,
+} from "./regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "./sync-api-docs";
 
 const LUA_STDLIB_LEAD =
@@ -235,6 +252,98 @@ describe("materializeVersionedSurface", () => {
     const index = readFileSync(resolve(destDir, "index.d.ts"), "utf8");
     for (const namespace of MULTI_KIND_NAMESPACES) {
       expect(index).toContain(`import "./${namespace}";`);
+    }
+  });
+});
+
+describe("buildVersionedSurfaceFiles", () => {
+  test("returns one entry per module plus index.d.ts and package.json, and nothing else", async () => {
+    const { fakeZip, cacheDir } = labelRefDocZip();
+    const target = defold198Target();
+    const resolveOpts = { cacheDir, readZip: () => fakeZip, download: noDownload };
+
+    const files = await buildVersionedSurfaceFiles(target, { resolveOpts });
+
+    const modules = await resolveTargetModules(target, resolveOpts);
+    const expectedPaths = [...modules.map((entry) => entry.outFile), "index.d.ts", "package.json"];
+    expect(files.map((file) => file.path)).toEqual(expectedPaths);
+
+    for (const entry of modules) {
+      const file = files.find((f) => f.path === entry.outFile);
+      expect(file?.contents).toBe(generateModuleDeclaration(entry).contents);
+    }
+
+    const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
+    expect(files.find((f) => f.path === "index.d.ts")?.contents).toBe(
+      generateVersionIndex(target.id, versioned),
+    );
+  });
+
+  test("the package.json entry parses to the materialized package name and types entrypoint", async () => {
+    const { fakeZip, cacheDir } = labelRefDocZip();
+    const target = defold198Target();
+
+    const files = await buildVersionedSurfaceFiles(target, {
+      resolveOpts: { cacheDir, readZip: () => fakeZip, download: noDownload },
+    });
+
+    const pkgEntry = files.find((f) => f.path === "package.json");
+    expect(pkgEntry).toBeDefined();
+    expect(JSON.parse(pkgEntry?.contents ?? "")).toEqual({
+      name: `@defold-typescript/materialized-${target.id}`,
+      types: "index.d.ts",
+    });
+  });
+
+  test("excludeModules omits the module's entry and its index import", async () => {
+    const { fakeZip, cacheDir } = multiKindRefDocZip();
+
+    const files = await buildVersionedSurfaceFiles(multiKindTarget(), {
+      excludeModules: ["gui"],
+      resolveOpts: { cacheDir, readZip: () => fakeZip, download: noDownload },
+    });
+
+    const paths = files.map((file) => file.path);
+    expect(paths).not.toContain("gui.d.ts");
+    expect(paths).toContain("render.d.ts");
+    expect(paths).toContain("sprite.d.ts");
+
+    const index = files.find((f) => f.path === "index.d.ts")?.contents ?? "";
+    expect(index).not.toContain('import "./gui";');
+    expect(index).toContain('import "./render";');
+    expect(index).toContain('import "./sprite";');
+  });
+
+  test("entry order is modules in resolveTargetModules order, then index.d.ts, then package.json", async () => {
+    const { fakeZip, cacheDir } = multiKindRefDocZip();
+    const target = multiKindTarget();
+    const resolveOpts = { cacheDir, readZip: () => fakeZip, download: noDownload };
+
+    const files = await buildVersionedSurfaceFiles(target, { resolveOpts });
+
+    const modules = await resolveTargetModules(target, resolveOpts);
+    expect(files.map((file) => file.path)).toEqual([
+      ...modules.map((entry) => entry.outFile),
+      "index.d.ts",
+      "package.json",
+    ]);
+  });
+
+  test("materializeVersionedSurface writes exactly the files the builder returns", async () => {
+    const { fakeZip, cacheDir } = multiKindRefDocZip();
+    const target = multiKindTarget();
+    const opts = {
+      excludeModules: ["gui"],
+      resolveOpts: { cacheDir, readZip: () => fakeZip, download: noDownload },
+    };
+    const destDir = mkdtempSync(resolve(tmpdir(), "materialized-"));
+
+    const files = await buildVersionedSurfaceFiles(target, opts);
+    await materializeVersionedSurface(target, { destDir, ...opts });
+
+    expect(readdirSync(destDir).sort()).toEqual(files.map((file) => file.path).sort());
+    for (const file of files) {
+      expect(readFileSync(resolve(destDir, file.path), "utf8")).toBe(file.contents);
     }
   });
 });
