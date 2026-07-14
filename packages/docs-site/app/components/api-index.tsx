@@ -3,11 +3,13 @@
 import { htmlToDocText } from "@defold-typescript/types";
 import type { ApiPage } from "../lib/api-surface";
 import { renderCardSummary } from "../lib/card-summary";
+import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { getStartedPages } from "../lib/get-started";
 import type { GuidePage } from "../lib/guide";
 import { groupGuidePages } from "../lib/guide-groups";
 import { humanize } from "../lib/nav";
 import {
+  apiCardBadgeHtml,
   apiPageCardDescription,
   groupApiIndexPages,
   groupLibraryIndexByCreator,
@@ -16,13 +18,17 @@ import { LandingCard, LandingCardGrid, LandingPage, LandingSection } from "./lan
 
 // A card grid of API namespaces. Namespace labels render mono; the card summary
 // is the same doc-derived blurb used across the API surface. An empty category
-// is rendered by the caller as nothing at all.
+// is rendered by the caller as nothing at all. `badgeHtml` (Combined index only)
+// yields per-card availability pills; it defaults to none, so the version index
+// stays badge-less.
 function ApiCards({
   pages,
   label = (page) => page.displayName ?? page.namespace,
+  badgeHtml,
 }: {
   pages: ApiPage[];
   label?: (page: ApiPage) => string;
+  badgeHtml?: (page: ApiPage) => string;
 }) {
   return (
     <LandingCardGrid>
@@ -34,6 +40,7 @@ function ApiCards({
             href={page.route}
             title={label(page)}
             description={description ? htmlToDocText(description) : null}
+            badgeHtml={badgeHtml?.(page) || null}
           />
         );
       })}
@@ -162,32 +169,82 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
   );
 }
 
-// The `/api/combined` landing: every engine namespace across the tracked Defold
-// versions in one surface. Documentation-only — the same card grid as the
-// per-version index, but the lead names the versions the union spans and the
-// availability convention (a symbol present in every version carries no badge).
+// The canonical `/api` landing: every non-library namespace across the tracked
+// Defold versions in one surface. Mirrors `ApiIndex`'s four grouped sections
+// (Globals, Global types, Lua standard, Defold engine) so the index matches the
+// sidebar, but the lead names the versions the union spans and engine cards carry
+// per-namespace change badges from `badgeCounts` (Combined-only, so a symbol
+// present in every version carries no badge). Libraries stay on `/libraries`.
 export function CombinedIndex({
   pages,
   versions,
+  badgeCounts = new Map(),
 }: {
   pages: ApiPage[];
   versions: readonly string[];
+  badgeCounts?: Map<string, NamespaceBadgeCounts>;
 }) {
+  const {
+    globals: globalsPages,
+    globalType: globalTypePages,
+    luaStdlib: luaStdlibPages,
+    engine: enginePages,
+  } = groupApiIndexPages(pages);
+  const apiPageCount =
+    globalsPages.length + globalTypePages.length + luaStdlibPages.length + enginePages.length;
+  const engineBadge = (page: ApiPage) => apiCardBadgeHtml(page, badgeCounts);
   return (
     <LandingPage
       title="Combined API reference"
       lead={
         <p>
-          Every engine namespace across the tracked Defold versions ({versions.join(", ")}), unified
-          into one surface. Each symbol is annotated with the versions it is available in; a symbol
+          Every namespace across the tracked Defold versions ({versions.join(", ")}), unified into
+          one surface. Each symbol is annotated with the versions it is available in; a symbol
           present in every version carries no badge.
           <span class="mt-1 block text-sm text-text-faint">
-            {pages.length} namespace{pages.length === 1 ? "" : "s"} documented.
+            {apiPageCount} namespace{apiPageCount === 1 ? "" : "s"} documented.
           </span>
         </p>
       }
     >
-      {pages.length > 0 ? (
+      {globalsPages.length > 0 ? (
+        <LandingSection
+          heading="Globals"
+          subtitle="Prefixless globals that Defold exposes to every script."
+        >
+          <ApiCards pages={globalsPages} />
+        </LandingSection>
+      ) : null}
+      {globalTypePages.length > 0 ? (
+        <LandingSection
+          heading="Global types"
+          subtitle={
+            <>
+              Core value types (<code>Vector3</code>, <code>Quaternion</code>, <code>Hash</code>, …)
+              that Defold exposes as ambient globals. Hand-curated from{" "}
+              <code>@defold-typescript/types</code> rather than generated from the Defold reference
+              documentation.
+            </>
+          }
+        >
+          <ApiCards pages={globalTypePages} />
+        </LandingSection>
+      ) : null}
+      {luaStdlibPages.length > 0 ? (
+        <LandingSection
+          heading="Lua standard library"
+          subtitle={
+            <>
+              Pure-Lua and LuaJIT surfaces (<code>base</code>, <code>bit</code>, …). Types are
+              provided by the <code>lua-types</code> dependency and are not re-emitted by{" "}
+              <code>@defold-typescript/types</code>.
+            </>
+          }
+        >
+          <ApiCards pages={luaStdlibPages} />
+        </LandingSection>
+      ) : null}
+      {enginePages.length > 0 ? (
         <LandingSection
           heading="Defold engine"
           subtitle={
@@ -197,7 +254,7 @@ export function CombinedIndex({
             </>
           }
         >
-          <ApiCards pages={pages} />
+          <ApiCards pages={enginePages} badgeHtml={engineBadge} />
         </LandingSection>
       ) : null}
     </LandingPage>

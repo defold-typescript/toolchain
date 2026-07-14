@@ -13,18 +13,21 @@ import { withBase } from "../lib/base";
  * A single link card: a title (mono for API namespaces) over an optional summary.
  * Pass `description` for plain text or `descriptionHtml` for pre-rendered inline
  * HTML (e.g. a card summary's rendered markdown); the latter wins if both are set.
+ * Pass `badgeHtml` for pre-rendered availability pills that ride the title row.
  */
 export function LandingCard({
   href,
   title,
   description,
   descriptionHtml,
+  badgeHtml,
   mono = false,
 }: {
   href: string;
   title: Child;
   description?: string | null;
   descriptionHtml?: string | null;
+  badgeHtml?: string | null;
   mono?: boolean;
 }) {
   return (
@@ -33,14 +36,17 @@ export function LandingCard({
         href={withBase(href)}
         class="block rounded-lg border border-border bg-surface px-4 py-3 transition hover:border-border-strong hover:bg-surface-2"
       >
-        <span
-          class={
-            mono
-              ? "font-mono text-[13px] font-semibold text-accent"
-              : "text-[15px] font-semibold text-accent"
-          }
-        >
-          {title}
+        <span class="flex items-center gap-2">
+          <span
+            class={
+              mono
+                ? "font-mono text-[13px] font-semibold text-accent"
+                : "text-[15px] font-semibold text-accent"
+            }
+          >
+            {title}
+          </span>
+          {badgeHtml ? <span dangerouslySetInnerHTML={{ __html: badgeHtml }} /> : null}
         </span>
         {descriptionHtml ? (
           <span
