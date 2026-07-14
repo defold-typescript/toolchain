@@ -3127,3 +3127,218 @@ describe("dispatch init --template", () => {
     expect(parsed.exitCode).toBe(0);
   });
 });
+
+describe("dispatch upgrade", () => {
+  const USAGE =
+    "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n";
+
+  function upgradeHarness(opts?: {
+    latest?: string;
+    running?: string;
+    exitCodes?: number[];
+    offline?: boolean;
+    env?: NodeJS.ProcessEnv;
+  }): {
+    internals: Parameters<typeof dispatch>[2];
+    spawned: { argv: string[]; cwd: string }[];
+  } {
+    const spawned: { argv: string[]; cwd: string }[] = [];
+    const exitCodes = [...(opts?.exitCodes ?? [])];
+    return {
+      spawned,
+      internals: {
+        cliVersion: opts?.running ?? "1.2.0",
+        detectEditorVersion: () => null,
+        upgradeInternals: {
+          fetch: async () => {
+            if (opts?.offline) {
+              throw new Error("getaddrinfo ENOTFOUND registry.npmjs.org");
+            }
+            return new Response(JSON.stringify({ version: opts?.latest ?? "1.3.0" }));
+          },
+          spawn: (argv, spawnCwd) => {
+            spawned.push({ argv, cwd: spawnCwd });
+            return { exited: Promise.resolve(exitCodes.shift() ?? 0) };
+          },
+          env: opts?.env ?? { npm_config_user_agent: "bun/1.2.0 npm/? node/?" },
+        },
+      },
+    };
+  }
+
+  const handOffs = (spawned: { argv: string[] }[]): string[][] =>
+    spawned
+      .map((s) => s.argv)
+      .filter((argv) => argv.some((a) => a.startsWith("@defold-typescript/cli@")));
+
+  test("a behind CLI hands off to the resolved version, exactly once", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    const code = await dispatch(["upgrade", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(handOffs(spawned)).toEqual([
+      [
+        "bunx",
+        "@defold-typescript/cli@1.3.0",
+        "init",
+        ".",
+        "--force",
+        "--suppress-install-reminder",
+      ],
+    ]);
+    expect(spawned[0]?.cwd).toBe(cwd);
+  });
+
+  test("a successful hand-off is followed by the install command and reports from -> to", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    const code = await dispatch(["upgrade", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(spawned.map((s) => s.argv).at(-1)).toEqual(["bun", "install"]);
+    expect(out()).toContain("1.2.0");
+    expect(out()).toContain("1.3.0");
+  });
+
+  test("the install command follows the detected package manager", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io } = captureStreams();
+    const { internals, spawned } = upgradeHarness({
+      running: "1.2.0",
+      latest: "1.3.0",
+      env: { npm_config_user_agent: "pnpm/9.0.0" },
+    });
+
+    await dispatch(["upgrade", cwd], io, internals);
+
+    expect(spawned.map((s) => s.argv).at(-1)).toEqual(["pnpm", "install"]);
+    expect(spawned[0]?.argv[0]).toBe("pnpm");
+  });
+
+  test("an already-latest CLI re-scaffolds in process and installs, spawning no hand-off", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+
+    const code = await dispatch(["upgrade", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(handOffs(spawned)).toEqual([]);
+    expect(spawned.map((s) => s.argv)).toEqual([["bun", "install"]]);
+    expect(existsSync(path.join(cwd, "tsconfig.json"))).toBe(true);
+  });
+
+  test("a failing hand-off propagates its exit code and never installs", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, err } = captureStreams();
+    const { internals, spawned } = upgradeHarness({
+      running: "1.2.0",
+      latest: "1.3.0",
+      exitCodes: [7],
+    });
+
+    const code = await dispatch(["upgrade", cwd], io, internals);
+
+    expect(code).toBe(7);
+    expect(spawned.map((s) => s.argv)).toEqual([
+      [
+        "bunx",
+        "@defold-typescript/cli@1.3.0",
+        "init",
+        ".",
+        "--force",
+        "--suppress-install-reminder",
+      ],
+    ]);
+    expect(err()).toContain("7");
+  });
+
+  test("offline exits 1 with an actionable message, spawning nothing and writing nothing", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, err } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ offline: true });
+
+    const code = await dispatch(["upgrade", cwd], io, internals);
+
+    expect(code).toBe(1);
+    expect(spawned).toEqual([]);
+    expect(err()).toMatch(/network connection/i);
+    expect(existsSync(path.join(cwd, "tsconfig.json"))).toBe(false);
+    expect(existsSync(path.join(cwd, "mise.toml"))).toBe(false);
+  });
+
+  test("update is a strict alias for upgrade", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    const code = await dispatch(["update", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(handOffs(spawned)).toEqual([
+      [
+        "bunx",
+        "@defold-typescript/cli@1.3.0",
+        "init",
+        ".",
+        "--force",
+        "--suppress-install-reminder",
+      ],
+    ]);
+  });
+
+  test("--json carries ok, from/to and handedOff, and writes nothing to stderr", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as {
+      command: string;
+      ok: boolean;
+      from: string;
+      to: string;
+      handedOff: boolean;
+    };
+    expect(parsed).toMatchObject({
+      command: "upgrade",
+      ok: true,
+      from: "1.2.0",
+      to: "1.3.0",
+      handedOff: true,
+    });
+    expect(err()).toBe("");
+  });
+
+  test("--json on an offline failure writes an ok:false payload with the error", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const { internals } = upgradeHarness({ offline: true });
+
+    const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out().trim()) as { command: string; ok: boolean; error: string };
+    expect(parsed.command).toBe("upgrade");
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toMatch(/network connection/i);
+    expect(err()).toBe("");
+  });
+
+  test("the usage fallback is untouched: only upgrade/update are claimed", () => {
+    const bare = captureStreams();
+    expect(dispatch([], bare.io)).toBe(1);
+    expect(bare.err()).toBe(USAGE);
+
+    const unknown = captureStreams();
+    expect(dispatch(["upgradez"], unknown.io)).toBe(1);
+    expect(unknown.err()).toBe(USAGE);
+  });
+});
