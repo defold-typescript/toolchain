@@ -65,6 +65,35 @@ describe("renderHelp", () => {
 
     expect(text).not.toContain("--force");
   });
+
+  test("top-level help lists upgrade with a summary", () => {
+    const text = renderHelp(null);
+
+    expect(COMMAND_NAMES.has("upgrade")).toBe(true);
+    expect(text).toMatch(/^ {2}upgrade {2,}\S/m);
+  });
+
+  test("upgrade help explains that it resolves the latest CLI and hands off when behind", () => {
+    const text = renderHelp("upgrade");
+
+    expect(text).toContain("Usage:");
+    expect(text).toContain("bunx @defold-typescript/cli upgrade");
+    expect(text).toContain("latest");
+    expect(text).toContain("hands off");
+    expect(text.endsWith("\n")).toBe(true);
+  });
+
+  test("update is an alias, never listed as a second command", () => {
+    expect(COMMAND_NAMES.has("update")).toBe(false);
+    expect(renderHelp(null)).not.toMatch(/^ {2}update\b/m);
+  });
+
+  test("init --force reads as an in-place re-scaffold, not a blind overwrite", () => {
+    const text = renderHelp("init");
+
+    expect(text).toContain("re-scaffolds in place");
+    expect(text).not.toContain("overwrite existing scaffolding files");
+  });
 });
 
 describe("renderHelpJson", () => {
@@ -103,5 +132,33 @@ describe("renderHelpJson", () => {
     const parsed = JSON.parse(renderHelpJson("init-agents"));
 
     expect(parsed.flags.some((f: { flag: string }) => f.flag.startsWith("--force"))).toBe(false);
+  });
+
+  test("the commands array carries upgrade and no update alias entry", () => {
+    const parsed = JSON.parse(renderHelpJson(null));
+    const names = parsed.commands.map((c: { name: string }) => c.name);
+
+    expect(names).toContain("upgrade");
+    expect(names).not.toContain("update");
+    const upgrade = parsed.commands.find((c: { name: string }) => c.name === "upgrade");
+    expect(upgrade.summary.length).toBeGreaterThan(0);
+  });
+
+  test("upgrade JSON carries the subject and its usage", () => {
+    const parsed = JSON.parse(renderHelpJson("upgrade"));
+
+    expect(parsed.subject).toBe("upgrade");
+    expect(parsed.usage).toContain("upgrade");
+    expect(Array.isArray(parsed.flags)).toBe(true);
+  });
+
+  // Prose and JSON help describe one CLI; a reword that lands in only one of them
+  // is drift an agent reading `--json` would never see.
+  test("init --force JSON flag text matches the prose re-scaffold wording", () => {
+    const parsed = JSON.parse(renderHelpJson("init"));
+    const force = parsed.flags.find((f: { flag: string }) => f.flag === "--force");
+
+    expect(force.desc).toContain("re-scaffolds in place");
+    expect(renderHelp("init")).toContain(force.desc);
   });
 });

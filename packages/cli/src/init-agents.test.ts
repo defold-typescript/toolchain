@@ -157,4 +157,22 @@ describe("runInitAgents", () => {
     expect(block).toContain("factory per file");
     expect(block).toContain("defineScript<T>");
   });
+
+  test("renderAgentsBlock names the upgrade command and its guide", () => {
+    const block = renderAgentsBlock();
+    expect(block).toContain("@defold-typescript/cli@latest upgrade");
+    expect(block).toContain("node_modules/@defold-typescript/docs/guide/upgrading.md");
+  });
+
+  test("the upgrade pointer stays versionless and path-stable under node_modules", () => {
+    const block = renderAgentsBlock();
+    // `@latest` is a dist-tag the upgrade deliberately pulls; a pinned version
+    // (`@1.2.3`) would freeze the block and break byte-identical re-runs.
+    expect(block).not.toMatch(/@defold-typescript\/[a-z-]+@\d/);
+    for (const line of block.split("\n")) {
+      if (line.includes("@defold-typescript/docs/")) {
+        expect(line).toContain("node_modules/@defold-typescript/docs/");
+      }
+    }
+  });
 });

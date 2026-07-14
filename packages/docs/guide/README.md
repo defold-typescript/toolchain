@@ -66,6 +66,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 ### Project configuration
 
 - [Pinning the Defold target](./pinning-defold-target.md) — keep the default latest surface, or pin a fixed version or release channel (`stable`/`beta`/`alpha`) whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
+- [Upgrading the toolchain](./upgrading.md) — move the project to the latest toolchain with one verb (`bunx @defold-typescript/cli@latest upgrade`, or its `update` synonym): what it re-scaffolds, why it never clobbers your own scripts, what it does to an existing `defold-target` pin, and the `--json` envelope to read.
 - [Upgrading to Defold 1.13.0](./upgrading-to-defold-1-13-0.md) — move a project from 1.12.4: the removed and re-signatured Lua APIs (`model.material` removed, `liveupdate.add_mount` re-signatured, …), the source/asset migrations (Collada removal, glTF re-centering, Spine 4.6.0), and the rendering/platform default changes, each with a way to verify.
 - [Native extensions](./extensions.md) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](./resolve.md) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
 

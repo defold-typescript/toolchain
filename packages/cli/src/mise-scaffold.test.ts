@@ -31,10 +31,12 @@ describe("MISE_TASKS_TOML", () => {
     );
   });
 
-  test("upgrade is the two-command @latest init --force then bun install array", () => {
-    expect(MISE_TASKS_TOML).toContain(
-      'run = ["bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder", "bun install"]',
-    );
+  test("upgrade calls the verb, so the recipe lives in exactly one place", () => {
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli@latest upgrade"');
+    // The longhand recipe the verb replaces must not survive anywhere in the block.
+    expect(MISE_TASKS_TOML).not.toContain("init . --force");
+    expect(MISE_TASKS_TOML).not.toContain("--suppress-install-reminder");
+    expect(MISE_TASKS_TOML).not.toContain("bun install");
   });
 
   test("each managed task is fronted by the managed marker", () => {
@@ -103,9 +105,7 @@ describe("mergeMiseToml", () => {
 
     expect(merged).toContain('run = "bunx @defold-typescript/cli init-agents ."');
     expect(merged).not.toContain('run = "bunx @defold-typescript/cli init-agents"');
-    expect(merged).toContain(
-      'run = ["bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder", "bun install"]',
-    );
+    expect(merged).toContain('run = "bunx @defold-typescript/cli@latest upgrade"');
     expect(merged).not.toContain("@latest init --force");
     expect(merged).toContain('node = "22"');
     expect(merged).toContain('[tasks."my-custom-task"]\nrun = "echo hello"');

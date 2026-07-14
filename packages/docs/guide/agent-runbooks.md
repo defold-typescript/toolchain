@@ -372,6 +372,62 @@ On failure:
 a re-run that changes nothing omits the untouched file. If `ok` is `false`, stop
 and surface `error`; nothing was written.
 
+## Upgrade the toolchain
+
+**Goal:** move the project to the latest `@defold-typescript` toolchain — the
+latest CLI, the managed files re-scaffolded from its templates, and the managed
+dependencies re-pinned and reinstalled.
+
+**Command (run from the project root):**
+
+```sh
+bunx @defold-typescript/cli@latest upgrade --json
+```
+
+`update` is a synonym for `upgrade`; both spellings run the same verb, so either
+is safe to emit. There is no separate "check for updates" verb — the run resolves
+the latest version itself and re-scaffolds in place when it is already current.
+
+The verb replaces the older two-command recipe (`init . --force` followed by an
+install). Do not spell that recipe out: the verb decides whether the *running* CLI
+is new enough to re-scaffold, and hands off to the newer one when it is not.
+
+**Returns:**
+
+```json
+{
+  "command": "upgrade",
+  "ok": true,
+  "written": ["package.json", "tsconfig.json", "..."],
+  "from": "0.4.1",
+  "to": "0.5.0",
+  "handedOff": true
+}
+```
+
+On failure:
+
+```json
+{ "command": "upgrade", "ok": false, "error": "<message>" }
+```
+
+**Reading `ok`:** if `ok` is `true`, the upgrade landed — `written` lists the
+managed files the re-scaffold touched, `from` and `to` are the running and the
+resolved-latest CLI versions, and `handedOff` says whether a newer CLI performed
+the re-scaffold (`false` means the running CLI was already the latest and
+re-scaffolded in place; `from` and `to` are then equal). If `ok` is `false`, stop
+and surface `error`.
+
+**The offline failure mode:** upgrading is the one command that needs the network.
+When the npm registry is unreachable the run fails — `ok` is `false` with a
+non-zero exit — instead of re-scaffolding against the version already on disk.
+Read the failure; never treat it as a silent no-op that succeeded.
+
+**What it never touches:** your own scripts. An entry file you authored
+(`src/main.ts`) is reported as `skipped`, not overwritten. See
+[Upgrading the toolchain](./upgrading.md) for what the re-scaffold refreshes and
+what it does to an existing `defold-target` pin.
+
 ## Regenerate extension types
 
 **Goal:** refresh the ambient TypeScript surface for native extensions after a
