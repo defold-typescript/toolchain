@@ -21,6 +21,7 @@ import {
   apiLinkify,
   apiPageMarkdown,
   apiReplacementResolver,
+  apiSignatureSymbolLinks,
   isKnownVersionId,
   namespaceCountBadges,
 } from "../../lib/api-page-render";
@@ -85,6 +86,9 @@ export default createRoute(
     // prose mention or a deprecation replacement resolves to its canonical route.
     const linkify = apiLinkify(pages);
     const resolveReplacement = apiReplacementResolver(pages);
+    // Deep-link `Opaque` brand tokens in rendered signatures to this surface's
+    // `/api/Opaque` Reference page.
+    const signatureSymbolLinks = apiSignatureSymbolLinks(pages);
 
     // Library pages render their heading as the styled `creator/dir/namespace`
     // path (matching the /libraries index), so the markdown body omits its H1.
@@ -93,7 +97,7 @@ export default createRoute(
       const creator = libraryOwners().get(dir) ?? dir;
       const body = await renderMarkdown(
         apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
-        { highlightSignatureHeadings: true },
+        { highlightSignatureHeadings: true, signatureSymbolLinks },
       );
       return c.render(
         <article class="prose">
@@ -117,7 +121,7 @@ export default createRoute(
 
     const html = await renderMarkdown(
       apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges, combinedMarkers }),
-      { highlightSignatureHeadings: true },
+      { highlightSignatureHeadings: true, signatureSymbolLinks },
     );
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${page.module.namespace} API`,

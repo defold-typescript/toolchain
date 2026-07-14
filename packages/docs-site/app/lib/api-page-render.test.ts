@@ -11,6 +11,7 @@ import {
   apiLinkify,
   apiPageMarkdown,
   apiReplacementResolver,
+  apiSignatureSymbolLinks,
   isKnownVersionId,
   namespaceCountBadges,
   navNamespaceBadges,
@@ -969,6 +970,64 @@ describe("Combined page authoritative render + markers", () => {
     expect(enginePage).toBeDefined();
     const md = apiPageMarkdown(enginePage as ApiPage, noLink);
     expect(md).not.toContain("api-badge-dot");
+  });
+});
+
+describe("signature brand deep-links", () => {
+  // Track `<a`/`</a>` depth over the rendered HTML; any depth above 1 means an
+  // anchor is nested inside another anchor — invalid, and the shipped-feature
+  // regression this slice's guard exists to catch.
+  function hasNestedAnchor(html: string): boolean {
+    const re = /<a\b|<\/a>/g;
+    let depth = 0;
+    let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: standard regex-exec loop
+    while ((m = re.exec(html)) !== null) {
+      if (m[0] === "</a>") depth--;
+      else if (++depth > 1) return true;
+    }
+    return false;
+  }
+
+  // Both real render sites in one document: an H3 signature heading (wrapped by
+  // `slugify-headings` in a `heading-anchor`) and an overview `[`sig`](#anchor)`
+  // jump item — each carrying an `Opaque<"node">` brand.
+  const bothSitesMarkdown = [
+    '### `factory.create(url: string): Opaque<"node">`',
+    "",
+    '- [`factory.create(url: string): Opaque<"node">`](#anchor)',
+    "",
+  ].join("\n");
+
+  test("links the Opaque brand at both render sites with no nested anchors", async () => {
+    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const html = await renderMarkdown(bothSitesMarkdown, {
+      highlightSignatureHeadings: true,
+      signatureSymbolLinks: apiSignatureSymbolLinks(pages),
+    });
+    // One brand link per render site.
+    expect((html.match(/class="signature-symbol-link"/g) ?? []).length).toBe(2);
+    expect((html.match(/href="\/api\/Opaque"/g) ?? []).length).toBe(2);
+    expect(hasNestedAnchor(html)).toBe(false);
+  });
+
+  test("the outer permalink/jump anchor still covers the non-brand signature text", async () => {
+    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const html = await renderMarkdown(bothSitesMarkdown, {
+      highlightSignatureHeadings: true,
+      signatureSymbolLinks: apiSignatureSymbolLinks(pages),
+    });
+    // The heading permalink still wraps the PRE fragment (the code up to Opaque).
+    expect(html).toContain('<a class="heading-anchor"');
+    expect(html).toMatch(/<a class="heading-anchor"[^>]*><code class="api-signature shiki">/);
+    // The overview jump anchor still wraps its PRE fragment.
+    expect(html).toMatch(/<a href="#anchor"><code class="api-signature shiki">/);
+  });
+
+  test("omitting signatureSymbolLinks produces no brand link and no nesting", async () => {
+    const html = await renderMarkdown(bothSitesMarkdown, { highlightSignatureHeadings: true });
+    expect(html).not.toContain("signature-symbol-link");
+    expect(hasNestedAnchor(html)).toBe(false);
   });
 });
 
