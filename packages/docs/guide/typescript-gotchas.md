@@ -241,9 +241,19 @@ function present(x: unknown): boolean {
 }
 ```
 
-**Why.** Lua has a single absent value, `nil`. TypeScript's `null`, `undefined`, the strict `x === null` / `x === undefined`, and the loose `x == null` all transpile to `x == nil`. There is no Lua-level distinction between "explicitly null" and "missing", so a function that tries to treat `null` and `undefined` differently cannot — both arrive as `nil`. The `=== nil` form (using the ambient `nil` type) works as written and is the honest model.
+**Why.** Lua has a single absent value, `nil`. TypeScript's `null`, `undefined`, the strict `x === null` / `x === undefined`, and the loose `x == null` all transpile to `x == nil`. There is no Lua-level distinction between "explicitly null" and "missing", so a function that tries to treat `null` and `undefined` differently cannot — both arrive as `nil`. There is no ambient `nil` identifier in TypeScript, so a bare `x === nil` does not compile: test absence with `x === undefined` (or the loose `x == null`, which narrows out both) instead.
 
 **Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
+
+The engine functions follow the same sentinel: a documented `nil` return is typed `T | undefined`, so narrow it explicitly before use — truthiness would wrongly discard a falsy-but-valid value.
+
+```ts
+const parent = go.get_parent();   // Hash | undefined
+if (parent !== undefined) {
+  // parent: Hash — narrowed, safe to use
+  go.set_parent(go.get_id("."), parent);
+}
+```
 
 **How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished them, the gate would fail.
 

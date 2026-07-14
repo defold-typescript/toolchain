@@ -226,16 +226,16 @@ describe("authored socket signature store", () => {
       "socket.gettime(): number",
     );
     expect(lookupSignature(store, "socket.connect")?.signatures).toContain(
-      "socket.connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | unknown, string | unknown]>",
+      "socket.connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>",
     );
   });
 
   test("receiver methods key on the verbatim fixture name with typed (non-unknown) params", () => {
     expect(lookupSignature(store, "client:receive")?.signatures).toContain(
-      "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>",
+      "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | undefined, string | undefined, string | undefined]>",
     );
     expect(lookupSignature(store, "master:bind")?.signatures).toContain(
-      "master:bind(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>",
+      "master:bind(address: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>",
     );
   });
 
@@ -243,7 +243,7 @@ describe("authored socket signature store", () => {
     const entry = lookupSignature(store, "socket.dns.toip");
     expect(entry).not.toBeNull();
     expect(entry?.signatures).toContain(
-      "socket.dns.toip(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>",
+      "socket.dns.toip(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>",
     );
   });
 

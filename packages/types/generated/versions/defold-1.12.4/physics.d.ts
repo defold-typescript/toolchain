@@ -221,7 +221,7 @@ declare global {
      * });
      * ```
      */
-    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | unknown;
+    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects

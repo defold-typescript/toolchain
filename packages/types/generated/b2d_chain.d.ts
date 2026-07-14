@@ -21,7 +21,7 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns parent chain, or `nil` if the shape is not a chain segment
      */
-    function from_shape(shape_id: Opaque<"b2Shape">): Opaque<"b2Chain"> | unknown;
+    function from_shape(shape_id: Opaque<"b2Shape">): Opaque<"b2Chain"> | undefined;
     /**
      * Get chain friction.
      *
