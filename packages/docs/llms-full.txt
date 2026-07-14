@@ -859,7 +859,7 @@ function present(x: unknown): boolean {
 
 **Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
 
-The engine functions follow the same sentinel: a documented `nil` return is typed `T | undefined`, so narrow it explicitly before use — truthiness would wrongly discard a falsy-but-valid value.
+The engine functions follow the same sentinel: a documented `nil` return is typed `T | undefined`, so narrow it explicitly with `!== undefined` before use. The guard **precisely tests absence** and transpiles to the same `== nil` in Lua, so it does not lean on the divergent [TS/Lua truthiness](#if-x-truthiness-differs--0-and--are-truthy-in-lua) — where `0` and `""` are truthy once transpiled — the way a bare `if (value)` would.
 
 ```ts
 const parent = go.get_parent();   // Hash | undefined
