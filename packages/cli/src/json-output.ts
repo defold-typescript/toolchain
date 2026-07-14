@@ -8,7 +8,8 @@ export type CliCommand =
   | "bob"
   | "wall"
   | "resolve"
-  | "run";
+  | "run"
+  | "upgrade";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;
@@ -60,6 +61,9 @@ export interface RenderResultInput {
   readonly projectc?: string;
   readonly build?: { readonly exitCode: number };
   readonly launch?: { readonly enginePath: string; readonly exitCode: number };
+  readonly from?: string;
+  readonly to?: string;
+  readonly handedOff?: boolean;
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -119,7 +123,10 @@ export function renderResult(input: RenderResultInput): string {
   const withProjectc =
     "projectc" in input ? { ...withEnginePath, projectc: input.projectc } : withEnginePath;
   const withBuild = "build" in input ? { ...withProjectc, build: input.build } : withProjectc;
-  const payload = "launch" in input ? { ...withBuild, launch: input.launch } : withBuild;
+  const withLaunch = "launch" in input ? { ...withBuild, launch: input.launch } : withBuild;
+  const withFrom = "from" in input ? { ...withLaunch, from: input.from } : withLaunch;
+  const withTo = "to" in input ? { ...withFrom, to: input.to } : withFrom;
+  const payload = "handedOff" in input ? { ...withTo, handedOff: input.handedOff } : withTo;
   return `${JSON.stringify(payload)}\n`;
 }
 
