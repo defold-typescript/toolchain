@@ -83,7 +83,13 @@ const RUNNER: Record<ReturnType<typeof packageManager>, string[]> = {
 // The argv the scaffolded `mise.toml` upgrade task documents, with the resolved
 // version substituted for its `@latest` tag: the runner still fetches and caches
 // the package, but the target is the version this run actually resolved.
-export function handOffArgv(latest: string, env: NodeJS.ProcessEnv = process.env): string[] {
+// `--json` rides along only when this run is capturing, so the delegated CLI
+// reports the files it re-scaffolded instead of printing prose for a human.
+export function handOffArgv(
+  latest: string,
+  env: NodeJS.ProcessEnv = process.env,
+  opts?: { capture?: boolean },
+): string[] {
   return [
     ...(RUNNER[packageManager(env)] ?? RUNNER.bun),
     `${CLI_PACKAGE}@${latest}`,
@@ -91,7 +97,39 @@ export function handOffArgv(latest: string, env: NodeJS.ProcessEnv = process.env
     ".",
     "--force",
     "--suppress-install-reminder",
+    ...(opts?.capture === true ? ["--json"] : []),
   ];
+}
+
+// The delegated CLI performed the re-scaffold, so it — not this process — knows
+// what was written. Read its envelope back rather than reporting an empty list.
+// The runner may print its own lines first, so the last parsable `init` envelope
+// wins; an unreadable report yields `[]` and never throws, because a report this
+// process could not parse must not fail an upgrade that otherwise succeeded.
+export function readHandOffWritten(stdout: string): readonly string[] {
+  const lines = stdout.split("\n");
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = (lines[i] ?? "").trim();
+    if (line === "") {
+      continue;
+    }
+    try {
+      const parsed: unknown = JSON.parse(line);
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        (parsed as { command?: unknown }).command === "init" &&
+        Array.isArray((parsed as { written?: unknown }).written)
+      ) {
+        return (parsed as { written: unknown[] }).written.filter(
+          (entry): entry is string => typeof entry === "string",
+        );
+      }
+    } catch {
+      // Not JSON, or not this CLI's envelope: keep walking back through the noise.
+    }
+  }
+  return [];
 }
 
 export function installArgv(env: NodeJS.ProcessEnv = process.env): string[] {
@@ -101,6 +139,10 @@ export function installArgv(env: NodeJS.ProcessEnv = process.env): string[] {
 export interface UpgradeProcess {
   readonly exited: Promise<number>;
   readonly output?: Promise<string>;
+  // The package runner writes its fetch progress to stderr, which can interleave
+  // mid-line into the merged `output`; a JSON envelope is only safe to parse out
+  // of the child's stdout on its own.
+  readonly stdout?: Promise<string>;
 }
 
 export type UpgradeSpawn = (
@@ -165,17 +207,25 @@ function spawnCapture(argv: string[], cwd: string): UpgradeProcess {
   proc.stderr?.setEncoding("utf8").on("data", (chunk) => {
     stderr += chunk;
   });
-  const settled = new Promise<{ code: number; output: string }>((resolve, reject) => {
-    proc.on("error", reject);
-    proc.on("close", (code) => {
-      const combined = `${stdout}${stderr}`.trim();
-      resolve({
-        code: code ?? 1,
-        output: combined.length > OUTPUT_TAIL_LIMIT ? combined.slice(-OUTPUT_TAIL_LIMIT) : combined,
+  const settled = new Promise<{ code: number; output: string; stdout: string }>(
+    (resolve, reject) => {
+      proc.on("error", reject);
+      proc.on("close", (code) => {
+        const combined = `${stdout}${stderr}`.trim();
+        resolve({
+          code: code ?? 1,
+          output:
+            combined.length > OUTPUT_TAIL_LIMIT ? combined.slice(-OUTPUT_TAIL_LIMIT) : combined,
+          stdout,
+        });
       });
-    });
-  });
-  return { exited: settled.then((s) => s.code), output: settled.then((s) => s.output) };
+    },
+  );
+  return {
+    exited: settled.then((s) => s.code),
+    output: settled.then((s) => s.output),
+    stdout: settled.then((s) => s.stdout),
+  };
 }
 
 export function defaultUpgradeIo(): UpgradeIo {
@@ -204,7 +254,7 @@ export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcom
 
   let written: readonly string[] = [];
   if (plan.action === "hand-off") {
-    const handOff = io.spawn(handOffArgv(plan.target, io.env), opts.cwd, { capture });
+    const handOff = io.spawn(handOffArgv(plan.target, io.env, { capture }), opts.cwd, { capture });
     const code = await handOff.exited;
     if (code !== 0) {
       // An install after a half-written scaffold would pin that state, so the
@@ -216,6 +266,9 @@ export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcom
         error: `defold-typescript upgrade: ${CLI_PACKAGE}@${plan.target} init exited with code ${code}; the project was not upgraded.`,
         ...(await failureOutput(handOff)),
       };
+    }
+    if (capture) {
+      written = readHandOffWritten((await handOff.stdout) ?? "");
     }
   } else {
     written = runInit({ cwd: opts.cwd, force: true }).written;

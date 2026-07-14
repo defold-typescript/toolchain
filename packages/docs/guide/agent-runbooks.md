@@ -424,6 +424,10 @@ the re-scaffold (`false` means the running CLI was already the latest and
 re-scaffolded in place; `from` and `to` are then equal). If `ok` is `false`, stop
 and surface `error`.
 
+When `handedOff` is `true`, `written` is the list the **newer CLI reports** for
+the re-scaffold it performed, read back from the delegated run; when it is
+`false`, the list is the running CLI's own.
+
 **The offline failure mode:** upgrading is the one command that needs the network.
 When the npm registry is unreachable the run fails — `ok` is `false` with a
 non-zero exit — instead of re-scaffolding against the version already on disk.

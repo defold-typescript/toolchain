@@ -90,6 +90,11 @@ bunx @defold-typescript/cli@latest upgrade --json
 `handedOff` says whether the newer CLI did the re-scaffold. When `from` and `to`
 are equal, `handedOff` is `false` and the project was re-scaffolded in place.
 
+`written` lists the managed files the re-scaffold touched. When `handedOff` is
+`true` it is the list the **newer CLI reports** for the re-scaffold it performed,
+read back from the delegated run; when `handedOff` is `false` it is the running
+CLI's own list.
+
 Upgrading is the one command that needs the network. If the registry is
 unreachable, the run fails — `ok` is `false` with a non-zero exit — rather than
 quietly re-scaffolding against the version you already have. See the

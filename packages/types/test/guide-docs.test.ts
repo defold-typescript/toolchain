@@ -667,6 +667,23 @@ describe("docs/guide/agent-runbooks.md topical runbooks", () => {
   });
 });
 
+// The worked payload a reader copies is the contract; parsing it back is what
+// keeps the guides from printing a combination no code path can emit.
+function workedUpgradePayload(body: string): { handedOff?: boolean; written?: unknown[] } {
+  const blocks = [...body.matchAll(/```json\n([\s\S]*?)```/g)].map((m) => m[1] ?? "");
+  const payloads = blocks
+    .map((block) => {
+      try {
+        return JSON.parse(block) as Record<string, unknown>;
+      } catch {
+        return undefined;
+      }
+    })
+    .filter((p): p is Record<string, unknown> => p?.command === "upgrade" && p?.ok === true);
+  expect(payloads).toHaveLength(1);
+  return payloads[0] as { handedOff?: boolean; written?: unknown[] };
+}
+
 describe("docs/guide/agent-runbooks.md upgrade runbook", () => {
   function section(body: string, heading: string, next?: string): string {
     const start = body.indexOf(heading);
@@ -700,6 +717,20 @@ describe("docs/guide/agent-runbooks.md upgrade runbook", () => {
     expect(runbook).toContain("`ok` is `false`");
     expect(runbook).toContain("registry");
     expect(runbook).toContain("non-zero");
+  });
+
+  test("the worked payload is one the CLI can emit: a hand-off never pairs with an empty written", async () => {
+    const payload = workedUpgradePayload(await upgradeRunbook());
+    expect(Array.isArray(payload.written)).toBe(true);
+    if (payload.handedOff === true) {
+      expect(payload.written?.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("says where a hand-off's written comes from", async () => {
+    const runbook = await upgradeRunbook();
+    expect(runbook).toContain("handedOff");
+    expect(runbook).toMatch(/newer CLI reports?/i);
   });
 });
 
@@ -738,6 +769,20 @@ describe("docs/guide/upgrading.md", () => {
   test("the guide README links the page", async () => {
     const readme = await readGuide("README.md");
     expect(readme).toContain("](./upgrading.md)");
+  });
+
+  test("the worked payload is one the CLI can emit: a hand-off never pairs with an empty written", async () => {
+    const payload = workedUpgradePayload(await readGuide("upgrading.md"));
+    expect(Array.isArray(payload.written)).toBe(true);
+    if (payload.handedOff === true) {
+      expect(payload.written?.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("says where a hand-off's written comes from", async () => {
+    const body = await readGuide("upgrading.md");
+    expect(body).toContain("handedOff");
+    expect(body).toMatch(/newer CLI reports?/i);
   });
 });
 
