@@ -7,9 +7,9 @@ const MANAGED_MARKER = "# managed by @defold-typescript";
 // Build/watch/resolve/setup-debug/init-agents run `bunx @defold-typescript/cli <cmd>`: inside an
 // installed project bunx resolves the `@defold-typescript/cli` pinned in
 // `SCAFFOLD_DEV_DEPS`, so the task runs the version locked alongside
-// `@defold-typescript/types`. `:upgrade` is the deliberate `@latest` pull that
-// re-pins `@defold-typescript/types` via `init --force` + reinstall; it
-// suppresses the install reminder because its second command already reinstalls.
+// `@defold-typescript/types`. `:upgrade` is the deliberate `@latest` pull; it
+// calls the `upgrade` verb rather than spelling the re-scaffold-and-reinstall
+// recipe out longhand, so the recipe lives in exactly one place.
 export const MISE_TASKS_TOML = `${MANAGED_MARKER}
 [tasks."defold-typescript:build"]
 description = "Build the TypeScript sources with the defold-typescript CLI"
@@ -39,7 +39,7 @@ run = "bunx @defold-typescript/cli init-agents ."
 ${MANAGED_MARKER}
 [tasks."defold-typescript:upgrade"]
 description = "Upgrade the defold-typescript CLI to its latest release and re-pin the types dependency"
-run = ["bunx @defold-typescript/cli@latest init . --force --suppress-install-reminder", "bun install"]
+run = "bunx @defold-typescript/cli@latest upgrade"
 `;
 
 // Drop every managed block (marker line through the next blank line or EOF),

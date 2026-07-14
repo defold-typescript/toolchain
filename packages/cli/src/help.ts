@@ -19,7 +19,10 @@ const COMMANDS: readonly HelpCommand[] = [
       "Scaffold a new Defold-compatible project, or add TypeScript to an existing Defold project.",
     usage: "bunx @defold-typescript/cli init [path]",
     flags: [
-      { flag: "--force", desc: "overwrite existing scaffolding files" },
+      {
+        flag: "--force",
+        desc: "re-scaffolds in place: refreshes the managed files and re-pins the managed deps",
+      },
       { flag: "--template <name>", desc: "scaffold from a named template" },
       { flag: "--suppress-install-reminder", desc: "skip the post-init install hint" },
     ],
@@ -28,6 +31,15 @@ const COMMANDS: readonly HelpCommand[] = [
     name: "init-agents",
     summary: "Write the AGENTS.md and CLAUDE.md agent guides.",
     usage: "bunx @defold-typescript/cli init-agents [path]",
+    flags: [],
+  },
+  // `update` dispatches here too, but is deliberately absent from COMMANDS: it is
+  // an alias, and listing it would advertise two verbs where there is one.
+  {
+    name: "upgrade",
+    summary:
+      "Upgrade to the latest CLI release: hands off to the newer CLI when the running one is behind, then re-scaffolds the managed files and reinstalls.",
+    usage: "bunx @defold-typescript/cli upgrade [path]",
     flags: [],
   },
   {

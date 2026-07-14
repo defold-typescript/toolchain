@@ -51,6 +51,10 @@ export function renderAgentsBlock(): string {
     "  `--defold-target` is a per-run override that never writes the file. Any other key in the",
     "  namespace pins nothing and is warned about; see",
     "  `node_modules/@defold-typescript/docs/guide/pinning-defold-target.md`.",
+    "- Upgrade the toolchain with `bunx @defold-typescript/cli@latest upgrade` (`update` is a",
+    "  synonym). It resolves the latest CLI, re-scaffolds the managed files, and reinstalls; it",
+    "  never clobbers your own scripts. See",
+    "  `node_modules/@defold-typescript/docs/guide/upgrading.md`.",
   ].join("\n");
 }
 
