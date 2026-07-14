@@ -366,7 +366,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           data-topbar
           class="topbar-critical sticky top-0 z-30 flex items-center gap-6 border-b border-border bg-bg/85 px-6 backdrop-blur"
         >
-          <div class="mx-auto flex w-full flex-wrap items-center gap-x-6 gap-y-2 py-2 lg:h-14 lg:flex-nowrap lg:gap-y-0 lg:py-0">
+          <div class="mx-auto flex w-full flex-wrap items-center gap-x-2 gap-y-2 py-2 lg:h-14 lg:flex-nowrap lg:gap-x-6 lg:gap-y-0 lg:py-0">
             <SidebarToggle />
             {/* Wordmark uses font-medium (Barlow 500), which is preloaded, not
                 font-semibold (600, not preloaded): a non-preloaded weight here
@@ -407,11 +407,20 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
                 ))}
               </nav>
             </div>
-            <div class="ml-auto flex items-center gap-2 lg:ml-0">
+            <div class="contents lg:ml-0 lg:flex lg:items-center lg:gap-2">
               {currentVersion ? (
-                <VersionSelector entries={versionSwitcher} currentId={currentVersion.id} />
+                <VersionSelector
+                  entries={versionSwitcher}
+                  currentId={currentVersion.id}
+                  class="ml-auto lg:ml-0"
+                />
               ) : null}
-              <Search versionIds={versionIds} />
+              <div
+                data-testid="search"
+                class="order-1 w-full basis-full lg:order-none lg:w-auto lg:basis-auto"
+              >
+                <Search versionIds={versionIds} />
+              </div>
               <GithubLink />
               <ThemeToggle />
             </div>
@@ -462,13 +471,15 @@ const REPO_URL = "https://github.com/defold-typescript/toolchain";
 function VersionSelector({
   entries,
   currentId,
+  class: className,
 }: {
   entries: readonly VersionSwitcherEntry[];
   currentId: string;
+  class?: string;
 }) {
   const currentLabel = entries.find((entry) => entry.id === currentId)?.label ?? currentId;
   return (
-    <details class="group relative">
+    <details class={`group relative${className ? ` ${className}` : ""}`}>
       <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text [&::-webkit-details-marker]:hidden">
         <span data-surface-summary="">{currentLabel}</span>
         <svg
