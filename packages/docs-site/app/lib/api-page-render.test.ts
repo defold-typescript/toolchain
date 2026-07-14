@@ -307,7 +307,7 @@ describe("apiPageMarkdown", () => {
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(socket, apiLinkify(pages));
     expect(md).toContain(
-      "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>",
+      "client:receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | undefined, string | undefined, string | undefined]>",
     );
     expect(md).not.toContain(`\`${thin}\``);
   });

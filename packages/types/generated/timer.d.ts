@@ -91,7 +91,7 @@ declare global {
      * }
      * ```
      */
-    function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | unknown;
+    function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | undefined;
     /**
      * Manual triggering a callback for a timer.
      *

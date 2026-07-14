@@ -47,7 +47,7 @@ declare global {
      * pprint(s);
      * ```
      */
-    function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | unknown;
+    function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;
     /**
      * Load image (PNG or JPEG) from buffer.
      *
@@ -85,7 +85,7 @@ declare global {
      * });
      * ```
      */
-    function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | unknown;
+    function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
     /**
      * Load image (PNG or JPEG) from a string buffer.
      *
@@ -132,7 +132,7 @@ declare global {
      * });
      * ```
      */
-    function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | unknown;
+    function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
   }
 }
 

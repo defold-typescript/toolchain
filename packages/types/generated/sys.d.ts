@@ -498,7 +498,7 @@ declare global {
      * }
      * ```
      */
-    function load_resource(filename: string): LuaMultiReturn<[string | unknown, string | unknown]>;
+    function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
     /**
      * Open URL in default application, typically a browser
      *

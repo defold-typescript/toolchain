@@ -245,6 +245,21 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("## Some slots are `unknown` on purpose — the `any` wildcard");
   });
 
+  test("typescript-gotchas.md nil-collapse section names undefined as the single sentinel and drops the ambient-nil claim", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain("## `null`, `undefined`, and `== null` all collapse to `nil`");
+    expect(body).toContain("Model absence with a single sentinel");
+    expect(body).toContain("There is no ambient `nil` identifier in TypeScript");
+    expect(body).not.toContain("using the ambient `nil` type");
+  });
+
+  test("typescript-gotchas.md carries a go.get_parent engine-return narrowing example", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain("const parent = go.get_parent();");
+    expect(body).toContain("Hash | undefined");
+    expect(body).toContain("if (parent !== undefined)");
+  });
+
   test("typescript-gotchas.md states `===`/`==` lower identically and links it from the digest", async () => {
     const body = await readGuide("typescript-gotchas.md");
     expect(body).toContain(

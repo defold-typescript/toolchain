@@ -398,7 +398,7 @@ declare global {
      * const parent_id2 = go.get_parent("x");
      * ```
      */
-    export function get_parent(id?: string | Hash | Url): Hash | unknown;
+    export function get_parent(id?: string | Hash | Url): Hash | undefined;
     /**
      * The position is relative the parent (if any). Use go.get_world_position to retrieve the global world position.
      *
@@ -742,7 +742,7 @@ declare global {
      * });
      * ```
      */
-    export function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | unknown;
+    export function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
     /**
      * This is a callback-function, which is called by the engine whenever a message has been sent to the script component.
      * It can be used to take action on the message, e.g. send a response back to the sender of the message.

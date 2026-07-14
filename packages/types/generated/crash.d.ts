@@ -94,7 +94,7 @@ declare global {
      * @param index - system field enum. Must be less than crash.SYSFIELD_MAX
      * @returns value recorded in the crash dump, or `nil` if it didn't exist
      */
-    function get_sys_field(handle: number, index: number): string | unknown;
+    function get_sys_field(handle: number, index: number): string | undefined;
     /**
      * reads user field from a loaded crash dump
      *
@@ -109,7 +109,7 @@ declare global {
      *
      * @returns handle to the loaded dump, or `nil` if no dump was found
      */
-    function load_previous(): number | unknown;
+    function load_previous(): number | undefined;
     /**
      * releases a previously loaded crash dump
      *
