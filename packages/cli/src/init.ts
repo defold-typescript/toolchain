@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ScriptHookName } from "@defold-typescript/types";
 import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
+import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
 import { runInitAgents } from "./init-agents";
@@ -25,6 +26,7 @@ export interface InitOperation {
 export interface RunInitResult {
   readonly written: string[];
   readonly operations: InitOperation[];
+  readonly warnings: string[];
 }
 
 const CONFLICTING_TS_CONFIGS = ["tsconfig.json"];
@@ -330,7 +332,7 @@ interface PackageJson {
   version?: string;
   type?: string;
   devDependencies?: Record<string, string>;
-  "defold-typescript"?: { "defold-target"?: string };
+  "defold-typescript"?: unknown;
   [key: string]: unknown;
 }
 
@@ -781,6 +783,7 @@ function writeTsSurface(
   cwd: string,
   written: string[],
   operations: InitOperation[],
+  warnings: string[],
   force = false,
   mainTs: string = MAIN_TS_CONTENT,
   writeMainTs = true,
@@ -851,7 +854,12 @@ function writeTsSurface(
     }
     repairManagedDevDeps(devDeps, force);
     existing.devDependencies = devDeps;
-    existing["defold-typescript"] ??= { "defold-target": CURRENT_STABLE_DEFOLD_VERSION };
+    const repair = repairDefoldNamespace(
+      existing["defold-typescript"],
+      CURRENT_STABLE_DEFOLD_VERSION,
+    );
+    existing["defold-typescript"] = repair.namespace;
+    warnings.push(...repair.warnings);
     writeJson(pkgPath, existing);
   } else {
     const fresh: PackageJson = {
@@ -887,13 +895,17 @@ function writeTsSurface(
 
 // Give every scaffolded file that isn't already reported a "written" operation,
 // so callers surface the full write set alongside the merge/skip specifics.
-function withScaffoldOperations(written: string[], operations: InitOperation[]): RunInitResult {
+function withScaffoldOperations(
+  written: string[],
+  operations: InitOperation[],
+  warnings: string[],
+): RunInitResult {
   for (const target of written) {
     if (!operations.some((op) => op.target === target)) {
       operations.push({ target, status: "written" });
     }
   }
-  return { written, operations };
+  return { written, operations, warnings };
 }
 
 export function runNewProjectInit(
@@ -914,6 +926,7 @@ export function runNewProjectInit(
 
   const written: string[] = [];
   const operations: InitOperation[] = [];
+  const warnings: string[] = [];
 
   writeFileSync(
     path.join(cwd, "game.project"),
@@ -933,9 +946,9 @@ export function runNewProjectInit(
   writeFileSync(path.join(cwd, "input", "game.input_binding"), GAME_INPUT_BINDING_CONTENT);
   written.push("input/game.input_binding");
 
-  writeTsSurface(cwd, written, operations, force, mainTs, !skipUserAuthored);
+  writeTsSurface(cwd, written, operations, warnings, force, mainTs, !skipUserAuthored);
 
-  return withScaffoldOperations(written, operations);
+  return withScaffoldOperations(written, operations, warnings);
 }
 
 export function runInit(opts: RunInitOptions): RunInitResult {
@@ -975,6 +988,7 @@ export function runInit(opts: RunInitOptions): RunInitResult {
 
   const written: string[] = [];
   const operations: InitOperation[] = [];
-  writeTsSurface(cwd, written, operations, force, MAIN_TS_CONTENT, writeMainTs);
-  return withScaffoldOperations(written, operations);
+  const warnings: string[] = [];
+  writeTsSurface(cwd, written, operations, warnings, force, MAIN_TS_CONTENT, writeMainTs);
+  return withScaffoldOperations(written, operations, warnings);
 }

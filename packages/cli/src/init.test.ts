@@ -359,6 +359,73 @@ describe("runInit (add-TS mode)", () => {
     expect(pkg["defold-typescript"]).toEqual({ "defold-target": "1.9.8" });
   });
 
+  test("migrates a legacy defold-version key, preserving its value", () => {
+    touch("game.project", "[project]\n");
+    const original = { name: "user-project", "defold-typescript": { "defold-version": "1.12.4" } };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    const result = runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg["defold-typescript"]).toEqual({ "defold-target": "1.12.4" });
+    const warning = result.warnings.find((w) => w.includes("defold-version"));
+    expect(warning).toBeDefined();
+    expect(warning).toContain("defold-target");
+  });
+
+  test("migrates a legacy channel key, preserving its value", () => {
+    touch("game.project", "[project]\n");
+    const original = { name: "user-project", "defold-typescript": { channel: "beta" } };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg["defold-typescript"]).toEqual({ "defold-target": "beta" });
+  });
+
+  test("seeds a pin into a present-but-pinless namespace, leaving extensions untouched", () => {
+    touch("game.project", "[project]\n");
+    const extensions = { "https://github.com/defold/extension-websocket": "3.1.0" };
+    const original = { name: "user-project", "defold-typescript": { extensions } };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg["defold-typescript"]).toEqual({
+      extensions,
+      "defold-target": CURRENT_STABLE_DEFOLD_VERSION,
+    });
+  });
+
+  test("an explicit defold-target wins over a legacy key, which is dropped", () => {
+    touch("game.project", "[project]\n");
+    const original = {
+      name: "user-project",
+      "defold-typescript": { "defold-target": "1.9.8", "defold-version": "1.12.4" },
+    };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd });
+
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(pkg["defold-typescript"]).toEqual({ "defold-target": "1.9.8" });
+  });
+
+  test("migration is idempotent: a second run leaves the file byte-identical", () => {
+    touch("game.project", "[project]\n");
+    const original = { name: "user-project", "defold-typescript": { "defold-version": "1.12.4" } };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
+
+    runInit({ cwd });
+    const migrated = readFileSync(path.join(cwd, "package.json"), "utf8");
+    const second = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, "package.json"), "utf8")).toBe(migrated);
+    expect(second.warnings).toEqual([]);
+  });
+
   test("emitted tsconfig.json references @defold-typescript/types and main.ts uses defineScript", () => {
     touch("game.project", "[project]\n");
 
