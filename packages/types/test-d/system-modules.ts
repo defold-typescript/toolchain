@@ -1,5 +1,5 @@
 /// <reference path="../index.d.ts" />
-import type { Hash } from "../src/core-types";
+import type { Hash, Opaque } from "../src/core-types";
 
 // json: round-trip string -> table -> string is the headline proof. Both params
 // emit as required (the optional-emits-as-required gotcha), so pass the options table.
@@ -42,10 +42,23 @@ void _metaValues;
 void _metaValueType;
 const _world: unknown = b2d.get_world();
 const _signum: number = crash.get_signum(0);
-const _img: Record<string | number, unknown> | unknown = image.load("data", {});
+// image.load returns the concrete record or `undefined` — a documented `nil`
+// return typed `T | undefined`, not a collapsed `unknown`. The fields are
+// readable only after an explicit `!== undefined` guard.
+const _img:
+  | { width: number; height: number; type: Opaque<"constant">; buffer: string }
+  | undefined = image.load("data", {});
 const _mounts: { name: string; uri: string; priority: number }[] = liveupdate.get_mounts();
 const _mem: number = profiler.get_memory_usage();
 const _socketTime: number = socket.gettime();
+// @ts-expect-error the record may be undefined, so the field is not readable before the guard
+const _imgWidthEarly: number = _img.width;
+void _imgWidthEarly;
+if (_img !== undefined) {
+  // Inside the guard the concrete fields narrow to their real types.
+  const _imgWidth: number = _img.width;
+  void _imgWidth;
+}
 void _buf;
 void _world;
 void _signum;
