@@ -27,6 +27,9 @@ function ____exports.inspect(x)
     if x == nil then
         out = "undef"
     end
+    if x ~= nil then
+        out = "present"
+    end
     local kind = __TS__TypeOf(x)
     local n = x
     return (out .. kind) .. tostring(n)
