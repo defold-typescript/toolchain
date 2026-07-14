@@ -142,7 +142,7 @@ declare global {
      * if (values) print(`${values.length} values in 'somefloats'`);
      * ```
      */
-    function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | unknown, Opaque<"constant"> | unknown]>;
+    function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, Opaque<"constant"> | undefined]>;
     /**
      * Get a specified stream from a buffer.
      *

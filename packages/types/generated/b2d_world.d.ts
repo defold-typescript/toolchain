@@ -58,7 +58,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @returns closest cast hit table with `node_visits` and `leaf_visits`, or `nil` on miss
      */
-    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | unknown;
+    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined;
     /**
      * Uses Box2D v2 time-of-impact for fixture child shapes that support distance proxies.
      * Grid fixture children are skipped.

@@ -1044,7 +1044,7 @@ declare global {
      * @param node - the node from which to retrieve its parent
      * @returns parent instance or `nil`
      */
-    function get_parent(node: Opaque<"node">): Opaque<"node"> | unknown;
+    function get_parent(node: Opaque<"node">): Opaque<"node"> | undefined;
     /**
      * Get the paricle fx for a gui node
      *
@@ -1189,7 +1189,7 @@ declare global {
      *
      * @param node - node from which to get the type
      */
-    function get_type(node: Opaque<"node">): LuaMultiReturn<[Opaque<"constant">, number | unknown]>;
+    function get_type(node: Opaque<"node">): LuaMultiReturn<[Opaque<"constant">, number | undefined]>;
     /**
      * Returns `true` if a node is visible and `false` if it's not.
      * Invisible nodes are not rendered.
@@ -1518,7 +1518,7 @@ declare global {
      * });
      * ```
      */
-    function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | unknown;
+    function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
     /**
      * This is a callback-function, which is called by the engine whenever a message has been sent to the gui component.
      * It can be used to take action on the message, e.g. update the gui or send a response back to the sender of the message.

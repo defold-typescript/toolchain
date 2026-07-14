@@ -855,9 +855,19 @@ function present(x: unknown): boolean {
 }
 ```
 
-**Why.** Lua has a single absent value, `nil`. TypeScript's `null`, `undefined`, the strict `x === null` / `x === undefined`, and the loose `x == null` all transpile to `x == nil`. There is no Lua-level distinction between "explicitly null" and "missing", so a function that tries to treat `null` and `undefined` differently cannot — both arrive as `nil`. The `=== nil` form (using the ambient `nil` type) works as written and is the honest model.
+**Why.** Lua has a single absent value, `nil`. TypeScript's `null`, `undefined`, the strict `x === null` / `x === undefined`, and the loose `x == null` all transpile to `x == nil`. There is no Lua-level distinction between "explicitly null" and "missing", so a function that tries to treat `null` and `undefined` differently cannot — both arrive as `nil`. There is no ambient `nil` identifier in TypeScript, so a bare `x === nil` does not compile: test absence with `x === undefined` (or the loose `x == null`, which narrows out both) instead.
 
 **Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
+
+The engine functions follow the same sentinel: a documented `nil` return is typed `T | undefined`, so narrow it explicitly before use — truthiness would wrongly discard a falsy-but-valid value.
+
+```ts
+const parent = go.get_parent();   // Hash | undefined
+if (parent !== undefined) {
+  // parent: Hash — narrowed, safe to use
+  go.set_parent(go.get_id("."), parent);
+}
+```
 
 **How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished them, the gate would fail.
 
@@ -4171,7 +4181,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### b2d.chain
 
 - function destroy(chain: Opaque<"b2Chain">): void; [since 1.13.0]
-- function from_shape(shape_id: Opaque<"b2Shape">): Opaque<"b2Chain"> | unknown; [since 1.13.0]
+- function from_shape(shape_id: Opaque<"b2Shape">): Opaque<"b2Chain"> | undefined; [since 1.13.0]
 - function get_friction(chain: Opaque<"b2Chain">): number; [since 1.13.0]
 - function get_geometry(chain: Opaque<"b2Chain">): Record<string | number, unknown>; [since 1.13.0]
 - function get_material(chain: Opaque<"b2Chain">): number; [since 1.13.0]
@@ -4367,7 +4377,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number }; [since 1.13.0]
-- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | unknown; [since 1.13.0]
+- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined; [since 1.13.0]
 - function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function collide_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, filter?: { category_bits?: number; mask_bits?: number }, max_results?: number): Record<string | number, unknown>; [since 1.13.0]
@@ -4406,7 +4416,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number }, srcoffset: number, count: number): void;
 - function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<"constant">; count?: number }): Opaque<"buffer">;
 - function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash): string;
-- function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | unknown, Opaque<"constant"> | unknown]>;
+- function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, Opaque<"constant"> | undefined]>;
 - function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number };
 - function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: Opaque<"constant">): void;
 - buffer.VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" }
@@ -4489,9 +4499,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_extra_data(handle: number): string;
 - function get_modules(handle: number): Record<string | number, unknown>;
 - function get_signum(handle: number): number;
-- function get_sys_field(handle: number, index: number): string | unknown;
+- function get_sys_field(handle: number, index: number): string | undefined;
 - function get_user_field(handle: number, index: number): string;
-- function load_previous(): number | unknown;
+- function load_previous(): number | undefined;
 - function release(handle: number): void;
 - function set_file_path(path: string): void;
 - function set_user_field(index: number, value: string): void;
@@ -4544,7 +4554,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function exists(url: string | Hash | Url): boolean;
 - go.get(url: string | Hash | Url, property: string | Hash, options?: Record<string | number, unknown>): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">
 - function get_id(path?: string): Hash;
-- function get_parent(id?: string | Hash | Url): Hash | unknown;
+- function get_parent(id?: string | Hash | Url): Hash | undefined;
 - function get_position(id?: string | Hash | Url): Vector3;
 - function get_rotation(id?: string | Hash | Url): Quaternion;
 - function get_scale(id?: string | Hash | Url): Vector3;
@@ -4566,7 +4576,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function world_to_local_transform(transformation: Matrix4, url: string | Hash | Url): Matrix4;
 - function init(self: Opaque<"userdata">): void;
 - function late_update(self: Opaque<"userdata">, dt: number): void;
-- function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | unknown;
+- function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
 - function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;
 - function on_reload(self: Opaque<"userdata">): void;
 - function update(self: Opaque<"userdata">, dt: number): void;
@@ -4789,7 +4799,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_node(id: string | Hash): Opaque<"node">;
 - function get_outer_bounds(node: Opaque<"node">): Opaque<"constant">;
 - function get_outline(node: Opaque<"node">): Vector4;
-- function get_parent(node: Opaque<"node">): Opaque<"node"> | unknown;
+- function get_parent(node: Opaque<"node">): Opaque<"node"> | undefined;
 - function get_particlefx(node: Opaque<"node">): Hash;
 - function get_perimeter_vertices(node: Opaque<"node">): number;
 - function get_pivot(node: Opaque<"node">): Opaque<"constant">;
@@ -4805,7 +4815,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_texture(node: Opaque<"node">): Hash;
 - function get_tracking(node: Opaque<"node">): number;
 - function get_tree(node: Opaque<"node">): LuaMap<Hash, Opaque<"node">>;
-- function get_type(node: Opaque<"node">): LuaMultiReturn<[Opaque<"constant">, number | unknown]>;
+- function get_type(node: Opaque<"node">): LuaMultiReturn<[Opaque<"constant">, number | undefined]>;
 - function get_visible(node: Opaque<"node">): boolean;
 - function get_width(): number;
 - function get_xanchor(node: Opaque<"node">): Opaque<"constant">;
@@ -4874,7 +4884,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function show_keyboard(type: Opaque<"constant">, autoclose: boolean): void;
 - function stop_particlefx(node: Opaque<"node">, options?: { clear?: boolean }): void;
 - function init(self: Opaque<"userdata">): void;
-- function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | unknown;
+- function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
 - function on_message(self: Opaque<"userdata">, message_id: Hash, message: Record<string | number, unknown>): void;
 - function on_reload(self: Opaque<"userdata">): void;
 - function update(self: Opaque<"userdata">, dt: number): void;
@@ -5012,9 +5022,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### image
 
-- function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | unknown;
-- function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | unknown;
-- function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | unknown;
+- function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;
+- function load(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: string } | undefined;
+- function load_buffer(buffer: string, options?: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<"constant">; buffer: Opaque<"buffer"> } | undefined;
 - image.TYPE_LUMINANCE: number & { readonly __brand: "image.TYPE_LUMINANCE" }
 - image.TYPE_LUMINANCE_ALPHA: number & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" }
 - image.TYPE_RGB: number & { readonly __brand: "image.TYPE_RGB" }
@@ -5124,7 +5134,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;
 - function get_maskbit(url: string | Hash | Url, group: string): boolean;
 - function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter: number; dimensions: Vector3; diameter: number; height: number };
-- function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | unknown;
+- function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;
 - function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;
 - function set_gravity(gravity: Vector3): void;
@@ -5268,73 +5278,73 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - close(): void;
 - dirty(): boolean;
 - getfd(): number;
-- getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>;
+- getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
 - getpeername(): string;
 - getsockname(): string;
 - getstats(): string;
-- receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | unknown, string | unknown, string | unknown]>;
-- send(data: string, i?: number, j?: number): LuaMultiReturn<[number | unknown, string | unknown, number | unknown]>;
+- receive(pattern?: string | number, prefix?: string): LuaMultiReturn<[string | undefined, string | undefined, string | undefined]>;
+- send(data: string, i?: number, j?: number): LuaMultiReturn<[number | undefined, string | undefined, number | undefined]>;
 - setfd(handle: number): void;
-- setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>;
-- setstats(received: number, sent: number, age: number): number | unknown;
+- setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;
+- setstats(received: number, sent: number, age: number): number | undefined;
 - settimeout(value: number, mode?: string): void;
 - shutdown(mode: string): number;
 - close(): void;
-- getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>;
+- getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
 - getpeername(): string;
 - getsockname(): string;
-- receive(size?: number): LuaMultiReturn<[string | unknown, string | unknown]>;
-- send(datagram: string): LuaMultiReturn<[number | unknown, string | unknown]>;
-- setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>;
-- setpeername(arg0: string): LuaMultiReturn<[number | unknown, string | unknown]>;
+- receive(size?: number): LuaMultiReturn<[string | undefined, string | undefined]>;
+- send(datagram: string): LuaMultiReturn<[number | undefined, string | undefined]>;
+- setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;
+- setpeername(arg0: string): LuaMultiReturn<[number | undefined, string | undefined]>;
 - settimeout(value: number): void;
-- bind(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>;
+- bind(address: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>;
 - close(): void;
-- connect(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>;
+- connect(address: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>;
 - dirty(): boolean;
 - getfd(): number;
 - getsockname(): string;
 - getstats(): string;
-- listen(backlog: number): LuaMultiReturn<[number | unknown, string | unknown]>;
+- listen(backlog: number): LuaMultiReturn<[number | undefined, string | undefined]>;
 - setfd(handle: number): void;
-- setstats(received: number, sent: number, age: number): number | unknown;
+- setstats(received: number, sent: number, age: number): number | undefined;
 - settimeout(value: number, mode?: string): void;
-- accept(): LuaMultiReturn<[client | unknown, string | unknown]>;
+- accept(): LuaMultiReturn<[client | undefined, string | undefined]>;
 - close(): void;
 - dirty(): boolean;
 - getfd(): number;
-- getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>;
+- getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
 - getsockname(): string;
 - getstats(): string;
 - setfd(handle: number): void;
-- setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>;
-- setstats(received: number, sent: number, age: number): number | unknown;
+- setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;
+- setstats(received: number, sent: number, age: number): number | undefined;
 - settimeout(value: number, mode?: string): void;
-- function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | unknown, string | unknown]>;
-- function getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>;
+- function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;
+- function getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;
 - function gethostname(): string;
-- function getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | unknown, string | unknown]>;
-- function tohostname(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>;
-- function toip(address: string): LuaMultiReturn<[string | unknown, Record<string | number, unknown> | string]>;
+- function getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;
+- function tohostname(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
+- function toip(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
 - function gettime(): number;
 - function newtry(finalizer: () => void): (...args: unknown[]) => unknown;
 - function protect(func: (...args: unknown[]) => unknown): (arg0: unknown) => void;
-- function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | unknown]>;
+- function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;
 - function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;
 - function sleep(time: number): void;
-- function tcp(): LuaMultiReturn<[master | unknown, string | unknown]>;
-- function tcp6(): LuaMultiReturn<[master | unknown, string | unknown]>;
-- function udp(): LuaMultiReturn<[unconnected | unknown, string | unknown]>;
-- function udp6(): LuaMultiReturn<[unconnected | unknown, string | unknown]>;
+- function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;
+- function tcp6(): LuaMultiReturn<[master | undefined, string | undefined]>;
+- function udp(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;
+- function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;
 - close(): void;
-- getoption(option: string): LuaMultiReturn<[unknown, string | unknown]>;
+- getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;
 - getsockname(): string;
-- receive(size?: number): LuaMultiReturn<[string | unknown, string | unknown]>;
-- receivefrom(size?: number): LuaMultiReturn<[string | unknown, string, number | unknown]>;
-- sendto(datagram: string, ip: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>;
-- setoption(option: string, value?: unknown): LuaMultiReturn<[number | unknown, string | unknown]>;
-- setpeername(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>;
-- setsockname(address: string, port: number): LuaMultiReturn<[number | unknown, string | unknown]>;
+- receive(size?: number): LuaMultiReturn<[string | undefined, string | undefined]>;
+- receivefrom(size?: number): LuaMultiReturn<[string | undefined, string, number | undefined]>;
+- sendto(datagram: string, ip: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>;
+- setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;
+- setpeername(address: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>;
+- setsockname(address: string, port: number): LuaMultiReturn<[number | undefined, string | undefined]>;
 - settimeout(value: number): void;
 - socket._SETSIZE: number & { readonly __brand: "socket._SETSIZE" }
 - socket._VERSION: number & { readonly __brand: "socket._VERSION" }
@@ -5395,7 +5405,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function load(filename: string): Record<string | number, unknown>;
 - function load_buffer(path: string): Opaque<"buffer">;
 - function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;
-- function load_resource(filename: string): LuaMultiReturn<[string | unknown, string | unknown]>;
+- function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
 - function open_url(url: string, attributes?: { target?: string }): boolean;
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;
 - function save(filename: string, table: Record<string | number, unknown>): void;
@@ -5434,7 +5444,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function cancel(handle: number): boolean;
 - function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;
-- function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | unknown;
+- function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | undefined;
 - function trigger(handle: number): boolean;
 - timer.INVALID_TIMER_HANDLE: number & { readonly __brand: "timer.INVALID_TIMER_HANDLE" }
 
