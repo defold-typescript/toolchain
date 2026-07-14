@@ -1,10 +1,11 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { apiPagesForVersion, TYPES_DIR } from "../../../lib/api-content";
+import { apiPagesForVersion, canonicalApiPages, TYPES_DIR } from "../../../lib/api-content";
 import {
   apiLinkify,
   apiPageMarkdown,
   apiReplacementResolver,
+  apiSignatureSymbolLinks,
   versionedApiParams,
 } from "../../../lib/api-page-render";
 import { pageHeadings } from "../../../lib/headings";
@@ -27,8 +28,13 @@ export default createRoute(
 
     const linkify = apiLinkify(pages);
     const resolveReplacement = apiReplacementResolver(pages);
+    // Global-type brands (`Opaque`) are version-independent — they live only on
+    // the canonical `/api/Opaque` page, not per version — so resolve the
+    // signature deep-links against the canonical surface, not this version's.
+    const signatureSymbolLinks = apiSignatureSymbolLinks(canonicalApiPages());
     const html = await renderMarkdown(apiPageMarkdown(page, linkify, { resolveReplacement }), {
       highlightSignatureHeadings: true,
+      signatureSymbolLinks,
     });
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${namespace} API (${version})`,

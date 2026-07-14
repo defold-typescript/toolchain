@@ -406,6 +406,31 @@ header.topbar-critical .logo-mark {
 .prose .api-overview a:focus-visible .api-signature {
   background: var(--color-accent-soft);
 }
+/* Unlayered mirror of the `.signature-split` / `.signature-symbol-link` rules in
+   app/styles.css: its unlayered `.prose a` / `.prose .api-overview a` outrank the
+   layered copy regardless of specificity, so the split-signature seam flattening,
+   the permalink-icon positioning context, and the brand deep-link's dotted
+   underline are duplicated here (as with `.badge-link`). Placed after the
+   overview rules to win at equal specificity. */
+.prose .signature-split {
+  position: relative;
+}
+.prose .signature-split a.heading-anchor {
+  position: static;
+}
+.prose .signature-split a .api-signature {
+  border-color: transparent;
+  border-radius: 0;
+  /* Uniform vertical padding (matching `.prose code`), zero horizontal, so the
+     fragments' shared background aligns top-to-bottom and abuts seamlessly. */
+  padding: 0.1em 0;
+}
+.prose a.signature-symbol-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.15em;
+}
 /* Sidebar namespace count pills (Combined-only) — kept in sync with the
  * `nav-badge-*` rules in `app/styles.css`. Sidebar sits outside `.prose`. */
 .nav-badge-counts {

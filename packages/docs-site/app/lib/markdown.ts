@@ -11,6 +11,7 @@ import MarkdownIt from "markdown-it";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { withBase } from "./base";
 import { slugify } from "./headings";
+import { splitSignatureBrandLinks } from "./signature-brand-links";
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -192,7 +193,11 @@ function replaceFirstHeading(markdown: string, heading: string): string {
 
 export async function renderMarkdown(
   markdown: string,
-  opts: { firstHeading?: string; highlightSignatureHeadings?: boolean } = {},
+  opts: {
+    firstHeading?: string;
+    highlightSignatureHeadings?: boolean;
+    signatureSymbolLinks?: ReadonlyMap<string, string>;
+  } = {},
 ): Promise<string> {
   const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
   const highlighter = await getHighlighter();
@@ -482,5 +487,13 @@ export async function renderMarkdown(
     `<div class="table-scroll">\n${self.renderToken(tokens, idx, options)}`;
   md.renderer.rules.table_close = (tokens, idx, options, _env, self) =>
     `${self.renderToken(tokens, idx, options)}</div>\n`;
-  return md.render(source);
+  let html = md.render(source);
+  // Deep-link global-type brand tokens in rendered signatures. Runs on the final
+  // HTML, after the signature-recolor and heading-anchor rules, so the enclosing
+  // anchors exist and the transform can split them into sibling links (never nest
+  // an anchor inside the signature code).
+  if (opts.signatureSymbolLinks) {
+    html = splitSignatureBrandLinks(html, opts.signatureSymbolLinks);
+  }
+  return html;
 }
