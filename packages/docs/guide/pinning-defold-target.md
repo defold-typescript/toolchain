@@ -79,9 +79,30 @@ A channel is spelled the same way — swap the version for a channel name:
 }
 ```
 
-`bunx @defold-typescript/cli@latest init <folder>` seeds `defold-target` with
-the current-stable version when it creates or augments a `package.json`, and
-leaves an existing pin untouched.
+### The pin's lifecycle
+
+The pin is **hand-edited**. There is no setter command: `--defold-target` is a
+per-run override that never writes `package.json`, by design — a throwaway build
+against an older surface cannot silently re-pin the project.
+
+The only command that writes the pin is `init`:
+
+- `bunx @defold-typescript/cli@latest init <folder>` seeds `defold-target` with
+  the current-stable version when it creates or augments a `package.json`;
+- it leaves an existing, valid `defold-target` untouched;
+- it seeds a pin into a namespace that has one of the other recognized keys but
+  no pin;
+- it migrates the legacy `defold-version` and `channel` spellings to
+  `defold-target`, keeping the value you wrote. When both a legacy key and a
+  valid `defold-target` are present, `defold-target` wins and the legacy key is
+  dropped.
+
+The namespace recognizes exactly two keys — `defold-target` and `extensions`.
+Any other key is inert: it pins nothing. Rather than swallow it, every
+target-resolving command warns and names both the offending key and the
+recognized ones, on stderr for a normal run and in the `warnings` array under
+`--json`. It is a warning, never an error — the command still runs, and the
+target resolves as if the bad key were absent. Run `init` to repair the file.
 
 The active target resolves with this precedence:
 

@@ -564,6 +564,57 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
+  test("build warns on a legacy defold-version pin key and still succeeds", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("defold-version");
+    expect(err()).toContain("defold-target");
+  });
+
+  test("build --json reports the bad pin key as a warning and stays ok", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { ok: boolean; warnings: string[] };
+    expect(parsed.ok).toBe(true);
+    const warning = parsed.warnings.find((w) => w.includes("defold-version"));
+    expect(warning).toBeDefined();
+    expect(warning).toContain("defold-target");
+  });
+
+  test("a bad pin key does not become a pin: resolution is unchanged", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldVersionSource: string };
+    expect(parsed.defoldVersionSource).toBe("default");
+    expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
+  });
+
+  test("a valid pin produces no pin-key warning", async () => {
+    scaffoldBuildProject({
+      "defold-typescript": { "defold-target": CURRENT_STABLE_DEFOLD_VERSION },
+    });
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { warnings: string[] };
+    expect(parsed.warnings.some((w) => w.includes("defold-typescript"))).toBe(false);
+    expect(err()).toBe("");
+  });
+
   test("build --defold-target overrides the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const { io, out } = captureStreams();

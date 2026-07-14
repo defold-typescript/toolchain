@@ -46,6 +46,11 @@ export function renderAgentsBlock(): string {
     "- Do not call the generic form `defineScript<T>(...)` / `defineGuiScript<T>(...)`; the factory",
     "  goes undetected and the file silently compiles to a `.lua` module instead of a script —",
     "  annotate `init(): T` instead.",
+    "- The Defold API target is pinned by hand in `package.json` as",
+    '  `"defold-typescript": { "defold-target": … }` — that exact key, no setter command, and',
+    "  `--defold-target` is a per-run override that never writes the file. Any other key in the",
+    "  namespace pins nothing and is warned about; see",
+    "  `node_modules/@defold-typescript/docs/guide/pinning-defold-target.md`.",
   ].join("\n");
 }
 

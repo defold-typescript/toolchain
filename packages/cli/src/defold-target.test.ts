@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   classifyDefoldTarget,
+  diagnoseDefoldNamespace,
   readDefoldTargetPin,
   resolveDefoldTarget,
   resolveTargetHead,
@@ -58,6 +59,66 @@ describe("readDefoldTargetPin", () => {
     expect(readDefoldTargetPin(null)).toBeUndefined();
     expect(readDefoldTargetPin("nope")).toBeUndefined();
     expect(readDefoldTargetPin(undefined)).toBeUndefined();
+  });
+});
+
+describe("diagnoseDefoldNamespace", () => {
+  test("a recognized pin produces no diagnostics", () => {
+    expect(diagnoseDefoldNamespace({ "defold-typescript": { "defold-target": "1.13.0" } })).toEqual(
+      [],
+    );
+  });
+
+  test("extensions alone is recognized and produces no diagnostics", () => {
+    expect(
+      diagnoseDefoldNamespace({
+        "defold-typescript": { extensions: { "https://github.com/x/y": "1.0.0" } },
+      }),
+    ).toEqual([]);
+  });
+
+  test("the legacy defold-version key is named and points at defold-target", () => {
+    const diagnostics = diagnoseDefoldNamespace({
+      "defold-typescript": { "defold-version": "1.12.4" },
+    });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toContain("defold-version");
+    expect(diagnostics[0]).toContain("defold-target");
+  });
+
+  test("the legacy channel key is named and points at defold-target", () => {
+    const diagnostics = diagnoseDefoldNamespace({ "defold-typescript": { channel: "beta" } });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toContain("channel");
+    expect(diagnostics[0]).toContain("defold-target");
+  });
+
+  test("an unrecognized non-legacy key is named alongside the recognized keys", () => {
+    const diagnostics = diagnoseDefoldNamespace({
+      "defold-typescript": { defoldTarget: "1.12.4" },
+    });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toContain("defoldTarget");
+    expect(diagnostics[0]).toContain("defold-target");
+    expect(diagnostics[0]).toContain("extensions");
+  });
+
+  test("multiple bad keys produce one diagnostic each, in sorted order", () => {
+    const diagnostics = diagnoseDefoldNamespace({
+      "defold-typescript": { defoldTarget: "1.12.4", channel: "beta", "defold-version": "1.12.4" },
+    });
+    expect(diagnostics).toHaveLength(3);
+    expect(diagnostics[0]).toContain("channel");
+    expect(diagnostics[1]).toContain("defold-version");
+    expect(diagnostics[2]).toContain("defoldTarget");
+  });
+
+  test("an absent, non-object, or unparseable namespace produces no diagnostics", () => {
+    expect(diagnoseDefoldNamespace({ name: "x" })).toEqual([]);
+    expect(diagnoseDefoldNamespace({ "defold-typescript": "beta" })).toEqual([]);
+    expect(diagnoseDefoldNamespace(null)).toEqual([]);
+    expect(diagnoseDefoldNamespace("nope")).toEqual([]);
+    expect(diagnoseDefoldNamespace(undefined)).toEqual([]);
   });
 });
 
