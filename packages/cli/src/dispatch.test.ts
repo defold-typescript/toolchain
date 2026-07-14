@@ -3136,14 +3136,16 @@ describe("dispatch upgrade", () => {
     latest?: string;
     running?: string;
     exitCodes?: number[];
+    outputs?: string[];
     offline?: boolean;
     env?: NodeJS.ProcessEnv;
   }): {
     internals: Parameters<typeof dispatch>[2];
-    spawned: { argv: string[]; cwd: string }[];
+    spawned: { argv: string[]; cwd: string; capture: boolean }[];
   } {
-    const spawned: { argv: string[]; cwd: string }[] = [];
+    const spawned: { argv: string[]; cwd: string; capture: boolean }[] = [];
     const exitCodes = [...(opts?.exitCodes ?? [])];
+    const outputs = [...(opts?.outputs ?? [])];
     return {
       spawned,
       internals: {
@@ -3156,9 +3158,13 @@ describe("dispatch upgrade", () => {
             }
             return new Response(JSON.stringify({ version: opts?.latest ?? "1.3.0" }));
           },
-          spawn: (argv, spawnCwd) => {
-            spawned.push({ argv, cwd: spawnCwd });
-            return { exited: Promise.resolve(exitCodes.shift() ?? 0) };
+          spawn: (argv, spawnCwd, spawnOpts) => {
+            spawned.push({ argv, cwd: spawnCwd, capture: spawnOpts?.capture === true });
+            const output = outputs.shift();
+            return {
+              exited: Promise.resolve(exitCodes.shift() ?? 0),
+              ...(output !== undefined ? { output: Promise.resolve(output) } : {}),
+            };
           },
           env: opts?.env ?? { npm_config_user_agent: "bun/1.2.0 npm/? node/?" },
         },
@@ -3295,11 +3301,16 @@ describe("dispatch upgrade", () => {
   test("--json carries ok, from/to and handedOff, and writes nothing to stderr", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out, err } = captureStreams();
-    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
 
     const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
 
     expect(code).toBe(0);
+    // Both children must be captured, or their prose would share stdout with the
+    // envelope; the seam assertion is what makes the single-document check real.
+    expect(spawned).toHaveLength(2);
+    expect(spawned.every((s) => s.capture)).toBe(true);
+    expect(out().trim()).not.toContain("\n");
     const parsed = JSON.parse(out().trim()) as {
       command: string;
       ok: boolean;
@@ -3317,14 +3328,75 @@ describe("dispatch upgrade", () => {
     expect(err()).toBe("");
   });
 
+  test("--json captures the install on the already-latest path too", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+
+    const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    expect(spawned.map((s) => s.argv)).toEqual([["bun", "install"]]);
+    expect(spawned[0]?.capture).toBe(true);
+    expect(JSON.parse(out().trim())).toMatchObject({ ok: true, handedOff: false });
+    expect(err()).toBe("");
+  });
+
+  test("without --json nothing is captured: humans keep the inherited child output", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    await dispatch(["upgrade", cwd], io, internals);
+
+    expect(spawned).toHaveLength(2);
+    expect(spawned.some((s) => s.capture)).toBe(false);
+  });
+
+  test("--json with a failing install carries the captured child text in output", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const { internals, spawned } = upgradeHarness({
+      running: "1.2.0",
+      latest: "1.3.0",
+      exitCodes: [0, 5],
+      outputs: ["hand-off log", "error: lockfile is frozen"],
+    });
+
+    const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
+
+    expect(code).toBe(5);
+    expect(spawned.every((s) => s.capture)).toBe(true);
+    const parsed = JSON.parse(out().trim()) as { ok: boolean; error: string; output: string };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toContain("bun install");
+    expect(parsed.output).toBe("error: lockfile is frozen");
+    expect(err()).toBe("");
+  });
+
+  test("update --json does not diverge from upgrade --json", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    const code = await dispatch(["update", cwd, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    expect(spawned.every((s) => s.capture)).toBe(true);
+    expect(JSON.parse(out().trim())).toMatchObject({ command: "upgrade", ok: true });
+    expect(err()).toBe("");
+  });
+
   test("--json on an offline failure writes an ok:false payload with the error", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out, err } = captureStreams();
-    const { internals } = upgradeHarness({ offline: true });
+    const { internals, spawned } = upgradeHarness({ offline: true });
 
     const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
 
     expect(code).toBe(1);
+    // The clean stderr below is earned by resolving nothing, not by a silent seam.
+    expect(spawned).toEqual([]);
     const parsed = JSON.parse(out().trim()) as { command: string; ok: boolean; error: string };
     expect(parsed.command).toBe("upgrade");
     expect(parsed.ok).toBe(false);

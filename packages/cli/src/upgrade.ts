@@ -100,9 +100,14 @@ export function installArgv(env: NodeJS.ProcessEnv = process.env): string[] {
 
 export interface UpgradeProcess {
   readonly exited: Promise<number>;
+  readonly output?: Promise<string>;
 }
 
-export type UpgradeSpawn = (argv: string[], cwd: string) => UpgradeProcess;
+export type UpgradeSpawn = (
+  argv: string[],
+  cwd: string,
+  opts?: { capture?: boolean },
+) => UpgradeProcess;
 
 export interface UpgradeIo {
   readonly fetch: FetchImpl;
@@ -113,6 +118,7 @@ export interface UpgradeIo {
 export interface RunUpgradeOptions {
   readonly cwd: string;
   readonly running: string;
+  readonly capture?: boolean;
   readonly io?: Partial<UpgradeIo>;
 }
 
@@ -123,6 +129,7 @@ export interface UpgradeOutcome {
   readonly written: readonly string[];
   readonly exitCode: number;
   readonly error?: string;
+  readonly output?: string;
 }
 
 function spawnInherit(argv: string[], cwd: string): UpgradeProcess {
@@ -138,21 +145,67 @@ function spawnInherit(argv: string[], cwd: string): UpgradeProcess {
   return { exited };
 }
 
+// Cap the diagnostic tail so a chatty install cannot bloat the envelope.
+const OUTPUT_TAIL_LIMIT = 4000;
+
+// Under --json the CLI keeps stdout to a single JSON document, so a delegated
+// child must not share the inherited fd; its streams are piped back here and
+// surfaced inside the envelope instead.
+function spawnCapture(argv: string[], cwd: string): UpgradeProcess {
+  const [cmd, ...args] = argv;
+  if (cmd === undefined) {
+    throw new Error("defold-typescript upgrade: cannot spawn an empty command.");
+  }
+  const proc = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+  let stdout = "";
+  let stderr = "";
+  proc.stdout?.setEncoding("utf8").on("data", (chunk) => {
+    stdout += chunk;
+  });
+  proc.stderr?.setEncoding("utf8").on("data", (chunk) => {
+    stderr += chunk;
+  });
+  const settled = new Promise<{ code: number; output: string }>((resolve, reject) => {
+    proc.on("error", reject);
+    proc.on("close", (code) => {
+      const combined = `${stdout}${stderr}`.trim();
+      resolve({
+        code: code ?? 1,
+        output: combined.length > OUTPUT_TAIL_LIMIT ? combined.slice(-OUTPUT_TAIL_LIMIT) : combined,
+      });
+    });
+  });
+  return { exited: settled.then((s) => s.code), output: settled.then((s) => s.output) };
+}
+
 export function defaultUpgradeIo(): UpgradeIo {
-  return { fetch: (url) => fetch(url), spawn: spawnInherit, env: process.env };
+  return {
+    fetch: (url) => fetch(url),
+    spawn: (argv, cwd, opts) => (opts?.capture ? spawnCapture(argv, cwd) : spawnInherit(argv, cwd)),
+    env: process.env,
+  };
 }
 
 // Throws when the registry cannot be reached: an upgrade that cannot see the
 // registry has nothing to upgrade to, and must fail rather than re-scaffold.
 export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcome> {
   const io: UpgradeIo = { ...defaultUpgradeIo(), ...opts.io };
+  const capture = opts.capture ?? false;
   const latest = await resolveLatestCliVersion(io.fetch);
   const plan = planUpgrade({ running: opts.running, latest });
   const base = { from: opts.running, to: latest, handedOff: plan.action === "hand-off" };
 
+  // Captured text is a diagnostic: it earns its place in the envelope only when
+  // a child failed, so a success payload stays byte-identical to today's.
+  const failureOutput = async (proc: UpgradeProcess): Promise<{ output?: string }> => {
+    const output = await proc.output;
+    return output === undefined ? {} : { output };
+  };
+
   let written: readonly string[] = [];
   if (plan.action === "hand-off") {
-    const code = await io.spawn(handOffArgv(plan.target, io.env), opts.cwd).exited;
+    const handOff = io.spawn(handOffArgv(plan.target, io.env), opts.cwd, { capture });
+    const code = await handOff.exited;
     if (code !== 0) {
       // An install after a half-written scaffold would pin that state, so the
       // failed hand-off ends the run.
@@ -161,19 +214,22 @@ export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcom
         written,
         exitCode: code,
         error: `defold-typescript upgrade: ${CLI_PACKAGE}@${plan.target} init exited with code ${code}; the project was not upgraded.`,
+        ...(await failureOutput(handOff)),
       };
     }
   } else {
     written = runInit({ cwd: opts.cwd, force: true }).written;
   }
 
-  const installCode = await io.spawn(installArgv(io.env), opts.cwd).exited;
+  const install = io.spawn(installArgv(io.env), opts.cwd, { capture });
+  const installCode = await install.exited;
   if (installCode !== 0) {
     return {
       ...base,
       written,
       exitCode: installCode,
       error: `defold-typescript upgrade: \`${installHint(io.env)}\` exited with code ${installCode}.`,
+      ...(await failureOutput(install)),
     };
   }
   return { ...base, written, exitCode: 0 };
