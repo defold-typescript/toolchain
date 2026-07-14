@@ -229,3 +229,38 @@ describe("regen drift guard — builtin messages", () => {
     expect(Bun.file(path).size > 0).toBe(true);
   });
 });
+
+describe("nil-return union absorption guard", () => {
+  // A ref-doc `nil` return alternative that once fell through to the generic
+  // `unknown` fallback produced the absorbing `T | unknown` union, erasing `T`.
+  // Any callable signature line (it carries the `): ` return separator) must be
+  // free of that fragment. Standalone `unknown` and the `Record<string | number,
+  // unknown>` opaque-table shape carry no ` | unknown` substring, so they stay
+  // allowed without an allowlist.
+  const absorbingUnionLines = (contents: string): string[] =>
+    contents.split("\n").filter((line) => line.includes("): ") && line.includes(" | unknown"));
+
+  test.each(
+    MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
+  )("%s: current generated signatures carry no nil-absorbing ` | unknown` fragment", (_namespace, entry) => {
+    const { contents } = generateModuleDeclaration(entry);
+    expect(absorbingUnionLines(contents)).toEqual([]);
+  });
+
+  test.each(
+    VERSIONED_MODULE_MANIFEST.map(
+      (entry) => [`${entry.versionId}/${entry.namespace}`, entry] as const,
+    ),
+  )("%s: committed-version generated signatures carry no nil-absorbing ` | unknown` fragment", (_label, entry) => {
+    const { contents } = generateModuleDeclaration(entry);
+    expect(absorbingUnionLines(contents)).toEqual([]);
+  });
+
+  test("the guard predicate leaves standalone unknown and Record<..., unknown> untouched", () => {
+    expect(absorbingUnionLines("  function f(): unknown;")).toEqual([]);
+    expect(absorbingUnionLines("  function g(): Record<string | number, unknown>;")).toEqual([]);
+    expect(absorbingUnionLines("  function h(): number | unknown;")).toEqual([
+      "  function h(): number | unknown;",
+    ]);
+  });
+});

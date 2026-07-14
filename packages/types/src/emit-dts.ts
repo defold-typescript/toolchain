@@ -2057,6 +2057,13 @@ function mapSlotUnion(
           ts = mapType(token);
         }
       }
+    } else if (token === "nil" && slotKind === "return") {
+      // A top-level ref-doc `nil` return alternative is the engine's absence
+      // sentinel: project it to `undefined` (TSTL lowers `undefined` to Lua
+      // `nil`) instead of the generic `unknown` fallback that would absorb the
+      // concrete member. Parameters strip `nil` upstream, so this reaches only
+      // return slots.
+      ts = "undefined";
     } else {
       const curated =
         slotKind !== undefined && slotName !== undefined
@@ -2068,6 +2075,10 @@ function mapSlotUnion(
     seen.add(ts);
     mapped.push(ts);
   }
+  // A genuine `unknown` member (an `any` slot, including `any | nil`) absorbs
+  // every other union member, so collapse to exactly `unknown` rather than emit
+  // a redundant `T | unknown` or `unknown | undefined`.
+  if (mapped.includes("unknown")) return "unknown";
   return mapped.join(" | ");
 }
 

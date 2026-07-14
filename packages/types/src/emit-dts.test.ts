@@ -2178,7 +2178,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ],
     });
     expect(out).toContain(
-      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | unknown;",
+      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;",
     );
     expect(out).toContain(
       "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
@@ -2193,7 +2193,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
     });
     const socketHandles = "(client | master | unconnected)[]";
     expect(out).toContain(
-      `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | unknown]>;`,
+      `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
     );
   });
 
@@ -2395,6 +2395,81 @@ describe("TABLE_SLOT_CURATIONS", () => {
   });
 });
 
+describe("nil-return typing", () => {
+  function moduleOf(namespace: string, functions: ApiFunction[]): ApiModule {
+    return {
+      namespace,
+      brief: "",
+      description: "",
+      functions,
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+  }
+
+  test("a single return number | nil emits number | undefined; a nil-bearing param keeps its optional form", () => {
+    const out = emitDeclarations(
+      moduleOf("ns", [
+        {
+          name: "ns.load_previous",
+          brief: "",
+          description: "",
+          parameters: [{ name: "slot", doc: "", types: ["number", "nil"], isOptional: false }],
+          returnValues: [
+            { name: "data", doc: "the data or nil", types: ["number", "nil"], isOptional: false },
+          ],
+        },
+      ]),
+    );
+    expect(out).toContain("function load_previous(slot?: number): number | undefined;");
+  });
+
+  test("a multi-return maps each nil-bearing slot to T | undefined in declaration order", () => {
+    const out = emitDeclarations(
+      moduleOf("ns", [
+        {
+          name: "ns.get_parent",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [
+            { name: "id", doc: "id or nil", types: ["hash", "nil"], isOptional: false },
+            { name: "err", doc: "error or nil", types: ["string", "nil"], isOptional: false },
+          ],
+        },
+      ]),
+    );
+    expect(out).toContain(
+      "function get_parent(): LuaMultiReturn<[Hash | undefined, string | undefined]>;",
+    );
+  });
+
+  test("a genuine any | nil return emits exactly unknown, not unknown | undefined", () => {
+    const out = emitDeclarations(
+      moduleOf("ns", [
+        {
+          name: "ns.raw",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [
+            {
+              name: "value",
+              doc: "arbitrary value or nil",
+              types: ["any", "nil"],
+              isOptional: false,
+            },
+          ],
+        },
+      ]),
+    );
+    expect(out).toContain("function raw(): unknown;");
+    expect(out).not.toContain("unknown | undefined");
+  });
+});
+
 describe("socket handle method interfaces", () => {
   test("emits a method-bearing interface per receiver, replacing the Opaque handle brands", () => {
     const module = parseDefoldApiDoc(socketDoc);
@@ -2428,12 +2503,14 @@ describe("socket handle method interfaces", () => {
     const module = parseDefoldApiDoc(socketDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | unknown, string | unknown]>;",
+      "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;",
     );
-    expect(out).toContain("function tcp(): LuaMultiReturn<[master | unknown, string | unknown]>;");
+    expect(out).toContain(
+      "function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;",
+    );
     const socketHandles = "(client | master | unconnected)[]";
     expect(out).toContain(
-      `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | unknown]>;`,
+      `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
     );
   });
 
@@ -2643,7 +2720,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
         },
       ]),
     );
-    expect(out).toContain("number[]");
+    expect(out).toContain("number[] | undefined");
   });
 
   test("iap.list emits the ids param as string[]", () => {
