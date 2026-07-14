@@ -31,8 +31,7 @@ export function renderMaterializedKindIndex(opts: RenderMaterializedKindIndexOpt
   return `${LUA_STDLIB_REFERENCES}${lines.join("\n")}\n\nexport { ${entry.factory} } from "@defold-typescript/types/lifecycle";\nexport type { ScriptProperties, ScriptProperty } from "@defold-typescript/types/lifecycle";\n`;
 }
 
-export interface MaterializeVersionedSurfaceOptions {
-  readonly destDir: string;
+export interface BuildVersionedSurfaceOptions {
   readonly resolveOpts?: ResolveTargetOptions;
   // Bare module names (no `.d.ts`) to omit from the surface — both the emitted
   // file and its aggregate-index import. Lets a caller narrow the surface to a
@@ -40,35 +39,61 @@ export interface MaterializeVersionedSurfaceOptions {
   readonly excludeModules?: readonly string[];
 }
 
-// Generate a versioned surface on the fly into a project-local faux `@types`
-// package: resolve the target's module docs (ref-doc or committed fixture),
-// emit each module declaration, then write the aggregate side-effect entrypoint
-// and a minimal package.json. ref-doc targets are never pre-baked, so this is
-// the only path that turns a resolved version into a consumable type surface.
-export async function materializeVersionedSurface(
+export interface MaterializeVersionedSurfaceOptions extends BuildVersionedSurfaceOptions {
+  readonly destDir: string;
+}
+
+export interface VersionedSurfaceFile {
+  // Relative to the surface root, so a sink can write it to disk or key it in
+  // object storage without rewriting the path.
+  readonly path: string;
+  readonly contents: string;
+}
+
+// Generate a versioned surface as an in-memory file map: resolve the target's
+// module docs (ref-doc or committed fixture), emit each module declaration, then
+// the aggregate side-effect entrypoint and a minimal package.json. Pure — no
+// `node:fs` — so a Worker with no filesystem can serve a version generated at
+// request time; `materializeVersionedSurface` is the disk sink over the same map.
+export async function buildVersionedSurfaceFiles(
   target: ApiTarget,
-  opts: MaterializeVersionedSurfaceOptions,
-): Promise<void> {
+  opts: BuildVersionedSurfaceOptions = {},
+): Promise<VersionedSurfaceFile[]> {
   const exclude = new Set(opts.excludeModules ?? []);
   const modules = (await resolveTargetModules(target, opts.resolveOpts ?? {})).filter(
     (entry) => !exclude.has(entry.outFile.replace(/\.d\.ts$/, "")),
   );
-  mkdirSync(opts.destDir, { recursive: true });
 
-  for (const entry of modules) {
-    const { contents } = generateModuleDeclaration(entry);
-    writeFileSync(resolve(opts.destDir, entry.outFile), contents);
-  }
+  const files: VersionedSurfaceFile[] = modules.map((entry) => ({
+    path: entry.outFile,
+    contents: generateModuleDeclaration(entry).contents,
+  }));
 
   const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
-  writeFileSync(resolve(opts.destDir, "index.d.ts"), generateVersionIndex(target.id, versioned));
+  files.push({ path: "index.d.ts", contents: generateVersionIndex(target.id, versioned) });
 
-  writeFileSync(
-    resolve(opts.destDir, "package.json"),
-    `${JSON.stringify(
+  files.push({
+    path: "package.json",
+    contents: `${JSON.stringify(
       { name: `@defold-typescript/materialized-${target.id}`, types: "index.d.ts" },
       null,
       2,
     )}\n`,
-  );
+  });
+
+  return files;
+}
+
+// Write the generated surface into a project-local faux `@types` package.
+// ref-doc targets are never pre-baked, so this is the only path that turns a
+// resolved version into a consumable on-disk type surface.
+export async function materializeVersionedSurface(
+  target: ApiTarget,
+  opts: MaterializeVersionedSurfaceOptions,
+): Promise<void> {
+  const files = await buildVersionedSurfaceFiles(target, opts);
+  mkdirSync(opts.destDir, { recursive: true });
+  for (const file of files) {
+    writeFileSync(resolve(opts.destDir, file.path), file.contents);
+  }
 }
