@@ -3137,6 +3137,7 @@ describe("dispatch upgrade", () => {
     running?: string;
     exitCodes?: number[];
     outputs?: string[];
+    stdouts?: string[];
     offline?: boolean;
     env?: NodeJS.ProcessEnv;
   }): {
@@ -3146,6 +3147,7 @@ describe("dispatch upgrade", () => {
     const spawned: { argv: string[]; cwd: string; capture: boolean }[] = [];
     const exitCodes = [...(opts?.exitCodes ?? [])];
     const outputs = [...(opts?.outputs ?? [])];
+    const stdouts = [...(opts?.stdouts ?? [])];
     return {
       spawned,
       internals: {
@@ -3161,9 +3163,11 @@ describe("dispatch upgrade", () => {
           spawn: (argv, spawnCwd, spawnOpts) => {
             spawned.push({ argv, cwd: spawnCwd, capture: spawnOpts?.capture === true });
             const output = outputs.shift();
+            const stdout = stdouts.shift();
             return {
               exited: Promise.resolve(exitCodes.shift() ?? 0),
               ...(output !== undefined ? { output: Promise.resolve(output) } : {}),
+              ...(stdout !== undefined ? { stdout: Promise.resolve(stdout) } : {}),
             };
           },
           env: opts?.env ?? { npm_config_user_agent: "bun/1.2.0 npm/? node/?" },
@@ -3171,6 +3175,9 @@ describe("dispatch upgrade", () => {
       },
     };
   }
+
+  const delegatedInit = (written: readonly string[]): string =>
+    `${JSON.stringify({ command: "init", ok: true, written })}\n`;
 
   const handOffs = (spawned: { argv: string[] }[]): string[][] =>
     spawned
@@ -3402,6 +3409,60 @@ describe("dispatch upgrade", () => {
     expect(parsed.ok).toBe(false);
     expect(parsed.error).toMatch(/network connection/i);
     expect(err()).toBe("");
+  });
+
+  test("--json on a hand-off prints the documented pair: handedOff true with a populated written", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const { internals, spawned } = upgradeHarness({
+      running: "1.2.0",
+      latest: "1.3.0",
+      stdouts: [delegatedInit(["package.json", "tsconfig.json"])],
+    });
+
+    const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    expect(handOffs(spawned)[0]).toContain("--json");
+    expect(out().trim()).not.toContain("\n");
+    expect(JSON.parse(out().trim())).toMatchObject({
+      command: "upgrade",
+      ok: true,
+      handedOff: true,
+      written: ["package.json", "tsconfig.json"],
+    });
+    expect(err()).toBe("");
+  });
+
+  test("update --json reports the delegated files too", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const { internals } = upgradeHarness({
+      running: "1.2.0",
+      latest: "1.3.0",
+      stdouts: [delegatedInit(["package.json", "tsconfig.json"])],
+    });
+
+    const code = await dispatch(["update", cwd, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out().trim())).toMatchObject({
+      command: "upgrade",
+      ok: true,
+      handedOff: true,
+      written: ["package.json", "tsconfig.json"],
+    });
+    expect(err()).toBe("");
+  });
+
+  test("a human upgrade hands off without --json, so the delegated CLI still prints prose", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io } = captureStreams();
+    const { internals, spawned } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+
+    await dispatch(["upgrade", cwd], io, internals);
+
+    expect(handOffs(spawned)[0]).not.toContain("--json");
   });
 
   test("the usage fallback is untouched: only upgrade/update are claimed", () => {
