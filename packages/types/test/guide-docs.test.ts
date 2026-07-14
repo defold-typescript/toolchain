@@ -260,6 +260,19 @@ describe("docs/guide scaffold", () => {
     expect(body).toContain("if (parent !== undefined)");
   });
 
+  test("typescript-gotchas.md frames the nil-return guard as precisely testing absence, not as a falsy-value trap", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    // The `if (x)` entry already establishes that `0` and `""` are truthy in
+    // the emitted Lua, so the old JS-falsy rationale for `!== undefined` was
+    // wrong. The corrected guidance frames the guard as precisely testing
+    // absence, independent of the divergent TS/Lua truthiness.
+    expect(body).toContain("precisely tests absence");
+    expect(body).not.toContain("wrongly discard");
+    expect(body).not.toContain("falsy handle");
+    // The genuine arbitrary-value `unknown` coverage stays asserted.
+    expect(body).toContain("## Some slots are `unknown` on purpose — the `any` wildcard");
+  });
+
   test("typescript-gotchas.md states `===`/`==` lower identically and links it from the digest", async () => {
     const body = await readGuide("typescript-gotchas.md");
     expect(body).toContain(
