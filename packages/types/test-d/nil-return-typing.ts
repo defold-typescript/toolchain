@@ -4,8 +4,9 @@ import type { Hash } from "../src/core-types";
 // A top-level ref-doc `nil` return alternative now projects as `undefined`, so a
 // nil-bearing return is a genuine `T | undefined` that TypeScript narrows with an
 // explicit `!== undefined` check. The check is used because it precisely tests
-// absence and lowers to the same `== nil` in Lua, independent of the divergent
-// TS/Lua truthiness — not because truthiness would drop a falsy value.
+// absence and lowers to `~= nil` in Lua — the not-equal counterpart of the
+// `== nil` the equal `=== undefined` / `=== null` checks emit — independent of
+// the divergent TS/Lua truthiness, not because truthiness would drop a falsy value.
 
 // crash.load_previous(): number | undefined
 const handle = crash.load_previous();
