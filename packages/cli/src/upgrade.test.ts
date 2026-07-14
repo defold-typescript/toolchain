@@ -426,4 +426,32 @@ describe("defaultUpgradeIo", () => {
     expect(output).toContain('{"a":1}');
     expect(output).toContain("noise");
   });
+
+  // Every injected seam resolves, so only the real one can reach the spawn-error
+  // path where `settled` rejects and fans that rejection out to each derived promise.
+  const MISSING_CMD = "definitely-not-a-real-command-xyz";
+
+  test("a captured child that cannot be spawned stays observable through `exited` alone", async () => {
+    const { exited, output, stdout } = defaultUpgradeIo().spawn([MISSING_CMD], cwd, {
+      capture: true,
+    });
+
+    await expect(exited).rejects.toThrow(new RegExp(MISSING_CMD));
+
+    if (output === undefined || stdout === undefined) {
+      throw new Error("a captured spawn must expose both derived promises");
+    }
+    // The failure is already fully reported through `exited`; a child that never
+    // started produced no text, so these must settle rather than orphan a rejection.
+    await expect(output).resolves.toBe("");
+    await expect(stdout).resolves.toBe("");
+  });
+
+  test("without capture an unspawnable child still rejects `exited` and derives nothing to orphan", async () => {
+    const proc = defaultUpgradeIo().spawn([MISSING_CMD], cwd);
+
+    await expect(proc.exited).rejects.toThrow(new RegExp(MISSING_CMD));
+    expect(proc.output).toBeUndefined();
+    expect(proc.stdout).toBeUndefined();
+  });
 });
