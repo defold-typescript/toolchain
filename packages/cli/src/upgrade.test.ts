@@ -100,6 +100,31 @@ describe("handOffArgv", () => {
   test("pins the resolved version, never a bare @latest tag", () => {
     expect(handOffArgv("1.3.0", {})).not.toContain("@defold-typescript/cli@latest");
   });
+
+  test("a capturing hand-off asks the delegated CLI for its JSON envelope", () => {
+    expect(handOffArgv("1.3.0", {}, { capture: true })).toEqual([
+      "bunx",
+      "@defold-typescript/cli@1.3.0",
+      "init",
+      ".",
+      "--force",
+      "--suppress-install-reminder",
+      "--json",
+    ]);
+  });
+
+  test("a human hand-off never asks for --json, whether capture is false or omitted", () => {
+    expect(handOffArgv("1.3.0", {}, { capture: false })).not.toContain("--json");
+    expect(handOffArgv("1.3.0", {})).not.toContain("--json");
+  });
+
+  test("the runner prefix and the pinned target are the same in both forms", () => {
+    const env = { npm_config_user_agent: "pnpm/9.0.0" };
+    const captured = handOffArgv("1.3.0", env, { capture: true });
+    const human = handOffArgv("1.3.0", env);
+    expect(captured.slice(0, 3)).toEqual(["pnpm", "dlx", "@defold-typescript/cli@1.3.0"]);
+    expect(captured.filter((a) => a !== "--json")).toEqual(human);
+  });
 });
 
 describe("installArgv", () => {
@@ -112,13 +137,19 @@ describe("installArgv", () => {
 
 type SpawnRecord = { argv: string[]; cwd: string; capture: boolean };
 
-function upgradeIo(opts?: { latest?: string; exitCodes?: number[]; outputs?: string[] }): {
+function upgradeIo(opts?: {
+  latest?: string;
+  exitCodes?: number[];
+  outputs?: string[];
+  stdouts?: string[];
+}): {
   io: Partial<UpgradeIo>;
   spawned: SpawnRecord[];
 } {
   const spawned: SpawnRecord[] = [];
   const exitCodes = [...(opts?.exitCodes ?? [])];
   const outputs = [...(opts?.outputs ?? [])];
+  const stdouts = [...(opts?.stdouts ?? [])];
   return {
     spawned,
     io: {
@@ -126,15 +157,20 @@ function upgradeIo(opts?: { latest?: string; exitCodes?: number[]; outputs?: str
       spawn: (argv, cwd, spawnOpts) => {
         spawned.push({ argv, cwd, capture: spawnOpts?.capture === true });
         const output = outputs.shift();
+        const stdout = stdouts.shift();
         return {
           exited: Promise.resolve(exitCodes.shift() ?? 0),
           ...(output !== undefined ? { output: Promise.resolve(output) } : {}),
+          ...(stdout !== undefined ? { stdout: Promise.resolve(stdout) } : {}),
         };
       },
       env: { npm_config_user_agent: "bun/1.2.0 npm/? node/?" },
     },
   };
 }
+
+const initEnvelope = (written: readonly string[]): string =>
+  JSON.stringify({ command: "init", ok: true, written });
 
 const isHandOff = (record: SpawnRecord): boolean =>
   record.argv.some((arg) => arg.startsWith("@defold-typescript/cli@"));
@@ -227,6 +263,119 @@ describe("runUpgrade", () => {
     expect(outcome.exitCode).toBe(1);
     expect(outcome.output).toBe("hand-off boom");
   });
+
+  test("a captured hand-off adopts the files the delegated CLI reported writing", async () => {
+    const { io } = upgradeIo({
+      latest: "1.3.0",
+      stdouts: [initEnvelope(["package.json", "tsconfig.json"])],
+    });
+
+    const outcome = await runUpgrade({ cwd, running: "1.2.0", capture: true, io });
+
+    expect(outcome.written).toEqual(["package.json", "tsconfig.json"]);
+    expect(outcome.handedOff).toBe(true);
+    expect(outcome.exitCode).toBe(0);
+  });
+
+  test("the envelope is found under the runner's own progress noise", async () => {
+    const { io } = upgradeIo({
+      latest: "1.3.0",
+      stdouts: [
+        `Resolving @defold-typescript/cli@1.3.0\nnot json at all\n${initEnvelope(["package.json"])}\n`,
+      ],
+    });
+
+    const outcome = await runUpgrade({ cwd, running: "1.2.0", capture: true, io });
+
+    expect(outcome.written).toEqual(["package.json"]);
+    expect(outcome.exitCode).toBe(0);
+  });
+
+  test("an unreadable report never fails an otherwise successful upgrade", async () => {
+    const garbage = upgradeIo({ latest: "1.3.0", stdouts: ["not json {{{"] });
+    const fromGarbage = await runUpgrade({
+      cwd,
+      running: "1.2.0",
+      capture: true,
+      io: garbage.io,
+    });
+    expect(fromGarbage.written).toEqual([]);
+    expect(fromGarbage.exitCode).toBe(0);
+
+    const noWritten = upgradeIo({
+      latest: "1.3.0",
+      stdouts: [JSON.stringify({ command: "init", ok: true })],
+    });
+    const fromNoWritten = await runUpgrade({
+      cwd,
+      running: "1.2.0",
+      capture: true,
+      io: noWritten.io,
+    });
+    expect(fromNoWritten.written).toEqual([]);
+    expect(fromNoWritten.exitCode).toBe(0);
+  });
+
+  test("a human hand-off reports no written files and never reads the child's stdout", async () => {
+    const { io } = upgradeIo({
+      latest: "1.3.0",
+      stdouts: [initEnvelope(["package.json", "tsconfig.json"])],
+    });
+
+    const outcome = await runUpgrade({ cwd, running: "1.2.0", capture: false, io });
+
+    expect(outcome.written).toEqual([]);
+    expect(outcome.handedOff).toBe(true);
+    expect(outcome.exitCode).toBe(0);
+  });
+
+  // Each mode gets a pristine directory: a second init into the same tree skips
+  // the files it already wrote, which would compare scaffolding idempotence
+  // rather than the capture flag.
+  test("already-latest still takes written from the in-process init, captured or not", async () => {
+    const freshCwd = (): string => mkdtempSync(path.join(os.tmpdir(), "defold-ts-upgrade-latest-"));
+    const capturedCwd = freshCwd();
+    const inheritedCwd = freshCwd();
+
+    try {
+      const withCapture = await runUpgrade({
+        cwd: capturedCwd,
+        running: "1.3.0",
+        capture: true,
+        io: upgradeIo({ latest: "1.3.0" }).io,
+      });
+      const withoutCapture = await runUpgrade({
+        cwd: inheritedCwd,
+        running: "1.3.0",
+        capture: false,
+        io: upgradeIo({ latest: "1.3.0" }).io,
+      });
+
+      expect(withCapture.handedOff).toBe(false);
+      expect(withoutCapture.handedOff).toBe(false);
+      expect(withCapture.written).toContain("package.json");
+      expect(withoutCapture.written).toEqual(withCapture.written);
+    } finally {
+      rmSync(capturedCwd, { recursive: true, force: true });
+      rmSync(inheritedCwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a failed hand-off reports no written files, spawns no install, and keeps its output", async () => {
+    const { io, spawned } = upgradeIo({
+      latest: "1.3.0",
+      exitCodes: [7],
+      outputs: ["hand-off boom"],
+      stdouts: [initEnvelope(["package.json"])],
+    });
+
+    const outcome = await runUpgrade({ cwd, running: "1.2.0", capture: true, io });
+
+    expect(outcome.written).toEqual([]);
+    expect(outcome.exitCode).toBe(7);
+    expect(outcome.output).toBe("hand-off boom");
+    expect(spawned).toHaveLength(1);
+  });
 });
 
 // The injected seam is what hid this bug, so this asserts against the real spawn.
@@ -259,5 +408,22 @@ describe("defaultUpgradeIo", () => {
 
     expect(await proc.exited).toBe(0);
     expect(proc.output).toBeUndefined();
+    expect(proc.stdout).toBeUndefined();
+  });
+
+  // The runner writes its fetch progress to stderr, so an envelope parsed out of
+  // the merged text could be corrupted by an interleaved line; stdout stands alone.
+  test("capture exposes the child's stdout apart from the merged diagnostic output", async () => {
+    const proc = defaultUpgradeIo().spawn(
+      [process.execPath, "-e", "process.stderr.write('noise');process.stdout.write('{\"a\":1}')"],
+      cwd,
+      { capture: true },
+    );
+
+    expect(await proc.exited).toBe(0);
+    expect(await proc.stdout).toBe('{"a":1}');
+    const output = await proc.output;
+    expect(output).toContain('{"a":1}');
+    expect(output).toContain("noise");
   });
 });
