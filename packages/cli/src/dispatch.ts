@@ -602,6 +602,7 @@ export function dispatch(
           ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
           ...(resolveSurface ? { resolveSurface } : {}),
           ...(json ? { json: true } : {}),
+          ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
         };
         const handle = runWatch(watchOpts);
         if (internals) {
@@ -753,6 +754,7 @@ export function dispatch(
             result.ok
               ? {
                   command: "resolve",
+                  ...(pinDiagnostics.length > 0 ? { warnings: pinDiagnostics } : {}),
                   defoldVersion: head.version,
                   defoldVersionSource: targetSource,
                   defoldChannel: head.channel,

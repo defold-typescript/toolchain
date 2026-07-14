@@ -32,6 +32,7 @@ export interface RunWatchOptions {
   readonly componentWatcherFactory?: WatcherFactory;
   readonly resolveSurface?: () => void | Promise<void>;
   readonly json?: boolean;
+  readonly pinDiagnostics?: readonly string[];
 }
 
 export interface RunWatchHandle {
@@ -114,7 +115,17 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let session: BuildSession;
   let config: ReturnType<typeof readBuildConfig>;
   if (opts.json) {
-    stdout.write(renderWatchEvent({ event: "start" }));
+    // The diagnostics ride `start`, not the initial `build` event: a compile
+    // failure routes to reportFailure, whose payload carries no warnings, so
+    // hanging them on `build` would lose them for a project that has both a bad
+    // pin key and a broken source file. The non-JSON stderr line comes from the
+    // dispatch choke point, so nothing is written here for a normal run.
+    stdout.write(
+      renderWatchEvent({
+        event: "start",
+        ...(opts.pinDiagnostics?.length ? { warnings: opts.pinDiagnostics } : {}),
+      }),
+    );
   }
   try {
     opts.syncSurface?.();
