@@ -874,12 +874,15 @@ describe("dispatch", () => {
     );
 
     const { io, out } = captureStreams();
-    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.12.4");
-    const surfaceDir = path.join(cwd, ".defold-types", "defold-1.12.4");
+    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.13.0");
+    const surfaceDir = path.join(cwd, ".defold-types", "defold-1.13.0");
     expect(existsSync(path.join(surfaceDir, "label.d.ts"))).toBe(true);
     expect(existsSync(path.join(surfaceDir, "engine-globals.d.ts"))).toBe(true);
     expect(readFileSync(path.join(surfaceDir, "index.d.ts"), "utf8")).toContain(
@@ -901,14 +904,17 @@ describe("dispatch", () => {
     }
 
     const { io, out } = captureStreams();
-    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as Record<string, unknown>;
     expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"),
+      path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -931,14 +937,17 @@ describe("dispatch", () => {
     }
 
     const { io, out } = captureStreams();
-    const code = await dispatch(["build", cwd, "--json"], io, { sourceGeneratedDir });
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+    });
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as Record<string, unknown>;
     expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"),
+      path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -1309,13 +1318,14 @@ describe("dispatch", () => {
       componentWatcherFactory: component,
       sourceGeneratedDir,
       onWatchStart,
+      detectEditorVersion: () => null,
     });
 
     const handle = await ready;
     await handle.waitForIdle();
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"),
+      path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -1364,12 +1374,13 @@ describe("dispatch", () => {
       componentWatcherFactory: component,
       sourceGeneratedDir,
       onWatchStart,
+      detectEditorVersion: () => null,
     });
 
     const handle = await ready;
     await handle.waitForIdle();
 
-    const indexPath = path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts");
+    const indexPath = path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts");
     expect(readFileSync(indexPath, "utf8")).toContain('"./render"');
 
     writeFileSync(path.join(cwd, "hud.gui_script"), "");
