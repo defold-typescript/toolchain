@@ -221,10 +221,21 @@ function spawnCapture(argv: string[], cwd: string): UpgradeProcess {
       });
     },
   );
+  // single-rejection-consumer: a spawn failure is observable through `exited`
+  // alone — the only promise with a guaranteed awaiter. Every other promise
+  // derived from `settled` must therefore swallow that rejection, or it becomes
+  // an orphan nobody awaits (fatal under Node). A child that never started
+  // produced no text, so "" is the honest value for both.
   return {
     exited: settled.then((s) => s.code),
-    output: settled.then((s) => s.output),
-    stdout: settled.then((s) => s.stdout),
+    output: settled.then(
+      (s) => s.output,
+      () => "",
+    ),
+    stdout: settled.then(
+      (s) => s.stdout,
+      () => "",
+    ),
   };
 }
 

@@ -14,6 +14,7 @@ import {
   noDownload,
 } from "./ref-doc-test-fixture";
 import { runResolve } from "./resolve";
+import { defaultUpgradeIo } from "./upgrade";
 import type { RunWatchHandle, Watcher, WatcherFactory } from "./watch";
 
 function captureStreams(): {
@@ -3409,6 +3410,48 @@ describe("dispatch upgrade", () => {
     expect(parsed.ok).toBe(false);
     expect(parsed.error).toMatch(/network connection/i);
     expect(err()).toBe("");
+  });
+
+  // Every seam above resolves, which is what hid the orphan: drive the real capture
+  // seam with an argv that cannot spawn, so the whole path runs for real and only
+  // `fetch` is stubbed.
+  test("--json survives a child that cannot be spawned: one envelope, clean stderr, no orphaned rejection", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, out, err } = captureStreams();
+    const missing = "definitely-not-a-real-command-xyz";
+    const internals: Parameters<typeof dispatch>[2] = {
+      cliVersion: "1.2.0",
+      detectEditorVersion: () => null,
+      upgradeInternals: {
+        fetch: async () => new Response(JSON.stringify({ version: "1.3.0" })),
+        spawn: (_argv, spawnCwd, spawnOpts) =>
+          defaultUpgradeIo().spawn([missing], spawnCwd, spawnOpts),
+        env: { npm_config_user_agent: "bun/1.2.0 npm/? node/?" },
+      },
+    };
+
+    const orphans: unknown[] = [];
+    const onOrphan = (reason: unknown): void => {
+      orphans.push(reason);
+    };
+    process.on("unhandledRejection", onOrphan);
+    try {
+      const code = await dispatch(["upgrade", cwd, "--json"], io, internals);
+      // The orphan surfaces after dispatch returns, so a microtask tick is not enough.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(orphans).toEqual([]);
+      expect(code).not.toBe(0);
+      const text = out().trim();
+      expect(text).not.toContain("\n");
+      const parsed = JSON.parse(text) as { command: string; ok: boolean; error: string };
+      expect(parsed.command).toBe("upgrade");
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error).toContain(missing);
+      expect(err()).toBe("");
+    } finally {
+      process.off("unhandledRejection", onOrphan);
+    }
   });
 
   test("--json on a hand-off prints the documented pair: handedOff true with a populated written", async () => {
