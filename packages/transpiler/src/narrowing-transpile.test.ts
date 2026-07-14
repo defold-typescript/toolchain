@@ -27,6 +27,9 @@ describe("narrowing transpile", () => {
       "  if (x === undefined) {",
       "    out = 'undef';",
       "  }",
+      "  if (x !== undefined) {",
+      "    out = 'present';",
+      "  }",
       "  const kind = typeof x;",
       "  const n = x as number;",
       "  return out + kind + n;",
@@ -52,5 +55,23 @@ describe("narrowing transpile", () => {
     // Both operators emit the same `cell == 0`: the loose form gets no
     // coercion helper, so the strict and loose lines are byte-identical.
     expect(result.lua.match(/cell == 0/g) ?? []).toHaveLength(2);
+  });
+
+  test("`!== undefined` lowers to the not-equal Lua `~= nil`", () => {
+    const source = [
+      "export function present(x: unknown): boolean {",
+      "  if (x !== undefined) {",
+      "    return true;",
+      "  }",
+      "  return false;",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    // The not-equal guard emits `x ~= nil`, the counterpart of the `x == nil`
+    // that the equal `=== undefined` / `=== null` checks lower to.
+    expect(result.lua).toContain("x ~= nil");
+    expect(result.lua).not.toContain("x == nil");
   });
 });
