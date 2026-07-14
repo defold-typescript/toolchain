@@ -2290,6 +2290,12 @@ created or updated; on `false`, read `error` for the failure reason. Some verbs
 add fields to the success envelope (noted per runbook), but `command`, `ok`, and
 either `written` or `error` are always present.
 
+Verbs that shell out keep the contract by capturing their children rather than
+interleaving them: under `--json`, [`upgrade`](./upgrading.md) pipes the output
+of both the delegated CLI and the package-manager install into the envelope,
+surfacing it in `output` when a child fails, so the whole of stdout stays a
+single parseable document.
+
 #### Machine-readable output
 
 Every command accepts `--json`. The one-shot commands (`init`, `build`,
