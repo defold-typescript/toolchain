@@ -38,6 +38,7 @@ import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
 import { runSetupDebug } from "./setup-debug";
+import { runUpgrade, type UpgradeIo } from "./upgrade";
 import type { CheckboxPrompt } from "./wall-interactive";
 import type { RunWatchHandle, RunWatchOptions, WatcherFactory } from "./watch";
 
@@ -88,6 +89,10 @@ export interface DispatchInternals {
   // pure `resolveRunnable`, and spawn/copyAside/chmod drive `launchEngine`. Tests
   // inject a deterministic subset over `defaultRunEngine`, mirroring `defoldIo`.
   readonly runInternals?: Partial<RunEngine>;
+  // Seams for the only verb that goes online: `fetch` resolves the latest release
+  // from the npm registry, `spawn` runs the hand-off and the install, and `env`
+  // carries the `npm_config_user_agent` the runner is detected from.
+  readonly upgradeInternals?: Partial<UpgradeIo>;
 }
 
 const USAGE =
@@ -1073,6 +1078,48 @@ export function dispatch(
       }
       return exitCode;
     });
+  }
+
+  if (command === "upgrade" || command === "update") {
+    return (async (): Promise<number> => {
+      const running = internals?.cliVersion ?? readCliVersion();
+      try {
+        const outcome = await runUpgrade({
+          cwd,
+          running,
+          ...(internals?.upgradeInternals ? { io: internals.upgradeInternals } : {}),
+        });
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "upgrade",
+              written: outcome.written,
+              from: outcome.from,
+              to: outcome.to,
+              handedOff: outcome.handedOff,
+              ...(outcome.error !== undefined ? { error: outcome.error } : {}),
+            }),
+          );
+        } else if (outcome.error !== undefined) {
+          io.stderr.write(`${outcome.error}\n`);
+        } else {
+          io.stdout.write(
+            `defold-typescript upgrade: ${outcome.from} -> ${outcome.to}${
+              outcome.handedOff ? "" : " (already latest; re-scaffolded managed files)"
+            }\n`,
+          );
+        }
+        return outcome.exitCode;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "upgrade", error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
+      }
+    })();
   }
 
   io.stderr.write(USAGE);
