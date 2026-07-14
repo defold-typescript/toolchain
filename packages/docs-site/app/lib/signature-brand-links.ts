@@ -15,6 +15,8 @@
 // Pure and `node:*`-free (string transform only) so it stays under root
 // `bun test` and keeps the `client-graph-node-free` gate green.
 
+import { withBase } from "./base";
+
 const CODE_OPEN = '<code class="api-signature shiki">';
 const CODE_CLOSE = "</code>";
 
@@ -52,7 +54,11 @@ function renderSpans(spans: readonly Span[]): string {
   return spans.map((s) => `<span style="${s.style}">${s.text}</span>`).join("");
 }
 
-export function splitSignatureBrandLinks(html: string, links: ReadonlyMap<string, string>): string {
+export function splitSignatureBrandLinks(
+  html: string,
+  links: ReadonlyMap<string, string>,
+  applyBase: (route: string) => string = withBase,
+): string {
   if (links.size === 0) return html;
   const brandRe = brandWordRegex([...links.keys()]);
 
@@ -68,7 +74,7 @@ export function splitSignatureBrandLinks(html: string, links: ReadonlyMap<string
       const outerFragment = (frag: readonly Span[], trailing: string): string =>
         `${open}${CODE_OPEN}${renderSpans(frag)}${CODE_CLOSE}${trailing}</a>`;
       const brandFragment = (route: string, style: string, name: string): string =>
-        `<a class="signature-symbol-link" href="${escapeAttr(route)}">${CODE_OPEN}<span style="${style}">${name}</span>${CODE_CLOSE}</a>`;
+        `<a class="signature-symbol-link" href="${escapeAttr(applyBase(route))}">${CODE_OPEN}<span style="${style}">${name}</span>${CODE_CLOSE}</a>`;
 
       const out: string[] = [];
       let pre: Span[] = [];
