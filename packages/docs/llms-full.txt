@@ -859,7 +859,7 @@ function present(x: unknown): boolean {
 
 **Typed alternative.** Model absence with a single sentinel. Pick `undefined` in your TypeScript (it is what the engine's `nil` maps to most naturally), use `x === undefined` or `x == null` to test it, and do not design APIs that depend on distinguishing the two. If you need a third "unset" state, encode it explicitly with a value, not with `null`-vs-`undefined`.
 
-The engine functions follow the same sentinel: a documented `nil` return is typed `T | undefined`, so narrow it explicitly with `!== undefined` before use. The guard **precisely tests absence** and transpiles to the same `== nil` in Lua, so it does not lean on the divergent [TS/Lua truthiness](#if-x-truthiness-differs--0-and--are-truthy-in-lua) — where `0` and `""` are truthy once transpiled — the way a bare `if (value)` would.
+The engine functions follow the same sentinel: a documented `nil` return is typed `T | undefined`, so narrow it explicitly with `!== undefined` before use. The guard **precisely tests absence** and transpiles to `~= nil` in Lua — the not-equal counterpart of the `== nil` that the equal `=== undefined` / `=== null` checks emit — so it does not lean on the divergent [TS/Lua truthiness](#if-x-truthiness-differs--0-and--are-truthy-in-lua) — where `0` and `""` are truthy once transpiled — the way a bare `if (value)` would.
 
 ```ts
 const parent = go.get_parent();   // Hash | undefined
@@ -869,7 +869,7 @@ if (parent !== undefined) {
 }
 ```
 
-**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`. The collapse is visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished them, the gate would fail.
+**How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`, and pins the `!== undefined` guard beside them so the committed snapshot shows it lowering to `x ~= nil`. The collapse and its not-equal counterpart are visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished the equal checks or emitted the wrong operator for the not-equal one, the gate would fail.
 
 #### `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
 
