@@ -841,22 +841,26 @@ describe("apiPageMarkdown authoritative member signatures", () => {
 });
 
 describe("apiPageMarkdown title badges", () => {
-  test("injects titleBadges immediately after the H1 and before the intro", () => {
+  const h1LineOf = (md: string) => md.split("\n").find((line) => line.startsWith("# "));
+
+  test("appends titleBadges inline on the H1 line, not as a standalone block after it", () => {
     const md = apiPageMarkdown(versionedWmathPage(), (t) => t, {
-      titleBadges: '<div class="api-badge-counts">PILLS</div>',
+      titleBadges: '<span class="api-badge-counts">PILLS</span>',
     });
-    const iH1 = md.indexOf("# wmath");
-    const iBadges = md.indexOf('<div class="api-badge-counts">PILLS</div>');
-    const iIntro = md.indexOf("Old-version math helpers.");
-    expect(iH1).toBe(0);
-    expect(iBadges).toBeGreaterThan(iH1);
-    expect(iBadges).toBeLessThan(iIntro);
+    const h1 = h1LineOf(md);
+    // the pill rides the H1 line so it renders on the heading baseline, not below
+    expect(h1).toBe('# wmath <span class="api-badge-counts">PILLS</span>');
+    // never emitted as its own block line after the heading
+    expect(md).not.toMatch(/\n<span class="api-badge-counts">PILLS<\/span>\n/);
+    // still ahead of the intro prose
+    expect(md.indexOf("PILLS")).toBeLessThan(md.indexOf("Old-version math helpers."));
   });
 
   test("omitting titleBadges leaves the heading unchanged", () => {
     const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
     expect(md).not.toContain("api-badge-counts");
     expect(md.startsWith("# wmath")).toBe(true);
+    expect(h1LineOf(md)).toBe("# wmath");
   });
 });
 
@@ -871,6 +875,12 @@ describe("namespaceCountBadges visible text", () => {
   test("a zero category is omitted; an all-zero namespace shows nothing", () => {
     expect(namespaceCountBadges({ new: 2, changed: 0, deprecated: 0 })).not.toContain("changed");
     expect(namespaceCountBadges({ new: 0, changed: 0, deprecated: 0 })).toBe("");
+  });
+
+  test("wraps the pills in an inline span so they can ride a heading baseline", () => {
+    const html = namespaceCountBadges({ new: 3, changed: 0, deprecated: 0 });
+    expect(html).toContain('<span class="api-badge-counts"');
+    expect(html).not.toContain("<div");
   });
 });
 
