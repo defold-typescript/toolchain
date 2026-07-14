@@ -271,8 +271,12 @@ describe("docs/guide scaffold", () => {
     expect(body).not.toContain("falsy handle");
     // The `!== undefined` guard is a not-equal comparison, so it lowers to
     // `~= nil` — not the `== nil` that the equal `=== undefined` / `=== null`
-    // checks emit. Pin the operator so the wrong claim cannot return.
-    expect(body).toContain("~= nil");
+    // checks emit. Pin the operator on the target sentence itself so the wrong
+    // claim cannot return there; a bare whole-body `~= nil` match would stay
+    // green off an unrelated paragraph.
+    expect(body).toContain(
+      "The guard **precisely tests absence** and transpiles to `~= nil` in Lua",
+    );
     expect(body).not.toContain("transpiles to the same `== nil`");
     // The genuine arbitrary-value `unknown` coverage stays asserted.
     expect(body).toContain("## Some slots are `unknown` on purpose — the `any` wildcard");
