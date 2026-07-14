@@ -143,6 +143,12 @@ describe("runInitAgents", () => {
     expect(block).toContain("https://defold.com/llms.txt");
   });
 
+  test("renderAgentsBlock names the defold-target pin key and its guide", () => {
+    const block = renderAgentsBlock();
+    expect(block).toContain("defold-target");
+    expect(block).toContain("node_modules/@defold-typescript/docs/guide/pinning-defold-target.md");
+  });
+
   test("renderAgentsBlock carries the script-factory hard rules", () => {
     const block = renderAgentsBlock();
     expect(block).toContain(".ts.script");
