@@ -667,6 +667,80 @@ describe("docs/guide/agent-runbooks.md topical runbooks", () => {
   });
 });
 
+describe("docs/guide/agent-runbooks.md upgrade runbook", () => {
+  function section(body: string, heading: string, next?: string): string {
+    const start = body.indexOf(heading);
+    expect(start).toBeGreaterThan(-1);
+    const end = next ? body.indexOf(next, start + heading.length) : body.length;
+    return body.slice(start, end === -1 ? body.length : end);
+  }
+
+  async function upgradeRunbook(): Promise<string> {
+    const body = await readGuide("agent-runbooks.md");
+    return section(body, "## Upgrade the toolchain", "\n## ");
+  }
+
+  test("names the exact command and the update synonym", async () => {
+    const runbook = await upgradeRunbook();
+    expect(runbook).toContain("bunx @defold-typescript/cli@latest upgrade --json");
+    expect(runbook).toContain("update");
+  });
+
+  test("documents the --json envelope an agent branches on", async () => {
+    const runbook = await upgradeRunbook();
+    expect(runbook).toContain('"command": "upgrade"');
+    expect(runbook).toContain('"from"');
+    expect(runbook).toContain('"to"');
+    expect(runbook).toContain('"handedOff"');
+    expect(runbook).toContain("**Reading `ok`:**");
+  });
+
+  test("states the offline failure mode so a failed upgrade is never read as a no-op", async () => {
+    const runbook = await upgradeRunbook();
+    expect(runbook).toContain("`ok` is `false`");
+    expect(runbook).toContain("registry");
+    expect(runbook).toContain("non-zero");
+  });
+});
+
+describe("docs/guide/upgrading.md", () => {
+  test("exists and names the verb, the update synonym, and the install step", async () => {
+    expect(await Bun.file(resolve(GUIDE, "upgrading.md")).exists()).toBe(true);
+    const body = await readGuide("upgrading.md");
+    expect(body).toContain("bunx @defold-typescript/cli@latest upgrade");
+    expect(body).toContain("update");
+    expect(body).toContain("install");
+  });
+
+  // Pinned against the real repair behavior in `repairDefoldNamespace`, so a
+  // change to how a pin is healed cannot leave this page silently wrong.
+  test("states what the re-scaffold does to an existing defold-target pin", async () => {
+    const body = await readGuide("upgrading.md");
+    expect(body).toContain("defold-target");
+    expect(body).toContain("left untouched");
+    expect(body).toContain("defold-version");
+    expect(body).toContain("channel");
+    expect(body).toContain("migrated");
+  });
+
+  test("states that the upgrade never clobbers user-authored entry files", async () => {
+    const body = await readGuide("upgrading.md");
+    expect(body).toContain("src/main.ts");
+    expect(body).toContain("never");
+  });
+
+  test("links the pin lifecycle rather than restating it", async () => {
+    const body = await readGuide("upgrading.md");
+    expect(body).toContain("./pinning-defold-target.md");
+    expect(await Bun.file(resolve(GUIDE, "pinning-defold-target.md")).exists()).toBe(true);
+  });
+
+  test("the guide README links the page", async () => {
+    const readme = await readGuide("README.md");
+    expect(readme).toContain("](./upgrading.md)");
+  });
+});
+
 describe("docs/guide/messages.md", () => {
   test("exists and carries its four message-typing marker headings", async () => {
     const f = Bun.file(resolve(GUIDE, "messages.md"));
