@@ -1734,6 +1734,144 @@ describe("dispatch", () => {
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
+
+  test("watch --json reports the bad pin key on its start event", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, out } = captureStreams();
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      watcherFactory: factory,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    const code = await result;
+
+    expect(code).toBe(0);
+    const lines = out().trimEnd().split("\n");
+    const start = JSON.parse(lines[0] as string) as { event: string; warnings: string[] };
+    expect(start.event).toBe("start");
+    const warning = start.warnings.find((w) => w.includes("defold-version"));
+    expect(warning).toBeDefined();
+    expect(warning).toContain("defold-target");
+  });
+
+  test("watch --json reports the bad pin key exactly once across the stream", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, out } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const main: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    // The embedded resolve fires on a game.project change and emits its own
+    // `command: "resolve"` payload; it must not repeat the pin diagnostic.
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    triggerMain?.("change", "game.project");
+    await handle.waitForIdle();
+
+    handle.stop();
+    const code = await result;
+
+    expect(code).toBe(0);
+    const stdout = out();
+    expect(stdout).toContain('"event":"resolve"');
+    expect(stdout.split("defold-version").length - 1).toBe(1);
+  });
+
+  test("watch --json keeps the bad pin key on start when the initial build fails", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
+    writeFileSync(path.join(cwd, "src", "main.ts"), "export const a: number = 'nope';\n");
+    const { io, out } = captureStreams();
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      watcherFactory: factory,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    await result;
+
+    const lines = out().trimEnd().split("\n");
+    const start = JSON.parse(lines[0] as string) as { event: string; warnings: string[] };
+    expect(start.event).toBe("start");
+    expect(start.warnings.some((w) => w.includes("defold-target"))).toBe(true);
+    const build = JSON.parse(lines[1] as string) as { event: string; ok: boolean };
+    expect(build.event).toBe("build");
+    expect(build.ok).toBe(false);
+  });
+
+  test("watch --json on a valid pin emits a start event with no warnings", async () => {
+    scaffoldBuildProject({
+      "defold-typescript": { "defold-target": CURRENT_STABLE_DEFOLD_VERSION },
+    });
+    const { io, out, err } = captureStreams();
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      watcherFactory: factory,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    const code = await result;
+
+    expect(code).toBe(0);
+    const lines = out().trimEnd().split("\n");
+    const start = JSON.parse(lines[0] as string) as Record<string, unknown>;
+    expect(start).toEqual({ command: "watch", event: "start", ok: true, written: [] });
+    expect(err()).toBe("");
+  });
+
+  test("non-JSON watch writes the bad pin key to stderr once", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, err } = captureStreams();
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      watcherFactory: factory,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    const code = await result;
+
+    expect(code).toBe(0);
+    const stderr = err();
+    expect(stderr).toContain("defold-target");
+    expect(stderr.split("defold-version").length - 1).toBe(1);
+  });
 });
 
 describe("dispatch wall command", () => {
@@ -2766,6 +2904,68 @@ describe("dispatch resolve", () => {
     expect(parsed.extensions[0]?.url).toBe(url);
     expect(parsed.extensions[0]?.pinStatus).toBe("drift");
     expect(err()).toContain("drift");
+  });
+
+  function writePin(pkg: Record<string, unknown>): void {
+    writeFileSync(path.join(cwd, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
+  }
+
+  test("resolve --json reports the bad pin key as a warning and stays ok", async () => {
+    writeProject("[project]\n");
+    writePin({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { ok: boolean; warnings: string[] };
+    expect(parsed.ok).toBe(true);
+    const warning = parsed.warnings.find((w) => w.includes("defold-version"));
+    expect(warning).toBeDefined();
+    expect(warning).toContain("defold-target");
+  });
+
+  test("a bad pin key does not become a resolve pin: resolution is unchanged", async () => {
+    writeProject("[project]\n");
+    writePin({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd, "--json"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { defoldVersion: string; defoldVersionSource: string };
+    expect(parsed.defoldVersionSource).toBe("default");
+    expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
+  });
+
+  test("a valid pin produces no pin-key warning on the resolve payload", async () => {
+    writeProject("[project]\n");
+    writePin({ "defold-typescript": { "defold-target": CURRENT_STABLE_DEFOLD_VERSION } });
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as Record<string, unknown>;
+    expect(parsed.warnings).toBeUndefined();
+    expect(err()).toBe("");
+  });
+
+  test("non-JSON resolve writes the bad pin key to stderr once", async () => {
+    writeProject("[project]\n");
+    writePin({ "defold-typescript": { "defold-version": "1.12.4" } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const stderr = err();
+    expect(stderr).toContain("defold-target");
+    expect(stderr.split("defold-version").length - 1).toBe(1);
   });
 });
 
