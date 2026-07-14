@@ -25,7 +25,7 @@ export function classifyDefoldTarget(token: string): DefoldTarget {
   );
 }
 
-export function readDefoldTargetPin(pkg: unknown): string | undefined {
+function readDefoldNamespace(pkg: unknown): Record<string, unknown> | undefined {
   if (typeof pkg !== "object" || pkg === null) {
     return undefined;
   }
@@ -33,8 +33,93 @@ export function readDefoldTargetPin(pkg: unknown): string | undefined {
   if (typeof namespace !== "object" || namespace === null) {
     return undefined;
   }
-  const target = (namespace as Record<string, unknown>)["defold-target"];
+  return namespace as Record<string, unknown>;
+}
+
+export function readDefoldTargetPin(pkg: unknown): string | undefined {
+  const target = readDefoldNamespace(pkg)?.["defold-target"];
   return typeof target === "string" ? target : undefined;
+}
+
+// The only keys the readers consume: `defold-target` here, `extensions` in
+// extension-version.ts. Anything else in the namespace is inert, so it is
+// diagnosed rather than silently dropped.
+export const RECOGNIZED_NAMESPACE_KEYS = ["defold-target", "extensions"] as const;
+
+// The spellings that predate `defold-target`. The flag surface already hard-
+// rejects them (dispatch.ts) — the pin surface points at the same replacement.
+export const LEGACY_TARGET_KEYS = ["defold-version", "channel"] as const;
+
+function isKeyOf(keys: readonly string[], key: string): boolean {
+  return keys.includes(key);
+}
+
+export function diagnoseDefoldNamespace(pkg: unknown): readonly string[] {
+  const namespace = readDefoldNamespace(pkg);
+  if (namespace === undefined) {
+    return [];
+  }
+  const recognized = RECOGNIZED_NAMESPACE_KEYS.map((key) => `"${key}"`).join(" and ");
+  return Object.keys(namespace)
+    .filter((key) => !isKeyOf(RECOGNIZED_NAMESPACE_KEYS, key))
+    .sort()
+    .map((key) =>
+      isKeyOf(LEGACY_TARGET_KEYS, key)
+        ? `package.json "defold-typescript"."${key}" was removed; use "defold-target" (a version like 1.12.4, or stable|beta|alpha). Nothing is pinned until then; \`defold-typescript init\` migrates it.`
+        : `package.json "defold-typescript"."${key}" is not a recognized key (recognized: ${recognized}); it is ignored.`,
+    );
+}
+
+export interface DefoldNamespaceRepair {
+  readonly namespace: unknown;
+  readonly warnings: readonly string[];
+}
+
+export function repairDefoldNamespace(
+  namespace: unknown,
+  fallbackTarget: string,
+): DefoldNamespaceRepair {
+  if (namespace === undefined || namespace === null) {
+    return { namespace: { "defold-target": fallbackTarget }, warnings: [] };
+  }
+  if (typeof namespace !== "object") {
+    return { namespace, warnings: [] };
+  }
+  const source = namespace as Record<string, unknown>;
+  const pinned = typeof source["defold-target"] === "string" ? source["defold-target"] : undefined;
+  const legacyKey = LEGACY_TARGET_KEYS.find((key) => typeof source[key] === "string");
+  const legacyValue = legacyKey === undefined ? undefined : (source[legacyKey] as string);
+  const target = pinned ?? legacyValue ?? fallbackTarget;
+
+  const warnings: string[] = [];
+  if (legacyKey !== undefined) {
+    warnings.push(
+      pinned === undefined
+        ? `migrated package.json "defold-typescript"."${legacyKey}" to "defold-target", keeping "${target}".`
+        : `dropped package.json "defold-typescript"."${legacyKey}"; the "defold-target" pin ("${pinned}") wins.`,
+    );
+  } else if (pinned === undefined) {
+    warnings.push(`seeded package.json "defold-typescript"."defold-target" with "${target}".`);
+  }
+
+  // Rewrite the pin in the slot the old key occupied, so a namespace that
+  // already carries a valid pin round-trips byte-identical.
+  const repaired: Record<string, unknown> = {};
+  let placed = false;
+  for (const [key, value] of Object.entries(source)) {
+    if (key === "defold-target" || isKeyOf(LEGACY_TARGET_KEYS, key)) {
+      if (!placed) {
+        repaired["defold-target"] = target;
+        placed = true;
+      }
+      continue;
+    }
+    repaired[key] = value;
+  }
+  if (!placed) {
+    repaired["defold-target"] = target;
+  }
+  return { namespace: repaired, warnings };
 }
 
 export function resolveDefoldTarget(opts: {
