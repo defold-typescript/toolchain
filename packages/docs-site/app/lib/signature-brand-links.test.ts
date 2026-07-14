@@ -111,4 +111,21 @@ describe("splitSignatureBrandLinks", () => {
       headingInput,
     );
   });
+
+  test("deploy base is applied to the brand-anchor href", () => {
+    const out = splitSignatureBrandLinks(headingInput, OPAQUE_LINKS, (r) => `/repo${r}`);
+    expect(out).toContain('href="/repo/api/Opaque"');
+    expect(out).not.toContain('href="/api/Opaque"');
+  });
+
+  test("based href stays a single escaped anchor, split undisturbed", () => {
+    const out = splitSignatureBrandLinks(headingInput, OPAQUE_LINKS, (r) => `/repo${r}`);
+    expect((out.match(/class="signature-symbol-link"/g) ?? []).length).toBe(1);
+    expect(hasNestedAnchor(out)).toBe(false);
+  });
+
+  test("default applyBase is withBase (identity under test)", () => {
+    const out = splitSignatureBrandLinks(headingInput, OPAQUE_LINKS);
+    expect(out).toContain('href="/api/Opaque"');
+  });
 });
