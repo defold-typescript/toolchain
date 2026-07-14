@@ -68,7 +68,7 @@ export default function Search({ versionIds }: SearchProps) {
   };
 
   return (
-    <div class="relative">
+    <div class="relative w-full lg:w-auto">
       <input
         type="search"
         placeholder="Search docs…"
@@ -77,7 +77,7 @@ export default function Search({ versionIds }: SearchProps) {
         onKeyDown={onKeyDown}
         onFocus={() => hits.length > 0 && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        class="h-9 w-56 max-w-[40vw] rounded-md border border-border bg-surface px-3 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none"
+        class="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none lg:w-56 lg:max-w-[40vw]"
       />
       {open && hits.length > 0 ? (
         <div class="absolute right-0 z-40 mt-1 w-80 overflow-hidden rounded-md border border-border bg-bg shadow-lg">

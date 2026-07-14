@@ -13,6 +13,11 @@ const logoTitle = (page: import("@playwright/test").Page) => page.getByTestId("l
 const logoIcon = (page: import("@playwright/test").Page) => page.locator("header .logo-mark");
 const githubLink = (page: import("@playwright/test").Page) =>
   page.getByRole("link", { name: "GitHub repository" });
+const search = (page: import("@playwright/test").Page) => page.getByTestId("search");
+const versionSelector = (page: import("@playwright/test").Page) =>
+  page.locator("header details").first();
+const themeToggle = (page: import("@playwright/test").Page) =>
+  page.locator('header [aria-label^="Switch to"]');
 
 async function boxOf(locator: ReturnType<typeof topicNav>) {
   const box = await locator.boundingBox();
@@ -86,6 +91,14 @@ test.describe("wide viewport (lg and up)", () => {
     await expect(logoTitle(page)).toBeVisible();
   });
 
+  test("search box sits on the logo's row", async ({ page }) => {
+    await page.goto("/");
+    const logoBox = await boxOf(logo(page));
+    const searchBox = await boxOf(search(page));
+    // Same row: the search box's top sits within the logo's vertical band.
+    expect(searchBox.y).toBeLessThan(logoBox.y + logoBox.height);
+  });
+
   test("topbar links to the GitHub repository, opening in a new tab", async ({ page }) => {
     await page.goto("/");
     await expect(githubLink(page)).toBeVisible();
@@ -140,6 +153,36 @@ test.describe("narrow viewport (below lg)", () => {
 
     await expect(sidebar(page)).toBeHidden();
     await expect(toggle(page)).toBeVisible();
+  });
+
+  test("search wraps to its own full-width row spanning the topbar", async ({ page }) => {
+    await page.goto("/");
+    const logoBox = await boxOf(logo(page));
+    const searchBox = await boxOf(search(page));
+    // Second row: the search box sits entirely below the logo's bottom edge.
+    expect(searchBox.y).toBeGreaterThanOrEqual(logoBox.y + logoBox.height);
+    // Full-width: the box spans most of the viewport, well past the old 40vw cap.
+    expect(searchBox.width).toBeGreaterThanOrEqual(NARROW.width * 0.8);
+  });
+
+  test("version dropdown, GitHub link, and theme toggle stay on the logo's row", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const logoBox = await boxOf(logo(page));
+    const versionBox = await boxOf(versionSelector(page));
+    const githubBox = await boxOf(githubLink(page));
+    const themeBox = await boxOf(themeToggle(page));
+    for (const box of [versionBox, githubBox, themeBox]) {
+      // Each of the trio's tops sits within the logo's vertical band — none wrapped.
+      expect(box.y).toBeLessThan(logoBox.y + logoBox.height);
+    }
+    // The promoted trio keeps the tight gap-2 (~8px) spacing, not the header's
+    // wider gap-x-6 — measured between consecutive right-aligned items.
+    const gapVersionGithub = githubBox.x - (versionBox.x + versionBox.width);
+    const gapGithubTheme = themeBox.x - (githubBox.x + githubBox.width);
+    expect(gapVersionGithub).toBeLessThanOrEqual(12);
+    expect(gapGithubTheme).toBeLessThanOrEqual(12);
   });
 
   test("topic-nav labels stay on one line (never wrap)", async ({ page }) => {
