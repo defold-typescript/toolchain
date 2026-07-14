@@ -827,11 +827,14 @@
     background: var(--color-badge-deprecated);
   }
 
-  /* Namespace-title count pills: one per non-zero category, sitting under the H1. */
+  /* Namespace-title count pills: one per non-zero category. Inline-flex so the
+     group rides the H1 baseline and the `/api` index card title row instead of
+     wrapping to its own line. */
   .prose .api-badge-counts {
-    display: flex;
+    display: inline-flex;
     gap: 0.4rem;
     align-items: center;
+    vertical-align: middle;
   }
 
   .prose .api-badge-count {

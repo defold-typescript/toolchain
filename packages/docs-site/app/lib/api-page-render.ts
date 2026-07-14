@@ -157,18 +157,20 @@ const COUNT_KINDS: {
   { flag: "deprecated", kind: "deprecated", noun: "deprecated" },
 ];
 
-// The count pills injected after a Combined namespace's H1: one pill per non-zero
-// category showing its tally and category noun as visible text (`12 new`), the
+// The count pills for a Combined namespace: one pill per non-zero category
+// showing its tally and category noun as visible text (`12 new`), the
 // `aria-label` spelling it out for assistive tech so color stays additive rather
-// than the sole signal. Returns `""` when every count is zero (a fully stable
-// namespace shows nothing).
+// than the sole signal. The wrapper is an inline `<span>` (not a block `<div>`)
+// so the group rides the namespace-page H1 baseline and the `/api` index card
+// title row instead of wrapping to its own line. Returns `""` when every count
+// is zero (a fully stable namespace shows nothing).
 export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
   const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
     (c) =>
       `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]} ${c.noun}</span>`,
   );
   if (pills.length === 0) return "";
-  return `<div class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</div>`;
+  return `<span class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</span>`;
 }
 
 // The compact count pills for a sidebar namespace leaf: one span per non-zero
@@ -291,8 +293,9 @@ export function apiPageMarkdown(
   }: {
     omitHeading?: boolean;
     resolveReplacement?: ReplacementResolver;
-    // Namespace-title count pills injected immediately after the H1 (Combined
-    // pages pass the `namespaceCountBadges` HTML); empty leaves the heading as-is.
+    // Namespace-title count pills appended inline on the H1 line (Combined pages
+    // pass the `namespaceCountBadges` HTML) so they sit on the heading baseline;
+    // empty leaves the heading as-is.
     titleBadges?: string;
     // The per-symbol color/category marker layer is Combined-only: the union
     // surface is the one place comparison across versions is meaningful. The
@@ -307,12 +310,17 @@ export function apiPageMarkdown(
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
   const lines: string[] = [];
   if (!omitHeading) {
-    lines.push(`# ${page.displayName ?? m.namespace}`, "");
+    // The title pills ride the H1 line (mirroring the inline `api-badge-dot`
+    // signature-heading markers) so they render on the heading baseline rather
+    // than as a block that wraps below the title.
+    const heading = `# ${page.displayName ?? m.namespace}`;
+    lines.push(titleBadges ? `${heading} ${titleBadges}` : heading, "");
     if (page.displayName && page.displayName !== m.namespace) {
       lines.push(`\`${m.namespace}\``, "");
     }
+  } else if (titleBadges) {
+    lines.push(titleBadges, "");
   }
-  if (titleBadges) lines.push(titleBadges, "");
   const raw = m.description || m.brief;
   const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
   if (intro) lines.push(linkify(intro), "");
