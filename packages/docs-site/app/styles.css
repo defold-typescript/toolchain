@@ -718,6 +718,45 @@
     background: var(--color-accent-soft);
   }
 
+  /* A brand token (`Opaque`) inside a rendered signature is split into its own
+     deep-link anchor (see signature-brand-links.ts) and wrapped, with the
+     re-emitted permalink/jump fragments, in a `.signature-split` span. That span
+     is the positioning context for the heading permalink icon — a partial
+     re-emitted `heading-anchor` would offset the icon mid-signature — so pin its
+     `position` here and neutralize the fragments' `position: relative`. Flatten
+     the per-fragment pill seams (border, radius, inner padding) so the split run
+     still reads as one signature over its shared background. The brand keeps its
+     Shiki token color and gets a dotted underline so it reads as a link. Placed
+     after the overview rules to win at equal specificity over their
+     `border-bottom: 0`; the `.prose a` base border is unlayered in critical.css,
+     so these overrides are mirrored there too (as with `.badge-link`). */
+  .prose .signature-split {
+    position: relative;
+  }
+
+  .prose .signature-split a.heading-anchor {
+    position: static;
+  }
+
+  /* The `a` keeps this above `.prose a:not(.heading-anchor) .api-signature`, which
+     would otherwise zero the brand fragment's padding and shorten its background. */
+  .prose .signature-split a .api-signature {
+    border-color: transparent;
+    border-radius: 0;
+    /* Uniform vertical padding (matching `.prose code`), zero horizontal, so the
+       fragments' shared background aligns top-to-bottom and abuts seamlessly. */
+    padding: 0.1em 0;
+  }
+
+  /* A `text-decoration` underline (not `border-bottom`) so it draws over the
+     fragment's shared background instead of being hidden beneath it. */
+  .prose a.signature-symbol-link {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: var(--color-accent);
+    text-underline-offset: 0.15em;
+  }
+
   .prose img {
     max-width: 100%;
     margin-top: 0.75rem;

@@ -385,6 +385,17 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
   return (text: string) => linkifySymbolMentions(text, registry);
 }
 
+// The `name → route` map that `renderMarkdown`'s `signatureSymbolLinks` uses to
+// deep-link global-type brand tokens inside rendered signatures, resolved through
+// `buildSymbolIndex`. Today only `Opaque` is populated (a bare `Opaque` in a
+// signature is always the generic engine-handle brand). Empty when the given
+// surface carries no such page — global types are version-independent, so the
+// versioned route resolves this against the canonical surface, not its own pages.
+export function apiSignatureSymbolLinks(pages: ApiPage[]): Map<string, string> {
+  const route = buildSymbolIndex(pages).Opaque?.route;
+  return route ? new Map([["Opaque", route]]) : new Map();
+}
+
 // A replacement-link resolver scoped to one surface's pages. `buildSymbolIndex`
 // keys every member by its qualified name to a route that already carries the
 // surface's version prefix, so a resolved replacement is version-correct by
