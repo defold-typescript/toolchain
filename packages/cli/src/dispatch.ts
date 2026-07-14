@@ -13,6 +13,7 @@ import {
 import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
+  diagnoseDefoldNamespace,
   fetchChannelInfo,
   fetchVersionInfo,
   type ResolvedTargetHead,
@@ -132,13 +133,13 @@ function parseValueFlag(
   return { value, rest };
 }
 
-function readTargetPin(cwd: string): string | undefined {
+function readPackageJson(cwd: string): unknown {
   const pkgPath = path.join(cwd, "package.json");
   if (!existsSync(pkgPath)) {
     return undefined;
   }
   try {
-    return readDefoldTargetPin(JSON.parse(readFileSync(pkgPath, "utf8")));
+    return JSON.parse(readFileSync(pkgPath, "utf8"));
   } catch {
     return undefined;
   }
@@ -215,7 +216,17 @@ export function dispatch(
     return 1;
   }
 
-  const pin = readTargetPin(cwd);
+  // One read of package.json feeds both the pin and its diagnostics, so every
+  // target-resolving command reports a bad namespace key from the same place.
+  // A JSON run folds these into its `warnings` payload instead (see below).
+  const pkg = readPackageJson(cwd);
+  const pin = readDefoldTargetPin(pkg);
+  const pinDiagnostics = diagnoseDefoldNamespace(pkg);
+  if (!json && command !== undefined) {
+    for (const diagnostic of pinDiagnostics) {
+      io.stderr.write(`defold-typescript ${command}: ${diagnostic}\n`);
+    }
+  }
   let detected: string | undefined;
   if (defoldTargetFlag === undefined && pin === undefined) {
     const result = (internals?.detectEditorVersion ?? detectInstalledEditorVersion)();
@@ -264,17 +275,19 @@ export function dispatch(
             'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
           );
         }
-        const { written, operations } = runInit({
+        const { written, operations, warnings } = runInit({
           cwd,
           force,
           ...(templateFlag !== undefined ? { template: templateFlag } : {}),
         });
+        const initWarnings = [...pinDiagnostics, ...warnings];
         if (json) {
           io.stdout.write(
             renderResult({
               command: "init",
               written,
               operations,
+              ...(initWarnings.length > 0 ? { warnings: initWarnings } : {}),
               defoldVersion: head.version,
               defoldVersionSource: targetSource,
               defoldChannel: head.channel,
@@ -289,6 +302,9 @@ export function dispatch(
           );
           for (const op of operations) {
             io.stdout.write(`  ${op.target}: ${op.status}${op.detail ? ` — ${op.detail}` : ""}\n`);
+          }
+          for (const warning of warnings) {
+            io.stderr.write(`defold-typescript init: ${warning}\n`);
           }
           if (!suppressInstallReminder) {
             io.stdout.write(`Next: run \`${installHint()}\` to install dependencies.\n`);
@@ -424,7 +440,7 @@ export function dispatch(
             renderResult({
               command: "build",
               written,
-              warnings,
+              warnings: [...pinDiagnostics, ...warnings],
               defoldVersion: head.version,
               defoldVersionSource: targetSource,
               defoldChannel: head.channel,
