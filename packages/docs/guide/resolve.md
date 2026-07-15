@@ -117,10 +117,12 @@ by two knobs:
 - **Default (no flag)** — warns on drift, writing one `stderr` line per drifted
   URL (e.g. `pin drift for https://...: sha256:pinned -> sha256:fresh`) but exits
   `0`, so drift surfaces on a developer's machine without breaking scripted runs.
-  Absent pins are seeded; existing pins are never clobbered.
+  Absent pins are seeded; existing pins are never clobbered; and a pin whose URL
+  is no longer declared in `[dependencies]` is pruned, so the pin map tracks the
+  URLs that actually resolve.
 - **`--frozen`** — treats the pin set as a lockfile: exits non-zero on drift and
-  writes nothing (no seeding, no clobbering). An unpinned extension passes and
-  stays unseeded.
+  writes nothing (no seeding, no clobbering, no pruning). An unpinned extension
+  passes and stays unseeded.
 
 Either way `resolve` still materializes the surface for the drifted dependencies;
 only the `package.json` write and the exit code are gated. `--json` reports
