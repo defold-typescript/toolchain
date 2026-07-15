@@ -360,6 +360,81 @@ describe("runResolve", () => {
     expect(report.pinStatus).toBe("drift");
   });
 
+  test("a prune-only run rewrites package.json, dropping an orphan pin", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    const orphanUrl = "https://example.com/gone.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = join(cwd, "package.json");
+    writeFileSync(
+      pkgPath,
+      `${JSON.stringify(
+        {
+          "defold-typescript": {
+            extensions: { [url]: "sha256:live", [orphanUrl]: "sha256:orphan" },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+    });
+
+    expect(result.ok).toBe(true);
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+      "defold-typescript"?: { extensions?: Record<string, string> };
+    };
+    expect(pkg["defold-typescript"]?.extensions?.[url]).toBe("sha256:live");
+    expect(pkg["defold-typescript"]?.extensions?.[orphanUrl]).toBeUndefined();
+  });
+
+  test("freeze:true never prunes an orphan pin", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    const orphanUrl = "https://example.com/gone.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = join(cwd, "package.json");
+    const original = `${JSON.stringify(
+      {
+        "defold-typescript": {
+          extensions: { [url]: "sha256:live", [orphanUrl]: "sha256:orphan" },
+        },
+      },
+      null,
+      2,
+    )}\n`;
+    writeFileSync(pkgPath, original);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      freeze: true,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(pkgPath, "utf8")).toBe(original);
+  });
+
   test("a project with no [dependencies] resolves clean with no writes", async () => {
     const cwd = tmp();
     writeProject(cwd, "[project]\ntitle = Test\n");
