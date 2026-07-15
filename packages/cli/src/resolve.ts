@@ -89,8 +89,13 @@ function readExistingPackageJson(cwd: string): { value: unknown; writable: boole
   }
 }
 
-function seedExtensionPins(cwd: string, existing: unknown, resolved: Record<string, string>): void {
-  const merged = mergeResolvedVersionPins(existing, resolved);
+function seedExtensionPins(
+  cwd: string,
+  existing: unknown,
+  resolved: Record<string, string>,
+  liveUrls: Iterable<string>,
+): void {
+  const merged = mergeResolvedVersionPins(existing, resolved, liveUrls);
   writeFileSync(join(cwd, "package.json"), `${formatJsonLikeBiome(merged)}\n`);
 }
 
@@ -190,14 +195,20 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
 
   const existingPkg = readExistingPackageJson(cwd);
   const pins = readExtensionVersionPins(existingPkg.value);
+  const liveUrls = bundles.map((b) => b.url);
   const resolvedForSeed: Record<string, string> = {};
   for (const bundle of bundles) {
     if (!(bundle.url in pins)) {
       resolvedForSeed[bundle.url] = bundle.resolvedVersion;
     }
   }
-  if (!opts.freeze && Object.keys(resolvedForSeed).length > 0 && existingPkg.writable) {
-    seedExtensionPins(cwd, existingPkg.value, resolvedForSeed);
+  const orphaned = Object.keys(pins).some((u) => !liveUrls.includes(u));
+  if (
+    !opts.freeze &&
+    existingPkg.writable &&
+    (Object.keys(resolvedForSeed).length > 0 || orphaned)
+  ) {
+    seedExtensionPins(cwd, existingPkg.value, resolvedForSeed, liveUrls);
   }
 
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {

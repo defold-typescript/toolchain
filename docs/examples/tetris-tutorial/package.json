@@ -1,8 +1,7 @@
 {
   "defold-typescript": {
     "extensions": {
-      "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip": "sha256:46fa3c3c8269e8659ac8d2c0937abaf6ec126f5e61ac69c15e7082b1fd3b37dc",
-      "https://github.com/britzl/defold-input/archive/HEAD.zip": "sha256:3bd1f8e32db0cf259031d3e4958ce4990d798f305c45101d7a7bbe279bd99dda"
+      "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip": "sha256:46fa3c3c8269e8659ac8d2c0937abaf6ec126f5e61ac69c15e7082b1fd3b37dc"
     }
   }
 }

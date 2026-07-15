@@ -158,4 +158,47 @@ describe("mergeResolvedVersionPins", () => {
     expect(merged).not.toBe(original);
     expect(merged["defold-typescript"]).not.toBe(original["defold-typescript"]);
   });
+
+  test("drops an orphan pin absent from the live url set", () => {
+    const merged = mergeResolvedVersionPins(
+      { "defold-typescript": { extensions: { [URL_A]: "sha256:a", [URL_B]: "sha256:b" } } },
+      {},
+      [URL_A],
+    );
+    expect(merged).toEqual({
+      "defold-typescript": { extensions: { [URL_A]: "sha256:a" } },
+    });
+  });
+
+  test("preserves live pins while seeding a new one", () => {
+    const merged = mergeResolvedVersionPins(
+      { "defold-typescript": { extensions: { [URL_A]: "sha256:a" } } },
+      { [URL_B]: "sha256:B" },
+      [URL_A, URL_B],
+    );
+    expect(merged).toEqual({
+      "defold-typescript": { extensions: { [URL_A]: "sha256:a", [URL_B]: "sha256:B" } },
+    });
+  });
+
+  test("never clobbers a live pin during reconcile", () => {
+    const merged = mergeResolvedVersionPins(
+      { "defold-typescript": { extensions: { [URL_A]: "sha256:old" } } },
+      { [URL_A]: "sha256:new" },
+      [URL_A],
+    );
+    expect(merged).toEqual({
+      "defold-typescript": { extensions: { [URL_A]: "sha256:old" } },
+    });
+  });
+
+  test("omitting the live url set prunes nothing", () => {
+    const merged = mergeResolvedVersionPins(
+      { "defold-typescript": { extensions: { [URL_A]: "sha256:a", [URL_B]: "sha256:b" } } },
+      {},
+    );
+    expect(merged).toEqual({
+      "defold-typescript": { extensions: { [URL_A]: "sha256:a", [URL_B]: "sha256:b" } },
+    });
+  });
 });
