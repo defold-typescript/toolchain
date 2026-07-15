@@ -39,6 +39,7 @@ export function readExtensionVersionPins(pkg: unknown): Record<string, string> {
 export function mergeResolvedVersionPins(
   pkg: unknown,
   resolved: Record<string, string>,
+  liveUrls?: Iterable<string>,
 ): Record<string, unknown> {
   const base: Record<string, unknown> =
     typeof pkg === "object" && pkg !== null && !Array.isArray(pkg)
@@ -56,6 +57,14 @@ export function mergeResolvedVersionPins(
     !Array.isArray(existingNamespace.extensions)
       ? { ...(existingNamespace.extensions as Record<string, unknown>) }
       : {};
+  if (liveUrls !== undefined) {
+    const live = new Set(liveUrls);
+    for (const url of Object.keys(existingExtensions)) {
+      if (!live.has(url)) {
+        delete existingExtensions[url];
+      }
+    }
+  }
   for (const [url, version] of Object.entries(resolved)) {
     if (!(url in existingExtensions)) {
       existingExtensions[url] = version;
