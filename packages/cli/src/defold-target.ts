@@ -17,7 +17,7 @@ export function classifyDefoldTarget(token: string): DefoldTarget {
   if (isDefoldChannel(token)) {
     return { kind: "channel", channel: token };
   }
-  if (/^\d+\.\d+(\.\d+)?/.test(token)) {
+  if (/^\d+\.\d+(\.\d+)?$/.test(token)) {
     return { kind: "version", version: token };
   }
   throw new Error(
@@ -82,7 +82,7 @@ export function describeTargetOverride(
     return [];
   }
   return [
-    `--defold-target ${flag} overrides the package.json pin (${pin}) for this run only; it does not update the pin. Edit "defold-typescript"."defold-target" or run \`init\` to persist ${flag}.`,
+    `--defold-target ${flag} overrides the package.json pin (${pin}) for this run only; it does not update the pin. Edit "defold-typescript"."defold-target" or run \`set-target ${flag}\` to persist ${flag}.`,
   ];
 }
 

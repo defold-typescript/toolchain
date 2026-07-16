@@ -79,6 +79,30 @@ describe("runSetTarget", () => {
     expect(readPkgFile()).toBe(before);
   });
 
+  test("a malformed version suffix is rejected, naming set-target and the accepted forms; file untouched", () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const before = readPkgFile();
+
+    const result = runSetTarget({ cwd, token: "1.13.0garbage" });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("set-target");
+    expect(result.error).toContain("stable|beta|alpha");
+    expect(result.written).toEqual([]);
+    expect(readPkgFile()).toBe(before);
+  });
+
+  test("a channel token is accepted and written, proving channels persist through validation", () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const result = runSetTarget({ cwd, token: "beta" });
+
+    expect(result.ok).toBe(true);
+    expect(result.to).toBe("beta");
+    expect(result.written).toEqual(["package.json"]);
+    expect(pinOf()).toBe("beta");
+  });
+
   test("--detected writes the detected editor version", () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
 
