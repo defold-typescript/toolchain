@@ -54,39 +54,66 @@ export function runRegenSequence(run: (unit: RegenUnit) => boolean): RegenSummar
   return { ok: true, ran };
 }
 
-function spawn(unit: RegenUnit): boolean {
-  process.stdout.write(`$ ${unit.command.join(" ")}\n`);
+// Stream sinks so the CLI's routing is testable without spawning real
+// generators. In `--json` mode the summary object is the only thing on stdout;
+// banners and child output are diverted to stderr so a machine consumer can
+// `JSON.parse` stdout directly.
+export interface RegenIo {
+  readonly stdout: (c: string) => void;
+  readonly stderr: (c: string) => void;
+}
+
+export type ExecUnit = (unit: RegenUnit, json: boolean, io: RegenIo) => boolean;
+
+export function runRegenCli(argv: readonly string[], exec: ExecUnit, io: RegenIo): number {
+  const json = argv.includes("--json");
+  const banner = json ? io.stderr : io.stdout;
+
+  if (argv.includes("--plan")) {
+    const units = plan();
+    if (json) {
+      io.stdout(`${JSON.stringify({ plan: units })}\n`);
+    } else {
+      for (const unit of units) {
+        io.stdout(`${unit.id}: ${unit.command}\n`);
+      }
+    }
+    return 0;
+  }
+
+  const summary = runRegenSequence((unit) => {
+    banner(`$ ${unit.command.join(" ")}\n`);
+    return exec(unit, json, io);
+  });
+  if (json) {
+    io.stdout(`${JSON.stringify(summary)}\n`);
+  } else if (summary.ok) {
+    io.stdout(`regen:all — regenerated ${summary.ran.length} artifact set(s)\n`);
+  } else {
+    io.stderr(`regen:all FAILED at \`${summary.failed}\`\n`);
+  }
+  return summary.ok ? 0 : 1;
+}
+
+export function execUnit(unit: RegenUnit, json: boolean, io: RegenIo): boolean {
   const proc = Bun.spawnSync([...unit.command], {
     cwd: REPO_ROOT,
-    stdout: "inherit",
+    // pipe-and-forward in json mode keeps child stdout off the parent's stdout
+    // (buffered, not live — fine for machine-consumed json); inherit otherwise.
+    stdout: json ? "pipe" : "inherit",
     stderr: "inherit",
   });
+  if (json && proc.stdout) {
+    io.stderr(new TextDecoder().decode(proc.stdout));
+  }
   return proc.exitCode === 0;
 }
 
 if (import.meta.main) {
-  const args = process.argv.slice(2);
-  const json = args.includes("--json");
-
-  if (args.includes("--plan")) {
-    const units = plan();
-    if (json) {
-      process.stdout.write(`${JSON.stringify({ plan: units })}\n`);
-    } else {
-      for (const unit of units) {
-        process.stdout.write(`${unit.id}: ${unit.command}\n`);
-      }
-    }
-    process.exit(0);
-  }
-
-  const summary = runRegenSequence(spawn);
-  if (json) {
-    process.stdout.write(`${JSON.stringify(summary)}\n`);
-  } else if (summary.ok) {
-    process.stdout.write(`regen:all — regenerated ${summary.ran.length} artifact set(s)\n`);
-  } else {
-    process.stderr.write(`regen:all FAILED at \`${summary.failed}\`\n`);
-  }
-  process.exit(summary.ok ? 0 : 1);
+  process.exit(
+    runRegenCli(process.argv.slice(2), execUnit, {
+      stdout: (c) => process.stdout.write(c),
+      stderr: (c) => process.stderr.write(c),
+    }),
+  );
 }
