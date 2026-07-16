@@ -9,7 +9,8 @@ export type CliCommand =
   | "wall"
   | "resolve"
   | "run"
-  | "upgrade";
+  | "upgrade"
+  | "set-target";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;

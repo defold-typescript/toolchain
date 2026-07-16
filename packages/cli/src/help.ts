@@ -43,6 +43,16 @@ const COMMANDS: readonly HelpCommand[] = [
     flags: [],
   },
   {
+    name: "set-target",
+    summary:
+      "Write the package.json defold-target pin to a version or channel, or sync it to the installed editor.",
+    usage: "bunx @defold-typescript/cli set-target <version|stable|beta|alpha> [path]",
+    flags: [
+      { flag: "--detected", desc: "pin the installed Defold editor's version instead of a token" },
+      { flag: "--detect", desc: "synonym for --detected" },
+    ],
+  },
+  {
     name: "build",
     summary: "Transpile TypeScript under src/ to Lua once.",
     usage: "bunx @defold-typescript/cli build [path]",
