@@ -70,6 +70,22 @@ export function diagnoseDefoldNamespace(pkg: unknown): readonly string[] {
     );
 }
 
+// `--defold-target` is a per-run override that never rewrites the pin by design.
+// When it silently shadows a live pin, name both values and how to persist the
+// target. Raw trimmed comparison, not classified equality, so the notice mirrors
+// exactly what the user typed and cannot drift from readDefoldTargetPin's guard.
+export function describeTargetOverride(
+  flag: string | undefined,
+  pin: string | undefined,
+): readonly string[] {
+  if (flag === undefined || pin === undefined || flag.trim() === pin.trim()) {
+    return [];
+  }
+  return [
+    `--defold-target ${flag} overrides the package.json pin (${pin}) for this run only; it does not update the pin. Edit "defold-typescript"."defold-target" or run \`init\` to persist ${flag}.`,
+  ];
+}
+
 export interface DefoldNamespaceRepair {
   readonly namespace: unknown;
   readonly warnings: readonly string[];
