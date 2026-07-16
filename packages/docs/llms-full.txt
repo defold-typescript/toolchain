@@ -3345,6 +3345,10 @@ you do not select it.
   deprecation list is never auto-edited.
 - **Re-confirm `import-manifest.json`** — verify the imported release tag matches
   the intended `<to>` build.
+- **Re-confirm the extension release tags** — verify the pinned
+  `EXTENSION_MANIFEST` tags (iac/iap/push/webview) still match the intended
+  `<to>` build; a new Defold release may bundle newer extension versions. These
+  pin independently of `import-manifest.json`.
 - **Author the upgrade guide** — a new `upgrading-to-defold-<new>.md` under
   `packages/docs/guide/` (dashes, not dots) plus its gate.
 - **Minor bumps only** — review the demoted `defold-<prev>` surface under

@@ -4,6 +4,7 @@ import type { ReleaseImportManifest } from "../packages/types/scripts/import-def
 import { runBumpCheck } from "./bump-defold-check.ts";
 import {
   classifyTransition,
+  EXTENSION_PINS,
   fixtureDir,
   RELEASE_MODEL,
   type ReleaseTransition,
@@ -115,6 +116,7 @@ export function remainingHumanDecisions(plan: BumpPlan): string[] {
   const decisions = [
     `curate api-migrations.json for the ${plan.from} -> ${plan.to} transition (never auto-edited)`,
     `re-confirm the import-manifest.json release tag matches the intended ${plan.to} build`,
+    `re-confirm the pinned extension release tags (${EXTENSION_PINS.map((p) => `${p.namespace}@${p.tag}`).join(", ")}) still match the intended ${plan.to} build`,
     `author the ${plan.to} upgrade guide`,
   ];
   if (plan.transition === "minor") {
