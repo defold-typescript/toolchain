@@ -56,8 +56,10 @@ export interface ExtensionPin {
   readonly path: string;
 }
 
-// Extension-only namespaces pinned to a release tag; the types-side sync script
-// derives its `EXTENSION_MANIFEST` from these.
+// Extension-only namespaces pinned to a release tag. The types-side sync script
+// holds these values in its own `EXTENSION_MANIFEST` (the per-package rootDir
+// boundary prevents importing this module); `release-model.test.ts`
+// correspondence-guards that manifest against these pins so tag drift fails CI.
 export const EXTENSION_PINS: readonly ExtensionPin[] = [
   {
     namespace: "iac",
