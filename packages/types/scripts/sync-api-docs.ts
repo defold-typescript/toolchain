@@ -6,6 +6,11 @@ import { DEFOLD_TYPE_MAP } from "../src/core-types";
 import { parseScriptApi } from "../src/script-api";
 import { MODULE_MANIFEST } from "./regen";
 
+// The current pinned Defold release. This value and the two fixture-path
+// templates below are held here rather than imported from the root release
+// model because the per-package `rootDir` boundary forbids a types-package
+// module importing outside its own tree; `scripts/release-model.test.ts`
+// correspondence-guards these against the model so drift fails CI.
 export const DEFOLD_VERSION = "1.13.0";
 export const refDocUrl = (version = DEFOLD_VERSION): string =>
   `https://github.com/defold/defold/releases/download/${version}/ref-doc.zip`;
