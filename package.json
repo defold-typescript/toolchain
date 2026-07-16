@@ -16,6 +16,7 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "typecheck": "bun run --filter '*' typecheck && tsc -p scripts/tsconfig.json && tsc -p test/tsconfig.json",
+    "regen:all": "bun scripts/regen-all.ts",
     "readme:sync": "bun scripts/sync-readme.ts --write",
     "readme:check": "bun scripts/sync-readme.ts --check",
     "smoke": "bun scripts/release-smoke.ts",
