@@ -11,11 +11,12 @@ import {
   BumpValidationError,
   importResult,
   planBump,
+  remainingHumanDecisions,
   runBump,
   runBumpCli,
   spawn,
 } from "./bump-defold.ts";
-import { fixtureDir, RELEASE_MODEL, targetMetaFor } from "./release-model.ts";
+import { EXTENSION_PINS, fixtureDir, RELEASE_MODEL, targetMetaFor } from "./release-model.ts";
 
 const REPO = path.resolve(import.meta.dir, "..");
 
@@ -154,6 +155,31 @@ describe("runBump", () => {
     expect(summary.ok).toBe(false);
     expect(summary.failedStage).toBe("validate");
     expect(ran).toEqual([]);
+  });
+});
+
+describe("remainingHumanDecisions", () => {
+  const [pin] = EXTENSION_PINS;
+  if (!pin) throw new Error("EXTENSION_PINS is empty");
+
+  test("a minor bump reports an extension-release-tag reconfirmation naming a pinned tag", () => {
+    const decisions = remainingHumanDecisions(planBump("1.14.0"));
+    const entry = decisions.find((d) => /extension release tag/i.test(d));
+    expect(entry).toBeDefined();
+    expect(entry).toContain(`${pin.namespace}@${pin.tag}`);
+  });
+
+  test("a patch bump carries the same extension-tag entry — it is unconditional", () => {
+    const decisions = remainingHumanDecisions(planBump("1.13.1"));
+    const entry = decisions.find((d) => /extension release tag/i.test(d));
+    expect(entry).toBeDefined();
+    expect(entry).toContain(`${pin.namespace}@${pin.tag}`);
+  });
+
+  test("the import-manifest reconfirmation survives alongside the new extension-tag line", () => {
+    const joined = remainingHumanDecisions(planBump("1.14.0")).join("\n");
+    expect(joined).toMatch(/manifest.*tag/i);
+    expect(joined).toContain("import-manifest.json");
   });
 });
 
