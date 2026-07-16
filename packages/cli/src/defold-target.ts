@@ -138,6 +138,33 @@ export function repairDefoldNamespace(
   return { namespace: repaired, warnings };
 }
 
+// The imperative counterpart to `repairDefoldNamespace`: force the pin to
+// `value` rather than keeping an existing one. Shares the slot-placement and
+// legacy-key handling so the written namespace stays byte-stable and never
+// leaves a legacy key beside the pin.
+export function setDefoldTargetPin(namespace: unknown, value: string): unknown {
+  if (typeof namespace !== "object" || namespace === null) {
+    return { "defold-target": value };
+  }
+  const source = namespace as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  let placed = false;
+  for (const [key, existing] of Object.entries(source)) {
+    if (key === "defold-target" || isKeyOf(LEGACY_TARGET_KEYS, key)) {
+      if (!placed) {
+        result["defold-target"] = value;
+        placed = true;
+      }
+      continue;
+    }
+    result[key] = existing;
+  }
+  if (!placed) {
+    result["defold-target"] = value;
+  }
+  return result;
+}
+
 export function resolveDefoldTarget(opts: {
   flag?: string;
   pin?: string;

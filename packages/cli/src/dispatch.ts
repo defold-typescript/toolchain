@@ -38,6 +38,7 @@ import { detectInstalledEditorVersion } from "./installed-editor-version";
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
+import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
 import type { CheckboxPrompt } from "./wall-interactive";
@@ -197,7 +198,9 @@ export function dispatch(
       a !== "--suppress-install-reminder" &&
       a !== "--remove" &&
       a !== "--list" &&
-      a !== "--frozen",
+      a !== "--frozen" &&
+      a !== "--detected" &&
+      a !== "--detect",
   );
   const [command, ...rest] = positional;
   const cwd = rest[0] ? path.resolve(rest[0]) : process.cwd();
@@ -220,6 +223,59 @@ export function dispatch(
       io.stderr.write(`${message}\n`);
     }
     return 1;
+  }
+
+  if (command === "set-target") {
+    // Pin writer, not a target resolver: it never runs the resolution machinery
+    // below. With `--detected` the sole positional is the path; otherwise the
+    // token leads and the path trails.
+    const detectedMode = argv.includes("--detected") || argv.includes("--detect");
+    const usageError = (): number => {
+      const message =
+        "defold-typescript set-target: pass a version|stable|beta|alpha token, or --detected, and an optional path.";
+      if (json) {
+        io.stdout.write(renderResult({ command: "set-target", error: message }));
+      } else {
+        io.stderr.write(`${message}\n`);
+      }
+      return 1;
+    };
+    if (detectedMode && rest.length > 1) {
+      return usageError();
+    }
+    if (!detectedMode && rest[0] === undefined) {
+      return usageError();
+    }
+    const token = detectedMode ? undefined : rest[0];
+    const pathArg = detectedMode ? rest[0] : rest[1];
+    const setTargetCwd = pathArg ? path.resolve(pathArg) : process.cwd();
+    const result = runSetTarget({
+      cwd: setTargetCwd,
+      ...(token !== undefined ? { token } : {}),
+      ...(detectedMode
+        ? { detected: true, detect: internals?.detectEditorVersion ?? detectInstalledEditorVersion }
+        : {}),
+    });
+    if (json) {
+      io.stdout.write(
+        renderResult({
+          command: "set-target",
+          ...(result.error !== undefined ? { error: result.error } : {}),
+          written: result.written,
+          ...(result.from !== undefined ? { from: result.from } : {}),
+          ...(result.to !== undefined ? { to: result.to } : {}),
+        }),
+      );
+    } else if (!result.ok) {
+      io.stderr.write(`${result.error}\n`);
+    } else if (result.written.length === 0) {
+      io.stdout.write(`defold-typescript set-target: already ${result.to}\n`);
+    } else {
+      io.stdout.write(
+        `defold-typescript set-target: ${result.from ?? "(unset)"} -> ${result.to}\n`,
+      );
+    }
+    return result.ok ? 0 : 1;
   }
 
   // One read of package.json feeds both the pin and its diagnostics, so every

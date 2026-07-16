@@ -3595,3 +3595,89 @@ describe("dispatch upgrade", () => {
     expect(unknown.err()).toBe(USAGE);
   });
 });
+
+describe("dispatch set-target", () => {
+  function writePkg(value: unknown): void {
+    writeFileSync(path.join(cwd, "package.json"), `${JSON.stringify(value, null, 2)}\n`);
+  }
+
+  function pinOf(): string {
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+      "defold-typescript": { "defold-target": string };
+    };
+    return pkg["defold-typescript"]["defold-target"];
+  }
+
+  test("set-target <token> writes the pin and reports from -> to", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["set-target", "1.13.0", cwd], io);
+
+    expect(code).toBe(0);
+    expect(out()).toContain("1.12.4 -> 1.13.0");
+    expect(pinOf()).toBe("1.13.0");
+  });
+
+  test("set-target --json emits the command/ok/written/from/to payload", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["set-target", "1.13.0", cwd, "--json"], io);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out())).toMatchObject({
+      command: "set-target",
+      ok: true,
+      written: ["package.json"],
+      from: "1.12.4",
+      to: "1.13.0",
+    });
+  });
+
+  test("set-target --detected writes the injected detected version", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detected", cwd], io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    expect(pinOf()).toBe("1.13.0");
+  });
+
+  test("--detect is a synonym of --detected", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detect", cwd], io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    expect(pinOf()).toBe("1.13.0");
+  });
+
+  test("neither a token nor --detected is a usage error", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["set-target"], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("set-target");
+  });
+
+  test("--detected together with a positional token is a usage error", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detected", "1.13.0", cwd], io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("set-target");
+    expect(pinOf()).toBe("1.12.4");
+  });
+});

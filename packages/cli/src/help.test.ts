@@ -94,6 +94,23 @@ describe("renderHelp", () => {
     expect(text).toContain("re-scaffolds in place");
     expect(text).not.toContain("overwrite existing scaffolding files");
   });
+
+  test("top-level help lists set-target", () => {
+    const text = renderHelp(null);
+
+    expect(COMMAND_NAMES.has("set-target")).toBe(true);
+    expect(text).toMatch(/^ {2}set-target {2,}\S/m);
+  });
+
+  test("set-target help names --detected and its --detect synonym", () => {
+    const text = renderHelp("set-target");
+
+    expect(text).toContain("Usage:");
+    expect(text).toContain("set-target");
+    expect(text).toContain("--detected");
+    expect(text).toContain("--detect");
+    expect(text.endsWith("\n")).toBe(true);
+  });
 });
 
 describe("renderHelpJson", () => {
