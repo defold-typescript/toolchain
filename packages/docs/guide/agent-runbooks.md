@@ -1116,13 +1116,41 @@ bun scripts/generate-api-signatures.ts --write
    `upgrading-to-defold-<new>.md` under `packages/docs/guide/` — **the filename
    uses dashes, not dots** (e.g. `upgrading-to-defold-1-14-0.md`). Update its
    gate, `packages/docs-site/app/lib/upgrade-guide.test.ts`: the `SLUG` constant
-   and the version axes.
+   and the version axes. Then **regenerate the committed llms corpus** — after
+   *any* guide/docs change — and commit the result:
 
-7. **Stage 7 — move every hardcoded-version test expectation `(manual)`:**
+```sh
+bun --filter @defold-typescript/docs-site build-llms
+```
+
+   `packages/docs/llms-full.txt` is a **generated artifact** (never hand-edit
+   it); skipping this leaves it stale and reds
+   `packages/docs-site/scripts/build-llms.test.ts`, which compares the committed
+   file against a fresh build.
+
+7. **Stage 7 — move every hardcoded-version test expectation `(manual)`.** These
+   expectations are scattered, so **audit the whole repository** — grep the test
+   suite for the outgoing and incoming version literals (the `1.13.0` / `1.12.4`
+   strings and the `defold-<version>` fixture prefixes) and move **every** hit;
+   the list below is the known floor, not the ceiling:
+
+```sh
+grep -rn -e '1\.13\.0' -e '1\.12\.4' -e 'defold-1\.1' \
+  packages --include='*.test.ts'
+```
+
+   Known must-update files:
    - `scripts/defold-release-readiness.test.ts` — the regression lock (`version`,
      `baseline`, `requiredVersionIds`, `declarationNamespaceCount`).
    - `packages/types/scripts/generate-api-availability.test.ts` and
      `packages/types/scripts/generate-api-signatures.test.ts` — the version axes.
+   - `packages/cli/src/defold-version.test.ts` — the `DEFOLD_VERSIONS` tuple and
+     the `DEFOLD_VERSION` cross-check against `sync-api-docs.ts`.
+   - `packages/types/scripts/sync-api-docs.test.ts` — the
+     `fixtures/defold-<version>/*_doc.json` fixture-path assertions.
+   - `packages/types/test/api-targets.test.ts` — the default/committed target ids
+     and `VERSIONED_MODULE_MANIFEST`.
+   - `packages/types/test/fixture-surface-enumerate.test.ts` — the version axes.
 
 8. **Stage 8 — verify `(scripted)`:**
 
@@ -1137,7 +1165,9 @@ mise run release-readiness
    `bun test` is the sole automated proof the bump is complete — see the
    enforcement boundary above. CI never runs the network / fail-closed mise gates
    (`import-defold-release`, `sync-api-docs-check`, `release-readiness`), so
-   `mise run release-readiness` here is advisory.
+   `mise run release-readiness` here is advisory. If `bun test` reds on
+   `build-llms.test.ts`, the Stage 6 `build-llms` regen was skipped — run it and
+   commit the refreshed `packages/docs/llms-full.txt`.
 
 9. **Stage 9 — cut the release, separately `(manual)`.** Cutting the npm release
    is **decoupled** from the bump: `mise run release` (`bun scripts/release.ts`,
