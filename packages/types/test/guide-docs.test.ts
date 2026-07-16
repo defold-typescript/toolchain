@@ -769,6 +769,12 @@ describe("docs/guide/agent-runbooks.md bump-the-pinned-version section", () => {
     expect(s).toMatch(/upgrading-to-defold/i);
   });
 
+  test("requires re-confirming the pinned extension release tags", async () => {
+    const s = await bumpSection();
+    expect(s).toMatch(/EXTENSION_MANIFEST/);
+    expect(s).toMatch(/extension release tag/i);
+  });
+
   test("states publication is a separate decoupled step", async () => {
     const s = await bumpSection();
     expect(s).toContain("mise run release");
