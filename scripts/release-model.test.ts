@@ -12,6 +12,7 @@ import {
 } from "../packages/types/scripts/sync-api-docs.ts";
 import {
   classifyTransition,
+  EXTENSION_PINS,
   fixtureDir,
   promotedNamespacesFor,
   RELEASE_MODEL,
@@ -81,6 +82,17 @@ describe("release model", () => {
       expect(promotedNamespacesFor(RELEASE_MODEL.current)).toEqual([
         ...DEFOLD_1_13_PROMOTED_NAMESPACES,
       ]);
+    });
+
+    test("extension pins read by sync-api-docs match the model", () => {
+      expect(
+        EXTENSION_MANIFEST.map(({ namespace, repo, tag, path }) => ({
+          namespace,
+          repo,
+          tag,
+          path,
+        })),
+      ).toEqual([...EXTENSION_PINS]);
     });
   });
 });
