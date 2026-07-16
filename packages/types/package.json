@@ -61,7 +61,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "regen": "bun scripts/regen.ts",
     "generate-api-availability": "bun scripts/generate-api-availability.ts",
-    "generate-api-signatures": "bun scripts/generate-api-signatures.ts",
+    "generate-api-signatures": "bun scripts/generate-api-signatures.ts --write",
     "import-defold-release": "bun scripts/import-defold-release.ts",
     "sync-api-docs": "bun scripts/sync-api-docs.ts",
     "ref-doc-delta": "bun scripts/ref-doc-delta.ts --target defold-1.9.8 --namespace label --present label.get_text --absent label.set_text"
