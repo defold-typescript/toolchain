@@ -81,14 +81,29 @@ A channel is spelled the same way — swap the version for a channel name:
 
 ### The pin's lifecycle
 
-The pin is **hand-edited**. There is no setter command: `--defold-target` is a
+The pin is written by `set-target` (or hand-edited). `set-target <token>` writes
+the `defold-target` pin to a version or channel; `set-target --detected` syncs it
+to the installed Defold editor's version. By contrast, `--defold-target` is a
 per-run override that never writes `package.json`, by design — a throwaway build
 against an older surface cannot silently re-pin the project. When the flag
 overrides a live pin, the CLI now says so — on stderr for a normal run and in the
 `warnings` array under `--json` — naming both the flag value and the pin it
 shadowed, and pointing at how to persist the target.
 
-The only command that writes the pin is `init`:
+`set-target` is a **writer** scoped like `init`'s pin write: it reads
+`package.json`, sets `"defold-typescript"."defold-target"` to a validated value,
+preserves every other key, and reports the transition. Setting the value already
+pinned writes nothing. It does not materialize a surface or repoint
+`tsconfig.json` — the next `build`/`watch` does that. Its flags:
+
+- `bunx @defold-typescript/cli@latest set-target 1.13.0` pins that version;
+  `set-target stable` (or `beta`/`alpha`) pins the channel — the token is written
+  verbatim, as you expressed it;
+- `set-target --detected` (alias `--detect`) pins the installed editor's version,
+  erroring when no Defold editor is detected rather than falling back;
+- an optional trailing path targets a project other than the current folder.
+
+`init` also writes the pin:
 
 - `bunx @defold-typescript/cli@latest init <folder>` seeds `defold-target` with
   the current-stable version when it creates or augments a `package.json`;
