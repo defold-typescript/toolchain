@@ -15,6 +15,23 @@ describe("classifyDefoldTarget", () => {
     expect(classifyDefoldTarget("1.12.4")).toEqual({ kind: "version", version: "1.12.4" });
   });
 
+  test("a two-part version still classifies, proving the accepted shape is preserved", () => {
+    expect(classifyDefoldTarget("1.12")).toEqual({ kind: "version", version: "1.12" });
+  });
+
+  test("a version with a trailing non-version suffix throws, naming the accepted forms", () => {
+    for (const bad of ["1.13.0garbage", "1.12.4x", "1.2.3.4", "1.12.4-beta"]) {
+      let message = "";
+      try {
+        classifyDefoldTarget(bad);
+      } catch (err) {
+        message = err instanceof Error ? err.message : String(err);
+      }
+      expect(message).toContain("1.12.4");
+      expect(message).toContain("stable|beta|alpha");
+    }
+  });
+
   test("each channel name classifies as a moving channel", () => {
     expect(classifyDefoldTarget("stable")).toEqual({ kind: "channel", channel: "stable" });
     expect(classifyDefoldTarget("beta")).toEqual({ kind: "channel", channel: "beta" });
@@ -132,7 +149,8 @@ describe("describeTargetOverride", () => {
     expect(notices[0]).toContain("1.12.4");
     expect(notices[0]).toContain("this run only");
     expect(notices[0]).toContain("does not update the pin");
-    expect(notices[0]).toContain("init");
+    expect(notices[0]).toContain("set-target 1.13.0");
+    expect(notices[0]).not.toContain("init");
   });
 
   test("channel flag over a differing channel pin names both tokens", () => {
