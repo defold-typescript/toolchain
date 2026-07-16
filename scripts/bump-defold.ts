@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+import { runBumpCheck } from "./bump-defold-check.ts";
 import {
   classifyTransition,
   fixtureDir,
@@ -265,10 +266,20 @@ if (import.meta.main) {
   const to = toIndex >= 0 ? args[toIndex + 1] : undefined;
 
   if (check) {
-    process.stderr.write(
-      "bump:defold --check is not implemented yet — it lands with the offline-check step\n",
-    );
-    process.exit(2);
+    const result = runBumpCheck(REPO_ROOT);
+    if (json) {
+      process.stdout.write(
+        `${JSON.stringify({ command: "bump:defold", mode: "check", ok: result.ok, problems: result.problems })}\n`,
+      );
+    } else if (result.ok) {
+      process.stdout.write("bump:defold --check: OK — release evidence complete and offline\n");
+    } else {
+      process.stdout.write(`bump:defold --check: BLOCKED (${result.problems.length} blocker(s))\n`);
+      for (const problem of result.problems) {
+        process.stdout.write(`  - [${problem.category}] ${problem.message}\n`);
+      }
+    }
+    process.exit(result.ok ? 0 : 1);
   }
   if (!to || to.startsWith("--")) {
     process.stderr.write("usage: bump:defold --to <version> [--json]\n");
