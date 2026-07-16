@@ -13,6 +13,7 @@ import {
 import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
+  describeTargetOverride,
   diagnoseDefoldNamespace,
   fetchChannelInfo,
   fetchVersionInfo,
@@ -226,9 +227,12 @@ export function dispatch(
   // A JSON run folds these into its `warnings` payload instead (see below).
   const pkg = readPackageJson(cwd);
   const pin = readDefoldTargetPin(pkg);
-  const pinDiagnostics = diagnoseDefoldNamespace(pkg);
+  const targetDiagnostics = [
+    ...diagnoseDefoldNamespace(pkg),
+    ...describeTargetOverride(defoldTargetFlag, pin),
+  ];
   if (!json && command !== undefined) {
-    for (const diagnostic of pinDiagnostics) {
+    for (const diagnostic of targetDiagnostics) {
       io.stderr.write(`defold-typescript ${command}: ${diagnostic}\n`);
     }
   }
@@ -285,7 +289,7 @@ export function dispatch(
           force,
           ...(templateFlag !== undefined ? { template: templateFlag } : {}),
         });
-        const initWarnings = [...pinDiagnostics, ...warnings];
+        const initWarnings = [...targetDiagnostics, ...warnings];
         if (json) {
           io.stdout.write(
             renderResult({
@@ -445,7 +449,7 @@ export function dispatch(
             renderResult({
               command: "build",
               written,
-              warnings: [...pinDiagnostics, ...warnings],
+              warnings: [...targetDiagnostics, ...warnings],
               defoldVersion: head.version,
               defoldVersionSource: targetSource,
               defoldChannel: head.channel,
@@ -607,7 +611,7 @@ export function dispatch(
           ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
           ...(resolveSurface ? { resolveSurface } : {}),
           ...(json ? { json: true } : {}),
-          ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
+          ...(targetDiagnostics.length > 0 ? { pinDiagnostics: targetDiagnostics } : {}),
         };
         const handle = runWatch(watchOpts);
         if (internals) {
@@ -759,7 +763,7 @@ export function dispatch(
             result.ok
               ? {
                   command: "resolve",
-                  ...(pinDiagnostics.length > 0 ? { warnings: pinDiagnostics } : {}),
+                  ...(targetDiagnostics.length > 0 ? { warnings: targetDiagnostics } : {}),
                   defoldVersion: head.version,
                   defoldVersionSource: targetSource,
                   defoldChannel: head.channel,

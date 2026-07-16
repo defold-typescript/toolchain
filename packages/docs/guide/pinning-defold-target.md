@@ -83,7 +83,10 @@ A channel is spelled the same way — swap the version for a channel name:
 
 The pin is **hand-edited**. There is no setter command: `--defold-target` is a
 per-run override that never writes `package.json`, by design — a throwaway build
-against an older surface cannot silently re-pin the project.
+against an older surface cannot silently re-pin the project. When the flag
+overrides a live pin, the CLI now says so — on stderr for a normal run and in the
+`warnings` array under `--json` — naming both the flag value and the pin it
+shadowed, and pointing at how to persist the target.
 
 The only command that writes the pin is `init`:
 
