@@ -160,12 +160,22 @@ export function testsModelCorrespondenceProblems(
   return problems;
 }
 
-export function runBumpCheck(root: string, model: ReleaseModelView = RELEASE_MODEL): CheckResult {
+// `root` sources the release-readiness evidence and the model-coupled test scan;
+// `driftRoot` (defaulting to `root`) locates the committed llms/signatures bytes
+// the drift guard checks. Splitting them lets a caller point drift at an
+// independently-staleable fixture while readiness reads the real repo, so a
+// staled artifact is provably the sole cause of a block rather than one blocker
+// among many from a sparse root.
+export function runBumpCheck(
+  root: string,
+  model: ReleaseModelView = RELEASE_MODEL,
+  driftRoot: string = root,
+): CheckResult {
   const expected = expectedFromModel(model);
   const readiness = evaluateReleaseReadiness(collectEvidence(root, expected));
   const problems: CheckProblem[] = [
     ...readiness.problems,
-    ...driftProblems(collectDriftInputs(root)),
+    ...driftProblems(collectDriftInputs(driftRoot)),
     ...testsModelCorrespondenceProblems(root, model),
   ];
   return { ok: problems.length === 0, problems };
