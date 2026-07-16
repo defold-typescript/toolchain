@@ -6,6 +6,7 @@ import {
   readDefoldTargetPin,
   resolveDefoldTarget,
   resolveTargetHead,
+  setDefoldTargetPin,
 } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 
@@ -235,5 +236,40 @@ describe("resolveTargetHead", () => {
     expect(calls).toEqual(["beta"]);
     expect(head).toEqual({ version: "1.13.0", channel: "beta", sha: "abc123" });
     expect(versionFetched).toBe(false);
+  });
+});
+
+describe("setDefoldTargetPin", () => {
+  test("replaces the pin and preserves sibling keys in their slot", () => {
+    const extensions = { "https://example/ext": "1.0.0" };
+    expect(setDefoldTargetPin({ "defold-target": "1.12.4", extensions }, "1.13.0")).toEqual({
+      "defold-target": "1.13.0",
+      extensions,
+    });
+  });
+
+  test("setting the current value is idempotent", () => {
+    const namespace = { "defold-target": "1.12.4", extensions: {} };
+    expect(setDefoldTargetPin(namespace, "1.12.4")).toEqual(namespace);
+  });
+
+  test("an absent namespace becomes a pin-only namespace", () => {
+    expect(setDefoldTargetPin(undefined, "1.13.0")).toEqual({ "defold-target": "1.13.0" });
+    expect(setDefoldTargetPin(null, "1.13.0")).toEqual({ "defold-target": "1.13.0" });
+  });
+
+  test("a legacy target key is migrated to defold-target with the new value", () => {
+    expect(setDefoldTargetPin({ "defold-version": "1.12.4" }, "1.13.0")).toEqual({
+      "defold-target": "1.13.0",
+    });
+    expect(setDefoldTargetPin({ channel: "beta" }, "1.13.0")).toEqual({
+      "defold-target": "1.13.0",
+    });
+  });
+
+  test("a legacy key beside the pin is dropped, not left behind", () => {
+    expect(
+      setDefoldTargetPin({ "defold-target": "1.12.4", channel: "beta", name: "x" }, "1.13.0"),
+    ).toEqual({ "defold-target": "1.13.0", name: "x" });
   });
 });
