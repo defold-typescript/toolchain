@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   classifyDefoldTarget,
+  describeTargetOverride,
   diagnoseDefoldNamespace,
   readDefoldTargetPin,
   resolveDefoldTarget,
@@ -119,6 +120,39 @@ describe("diagnoseDefoldNamespace", () => {
     expect(diagnoseDefoldNamespace(null)).toEqual([]);
     expect(diagnoseDefoldNamespace("nope")).toEqual([]);
     expect(diagnoseDefoldNamespace(undefined)).toEqual([]);
+  });
+});
+
+describe("describeTargetOverride", () => {
+  test("version flag over a differing version pin names both and how to persist", () => {
+    const notices = describeTargetOverride("1.13.0", "1.12.4");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain("1.13.0");
+    expect(notices[0]).toContain("1.12.4");
+    expect(notices[0]).toContain("this run only");
+    expect(notices[0]).toContain("does not update the pin");
+    expect(notices[0]).toContain("init");
+  });
+
+  test("channel flag over a differing channel pin names both tokens", () => {
+    const notices = describeTargetOverride("alpha", "beta");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain("alpha");
+    expect(notices[0]).toContain("beta");
+  });
+
+  test("channel flag over a version pin produces one notice", () => {
+    const notices = describeTargetOverride("stable", "1.12.4");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain("stable");
+    expect(notices[0]).toContain("1.12.4");
+  });
+
+  test("equal, whitespace-only difference, no pin, or no flag produce no notice", () => {
+    expect(describeTargetOverride("1.12.4", "1.12.4")).toEqual([]);
+    expect(describeTargetOverride(" 1.12.4 ", "1.12.4")).toEqual([]);
+    expect(describeTargetOverride("1.13.0", undefined)).toEqual([]);
+    expect(describeTargetOverride(undefined, "1.12.4")).toEqual([]);
   });
 });
 

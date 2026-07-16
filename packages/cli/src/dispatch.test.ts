@@ -684,6 +684,83 @@ describe("dispatch", () => {
     expect(parsed.defoldSha).toBe("sha-alpha");
   });
 
+  test("build --defold-target overriding a live pin writes a stderr override notice", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", "1.13.0"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("1.13.0");
+    expect(err()).toContain("1.12.4");
+  });
+
+  test("build --json override notice rides warnings without changing resolution", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", "1.13.0", "--json"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      ok: boolean;
+      warnings: string[];
+      defoldVersion: string;
+      defoldVersionSource: string;
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.defoldVersion).toBe("1.13.0");
+    expect(parsed.defoldVersionSource).toBe("flag");
+    const notice = parsed.warnings.find((w) => w.includes("1.13.0") && w.includes("1.12.4"));
+    expect(notice).toBeDefined();
+  });
+
+  test("build --defold-target equal to the pin produces no override notice", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", "1.12.4", "--json"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { warnings: string[] };
+    expect(parsed.warnings.some((w) => w.includes("overrides the package.json pin"))).toBe(false);
+  });
+
+  test("build --defold-target with no pin produces no override notice", async () => {
+    scaffoldBuildProject();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", "1.13.0", "--json"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { warnings: string[] };
+    expect(parsed.warnings.some((w) => w.includes("overrides the package.json pin"))).toBe(false);
+  });
+
+  test("a pin-key diagnostic and an override notice compose", async () => {
+    scaffoldBuildProject({
+      "defold-typescript": { "defold-version": "1.9.0", "defold-target": "1.12.4" },
+    });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", "1.13.0", "--json"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { warnings: string[] };
+    expect(parsed.warnings.some((w) => w.includes("defold-version"))).toBe(true);
+    expect(parsed.warnings.some((w) => w.includes("1.13.0") && w.includes("1.12.4"))).toBe(true);
+  });
+
   test("build --json with a version target reports a null channel and sha", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
