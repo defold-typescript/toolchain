@@ -143,13 +143,14 @@ export function testsModelCorrespondenceProblems(
       continue;
     }
     const source = readFileSync(abs, "utf8");
-    if (!DERIVED_VERSION_SYMBOLS.some((symbol) => source.includes(symbol))) {
+    const code = stripComments(source);
+    if (!DERIVED_VERSION_SYMBOLS.some((symbol) => code.includes(symbol))) {
       problems.push({
         category: "integration",
         message: `version-coupled test ${rel} does not derive its version from the release model`,
       });
     }
-    if (stripComments(source).includes(model.current)) {
+    if (code.includes(model.current)) {
       problems.push({
         category: "integration",
         message: `version-coupled test ${rel} hardcodes the current version literal ${model.current}`,
