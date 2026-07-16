@@ -1046,10 +1046,12 @@ bun run bump:defold --to <version>
 ```
 
 `bump:defold --to` orchestrates the whole rotation: it plans the transition, runs
-the fail-closed release import, syncs the ref-doc fixtures, rewrites the version
-sources of truth, regenerates every derived artifact, and reports the decisions
-left to a human. Add `--json` for a single machine-readable summary — the
-`remainingHumanDecisions` array is the part an agent branches on.
+the fail-closed release import, rewrites the version sources of truth, syncs the
+ref-doc fixtures (core and extension) into the new target dir, rewrites the
+target metadata, regenerates every derived artifact, and reports the decisions
+left to a human. Add `--json` for a single machine-readable summary — it is the
+sole document on stdout, and its `remainingHumanDecisions` array is the part an
+agent branches on.
 
 ```sh
 bun run bump:defold --check
