@@ -2,12 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadApiTargets } from "../scripts/regen";
+import { DEFOLD_VERSION } from "../scripts/sync-api-docs";
 import { enumerateDeclaredSymbols } from "./fixture-surface-enumerate";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 describe("committed release surfaces", () => {
-  test("1.13.0 and 1.12.4 include every function-bearing mapped namespace", () => {
+  test("the committed release surfaces include every function-bearing mapped namespace", () => {
     const required = [
       "b2d.fixture",
       "b2d.shape",
@@ -18,12 +19,12 @@ describe("committed release surfaces", () => {
       "material",
     ];
 
-    const targets = loadApiTargets().filter((target) =>
-      ["defold-1.13.0", "defold-1.12.4"].includes(target.id),
-    );
+    // The committed surfaces are the two null-source targets (current default +
+    // previous); the ref-doc regression target carries a non-null source.
+    const targets = loadApiTargets().filter((target) => target.source == null);
     expect(targets).toHaveLength(2);
-    const current = targets.find((target) => target.id === "defold-1.13.0");
-    if (!current) throw new Error("missing defold-1.13.0 target");
+    const current = targets.find((target) => target.id === `defold-${DEFOLD_VERSION}`);
+    if (!current) throw new Error(`missing defold-${DEFOLD_VERSION} target`);
     const currentNamespaces = new Set(current.modules.map((module) => module.namespace));
     for (const namespace of required) expect(currentNamespaces.has(namespace)).toBe(true);
 
