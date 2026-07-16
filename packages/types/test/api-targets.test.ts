@@ -12,12 +12,14 @@ import {
   resolveTargetModules,
   VERSIONED_MODULE_MANIFEST,
 } from "../scripts/regen";
-import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
+import { DEFOLD_VERSION, SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const GENERATED = resolve(PACKAGE_ROOT, "generated");
 
 function labelRefDocZip(): { fakeZip: ZipAccessor; cacheDir: string; version: string } {
+  // Intentionally historical: 1.9.8 is a fixed ref-doc regression target, not the
+  // current/previous release, so it stays a literal across version bumps.
   const version = "1.9.8";
   const labelEntry = SYNC_MANIFEST.find((e) => e.namespace === "label");
   if (!labelEntry) throw new Error("no label SYNC_MANIFEST entry");
@@ -41,13 +43,20 @@ const noDownload = async (): Promise<Uint8Array> => {
 };
 
 describe("api-targets registry", () => {
-  test("1.13.0 is the sole default and 1.12.4 remains a complete committed target", () => {
+  test("the current version is the sole default and the previous committed target is a complete subset", () => {
     const targets = loadApiTargets();
-    const current = targets.find((target) => target.id === "defold-1.13.0");
-    const previous = targets.find((target) => target.id === "defold-1.12.4");
+    const current = targets.find((target) => target.id === `defold-${DEFOLD_VERSION}`);
+    // The previous release is the one committed target that is not the default,
+    // identified structurally so a version bump follows the registry (and the
+    // `DEFOLD_VERSION` the registry's default id is cross-checked against here).
+    const committedNonDefault = targets.filter(
+      (target) => target.source == null && target.default !== true,
+    );
+    expect(committedNonDefault).toHaveLength(1);
+    const previous = committedNonDefault[0];
 
     expect(targets.filter((target) => target.default === true).map((target) => target.id)).toEqual([
-      "defold-1.13.0",
+      `defold-${DEFOLD_VERSION}`,
     ]);
     expect(current?.source).toBeNull();
     expect(previous?.default).toBe(false);
@@ -204,13 +213,15 @@ describe("api-targets registry", () => {
     expect(() => loadTargetModules(target, tmp)).toThrow(/broken.*nope.*does_not_exist\.json/);
   });
 
-  test("VERSIONED_MODULE_MANIFEST contains the complete committed 1.12.4 surface only", () => {
+  test("VERSIONED_MODULE_MANIFEST contains the complete committed previous surface only", () => {
+    const previous = loadApiTargets().find(
+      (target) => target.source == null && target.default !== true,
+    );
+    if (!previous) throw new Error("no committed previous target");
     expect(new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))).toEqual(
-      new Set(["defold-1.12.4"]),
+      new Set([previous.id]),
     );
-    expect(VERSIONED_MODULE_MANIFEST).toHaveLength(
-      loadApiTargets().find((target) => target.id === "defold-1.12.4")?.modules.length ?? 0,
-    );
+    expect(VERSIONED_MODULE_MANIFEST).toHaveLength(previous.modules.length);
   });
 
   test("resolveTargetModules delegates to loadTargetModules for a null-source target", async () => {

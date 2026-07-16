@@ -7,6 +7,7 @@ import { MODULE_MANIFEST } from "./regen";
 import {
   buildCoverageReport,
   collectUpstreamNamespaces,
+  DEFOLD_VERSION,
   EXTENSION_MANIFEST,
   extractFixtures,
   IGNORED_UPSTREAM,
@@ -53,13 +54,13 @@ describe("SYNC_MANIFEST coverage", () => {
   test("maps graphics to its src-script ref-doc entry", () => {
     const graphics = SYNC_MANIFEST.find((e) => e.namespace === "graphics");
     expect(graphics?.zipEntry).toBe("doc/src-script_graphics.cpp_doc.json");
-    expect(graphics?.fixture).toBe("fixtures/defold-1.13.0/graphics_doc.json");
+    expect(graphics?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/graphics_doc.json`);
   });
 
   test("maps font to its scripts-script ref-doc entry", () => {
     const font = SYNC_MANIFEST.find((e) => e.namespace === "font");
     expect(font?.zipEntry).toBe("doc/scripts-script_font.cpp_doc.json");
-    expect(font?.fixture).toBe("fixtures/defold-1.13.0/font_doc.json");
+    expect(font?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/font_doc.json`);
   });
 
   test("every UNMAPPED entry carries a non-empty reason", () => {
@@ -75,11 +76,11 @@ describe("SYNC_MANIFEST coverage", () => {
     }
   });
 
-  test("every entry's fixture is a 1.13.0 *_doc.json path and zipEntry is non-empty", () => {
+  test(`every entry's fixture is a defold-${DEFOLD_VERSION} *_doc.json path and zipEntry is non-empty`, () => {
     for (const entry of SYNC_MANIFEST) {
       // Dotted namespaces use underscore-joined filenames inside the version-owned
       // fixture directory; dots remain route separators only in namespace ids.
-      const expected = `fixtures/defold-1.13.0/${entry.namespace.replace(/\./g, "_")}_doc.json`;
+      const expected = `fixtures/defold-${DEFOLD_VERSION}/${entry.namespace.replace(/\./g, "_")}_doc.json`;
       expect(entry.fixture).toBe(expected);
       expect(entry.zipEntry.length).toBeGreaterThan(0);
     }
@@ -112,25 +113,25 @@ describe("LUA_STDLIB_MANIFEST", () => {
     expect(LUA_STDLIB_MANIFEST).toHaveLength(10);
     const base = LUA_STDLIB_MANIFEST.find((e) => e.namespace === "base");
     expect(base?.zipEntry).toBe("doc/lua_base.doc_h_doc.json");
-    expect(base?.fixture).toBe("fixtures/defold-1.13.0/base_doc.json");
+    expect(base?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/base_doc.json`);
     const bit = LUA_STDLIB_MANIFEST.find((e) => e.namespace === "bit");
     expect(bit?.zipEntry).toBe("doc/src-script_bitop.cpp_doc.json");
-    expect(bit?.fixture).toBe("fixtures/defold-1.13.0/bit_doc.json");
+    expect(bit?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/bit_doc.json`);
   });
 
-  test("maps the five core stdlib namespaces to their confirmed 1.13.0 zip entries", () => {
+  test("maps the five core stdlib namespaces to their confirmed zip entries", () => {
     for (const [namespace, zipEntry] of CORE_FIVE_STDLIB) {
       const found = LUA_STDLIB_MANIFEST.find((e) => e.namespace === namespace);
       expect(found?.zipEntry).toBe(zipEntry);
-      expect(found?.fixture).toBe(`fixtures/defold-1.13.0/${namespace}_doc.json`);
+      expect(found?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/${namespace}_doc.json`);
     }
   });
 
-  test("maps the sandboxed debug/io/package namespaces to their confirmed 1.13.0 zip entries", () => {
+  test("maps the sandboxed debug/io/package namespaces to their confirmed zip entries", () => {
     for (const [namespace, zipEntry] of SANDBOXED_THREE) {
       const found = LUA_STDLIB_MANIFEST.find((e) => e.namespace === namespace);
       expect(found?.zipEntry).toBe(zipEntry);
-      expect(found?.fixture).toBe(`fixtures/defold-1.13.0/${namespace}_doc.json`);
+      expect(found?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/${namespace}_doc.json`);
     }
   });
 
@@ -201,7 +202,7 @@ describe("EXTENSION_MANIFEST", () => {
       expect(entry.repo).toMatch(/^[\w.-]+\/[\w.-]+$/);
       expect(entry.tag.length).toBeGreaterThan(0);
       expect(entry.path.length).toBeGreaterThan(0);
-      expect(entry.fixture).toBe(`fixtures/defold-1.13.0/${entry.namespace}_doc.json`);
+      expect(entry.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/${entry.namespace}_doc.json`);
     }
   });
 
@@ -444,7 +445,13 @@ describe("sys multi-source merge", () => {
   });
 
   test("the vendored sys fixture carries the merged gamesys + engine functions", () => {
-    const path = resolve(import.meta.dir, "..", "fixtures", "defold-1.13.0", "sys_doc.json");
+    const path = resolve(
+      import.meta.dir,
+      "..",
+      "fixtures",
+      `defold-${DEFOLD_VERSION}`,
+      "sys_doc.json",
+    );
     const module = parseDefoldApiDoc(JSON.parse(readFileSync(path, "utf8")));
     const names = new Set(module.functions.map((f) => f.name));
     for (const fn of [
