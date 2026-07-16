@@ -1028,148 +1028,64 @@ prefer a module singleton for app state. The full four-tier treatment — per-in
 Unlike every runbook above — written for an agent driving a *consumer* project —
 this section is for a maintainer (human or agent) working **inside this repo**,
 rotating the pinned Defold engine version the whole toolchain generates against.
+The mechanics are a single command; what a maintainer must still understand is
+the semantics, the network boundary, and the handful of decisions the command
+cannot make.
 
-**Enforcement boundary, up front:** CI (`.github/workflows/ci.yml`) runs only
-`bun install` / `bun run build` / `bun run typecheck` / `bun run lint` /
-`bun test`. It never runs the network, fail-closed mise gates
-(`import-defold-release`, `sync-api-docs-check`, `release-readiness`). So
-`bun test` — the regen / availability / signatures drift guards plus the
-`defold-release-readiness` regression lock — is the **only** automated proof a
-bump is complete. Every manual edit below must be made by hand; skip one and the
-drift guards go red.
+### Prerequisites
 
-Two distinctions run through every stage:
+- Bun — the repo's package manager and script runner.
+- Network egress for the bump itself: it runs the fail-closed release import and
+  fetches the upstream `ref-doc.zip`. The completeness gate (`--check`, below) is
+  fully offline.
 
-- **Sources of truth vs generated artifacts.** Hand-edit only the sources of
-  truth — `packages/cli/src/defold-version.ts`, the `sync-api-docs.ts` pins,
-  `packages/types/api-targets.json`, `packages/types/api-migrations.json`.
-  Everything the scripts in stages 3 and 5 write is a generated artifact; never
-  hand-edit one.
-- **Patch vs minor.** A minor bump (e.g. `1.13.x` to `1.14.0`) adds a new default
-  target and demotes the prior one into a committed historical surface; a patch
-  bump (`1.13.0` to `1.13.1`) replaces the existing version in place. The
-  difference changes the edits in stages 1 and 4, and is called out inline there.
-
-Work the stages in order:
-
-1. **Stage 1 — pin the version, by hand `(manual)`:**
-   - `packages/cli/src/defold-version.ts` — `DEFOLD_VERSIONS` is a newest-first
-     tuple of full patch strings (index 0 = current stable). It is the single
-     source of truth for CLI defaults: `CURRENT_STABLE_DEFOLD_VERSION`,
-     `PREVIOUS_STABLE_DEFOLD_VERSION`, and the `RELEASE_TARGET_MATRIX` (in
-     `release-target-matrix.ts`) all derive from it. A **minor** bump prepends the
-     new version and keeps the prior at index 1; a **patch** bump replaces index 0
-     in place.
-   - `packages/types/scripts/sync-api-docs.ts` — the `DEFOLD_VERSION` constant
-     **and both `fixtures/defold-<version>/` path templates** (one for the core
-     doc JSON, one inside the `ext()` helper).
-   - `packages/types/scripts/import-defold-release.ts` — the per-release
-     promoted-namespaces constant (today `DEFOLD_1_13_PROMOTED_NAMESPACES`). A
-     **minor** bump introduces a new version-named constant; a **patch** bump
-     reuses the existing one.
-   - `mise.toml` — the `import-defold-release` task's `run` line pins the version
-     literal.
-
-2. **Stage 2 — re-confirm the manifests `(manual)`.** Check the `SYNC_MANIFEST`
-   and `LUA_STDLIB_MANIFEST` zip `doc/*.json` entry paths and the
-   `EXTENSION_MANIFEST` tags (all in `sync-api-docs.ts`) against the new
-   `ref-doc.zip` layout. Extension tags (iac / iap / push / webview) move
-   independently of the engine version.
-
-3. **Stage 3 — import + sync `(scripted)`, from `packages/types`:**
+### Usage
 
 ```sh
-bun run import-defold-release -- <version>
-bun run sync-api-docs
-mise run sync-api-docs-check
+bun run bump:defold --to <version>
 ```
 
-   `import-defold-release` writes the fixtures + `import-manifest.json` **only when
-   it reports `ready`** (no unknown types, no unmapped function namespaces); a
-   `blocked` run exits non-zero and writes nothing — resolve the gaps first.
-   `sync-api-docs` runs in write mode by default (`--check` is the gate) and syncs
-   core, lua-stdlib, and the four extension fixtures; `sync-api-docs-check`
-   verifies the result.
-
-4. **Stage 4 — hand-edit the remaining sources of truth `(manual)`:**
-   - `packages/types/api-targets.json` — add the new target as the default
-     (`"default": true`, `"generatedDir": "generated"`) and **demote the prior
-     default** to `"default": false` with `"generatedDir":
-     "generated/versions/defold-<prev>"`, deepening its `coreTypesImport` to
-     match. Patch-vs-minor: a **minor** bump adds the new default and demotes the
-     prior into `generated/versions/` (a new committed historical surface); a
-     **patch** bump replaces the existing default target's version in place, no
-     demotion.
-   - `packages/types/api-migrations.json` — the hand-curated deprecation list
-     (`identity` + `deprecatedSince`); add an entry for anything the new release
-     deprecates.
-
-5. **Stage 5 — regenerate `(scripted)`, from `packages/types`:**
+`bump:defold --to` orchestrates the whole rotation: it plans the transition, runs
+the fail-closed release import, syncs the ref-doc fixtures, rewrites the version
+sources of truth, regenerates every derived artifact, and reports the decisions
+left to a human. Add `--json` for a single machine-readable summary — the
+`remainingHumanDecisions` array is the part an agent branches on.
 
 ```sh
-bun run regen
-bun scripts/generate-api-availability.ts --write
-bun scripts/generate-api-signatures.ts --write
+bun run bump:defold --check
 ```
 
-6. **Stage 6 — guide + gate `(manual)`.** Author a new
-   `upgrading-to-defold-<new>.md` under `packages/docs/guide/` — **the filename
-   uses dashes, not dots** (e.g. `upgrading-to-defold-1-14-0.md`). Update its
-   gate, `packages/docs-site/app/lib/upgrade-guide.test.ts`: the `SLUG` constant
-   and the version axes. Then **regenerate the committed llms corpus** — after
-   *any* guide/docs change — and commit the result:
+`bump:defold --check` is the offline completeness gate: it re-derives the expected
+release evidence from the committed sources and fails if any generated artifact
+(fixtures, availability, signatures, the llms corpus) is stale relative to them.
+It touches no network. Run it after a bump — and in review — to prove the rotation
+is complete.
 
-```sh
-bun --filter @defold-typescript/docs-site build-llms
-```
+### Patch vs minor
 
-   `packages/docs/llms-full.txt` is a **generated artifact** (never hand-edit
-   it); skipping this leaves it stale and reds
-   `packages/docs-site/scripts/build-llms.test.ts`, which compares the committed
-   file against a fresh build.
+The one semantic a maintainer must hold: a **minor** bump (e.g. `1.13.x` to
+`1.14.0`) adds the new version as the default target and demotes the prior default
+into a committed historical surface under `generated/versions/`; a **patch** bump
+(`1.13.0` to `1.13.1`) replaces the current version in place, with no demotion.
+`bump:defold` classifies which one applies from the `--to` version automatically —
+you do not select it.
 
-7. **Stage 7 — move every hardcoded-version test expectation `(manual)`.** These
-   expectations are scattered, so **audit the whole repository** — grep the test
-   suite for the outgoing and incoming version literals (the `1.13.0` / `1.12.4`
-   strings and the `defold-<version>` fixture prefixes) and move **every** hit;
-   the list below is the known floor, not the ceiling:
+### Manual review points
 
-```sh
-grep -rn -e '1\.13\.0' -e '1\.12\.4' -e 'defold-1\.1' \
-  packages --include='*.test.ts'
-```
+`bump:defold` reports the decisions it deliberately will not make (its
+`remainingHumanDecisions`); resolve each by hand:
 
-   Known must-update files:
-   - `scripts/defold-release-readiness.test.ts` — the regression lock (`version`,
-     `baseline`, `requiredVersionIds`, `declarationNamespaceCount`).
-   - `packages/types/scripts/generate-api-availability.test.ts` and
-     `packages/types/scripts/generate-api-signatures.test.ts` — the version axes.
-   - `packages/cli/src/defold-version.test.ts` — the `DEFOLD_VERSIONS` tuple and
-     the `DEFOLD_VERSION` cross-check against `sync-api-docs.ts`.
-   - `packages/types/scripts/sync-api-docs.test.ts` — the
-     `fixtures/defold-<version>/*_doc.json` fixture-path assertions.
-   - `packages/types/test/api-targets.test.ts` — the default/committed target ids
-     and `VERSIONED_MODULE_MANIFEST`.
-   - `packages/types/test/fixture-surface-enumerate.test.ts` — the version axes.
+- **Curate `api-migrations.json`** for the `<from> -> <to>` transition — the
+  deprecation list is never auto-edited.
+- **Re-confirm `import-manifest.json`** — verify the imported release tag matches
+  the intended `<to>` build.
+- **Author the upgrade guide** — a new `upgrading-to-defold-<new>.md` under
+  `packages/docs/guide/` (dashes, not dots) plus its gate.
+- **Minor bumps only** — review the demoted `defold-<prev>` surface under
+  `generated/versions/`.
 
-8. **Stage 8 — verify `(scripted)`:**
+### Publication is separate
 
-```sh
-bun run build
-bun run typecheck
-bun run lint
-bun test
-mise run release-readiness
-```
-
-   `bun test` is the sole automated proof the bump is complete — see the
-   enforcement boundary above. CI never runs the network / fail-closed mise gates
-   (`import-defold-release`, `sync-api-docs-check`, `release-readiness`), so
-   `mise run release-readiness` here is advisory. If `bun test` reds on
-   `build-llms.test.ts`, the Stage 6 `build-llms` regen was skipped — run it and
-   commit the refreshed `packages/docs/llms-full.txt`.
-
-9. **Stage 9 — cut the release, separately `(manual)`.** Cutting the npm release
-   is **decoupled** from the bump: `mise run release` (`bun scripts/release.ts`,
-   network) is its own step, run when you choose to publish — not part of
-   completing the version bump.
+Cutting the npm release is **decoupled** from the bump: `mise run release` is its
+own networked step, run when you choose to publish. It is not part of completing a
+version bump.

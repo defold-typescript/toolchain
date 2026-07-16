@@ -734,6 +734,55 @@ describe("docs/guide/agent-runbooks.md upgrade runbook", () => {
   });
 });
 
+describe("docs/guide/agent-runbooks.md bump-the-pinned-version section", () => {
+  async function bumpSection(): Promise<string> {
+    const body = await readGuide("agent-runbooks.md");
+    const start = body.indexOf("## Bump the pinned Defold version");
+    expect(start).toBeGreaterThan(-1);
+    const end = body.indexOf("\n## ", start + 1);
+    return body.slice(start, end === -1 ? body.length : end);
+  }
+
+  test("names both bump verbs and points at the --json envelope", async () => {
+    const s = await bumpSection();
+    expect(s).toContain("bump:defold --to");
+    expect(s).toContain("bump:defold --check");
+    expect(s).toContain("--json");
+  });
+
+  test("states the patch-vs-minor semantics the command classifies automatically", async () => {
+    const s = await bumpSection();
+    expect(s).toMatch(/patch/i);
+    expect(s).toMatch(/minor/i);
+  });
+
+  test("states the network behavior: import/ref-doc need egress, --check is offline", async () => {
+    const s = await bumpSection();
+    expect(s).toMatch(/offline/i);
+    expect(s).toMatch(/network|egress/i);
+  });
+
+  test("mirrors the reported manual review points", async () => {
+    const s = await bumpSection();
+    expect(s).toContain("api-migrations.json");
+    expect(s).toContain("import-manifest.json");
+    expect(s).toMatch(/upgrading-to-defold/i);
+  });
+
+  test("states publication is a separate decoupled step", async () => {
+    const s = await bumpSection();
+    expect(s).toContain("mise run release");
+    expect(s).toMatch(/separate|decoupled/i);
+  });
+
+  test("no longer inventories mutable files or generator ordering", async () => {
+    const s = await bumpSection();
+    expect(s).not.toContain("Stage 1 —");
+    expect(s).not.toContain("Stage 8");
+    expect(s).not.toContain("newest-first");
+  });
+});
+
 describe("docs/guide/upgrading.md", () => {
   test("exists and names the verb, the update synonym, and the install step", async () => {
     expect(await Bun.file(resolve(GUIDE, "upgrading.md")).exists()).toBe(true);
