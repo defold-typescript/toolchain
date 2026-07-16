@@ -14,7 +14,10 @@ describe("DEFOLD_VERSIONS single source", () => {
   });
 
   test("equals the concrete surfaces/fixtures depend on", () => {
-    expect(DEFOLD_VERSIONS).toEqual(["1.13.0", "1.12.4"]);
+    expect(DEFOLD_VERSIONS).toEqual([
+      CURRENT_STABLE_DEFOLD_VERSION,
+      PREVIOUS_STABLE_DEFOLD_VERSION,
+    ]);
   });
 });
 
