@@ -15,6 +15,10 @@ const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
+// The set of namespaces promoted into the generated surface at Defold 1.13.0.
+// Held here rather than derived from the root release model because the
+// per-package `rootDir` boundary forbids importing outside this package tree;
+// `scripts/release-model.test.ts` correspondence-guards this against the model.
 export const DEFOLD_1_13_PROMOTED_NAMESPACES = [
   "b2d.chain",
   "b2d.fixture",
