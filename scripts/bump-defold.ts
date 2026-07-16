@@ -391,8 +391,11 @@ export function runBumpCli(argv: string[], io: BumpIO, runStage: RunStage): numb
   const to = toIndex >= 0 ? argv[toIndex + 1] : undefined;
 
   if (check) {
-    const checkRoot = process.env.BUMP_DEFOLD_CHECK_ROOT ?? REPO_ROOT;
-    const result = runBumpCheck(checkRoot);
+    const result = runBumpCheck(
+      REPO_ROOT,
+      undefined,
+      process.env.BUMP_DEFOLD_CHECK_ROOT ?? REPO_ROOT,
+    );
     if (json) {
       io.stdout(
         `${JSON.stringify({ command: "bump:defold", mode: "check", ok: result.ok, problems: result.problems })}\n`,
