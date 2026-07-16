@@ -64,7 +64,7 @@ test("every inline --color-* token matches styles.css in both light and dark", (
   expect(diffColorTokens(inline.dark, styles.dark)).toEqual([]);
 });
 
-test("diffColorTokens names the differing token and is empty for identical maps", () => {
+test("diffColorTokens reports a token missing from OR differing in the second map", () => {
   const a = new Map([
     ["--color-bg", "#000000"],
     ["--color-text", "#ffffff"],
@@ -77,4 +77,10 @@ test("diffColorTokens names the differing token and is empty for identical maps"
     ["--color-text", "#eeeeee"],
   ]);
   expect(diffColorTokens(a, drifted)).toEqual(["--color-text"]);
+
+  // A token present in the first map but absent from the second is reported —
+  // this is why the parity assertion above proves every pinned inline token
+  // must EXIST (not merely match) with the same light + dark value in styles.css.
+  const missing = new Map([["--color-bg", "#000000"]]);
+  expect(diffColorTokens(a, missing)).toEqual(["--color-text"]);
 });
