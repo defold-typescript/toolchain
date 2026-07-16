@@ -266,7 +266,8 @@ if (import.meta.main) {
   const to = toIndex >= 0 ? args[toIndex + 1] : undefined;
 
   if (check) {
-    const result = runBumpCheck(REPO_ROOT);
+    const checkRoot = process.env.BUMP_DEFOLD_CHECK_ROOT ?? REPO_ROOT;
+    const result = runBumpCheck(checkRoot);
     if (json) {
       process.stdout.write(
         `${JSON.stringify({ command: "bump:defold", mode: "check", ok: result.ok, problems: result.problems })}\n`,
