@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+import type { ReleaseImportManifest } from "../packages/types/scripts/import-defold-release.ts";
 import { runBumpCheck } from "./bump-defold-check.ts";
 import {
   classifyTransition,
@@ -19,13 +20,25 @@ import {
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const TARGETS_PATH = path.join(REPO_ROOT, "packages/types/api-targets.json");
+// The two files that carry the version literals the model is seeded from and the
+// sync stage reads: `DEFOLD_VERSIONS` (single source of `RELEASE_MODEL`) and the
+// `DEFOLD_VERSION` + fixture-dir templates sync-api-docs resolves against.
+const DEFOLD_VERSION_PATH = path.join(REPO_ROOT, "packages/cli/src/defold-version.ts");
+const SYNC_API_DOCS_PATH = path.join(REPO_ROOT, "packages/types/scripts/sync-api-docs.ts");
 
-export type BumpStageId = "validate" | "import" | "sync" | "target-metadata" | "regen";
+export type BumpStageId = "validate" | "import" | "rotate" | "sync" | "target-metadata" | "regen";
 
 // The side-effecting stages the orchestrator drives through the seam, in order.
 // `validate` is pure planning (classify + reject no-op/downgrade) and runs
 // inside planBump, before any stage touches disk — so it is never in this list.
-export const BUMP_STAGES: readonly BumpStageId[] = ["import", "sync", "target-metadata", "regen"];
+// `rotate` runs after a ready import so a blocked import never rewrites literals.
+export const BUMP_STAGES: readonly BumpStageId[] = [
+  "import",
+  "rotate",
+  "sync",
+  "target-metadata",
+  "regen",
+];
 
 export type TargetOpKind = "in-place" | "add-default" | "demote";
 
@@ -145,8 +158,22 @@ export function runBump(opts: {
   const ctx: StageContext = { to: plan.to, from: plan.from, transition: plan.transition, plan };
   const ran: BumpStageId[] = [];
   for (const stage of plan.stages) {
-    const result = opts.runStage(stage, ctx);
     ran.push(stage);
+    let result: StageResult;
+    try {
+      result = opts.runStage(stage, ctx);
+    } catch (error) {
+      return {
+        command: "bump:defold",
+        ok: false,
+        to: plan.to,
+        transition: plan.transition,
+        ran,
+        remainingHumanDecisions: [],
+        failedStage: stage,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
     const blockedImport = stage === "import" && result.ready === false;
     if (!result.ok || blockedImport) {
       return {
@@ -221,87 +248,193 @@ export function applyTargetOps(plan: BumpPlan, targetsPath = TARGETS_PATH): void
   writeFileSync(targetsPath, `${JSON.stringify(registry, null, 2)}\n`);
 }
 
-function spawn(command: string[], cwd = REPO_ROOT): number {
-  process.stderr.write(`$ ${command.join(" ")}\n`);
-  const proc = Bun.spawnSync(command, { cwd, stdout: "inherit", stderr: "inherit" });
-  return proc.exitCode ?? 1;
+// Rewrite the version literals a bump makes stale, programmatically (never by
+// hand) and mirroring `applyTargetOps`' path-injectable shape so tests operate
+// on temp copies. `DEFOLD_VERSIONS` seeds `RELEASE_MODEL`, so it must hold
+// exactly `[newCurrent, newPrevious]`; the sync file's `DEFOLD_VERSION` and both
+// `fixtures/defold-<from>/` templates must retarget the new dir so the next sync
+// writes core *and* extension fixtures into `fixtures/defold-<to>/`.
+export function applyVersionRotation(
+  plan: BumpPlan,
+  paths: { versionFile?: string; syncFile?: string } = {},
+): void {
+  const versionFile = paths.versionFile ?? DEFOLD_VERSION_PATH;
+  const syncFile = paths.syncFile ?? SYNC_API_DOCS_PATH;
+
+  const versionSrc = readFileSync(versionFile, "utf8");
+  const tuple = versionSrc.match(/DEFOLD_VERSIONS = \[[^\]]*\]/);
+  if (!tuple) throw new Error(`could not find DEFOLD_VERSIONS tuple in ${versionFile}`);
+  const existing = [...tuple[0].matchAll(/"([^"]+)"/g)].map((entry) => entry[1]);
+  // patch keeps the existing previous ([1]); minor demotes the prior current ([0]).
+  const prevKept = plan.transition === "patch" ? existing[1] : existing[0];
+  const rotated = `DEFOLD_VERSIONS = ["${plan.to}", "${prevKept}"]`;
+  writeFileSync(versionFile, versionSrc.replace(tuple[0], rotated));
+
+  const syncSrc = readFileSync(syncFile, "utf8")
+    .replace(`DEFOLD_VERSION = "${plan.from}"`, `DEFOLD_VERSION = "${plan.to}"`)
+    .split(`fixtures/defold-${plan.from}/`)
+    .join(`fixtures/defold-${plan.to}/`);
+  writeFileSync(syncFile, syncSrc);
+}
+
+// Where a bump routes progress vs. its machine-readable result. In `--json` mode
+// only the final summary reaches `stdout`; every child's output and every
+// progress banner is human noise routed to `stderr`, so the summary is the sole
+// stdout document.
+export interface BumpIO {
+  stdout(text: string): void;
+  stderr(text: string): void;
+}
+
+interface SpawnResult {
+  readonly exitCode: number;
+  readonly stdout: string;
+}
+
+// Run a child, forwarding its stderr (and, unless captured, its stdout) to the
+// human `io.stderr` sink so `io.stdout` stays reserved for the JSON summary. When
+// `capture` is set the child's stdout is returned for structured parsing instead
+// of echoed anywhere.
+export function spawn(
+  command: string[],
+  io: BumpIO,
+  opts: { capture?: boolean; cwd?: string } = {},
+): SpawnResult {
+  io.stderr(`$ ${command.join(" ")}\n`);
+  const proc = Bun.spawnSync(command, {
+    cwd: opts.cwd ?? REPO_ROOT,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stdout = proc.stdout ? new TextDecoder().decode(proc.stdout) : "";
+  const stderr = proc.stderr ? new TextDecoder().decode(proc.stderr) : "";
+  if (stderr) io.stderr(stderr);
+  if (!opts.capture && stdout) io.stderr(stdout);
+  return { exitCode: proc.exitCode ?? 1, stdout };
+}
+
+export interface ImportOutcome {
+  readonly ok: boolean;
+  readonly ready: boolean;
+  readonly blockers: string[];
+}
+
+// Parse the `import-defold-release --json` manifest into a structural stage
+// outcome, flattening both blocker classes into human-named strings so a blocked
+// import propagates *why* rather than a bare exit code.
+export function importResult(child: SpawnResult): ImportOutcome {
+  let manifest: ReleaseImportManifest | undefined;
+  try {
+    manifest = JSON.parse(child.stdout) as ReleaseImportManifest;
+  } catch {
+    manifest = undefined;
+  }
+  if (!manifest?.blockers) {
+    return {
+      ok: false,
+      ready: false,
+      blockers: [`import produced no parseable manifest (exit ${child.exitCode})`],
+    };
+  }
+  const blockers = [
+    ...manifest.blockers.unknownTypes.map(
+      (blocker) => `unknown type ${blocker.namespace}.${blocker.symbol}`,
+    ),
+    ...manifest.blockers.unmappedFunctionNamespaces.map(
+      (blocker) => `unmapped namespace ${blocker.namespace}`,
+    ),
+  ];
+  return { ok: child.exitCode === 0 && manifest.ready, ready: manifest.ready, blockers };
 }
 
 // The real stage seam: each stage is an actual child invocation (or a
-// programmatic file edit). Tests inject a mock in its place, so this path is
-// exercised only by a live bump.
-export const defaultRunStage: RunStage = (stage, ctx) => {
-  switch (stage) {
-    case "import": {
-      const code = spawn(["bun", "run", "import-defold-release", ctx.to]);
-      return { ok: true, ready: code === 0 };
+// programmatic file edit) wired to `io`. Tests inject a mock in its place, so
+// this factory's body is exercised only by a live bump.
+export function makeDefaultRunStage(io: BumpIO): RunStage {
+  return (stage, ctx) => {
+    switch (stage) {
+      case "import":
+        return importResult(
+          spawn(["bun", "run", "import-defold-release", ctx.to, "--json"], io, { capture: true }),
+        );
+      case "rotate":
+        applyVersionRotation(ctx.plan);
+        return { ok: true };
+      case "sync":
+        return {
+          ok: spawn(["bun", "--cwd", "packages/types", "run", "sync-api-docs"], io).exitCode === 0,
+        };
+      case "target-metadata": {
+        applyTargetOps(ctx.plan);
+        return {
+          ok: spawn(["bunx", "biome", "format", "--write", TARGETS_PATH], io).exitCode === 0,
+        };
+      }
+      case "regen":
+        return { ok: spawn(["bun", "scripts/regen-all.ts"], io).exitCode === 0 };
+      default:
+        return { ok: false };
     }
-    case "sync": {
-      const code = spawn(["bun", "--cwd", "packages/types", "run", "sync-api-docs"]);
-      return { ok: code === 0 };
-    }
-    case "target-metadata": {
-      applyTargetOps(ctx.plan);
-      const code = spawn(["bunx", "biome", "format", "--write", TARGETS_PATH]);
-      return { ok: code === 0 };
-    }
-    case "regen": {
-      const code = spawn(["bun", "scripts/regen-all.ts"]);
-      return { ok: code === 0 };
-    }
-    default:
-      return { ok: false };
-  }
-};
+  };
+}
 
 // `fixtureDir` is part of the release-model contract this orchestrator honors;
 // re-export keeps the bump surface importable as one module for the runbook.
 export { fixtureDir };
 
-if (import.meta.main) {
-  const args = process.argv.slice(2);
-  const json = args.includes("--json");
-  const check = args.includes("--check");
-  const toIndex = args.indexOf("--to");
-  const to = toIndex >= 0 ? args[toIndex + 1] : undefined;
+// The injectable CLI entrypoint. In `--json` mode it writes exactly one
+// `JSON.stringify` document to `io.stdout`; every human line goes to `io.stderr`.
+export function runBumpCli(argv: string[], io: BumpIO, runStage: RunStage): number {
+  const json = argv.includes("--json");
+  const check = argv.includes("--check");
+  const toIndex = argv.indexOf("--to");
+  const to = toIndex >= 0 ? argv[toIndex + 1] : undefined;
 
   if (check) {
     const checkRoot = process.env.BUMP_DEFOLD_CHECK_ROOT ?? REPO_ROOT;
     const result = runBumpCheck(checkRoot);
     if (json) {
-      process.stdout.write(
+      io.stdout(
         `${JSON.stringify({ command: "bump:defold", mode: "check", ok: result.ok, problems: result.problems })}\n`,
       );
     } else if (result.ok) {
-      process.stdout.write("bump:defold --check: OK — release evidence complete and offline\n");
+      io.stdout("bump:defold --check: OK — release evidence complete and offline\n");
     } else {
-      process.stdout.write(`bump:defold --check: BLOCKED (${result.problems.length} blocker(s))\n`);
+      io.stdout(`bump:defold --check: BLOCKED (${result.problems.length} blocker(s))\n`);
       for (const problem of result.problems) {
-        process.stdout.write(`  - [${problem.category}] ${problem.message}\n`);
+        io.stdout(`  - [${problem.category}] ${problem.message}\n`);
       }
     }
-    process.exit(result.ok ? 0 : 1);
+    return result.ok ? 0 : 1;
   }
   if (!to || to.startsWith("--")) {
-    process.stderr.write("usage: bump:defold --to <version> [--json]\n");
-    process.exit(2);
+    io.stderr("usage: bump:defold --to <version> [--json]\n");
+    return 2;
   }
 
-  const summary = runBump({ to, runStage: defaultRunStage });
+  const summary = runBump({ to, runStage });
   if (json) {
-    process.stdout.write(`${JSON.stringify(summary)}\n`);
+    io.stdout(`${JSON.stringify(summary)}\n`);
   } else if (summary.ok) {
-    process.stdout.write(`bump:defold — bumped to ${summary.to} (${summary.transition})\n`);
-    process.stdout.write("remaining human decisions:\n");
+    io.stdout(`bump:defold — bumped to ${summary.to} (${summary.transition})\n`);
+    io.stdout("remaining human decisions:\n");
     for (const decision of summary.remainingHumanDecisions) {
-      process.stdout.write(`  - ${decision}\n`);
+      io.stdout(`  - ${decision}\n`);
     }
   } else {
     const detail = summary.error ? `: ${summary.error}` : "";
-    process.stderr.write(`bump:defold FAILED at \`${summary.failedStage}\`${detail}\n`);
+    io.stderr(`bump:defold FAILED at \`${summary.failedStage}\`${detail}\n`);
     for (const blocker of summary.blockers ?? []) {
-      process.stderr.write(`  blocker: ${blocker}\n`);
+      io.stderr(`  blocker: ${blocker}\n`);
     }
   }
-  process.exit(summary.ok ? 0 : 1);
+  return summary.ok ? 0 : 1;
+}
+
+if (import.meta.main) {
+  const io: BumpIO = {
+    stdout: (text) => process.stdout.write(text),
+    stderr: (text) => process.stderr.write(text),
+  };
+  process.exit(runBumpCli(process.argv.slice(2), io, makeDefaultRunStage(io)));
 }
