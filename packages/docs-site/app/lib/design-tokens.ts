@@ -72,11 +72,15 @@ export function parseThemeColorTokens(
   };
 }
 
-/** Names present in BOTH maps whose values differ, in `a`'s iteration order. */
+/**
+ * Names in `a` that `b` fails to satisfy — missing from `b`, or present with a
+ * different value — in `a`'s iteration order. Asymmetric on purpose: a token
+ * deleted from `b` must surface, not just a changed value.
+ */
 export function diffColorTokens(a: Map<string, string>, b: Map<string, string>): string[] {
   const drifted: string[] = [];
   for (const [name, value] of a) {
-    if (b.has(name) && b.get(name) !== value) drifted.push(name);
+    if (!b.has(name) || b.get(name) !== value) drifted.push(name);
   }
   return drifted;
 }
