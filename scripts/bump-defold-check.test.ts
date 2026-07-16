@@ -237,34 +237,69 @@ describe("collectDriftInputs — real disk-read seam", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+});
 
-  test("runBumpCheck over a stale root is not ok and carries the named stale blocker", () => {
-    const root = freshCorrectRoot({ llmsTxt: "STALE llms corpus\n" });
+describe("runBumpCheck — drift root split makes staling the sole cause", () => {
+  test("a fresh-correct drift root over the real evidence root reports ok with no problems", () => {
+    const driftRoot = freshCorrectRoot();
     try {
-      const result = runBumpCheck(root);
-      expect(result.ok).toBe(false);
-      expect(
-        result.problems.some((p) => p.category === "llms" && /llms\.txt/.test(p.message)),
-      ).toBe(true);
+      const result = runBumpCheck(REPO_ROOT, undefined, driftRoot);
+      if (!result.ok) {
+        throw new Error(`expected ok, got blockers:\n${JSON.stringify(result.problems, null, 2)}`);
+      }
+      expect(result.problems).toEqual([]);
     } finally {
-      rmSync(root, { recursive: true, force: true });
+      rmSync(driftRoot, { recursive: true, force: true });
+    }
+  });
+
+  test("a stale llms.txt in the drift root is the sole blocker through runBumpCheck", () => {
+    const driftRoot = freshCorrectRoot({ llmsTxt: "STALE llms corpus\n" });
+    try {
+      const result = runBumpCheck(REPO_ROOT, undefined, driftRoot);
+      expect(result.ok).toBe(false);
+      expect(result.problems.map((p) => p.category)).toEqual(["llms"]);
+      expect(result.problems[0]?.message).toMatch(/llms\.txt/);
+    } finally {
+      rmSync(driftRoot, { recursive: true, force: true });
+    }
+  });
+
+  test("a stale api-signatures.json in the drift root is the sole blocker through runBumpCheck", () => {
+    const driftRoot = freshCorrectRoot({
+      signatures: JSON.stringify({ versions: { stale: true } }),
+    });
+    try {
+      const result = runBumpCheck(REPO_ROOT, undefined, driftRoot);
+      expect(result.ok).toBe(false);
+      expect(result.problems.map((p) => p.category)).toEqual(["signatures"]);
+      expect(result.problems[0]?.message).toMatch(/api-signatures\.json/);
+    } finally {
+      rmSync(driftRoot, { recursive: true, force: true });
     }
   });
 });
 
 describe("bump:defold --check command — stale artifact exit code", () => {
-  test("a stale committed artifact under the injected check root exits 1 with the named blocker on stdout", () => {
-    const root = freshCorrectRoot({ llmsTxt: "STALE llms corpus\n" });
+  test("a fresh-correct check root exits 0; staling its llms.txt flips the command to exit 1", () => {
+    const freshRoot = freshCorrectRoot();
+    const staleRoot = freshCorrectRoot({ llmsTxt: "STALE llms corpus\n" });
     try {
-      const proc = Bun.spawnSync(["bun", "scripts/bump-defold.ts", "--check"], {
+      const okProc = Bun.spawnSync(["bun", "scripts/bump-defold.ts", "--check"], {
         cwd: REPO_ROOT,
-        env: { ...process.env, BUMP_DEFOLD_CHECK_ROOT: root },
+        env: { ...process.env, BUMP_DEFOLD_CHECK_ROOT: freshRoot },
       });
-      const stdout = proc.stdout.toString();
-      expect(proc.exitCode).toBe(1);
-      expect(stdout).toMatch(/llms\.txt/);
+      expect(okProc.exitCode).toBe(0);
+
+      const staleProc = Bun.spawnSync(["bun", "scripts/bump-defold.ts", "--check"], {
+        cwd: REPO_ROOT,
+        env: { ...process.env, BUMP_DEFOLD_CHECK_ROOT: staleRoot },
+      });
+      expect(staleProc.exitCode).toBe(1);
+      expect(staleProc.stdout.toString()).toMatch(/llms\.txt/);
     } finally {
-      rmSync(root, { recursive: true, force: true });
+      rmSync(freshRoot, { recursive: true, force: true });
+      rmSync(staleRoot, { recursive: true, force: true });
     }
   });
 });
