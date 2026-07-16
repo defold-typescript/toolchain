@@ -163,9 +163,9 @@ const THEME_TOKENS = `
   --color-surface-2: #1d1d20;
   --color-border: #2a2a2e;
   --color-border-strong: #3a3a40;
-  --color-text: #c0c0c4;
+  --color-text: #ececef;
   --color-text-muted: #a4a4ad;
-  --color-text-faint: #4c4c56;
+  --color-text-faint: #6f6f78;
   --color-accent: #79a8ff;
   --color-accent-soft: rgba(121, 168, 255, 0.12);
   --color-accent-strong: #a9c4ff;
