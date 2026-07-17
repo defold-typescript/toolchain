@@ -120,6 +120,22 @@ describe("renderResult", () => {
     const parsed = JSON.parse(out) as Record<string, unknown>;
     expect("output" in parsed).toBe(false);
   });
+
+  test("emits a pinMismatch object with exactly installed and pinned keys", () => {
+    const out = renderResult({
+      command: "build",
+      written: [],
+      pinMismatch: { installed: "1.13.0", pinned: "1.12.4" },
+    });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("omits pinMismatch when undefined", () => {
+    const out = renderResult({ command: "build", written: [] });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect("pinMismatch" in parsed).toBe(false);
+  });
 });
 
 describe("renderWatchEvent", () => {

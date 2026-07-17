@@ -13,6 +13,7 @@ import {
 import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
+  describeInstalledPinMismatch,
   describeTargetOverride,
   diagnoseDefoldNamespace,
   fetchChannelInfo,
@@ -292,9 +293,21 @@ export function dispatch(
       io.stderr.write(`defold-typescript ${command}: ${diagnostic}\n`);
     }
   }
+  // The installed editor feeds two sites now — the no-flag/no-pin resolution
+  // fallback below and the pin-drift check after `target` resolves — so read it
+  // at most once and memoize.
+  let installedEditorRead = false;
+  let installedEditorVersion: string | null = null;
+  const detectInstalled = (): string | null => {
+    if (!installedEditorRead) {
+      installedEditorVersion = (internals?.detectEditorVersion ?? detectInstalledEditorVersion)();
+      installedEditorRead = true;
+    }
+    return installedEditorVersion;
+  };
   let detected: string | undefined;
   if (defoldTargetFlag === undefined && pin === undefined) {
-    const result = (internals?.detectEditorVersion ?? detectInstalledEditorVersion)();
+    const result = detectInstalled();
     if (result !== null) {
       detected = result;
     }
@@ -316,6 +329,24 @@ export function dispatch(
     return 1;
   }
   const targetSource = target.source;
+  // A concrete-version pin can silently lag the installed editor after an upgrade;
+  // warn (build/upgrade only) so the user knows `set-target --detected` exists. A
+  // channel pin tracks its head, and a flag override is covered by the override
+  // notice, so both stay out of this gate — leaving `pinnedVersion` undefined keeps
+  // the editor undetected for them.
+  const pinnedVersion =
+    (command === "build" || command === "upgrade") &&
+    target.kind === "version" &&
+    target.source === "pin"
+      ? target.version
+      : undefined;
+  const installedForDrift =
+    pinnedVersion !== undefined ? (detectInstalled() ?? undefined) : undefined;
+  const driftNotice = describeInstalledPinMismatch(installedForDrift, pinnedVersion);
+  const pinMismatch =
+    installedForDrift !== undefined && pinnedVersion !== undefined && driftNotice.length > 0
+      ? { installed: installedForDrift, pinned: pinnedVersion }
+      : undefined;
   const channelFetch =
     internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
   const versionFetch = internals?.fetchVersionInfo ?? fetchVersionInfo;
@@ -505,19 +536,23 @@ export function dispatch(
             renderResult({
               command: "build",
               written,
-              warnings: [...targetDiagnostics, ...warnings],
+              warnings: [...driftNotice, ...targetDiagnostics, ...warnings],
               defoldVersion: head.version,
               defoldVersionSource: targetSource,
               defoldChannel: head.channel,
               defoldSha: head.sha,
               apiSurface,
               materializedSurface: materializedDir,
+              ...(pinMismatch ? { pinMismatch } : {}),
             }),
           );
         } else {
           io.stdout.write(
             `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
           );
+          for (const notice of driftNotice) {
+            io.stderr.write(`defold-typescript build: ${notice}\n`);
+          }
           for (const warning of warnings) {
             io.stderr.write(`defold-typescript build: ${warning}\n`);
           }
@@ -1158,6 +1193,8 @@ export function dispatch(
               from: outcome.from,
               to: outcome.to,
               handedOff: outcome.handedOff,
+              ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+              ...(pinMismatch ? { pinMismatch } : {}),
               ...(outcome.error !== undefined ? { error: outcome.error } : {}),
               ...(outcome.output !== undefined ? { output: outcome.output } : {}),
             }),
@@ -1165,6 +1202,9 @@ export function dispatch(
         } else if (outcome.error !== undefined) {
           io.stderr.write(`${outcome.error}\n`);
         } else {
+          for (const notice of driftNotice) {
+            io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
+          }
           io.stdout.write(
             `defold-typescript upgrade: ${outcome.from} -> ${outcome.to}${
               outcome.handedOff ? "" : " (already latest; re-scaffolded managed files)"
