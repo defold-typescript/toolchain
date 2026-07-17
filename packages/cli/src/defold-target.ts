@@ -86,6 +86,22 @@ export function describeTargetOverride(
   ];
 }
 
+// The proactive counterpart to `describeTargetOverride`: an editor upgrade leaves
+// a concrete-version pin silently lagging, so name both versions and the one-command
+// fix. The caller supplies `pinned` only for a concrete-version pin (a channel pin
+// tracks its head and never lags), so this helper never sees a channel token.
+export function describeInstalledPinMismatch(
+  installed: string | undefined,
+  pinned: string | undefined,
+): readonly string[] {
+  if (installed === undefined || pinned === undefined || installed.trim() === pinned.trim()) {
+    return [];
+  }
+  return [
+    `the installed Defold editor (${installed}) differs from the "defold-target" pin (${pinned}); run \`set-target --detected\` to sync the pin. This is advisory and does not change the pin.`,
+  ];
+}
+
 export interface DefoldNamespaceRepair {
   readonly namespace: unknown;
   readonly warnings: readonly string[];

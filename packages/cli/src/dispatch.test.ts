@@ -761,6 +761,120 @@ describe("dispatch", () => {
     expect(parsed.warnings.some((w) => w.includes("1.13.0") && w.includes("1.12.4"))).toBe(true);
   });
 
+  test("build warns on stderr when the installed editor drifts from a version pin", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => "1.13.0" });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("1.13.0");
+    expect(err()).toContain("1.12.4");
+    expect(err()).toContain("set-target --detected");
+  });
+
+  test("build --json folds the drift notice into warnings and adds pinMismatch, resolution unchanged", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      ok: boolean;
+      warnings: string[];
+      defoldVersion: string;
+      defoldVersionSource: string;
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.defoldVersion).toBe("1.12.4");
+    expect(parsed.defoldVersionSource).toBe("pin");
+    expect(parsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(true);
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("build produces no drift notice when the editor matches the pin or is undetected", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const matched = captureStreams();
+    const matchCode = await dispatch(["build", cwd, "--json"], matched.io, {
+      detectEditorVersion: () => "1.12.4",
+    });
+    expect(matchCode).toBe(0);
+    const matchParsed = JSON.parse(matched.out()) as {
+      warnings: string[];
+      pinMismatch?: unknown;
+    };
+    expect(matchParsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(false);
+    expect("pinMismatch" in matchParsed).toBe(false);
+
+    const undetected = captureStreams();
+    const undetectedCode = await dispatch(["build", cwd, "--json"], undetected.io, {
+      detectEditorVersion: () => null,
+    });
+    expect(undetectedCode).toBe(0);
+    const undetectedParsed = JSON.parse(undetected.out()) as {
+      warnings: string[];
+      pinMismatch?: unknown;
+    };
+    expect(undetectedParsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(false);
+    expect("pinMismatch" in undetectedParsed).toBe(false);
+  });
+
+  test("build --defold-target emits only the override notice, not the drift notice", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", "1.13.0", "--json"], io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { warnings: string[]; pinMismatch?: unknown };
+    expect(parsed.warnings.some((w) => w.includes("overrides the package.json pin"))).toBe(true);
+    expect(parsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(false);
+    expect("pinMismatch" in parsed).toBe(false);
+  });
+
+  test("build produces no drift notice for a channel pin even when the editor differs", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "stable" } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      detectEditorVersion: () => "1.13.0",
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { warnings: string[]; pinMismatch?: unknown };
+    expect(parsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(false);
+    expect("pinMismatch" in parsed).toBe(false);
+  });
+
+  test("watch produces no drift notice — the scope guard holds for non-build/upgrade commands", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
+    writeFileSync(path.join(cwd, "main.script"), "");
+    const resolveOpts = multiKindRefDocResolveOpts();
+    const { io, err } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const code = await dispatch(["watch", cwd], io, {
+      watcherFactory: main,
+      resolveOpts,
+      refDocRegistry: [multiKindRefDocTarget()],
+      onWatchStart: (h) => h.stop(),
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("set-target --detected");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
   test("build --json with a version target reports a null channel and sha", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
@@ -3411,6 +3525,47 @@ describe("dispatch upgrade", () => {
       handedOff: true,
     });
     expect(err()).toBe("");
+  });
+
+  test("upgrade warns on stderr when the installed editor drifts from a version pin", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const { io, err } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const drifting = { ...internals, detectEditorVersion: (): string => "1.13.0" };
+
+    const code = await dispatch(["upgrade", cwd], io, drifting);
+
+    expect(code).toBe(0);
+    expect(err()).toContain("1.13.0");
+    expect(err()).toContain("1.12.4");
+    expect(err()).toContain("set-target --detected");
+  });
+
+  test("upgrade --json folds the drift notice into warnings and adds pinMismatch", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const { io, out } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const drifting = { ...internals, detectEditorVersion: (): string => "1.13.0" };
+
+    const code = await dispatch(["upgrade", cwd, "--json"], io, drifting);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as {
+      ok: boolean;
+      warnings?: string[];
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
   });
 
   test("--json captures the install on the already-latest path too", async () => {

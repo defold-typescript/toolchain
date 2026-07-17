@@ -58,6 +58,7 @@ export interface RenderResultInput {
   readonly extensions?: readonly ResolvedExtensionReportJson[];
   readonly libraries?: readonly ResolvedLibraryReportJson[];
   readonly warnings?: readonly string[];
+  readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly enginePath?: string;
   readonly projectc?: string;
   readonly build?: { readonly exitCode: number };
@@ -119,8 +120,10 @@ export function renderResult(input: RenderResultInput): string {
     "libraries" in input ? { ...withExtensions, libraries: input.libraries } : withExtensions;
   const withWarnings =
     "warnings" in input ? { ...withLibraries, warnings: input.warnings } : withLibraries;
+  const withPinMismatch =
+    "pinMismatch" in input ? { ...withWarnings, pinMismatch: input.pinMismatch } : withWarnings;
   const withEnginePath =
-    "enginePath" in input ? { ...withWarnings, enginePath: input.enginePath } : withWarnings;
+    "enginePath" in input ? { ...withPinMismatch, enginePath: input.enginePath } : withPinMismatch;
   const withProjectc =
     "projectc" in input ? { ...withEnginePath, projectc: input.projectc } : withEnginePath;
   const withBuild = "build" in input ? { ...withProjectc, build: input.build } : withProjectc;

@@ -3526,7 +3526,11 @@ per-run override that never writes `package.json`, by design — a throwaway bui
 against an older surface cannot silently re-pin the project. When the flag
 overrides a live pin, the CLI now says so — on stderr for a normal run and in the
 `warnings` array under `--json` — naming both the flag value and the pin it
-shadowed, and pointing at how to persist the target.
+shadowed, and pointing at how to persist the target. The reverse drift is caught
+too: when the installed editor differs from a pinned version, `build` and
+`upgrade` warn — naming both the installed version and the pin, and pointing back
+at `set-target --detected` — on stderr for a normal run and in the `warnings`
+array under `--json`. A channel pin tracks its head and never triggers this.
 
 `set-target` is a **writer** scoped like `init`'s pin write: it reads
 `package.json`, sets `"defold-typescript"."defold-target"` to a validated value,
@@ -3602,6 +3606,11 @@ The resolved target is reported in `--json` output:
   always derives from the resolved head version, never from the pin token.
 
 `build`, `watch`, `resolve`, and `init` all report these fields.
+
+On drift, `build` and `upgrade` add a `pinMismatch: { installed, pinned }` object
+(alongside the notice in the `warnings` array) naming the installed editor version
+and the pinned version. It is absent when the two match, when no editor is
+detected, and for a channel pin.
 
 #### Materializing the pinned surface
 
