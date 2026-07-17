@@ -5,11 +5,6 @@ bun = "1.3"
 description = "Verify Defold docs drift: offline byte-drift of vendored fixtures vs the pinned ref-doc.zip (deterministic gate). Add --live for the advisory upstream ref-doc-delta canary (network-touching, not a CI gate)."
 run = "bun scripts/verify-docs-drift.ts"
 
-[tasks.import-defold-release]
-description = "Check Defold 1.13.0 release docs and emit deterministic import evidence"
-dir = "{{config_root}}/packages/types"
-run = "bun run import-defold-release -- 1.13.0 --check"
-
 [tasks.release-readiness]
 description = "Offline Defold release-promotion gate over committed evidence (deterministic, fails closed). Add --live for the advisory network archive refresh."
 run = "bun scripts/defold-release-readiness.ts --check"
