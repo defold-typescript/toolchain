@@ -249,6 +249,20 @@ How the channel affects the doc-source fetch:
 
 ## Maintainer verification
 
+One task unifies the Defold-pin drift checks, mirroring the
+`release-readiness [--live]` split:
+
+```sh
+mise run verify-docs-drift          # offline byte-drift gate (governs the exit)
+mise run verify-docs-drift -- --live # also runs the advisory upstream canary
+```
+
+The offline form shells `bun run sync-api-docs --check` — the deterministic
+byte-drift of the vendored fixtures against the pinned `ref-doc.zip` — and its
+exit code governs. Adding `--live` additionally spawns the advisory,
+network-touching `bun run ref-doc-delta` canary; its verdict is printed but never
+changes the exit code, so a network hiccup or upstream drift cannot fail the gate.
+
 The public `defold-1.9.8` example target is periodically checked with the
 advisory, network-touching `bun run ref-doc-delta` command. It verifies that the
 live Defold 1.9.8 reference docs still include `label.get_text` and still omit
