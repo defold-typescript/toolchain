@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   classifyDefoldTarget,
+  describeInstalledPinMismatch,
   describeTargetOverride,
   diagnoseDefoldNamespace,
   readDefoldTargetPin,
@@ -172,6 +173,25 @@ describe("describeTargetOverride", () => {
     expect(describeTargetOverride(" 1.12.4 ", "1.12.4")).toEqual([]);
     expect(describeTargetOverride("1.13.0", undefined)).toEqual([]);
     expect(describeTargetOverride(undefined, "1.12.4")).toEqual([]);
+  });
+});
+
+describe("describeInstalledPinMismatch", () => {
+  test("installed editor differing from the pin names both and points at set-target --detected", () => {
+    const notices = describeInstalledPinMismatch("1.13.0", "1.12.4");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain("1.13.0");
+    expect(notices[0]).toContain("1.12.4");
+    expect(notices[0]).toContain("advisory");
+    expect(notices[0]).toContain("does not change the pin");
+    expect(notices[0]).toContain("set-target --detected");
+  });
+
+  test("equal, whitespace-only difference, no editor, or no pin produce no notice", () => {
+    expect(describeInstalledPinMismatch("1.12.4", "1.12.4")).toEqual([]);
+    expect(describeInstalledPinMismatch(" 1.12.4 ", "1.12.4")).toEqual([]);
+    expect(describeInstalledPinMismatch(undefined, "1.12.4")).toEqual([]);
+    expect(describeInstalledPinMismatch("1.13.0", undefined)).toEqual([]);
   });
 });
 
