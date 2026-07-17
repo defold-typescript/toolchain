@@ -9,12 +9,20 @@
 // repo, so it is deliberately kept out of the deterministic test suite; the
 // offline guarantees live in `packages/cli/src/release-bin-smoke.test.ts`.
 
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { PACKAGES } from "./release-pack-proof";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
-const PACKAGES = ["types", "transpiler", "cli"] as const;
 const RUNTIMES = ["node", "bun"] as const;
 export const STARTER_ARTIFACT_REL = "src/main.ts.script";
 
@@ -71,38 +79,69 @@ function packAll(dest: string): string[] | null {
   return ok ? tgz : null;
 }
 
-function tarballFor(tarballs: string[], pkg: string): string {
-  const match = tarballs.find((t) => path.basename(t).includes(`-${pkg}-`));
+export function internalCliDeps(cliManifest: unknown): string[] {
+  const deps =
+    typeof cliManifest === "object" && cliManifest !== null
+      ? (cliManifest as { dependencies?: Record<string, unknown> }).dependencies
+      : undefined;
+  const names = deps && typeof deps === "object" ? Object.keys(deps) : [];
+  return names.filter((name) => name.startsWith("@defold-typescript/")).sort();
+}
+
+export function pinnedTypeScriptSpec(rootManifest: unknown): string {
+  const dev =
+    typeof rootManifest === "object" && rootManifest !== null
+      ? (rootManifest as { devDependencies?: Record<string, unknown> }).devDependencies
+      : undefined;
+  const spec = dev && typeof dev === "object" ? dev.typescript : undefined;
+  if (typeof spec !== "string" || !/^\d+\.\d+\.\d+(?:-[\w.]+)?$/.test(spec)) {
+    throw new Error(`root devDependencies.typescript is missing or unpinned: ${String(spec)}`);
+  }
+  return `typescript@${spec}`;
+}
+
+export function tarballForExact(tarballs: string[], pkg: string): string {
+  const prefix = `defold-typescript-${pkg}-`;
+  const match = tarballs.find((t) => path.basename(t).startsWith(prefix));
   if (match === undefined) {
     throw new Error(`no packed tarball for ${pkg}`);
   }
   return match;
 }
 
+export function overridesFor(internalDeps: string[], tarballs: string[]): Record<string, string> {
+  const overrides: Record<string, string> = {};
+  for (const dep of internalDeps) {
+    const pkg = dep.slice("@defold-typescript/".length);
+    overrides[dep] = `file:${tarballForExact(tarballs, pkg)}`;
+  }
+  return overrides;
+}
+
 function installConsumer(dir: string, tarballs: string[]): boolean {
-  const types = tarballFor(tarballs, "types");
-  const transpiler = tarballFor(tarballs, "transpiler");
-  const cli = tarballFor(tarballs, "cli");
-  // The packed cli tarball pins its siblings to the concrete `0.0.0`, which
-  // would resolve against the (unpublished) registry. `file:` overrides force
-  // the transitive `@defold-typescript/*` deps onto the local tarballs so the
-  // install resolves entirely offline.
+  const cliManifest = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, "packages", "cli", "package.json"), "utf8"),
+  );
+  const rootManifest = JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
+  const cli = tarballForExact(tarballs, "cli");
+  // The packed cli tarball pins every internal `@defold-typescript/*` sibling to
+  // the concrete `0.0.0`, which would resolve against the (unpublished)
+  // registry. Deriving `file:` overrides from the CLI manifest forces each
+  // transitive internal dep onto its local tarball, so the install resolves
+  // entirely offline — no dep can silently drift out of the override set.
   writeFileSync(
     path.join(dir, "package.json"),
     `${JSON.stringify(
       {
         name: "release-smoke-consumer",
         private: true,
-        overrides: {
-          "@defold-typescript/types": `file:${types}`,
-          "@defold-typescript/transpiler": `file:${transpiler}`,
-        },
+        overrides: overridesFor(internalCliDeps(cliManifest), tarballs),
       },
       null,
       2,
     )}\n`,
   );
-  const add = spawn(["bun", "add", "typescript", types, transpiler, cli], dir);
+  const add = spawn(["bun", "add", pinnedTypeScriptSpec(rootManifest), cli], dir);
   return add.code === 0 ? true : record(`install (${dir})`, false, add.output.slice(-400));
 }
 
