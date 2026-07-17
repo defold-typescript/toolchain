@@ -21,19 +21,28 @@ function recordingRunner(exitCodes: readonly number[]): {
 }
 
 describe("verify-docs-drift orchestration", () => {
-  test("driftCommands(false) is the offline command only", () => {
-    const commands = driftCommands(false);
-    expect(commands).toHaveLength(1);
-    expect(commands[0]?.argv).toContain("sync-api-docs");
-    expect(commands[0]?.argv).toContain("--check");
-    expect(commands.some((c) => c.argv.includes("ref-doc-delta"))).toBe(false);
+  const OFFLINE_COMMAND: DriftCommand = {
+    label: "offline drift",
+    argv: ["bun", "run", "sync-api-docs", "--check"],
+    cwd: "packages/types",
+  };
+  const LIVE_CANARY_COMMAND: DriftCommand = {
+    label: "live upstream canary",
+    argv: ["bun", "run", "ref-doc-delta"],
+  };
+
+  test("driftCommands(false) is exactly the offline command", () => {
+    expect(driftCommands(false)).toEqual([OFFLINE_COMMAND]);
   });
 
-  test("driftCommands(true) appends the live canary after the offline command", () => {
+  test("driftCommands(true) is exactly the offline command then the live canary", () => {
+    expect(driftCommands(true)).toEqual([OFFLINE_COMMAND, LIVE_CANARY_COMMAND]);
+  });
+
+  test("only the offline command carries the required packages/types cwd", () => {
     const commands = driftCommands(true);
-    expect(commands).toHaveLength(2);
-    expect(commands[0]?.argv).toContain("sync-api-docs");
-    expect(commands[1]?.argv).toContain("ref-doc-delta");
+    expect(commands[0]?.cwd).toBe("packages/types");
+    expect(commands[1]).not.toHaveProperty("cwd");
   });
 
   test("offline-only clean run calls run once and returns 0", () => {
@@ -73,6 +82,12 @@ describe("verify-docs-drift orchestration", () => {
     expect(mise).toContain("[tasks.verify-docs-drift]");
     expect(mise).toContain("Verify Defold docs drift");
     expect(mise).not.toContain("[tasks.sync-api-docs-check]");
+    // The orphaned hardcoded task was removed, but its package script and
+    // underlying command must survive (bump:defold still spawns them).
+    expect(mise).not.toContain("[tasks.import-defold-release]");
+    expect(rootPackage.scripts["import-defold-release"]).toContain(
+      "packages/types/scripts/import-defold-release.ts",
+    );
 
     expect(rootPackage.scripts.test).not.toContain("verify-docs-drift");
     expect(rootPackage.scripts.typecheck).not.toContain("verify-docs-drift");
