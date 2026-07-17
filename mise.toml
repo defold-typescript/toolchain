@@ -1,10 +1,9 @@
 [tools]
 bun = "1.3"
 
-[tasks.sync-api-docs-check]
-description = "Check vendored Defold API fixtures for drift against the pinned ref-doc.zip"
-dir = "{{config_root}}/packages/types"
-run = "bun run sync-api-docs --check"
+[tasks.verify-docs-drift]
+description = "Verify Defold docs drift: offline byte-drift of vendored fixtures vs the pinned ref-doc.zip (deterministic gate). Add --live for the advisory upstream ref-doc-delta canary (network-touching, not a CI gate)."
+run = "bun scripts/verify-docs-drift.ts"
 
 [tasks.import-defold-release]
 description = "Check Defold 1.13.0 release docs and emit deterministic import evidence"

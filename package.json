@@ -25,6 +25,7 @@
     "pack-proof": "bun scripts/release-pack-proof.ts",
     "example-smoke": "bun scripts/example-smoke.ts",
     "build:lldebugger": "bun scripts/build-lldebugger-zip.ts",
+    "verify-docs-drift": "bun scripts/verify-docs-drift.ts",
     "ref-doc-delta": "bun --cwd packages/types run ref-doc-delta",
     "import-defold-release": "bun packages/types/scripts/import-defold-release.ts",
     "release-readiness": "bun scripts/defold-release-readiness.ts --check"
