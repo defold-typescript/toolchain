@@ -14,7 +14,7 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## Unreleased
+## v0.20.5
 
 ### Improved
 
