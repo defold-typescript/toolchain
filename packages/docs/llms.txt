@@ -43,6 +43,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Native extensions](guide/extensions.md)
 - [API docs vs `ts-defold-types`](guide/api-docs-vs-ts-defold.md)
 - [Migrating from `ts-defold`](guide/migrating-from-ts-defold.md)
+- [Changelog](guide/changelog.md)
 
 ## API
 

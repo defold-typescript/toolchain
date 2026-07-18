@@ -274,7 +274,7 @@ describe("buildNav", () => {
     expect(guides?.route).toBe("/guides");
   });
 
-  test("nests the Guides pages under seven route-less group headers in learning order", () => {
+  test("nests the Guides pages under eight route-less group headers in learning order", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -291,6 +291,7 @@ describe("buildNav", () => {
       "Toolchain & workflow",
       "Project configuration",
       "Migration",
+      "Releases",
     ]);
     for (const header of guides?.links ?? []) {
       expect(header.route).toBeUndefined();
@@ -332,6 +333,7 @@ describe("buildNav", () => {
       "/api-docs-vs-ts-defold",
       "/migrating-from-ts-defold",
     ]);
+    expect(byLabel("Releases")?.children?.map((c) => c.route)).toEqual(["/changelog"]);
   });
 
   test("maps the index page to / under Get started, labeled Overview", () => {
