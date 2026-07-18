@@ -13,7 +13,12 @@ jobs:
   lint-typecheck:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth/fetch-tags: bun run build runs build-changelog-dates.ts, which
+      # fails loud on a tagless checkout (the /changelog date map is git-tag-sourced).
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build
@@ -26,7 +31,12 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      # fetch-depth/fetch-tags: bun run build runs build-changelog-dates.ts, which
+      # fails loud on a tagless checkout (the /changelog date map is git-tag-sourced).
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       # Build first: publish-pack / release-bin-smoke tests build the cli, which
