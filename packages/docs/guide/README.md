@@ -75,6 +75,10 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [API docs vs `ts-defold-types`](./api-docs-vs-ts-defold.md) — a factual, dimension-by-dimension comparison of the JSDoc that `@defold-typescript/types` and `ts-defold-types` emit (Markdown conversion, dash params, grid-aligned multi-line docs, branded constants, the `@example` trade-off), with a picker for which surface fits your project.
 - [Migrating from `ts-defold`](./migrating-from-ts-defold.md) — move a project off the `@ts-defold/*` stack: the package/tooling map, the step-by-step port via `init` add-TypeScript mode and a `tsconfig.json` reconcile, and the type-surface differences you will hit.
 
+### Releases
+
+- [Changelog](./changelog.md) — what changed in each published toolchain version (`vX.Y.Z` tag), reverse-chronological with `Added` / `Improved` / `Fixed` and a `Breaking` lead line where behavior changed incompatibly; the latest releases per-patch, older ones rolled up per minor.
+
 ## Reference
 
 - [API](/api) — the generated `@defold-typescript/types` reference: every documented Defold namespace, grouped alphabetically as cards (site-only; built from the typed surface the toolchain ships).

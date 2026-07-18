@@ -16,6 +16,7 @@ describe("GUIDE_GROUPS", () => {
       "toolchain-workflow",
       "project-configuration",
       "migration",
+      "releases",
     ]);
     expect(GUIDE_GROUPS.map((g) => g.label)).toEqual([
       "Tutorial",
@@ -25,6 +26,7 @@ describe("GUIDE_GROUPS", () => {
       "Toolchain & workflow",
       "Project configuration",
       "Migration",
+      "Releases",
     ]);
     for (const group of GUIDE_GROUPS) {
       expect(group.subtitle.length).toBeGreaterThan(0);
@@ -73,11 +75,11 @@ describe("groupGuidePages", () => {
     }
   });
 
-  test("the union of grouped routes is exactly the 23 guide-tab routes, tutorial first", () => {
+  test("the union of grouped routes is exactly the 24 guide-tab routes, tutorial first", () => {
     const groups = groupGuidePages(pages);
     const routes = groups.flatMap((g) => g.pages.map((p) => p.route));
-    expect(routes.length).toBe(23);
-    expect(new Set(routes).size).toBe(23);
+    expect(routes.length).toBe(24);
+    expect(new Set(routes).size).toBe(24);
     // the Tetris tutorial now leads the guide list as its own first subgroup
     expect(routes[0]).toBe("/tetris-tutorial");
     expect(new Set(routes)).toEqual(
@@ -105,6 +107,7 @@ describe("groupGuidePages", () => {
         "/extensions",
         "/api-docs-vs-ts-defold",
         "/migrating-from-ts-defold",
+        "/changelog",
       ]),
     );
     // the site index and get-started onboarding stay out of the guide groups
