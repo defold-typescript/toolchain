@@ -2887,6 +2887,67 @@ describe("dispatch bob", () => {
     expect(channel.err()).not.toContain("set-target --detected");
   });
 
+  test("bob bundle stays silent when the editor matches the pin or the pin is a channel", async () => {
+    pinProject("1.12.4");
+    const matched = captureStreams();
+    const { internals } = defoldInternals();
+    const matchCode = await dispatch(["bob", "bundle", cwd, "--json"], matched.io, {
+      ...internals,
+      detectEditorVersion: () => "1.12.4",
+    });
+    expect(matchCode).toBe(0);
+    expect(matched.out()).not.toContain("pinMismatch");
+    expect(matched.err()).not.toContain("set-target --detected");
+
+    pinProject("stable");
+    const channel = captureStreams();
+    const { internals: internals2 } = defoldInternals();
+    const channelCode = await dispatch(["bob", "bundle", cwd, "--json"], channel.io, {
+      ...internals2,
+      detectEditorVersion: () => "1.13.0",
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+    });
+    expect(channelCode).toBe(0);
+    expect(channel.out()).not.toContain("pinMismatch");
+    expect(channel.err()).not.toContain("set-target --detected");
+  });
+
+  test("bob run stays silent when the editor matches the pin or the pin is a channel", async () => {
+    const runInternals = {
+      platform: "darwin" as const,
+      arch: "arm64" as const,
+      probe: () => true,
+      spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+      copyAside: (p: string) => p,
+      chmod: () => {},
+    };
+
+    pinProject("1.12.4");
+    const matched = captureStreams();
+    const { internals } = defoldInternals();
+    const matchCode = await dispatch(["bob", "run", cwd, "--json"], matched.io, {
+      ...internals,
+      detectEditorVersion: () => "1.12.4",
+      runInternals,
+    });
+    expect(matchCode).toBe(0);
+    expect(matched.out()).not.toContain("pinMismatch");
+    expect(matched.err()).not.toContain("set-target --detected");
+
+    pinProject("stable");
+    const channel = captureStreams();
+    const { internals: internals2 } = defoldInternals();
+    const channelCode = await dispatch(["bob", "run", cwd, "--json"], channel.io, {
+      ...internals2,
+      detectEditorVersion: () => "1.13.0",
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+      runInternals,
+    });
+    expect(channelCode).toBe(0);
+    expect(channel.out()).not.toContain("pinMismatch");
+    expect(channel.err()).not.toContain("set-target --detected");
+  });
+
   test("bob status and bob resolve stay silent even when the editor drifts", async () => {
     pinProject("1.12.4");
     const status = captureStreams();
@@ -3666,6 +3727,123 @@ describe("dispatch init --template", () => {
     expect(channelCode).toBe(0);
     expect(channel.out()).not.toContain("set-target --detected");
     expect(channel.out()).not.toContain("pinMismatch");
+  });
+
+  test("run with no project path derives the project dir from args before -- so drift still fires", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const spawned: string[][] = [];
+    const { io, err } = captureStreams();
+    const previous = process.cwd();
+    process.chdir(cwd);
+    const resolved = process.cwd();
+    const projectc = path.join(resolved, "build/default/game.projectc");
+    const engine = path.join(resolved, "build/arm64-macos/dmengine");
+    try {
+      const code = await dispatch(["run", "--", "--windowed"], io, {
+        detectEditorVersion: () => "1.13.0",
+        runInternals: {
+          platform: "darwin",
+          arch: "arm64",
+          probe: (p) => p === projectc || p === engine,
+          spawn: (argv) => {
+            spawned.push(argv);
+            return { kill: () => {}, exited: Promise.resolve(7) };
+          },
+          copyAside: (p) => p,
+          chmod: () => {},
+        },
+      });
+
+      expect(code).toBe(7);
+      const stderr = err();
+      expect(stderr).toContain("1.13.0");
+      expect(stderr).toContain("1.12.4");
+      expect(stderr).toContain("set-target --detected");
+      expect(spawned[0]?.[spawned[0].length - 1]).toBe("--windowed");
+    } finally {
+      process.chdir(previous);
+    }
+  });
+
+  test("run --json with no project path emits pinMismatch and passes args through", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const spawned: string[][] = [];
+    const { io, out } = captureStreams();
+    const previous = process.cwd();
+    process.chdir(cwd);
+    const resolved = process.cwd();
+    const projectc = path.join(resolved, "build/default/game.projectc");
+    const engine = path.join(resolved, "build/arm64-macos/dmengine");
+    try {
+      const code = await dispatch(["run", "--json", "--", "--windowed"], io, {
+        detectEditorVersion: () => "1.13.0",
+        runInternals: {
+          platform: "darwin",
+          arch: "arm64",
+          probe: (p) => p === projectc || p === engine,
+          spawn: (argv) => {
+            spawned.push(argv);
+            return { kill: () => {}, exited: Promise.resolve(0) };
+          },
+          copyAside: (p) => p,
+          chmod: () => {},
+        },
+      });
+
+      expect(code).toBe(0);
+      const parsed = JSON.parse(out()) as {
+        enginePath: string;
+        exitCode: number;
+        warnings?: string[];
+        pinMismatch?: { installed: string; pinned: string };
+      };
+      expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+      expect(parsed.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
+      expect(parsed.enginePath).toBe(engine);
+      expect(parsed.exitCode).toBe(0);
+      expect(spawned[0]?.[spawned[0].length - 1]).toBe("--windowed");
+    } finally {
+      process.chdir(previous);
+    }
+  });
+
+  test("run with an explicit project path before -- still drifts and passes args through", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const spawned: string[][] = [];
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--json", "--", "--windowed"], io, {
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: (argv) => {
+          spawned.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+    expect(spawned[0]?.[spawned[0].length - 1]).toBe("--windowed");
   });
 });
 
