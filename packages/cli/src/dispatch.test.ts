@@ -3568,6 +3568,85 @@ describe("dispatch upgrade", () => {
     expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
   });
 
+  test("update warns on stderr when the installed editor drifts from a version pin", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const { io, err } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const drifting = { ...internals, detectEditorVersion: (): string => "1.13.0" };
+
+    const code = await dispatch(["update", cwd], io, drifting);
+
+    expect(code).toBe(0);
+    expect(err()).toContain("1.13.0");
+    expect(err()).toContain("1.12.4");
+    expect(err()).toContain("set-target --detected");
+  });
+
+  test("update --json folds the drift notice into warnings and adds pinMismatch", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const { io, out } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const drifting = { ...internals, detectEditorVersion: (): string => "1.13.0" };
+
+    const code = await dispatch(["update", cwd, "--json"], io, drifting);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as {
+      ok: boolean;
+      warnings?: string[];
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("update stays silent when the installed editor matches the version pin", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const { io, out, err } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const matching = { ...internals, detectEditorVersion: (): string => "1.12.4" };
+
+    const code = await dispatch(["update", cwd, "--json"], io, matching);
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("set-target --detected");
+    expect("pinMismatch" in (JSON.parse(out().trim()) as object)).toBe(false);
+  });
+
+  test("update produces no drift notice for a channel pin even when the editor differs", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "stable" } }, null, 2)}\n`,
+    );
+    const { io, out, err } = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const channelDrift = {
+      ...internals,
+      detectEditorVersion: (): string => "1.13.0",
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+    };
+
+    const code = await dispatch(["update", cwd, "--json"], io, channelDrift);
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("set-target --detected");
+    expect("pinMismatch" in (JSON.parse(out().trim()) as object)).toBe(false);
+  });
+
   test("--json captures the install on the already-latest path too", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out, err } = captureStreams();

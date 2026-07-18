@@ -330,12 +330,12 @@ export function dispatch(
   }
   const targetSource = target.source;
   // A concrete-version pin can silently lag the installed editor after an upgrade;
-  // warn (build/upgrade only) so the user knows `set-target --detected` exists. A
+  // warn (build/upgrade/update only) so the user knows `set-target --detected` exists. A
   // channel pin tracks its head, and a flag override is covered by the override
   // notice, so both stay out of this gate — leaving `pinnedVersion` undefined keeps
   // the editor undetected for them.
   const pinnedVersion =
-    (command === "build" || command === "upgrade") &&
+    (command === "build" || command === "upgrade" || command === "update") &&
     target.kind === "version" &&
     target.source === "pin"
       ? target.version
