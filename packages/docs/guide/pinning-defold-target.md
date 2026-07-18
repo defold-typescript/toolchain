@@ -89,10 +89,13 @@ against an older surface cannot silently re-pin the project. When the flag
 overrides a live pin, the CLI now says so — on stderr for a normal run and in the
 `warnings` array under `--json` — naming both the flag value and the pin it
 shadowed, and pointing at how to persist the target. The reverse drift is caught
-too: when the installed editor differs from a pinned version, `build` and
-`upgrade` (and its `update` synonym) warn — naming both the installed version and the pin, and pointing back
-at `set-target --detected` — on stderr for a normal run and in the `warnings`
-array under `--json`. A channel pin tracks its head and never triggers this.
+too: when the installed editor differs from a pinned version, the whole
+build-the-project loop — `build`, `upgrade` (and its `update` synonym), `watch`
+(once at startup, never per rebuild), `run`, and `bob build`/`bundle`/`run` —
+warns, naming both the installed version and the pin, and pointing back at
+`set-target --detected`, on stderr for a normal run and in the `warnings` array
+under `--json`. `bob status`/`bob resolve` inspect rather than build and stay
+quiet. A channel pin tracks its head and never triggers this.
 
 `set-target` is a **writer** scoped like `init`'s pin write: it reads
 `package.json`, sets `"defold-typescript"."defold-target"` to a validated value,
@@ -169,7 +172,9 @@ The resolved target is reported in `--json` output:
 
 `build`, `watch`, `resolve`, and `init` all report these fields.
 
-On drift, `build` and `upgrade` (and its `update` synonym) add a `pinMismatch: { installed, pinned }` object
+On drift, every command in the build-the-project loop — `build`, `upgrade` (and
+its `update` synonym), `watch` (on its `start` event), `run`, and `bob
+build`/`bundle`/`run` — adds a `pinMismatch: { installed, pinned }` object
 (alongside the notice in the `warnings` array) naming the installed editor version
 and the pinned version. It is absent when the two match, when no editor is
 detected, and for a channel pin.

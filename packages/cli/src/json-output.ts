@@ -149,6 +149,7 @@ export interface RenderWatchEventInput {
   readonly changed?: readonly string[];
   readonly removed?: readonly string[];
   readonly warnings?: readonly string[];
+  readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly error?: string;
   readonly errors?: readonly WatchErrorEntry[];
 }
@@ -164,5 +165,7 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
   const withRemoved = "removed" in input ? { ...withChanged, removed: input.removed } : withChanged;
   const withWarnings =
     "warnings" in input ? { ...withRemoved, warnings: input.warnings } : withRemoved;
-  return `${JSON.stringify(withWarnings)}\n`;
+  const withPinMismatch =
+    "pinMismatch" in input ? { ...withWarnings, pinMismatch: input.pinMismatch } : withWarnings;
+  return `${JSON.stringify(withPinMismatch)}\n`;
 }
