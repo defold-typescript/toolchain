@@ -6,7 +6,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build-indexes": "bun scripts/build-guide-images.ts && bun scripts/build-font-fallbacks.ts && bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && bun scripts/build-llms.ts",
+    "build-indexes": "bun scripts/build-guide-images.ts && bun scripts/build-font-fallbacks.ts && bun scripts/build-changelog-dates.ts && bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && bun scripts/build-llms.ts",
     "build-font-fallbacks": "bun scripts/build-font-fallbacks.ts",
     "build-llms": "bun scripts/build-llms.ts",
     "dev": "bun run build-indexes && vite",

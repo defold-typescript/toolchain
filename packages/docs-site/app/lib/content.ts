@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { CHANGELOG_TAG_DATES } from "../generated/changelog-dates";
+import { applyChangelogTagDates } from "./changelog-dates";
 import { parseFrontmatter } from "./frontmatter";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
@@ -19,8 +21,9 @@ export function renderGuide(
   page: GuidePage,
   opts: { firstHeading?: string } = {},
 ): Promise<string> {
-  return renderMarkdown(
-    parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body,
-    opts,
-  );
+  let body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body;
+  if (page.slug === "changelog") {
+    body = applyChangelogTagDates(body, CHANGELOG_TAG_DATES);
+  }
+  return renderMarkdown(body, opts);
 }

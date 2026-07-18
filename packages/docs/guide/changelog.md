@@ -27,7 +27,7 @@ changes are called out first because the toolchain is pre-1.0.
 - `run` derives its project directory from the arguments before `--`, so pin
   drift is no longer read from a `<cwd>/--` path.
 
-## v0.20.4 - 2026-07-17
+## v0.20.4
 
 ### Improved
 
@@ -36,7 +36,7 @@ changes are called out first because the toolchain is pre-1.0.
   trigger.
 - Release-smoke overrides derive from the CLI manifest, with a pinned TypeScript.
 
-## v0.20.3 - 2026-07-16
+## v0.20.3
 
 ### Added
 
@@ -52,7 +52,7 @@ changes are called out first because the toolchain is pre-1.0.
   points the override notice at `set-target`.
 - `resolve` prunes orphaned extension version-pins.
 
-## v0.20.2 - 2026-07-14
+## v0.20.2
 
 ### Fixed
 
