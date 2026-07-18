@@ -1,10 +1,12 @@
-// Cut a release: bump the version and push the v<version> tag.
+// Cut a release: tag the version the changelog projects, and push it.
 //
-// Publishing now happens in CI (release.yml, OIDC trusted publishing), so this
-// command does NOT publish — it computes the next version from what is live on
-// npm, then creates and pushes the v<version> tag. Pushing the tag triggers the
-// Release workflow, which stamps the manifests from the tag and publishes all
-// packages. The repo manifests stay pinned at 0.0.0; the tag drives the version.
+// Publishing happens in CI (release.yml, OIDC trusted publishing), so this
+// command does NOT publish — it reads the projected next version from the top
+// `## vX.Y.Z` heading in packages/docs/guide/changelog.md, verifies it is strictly
+// greater than the latest release tag, then creates and pushes that v<version>
+// tag. Pushing the tag triggers the Release workflow, which stamps the manifests
+// from the tag and publishes all packages. The repo manifests stay pinned at
+// 0.0.0; the tag drives the version.
 //
 // Author each change under the projected version heading as work lands: the top
 // `## vX.Y.Z` heading in packages/docs/guide/changelog.md is the next version, and
@@ -14,36 +16,31 @@
 // into an `Added`/`Improved`/`Fixed` section (advisory; no CI gate enforces this).
 //
 // Usage:
-//   mise run release [<version>|patch|minor|major]   (default: patch)
-//   bun scripts/release.ts [<version>|patch|minor|major]
+//   mise run release            (tags the changelog-projected version)
+//   bun scripts/release.ts
 
 import { spawnSync } from "node:child_process";
-import { PACKAGES } from "./release-pack-proof.ts";
+import { readFileSync } from "node:fs";
+import { projectedReleaseVersion } from "./changelog-version.ts";
 
-const SCOPED = PACKAGES.map((p) => `@defold-typescript/${p}`);
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
-export type Bump = "patch" | "minor" | "major";
-
 export interface Args {
-  readonly spec: string;
   readonly help: boolean;
   readonly skipCiCheck: boolean;
 }
 
-export const HELP = `Cut a release: bump the version and push the v<version> tag.
+export const HELP = `Cut a release: tag the version the changelog projects, and push it.
 
 Usage:
-  mise run release [<version>|patch|minor|major]
-  bun scripts/release.ts [<version>|patch|minor|major]
+  mise run release
+  bun scripts/release.ts
 
-Reads the highest version live on npm, resolves the target, waits for the
-commit's CI run to pass, then creates and pushes the v<target> tag. The Release
-workflow publishes from the tag via OIDC; nothing is published locally.
-
-Arguments:
-  patch | minor | major   bump from the highest published version (default: patch)
-  <x.y.z>                  explicit version; must be greater than current
+Takes no version argument. Reads the projected next version from the top
+\`## vX.Y.Z\` heading in packages/docs/guide/changelog.md, verifies it is strictly
+greater than the latest release tag, waits for the commit's CI run to pass, then
+creates and pushes that v<version> tag. The Release workflow publishes from the
+tag via OIDC; nothing is published locally.
 
 Flags:
   --skip-ci-check         tag without waiting for the commit's CI run to pass
@@ -64,10 +61,10 @@ export function parseArgs(argv: readonly string[]): Args {
       positional.push(arg);
     }
   }
-  if (positional.length > 1) {
-    throw new Error(`expected one version/bump argument, got: ${positional.join(", ")}`);
+  if (positional.length > 0) {
+    throw new Error(`expected no arguments, got: ${positional.join(", ")}`);
   }
-  return { spec: positional[0] ?? "patch", help, skipCiCheck };
+  return { help, skipCiCheck };
 }
 
 function parseSemver(v: string): [number, number, number] {
@@ -88,30 +85,19 @@ export function maxVersion(versions: readonly string[]): string {
     .reduce((hi, v) => (compareVersions(v, hi) > 0 ? v : hi), "0.0.0");
 }
 
-export function bumpVersion(base: string, kind: Bump): string {
-  const [major, minor, patch] = parseSemver(base);
-  if (kind === "major") return `${major + 1}.0.0`;
-  if (kind === "minor") return `${major}.${minor + 1}.0`;
-  return `${major}.${minor}.${patch + 1}`;
-}
-
 const RELEASE_TAG = /^v\d+\.\d+\.\d+$/;
 
 export function releaseTagsAt(tags: readonly string[]): string[] {
   return tags.map((t) => t.trim()).filter((t) => RELEASE_TAG.test(t));
 }
 
-export function resolveTarget(base: string, spec: string): string {
-  if (spec === "patch" || spec === "minor" || spec === "major") {
-    return bumpVersion(base, spec);
-  }
-  if (!SEMVER.test(spec)) {
-    throw new Error(`"${spec}" is not a bump keyword or an x.y.z version`);
-  }
-  if (compareVersions(spec, base) <= 0) {
-    throw new Error(`target ${spec} is not greater than the current published version ${base}`);
-  }
-  return spec;
+export function latestReleaseTag(tags: readonly string[]): string {
+  const stripped = releaseTagsAt(tags).map((t) => t.slice(1));
+  return `v${maxVersion(stripped)}`;
+}
+
+export function resolveReleaseTarget(changelogBody: string, tags: readonly string[]): string {
+  return projectedReleaseVersion(changelogBody, latestReleaseTag(tags));
 }
 
 function run(cmd: string[], opts: { inherit?: boolean } = {}): { code: number; output: string } {
@@ -132,14 +118,6 @@ function die(message: string): never {
 function defaultRemoteRef(): string {
   const head = run(["git", "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
   return head.code === 0 && head.output.trim() ? head.output.trim() : "origin/main";
-}
-
-function publishedBase(): string {
-  const versions = SCOPED.map((pkg) => {
-    const { code, output } = run(["bun", "pm", "view", pkg, "version"]);
-    return code === 0 ? output.trim() : "";
-  });
-  return maxVersion(versions);
 }
 
 // Block the current thread for `ms` milliseconds with no child process —
@@ -235,17 +213,21 @@ function main(): void {
     );
   }
 
-  const base = publishedBase();
+  const tags = run(["git", "tag"]).output.split("\n");
+  const latestTag = latestReleaseTag(tags);
   let target: string;
   try {
-    target = resolveTarget(base, args.spec);
+    target = resolveReleaseTarget(
+      readFileSync(new URL("../packages/docs/guide/changelog.md", import.meta.url), "utf8"),
+      tags,
+    );
   } catch (err) {
     die((err as Error).message);
   }
   const tag = `v${target}`;
 
   process.stdout.write(
-    `current published: ${base}\ntarget version:    ${target}\ntag:               ${tag}\n\n`,
+    `latest tag:     ${latestTag}\ntarget version: ${target}\ntag:            ${tag}\n\n`,
   );
 
   if (args.skipCiCheck) {

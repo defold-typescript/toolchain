@@ -1,23 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import {
-  bumpVersion,
   compareVersions,
+  latestReleaseTag,
   maxVersion,
   parseArgs,
   releaseTagsAt,
-  resolveTarget,
+  resolveReleaseTarget,
   sleepSync,
 } from "./release.ts";
 
 describe("parseArgs", () => {
-  test("defaults to a patch bump", () => {
-    expect(parseArgs([])).toEqual({ spec: "patch", help: false, skipCiCheck: false });
-  });
-
-  test("reads a bump keyword or explicit version", () => {
-    expect(parseArgs(["minor"]).spec).toBe("minor");
-    expect(parseArgs(["1.2.3"]).spec).toBe("1.2.3");
+  test("defaults to no bump spec", () => {
+    expect(parseArgs([])).toEqual({ help: false, skipCiCheck: false });
   });
 
   test("reads the --skip-ci-check flag", () => {
@@ -30,13 +25,16 @@ describe("parseArgs", () => {
     expect(parseArgs(["-h"]).help).toBe(true);
   });
 
+  test("rejects a bare positional now that the verb is gone", () => {
+    expect(() => parseArgs(["patch"])).toThrow(/patch/);
+  });
+
   test("rejects the retired --publish flag", () => {
     expect(() => parseArgs(["--publish"])).toThrow(/unknown flag/);
   });
 
-  test("rejects unknown flags and extra positionals", () => {
+  test("rejects unknown flags", () => {
     expect(() => parseArgs(["--nope"])).toThrow();
-    expect(() => parseArgs(["patch", "minor"])).toThrow();
   });
 });
 
@@ -51,33 +49,6 @@ describe("version math", () => {
   test("maxVersion ignores non-semver entries and floors at 0.0.0", () => {
     expect(maxVersion(["0.9.0", "0.10.0", "", "garbage"])).toBe("0.10.0");
     expect(maxVersion([])).toBe("0.0.0");
-  });
-
-  test("bumpVersion increments and resets lower fields", () => {
-    expect(bumpVersion("0.10.0", "patch")).toBe("0.10.1");
-    expect(bumpVersion("0.10.0", "minor")).toBe("0.11.0");
-    expect(bumpVersion("0.10.0", "major")).toBe("1.0.0");
-  });
-});
-
-describe("resolveTarget", () => {
-  test("bumps from the current published version", () => {
-    expect(resolveTarget("0.10.0", "patch")).toBe("0.10.1");
-    expect(resolveTarget("0.10.0", "minor")).toBe("0.11.0");
-    expect(resolveTarget("0.10.0", "major")).toBe("1.0.0");
-  });
-
-  test("accepts an explicit version greater than current", () => {
-    expect(resolveTarget("0.10.0", "0.11.0")).toBe("0.11.0");
-  });
-
-  test("rejects an explicit version not strictly greater than current", () => {
-    expect(() => resolveTarget("0.10.0", "0.10.0")).toThrow();
-    expect(() => resolveTarget("0.10.0", "0.9.0")).toThrow();
-  });
-
-  test("rejects a malformed explicit version", () => {
-    expect(() => resolveTarget("0.10.0", "1.2")).toThrow();
   });
 });
 
@@ -95,6 +66,30 @@ describe("releaseTagsAt", () => {
   });
 });
 
+describe("latestReleaseTag", () => {
+  test("filters to plain v<x.y.z> tags and picks the semver-max", () => {
+    expect(latestReleaseTag(["v0.19.0", "v0.20.4", "nightly", "0.20.4"])).toBe("v0.20.4");
+  });
+
+  test("floors at v0.0.0 for a first-ever release", () => {
+    expect(latestReleaseTag([])).toBe("v0.0.0");
+  });
+});
+
+describe("resolveReleaseTarget", () => {
+  test("returns the changelog-projected version above the latest tag", () => {
+    expect(resolveReleaseTarget("## v0.20.5\n\n### Fixed\n", ["v0.20.4"])).toBe("0.20.5");
+  });
+
+  test("throws when the top heading is already tagged", () => {
+    expect(() => resolveReleaseTarget("## v0.20.5\n", ["v0.20.4", "v0.20.5"])).toThrow(/0\.20\.5/);
+  });
+
+  test("uses the v0.0.0 floor when no tags exist", () => {
+    expect(resolveReleaseTarget("## v0.1.0\n", [])).toBe("0.1.0");
+  });
+});
+
 describe("sleepSync", () => {
   test("blocks for at least the requested interval", () => {
     const start = performance.now();
@@ -109,5 +104,11 @@ describe("sleepSync", () => {
   test("the source no longer spawns the sleep binary", () => {
     const src = readFileSync(new URL("./release.ts", import.meta.url), "utf8");
     expect(src.includes('"sleep"')).toBe(false);
+  });
+
+  test("the source no longer reads the published npm version", () => {
+    const src = readFileSync(new URL("./release.ts", import.meta.url), "utf8");
+    expect(src.includes("bun pm view")).toBe(false);
+    expect(src.includes("publishedBase")).toBe(false);
   });
 });
