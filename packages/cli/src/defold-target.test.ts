@@ -3,6 +3,7 @@ import {
   classifyDefoldTarget,
   describeInstalledPinMismatch,
   describeTargetOverride,
+  describeUpstreamReleaseNotice,
   diagnoseDefoldNamespace,
   readDefoldTargetPin,
   resolveDefoldTarget,
@@ -192,6 +193,35 @@ describe("describeInstalledPinMismatch", () => {
     expect(describeInstalledPinMismatch(" 1.12.4 ", "1.12.4")).toEqual([]);
     expect(describeInstalledPinMismatch(undefined, "1.12.4")).toEqual([]);
     expect(describeInstalledPinMismatch("1.13.0", undefined)).toEqual([]);
+  });
+});
+
+describe("describeUpstreamReleaseNotice", () => {
+  test("a newer upstream release names both versions, the sync path, and that it is advisory", () => {
+    const notices = describeUpstreamReleaseNotice("1.12.4", "1.13.0");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain("1.12.4");
+    expect(notices[0]).toContain("1.13.0");
+    expect(notices[0]).toContain("advisory");
+    expect(notices[0]).toContain("set-target");
+    expect(notices[0]).toContain("upgrade");
+  });
+
+  test("equal versions produce no notice", () => {
+    expect(describeUpstreamReleaseNotice("1.13.0", "1.13.0")).toEqual([]);
+  });
+
+  test("current ahead of latest produces no notice (directional, not string inequality)", () => {
+    expect(describeUpstreamReleaseNotice("1.13.0", "1.12.4")).toEqual([]);
+  });
+
+  test("a stable release is newer than its prerelease, so compareSemver drives the notice", () => {
+    expect(describeUpstreamReleaseNotice("1.13.0-beta", "1.13.0")).toHaveLength(1);
+  });
+
+  test("a missing current or missing latest produces no notice", () => {
+    expect(describeUpstreamReleaseNotice(undefined, "1.13.0")).toEqual([]);
+    expect(describeUpstreamReleaseNotice("1.12.4", undefined)).toEqual([]);
   });
 });
 
