@@ -205,11 +205,15 @@ export function dispatch(
   );
   const [command, ...rest] = positional;
   // bob-cwd-is-second-positional: bob's leading positional is its subcommand, so
-  // the project dir it reads pins and diagnostics from is `rest[1]`; every other
-  // command takes it from `rest[0]`. Resolving it uniformly here keeps the pin,
-  // its namespace diagnostics, and the drift check all pointed at the project
-  // actually being built.
-  const cwdArg = command === "bob" ? rest[1] : rest[0];
+  // the project dir it reads pins and diagnostics from is `rest[1]`; `run` takes
+  // its project dir from the first positional *before* `--` (engine args follow
+  // `--`, so `rest[0]` may be `--` itself); every other command takes it from
+  // `rest[0]`. Resolving it uniformly here keeps the pin, its namespace
+  // diagnostics, and the drift check all pointed at the project actually being
+  // built.
+  const runDashIndex = rest.indexOf("--");
+  const runProjectArg = (runDashIndex === -1 ? rest : rest.slice(0, runDashIndex))[0];
+  const cwdArg = command === "bob" ? rest[1] : command === "run" ? runProjectArg : rest[0];
   const cwd = cwdArg ? path.resolve(cwdArg) : process.cwd();
 
   // Hard cutover: the two-flag surface collapsed into `--defold-target`. Reject
@@ -1174,14 +1178,12 @@ export function dispatch(
   if (command === "run") {
     const engine: RunEngine = { ...defaultRunEngine(), ...internals?.runInternals };
     const dashIndex = rest.indexOf("--");
-    const runArgs = dashIndex === -1 ? rest : rest.slice(0, dashIndex);
     const extraArgs = dashIndex === -1 ? [] : rest.slice(dashIndex + 1);
-    const runCwd = runArgs[0] ? path.resolve(runArgs[0]) : process.cwd();
 
     let runnable: Runnable;
     try {
       runnable = resolveRunnable({
-        cwd: runCwd,
+        cwd,
         platform: engine.platform,
         arch: engine.arch,
         probe: engine.probe,
