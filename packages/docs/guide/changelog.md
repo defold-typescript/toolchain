@@ -14,6 +14,14 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.20.6
+
+### Fixed
+
+- Cutting a release now refreshes the published `/changelog` on its own: the new
+  tag's date replaces `- Unreleased` for the shipped version without a manual docs
+  redeploy.
+
 ## v0.20.5
 
 ### Improved
