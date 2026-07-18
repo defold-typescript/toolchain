@@ -1,4 +1,5 @@
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
+import { compareSemver } from "./upgrade";
 
 export const DEFOLD_CHANNELS = ["stable", "beta", "alpha"] as const;
 export type DefoldChannel = (typeof DEFOLD_CHANNELS)[number];
@@ -99,6 +100,23 @@ export function describeInstalledPinMismatch(
   }
   return [
     `the installed Defold editor (${installed}) differs from the "defold-target" pin (${pinned}); run \`set-target --detected\` to sync the pin. This is advisory and does not change the pin.`,
+  ];
+}
+
+// The "you are behind the world" counterpart: a newer Defold release exists
+// upstream than the resolved target. "Behind" is directional — a target pinned
+// ahead of its channel head (e.g. tracking beta while stable lags) must not be
+// nagged — so the gate is `compareSemver`, not string inequality. Channel-head
+// resolution belongs to the caller; this helper takes two resolved versions.
+export function describeUpstreamReleaseNotice(
+  current: string | undefined,
+  latest: string | undefined,
+): readonly string[] {
+  if (current === undefined || latest === undefined || compareSemver(latest, current) <= 0) {
+    return [];
+  }
+  return [
+    `a newer Defold release (${latest}) is available upstream than your target (${current}); run \`set-target ${latest}\` or \`upgrade\` to move to it. This is advisory and checked at most once per interval.`,
   ];
 }
 
