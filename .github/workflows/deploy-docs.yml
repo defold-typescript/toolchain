@@ -10,10 +10,10 @@ name: Deploy docs
 on:
   push:
     branches: [main]
-    # The v* release tag re-renders the /changelog: build-changelog-dates.ts now
-    # sees the tag and flips the just-released `## vX.Y.Z` section from
-    # `- Unreleased` to its tag date — no extra commit, no manual dispatch.
-    tags: ["v*"]
+  # scripts/release.ts dispatches this workflow on the default branch after pushing
+  # a v* tag, so the just-released `## vX.Y.Z` /changelog section re-renders from
+  # `- Unreleased` to its tag date. The tag ref itself is not used: the github-pages
+  # environment only permits the default branch to deploy.
   workflow_dispatch:
 
 permissions:
