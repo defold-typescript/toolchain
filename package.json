@@ -28,7 +28,8 @@
     "verify-docs-drift": "bun scripts/verify-docs-drift.ts",
     "ref-doc-delta": "bun --cwd packages/types run ref-doc-delta",
     "import-defold-release": "bun packages/types/scripts/import-defold-release.ts",
-    "release-readiness": "bun scripts/defold-release-readiness.ts --check"
+    "release-readiness": "bun scripts/defold-release-readiness.ts --check",
+    "changelog:commits": "bun scripts/changelog-commits.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
