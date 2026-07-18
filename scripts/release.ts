@@ -6,10 +6,12 @@
 // Release workflow, which stamps the manifests from the tag and publishes all
 // packages. The repo manifests stay pinned at 0.0.0; the tag drives the version.
 //
-// Before tagging, author the new version's section in
-// packages/docs/guide/changelog.md: run `bun run changelog:commits <prevTag>
-// v<version>` for the raw material and curate it into an `Added`/`Improved`/`Fixed`
-// section (advisory; no CI gate enforces this).
+// Author each change under the projected version heading as work lands: the top
+// `## vX.Y.Z` heading in packages/docs/guide/changelog.md is the next version, and
+// its untagged section renders as `- Unreleased` until the tag exists. Raise the
+// heading by semver intent (patch < minor < major) when a change warrants it; run
+// `bun run changelog:commits <prevTag> v<version>` for raw material and curate it
+// into an `Added`/`Improved`/`Fixed` section (advisory; no CI gate enforces this).
 //
 // Usage:
 //   mise run release [<version>|patch|minor|major]   (default: patch)
