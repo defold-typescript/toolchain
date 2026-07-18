@@ -112,3 +112,22 @@ describe("sleepSync", () => {
     expect(src.includes("publishedBase")).toBe(false);
   });
 });
+
+describe("changelog flip on release", () => {
+  test("release dispatches deploy-docs after tagging so the /changelog re-renders", () => {
+    const src = readFileSync(new URL("./release.ts", import.meta.url), "utf8");
+    expect(src.includes('"deploy-docs.yml"')).toBe(true);
+  });
+
+  // The github-pages environment allows only the default branch to deploy, so a
+  // tag-triggered build renders the date but its deploy is rejected. The flip is
+  // driven from release.ts (default-branch dispatch) instead; the workflow must
+  // not re-add the always-rejected tag trigger.
+  test("deploy-docs no longer triggers on the release tag", () => {
+    const yml = readFileSync(
+      new URL("../.github/workflows/deploy-docs.yml", import.meta.url),
+      "utf8",
+    );
+    expect(yml.includes('tags: ["v*"]')).toBe(false);
+  });
+});
