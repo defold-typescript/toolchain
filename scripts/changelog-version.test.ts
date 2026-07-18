@@ -74,8 +74,8 @@ describe("committed changelog is release-ready", () => {
     "utf8",
   );
 
-  test("projects to 0.20.5 over the latest tag and carries no literal ## Unreleased heading", () => {
-    expect(projectedReleaseVersion(body, "v0.20.4")).toBe("0.20.5");
+  test("projects to 0.20.6 over the latest tag and carries no literal ## Unreleased heading", () => {
+    expect(projectedReleaseVersion(body, "v0.20.5")).toBe("0.20.6");
     expect(body).not.toMatch(/^## Unreleased$/m);
   });
 });
