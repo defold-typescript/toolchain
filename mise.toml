@@ -34,7 +34,7 @@ description = "One-time npm OIDC trusted-publisher setup for all workspace packa
 run = "bun scripts/trust-publishers.ts"
 
 [tasks.release]
-description = "Cut a release: bump from the live npm version and push the v<version> tag (CI publishes via OIDC). Usage: mise run release [<version>|patch|minor|major] (default: patch)"
+description = "Cut a release: tag the version the changelog projects (top ## vX.Y.Z heading, strictly above the latest tag) and push it (CI publishes via OIDC). Usage: mise run release"
 run = "bun scripts/release.ts"
 
 [tasks."example:build"]
