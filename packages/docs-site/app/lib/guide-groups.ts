@@ -53,6 +53,12 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     subtitle: "Comparing surfaces and moving off ts-defold.",
     slugs: ["api-docs-vs-ts-defold", "migrating-from-ts-defold"],
   },
+  {
+    id: "releases",
+    label: "Releases",
+    subtitle: "What changed in each published toolchain version.",
+    slugs: ["changelog"],
+  },
 ];
 
 export interface GuideGroupPages {
