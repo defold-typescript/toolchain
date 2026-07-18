@@ -1,7 +1,9 @@
 // Renders `/changelog` per-patch section dates from the git tag map so the tag is
 // the single source of truth: a `## vX.Y.Z` heading with a matching tag gets its
-// date, an untagged one renders as `- Unreleased`. Rolled-up minors (`## v0.20.x`)
-// and the literal `## Unreleased` staging heading are not versions and pass through.
+// date, an untagged one renders as `- Unreleased`. The top staging heading is now a
+// projected `## vX.Y.Z` (no tag yet) that rides the untagged path and renders as
+// `- Unreleased`. Only rolled-up minors (`## v0.20.x`) are not versions and pass
+// through unchanged.
 
 const VERSION_HEADING = /^## (v\d+\.\d+\.\d+)(?: - .*)?$/;
 
