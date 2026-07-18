@@ -33,6 +33,7 @@ export interface RunWatchOptions {
   readonly resolveSurface?: () => void | Promise<void>;
   readonly json?: boolean;
   readonly pinDiagnostics?: readonly string[];
+  readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
 }
 
 export interface RunWatchHandle {
@@ -124,6 +125,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       renderWatchEvent({
         event: "start",
         ...(opts.pinDiagnostics?.length ? { warnings: opts.pinDiagnostics } : {}),
+        ...(opts.pinMismatch ? { pinMismatch: opts.pinMismatch } : {}),
       }),
     );
   }
