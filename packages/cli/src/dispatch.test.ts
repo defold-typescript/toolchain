@@ -854,8 +854,8 @@ describe("dispatch", () => {
     expect("pinMismatch" in parsed).toBe(false);
   });
 
-  test("watch produces no drift notice — the scope guard holds for non-build/upgrade commands", async () => {
-    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
+  test("watch warns on stderr once at startup when the installed editor drifts from a version pin", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
     writeFileSync(path.join(cwd, "main.script"), "");
     const resolveOpts = multiKindRefDocResolveOpts();
     const { io, err } = captureStreams();
@@ -870,9 +870,75 @@ describe("dispatch", () => {
     });
 
     expect(code).toBe(0);
-    expect(err()).not.toContain("set-target --detected");
+    const stderr = err();
+    expect(stderr).toContain("1.13.0");
+    expect(stderr).toContain("1.12.4");
+    expect(stderr).toContain("set-target --detected");
+    // Once at startup, never repeated on rebuilds.
+    expect(stderr.split("set-target --detected").length - 1).toBe(1);
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("watch --json surfaces the drift notice and pinMismatch on its start event exactly once", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out } = captureStreams();
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      watcherFactory: factory,
+      onWatchStart,
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    const code = await result;
+
+    expect(code).toBe(0);
+    const lines = out().trimEnd().split("\n");
+    const start = JSON.parse(lines[0] as string) as {
+      event: string;
+      warnings?: string[];
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(start.event).toBe("start");
+    expect(start.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
+    expect(start.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+    // The notice rides `start` alone — exactly once across the whole stream.
+    expect(out().split("set-target --detected").length - 1).toBe(1);
+  });
+
+  test("watch stays silent when the editor matches the pin or the pin is a channel", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const matched = captureStreams();
+    const matchFactory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    const matchCode = await dispatch(["watch", cwd, "--json"], matched.io, {
+      watcherFactory: matchFactory,
+      onWatchStart: (h) => h.stop(),
+      detectEditorVersion: () => "1.12.4",
+    });
+    expect(matchCode).toBe(0);
+    expect(matched.out()).not.toContain("set-target --detected");
+    expect(matched.out()).not.toContain("pinMismatch");
+
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "stable" } }, null, 2)}\n`,
+    );
+    const channel = captureStreams();
+    const channelFactory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    const channelCode = await dispatch(["watch", cwd, "--json"], channel.io, {
+      watcherFactory: channelFactory,
+      onWatchStart: (h) => h.stop(),
+      detectEditorVersion: () => "1.13.0",
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+    });
+    expect(channelCode).toBe(0);
+    expect(channel.out()).not.toContain("set-target --detected");
+    expect(channel.out()).not.toContain("pinMismatch");
   });
 
   test("build --json with a version target reports a null channel and sha", async () => {
@@ -1445,6 +1511,7 @@ describe("dispatch", () => {
       resolveOpts,
       refDocRegistry: [multiKindRefDocTarget()],
       onWatchStart: (h) => h.stop(),
+      detectEditorVersion: () => null,
     });
 
     const code = await result;
@@ -2664,6 +2731,185 @@ describe("dispatch bob", () => {
     expect(err()).toContain("5");
   });
 
+  function pinProject(target: string): void {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": target } }, null, 2)}\n`,
+    );
+  }
+
+  test("bob build warns on stderr when the installed editor drifts from a version pin", async () => {
+    pinProject("1.12.4");
+    const { io, err } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "build", cwd], io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    const stderr = err();
+    expect(stderr).toContain("1.13.0");
+    expect(stderr).toContain("1.12.4");
+    expect(stderr).toContain("set-target --detected");
+  });
+
+  test("bob build --json adds pinMismatch on drift, subcommand and exitCode intact", async () => {
+    pinProject("1.12.4");
+    const { io, out } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "build", cwd, "--json"], io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as {
+      command: string;
+      subcommand: string;
+      exitCode: number;
+      warnings?: string[];
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.command).toBe("bob");
+    expect(parsed.subcommand).toBe("build");
+    expect(parsed.exitCode).toBe(0);
+    expect(parsed.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("bob bundle warns on stderr and folds pinMismatch into --json on drift", async () => {
+    pinProject("1.12.4");
+    const stderrRun = captureStreams();
+    const { internals } = defoldInternals();
+    const stderrCode = await dispatch(["bob", "bundle", cwd], stderrRun.io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+    });
+    expect(stderrCode).toBe(0);
+    expect(stderrRun.err()).toContain("set-target --detected");
+
+    const jsonRun = captureStreams();
+    const { internals: internals2 } = defoldInternals();
+    const jsonCode = await dispatch(["bob", "bundle", cwd, "--json"], jsonRun.io, {
+      ...internals2,
+      detectEditorVersion: () => "1.13.0",
+    });
+    expect(jsonCode).toBe(0);
+    const parsed = JSON.parse(jsonRun.out().trim()) as {
+      subcommand: string;
+      exitCode: number;
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.subcommand).toBe("bundle");
+    expect(parsed.exitCode).toBe(0);
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("bob run warns on stderr on drift, launch exit code intact", async () => {
+    pinProject("1.12.4");
+    const { io, err } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "run", cwd], io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => true,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(0);
+    const stderr = err();
+    expect(stderr).toContain("1.13.0");
+    expect(stderr).toContain("1.12.4");
+    expect(stderr).toContain("set-target --detected");
+  });
+
+  test("bob run --json adds pinMismatch on drift, launch envelope intact", async () => {
+    pinProject("1.12.4");
+    const { io, out } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "run", cwd, "--json"], io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => true,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as {
+      subcommand: string;
+      launch: { enginePath: string; exitCode: number };
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.subcommand).toBe("run");
+    expect(parsed.launch.exitCode).toBe(0);
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("bob build stays silent when the editor matches the pin or the pin is a channel", async () => {
+    pinProject("1.12.4");
+    const matched = captureStreams();
+    const { internals } = defoldInternals();
+    const matchCode = await dispatch(["bob", "build", cwd, "--json"], matched.io, {
+      ...internals,
+      detectEditorVersion: () => "1.12.4",
+    });
+    expect(matchCode).toBe(0);
+    expect(matched.out()).not.toContain("pinMismatch");
+    expect(matched.err()).not.toContain("set-target --detected");
+
+    pinProject("stable");
+    const channel = captureStreams();
+    const { internals: internals2 } = defoldInternals();
+    const channelCode = await dispatch(["bob", "build", cwd, "--json"], channel.io, {
+      ...internals2,
+      detectEditorVersion: () => "1.13.0",
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+    });
+    expect(channelCode).toBe(0);
+    expect(channel.out()).not.toContain("pinMismatch");
+    expect(channel.err()).not.toContain("set-target --detected");
+  });
+
+  test("bob status and bob resolve stay silent even when the editor drifts", async () => {
+    pinProject("1.12.4");
+    const status = captureStreams();
+    const { internals } = defoldInternals();
+    const statusCode = await dispatch(["bob", "status", cwd], status.io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+    });
+    expect(statusCode).toBe(0);
+    expect(status.out()).not.toContain("pinMismatch");
+    expect(status.err()).not.toContain("set-target --detected");
+
+    const resolve = captureStreams();
+    const { internals: internals2 } = defoldInternals();
+    const resolveCode = await dispatch(["bob", "resolve", cwd], resolve.io, {
+      ...internals2,
+      detectEditorVersion: () => "1.13.0",
+    });
+    expect(resolveCode).toBe(0);
+    expect(resolve.out()).not.toContain("pinMismatch");
+    expect(resolve.err()).not.toContain("set-target --detected");
+  });
+
   test("the removed defold command is unknown and falls through to top-level usage", async () => {
     const { io, err } = captureStreams();
 
@@ -3317,6 +3563,109 @@ describe("dispatch init --template", () => {
     expect(parsed.enginePath).toBe(engine);
     expect(parsed.projectc).toBe(projectc);
     expect(parsed.exitCode).toBe(0);
+  });
+
+  test("run warns on stderr when the installed editor drifts from a version pin, exit code intact", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["run", cwd], io, {
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(7) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(7);
+    const stderr = err();
+    expect(stderr).toContain("1.13.0");
+    expect(stderr).toContain("1.12.4");
+    expect(stderr).toContain("set-target --detected");
+  });
+
+  test("run --json adds warnings and pinMismatch on drift, leaving enginePath and exitCode intact", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--json"], io, {
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      command: string;
+      enginePath: string;
+      exitCode: number;
+      warnings?: string[];
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.command).toBe("run");
+    expect(parsed.enginePath).toBe(engine);
+    expect(parsed.exitCode).toBe(0);
+    expect(parsed.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("run stays silent when the editor matches the pin or the pin is a channel", async () => {
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const runInternals = {
+      platform: "darwin" as const,
+      arch: "arm64" as const,
+      probe: (p: string) => p === projectc || p === engine,
+      spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+      copyAside: (p: string) => p,
+      chmod: () => {},
+    };
+
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const matched = captureStreams();
+    const matchCode = await dispatch(["run", cwd, "--json"], matched.io, {
+      detectEditorVersion: () => "1.12.4",
+      runInternals,
+    });
+    expect(matchCode).toBe(0);
+    expect(matched.out()).not.toContain("set-target --detected");
+    expect(matched.out()).not.toContain("pinMismatch");
+
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "stable" } }, null, 2)}\n`,
+    );
+    const channel = captureStreams();
+    const channelCode = await dispatch(["run", cwd, "--json"], channel.io, {
+      detectEditorVersion: () => "1.13.0",
+      runInternals,
+    });
+    expect(channelCode).toBe(0);
+    expect(channel.out()).not.toContain("set-target --detected");
+    expect(channel.out()).not.toContain("pinMismatch");
   });
 });
 

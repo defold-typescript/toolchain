@@ -204,7 +204,13 @@ export function dispatch(
       a !== "--detect",
   );
   const [command, ...rest] = positional;
-  const cwd = rest[0] ? path.resolve(rest[0]) : process.cwd();
+  // bob-cwd-is-second-positional: bob's leading positional is its subcommand, so
+  // the project dir it reads pins and diagnostics from is `rest[1]`; every other
+  // command takes it from `rest[0]`. Resolving it uniformly here keeps the pin,
+  // its namespace diagnostics, and the drift check all pointed at the project
+  // actually being built.
+  const cwdArg = command === "bob" ? rest[1] : rest[0];
+  const cwd = cwdArg ? path.resolve(cwdArg) : process.cwd();
 
   // Hard cutover: the two-flag surface collapsed into `--defold-target`. Reject
   // the removed flags before any resolution so the pointer is unambiguous.
@@ -330,14 +336,25 @@ export function dispatch(
   }
   const targetSource = target.source;
   // A concrete-version pin can silently lag the installed editor after an upgrade;
-  // warn (build/upgrade/update only) so the user knows `set-target --detected` exists. A
-  // channel pin tracks its head, and a flag override is covered by the override
-  // notice, so both stay out of this gate — leaving `pinnedVersion` undefined keeps
-  // the editor undetected for them.
+  // warn across the build-the-project loop so the user knows `set-target --detected`
+  // exists. That loop is `build`/`upgrade`/`update` plus the heads-down commands
+  // `watch`/`run` and `bob build|bundle|run` — the developer who keeps a watcher
+  // running, only ever `run`s, or drives builds through `bob` never crosses the
+  // first three. `bob status`/`bob resolve` inspect rather than build, so they stay
+  // out. A channel pin tracks its head, and a flag override is covered by the
+  // override notice, so both stay out of this gate — leaving `pinnedVersion`
+  // undefined keeps the editor undetected for them.
+  const bobBuildsProject =
+    command === "bob" && (rest[0] === "build" || rest[0] === "bundle" || rest[0] === "run");
+  const driftCheckedCommand =
+    command === "build" ||
+    command === "upgrade" ||
+    command === "update" ||
+    command === "watch" ||
+    command === "run" ||
+    bobBuildsProject;
   const pinnedVersion =
-    (command === "build" || command === "upgrade" || command === "update") &&
-    target.kind === "version" &&
-    target.source === "pin"
+    driftCheckedCommand && target.kind === "version" && target.source === "pin"
       ? target.version
       : undefined;
   const installedForDrift =
@@ -692,6 +709,16 @@ export function dispatch(
       }
 
       const launchWatch = (): Promise<number> => {
+        // The JSON `start` event carries pin diagnostics; prepend the drift notice
+        // so `--json` surfaces it there once. The non-JSON stderr line has no such
+        // startup channel (watch.ts prints `pinDiagnostics` only in JSON mode), so
+        // emit it here, once, before the watcher opens — never per rebuild.
+        const pinDiagnostics = [...driftNotice, ...targetDiagnostics];
+        if (!json) {
+          for (const notice of driftNotice) {
+            io.stderr.write(`defold-typescript watch: ${notice}\n`);
+          }
+        }
         const watchOpts: RunWatchOptions = {
           cwd,
           stdout: io.stdout,
@@ -702,7 +729,8 @@ export function dispatch(
           ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
           ...(resolveSurface ? { resolveSurface } : {}),
           ...(json ? { json: true } : {}),
-          ...(targetDiagnostics.length > 0 ? { pinDiagnostics: targetDiagnostics } : {}),
+          ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
+          ...(pinMismatch ? { pinMismatch } : {}),
         };
         const handle = runWatch(watchOpts);
         if (internals) {
@@ -927,7 +955,7 @@ export function dispatch(
 
   if (command === "bob") {
     const subcommand = rest[0];
-    const bobCwd = rest[1] ? path.resolve(rest[1]) : process.cwd();
+    const bobCwd = cwd;
     const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
 
     if (subcommand === "status") {
@@ -1028,6 +1056,11 @@ export function dispatch(
           for (const warning of runnable.warnings) {
             io.stderr.write(`defold-typescript bob run: ${warning}\n`);
           }
+          if (!json) {
+            for (const notice of driftNotice) {
+              io.stderr.write(`defold-typescript bob run: ${notice}\n`);
+            }
+          }
           const exitCode = await launchEngine(runnable, {
             platform: runEngine.platform,
             spawn: runEngine.spawn,
@@ -1041,6 +1074,8 @@ export function dispatch(
                 subcommand: "run",
                 build: { exitCode: prepared.buildExitCode },
                 launch: { enginePath: runnable.enginePath, exitCode },
+                ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+                ...(pinMismatch ? { pinMismatch } : {}),
               }),
             );
           }
@@ -1070,6 +1105,11 @@ export function dispatch(
             `defold-typescript bob: could not resolve an artifact sha for Defold ${head.version}.`,
           );
         }
+        if (!json) {
+          for (const notice of driftNotice) {
+            io.stderr.write(`defold-typescript bob ${subcommand}: ${notice}\n`);
+          }
+        }
         const result = await runBobCommand({
           cwd: bobCwd,
           subcommand,
@@ -1081,6 +1121,10 @@ export function dispatch(
         });
         if (json) {
           const withOutput = result.output !== undefined ? { output: result.output } : {};
+          const driftFields = {
+            ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+            ...(pinMismatch ? { pinMismatch } : {}),
+          };
           const headFields = {
             defoldVersion: result.defoldVersion,
             defoldVersionSource: targetSource,
@@ -1094,6 +1138,7 @@ export function dispatch(
                     command: "bob",
                     subcommand: result.subcommand,
                     exitCode: result.exitCode,
+                    ...driftFields,
                     ...headFields,
                     ...withOutput,
                   }
@@ -1102,6 +1147,7 @@ export function dispatch(
                     subcommand: result.subcommand,
                     exitCode: result.exitCode,
                     error: `bob ${result.subcommand} exited with code ${result.exitCode}`,
+                    ...driftFields,
                     ...headFields,
                     ...withOutput,
                   },
@@ -1153,6 +1199,13 @@ export function dispatch(
     for (const warning of runnable.warnings) {
       io.stderr.write(`defold-typescript run: ${warning}\n`);
     }
+    // The drift notice is mutually exclusive with its JSON form: stderr here,
+    // folded into `warnings`/`pinMismatch` below under `--json` (as `build` does).
+    if (!json) {
+      for (const notice of driftNotice) {
+        io.stderr.write(`defold-typescript run: ${notice}\n`);
+      }
+    }
 
     return launchEngine(runnable, {
       platform: engine.platform,
@@ -1168,6 +1221,8 @@ export function dispatch(
             enginePath: runnable.enginePath,
             projectc: runnable.projectcPath,
             exitCode,
+            ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+            ...(pinMismatch ? { pinMismatch } : {}),
           }),
         );
       }
