@@ -12,6 +12,12 @@
 # under-trigger.
 pre-commit:
   commands:
+    # No glob: runs on every commit. Fails any commit that does not stage a
+    # change to packages/docs/guide/changelog.md, keeping the changelog from
+    # drifting behind the work that lands. Bypass a genuine exception with
+    # `git commit --no-verify`.
+    changelog:
+      run: bun scripts/changelog-gate.ts
     readme:
       glob:
         - "README.md"
