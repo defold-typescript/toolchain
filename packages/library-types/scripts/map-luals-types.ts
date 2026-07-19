@@ -118,6 +118,17 @@ function mapFunction(token: string, ctx: MapContext, unknowns: string[]): string
   const paramList = params
     .map((raw) => raw.trim())
     .map((part) => {
+      if (part.startsWith("...")) {
+        const after = part.slice(3).trim();
+        let element: string;
+        if (after.startsWith(":")) {
+          element = mapToken(after.slice(1).trim(), ctx, unknowns);
+        } else {
+          element = "unknown";
+          unknowns.push("...");
+        }
+        return `...args: ${needsArrayParens(element) ? `(${element})[]` : `${element}[]`}`;
+      }
       const colon = splitTopLevel(part, ":");
       if (colon.length < 2) {
         // Untyped param (`self`, `_`, `ctx`): a recorded gap, not a silent `any`.
@@ -176,6 +187,17 @@ function mapToken(raw: string, ctx: MapContext, unknowns: string[]): string {
     const base = mapToken(token.slice(0, -1), ctx, unknowns);
     const members = splitTopLevel(base, "|").map((m) => m.trim());
     return members.includes("undefined") ? base : `${base} | undefined`;
+  }
+
+  // A `fun(...)` whose return follows the `)` keeps its return-type `|` inside the
+  // function; splitting the union first would cut `fun(): a|b` into `(fun) | b`.
+  // `fun()|nil` (a `|` right after the `)`) falls through to the union split.
+  if (/^fun\s*\(/.test(token)) {
+    const close = matchBracket(token, token.indexOf("("));
+    const afterClose = close === -1 ? "" : token.slice(close + 1).trim();
+    if (close !== -1 && afterClose.startsWith(":")) {
+      return mapFunction(token, ctx, unknowns);
+    }
   }
 
   // Top-level union.
