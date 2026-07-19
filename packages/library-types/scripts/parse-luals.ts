@@ -43,11 +43,14 @@ export interface LibraryParam {
   isVararg: boolean;
 }
 
+export type LibraryFieldVisibility = "public" | "protected" | "private" | "package";
+
 export interface LibraryField {
   name: string;
   types: string[];
   doc: string;
   isOptional: boolean;
+  visibility?: LibraryFieldVisibility;
 }
 
 export interface LibraryGeneric {
@@ -115,14 +118,45 @@ function parseReturn(rest: string): LibraryParam {
   return { name, types: type ? [type] : [], doc, isOptional: false, isVararg: false };
 }
 
+const VISIBILITY_KEYWORDS = new Set<LibraryFieldVisibility>([
+  "public",
+  "protected",
+  "private",
+  "package",
+]);
+
 function parseField(rest: string): LibraryField {
-  const spaceAt = rest.search(/\s/);
-  const rawName = spaceAt === -1 ? rest : rest.slice(0, spaceAt);
-  const afterName = spaceAt === -1 ? "" : rest.slice(spaceAt).trim();
+  // LuaLS grammar is `---@field [scope] <name> <type> [description]`. Strip a leading
+  // visibility keyword only when a further token follows it — a lone `---@field private`
+  // is a field literally named `private`, matching LuaLS's own resolution.
+  let body = rest;
+  let visibility: LibraryFieldVisibility | undefined;
+  const firstSpace = body.search(/\s/);
+  if (firstSpace !== -1) {
+    const first = body.slice(0, firstSpace);
+    if (VISIBILITY_KEYWORDS.has(first as LibraryFieldVisibility)) {
+      visibility = first as LibraryFieldVisibility;
+      body = body.slice(firstSpace).trim();
+    }
+  }
+  const spaceAt = body.search(/\s/);
+  const rawName = spaceAt === -1 ? body : body.slice(0, spaceAt);
+  const afterName = spaceAt === -1 ? "" : body.slice(spaceAt).trim();
   const isOptional = rawName.endsWith("?");
   const name = isOptional ? rawName.slice(0, -1) : rawName;
   const { type, rest: doc } = readTypeToken(afterName);
-  return { name, types: type ? [type] : [], doc, isOptional };
+  return {
+    name,
+    types: type ? [type] : [],
+    doc,
+    isOptional,
+    ...(visibility ? { visibility } : {}),
+  };
+}
+
+function parseVararg(rest: string): LibraryParam {
+  const { type, rest: doc } = readTypeToken(rest);
+  return { name: "...", types: type ? [type] : [], doc, isOptional: false, isVararg: true };
 }
 
 function parseGenerics(rest: string): LibraryGeneric[] {
@@ -244,6 +278,10 @@ export function parseLualsSource(source: string): LibraryModel {
         }
         case "param": {
           pending.params.push(parseParam(rest));
+          break;
+        }
+        case "vararg": {
+          pending.params.push(parseVararg(rest));
           break;
         }
         case "return": {
