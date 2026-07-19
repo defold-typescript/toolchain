@@ -6,7 +6,11 @@
       "sourceGlobs": ["druid/**/*.lua"],
       "moduleId": "druid.druid",
       "namespace": "druid",
-      "typeRenames": {},
+      "typeRenames": {
+        "vector": "Vector",
+        "vector3": "Vector3",
+        "vector4": "Vector4"
+      },
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
