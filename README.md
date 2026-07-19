@@ -54,6 +54,8 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [init](https://defold-typescript.github.io/toolchain/init) — scaffold a new Defold project with a TypeScript surface, or add TypeScript to an existing project; the two modes, the `--template` / `--force` flags, and the starter templates.
 - [watch](https://defold-typescript.github.io/toolchain/watch) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, and re-resolve the extension surface on `game.project` changes.
 - [build](https://defold-typescript.github.io/toolchain/build) — one-shot transpile of every `src/` TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.
+- [run](https://defold-typescript.github.io/toolchain/run) — launch the compiled project from `build/default` (or a native-extension `dmengine`) with no transpile and no Bob, forwarding engine args after `--` and propagating the engine exit code.
+- [bob](https://defold-typescript.github.io/toolchain/bob) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
 - [wall](https://defold-typescript.github.io/toolchain/wall) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](https://defold-typescript.github.io/toolchain/resolve) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 

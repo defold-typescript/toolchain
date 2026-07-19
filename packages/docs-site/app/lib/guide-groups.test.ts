@@ -75,11 +75,11 @@ describe("groupGuidePages", () => {
     }
   });
 
-  test("the union of grouped routes is exactly the 24 guide-tab routes, tutorial first", () => {
+  test("the union of grouped routes is exactly the 26 guide-tab routes, tutorial first", () => {
     const groups = groupGuidePages(pages);
     const routes = groups.flatMap((g) => g.pages.map((p) => p.route));
-    expect(routes.length).toBe(24);
-    expect(new Set(routes).size).toBe(24);
+    expect(routes.length).toBe(26);
+    expect(new Set(routes).size).toBe(26);
     // the Tetris tutorial now leads the guide list as its own first subgroup
     expect(routes[0]).toBe("/tetris-tutorial");
     expect(new Set(routes)).toEqual(
@@ -95,6 +95,8 @@ describe("groupGuidePages", () => {
         "/init",
         "/watch",
         "/build",
+        "/run",
+        "/bob",
         "/wall",
         "/resolve",
         "/transpile-diagnostics",

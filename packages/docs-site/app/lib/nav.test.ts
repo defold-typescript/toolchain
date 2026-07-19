@@ -314,6 +314,8 @@ describe("buildNav", () => {
       "/init",
       "/watch",
       "/build",
+      "/run",
+      "/bob",
       "/wall",
       "/resolve",
     ]);
