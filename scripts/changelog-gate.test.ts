@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { CHANGELOG_PATH, evaluateChangelogGate } from "./changelog-gate.ts";
+import type { RunGit } from "./changelog-gate.ts";
+import { CHANGELOG_PATH, evaluateChangelogGate, resolveGateInputs } from "./changelog-gate.ts";
+import { latestReleaseTag } from "./release.ts";
 
 describe("evaluateChangelogGate", () => {
   test("ok when the staged paths include the changelog", () => {
@@ -97,5 +99,90 @@ describe("evaluateChangelogGate", () => {
     });
     expect(result.ok).toBe(false);
     expect(result.reason).toContain(CHANGELOG_PATH);
+  });
+});
+
+describe("resolveGateInputs", () => {
+  type Key = "diff" | "show" | "tag";
+  type Responses = Partial<Record<Key, { exitCode: number; stdout: string }>>;
+
+  function fakeRunGit(responses: Responses, calls?: Key[]): RunGit {
+    return (args) => {
+      const key = args[0] as Key;
+      calls?.push(key);
+      const response = responses[key];
+      if (!response) throw new Error(`unexpected git ${key} call`);
+      return response;
+    };
+  }
+
+  test("staged deletion cannot pass: git show fails, no inputs handed on for a touch-only pass", () => {
+    const result = resolveGateInputs(
+      fakeRunGit({
+        diff: { exitCode: 0, stdout: `scripts/changelog-gate.ts\n${CHANGELOG_PATH}\n` },
+        show: { exitCode: 128, stdout: "" },
+      }),
+      latestReleaseTag,
+    );
+    if (result.ok) throw new Error("expected a failing gate");
+    expect(result.reason).toContain(CHANGELOG_PATH);
+    expect(result.reason).toMatch(/delet/i);
+  });
+
+  test("tag-read failure cannot degrade to v0.0.0", () => {
+    const result = resolveGateInputs(
+      fakeRunGit({
+        diff: { exitCode: 0, stdout: `${CHANGELOG_PATH}\n` },
+        show: { exitCode: 0, stdout: "## v0.20.7\n\n### Fixed\n\n- late entry\n" },
+        tag: { exitCode: 1, stdout: "" },
+      }),
+      latestReleaseTag,
+    );
+    if (result.ok) throw new Error("expected a failing gate");
+    expect(result.reason).toMatch(/tag/i);
+    expect(result.reason).toContain("v0.0.0");
+  });
+
+  test("happy path: staged changelog, readable body, readable tags", () => {
+    const body = "## v0.20.8\n\n### Added\n\n- new thing\n";
+    const result = resolveGateInputs(
+      fakeRunGit({
+        diff: { exitCode: 0, stdout: `${CHANGELOG_PATH}\n` },
+        show: { exitCode: 0, stdout: body },
+        tag: { exitCode: 0, stdout: "v0.20.6\nv0.20.7\n" },
+      }),
+      latestReleaseTag,
+    );
+    if (!result.ok) throw new Error(`expected ok, got: ${result.reason}`);
+    expect(result.inputs.stagedPaths).toContain(CHANGELOG_PATH);
+    expect(result.inputs.changelogBody).toBe(body);
+    expect(result.inputs.latestReleaseTag).toBe("v0.20.7");
+    expect(evaluateChangelogGate(result.inputs).ok).toBe(true);
+  });
+
+  test("not staged short-circuits: show/tag never consulted, evaluate fails touch-only", () => {
+    const calls: Key[] = [];
+    const result = resolveGateInputs(
+      fakeRunGit(
+        { diff: { exitCode: 0, stdout: "scripts/changelog-gate.ts\nlefthook.yml\n" } },
+        calls,
+      ),
+      latestReleaseTag,
+    );
+    if (!result.ok) throw new Error(`expected ok, got: ${result.reason}`);
+    expect(result.inputs).toEqual({ stagedPaths: ["scripts/changelog-gate.ts", "lefthook.yml"] });
+    expect(calls).toEqual(["diff"]);
+    const gate = evaluateChangelogGate(result.inputs);
+    expect(gate.ok).toBe(false);
+    expect(gate.reason).toContain(CHANGELOG_PATH);
+  });
+
+  test("staged-paths read failure: git diff fails, cannot verify the commit", () => {
+    const result = resolveGateInputs(
+      fakeRunGit({ diff: { exitCode: 128, stdout: "" } }),
+      latestReleaseTag,
+    );
+    if (result.ok) throw new Error("expected a failing gate");
+    expect(result.reason).toMatch(/staged path/i);
   });
 });
