@@ -21,6 +21,9 @@ changes are called out first because the toolchain is pre-1.0.
 - Guide pages for the `run` and `bob` commands, covering the launch/build
   workflow, the two `run` resolver errors, the `bob.jar` cache, and the
   per-subcommand `--json` shapes.
+- A pre-commit gate that fails any commit not staging a change to this
+  changelog, so it can no longer drift behind the work that lands; bypass a
+  genuine exception with `git commit --no-verify`.
 
 ### Fixed
 
