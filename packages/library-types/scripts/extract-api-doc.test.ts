@@ -3,13 +3,20 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { extractApiDoc } from "./extract-api-doc";
+import { readLualsTargets } from "./sync-luals-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
+// The api-doc drift guard covers only the ts-defold front-end, whose generated
+// `<moduleId>.d.ts` each round-trips to an `api-doc/<moduleId>.json` fixture. The
+// luals emitter writes `<namespace>.d.ts` from LuaLS annotations, not api-doc, so
+// those namespaces are excluded here.
 function generatedModules(): string[] {
+  const lualsNamespaces = new Set(readLualsTargets(PACKAGE_ROOT).map((t) => t.namespace));
   return readdirSync(join(PACKAGE_ROOT, "generated"))
     .filter((f) => f.endsWith(".d.ts"))
     .map((f) => f.slice(0, -".d.ts".length))
+    .filter((name) => !lualsNamespaces.has(name))
     .sort();
 }
 

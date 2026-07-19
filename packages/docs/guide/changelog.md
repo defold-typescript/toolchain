@@ -14,6 +14,16 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.20.9
+
+### Added
+
+- In progress: typed bindings for LuaLS-annotated pure-Lua libraries (starting
+  with Druid). An emitter now renders the first generated library `.d.ts` from
+  the ingested LuaLS annotations — Druid's interfaces, methods, and module
+  functions — building on the earlier source ingest and type mapper; the
+  published package you import still ships in a later release.
+
 ## v0.20.8
 
 ### Added
