@@ -20,8 +20,9 @@ changes are called out first because the toolchain is pre-1.0.
 
 - In progress: typed bindings for LuaLS-annotated pure-Lua libraries (starting
   with Druid). The plumbing is landing release by release — source ingest and
-  the LuaLS-to-TypeScript type mapper are in place; the generated library
-  `.d.ts` you import ships in a later release.
+  the LuaLS-to-TypeScript type mapper are in place, with the mapper now emitting
+  valid TypeScript for vararg parameters and function return unions; the
+  generated library `.d.ts` you import ships in a later release.
 
 ## v0.20.7
 
