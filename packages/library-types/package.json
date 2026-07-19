@@ -169,7 +169,8 @@
     "regen": "bun scripts/sync-library-types.ts",
     "check": "bun scripts/sync-library-types.ts --check",
     "classify": "bun scripts/sync-library-types.ts --classify",
-    "luals:fetch": "bun scripts/sync-luals-types.ts --fetch"
+    "luals:fetch": "bun scripts/sync-luals-types.ts --fetch",
+    "luals:fidelity": "bun scripts/sync-luals-types.ts --fidelity"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*"
