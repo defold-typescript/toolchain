@@ -38,6 +38,13 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Fixed
 
+- The LuaLS annotation scanner (`parseLualsSource`) now reads a `---@field`
+  visibility modifier (`public`/`protected`/`private`/`package`) into a new
+  optional `visibility` instead of mistaking it for the field name — realigning
+  71 Druid fields whose name/type/doc were shifted a column — and captures
+  `---@vararg` as a trailing `...` param, so methods like `druid:new` no longer
+  lose their variadic argument. Internal ingest tooling; no library `.d.ts`
+  output yet.
 - `bob status` now honors the `--java` / `DEFOLD_JAVA` override, matching
   executing Bob commands, so the preflight reports the same Java runtime a build
   will actually use.

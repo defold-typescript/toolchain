@@ -211,6 +211,90 @@ describe("parseLualsSource", () => {
   });
 });
 
+describe("parseLualsSource field visibility and @vararg", () => {
+  test("a @field with a leading visibility keyword captures it without shifting name/type/doc", () => {
+    const model = parseLualsSource(
+      lua("---@class Comp", "---@field private count integer the total", "local Comp = {}"),
+    );
+    expect(model.interfaces[0]?.fields).toEqual([
+      {
+        name: "count",
+        types: ["integer"],
+        doc: "the total",
+        isOptional: false,
+        visibility: "private",
+      },
+    ]);
+  });
+
+  test("each of the four visibility keywords is captured with aligned name/type/doc", () => {
+    for (const scope of ["public", "protected", "private", "package"] as const) {
+      const model = parseLualsSource(
+        lua("---@class Comp", `---@field ${scope} count integer the total`, "local Comp = {}"),
+      );
+      expect(model.interfaces[0]?.fields[0]).toEqual({
+        name: "count",
+        types: ["integer"],
+        doc: "the total",
+        isOptional: false,
+        visibility: scope,
+      });
+    }
+  });
+
+  test("an unmarked @field carries no visibility key at all", () => {
+    const model = parseLualsSource(
+      lua("---@class Comp", "---@field text string the label", "local Comp = {}"),
+    );
+    const field = model.interfaces[0]?.fields[0];
+    expect(field).toEqual({
+      name: "text",
+      types: ["string"],
+      doc: "the label",
+      isOptional: false,
+    });
+    expect(field && Object.keys(field)).not.toContain("visibility");
+  });
+
+  test("a modifier plus an optional name and a spaced raw type stays aligned", () => {
+    // The space inside `fun(self, a)` must not end the type token after the leading
+    // `private` is stripped — bracket depth is still honored. (A space after the
+    // top-level `:` would end the token, but that is readTypeToken's behavior, kept
+    // untouched by this change; see docs/impl step file.)
+    const model = parseLualsSource(
+      lua(
+        "---@class Comp",
+        "---@field private on_click? fun(self, a):b the handler",
+        "local Comp = {}",
+      ),
+    );
+    expect(model.interfaces[0]?.fields[0]).toEqual({
+      name: "on_click",
+      types: ["fun(self, a):b"],
+      doc: "the handler",
+      isOptional: true,
+      visibility: "private",
+    });
+  });
+
+  test("a bare @field private with no following token is a field literally named private", () => {
+    const model = parseLualsSource(lua("---@class Comp", "---@field private", "local Comp = {}"));
+    const field = model.interfaces[0]?.fields[0];
+    expect(field).toEqual({ name: "private", types: [], doc: "", isOptional: false });
+    expect(field && Object.keys(field)).not.toContain("visibility");
+  });
+
+  test("@vararg yields a ... param appended after the preceding @param in source order", () => {
+    const model = parseLualsSource(
+      lua("---@param a number the a", "---@vararg any extra args", "function M.f(a, ...)", "end"),
+    );
+    expect(model.moduleFunctions[0]?.params).toEqual([
+      { name: "a", types: ["number"], doc: "the a", isOptional: false, isVararg: false },
+      { name: "...", types: ["any"], doc: "extra args", isOptional: false, isVararg: true },
+    ]);
+  });
+});
+
 describe("druid parse snapshot", () => {
   const druidRoot = join(PACKAGE_ROOT, "fixtures/luals/druid");
   const files = readdirSync(druidRoot, { recursive: true })
