@@ -1,0 +1,25 @@
+{
+  "namespace": "druid",
+  "totalMembers": 965,
+  "totalTypeTokens": 1301,
+  "unknownFallbacks": 126,
+  "unknownTokens": [
+    "...",
+    "T",
+    "_",
+    "boolean,",
+    "druid.layout.row_data[]>",
+    "enabled_state",
+    "event",
+    "function",
+    "hover_state",
+    "nil,",
+    "node",
+    "number,",
+    "self",
+    "string,",
+    "touch"
+  ],
+  "undocumentedMembers": 328,
+  "coverage": 0.903
+}

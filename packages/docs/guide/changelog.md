@@ -29,6 +29,15 @@ changes are called out first because the toolchain is pre-1.0.
   every LuaLS type expression as a raw token (mapping to TypeScript is a later
   release). Locked against the pinned druid fixture with a parse snapshot. Still
   no library `.d.ts` output.
+- A pure LuaLS-to-TypeScript type-token mapper (`mapLualsType`) that turns the
+  parser's raw tokens into TS type strings — scalars, optionals, unions, arrays,
+  `table<>`, inline objects, `fun(...)`, string literals, and core/per-target
+  renames — with the same loud-fail-on-unmapped-`vmath.*` discipline the ts-defold
+  front-end uses. On top of it, a per-library fidelity report (`buildFidelityReport`,
+  `bun run luals:fidelity`) that runs the mapper over the whole parsed model and
+  tallies coverage, unknown-token fallbacks, and undocumented members; the committed
+  `fidelity/druid.json` is a byte-stable regression guard. Still no library `.d.ts`
+  output — declaration emission lands in a later release.
 
 ### Fixed
 

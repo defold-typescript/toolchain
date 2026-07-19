@@ -1,5 +1,7 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
+import { mergeLibraryModels, parseLualsSource } from "./parse-luals";
 
 /**
  * The LuaLS ingestion front-end pins its source per-entry: a druid-style library
@@ -144,6 +146,25 @@ export async function fetchLualsFixtures(
 }
 
 /**
+ * Parse and merge a target's committed fixtures, then build its fidelity report.
+ * Reads only `fixtures/luals/<namespace>/**` from disk — zero network — so both
+ * the `--fidelity` CLI arm and its round-trip test drive the exact same path and
+ * agree byte-for-byte. Fixture files are read in sorted order for determinism,
+ * mirroring the parse snapshot.
+ */
+export function buildTargetFidelity(packageRoot: string, target: LualsTarget): FidelityReport {
+  const root = join(packageRoot, "fixtures/luals", target.namespace);
+  const files = readdirSync(root, { recursive: true })
+    .map((entry) => String(entry))
+    .filter((entry) => entry.endsWith(".lua"))
+    .sort();
+  const model = mergeLibraryModels(
+    files.map((rel) => parseLualsSource(readFileSync(join(root, rel), "utf8"))),
+  );
+  return buildFidelityReport(target.namespace, model, target.typeRenames);
+}
+
+/**
  * A druid-style corpus member: a LuaLS-sourced pure-Lua library, distinct from
  * the ts-defold hand-written modules. Standalone registry — the docs-site and
  * CLI wirings belong to later slices, not this one.
@@ -202,6 +223,18 @@ if (import.meta.main) {
         fetchText: defaultFetchText,
       });
       console.log(`snapshotted ${target.moduleId} from ${repoSlug(target.repo)}@${target.ref}`);
+    }
+  }
+  if (argv.includes("--fidelity")) {
+    const targets = readLualsTargets(root);
+    for (const target of targets) {
+      const report = buildTargetFidelity(root, target);
+      const dest = join(root, "fidelity", `${target.namespace}.json`);
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, `${JSON.stringify(report, null, 2)}\n`);
+      console.log(
+        `${target.moduleId}: coverage ${(report.coverage * 100).toFixed(1)}% (${report.unknownFallbacks} unknown, ${report.undocumentedMembers} undocumented)`,
+      );
     }
   }
 }
