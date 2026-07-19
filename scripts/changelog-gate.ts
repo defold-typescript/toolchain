@@ -55,38 +55,89 @@ export function evaluateChangelogGate({
   return { ok: true };
 }
 
-if (import.meta.main) {
-  const { latestReleaseTag } = await import("./release.ts");
+// A single git invocation, reduced to what the resolver needs. Injected so the
+// resolver stays pure and testable — the CLI wires it to `Bun.spawnSync`.
+export type RunGit = (args: string[]) => { exitCode: number; stdout: string };
 
-  const proc = Bun.spawnSync(["git", "diff", "--cached", "--name-only"], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const stagedPaths = proc.stdout
-    .toString()
+// Feed `evaluateChangelogGate` from git, failing LOUD when a required git command
+// fails instead of silently downgrading to the touch-only gate. Absent inputs
+// (`inputs` without `changelogBody`/`latestReleaseTag`) still mean the legitimate
+// touch-only mode — but only when the changelog is not staged, never as the
+// fallout of a git error. Pure: the runner and tag mapper are injected.
+export function resolveGateInputs(
+  runGit: RunGit,
+  toLatestReleaseTag: (tags: string[]) => string,
+  changelogPath = CHANGELOG_PATH,
+):
+  | {
+      ok: true;
+      inputs: { stagedPaths: string[]; changelogBody?: string; latestReleaseTag?: string };
+    }
+  | { ok: false; reason: string } {
+  const diff = runGit(["diff", "--cached", "--name-only"]);
+  if (diff.exitCode !== 0) {
+    return {
+      ok: false,
+      reason:
+        "cannot read the staged paths (`git diff --cached --name-only` failed), so the " +
+        "commit cannot be verified; fix git or bypass with `git commit --no-verify`.",
+    };
+  }
+  const stagedPaths = diff.stdout
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
-  let changelogBody: string | undefined;
-  let tag: string | undefined;
-  if (stagedPaths.includes(CHANGELOG_PATH)) {
-    const staged = Bun.spawnSync(["git", "show", `:${CHANGELOG_PATH}`], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    if (staged.exitCode === 0) {
-      changelogBody = staged.stdout.toString();
-      const tags = Bun.spawnSync(["git", "tag"], { stdout: "pipe", stderr: "pipe" });
-      tag = latestReleaseTag(tags.stdout.toString().split("\n"));
-    }
+  if (!stagedPaths.includes(changelogPath)) {
+    return { ok: true, inputs: { stagedPaths } };
   }
 
-  const result = evaluateChangelogGate({
-    stagedPaths,
-    ...(changelogBody !== undefined ? { changelogBody } : {}),
-    ...(tag !== undefined ? { latestReleaseTag: tag } : {}),
-  });
+  const show = runGit(["show", `:${changelogPath}`]);
+  if (show.exitCode !== 0) {
+    return {
+      ok: false,
+      reason:
+        `the staged \`${changelogPath}\` content is unreadable (\`git show :${changelogPath}\` ` +
+        "failed — a staged deletion or type change); keep a readable changelog entry, or bypass " +
+        "with `git commit --no-verify`.",
+    };
+  }
+
+  const tag = runGit(["tag"]);
+  if (tag.exitCode !== 0) {
+    return {
+      ok: false,
+      reason:
+        "cannot read git tags (`git tag` failed); refusing to fall back to v0.0.0 and pass " +
+        "anything — fix git or bypass with `git commit --no-verify`.",
+    };
+  }
+
+  return {
+    ok: true,
+    inputs: {
+      stagedPaths,
+      changelogBody: show.stdout,
+      latestReleaseTag: toLatestReleaseTag(tag.stdout.split("\n")),
+    },
+  };
+}
+
+if (import.meta.main) {
+  const { latestReleaseTag } = await import("./release.ts");
+
+  const runGit: RunGit = (args) => {
+    const proc = Bun.spawnSync(["git", ...args], { stdout: "pipe", stderr: "pipe" });
+    return { exitCode: proc.exitCode, stdout: proc.stdout.toString() };
+  };
+
+  const resolved = resolveGateInputs(runGit, latestReleaseTag);
+  if (!resolved.ok) {
+    console.error(`changelog gate: ${resolved.reason}`);
+    process.exit(1);
+  }
+
+  const result = evaluateChangelogGate(resolved.inputs);
   if (!result.ok) {
     console.error(`changelog gate: ${result.reason}`);
     process.exit(1);
