@@ -28,8 +28,9 @@ then `bob build` to compile the Defold project.
 - **`bundle`** — produce a platform bundle (an app/executable for a target).
 - **`status`** — a read-only pre-flight. It reports the resolved target head
   (version, channel, sha), the cached `bob.jar` path (and whether it is cached),
-  and the resolved Java — and **never downloads or runs** anything. Use it to
-  confirm what a build *would* do.
+  and the resolved Java. Resolving a channel head may fetch target metadata, but
+  it **never downloads `bob.jar` or launches Bob**. Use it to confirm what a
+  build *would* do.
 - **`run`** — a composite (bob itself has no native run verb): debug-build,
   ensure a target-matched engine, then launch. See below.
 
@@ -73,8 +74,10 @@ head without touching the network's download path.
 2. `java` on your `PATH`,
 3. the JDK bundled inside an installed Defold editor.
 
-If none resolve, the command errors and names all three. `status` reports Java
-as `(not found)` rather than failing.
+If none resolve, the command errors and names all three. `status` resolves Java
+the same way — honoring `--java` / `DEFOLD_JAVA` before `PATH` and the bundled
+JDK — but reports Java as `(not found)` rather than failing when nothing
+resolves.
 
 ## Flags
 
@@ -82,9 +85,14 @@ as `(not found)` rather than failing.
   environment-variable form.
 - `--build-server <url>` — a native-extension build server, threaded through to
   bob for `resolve`/`build`/`bundle` and the build phase of `bob run`.
-- `--json` — emit one machine-readable object per run (including `subcommand`,
-  the resolved head fields, and `exitCode`). See
-  [Agent runbooks](./agent-runbooks.md#machine-readable-output).
+- `--json` — emit one machine-readable object per run, shaped per subcommand:
+  - `resolve` / `build` / `bundle` — the resolved head fields plus a top-level
+    `exitCode`.
+  - `status` — the head fields plus `bobJar` and `java`, with **no** `exitCode`
+    (a pre-flight runs nothing to exit).
+  - `run` — nested `build` and `launch` objects, with no top-level `exitCode`.
+
+  See [Agent runbooks](./agent-runbooks.md#machine-readable-output).
 - target selection — the resolved Defold version/channel comes from your
   project's pin (see [Pinning the Defold target](./pinning-defold-target.md)).
 

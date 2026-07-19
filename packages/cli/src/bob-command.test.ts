@@ -259,6 +259,16 @@ describe("reportBobStatus", () => {
     expect(status.java).toBeNull();
   });
 
+  test("honors the java override over PATH resolution", async () => {
+    const status = await reportBobStatus({
+      target: version,
+      cacheDir: "/c",
+      java: "/jdk/bin/java",
+      io: statusIo({ fetchChannelInfo: NOT_CALLED, javaProbe: () => true }),
+    });
+    expect(status.java).toBe("/jdk/bin/java");
+  });
+
   test("returns ok:false with unresolved head fields and an error when the channel fetch rejects", async () => {
     const status = await reportBobStatus({
       target: { kind: "channel", channel: "stable" },

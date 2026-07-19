@@ -1902,10 +1902,12 @@ capturable); a single envelope prints on exit:
 ### Run
 
 `run` launches a project you already compiled — the `Runnable` (an engine
-executable plus a `build/default/game.projectc`) that a prior
-[`bob build`](./bob.md) or [`bob run`](./bob.md) left in the tree. It does no
-transpile, runs no Bob, and downloads nothing: it finds the engine, launches it,
-and streams the game to your terminal.
+executable plus a `build/default/game.projectc`) left in the tree by a prior
+build step. A plain project needs [`bob run`](./bob.md), which fetches and
+records a stock engine for the resolved SHA; a native-extension build already
+supplies `build/<platform>/dmengine`, so [`bob build`](./bob.md) alone is enough
+there. `run` does no transpile, runs no Bob, and downloads nothing: it finds the
+engine, launches it, and streams the game to your terminal.
 
 ```sh
 bunx @defold-typescript/cli run                 # launch ./build/default
@@ -1914,9 +1916,15 @@ bunx @defold-typescript/cli run -- --verbose    # forward engine args after --
 ```
 
 The optional `[path]` is the project directory; it defaults to the current
-directory. A project with no compiled build is a resolver error — `run` names
-the [`bob build`](./bob.md) / [`bob run`](./bob.md) command that would produce
-one, and exits `1` without launching.
+directory. When the tree is not launchable, `run` reports one of two distinct
+resolver errors and exits `1` without launching:
+
+- **no compiled project** — `build/default/game.projectc` is missing:
+  `no compiled project at build/default; run "bob build" (or "bob run") first`.
+- **no engine** — the `.projectc` is present but no engine is:
+  `no engine for <platform>; run "bob run" to download and cache one`. A plain
+  project built with `bob build` alone lands here, because only `bob run`
+  fetches and caches the stock engine.
 
 #### What it launches
 
@@ -2000,8 +2008,9 @@ then `bob build` to compile the Defold project.
 - **`bundle`** — produce a platform bundle (an app/executable for a target).
 - **`status`** — a read-only pre-flight. It reports the resolved target head
   (version, channel, sha), the cached `bob.jar` path (and whether it is cached),
-  and the resolved Java — and **never downloads or runs** anything. Use it to
-  confirm what a build *would* do.
+  and the resolved Java. Resolving a channel head may fetch target metadata, but
+  it **never downloads `bob.jar` or launches Bob**. Use it to confirm what a
+  build *would* do.
 - **`run`** — a composite (bob itself has no native run verb): debug-build,
   ensure a target-matched engine, then launch. See below.
 
@@ -2045,8 +2054,10 @@ head without touching the network's download path.
 2. `java` on your `PATH`,
 3. the JDK bundled inside an installed Defold editor.
 
-If none resolve, the command errors and names all three. `status` reports Java
-as `(not found)` rather than failing.
+If none resolve, the command errors and names all three. `status` resolves Java
+the same way — honoring `--java` / `DEFOLD_JAVA` before `PATH` and the bundled
+JDK — but reports Java as `(not found)` rather than failing when nothing
+resolves.
 
 #### Flags
 
@@ -2054,9 +2065,14 @@ as `(not found)` rather than failing.
   environment-variable form.
 - `--build-server <url>` — a native-extension build server, threaded through to
   bob for `resolve`/`build`/`bundle` and the build phase of `bob run`.
-- `--json` — emit one machine-readable object per run (including `subcommand`,
-  the resolved head fields, and `exitCode`). See
-  [Agent runbooks](./agent-runbooks.md#machine-readable-output).
+- `--json` — emit one machine-readable object per run, shaped per subcommand:
+  - `resolve` / `build` / `bundle` — the resolved head fields plus a top-level
+    `exitCode`.
+  - `status` — the head fields plus `bobJar` and `java`, with **no** `exitCode`
+    (a pre-flight runs nothing to exit).
+  - `run` — nested `build` and `launch` objects, with no top-level `exitCode`.
+
+  See [Agent runbooks](./agent-runbooks.md#machine-readable-output).
 - target selection — the resolved Defold version/channel comes from your
   project's pin (see [Pinning the Defold target](./pinning-defold-target.md)).
 
