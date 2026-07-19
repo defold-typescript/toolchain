@@ -4,10 +4,12 @@ toc-title: run
 # Run
 
 `run` launches a project you already compiled — the `Runnable` (an engine
-executable plus a `build/default/game.projectc`) that a prior
-[`bob build`](./bob.md) or [`bob run`](./bob.md) left in the tree. It does no
-transpile, runs no Bob, and downloads nothing: it finds the engine, launches it,
-and streams the game to your terminal.
+executable plus a `build/default/game.projectc`) left in the tree by a prior
+build step. A plain project needs [`bob run`](./bob.md), which fetches and
+records a stock engine for the resolved SHA; a native-extension build already
+supplies `build/<platform>/dmengine`, so [`bob build`](./bob.md) alone is enough
+there. `run` does no transpile, runs no Bob, and downloads nothing: it finds the
+engine, launches it, and streams the game to your terminal.
 
 ```sh
 bunx @defold-typescript/cli run                 # launch ./build/default
@@ -16,9 +18,15 @@ bunx @defold-typescript/cli run -- --verbose    # forward engine args after --
 ```
 
 The optional `[path]` is the project directory; it defaults to the current
-directory. A project with no compiled build is a resolver error — `run` names
-the [`bob build`](./bob.md) / [`bob run`](./bob.md) command that would produce
-one, and exits `1` without launching.
+directory. When the tree is not launchable, `run` reports one of two distinct
+resolver errors and exits `1` without launching:
+
+- **no compiled project** — `build/default/game.projectc` is missing:
+  `no compiled project at build/default; run "bob build" (or "bob run") first`.
+- **no engine** — the `.projectc` is present but no engine is:
+  `no engine for <platform>; run "bob run" to download and cache one`. A plain
+  project built with `bob build` alone lands here, because only `bob run`
+  fetches and caches the stock engine.
 
 ## What it launches
 

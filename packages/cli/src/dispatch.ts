@@ -963,10 +963,12 @@ export function dispatch(
     const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
 
     if (subcommand === "status") {
+      const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
       return (async (): Promise<number> => {
         const status = await reportBobStatus({
           target,
           cacheDir: defoldIo.cacheDir,
+          ...(javaOverride !== undefined ? { java: javaOverride } : {}),
           io: {
             fetchChannelInfo: channelFetch,
             fetchVersionInfo: versionFetch,
