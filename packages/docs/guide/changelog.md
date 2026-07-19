@@ -24,6 +24,11 @@ changes are called out first because the toolchain is pre-1.0.
 - A pre-commit gate that fails any commit not staging a change to this
   changelog, so it can no longer drift behind the work that lands; bypass a
   genuine exception with `git commit --no-verify`.
+- Groundwork for typing LuaLS-annotated Lua libraries: a pinned, per-library
+  `luals-targets.json` config with an offline fixture-fetch step
+  (`bun run luals:fetch`, seeded with `Insality/druid`) that snapshots matched
+  Lua source, plus a pure-Lua corpus registry. No new library types ship yet —
+  the annotation parser and emitter land in later releases.
 
 ### Fixed
 

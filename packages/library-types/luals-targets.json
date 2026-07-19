@@ -1,0 +1,13 @@
+{
+  "targets": [
+    {
+      "repo": "https://github.com/Insality/druid",
+      "ref": "1.2.5",
+      "sourceGlobs": ["druid/**/*.lua"],
+      "moduleId": "druid.druid",
+      "namespace": "druid",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}
