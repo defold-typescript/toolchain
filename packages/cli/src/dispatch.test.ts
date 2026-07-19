@@ -2630,6 +2630,23 @@ describe("dispatch bob", () => {
     expect(downloaded).toEqual([]);
   });
 
+  test("bob status honors the --java override", async () => {
+    const { io, out } = captureStreams();
+    const { internals, spawned, downloaded } = defoldInternals();
+
+    const code = await dispatch(
+      ["bob", "status", cwd, "--defold-target", "1.12.4", "--java", "/jdk/bin/java", "--json"],
+      io,
+      internals,
+    );
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as { java: string };
+    expect(parsed.java).toBe("/jdk/bin/java");
+    expect(spawned).toEqual([]);
+    expect(downloaded).toEqual([]);
+  });
+
   test("bob status --json on an offline channel exits non-zero with an error", async () => {
     const { io, out } = captureStreams();
     const { internals } = defoldInternals();
