@@ -53,6 +53,8 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [init](./init.md) — scaffold a new Defold project with a TypeScript surface, or add TypeScript to an existing project; the two modes, the `--template` / `--force` flags, and the starter templates.
 - [watch](./watch.md) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, and re-resolve the extension surface on `game.project` changes.
 - [build](./build.md) — one-shot transpile of every `src/` TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.
+- [run](./run.md) — launch the compiled project from `build/default` (or a native-extension `dmengine`) with no transpile and no Bob, forwarding engine args after `--` and propagating the engine exit code.
+- [bob](./bob.md) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
 - [wall](./wall.md) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](./resolve.md) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 
