@@ -14,16 +14,10 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.20.7
+## v0.20.8
 
 ### Added
 
-- Guide pages for the `run` and `bob` commands, covering the launch/build
-  workflow, the two `run` resolver errors, the `bob.jar` cache, and the
-  per-subcommand `--json` shapes.
-- A pre-commit gate that fails any commit not staging a change to this
-  changelog, so it can no longer drift behind the work that lands; bypass a
-  genuine exception with `git commit --no-verify`.
 - Groundwork for typing LuaLS-annotated Lua libraries: a pinned, per-library
   `luals-targets.json` config with an offline fixture-fetch step
   (`bun run luals:fetch`, seeded with `Insality/druid`) that snapshots matched
@@ -45,6 +39,24 @@ changes are called out first because the toolchain is pre-1.0.
   `---@vararg` as a trailing `...` param, so methods like `druid.instance:new`
   no longer lose their variadic argument. Internal ingest tooling; no library `.d.ts`
   output yet.
+- The pre-commit changelog gate now rejects a commit whose top changelog
+  heading is an already-released version (a tag at or above it exists), so
+  unshipped work can no longer be filed under a live release; bypass a genuine
+  exception with `git commit --no-verify`.
+
+## v0.20.7
+
+### Added
+
+- Guide pages for the `run` and `bob` commands, covering the launch/build
+  workflow, the two `run` resolver errors, the `bob.jar` cache, and the
+  per-subcommand `--json` shapes.
+- A pre-commit gate that fails any commit not staging a change to this
+  changelog, so it can no longer drift behind the work that lands; bypass a
+  genuine exception with `git commit --no-verify`.
+
+### Fixed
+
 - `bob status` now honors the `--java` / `DEFOLD_JAVA` override, matching
   executing Bob commands, so the preflight reports the same Java runtime a build
   will actually use.
