@@ -18,44 +18,10 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Added
 
-- Groundwork for typing LuaLS-annotated Lua libraries: a pinned, per-library
-  `luals-targets.json` config with an offline fixture-fetch step
-  (`bun run luals:fetch`, seeded with `Insality/druid`) that snapshots matched
-  Lua source, plus a pure-Lua corpus registry. No new library types ship yet —
-  the annotation parser and emitter land in later releases.
-- A line-oriented `---@` annotation scanner (`parseLualsSource`) that reads the
-  fetched LuaLS source into a richer `LibraryModel` — interfaces with
-  methods/fields/generics/extends, aliases, and module functions — preserving
-  every LuaLS type expression as a raw token (mapping to TypeScript is a later
-  release). Locked against the pinned druid fixture with a parse snapshot. Still
-  no library `.d.ts` output.
-- A pure LuaLS-to-TypeScript type-token mapper (`mapLualsType`) that turns the
-  parser's raw tokens into TS type strings — scalars, optionals, unions, arrays,
-  `table<>`, inline objects, `fun(...)`, string literals, and core/per-target
-  renames — with the same loud-fail-on-unmapped-`vmath.*` discipline the ts-defold
-  front-end uses. On top of it, a per-library fidelity report (`buildFidelityReport`,
-  `bun run luals:fidelity`) that runs the mapper over the whole parsed model and
-  tallies coverage, unknown-token fallbacks, and undocumented members; the committed
-  `fidelity/druid.json` is a byte-stable regression guard. Still no library `.d.ts`
-  output — declaration emission lands in a later release.
-
-### Fixed
-
-- The LuaLS annotation scanner (`parseLualsSource`) now reads a `---@field`
-  visibility modifier (`public`/`protected`/`private`/`package`) into a new
-  optional `visibility` instead of mistaking it for the field name — realigning
-  71 Druid fields whose name/type/doc were shifted a column — and captures
-  `---@vararg` as a trailing `...` param, so methods like `druid.instance:new`
-  no longer lose their variadic argument. Internal ingest tooling; no library `.d.ts`
-  output yet.
-- The pre-commit changelog gate now rejects a commit whose top changelog
-  heading is an already-released version (a tag at or above it exists), so
-  unshipped work can no longer be filed under a live release; bypass a genuine
-  exception with `git commit --no-verify`.
-- The pre-commit changelog gate no longer fails open when a git command errors:
-  a staged changelog *deletion* (unreadable `git show`) or a failed `git tag`
-  read now aborts the commit instead of silently degrading to the weaker
-  touch-only check; bypass a genuine exception with `git commit --no-verify`.
+- In progress: typed bindings for LuaLS-annotated pure-Lua libraries (starting
+  with Druid). The plumbing is landing release by release — source ingest and
+  the LuaLS-to-TypeScript type mapper are in place; the generated library
+  `.d.ts` you import ships in a later release.
 
 ## v0.20.7
 

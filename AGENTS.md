@@ -10,6 +10,7 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 - Keep `packages/docs/guide/` current as features land; a user-visible command, flag, type, or workflow change updates the relevant guide page in the same body of work.
 - Never commit without an explicit human request, unless the active skill workflow calls for it.
 - Every commit must update `packages/docs/guide/changelog.md` (a pre-commit gate in `scripts/changelog-gate.ts` enforces it, running on every commit with no glob) — bypass a genuine exception with `git commit --no-verify`.
+- Write changelog entries for the end user, not the contributor. Keep each bullet to one or two short sentences on what a user would actually notice: real additions, behavior changes, backward-compatibility and breaking changes, and bugs they would have hit. Omit internal-only work — docs-tooling, refactors, test scaffolding, naming nitpicks — unless it changes something a user sees. Fold multiple commits toward one feature into a single merged sentence rather than one bullet per commit; while a feature is still in progress, keep collapsing its bullets so the released entry reads as one coherent change.
 
 ## Layout invariants
 
