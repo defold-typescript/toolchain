@@ -1,7 +1,8 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { emitLibraryDeclarations } from "./emit-library-dts";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
-import { mergeLibraryModels, parseLualsSource } from "./parse-luals";
+import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
 
 /**
  * The LuaLS ingestion front-end pins its source per-entry: a druid-style library
@@ -152,16 +153,23 @@ export async function fetchLualsFixtures(
  * agree byte-for-byte. Fixture files are read in sorted order for determinism,
  * mirroring the parse snapshot.
  */
-export function buildTargetFidelity(packageRoot: string, target: LualsTarget): FidelityReport {
+export function buildTargetModel(packageRoot: string, target: LualsTarget): LibraryModel {
   const root = join(packageRoot, "fixtures/luals", target.namespace);
   const files = readdirSync(root, { recursive: true })
     .map((entry) => String(entry))
     .filter((entry) => entry.endsWith(".lua"))
     .sort();
-  const model = mergeLibraryModels(
+  return mergeLibraryModels(
     files.map((rel) => parseLualsSource(readFileSync(join(root, rel), "utf8"))),
   );
-  return buildFidelityReport(target.namespace, model, target.typeRenames);
+}
+
+export function buildTargetFidelity(packageRoot: string, target: LualsTarget): FidelityReport {
+  return buildFidelityReport(
+    target.namespace,
+    buildTargetModel(packageRoot, target),
+    target.typeRenames,
+  );
 }
 
 /**
@@ -235,6 +243,20 @@ if (import.meta.main) {
       console.log(
         `${target.moduleId}: coverage ${(report.coverage * 100).toFixed(1)}% (${report.unknownFallbacks} unknown, ${report.undocumentedMembers} undocumented)`,
       );
+    }
+  }
+  if (argv.includes("--emit")) {
+    const targets = readLualsTargets(root);
+    for (const target of targets) {
+      const model = buildTargetModel(root, target);
+      const declarations = emitLibraryDeclarations(model, {
+        moduleId: target.moduleId,
+        typeRenames: target.typeRenames,
+      });
+      const dest = join(root, "generated", `${target.namespace}.d.ts`);
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, declarations);
+      console.log(`emitted ${target.moduleId} -> generated/${target.namespace}.d.ts`);
     }
   }
 }
