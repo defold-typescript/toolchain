@@ -86,7 +86,9 @@ export function buildFidelityReport(
   for (const alias of model.aliases) mapTokens(alias.types);
 
   const coverage =
-    totalTypeTokens === 0 ? 1 : round3((totalTypeTokens - unknownFallbacks) / totalTypeTokens);
+    totalTypeTokens === 0
+      ? 1
+      : round3(Math.max(0, Math.min(1, (totalTypeTokens - unknownFallbacks) / totalTypeTokens)));
 
   return {
     namespace,
