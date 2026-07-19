@@ -29,6 +29,12 @@ changes are called out first because the toolchain is pre-1.0.
   (`bun run luals:fetch`, seeded with `Insality/druid`) that snapshots matched
   Lua source, plus a pure-Lua corpus registry. No new library types ship yet —
   the annotation parser and emitter land in later releases.
+- A line-oriented `---@` annotation scanner (`parseLualsSource`) that reads the
+  fetched LuaLS source into a richer `LibraryModel` — interfaces with
+  methods/fields/generics/extends, aliases, and module functions — preserving
+  every LuaLS type expression as a raw token (mapping to TypeScript is a later
+  release). Locked against the pinned druid fixture with a parse snapshot. Still
+  no library `.d.ts` output.
 
 ### Fixed
 
