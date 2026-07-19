@@ -81,8 +81,18 @@ export {
   type Vector3,
   type Vector4,
 } from "./src/core-types";
-export { examplesHtmlToMarkdown, htmlToCodeText, htmlToDocText } from "./src/doc-comment";
-export { type EmitOptions, emitDeclarations } from "./src/emit-dts";
+export {
+  examplesHtmlToMarkdown,
+  htmlToCodeText,
+  htmlToDocText,
+  renderDocComment,
+} from "./src/doc-comment";
+export {
+  type EmitOptions,
+  emitDeclarations,
+  TS_IDENTIFIER,
+  TS_RESERVED_NAMES,
+} from "./src/emit-dts";
 export {
   hashExampleSource,
   lookupTranslation,

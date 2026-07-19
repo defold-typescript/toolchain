@@ -42,6 +42,8 @@ export {
   emitDeclarations,
   emitSymbolSignatures,
   type SymbolSignature,
+  TS_IDENTIFIER,
+  TS_RESERVED_NAMES,
 } from "./emit-dts";
 export {
   hashExampleSource,

@@ -1,0 +1,22 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`emits a declare module block with an interface, its field and method, and a module function 1`] = `
+"/** @noResolution */
+declare module 'demo.demo' {
+	/**
+	 * A widget.
+	 */
+	interface widget {
+		count: number;
+		/**
+		 * Resize the widget.
+		 */
+		resize(size: number): boolean;
+	}
+	/**
+	 * Create a widget.
+	 */
+	export function create(this: void): widget;
+}
+"
+`;
