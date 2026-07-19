@@ -116,6 +116,35 @@ describe("mapLualsType functions", () => {
   test("function in a union is parenthesized", () => {
     expect(ts("fun()|nil")).toBe("(() => void) | undefined");
   });
+
+  test("Druid vararg form: bare vararg becomes a rest param and is recorded", () => {
+    const r = mapLualsType(
+      "fun(self:druid.component, ...)|nil",
+      ctx({ knownNames: new Set(["druid.component"]) }),
+    );
+    expect(r.ts).toBe("((self: druid.component, ...args: unknown[]) => void) | undefined");
+    expect(r.unknowns).toEqual(["..."]);
+  });
+
+  test("bare vararg alone becomes a rest param and is recorded", () => {
+    const r = mapLualsType("fun(...)", ctx());
+    expect(r.ts).toBe("(...args: unknown[]) => void");
+    expect(r.unknowns).toEqual(["..."]);
+  });
+
+  test("typed vararg becomes a typed rest param and records nothing", () => {
+    const r = mapLualsType("fun(...:string)", ctx());
+    expect(r.ts).toBe("(...args: string[]) => void");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("return union stays inside the return type", () => {
+    expect(ts("fun(): number|string")).toBe("() => number | string");
+  });
+
+  test("params plus a return union", () => {
+    expect(ts("fun(x: integer): number | nil")).toBe("(x: number) => number | undefined");
+  });
 });
 
 describe("mapLualsType core renames", () => {

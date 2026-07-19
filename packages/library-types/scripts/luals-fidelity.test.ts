@@ -52,6 +52,28 @@ describe("buildFidelityReport", () => {
     expect(() => buildFidelityReport("broken", model, {})).toThrow(/vmath\.made_up/);
   });
 
+  test("coverage clamps to 0 when one token records more unknowns than tokens", () => {
+    const multiUnknownModel: LibraryModel = {
+      interfaces: [
+        {
+          name: "Handler",
+          generics: [],
+          brief: "",
+          methods: [],
+          fields: [{ name: "cb", types: ["fun(self, ctx)"], doc: "", isOptional: false }],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const report = buildFidelityReport("handler", multiUnknownModel, {});
+    expect(report.unknownFallbacks).toBe(2);
+    expect(report.totalTypeTokens).toBe(1);
+    expect(report.coverage).toBe(0);
+    expect(report.coverage).toBeGreaterThanOrEqual(0);
+    expect(report.coverage).toBeLessThanOrEqual(1);
+  });
+
   test("building twice over the same model yields deeply-equal reports", () => {
     expect(buildFidelityReport("widgets", tinyModel, {})).toEqual(
       buildFidelityReport("widgets", tinyModel, {}),
