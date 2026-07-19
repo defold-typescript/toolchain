@@ -43,6 +43,10 @@ changes are called out first because the toolchain is pre-1.0.
   heading is an already-released version (a tag at or above it exists), so
   unshipped work can no longer be filed under a live release; bypass a genuine
   exception with `git commit --no-verify`.
+- The pre-commit changelog gate no longer fails open when a git command errors:
+  a staged changelog *deletion* (unreadable `git show`) or a failed `git tag`
+  read now aborts the commit instead of silently degrading to the weaker
+  touch-only check; bypass a genuine exception with `git commit --no-verify`.
 
 ## v0.20.7
 
