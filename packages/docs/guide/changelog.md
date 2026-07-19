@@ -14,6 +14,20 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.20.7
+
+### Added
+
+- Guide pages for the `run` and `bob` commands, covering the launch/build
+  workflow, the two `run` resolver errors, the `bob.jar` cache, and the
+  per-subcommand `--json` shapes.
+
+### Fixed
+
+- `bob status` now honors the `--java` / `DEFOLD_JAVA` override, matching
+  executing Bob commands, so the preflight reports the same Java runtime a build
+  will actually use.
+
 ## v0.20.6
 
 ### Fixed
