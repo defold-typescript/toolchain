@@ -228,9 +228,10 @@ export interface BobStatus {
 
 // resolveJava throws when nothing is found; status reports Java as absent
 // rather than failing, so a missing runtime is never fatal here.
-function resolveJavaOrNull(io: BobStatusIo): string | null {
+function resolveJavaOrNull(io: BobStatusIo, override?: string): string | null {
   try {
     return resolveJava({
+      ...(override !== undefined ? { override } : {}),
       probe: io.javaProbe,
       ...(io.bundledJava !== undefined ? { bundledJava: io.bundledJava } : {}),
     });
@@ -246,10 +247,11 @@ function resolveJavaOrNull(io: BobStatusIo): string | null {
 export async function reportBobStatus(opts: {
   target: DefoldTarget;
   cacheDir: string;
+  java?: string;
   io: BobStatusIo;
 }): Promise<BobStatus> {
   const { target, cacheDir, io } = opts;
-  const java = resolveJavaOrNull(io);
+  const java = resolveJavaOrNull(io, opts.java);
   const channel = target.kind === "channel" ? target.channel : null;
   let head: ResolvedTargetHead;
   try {
