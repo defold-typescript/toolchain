@@ -168,7 +168,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "regen": "bun scripts/sync-library-types.ts",
     "check": "bun scripts/sync-library-types.ts --check",
-    "classify": "bun scripts/sync-library-types.ts --classify"
+    "classify": "bun scripts/sync-library-types.ts --classify",
+    "luals:fetch": "bun scripts/sync-luals-types.ts --fetch"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*"
