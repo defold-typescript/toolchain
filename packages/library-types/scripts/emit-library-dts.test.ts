@@ -73,15 +73,16 @@ test("emits a reserved-word member through the reserved-name path, not raw", () 
   expect(out).not.toMatch(/default\s*:/);
 });
 
-test("ignores interface generics, interface extends, and method generics (deferred scope)", () => {
+test("emits a constrained generic param and an extends clause when the parent is a declared interface", () => {
   const model: LibraryModel = {
     interfaces: [
+      { name: "druid.component", generics: [], fields: [], methods: [], brief: "" },
       {
         name: "box",
-        extends: "container",
-        generics: [{ name: "T", constraint: "base" }],
+        extends: "druid.component",
+        generics: [{ name: "T", constraint: "druid.component" }],
         fields: [],
-        methods: [{ name: "map", brief: "", generics: [{ name: "U" }], params: [], returns: [] }],
+        methods: [],
         brief: "",
       },
     ],
@@ -91,10 +92,70 @@ test("ignores interface generics, interface extends, and method generics (deferr
 
   const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
 
-  expect(out).toContain("interface box {");
+  expect(out).toContain("interface box<T extends druid_component> extends druid_component {");
+});
+
+test("emits a bare generic param when the generic has no constraint", () => {
+  const model: LibraryModel = {
+    interfaces: [{ name: "bag", generics: [{ name: "T" }], fields: [], methods: [], brief: "" }],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("interface bag<T> {");
+});
+
+test("scopes a method generic so its param and return resolve to the param, not unknown", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "mapper",
+        generics: [],
+        fields: [],
+        methods: [
+          {
+            name: "map",
+            brief: "",
+            generics: [{ name: "T" }],
+            params: [{ name: "x", types: ["T"], doc: "", isOptional: false, isVararg: false }],
+            returns: [{ name: "y", types: ["T"], doc: "", isOptional: false, isVararg: false }],
+          },
+        ],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("map<T>(x: T): T;");
+  expect(out).not.toContain("unknown");
+});
+
+test("omits the extends clause when the parent is not a declared interface", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "lonely",
+        extends: "not_declared",
+        generics: [],
+        fields: [],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("interface lonely {");
   expect(out).not.toContain("extends");
-  expect(out).not.toContain("<T");
-  expect(out).not.toContain("<U");
 });
 
 test("regenerating druid from the committed fixtures matches the committed golden byte-for-byte", () => {

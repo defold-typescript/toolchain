@@ -25,6 +25,24 @@ export interface MapResult {
   unknowns: string[];
 }
 
+/**
+ * A child `MapContext` with each generic parameter `name` added as an identity
+ * rename and a known name, so a bare `T` maps to `T` instead of lowering to
+ * `unknown`. Returns the same ctx when there are no generics. Shared by the emitter
+ * (declaration text) and the fidelity report (coverage) so both scope generics
+ * identically.
+ */
+export function scopeGenerics(ctx: MapContext, generics: readonly { name: string }[]): MapContext {
+  if (generics.length === 0) return ctx;
+  const knownNames = new Set(ctx.knownNames);
+  const typeRenames = { ...ctx.typeRenames };
+  for (const generic of generics) {
+    knownNames.add(generic.name);
+    typeRenames[generic.name] = generic.name;
+  }
+  return { knownNames, typeRenames };
+}
+
 const SCALARS: Readonly<Record<string, string>> = {
   integer: "number",
   number: "number",
