@@ -236,6 +236,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         sourceUrl: `${lualsEntry.repo}/tree/${lualsEntry.ref}`,
         importString: libraryImportString(namespace),
         license: lualsEntry.license,
+        authoredHere: true,
       };
     }
     const dir = moduleDir.get(namespace);
@@ -251,6 +252,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
       sourceUrl,
       importString: libraryImportString(namespace),
       license,
+      authoredHere: false,
     };
   };
 }

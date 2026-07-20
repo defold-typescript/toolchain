@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { pageHeadings } from "./headings";
-import { renderMarkdown } from "./markdown";
+import { AUTHORED_LIBRARY_HINT, authoredLibraryPin, renderMarkdown } from "./markdown";
 
 describe("renderMarkdown", () => {
   test("renders a heading to <h1>", async () => {
@@ -472,5 +472,25 @@ describe("renderMarkdown", () => {
     const tokenSpans =
       html.match(/<span style="--shiki-light:#[0-9a-fA-F]+;--shiki-dark:#[0-9a-fA-F]+"/g) ?? [];
     expect(tokenSpans.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("authoredLibraryPin", () => {
+  test("inlines the map-pin glyph with the authored-pin class and the hint", () => {
+    const html = authoredLibraryPin(AUTHORED_LIBRARY_HINT);
+    expect(html).toContain("<svg");
+    expect(html).toContain('class="authored-pin"');
+    expect(html).toContain(`title="${AUTHORED_LIBRARY_HINT}"`);
+    expect(html).toContain(`aria-label="${AUTHORED_LIBRARY_HINT}"`);
+  });
+
+  test("carries the default hint text", () => {
+    expect(AUTHORED_LIBRARY_HINT).toBe("Type bindings maintained in this repo");
+  });
+
+  test("escapes a hint containing markup", () => {
+    const html = authoredLibraryPin('a "b" <c>');
+    expect(html).toContain('title="a &quot;b&quot; &lt;c&gt;"');
+    expect(html).not.toContain('title="a "b"');
   });
 });
