@@ -25,7 +25,10 @@ changes are called out first because the toolchain is pre-1.0.
   types preserved) — building on the earlier source ingest and type mapper.
   Interface and method generics with constraints (`<T extends druid_component>`)
   and `extends` inheritance clauses are now emitted, so inherited component
-  methods and generic return types are typed instead of `unknown`. Concrete
+  methods and generic return types are typed instead of `unknown`. Union and
+  nullable return types on a base's self-receiving lifecycle hooks are now
+  preserved when those hooks are lowered to permissive optional methods, instead
+  of collapsing to a data field or silently dropping the nullability. Concrete
   components (buttons, scrolls, …) now structurally satisfy the base
   `druid_component`, so passing one into a generic component factory
   (`new_widget`) keeps its concrete type instead of tripping a declaration error
