@@ -13,6 +13,13 @@
  * yields near-empty elements. The model carries the interfaces explicitly.
  */
 
+import {
+  buildModelContext,
+  mapTypes,
+  renderGenericParams,
+  sanitizeTypeName,
+} from "./emit-library-dts";
+import { type MapContext, scopeGenerics } from "./map-luals-types";
 import type { LibraryField, LibraryMethod, LibraryModel, LibraryParam } from "./parse-luals";
 
 // A field with an explicit non-public visibility is internal surface; keep only
@@ -22,62 +29,75 @@ function isPublicField(field: LibraryField): boolean {
   return field.visibility === undefined || field.visibility === "public";
 }
 
-function parameterElement(param: LibraryParam): Record<string, unknown> {
+// Each type token is mapped independently (one mapped TS string per token) so the
+// ref-doc `types` array stays token-per-slot the way engine ref-docs are shaped.
+function mapTokens(tokens: readonly string[], ctx: MapContext): string[] {
+  return tokens.map((token) => mapTypes([token], ctx));
+}
+
+function parameterElement(param: LibraryParam, ctx: MapContext): Record<string, unknown> {
   return {
     name: param.name,
     doc: param.doc,
-    types: param.types,
+    types: mapTokens(param.types, ctx),
     is_optional: param.isOptional ? "True" : "False",
   };
 }
 
-function returnElement(ret: LibraryParam): Record<string, unknown> {
-  return { name: "", doc: ret.doc, types: ret.types };
+function returnElement(ret: LibraryParam, ctx: MapContext): Record<string, unknown> {
+  return { name: "", doc: ret.doc, types: mapTokens(ret.types, ctx) };
 }
 
-function functionElement(method: LibraryMethod): Record<string, unknown> {
+function functionElement(method: LibraryMethod, ctx: MapContext): Record<string, unknown> {
+  const fnCtx = scopeGenerics(ctx, method.generics);
+  const generics = renderGenericParams(method.generics, fnCtx);
   return {
     type: "FUNCTION",
     name: method.name,
     brief: method.brief,
     description: method.brief,
-    parameters: method.params.map(parameterElement),
-    returnvalues: method.returns.map(returnElement),
+    ...(generics !== "" ? { generics } : {}),
+    parameters: method.params.map((param) => parameterElement(param, fnCtx)),
+    returnvalues: method.returns.map((ret) => returnElement(ret, fnCtx)),
   };
 }
 
-function propertyElement(field: LibraryField): Record<string, unknown> {
+function propertyElement(field: LibraryField, ctx: MapContext): Record<string, unknown> {
   return {
     name: field.name,
     brief: field.doc,
     description: field.doc,
-    types: field.types,
+    types: mapTokens(field.types, ctx),
   };
 }
 
 export function lowerLibraryModel(
   model: LibraryModel,
-  { namespace }: { namespace: string },
+  { namespace, typeRenames }: { namespace: string; typeRenames?: Record<string, string> },
 ): unknown {
+  const ctx = buildModelContext(model, typeRenames);
   const elements: Record<string, unknown>[] = [];
 
   for (const fn of model.moduleFunctions) {
-    elements.push(functionElement(fn));
+    elements.push(functionElement(fn, ctx));
   }
 
   for (const iface of model.interfaces) {
-    const functions = iface.methods.map(functionElement);
-    const properties = iface.fields.filter(isPublicField).map(propertyElement);
+    const ifaceCtx = scopeGenerics(ctx, iface.generics);
+    const functions = iface.methods.map((method) => functionElement(method, ifaceCtx));
+    const properties = iface.fields
+      .filter(isPublicField)
+      .map((field) => propertyElement(field, ifaceCtx));
     elements.push({
       type: "TYPEDEF",
-      name: iface.name,
+      name: sanitizeTypeName(iface.name),
       ...(functions.length > 0 ? { functions } : {}),
       ...(properties.length > 0 ? { properties } : {}),
     });
   }
 
   for (const alias of model.aliases) {
-    elements.push({ type: "TYPEDEF", name: alias.name });
+    elements.push({ type: "TYPEDEF", name: sanitizeTypeName(alias.name) });
   }
 
   // The module's own `@class` (named for the namespace, e.g. `@class druid`)
