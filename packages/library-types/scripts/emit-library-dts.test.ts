@@ -374,17 +374,26 @@ test("emits a bare generic param when the constraint resolves to unknown, not <T
   expect(out).not.toContain("extends unknown");
 });
 
-test("regenerating druid from the committed fixtures matches the committed golden byte-for-byte", () => {
-  const packageRoot = join(import.meta.dir, "..");
-  const druid = readLualsTargets(packageRoot).find((t) => t.namespace === "druid");
-  if (!druid) throw new Error("druid target missing from luals-targets.json");
+const EMIT_TARGETS = readLualsTargets(join(import.meta.dir, "..")).map(
+  (target) => [target.namespace, target] as const,
+);
 
-  const model = buildTargetModel(packageRoot, druid);
+test("the luals corpus carries more than one target, proving the pipeline generalizes beyond druid", () => {
+  const namespaces = EMIT_TARGETS.map(([namespace]) => namespace);
+  expect(namespaces).toContain("druid");
+  expect(namespaces.length).toBeGreaterThan(1);
+});
+
+test.each(
+  EMIT_TARGETS,
+)("regenerating %s from the committed fixtures matches the committed golden byte-for-byte", (namespace, target) => {
+  const packageRoot = join(import.meta.dir, "..");
+  const model = buildTargetModel(packageRoot, target);
   const emitted = emitLibraryDeclarations(model, {
-    moduleId: druid.moduleId,
-    typeRenames: druid.typeRenames,
+    moduleId: target.moduleId,
+    typeRenames: target.typeRenames,
   });
-  const golden = readFileSync(join(packageRoot, "generated", `${druid.namespace}.d.ts`), "utf8");
+  const golden = readFileSync(join(packageRoot, "generated", `${namespace}.d.ts`), "utf8");
 
   expect(emitted).toBe(golden);
 });

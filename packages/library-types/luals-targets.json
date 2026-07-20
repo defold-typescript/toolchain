@@ -13,6 +13,16 @@
         "vector4": "Vector4"
       },
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/Insality/decore",
+      "ref": "4",
+      "license": "MIT",
+      "sourceGlobs": ["decore/**/*.lua"],
+      "moduleId": "decore.decore",
+      "namespace": "decore",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**"]
     }
   ]
 }
