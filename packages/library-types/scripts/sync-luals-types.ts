@@ -111,6 +111,9 @@ export type ListLualsTree = (repo: string, ref: string) => Promise<string[]>;
 /** Fetch the raw text at a URL. Network seam — mirrors `sync-library-types.ts`. */
 export type FetchText = (url: string) => Promise<string>;
 
+/** Recursively enumerate a fixture directory's entries. Filesystem seam. */
+export type ReadFixtureDir = (root: string) => string[];
+
 /**
  * A GitHub repo URL reduced to the bare `<owner>/<repo>` slug used to address
  * raw content. Mirrors `repoSlug` in the ts-defold front-end.
@@ -160,10 +163,15 @@ export async function fetchLualsFixtures(
  * library file's functions from the one module. A `moduleId` with no matching
  * fixture is a loud misconfiguration, not a silently empty surface.
  */
-export function buildTargetModel(packageRoot: string, target: LualsTarget): LibraryModel {
+export function buildTargetModel(
+  packageRoot: string,
+  target: LualsTarget,
+  seams: { readDir?: ReadFixtureDir } = {},
+): LibraryModel {
+  const readDir = seams.readDir ?? ((r) => readdirSync(r, { recursive: true }).map(String));
   const root = join(packageRoot, "fixtures/luals", target.namespace);
-  const files = readdirSync(root, { recursive: true })
-    .map((entry) => String(entry))
+  const files = readDir(root)
+    .map((entry) => entry.replace(/\\/g, "/"))
     .filter((entry) => entry.endsWith(".lua"))
     .sort();
   const ownFile = `${target.moduleId.replace(/\./g, "/")}.lua`;

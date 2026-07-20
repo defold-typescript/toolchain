@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { emitLibraryDeclarations } from "./emit-library-dts";
@@ -10,6 +10,7 @@ import {
   type ListLualsTree,
   type LualsTarget,
   lualsCorpusTargets,
+  type ReadFixtureDir,
   readLualsTargets,
   selectLualsSources,
 } from "./sync-luals-types";
@@ -189,5 +190,19 @@ describe("buildTargetModel module ownership", () => {
   test("a target whose moduleId has no matching .lua fixture throws, naming the expected path", () => {
     const bogus: LualsTarget = { ...DRUID, moduleId: "druid.nonexistent" };
     expect(() => buildTargetModel(PACKAGE_ROOT, bogus)).toThrow(/druid\/nonexistent\.lua/);
+  });
+
+  test("a Windows-style backslash readdir resolves druid.druid to the same moduleFunctions", () => {
+    if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
+    const backslashReadDir: ReadFixtureDir = (root) =>
+      readdirSync(root, { recursive: true }).map((entry) => String(entry).replace(/\//g, "\\"));
+    const backslashNames = buildTargetModel(PACKAGE_ROOT, druidTarget, {
+      readDir: backslashReadDir,
+    }).moduleFunctions.map((f) => f.name);
+    const posixNames = buildTargetModel(PACKAGE_ROOT, druidTarget).moduleFunctions.map(
+      (f) => f.name,
+    );
+    expect([...backslashNames].sort()).toEqual([...posixNames].sort());
+    expect([...backslashNames].sort()).toEqual([...DRUID_PUBLICS].sort());
   });
 });
