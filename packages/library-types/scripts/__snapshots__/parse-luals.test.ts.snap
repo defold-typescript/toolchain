@@ -9301,9 +9301,9 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
               "doc": "",
               "isOptional": false,
               "isVararg": false,
-              "name": "number",
+              "name": "",
               "types": [
-                "number,",
+                "number, number",
               ],
             },
           ],
@@ -12928,12 +12928,12 @@ If color_id is not found in palette and not a hex string, returns white."
       ],
       "returns": [
         {
-          "doc": "number, number",
+          "doc": "",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "number,",
+            "number, number, number",
           ],
         },
       ],
@@ -13018,12 +13018,12 @@ If color_id is not found in palette and not a hex string, returns white."
       ],
       "returns": [
         {
-          "doc": "number, number, number",
+          "doc": "",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "number,",
+            "number, number, number, number",
           ],
         },
       ],
@@ -13072,12 +13072,12 @@ If color_id is not found in palette and not a hex string, returns white."
       ],
       "returns": [
         {
-          "doc": "number, number, number|nil",
+          "doc": "",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "number,",
+            "number, number, number, number|nil",
           ],
         },
       ],
@@ -13216,148 +13216,6 @@ If color_id is not found in palette and not a hex string, returns white."
       ],
     },
     {
-      "brief": "",
-      "generics": [],
-      "name": "animate_cursor",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "set_selection_width",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "update_text",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "self",
-          "types": [
-            "druid.rich_input",
-          ],
-        },
-      ],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "on_select",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "on_unselect",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "Update selection",
-      "generics": [],
-      "name": "update_selection",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "get_index_by_touch",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "on_touch_start_callback",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "on_drag_callback",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "self",
-          "types": [
-            "druid.rich_input",
-          ],
-        },
-        {
-          "doc": "The delta x position",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "dx",
-          "types": [
-            "number",
-          ],
-        },
-        {
-          "doc": "The delta y position",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "dy",
-          "types": [
-            "number",
-          ],
-        },
-        {
-          "doc": "The x position",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "x",
-          "types": [
-            "number",
-          ],
-        },
-        {
-          "doc": "The y position",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "y",
-          "types": [
-            "number",
-          ],
-        },
-        {
-          "doc": "The touch table",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "touch",
-          "types": [
-            "table",
-          ],
-        },
-      ],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "ltrim",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "compare_words",
-      "params": [],
-      "returns": [],
-    },
-    {
       "brief": 
 "Get the length of a text ignoring any tags except image tags
 which are treated as having a length of 1"
@@ -13383,132 +13241,6 @@ which are treated as having a length of 1"
           "name": "",
           "types": [
             "number",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "get_text_metrics",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "word",
-          "types": [
-            "druid.rich_text.word",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "previous_word",
-          "types": [
-            "druid.rich_text.word|nil",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "settings",
-          "types": [
-            "druid.rich_text.settings",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "druid.rich_text.metrics",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "get_image_metrics",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "word",
-          "types": [
-            "druid.rich_text.word",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "settings",
-          "types": [
-            "druid.rich_text.settings",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "druid.rich_text.metrics",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "measure_node",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "word",
-          "types": [
-            "druid.rich_text.word",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "settings",
-          "types": [
-            "druid.rich_text.settings",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "previous_word",
-          "types": [
-            "druid.rich_text.word|nil",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "druid.rich_text.metrics",
           ],
         },
       ],
@@ -13942,41 +13674,6 @@ which are treated as having a length of 1"
       "returns": [],
     },
     {
-      "brief": "",
-      "generics": [],
-      "name": "parse_tag",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "add_word",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "split_line",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "split_text",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "merge_tags",
-      "params": [],
-      "returns": [],
-    },
-    {
       "brief": "Parse the text into individual words",
       "generics": [],
       "name": "parse",
@@ -14061,51 +13758,6 @@ which are treated as having a length of 1"
       "name": "register",
       "params": [],
       "returns": [],
-    },
-    {
-      "brief": "Split string at first occurrence of token",
-      "generics": [],
-      "name": "split",
-      "params": [
-        {
-          "doc": "The string to split",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "s",
-          "types": [
-            "string?",
-          ],
-        },
-        {
-          "doc": "The token to split string on",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "token",
-          "types": [
-            "string",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "The string before the token or the whole string if token doesn't exist",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "before",
-          "types": [
-            "string?",
-          ],
-        },
-        {
-          "doc": "The string after the token or nil",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "after",
-          "types": [
-            "string?",
-          ],
-        },
-      ],
     },
     {
       "brief": "Create a new Druid instance for creating GUI components.",
@@ -14198,12 +13850,12 @@ The default way to create component is \`druid_instance:new(component_class, ...
       "name": "set_text_function",
       "params": [
         {
-          "doc": "string Get localized text function",
+          "doc": "Get localized text function",
           "isOptional": false,
           "isVararg": false,
           "name": "callback",
           "types": [
-            "fun(text_id: string):",
+            "fun(text_id: string): string",
           ],
         },
       ],
@@ -14262,36 +13914,6 @@ It will notify all Druid instances to update the lang text components."
       "name": "on_language_change",
       "params": [],
       "returns": [],
-    },
-    {
-      "brief": 
-"Set a widget to the current game object. The game object can acquire the widget by calling \`bindings.get_widget\`
-It wraps with events only top level functions cross-context, so you will have no access to nested widgets functions"
-,
-      "generics": [],
-      "name": "wrap_widget",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "widget",
-          "types": [
-            "druid.widget",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "druid.widget",
-          ],
-        },
-      ],
     },
     {
       "brief": 
@@ -14432,86 +14054,6 @@ Only one widget can be set per game object."
       ],
     },
     {
-      "brief": "Create a backup of a file",
-      "generics": [],
-      "name": "create_backup",
-      "params": [
-        {
-          "doc": "- The path of the file to backup",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "file_path",
-          "types": [
-            "string",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "- The backup file path, or nil if backup failed",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "string|nil",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "Restore from a backup file",
-      "generics": [],
-      "name": "restore_from_backup",
-      "params": [
-        {
-          "doc": "- The path of the backup file",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "backup_path",
-          "types": [
-            "string",
-          ],
-        },
-        {
-          "doc": "- The path to restore to",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "original_path",
-          "types": [
-            "string",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "- True if restore was successful",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "boolean",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "Remove a backup file",
-      "generics": [],
-      "name": "remove_backup",
-      "params": [
-        {
-          "doc": "- The path of the backup file to remove",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "backup_path",
-          "types": [
-            "string",
-          ],
-        },
-      ],
-      "returns": [],
-    },
-    {
       "brief": "Assign layers to GUI nodes based on textures and fonts",
       "generics": [],
       "name": "assign_layers",
@@ -14548,21 +14090,7 @@ Only one widget can be set per game object."
     {
       "brief": "",
       "generics": [],
-      "name": "to_camel_case",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
       "name": "create_druid_gui_script",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "to_camel_case",
       "params": [],
       "returns": [],
     },
@@ -14624,12 +14152,12 @@ Only one widget can be set per game object."
       ],
       "returns": [
         {
-          "doc": "string|nil",
+          "doc": "",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "table|nil,",
+            "table|nil, string|nil",
           ],
         },
       ],
@@ -14663,12 +14191,12 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       ],
       "returns": [
         {
-          "doc": "string|nil",
+          "doc": "",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "boolean,",
+            "boolean, string|nil",
           ],
         },
       ],
@@ -14939,12 +14467,12 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       ],
       "returns": [
         {
-          "doc": "string|nil @success, reason",
+          "doc": "@success, reason",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "string|nil,",
+            "string|nil, string|nil",
           ],
         },
       ],
@@ -14975,12 +14503,12 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       ],
       "returns": [
         {
-          "doc": "string|nil @success, reason",
+          "doc": "@success, reason",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "boolean,",
+            "boolean, string|nil",
           ],
         },
       ],
@@ -15019,12 +14547,12 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       ],
       "returns": [
         {
-          "doc": "string, string, boolean @new_object_name, name, value, end_struct_flag",
+          "doc": "@new_object_name, name, value, end_struct_flag",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "string,",
+            "string, string, string, boolean",
           ],
         },
       ],
@@ -15073,23 +14601,6 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       "returns": [],
     },
     {
-      "brief": "Read editor port from .internal/editor.port file",
-      "generics": [],
-      "name": "get_editor_port",
-      "params": [],
-      "returns": [
-        {
-          "doc": "Editor port number or nil if not found",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "port",
-          "types": [
-            "number|nil",
-          ],
-        },
-      ],
-    },
-    {
       "brief": "Call editor HTTP API command",
       "generics": [],
       "name": "call_editor_command",
@@ -15115,77 +14626,6 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
           ],
         },
       ],
-    },
-    {
-      "brief": "Mask text by replacing every character with a mask character",
-      "generics": [],
-      "name": "mask_text",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "text",
-          "types": [
-            "string",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "mask",
-          "types": [
-            "string",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "Masked text",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "string",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "clear_and_select",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "get_text_width",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "get_icon_width",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "is_text_node",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "Text node or icon node can be nil",
-      "generics": [],
-      "name": "get_width",
-      "params": [],
-      "returns": [],
     },
     {
       "brief": 
@@ -16049,12 +15489,12 @@ Offset shown in [-0.5 .. 0.5] range, where -0.5 is left or bottom, 0.5 is right 
       ],
       "returns": [
         {
-          "doc": "result String representation of table, Is max string length reached",
+          "doc": "String representation of table, Is max string length reached",
           "isOptional": false,
           "isVararg": false,
-          "name": "boolean",
+          "name": "result",
           "types": [
-            "string,",
+            "string, boolean",
           ],
         },
       ],
@@ -16290,152 +15730,6 @@ Thanks to Dragosha! ( ・ω・ ) <  Hey friend!"
       ],
     },
     {
-      "brief": "",
-      "generics": [],
-      "name": "set_input_state",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "sort_input_comparator",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "component_a",
-          "types": [
-            "druid.component",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "component_b",
-          "types": [
-            "druid.component",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "",
-          "types": [
-            "boolean",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "sort_input_stack",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "self",
-          "types": [
-            "druid.instance",
-          ],
-        },
-      ],
-      "returns": [],
-    },
-    {
-      "brief": "Get current component interests",
-      "generics": [],
-      "name": "get_component_interests",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "instance",
-          "types": [
-            "druid.component",
-          ],
-        },
-      ],
-      "returns": [
-        {
-          "doc": "List of component interests",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "interest_list",
-          "types": [
-            "table",
-          ],
-        },
-      ],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "register_interests",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "self",
-          "types": [
-            "druid.instance",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "instance",
-          "types": [
-            "druid.component",
-          ],
-        },
-      ],
-      "returns": [],
-    },
-    {
-      "brief": "Before processing any input check if we need to update input stack",
-      "generics": [],
-      "name": "check_sort_input_stack",
-      "params": [
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "self",
-          "types": [
-            "druid.instance",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "isVararg": false,
-          "name": "components",
-          "types": [
-            "table[]",
-          ],
-        },
-      ],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "schedule_late_init",
-      "params": [],
-      "returns": [],
-    },
-    {
       "brief": "Druid class constructor which used to create Druid components",
       "generics": [],
       "name": "create_druid_instance",
@@ -16518,139 +15812,6 @@ Thanks to Dragosha! ( ・ω・ ) <  Hey friend!"
       "brief": "",
       "generics": [],
       "name": "play_sound",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8charbytes",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8len",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8sub",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8replace",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8upper",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8lower",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8reverse",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8char",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8unicode",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8gensub",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "binsearch",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "classMatchGenerator",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8subWithBytes",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "matcherGenerator",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8find",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8match",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8gmatch",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "replace",
-      "params": [],
-      "returns": [],
-    },
-    {
-      "brief": "",
-      "generics": [],
-      "name": "utf8gsub",
       "params": [],
       "returns": [],
     },
