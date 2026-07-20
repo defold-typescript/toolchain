@@ -41,7 +41,11 @@ changes are called out first because the toolchain is pre-1.0.
   signatures as the generated `.d.ts` — mapped types, sanitized type names, and
   generic clauses (`get_widget<T extends druid_widget>`) — instead of the raw
   LuaLS `table|nil` / unbound-`T` / dotted `druid.button` tokens it printed
-  before. The published package you import still ships in a later release.
+  before. Variadic parameters and multi-value returns on that page now match the
+  generated `.d.ts` too — `translate(locale_id: string, ...args: string[])` and
+  `get_text_size(...): LuaMultiReturn<[number, number]>` instead of the earlier
+  `...: string` and `number, number` forms. The published package you import
+  still ships in a later release.
 
 ## v0.20.8
 

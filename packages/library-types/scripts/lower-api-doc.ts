@@ -36,11 +36,14 @@ function mapTokens(tokens: readonly string[], ctx: MapContext): string[] {
 }
 
 function parameterElement(param: LibraryParam, ctx: MapContext): Record<string, unknown> {
+  // A vararg's element type stays a plain mapped token here; the renderer arrayifies
+  // it (`...args: T[]`) from the `is_vararg` flag, keeping the JSON structurally honest.
   return {
-    name: param.name,
+    name: param.isVararg ? "...args" : param.name,
     doc: param.doc,
     types: mapTokens(param.types, ctx),
     is_optional: param.isOptional ? "True" : "False",
+    is_vararg: param.isVararg ? "True" : "False",
   };
 }
 

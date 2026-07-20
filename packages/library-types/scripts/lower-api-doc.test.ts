@@ -58,8 +58,20 @@ test("a module function lowers its param/return tokens to emitter-equivalent Typ
   expect(fn?.name).toBe("new");
   expect(fn?.brief).toBe("Create a new Druid instance.\nLonger description.");
   expect(fn?.parameters).toEqual([
-    { name: "context", doc: "the context", types: ["LuaTable"], is_optional: "False" },
-    { name: "style", doc: "the style", types: ["LuaTable | undefined"], is_optional: "False" },
+    {
+      name: "context",
+      doc: "the context",
+      types: ["LuaTable"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
+    {
+      name: "style",
+      doc: "the style",
+      types: ["LuaTable | undefined"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
   ]);
   expect(fn?.returnvalues).toEqual([{ name: "", doc: "the instance", types: ["druid_instance"] }]);
   expect(fn).not.toHaveProperty("generics");
@@ -113,7 +125,13 @@ test("a method lowers a `boolean|nil` param and a dotted return to mapped TypeSc
       brief: "Enable or disable.",
       description: "Enable or disable.",
       parameters: [
-        { name: "state", doc: "on/off", types: ["boolean | undefined"], is_optional: "False" },
+        {
+          name: "state",
+          doc: "on/off",
+          types: ["boolean | undefined"],
+          is_optional: "False",
+          is_vararg: "False",
+        },
       ],
       returnvalues: [{ name: "", doc: "", types: ["druid_button"] }],
     },
@@ -145,7 +163,96 @@ test("a `fun(...)` param token lowers to an arrow type", () => {
 
   const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
   expect(fn?.parameters).toEqual([
-    { name: "cb", doc: "the callback", types: ["(a: string) => string"], is_optional: "False" },
+    {
+      name: "cb",
+      doc: "the callback",
+      types: ["(a: string) => string"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
+  ]);
+});
+
+test("a `...` param lowers with is_vararg True, name ...args, and the mapped element token", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "format",
+        brief: "",
+        generics: [],
+        params: [
+          { name: "...", types: ["string"], doc: "the args", isOptional: false, isVararg: true },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  expect(fn?.parameters).toEqual([
+    {
+      name: "...args",
+      doc: "the args",
+      types: ["string"],
+      is_optional: "False",
+      is_vararg: "True",
+    },
+  ]);
+});
+
+test("a two-return method keeps two returnvalues entries with their distinct docs", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "druid.text",
+        generics: [],
+        fields: [],
+        methods: [
+          {
+            name: "get_text_size",
+            brief: "Measure text.",
+            generics: [],
+            params: [
+              {
+                name: "text",
+                types: ["string|nil"],
+                doc: "the text",
+                isOptional: false,
+                isVararg: false,
+              },
+            ],
+            returns: [
+              {
+                name: "",
+                types: ["number"],
+                doc: "The text width",
+                isOptional: false,
+                isVararg: false,
+              },
+              {
+                name: "",
+                types: ["number"],
+                doc: "The text height",
+                isOptional: false,
+                isVararg: false,
+              },
+            ],
+          },
+        ],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const fn = (typedef?.functions as Record<string, unknown>[])[0];
+  expect(fn?.returnvalues).toEqual([
+    { name: "", doc: "The text width", types: ["number"] },
+    { name: "", doc: "The text height", types: ["number"] },
   ]);
 });
 
@@ -199,9 +306,27 @@ test("a generic module function carries a `generics` clause and keeps its bound 
   const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
   expect(fn?.generics).toBe("<T extends druid_widget>");
   expect(fn?.parameters).toEqual([
-    { name: "widget_class", doc: "the class", types: ["T"], is_optional: "False" },
-    { name: "gui_url", doc: "the url", types: ["Url | string"], is_optional: "False" },
-    { name: "params", doc: "extra", types: ["unknown | undefined"], is_optional: "False" },
+    {
+      name: "widget_class",
+      doc: "the class",
+      types: ["T"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
+    {
+      name: "gui_url",
+      doc: "the url",
+      types: ["Url | string"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
+    {
+      name: "params",
+      doc: "extra",
+      types: ["unknown | undefined"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
   ]);
   expect(fn?.returnvalues).toEqual([{ name: "", doc: "the widget", types: ["T"] }]);
 });
@@ -232,7 +357,9 @@ test("a generic interface method carries a `generics` clause and keeps its bound
   const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
   const fn = (typedef?.functions as Record<string, unknown>[])[0];
   expect(fn?.generics).toBe("<T>");
-  expect(fn?.parameters).toEqual([{ name: "x", doc: "", types: ["T"], is_optional: "False" }]);
+  expect(fn?.parameters).toEqual([
+    { name: "x", doc: "", types: ["T"], is_optional: "False", is_vararg: "False" },
+  ]);
   expect(fn?.returnvalues).toEqual([{ name: "", doc: "", types: ["T"] }]);
 });
 
@@ -304,6 +431,54 @@ test("the lowered object round-trips through parseDefoldApiDoc", () => {
   expect(parsed.typedefs).toHaveLength(2);
   expect(parsed.typedefs[0]?.functions).toHaveLength(1);
   expect(parsed.typedefs[0]?.properties).toHaveLength(1);
+});
+
+test("the committed druid golden carries the emitter-equivalent vararg + multi-return shape", () => {
+  const packageRoot = join(import.meta.dir, "..");
+  const golden = JSON.parse(readFileSync(join(packageRoot, "api-doc", "druid.json"), "utf8"));
+  const typedef = (name: string) =>
+    (golden.elements as Record<string, unknown>[]).find(
+      (e) => e.type === "TYPEDEF" && e.name === name,
+    );
+  const method = (typeName: string, fnName: string) =>
+    ((typedef(typeName)?.functions as Record<string, unknown>[]) ?? []).find(
+      (f) => f.name === fnName,
+    );
+
+  const translate = method("druid_lang_text", "translate");
+  expect(translate?.parameters).toEqual([
+    {
+      name: "locale_id",
+      doc: "Locale id to get text from",
+      types: ["string"],
+      is_optional: "False",
+      is_vararg: "False",
+    },
+    {
+      name: "...args",
+      doc: "Optional params for string.format",
+      types: ["string"],
+      is_optional: "False",
+      is_vararg: "True",
+    },
+  ]);
+
+  const format = method("druid_lang_text", "format");
+  expect(format?.parameters).toEqual([
+    {
+      name: "...args",
+      doc: "Optional params for string.format",
+      types: ["string"],
+      is_optional: "False",
+      is_vararg: "True",
+    },
+  ]);
+
+  const getTextSize = method("druid_text", "get_text_size");
+  expect(getTextSize?.returnvalues).toEqual([
+    { name: "", doc: "The text width", types: ["number"] },
+    { name: "", doc: "The text height", types: ["number"] },
+  ]);
 });
 
 test("regenerating druid from the committed fixtures matches the committed golden api-doc byte-for-byte", () => {
