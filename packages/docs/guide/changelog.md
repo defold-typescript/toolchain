@@ -25,7 +25,11 @@ changes are called out first because the toolchain is pre-1.0.
   types preserved) — building on the earlier source ingest and type mapper.
   Interface and method generics with constraints (`<T extends druid_component>`)
   and `extends` inheritance clauses are now emitted, so inherited component
-  methods and generic return types are typed instead of `unknown`. The LuaLS
+  methods and generic return types are typed instead of `unknown`. Concrete
+  components (buttons, scrolls, …) now structurally satisfy the base
+  `druid_component`, so passing one into a generic component factory
+  (`new_widget`) keeps its concrete type instead of tripping a declaration error
+  that `skipLibCheck` had been hiding. The LuaLS
   sync scripts (`luals:emit`/`--fidelity`) now run on Windows, which previously
   threw a spurious "fixture not found" because fixture path separators were
   compared unnormalized. The published package you import still ships in a later
