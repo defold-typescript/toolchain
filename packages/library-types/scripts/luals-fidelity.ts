@@ -11,7 +11,7 @@
  */
 
 import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
-import type { LibraryModel } from "./parse-luals";
+import type { LibraryGeneric, LibraryModel } from "./parse-luals";
 
 export interface FidelityReport {
   namespace: string;
@@ -62,8 +62,24 @@ export function buildFidelityReport(
 
   const undocumented = (doc: string): boolean => doc.trim() === "";
 
+  const mapConstraints = (generics: readonly LibraryGeneric[], mapCtx: MapContext): void => {
+    for (const generic of generics) {
+      if (generic.constraint) mapTokens([generic.constraint], mapCtx);
+    }
+  };
+
   for (const iface of model.interfaces) {
     const ifaceCtx = scopeGenerics(ctx, iface.generics);
+    if (iface.extends) {
+      mapTokens(
+        iface.extends
+          .split(",")
+          .map((parent) => parent.trim())
+          .filter((parent) => parent !== ""),
+        ifaceCtx,
+      );
+    }
+    mapConstraints(iface.generics, ifaceCtx);
     for (const field of iface.fields) {
       totalMembers++;
       if (undocumented(field.doc)) undocumentedMembers++;
@@ -73,6 +89,7 @@ export function buildFidelityReport(
       totalMembers++;
       if (undocumented(method.brief)) undocumentedMembers++;
       const methodCtx = scopeGenerics(ifaceCtx, method.generics);
+      mapConstraints(method.generics, methodCtx);
       for (const param of method.params) mapTokens(param.types, methodCtx);
       for (const ret of method.returns) mapTokens(ret.types, methodCtx);
     }
@@ -82,6 +99,7 @@ export function buildFidelityReport(
     totalMembers++;
     if (undocumented(fn.brief)) undocumentedMembers++;
     const fnCtx = scopeGenerics(ctx, fn.generics);
+    mapConstraints(fn.generics, fnCtx);
     for (const param of fn.params) mapTokens(param.types, fnCtx);
     for (const ret of fn.returns) mapTokens(ret.types, fnCtx);
   }

@@ -761,19 +761,58 @@ declare module 'druid.druid' {
 	}
 	interface druid_component {
 		druid: druid_instance;
-		init: ((self: druid_component, ...args: unknown[]) => void) | undefined;
-		update: ((self: druid_component, dt: number) => void) | undefined;
-		on_remove: ((self: druid_component) => void) | undefined;
-		on_input: ((self: druid_component, action_id: Hash, action: LuaTable) => void) | undefined;
-		on_input_interrupt: ((self: druid_component, action_id: Hash, action: LuaTable) => void) | undefined;
-		on_message: ((self: druid_component, message_id: Hash, message: LuaTable, sender: Url) => void) | undefined;
-		on_late_init: ((self: druid_component) => void) | undefined;
-		on_focus_lost: ((self: druid_component) => void) | undefined;
-		on_focus_gained: ((self: druid_component) => void) | undefined;
-		on_style_change: ((self: druid_component, style: LuaTable) => void) | undefined;
-		on_layout_change: ((self: druid_component) => void) | undefined;
-		on_window_resized: ((self: druid_component) => void) | undefined;
-		on_language_change: ((self: druid_component) => void) | undefined;
+		/**
+		 * Called when component is created
+		 */
+		init?(...args: any[]): void;
+		/**
+		 * Called every frame
+		 */
+		update?(...args: any[]): void;
+		/**
+		 * Called when component is removed
+		 */
+		on_remove?(...args: any[]): void;
+		/**
+		 * Called when input event is triggered
+		 */
+		on_input?(...args: any[]): void;
+		/**
+		 * Called when input event is consumed before
+		 */
+		on_input_interrupt?(...args: any[]): void;
+		/**
+		 * Called when message is received
+		 */
+		on_message?(...args: any[]): void;
+		/**
+		 * Called before update once time after GUI init
+		 */
+		on_late_init?(...args: any[]): void;
+		/**
+		 * Called when app lost focus
+		 */
+		on_focus_lost?(...args: any[]): void;
+		/**
+		 * Called when app gained focus
+		 */
+		on_focus_gained?(...args: any[]): void;
+		/**
+		 * Called when style is changed
+		 */
+		on_style_change?(...args: any[]): void;
+		/**
+		 * Called when GUI layout is changed
+		 */
+		on_layout_change?(...args: any[]): void;
+		/**
+		 * Called when window is resized
+		 */
+		on_window_resized?(...args: any[]): void;
+		/**
+		 * Called when language is changed
+		 */
+		on_language_change?(...args: any[]): void;
 		_component: druid_component_component;
 		_meta: druid_component_meta;
 		/**

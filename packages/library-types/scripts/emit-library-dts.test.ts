@@ -158,6 +158,148 @@ test("omits the extends clause when the parent is not a declared interface", () 
   expect(out).not.toContain("extends");
 });
 
+test("emits a base's self-receiving hook fields as permissive optional methods, preserving the return", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "base",
+        generics: [],
+        fields: [
+          {
+            name: "on_style_change",
+            types: ["fun(self:base, style: table)|nil"],
+            doc: "Called when style changes.",
+            isOptional: false,
+          },
+          { name: "measure", types: ["fun(self:base):number"], doc: "", isOptional: false },
+        ],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("on_style_change?(...args: any[]): void;");
+  expect(out).toContain("measure?(...args: any[]): number;");
+  expect(out).not.toContain("on_style_change: ((");
+});
+
+test("keeps both the extends clause and a subinterface's refined override of a base hook method", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      { name: "refined", generics: [], fields: [], methods: [], brief: "" },
+      {
+        name: "base",
+        generics: [],
+        fields: [
+          {
+            name: "on_style_change",
+            types: ["fun(self:base, style: table)|nil"],
+            doc: "",
+            isOptional: false,
+          },
+        ],
+        methods: [],
+        brief: "",
+      },
+      {
+        name: "child",
+        extends: "base",
+        generics: [],
+        fields: [],
+        methods: [
+          {
+            name: "on_style_change",
+            brief: "",
+            generics: [],
+            params: [
+              { name: "style", types: ["refined"], doc: "", isOptional: false, isVararg: false },
+            ],
+            returns: [],
+          },
+        ],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("interface child extends base {");
+  expect(out).toContain("on_style_change(style: refined): void;");
+  expect(out).toContain("on_style_change?(...args: any[]): void;");
+});
+
+test("leaves a hook field with an untyped self as a data field", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "stylebag",
+        generics: [],
+        fields: [{ name: "on_init", types: ["fun(self)|nil"], doc: "", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("on_init: ((self: unknown) => void) | undefined;");
+  expect(out).not.toContain("on_init?(...args: any[])");
+});
+
+test("leaves a hook field whose self is a different declared interface as a data field", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      { name: "other", generics: [], fields: [], methods: [], brief: "" },
+      {
+        name: "stylebag",
+        generics: [],
+        fields: [{ name: "on_init", types: ["fun(self: other)|nil"], doc: "", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("on_init: ((self: other) => void) | undefined;");
+  expect(out).not.toContain("on_init?(...args: any[])");
+});
+
+test("emits a bare generic param when the constraint resolves to unknown, not <T extends unknown>", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "bag",
+        generics: [{ name: "T", constraint: "not_declared" }],
+        fields: [],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("interface bag<T> {");
+  expect(out).not.toContain("extends unknown");
+});
+
 test("regenerating druid from the committed fixtures matches the committed golden byte-for-byte", () => {
   const packageRoot = join(import.meta.dir, "..");
   const druid = readLualsTargets(packageRoot).find((t) => t.namespace === "druid");
