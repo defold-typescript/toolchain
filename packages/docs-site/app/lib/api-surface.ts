@@ -13,10 +13,12 @@ import {
   htmlToDocText,
   lookupSignature,
   lookupTranslation,
+  luaMultiReturn,
   normalizedFunctionSignature,
   type SignatureStore,
   symbolIdentityKey,
   type TranslationStore,
+  varargElementType,
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
 
@@ -359,11 +361,23 @@ function projectParams(list: ApiParameter[], mapType: MapType = mapDocType): Api
   }));
 }
 
-function functionSignature(fn: ApiFunction, mapType: MapType = mapDocType): string {
+// `isLibrary` gates the emitter-equivalent variadic (`...args: T[]`) and multi-return
+// (`LuaMultiReturn<[...]>`) forms so a LuaLS-sourced library `/api` page matches its
+// `generated/<ns>.d.ts`; engine pages keep `...: T` and comma-joined returns.
+function functionSignature(
+  fn: ApiFunction,
+  mapType: MapType = mapDocType,
+  isLibrary = false,
+): string {
   const params = fn.parameters
-    .map((p) => `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`)
+    .map((p) =>
+      isLibrary && p.isVararg
+        ? `${p.name}: ${varargElementType(typeList(p.types, mapType))}`
+        : `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`,
+    )
     .join(", ");
-  const ret = fn.returnValues.map((r) => typeList(r.types, mapType)).join(", ");
+  const mapped = fn.returnValues.map((r) => typeList(r.types, mapType));
+  const ret = isLibrary && mapped.length > 1 ? luaMultiReturn(mapped) : mapped.join(", ");
   return `${fn.name}${fn.generics ?? ""}(${params})${ret ? `: ${ret}` : ""}`;
 }
 
@@ -385,8 +399,9 @@ function typeMemberFunctionSignature(
   typeName: string,
   fn: ApiFunction,
   mapType: MapType = mapDocType,
+  isLibrary = false,
 ): string {
-  return `${typeName}.${functionSignature(fn, mapType)}`;
+  return `${typeName}.${functionSignature(fn, mapType, isLibrary)}`;
 }
 
 function typeMemberPropertySignature(
@@ -439,6 +454,7 @@ export function apiModuleMarkdown(
   // `library` JSON tokens are already TypeScript, so re-mapping them through the
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
+  const isLibrary = page.category === "library";
   const lines: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
   if (page.displayName && page.displayName !== m.namespace) {
     lines.push(`\`${m.namespace}\``, "");
@@ -456,7 +472,7 @@ export function apiModuleMarkdown(
         fn.name,
         normalizedFunctionSignature(fn),
       );
-      lines.push(`### \`${authSig ?? functionSignature(fn, mapType)}\``, "");
+      lines.push(`### \`${authSig ?? functionSignature(fn, mapType, isLibrary)}\``, "");
       const doc = htmlToDocText(fn.description || fn.brief);
       if (doc) lines.push(doc, "");
       pushAvailabilityProse(
@@ -537,7 +553,7 @@ export function apiModuleMarkdown(
     for (const td of typedefs) {
       lines.push(`### ${td.name}`, "");
       for (const fn of td.functions ?? []) {
-        lines.push(`#### \`${functionSignature(fn, mapType)}\``, "");
+        lines.push(`#### \`${functionSignature(fn, mapType, isLibrary)}\``, "");
         const doc = htmlToDocText(fn.description || fn.brief);
         if (doc) lines.push(doc, "");
         const example = exampleMarkdownFor(fn, translations);
@@ -574,6 +590,7 @@ export function apiModuleSymbols(
   // `library` JSON tokens are already TypeScript, so re-mapping them through the
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
+  const isLibrary = page.category === "library";
   const authoritative = page.authoritativeSignatures;
   const symbols: ApiSymbol[] = [];
   const overrideEmitted = new Set<string>();
@@ -606,8 +623,8 @@ export function apiModuleSymbols(
       signature:
         authSig ??
         (ov === null
-          ? functionSignature(fn, mapType)
-          : (ov.signatures[0] ?? functionSignature(fn, mapType))),
+          ? functionSignature(fn, mapType, isLibrary)
+          : (ov.signatures[0] ?? functionSignature(fn, mapType, isLibrary))),
       docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
       parameters: projectParams(fn.parameters, mapType),
       returnValues: projectParams(fn.returnValues, mapType),
@@ -699,7 +716,7 @@ export function apiModuleSymbols(
       const symbol: ApiSymbol = {
         kind: "type",
         name: typeMemberName(td.name, fn.name),
-        signature: typeMemberFunctionSignature(td.name, fn, mapType),
+        signature: typeMemberFunctionSignature(td.name, fn, mapType, isLibrary),
         docMarkdown: htmlToDocText(fn.description || fn.brief),
         parameters: projectParams(fn.parameters, mapType),
         returnValues: projectParams(fn.returnValues, mapType),

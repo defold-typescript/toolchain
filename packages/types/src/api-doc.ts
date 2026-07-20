@@ -49,6 +49,13 @@ export interface ApiParameter {
   types: string[];
   isOptional: boolean;
   /**
+   * True for a `...` variadic parameter. `parseParameterList` always sets it
+   * (`false` when the ref-doc omits `is_vararg`, so engine docs read as before);
+   * optional on the interface so hand-built engine `ApiParameter` literals need
+   * not spell out `false`.
+   */
+  isVararg?: boolean;
+  /**
    * Per-member docs for an object-literal type, extracted as a tree alongside
    * the flat `types` token (never inside it). Absent for plain-typed params.
    */
@@ -190,6 +197,7 @@ function parseParameterList(raw: unknown): ApiParameter[] {
       doc: stringOr(item.doc, ""),
       types: parseStringArray(item.types),
       isOptional: item.is_optional === "True",
+      isVararg: item.is_vararg === "True",
       ...(Array.isArray(item.fields) ? { fields: parseParameterList(item.fields) } : {}),
     });
   }

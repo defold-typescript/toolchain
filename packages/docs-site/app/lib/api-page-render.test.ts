@@ -466,6 +466,12 @@ describe("apiPageMarkdown library provenance block", () => {
       expect(line).not.toMatch(/druid\.[a-z]/);
     }
     expect(md).not.toContain("table|nil");
+    // Emitter-equivalent variadic + multi-return: arrayified vararg and a tuple,
+    // never the pre-lift `...: string` param or `): number, number` return token.
+    expect(md).toContain("...args: string[]");
+    expect(md).toContain("LuaMultiReturn<[number, number]>");
+    expect(md).not.toContain("...: string");
+    expect(md).not.toContain("): number, number");
     expect(md).toContain("[Insality/druid](https://github.com/Insality/druid)");
     expect(md).not.toContain("ts-defold/library");
     expect(md).toMatchSnapshot();

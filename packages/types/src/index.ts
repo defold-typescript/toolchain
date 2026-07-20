@@ -52,6 +52,12 @@ export {
   type TranslationStore,
 } from "./example-store";
 export {
+  hasTopLevelUnion,
+  luaMultiReturn,
+  needsArrayParens,
+  varargElementType,
+} from "./library-signature";
+export {
   defineGuiScript,
   defineRenderScript,
   defineScript,

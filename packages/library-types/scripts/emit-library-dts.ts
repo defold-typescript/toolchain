@@ -18,7 +18,13 @@
  * only for parents that resolve to a declared interface.
  */
 
-import { renderDocComment, TS_IDENTIFIER, TS_RESERVED_NAMES } from "@defold-typescript/types";
+import {
+  luaMultiReturn,
+  renderDocComment,
+  TS_IDENTIFIER,
+  TS_RESERVED_NAMES,
+  varargElementType,
+} from "@defold-typescript/types";
 import {
   type MapContext,
   mapLualsType,
@@ -63,23 +69,6 @@ function safeParamName(name: string, index: number): string {
   return TS_RESERVED_NAMES.has(name) ? `${name}_` : name;
 }
 
-/** True when a top-level `|` (a union) appears in a mapped type, honoring bracket depth. */
-function hasTopLevelUnion(ts: string): boolean {
-  let depth = 0;
-  for (let i = 0; i < ts.length; i++) {
-    const c = ts[i];
-    if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
-    else if (c === ">" || c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
-    else if (depth === 0 && c === "|") return true;
-  }
-  return false;
-}
-
-/** An array element needs parentheses when it is a union, a function, or an object. */
-function needsArrayParens(ts: string): boolean {
-  return hasTopLevelUnion(ts) || ts.includes("=>") || ts.startsWith("{");
-}
-
 export function mapTypes(types: readonly string[], ctx: MapContext): string {
   if (types.length === 0) return "unknown";
   return types.map((token) => mapLualsType(token, ctx).ts).join(" | ");
@@ -102,8 +91,7 @@ export function renderGenericParams(generics: readonly LibraryGeneric[], ctx: Ma
 function renderHookReturn(returnTokens: readonly string[], ctx: MapContext): string {
   if (returnTokens.length === 0) return "void";
   if (returnTokens.length === 1) return mapTypes([returnTokens[0] as string], ctx);
-  const inner = returnTokens.map((token) => mapTypes([token], ctx)).join(", ");
-  return `LuaMultiReturn<[${inner}]>`;
+  return luaMultiReturn(returnTokens.map((token) => mapTypes([token], ctx)));
 }
 
 /**
@@ -130,8 +118,7 @@ function renderParams(params: readonly LibraryParam[], ctx: MapContext): string 
     .map((param, index) => {
       const mapped = mapTypes(param.types, ctx);
       if (param.isVararg) {
-        const element = needsArrayParens(mapped) ? `(${mapped})[]` : `${mapped}[]`;
-        return `...args: ${element}`;
+        return `...args: ${varargElementType(mapped)}`;
       }
       const optional = param.isOptional ? "?" : "";
       return `${safeParamName(param.name, index)}${optional}: ${mapped}`;
@@ -142,8 +129,7 @@ function renderParams(params: readonly LibraryParam[], ctx: MapContext): string 
 function renderReturn(returns: readonly LibraryParam[], ctx: MapContext): string {
   if (returns.length === 0) return "void";
   if (returns.length === 1) return mapTypes((returns[0] as LibraryParam).types, ctx);
-  const inner = returns.map((ret) => mapTypes(ret.types, ctx)).join(", ");
-  return `LuaMultiReturn<[${inner}]>`;
+  return luaMultiReturn(returns.map((ret) => mapTypes(ret.types, ctx)));
 }
 
 function pushDoc(lines: string[], summary: string, indent: string): void {

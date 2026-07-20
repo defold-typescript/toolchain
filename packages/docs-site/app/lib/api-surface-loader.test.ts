@@ -173,4 +173,20 @@ describe("loadApiSurface — druid library page", () => {
       "druid_button.set_enabled(state: boolean | undefined): druid_button",
     );
   });
+
+  test("surfaces emitter-equivalent varargs and multi-returns for lang_text and text", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const druid = pages.find((p) => p.namespace === "druid");
+    if (!druid) throw new Error("druid page missing");
+    const byName = new Map(apiModuleSymbols(druid).map((s) => [s.name, s.signature]));
+    expect(byName.get("druid_lang_text.translate")).toBe(
+      "druid_lang_text.translate(locale_id: string, ...args: string[]): druid_lang_text",
+    );
+    expect(byName.get("druid_lang_text.format")).toBe(
+      "druid_lang_text.format(...args: string[]): druid_lang_text",
+    );
+    expect(byName.get("druid_text.get_text_size")).toBe(
+      "druid_text.get_text_size(text: string | undefined): LuaMultiReturn<[number, number]>",
+    );
+  });
 });

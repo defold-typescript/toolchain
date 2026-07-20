@@ -1608,6 +1608,112 @@ describe("library-category token rendering", () => {
     expect(sig).toBe("event.on(callback: function, context: any): table");
   });
 
+  test("a library vararg param renders `...args: T[]`; the same param on an engine page stays `...args: T`", () => {
+    const module: Partial<ApiPage["module"]> = {
+      functions: [
+        {
+          name: "event.fmt",
+          brief: "",
+          description: "Format.",
+          parameters: [
+            { name: "...args", doc: "", types: ["string"], isOptional: false, isVararg: true },
+          ],
+          returnValues: [{ name: "", doc: "", types: ["number"], isOptional: false }],
+        },
+      ],
+    };
+    const librarySig = apiModuleSymbols(libraryPage(module))[0]?.signature;
+    expect(librarySig).toBe("event.fmt(...args: string[]): number");
+
+    const enginePage: ApiPage = { ...libraryPage(module), category: "engine" };
+    expect(apiModuleSymbols(enginePage)[0]?.signature).toBe("event.fmt(...args: string): number");
+  });
+
+  test("a library vararg param over a union parenthesizes the element type", () => {
+    const module: Partial<ApiPage["module"]> = {
+      functions: [
+        {
+          name: "event.pick",
+          brief: "",
+          description: "Pick.",
+          parameters: [
+            {
+              name: "...args",
+              doc: "",
+              types: ["string", "any"],
+              isOptional: false,
+              isVararg: true,
+            },
+          ],
+          returnValues: [],
+        },
+      ],
+    };
+    expect(apiModuleSymbols(libraryPage(module))[0]?.signature).toBe(
+      "event.pick(...args: (string | any)[])",
+    );
+  });
+
+  test("a library >1-return function wraps in LuaMultiReturn; the same on an engine page stays `a, b`", () => {
+    const module: Partial<ApiPage["module"]> = {
+      functions: [
+        {
+          name: "event.measure",
+          brief: "",
+          description: "Measure.",
+          parameters: [],
+          returnValues: [
+            { name: "", doc: "", types: ["number"], isOptional: false },
+            { name: "", doc: "", types: ["number"], isOptional: false },
+          ],
+        },
+      ],
+    };
+    expect(apiModuleSymbols(libraryPage(module))[0]?.signature).toBe(
+      "event.measure(): LuaMultiReturn<[number, number]>",
+    );
+
+    const enginePage: ApiPage = { ...libraryPage(module), category: "engine" };
+    expect(apiModuleSymbols(enginePage)[0]?.signature).toBe("event.measure(): number, number");
+  });
+
+  test("a library typedef member renders vararg + multi-return like the emitter", () => {
+    const module: Partial<ApiPage["module"]> = {
+      typedefs: [
+        {
+          name: "druid_text",
+          functions: [
+            {
+              name: "get_text_size",
+              brief: "",
+              description: "Measure.",
+              parameters: [
+                {
+                  name: "text",
+                  doc: "",
+                  types: ["string | undefined"],
+                  isOptional: false,
+                  isVararg: false,
+                },
+              ],
+              returnValues: [
+                { name: "", doc: "", types: ["number"], isOptional: false },
+                { name: "", doc: "", types: ["number"], isOptional: false },
+              ],
+            },
+          ],
+          properties: [],
+        },
+      ],
+    };
+    const sig = apiModuleSymbols(libraryPage(module)).find(
+      (s) => s.name === "druid_text.get_text_size",
+    )?.signature;
+    expect(sig).toBe(
+      "druid_text.get_text_size(text: string | undefined): LuaMultiReturn<[number, number]>",
+    );
+  });
+
   test("still maps ref-doc tokens through DEFOLD_TYPE_MAP for an engine module", () => {
     const enginePage: ApiPage = {
       namespace: "demo",
