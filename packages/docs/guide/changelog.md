@@ -21,9 +21,10 @@ changes are called out first because the toolchain is pre-1.0.
 - In progress: typed bindings for LuaLS-annotated pure-Lua libraries.
   `defold-typescript resolve` now materializes generated `.d.ts` for declared
   Druid and Decore dependencies — generics, inheritance, variadics, and
-  multi-returns preserved — each with a rendered API page at `/api/<name>`, and a
-  new [Authoring LuaLS library types](authoring-luals-library-types.md) guide
-  documents adding further libraries as a config-only change.
+  multi-returns preserved — each with a rendered API page at `/api/<name>`, and the
+  new [Authoring LuaLS library types](authoring-luals-library-types.md) guide covers
+  adding further libraries as a config-only change, including how to fill an empty
+  API-page description.
 
 ## v0.20.8
 
