@@ -30,3 +30,6842 @@ Returns the projection matrix.
 </div>
 "
 `;
+
+exports[`apiPageMarkdown library provenance block the druid page renders its component typedefs and pins to Insality/druid, not ts-defold/library 1`] = `
+"# Insality / druid
+
+\`druid\`
+
+Entry point for Druid UI Framework.
+Create a new Druid instance and adjust the Druid settings here.
+
+- GitHub: [Insality/druid](https://github.com/Insality/druid) — pinned to [\`1.2.5\`](https://github.com/Insality/druid/tree/1.2.5)
+  1. Pick a release from [Insality/druid releases](https://github.com/Insality/druid/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) to \`game.project\` under \`[project]\` \`dependencies\`, then **Fetch Libraries** in the Defold editor.
+  2. Run \`bunx @defold-typescript/cli resolve\` to materialize its types.
+  3. Import it under a namespace alias of your choice:
+     \`\`\`ts
+     import * as druid from "druid"
+     \`\`\`
+
+## Functions
+
+<div class="api-overview" aria-label="Function overview">
+
+- [\`new(context: table, style: table|nil): druid.instance\`](#newcontext-table-style-tablenil-druidinstance)
+- [\`register(name: string, module: table)\`](#registername-string-module-table)
+- [\`set_default_style(style: table)\`](#set_default_stylestyle-table)
+- [\`set_text_function(callback: fun(text_id: string): string)\`](#set_text_functioncallback-funtext_id-string-string)
+- [\`set_sound_function(callback: fun(sound_id: string))\`](#set_sound_functioncallback-funsound_id-string)
+- [\`init_window_listener()\`](#init_window_listener)
+- [\`on_window_callback(window_event: constant)\`](#on_window_callbackwindow_event-constant)
+- [\`on_language_change()\`](#on_language_change)
+- [\`get_widget(widget_class: T, gui_url: url|string, params: any|nil): T\`](#get_widgetwidget_class-t-gui_url-urlstring-params-anynil-t)
+- [\`register_druid_as_widget(druid: druid.instance)\`](#register_druid_as_widgetdruid-druidinstance)
+- [\`unregister_druid_as_widget()\`](#unregister_druid_as_widget)
+- [\`set_logger(logger_instance: druid.logger|table|nil)\`](#set_loggerlogger_instance-druidloggertablenil)
+- [\`get_logger(name: string?, level: string|nil): druid.logger\`](#get_loggername-string-level-stringnil-druidlogger)
+
+</div>
+
+### \`new(context: table, style: table|nil): druid.instance\`
+
+<div class="api-symbol-body">
+
+Create a new Druid instance for creating GUI components.
+
+**Parameters**
+
+- \`context\`: \`table\` — The Druid context. Usually, this is the self of the gui_script. It is passed into all Druid callbacks.
+- \`style\`: \`table|nil\` — The Druid style table to override style parameters for this Druid instance.
+
+**Returns**
+
+- \`druid.instance\` — The new Druid instance
+
+</div>
+
+### \`register(name: string, module: table)\`
+
+<div class="api-symbol-body">
+
+Register a new external Druid component.
+Register component just makes the druid:new_{name} function.
+For example, if you register a component called "my_component", you can create it using druid:new_my_component(...).
+This can be useful if you have your own "basic" components that you don't want to require in every file.
+The default way to create component is \`druid_instance:new(component_class, ...)\`.
+
+**Parameters**
+
+- \`name\`: \`string\` — Module name
+- \`module\`: \`table\` — Lua table with component
+
+</div>
+
+### \`set_default_style(style: table)\`
+
+<div class="api-symbol-body">
+
+Set the default style for all Druid instances.
+
+**Parameters**
+
+- \`style\`: \`table\` — Default style
+
+</div>
+
+### \`set_text_function(callback: fun(text_id: string): string)\`
+
+<div class="api-symbol-body">
+
+Set the text function for the LangText component.
+
+**Parameters**
+
+- \`callback\`: \`fun(text_id: string): string\` — Get localized text function
+
+</div>
+
+### \`set_sound_function(callback: fun(sound_id: string))\`
+
+<div class="api-symbol-body">
+
+Set the sound function to able components to play sounds.
+
+**Parameters**
+
+- \`callback\`: \`fun(sound_id: string)\` — Sound play callback
+
+</div>
+
+### \`init_window_listener()\`
+
+<div class="api-symbol-body">
+
+Subscribe Druid to the window listener. It will override your previous
+window listener, so if you have one, you should call M.on_window_callback manually.
+
+</div>
+
+### \`on_window_callback(window_event: constant)\`
+
+<div class="api-symbol-body">
+
+Set the window callback to enable Druid window events.
+
+**Parameters**
+
+- \`window_event\`: \`constant\` — Event param from window listener
+
+</div>
+
+### \`on_language_change()\`
+
+<div class="api-symbol-body">
+
+Call this function when the game language changes.
+It will notify all Druid instances to update the lang text components.
+
+</div>
+
+### \`get_widget(widget_class: T, gui_url: url|string, params: any|nil): T\`
+
+<div class="api-symbol-body">
+
+Create a widget from the bound Druid GUI instance.
+The widget will be created and all widget functions can be called from Game Object contexts.
+This allows using only \`druid_widget.gui_script\` for GUI files and call this widget functions from Game Object script file.
+Widget class here is your lua file for the GUI scene (widgets in Druid)
+<a href="/api/defold-1.13.0/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, nil, "gui_widget") -- current game object
+<a href="/api/defold-1.13.0/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, object_url, "gui_widget") -- other game object
+
+**Parameters**
+
+- \`widget_class\`: \`T\` — The class of the widget to return
+- \`gui_url\`: \`url|string\` — GUI url or string of component name near current script
+- \`params\`: \`any|nil\` — Additional parameters to pass to the widget's init function
+
+**Returns**
+
+- \`T\` — The new created widget,
+
+</div>
+
+### \`register_druid_as_widget(druid: druid.instance)\`
+
+<div class="api-symbol-body">
+
+Bind a Druid GUI instance to the current game object.
+This instance now can produce widgets from \`druid.get_widget()\` function.
+Only one widget can be set per game object.
+
+**Parameters**
+
+- \`druid\`: \`druid.instance\` — The druid instance to register
+
+</div>
+
+### \`unregister_druid_as_widget()\`
+
+<div class="api-symbol-body">
+
+Should be called on final, where druid instance is destroyed.
+
+</div>
+
+### \`set_logger(logger_instance: druid.logger|table|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`logger_instance\`: \`druid.logger|table|nil\`
+
+</div>
+
+### \`get_logger(name: string?, level: string|nil): druid.logger\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`name\`: \`string?\`
+- \`level\`: \`string|nil\`
+
+**Returns**
+
+- \`druid.logger\`
+
+</div>
+
+## Types
+
+### \`druid.back_handler.init(callback: function|nil, params: any?)\`
+
+<div class="api-symbol-body">
+
+The Back Handler constructor
+
+**Parameters**
+
+- \`callback\`: \`function|nil\` — The callback to call when the back handler is triggered
+- \`params\`: \`any?\` — Custom args to pass in the callback
+
+</div>
+
+### \`druid.back_handler.on_input(action_id: hash, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — The action id
+- \`action\`: \`table\` — The action table
+
+**Returns**
+
+- \`boolean\` — True if the input was consumed
+
+</div>
+
+### \`druid.back_handler.on_back: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.back_handler, params: any?) Trigger on back handler action
+
+</div>
+
+### \`druid.back_handler.params: any?\`
+
+<div class="api-symbol-body">
+
+Custom args to pass in the callback
+
+</div>
+
+### \`druid.blocker.init(node: node|string)\`
+
+<div class="api-symbol-body">
+
+The Blocker constructor
+
+**Parameters**
+
+- \`node\`: \`node|string\` — The node to use as a blocker
+
+</div>
+
+### \`druid.blocker.on_input(action_id: string, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`string\` — The action id
+- \`action\`: \`table\` — The action table
+
+**Returns**
+
+- \`boolean\` — True if the input was consumed
+
+</div>
+
+### \`druid.blocker.set_enabled(state: boolean): druid.blocker\`
+
+<div class="api-symbol-body">
+
+Set blocker enabled state
+
+**Parameters**
+
+- \`state\`: \`boolean\` — The new enabled state
+
+**Returns**
+
+- \`druid.blocker\` — The blocker instance
+
+</div>
+
+### \`druid.blocker.is_enabled(): boolean\`
+
+<div class="api-symbol-body">
+
+Get blocker enabled state
+
+**Returns**
+
+- \`boolean\` — True if the blocker is enabled
+
+</div>
+
+### \`druid.blocker.node: node\`
+
+<div class="api-symbol-body">
+
+The node that will block input
+
+</div>
+
+### \`druid.button.style.LONGTAP_TIME: number|nil\`
+
+<div class="api-symbol-body">
+
+Minimum time to trigger on_hold_callback. Default: 0.4
+
+</div>
+
+### \`druid.button.style.AUTOHOLD_TRIGGER: number|nil\`
+
+<div class="api-symbol-body">
+
+Maximum hold time to trigger button release while holding. Default: 0.8
+
+</div>
+
+### \`druid.button.style.DOUBLETAP_TIME: number|nil\`
+
+<div class="api-symbol-body">
+
+Time between double taps. Default: 0.4
+
+</div>
+
+### \`druid.button.style.on_init: fun(self)|nil\`
+
+### \`druid.button.style.on_click: fun(self, node)|nil\`
+
+### \`druid.button.style.on_click_disabled: fun(self, node)|nil\`
+
+### \`druid.button.style.on_hover: fun(self, node, hover_state)|nil\`
+
+### \`druid.button.style.on_mouse_hover: fun(self, node, hover_state)|nil\`
+
+### \`druid.button.style.on_set_enabled: fun(self, node, enabled_state)|nil\`
+
+### \`druid.button.init(node_or_node_id: node|string, callback: fun()|nil, custom_args: any|nil, anim_node: node|string|nil)\`
+
+<div class="api-symbol-body">
+
+The constructor for the button component
+
+**Parameters**
+
+- \`node_or_node_id\`: \`node|string\` — Node name or GUI Node itself
+- \`callback\`: \`fun()|nil\` — Callback on button click
+- \`custom_args\`: \`any|nil\` — Custom args for any Button event, will be passed to callbacks
+- \`anim_node\`: \`node|string|nil\` — Node to animate instead of trigger node, useful for animating small icons on big panels
+
+</div>
+
+### \`druid.button.on_style_change(style: druid.button.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.button.style\`
+
+</div>
+
+### \`druid.button.set_animations_disabled(): druid.button\`
+
+<div class="api-symbol-body">
+
+Remove default button style animations
+
+**Returns**
+
+- \`druid.button\` — The current button instance
+
+</div>
+
+### \`druid.button.on_late_init()\`
+
+### \`druid.button.on_input(action_id: hash, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — The action id
+- \`action\`: \`table\` — The action table
+
+**Returns**
+
+- \`boolean\` — True if the input was consumed
+
+</div>
+
+### \`druid.button.on_input_interrupt()\`
+
+### \`druid.button.set_enabled(state: boolean|nil): druid.button\`
+
+<div class="api-symbol-body">
+
+Set button enabled state.
+The style.on_set_enabled will be triggered.
+Disabled button is not clickable.
+
+**Parameters**
+
+- \`state\`: \`boolean|nil\` — Enabled state
+
+**Returns**
+
+- \`druid.button\` — The current button instance
+
+</div>
+
+### \`druid.button.is_enabled(): boolean\`
+
+<div class="api-symbol-body">
+
+Get button enabled state.
+By default all Buttons are enabled on creating.
+
+**Returns**
+
+- \`boolean\` — True, if button is enabled now, False otherwise
+
+</div>
+
+### \`druid.button.set_click_zone(zone: node|string|nil): druid.button\`
+
+<div class="api-symbol-body">
+
+Set additional button click area.
+Useful to restrict click outside of stencil node or scrollable content.
+If button node placed inside stencil node, it will be automatically set to this stencil node.
+
+**Parameters**
+
+- \`zone\`: \`node|string|nil\` — Gui node
+
+**Returns**
+
+- \`druid.button\` — The current button instance
+
+</div>
+
+### \`druid.button.set_key_trigger(key: hash|string): druid.button\`
+
+<div class="api-symbol-body">
+
+Set key name to trigger this button by keyboard.
+
+**Parameters**
+
+- \`key\`: \`hash|string\` — The action_id of the input key. Example: "key_space"
+
+**Returns**
+
+- \`druid.button\` — The current button instance
+
+</div>
+
+### \`druid.button.get_key_trigger(): hash\`
+
+<div class="api-symbol-body">
+
+Get current key name to trigger this button.
+
+**Returns**
+
+- \`hash\` — The action_id of the input key
+
+</div>
+
+### \`druid.button.set_check_function(check_function: function|nil, failure_callback: function|nil): druid.button\`
+
+<div class="api-symbol-body">
+
+Set function for additional check for button click availability.
+
+**Parameters**
+
+- \`check_function\`: \`function|nil\` — Should return true or false. If true - button can be pressed.
+- \`failure_callback\`: \`function|nil\` — Function will be called on button click, if check function returns false
+
+**Returns**
+
+- \`druid.button\` — The current button instance
+
+</div>
+
+### \`druid.button.set_web_user_interaction(is_web_mode: boolean|nil): druid.button\`
+
+<div class="api-symbol-body">
+
+Set Button mode to work inside user HTML5 interaction event.
+
+It's required to make protected things like copy & paste text, show mobile keyboard, etc
+The HTML5 button doesn't call any events except on_click event.
+
+If the game is not HTML, html mode will be not enabled
+
+**Parameters**
+
+- \`is_web_mode\`: \`boolean|nil\` — If true - button will be called inside html5 callback
+
+**Returns**
+
+- \`druid.button\` — The current button instance
+
+</div>
+
+### \`druid.button._is_input_match(action_id: hash): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — The action id
+
+**Returns**
+
+- \`boolean\` — True if the input matches the button
+
+</div>
+
+### \`druid.button.button_hover(hover_state: boolean)\`
+
+<div class="api-symbol-body">
+
+Call button style on_hover callback
+
+**Parameters**
+
+- \`hover_state\`: \`boolean\` — True if the hover state is active
+
+</div>
+
+### \`druid.button.button_mouse_hover(hover_state: boolean)\`
+
+<div class="api-symbol-body">
+
+Call button style on_hover callback
+
+**Parameters**
+
+- \`hover_state\`: \`boolean\` — True if the hover state is active
+
+</div>
+
+### \`druid.button.button_click()\`
+
+<div class="api-symbol-body">
+
+Call button click callback
+
+</div>
+
+### \`druid.button.button_repeated_click()\`
+
+<div class="api-symbol-body">
+
+Call button repeated click callback
+
+</div>
+
+### \`druid.button.button_long_click()\`
+
+<div class="api-symbol-body">
+
+Call button long click callback
+
+</div>
+
+### \`druid.button.button_double_click()\`
+
+<div class="api-symbol-body">
+
+Call button double click callback
+
+</div>
+
+### \`druid.button.button_hold(press_time: number)\`
+
+<div class="api-symbol-body">
+
+Call button hold callback
+
+**Parameters**
+
+- \`press_time\`: \`number\` — Amount of time the button was held
+
+</div>
+
+### \`druid.button._on_button_release()\`
+
+### \`druid.button.on_click: event\`
+
+<div class="api-symbol-body">
+
+fun(self, custom_args, button_instance)
+
+</div>
+
+### \`druid.button.on_pressed: event\`
+
+<div class="api-symbol-body">
+
+fun(self, custom_args, button_instance)
+
+</div>
+
+### \`druid.button.on_repeated_click: event\`
+
+<div class="api-symbol-body">
+
+fun(self, custom_args, button_instance, click_count) Repeated click callback, while holding the button
+
+</div>
+
+### \`druid.button.on_long_click: event\`
+
+<div class="api-symbol-body">
+
+fun(self, custom_args, button_instance, hold_time) Callback on long button tap
+
+</div>
+
+### \`druid.button.on_double_click: event\`
+
+<div class="api-symbol-body">
+
+fun(self, custom_args, button_instance, click_amount) Different callback, if tap button 2+ in row
+
+</div>
+
+### \`druid.button.on_hold_callback: event\`
+
+<div class="api-symbol-body">
+
+fun(self, custom_args, button_instance, press_time) Hold callback, before long_click trigger
+
+</div>
+
+### \`druid.button.on_click_outside: event\`
+
+<div class="api-symbol-body">
+
+fun(self, custom_args, button_instance)
+
+</div>
+
+### \`druid.button.node: node\`
+
+<div class="api-symbol-body">
+
+Clickable node
+
+</div>
+
+### \`druid.button.node_id: hash\`
+
+<div class="api-symbol-body">
+
+Node id
+
+</div>
+
+### \`druid.button.anim_node: node\`
+
+<div class="api-symbol-body">
+
+Animation node. In default case equals to clickable node
+
+</div>
+
+### \`druid.button.params: any\`
+
+<div class="api-symbol-body">
+
+Custom arguments for any Button event
+
+</div>
+
+### \`druid.button.hover: druid.hover\`
+
+<div class="api-symbol-body">
+
+Hover component for this button
+
+</div>
+
+### \`druid.button.click_zone: node|nil\`
+
+<div class="api-symbol-body">
+
+Click zone node to restrict click area
+
+</div>
+
+### \`druid.button.start_scale: vector3\`
+
+<div class="api-symbol-body">
+
+Start scale of the button
+
+</div>
+
+### \`druid.button.start_pos: vector3\`
+
+<div class="api-symbol-body">
+
+Start position of the button
+
+</div>
+
+### \`druid.button.disabled: boolean\`
+
+<div class="api-symbol-body">
+
+Is button disabled
+
+</div>
+
+### \`druid.button.key_trigger: hash\`
+
+<div class="api-symbol-body">
+
+Key trigger for this button
+
+</div>
+
+### \`druid.button.style: table\`
+
+<div class="api-symbol-body">
+
+Style for this button
+
+</div>
+
+### \`druid.drag.style.DRAG_DEADZONE: number\`
+
+<div class="api-symbol-body">
+
+Distance in pixels to start dragging. Default: 10
+
+</div>
+
+### \`druid.drag.style.NO_USE_SCREEN_KOEF: boolean\`
+
+<div class="api-symbol-body">
+
+If screen aspect ratio affects on drag values. Default: false
+
+</div>
+
+### \`druid.drag.init(node_or_node_id: node|string, on_drag_callback: fun(self, touch))\`
+
+<div class="api-symbol-body">
+
+The constructor for Drag component
+
+**Parameters**
+
+- \`node_or_node_id\`: \`node|string\` — The node to subscribe to drag events over
+- \`on_drag_callback\`: \`fun(self, touch)\` — The callback to call when a drag occurs
+
+</div>
+
+### \`druid.drag.on_style_change(style: druid.drag.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.drag.style\` — The style of Drag component
+
+</div>
+
+### \`druid.drag.set_drag_cursors(is_enabled: boolean)\`
+
+<div class="api-symbol-body">
+
+Set Drag component enabled state.
+
+**Parameters**
+
+- \`is_enabled\`: \`boolean\` — True if Drag component is enabled
+
+</div>
+
+### \`druid.drag.on_late_init()\`
+
+### \`druid.drag.on_window_resized()\`
+
+### \`druid.drag.on_input_interrupt()\`
+
+### \`druid.drag.on_input(action_id: hash, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — Action id from on_input
+- \`action\`: \`table\` — Action from on_input
+
+**Returns**
+
+- \`boolean\` — True if the input was consumed
+
+</div>
+
+### \`druid.drag.set_click_zone(node: node|string|nil): druid.drag\`
+
+<div class="api-symbol-body">
+
+Set Drag click zone
+
+**Parameters**
+
+- \`node\`: \`node|string|nil\` — Node or node id
+
+**Returns**
+
+- \`druid.drag\` — Current instance
+
+</div>
+
+### \`druid.drag.set_enabled(is_enabled: boolean): druid.drag\`
+
+<div class="api-symbol-body">
+
+Set Drag component enabled state.
+
+**Parameters**
+
+- \`is_enabled\`: \`boolean\`
+
+**Returns**
+
+- \`druid.drag\` — Current instance
+
+</div>
+
+### \`druid.drag.is_enabled(): boolean\`
+
+<div class="api-symbol-body">
+
+Check if Drag component is capture input
+
+**Returns**
+
+- \`boolean\` — True if Drag component is enabled
+
+</div>
+
+### \`druid.drag._start_touch()\`
+
+### \`druid.drag._end_touch(touch: touch|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`touch\`: \`touch|nil\`
+
+</div>
+
+### \`druid.drag._process_touch(touch: touch)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`touch\`: \`touch\` — Touch action
+
+</div>
+
+### \`druid.drag._find_touch(action_id: hash, action: table, touch_id: number): table|nil\`
+
+<div class="api-symbol-body">
+
+Return current touch action from action input data
+If touch_id stored - return exact this touch action
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — Action id from on_input
+- \`action\`: \`table\` — Action from on_input
+- \`touch_id\`: \`number\` — Touch id
+
+**Returns**
+
+- \`table|nil\` — Touch action
+
+</div>
+
+### \`druid.drag._on_touch_release(action_id: hash, action: table, touch: table)\`
+
+<div class="api-symbol-body">
+
+Process on touch release. We should to find, if any other
+touches exists to switch to another touch.
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — Action id from on_input
+- \`action\`: \`table\` — Action from on_input
+- \`touch\`: \`table\` — Touch action
+
+</div>
+
+### \`druid.drag.node: node\`
+
+<div class="api-symbol-body">
+
+The node to subscribe to drag events over
+
+</div>
+
+### \`druid.drag.on_touch_start: event\`
+
+<div class="api-symbol-body">
+
+fun(self, touch) The event triggered when a touch starts
+
+</div>
+
+### \`druid.drag.on_touch_end: event\`
+
+<div class="api-symbol-body">
+
+fun(self, touch) The event triggered when a touch ends
+
+</div>
+
+### \`druid.drag.on_drag_start: event\`
+
+<div class="api-symbol-body">
+
+fun(self, touch) The event triggered when a drag starts
+
+</div>
+
+### \`druid.drag.on_drag: event\`
+
+<div class="api-symbol-body">
+
+fun(self, touch) The event triggered when a drag occurs
+
+</div>
+
+### \`druid.drag.on_drag_end: event\`
+
+<div class="api-symbol-body">
+
+fun(self, touch) The event triggered when a drag ends
+
+</div>
+
+### \`druid.drag.style: druid.drag.style\`
+
+<div class="api-symbol-body">
+
+The style of Drag component
+
+</div>
+
+### \`druid.drag.click_zone: node|nil\`
+
+<div class="api-symbol-body">
+
+The click zone of Drag component
+
+</div>
+
+### \`druid.drag.is_touch: boolean\`
+
+<div class="api-symbol-body">
+
+True if a touch is active
+
+</div>
+
+### \`druid.drag.is_drag: boolean\`
+
+<div class="api-symbol-body">
+
+True if a drag is active
+
+</div>
+
+### \`druid.drag.can_x: boolean\`
+
+<div class="api-symbol-body">
+
+True if Drag can move horizontally
+
+</div>
+
+### \`druid.drag.can_y: boolean\`
+
+<div class="api-symbol-body">
+
+True if Drag can move vertically
+
+</div>
+
+### \`druid.drag.dx: number\`
+
+<div class="api-symbol-body">
+
+The horizontal drag distance
+
+</div>
+
+### \`druid.drag.dy: number\`
+
+<div class="api-symbol-body">
+
+The vertical drag distance
+
+</div>
+
+### \`druid.drag.touch_id: number\`
+
+<div class="api-symbol-body">
+
+The touch id
+
+</div>
+
+### \`druid.drag.x: number\`
+
+<div class="api-symbol-body">
+
+The current x position
+
+</div>
+
+### \`druid.drag.y: number\`
+
+<div class="api-symbol-body">
+
+The current y position
+
+</div>
+
+### \`druid.drag.screen_x: number\`
+
+<div class="api-symbol-body">
+
+The current screen x position
+
+</div>
+
+### \`druid.drag.screen_y: number\`
+
+<div class="api-symbol-body">
+
+The current screen y position
+
+</div>
+
+### \`druid.drag.touch_start_pos: vector3\`
+
+<div class="api-symbol-body">
+
+The touch start position
+
+</div>
+
+### \`druid.hover.style.ON_HOVER_CURSOR: string|number|nil\`
+
+<div class="api-symbol-body">
+
+Mouse hover style on node hover
+
+</div>
+
+### \`druid.hover.style.ON_MOUSE_HOVER_CURSOR: string|number|nil\`
+
+<div class="api-symbol-body">
+
+Mouse hover style on node mouse hover
+
+</div>
+
+### \`druid.hover.init(node: node, on_hover_callback: function, on_mouse_hover: function)\`
+
+<div class="api-symbol-body">
+
+The constructor for the hover component
+
+**Parameters**
+
+- \`node\`: \`node\` — Gui node
+- \`on_hover_callback\`: \`function\` — Hover callback
+- \`on_mouse_hover\`: \`function\` — On mouse hover callback
+
+</div>
+
+### \`druid.hover.on_late_init()\`
+
+### \`druid.hover.on_style_change(style: druid.hover.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.hover.style\`
+
+</div>
+
+### \`druid.hover.on_input(action_id: hash, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — Action id from on_input
+- \`action\`: \`table\` — Action from on_input
+
+**Returns**
+
+- \`boolean\` — True if the input was consumed
+
+</div>
+
+### \`druid.hover.on_input_interrupt()\`
+
+### \`druid.hover.set_hover(state: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Set hover state
+
+**Parameters**
+
+- \`state\`: \`boolean|nil\` — The hover state
+
+</div>
+
+### \`druid.hover.is_hovered(): boolean\`
+
+<div class="api-symbol-body">
+
+Return current hover state. True if touch action was on the node at current time
+
+**Returns**
+
+- \`boolean\` — The current hovered state
+
+</div>
+
+### \`druid.hover.set_mouse_hover(state: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Set mouse hover state
+
+**Parameters**
+
+- \`state\`: \`boolean|nil\` — The mouse hover state
+
+</div>
+
+### \`druid.hover.is_mouse_hovered(): boolean\`
+
+<div class="api-symbol-body">
+
+Return current hover state. True if nil action_id (usually desktop mouse) was on the node at current time
+
+**Returns**
+
+- \`boolean\` — The current hovered state
+
+</div>
+
+### \`druid.hover.set_click_zone(zone: node|string|nil)\`
+
+<div class="api-symbol-body">
+
+Strict hover click area. Useful for no click events outside stencil node
+
+**Parameters**
+
+- \`zone\`: \`node|string|nil\` — Gui node
+
+</div>
+
+### \`druid.hover.set_enabled(state: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Set enable state of hover component.
+If hover is not enabled, it will not generate
+any hover events
+
+**Parameters**
+
+- \`state\`: \`boolean|nil\` — The hover enabled state
+
+</div>
+
+### \`druid.hover.is_enabled(): boolean\`
+
+<div class="api-symbol-body">
+
+Return current hover enabled state
+
+**Returns**
+
+- \`boolean\` — The hover enabled state
+
+</div>
+
+### \`druid.hover.on_remove()\`
+
+### \`druid.hover._set_cursor()\`
+
+### \`druid.hover.node: node\`
+
+<div class="api-symbol-body">
+
+Gui node
+
+</div>
+
+### \`druid.hover.on_hover: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.hover, is_hover: boolean) Hover event
+
+</div>
+
+### \`druid.hover.on_mouse_hover: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.hover, is_hover: boolean) Mouse hover event
+
+</div>
+
+### \`druid.hover.style: druid.hover.style\`
+
+<div class="api-symbol-body">
+
+Style of the hover component
+
+</div>
+
+### \`druid.hover.click_zone: node\`
+
+<div class="api-symbol-body">
+
+Click zone of the hover component
+
+</div>
+
+### \`druid.scroll.style.FRICT: number|nil\`
+
+<div class="api-symbol-body">
+
+Multiplier for free inertion. Default: 0
+
+</div>
+
+### \`druid.scroll.style.FRICT_HOLD: number|nil\`
+
+<div class="api-symbol-body">
+
+Multiplier for inertion, while touching. Default: 0
+
+</div>
+
+### \`druid.scroll.style.INERT_THRESHOLD: number|nil\`
+
+<div class="api-symbol-body">
+
+Scroll speed to stop inertion. Default: 3
+
+</div>
+
+### \`druid.scroll.style.INERT_SPEED: number|nil\`
+
+<div class="api-symbol-body">
+
+Multiplier for inertion speed. Default: 30
+
+</div>
+
+### \`druid.scroll.style.POINTS_DEADZONE: number|nil\`
+
+<div class="api-symbol-body">
+
+Speed to check points of interests in no_inertion mode. Default: 20
+
+</div>
+
+### \`druid.scroll.style.BACK_SPEED: number|nil\`
+
+<div class="api-symbol-body">
+
+Scroll back returning lerp speed. Default: 35
+
+</div>
+
+### \`druid.scroll.style.ANIM_SPEED: number|nil\`
+
+<div class="api-symbol-body">
+
+Scroll gui.animation speed for scroll_to function. Default: 2
+
+</div>
+
+### \`druid.scroll.style.EXTRA_STRETCH_SIZE: number|nil\`
+
+<div class="api-symbol-body">
+
+extra size in pixels outside of scroll (stretch effect). Default: 0
+
+</div>
+
+### \`druid.scroll.style.SMALL_CONTENT_SCROLL: boolean|nil\`
+
+<div class="api-symbol-body">
+
+If true, content node with size less than view node size can be scrolled. Default: false
+
+</div>
+
+### \`druid.scroll.style.WHEEL_SCROLL_SPEED: number|nil\`
+
+<div class="api-symbol-body">
+
+The scroll speed via mouse wheel scroll or touchpad. Set to 0 to disable wheel scrolling. Default: 0
+
+</div>
+
+### \`druid.scroll.style.WHEEL_SCROLL_INVERTED: boolean|nil\`
+
+<div class="api-symbol-body">
+
+If true, invert direction for touchpad and mouse wheel scroll. Default: false
+
+</div>
+
+### \`druid.scroll.style.WHEEL_SCROLL_BY_INERTION: boolean|nil\`
+
+<div class="api-symbol-body">
+
+If true, wheel will add inertion to scroll. Direct set position otherwise.. Default: false
+
+</div>
+
+### \`druid.scroll.init(view_node: string|node, content_node: string|node)\`
+
+<div class="api-symbol-body">
+
+The Scroll constructor
+
+**Parameters**
+
+- \`view_node\`: \`string|node\` — GUI view scroll node - the static part that captures user input
+- \`content_node\`: \`string|node\` — GUI content scroll node - the dynamic part that will change position
+
+</div>
+
+### \`druid.scroll.on_style_change(style: druid.scroll.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.scroll.style\`
+
+</div>
+
+### \`druid.scroll.on_late_init()\`
+
+### \`druid.scroll.on_layout_change()\`
+
+### \`druid.scroll.update()\`
+
+### \`druid.scroll.on_input()\`
+
+### \`druid.scroll.on_remove()\`
+
+### \`druid.scroll.scroll_to(point: vector3, is_instant: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Start scroll to target point.
+
+**Parameters**
+
+- \`point\`: \`vector3\` — Target point
+- \`is_instant\`: \`boolean|nil\` — Instant scroll flag
+
+</div>
+
+### \`druid.scroll.scroll_to_make_node_visible(node: node, is_instant: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Scroll to the node, if node is not visible in scroll view
+
+**Parameters**
+
+- \`node\`: \`node\` — The node to make visible
+- \`is_instant\`: \`boolean|nil\` — Instant scroll flag
+
+</div>
+
+### \`druid.scroll.scroll_to_index(index: number, is_silent: boolean|nil, is_instant: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Scroll to item in scroll by point index.
+
+**Parameters**
+
+- \`index\`: \`number\` — Point index
+- \`is_silent\`: \`boolean|nil\` — If true, skip the point callback
+- \`is_instant\`: \`boolean|nil\` — Instant scroll flag
+
+</div>
+
+### \`druid.scroll.scroll_to_percent(percent: vector3, is_instant: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Start scroll to target scroll percent
+
+**Parameters**
+
+- \`percent\`: \`vector3\` — target percent
+- \`is_instant\`: \`boolean|nil\` — instant scroll flag
+
+</div>
+
+### \`druid.scroll.get_percent(): vector3\`
+
+<div class="api-symbol-body">
+
+Return current scroll progress status.
+
+**Returns**
+
+- \`vector3\` — New vector with scroll progress values
+
+</div>
+
+### \`druid.scroll.set_size(size: vector3, offset: vector3|nil): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Set scroll content size.
+
+**Parameters**
+
+- \`size\`: \`vector3\` — The new size for content node
+- \`offset\`: \`vector3|nil\` — Offset value to set, where content is starts
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.set_view_size(size: vector3): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Set new scroll view size in case the node size was changed.
+
+**Parameters**
+
+- \`size\`: \`vector3\` — The new size for view node
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.update_view_size(): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Refresh scroll view size, used when view node size is changed
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.set_inert(state: boolean): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Enable or disable scroll inert
+
+**Parameters**
+
+- \`state\`: \`boolean\` — Inert scroll state
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.is_inert(): boolean\`
+
+<div class="api-symbol-body">
+
+Return if scroll have inertion
+
+**Returns**
+
+- \`boolean\` — If scroll have inertion
+
+</div>
+
+### \`druid.scroll.set_extra_stretch_size(stretch_size: number|nil): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Set extra size for scroll stretching
+
+**Parameters**
+
+- \`stretch_size\`: \`number|nil\` — Size in pixels of additional scroll area
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.get_scroll_size(): vector3\`
+
+<div class="api-symbol-body">
+
+Return vector of scroll size with width and height.
+
+**Returns**
+
+- \`vector3\` — Available scroll size
+
+</div>
+
+### \`druid.scroll.set_points(points: table): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Set points of interest.
+
+**Parameters**
+
+- \`points\`: \`table\` — Array of vector3 points
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.set_horizontal_scroll(state: boolean): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Lock or unlock horizontal scroll
+
+**Parameters**
+
+- \`state\`: \`boolean\` — True, if horizontal scroll is enabled
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.set_vertical_scroll(state: boolean): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Lock or unlock vertical scroll
+
+**Parameters**
+
+- \`state\`: \`boolean\` — True, if vertical scroll is enabled
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.is_node_in_view(node: node): boolean\`
+
+<div class="api-symbol-body">
+
+Check node if it visible now on scroll.
+
+**Parameters**
+
+- \`node\`: \`node\` — The node to check
+
+**Returns**
+
+- \`boolean\` — True if node in visible scroll area
+
+</div>
+
+### \`druid.scroll.bind_grid(grid: druid.grid|nil): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Bind the grid component (Static or Dynamic) to recalculate
+
+**Parameters**
+
+- \`grid\`: \`druid.grid|nil\` — Druid grid component
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.bind_layout(layout: druid.layout|nil): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Bind the layout component to recalculate
+
+**Parameters**
+
+- \`layout\`: \`druid.layout|nil\` — Druid layout component
+
+**Returns**
+
+- \`druid.scroll\` — Current scroll instance
+
+</div>
+
+### \`druid.scroll.set_click_zone(node: node|string)\`
+
+<div class="api-symbol-body">
+
+Strict drag scroll area. Useful for
+
+**Parameters**
+
+- \`node\`: \`node|string\` — Gui node
+
+</div>
+
+### \`druid.scroll._on_scroll_drag()\`
+
+### \`druid.scroll._check_soft_zone()\`
+
+### \`druid.scroll._cancel_animate()\`
+
+### \`druid.scroll._set_scroll_position()\`
+
+### \`druid.scroll._check_points()\`
+
+<div class="api-symbol-body">
+
+Find closer point of interest
+
+</div>
+
+### \`druid.scroll._check_threshold()\`
+
+### \`druid.scroll._update_free_scroll()\`
+
+### \`druid.scroll._update_hand_scroll()\`
+
+### \`druid.scroll._on_touch_start()\`
+
+### \`druid.scroll._on_touch_end()\`
+
+### \`druid.scroll._update_size()\`
+
+### \`druid.scroll._process_scroll_wheel()\`
+
+### \`druid.scroll._on_mouse_hover()\`
+
+### \`druid.scroll._inverse_lerp()\`
+
+### \`druid.scroll._get_border_vector(vector: vector4, offset: vector3): vector4\`
+
+<div class="api-symbol-body">
+
+Update vector with next conditions:
+Field x have to <= field z
+Field y have to <= field w
+
+**Parameters**
+
+- \`vector\`: \`vector4\`
+- \`offset\`: \`vector3\`
+
+**Returns**
+
+- \`vector4\`
+
+</div>
+
+### \`druid.scroll._get_size_vector(vector: vector4): vector3\`
+
+<div class="api-symbol-body">
+
+Return size from scroll border vector4
+
+**Parameters**
+
+- \`vector\`: \`vector4\`
+
+**Returns**
+
+- \`vector3\`
+
+</div>
+
+### \`druid.scroll.node: node\`
+
+<div class="api-symbol-body">
+
+The root node
+
+</div>
+
+### \`druid.scroll.click_zone: node|nil\`
+
+<div class="api-symbol-body">
+
+Optional click zone to restrict scroll area
+
+</div>
+
+### \`druid.scroll.on_scroll: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.scroll, position: vector3) Triggered on scroll move
+
+</div>
+
+### \`druid.scroll.on_scroll_to: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.scroll, target: vector3, is_instant: boolean) Triggered on scroll_to
+
+</div>
+
+### \`druid.scroll.on_point_scroll: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.scroll, index: number, point: vector3) Triggered on scroll_to_index
+
+</div>
+
+### \`druid.scroll.view_node: node\`
+
+<div class="api-symbol-body">
+
+The scroll view node (static part)
+
+</div>
+
+### \`druid.scroll.view_border: vector4\`
+
+<div class="api-symbol-body">
+
+The scroll view borders
+
+</div>
+
+### \`druid.scroll.content_node: node\`
+
+<div class="api-symbol-body">
+
+The scroll content node (moving part)
+
+</div>
+
+### \`druid.scroll.view_size: vector3\`
+
+<div class="api-symbol-body">
+
+Size of the view node
+
+</div>
+
+### \`druid.scroll.position: vector3\`
+
+<div class="api-symbol-body">
+
+Current scroll position
+
+</div>
+
+### \`druid.scroll.target_position: vector3\`
+
+<div class="api-symbol-body">
+
+Target scroll position for animations
+
+</div>
+
+### \`druid.scroll.available_pos: vector4\`
+
+<div class="api-symbol-body">
+
+Available content position (min_x, max_y, max_x, min_y)
+
+</div>
+
+### \`druid.scroll.available_size: vector3\`
+
+<div class="api-symbol-body">
+
+Size of available positions (width, height, 0)
+
+</div>
+
+### \`druid.scroll.drag: druid.drag\`
+
+<div class="api-symbol-body">
+
+The drag component instance
+
+</div>
+
+### \`druid.scroll.selected: number|nil\`
+
+<div class="api-symbol-body">
+
+Current selected point of interest index
+
+</div>
+
+### \`druid.scroll.is_animate: boolean\`
+
+<div class="api-symbol-body">
+
+True if scroll is animating
+
+</div>
+
+### \`druid.scroll.style: druid.scroll.style\`
+
+<div class="api-symbol-body">
+
+Component style parameters
+
+</div>
+
+### \`druid.grid.style.IS_DYNAMIC_NODE_POSES: boolean|nil\`
+
+<div class="api-symbol-body">
+
+If true, always center grid content as grid pivot sets. Default: false
+
+</div>
+
+### \`druid.grid.style.IS_ALIGN_LAST_ROW: boolean|nil\`
+
+<div class="api-symbol-body">
+
+If true, always align last row of the grid as grid pivot sets. Default: false
+
+</div>
+
+### \`druid.grid.init(parent: string|node, element: node, in_row: number|nil)\`
+
+<div class="api-symbol-body">
+
+The constructor for the grid component
+
+**Parameters**
+
+- \`parent\`: \`string|node\` — The GUI Node container, where grid's items will be placed
+- \`element\`: \`node\` — Element prefab. Need to get it size
+- \`in_row\`: \`number|nil\` — How many nodes in row can be placed. By default 1
+
+</div>
+
+### \`druid.grid.on_style_change(style: druid.grid.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.grid.style\`
+
+</div>
+
+### \`druid.grid.get_pos(index: number): vector3\`
+
+<div class="api-symbol-body">
+
+Return pos for grid node index
+
+**Parameters**
+
+- \`index\`: \`number\` — The grid element index
+
+**Returns**
+
+- \`vector3\` — Node position
+
+</div>
+
+### \`druid.grid.get_index_xy(x: number, y: number): number\`
+
+<div class="api-symbol-body">
+
+Return grid index by content-local x, y. Inverse of get_pos + _get_dynamic_offset.
+
+**Parameters**
+
+- \`x\`: \`number\`
+- \`y\`: \`number\`
+
+**Returns**
+
+- \`number\` — The node index
+
+</div>
+
+### \`druid.grid.get_index(pos: vector3): number\`
+
+<div class="api-symbol-body">
+
+Return grid index by position. Inverse of get_pos + _get_dynamic_offset.
+
+**Parameters**
+
+- \`pos\`: \`vector3\` — The node position in the grid
+
+**Returns**
+
+- \`number\` — The node index
+
+</div>
+
+### \`druid.grid.get_index_by_node(node: node): number|nil\`
+
+<div class="api-symbol-body">
+
+Return grid index by node
+
+**Parameters**
+
+- \`node\`: \`node\` — The gui node in the grid
+
+**Returns**
+
+- \`number|nil\` — The node index
+
+</div>
+
+### \`druid.grid.on_layout_change()\`
+
+### \`druid.grid.set_anchor(anchor: vector3)\`
+
+<div class="api-symbol-body">
+
+Set grid anchor. Default anchor is equal to anchor of grid parent node
+
+**Parameters**
+
+- \`anchor\`: \`vector3\` — Anchor
+
+</div>
+
+### \`druid.grid.refresh(): druid.grid\`
+
+<div class="api-symbol-body">
+
+Instantly update the grid content
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.set_pivot(pivot: constant): druid.grid\`
+
+<div class="api-symbol-body">
+
+Set grid pivot
+
+**Parameters**
+
+- \`pivot\`: \`constant\` — The new pivot
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.add(item: node, index: number|nil, shift_policy: number|nil, is_instant: boolean|nil): druid.grid\`
+
+<div class="api-symbol-body">
+
+Add new item to the grid
+
+**Parameters**
+
+- \`item\`: \`node\` — GUI node
+- \`index\`: \`number|nil\` — The item position. By default add as last item
+- \`shift_policy\`: \`number|nil\` — How shift nodes, if required. Default: const.SHIFT.RIGHT
+- \`is_instant\`: \`boolean|nil\` — If true, update node positions instantly
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.set_items(nodes: node[], is_instant: boolean|nil): druid.grid\`
+
+<div class="api-symbol-body">
+
+Set new items to the grid. All previous items will be removed
+
+**Parameters**
+
+- \`nodes\`: \`node[]\` — The new grid nodes
+- \`is_instant\`: \`boolean|nil\` — If true, update node positions instantly
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.remove(index: number, shift_policy: number|nil, is_instant: boolean|nil): node\`
+
+<div class="api-symbol-body">
+
+Remove the item from the grid. Note that gui node will be not deleted
+
+**Parameters**
+
+- \`index\`: \`number\` — The grid node index to remove
+- \`shift_policy\`: \`number|nil\` — How shift nodes, if required. Default: const.SHIFT.RIGHT
+- \`is_instant\`: \`boolean|nil\` — If true, update node positions instantly
+
+**Returns**
+
+- \`node\` — The deleted gui node from grid
+
+</div>
+
+### \`druid.grid.get_items_count(): number\`
+
+<div class="api-symbol-body">
+
+Return items count in grid
+
+**Returns**
+
+- \`number\` — The items count in grid
+
+</div>
+
+### \`druid.grid.get_size(): vector3\`
+
+<div class="api-symbol-body">
+
+Return grid content size
+
+**Returns**
+
+- \`vector3\` — The grid content size
+
+</div>
+
+### \`druid.grid.get_size_for(count: number): vector3\`
+
+<div class="api-symbol-body">
+
+Return grid content size for given count of nodes
+
+**Parameters**
+
+- \`count\`: \`number\` — The count of nodes
+
+**Returns**
+
+- \`vector3\` — The grid content size
+
+</div>
+
+### \`druid.grid.get_borders(): vector4\`
+
+<div class="api-symbol-body">
+
+Return grid content borders
+
+**Returns**
+
+- \`vector4\` — The grid content borders
+
+</div>
+
+### \`druid.grid.get_all_pos(): vector3[]\`
+
+<div class="api-symbol-body">
+
+Return array of all node positions
+
+**Returns**
+
+- \`vector3[]\` — All grid node positions
+
+</div>
+
+### \`druid.grid.set_position_function(callback: function): druid.grid\`
+
+<div class="api-symbol-body">
+
+Change set position function for grid nodes. It will call on
+
+**Parameters**
+
+- \`callback\`: \`function\` — Function on node set position
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.clear(): druid.grid\`
+
+<div class="api-symbol-body">
+
+Clear grid nodes array. GUI nodes will be not deleted!
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.get_offset(): vector3\`
+
+<div class="api-symbol-body">
+
+Return StaticGrid offset, where StaticGrid content starts.
+
+**Returns**
+
+- \`vector3\` — The StaticGrid offset
+
+</div>
+
+### \`druid.grid.set_in_row(in_row: number): druid.grid\`
+
+<div class="api-symbol-body">
+
+Set new in_row elements for grid
+
+**Parameters**
+
+- \`in_row\`: \`number\` — The new in_row value
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.set_item_size(width: number|nil, height: number|nil): druid.grid\`
+
+<div class="api-symbol-body">
+
+Set new node size for grid
+
+**Parameters**
+
+- \`width\`: \`number|nil\` — The new node width
+- \`height\`: \`number|nil\` — The new node height
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid.sort_nodes(comparator: function): druid.grid\`
+
+<div class="api-symbol-body">
+
+Sort grid nodes by custom comparator function
+
+**Parameters**
+
+- \`comparator\`: \`function\` — The comparator function. (a, b) -> boolean
+
+**Returns**
+
+- \`druid.grid\` — Current grid instance
+
+</div>
+
+### \`druid.grid._update(is_instant: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Update grid inner state
+
+**Parameters**
+
+- \`is_instant\`: \`boolean|nil\` — If true, node position update instantly, otherwise with set_position_function callback
+
+</div>
+
+### \`druid.grid._update_indexes()\`
+
+<div class="api-symbol-body">
+
+Update first and last indexes of grid nodes
+
+</div>
+
+### \`druid.grid._update_borders()\`
+
+<div class="api-symbol-body">
+
+Update grid content borders, recalculate min and max values
+
+</div>
+
+### \`druid.grid._update_pos(is_instant: boolean|nil)\`
+
+<div class="api-symbol-body">
+
+Update grid nodes position
+
+**Parameters**
+
+- \`is_instant\`: \`boolean|nil\` — If true, node position update instantly, otherwise with set_position_function callback
+
+</div>
+
+### \`druid.grid._get_dynamic_offset(): number, number\`
+
+<div class="api-symbol-body">
+
+Return dynamic centering offset. Only non-zero when IS_DYNAMIC_NODE_POSES is enabled,
+centers grid content according to pivot within its current borders.
+
+**Returns**
+
+- \`number\`
+- \`number\`
+
+</div>
+
+### \`druid.grid._get_row_offset_x(): number\`
+
+<div class="api-symbol-body">
+
+Return x offset for a given row. For most rows returns _base_offset.x,
+but when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset.
+
+**Returns**
+
+- \`number\` — The offset x value
+
+</div>
+
+### \`druid.grid._extend_border(border: vector4, pos: vector3, size: vector3, pivot: vector3)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`border\`: \`vector4\` — Will be updated with new border values
+- \`pos\`: \`vector3\`
+- \`size\`: \`vector3\`
+- \`pivot\`: \`vector3\`
+
+</div>
+
+### \`druid.grid.on_add_item: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.grid, item: node, index: number) Trigger on add item event
+
+</div>
+
+### \`druid.grid.on_remove_item: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.grid, index: number) Trigger on remove item event
+
+</div>
+
+### \`druid.grid.on_change_items: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.grid, index: number) Trigger on change items event
+
+</div>
+
+### \`druid.grid.on_clear: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.grid) Trigger on clear event
+
+</div>
+
+### \`druid.grid.on_update_positions: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.grid) Trigger on update positions event
+
+</div>
+
+### \`druid.grid.parent: node\`
+
+<div class="api-symbol-body">
+
+Parent node
+
+</div>
+
+### \`druid.grid.nodes: node[]\`
+
+<div class="api-symbol-body">
+
+Nodes array
+
+</div>
+
+### \`druid.grid.first_index: number\`
+
+<div class="api-symbol-body">
+
+First index
+
+</div>
+
+### \`druid.grid.last_index: number\`
+
+<div class="api-symbol-body">
+
+Last index
+
+</div>
+
+### \`druid.grid.anchor: vector3\`
+
+<div class="api-symbol-body">
+
+Anchor
+
+</div>
+
+### \`druid.grid.pivot: vector3\`
+
+<div class="api-symbol-body">
+
+Pivot
+
+</div>
+
+### \`druid.grid.node_size: vector3\`
+
+<div class="api-symbol-body">
+
+Node size
+
+</div>
+
+### \`druid.grid.border: vector4\`
+
+<div class="api-symbol-body">
+
+Border
+
+</div>
+
+### \`druid.grid.in_row: number\`
+
+<div class="api-symbol-body">
+
+In row
+
+</div>
+
+### \`druid.grid.style: druid.grid.style\`
+
+<div class="api-symbol-body">
+
+Style
+
+</div>
+
+### \`druid.text.style.TRIM_POSTFIX: string|nil\`
+
+<div class="api-symbol-body">
+
+The postfix for TRIM adjust type. Default: ...
+
+</div>
+
+### \`druid.text.style.DEFAULT_ADJUST: string|nil\`
+
+<div class="api-symbol-body">
+
+The default adjust type for any text component. Default: DOWNSCALE
+
+</div>
+
+### \`druid.text.style.ADJUST_STEPS: number|nil\`
+
+<div class="api-symbol-body">
+
+Amount of iterations for text adjust by height. Default: 20
+
+</div>
+
+### \`druid.text.style.ADJUST_SCALE_DELTA: number|nil\`
+
+<div class="api-symbol-body">
+
+Scale step on each height adjust step. Default: 0.02
+
+</div>
+
+### \`druid.text.init(node: string|node, value: string|nil, adjust_type: druid.text.adjust_type|nil)\`
+
+<div class="api-symbol-body">
+
+The Text constructor
+
+**Parameters**
+
+- \`node\`: \`string|node\` — Node name or GUI Text Node itself
+- \`value\`: \`string|nil\` — Initial text. Default value is node text from GUI scene. Default: nil
+- \`adjust_type\`: \`druid.text.adjust_type|nil\` — Adjust type for text. By default is "downscale". Options: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
+
+</div>
+
+### \`druid.text.on_style_change(style: druid.text.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.text.style\`
+
+</div>
+
+### \`druid.text.on_layout_change()\`
+
+### \`druid.text.get_text_size(text: string|nil): number, number\`
+
+<div class="api-symbol-body">
+
+Calculate text width with font with respect to trailing space
+
+**Parameters**
+
+- \`text\`: \`string|nil\` — The text to calculate the size of, if nil - use current text
+
+**Returns**
+
+- \`number\` — The text width
+- \`number\` — The text height
+
+</div>
+
+### \`druid.text.get_text_index_by_width(width: number): number\`
+
+<div class="api-symbol-body">
+
+Get chars count by width
+
+**Parameters**
+
+- \`width\`: \`number\` — The width to get the chars count of
+
+**Returns**
+
+- \`number\` — The chars count
+
+</div>
+
+### \`druid.text.set_to(set_to: string): druid.text\`
+
+<div class="api-symbol-body">
+
+Set text to text field
+
+**Parameters**
+
+- \`set_to\`: \`string\` — Text for node
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.set_text()\`
+
+### \`druid.text.get_text()\`
+
+### \`druid.text.set_size(size: vector3): druid.text\`
+
+<div class="api-symbol-body">
+
+Set text area size
+
+**Parameters**
+
+- \`size\`: \`vector3\` — The new text area size
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.set_color(color: vector4): druid.text\`
+
+<div class="api-symbol-body">
+
+Set color
+
+**Parameters**
+
+- \`color\`: \`vector4\` — Color for node
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.set_alpha(alpha: number): druid.text\`
+
+<div class="api-symbol-body">
+
+Set alpha
+
+**Parameters**
+
+- \`alpha\`: \`number\` — Alpha for node
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.set_scale(scale: vector3): druid.text\`
+
+<div class="api-symbol-body">
+
+Set scale
+
+**Parameters**
+
+- \`scale\`: \`vector3\` — Scale for node
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.set_pivot(pivot: number): druid.text\`
+
+<div class="api-symbol-body">
+
+Set text pivot. Text will re-anchor inside text area
+
+**Parameters**
+
+- \`pivot\`: \`number\` — The gui.PIVOT_* constant
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.is_multiline(): boolean\`
+
+<div class="api-symbol-body">
+
+Return true, if text with line break
+
+**Returns**
+
+- \`boolean\` — Is text node with line break
+
+</div>
+
+### \`druid.text.set_text_adjust(adjust_type: druid.text.adjust_type|nil, minimal_scale: number|nil): druid.text\`
+
+<div class="api-symbol-body">
+
+Set text adjust, refresh the current text visuals, if needed
+
+**Parameters**
+
+- \`adjust_type\`: \`druid.text.adjust_type|nil\` — The adjust type to set, values: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
+- \`minimal_scale\`: \`number|nil\` — To remove minimal scale, use \`text:set_minimal_scale(nil)\`, if pass nil - not change minimal scale
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.set_minimal_scale(minimal_scale: number): druid.text\`
+
+<div class="api-symbol-body">
+
+Set minimal scale for "downscale_limited" or "scale_then_scroll" adjust types
+
+**Parameters**
+
+- \`minimal_scale\`: \`number\` — If pass nil - not use minimal scale
+
+**Returns**
+
+- \`druid.text\` — Current text instance
+
+</div>
+
+### \`druid.text.get_text_adjust(): string\`
+
+<div class="api-symbol-body">
+
+Return current text adjust type
+
+**Returns**
+
+- \`string\` — The current text adjust type
+
+</div>
+
+### \`druid.text._update_text_size()\`
+
+### \`druid.text._reset_default_scale()\`
+
+<div class="api-symbol-body">
+
+Reset initial scale for text
+
+</div>
+
+### \`druid.text._is_fit_info_area(metrics: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`metrics\`: \`table\`
+
+**Returns**
+
+- \`boolean\`
+
+</div>
+
+### \`druid.text._update_text_area_size()\`
+
+<div class="api-symbol-body">
+
+Setup scale x, but can only be smaller, than start text scale
+
+</div>
+
+### \`druid.text._update_text_with_trim(trim_postfix: string)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`trim_postfix\`: \`string\`
+
+</div>
+
+### \`druid.text._update_text_with_trim_left(trim_postfix: string)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`trim_postfix\`: \`string\`
+
+</div>
+
+### \`druid.text._update_text_with_anchor_shift()\`
+
+### \`druid.text._update_adjust()\`
+
+### \`druid.text.node: node\`
+
+<div class="api-symbol-body">
+
+The text node
+
+</div>
+
+### \`druid.text.on_set_text: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.text, text: string) The event triggered when the text is set
+
+</div>
+
+### \`druid.text.on_update_text_scale: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.text, scale: vector3, metrics: table) The event triggered when the text scale is updated
+
+</div>
+
+### \`druid.text.on_set_pivot: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.text, pivot: userdata) The event triggered when the text pivot is set
+
+</div>
+
+### \`druid.text.style: druid.text.style\`
+
+<div class="api-symbol-body">
+
+The style of the text
+
+</div>
+
+### \`druid.text.start_pivot: number\`
+
+<div class="api-symbol-body">
+
+The start pivot of the text
+
+</div>
+
+### \`druid.text.start_scale: vector3\`
+
+<div class="api-symbol-body">
+
+The start scale of the text
+
+</div>
+
+### \`druid.text.scale: vector3\`
+
+<div class="api-symbol-body">
+
+The current scale of the text
+
+</div>
+
+### \`druid.component.meta.template: string\`
+
+### \`druid.component.meta.context: table\`
+
+### \`druid.component.meta.nodes: table<hash, node>|nil\`
+
+### \`druid.component.meta.style: table|nil\`
+
+### \`druid.component.meta.druid: druid.instance\`
+
+### \`druid.component.meta.input_enabled: boolean\`
+
+### \`druid.component.meta.children: table\`
+
+### \`druid.component.meta.parent: druid.component|nil\`
+
+### \`druid.component.meta.instance_class: table\`
+
+### \`druid.component.component.name: string\`
+
+### \`druid.component.component.input_priority: number\`
+
+### \`druid.component.component.default_input_priority: number\`
+
+### \`druid.component.component._is_input_priority_changed: boolean\`
+
+### \`druid.component.component._uid: number\`
+
+### \`druid.component.set_style(self: T, druid_style: table|nil): T\`
+
+<div class="api-symbol-body">
+
+Set component style. Pass nil to clear style
+
+**Parameters**
+
+- \`self\`: \`T\`
+- \`druid_style\`: \`table|nil\`
+
+**Returns**
+
+- \`T\` — The component itself for chaining
+
+</div>
+
+### \`druid.component.set_template(self: T, template: string|nil): T\`
+
+<div class="api-symbol-body">
+
+Set component template name. Pass nil to clear template.
+This template id used to access nodes inside the template on GUI scene.
+Parent template will be added automatically if exist.
+
+**Parameters**
+
+- \`self\`: \`T\`
+- \`template\`: \`string|nil\`
+
+**Returns**
+
+- \`T\` — The component itself for chaining
+
+</div>
+
+### \`druid.component.get_template(): string\`
+
+<div class="api-symbol-body">
+
+Get full template name.
+
+**Returns**
+
+- \`string\`
+
+</div>
+
+### \`druid.component.set_nodes(nodes: table<hash, node>|node|string|nil): druid.component\`
+
+<div class="api-symbol-body">
+
+Set current component nodes, returned from \`gui.clone_tree\` function.
+
+**Parameters**
+
+- \`nodes\`: \`table<hash, node>|node|string|nil\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+
+**Returns**
+
+- \`druid.component\`
+
+</div>
+
+### \`druid.component.get_context(): any\`
+
+<div class="api-symbol-body">
+
+Return current component context
+
+**Returns**
+
+- \`any\` — Usually it's self of script but can be any other Druid component
+
+</div>
+
+### \`druid.component.get_node(node_id: string|node): node\`
+
+<div class="api-symbol-body">
+
+Get component node by node_id. Respect to current template and nodes.
+
+**Parameters**
+
+- \`node_id\`: \`string|node\`
+
+**Returns**
+
+- \`node\`
+
+</div>
+
+### \`druid.component.get_druid(template: string|nil, nodes: table<hash, node>|node|string|nil): druid.instance\`
+
+<div class="api-symbol-body">
+
+Get Druid instance for inner component creation.
+
+**Parameters**
+
+- \`template\`: \`string|nil\`
+- \`nodes\`: \`table<hash, node>|node|string|nil\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+
+**Returns**
+
+- \`druid.instance\`
+
+</div>
+
+### \`druid.component.get_name(): string\`
+
+<div class="api-symbol-body">
+
+Get component name
+
+**Returns**
+
+- \`string\` — The component name + uid
+
+</div>
+
+### \`druid.component.get_parent_name(): string|nil\`
+
+<div class="api-symbol-body">
+
+Get parent component name
+
+**Returns**
+
+- \`string|nil\` — The parent component name if exist or nil
+
+</div>
+
+### \`druid.component.get_input_priority(): number\`
+
+<div class="api-symbol-body">
+
+Get component input priority, the bigger number processed first. Default value: 10
+
+**Returns**
+
+- \`number\`
+
+</div>
+
+### \`druid.component.set_input_priority(value: number, is_temporary: boolean|nil): druid.component\`
+
+<div class="api-symbol-body">
+
+Set component input priority, the bigger number processed first. Default value: 10
+
+**Parameters**
+
+- \`value\`: \`number\`
+- \`is_temporary\`: \`boolean|nil\` — If true, the reset input priority will return to previous value
+
+**Returns**
+
+- \`druid.component\` — The component itself for chaining
+
+</div>
+
+### \`druid.component.reset_input_priority(): druid.component\`
+
+<div class="api-symbol-body">
+
+Reset component input priority to it's default value, that was set in \`create\` function or \`set_input_priority\`
+
+**Returns**
+
+- \`druid.component\` — The component itself for chaining
+
+</div>
+
+### \`druid.component.get_uid(): number\`
+
+<div class="api-symbol-body">
+
+Get component UID, unique identifier created in component creation order.
+
+**Returns**
+
+- \`number\` — The component uid
+
+</div>
+
+### \`druid.component.set_input_enabled(state: boolean): druid.component\`
+
+<div class="api-symbol-body">
+
+Set component input state. By default it's enabled.
+If input is disabled, the component will not receive input events.
+Recursive for all children components.
+
+**Parameters**
+
+- \`state\`: \`boolean\`
+
+**Returns**
+
+- \`druid.component\` — The component itself for chaining
+
+</div>
+
+### \`druid.component.get_input_enabled(): boolean\`
+
+<div class="api-symbol-body">
+
+Get component input state. By default it's enabled. Can be disabled by \`set_input_enabled\` function.
+
+**Returns**
+
+- \`boolean\`
+
+</div>
+
+### \`druid.component.get_parent_component(): druid.component|nil\`
+
+<div class="api-symbol-body">
+
+Get parent component
+
+**Returns**
+
+- \`druid.component|nil\` — The parent component if exist or nil
+
+</div>
+
+### \`druid.component.setup_component(druid_instance: druid.instance, context: table, style: table, instance_class: table): druid.component\`
+
+<div class="api-symbol-body">
+
+Setup component context and his style table
+
+**Parameters**
+
+- \`druid_instance\`: \`druid.instance\` — The parent druid instance
+- \`context\`: \`table\` — Druid context. Usually it is self of script
+- \`style\`: \`table\` — Druid style module
+- \`instance_class\`: \`table\` — The component instance class
+
+**Returns**
+
+- \`druid.component\` — BaseComponent itself
+
+</div>
+
+### \`druid.component._is_input_priority_changed()\`
+
+<div class="api-symbol-body">
+
+Return true, if input priority was changed
+
+</div>
+
+### \`druid.component._reset_input_priority_changed()\`
+
+<div class="api-symbol-body">
+
+Reset is_input_priority_changed field
+
+</div>
+
+### \`druid.component.get_nodes(): table<hash, node>|nil\`
+
+<div class="api-symbol-body">
+
+Get current component nodes
+
+**Returns**
+
+- \`table<hash, node>|nil\`
+
+</div>
+
+### \`druid.component.__add_child(child: T): T\`
+
+<div class="api-symbol-body">
+
+Add child to component children list
+
+**Parameters**
+
+- \`child\`: \`T\` — The druid component instance
+
+**Returns**
+
+- \`T\` — The component itself for chaining
+
+</div>
+
+### \`druid.component.__remove_child(child: T): boolean\`
+
+<div class="api-symbol-body">
+
+Remove child from component children list
+
+**Parameters**
+
+- \`child\`: \`T\` — The druid component instance
+
+**Returns**
+
+- \`boolean\` — if child was removed
+
+</div>
+
+### \`druid.component.get_childrens(): table\`
+
+<div class="api-symbol-body">
+
+Return all children components, recursive
+
+**Returns**
+
+- \`table\` — Array of childrens if the Druid component instance
+
+</div>
+
+### \`druid.rich_input.init(template: string, nodes: table)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`template\`: \`string\` — The template string name
+- \`nodes\`: \`table\` — Nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
+
+</div>
+
+### \`druid.rich_input.on_input(action_id: hash, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — Action id from on_input
+- \`action\`: \`table\` — Action table from on_input
+
+**Returns**
+
+- \`boolean\` — True if input was consumed
+
+</div>
+
+### \`druid.rich_input.set_placeholder(placeholder_text: string): druid.rich_input\`
+
+<div class="api-symbol-body">
+
+Set placeholder text
+
+**Parameters**
+
+- \`placeholder_text\`: \`string\` — The placeholder text
+
+**Returns**
+
+- \`druid.rich_input\` — Current instance
+
+</div>
+
+### \`druid.rich_input.select(): druid.rich_input\`
+
+<div class="api-symbol-body">
+
+Select input field
+
+**Returns**
+
+- \`druid.rich_input\` — Current instance
+
+</div>
+
+### \`druid.rich_input.set_text(text: string): druid.rich_input\`
+
+<div class="api-symbol-body">
+
+Set input field text
+
+**Parameters**
+
+- \`text\`: \`string\` — The input text
+
+**Returns**
+
+- \`druid.rich_input\` — Current instance
+
+</div>
+
+### \`druid.rich_input.set_font(font: hash): druid.rich_input\`
+
+<div class="api-symbol-body">
+
+Set input field font
+
+**Parameters**
+
+- \`font\`: \`hash\` — The font hash
+
+**Returns**
+
+- \`druid.rich_input\` — Current instance
+
+</div>
+
+### \`druid.rich_input.get_text()\`
+
+<div class="api-symbol-body">
+
+Set input field text
+
+</div>
+
+### \`druid.rich_input.set_allowed_characters(characters: string): druid.rich_input\`
+
+<div class="api-symbol-body">
+
+Set allowed charaters for input field.
+
+**Parameters**
+
+- \`characters\`: \`string\` — Regular expression for validate user input
+
+**Returns**
+
+- \`druid.rich_input\` — Current instance
+
+</div>
+
+### \`druid.rich_input.root: node\`
+
+<div class="api-symbol-body">
+
+The root node of the rich input
+
+</div>
+
+### \`druid.rich_input.input: druid.input\`
+
+<div class="api-symbol-body">
+
+The input component
+
+</div>
+
+### \`druid.rich_input.cursor: node\`
+
+<div class="api-symbol-body">
+
+The cursor node
+
+</div>
+
+### \`druid.rich_input.cursor_text: node\`
+
+<div class="api-symbol-body">
+
+The cursor text node
+
+</div>
+
+### \`druid.rich_input.cursor_position: vector3\`
+
+<div class="api-symbol-body">
+
+The position of the cursor
+
+</div>
+
+### \`druid.rich_text.settings.parent: node\`
+
+### \`druid.rich_text.settings.size: number\`
+
+### \`druid.rich_text.settings.fonts: table<string, string>\`
+
+### \`druid.rich_text.settings.scale: vector3\`
+
+### \`druid.rich_text.settings.color: vector4\`
+
+### \`druid.rich_text.settings.shadow: vector4\`
+
+### \`druid.rich_text.settings.outline: vector4\`
+
+### \`druid.rich_text.settings.position: vector3\`
+
+### \`druid.rich_text.settings.image_pixel_grid_snap: boolean\`
+
+### \`druid.rich_text.settings.combine_words: boolean\`
+
+### \`druid.rich_text.settings.default_animation: string\`
+
+### \`druid.rich_text.settings.split_by_character: boolean\`
+
+### \`druid.rich_text.settings.text_prefab: node\`
+
+### \`druid.rich_text.settings.adjust_scale: number\`
+
+### \`druid.rich_text.settings.default_texture: string\`
+
+### \`druid.rich_text.settings.is_multiline: boolean\`
+
+### \`druid.rich_text.settings.text_leading: number\`
+
+### \`druid.rich_text.settings.font: hash\`
+
+### \`druid.rich_text.settings.width: number\`
+
+### \`druid.rich_text.settings.height: number\`
+
+### \`druid.rich_text.word.node: node\`
+
+### \`druid.rich_text.word.relative_scale: number\`
+
+### \`druid.rich_text.word.source_text: string\`
+
+### \`druid.rich_text.word.color: vector4\`
+
+### \`druid.rich_text.word.text_color: vector4\`
+
+### \`druid.rich_text.word.position: vector3\`
+
+### \`druid.rich_text.word.offset: vector3\`
+
+### \`druid.rich_text.word.scale: vector3\`
+
+### \`druid.rich_text.word.size: vector3\`
+
+### \`druid.rich_text.word.metrics: druid.rich_text.metrics\`
+
+### \`druid.rich_text.word.pivot: constant\`
+
+### \`druid.rich_text.word.text: string\`
+
+### \`druid.rich_text.word.shadow: vector4\`
+
+### \`druid.rich_text.word.outline: vector4\`
+
+### \`druid.rich_text.word.font: string\`
+
+### \`druid.rich_text.word.image: druid.rich_text.word.image\`
+
+### \`druid.rich_text.word.br: boolean\`
+
+### \`druid.rich_text.word.nobr: boolean\`
+
+### \`druid.rich_text.word.tags: table<string, boolean>\`
+
+### \`druid.rich_text.word.image.texture: string\`
+
+### \`druid.rich_text.word.image.anim: string\`
+
+### \`druid.rich_text.word.image.width: number\`
+
+### \`druid.rich_text.word.image.height: number\`
+
+### \`druid.rich_text.style.ADJUST_STEPS: number\`
+
+### \`druid.rich_text.style.ADJUST_SCALE_DELTA: number\`
+
+### \`druid.rich_text.lines_metrics.text_width: number\`
+
+### \`druid.rich_text.lines_metrics.text_height: number\`
+
+### \`druid.rich_text.lines_metrics.lines: table<number, druid.rich_text.metrics>\`
+
+### \`druid.rich_text.metrics.width: number\`
+
+### \`druid.rich_text.metrics.height: number\`
+
+### \`druid.rich_text.metrics.offset_x: number|nil\`
+
+### \`druid.rich_text.metrics.offset_y: number|nil\`
+
+### \`druid.rich_text.metrics.node_size: vector3|nil\`
+
+### \`druid.rich_text.init(text_node: node|string, value: string|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`text_node\`: \`node|string\` — The text node to make Rich Text
+- \`value\`: \`string|nil\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+
+</div>
+
+### \`druid.rich_text.on_layout_change()\`
+
+### \`druid.rich_text.on_style_change(style: druid.rich_text.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.rich_text.style\`
+
+</div>
+
+### \`druid.rich_text.set_text(text: string|nil): druid.rich_text.word[], druid.rich_text.lines_metrics\`
+
+<div class="api-symbol-body">
+
+Set text for Rich Text
+-- Color
+rich_text:set_text("＜color=red＞Foobar＜/color＞")
+rich_text:set_text("＜color=1.0,0,0,1.0＞Foobar＜/color＞")
+rich_text:set_text("＜color=#ff0000＞Foobar＜/color＞")
+rich_text:set_text("＜color=#ff0000ff＞Foobar＜/color＞")
+-- Shadow
+rich_text:set_text("＜shadow=red＞Foobar＜/shadow＞")
+rich_text:set_text("＜shadow=1.0,0,0,1.0＞Foobar＜/shadow＞")
+rich_text:set_text("＜shadow=#ff0000＞Foobar＜/shadow＞")
+rich_text:set_text("＜shadow=#ff0000ff＞Foobar＜/shadow＞")
+-- Outline
+rich_text:set_text("＜outline=red＞Foobar＜/outline＞")
+rich_text:set_text("＜outline=1.0,0,0,1.0＞Foobar＜/outline＞")
+rich_text:set_text("＜outline=#ff0000＞Foobar＜/outline＞")
+rich_text:set_text("＜outline=#ff0000ff＞Foobar＜/outline＞")
+-- Font
+rich_text:set_text("＜font=MyCoolFont＞Foobar＜/font＞")
+-- Size
+rich_text:set_text("＜size=2＞Twice as large＜/size＞")
+-- Line break
+rich_text:set_text("＜br/＞Insert a line break")
+-- No break
+rich_text:set_text("＜nobr＞Prevent the text from breaking")
+-- Image
+rich_text:set_text("＜img=texture:image＞Display image")
+rich_text:set_text("＜img=texture:image,size＞Display image with size")
+rich_text:set_text("＜img=texture:image,width,height＞Display image with width and height")
+
+**Parameters**
+
+- \`text\`: \`string|nil\` — The text to set
+
+**Returns**
+
+- \`druid.rich_text.word[]\`
+- \`druid.rich_text.lines_metrics\`
+
+</div>
+
+### \`druid.rich_text.get_text(): string\`
+
+<div class="api-symbol-body">
+
+Get the current text of the rich text
+
+**Returns**
+
+- \`string\` — The current text of the rich text
+
+</div>
+
+### \`druid.rich_text.set_pivot(pivot: number): druid.rich_text\`
+
+<div class="api-symbol-body">
+
+Set pivot and keep the content in place (anchor). After this, resizing the root will keep the anchor fixed.
+
+**Parameters**
+
+- \`pivot\`: \`number\` — GUI pivot constant
+
+**Returns**
+
+- \`druid.rich_text\`
+
+</div>
+
+### \`druid.rich_text.on_remove()\`
+
+### \`druid.rich_text.clear()\`
+
+<div class="api-symbol-body">
+
+Clear all created words.
+
+</div>
+
+### \`druid.rich_text.tagged(tag: string): druid.rich_text.word[]\`
+
+<div class="api-symbol-body">
+
+Get all words, which has a passed tag.
+
+**Parameters**
+
+- \`tag\`: \`string\` — The tag to get the words for
+
+**Returns**
+
+- \`druid.rich_text.word[]\` — The words with the passed tag
+
+</div>
+
+### \`druid.rich_text.set_split_to_characters(value: boolean): druid.rich_text\`
+
+<div class="api-symbol-body">
+
+Set if the rich text should split to characters, not words
+
+**Parameters**
+
+- \`value\`: \`boolean\`
+
+**Returns**
+
+- \`druid.rich_text\`
+
+</div>
+
+### \`druid.rich_text.get_words(): druid.rich_text.word[]\`
+
+<div class="api-symbol-body">
+
+Get all current created words, each word is a table that contains the information about the word
+
+**Returns**
+
+- \`druid.rich_text.word[]\`
+
+</div>
+
+### \`druid.rich_text.get_line_metric(): druid.rich_text.lines_metrics\`
+
+<div class="api-symbol-body">
+
+Get the current line metrics
+
+**Returns**
+
+- \`druid.rich_text.lines_metrics\` — The line metrics of the rich text
+
+</div>
+
+### \`druid.rich_text._create_settings(): table\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`table\` — The settings of the rich text, they are created based on the root node on the GUI scene
+
+</div>
+
+### \`druid.rich_text.set_width(width: number): druid.rich_text\`
+
+<div class="api-symbol-body">
+
+Set the width of the rich text, not affects the size of current spawned words
+
+**Parameters**
+
+- \`width\`: \`number\`
+
+**Returns**
+
+- \`druid.rich_text\`
+
+</div>
+
+### \`druid.rich_text.set_height(height: number): druid.rich_text\`
+
+<div class="api-symbol-body">
+
+Set the height of the rich text, not affects the size of current spawned words
+
+**Parameters**
+
+- \`height\`: \`number\`
+
+**Returns**
+
+- \`druid.rich_text\`
+
+</div>
+
+### \`druid.rich_text.root: node\`
+
+<div class="api-symbol-body">
+
+The root text node of the rich text
+
+</div>
+
+### \`druid.rich_text.text_prefab: node\`
+
+<div class="api-symbol-body">
+
+The text prefab node
+
+</div>
+
+### \`druid.container.style.DRAGGABLE_CORNER_SIZE: vector3\`
+
+<div class="api-symbol-body">
+
+Size of box node for debug draggable corners
+
+</div>
+
+### \`druid.container.style.DRAGGABLE_CORNER_COLOR: vector4\`
+
+<div class="api-symbol-body">
+
+Color of debug draggable corners
+
+</div>
+
+### \`druid.container.init(node: node, mode: string, callback: fun(self: druid.container, size: vector3)|nil)\`
+
+<div class="api-symbol-body">
+
+The Container constructor
+
+**Parameters**
+
+- \`node\`: \`node\` — Gui node
+- \`mode\`: \`string\` — Layout mode
+- \`callback\`: \`fun(self: druid.container, size: vector3)|nil\` — Callback on size changed
+
+</div>
+
+### \`druid.container.on_late_init()\`
+
+### \`druid.container.on_remove()\`
+
+### \`druid.container.refresh_origins()\`
+
+<div class="api-symbol-body">
+
+Refresh the origins of the container, origins is the size and position of the container when it was created
+
+</div>
+
+### \`druid.container.set_pivot(pivot: constant)\`
+
+<div class="api-symbol-body">
+
+Set the pivot of the container
+
+**Parameters**
+
+- \`pivot\`: \`constant\` — The pivot to set
+
+</div>
+
+### \`druid.container.on_style_change(style: druid.container.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.container.style\`
+
+</div>
+
+### \`druid.container.set_size(width: number|nil, height: number|nil, anchor_pivot: constant|nil): druid.container\`
+
+<div class="api-symbol-body">
+
+Set new size of layout node
+
+**Parameters**
+
+- \`width\`: \`number|nil\` — The width to set
+- \`height\`: \`number|nil\` — The height to set
+- \`anchor_pivot\`: \`constant|nil\` — If set will keep the corner position relative to the new size
+
+**Returns**
+
+- \`druid.container\` — Container
+
+</div>
+
+### \`druid.container.get_position(): vector3\`
+
+<div class="api-symbol-body">
+
+Get the position of the container
+
+**Returns**
+
+- \`vector3\` — The position of the container
+
+</div>
+
+### \`druid.container.set_position(pos_x: number, pos_y: number)\`
+
+<div class="api-symbol-body">
+
+Set the position of the container
+
+**Parameters**
+
+- \`pos_x\`: \`number\` — The x position to set
+- \`pos_y\`: \`number\` — The y position to set
+
+</div>
+
+### \`druid.container.get_size(): vector3\`
+
+<div class="api-symbol-body">
+
+Get the current size of the layout node
+
+**Returns**
+
+- \`vector3\` — The current size of the layout node
+
+</div>
+
+### \`druid.container.get_scale(): vector3\`
+
+<div class="api-symbol-body">
+
+Get the current scale of the layout node
+
+**Returns**
+
+- \`vector3\` — The current scale of the layout node
+
+</div>
+
+### \`druid.container.fit_into_size(target_size: vector3): druid.container\`
+
+<div class="api-symbol-body">
+
+Set size for layout node to fit inside it
+
+**Parameters**
+
+- \`target_size\`: \`vector3\` — The target size to fit into
+
+**Returns**
+
+- \`druid.container\` — Current container instance
+
+</div>
+
+### \`druid.container.fit_into_window(): druid.container\`
+
+<div class="api-symbol-body">
+
+Set current size for layout node to fit inside it
+
+**Returns**
+
+- \`druid.container\` — Current container instance
+
+</div>
+
+### \`druid.container.on_window_resized()\`
+
+### \`druid.container.add_container(node_or_container: node|string|druid.container|table, mode: druid.container.mode|nil, on_resize_callback: fun(self: userdata, size: vector3)|nil): druid.container\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node_or_container\`: \`node|string|druid.container|table\` — The node or container to add
+- \`mode\`: \`druid.container.mode|nil\` — stretch, fit, stretch_x, stretch_y. Default: Pick from node, "fit" or "stretch"
+- \`on_resize_callback\`: \`fun(self: userdata, size: vector3)|nil\`
+
+**Returns**
+
+- \`druid.container\` — Container New created layout instance
+
+</div>
+
+### \`druid.container.remove_container_by_node(): druid.container|nil\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`druid.container|nil\`
+
+</div>
+
+### \`druid.container.set_parent_container(parent_container: druid.container|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`parent_container\`: \`druid.container|nil\`
+
+</div>
+
+### \`druid.container.refresh()\`
+
+### \`druid.container.refresh_scale()\`
+
+### \`druid.container.update_child_containers()\`
+
+### \`druid.container.create_draggable_corners(): druid.container\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`druid.container\` — Current container instance
+
+</div>
+
+### \`druid.container.clear_draggable_corners(): druid.container\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`druid.container\` — Current container instance
+
+</div>
+
+### \`druid.container._on_corner_drag()\`
+
+### \`druid.container.fit_into_node(node: string|node): druid.container\`
+
+<div class="api-symbol-body">
+
+Set node for layout node to fit inside it. Pass nil to reset
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+
+**Returns**
+
+- \`druid.container\` — Current container instance
+
+</div>
+
+### \`druid.container.set_min_size(min_size_x: number|nil, min_size_y: number|nil): druid.container\`
+
+<div class="api-symbol-body">
+
+Set the minimum size of the container
+
+**Parameters**
+
+- \`min_size_x\`: \`number|nil\` — The minimum size x
+- \`min_size_y\`: \`number|nil\` — The minimum size y
+
+**Returns**
+
+- \`druid.container\` — Current container instance
+
+</div>
+
+### \`druid.container.set_max_size(max_size_x: number|nil, max_size_y: number|nil): druid.container\`
+
+<div class="api-symbol-body">
+
+Set the maximum size of the container
+
+**Parameters**
+
+- \`max_size_x\`: \`number|nil\` — The maximum size x
+- \`max_size_y\`: \`number|nil\` — The maximum size y
+
+**Returns**
+
+- \`druid.container\` — Current container instance
+
+</div>
+
+### \`druid.container.node: node\`
+
+<div class="api-symbol-body">
+
+The gui node
+
+</div>
+
+### \`druid.container.druid: druid.instance\`
+
+<div class="api-symbol-body">
+
+The druid instance
+
+</div>
+
+### \`druid.container.node_offset: vector4\`
+
+<div class="api-symbol-body">
+
+The node offset
+
+</div>
+
+### \`druid.container.origin_size: vector3\`
+
+<div class="api-symbol-body">
+
+The origin size
+
+</div>
+
+### \`druid.container.size: vector3\`
+
+<div class="api-symbol-body">
+
+The current size
+
+</div>
+
+### \`druid.container.origin_position: vector3\`
+
+<div class="api-symbol-body">
+
+The origin position
+
+</div>
+
+### \`druid.container.position: vector3\`
+
+<div class="api-symbol-body">
+
+The current position
+
+</div>
+
+### \`druid.container.pivot_offset: vector3\`
+
+<div class="api-symbol-body">
+
+The pivot offset
+
+</div>
+
+### \`druid.container.center_offset: vector3\`
+
+<div class="api-symbol-body">
+
+The center offset
+
+</div>
+
+### \`druid.container.mode: druid.container.mode\`
+
+<div class="api-symbol-body">
+
+The layout mode
+
+</div>
+
+### \`druid.container.fit_size: vector3\`
+
+<div class="api-symbol-body">
+
+The fit size
+
+</div>
+
+### \`druid.container.min_size_x: number|nil\`
+
+<div class="api-symbol-body">
+
+The minimum size x
+
+</div>
+
+### \`druid.container.min_size_y: number|nil\`
+
+<div class="api-symbol-body">
+
+The minimum size y
+
+</div>
+
+### \`druid.container.max_size_x: number|nil\`
+
+<div class="api-symbol-body">
+
+The maximum size x
+
+</div>
+
+### \`druid.container.max_size_y: number|nil\`
+
+<div class="api-symbol-body">
+
+The maximum size y
+
+</div>
+
+### \`druid.container.on_size_changed: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.container, size: vector3) The event triggered when the size changes
+
+</div>
+
+### \`druid.container._parent_container: druid.container\`
+
+<div class="api-symbol-body">
+
+The parent container
+
+</div>
+
+### \`druid.container._containers: table\`
+
+<div class="api-symbol-body">
+
+The containers
+
+</div>
+
+### \`druid.container._draggable_corners: table\`
+
+<div class="api-symbol-body">
+
+The draggable corners
+
+</div>
+
+### \`druid.data_list.init(scroll: druid.scroll, grid: druid.grid, create_function: function)\`
+
+<div class="api-symbol-body">
+
+The DataList constructor
+
+**Parameters**
+
+- \`scroll\`: \`druid.scroll\` — The Scroll instance for Data List component
+- \`grid\`: \`druid.grid\` — The StaticGrid instance for Data List component
+- \`create_function\`: \`function\` — The create function callback(self, data, index, data_list). Function should return (node, [component])
+
+</div>
+
+### \`druid.data_list.on_remove()\`
+
+### \`druid.data_list.set_use_cache(is_use_cache: boolean): druid.data_list\`
+
+<div class="api-symbol-body">
+
+Set use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove
+
+**Parameters**
+
+- \`is_use_cache\`: \`boolean\` — Use cache version of DataList
+
+**Returns**
+
+- \`druid.data_list\` — Current DataList instance
+
+</div>
+
+### \`druid.data_list.set_data(data: table): druid.data_list\`
+
+<div class="api-symbol-body">
+
+Set new data set for DataList component
+
+**Parameters**
+
+- \`data\`: \`table\` — The new data array
+
+**Returns**
+
+- \`druid.data_list\` — Current DataList instance
+
+</div>
+
+### \`druid.data_list.get_data(): table\`
+
+<div class="api-symbol-body">
+
+Return current data from DataList component
+
+**Returns**
+
+- \`table\` — The current data array
+
+</div>
+
+### \`druid.data_list.add(data: table, index: number|nil, shift_policy: number|nil): druid.data_list\`
+
+<div class="api-symbol-body">
+
+Add element to DataList
+
+**Parameters**
+
+- \`data\`: \`table\` — The data to add
+- \`index\`: \`number|nil\` — The index to add the data at
+- \`shift_policy\`: \`number|nil\` — The constant from const.SHIFT.*
+
+**Returns**
+
+- \`druid.data_list\` — Current DataList instance
+
+</div>
+
+### \`druid.data_list.remove(index: number|nil, shift_policy: number|nil): druid.data_list\`
+
+<div class="api-symbol-body">
+
+Remove element from DataList
+
+**Parameters**
+
+- \`index\`: \`number|nil\` — The index to remove the data at
+- \`shift_policy\`: \`number|nil\` — The constant from const.SHIFT.*
+
+**Returns**
+
+- \`druid.data_list\` — Current DataList instance
+
+</div>
+
+### \`druid.data_list.remove_by_data(data: table, shift_policy: number|nil): druid.data_list\`
+
+<div class="api-symbol-body">
+
+Remove element from DataList by data value
+
+**Parameters**
+
+- \`data\`: \`table\` — The data to remove
+- \`shift_policy\`: \`number|nil\` — The constant from const.SHIFT.*
+
+**Returns**
+
+- \`druid.data_list\` — Current DataList instance
+
+</div>
+
+### \`druid.data_list.clear(): druid.data_list\`
+
+<div class="api-symbol-body">
+
+Clear the DataList and refresh visuals
+
+**Returns**
+
+- \`druid.data_list\` — Current DataList instance
+
+</div>
+
+### \`druid.data_list.get_index(data: table)\`
+
+<div class="api-symbol-body">
+
+Return index for data value
+
+**Parameters**
+
+- \`data\`: \`table\`
+
+</div>
+
+### \`druid.data_list.get_created_nodes(): node[]\`
+
+<div class="api-symbol-body">
+
+Return all currently created nodes in DataList
+
+**Returns**
+
+- \`node[]\` — List of created nodes
+
+</div>
+
+### \`druid.data_list.get_created_components(): druid.component[]\`
+
+<div class="api-symbol-body">
+
+Return all currently created components in DataList
+
+**Returns**
+
+- \`druid.component[]\` — List of created components
+
+</div>
+
+### \`druid.data_list.scroll_to_index(index: number)\`
+
+<div class="api-symbol-body">
+
+Instant scroll to element with passed index
+
+**Parameters**
+
+- \`index\`: \`number\` — The index to scroll to
+
+</div>
+
+### \`druid.data_list._add_at(index: number)\`
+
+<div class="api-symbol-body">
+
+Add element at passed index using cache or create new
+
+**Parameters**
+
+- \`index\`: \`number\` — The index to add the element at
+
+</div>
+
+### \`druid.data_list._remove_at(index: number)\`
+
+<div class="api-symbol-body">
+
+Remove element from passed index and add it to cache if applicable
+
+**Parameters**
+
+- \`index\`: \`number\` — The index to remove the element at
+
+</div>
+
+### \`druid.data_list._get_visible_bounds(): number, number, number, number\`
+
+<div class="api-symbol-body">
+
+Get the visible area bounds in content-local coordinates (top-left and bottom-right),
+clamped to the grid coordinate range so get_index_xy produces valid results.
+
+**Returns**
+
+- \`number\`
+- \`number\`
+- \`number\`
+- \`number\`
+
+</div>
+
+### \`druid.data_list._refresh()\`
+
+<div class="api-symbol-body">
+
+Refresh all elements in DataList
+
+</div>
+
+### \`druid.data_list.scroll: druid.scroll\`
+
+<div class="api-symbol-body">
+
+The scroll instance for Data List component
+
+</div>
+
+### \`druid.data_list.grid: druid.grid\`
+
+<div class="api-symbol-body">
+
+The StaticGrid or DynamicGrid instance for Data List component
+
+</div>
+
+### \`druid.data_list.on_scroll_progress_change: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.data_list, progress: number) The event triggered when the scroll progress changes
+
+</div>
+
+### \`druid.data_list.on_element_add: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when a new element is added
+
+</div>
+
+### \`druid.data_list.on_element_remove: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when an element is removed
+
+</div>
+
+### \`druid.data_list.top_index: number\`
+
+<div class="api-symbol-body">
+
+The top index of the visible elements
+
+</div>
+
+### \`druid.data_list.last_index: number\`
+
+<div class="api-symbol-body">
+
+The last index of the visible elements
+
+</div>
+
+### \`druid.data_list.scroll_progress: number\`
+
+<div class="api-symbol-body">
+
+The scroll progress
+
+</div>
+
+### \`druid.hotkey.style.MODIFICATORS: string[]|hash[]\`
+
+<div class="api-symbol-body">
+
+The list of action_id as hotkey modificators
+
+</div>
+
+### \`druid.hotkey.style.MODIFICATOR_RELEASE_TIME: number\`
+
+<div class="api-symbol-body">
+
+Time in seconds to keep modificator active after release
+
+</div>
+
+### \`druid.hotkey.init(keys: string[]|string, callback: function, callback_argument: any|nil)\`
+
+<div class="api-symbol-body">
+
+The Hotkey constructor
+
+**Parameters**
+
+- \`keys\`: \`string[]|string\` — The keys to be pressed for trigger callback. Should contains one key and any modificator keys
+- \`callback\`: \`function\` — The callback function
+- \`callback_argument\`: \`any|nil\` — The argument to pass into the callback function
+
+</div>
+
+### \`druid.hotkey.on_style_change(style: druid.hotkey.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.hotkey.style\`
+
+</div>
+
+### \`druid.hotkey.add_hotkey(keys: string[]|hash[]|string|hash, callback_argument: any|nil): druid.hotkey\`
+
+<div class="api-symbol-body">
+
+Add hotkey for component callback
+
+**Parameters**
+
+- \`keys\`: \`string[]|hash[]|string|hash\` — that have to be pressed before key pressed to activate
+- \`callback_argument\`: \`any|nil\` — The argument to pass into the callback function
+
+**Returns**
+
+- \`druid.hotkey\` — Current instance
+
+</div>
+
+### \`druid.hotkey.is_processing()\`
+
+### \`druid.hotkey.on_focus_gained()\`
+
+### \`druid.hotkey._is_modificator_active(modificator: hash, time: number): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`modificator\`: \`hash\`
+- \`time\`: \`number\` — The current time
+
+**Returns**
+
+- \`boolean\`
+
+</div>
+
+### \`druid.hotkey.on_input(action_id: hash|nil, action: action): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash|nil\` — The action id
+- \`action\`: \`action\` — The action
+
+**Returns**
+
+- \`boolean\` — True if the action is consumed
+
+</div>
+
+### \`druid.hotkey.set_repeat(is_enabled_repeated: boolean): druid.hotkey\`
+
+<div class="api-symbol-body">
+
+If true, the callback will be triggered on action.repeated
+
+**Parameters**
+
+- \`is_enabled_repeated\`: \`boolean\` — The flag value
+
+**Returns**
+
+- \`druid.hotkey\` — Current instance
+
+</div>
+
+### \`druid.hotkey.bind_node(node: node|nil): druid.hotkey\`
+
+<div class="api-symbol-body">
+
+If node is provided, the hotkey can be disabled, if the node is disabled
+
+**Parameters**
+
+- \`node\`: \`node|nil\` — The node to bind the hotkey to. Nil to unbind the node
+
+**Returns**
+
+- \`druid.hotkey\` — Current instance
+
+</div>
+
+### \`druid.hotkey.on_hotkey_pressed: event\`
+
+<div class="api-symbol-body">
+
+fun(self, context, callback_argument) The event triggered when a hotkey is pressed
+
+</div>
+
+### \`druid.hotkey.on_hotkey_released: event\`
+
+<div class="api-symbol-body">
+
+fun(self, context, callback_argument) The event triggered when a hotkey is released
+
+</div>
+
+### \`druid.hotkey.style: druid.hotkey.style\`
+
+<div class="api-symbol-body">
+
+The style of the hotkey component
+
+</div>
+
+### \`druid.input.style.MASK_DEFAULT_CHAR: string\`
+
+<div class="api-symbol-body">
+
+Default character mask for password input
+
+</div>
+
+### \`druid.input.style.IS_LONGTAP_ERASE: boolean\`
+
+<div class="api-symbol-body">
+
+Is long tap will erase current input data
+
+</div>
+
+### \`druid.input.style.IS_UNSELECT_ON_RESELECT: boolean\`
+
+<div class="api-symbol-body">
+
+If true, call unselect on select selected input
+
+</div>
+
+### \`druid.input.style.on_init: fun(self: druid.input)|nil\`
+
+<div class="api-symbol-body">
+
+Callback when input is initialized, use to set custom properties on self
+
+</div>
+
+### \`druid.input.style.on_select: fun(self: druid.input, button_node: node)\`
+
+<div class="api-symbol-body">
+
+Callback on input field selecting
+
+</div>
+
+### \`druid.input.style.on_unselect: fun(self: druid.input, button_node: node)\`
+
+<div class="api-symbol-body">
+
+Callback on input field unselecting
+
+</div>
+
+### \`druid.input.style.on_input_wrong: fun(self: druid.input, button_node: node)\`
+
+<div class="api-symbol-body">
+
+Callback on wrong user input
+
+</div>
+
+### \`druid.input.init(click_node: node, text_node: node|druid.text, keyboard_type: constant|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`click_node\`: \`node\` — Node to enabled input component
+- \`text_node\`: \`node|druid.text\` — Text node what will be changed on user input. You can pass text component instead of text node name Text
+- \`keyboard_type\`: \`constant|nil\` — Gui keyboard type for input field
+
+</div>
+
+### \`druid.input.on_style_change(style: druid.input.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.input.style\`
+
+</div>
+
+### \`druid.input.on_input(action_id: hash|nil, action: action): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash|nil\` — The action id
+- \`action\`: \`action\` — The action
+
+**Returns**
+
+- \`boolean\` — True if the action is consumed
+
+</div>
+
+### \`druid.input.on_focus_lost()\`
+
+### \`druid.input.get_text_selected()\`
+
+### \`druid.input.get_text_selected_replaced(text: string): string\`
+
+<div class="api-symbol-body">
+
+Replace selected text with new text
+
+**Parameters**
+
+- \`text\`: \`string\` — The text to replace selected text
+
+**Returns**
+
+- \`string\` — New input text
+
+</div>
+
+### \`druid.input.set_text(input_text: string?)\`
+
+<div class="api-symbol-body">
+
+Set text for input field
+
+**Parameters**
+
+- \`input_text\`: \`string?\` — The string to apply for input field, if nil - will be set to empty string
+
+</div>
+
+### \`druid.input.select()\`
+
+<div class="api-symbol-body">
+
+Select input field. It will show the keyboard and trigger on_select events
+
+</div>
+
+### \`druid.input.unselect()\`
+
+<div class="api-symbol-body">
+
+Remove selection from input. It will hide the keyboard and trigger on_unselect events
+
+</div>
+
+### \`druid.input.get_text(): string\`
+
+<div class="api-symbol-body">
+
+Return current input field text
+
+**Returns**
+
+- \`string\` — The current input field text
+
+</div>
+
+### \`druid.input.set_max_length(max_length: number): druid.input\`
+
+<div class="api-symbol-body">
+
+Set maximum length for input field.
+Pass nil to make input field unliminted (by default)
+
+**Parameters**
+
+- \`max_length\`: \`number\` — Maximum length for input text field
+
+**Returns**
+
+- \`druid.input\` — Current input instance
+
+</div>
+
+### \`druid.input.set_allowed_characters(characters: string): druid.input\`
+
+<div class="api-symbol-body">
+
+Set allowed charaters for input field.
+See: https://defold.com/ref/stable/string/
+ex: [%a%d] for alpha and numeric
+ex: [abcdef] to allow only these characters
+ex: [^%s] to allow only non-space characters
+
+**Parameters**
+
+- \`characters\`: \`string\` — Regular expression for validate user input
+
+**Returns**
+
+- \`druid.input\` — Current input instance
+
+</div>
+
+### \`druid.input.reset_changes(): druid.input\`
+
+<div class="api-symbol-body">
+
+Reset current input selection and return previous value
+
+**Returns**
+
+- \`druid.input\` — Current input instance
+
+</div>
+
+### \`druid.input.select_cursor(cursor_index: number|nil, start_index: number|nil, end_index: number|nil): druid.input\`
+
+<div class="api-symbol-body">
+
+Set cursor position in input field
+
+**Parameters**
+
+- \`cursor_index\`: \`number|nil\` — Cursor index for cursor position, if nil - will be set to the end of the text
+- \`start_index\`: \`number|nil\` — Start index for cursor position, if nil - will be set to the end of the text
+- \`end_index\`: \`number|nil\` — End index for cursor position, if nil - will be set to the start_index
+
+**Returns**
+
+- \`druid.input\` — Current input instance
+
+</div>
+
+### \`druid.input.move_selection(delta: number, is_add_to_selection: boolean, is_move_to_end: boolean): druid.input\`
+
+<div class="api-symbol-body">
+
+Change cursor position by delta
+
+**Parameters**
+
+- \`delta\`: \`number\` — side for cursor position, -1 for left, 1 for right
+- \`is_add_to_selection\`: \`boolean\` — (Shift key)
+- \`is_move_to_end\`: \`boolean\` — (Ctrl key)
+
+**Returns**
+
+- \`druid.input\` — Current input instance
+
+</div>
+
+### \`druid.input.on_input_select: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.input, input: druid.input) The event triggered when the input field is selected
+
+</div>
+
+### \`druid.input.on_input_unselect: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.input, text: string, input: druid.input) The event triggered when the input field is unselected
+
+</div>
+
+### \`druid.input.on_input_text: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.input) The event triggered when the input field is changed
+
+</div>
+
+### \`druid.input.on_input_empty: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.input) The event triggered when the input field is empty
+
+</div>
+
+### \`druid.input.on_input_full: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.input) The event triggered when the input field is full
+
+</div>
+
+### \`druid.input.on_input_wrong: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.input) The event triggered when the input field is wrong
+
+</div>
+
+### \`druid.input.on_select_cursor_change: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.input, cursor_index: number, start_index: number, end_index: number) The event triggered when the cursor index is changed
+
+</div>
+
+### \`druid.input.style: druid.input.style\`
+
+<div class="api-symbol-body">
+
+The style of the input component
+
+</div>
+
+### \`druid.lang_text.init(node: string|node, locale_id: string|nil, adjust_type: string|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`locale_id\`: \`string|nil\` — Default locale id or text from node as default. If not provided, will use text from the node
+- \`adjust_type\`: \`string|nil\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
+
+</div>
+
+### \`druid.lang_text.on_language_change()\`
+
+### \`druid.lang_text.set_to(text: string): druid.lang_text\`
+
+<div class="api-symbol-body">
+
+Setup raw text to lang_text component. This will clear any locale settings.
+
+**Parameters**
+
+- \`text\`: \`string\` — Text for text node
+
+**Returns**
+
+- \`druid.lang_text\` — Current instance
+
+</div>
+
+### \`druid.lang_text.set_text(text: string): druid.lang_text\`
+
+<div class="api-symbol-body">
+
+Setup raw text to lang_text component. This will clear any locale settings.
+
+**Parameters**
+
+- \`text\`: \`string\` — Text for text node
+
+**Returns**
+
+- \`druid.lang_text\` — Current instance
+
+</div>
+
+### \`druid.lang_text.translate(locale_id: string, ...: string): druid.lang_text\`
+
+<div class="api-symbol-body">
+
+Translate the text by locale_id. The text will be automatically updated when locale changes.
+
+**Parameters**
+
+- \`locale_id\`: \`string\` — Locale id to get text from
+- \`...\`: \`string\` — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
+
+**Returns**
+
+- \`druid.lang_text\` — Current instance
+
+</div>
+
+### \`druid.lang_text.format(...: string): druid.lang_text\`
+
+<div class="api-symbol-body">
+
+Format string with new text params on localized text. Keeps the current locale but updates the format parameters.
+
+**Parameters**
+
+- \`...\`: \`string\` — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
+
+**Returns**
+
+- \`druid.lang_text\` — Current instance
+
+</div>
+
+### \`druid.lang_text.text: druid.text\`
+
+<div class="api-symbol-body">
+
+The text component
+
+</div>
+
+### \`druid.lang_text.node: node\`
+
+<div class="api-symbol-body">
+
+The node of the text component
+
+</div>
+
+### \`druid.lang_text.on_change: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.lang_text) The event triggered when the text is changed
+
+</div>
+
+### \`event.on_size_changed.subscribe: fun(_, callback: fun(new_size: vector3), context: any|nil)\`
+
+### \`druid.layout.row_data.width: number\`
+
+### \`druid.layout.row_data.height: number\`
+
+### \`druid.layout.row_data.count: number\`
+
+### \`druid.layout.rows_data.total_width: number\`
+
+### \`druid.layout.rows_data.total_height: number\`
+
+### \`druid.layout.rows_data.nodes_width: table<node, number>\`
+
+### \`druid.layout.rows_data.nodes_height: table<node, number>\`
+
+### \`druid.layout.rows_data.rows: druid.layout.row_data[]>\`
+
+### \`druid.layout.init(node_or_node_id: node|string, layout_type: druid.layout.type)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node_or_node_id\`: \`node|string\` — The node to manage the layout of
+- \`layout_type\`: \`druid.layout.type\` — The type of layout (horizontal, vertical, horizontal_wrap)
+
+</div>
+
+### \`druid.layout.update()\`
+
+### \`druid.layout.on_layout_change()\`
+
+### \`druid.layout.get_entities(): node[]\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`node[]\` — The entities to manage the layout of
+
+</div>
+
+### \`druid.layout.get_entities_count(): number\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`number\` — The count of entities in layout
+
+</div>
+
+### \`druid.layout.set_node_index(node: node, index: number): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node\`: \`node\` — The node to set the index of
+- \`index\`: \`number\` — The index to set the node to
+
+**Returns**
+
+- \`druid.layout\` — for chaining
+
+</div>
+
+### \`druid.layout.set_margin(margin_x: number|nil, margin_y: number|nil): druid.layout\`
+
+<div class="api-symbol-body">
+
+Set the margin of the layout
+
+**Parameters**
+
+- \`margin_x\`: \`number|nil\` — The margin x
+- \`margin_y\`: \`number|nil\` — The margin y
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.set_padding(padding_x: number|nil, padding_y: number|nil, padding_z: number|nil, padding_w: number|nil): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`padding_x\`: \`number|nil\` — From Left
+- \`padding_y\`: \`number|nil\` — From Top
+- \`padding_z\`: \`number|nil\` — From Right
+- \`padding_w\`: \`number|nil\` — From Bottom
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.set_dirty(): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.set_justify(is_justify: boolean): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`is_justify\`: \`boolean\`
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.set_type(layout_type: druid.layout.type): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`layout_type\`: \`druid.layout.type\`
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.set_hug_content(is_hug_width: boolean, is_hug_height: boolean): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`is_hug_width\`: \`boolean\`
+- \`is_hug_height\`: \`boolean\`
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.add(node_or_node_id: node|string): druid.layout\`
+
+<div class="api-symbol-body">
+
+Add node to layout
+
+**Parameters**
+
+- \`node_or_node_id\`: \`node|string\` — node_or_node_id
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.remove(node_or_node_id: node|string): druid.layout\`
+
+<div class="api-symbol-body">
+
+Remove node from layout
+
+**Parameters**
+
+- \`node_or_node_id\`: \`node|string\` — node_or_node_id
+
+**Returns**
+
+- \`druid.layout\` — for chaining
+
+</div>
+
+### \`druid.layout.get_size(): vector3\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`vector3\`
+
+</div>
+
+### \`druid.layout.get_content_size(): number, number\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`number, number\`
+
+</div>
+
+### \`druid.layout.refresh_layout(is_instant: boolean|nil): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`is_instant\`: \`boolean|nil\` — If true, node position update instantly, otherwise with set_position_function callback
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.clear_layout(): druid.layout\`
+
+<div class="api-symbol-body">
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.get_node_size(node: node): number, number\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node\`: \`node\`
+
+**Returns**
+
+- \`number\` — The width of the node
+- \`number\` — The height of the node
+
+</div>
+
+### \`druid.layout.calculate_rows_data(): druid.layout.rows_data\`
+
+<div class="api-symbol-body">
+
+Calculate rows data for layout. Contains total width, height and rows info (width, height, count of elements in row)
+
+**Returns**
+
+- \`druid.layout.rows_data\`
+
+</div>
+
+### \`druid.layout.set_node_position(node: node, x: number, y: number): node\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node\`: \`node\`
+- \`x\`: \`number\`
+- \`y\`: \`number\`
+
+**Returns**
+
+- \`node\`
+
+</div>
+
+### \`druid.layout.set_position_function(callback: function): druid.layout\`
+
+<div class="api-symbol-body">
+
+Set custom position function for layout nodes. It will call on update poses on layout elements. Default: <a href="/api/defold-1.13.0/gui#guiset_positionnode-opaquenode-position-vector3--vector4" class="symbol-xref">gui.set_position</a>
+
+**Parameters**
+
+- \`callback\`: \`function\`
+
+**Returns**
+
+- \`druid.layout\` — Current layout instance
+
+</div>
+
+### \`druid.layout.node: node\`
+
+<div class="api-symbol-body">
+
+The node to manage the layout of
+
+</div>
+
+### \`druid.layout.rows_data: druid.layout.rows_data\`
+
+<div class="api-symbol-body">
+
+Last calculated rows data
+
+</div>
+
+### \`druid.layout.is_dirty: boolean\`
+
+<div class="api-symbol-body">
+
+True if layout needs to be updated
+
+</div>
+
+### \`druid.layout.entities: node[]\`
+
+<div class="api-symbol-body">
+
+The entities to manage the layout of
+
+</div>
+
+### \`druid.layout.margin: {x: number, y: number}\`
+
+<div class="api-symbol-body">
+
+The margin of the layout
+
+</div>
+
+### \`druid.layout.padding: vector4\`
+
+<div class="api-symbol-body">
+
+The padding of the layout
+
+</div>
+
+### \`druid.layout.type: string\`
+
+<div class="api-symbol-body">
+
+The type of the layout
+
+</div>
+
+### \`druid.layout.is_resize_width: boolean\`
+
+<div class="api-symbol-body">
+
+True if the layout should resize the width of the node
+
+</div>
+
+### \`druid.layout.is_resize_height: boolean\`
+
+<div class="api-symbol-body">
+
+True if the layout should resize the height of the node
+
+</div>
+
+### \`druid.layout.is_justify: boolean\`
+
+<div class="api-symbol-body">
+
+True if the layout should justify the nodes
+
+</div>
+
+### \`druid.layout.on_size_changed: event.on_size_changed\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.layout, size: vector3) The event triggered when the size of the layout is changed
+
+</div>
+
+### \`druid.progress.style.SPEED: number|nil\`
+
+<div class="api-symbol-body">
+
+Progress bar fill rate. Higher value means faster fill. Default: 5
+
+</div>
+
+### \`druid.progress.style.MIN_DELTA: number|nil\`
+
+<div class="api-symbol-body">
+
+Minimum step to fill progress bar. Default: 0.005
+
+</div>
+
+### \`druid.progress.init(node: string|node, key: string, init_value: number|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node\`: \`string|node\` — Node name or GUI Node itself.
+- \`key\`: \`string\` — Progress bar direction: "x" or "y"
+- \`init_value\`: \`number|nil\` — Initial value of progress bar (0 to 1). Default: 1
+
+</div>
+
+### \`druid.progress.on_style_change(style: druid.progress.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.progress.style\`
+
+</div>
+
+### \`druid.progress.on_layout_change()\`
+
+### \`druid.progress.on_remove()\`
+
+### \`druid.progress.update(dt: number)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`dt\`: \`number\` — Delta time
+
+</div>
+
+### \`druid.progress.fill(): druid.progress\`
+
+<div class="api-symbol-body">
+
+Fill the progress bar
+
+**Returns**
+
+- \`druid.progress\` — Current progress instance
+
+</div>
+
+### \`druid.progress.empty(): druid.progress\`
+
+<div class="api-symbol-body">
+
+Empty the progress bar
+
+**Returns**
+
+- \`druid.progress\` — Current progress instance
+
+</div>
+
+### \`druid.progress.set_to(to: number): druid.progress\`
+
+<div class="api-symbol-body">
+
+Instant fill progress bar to value
+
+**Parameters**
+
+- \`to\`: \`number\` — Progress bar value, from 0 to 1
+
+**Returns**
+
+- \`druid.progress\` — Current progress instance
+
+</div>
+
+### \`druid.progress.get(): number\`
+
+<div class="api-symbol-body">
+
+Return the current value of the progress bar
+
+**Returns**
+
+- \`number\` — The current value of the progress bar
+
+</div>
+
+### \`druid.progress.set_steps(steps: number[], callback: function): druid.progress\`
+
+<div class="api-symbol-body">
+
+Set points on progress bar to fire the callback
+
+**Parameters**
+
+- \`steps\`: \`number[]\` — Array of progress bar values
+- \`callback\`: \`function\` — Callback on intersect step value
+
+**Returns**
+
+- \`druid.progress\` — Current progress instance
+
+</div>
+
+### \`druid.progress.to(to: number, callback: function|nil): druid.progress\`
+
+<div class="api-symbol-body">
+
+Start animation of a progress bar
+
+**Parameters**
+
+- \`to\`: \`number\` — value between 0..1
+- \`callback\`: \`function|nil\` — Callback on animation ends
+
+**Returns**
+
+- \`druid.progress\` — Current progress instance
+
+</div>
+
+### \`druid.progress.set_max_size(max_size: vector3): druid.progress\`
+
+<div class="api-symbol-body">
+
+Set progress bar max node size
+
+**Parameters**
+
+- \`max_size\`: \`vector3\` — The new node maximum (full) size
+
+**Returns**
+
+- \`druid.progress\` — Current progress instance
+
+</div>
+
+### \`druid.progress._check_steps(from: number, to: number, exactly: number|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`from\`: \`number\` — The start value
+- \`to\`: \`number\` — The end value
+- \`exactly\`: \`number|nil\` — The exact value
+
+</div>
+
+### \`druid.progress._set_bar_to(set_to: number)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`set_to\`: \`number\` — The value to set the progress bar to
+
+</div>
+
+### \`druid.progress.node: node\`
+
+<div class="api-symbol-body">
+
+The progress bar node
+
+</div>
+
+### \`druid.progress.on_change: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.progress, value: number) Event triggered when progress value changes
+
+</div>
+
+### \`druid.progress.style: druid.progress.style\`
+
+<div class="api-symbol-body">
+
+Component style parameters
+
+</div>
+
+### \`druid.progress.key: string\`
+
+<div class="api-symbol-body">
+
+Progress bar direction: "x" or "y"
+
+</div>
+
+### \`druid.progress.prop: hash\`
+
+<div class="api-symbol-body">
+
+Property for scaling the progress bar
+
+</div>
+
+### \`druid.slider.init(node: node, end_pos: vector3, callback: function|nil)\`
+
+<div class="api-symbol-body">
+
+The Slider constructor
+
+**Parameters**
+
+- \`node\`: \`node\` — GUI node to drag as a slider
+- \`end_pos\`: \`vector3\` — The end position of slider, should be on the same axis as the node
+- \`callback\`: \`function|nil\` — On slider change callback
+
+</div>
+
+### \`druid.slider.on_layout_change()\`
+
+### \`druid.slider.on_remove()\`
+
+### \`druid.slider.on_style_change(style: table)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`table\`
+
+</div>
+
+### \`druid.slider.on_window_resized()\`
+
+### \`druid.slider.on_input(action_id: hash, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — Action id from on_input
+- \`action\`: \`table\` — Action table from on_input
+
+**Returns**
+
+- \`boolean\` — True if input was consumed
+
+</div>
+
+### \`druid.slider.set(value: number, is_silent: boolean|nil): druid.slider\`
+
+<div class="api-symbol-body">
+
+Set value for slider
+
+**Parameters**
+
+- \`value\`: \`number\` — Value from 0 to 1
+- \`is_silent\`: \`boolean|nil\` — Don't trigger event if true
+
+**Returns**
+
+- \`druid.slider\` — Current slider instance
+
+</div>
+
+### \`druid.slider.set_steps(steps: number[]): druid.slider\`
+
+<div class="api-symbol-body">
+
+Set slider steps. Pin node will
+apply closest step position
+
+**Parameters**
+
+- \`steps\`: \`number[]\` — Array of steps
+
+**Returns**
+
+- \`druid.slider\` — Current slider instance
+
+</div>
+
+### \`druid.slider.set_end_pos(end_pos: vector3): druid.slider\`
+
+<div class="api-symbol-body">
+
+Adjust the end position of the slider
+
+**Parameters**
+
+- \`end_pos\`: \`vector3\` — The end position of the slider
+
+**Returns**
+
+- \`druid.slider\` — Current slider instance
+
+</div>
+
+### \`druid.slider.set_input_node(input_node: node|string|nil): druid.slider\`
+
+<div class="api-symbol-body">
+
+Set input zone for slider.
+User can touch any place of node, pin instantly will
+move at this position and node drag will start.
+This function require the Defold version 1.3.0+
+
+**Parameters**
+
+- \`input_node\`: \`node|string|nil\`
+
+**Returns**
+
+- \`druid.slider\` — Current slider instance
+
+</div>
+
+### \`druid.slider.set_enabled(is_enabled: boolean): druid.slider\`
+
+<div class="api-symbol-body">
+
+Set Slider input enabled or disabled
+
+**Parameters**
+
+- \`is_enabled\`: \`boolean\` — True if slider is enabled
+
+**Returns**
+
+- \`druid.slider\` — Current slider instance
+
+</div>
+
+### \`druid.slider.is_enabled(): boolean\`
+
+<div class="api-symbol-body">
+
+Check if Slider component is enabled
+
+**Returns**
+
+- \`boolean\` — True if slider is enabled
+
+</div>
+
+### \`druid.slider._on_change_value()\`
+
+### \`druid.slider._set_position()\`
+
+### \`druid.slider.node: node\`
+
+<div class="api-symbol-body">
+
+The node to manage the slider
+
+</div>
+
+### \`druid.slider.on_change_value: event\`
+
+<div class="api-symbol-body">
+
+fun(self: druid.slider, value: number) The event triggered when the slider value changes
+
+</div>
+
+### \`druid.slider.style: table\`
+
+<div class="api-symbol-body">
+
+The style of the slider
+
+</div>
+
+### \`druid.swipe.style.SWIPE_TIME: number|nil\`
+
+<div class="api-symbol-body">
+
+Maximum time for swipe trigger. Default: 0.4
+
+</div>
+
+### \`druid.swipe.style.SWIPE_THRESHOLD: number|nil\`
+
+<div class="api-symbol-body">
+
+Minimum distance for swipe trigger. Default: 50
+
+</div>
+
+### \`druid.swipe.style.SWIPE_TRIGGER_ON_MOVE: boolean|nil\`
+
+<div class="api-symbol-body">
+
+If true, trigger on swipe moving, not only release action. Default: false
+
+</div>
+
+### \`druid.swipe.init(node_or_node_id: node|string, on_swipe_callback: function)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node_or_node_id\`: \`node|string\`
+- \`on_swipe_callback\`: \`function\`
+
+</div>
+
+### \`druid.swipe.on_late_init()\`
+
+### \`druid.swipe.on_style_change(style: druid.swipe.style)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`style\`: \`druid.swipe.style\`
+
+</div>
+
+### \`druid.swipe.on_input(action_id: hash, action: action): boolean\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — The action id
+- \`action\`: \`action\` — The action table
+
+**Returns**
+
+- \`boolean\` — True if the input was consumed
+
+</div>
+
+### \`druid.swipe.on_input_interrupt()\`
+
+### \`druid.swipe.set_click_zone(zone: node|string|nil)\`
+
+<div class="api-symbol-body">
+
+Set the click zone for the swipe, useful for restricting events outside stencil node
+
+**Parameters**
+
+- \`zone\`: \`node|string|nil\` — Gui node
+
+</div>
+
+### \`druid.swipe._start_swipe(action: action)\`
+
+<div class="api-symbol-body">
+
+Start swipe event
+
+**Parameters**
+
+- \`action\`: \`action\` — The action table
+
+</div>
+
+### \`druid.swipe._reset_swipe()\`
+
+<div class="api-symbol-body">
+
+Reset swipe event
+
+</div>
+
+### \`druid.swipe._check_swipe(self: druid.swipe, action: action)\`
+
+<div class="api-symbol-body">
+
+Check swipe event
+
+**Parameters**
+
+- \`self\`: \`druid.swipe\`
+- \`action\`: \`action\`
+
+</div>
+
+### \`druid.swipe.node: node\`
+
+<div class="api-symbol-body">
+
+The node to manage the swipe
+
+</div>
+
+### \`druid.swipe.on_swipe: event\`
+
+<div class="api-symbol-body">
+
+fun(context, side, dist, dt) The event triggered when a swipe is detected
+
+</div>
+
+### \`druid.swipe.style: druid.swipe.style\`
+
+<div class="api-symbol-body">
+
+The style of the swipe
+
+</div>
+
+### \`druid.swipe.click_zone: node\`
+
+<div class="api-symbol-body">
+
+The click zone of the swipe
+
+</div>
+
+### \`druid.timer.init(node: node, seconds_from: number|nil, seconds_to: number|nil, callback: function|nil)\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`node\`: \`node\` — Gui text node
+- \`seconds_from\`: \`number|nil\` — Start timer value in seconds
+- \`seconds_to\`: \`number|nil\` — End timer value in seconds
+- \`callback\`: \`function|nil\` — Function that triggers when timer value equals to seconds_to
+
+</div>
+
+### \`druid.timer.update()\`
+
+### \`druid.timer.on_layout_change()\`
+
+### \`druid.timer.set_to(set_to: number): druid.timer\`
+
+<div class="api-symbol-body">
+
+Set the timer to a specific value
+
+**Parameters**
+
+- \`set_to\`: \`number\` — Value in seconds
+
+**Returns**
+
+- \`druid.timer\` — Current timer instance
+
+</div>
+
+### \`druid.timer.set_state(is_on: boolean|nil): druid.timer\`
+
+<div class="api-symbol-body">
+
+Set the timer to a specific value
+
+**Parameters**
+
+- \`is_on\`: \`boolean|nil\` — Timer enable state
+
+**Returns**
+
+- \`druid.timer\` — Current timer instance
+
+</div>
+
+### \`druid.timer.set_interval(from: number, to: number): druid.timer\`
+
+<div class="api-symbol-body">
+
+Set the timer interval
+
+**Parameters**
+
+- \`from\`: \`number\` — Start time in seconds
+- \`to\`: \`number\` — Target time in seconds
+
+**Returns**
+
+- \`druid.timer\` — Current timer instance
+
+</div>
+
+### \`druid.timer._second_string_min(sec: number): string\`
+
+<div class="api-symbol-body">
+
+**Parameters**
+
+- \`sec\`: \`number\` — Seconds to convert
+
+**Returns**
+
+- \`string\` — The formatted time string
+
+</div>
+
+### \`druid.timer.on_tick: event\`
+
+<div class="api-symbol-body">
+
+fun(context, value) The event triggered when the timer ticks
+
+</div>
+
+### \`druid.timer.on_set_enabled: event\`
+
+<div class="api-symbol-body">
+
+fun(context, is_on) The event triggered when the timer is enabled
+
+</div>
+
+### \`druid.timer.on_timer_end: event\`
+
+<div class="api-symbol-body">
+
+fun(context) The event triggered when the timer ends
+
+</div>
+
+### \`druid.timer.node: node\`
+
+<div class="api-symbol-body">
+
+The node to display the timer
+
+</div>
+
+### \`druid.timer.from: number\`
+
+<div class="api-symbol-body">
+
+The start time of the timer
+
+</div>
+
+### \`druid.timer.target: number\`
+
+<div class="api-symbol-body">
+
+The target time of the timer
+
+</div>
+
+### \`druid.timer.value: number\`
+
+<div class="api-symbol-body">
+
+The current value of the timer
+
+</div>
+
+### \`druid.timer.is_on: boolean|nil\`
+
+<div class="api-symbol-body">
+
+True if the timer is on
+
+</div>
+
+### \`druid.system.animation_data.frames: table<number, table<string, number>>\`
+
+<div class="api-symbol-body">
+
+List of frames with uv coordinates and size
+
+</div>
+
+### \`druid.system.animation_data.width: number\`
+
+<div class="api-symbol-body">
+
+Width of the animation
+
+</div>
+
+### \`druid.system.animation_data.height: number\`
+
+<div class="api-symbol-body">
+
+Height of the animation
+
+</div>
+
+### \`druid.system.animation_data.fps: number\`
+
+<div class="api-symbol-body">
+
+Frames per second
+
+</div>
+
+### \`druid.system.animation_data.current_frame: number\`
+
+<div class="api-symbol-body">
+
+Current frame
+
+</div>
+
+### \`druid.system.animation_data.node: node\`
+
+<div class="api-symbol-body">
+
+Node with flipbook animation
+
+</div>
+
+### \`druid.system.animation_data.v: vector4\`
+
+<div class="api-symbol-body">
+
+Vector with UV coordinates and size
+
+</div>
+
+### \`druid.logger.trace: fun(message: string, context: any)\`
+
+### \`druid.logger.debug: fun(message: string, context: any)\`
+
+### \`druid.logger.info: fun(message: string, context: any)\`
+
+### \`druid.logger.warn: fun(message: string, context: any)\`
+
+### \`druid.logger.error: fun(message: string, context: any)\`
+
+### \`druid.logger.trace: fun(_, msg: string, data: any)\`
+
+### \`druid.logger.debug: fun(_, msg: string, data: any)\`
+
+### \`druid.logger.info: fun(_, msg: string, data: any)\`
+
+### \`druid.logger.warn: fun(_, msg: string, data: any)\`
+
+### \`druid.logger.error: fun(_, msg: string, data: any)\`
+
+### \`GUITextMetrics.width: number\`
+
+### \`GUITextMetrics.height: number\`
+
+### \`GUITextMetrics.max_ascent: number\`
+
+### \`GUITextMetrics.max_descent: number\`
+
+### \`GUITextMetrics.offset_x: number\`
+
+### \`GUITextMetrics.offset_y: number\`
+
+### \`utf8.len: fun(s: string):number\`
+
+### \`utf8.sub: fun(s: string, start_index: number, length: number)\`
+
+### \`utf8.reverse: fun()\`
+
+### \`utf8.char: fun()\`
+
+### \`utf8.unicode: fun()\`
+
+### \`utf8.gensub: fun()\`
+
+### \`utf8.byte: fun()\`
+
+### \`utf8.find: fun()\`
+
+### \`utf8.match: fun(s: string, m: string)\`
+
+### \`utf8.gmatch: fun(s: string, m: string)\`
+
+### \`utf8.gsub: fun()\`
+
+### \`utf8.dump: fun()\`
+
+### \`utf8.format: fun()\`
+
+### \`utf8.lower: fun()\`
+
+### \`utf8.upper: fun()\`
+
+### \`utf8.rep: fun()\`
+
+### \`action.value: number\`
+
+<div class="api-symbol-body">
+
+The amount of input given by the user. This is usually 1 for buttons and 0-1 for analogue inputs. This is not present for mouse movement.
+
+</div>
+
+### \`action.pressed: boolean\`
+
+<div class="api-symbol-body">
+
+If the input was pressed this frame. This is not present for mouse movement.
+
+</div>
+
+### \`action.released: boolean\`
+
+<div class="api-symbol-body">
+
+If the input was released this frame. This is not present for mouse movement.
+
+</div>
+
+### \`action.repeated: boolean\`
+
+<div class="api-symbol-body">
+
+If the input was repeated this frame. This is similar to how a key on a keyboard is repeated when you hold it down. This is not present for mouse movement.
+
+</div>
+
+### \`action.x: number\`
+
+<div class="api-symbol-body">
+
+The x value of a pointer device, if present.
+
+</div>
+
+### \`action.y: number\`
+
+<div class="api-symbol-body">
+
+The y value of a pointer device, if present.
+
+</div>
+
+### \`action.screen_x: number\`
+
+<div class="api-symbol-body">
+
+The screen space x value of a pointer device, if present.
+
+</div>
+
+### \`action.screen_y: number\`
+
+<div class="api-symbol-body">
+
+The screen space y value of a pointer device, if present.
+
+</div>
+
+### \`action.dx: number\`
+
+<div class="api-symbol-body">
+
+The change in x value of a pointer device, if present.
+
+</div>
+
+### \`action.dy: number\`
+
+<div class="api-symbol-body">
+
+The change in y value of a pointer device, if present.
+
+</div>
+
+### \`action.screen_dx: number\`
+
+<div class="api-symbol-body">
+
+The change in screen space x value of a pointer device, if present.
+
+</div>
+
+### \`action.screen_dy: number\`
+
+<div class="api-symbol-body">
+
+The change in screen space y value of a pointer device, if present.
+
+</div>
+
+### \`action.gamepad: number\`
+
+<div class="api-symbol-body">
+
+The index of the gamepad device that provided the input.
+
+</div>
+
+### \`action.touch: touch[]\`
+
+<div class="api-symbol-body">
+
+List of touch input, one element per finger, if present. See table below about touch input
+
+</div>
+
+### \`action.text: string\`
+
+<div class="api-symbol-body">
+
+The text input.
+
+</div>
+
+### \`touch.id: number\`
+
+<div class="api-symbol-body">
+
+A number identifying the touch input during its duration.
+
+</div>
+
+### \`touch.pressed: boolean\`
+
+<div class="api-symbol-body">
+
+True if the finger was pressed this frame.
+
+</div>
+
+### \`touch.released: boolean\`
+
+<div class="api-symbol-body">
+
+True if the finger was released this frame.
+
+</div>
+
+### \`touch.tap_count: number\`
+
+<div class="api-symbol-body">
+
+Number of taps, one for single, two for double-tap, etc
+
+</div>
+
+### \`touch.x: number\`
+
+<div class="api-symbol-body">
+
+The x touch location.
+
+</div>
+
+### \`touch.y: number\`
+
+<div class="api-symbol-body">
+
+The y touch location.
+
+</div>
+
+### \`touch.dx: number\`
+
+<div class="api-symbol-body">
+
+The change in x value.
+
+</div>
+
+### \`touch.dy: number\`
+
+<div class="api-symbol-body">
+
+The change in y value.
+
+</div>
+
+### \`touch.acc_x: number|nil\`
+
+<div class="api-symbol-body">
+
+Accelerometer x value (if present).
+
+</div>
+
+### \`touch.acc_y: number|nil\`
+
+<div class="api-symbol-body">
+
+Accelerometer y value (if present).
+
+</div>
+
+### \`touch.acc_z: number|nil\`
+
+<div class="api-symbol-body">
+
+Accelerometer z value (if present).
+
+</div>
+
+### \`druid.instance._can_use_input_component(component: druid.component): boolean\`
+
+<div class="api-symbol-body">
+
+Check whitelists and blacklists for input components
+
+**Parameters**
+
+- \`component\`: \`druid.component\` — The component to check
+
+**Returns**
+
+- \`boolean\` — True if component can be processed on input step
+
+</div>
+
+### \`druid.instance.new(component: T, ...: any): T\`
+
+<div class="api-symbol-body">
+
+Create new Druid component instance
+
+**Parameters**
+
+- \`component\`: \`T\` — The component class to create
+- \`...\`: \`any\` — Additional arguments to pass to the component's init function
+
+**Returns**
+
+- \`T\` — The new ready to use component
+
+</div>
+
+### \`druid.instance.final()\`
+
+<div class="api-symbol-body">
+
+Call this in gui_script final function.
+
+</div>
+
+### \`druid.instance.remove(component: T): boolean\`
+
+<div class="api-symbol-body">
+
+Remove created component from Druid instance.
+
+Component \`on_remove\` function will be invoked, if exist.
+
+**Parameters**
+
+- \`component\`: \`T\` — Component instance
+
+**Returns**
+
+- \`boolean\` — True if component was removed
+
+</div>
+
+### \`druid.instance.get_context(): any\`
+
+<div class="api-symbol-body">
+
+Get a context of Druid instance (usually a self of gui script)
+
+**Returns**
+
+- \`any\` — The Druid context
+
+</div>
+
+### \`druid.instance.get_style(): table\`
+
+<div class="api-symbol-body">
+
+Get a style of Druid instance
+
+**Returns**
+
+- \`table\` — The Druid style table
+
+</div>
+
+### \`druid.instance.late_init()\`
+
+<div class="api-symbol-body">
+
+Druid late update function called after initialization and before the regular update step.
+This function is used to check the GUI state and perform actions after all components and nodes have been created.
+An example use case is performing an auto stencil check in the GUI hierarchy for input components.
+
+</div>
+
+### \`druid.instance.update(dt: number)\`
+
+<div class="api-symbol-body">
+
+Call this in gui_script update function.
+
+**Parameters**
+
+- \`dt\`: \`number\` — Delta time
+
+</div>
+
+### \`druid.instance.on_input(action_id: hash, action: table): boolean\`
+
+<div class="api-symbol-body">
+
+Call this in gui_script on_input function.
+
+**Parameters**
+
+- \`action_id\`: \`hash\` — Action_id from on_input
+- \`action\`: \`table\` — Action from on_input
+
+**Returns**
+
+- \`boolean\` — The boolean value is input was consumed
+
+</div>
+
+### \`druid.instance.on_message(message_id: hash, message: table, sender: url)\`
+
+<div class="api-symbol-body">
+
+Call this in gui_script on_message function.
+
+**Parameters**
+
+- \`message_id\`: \`hash\` — Message_id from on_message
+- \`message\`: \`table\` — Message from on_message
+- \`sender\`: \`url\` — Sender from on_message
+
+</div>
+
+### \`druid.instance.on_window_event(window_event: number)\`
+
+<div class="api-symbol-body">
+
+Called when the window event occurs
+
+**Parameters**
+
+- \`window_event\`: \`number\` — The window event
+
+</div>
+
+### \`druid.instance.on_language_change()\`
+
+<div class="api-symbol-body">
+
+Calls the on_language_change function in all related components
+This one called by global <a href="/api/druid#on_language_change" class="symbol-xref">druid.on_language_change</a>, but can be called manually to update all translations
+
+</div>
+
+### \`druid.instance.set_whitelist(whitelist_components: table|druid.component[]): druid.instance\`
+
+<div class="api-symbol-body">
+
+Set whitelist components for input processing.
+If whitelist is not empty and component not contains in this list,
+component will be not processed on the input step
+
+**Parameters**
+
+- \`whitelist_components\`: \`table|druid.component[]\` — The array of component to whitelist
+
+**Returns**
+
+- \`druid.instance\` — The Druid instance
+
+</div>
+
+### \`druid.instance.set_blacklist(blacklist_components: table|druid.component[]): druid.instance\`
+
+<div class="api-symbol-body">
+
+Set blacklist components for input processing.
+If blacklist is not empty and component is contained in this list,
+component will be not processed on the input step DruidInstance
+
+**Parameters**
+
+- \`blacklist_components\`: \`table|druid.component[]\` — The array of component to blacklist
+
+**Returns**
+
+- \`druid.instance\` — The Druid instance
+
+</div>
+
+### \`druid.instance._clear_late_remove()\`
+
+<div class="api-symbol-body">
+
+Remove all components on late remove step DruidInstance
+
+</div>
+
+### \`druid.instance.new_widget(widget: T, template: string|nil, nodes: table<hash, node>|node|string|nil, ...: any): T\`
+
+<div class="api-symbol-body">
+
+Create new Druid widget instance
+
+**Parameters**
+
+- \`widget\`: \`T\` — The widget class to create
+- \`template\`: \`string|nil\` — The template name used by widget
+- \`nodes\`: \`table<hash, node>|node|string|nil\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- \`...\`: \`any\` — Additional arguments to pass to the widget's init function
+
+**Returns**
+
+- \`T\` — The new ready to use widget
+
+</div>
+
+### \`druid.instance.new_button(node: string|node, callback: function|event|nil, params: any|nil, anim_node: node|string|nil): druid.button\`
+
+<div class="api-symbol-body">
+
+Create Button component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`callback\`: \`function|event|nil\` — Button callback
+- \`params\`: \`any|nil\` — Button callback params
+- \`anim_node\`: \`node|string|nil\` — Button anim node (node, if not provided)
+
+**Returns**
+
+- \`druid.button\` — The new button component
+
+</div>
+
+### \`druid.instance.new_blocker(node: string|node): druid.blocker\`
+
+<div class="api-symbol-body">
+
+Create Blocker component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+
+**Returns**
+
+- \`druid.blocker\` — The new blocker component
+
+</div>
+
+### \`druid.instance.new_back_handler(callback: function|event|nil, params: any|nil): druid.back_handler\`
+
+<div class="api-symbol-body">
+
+Create BackHandler component
+
+**Parameters**
+
+- \`callback\`: \`function|event|nil\` — The callback(self, custom_args) to call on back event
+- \`params\`: \`any|nil\` — Callback argument
+
+**Returns**
+
+- \`druid.back_handler\` — The new back handler component
+
+</div>
+
+### \`druid.instance.new_hover(node: string|node, on_hover_callback: function|nil, on_mouse_hover_callback: function|nil): druid.hover\`
+
+<div class="api-symbol-body">
+
+Create Hover component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`on_hover_callback\`: \`function|nil\` — Hover callback
+- \`on_mouse_hover_callback\`: \`function|nil\` — Mouse hover callback
+
+**Returns**
+
+- \`druid.hover\` — The new hover component
+
+</div>
+
+### \`druid.instance.new_text(node: string|node|druid.text, value: string|nil, adjust_type: string|nil): druid.text\`
+
+<div class="api-symbol-body">
+
+Create Text component
+
+**Parameters**
+
+- \`node\`: \`string|node|druid.text\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`value\`: \`string|nil\` — Initial text. Default value is node text from GUI scene.
+- \`adjust_type\`: \`string|nil\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
+
+**Returns**
+
+- \`druid.text\` — The new text component
+
+</div>
+
+### \`druid.instance.new_grid(parent_node: string|node, item: string|node, in_row: number|nil): druid.grid\`
+
+<div class="api-symbol-body">
+
+Create Grid component
+
+**Parameters**
+
+- \`parent_node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Parent of all Grid items.
+- \`item\`: \`string|node\` — Item prefab. Required to get grid's item size. Can be adjusted separately.
+- \`in_row\`: \`number|nil\` — How many nodes can be placed in a row
+
+**Returns**
+
+- \`druid.grid\` — The new grid component
+
+</div>
+
+### \`druid.instance.new_scroll(view_node: string|node, content_node: string|node): druid.scroll\`
+
+<div class="api-symbol-body">
+
+Create Scroll component
+
+**Parameters**
+
+- \`view_node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- \`content_node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as scrollable node inside view_node.
+
+**Returns**
+
+- \`druid.scroll\` — The new scroll component
+
+</div>
+
+### \`druid.instance.new_drag(node: string|node, on_drag_callback: function|nil): druid.drag\`
+
+<div class="api-symbol-body">
+
+Create Drag component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- \`on_drag_callback\`: \`function|nil\` — Callback for on_drag_event(self, dx, dy)
+
+**Returns**
+
+- \`druid.drag\` — The new drag component
+
+</div>
+
+### \`druid.instance.new_swipe(node: string|node, on_swipe_callback: function|nil): druid.swipe\`
+
+<div class="api-symbol-body">
+
+Create Swipe component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- \`on_swipe_callback\`: \`function|nil\` — Swipe callback for on_swipe_end event
+
+**Returns**
+
+- \`druid.swipe\` — The new swipe component
+
+</div>
+
+### \`druid.instance.new_lang_text(node: string|node, locale_id: string|nil, adjust_type: string|nil): druid.lang_text\`
+
+<div class="api-symbol-body">
+
+Create LangText component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`locale_id\`: \`string|nil\` — Default locale id or text from node as default
+- \`adjust_type\`: \`string|nil\` — Adjust type for text node. Default: "downscale"
+
+**Returns**
+
+- \`druid.lang_text\` — The new lang text component
+
+</div>
+
+### \`druid.instance.new_slider(pin_node: string|node, end_pos: vector3, callback: function|nil): druid.slider\`
+
+<div class="api-symbol-body">
+
+Create Slider component
+
+**Parameters**
+
+- \`pin_node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- \`end_pos\`: \`vector3\` — The end position of slider
+- \`callback\`: \`function|nil\` — On slider change callback
+
+**Returns**
+
+- \`druid.slider\` — The new slider component
+
+</div>
+
+### \`druid.instance.new_input(click_node: string|node, text_node: string|node|druid.text, keyboard_type: number|nil): druid.input\`
+
+<div class="api-symbol-body">
+
+Create Input component
+
+**Parameters**
+
+- \`click_node\`: \`string|node\` — Button node to enable input component
+- \`text_node\`: \`string|node|druid.text\` — Text node that will be changed on user input
+- \`keyboard_type\`: \`number|nil\` — Gui keyboard type for input field
+
+**Returns**
+
+- \`druid.input\` — The new input component
+
+</div>
+
+### \`druid.instance.new_data_list(druid_scroll: druid.scroll, druid_grid: druid.grid, create_function: function): druid.data_list\`
+
+<div class="api-symbol-body">
+
+Create DataList component
+
+**Parameters**
+
+- \`druid_scroll\`: \`druid.scroll\` — The Scroll instance for Data List component
+- \`druid_grid\`: \`druid.grid\` — The Grid instance for Data List component
+- \`create_function\`: \`function\` — The create function callback(self, data, index, data_list). Function should return (node, [component])
+
+**Returns**
+
+- \`druid.data_list\` — The new data list component
+
+</div>
+
+### \`druid.instance.new_timer(node: string|node, seconds_from: number|nil, seconds_to: number|nil, callback: function|nil): druid.timer\`
+
+<div class="api-symbol-body">
+
+Create Timer component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — Gui text node
+- \`seconds_from\`: \`number|nil\` — Start timer value in seconds
+- \`seconds_to\`: \`number|nil\` — End timer value in seconds
+- \`callback\`: \`function|nil\` — Function on timer end
+
+**Returns**
+
+- \`druid.timer\` — The new timer component
+
+</div>
+
+### \`druid.instance.new_progress(node: string|node, key: string, init_value: number|nil): druid.progress\`
+
+<div class="api-symbol-body">
+
+Create Progress component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — Progress bar fill node or node name
+- \`key\`: \`string\` — Progress bar direction: "x" or "y"
+- \`init_value\`: \`number|nil\` — Initial value of progress bar. Default: 1
+
+**Returns**
+
+- \`druid.progress\` — The new progress component
+
+</div>
+
+### \`druid.instance.new_layout(node: string|node, mode: string|nil): druid.layout\`
+
+<div class="api-symbol-body">
+
+Create Layout component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- \`mode\`: \`string|nil\` — vertical|horizontal|horizontal_wrap. Default: horizontal
+
+**Returns**
+
+- \`druid.layout\` — The new layout component
+
+</div>
+
+### \`druid.instance.new_container(node: string|node, mode: druid.container.mode|nil, callback: fun(self: druid.container, size: vector3)|nil): druid.container\`
+
+<div class="api-symbol-body">
+
+Create Container component
+
+**Parameters**
+
+- \`node\`: \`string|node\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- \`mode\`: \`druid.container.mode|nil\` — Layout mode. Default Fit or Stretch depends from node adjust mode from GUI scene
+- \`callback\`: \`fun(self: druid.container, size: vector3)|nil\` — Callback on size changed
+
+**Returns**
+
+- \`druid.container\` — The new container component
+
+</div>
+
+### \`druid.instance.new_hotkey(keys_array: string|string[], callback: function|event|nil, callback_argument: any|nil): druid.hotkey\`
+
+<div class="api-symbol-body">
+
+Create Hotkey component
+
+**Parameters**
+
+- \`keys_array\`: \`string|string[]\` — Keys for trigger action. Should contains one action key and any amount of modificator keys
+- \`callback\`: \`function|event|nil\` — The callback function
+- \`callback_argument\`: \`any|nil\` — The argument to pass into the callback function
+
+**Returns**
+
+- \`druid.hotkey\` — The new hotkey component
+
+</div>
+
+### \`druid.instance.new_rich_text(text_node: string|node, value: string|nil): druid.rich_text\`
+
+<div class="api-symbol-body">
+
+Create RichText component.
+
+**Parameters**
+
+- \`text_node\`: \`string|node\` — The text node to make Rich Text
+- \`value\`: \`string|nil\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+
+**Returns**
+
+- \`druid.rich_text\` — The new rich text component
+
+</div>
+
+### \`druid.instance.new_rich_input(template: string, nodes: table|nil): druid.rich_input\`
+
+<div class="api-symbol-body">
+
+Create RichInput component.
+As a template please check rich_input.gui layout.
+
+**Parameters**
+
+- \`template\`: \`string\` — The template string name
+- \`nodes\`: \`table|nil\` — Nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
+
+**Returns**
+
+- \`druid.rich_input\` — The new rich input component
+
+</div>
+"
+`;

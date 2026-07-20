@@ -35,8 +35,10 @@ changes are called out first because the toolchain is pre-1.0.
   that `skipLibCheck` had been hiding. The LuaLS
   sync scripts (`luals:emit`/`--fidelity`) now run on Windows, which previously
   threw a spurious "fixture not found" because fixture path separators were
-  compared unnormalized. The published package you import still ships in a later
-  release.
+  compared unnormalized. Druid now also has a rendered API reference page under
+  `/api/druid`, attributed to its own upstream repository and release tag rather
+  than the ts-defold library pin. The published package you import still ships
+  in a later release.
 
 ## v0.20.8
 
