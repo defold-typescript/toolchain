@@ -1,8 +1,8 @@
 {
   "namespace": "druid",
-  "totalMembers": 813,
-  "totalTypeTokens": 1070,
-  "unknownFallbacks": 104,
+  "totalMembers": 808,
+  "totalTypeTokens": 1065,
+  "unknownFallbacks": 99,
   "unknownTokens": [
     "...",
     "_",
@@ -16,6 +16,6 @@
     "self",
     "touch"
   ],
-  "undocumentedMembers": 245,
-  "coverage": 0.903
+  "undocumentedMembers": 240,
+  "coverage": 0.907
 }
