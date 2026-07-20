@@ -93,7 +93,7 @@ describe("druid resolves and its materialized types are usable end to end", () =
     });
     const errors = project.diagnostics.filter((d) => d.category !== "warning");
     expect(errors).toEqual([]);
-    expect(project.lua["main.ts"]).toContain('require("druid.druid")');
+    expect(project.lua["main.ts"]).toMatchSnapshot();
   });
 
   test("a consumer that misuses the druid API produces an error diagnostic (the check is not vacuous)", async () => {
