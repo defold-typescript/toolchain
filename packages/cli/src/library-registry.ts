@@ -10,8 +10,10 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import {
   buildLibraryRegistry,
+  buildLualsRegistryEntries,
   type LibraryClassification,
   type LibraryTargets,
+  type LualsTargets,
   type VendoredLibrary,
 } from "./library-match";
 
@@ -52,10 +54,30 @@ export function loadVendoredLibraryRegistry(
     ) as LibraryClassification;
     const targets = JSON.parse(readFileSync(targetsPath, "utf8")) as LibraryTargets;
     return {
-      registry: buildLibraryRegistry(classification, targets),
+      registry: [
+        ...buildLibraryRegistry(classification, targets),
+        ...readLualsRegistryEntries(root),
+      ],
       generatedDir: path.join(root, "generated"),
     };
   } catch {
     return EMPTY;
+  }
+}
+
+// LuaLS libraries are recognized straight from `luals-targets.json`, the single
+// per-library entry point. A missing or unparseable file degrades to the
+// pure-Lua-only registry rather than throwing, so a corpus without it still
+// resolves the vendored libraries.
+function readLualsRegistryEntries(root: string): VendoredLibrary[] {
+  const lualsTargetsPath = path.join(root, "luals-targets.json");
+  if (!existsSync(lualsTargetsPath)) {
+    return [];
+  }
+  try {
+    const targets = JSON.parse(readFileSync(lualsTargetsPath, "utf8")) as LualsTargets;
+    return buildLualsRegistryEntries(targets);
+  } catch {
+    return [];
   }
 }

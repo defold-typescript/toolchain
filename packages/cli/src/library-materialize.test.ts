@@ -146,6 +146,44 @@ describe("materializeVendoredLibraries", () => {
     expect(existsSync(path.join(librariesDir(), "keep.keep.d.ts"))).toBe(true);
   });
 
+  test("a LuaLS entry sources by generated stem but names the surface by module id", () => {
+    const druid = "declare module 'druid.druid' { export const version: string; }\n";
+    seedGenerated("druid", druid);
+
+    const result = materializeVendoredLibraries({
+      cwd,
+      matched: [
+        { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+      ],
+      generatedDir,
+    });
+
+    expect(result).toEqual({
+      materializedDir: ".defold-types/libraries",
+      modules: ["druid.druid"],
+      skipped: [],
+    });
+    const dir = librariesDir();
+    expect(readFileSync(path.join(dir, "druid.druid.d.ts"), "utf8")).toBe(druid);
+    expect(existsSync(path.join(dir, "druid.d.ts"))).toBe(false);
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
+      'import "./druid.druid";\n\nexport {};\n',
+    );
+  });
+
+  test("a LuaLS entry whose generated stem file is absent is skipped, not thrown", () => {
+    const result = materializeVendoredLibraries({
+      cwd,
+      matched: [
+        { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+      ],
+      generatedDir,
+    });
+
+    expect(result).toEqual({ materializedDir: null, modules: [], skipped: ["druid.druid"] });
+    expect(existsSync(librariesDir())).toBe(false);
+  });
+
   test("a matched module whose generated file is absent is skipped; present siblings materialize", () => {
     seedGenerated("present.present", "declare module 'present.present' {}\n");
 

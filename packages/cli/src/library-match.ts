@@ -36,6 +36,25 @@ export interface LibraryTargets {
 export interface VendoredLibrary {
   readonly sourceId: string;
   readonly modules: string[];
+  // LuaLS-only: maps a verify module id to the committed `generated/<stem>.d.ts`
+  // file stem when the two differ (druid verifies on `druid.druid` but ships its
+  // types in `generated/druid.d.ts`). Absent for pure-Lua libraries, where the
+  // stem is the module id and materialize behaves unchanged.
+  readonly generatedStems?: Readonly<Record<string, string>>;
+}
+
+// A single library entry in `packages/library-types/luals-targets.json`: the
+// upstream repo, the require module the archive ships (`moduleId`, used to
+// verify a match against the downloaded archive), and the `namespace` the
+// committed `.d.ts` file is named for (the generated stem).
+export interface LualsTarget {
+  readonly repo: string;
+  readonly moduleId: string;
+  readonly namespace: string;
+}
+
+export interface LualsTargets {
+  readonly targets: readonly LualsTarget[];
 }
 
 // pure-Lua and already-vendored dirs materialize into `.defold-types/`; native
@@ -81,6 +100,17 @@ export function buildLibraryRegistry(
     }
   }
   return registry;
+}
+
+// Turn the LuaLS target list into `VendoredLibrary` entries. Each target
+// verifies against the archive's shipped `moduleId` but sources its committed
+// types from `generated/<namespace>.d.ts`, so the stem is recorded separately.
+export function buildLualsRegistryEntries(targets: LualsTargets): VendoredLibrary[] {
+  return targets.targets.map((target) => ({
+    sourceId: normalizeSourceId(target.repo),
+    modules: [target.moduleId],
+    generatedStems: { [target.moduleId]: target.namespace },
+  }));
 }
 
 export function normalizeSourceId(url: string): string {
