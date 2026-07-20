@@ -295,6 +295,47 @@ describe("parseLualsSource field visibility and @vararg", () => {
   });
 });
 
+describe("parseLualsSource module ownership and spaced fun returns", () => {
+  test("a spaced `fun(...): ret` return survives the top-level colon; the trailer is doc", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param cb fun(text_id: string): string Get localized text",
+        "function M.f(cb)",
+        "end",
+      ),
+    );
+    const param = model.moduleFunctions[0]?.params[0];
+    expect(param?.types).toEqual(["fun(text_id: string): string"]);
+    expect(param?.doc).toBe("Get localized text");
+  });
+
+  test("a spaced multi-return `fun(): number, string` survives the top-level colon and comma", () => {
+    const model = parseLualsSource(
+      lua("---@param cb fun(): number, string the cb", "function M.f(cb)", "end"),
+    );
+    const param = model.moduleFunctions[0]?.params[0];
+    expect(param?.types).toEqual(["fun(): number, string"]);
+    expect(param?.doc).toBe("the cb");
+  });
+
+  test("bare `local function` and bare `function` are not module surface; dotted `M.x` is", () => {
+    const model = parseLualsSource(
+      lua(
+        "local function helper()",
+        "end",
+        "function plain()",
+        "end",
+        "function M.public()",
+        "end",
+      ),
+    );
+    const names = model.moduleFunctions.map((f) => f.name);
+    expect(names).toContain("public");
+    expect(names).not.toContain("helper");
+    expect(names).not.toContain("plain");
+  });
+});
+
 describe("druid parse snapshot", () => {
   const druidRoot = join(PACKAGE_ROOT, "fixtures/luals/druid");
   const files = readdirSync(druidRoot, { recursive: true })
