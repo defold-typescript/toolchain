@@ -309,7 +309,10 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     );
     const dir = moduleDir.get(namespace);
     if (!module.description) {
-      const fallback = dir ? descByDir?.get(dir) : undefined;
+      // ts-defold libraries key the description on their upstream dir; a LuaLS
+      // library has no classification dir, so it keys on its namespace directly
+      // (druid documents its own `---@class` and never reaches this fallback).
+      const fallback = (dir ? descByDir?.get(dir) : undefined) ?? descByDir?.get(namespace);
       if (fallback) module.description = fallback;
     }
     const meta = metaFor(namespace);

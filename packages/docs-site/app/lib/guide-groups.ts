@@ -33,7 +33,16 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "cli",
     label: "CLI",
     subtitle: "The command-line verbs you run day to day.",
-    slugs: ["init", "watch", "build", "run", "bob", "wall", "resolve"],
+    slugs: [
+      "init",
+      "watch",
+      "build",
+      "run",
+      "bob",
+      "wall",
+      "resolve",
+      "authoring-luals-library-types",
+    ],
   },
   {
     id: "toolchain-workflow",

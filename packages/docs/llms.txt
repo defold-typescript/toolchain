@@ -35,6 +35,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [bob](guide/bob.md)
 - [wall](guide/wall.md)
 - [resolve](guide/resolve.md)
+- [Authoring LuaLS library types](guide/authoring-luals-library-types.md)
 - [Transpile diagnostics](guide/transpile-diagnostics.md)
 - [Debugging](guide/debugging.md)
 - [Agent runbooks](guide/agent-runbooks.md)

@@ -318,6 +318,7 @@ describe("buildNav", () => {
       "/bob",
       "/wall",
       "/resolve",
+      "/authoring-luals-library-types",
     ]);
     expect(byLabel("Toolchain & workflow")?.children?.map((c) => c.route)).toEqual([
       "/transpile-diagnostics",

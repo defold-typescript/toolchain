@@ -58,6 +58,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [bob](https://defold-typescript.github.io/toolchain/bob) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
 - [wall](https://defold-typescript.github.io/toolchain/wall) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](https://defold-typescript.github.io/toolchain/resolve) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
+- [Authoring LuaLS library types](https://defold-typescript.github.io/toolchain/authoring-luals-library-types) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the `luals-targets.json` entry, the fetch/fidelity/emit/api-doc commands, and how the committed `.d.ts` reaches a consumer via [`resolve`](https://defold-typescript.github.io/toolchain/resolve).
 
 ### Toolchain & workflow
 

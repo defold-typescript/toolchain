@@ -1,0 +1,1883 @@
+{
+  "info": {
+    "namespace": "decore",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "new_world",
+      "brief": "Create a new world instance",
+      "description": "Create a new world instance",
+      "parameters": [
+        {
+          "name": "...args",
+          "doc": "",
+          "types": [
+            "system[] | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "world"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "Add window event to the world event bus",
+      "description": "Add window event to the world event bus",
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "",
+          "types": [
+            "world"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "LuaTable | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "sender",
+          "doc": "",
+          "types": [
+            "Url | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "system",
+      "brief": "",
+      "description": "",
+      "generics": "<T>",
+      "parameters": [
+        {
+          "name": "system_module",
+          "doc": "The module with system functions",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "system_id",
+          "doc": "The system id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "require_all_filters",
+          "doc": "The required components. Example: {\"transform\", \"game_object\"} or \"transform\". If nil - system will contain no entities",
+          "types": [
+            "string | string[] | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "T"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "processing_system",
+      "brief": "",
+      "description": "",
+      "generics": "<T>",
+      "parameters": [
+        {
+          "name": "system_module",
+          "doc": "The module with system functions",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "system_id",
+          "doc": "The system id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "require_all_filters",
+          "doc": "The required components. Example: {\"transform\", \"game_object\"} or \"transform\"",
+          "types": [
+            "string | string[] | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "T"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sorted_system",
+      "brief": "",
+      "description": "",
+      "generics": "<T>",
+      "parameters": [
+        {
+          "name": "system_module",
+          "doc": "The module with system functions",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "system_id",
+          "doc": "The system id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "require_all_filters",
+          "doc": "The required components. Example: {\"transform\", \"game_object\"} or \"transform\"",
+          "types": [
+            "string | string[] | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "T"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sorted_processing_system",
+      "brief": "",
+      "description": "",
+      "generics": "<T>",
+      "parameters": [
+        {
+          "name": "system_module",
+          "doc": "The module with system functions",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "system_id",
+          "doc": "The system id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "require_all_filters",
+          "doc": "The required components. Example: {\"transform\", \"game_object\"} or \"transform\"",
+          "types": [
+            "string | string[] | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "T"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_entity",
+      "brief": "Register entity to create it with `create_prefab` function",
+      "description": "Register entity to create it with `create_prefab` function",
+      "parameters": [
+        {
+          "name": "entity_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "entity_data",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "pack_id",
+          "doc": "default \"decore\"",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_entities",
+      "brief": "Add entities pack to decore entities\nIf entities pack with same id already loaded, do nothing.\nIf the same id is used in different packs, the last one will be used in `create_prefab` function",
+      "description": "Add entities pack to decore entities\nIf entities pack with same id already loaded, do nothing.\nIf the same id is used in different packs, the last one will be used in `create_prefab` function",
+      "parameters": [
+        {
+          "name": "pack_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "entities",
+          "doc": "",
+          "types": [
+            "LuaTable<string, LuaTable>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unregister_entities",
+      "brief": "Unload entities pack from decore entities",
+      "description": "Unload entities pack from decore entities",
+      "parameters": [
+        {
+          "name": "pack_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Create new entity instance",
+      "description": "Create new entity instance",
+      "parameters": [
+        {
+          "name": "components",
+          "doc": "",
+          "types": [
+            "LuaTable<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "entity"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_prefab",
+      "brief": "Create new entity instance from prefab",
+      "description": "Create new entity instance from prefab",
+      "parameters": [
+        {
+          "name": "prefab_id",
+          "doc": "",
+          "types": [
+            "string | Hash | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "pack_id",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "components",
+          "doc": "additional components to merge with prefab",
+          "types": [
+            "LuaTable<string, unknown> | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "entity"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_component",
+      "brief": "Register component to decore components",
+      "description": "Register component to decore components",
+      "parameters": [
+        {
+          "name": "component_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "component_data",
+          "doc": "",
+          "types": [
+            "LuaTable | string | number | boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "pack_id",
+          "doc": "default \"decore\"",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register_components",
+      "brief": "Register components pack to decore components",
+      "description": "Register components pack to decore components",
+      "parameters": [
+        {
+          "name": "components_data",
+          "doc": "",
+          "types": [
+            "decore_components_data"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unregister_components",
+      "brief": "Unload components pack from decore components",
+      "description": "Unload components pack from decore components",
+      "parameters": [
+        {
+          "name": "pack_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_component",
+      "brief": "Return new component instance from prefab",
+      "description": "Return new component instance from prefab",
+      "parameters": [
+        {
+          "name": "component_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "component_pack_id",
+          "doc": "if nil, use first found from latest loaded pack",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "nil if component not found. False can be returned as a component value (check on nil instead of not)",
+          "types": [
+            "unknown | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "apply_component",
+      "brief": "Add component to entity.\nIf component not exists, it will be created with default values\nIf component already exists, it will be merged with the new data\nTo refresh system filters, call world:addEntity(entity) after this function",
+      "description": "Add component to entity.\nIf component not exists, it will be created with default values\nIf component already exists, it will be merged with the new data\nTo refresh system filters, call world:addEntity(entity) after this function",
+      "parameters": [
+        {
+          "name": "entity",
+          "doc": "",
+          "types": [
+            "entity"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "component_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "component_data",
+          "doc": "if nil, create component with default values",
+          "types": [
+            "unknown | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "entity"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "apply_components",
+      "brief": "Add components to entity\nTo refresh system filters, call world:addEntity(entity) after this function",
+      "description": "Add components to entity\nTo refresh system filters, call world:addEntity(entity) after this function",
+      "parameters": [
+        {
+          "name": "entity",
+          "doc": "",
+          "types": [
+            "entity"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "components",
+          "doc": "",
+          "types": [
+            "LuaTable<string, unknown> | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "entity"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_entity_by_id",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "",
+          "types": [
+            "world"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "entity | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "find_entities",
+      "brief": "Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.\nIt looks for component_id in entity and entityToChange tables",
+      "description": "Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.\nIt looks for component_id in entity and entityToChange tables",
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "",
+          "types": [
+            "world"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "component_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "component_value",
+          "doc": "if nil, return all entities with component_id",
+          "types": [
+            "unknown | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "entity[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "print_loaded_packs_debug_info",
+      "brief": "Log all loaded packs for entities, components and worlds",
+      "description": "Log all loaded packs for entities, components and worlds",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "print_loaded_systems_debug_info",
+      "brief": "Log all loaded systems",
+      "description": "Log all loaded systems",
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "",
+          "types": [
+            "world"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "",
+          "types": [
+            "decore_logger | LuaTable | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_logger",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "level",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "decore_logger"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "world",
+      "properties": [
+        {
+          "name": "event_bus",
+          "brief": "",
+          "description": "",
+          "types": [
+            "decore_event_bus"
+          ]
+        },
+        {
+          "name": "entities",
+          "brief": "",
+          "description": "",
+          "types": [
+            "entity[]"
+          ]
+        },
+        {
+          "name": "systems",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "speed",
+          "brief": "Koef for delta time",
+          "description": "Koef for delta time",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "add",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, ...args: unknown[]) => unknown"
+          ]
+        },
+        {
+          "name": "addEntity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, entity: entity) => entity"
+          ]
+        },
+        {
+          "name": "addSystem",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, system: system) => system"
+          ]
+        },
+        {
+          "name": "remove",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, ...args: unknown[]) => void"
+          ]
+        },
+        {
+          "name": "removeEntity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, entity: entity) => entity"
+          ]
+        },
+        {
+          "name": "removeSystem",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, system: system) => system"
+          ]
+        },
+        {
+          "name": "refresh",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world) => void"
+          ]
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, dt: number, filter: (() => void) | undefined) => void"
+          ]
+        },
+        {
+          "name": "fixed_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, dt: number, filter: (() => void) | undefined) => void"
+          ]
+        },
+        {
+          "name": "late_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world, dt: number, filter: (() => void) | undefined) => void"
+          ]
+        },
+        {
+          "name": "clearEntities",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world) => void"
+          ]
+        },
+        {
+          "name": "clearSystems",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world) => void"
+          ]
+        },
+        {
+          "name": "getEntityCount",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world) => void"
+          ]
+        },
+        {
+          "name": "getSystemCount",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world) => void"
+          ]
+        },
+        {
+          "name": "setSystemIndex",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: world) => void"
+          ]
+        },
+        {
+          "name": "entitiesToChange",
+          "brief": "",
+          "description": "",
+          "types": [
+            "entity[]"
+          ]
+        },
+        {
+          "name": "entitiesToRemove",
+          "brief": "",
+          "description": "",
+          "types": [
+            "entity[]"
+          ]
+        },
+        {
+          "name": "systemsToChange",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "systemsToAdd",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "systemsToRemove",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "findEntities",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(world: world, component_id: string, component_value: unknown | undefined) => entity[]"
+          ]
+        },
+        {
+          "name": "findEntity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(world: world, component_id: string, component_value: unknown | undefined) => entity | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "decore"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "decore_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "decore_components_data",
+      "properties": [
+        {
+          "name": "pack_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "components",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "entity",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "Unique entity id, autofilled by decore.create_entity",
+          "description": "Unique entity id, autofilled by decore.create_entity",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "prefab_id",
+          "brief": "The entity id from decore collections, autofilled by decore.create_entity",
+          "description": "The entity id from decore collections, autofilled by decore.create_entity",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "pack_id",
+          "brief": "The entity id from decore collections, autofilled by decore.create_entity",
+          "description": "The entity id from decore collections, autofilled by decore.create_entity",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "parent_prefab_id",
+          "brief": "The parent prefab_id, used for prefab inheritance",
+          "description": "The parent prefab_id, used for prefab inheritance",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "child_instancies",
+          "brief": "The child instances to spawn on entity creation",
+          "description": "The child instances to spawn on entity creation",
+          "types": [
+            "entity | undefined"
+          ]
+        },
+        {
+          "name": "parent_id",
+          "brief": "The parent id",
+          "description": "The parent id",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "children_ids",
+          "brief": "The children ids",
+          "description": "The children ids",
+          "types": [
+            "number[] | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "system_decore",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "onAddToWorld",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "world",
+              "doc": "",
+              "types": [
+                "world"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "onRemoveFromWorld",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "world",
+              "doc": "",
+              "types": [
+                "world"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "onAdd",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "entity",
+              "doc": "",
+              "types": [
+                "entity"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "onRemove",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "entity",
+              "doc": "",
+              "types": [
+                "entity"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "spawn_children",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "entity",
+              "doc": "",
+              "types": [
+                "entity"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "remove_children",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "entity",
+              "doc": "",
+              "types": [
+                "entity"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "remove_from_parent",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "entity",
+              "doc": "",
+              "types": [
+                "entity"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "decore",
+          "brief": "",
+          "description": "",
+          "types": [
+            "decore"
+          ]
+        },
+        {
+          "name": "id_to_entity",
+          "brief": "The entity id to entity map",
+          "description": "The entity id to entity map",
+          "types": [
+            "LuaTable<number, entity>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "system",
+      "properties": [
+        {
+          "name": "indices",
+          "brief": "Entity index in entities table",
+          "description": "Entity index in entities table",
+          "types": [
+            "LuaTable<entity, number>"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "filter",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((self: system, entity: entity) => void) | undefined"
+          ]
+        },
+        {
+          "name": "active",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "world",
+          "brief": "",
+          "description": "",
+          "types": [
+            "world"
+          ]
+        },
+        {
+          "name": "entities",
+          "brief": "",
+          "description": "",
+          "types": [
+            "entity[]"
+          ]
+        },
+        {
+          "name": "nocache",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "index",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "modified",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "interval",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "bufferedTime",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "onAdd",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((self: system, entity: entity) => void) | undefined"
+          ]
+        },
+        {
+          "name": "onRemove",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((self: system, entity: entity) => void) | undefined"
+          ]
+        },
+        {
+          "name": "onModify",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((self: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "onAddToWorld",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((self: system, world: world) => void) | undefined"
+          ]
+        },
+        {
+          "name": "onRemoveFromWorld",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((self: system, world: world) => void) | undefined"
+          ]
+        },
+        {
+          "name": "preWrap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "postWrap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "fixed_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "late_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "preProcess",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "process",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, entity: entity, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "postProcess",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((system: system, dt: number) => void) | undefined"
+          ]
+        },
+        {
+          "name": "compare",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((e1: entity, e2: entity) => void) | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "tiny_ecs_Tiny_ECS_module",
+      "properties": [
+        {
+          "name": "requireAll",
+          "brief": "Returns a filter function that requires all of the specified components",
+          "description": "Returns a filter function that requires all of the specified components",
+          "types": [
+            "(...args: unknown[]) => unknown"
+          ]
+        },
+        {
+          "name": "requireAny",
+          "brief": "Returns a filter function that requires any of the specified components",
+          "description": "Returns a filter function that requires any of the specified components",
+          "types": [
+            "(...args: unknown[]) => unknown"
+          ]
+        },
+        {
+          "name": "rejectAll",
+          "brief": "Returns a filter function that rejects all of the specified components",
+          "description": "Returns a filter function that rejects all of the specified components",
+          "types": [
+            "(...args: unknown[]) => unknown"
+          ]
+        },
+        {
+          "name": "rejectAny",
+          "brief": "Returns a filter function that rejects any of the specified components",
+          "description": "Returns a filter function that rejects any of the specified components",
+          "types": [
+            "(...args: unknown[]) => unknown"
+          ]
+        },
+        {
+          "name": "filter",
+          "brief": "Returns a filter function that matches the specified pattern",
+          "description": "Returns a filter function that matches the specified pattern",
+          "types": [
+            "(pattern: string) => LuaMultiReturn<[unknown, unknown]>"
+          ]
+        },
+        {
+          "name": "system",
+          "brief": "Creates a new system",
+          "description": "Creates a new system",
+          "types": [
+            "(table: system | undefined) => system"
+          ]
+        },
+        {
+          "name": "processingSystem",
+          "brief": "Creates a new processing system",
+          "description": "Creates a new processing system",
+          "types": [
+            "(table: system | undefined) => system"
+          ]
+        },
+        {
+          "name": "sortedSystem",
+          "brief": "Creates a new sorted system",
+          "description": "Creates a new sorted system",
+          "types": [
+            "(table: system | undefined) => system"
+          ]
+        },
+        {
+          "name": "sortedProcessingSystem",
+          "brief": "Creates a new sorted processing system",
+          "description": "Creates a new sorted processing system",
+          "types": [
+            "(table: system | undefined) => system"
+          ]
+        },
+        {
+          "name": "world",
+          "brief": "Creates a new world",
+          "description": "Creates a new world",
+          "types": [
+            "(...args: unknown[]) => LuaMultiReturn<[world, unknown]>"
+          ]
+        },
+        {
+          "name": "addEntity",
+          "brief": "Adds an entity to the world",
+          "description": "Adds an entity to the world",
+          "types": [
+            "(world: world, entity: entity) => entity"
+          ]
+        },
+        {
+          "name": "addSystem",
+          "brief": "Adds a system to the world",
+          "description": "Adds a system to the world",
+          "types": [
+            "(world: world, system: system) => system"
+          ]
+        },
+        {
+          "name": "add",
+          "brief": "Adds entities to the world",
+          "description": "Adds entities to the world",
+          "types": [
+            "(world: world, ...args: unknown[]) => unknown"
+          ]
+        },
+        {
+          "name": "removeEntity",
+          "brief": "Removes an entity from the world",
+          "description": "Removes an entity from the world",
+          "types": [
+            "(world: world, entity: entity) => entity"
+          ]
+        },
+        {
+          "name": "removeSystem",
+          "brief": "Removes a system from the world",
+          "description": "Removes a system from the world",
+          "types": [
+            "(world: world, system: system) => system"
+          ]
+        },
+        {
+          "name": "remove",
+          "brief": "Removes entities from the world",
+          "description": "Removes entities from the world",
+          "types": [
+            "(world: world, ...args: unknown[]) => unknown"
+          ]
+        },
+        {
+          "name": "refresh",
+          "brief": "Refreshes the world",
+          "description": "Refreshes the world",
+          "types": [
+            "(world: world) => void"
+          ]
+        },
+        {
+          "name": "update",
+          "brief": "Updates the world",
+          "description": "Updates the world",
+          "types": [
+            "(world: world, dt: number, filter: ((...args: unknown[]) => void) | undefined) => unknown"
+          ]
+        },
+        {
+          "name": "clearEntities",
+          "brief": "Clears all entities from the world",
+          "description": "Clears all entities from the world",
+          "types": [
+            "(world: world) => void"
+          ]
+        },
+        {
+          "name": "clearSystems",
+          "brief": "Clears all systems from the world",
+          "description": "Clears all systems from the world",
+          "types": [
+            "(world: world) => void"
+          ]
+        },
+        {
+          "name": "getEntityCount",
+          "brief": "Returns the number of entities in the world",
+          "description": "Returns the number of entities in the world",
+          "types": [
+            "(world: world) => number"
+          ]
+        },
+        {
+          "name": "getSystemCount",
+          "brief": "Returns the number of systems in the world",
+          "description": "Returns the number of systems in the world",
+          "types": [
+            "(world: world) => number"
+          ]
+        },
+        {
+          "name": "setSystemIndex",
+          "brief": "Sets the index of a system in the world",
+          "description": "Sets the index of a system in the world",
+          "types": [
+            "(world: world, system: system, index: number) => number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "decore_event_bus",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "trigger",
+          "brief": "Pushes an event onto the queue, triggering it and processing the queue of callbacks.",
+          "description": "Pushes an event onto the queue, triggering it and processing the queue of callbacks.",
+          "parameters": [
+            {
+              "name": "event_name",
+              "doc": "The name of the event to push onto the queue.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "The data to pass to the event and its associated callbacks.",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "process",
+          "brief": "Processes a specified event, returning the list of events and optionally calling callback with the full list.",
+          "description": "Processes a specified event, returning the list of events and optionally calling callback with the full list.",
+          "parameters": [
+            {
+              "name": "event_name",
+              "doc": "The name of the event to process.",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Optional callback function to execute with the full list of events.",
+              "types": [
+                "((events: unknown[]) => void) | ((context: unknown, events: unknown[]) => void) | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "Optional context to pass as first argument to callback.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The list of events, or nil if no events found.",
+              "types": [
+                "unknown[] | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "process_all",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_merge_policy",
+          "brief": "You can set the merge policy for an event. This is useful when you want to merge events of the same type.",
+          "description": "You can set the merge policy for an event. This is useful when you want to merge events of the same type.",
+          "parameters": [
+            {
+              "name": "event_name",
+              "doc": "The name of the event to set the merge policy for.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "merge_callback",
+              "doc": "The callback function to merge the events. Return true if the events were merged, false otherwise.",
+              "types": [
+                "((new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean) | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clear_events",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "stash_to_events",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_events",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_stash",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "event_name",
+              "doc": "",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "LuaTable[] | undefined"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "events",
+          "brief": "The list of events group by event name. Array part of entities map is the order of entities event's triggers",
+          "description": "The list of events group by event name. Array part of entities map is the order of entities event's triggers",
+          "types": [
+            "LuaTable<string, unknown[]>"
+          ]
+        },
+        {
+          "name": "events_by_entity",
+          "brief": "Maps event_name -> entity -> array of events for fast lookup",
+          "description": "Maps event_name -> entity -> array of events for fast lookup",
+          "types": [
+            "LuaTable<string, LuaTable<entity, unknown[]>>"
+          ]
+        },
+        {
+          "name": "stash",
+          "brief": "Events to be processed in PostWrap",
+          "description": "Events to be processed in PostWrap",
+          "types": [
+            "LuaTable<string, unknown[]>"
+          ]
+        },
+        {
+          "name": "stash_by_entity",
+          "brief": "Maps event_name -> entity -> array of events for stash (fast lookup)",
+          "description": "Maps event_name -> entity -> array of events for stash (fast lookup)",
+          "types": [
+            "LuaTable<string, LuaTable<entity, unknown[]>>"
+          ]
+        },
+        {
+          "name": "merge_callbacks",
+          "brief": "The merge policy for events. If the merge policy returns true, the events are merged and not will be added as new event",
+          "description": "The merge policy for events. If the merge policy returns true, the events are merged and not will be added as new event",
+          "types": [
+            "LuaTable<string, (new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "system_bus_event",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "onAddToWorld",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "postWrap",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    }
+  ]
+}
