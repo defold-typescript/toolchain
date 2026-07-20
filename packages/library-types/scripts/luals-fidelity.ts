@@ -10,7 +10,7 @@
  * sorted-unique token list so the gap is visible instead of silent.
  */
 
-import { type MapContext, mapLualsType } from "./map-luals-types";
+import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
 import type { LibraryModel } from "./parse-luals";
 
 export interface FidelityReport {
@@ -51,10 +51,10 @@ export function buildFidelityReport(
   let undocumentedMembers = 0;
   const unknownTokens = new Set<string>();
 
-  const mapTokens = (tokens: string[]): void => {
+  const mapTokens = (tokens: string[], mapCtx: MapContext): void => {
     for (const token of tokens) {
       totalTypeTokens++;
-      const { unknowns } = mapLualsType(token, ctx);
+      const { unknowns } = mapLualsType(token, mapCtx);
       unknownFallbacks += unknowns.length;
       for (const u of unknowns) unknownTokens.add(u);
     }
@@ -63,27 +63,30 @@ export function buildFidelityReport(
   const undocumented = (doc: string): boolean => doc.trim() === "";
 
   for (const iface of model.interfaces) {
+    const ifaceCtx = scopeGenerics(ctx, iface.generics);
     for (const field of iface.fields) {
       totalMembers++;
       if (undocumented(field.doc)) undocumentedMembers++;
-      mapTokens(field.types);
+      mapTokens(field.types, ifaceCtx);
     }
     for (const method of iface.methods) {
       totalMembers++;
       if (undocumented(method.brief)) undocumentedMembers++;
-      for (const param of method.params) mapTokens(param.types);
-      for (const ret of method.returns) mapTokens(ret.types);
+      const methodCtx = scopeGenerics(ifaceCtx, method.generics);
+      for (const param of method.params) mapTokens(param.types, methodCtx);
+      for (const ret of method.returns) mapTokens(ret.types, methodCtx);
     }
   }
 
   for (const fn of model.moduleFunctions) {
     totalMembers++;
     if (undocumented(fn.brief)) undocumentedMembers++;
-    for (const param of fn.params) mapTokens(param.types);
-    for (const ret of fn.returns) mapTokens(ret.types);
+    const fnCtx = scopeGenerics(ctx, fn.generics);
+    for (const param of fn.params) mapTokens(param.types, fnCtx);
+    for (const ret of fn.returns) mapTokens(ret.types, fnCtx);
   }
 
-  for (const alias of model.aliases) mapTokens(alias.types);
+  for (const alias of model.aliases) mapTokens(alias.types, ctx);
 
   const coverage =
     totalTypeTokens === 0
