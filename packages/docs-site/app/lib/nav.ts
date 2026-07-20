@@ -1,6 +1,7 @@
 import { GET_STARTED_SLUGS } from "./get-started";
 import type { GuidePage } from "./guide";
 import { GUIDE_GROUPS } from "./guide-groups";
+import { AUTHORED_LIBRARY_HINT, authoredLibraryPin } from "./markdown";
 
 export interface NavLink {
   label: string;
@@ -39,6 +40,8 @@ export interface Namespace {
 export interface LibraryGroup {
   dir: string;
   label: string;
+  /** `true` when every module is LuaLS-sourced (absent from `moduleDir`) — a library this repo maintains. */
+  authoredHere: boolean;
   modules: Namespace[];
 }
 
@@ -177,12 +180,16 @@ export function buildNav(
     const libraryLinks = reference.libraries.map((creator) =>
       toNavGroup(
         creator.label,
-        creator.libraries.map((lib) =>
-          toNavGroup(
+        creator.libraries.map((lib) => {
+          const node = toNavGroup(
             lib.label,
             lib.modules.map(({ label, route }) => toNavLink(label, route)),
-          ),
-        ),
+          );
+          if (lib.authoredHere) {
+            node.labelHtml += authoredLibraryPin(AUTHORED_LIBRARY_HINT);
+          }
+          return node;
+        }),
       ),
     );
     categories.push({
@@ -230,6 +237,10 @@ export function libraryCreatorGroups(
         .map(([dir, modules]) => ({
           dir,
           label: dir,
+          // A module's `label` is its namespace; a LuaLS-authored library is one
+          // whose namespaces are all absent from `moduleDir` — the same
+          // discriminant the provenance loader uses, so the two never drift.
+          authoredHere: modules.every((m) => !moduleDir.has(m.label)),
           modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
         })),
     }));

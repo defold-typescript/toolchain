@@ -6,6 +6,7 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
+import { LibraryHeading } from "../routes/api/[namespace]";
 import { canonicalApiPages } from "./api-content";
 import {
   apiLinkify,
@@ -184,6 +185,7 @@ function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
         "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
       importString: 'import * as camera from "orthographic.camera"',
       license: "MIT",
+      authoredHere: false,
     },
     ...overrides,
   };
@@ -415,6 +417,7 @@ describe("apiPageMarkdown library provenance block", () => {
             "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
           importString: 'import * as camera from "orthographic.camera"',
           license: "MIT",
+          authoredHere: false,
         },
       }),
       (t) => t,
@@ -1093,5 +1096,28 @@ describe("apiReplacementResolver", () => {
       signature: "",
     });
     expect(route?.startsWith("/api/defold-1.12.4/go")).toBe(true);
+  });
+});
+
+describe("LibraryHeading — authored-pin marker", () => {
+  const headingHtml = (authoredHere: boolean): string =>
+    LibraryHeading({
+      creator: "Insality",
+      dir: "druid",
+      namespace: "druid",
+      authoredHere,
+    }).toString();
+
+  test("a LuaLS-authored library heading carries the pin and hint", () => {
+    const h1 = headingHtml(true);
+    expect(h1).toContain("authored-pin");
+    expect(h1).toContain("Type bindings maintained in this repo");
+    expect(h1).toContain("druid");
+  });
+
+  test("a vendored library heading omits the pin but keeps the path", () => {
+    const h1 = headingHtml(false);
+    expect(h1).not.toContain("authored-pin");
+    expect(h1).toContain("druid");
   });
 });

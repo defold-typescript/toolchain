@@ -178,6 +178,11 @@ export interface LibraryMeta {
   importString: string;
   /** SPDX-style license id from the classification `source`. */
   license: string;
+  /**
+   * `true` for a LuaLS-sourced library this repo maintains via `luals-targets.json`
+   * (namespace absent from `moduleDir`); `false` for a vendored library.
+   */
+  authoredHere: boolean;
 }
 
 export interface ApiPage {

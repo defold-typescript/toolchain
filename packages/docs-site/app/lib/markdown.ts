@@ -79,6 +79,21 @@ const HEADING_ANCHOR_CLOSE = `${HEADING_ANCHOR_ICON}</a>`;
 // link-rewrite ruler to mark destinations that leave the docs site.
 const EXTERNAL_LINK_ICON = phosphorDuotone("arrow-square-out", "external-icon");
 
+/** Hover hint shown on the LuaLS-authored library pin. */
+export const AUTHORED_LIBRARY_HINT = "Type bindings maintained in this repo";
+
+// A `map-pin-simple-area` (duotone) marker beside a LuaLS-authored library name
+// (the sidebar tree and the `/api/<slug>` heading). The wrapping span carries the
+// hover hint in `title`/`aria-label`; both render sites import this so the two
+// surfaces never drift.
+export function authoredLibraryPin(hint: string): string {
+  const safe = escapeAttr(hint);
+  return `<span class="authored-pin" title="${safe}" aria-label="${safe}">${phosphorDuotone(
+    "map-pin-simple-area",
+    "authored-pin",
+  )}</span>`;
+}
+
 // Guide pages cross-link with relative `.md` paths (`./foo.md`, `foo.md#anchor`),
 // but the site routes each file at its slug (`README.md` -> `/`, `foo.md` -> `/foo`),
 // so the raw hrefs would 404. Rewrite local `.md` links to their route; leave

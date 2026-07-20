@@ -18,6 +18,9 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Added
 
+- Library reference pages and the sidebar Libraries tree now show a map-pin
+  marker beside libraries whose type bindings this repo maintains (Druid, Decore),
+  with a hover hint, so you can tell them apart from vendored libraries at a glance.
 - In progress: typed bindings for LuaLS-annotated pure-Lua libraries.
   `defold-typescript resolve` now materializes generated `.d.ts` for declared
   Druid and Decore dependencies — generics, inheritance, variadics, and
