@@ -2304,7 +2304,7 @@ Update grid nodes position
 
 </div>
 
-### \`druid_grid._get_dynamic_offset(): number, number\`
+### \`druid_grid._get_dynamic_offset(): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -2522,7 +2522,7 @@ The Text constructor
 
 ### \`druid_text.on_layout_change()\`
 
-### \`druid_text.get_text_size(text: string | undefined): number, number\`
+### \`druid_text.get_text_size(text: string | undefined): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -3458,7 +3458,7 @@ The position of the cursor
 
 </div>
 
-### \`druid_rich_text.set_text(text: string | undefined): druid_rich_text_word[], druid_rich_text_lines_metrics\`
+### \`druid_rich_text.set_text(text: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>\`
 
 <div class="api-symbol-body">
 
@@ -4277,7 +4277,7 @@ Remove element from passed index and add it to cache if applicable
 
 </div>
 
-### \`druid_data_list._get_visible_bounds(): number, number, number, number\`
+### \`druid_data_list._get_visible_bounds(): LuaMultiReturn<[number, number, number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -4860,7 +4860,7 @@ Setup raw text to lang_text component. This will clear any locale settings.
 
 </div>
 
-### \`druid_lang_text.translate(locale_id: string, ...: string): druid_lang_text\`
+### \`druid_lang_text.translate(locale_id: string, ...args: string[]): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -4869,7 +4869,7 @@ Translate the text by locale_id. The text will be automatically updated when loc
 **Parameters**
 
 - \`locale_id\`: \`string\` — Locale id to get text from
-- \`...\`: \`string\` — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
+- \`...args\`: \`string\` — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
 
 **Returns**
 
@@ -4877,7 +4877,7 @@ Translate the text by locale_id. The text will be automatically updated when loc
 
 </div>
 
-### \`druid_lang_text.format(...: string): druid_lang_text\`
+### \`druid_lang_text.format(...args: string[]): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -4885,7 +4885,7 @@ Format string with new text params on localized text. Keeps the current locale b
 
 **Parameters**
 
-- \`...\`: \`string\` — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
+- \`...args\`: \`string\` — Optional params for <a href="/api/string#stringformatformatstring-string-args-any-string" class="symbol-xref">string.format</a>
 
 **Returns**
 
@@ -5148,7 +5148,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.get_node_size(node: Opaque<"node">): number, number\`
+### \`druid_layout.get_node_size(node: Opaque<"node">): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -6310,7 +6310,7 @@ Check whitelists and blacklists for input components
 
 </div>
 
-### \`druid_instance.new<T extends druid_component>(component: T, ...: unknown): T\`
+### \`druid_instance.new<T extends druid_component>(component: T, ...args: unknown[]): T\`
 
 <div class="api-symbol-body">
 
@@ -6319,7 +6319,7 @@ Create new Druid component instance
 **Parameters**
 
 - \`component\`: \`T\` — The component class to create
-- \`...\`: \`unknown\` — Additional arguments to pass to the component's init function
+- \`...args\`: \`unknown\` — Additional arguments to pass to the component's init function
 
 **Returns**
 
@@ -6495,7 +6495,7 @@ Remove all components on late remove step DruidInstance
 
 </div>
 
-### \`druid_instance.new_widget<T extends druid_component>(widget: T, template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...: unknown): T\`
+### \`druid_instance.new_widget<T extends druid_component>(widget: T, template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T\`
 
 <div class="api-symbol-body">
 
@@ -6506,7 +6506,7 @@ Create new Druid widget instance
 - \`widget\`: \`T\` — The widget class to create
 - \`template\`: \`string | undefined\` — The template name used by widget
 - \`nodes\`: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
-- \`...\`: \`unknown\` — Additional arguments to pass to the widget's init function
+- \`...args\`: \`unknown\` — Additional arguments to pass to the widget's init function
 
 **Returns**
 
