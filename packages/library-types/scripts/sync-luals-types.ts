@@ -290,7 +290,10 @@ if (import.meta.main) {
     const targets = readLualsTargets(root);
     for (const target of targets) {
       const model = buildTargetModel(root, target);
-      const lowered = lowerLibraryModel(model, { namespace: target.namespace });
+      const lowered = lowerLibraryModel(model, {
+        namespace: target.namespace,
+        typeRenames: target.typeRenames,
+      });
       const dest = join(root, "api-doc", `${target.namespace}.json`);
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, `${JSON.stringify(lowered, null, 2)}\n`);

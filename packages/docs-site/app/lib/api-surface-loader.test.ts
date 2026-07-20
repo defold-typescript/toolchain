@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { apiModuleSymbols } from "./api-surface";
 import {
   githubOwner,
   libraryDisplayName,
@@ -155,5 +156,21 @@ describe("loadApiSurface — druid library page", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const druid = pages.find((p) => p.namespace === "druid");
     expect(druid?.category).toBe("library");
+  });
+
+  test("surfaces emitter-equivalent signatures for new, get_widget, and druid_button.set_enabled", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const druid = pages.find((p) => p.namespace === "druid");
+    if (!druid) throw new Error("druid page missing");
+    const byName = new Map(apiModuleSymbols(druid).map((s) => [s.name, s.signature]));
+    expect(byName.get("new")).toBe(
+      "new(context: LuaTable, style: LuaTable | undefined): druid_instance",
+    );
+    expect(byName.get("get_widget")).toBe(
+      "get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params: unknown | undefined): T",
+    );
+    expect(byName.get("druid_button.set_enabled")).toBe(
+      "druid_button.set_enabled(state: boolean | undefined): druid_button",
+    );
   });
 });

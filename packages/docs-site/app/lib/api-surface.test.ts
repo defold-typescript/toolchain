@@ -539,6 +539,44 @@ describe("apiModuleSymbols", () => {
     expect(sym?.exampleMarkdown).toContain("demo.run()");
   });
 
+  test("a library function carrying generics prints `name<...>(...)`; absent generics is unchanged", () => {
+    const libraryPage: ApiPage = {
+      ...pageWith({}),
+      category: "library",
+      module: {
+        namespace: "druid",
+        brief: "",
+        description: "",
+        functions: [
+          {
+            name: "get_widget",
+            brief: "",
+            description: "",
+            generics: "<T extends druid_widget>",
+            parameters: [{ name: "widget_class", doc: "", types: ["T"], isOptional: false }],
+            returnValues: [{ name: "", doc: "", types: ["T"], isOptional: false }],
+          },
+          {
+            name: "new",
+            brief: "",
+            description: "",
+            parameters: [{ name: "context", doc: "", types: ["LuaTable"], isOptional: false }],
+            returnValues: [{ name: "", doc: "", types: ["druid_instance"], isOptional: false }],
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+    };
+    const symbols = apiModuleSymbols(libraryPage);
+    expect(symbols.map((s) => s.signature)).toEqual([
+      "get_widget<T extends druid_widget>(widget_class: T): T",
+      "new(context: LuaTable): druid_instance",
+    ]);
+  });
+
   test("a function with no examples yields exampleMarkdown undefined", () => {
     const symbols = apiModuleSymbols(
       pageWith({

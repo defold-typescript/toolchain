@@ -15,30 +15,36 @@ function elementsOf(lowered: unknown): Record<string, unknown>[] {
   return lowered.elements.filter(isRecord);
 }
 
-test("a module function with an optional param and a return lowers to a FUNCTION element", () => {
+test("a module function lowers its param/return tokens to emitter-equivalent TypeScript", () => {
   const model: LibraryModel = {
-    interfaces: [],
+    interfaces: [{ name: "druid.instance", generics: [], fields: [], methods: [], brief: "" }],
     aliases: [],
     moduleFunctions: [
       {
-        name: "new_button",
-        brief: "Create a button.\nLonger description.",
+        name: "new",
+        brief: "Create a new Druid instance.\nLonger description.",
         generics: [],
         params: [
-          { name: "node", types: ["node"], doc: "the node", isOptional: false, isVararg: false },
           {
-            name: "callback",
-            types: ["function"],
-            doc: "the callback",
-            isOptional: true,
+            name: "context",
+            types: ["table"],
+            doc: "the context",
+            isOptional: false,
+            isVararg: false,
+          },
+          {
+            name: "style",
+            types: ["table|nil"],
+            doc: "the style",
+            isOptional: false,
             isVararg: false,
           },
         ],
         returns: [
           {
-            name: "button",
-            types: ["druid.button"],
-            doc: "the button",
+            name: "",
+            types: ["druid.instance"],
+            doc: "the instance",
             isOptional: false,
             isVararg: false,
           },
@@ -49,25 +55,23 @@ test("a module function with an optional param and a return lowers to a FUNCTION
 
   const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
   expect(fn?.type).toBe("FUNCTION");
-  expect(fn?.name).toBe("new_button");
-  expect(fn?.brief).toBe("Create a button.\nLonger description.");
-  expect(fn?.description).toBe("Create a button.\nLonger description.");
+  expect(fn?.name).toBe("new");
+  expect(fn?.brief).toBe("Create a new Druid instance.\nLonger description.");
   expect(fn?.parameters).toEqual([
-    { name: "node", doc: "the node", types: ["node"], is_optional: "False" },
-    { name: "callback", doc: "the callback", types: ["function"], is_optional: "True" },
+    { name: "context", doc: "the context", types: ["LuaTable"], is_optional: "False" },
+    { name: "style", doc: "the style", types: ["LuaTable | undefined"], is_optional: "False" },
   ]);
-  expect(fn?.returnvalues).toEqual([{ name: "", doc: "the button", types: ["druid.button"] }]);
+  expect(fn?.returnvalues).toEqual([{ name: "", doc: "the instance", types: ["druid_instance"] }]);
+  expect(fn).not.toHaveProperty("generics");
 });
 
-test("an interface lowers to a TYPEDEF with functions from methods and properties from public fields", () => {
+test("a method lowers a `boolean|nil` param and a dotted return to mapped TypeScript", () => {
   const model: LibraryModel = {
     interfaces: [
       {
-        name: "druid_button",
+        name: "druid.button",
         generics: [],
-        fields: [
-          { name: "hover", types: ["druid.hover"], doc: "the hover component", isOptional: false },
-        ],
+        fields: [],
         methods: [
           {
             name: "set_enabled",
@@ -76,7 +80,7 @@ test("an interface lowers to a TYPEDEF with functions from methods and propertie
             params: [
               {
                 name: "state",
-                types: ["boolean"],
+                types: ["boolean|nil"],
                 doc: "on/off",
                 isOptional: false,
                 isVararg: false,
@@ -101,7 +105,6 @@ test("an interface lowers to a TYPEDEF with functions from methods and propertie
   };
 
   const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
-  expect(typedef?.type).toBe("TYPEDEF");
   expect(typedef?.name).toBe("druid_button");
   expect(typedef?.functions).toEqual([
     {
@@ -109,21 +112,131 @@ test("an interface lowers to a TYPEDEF with functions from methods and propertie
       name: "set_enabled",
       brief: "Enable or disable.",
       description: "Enable or disable.",
-      parameters: [{ name: "state", doc: "on/off", types: ["boolean"], is_optional: "False" }],
-      returnvalues: [{ name: "", doc: "", types: ["druid.button"] }],
-    },
-  ]);
-  expect(typedef?.properties).toEqual([
-    {
-      name: "hover",
-      brief: "the hover component",
-      description: "the hover component",
-      types: ["druid.hover"],
+      parameters: [
+        { name: "state", doc: "on/off", types: ["boolean | undefined"], is_optional: "False" },
+      ],
+      returnvalues: [{ name: "", doc: "", types: ["druid_button"] }],
     },
   ]);
 });
 
-test("a non-public field is dropped from the TYPEDEF properties; a field with no visibility is kept", () => {
+test("a `fun(...)` param token lowers to an arrow type", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "on_click",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "cb",
+            types: ["fun(a: string): string"],
+            doc: "the callback",
+            isOptional: false,
+            isVararg: false,
+          },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  expect(fn?.parameters).toEqual([
+    { name: "cb", doc: "the callback", types: ["(a: string) => string"], is_optional: "False" },
+  ]);
+});
+
+test("a dotted interface name and a dotted alias name lower to sanitized TYPEDEF names", () => {
+  const model: LibraryModel = {
+    interfaces: [{ name: "druid.button", generics: [], fields: [], methods: [], brief: "" }],
+    aliases: [{ name: "druid.callback", types: ["fun():void"], doc: "" }],
+    moduleFunctions: [],
+  };
+
+  const elements = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  expect(elements.map((e) => [e.type, e.name])).toEqual([
+    ["TYPEDEF", "druid_button"],
+    ["TYPEDEF", "druid_callback"],
+  ]);
+});
+
+test("a generic module function carries a `generics` clause and keeps its bound `T`", () => {
+  const model: LibraryModel = {
+    interfaces: [{ name: "druid.widget", generics: [], fields: [], methods: [], brief: "" }],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "get_widget",
+        brief: "Get a widget.",
+        generics: [{ name: "T", constraint: "druid.widget" }],
+        params: [
+          {
+            name: "widget_class",
+            types: ["T"],
+            doc: "the class",
+            isOptional: false,
+            isVararg: false,
+          },
+          {
+            name: "gui_url",
+            types: ["url|string"],
+            doc: "the url",
+            isOptional: false,
+            isVararg: false,
+          },
+          { name: "params", types: ["any|nil"], doc: "extra", isOptional: false, isVararg: false },
+        ],
+        returns: [
+          { name: "", types: ["T"], doc: "the widget", isOptional: false, isVararg: false },
+        ],
+      },
+    ],
+  };
+
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  expect(fn?.generics).toBe("<T extends druid_widget>");
+  expect(fn?.parameters).toEqual([
+    { name: "widget_class", doc: "the class", types: ["T"], is_optional: "False" },
+    { name: "gui_url", doc: "the url", types: ["Url | string"], is_optional: "False" },
+    { name: "params", doc: "extra", types: ["unknown | undefined"], is_optional: "False" },
+  ]);
+  expect(fn?.returnvalues).toEqual([{ name: "", doc: "the widget", types: ["T"] }]);
+});
+
+test("a generic interface method carries a `generics` clause and keeps its bound `T`", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "comp",
+        generics: [],
+        fields: [],
+        methods: [
+          {
+            name: "cast",
+            brief: "",
+            generics: [{ name: "T", constraint: "" }],
+            params: [{ name: "x", types: ["T"], doc: "", isOptional: false, isVararg: false }],
+            returns: [{ name: "", types: ["T"], doc: "", isOptional: false, isVararg: false }],
+          },
+        ],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const fn = (typedef?.functions as Record<string, unknown>[])[0];
+  expect(fn?.generics).toBe("<T>");
+  expect(fn?.parameters).toEqual([{ name: "x", doc: "", types: ["T"], is_optional: "False" }]);
+  expect(fn?.returnvalues).toEqual([{ name: "", doc: "", types: ["T"] }]);
+});
+
+test("a non-public field is dropped; a field with no visibility is kept and mapped", () => {
   const model: LibraryModel = {
     interfaces: [
       {
@@ -151,25 +264,15 @@ test("a non-public field is dropped from the TYPEDEF properties; a field with no
   };
 
   const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
-  const props = typedef?.properties as { name: string }[];
+  const props = typedef?.properties as { name: string; types: string[] }[];
   expect(props.map((p) => p.name)).toEqual(["kept", "shown"]);
-});
-
-test("an alias lowers to a bare TYPEDEF with no functions or properties", () => {
-  const model: LibraryModel = {
-    interfaces: [],
-    aliases: [{ name: "druid.callback", types: ["fun():void"], doc: "" }],
-    moduleFunctions: [],
-  };
-
-  const [alias] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
-  expect(alias).toEqual({ type: "TYPEDEF", name: "druid.callback" });
+  expect(props[0]?.types).toEqual(["number"]);
 });
 
 test("emits moduleFunctions, then interfaces, then aliases in order", () => {
   const model: LibraryModel = {
     interfaces: [{ name: "iface", generics: [], fields: [], methods: [], brief: "" }],
-    aliases: [{ name: "al", types: ["x"], doc: "" }],
+    aliases: [{ name: "al", types: ["number"], doc: "" }],
     moduleFunctions: [{ name: "fn", brief: "", generics: [], params: [], returns: [] }],
   };
   const elements = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
@@ -191,7 +294,7 @@ test("the lowered object round-trips through parseDefoldApiDoc", () => {
         brief: "",
       },
     ],
-    aliases: [{ name: "al", types: ["x"], doc: "" }],
+    aliases: [{ name: "al", types: ["number"], doc: "" }],
     moduleFunctions: [{ name: "fn", brief: "", generics: [], params: [], returns: [] }],
   };
   const lowered = lowerLibraryModel(model, { namespace: "druid" });
@@ -209,7 +312,10 @@ test("regenerating druid from the committed fixtures matches the committed golde
   if (!druid) throw new Error("druid target missing from luals-targets.json");
 
   const model = buildTargetModel(packageRoot, druid);
-  const lowered = lowerLibraryModel(model, { namespace: druid.namespace });
+  const lowered = lowerLibraryModel(model, {
+    namespace: druid.namespace,
+    typeRenames: druid.typeRenames,
+  });
   const emitted = `${JSON.stringify(lowered, null, 2)}\n`;
   const golden = readFileSync(join(packageRoot, "api-doc", `${druid.namespace}.json`), "utf8");
 
