@@ -51,7 +51,10 @@ changes are called out first because the toolchain is pre-1.0.
   them. The published `@defold-typescript/library-types` package now ships the
   per-library resolve manifest alongside the generated types, so a real
   (non-workspace) install recognizes Druid the same way the workspace does
-  instead of silently falling back to pure-Lua-only.
+  instead of silently falling back to pure-Lua-only. The generated `druid_logger`
+  type no longer declares its `trace`/`debug`/`info`/`warn`/`error` methods twice
+  with conflicting signatures — a previously `skipLibCheck`-masked invalid
+  declaration; the shipped signatures are the public `(message, context)` form.
 
 ## v0.20.8
 

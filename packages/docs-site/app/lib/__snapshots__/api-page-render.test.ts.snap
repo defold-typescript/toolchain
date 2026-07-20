@@ -6032,16 +6032,6 @@ Vector with UV coordinates and size
 
 ### \`druid_logger.error: (message: string, context: unknown) => void\`
 
-### \`druid_logger.trace: (_: unknown, msg: string, data: unknown) => void\`
-
-### \`druid_logger.debug: (_: unknown, msg: string, data: unknown) => void\`
-
-### \`druid_logger.info: (_: unknown, msg: string, data: unknown) => void\`
-
-### \`druid_logger.warn: (_: unknown, msg: string, data: unknown) => void\`
-
-### \`druid_logger.error: (_: unknown, msg: string, data: unknown) => void\`
-
 ### \`GUITextMetrics.width: number\`
 
 ### \`GUITextMetrics.height: number\`

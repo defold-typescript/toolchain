@@ -3,14 +3,14 @@ import { resolve } from "node:path";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
-// Type-check the committed `generated/druid.d.ts` with `skipLibCheck: false` so a
-// base/subinterface variance regression surfaces as a real `TS2430`
-// ("incorrectly extends") diagnostic instead of hiding behind the repo-wide
-// `skipLibCheck: true`. Only `TS2430` diagnostics under `generated/` are asserted
-// away: dependency-graph duplicate-identifier noise (and the known `druid_logger`
-// duplicate members) are `TS2300`/`TS2687`, not `TS2430`, so they do not gate this
-// proof.
-test("generated/druid.d.ts carries no incorrectly-extends (TS2430) diagnostics under skipLibCheck: false", () => {
+// Type-check the committed `generated/druid.d.ts` with `skipLibCheck: false` so any
+// invalid declaration in the whole druid golden — a base/subinterface variance
+// regression (`TS2430`) or the merged `druid_logger` duplicate members
+// (`TS2300`/`TS2717`) — surfaces as a real diagnostic instead of hiding behind the
+// repo-wide `skipLibCheck: true`. The offender filter is anchored on
+// `generated/druid.d.ts` so the out-of-scope `../types/generated/physics.d.ts`
+// `diameter` duplicate (a separate `packages/types` defect) does not gate this proof.
+test("generated/druid.d.ts carries no diagnostics under skipLibCheck: false", () => {
   const proc = Bun.spawnSync(
     ["bunx", "tsc", "-p", "tsconfig.dts-check.json", "--noEmit", "--pretty", "false"],
     { cwd: PACKAGE_ROOT, stdout: "pipe", stderr: "pipe" },
@@ -20,6 +20,8 @@ test("generated/druid.d.ts carries no incorrectly-extends (TS2430) diagnostics u
       /\\/g,
       "/",
     );
-  const offenders = output.split("\n").filter((line) => /generated\/.*error TS2430/.test(line));
+  const offenders = output
+    .split("\n")
+    .filter((line) => /generated\/druid\.d\.ts.*error TS/.test(line));
   expect(offenders).toEqual([]);
 });

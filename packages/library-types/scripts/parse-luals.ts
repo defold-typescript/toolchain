@@ -412,5 +412,21 @@ export function mergeLibraryModels(models: LibraryModel[]): LibraryModel {
     moduleFunctions.push(...model.moduleFunctions);
   }
 
+  // A class split across fixtures (e.g. druid's curated + runtime `druid.logger`
+  // blocks) concatenates both field sets above, so the same field name can appear
+  // twice with conflicting signatures — an invalid declaration masked by
+  // `skipLibCheck`. Collapse to the first occurrence; methods stay untouched so
+  // overloaded module functions keep every signature.
+  for (const iface of interfaces) iface.fields = dedupeByName(iface.fields);
+
   return { interfaces, aliases, moduleFunctions };
+}
+
+function dedupeByName<T extends { name: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.name)) return false;
+    seen.add(item.name);
+    return true;
+  });
 }

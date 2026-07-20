@@ -10961,46 +10961,6 @@ You can use these functions in your projects as well."
             "fun(message: string, context: any)",
           ],
         },
-        {
-          "doc": "",
-          "isOptional": false,
-          "name": "trace",
-          "types": [
-            "fun(_, msg: string, data: any)",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "name": "debug",
-          "types": [
-            "fun(_, msg: string, data: any)",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "name": "info",
-          "types": [
-            "fun(_, msg: string, data: any)",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "name": "warn",
-          "types": [
-            "fun(_, msg: string, data: any)",
-          ],
-        },
-        {
-          "doc": "",
-          "isOptional": false,
-          "name": "error",
-          "types": [
-            "fun(_, msg: string, data: any)",
-          ],
-        },
       ],
       "generics": [],
       "methods": [],
