@@ -1,0 +1,11 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`druid resolves and its materialized types are usable end to end a consumer compiles against the materialized types and transpiles to require("druid.druid") 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local druid = require("druid.druid")
+local instance = druid.new(context, nil)
+instance:update(0.016)
+return ____exports
+"
+`;

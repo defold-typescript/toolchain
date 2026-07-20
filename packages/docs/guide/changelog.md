@@ -48,7 +48,10 @@ changes are called out first because the toolchain is pre-1.0.
   dependency now makes `defold-typescript resolve` recognize it by source
   identity and materialize its committed types into your project, so a
   TypeScript file that imports `druid.druid` type-checks and transpiles against
-  them. The published package you import still ships in a later release.
+  them. The published `@defold-typescript/library-types` package now ships the
+  per-library resolve manifest alongside the generated types, so a real
+  (non-workspace) install recognizes Druid the same way the workspace does
+  instead of silently falling back to pure-Lua-only.
 
 ## v0.20.8
 
