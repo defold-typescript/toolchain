@@ -20,8 +20,9 @@ changes are called out first because the toolchain is pre-1.0.
 
 - In progress: typed bindings for LuaLS-annotated pure-Lua libraries (starting
   with Druid). An emitter now renders the first generated library `.d.ts` from
-  the ingested LuaLS annotations — Druid's interfaces, methods, and module
-  functions — building on the earlier source ingest and type mapper; the
+  the ingested LuaLS annotations — Druid's interfaces and methods, plus only the
+  module's own exported functions (not every file's, and with callback return
+  types preserved) — building on the earlier source ingest and type mapper; the
   published package you import still ships in a later release.
 
 ## v0.20.8

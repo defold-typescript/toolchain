@@ -76,17 +76,27 @@ const emptyPending = (): Pending => ({ doc: [], params: [], returns: [], generic
 /**
  * Read a single raw type token from the head of `rest`, honoring bracket depth so
  * an inner space (`table<string, any>`, `fun(a, b): c`) does not end the token. The
- * token ends at the first top-level whitespace. Returns the token and the trailing
- * remainder (the human description). Never rewrites the token toward TS.
+ * token ends at the first top-level whitespace, except that a space right after a
+ * top-level `:` or `,` continues the token — so a spaced `fun(text_id: string):
+ * string` return arrow and a multi-return `fun(): number, string` separator are kept
+ * whole rather than truncated at the `):`/`,`. Returns the token and the trailing
+ * remainder (the human description). Never rewrites the token toward TS. The only
+ * inputs carrying a top-level `:`/`,` are `fun(...)` type expressions, so plain
+ * types, unions, and descriptions are unaffected.
  */
 function readTypeToken(rest: string): { type: string; rest: string } {
   let depth = 0;
+  let lastNonSpace = "";
   let i = 0;
   for (; i < rest.length; i++) {
     const c = rest[i];
     if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
     else if (c === ">" || c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
-    else if ((c === " " || c === "\t") && depth === 0) break;
+    else if ((c === " " || c === "\t") && depth === 0) {
+      if (lastNonSpace !== ":" && lastNonSpace !== ",") break;
+      continue;
+    }
+    if (c !== undefined && c !== " " && c !== "\t") lastNonSpace = c;
   }
   return { type: rest.slice(0, i), rest: rest.slice(i).trim() };
 }
@@ -183,15 +193,34 @@ interface FunctionDecl {
   kind: "method" | "module";
   receiver?: string;
   name: string;
+  // A dotted module form (`function T.name`, `T.name = function`) is public module
+  // surface; a bare/`local` form (`function name`, `local function name`) is not.
+  qualified: boolean;
 }
 
-const FUNCTION_FORMS: { re: RegExp; kind: "method" | "module"; recv?: number; name: number }[] = [
+const FUNCTION_FORMS: {
+  re: RegExp;
+  kind: "method" | "module";
+  recv?: number;
+  name: number;
+  qualified?: boolean;
+}[] = [
   { re: /^function\s+([A-Za-z_][\w.]*):([A-Za-z_]\w*)\s*\(/, kind: "method", recv: 1, name: 2 },
-  { re: /^function\s+([A-Za-z_][\w.]*)\.([A-Za-z_]\w*)\s*\(/, kind: "module", name: 2 },
-  { re: /^(?:local\s+)?function\s+([A-Za-z_]\w*)\s*\(/, kind: "module", name: 1 },
+  {
+    re: /^function\s+([A-Za-z_][\w.]*)\.([A-Za-z_]\w*)\s*\(/,
+    kind: "module",
+    name: 2,
+    qualified: true,
+  },
+  { re: /^(?:local\s+)?function\s+([A-Za-z_]\w*)\s*\(/, kind: "module", name: 1, qualified: false },
   { re: /^([A-Za-z_][\w.]*):([A-Za-z_]\w*)\s*=\s*function\b/, kind: "method", recv: 1, name: 2 },
-  { re: /^([A-Za-z_][\w.]*)\.([A-Za-z_]\w*)\s*=\s*function\b/, kind: "module", name: 2 },
-  { re: /^([A-Za-z_]\w*)\s*=\s*function\b/, kind: "module", name: 1 },
+  {
+    re: /^([A-Za-z_][\w.]*)\.([A-Za-z_]\w*)\s*=\s*function\b/,
+    kind: "module",
+    name: 2,
+    qualified: true,
+  },
+  { re: /^([A-Za-z_]\w*)\s*=\s*function\b/, kind: "module", name: 1, qualified: false },
 ];
 
 function parseFunctionDecl(line: string): FunctionDecl | null {
@@ -201,9 +230,9 @@ function parseFunctionDecl(line: string): FunctionDecl | null {
     const name = m[form.name] ?? "";
     if (form.kind === "method") {
       const receiver = form.recv ? m[form.recv] : undefined;
-      return { kind: "method", name, ...(receiver ? { receiver } : {}) };
+      return { kind: "method", name, qualified: true, ...(receiver ? { receiver } : {}) };
     }
-    return { kind: "module", name };
+    return { kind: "module", name, qualified: form.qualified ?? false };
   }
   return null;
 }
@@ -216,6 +245,10 @@ const LOCAL_ASSIGN = /^local\s+([A-Za-z_]\w*)\s*=/;
  * indented lines — in-body closures, `---@cast`/`---@type` narrowing — are opaque,
  * so they neither create declarations nor pollute the pending block. Output order
  * follows source order, making the result stable across repeated runs.
+ *
+ * Only dotted module forms (`function T.name`, `T.name = function`) count as module
+ * surface; a bare or `local function` is a private helper and is skipped. Limitation:
+ * a bare function later re-exported via `M.x = helper` is not recovered as surface.
  */
 export function parseLualsSource(source: string): LibraryModel {
   const interfaces: LibraryInterface[] = [];
@@ -318,7 +351,7 @@ export function parseLualsSource(source: string): LibraryModel {
       if (decl.kind === "method") {
         const target = decl.receiver ? (receiverBinding.get(decl.receiver) ?? decl.receiver) : "";
         ensureInterface(target).methods.push(methodFromPending(decl.name));
-      } else {
+      } else if (decl.qualified) {
         moduleFunctions.push(methodFromPending(decl.name));
       }
       pending = emptyPending();
