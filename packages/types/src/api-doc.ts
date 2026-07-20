@@ -35,6 +35,12 @@ export interface ApiFunction {
   parameters: ApiParameter[];
   returnValues: ApiParameter[];
   examples?: string;
+  /**
+   * A pre-rendered generic-parameter clause (`<T extends druid_widget>`) inserted
+   * between the name and the `(` at render time. Present only on LuaLS-lowered
+   * library functions; engine ref-docs carry no `generics`, so it stays absent.
+   */
+  generics?: string;
 }
 
 export interface ApiParameter {
@@ -143,6 +149,7 @@ function parseFunction(element: Record<string, unknown>): ApiFunction {
     parameters: parseParameterList(element.parameters),
     returnValues: parseParameterList(element.returnvalues),
     examples: stringOr(element.examples, ""),
+    ...(typeof element.generics === "string" ? { generics: element.generics } : {}),
   };
 }
 

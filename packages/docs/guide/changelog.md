@@ -37,8 +37,11 @@ changes are called out first because the toolchain is pre-1.0.
   threw a spurious "fixture not found" because fixture path separators were
   compared unnormalized. Druid now also has a rendered API reference page under
   `/api/druid`, attributed to its own upstream repository and release tag rather
-  than the ts-defold library pin. The published package you import still ships
-  in a later release.
+  than the ts-defold library pin. That page now shows the same TypeScript
+  signatures as the generated `.d.ts` — mapped types, sanitized type names, and
+  generic clauses (`get_widget<T extends druid_widget>`) — instead of the raw
+  LuaLS `table|nil` / unbound-`T` / dotted `druid.button` tokens it printed
+  before. The published package you import still ships in a later release.
 
 ## v0.20.8
 
