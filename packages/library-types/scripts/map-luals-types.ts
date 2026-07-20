@@ -283,6 +283,11 @@ export function mapLualsType(token: string, ctx: MapContext): MapResult {
  * field, a non-`fun` type, an untyped `self`, or a `self` typed as a *different*
  * interface. Reuses the same bracket-aware split/match as the mapper so nested
  * commas and colons inside a param type never mis-split.
+ *
+ * The `fun` is isolated through its params `)` before the return is read, so a
+ * return union or nullable return (which also sits at bracket depth 0, after the
+ * `)`) survives instead of being mis-split as an outer `|nil` — the same
+ * ordering rule as the mapper's `fun(...)` return-union handling.
  */
 export function matchSelfHookField(
   types: readonly string[],
@@ -290,12 +295,13 @@ export function matchSelfHookField(
 ): string[] | null {
   if (types.length !== 1) return null;
   const raw = (types[0] as string).trim();
-  const members = splitTopLevel(raw, "|")
-    .map((member) => member.trim())
-    .filter((member) => member !== "" && member !== "nil");
-  if (members.length !== 1) return null;
-  const fun = members[0] as string;
-  if (!/^fun\s*\(/.test(fun)) return null;
+  const members = splitTopLevel(raw, "|").map((member) => member.trim());
+  const funIndex = members.findIndex((member) => /^fun\s*\(/.test(member));
+  if (funIndex === -1) return null;
+  // Anything unioned before the fun may only be a bare outer nullable.
+  if (members.slice(0, funIndex).some((member) => member !== "nil")) return null;
+  // Rejoin from the fun rightward so a return union or nullable stays whole.
+  const fun = members.slice(funIndex).join("|");
   const open = fun.indexOf("(");
   const close = matchBracket(fun, open);
   if (close === -1) return null;
@@ -306,7 +312,12 @@ export function matchSelfHookField(
   if ((first[0] as string).trim() !== "self") return null;
   if (first.slice(1).join(":").trim() !== selfTypeName) return null;
   const afterClose = fun.slice(close + 1).trim();
-  if (!afterClose.startsWith(":")) return [];
-  const retStr = afterClose.slice(1).trim();
-  return retStr === "" ? [] : splitTopLevel(retStr, ",").map((token) => token.trim());
+  if (afterClose === "") return [];
+  if (afterClose.startsWith(":")) {
+    const retStr = afterClose.slice(1).trim();
+    return retStr === "" ? [] : splitTopLevel(retStr, ",").map((token) => token.trim());
+  }
+  // Anything else after the params `)` must be an outer `| nil` (whole hook optional).
+  const outer = splitTopLevel(afterClose, "|").map((member) => member.trim());
+  return outer.every((member) => member === "" || member === "nil") ? [] : null;
 }

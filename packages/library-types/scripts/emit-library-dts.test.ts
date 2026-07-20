@@ -279,6 +279,80 @@ test("leaves a hook field whose self is a different declared interface as a data
   expect(out).not.toContain("on_init?(...args: any[])");
 });
 
+test("preserves a self-hook's union return when lowering to an optional method", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "base",
+        generics: [],
+        fields: [
+          { name: "measure", types: ["fun(self:base): number|string"], doc: "", isOptional: false },
+        ],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("measure?(...args: any[]): number | string;");
+  expect(out).not.toContain("measure: (");
+});
+
+test("preserves a self-hook's nullable return when lowering to an optional method", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "base",
+        generics: [],
+        fields: [
+          { name: "probe", types: ["fun(self:base): number|nil"], doc: "", isOptional: false },
+        ],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("probe?(...args: any[]): number | undefined;");
+  expect(out).not.toContain("probe: (");
+});
+
+test("preserves a self-hook's union + nullable + multi-return when lowering to an optional method", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "base",
+        generics: [],
+        fields: [
+          {
+            name: "sample",
+            types: ["fun(self:base): number|nil, string"],
+            doc: "",
+            isOptional: false,
+          },
+        ],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("sample?(...args: any[]): LuaMultiReturn<[number | undefined, string]>;");
+  expect(out).not.toContain("sample: (");
+});
+
 test("emits a bare generic param when the constraint resolves to unknown, not <T extends unknown>", () => {
   const model: LibraryModel = {
     interfaces: [
