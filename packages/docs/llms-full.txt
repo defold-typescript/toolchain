@@ -2328,9 +2328,10 @@ declares the library gets autocomplete and `tsc` coverage with no hand-written
 committed declaration into the consumer's project.
 
 Adding such a library is **data, not code**: you add one entry to
-`packages/library-types/luals-targets.json`, run the four generation commands, and
-commit the emitted artifacts. There is no pipeline source to touch — the same
-front-end that produces the druid types produces yours.
+`packages/library-types/luals-targets.json`, run the four generation commands,
+check the emitted API-doc description, and commit the artifacts. There is no
+pipeline source to touch — the same front-end that produces the druid types
+produces yours.
 
 > This page is for **library-type authors** working inside this repository. If you
 > only want to *use* a vendored library in your own game, you need nothing here —
@@ -2413,7 +2414,26 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
   applied shows up as an unexpected entry — fix `typeRenames` and re-emit.
 - **`undocumentedMembers`** — members with no annotation at all; informational.
 
-#### 4. Validate, then commit
+#### 4. Check the API-doc description
+
+After `luals:api-doc`, open `api-doc/<namespace>.json` and inspect
+`info.description`. It carries the description line on the library's main
+`---@class`. When that class has no description line the value is empty (`""`),
+and the docs-site `/api` page renders with no description — the "every library
+page has a non-empty description" gate fails.
+
+Remediate by adding a namespace-keyed entry to
+`packages/library-types/library-descriptions.json` — `"<namespace>": "<one-line
+summary>"`, keyed by namespace. The docs-site fallback in `api-surface-loader.ts`
+reads it for LuaLS libraries (a ts-defold library keys its fallback on the
+upstream classification dir; a LuaLS library has none, so it keys on the
+namespace directly). `druid` needs nothing here — its `---@class druid` is
+described, so it never reaches the fallback. `decore` is the worked example: its
+`---@class` carries no description, its `api-doc/decore.json` `info.description`
+is `""`, and the committed `"decore": "Defold ECS Data Manager"` entry supplies
+the page description.
+
+#### 5. Validate, then commit
 
 The emitted `.d.ts` is type-checked under `skipLibCheck: false` by the
 `dts-declaration-validity` gate, and the byte-for-byte emit and fidelity parity are

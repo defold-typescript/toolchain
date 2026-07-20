@@ -1416,3 +1416,30 @@ describe("docs/guide helper scripts", () => {
     expect(map).toContain("@defold-typescript/types/api-availability.json");
   });
 });
+
+describe("docs/guide/authoring-luals-library-types.md empty-description remediation", () => {
+  test("names inspecting the generated api-doc/<namespace>.json info.description", async () => {
+    const body = await readGuide("authoring-luals-library-types.md");
+    expect(body).toContain("api-doc/<namespace>.json");
+    expect(body).toContain("info.description");
+  });
+
+  test("states the empty-description docs-site consequence", async () => {
+    const body = await readGuide("authoring-luals-library-types.md");
+    expect(body).toContain("non-empty");
+    expect(body).toContain("description");
+  });
+
+  test("names the namespace-keyed library-descriptions.json fallback", async () => {
+    const body = await readGuide("authoring-luals-library-types.md");
+    expect(body).toContain("library-descriptions.json");
+    expect(body).toContain("keyed by namespace");
+  });
+
+  test("uses decore as the worked empty-description example", async () => {
+    const body = await readGuide("authoring-luals-library-types.md");
+    const start = body.indexOf("info.description");
+    expect(start).toBeGreaterThan(-1);
+    expect(body.slice(start)).toContain("decore");
+  });
+});
