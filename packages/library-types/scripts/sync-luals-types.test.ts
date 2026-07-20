@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { emitLibraryDeclarations } from "./emit-library-dts";
 import {
+  buildTargetModel,
   type FetchText,
   fetchLualsFixtures,
   type ListLualsTree,
@@ -142,5 +144,50 @@ describe("lualsCorpusTargets", () => {
       classification: "pure-lua",
       source: "luals",
     });
+  });
+});
+
+describe("buildTargetModel module ownership", () => {
+  const DRUID_PUBLICS = [
+    "new",
+    "register",
+    "set_default_style",
+    "set_text_function",
+    "set_sound_function",
+    "init_window_listener",
+    "on_window_callback",
+    "on_language_change",
+    "get_widget",
+    "register_druid_as_widget",
+    "unregister_druid_as_widget",
+    "set_logger",
+    "get_logger",
+  ];
+
+  const druidTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.moduleId === "druid.druid");
+
+  test("scopes moduleFunctions to druid/druid.lua's own publics, dropping other files and locals", () => {
+    if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
+    const names = buildTargetModel(PACKAGE_ROOT, druidTarget).moduleFunctions.map((f) => f.name);
+    expect([...names].sort()).toEqual([...DRUID_PUBLICS].sort());
+    expect(names).not.toContain("wrap_widget"); // druid.lua's `local function` helper
+    expect(names).not.toContain("get_color"); // color.lua
+    expect(names).not.toContain("utf8charbytes"); // system/utf8.lua
+  });
+
+  test("the set_text_function callback maps through emit to (text_id: string) => string", () => {
+    if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
+    const emitted = emitLibraryDeclarations(buildTargetModel(PACKAGE_ROOT, druidTarget), {
+      moduleId: druidTarget.moduleId,
+      typeRenames: druidTarget.typeRenames,
+    });
+    expect(emitted).toContain(
+      "export function set_text_function(this: void, callback: (text_id: string) => string): void;",
+    );
+  });
+
+  test("a target whose moduleId has no matching .lua fixture throws, naming the expected path", () => {
+    const bogus: LualsTarget = { ...DRUID, moduleId: "druid.nonexistent" };
+    expect(() => buildTargetModel(PACKAGE_ROOT, bogus)).toThrow(/druid\/nonexistent\.lua/);
   });
 });

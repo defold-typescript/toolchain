@@ -152,6 +152,13 @@ export async function fetchLualsFixtures(
  * the `--fidelity` CLI arm and its round-trip test drive the exact same path and
  * agree byte-for-byte. Fixture files are read in sorted order for determinism,
  * mirroring the parse snapshot.
+ *
+ * Interfaces and aliases come from the full merge — the module's own signatures
+ * reference cross-file classes — but module functions are scoped to the module's
+ * own `.lua` file (`moduleId` dotted to a path, e.g. `druid.druid` →
+ * `druid/druid.lua`). Merging every file's free functions would export every
+ * library file's functions from the one module. A `moduleId` with no matching
+ * fixture is a loud misconfiguration, not a silently empty surface.
  */
 export function buildTargetModel(packageRoot: string, target: LualsTarget): LibraryModel {
   const root = join(packageRoot, "fixtures/luals", target.namespace);
@@ -159,9 +166,16 @@ export function buildTargetModel(packageRoot: string, target: LualsTarget): Libr
     .map((entry) => String(entry))
     .filter((entry) => entry.endsWith(".lua"))
     .sort();
-  return mergeLibraryModels(
-    files.map((rel) => parseLualsSource(readFileSync(join(root, rel), "utf8"))),
-  );
+  const ownFile = `${target.moduleId.replace(/\./g, "/")}.lua`;
+  if (!files.includes(ownFile)) {
+    throw new Error(
+      `buildTargetModel: module "${target.moduleId}" expects fixture "${ownFile}" under fixtures/luals/${target.namespace}, but it is not among the ${files.length} fixture .lua files.`,
+    );
+  }
+  const parsed = new Map<string, LibraryModel>();
+  for (const rel of files) parsed.set(rel, parseLualsSource(readFileSync(join(root, rel), "utf8")));
+  const merged = mergeLibraryModels([...parsed.values()]);
+  return { ...merged, moduleFunctions: parsed.get(ownFile)?.moduleFunctions ?? [] };
 }
 
 export function buildTargetFidelity(packageRoot: string, target: LualsTarget): FidelityReport {
