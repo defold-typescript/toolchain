@@ -37,6 +37,17 @@ export function materializeVendoredLibraries(
 
   const modules = [...new Set(matched.flatMap((library) => library.modules))].sort();
 
+  // The committed source file stem differs from the module id only for LuaLS
+  // libraries (druid ships `druid.druid` but its types live in
+  // `generated/druid.d.ts`); pure-Lua modules map to themselves.
+  const stemOf = new Map<string, string>();
+  for (const library of matched) {
+    for (const module of library.modules) {
+      stemOf.set(module, library.generatedStems?.[module] ?? module);
+    }
+  }
+  const sourceStem = (module: string): string => stemOf.get(module) ?? module;
+
   // reconcile-to-zero: an empty match set means the declared set no longer wants
   // any library surface, so remove a previously-materialized one.
   if (modules.length === 0) {
@@ -48,7 +59,9 @@ export function materializeVendoredLibraries(
     return { materializedDir: null, modules: [], skipped: [] };
   }
 
-  const present = modules.filter((module) => existsSync(path.join(generatedDir, `${module}.d.ts`)));
+  const present = modules.filter((module) =>
+    existsSync(path.join(generatedDir, `${sourceStem(module)}.d.ts`)),
+  );
   const skipped = modules.filter((module) => !present.includes(module));
   if (present.length === 0) {
     return { materializedDir: null, modules: [], skipped };
@@ -64,8 +77,8 @@ export function materializeVendoredLibraries(
   }
 
   for (const module of present) {
-    const file = `${module}.d.ts`;
-    writeFileSync(path.join(absDir, file), readFileSync(path.join(generatedDir, file), "utf8"));
+    const source = readFileSync(path.join(generatedDir, `${sourceStem(module)}.d.ts`), "utf8");
+    writeFileSync(path.join(absDir, `${module}.d.ts`), source);
   }
 
   const imports = present.map((module) => `import "./${module}";`).join("\n");

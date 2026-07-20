@@ -176,7 +176,11 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       cwd,
       matched: matchedLibraries
         .filter((m) => m.confirmed.length > 0)
-        .map((m) => ({ sourceId: m.library.sourceId, modules: m.confirmed })),
+        .map((m) => ({
+          sourceId: m.library.sourceId,
+          modules: m.confirmed,
+          ...(m.library.generatedStems ? { generatedStems: m.library.generatedStems } : {}),
+        })),
       generatedDir: libraryGeneratedDir,
     });
   ensureLibraryTypesReference(cwd, librariesDir);

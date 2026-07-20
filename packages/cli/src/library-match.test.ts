@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   buildLibraryRegistry,
+  buildLualsRegistryEntries,
   type LibraryClassification,
   type LibraryTargets,
+  type LualsTargets,
   matchVendoredLibrary,
   normalizeSourceId,
+  type VendoredLibrary,
 } from "./library-match";
 
 const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
@@ -105,5 +108,70 @@ describe("buildLibraryRegistry", () => {
       { targets: [] },
     );
     expect(registry).toEqual([]);
+  });
+});
+
+describe("buildLualsRegistryEntries", () => {
+  const druidTargets: LualsTargets = {
+    targets: [
+      { repo: "https://github.com/Insality/druid", moduleId: "druid.druid", namespace: "druid" },
+    ],
+  };
+
+  test("maps a LuaLS target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
+    expect(buildLualsRegistryEntries(druidTargets)).toEqual([
+      { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+    ]);
+  });
+
+  test("normalizes the repo the same way declared archive URLs are", () => {
+    const [entry] = buildLualsRegistryEntries({
+      targets: [
+        {
+          repo: "https://GitHub.com/Insality/druid.git",
+          moduleId: "druid.druid",
+          namespace: "druid",
+        },
+      ],
+    });
+    expect(entry?.sourceId).toBe("druid");
+  });
+
+  test("returns no entries for an empty target list", () => {
+    expect(buildLualsRegistryEntries({ targets: [] })).toEqual([]);
+  });
+});
+
+describe("matchVendoredLibrary against a LuaLS entry", () => {
+  const druidEntry: VendoredLibrary = {
+    sourceId: "druid",
+    modules: ["druid.druid"],
+    generatedStems: { "druid.druid": "druid" },
+  };
+
+  test("matches druid's declared archive URL and its moving/forked refs", () => {
+    for (const url of [
+      "https://github.com/Insality/druid/archive/1.2.5.zip",
+      "https://github.com/Insality/druid/archive/main.zip",
+      "https://github.com/someone/druid/archive/refs/heads/main.zip?token=x",
+    ]) {
+      expect(matchVendoredLibrary(url, [druidEntry])).toEqual(druidEntry);
+    }
+  });
+
+  test("returns null for an unrelated URL", () => {
+    expect(
+      matchVendoredLibrary("https://github.com/nobody/other/archive/main.zip", [druidEntry]),
+    ).toBe(null);
+  });
+});
+
+describe("VendoredLibrary generatedStems is optional", () => {
+  test("a pure-Lua entry round-trips unchanged without generatedStems", () => {
+    const pureLua: VendoredLibrary = { sourceId: "dicebag", modules: ["dicebag.dicebag"] };
+    expect(pureLua.generatedStems).toBeUndefined();
+    expect(
+      matchVendoredLibrary("https://github.com/paulomrpp/dicebag/archive/main.zip", [pureLua]),
+    ).toEqual(pureLua);
   });
 });

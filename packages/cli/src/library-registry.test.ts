@@ -36,4 +36,14 @@ describe("loadVendoredLibraryRegistry", () => {
       generatedDir: null,
     });
   });
+
+  test("includes the druid LuaLS target alongside the pure-Lua entries", () => {
+    const { registry } = loadVendoredLibraryRegistry();
+    const druid = registry.find((library) => library.sourceId === "druid");
+    expect(druid).toBeDefined();
+    expect(druid?.modules).toEqual(["druid.druid"]);
+    expect(druid?.generatedStems?.["druid.druid"]).toBe("druid");
+    // the pure-Lua corpus is still present, so the LuaLS append is additive.
+    expect(registry.length).toBeGreaterThan(1);
+  });
 });

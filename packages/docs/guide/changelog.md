@@ -44,8 +44,11 @@ changes are called out first because the toolchain is pre-1.0.
   before. Variadic parameters and multi-value returns on that page now match the
   generated `.d.ts` too — `translate(locale_id: string, ...args: string[])` and
   `get_text_size(...): LuaMultiReturn<[number, number]>` instead of the earlier
-  `...: string` and `number, number` forms. The published package you import
-  still ships in a later release.
+  `...: string` and `number, number` forms. Declaring Druid as a `game.project`
+  dependency now makes `defold-typescript resolve` recognize it by source
+  identity and materialize its committed types into your project, so a
+  TypeScript file that imports `druid.druid` type-checks and transpiles against
+  them. The published package you import still ships in a later release.
 
 ## v0.20.8
 
