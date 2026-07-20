@@ -741,3 +741,84 @@ describe("runResolve library matching", () => {
     expect(warnings.join("\n")).toContain("mylib.core");
   });
 });
+
+describe("runResolve druid LuaLS library", () => {
+  const DRUID = "declare module 'druid.druid' { export const version: string; }\n";
+
+  // druid's committed types live in `generated/druid.d.ts` (named for its
+  // namespace), so the generated stem is `druid`, not the `druid.druid` module.
+  function seedDruidGenerated(): string {
+    const dir = tmp();
+    writeFileSync(join(dir, "druid.d.ts"), DRUID);
+    return dir;
+  }
+
+  const druidRegistry = [
+    { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+  ];
+
+  // An asset-only archive that ships `druid/druid.lua` under the GitHub wrapper
+  // dir, so the `druid` repo-name match verifies against `druid.druid`.
+  function verifiedDruidArchive(url: string): Record<string, FakeArchive> {
+    return {
+      [extensionArchiveKey(url)]: {
+        entries: ["druid-1.2.5/druid/druid.lua", "druid-1.2.5/asset/foo.png"],
+        contents: {},
+      },
+    };
+  }
+
+  test("materializes druid's committed types from the generated stem and reports it verified", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/Insality/druid/archive/1.2.5.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(verifiedDruidArchive(url)),
+      libraryRegistry: druidRegistry,
+      libraryGeneratedDir: seedDruidGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "libraries", "druid.druid.d.ts"), "utf8")).toBe(
+      DRUID,
+    );
+    expect(result.libraries).toEqual([
+      { url, source: "druid", modules: ["druid.druid"], provenance: "vendored", verified: true },
+    ]);
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).toContain("libraries");
+  });
+
+  test("a druid archive not shipping druid.druid stays unverified and writes no surface", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/Insality/druid/archive/1.2.5.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["druid-1.2.5/somethingelse/init.lua"],
+        contents: {},
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: druidRegistry,
+      libraryGeneratedDir: seedDruidGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(result.libraries).toEqual([
+      { url, source: "druid", modules: [], provenance: "vendored", verified: false },
+    ]);
+  });
+});
