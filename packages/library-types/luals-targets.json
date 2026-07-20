@@ -3,6 +3,7 @@
     {
       "repo": "https://github.com/Insality/druid",
       "ref": "1.2.5",
+      "license": "MIT",
       "sourceGlobs": ["druid/**/*.lua"],
       "moduleId": "druid.druid",
       "namespace": "druid",

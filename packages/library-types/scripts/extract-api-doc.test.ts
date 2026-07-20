@@ -8,11 +8,16 @@ import { readLualsTargets } from "./sync-luals-types";
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 // The api-doc drift guard covers only the ts-defold front-end, whose generated
-// `<moduleId>.d.ts` each round-trips to an `api-doc/<moduleId>.json` fixture. The
-// luals emitter writes `<namespace>.d.ts` from LuaLS annotations, not api-doc, so
-// those namespaces are excluded here.
+// `<moduleId>.d.ts` each round-trips to an `api-doc/<moduleId>.json` fixture via
+// `extractApiDoc`. A luals namespace's api-doc is lowered from its `LibraryModel`
+// (`lower-api-doc.ts`), not extracted from the emitted `.d.ts`, so it is excluded
+// here and guarded separately by `lower-api-doc.test.ts`.
+function lualsNamespaceSet(): Set<string> {
+  return new Set(readLualsTargets(PACKAGE_ROOT).map((t) => t.namespace));
+}
+
 function generatedModules(): string[] {
-  const lualsNamespaces = new Set(readLualsTargets(PACKAGE_ROOT).map((t) => t.namespace));
+  const lualsNamespaces = lualsNamespaceSet();
   return readdirSync(join(PACKAGE_ROOT, "generated"))
     .filter((f) => f.endsWith(".d.ts"))
     .map((f) => f.slice(0, -".d.ts".length))
@@ -480,9 +485,11 @@ declare module 'stub.stub' {
   });
 
   test("every generated module has exactly one api-doc fixture (no stale or missing)", () => {
+    const lualsNamespaces = lualsNamespaceSet();
     const fixtures = readdirSync(join(PACKAGE_ROOT, "api-doc"))
       .filter((f) => f.endsWith(".json"))
       .map((f) => f.slice(0, -".json".length))
+      .filter((name) => !lualsNamespaces.has(name))
       .sort();
     expect(fixtures).toEqual(generatedModules());
   });

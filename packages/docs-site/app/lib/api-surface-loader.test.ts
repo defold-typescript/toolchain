@@ -7,12 +7,14 @@ import {
   libraryOwnerByDir,
   loadApiSurface,
   loadApiSurfaceForVersion,
+  loadLibraryProvenance,
   loadVersionIndependentPages,
 } from "./api-surface-loader";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 describe("githubOwner", () => {
   test("returns the first path segment of a GitHub author URL", () => {
@@ -133,5 +135,25 @@ describe("loadApiSurface library displayName", () => {
     const page = libraryPages().find((p) => p.namespace === "alias.actual");
     expect(page?.displayName).toBe("alias / aliased");
     expect(page?.module.description).toBe("Aliased module description.");
+  });
+});
+
+describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
+  test("attributes druid to Insality/druid at the luals-targets ref, not the ts-defold/library pin", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("druid");
+    expect(meta.commit).toBe("1.2.5");
+    expect(meta.authorUrl).toBe("https://github.com/Insality/druid");
+    expect(meta.sourceUrl).toBe("https://github.com/Insality/druid/tree/1.2.5");
+    expect(meta.importString).toBe('import * as druid from "druid"');
+    expect(meta.license).toBe("MIT");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+});
+
+describe("loadApiSurface — druid library page", () => {
+  test("includes a druid page tagged category library", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const druid = pages.find((p) => p.namespace === "druid");
+    expect(druid?.category).toBe("library");
   });
 });

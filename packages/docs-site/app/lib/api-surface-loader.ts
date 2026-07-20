@@ -181,12 +181,38 @@ export function libraryOwnerByDir(libraryTypesDir: string): Map<string, string> 
   return ownerByDir;
 }
 
+// A LuaLS-sourced library's own pin, read from `luals-targets.json`. Unlike the
+// ts-defold libraries — vendored en masse from one `ts-defold/library` commit —
+// each druid-style library lives in its own repo at its own tag, so it carries
+// its own `repo`/`ref` and cannot be attributed from the shared classification.
+interface LualsProvenance {
+  repo: string;
+  ref: string;
+  license: string;
+}
+
+function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
+  const path = join(libraryTypesDir, "luals-targets.json");
+  if (!existsSync(path)) return new Map();
+  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
+    targets: { namespace: string; repo: string; ref: string; license?: string }[];
+  };
+  return new Map(
+    targets.map((t) => [t.namespace, { repo: t.repo, ref: t.ref, license: t.license ?? "" }]),
+  );
+}
+
 // Per-library provenance, joined from `library-classification.json` (repo,
 // pinned commit, license, and the dir each module belongs to) plus `NOTICE`
 // (the upstream author/url). Returns a per-module `LibraryMeta` builder the
 // render layer turns into the uniform Author / GitHub / Commit pin / Import /
 // License block; the module description is left clean.
-function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => LibraryMeta {
+//
+// A module absent from the ts-defold classification but present in
+// `luals-targets.json` is a LuaLS-sourced library (druid): it is attributed to
+// its own repo at its own ref, not pinned to the shared ts-defold/library
+// commit the classification would otherwise default it to.
+export function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => LibraryMeta {
   const classification = JSON.parse(
     readFileSync(join(libraryTypesDir, "library-classification.json"), "utf8"),
   ) as LibraryClassification;
@@ -197,9 +223,21 @@ function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => 
 
   const moduleDir = libraryModuleDirs(libraryTypesDir);
   const modulePath = libraryModulePaths(libraryTypesDir);
+  const luals = loadLualsProvenance(libraryTypesDir);
 
   const { repo, commit, license } = classification.source;
   return (namespace: string): LibraryMeta => {
+    const lualsEntry = moduleDir.has(namespace) ? undefined : luals.get(namespace);
+    if (lualsEntry) {
+      return {
+        author: "",
+        authorUrl: lualsEntry.repo,
+        commit: lualsEntry.ref,
+        sourceUrl: `${lualsEntry.repo}/tree/${lualsEntry.ref}`,
+        importString: libraryImportString(namespace),
+        license: lualsEntry.license,
+      };
+    }
     const dir = moduleDir.get(namespace);
     const credit = dir ? attribution.get(dir) : undefined;
     // Link straight to the `.d.ts` the types were generated from at the pin;

@@ -1,6 +1,7 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { emitLibraryDeclarations } from "./emit-library-dts";
+import { lowerLibraryModel } from "./lower-api-doc";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
 import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
 
@@ -18,6 +19,9 @@ export interface LualsTarget {
   namespace: string;
   typeRenames: Record<string, string>;
   ignore: string[];
+  // SPDX-style license id, surfaced by the docs-site provenance block. Optional
+  // in the config; the docs-site defaults an absent value to "".
+  license?: string;
 }
 
 export interface LualsTargets {
@@ -52,6 +56,7 @@ export function readLualsTargets(packageRoot: string): LualsTarget[] {
       namespace: entry.namespace as string,
       typeRenames: entry.typeRenames ?? {},
       ignore: entry.ignore ?? [],
+      ...(entry.license !== undefined ? { license: entry.license } : {}),
     };
   });
 }
@@ -279,6 +284,17 @@ if (import.meta.main) {
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, declarations);
       console.log(`emitted ${target.moduleId} -> generated/${target.namespace}.d.ts`);
+    }
+  }
+  if (argv.includes("--api-doc")) {
+    const targets = readLualsTargets(root);
+    for (const target of targets) {
+      const model = buildTargetModel(root, target);
+      const lowered = lowerLibraryModel(model, { namespace: target.namespace });
+      const dest = join(root, "api-doc", `${target.namespace}.json`);
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, `${JSON.stringify(lowered, null, 2)}\n`);
+      console.log(`lowered ${target.moduleId} -> api-doc/${target.namespace}.json`);
     }
   }
 }
