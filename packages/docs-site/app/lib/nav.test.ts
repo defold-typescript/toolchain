@@ -150,6 +150,7 @@ describe("buildNav", () => {
             {
               dir: "defold-input",
               label: "defold-input",
+              authoredHere: false,
               modules: [
                 { label: "in.button", route: "/api/in.button" },
                 { label: "in.cursor", route: "/api/in.cursor" },
@@ -158,6 +159,7 @@ describe("buildNav", () => {
             {
               dir: "monarch",
               label: "monarch",
+              authoredHere: false,
               modules: [{ label: "monarch.monarch", route: "/api/monarch.monarch" }],
             },
           ],
@@ -169,6 +171,7 @@ describe("buildNav", () => {
             {
               dir: "library-defold-persist",
               label: "library-defold-persist",
+              authoredHere: false,
               modules: [{ label: "persist.persist", route: "/api/persist.persist" }],
             },
           ],
@@ -205,6 +208,52 @@ describe("buildNav", () => {
     expect(labels.every((label) => !label.includes("/"))).toBe(true);
   });
 
+  test("appends the authored-pin marker to LuaLS library group labels only", () => {
+    const nav = buildNav(realPages(), {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: [
+        {
+          creator: "Insality",
+          label: "Insality",
+          libraries: [
+            {
+              dir: "druid",
+              label: "druid",
+              authoredHere: true,
+              modules: [{ label: "druid", route: "/api/druid" }],
+            },
+          ],
+        },
+        {
+          creator: "britzl",
+          label: "britzl",
+          libraries: [
+            {
+              dir: "monarch",
+              label: "monarch",
+              authoredHere: false,
+              modules: [{ label: "monarch.monarch", route: "/api/monarch.monarch" }],
+            },
+          ],
+        },
+      ],
+    });
+    const libraries = nav.find((c) => c.id === "libraries");
+    const druid = libraries?.links
+      .find((l) => l.label === "Insality")
+      ?.children?.find((l) => l.label === "druid");
+    const monarch = libraries?.links
+      .find((l) => l.label === "britzl")
+      ?.children?.find((l) => l.label === "monarch");
+    expect(druid?.labelHtml).toContain("authored-pin");
+    expect(druid?.labelHtml).toContain("Type bindings maintained in this repo");
+    expect(monarch?.labelHtml).not.toContain("authored-pin");
+    expect(monarch?.labelHtml).toBe("monarch");
+  });
+
   test("activeCategoryId resolves the Libraries index and nested namespace leaves", () => {
     const nav = buildNav(realPages(), {
       globals: [],
@@ -219,6 +268,7 @@ describe("buildNav", () => {
             {
               dir: "defold-saver",
               label: "defold-saver",
+              authoredHere: false,
               modules: [
                 { label: "saver.saver", route: "/api/saver.saver" },
                 { label: "saver.storage", route: "/api/saver.storage" },
@@ -508,6 +558,20 @@ describe("libraryCreatorGroups", () => {
     expect(groups[1]?.libraries[0]?.modules).toEqual([
       { label: "squid.squid", route: "/api/squid.squid" },
     ]);
+  });
+
+  test("marks a namespace absent from moduleDir authoredHere, present ones not", () => {
+    const groups = libraryCreatorGroups(
+      [
+        { namespace: "druid", route: "/api/druid" },
+        { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
+      ],
+      moduleDir,
+      ownerByDir,
+    );
+    const flat = groups.flatMap((group) => group.libraries);
+    expect(flat.find((lib) => lib.dir === "druid")?.authoredHere).toBe(true);
+    expect(flat.find((lib) => lib.dir === "monarch")?.authoredHere).toBe(false);
   });
 
   test("falls back to the dir for uncredited libraries", () => {

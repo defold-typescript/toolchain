@@ -149,6 +149,14 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta.license).toBe("MIT");
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
+
+  test("flags druid and decore authoredHere, and a vendored namespace not", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("druid").authoredHere).toBe(true);
+    expect(meta("decore").authoredHere).toBe(true);
+    expect(meta("monarch.monarch").authoredHere).toBe(false);
+    expect(meta("gooey").authoredHere).toBe(false);
+  });
 });
 
 describe("loadApiSurface — druid library page", () => {

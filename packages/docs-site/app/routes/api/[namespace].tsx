@@ -29,8 +29,32 @@ import { combinedRedirect, redirectHtml } from "../../lib/api-redirect";
 import { withBase } from "../../lib/base";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
 import { pageHeadings } from "../../lib/headings";
-import { renderMarkdown } from "../../lib/markdown";
+import { AUTHORED_LIBRARY_HINT, authoredLibraryPin, renderMarkdown } from "../../lib/markdown";
 import { COMBINED_VERSION_ID } from "../../lib/version-switch";
+
+// The library page heading: the styled `creator/dir/namespace` path, plus the
+// map-pin marker for a LuaLS-authored library (`authoredHere`). Exported so the
+// pin wiring is unit-testable without the route's cwd-relative surface loaders.
+export function LibraryHeading({
+  creator,
+  dir,
+  namespace,
+  authoredHere,
+}: {
+  creator: string;
+  dir: string;
+  namespace: string;
+  authoredHere: boolean;
+}) {
+  return (
+    <h1>
+      <LibraryPath creator={creator} dir={dir} namespace={namespace} />
+      {authoredHere ? (
+        <span dangerouslySetInnerHTML={{ __html: authoredLibraryPin(AUTHORED_LIBRARY_HINT) }} />
+      ) : null}
+    </h1>
+  );
+}
 
 // honox flat routing collapses `api/[version]/index.tsx` to `/api/:version`,
 // which collides with this `/api/:namespace` route (the shallower one wins). So
@@ -101,9 +125,12 @@ export default createRoute(
       );
       return c.render(
         <article class="prose">
-          <h1>
-            <LibraryPath creator={creator} dir={dir} namespace={page.namespace} />
-          </h1>
+          <LibraryHeading
+            creator={creator}
+            dir={dir}
+            namespace={page.namespace}
+            authoredHere={page.libraryMeta?.authoredHere ?? false}
+          />
           <div dangerouslySetInnerHTML={{ __html: body }} />
         </article>,
         { title: `${page.module.namespace} API`, headings: pageHeadings(body) },

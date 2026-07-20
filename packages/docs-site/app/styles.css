@@ -795,6 +795,25 @@
     opacity: 0.7;
   }
 
+  /* LuaLS-authored library pin (Phosphor duotone), appended by authoredLibraryPin
+     beside authored library names in the sidebar tree and the /api heading. The
+     span wrapper positions the pin against the label baseline; the nested glyph
+     carries the same class (phosphorDuotone needs a class hook), so reset its
+     inherited span styles to avoid a doubled gap and compounded opacity. */
+  .authored-pin {
+    display: inline-block;
+    vertical-align: -0.1em;
+    margin-left: 0.3em;
+    opacity: 0.7;
+  }
+
+  .authored-pin .authored-pin {
+    display: block;
+    margin-left: 0;
+    vertical-align: baseline;
+    opacity: 1;
+  }
+
   .search-snippet mark {
     background: var(--color-accent-soft);
     color: inherit;
