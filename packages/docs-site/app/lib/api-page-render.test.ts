@@ -444,6 +444,18 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("- Commit pin:");
     expect(md).not.toContain("- Attribution:");
   });
+
+  test("the druid page renders its component typedefs and pins to Insality/druid, not ts-defold/library", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const druid = pages.find((p) => p.namespace === "druid");
+    expect(druid).toBeDefined();
+    if (!druid) return;
+    const md = apiPageMarkdown(druid, apiLinkify(pages));
+    expect(md).toContain("druid.button");
+    expect(md).toContain("[Insality/druid](https://github.com/Insality/druid)");
+    expect(md).not.toContain("ts-defold/library");
+    expect(md).toMatchSnapshot();
+  });
 });
 
 describe("apiPageMarkdown display name", () => {
