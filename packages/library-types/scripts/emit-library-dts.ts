@@ -11,15 +11,18 @@
  * a different OOP shape. Only `renderDocComment`, `TS_RESERVED_NAMES`, and
  * `TS_IDENTIFIER` are reused from the types surface.
  *
- * Deferred to `luals-generics-inheritance`: interface/method generic parameters and
- * `extends` clauses. This slice ignores `interface.generics`, `interface.extends`,
- * and `method.generics`, emitting bare `interface X { ... }`.
+ * Renders interface/method generic parameters and `extends` clauses: each generic
+ * `name` is scoped into a child `MapContext` (an identity rename) so a bare `T`
+ * resolves to `T` instead of lowering to `unknown`, constraints and `extends`
+ * targets map through the existing rename map, and an `extends` clause is emitted
+ * only for parents that resolve to a declared interface.
  */
 
 import { renderDocComment, TS_IDENTIFIER, TS_RESERVED_NAMES } from "@defold-typescript/types";
-import { type MapContext, mapLualsType } from "./map-luals-types";
+import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
 import type {
   LibraryAlias,
+  LibraryGeneric,
   LibraryInterface,
   LibraryMethod,
   LibraryModel,
@@ -77,6 +80,35 @@ function mapTypes(types: readonly string[], ctx: MapContext): string {
   return types.map((token) => mapLualsType(token, ctx).ts).join(" | ");
 }
 
+/** A generic parameter list `<A extends C, B>`, or `""` when there are none. */
+function renderGenericParams(generics: readonly LibraryGeneric[], ctx: MapContext): string {
+  if (generics.length === 0) return "";
+  const params = generics.map((generic) => {
+    if (generic.constraint === undefined || generic.constraint === "") return generic.name;
+    return `${generic.name} extends ${mapTypes([generic.constraint], ctx)}`;
+  });
+  return `<${params.join(", ")}>`;
+}
+
+/**
+ * An ` extends X, Y` clause built from `iface.extends` split on commas, keeping only
+ * parents that name a declared interface (so no `extends unknown` is ever emitted),
+ * mapped through the rename map; `""` when none survive.
+ */
+function renderExtends(
+  iface: LibraryInterface,
+  ctx: MapContext,
+  interfaceNames: ReadonlySet<string>,
+): string {
+  if (!iface.extends) return "";
+  const parents = iface.extends
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => interfaceNames.has(name))
+    .map((name) => mapTypes([name], ctx));
+  return parents.length > 0 ? ` extends ${parents.join(", ")}` : "";
+}
+
 function renderParams(params: readonly LibraryParam[], ctx: MapContext): string {
   return params
     .map((param, index) => {
@@ -109,22 +141,31 @@ function renderAlias(alias: LibraryAlias, ctx: MapContext): string[] {
   return lines;
 }
 
-function renderInterface(iface: LibraryInterface, ctx: MapContext): string[] {
+function renderInterface(
+  iface: LibraryInterface,
+  ctx: MapContext,
+  interfaceNames: ReadonlySet<string>,
+): string[] {
   const lines: string[] = [];
   pushDoc(lines, iface.brief, INDENT);
-  lines.push(`${INDENT}interface ${sanitizeTypeName(iface.name)} {`);
+  const ifaceCtx = scopeGenerics(ctx, iface.generics);
+  const params = renderGenericParams(iface.generics, ifaceCtx);
+  const extendsClause = renderExtends(iface, ifaceCtx, interfaceNames);
+  lines.push(`${INDENT}interface ${sanitizeTypeName(iface.name)}${params}${extendsClause} {`);
   const body = INDENT + INDENT;
   for (const field of iface.fields) {
     const optional = field.isOptional ? "?" : "";
-    lines.push(`${body}${memberKey(field.name)}${optional}: ${mapTypes(field.types, ctx)};`);
+    lines.push(`${body}${memberKey(field.name)}${optional}: ${mapTypes(field.types, ifaceCtx)};`);
   }
   for (const method of iface.methods) {
     pushDoc(lines, method.brief, body);
+    const methodCtx = scopeGenerics(ifaceCtx, method.generics);
+    const methodParams = renderGenericParams(method.generics, methodCtx);
     lines.push(
-      `${body}${memberKey(method.name)}(${renderParams(method.params, ctx)}): ${renderReturn(
-        method.returns,
-        ctx,
-      )};`,
+      `${body}${memberKey(method.name)}${methodParams}(${renderParams(
+        method.params,
+        methodCtx,
+      )}): ${renderReturn(method.returns, methodCtx)};`,
     );
   }
   lines.push(`${INDENT}}`);
@@ -134,10 +175,12 @@ function renderInterface(iface: LibraryInterface, ctx: MapContext): string[] {
 function renderModuleFunction(fn: LibraryMethod, ctx: MapContext): string[] {
   const lines: string[] = [];
   pushDoc(lines, fn.brief, INDENT);
-  const params = renderParams(fn.params, ctx);
-  const signature = `(${params ? `this: void, ${params}` : "this: void"}): ${renderReturn(
+  const fnCtx = scopeGenerics(ctx, fn.generics);
+  const genericParams = renderGenericParams(fn.generics, fnCtx);
+  const params = renderParams(fn.params, fnCtx);
+  const signature = `${genericParams}(${params ? `this: void, ${params}` : "this: void"}): ${renderReturn(
     fn.returns,
-    ctx,
+    fnCtx,
   )}`;
   const isReserved = TS_RESERVED_NAMES.has(fn.name) || !TS_IDENTIFIER.test(fn.name);
   if (isReserved) {
@@ -170,9 +213,10 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
     typeRenames: { ...(opts.typeRenames ?? {}), ...nameRenames },
   };
 
+  const interfaceNames = new Set(model.interfaces.map((iface) => iface.name));
   const out: string[] = ["/** @noResolution */", `declare module '${opts.moduleId}' {`];
   for (const alias of model.aliases) out.push(...renderAlias(alias, ctx));
-  for (const iface of model.interfaces) out.push(...renderInterface(iface, ctx));
+  for (const iface of model.interfaces) out.push(...renderInterface(iface, ctx, interfaceNames));
   for (const fn of model.moduleFunctions) out.push(...renderModuleFunction(fn, ctx));
   out.push("}");
   return `${out.join("\n")}\n`;
