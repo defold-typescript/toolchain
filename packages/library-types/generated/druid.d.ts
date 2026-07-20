@@ -1776,11 +1776,6 @@ declare module 'druid.druid' {
 		info: (message: string, context: unknown) => void;
 		warn: (message: string, context: unknown) => void;
 		error: (message: string, context: unknown) => void;
-		trace: (_: unknown, msg: string, data: unknown) => void;
-		debug: (_: unknown, msg: string, data: unknown) => void;
-		info: (_: unknown, msg: string, data: unknown) => void;
-		warn: (_: unknown, msg: string, data: unknown) => void;
-		error: (_: unknown, msg: string, data: unknown) => void;
 	}
 	interface GUITextMetrics {
 		width: number;

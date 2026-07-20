@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
+import {
+  type LibraryField,
+  type LibraryInterface,
+  type LibraryMethod,
+  type LibraryModel,
+  mergeLibraryModels,
+  parseLualsSource,
+} from "./parse-luals";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -356,5 +363,59 @@ describe("druid parse snapshot", () => {
     );
     expect(model.interfaces.some((i) => i.methods.length > 0)).toBe(true);
     expect(model.moduleFunctions.length).toBeGreaterThan(0);
+  });
+});
+
+describe("mergeLibraryModels field dedup", () => {
+  const field = (name: string, type: string): LibraryField => ({
+    name,
+    types: [type],
+    doc: "",
+    isOptional: false,
+  });
+  const method = (name: string): LibraryMethod => ({
+    name,
+    brief: "",
+    generics: [],
+    params: [],
+    returns: [],
+  });
+  const iface = (
+    name: string,
+    fields: LibraryField[],
+    methods: LibraryMethod[] = [],
+  ): LibraryInterface => ({ name, generics: [], fields, methods, brief: "" });
+  const model = (interfaces: LibraryInterface[]): LibraryModel => ({
+    interfaces,
+    aliases: [],
+    moduleFunctions: [],
+  });
+
+  test("a field named the same across two merged interfaces collapses to one, first wins", () => {
+    const a = model([iface("X", [field("f", "string"), field("keep_a", "number")])]);
+    const b = model([iface("X", [field("f", "boolean"), field("keep_b", "table")])]);
+    const merged = mergeLibraryModels([a, b]);
+    expect(merged.interfaces).toHaveLength(1);
+    const x = merged.interfaces[0];
+    expect(x?.fields.map((fld) => fld.name)).toEqual(["f", "keep_a", "keep_b"]);
+    expect(x?.fields.find((fld) => fld.name === "f")?.types).toEqual(["string"]);
+  });
+
+  test("a single interface repeating a field name collapses to one (dedup is a final pass)", () => {
+    const a = model([
+      iface("X", [field("f", "string"), field("f", "boolean"), field("g", "number")]),
+    ]);
+    const merged = mergeLibraryModels([a]);
+    const x = merged.interfaces[0];
+    expect(x?.fields.map((fld) => fld.name)).toEqual(["f", "g"]);
+    expect(x?.fields.find((fld) => fld.name === "f")?.types).toEqual(["string"]);
+  });
+
+  test("two same-named methods are not deduped (overloaded module-function non-goal)", () => {
+    const a = model([iface("X", [], [method("call")])]);
+    const b = model([iface("X", [], [method("call")])]);
+    const merged = mergeLibraryModels([a, b]);
+    const x = merged.interfaces[0];
+    expect(x?.methods.map((m) => m.name)).toEqual(["call", "call"]);
   });
 });

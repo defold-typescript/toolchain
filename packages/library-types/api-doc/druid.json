@@ -10194,46 +10194,6 @@
           "types": [
             "(message: string, context: unknown) => void"
           ]
-        },
-        {
-          "name": "trace",
-          "brief": "",
-          "description": "",
-          "types": [
-            "(_: unknown, msg: string, data: unknown) => void"
-          ]
-        },
-        {
-          "name": "debug",
-          "brief": "",
-          "description": "",
-          "types": [
-            "(_: unknown, msg: string, data: unknown) => void"
-          ]
-        },
-        {
-          "name": "info",
-          "brief": "",
-          "description": "",
-          "types": [
-            "(_: unknown, msg: string, data: unknown) => void"
-          ]
-        },
-        {
-          "name": "warn",
-          "brief": "",
-          "description": "",
-          "types": [
-            "(_: unknown, msg: string, data: unknown) => void"
-          ]
-        },
-        {
-          "name": "error",
-          "brief": "",
-          "description": "",
-          "types": [
-            "(_: unknown, msg: string, data: unknown) => void"
-          ]
         }
       ]
     },
