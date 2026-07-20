@@ -364,7 +364,7 @@ function functionSignature(fn: ApiFunction, mapType: MapType = mapDocType): stri
     .map((p) => `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`)
     .join(", ");
   const ret = fn.returnValues.map((r) => typeList(r.types, mapType)).join(", ");
-  return `${fn.name}(${params})${ret ? `: ${ret}` : ""}`;
+  return `${fn.name}${fn.generics ?? ""}(${params})${ret ? `: ${ret}` : ""}`;
 }
 
 function variableSignature(v: ApiVariable, mapType: MapType = mapDocType): string {

@@ -451,7 +451,21 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(druid).toBeDefined();
     if (!druid) return;
     const md = apiPageMarkdown(druid, apiLinkify(pages));
-    expect(md).toContain("druid.button");
+    // Emitter-equivalent signatures: a mapped/sanitized generic module function and a
+    // sanitized typedef method, not the raw LuaLS `druid.`-dotted / unbound-`T` form.
+    expect(md).toContain("get_widget<T extends druid_widget>");
+    expect(md).toContain("druid_button.set_enabled(state: boolean | undefined): druid_button");
+    // No raw LuaLS token survives in a signature position (heading lines). Prose doc
+    // text may still mention `fun(self, ...)` and `druid.<component>` verbatim.
+    const signatureLines = md
+      .split("\n")
+      .filter((line) => line.startsWith("### ") || line.startsWith("#### "));
+    for (const line of signatureLines) {
+      expect(line).not.toContain("table|nil");
+      expect(line).not.toContain("fun(");
+      expect(line).not.toMatch(/druid\.[a-z]/);
+    }
+    expect(md).not.toContain("table|nil");
     expect(md).toContain("[Insality/druid](https://github.com/Insality/druid)");
     expect(md).not.toContain("ts-defold/library");
     expect(md).toMatchSnapshot();

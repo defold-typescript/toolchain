@@ -42,7 +42,7 @@ export interface EmitLibraryOptions {
 const INDENT = "\t";
 
 /** A model type name (dotted like `druid.button`) reduced to a legal TS identifier. */
-function sanitizeTypeName(name: string): string {
+export function sanitizeTypeName(name: string): string {
   const cleaned = name.replace(/[^A-Za-z0-9_$]/g, "_");
   return /^[A-Za-z_$]/.test(cleaned) ? cleaned : `_${cleaned}`;
 }
@@ -80,13 +80,13 @@ function needsArrayParens(ts: string): boolean {
   return hasTopLevelUnion(ts) || ts.includes("=>") || ts.startsWith("{");
 }
 
-function mapTypes(types: readonly string[], ctx: MapContext): string {
+export function mapTypes(types: readonly string[], ctx: MapContext): string {
   if (types.length === 0) return "unknown";
   return types.map((token) => mapLualsType(token, ctx).ts).join(" | ");
 }
 
 /** A generic parameter list `<A extends C, B>`, or `""` when there are none. */
-function renderGenericParams(generics: readonly LibraryGeneric[], ctx: MapContext): string {
+export function renderGenericParams(generics: readonly LibraryGeneric[], ctx: MapContext): string {
   if (generics.length === 0) return "";
   const params = generics.map((generic) => {
     if (generic.constraint === undefined || generic.constraint === "") return generic.name;
@@ -224,22 +224,37 @@ function renderModuleFunction(fn: LibraryMethod, ctx: MapContext): string[] {
 }
 
 /**
- * Emit the `.d.ts` text for one library model. References to the model's own
- * interfaces and aliases resolve to their sanitized declaration names via a rename
- * map layered over the caller's `typeRenames`; unresolved references lower to
- * `unknown` inside `mapLualsType` exactly as the fidelity report records them.
+ * The `MapContext` a library model maps every type token through: each interface
+ * and alias name is a known reference plus a sanitized rename (dotted `druid.button`
+ * -> `druid_button`), layered over the caller's `typeRenames`. Shared by the emitter
+ * (declaration text) and the api-doc lowering so both resolve model references
+ * identically — the invariant that keeps `api-doc/<ns>.json` byte-equivalent to
+ * `generated/<ns>.d.ts`.
  */
-export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOptions): string {
+export function buildModelContext(
+  model: LibraryModel,
+  typeRenames?: Record<string, string>,
+): MapContext {
   const declaredNames = [
     ...model.interfaces.map((iface) => iface.name),
     ...model.aliases.map((alias) => alias.name),
   ];
   const nameRenames: Record<string, string> = {};
   for (const name of declaredNames) nameRenames[name] = sanitizeTypeName(name);
-  const ctx: MapContext = {
+  return {
     knownNames: new Set(declaredNames),
-    typeRenames: { ...(opts.typeRenames ?? {}), ...nameRenames },
+    typeRenames: { ...(typeRenames ?? {}), ...nameRenames },
   };
+}
+
+/**
+ * Emit the `.d.ts` text for one library model. References to the model's own
+ * interfaces and aliases resolve to their sanitized declaration names via a rename
+ * map layered over the caller's `typeRenames`; unresolved references lower to
+ * `unknown` inside `mapLualsType` exactly as the fidelity report records them.
+ */
+export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOptions): string {
+  const ctx = buildModelContext(model, opts.typeRenames);
 
   const interfaceNames = new Set(model.interfaces.map((iface) => iface.name));
   const out: string[] = ["/** @noResolution */", `declare module '${opts.moduleId}' {`];

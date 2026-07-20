@@ -189,6 +189,36 @@ describe("parseDefoldApiDoc", () => {
     expect(noExample?.examples).toBe("");
   });
 
+  test("parseFunction reads a string generics clause and omits it when absent or non-string", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "ns.get_widget",
+          generics: "<T extends druid_widget>",
+          parameters: [],
+          returnvalues: [],
+        },
+        { type: "FUNCTION", name: "ns.plain", parameters: [], returnvalues: [] },
+        {
+          type: "FUNCTION",
+          name: "ns.bad_generics",
+          generics: 42,
+          parameters: [],
+          returnvalues: [],
+        },
+      ],
+    };
+    const module = parseDefoldApiDoc(doc);
+    const generic = module.functions.find((fn) => fn.name === "ns.get_widget");
+    const plain = module.functions.find((fn) => fn.name === "ns.plain");
+    const bad = module.functions.find((fn) => fn.name === "ns.bad_generics");
+    expect(generic?.generics).toBe("<T extends druid_widget>");
+    expect(plain?.generics).toBeUndefined();
+    expect(bad?.generics).toBeUndefined();
+  });
+
   test("every parsed ApiFunction has non-undefined name/parameters/returnValues", () => {
     const module = parseDefoldApiDoc(vmathDoc);
     expect(module.functions.length).toBeGreaterThan(0);
