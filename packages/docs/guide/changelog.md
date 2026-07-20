@@ -22,11 +22,14 @@ changes are called out first because the toolchain is pre-1.0.
   with Druid). An emitter now renders the first generated library `.d.ts` from
   the ingested LuaLS annotations — Druid's interfaces and methods, plus only the
   module's own exported functions (not every file's, and with callback return
-  types preserved) — building on the earlier source ingest and type mapper. The
-  LuaLS sync scripts (`luals:emit`/`--fidelity`) now run on Windows, which
-  previously threw a spurious "fixture not found" because fixture path separators
-  were compared unnormalized. The published package you import still ships in a
-  later release.
+  types preserved) — building on the earlier source ingest and type mapper.
+  Interface and method generics with constraints (`<T extends druid_component>`)
+  and `extends` inheritance clauses are now emitted, so inherited component
+  methods and generic return types are typed instead of `unknown`. The LuaLS
+  sync scripts (`luals:emit`/`--fidelity`) now run on Windows, which previously
+  threw a spurious "fixture not found" because fixture path separators were
+  compared unnormalized. The published package you import still ships in a later
+  release.
 
 ## v0.20.8
 

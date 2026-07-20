@@ -14,7 +14,7 @@ declare module 'druid.druid' {
 	 * - Key triggers in `input.binding` should be setup for correct working
 	 * - It uses a key_back and key_backspace action ids
 	 */
-	interface druid_back_handler {
+	interface druid_back_handler extends druid_component {
 		on_back: unknown;
 		params: unknown | undefined;
 		/**
@@ -34,7 +34,7 @@ declare module 'druid.druid' {
 	 * - Blocker will capture all input events that hit the node, preventing them from reaching other components
 	 * - Blocker works placed as usual component in stack, so any other component can be placed on top of it and will work as usual
 	 */
-	interface druid_blocker {
+	interface druid_blocker extends druid_component {
 		node: Opaque<"node">;
 		_is_enabled: boolean;
 		/**
@@ -84,7 +84,7 @@ declare module 'druid.druid' {
 	 * - Button can have key trigger to use them by key: `button:set_key_trigger`
 	 * -
 	 */
-	interface druid_button {
+	interface druid_button extends druid_component {
 		on_click: unknown;
 		on_pressed: unknown;
 		on_repeated_click: unknown;
@@ -191,7 +191,7 @@ declare module 'druid.druid' {
 	/**
 	 * A component that allows you to subscribe to drag events over a node
 	 */
-	interface druid_drag {
+	interface druid_drag extends druid_component {
 		node: Opaque<"node">;
 		on_touch_start: unknown;
 		on_touch_end: unknown;
@@ -261,7 +261,7 @@ declare module 'druid.druid' {
 	/**
 	 * The component for handling hover events on a node
 	 */
-	interface druid_hover {
+	interface druid_hover extends druid_component {
 		node: Opaque<"node">;
 		on_hover: unknown;
 		on_mouse_hover: unknown;
@@ -348,7 +348,7 @@ declare module 'druid.druid' {
 	 * -   - on_point_scroll(self, item_index, position): On scroll_to_index function callback
 	 * - Multitouch is required for scroll. Scroll correctly handles touch_id swap while dragging
 	 */
-	interface druid_scroll {
+	interface druid_scroll extends druid_component {
 		node: Opaque<"node">;
 		click_zone: Opaque<"node"> | undefined;
 		on_scroll: unknown;
@@ -495,7 +495,7 @@ declare module 'druid.druid' {
 	/**
 	 * The component for manage the nodes position in the grid with various options
 	 */
-	interface druid_grid {
+	interface druid_grid extends druid_component {
 		on_add_item: unknown;
 		on_remove_item: unknown;
 		on_change_items: unknown;
@@ -655,7 +655,7 @@ declare module 'druid.druid' {
 	 * -   - **"scale_then_trim"** - Combine two modes: first limited downscale, then trim
 	 * -   - **"scale_then_trim_left"** - Combine two modes: first limited downscale, then trim left
 	 */
-	interface druid_text {
+	interface druid_text extends druid_component {
 		node: Opaque<"node">;
 		on_set_text: unknown;
 		on_update_text_scale: unknown;
@@ -779,13 +779,13 @@ declare module 'druid.druid' {
 		/**
 		 * Set component style. Pass nil to clear style
 		 */
-		set_style(self: unknown, druid_style: LuaTable | undefined): unknown;
+		set_style<T>(self: T, druid_style: LuaTable | undefined): T;
 		/**
 		 * Set component template name. Pass nil to clear template.
 		 * This template id used to access nodes inside the template on GUI scene.
 		 * Parent template will be added automatically if exist.
 		 */
-		set_template(self: unknown, template: string | undefined): unknown;
+		set_template<T>(self: T, template: string | undefined): T;
 		/**
 		 * Get full template name.
 		 */
@@ -863,11 +863,11 @@ declare module 'druid.druid' {
 		/**
 		 * Add child to component children list
 		 */
-		__add_child(child: unknown): unknown;
+		__add_child<T extends druid_component>(child: T): T;
 		/**
 		 * Remove child from component children list
 		 */
-		__remove_child(child: unknown): boolean;
+		__remove_child<T extends druid_component>(child: T): boolean;
 		/**
 		 * Return all children components, recursive
 		 */
@@ -878,7 +878,7 @@ declare module 'druid.druid' {
 	/**
 	 * The component that handles a rich text input field, it's a wrapper around the druid.input component
 	 */
-	interface druid_rich_input {
+	interface druid_rich_input extends druid_component {
 		root: Opaque<"node">;
 		input: druid_input;
 		cursor: Opaque<"node">;
@@ -979,7 +979,7 @@ declare module 'druid.druid' {
 	/**
 	 * The component that handles a rich text display, allows to custom color, size, font, etc. of the parts of the text
 	 */
-	interface druid_rich_text {
+	interface druid_rich_text extends druid_component {
 		root: Opaque<"node">;
 		text_prefab: Opaque<"node">;
 		_last_value: string;
@@ -1084,7 +1084,7 @@ declare module 'druid.druid' {
 	 * - Container supports minimum size constraints
 	 * - Container can be fitted into window or custom size
 	 */
-	interface druid_container {
+	interface druid_container extends druid_component {
 		node: Opaque<"node">;
 		druid: druid_instance;
 		node_offset: Vector4;
@@ -1184,7 +1184,7 @@ declare module 'druid.druid' {
 	 * - Data List supports scrolling to specific elements
 	 * - Data List supports custom element creation and cleanup
 	 */
-	interface druid_data_list {
+	interface druid_data_list extends druid_component {
 		scroll: druid_scroll;
 		grid: druid_grid;
 		on_scroll_progress_change: unknown;
@@ -1283,7 +1283,7 @@ declare module 'druid.druid' {
 	 * - Hotkey can be enabled or disabled
 	 * - Hotkey can be set to repeat on key hold
 	 */
-	interface druid_hotkey {
+	interface druid_hotkey extends druid_component {
 		on_hotkey_pressed: unknown;
 		on_hotkey_released: unknown;
 		style: druid_hotkey_style;
@@ -1336,7 +1336,7 @@ declare module 'druid.druid' {
 	 * - You can setup max length of the text
 	 * - You can setup allowed characters. On add not allowed characters `on_input_wrong` will be called
 	 */
-	interface druid_input {
+	interface druid_input extends druid_component {
 		on_input_select: unknown;
 		on_input_unselect: unknown;
 		on_input_text: unknown;
@@ -1408,7 +1408,7 @@ declare module 'druid.druid' {
 	 * - Uses druid's get_text_function to get localized text by id
 	 * - Supports string formatting with additional parameters
 	 */
-	interface druid_lang_text {
+	interface druid_lang_text extends druid_component {
 		text: druid_text;
 		node: Opaque<"node">;
 		on_change: unknown;
@@ -1462,7 +1462,7 @@ declare module 'druid.druid' {
 	 * - Layout automatically updates when nodes are added or removed
 	 * - Layout can be manually updated by calling set_dirty()
 	 */
-	interface druid_layout {
+	interface druid_layout extends druid_component {
 		node: Opaque<"node">;
 		rows_data: druid_layout_rows_data;
 		is_dirty: boolean;
@@ -1529,7 +1529,7 @@ declare module 'druid.druid' {
 	 * - Progress bar can fill only by vertical or horizontal size. For diagonal progress bar, just rotate the node in GUI scene
 	 * - If you have glitchy or dark texture bugs with progress bar, try to disable mipmaps in your texture profiles
 	 */
-	interface druid_progress {
+	interface druid_progress extends druid_component {
 		node: Opaque<"node">;
 		on_change: unknown;
 		style: druid_progress_style;
@@ -1584,7 +1584,7 @@ declare module 'druid.druid' {
 	 * - Start pos and end pos should be on vertical or horizontal line (their x or y value should be equal)
 	 * - To catch input across all slider, you can setup input node via `slider:set_input_node`
 	 */
-	interface druid_slider {
+	interface druid_slider extends druid_component {
 		node: Opaque<"node">;
 		on_change_value: unknown;
 		style: LuaTable;
@@ -1644,7 +1644,7 @@ declare module 'druid.druid' {
 	/**
 	 * The component to manage swipe events over a node
 	 */
-	interface druid_swipe {
+	interface druid_swipe extends druid_component {
 		node: Opaque<"node">;
 		on_swipe: unknown;
 		style: druid_swipe_style;
@@ -1687,7 +1687,7 @@ declare module 'druid.druid' {
 	 * - Timer will set text node with current timer value
 	 * - Timer uses update function to handle time
 	 */
-	interface druid_timer {
+	interface druid_timer extends druid_component {
 		on_tick: unknown;
 		on_set_enabled: unknown;
 		on_timer_end: unknown;
@@ -1728,7 +1728,7 @@ declare module 'druid.druid' {
 		node: Opaque<"node">;
 		v: Vector4;
 	}
-	interface druid_widget {
+	interface druid_widget extends druid_component {
 		druid: druid_instance;
 	}
 	interface druid_logger {
@@ -1820,7 +1820,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create new Druid component instance
 		 */
-		"new"(component: unknown, ...args: unknown[]): unknown;
+		"new"<T extends druid_component>(component: T, ...args: unknown[]): T;
 		/**
 		 * Call this in gui_script final function.
 		 */
@@ -1830,7 +1830,7 @@ declare module 'druid.druid' {
 		 *
 		 * Component `on_remove` function will be invoked, if exist.
 		 */
-		remove(component: unknown): boolean;
+		remove<T extends druid_component>(component: T): boolean;
 		/**
 		 * Get a context of Druid instance (usually a self of gui script)
 		 */
@@ -1885,7 +1885,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create new Druid widget instance
 		 */
-		new_widget(widget: unknown, template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): unknown;
+		new_widget<T extends druid_component>(widget: T, template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T;
 		/**
 		 * Create Button component
 		 */
@@ -2017,7 +2017,7 @@ declare module 'druid.druid' {
 	 * msg.url(nil, nil, "gui_widget") -- current game object
 	 * msg.url(nil, object_url, "gui_widget") -- other game object
 	 */
-	export function get_widget(this: void, widget_class: unknown, gui_url: Url | string, params: unknown | undefined): unknown;
+	export function get_widget<T extends druid_widget>(this: void, widget_class: T, gui_url: Url | string, params: unknown | undefined): T;
 	/**
 	 * Bind a Druid GUI instance to the current game object.
 	 * This instance now can produce widgets from `druid.get_widget()` function.
