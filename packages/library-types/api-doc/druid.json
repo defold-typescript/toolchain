@@ -17,7 +17,8 @@
           "types": [
             "LuaTable"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
           "name": "style",
@@ -25,7 +26,8 @@
           "types": [
             "LuaTable | undefined"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
@@ -50,7 +52,8 @@
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
           "name": "module",
@@ -58,7 +61,8 @@
           "types": [
             "LuaTable"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -75,7 +79,8 @@
           "types": [
             "LuaTable"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -92,7 +97,8 @@
           "types": [
             "(text_id: string) => string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -109,7 +115,8 @@
           "types": [
             "(sound_id: string) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -134,7 +141,8 @@
           "types": [
             "Opaque<\"constant\">"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -160,7 +168,8 @@
           "types": [
             "T"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
           "name": "gui_url",
@@ -168,7 +177,8 @@
           "types": [
             "Url | string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
           "name": "params",
@@ -176,7 +186,8 @@
           "types": [
             "unknown | undefined"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
@@ -201,7 +212,8 @@
           "types": [
             "druid_instance"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -226,7 +238,8 @@
           "types": [
             "druid_logger | LuaTable | undefined"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -243,7 +256,8 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
           "name": "level",
@@ -251,7 +265,8 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
@@ -280,7 +295,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "params",
@@ -288,7 +304,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -305,7 +322,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -313,7 +331,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -362,7 +381,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -379,7 +399,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -387,7 +408,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -412,7 +434,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -547,7 +570,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -555,7 +579,8 @@
               "types": [
                 "(() => void) | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "custom_args",
@@ -563,7 +588,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "anim_node",
@@ -571,7 +597,8 @@
               "types": [
                 "Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -588,7 +615,8 @@
               "types": [
                 "druid_button_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -629,7 +657,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -637,7 +666,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -670,7 +700,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -711,7 +742,8 @@
               "types": [
                 "Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -736,7 +768,8 @@
               "types": [
                 "Hash | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -777,7 +810,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "failure_callback",
@@ -785,7 +819,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -810,7 +845,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -835,7 +871,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -860,7 +897,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -877,7 +915,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -926,7 +965,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1125,7 +1165,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_drag_callback",
@@ -1133,7 +1174,8 @@
               "types": [
                 "(self: unknown, touch: unknown) => void"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1150,7 +1192,8 @@
               "types": [
                 "druid_drag_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1167,7 +1210,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1208,7 +1252,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -1216,7 +1261,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -1241,7 +1287,8 @@
               "types": [
                 "Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -1266,7 +1313,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -1315,7 +1363,8 @@
               "types": [
                 "touch | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1332,7 +1381,8 @@
               "types": [
                 "touch"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1349,7 +1399,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -1357,7 +1408,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "touch_id",
@@ -1365,7 +1417,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -1390,7 +1443,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -1398,7 +1452,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "touch",
@@ -1406,7 +1461,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1613,7 +1669,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_hover_callback",
@@ -1621,7 +1678,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_mouse_hover",
@@ -1629,7 +1687,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1654,7 +1713,8 @@
               "types": [
                 "druid_hover_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1671,7 +1731,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -1679,7 +1740,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -1712,7 +1774,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1745,7 +1808,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1778,7 +1842,8 @@
               "types": [
                 "Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1795,7 +1860,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -1994,7 +2060,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "content_node",
@@ -2002,7 +2069,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2019,7 +2087,8 @@
               "types": [
                 "druid_scroll_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2076,7 +2145,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_instant",
@@ -2084,7 +2154,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2101,7 +2172,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_instant",
@@ -2109,7 +2181,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2126,7 +2199,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_silent",
@@ -2134,7 +2208,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_instant",
@@ -2142,7 +2217,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2159,7 +2235,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_instant",
@@ -2167,7 +2244,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2200,7 +2278,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "offset",
@@ -2208,7 +2287,8 @@
               "types": [
                 "Vector3 | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2233,7 +2313,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2274,7 +2355,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2315,7 +2397,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2356,7 +2439,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2381,7 +2465,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2406,7 +2491,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2431,7 +2517,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2456,7 +2543,8 @@
               "types": [
                 "druid_grid | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2481,7 +2569,8 @@
               "types": [
                 "druid_layout | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2506,7 +2595,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2635,7 +2725,8 @@
               "types": [
                 "Vector4"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "offset",
@@ -2643,7 +2734,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2668,7 +2760,8 @@
               "types": [
                 "Vector4"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2859,7 +2952,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "element",
@@ -2867,7 +2961,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "in_row",
@@ -2875,7 +2970,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2892,7 +2988,8 @@
               "types": [
                 "druid_grid_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -2909,7 +3006,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2934,7 +3032,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "y",
@@ -2942,7 +3041,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2967,7 +3067,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -2992,7 +3093,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3025,7 +3127,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -3058,7 +3161,8 @@
               "types": [
                 "Opaque<\"constant\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3083,7 +3187,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "index",
@@ -3091,7 +3196,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "shift_policy",
@@ -3099,7 +3205,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_instant",
@@ -3107,7 +3214,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3132,7 +3240,8 @@
               "types": [
                 "Opaque<\"node\">[]"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_instant",
@@ -3140,7 +3249,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3165,7 +3275,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "shift_policy",
@@ -3173,7 +3284,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_instant",
@@ -3181,7 +3293,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3238,7 +3351,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3295,7 +3409,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3352,7 +3467,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3377,7 +3493,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "height",
@@ -3385,7 +3502,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3410,7 +3528,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3435,7 +3554,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -3468,7 +3588,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -3524,7 +3645,8 @@
               "types": [
                 "Vector4"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "pos",
@@ -3532,7 +3654,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "size",
@@ -3540,7 +3663,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "pivot",
@@ -3548,7 +3672,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -3731,7 +3856,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "value",
@@ -3739,7 +3865,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "adjust_type",
@@ -3747,7 +3874,8 @@
               "types": [
                 "druid_text_adjust_type | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -3764,7 +3892,8 @@
               "types": [
                 "druid_text_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -3789,7 +3918,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3821,7 +3951,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3846,7 +3977,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3887,7 +4019,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3912,7 +4045,8 @@
               "types": [
                 "Vector4"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3937,7 +4071,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3962,7 +4097,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -3987,7 +4123,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4028,7 +4165,8 @@
               "types": [
                 "druid_text_adjust_type | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "minimal_scale",
@@ -4036,7 +4174,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4061,7 +4200,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4118,7 +4258,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4151,7 +4292,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -4168,7 +4310,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -4402,7 +4545,8 @@
               "types": [
                 "T"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "druid_style",
@@ -4410,7 +4554,8 @@
               "types": [
                 "LuaTable | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4436,7 +4581,8 @@
               "types": [
                 "T"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "template",
@@ -4444,7 +4590,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4485,7 +4632,8 @@
               "types": [
                 "LuaTable<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4526,7 +4674,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4551,7 +4700,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "nodes",
@@ -4559,7 +4709,8 @@
               "types": [
                 "LuaTable<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4632,7 +4783,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_temporary",
@@ -4640,7 +4792,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4697,7 +4850,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4754,7 +4908,8 @@
               "types": [
                 "druid_instance"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "context",
@@ -4762,7 +4917,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "style",
@@ -4770,7 +4926,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "instance_class",
@@ -4778,7 +4935,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4836,7 +4994,8 @@
               "types": [
                 "T"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4862,7 +5021,8 @@
               "types": [
                 "T"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4913,7 +5073,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "nodes",
@@ -4921,7 +5082,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -4938,7 +5100,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -4946,7 +5109,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -4971,7 +5135,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5012,7 +5177,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5037,7 +5203,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5070,7 +5237,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5603,7 +5771,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "value",
@@ -5611,7 +5780,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -5636,7 +5806,8 @@
               "types": [
                 "druid_rich_text_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -5653,7 +5824,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5701,7 +5873,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5742,7 +5915,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5767,7 +5941,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5840,7 +6015,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5865,7 +6041,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -5940,7 +6117,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "mode",
@@ -5948,7 +6126,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -5956,7 +6135,8 @@
               "types": [
                 "((self: druid_container, size: Vector3) => void) | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -5997,7 +6177,8 @@
               "types": [
                 "Opaque<\"constant\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6014,7 +6195,8 @@
               "types": [
                 "druid_container_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6031,7 +6213,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "height",
@@ -6039,7 +6222,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "anchor_pivot",
@@ -6047,7 +6231,8 @@
               "types": [
                 "Opaque<\"constant\"> | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6088,7 +6273,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "pos_y",
@@ -6096,7 +6282,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6145,7 +6332,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6194,7 +6382,8 @@
               "types": [
                 "Opaque<\"node\"> | string | druid_container | LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "mode",
@@ -6202,7 +6391,8 @@
               "types": [
                 "druid_container_mode | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_resize_callback",
@@ -6210,7 +6400,8 @@
               "types": [
                 "((self: Opaque<\"userdata\">, size: Vector3) => void) | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6251,7 +6442,8 @@
               "types": [
                 "druid_container | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6332,7 +6524,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6357,7 +6550,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "min_size_y",
@@ -6365,7 +6559,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6390,7 +6585,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "max_size_y",
@@ -6398,7 +6594,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6583,7 +6780,8 @@
               "types": [
                 "druid_scroll"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "grid",
@@ -6591,7 +6789,8 @@
               "types": [
                 "druid_grid"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "create_function",
@@ -6599,7 +6798,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6624,7 +6824,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6649,7 +6850,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6690,7 +6892,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "index",
@@ -6698,7 +6901,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "shift_policy",
@@ -6706,7 +6910,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6731,7 +6936,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "shift_policy",
@@ -6739,7 +6945,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6764,7 +6971,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "shift_policy",
@@ -6772,7 +6980,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -6813,7 +7022,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6862,7 +7072,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6879,7 +7090,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -6896,7 +7108,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -7052,7 +7265,8 @@
               "types": [
                 "string[] | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -7060,7 +7274,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback_argument",
@@ -7068,7 +7283,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -7085,7 +7301,8 @@
               "types": [
                 "druid_hotkey_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -7102,7 +7319,8 @@
               "types": [
                 "string[] | Hash[] | string | Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback_argument",
@@ -7110,7 +7328,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7151,7 +7370,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "time",
@@ -7159,7 +7379,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7184,7 +7405,8 @@
               "types": [
                 "Hash | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -7192,7 +7414,8 @@
               "types": [
                 "action"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7217,7 +7440,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7242,7 +7466,8 @@
               "types": [
                 "Opaque<\"node\"> | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7361,7 +7586,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "text_node",
@@ -7369,7 +7595,8 @@
               "types": [
                 "Opaque<\"node\"> | druid_text"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "keyboard_type",
@@ -7377,7 +7604,8 @@
               "types": [
                 "Opaque<\"constant\"> | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -7394,7 +7622,8 @@
               "types": [
                 "druid_input_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -7411,7 +7640,8 @@
               "types": [
                 "Hash | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -7419,7 +7649,8 @@
               "types": [
                 "action"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7460,7 +7691,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7485,7 +7717,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -7534,7 +7767,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7559,7 +7793,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7600,7 +7835,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "start_index",
@@ -7608,7 +7844,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "end_index",
@@ -7616,7 +7853,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7641,7 +7879,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_add_to_selection",
@@ -7649,7 +7888,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_move_to_end",
@@ -7657,7 +7897,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7754,7 +7995,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "locale_id",
@@ -7762,7 +8004,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "adjust_type",
@@ -7770,7 +8013,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -7795,7 +8039,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7820,7 +8065,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -7845,15 +8091,17 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
-              "name": "...",
+              "name": "...args",
               "doc": "Optional params for string.format",
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "True"
             }
           ],
           "returnvalues": [
@@ -7873,12 +8121,13 @@
           "description": "Format string with new text params on localized text. Keeps the current locale but updates the format parameters.",
           "parameters": [
             {
-              "name": "...",
+              "name": "...args",
               "doc": "Optional params for string.format",
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "True"
             }
           ],
           "returnvalues": [
@@ -8025,7 +8274,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "layout_type",
@@ -8033,7 +8283,8 @@
               "types": [
                 "druid_layout_type"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -8098,7 +8349,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "index",
@@ -8106,7 +8358,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8131,7 +8384,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "margin_y",
@@ -8139,7 +8393,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8164,7 +8419,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "padding_y",
@@ -8172,7 +8428,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "padding_z",
@@ -8180,7 +8437,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "padding_w",
@@ -8188,7 +8446,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8229,7 +8488,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8254,7 +8514,8 @@
               "types": [
                 "druid_layout_type"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8279,7 +8540,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_hug_height",
@@ -8287,7 +8549,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8312,7 +8575,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8337,7 +8601,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8394,7 +8659,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8435,7 +8701,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8483,7 +8750,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "x",
@@ -8491,7 +8759,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "y",
@@ -8499,7 +8768,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8524,7 +8794,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8667,7 +8938,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "key",
@@ -8675,7 +8947,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "init_value",
@@ -8683,7 +8956,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -8700,7 +8974,8 @@
               "types": [
                 "druid_progress_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -8733,7 +9008,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -8782,7 +9058,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8823,7 +9100,8 @@
               "types": [
                 "number[]"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -8831,7 +9109,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8856,7 +9135,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -8864,7 +9144,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8889,7 +9170,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -8914,7 +9196,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "to",
@@ -8922,7 +9205,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "exactly",
@@ -8930,7 +9214,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -8947,7 +9232,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9012,7 +9298,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "end_pos",
@@ -9020,7 +9307,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -9028,7 +9316,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9061,7 +9350,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9086,7 +9376,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -9094,7 +9385,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9119,7 +9411,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "is_silent",
@@ -9127,7 +9420,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9152,7 +9446,8 @@
               "types": [
                 "number[]"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9177,7 +9472,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9202,7 +9498,8 @@
               "types": [
                 "Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9227,7 +9524,8 @@
               "types": [
                 "boolean"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9346,7 +9644,8 @@
               "types": [
                 "Opaque<\"node\"> | string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_swipe_callback",
@@ -9354,7 +9653,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9379,7 +9679,8 @@
               "types": [
                 "druid_swipe_style"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9396,7 +9697,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -9404,7 +9706,8 @@
               "types": [
                 "action"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9437,7 +9740,8 @@
               "types": [
                 "Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9454,7 +9758,8 @@
               "types": [
                 "action"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9479,7 +9784,8 @@
               "types": [
                 "druid_swipe"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -9487,7 +9793,8 @@
               "types": [
                 "action"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9544,7 +9851,8 @@
               "types": [
                 "Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "seconds_from",
@@ -9552,7 +9860,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "seconds_to",
@@ -9560,7 +9869,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -9568,7 +9878,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -9601,7 +9912,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9626,7 +9938,8 @@
               "types": [
                 "boolean | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9651,7 +9964,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "to",
@@ -9659,7 +9973,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -9684,7 +9999,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10345,7 +10661,8 @@
               "types": [
                 "druid_component"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10371,15 +10688,17 @@
               "types": [
                 "T"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
-              "name": "...",
+              "name": "...args",
               "doc": "Additional arguments to pass to the component's init function",
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "True"
             }
           ],
           "returnvalues": [
@@ -10413,7 +10732,8 @@
               "types": [
                 "T"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10478,7 +10798,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -10495,7 +10816,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "action",
@@ -10503,7 +10825,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10528,7 +10851,8 @@
               "types": [
                 "Hash"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "message",
@@ -10536,7 +10860,8 @@
               "types": [
                 "LuaTable"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "sender",
@@ -10544,7 +10869,8 @@
               "types": [
                 "Url"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -10561,7 +10887,8 @@
               "types": [
                 "number"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": []
@@ -10586,7 +10913,8 @@
               "types": [
                 "LuaTable | druid_component[]"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10611,7 +10939,8 @@
               "types": [
                 "LuaTable | druid_component[]"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10645,7 +10974,8 @@
               "types": [
                 "T"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "template",
@@ -10653,7 +10983,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "nodes",
@@ -10661,15 +10992,17 @@
               "types": [
                 "LuaTable<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
-              "name": "...",
+              "name": "...args",
               "doc": "Additional arguments to pass to the widget's init function",
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "True"
             }
           ],
           "returnvalues": [
@@ -10694,7 +11027,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -10702,7 +11036,8 @@
               "types": [
                 "unknown | unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "params",
@@ -10710,7 +11045,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "anim_node",
@@ -10718,7 +11054,8 @@
               "types": [
                 "Opaque<\"node\"> | string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10743,7 +11080,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10768,7 +11106,8 @@
               "types": [
                 "unknown | unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "params",
@@ -10776,7 +11115,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10801,7 +11141,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_hover_callback",
@@ -10809,7 +11150,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_mouse_hover_callback",
@@ -10817,7 +11159,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10842,7 +11185,8 @@
               "types": [
                 "string | Opaque<\"node\"> | druid_text"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "value",
@@ -10850,7 +11194,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "adjust_type",
@@ -10858,7 +11203,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10883,7 +11229,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "item",
@@ -10891,7 +11238,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "in_row",
@@ -10899,7 +11247,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10924,7 +11273,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "content_node",
@@ -10932,7 +11282,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10957,7 +11308,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_drag_callback",
@@ -10965,7 +11317,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -10990,7 +11343,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "on_swipe_callback",
@@ -10998,7 +11352,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11023,7 +11378,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "locale_id",
@@ -11031,7 +11387,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "adjust_type",
@@ -11039,7 +11396,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11064,7 +11422,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "end_pos",
@@ -11072,7 +11431,8 @@
               "types": [
                 "Vector3"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -11080,7 +11440,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11105,7 +11466,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "text_node",
@@ -11113,7 +11475,8 @@
               "types": [
                 "string | Opaque<\"node\"> | druid_text"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "keyboard_type",
@@ -11121,7 +11484,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11146,7 +11510,8 @@
               "types": [
                 "druid_scroll"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "druid_grid",
@@ -11154,7 +11519,8 @@
               "types": [
                 "druid_grid"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "create_function",
@@ -11162,7 +11528,8 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11187,7 +11554,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "seconds_from",
@@ -11195,7 +11563,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "seconds_to",
@@ -11203,7 +11572,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -11211,7 +11581,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11236,7 +11607,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "key",
@@ -11244,7 +11616,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "init_value",
@@ -11252,7 +11625,8 @@
               "types": [
                 "number | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11277,7 +11651,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "mode",
@@ -11285,7 +11660,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11310,7 +11686,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "mode",
@@ -11318,7 +11695,8 @@
               "types": [
                 "druid_container_mode | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -11326,7 +11704,8 @@
               "types": [
                 "((self: druid_container, size: Vector3) => void) | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11351,7 +11730,8 @@
               "types": [
                 "string | string[]"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback",
@@ -11359,7 +11739,8 @@
               "types": [
                 "unknown | unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "callback_argument",
@@ -11367,7 +11748,8 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11392,7 +11774,8 @@
               "types": [
                 "string | Opaque<\"node\">"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "value",
@@ -11400,7 +11783,8 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [
@@ -11425,7 +11809,8 @@
               "types": [
                 "string"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             },
             {
               "name": "nodes",
@@ -11433,7 +11818,8 @@
               "types": [
                 "LuaTable | undefined"
               ],
-              "is_optional": "False"
+              "is_optional": "False",
+              "is_vararg": "False"
             }
           ],
           "returnvalues": [

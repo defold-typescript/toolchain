@@ -85,6 +85,28 @@ describe("parseDefoldApiDoc", () => {
     expect(fn.parameters.map((p) => p.isOptional)).toEqual([true, false, false]);
   });
 
+  test("reads is_vararg into isVararg, defaulting to false when absent (engine back-compat)", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "ns.fn",
+          parameters: [
+            { name: "locale_id", types: ["string"], is_optional: "False" },
+            { name: "...args", types: ["string"], is_vararg: "True" },
+            { name: "plain", types: ["number"] },
+          ],
+          returnvalues: [],
+        },
+      ],
+    };
+    const fn = parseDefoldApiDoc(doc).functions[0];
+    expect(fn).toBeDefined();
+    if (!fn) return;
+    expect(fn.parameters.map((p) => p.isVararg)).toEqual([false, true, false]);
+  });
+
   test("collects PROPERTY elements into properties with name + types parsed from the brief span", () => {
     const doc = {
       info: { namespace: "ns" },
@@ -270,6 +292,7 @@ describe("parseDefoldApiDoc", () => {
       doc: "Lerp factor.",
       types: ["number"],
       isOptional: true,
+      isVararg: false,
     });
     expect(options.fields?.[1]?.isOptional).toBe(false);
     expect(options.fields?.[1]?.fields?.[0]).toEqual({
@@ -277,6 +300,7 @@ describe("parseDefoldApiDoc", () => {
       doc: "Deep flag.",
       types: ["boolean"],
       isOptional: true,
+      isVararg: false,
     });
   });
 
