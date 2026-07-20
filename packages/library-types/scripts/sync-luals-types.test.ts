@@ -77,6 +77,14 @@ describe("readLualsTargets", () => {
     expect(druid?.namespace).toBe("druid");
     expect(druid?.repo).toBe("https://github.com/Insality/druid");
   });
+
+  test("reads the committed second luals target (decore) — the generality proof", () => {
+    const targets = readLualsTargets(PACKAGE_ROOT);
+    const decore = targets.find((t) => t.moduleId === "decore.decore");
+    expect(decore).toBeDefined();
+    expect(decore?.namespace).toBe("decore");
+    expect(decore?.repo).toBe("https://github.com/Insality/decore");
+  });
 });
 
 describe("selectLualsSources", () => {
@@ -146,6 +154,17 @@ describe("lualsCorpusTargets", () => {
       source: "luals",
     });
   });
+
+  test("tags the decore entry as a LuaLS-sourced pure-Lua corpus member", () => {
+    const entries = lualsCorpusTargets(PACKAGE_ROOT);
+    const decore = entries.find((e) => e.moduleId === "decore.decore");
+    expect(decore).toEqual({
+      moduleId: "decore.decore",
+      namespace: "decore",
+      classification: "pure-lua",
+      source: "luals",
+    });
+  });
 });
 
 describe("buildTargetModel module ownership", () => {
@@ -174,6 +193,16 @@ describe("buildTargetModel module ownership", () => {
     expect(names).not.toContain("wrap_widget"); // druid.lua's `local function` helper
     expect(names).not.toContain("get_color"); // color.lua
     expect(names).not.toContain("utf8charbytes"); // system/utf8.lua
+  });
+
+  test("the second target (decore) yields a non-empty moduleFunctions surface — not hollow", () => {
+    const decoreTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.moduleId === "decore.decore");
+    if (!decoreTarget) throw new Error("decore target missing from luals-targets.json");
+    const names = buildTargetModel(PACKAGE_ROOT, decoreTarget).moduleFunctions.map((f) => f.name);
+    expect(names.length).toBeGreaterThan(0);
+    expect(names).toContain("create");
+    expect(names).toContain("register_component");
+    expect(names).toContain("new_world");
   });
 
   test("the set_text_function callback maps through emit to (text_id: string) => string", () => {

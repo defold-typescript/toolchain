@@ -1,6 +1,7 @@
 {
   "boom": "Boom is a game framework built on top of Defold",
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
+  "decore": "Defold ECS Data Manager",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
   "defold-bridge": "One SDK for cross-platform publishing HTML5 games",

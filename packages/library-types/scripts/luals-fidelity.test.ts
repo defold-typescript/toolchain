@@ -175,18 +175,26 @@ describe("buildFidelityReport", () => {
   });
 });
 
-describe("druid fidelity round-trip", () => {
-  const druid = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "druid");
-  if (!druid) throw new Error("druid target missing from luals-targets.json");
+describe("fidelity round-trip", () => {
+  const targets = readLualsTargets(PACKAGE_ROOT);
+  if (!targets.some((t) => t.namespace === "druid")) {
+    throw new Error("druid target missing from luals-targets.json");
+  }
 
-  test("the committed report matches a freshly built one (offline)", () => {
-    const built = buildTargetFidelity(PACKAGE_ROOT, druid);
-    const committed = JSON.parse(readFileSync(join(PACKAGE_ROOT, "fidelity/druid.json"), "utf8"));
+  test.each(
+    targets.map((t) => [t.namespace, t] as const),
+  )("%s: the committed report matches a freshly built one (offline)", (namespace, target) => {
+    const built = buildTargetFidelity(PACKAGE_ROOT, target);
+    const committed = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "fidelity", `${namespace}.json`), "utf8"),
+    );
     expect(built).toEqual(committed);
   });
 
-  test("smoke floor: the druid report has members and every vmath.* resolves", () => {
-    const built = buildTargetFidelity(PACKAGE_ROOT, druid);
+  test.each(
+    targets.map((t) => [t.namespace, t] as const),
+  )("smoke floor: the %s report has members and type tokens", (_namespace, target) => {
+    const built = buildTargetFidelity(PACKAGE_ROOT, target);
     expect(built.totalMembers).toBeGreaterThan(0);
     expect(built.totalTypeTokens).toBeGreaterThan(0);
   });
