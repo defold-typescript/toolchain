@@ -19,7 +19,12 @@
  */
 
 import { renderDocComment, TS_IDENTIFIER, TS_RESERVED_NAMES } from "@defold-typescript/types";
-import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
+import {
+  type MapContext,
+  mapLualsType,
+  matchSelfHookField,
+  scopeGenerics,
+} from "./map-luals-types";
 import type {
   LibraryAlias,
   LibraryGeneric,
@@ -85,9 +90,20 @@ function renderGenericParams(generics: readonly LibraryGeneric[], ctx: MapContex
   if (generics.length === 0) return "";
   const params = generics.map((generic) => {
     if (generic.constraint === undefined || generic.constraint === "") return generic.name;
-    return `${generic.name} extends ${mapTypes([generic.constraint], ctx)}`;
+    const mapped = mapTypes([generic.constraint], ctx);
+    // An undeclared constraint lowers to `unknown`; drop it (mirror `renderExtends`'s
+    // declared-only filter) rather than emit a vacuous `<T extends unknown>`.
+    return mapped === "unknown" ? generic.name : `${generic.name} extends ${mapped}`;
   });
   return `<${params.join(", ")}>`;
+}
+
+/** The TS return type for a self-hook field lowered to an optional method. */
+function renderHookReturn(returnTokens: readonly string[], ctx: MapContext): string {
+  if (returnTokens.length === 0) return "void";
+  if (returnTokens.length === 1) return mapTypes([returnTokens[0] as string], ctx);
+  const inner = returnTokens.map((token) => mapTypes([token], ctx)).join(", ");
+  return `LuaMultiReturn<[${inner}]>`;
 }
 
 /**
@@ -154,6 +170,18 @@ function renderInterface(
   lines.push(`${INDENT}interface ${sanitizeTypeName(iface.name)}${params}${extendsClause} {`);
   const body = INDENT + INDENT;
   for (const field of iface.fields) {
+    // A base's self-receiving lifecycle hook is emitted as a permissive optional
+    // method (`name?(...args: any[]): ret`) so a concrete subinterface's refined
+    // override stays assignable under `extends`; strict function-field variance
+    // would reject it.
+    const hookReturns = matchSelfHookField(field.types, iface.name);
+    if (hookReturns !== null) {
+      pushDoc(lines, field.doc, body);
+      lines.push(
+        `${body}${memberKey(field.name)}?(...args: any[]): ${renderHookReturn(hookReturns, ifaceCtx)};`,
+      );
+      continue;
+    }
     const optional = field.isOptional ? "?" : "";
     lines.push(`${body}${memberKey(field.name)}${optional}: ${mapTypes(field.types, ifaceCtx)};`);
   }

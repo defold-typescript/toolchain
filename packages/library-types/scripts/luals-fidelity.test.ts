@@ -74,6 +74,100 @@ describe("buildFidelityReport", () => {
     expect(report.coverage).toBeLessThanOrEqual(1);
   });
 
+  test("an extends of a declared interface adds one resolved token", () => {
+    const model: LibraryModel = {
+      interfaces: [
+        { name: "Base", generics: [], brief: "b", methods: [], fields: [] },
+        { name: "Child", extends: "Base", generics: [], brief: "c", methods: [], fields: [] },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const report = buildFidelityReport("x", model, {});
+    expect(report.totalTypeTokens).toBe(1);
+    expect(report.unknownFallbacks).toBe(0);
+  });
+
+  test("an extends of an undeclared parent records the parent as an unknown fallback", () => {
+    const model: LibraryModel = {
+      interfaces: [
+        { name: "Child", extends: "Ghost", generics: [], brief: "", methods: [], fields: [] },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const report = buildFidelityReport("x", model, {});
+    expect(report.totalTypeTokens).toBe(1);
+    expect(report.unknownFallbacks).toBe(1);
+    expect(report.unknownTokens).toContain("Ghost");
+  });
+
+  test("an undeclared interface-generic constraint is an unknown fallback; a declared one is resolved", () => {
+    const undeclared: LibraryModel = {
+      interfaces: [
+        {
+          name: "Bag",
+          generics: [{ name: "T", constraint: "Ghost" }],
+          brief: "",
+          methods: [],
+          fields: [],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const undeclaredReport = buildFidelityReport("x", undeclared, {});
+    expect(undeclaredReport.totalTypeTokens).toBe(1);
+    expect(undeclaredReport.unknownFallbacks).toBe(1);
+    expect(undeclaredReport.unknownTokens).toContain("Ghost");
+
+    const declared: LibraryModel = {
+      interfaces: [
+        { name: "Cmp", generics: [], brief: "", methods: [], fields: [] },
+        {
+          name: "Bag",
+          generics: [{ name: "T", constraint: "Cmp" }],
+          brief: "",
+          methods: [],
+          fields: [],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const declaredReport = buildFidelityReport("x", declared, {});
+    expect(declaredReport.totalTypeTokens).toBe(1);
+    expect(declaredReport.unknownFallbacks).toBe(0);
+  });
+
+  test("an undeclared method-generic constraint is an unknown fallback", () => {
+    const model: LibraryModel = {
+      interfaces: [
+        {
+          name: "Mapper",
+          generics: [],
+          brief: "",
+          fields: [],
+          methods: [
+            {
+              name: "map",
+              brief: "m",
+              generics: [{ name: "U", constraint: "Ghost2" }],
+              params: [],
+              returns: [],
+            },
+          ],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const report = buildFidelityReport("x", model, {});
+    expect(report.totalTypeTokens).toBe(1);
+    expect(report.unknownFallbacks).toBe(1);
+    expect(report.unknownTokens).toContain("Ghost2");
+  });
+
   test("building twice over the same model yields deeply-equal reports", () => {
     expect(buildFidelityReport("widgets", tinyModel, {})).toEqual(
       buildFidelityReport("widgets", tinyModel, {}),

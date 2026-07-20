@@ -274,3 +274,39 @@ export function mapLualsType(token: string, ctx: MapContext): MapResult {
   const ts = mapToken(token, ctx, unknowns);
   return { ts, unknowns };
 }
+
+/**
+ * When `types` is exactly one `fun(self: <selfTypeName>, ...)` token — optionally
+ * unioned with `nil` — whose first parameter is `self` typed as the enclosing
+ * interface's own model name, return the function's raw return tokens (an empty
+ * array for a `void`/no-return hook). Returns `null` for every other shape: a data
+ * field, a non-`fun` type, an untyped `self`, or a `self` typed as a *different*
+ * interface. Reuses the same bracket-aware split/match as the mapper so nested
+ * commas and colons inside a param type never mis-split.
+ */
+export function matchSelfHookField(
+  types: readonly string[],
+  selfTypeName: string,
+): string[] | null {
+  if (types.length !== 1) return null;
+  const raw = (types[0] as string).trim();
+  const members = splitTopLevel(raw, "|")
+    .map((member) => member.trim())
+    .filter((member) => member !== "" && member !== "nil");
+  if (members.length !== 1) return null;
+  const fun = members[0] as string;
+  if (!/^fun\s*\(/.test(fun)) return null;
+  const open = fun.indexOf("(");
+  const close = matchBracket(fun, open);
+  if (close === -1) return null;
+  const paramsStr = fun.slice(open + 1, close).trim();
+  const params = paramsStr === "" ? [] : splitTopLevel(paramsStr, ",");
+  const first = (params[0]?.trim() ?? "").length > 0 ? splitTopLevel(params[0] as string, ":") : [];
+  if (first.length < 2) return null;
+  if ((first[0] as string).trim() !== "self") return null;
+  if (first.slice(1).join(":").trim() !== selfTypeName) return null;
+  const afterClose = fun.slice(close + 1).trim();
+  if (!afterClose.startsWith(":")) return [];
+  const retStr = afterClose.slice(1).trim();
+  return retStr === "" ? [] : splitTopLevel(retStr, ",").map((token) => token.trim());
+}
