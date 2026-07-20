@@ -18,43 +18,12 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Added
 
-- In progress: typed bindings for LuaLS-annotated pure-Lua libraries (starting
-  with Druid). An emitter now renders the first generated library `.d.ts` from
-  the ingested LuaLS annotations — Druid's interfaces and methods, plus only the
-  module's own exported functions (not every file's, and with callback return
-  types preserved) — building on the earlier source ingest and type mapper.
-  Interface and method generics with constraints (`<T extends druid_component>`)
-  and `extends` inheritance clauses are now emitted, so inherited component
-  methods and generic return types are typed instead of `unknown`. Union and
-  nullable return types on a base's self-receiving lifecycle hooks are now
-  preserved when those hooks are lowered to permissive optional methods, instead
-  of collapsing to a data field or silently dropping the nullability. Concrete
-  components (buttons, scrolls, …) now structurally satisfy the base
-  `druid_component`, so passing one into a generic component factory
-  (`new_widget`) keeps its concrete type instead of tripping a declaration error
-  that `skipLibCheck` had been hiding. The LuaLS
-  sync scripts (`luals:emit`/`--fidelity`) now run on Windows, which previously
-  threw a spurious "fixture not found" because fixture path separators were
-  compared unnormalized. Druid now also has a rendered API reference page under
-  `/api/druid`, attributed to its own upstream repository and release tag rather
-  than the ts-defold library pin. That page now shows the same TypeScript
-  signatures as the generated `.d.ts` — mapped types, sanitized type names, and
-  generic clauses (`get_widget<T extends druid_widget>`) — instead of the raw
-  LuaLS `table|nil` / unbound-`T` / dotted `druid.button` tokens it printed
-  before. Variadic parameters and multi-value returns on that page now match the
-  generated `.d.ts` too — `translate(locale_id: string, ...args: string[])` and
-  `get_text_size(...): LuaMultiReturn<[number, number]>` instead of the earlier
-  `...: string` and `number, number` forms. Declaring Druid as a `game.project`
-  dependency now makes `defold-typescript resolve` recognize it by source
-  identity and materialize its committed types into your project, so a
-  TypeScript file that imports `druid.druid` type-checks and transpiles against
-  them. The published `@defold-typescript/library-types` package now ships the
-  per-library resolve manifest alongside the generated types, so a real
-  (non-workspace) install recognizes Druid the same way the workspace does
-  instead of silently falling back to pure-Lua-only. The generated `druid_logger`
-  type no longer declares its `trace`/`debug`/`info`/`warn`/`error` methods twice
-  with conflicting signatures — a previously `skipLibCheck`-masked invalid
-  declaration; the shipped signatures are the public `(message, context)` form.
+- In progress: typed bindings for LuaLS-annotated pure-Lua libraries, starting
+  with Druid. `defold-typescript resolve` now recognizes a declared `druid`
+  dependency and materializes its generated `.d.ts` — with generics, inheritance,
+  variadics, and multi-returns preserved — so a file that imports `druid.druid`
+  type-checks and transpiles against it, and Druid gets a rendered API reference
+  page at `/api/druid`.
 
 ## v0.20.8
 
