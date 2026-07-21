@@ -21,6 +21,11 @@ changes are called out first because the toolchain is pre-1.0.
 - The `upgrade` guide page is now a CLI verb page (`toc-title: upgrade`, `# Upgrade`)
   sitting in the **CLI** sidebar subgroup right after `init`.
 
+### Fixes
+
+- Applied Biome's current formatting rule to inline type literals in the guide-docs
+  test, clearing the lint gate after a formatter-rule update.
+
 ## v0.21.0
 
 ### Added

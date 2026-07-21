@@ -108,8 +108,8 @@ function guiNodeBlockById(source: string, id: string): string {
 // ` ```ts ` and `[!MORE]`-quoted ` > ```ts `. Returns the raw info string and
 // the (still-quoted) code body up to the matching closing fence. Indented
 // command blocks never start at column 0 (or after `> `), so they are skipped.
-function tsFences(body: string): { info: string; code: string; }[] {
-  const fences: { info: string; code: string; }[] = [];
+function tsFences(body: string): { info: string; code: string }[] {
+  const fences: { info: string; code: string }[] = [];
   let info: string | null = null;
   let quoted = false;
   let bodyLines: string[] = [];
@@ -669,7 +669,7 @@ describe("docs/guide/agent-runbooks.md topical runbooks", () => {
 
 // The worked payload a reader copies is the contract; parsing it back is what
 // keeps the guides from printing a combination no code path can emit.
-function workedUpgradePayload(body: string): { handedOff?: boolean; written?: unknown[]; } {
+function workedUpgradePayload(body: string): { handedOff?: boolean; written?: unknown[] } {
   const blocks = [...body.matchAll(/```json\n([\s\S]*?)```/g)].map((m) => m[1] ?? "");
   const payloads = blocks
     .map((block) => {
@@ -681,7 +681,7 @@ function workedUpgradePayload(body: string): { handedOff?: boolean; written?: un
     })
     .filter((p): p is Record<string, unknown> => p?.command === "upgrade" && p?.ok === true);
   expect(payloads).toHaveLength(1);
-  return payloads[0] as { handedOff?: boolean; written?: unknown[]; };
+  return payloads[0] as { handedOff?: boolean; written?: unknown[] };
 }
 
 describe("docs/guide/agent-runbooks.md upgrade runbook", () => {
