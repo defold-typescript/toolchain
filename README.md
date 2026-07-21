@@ -58,7 +58,6 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [bob](https://defold-typescript.github.io/toolchain/bob) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
 - [wall](https://defold-typescript.github.io/toolchain/wall) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](https://defold-typescript.github.io/toolchain/resolve) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
-- [Authoring LuaLS library types](https://defold-typescript.github.io/toolchain/authoring-luals-library-types) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the `luals-targets.json` entry, the fetch/fidelity/emit/api-doc commands, and how the committed `.d.ts` reaches a consumer via [`resolve`](https://defold-typescript.github.io/toolchain/resolve).
 
 ### Toolchain & workflow
 
@@ -73,6 +72,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Upgrading the toolchain](https://defold-typescript.github.io/toolchain/upgrading) — move the project to the latest toolchain with one verb (`bunx @defold-typescript/cli@latest upgrade`, or its `update` synonym): what it re-scaffolds, why it never clobbers your own scripts, what it does to an existing `defold-target` pin, and the `--json` envelope to read.
 - [Upgrading to Defold 1.13.0](https://defold-typescript.github.io/toolchain/upgrading-to-defold-1-13-0) — move a project from 1.12.4: the removed and re-signatured Lua APIs (`model.material` removed, `liveupdate.add_mount` re-signatured, …), the source/asset migrations (Collada removal, glTF re-centering, Spine 4.6.0), and the rendering/platform default changes, each with a way to verify.
 - [Native extensions](https://defold-typescript.github.io/toolchain/extensions) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](https://defold-typescript.github.io/toolchain/resolve) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
+- [Authoring LuaLS library types](https://defold-typescript.github.io/toolchain/authoring-luals-library-types) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the `luals-targets.json` entry, the fetch/fidelity/emit/api-doc commands, and how the committed `.d.ts` reaches a consumer via [`resolve`](https://defold-typescript.github.io/toolchain/resolve).
 
 ### Migration
 

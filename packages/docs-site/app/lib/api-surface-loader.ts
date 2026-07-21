@@ -170,13 +170,23 @@ export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> 
 }
 
 export function libraryOwnerByDir(libraryTypesDir: string): Map<string, string> {
-  const noticePath = join(libraryTypesDir, "NOTICE");
-  if (!existsSync(noticePath)) return new Map();
-  const attribution = parseNoticeAttribution(readFileSync(noticePath, "utf8"));
   const ownerByDir = new Map<string, string>();
-  for (const [dir, credit] of attribution) {
-    const owner = githubOwner(credit.url);
-    if (owner) ownerByDir.set(dir, owner);
+  const noticePath = join(libraryTypesDir, "NOTICE");
+  if (existsSync(noticePath)) {
+    const attribution = parseNoticeAttribution(readFileSync(noticePath, "utf8"));
+    for (const [dir, credit] of attribution) {
+      const owner = githubOwner(credit.url);
+      if (owner) ownerByDir.set(dir, owner);
+    }
+  }
+  // LuaLS-sourced libraries (druid, decore) are absent from NOTICE — their
+  // provenance lives in luals-targets.json. Attribute each to its own repo owner
+  // (keyed by namespace, which is its dir since it is not in the ts-defold
+  // classification) so it nests under that owner in the Libraries tree exactly
+  // like the ts-defold libraries do.
+  for (const [namespace, provenance] of loadLualsProvenance(libraryTypesDir)) {
+    const owner = githubOwner(provenance.repo);
+    if (owner) ownerByDir.set(namespace, owner);
   }
   return ownerByDir;
 }

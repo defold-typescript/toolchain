@@ -41,6 +41,12 @@ describe("libraryOwnerByDir", () => {
     expect(owners.get("demolib")).toBe("someone");
     expect(owners.has("uncredited")).toBe(false);
   });
+
+  test("attributes LuaLS-sourced libraries to their repo owner so they nest under it", () => {
+    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
+    expect(owners.get("druid")).toBe("Insality");
+    expect(owners.get("decore")).toBe("Insality");
+  });
 });
 
 describe("libraryDisplayName", () => {

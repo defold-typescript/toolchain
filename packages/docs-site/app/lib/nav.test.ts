@@ -368,7 +368,6 @@ describe("buildNav", () => {
       "/bob",
       "/wall",
       "/resolve",
-      "/authoring-luals-library-types",
     ]);
     expect(byLabel("Toolchain & workflow")?.children?.map((c) => c.route)).toEqual([
       "/transpile-diagnostics",
@@ -381,6 +380,7 @@ describe("buildNav", () => {
       "/upgrading",
       "/upgrading-to-defold-1-13-0",
       "/extensions",
+      "/authoring-luals-library-types",
     ]);
     expect(byLabel("Migration")?.children?.map((c) => c.route)).toEqual([
       "/api-docs-vs-ts-defold",
