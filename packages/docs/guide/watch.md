@@ -41,6 +41,12 @@ edits.
 
 ## As a mise task
 
+```sh
+mise run # and pick defold-typescript:watch
+# or
+mise run defold-typescript:watch
+```
+
 If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` exposes the
 loop as `mise run defold-typescript:watch`. Like [`build`](./build.md), it carries
 no version tag, so `bunx` resolves the `@defold-typescript/cli` that `init` pinned

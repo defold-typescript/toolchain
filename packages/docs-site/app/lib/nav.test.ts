@@ -362,6 +362,7 @@ describe("buildNav", () => {
     ]);
     expect(byLabel("CLI")?.children?.map((c) => c.route)).toEqual([
       "/init",
+      "/upgrade",
       "/watch",
       "/build",
       "/run",

@@ -14,6 +14,13 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.21.1
+
+### Improved
+
+- The `upgrade` guide page is now a CLI verb page (`toc-title: upgrade`, `# Upgrade`)
+  sitting in the **CLI** sidebar subgroup right after `init`.
+
 ## v0.21.0
 
 ### Added

@@ -108,8 +108,8 @@ function guiNodeBlockById(source: string, id: string): string {
 // ` ```ts ` and `[!MORE]`-quoted ` > ```ts `. Returns the raw info string and
 // the (still-quoted) code body up to the matching closing fence. Indented
 // command blocks never start at column 0 (or after `> `), so they are skipped.
-function tsFences(body: string): { info: string; code: string }[] {
-  const fences: { info: string; code: string }[] = [];
+function tsFences(body: string): { info: string; code: string; }[] {
+  const fences: { info: string; code: string; }[] = [];
   let info: string | null = null;
   let quoted = false;
   let bodyLines: string[] = [];
@@ -669,7 +669,7 @@ describe("docs/guide/agent-runbooks.md topical runbooks", () => {
 
 // The worked payload a reader copies is the contract; parsing it back is what
 // keeps the guides from printing a combination no code path can emit.
-function workedUpgradePayload(body: string): { handedOff?: boolean; written?: unknown[] } {
+function workedUpgradePayload(body: string): { handedOff?: boolean; written?: unknown[]; } {
   const blocks = [...body.matchAll(/```json\n([\s\S]*?)```/g)].map((m) => m[1] ?? "");
   const payloads = blocks
     .map((block) => {
@@ -681,7 +681,7 @@ function workedUpgradePayload(body: string): { handedOff?: boolean; written?: un
     })
     .filter((p): p is Record<string, unknown> => p?.command === "upgrade" && p?.ok === true);
   expect(payloads).toHaveLength(1);
-  return payloads[0] as { handedOff?: boolean; written?: unknown[] };
+  return payloads[0] as { handedOff?: boolean; written?: unknown[]; };
 }
 
 describe("docs/guide/agent-runbooks.md upgrade runbook", () => {
@@ -789,7 +789,24 @@ describe("docs/guide/agent-runbooks.md bump-the-pinned-version section", () => {
   });
 });
 
+describe("docs/guide/upgrade.md", () => {
+  test("frontmatter toc-title is the verb `upgrade`, matching the sibling CLI verb pages", async () => {
+    const body = await readGuide("upgrade.md");
+    expect(body).toMatch(/^---\ntoc-title: upgrade\n/m);
+  });
+});
+
 describe("docs/guide/upgrading.md", () => {
+  test("body H1 is `# Upgrading the toolchain`, the CLI verb-page convention", async () => {
+    const body = await readGuide("upgrading.md");
+    expect(body).toContain("# Upgrading the toolchain\n");
+  });
+
+  test("opener carries the verbatim `bunx @defold-typescript/cli@latest upgrade` sh block", async () => {
+    const body = await readGuide("upgrading.md");
+    expect(body).toContain("```sh\nbunx @defold-typescript/cli@latest upgrade\n```");
+  });
+
   test("exists and names the verb, the update synonym, and the install step", async () => {
     expect(await Bun.file(resolve(GUIDE, "upgrading.md")).exists()).toBe(true);
     const body = await readGuide("upgrading.md");
@@ -827,7 +844,7 @@ describe("docs/guide/upgrading.md", () => {
   });
 
   test("the worked payload is one the CLI can emit: a hand-off never pairs with an empty written", async () => {
-    const payload = workedUpgradePayload(await readGuide("upgrading.md"));
+    const payload = workedUpgradePayload(await readGuide("upgrade.md"));
     expect(Array.isArray(payload.written)).toBe(true);
     if (payload.handedOff === true) {
       expect(payload.written?.length).toBeGreaterThan(0);
@@ -835,7 +852,7 @@ describe("docs/guide/upgrading.md", () => {
   });
 
   test("says where a hand-off's written comes from", async () => {
-    const body = await readGuide("upgrading.md");
+    const body = await readGuide("upgrade.md");
     expect(body).toContain("handedOff");
     expect(body).toMatch(/newer CLI reports?/i);
   });
