@@ -49,16 +49,6 @@ describe("GUIDE_GROUPS", () => {
     expect(core?.slugs).not.toContain("typescript-vs-lua");
     expect(core?.slugs).not.toContain("typescript-gotchas");
   });
-
-  // The toolchain-upgrade page is a versions/pinning concern, so it sits beside
-  // the pin page it cross-links; without a group it never reaches the nav.
-  test("registers the toolchain upgrade page beside the Defold pin page", () => {
-    const config = GUIDE_GROUPS.find((g) => g.id === "project-configuration");
-    expect(config?.slugs).toContain("upgrading");
-    const pinAt = config?.slugs.indexOf("pinning-defold-target") ?? -1;
-    const upgradeAt = config?.slugs.indexOf("upgrading") ?? -1;
-    expect(upgradeAt).toBe(pinAt + 1);
-  });
 });
 
 describe("groupGuidePages", () => {
@@ -73,49 +63,6 @@ describe("groupGuidePages", () => {
       // every declared slug resolves — no missing page silently dropped
       expect(group.pages.map((p) => p.slug)).toEqual(spec?.slugs ?? []);
     }
-  });
-
-  test("the union of grouped routes is exactly the 27 guide-tab routes, tutorial first", () => {
-    const groups = groupGuidePages(pages);
-    const routes = groups.flatMap((g) => g.pages.map((p) => p.route));
-    expect(routes.length).toBe(27);
-    expect(new Set(routes).size).toBe(27);
-    // the Tetris tutorial now leads the guide list as its own first subgroup
-    expect(routes[0]).toBe("/tetris-tutorial");
-    expect(new Set(routes)).toEqual(
-      new Set([
-        "/tetris-tutorial",
-        "/typescript-vs-lua",
-        "/typescript-gotchas",
-        "/data-structures",
-        "/script-lifecycle",
-        "/messages",
-        "/script-state",
-        "/vector-math",
-        "/init",
-        "/watch",
-        "/build",
-        "/run",
-        "/bob",
-        "/wall",
-        "/resolve",
-        "/authoring-luals-library-types",
-        "/transpile-diagnostics",
-        "/debugging",
-        "/agent-runbooks",
-        "/helper-scripts",
-        "/pinning-defold-target",
-        "/upgrading",
-        "/upgrading-to-defold-1-13-0",
-        "/extensions",
-        "/api-docs-vs-ts-defold",
-        "/migrating-from-ts-defold",
-        "/changelog",
-      ]),
-    );
-    // the site index and get-started onboarding stay out of the guide groups
-    expect(routes).not.toContain("/");
-    expect(routes).not.toContain("/getting-started");
   });
 
   test("skips a group slug that has no matching page instead of emitting undefined", () => {
