@@ -33,16 +33,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "cli",
     label: "CLI",
     subtitle: "The command-line verbs you run day to day.",
-    slugs: [
-      "init",
-      "watch",
-      "build",
-      "run",
-      "bob",
-      "wall",
-      "resolve",
-      "authoring-luals-library-types",
-    ],
+    slugs: ["init", "watch", "build", "run", "bob", "wall", "resolve"],
   },
   {
     id: "toolchain-workflow",
@@ -54,7 +45,13 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "project-configuration",
     label: "Project configuration",
     subtitle: "Pin the engine and add native code.",
-    slugs: ["pinning-defold-target", "upgrading", "upgrading-to-defold-1-13-0", "extensions"],
+    slugs: [
+      "pinning-defold-target",
+      "upgrading",
+      "upgrading-to-defold-1-13-0",
+      "extensions",
+      "authoring-luals-library-types",
+    ],
   },
   {
     id: "migration",

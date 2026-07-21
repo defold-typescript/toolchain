@@ -14,16 +14,17 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.20.9
+## v0.21.0
 
 ### Added
 
 - Library reference pages and the sidebar Libraries tree both show a map-pin
   marker beside libraries whose type bindings this repo maintains (Druid, Decore),
   with a hover hint, so you can tell them apart from vendored libraries at a glance.
-- In progress: typed bindings for LuaLS-annotated pure-Lua libraries.
-  `defold-typescript resolve` now materializes generated `.d.ts` for declared
-  Druid and Decore dependencies — generics, inheritance, variadics, and
+- Typed bindings for LuaLS-annotated pure-Lua libraries.
+  `defold-typescript resolve` now materializes generated `.d.ts` for libraries such as:
+  - **Druid** and **Decore** (first two libraries to proof concept)
+  > Dependencies — generics, inheritance, variadics, and
   multi-returns preserved — each with a rendered API page at `/api/<name>`, and the
   new [Authoring LuaLS library types](authoring-luals-library-types.md) guide covers
   adding further libraries as a config-only change, including how to fill an empty
