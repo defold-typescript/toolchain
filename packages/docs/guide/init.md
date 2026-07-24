@@ -30,9 +30,12 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
 - **New project.** In an empty or non-Defold folder it synthesizes a full Defold
   project (`game.project`, `main/main.collection`, `input/game.input_binding`)
   alongside the TypeScript surface (`src/main.ts`, `tsconfig.json`,
-  `package.json`, `.gitignore`, `.gitattributes`, `biome.json`, `mise.toml`,
-  `.vscode/`) and the
+  `package.json`, `.gitignore`, `.gitattributes`, `.defignore`, `biome.json`,
+  `mise.toml`, `.vscode/`) and the
   agent contract (`AGENTS.md`, `CLAUDE.md`).
+  The `.defignore` makes the Defold editor and bob skip `node_modules`,
+  `.defold-types`, and `.vscode` when they scan the project tree, so tooling and
+  generated-type files are never misread as game resources.
   `game.project` boots the collection and points `[input]` at the binding, so a
   fresh scaffold loads in Defold with no missing references. If the target folder
   already holds both a `.collection` and a `.ts` file (a `--force` synthesis into
@@ -94,7 +97,7 @@ bunx @defold-typescript/cli@latest init my-game --template minimal
 
 Both templates differ only in the synthesized entry script; the shared TypeScript
 surface (`tsconfig.json`, `package.json`, `.gitignore`, `.gitattributes`,
-`biome.json`, `mise.toml`, and the `.vscode/` files) is identical.
+`.defignore`, `biome.json`, `mise.toml`, and the `.vscode/` files) is identical.
 
 Omitting `--template` is equivalent to `--template default`. An unknown name fails
 fast and lists the valid templates:
