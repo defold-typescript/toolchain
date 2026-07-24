@@ -93,15 +93,19 @@ const SCRIPT_SUFFIX_BY_KIND: Record<ScriptKind, string> = {
   script: ".ts.script",
   "gui-script": ".ts.gui_script",
   "render-script": ".ts.render_script",
+  "editor-script": ".ts.editor_script",
 };
 
 export type SourceOutputKind = ScriptKind | "module";
 
 // A `.ts` source carries no Defold component kind of its own; the lifecycle
 // factory it calls is the signal. The call is matched (trailing `(`) so a bare
-// import of all three factories does not decide the kind. Precedence
-// render > gui > script; a source using no factory emits as a Lua module.
+// import of the factories does not decide the kind. `editor-script` is a
+// disjoint marker, so its order relative to the runtime three is irrelevant;
+// precedence among the runtime kinds is render > gui > script; a source using no
+// factory emits as a Lua module.
 const FACTORY_KINDS: ReadonlyArray<readonly [ScriptKind, RegExp]> = [
+  ["editor-script", /\bdefineEditorScript\s*\(/],
   ["render-script", /\bdefineRenderScript\s*\(/],
   ["gui-script", /\bdefineGuiScript\s*\(/],
   ["script", /\bdefineScript\s*\(/],
@@ -179,6 +183,7 @@ export function outputRelsForSource(rel: string, config: BuildConfig): string[] 
     computeOutputRel(rel, config, "script"),
     computeOutputRel(rel, config, "gui-script"),
     computeOutputRel(rel, config, "render-script"),
+    computeOutputRel(rel, config, "editor-script"),
   ];
   return outputs.flatMap((output) => [output, `${output}.map`]);
 }

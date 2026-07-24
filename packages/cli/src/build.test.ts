@@ -334,6 +334,45 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "src/main.lua.map"))).toBe(false);
   });
 
+  const EDITOR_SCRIPT = [
+    'import { defineEditorScript } from "@defold-typescript/types";',
+    "export default defineEditorScript({",
+    '  get_commands: () => [{ label: "Say Hi", locations: ["Edit"], run: () => print("hi") }],',
+    "});",
+    "",
+  ].join("\n");
+
+  test("builds a defineEditorScript source to a .ts.editor_script returning the hooks table", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/tools.ts", EDITOR_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("src/tools.ts.editor_script");
+    const lua = readFileSync(path.join(cwd, "src/tools.ts.editor_script"), "utf8");
+    expect(lua).toContain("return {");
+    expect(lua).toContain("get_commands =");
+    expect(lua).not.toContain("default");
+    // The generated banner is a trailer, so the chunk's `return` stays the last
+    // Lua statement (a trailing comment after `return` is not a statement).
+    expect(lua).toContain(GENERATED_BANNER);
+    expect(lua.indexOf("return {")).toBeLessThan(lua.indexOf(GENERATED_BANNER));
+  });
+
+  test("prunes a stale .ts.editor_script when its source switches to a runtime factory", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/tools.ts.editor_script", `return {}\n${GENERATED_BANNER}\n`);
+    writeFile("src/tools.ts.editor_script.map", "{}");
+    writeFile("src/tools.ts", MAIN_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("src/tools.ts.script");
+    expect(existsSync(path.join(cwd, "src/tools.ts.script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/tools.ts.editor_script"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/tools.ts.editor_script.map"))).toBe(false);
+  });
+
   test("warns about a banner-carrying orphan .lua whose .ts source no longer exists", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/keep.ts", "export const k = 1;\n");
