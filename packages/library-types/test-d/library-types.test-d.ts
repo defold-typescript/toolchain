@@ -39,7 +39,6 @@ import * as saver from "saver.saver";
 import * as storage from "saver.storage";
 import * as squid from "squid.squid";
 import * as starly from "starly.starly";
-import * as tweener from "tweener.tweener";
 import * as yagames from "yagames.yagames";
 import * as zzfx from "zzfx.api";
 
@@ -198,11 +197,6 @@ const _dmQuat: Quaternion = defmath.vect_to_quat(_v3);
 // `string | number | Hash`, proving the upstream `hash` reference was renamed.
 const _dbFlip: boolean = dicebag.flip_coin();
 const _dbDraw: boolean = dicebag.bag_draw(_hash);
-
-// tweener.tweener — `insine` is a `TweenFunc`; `tween` returns a `Hash` (upstream
-// `hash`) and `ease` a plain number, both driven by an `AnyTweenFunc` argument.
-const _twHandle: Hash = tweener.tween(tweener.insine, 0, 1, 1, () => {});
-const _twEase: number = tweener.ease(tweener.insine, 0, 1, 1, 0.5);
 
 // squid.squid — an `export =` module: the default object exposes `save_logs`
 // returning a boolean and a `SquidConfig` whose `is_enabled` is a boolean.
@@ -367,8 +361,6 @@ void _dmRound;
 void _dmQuat;
 void _dbFlip;
 void _dbDraw;
-void _twHandle;
-void _twEase;
 void _sqSaved;
 void _sqEnabled;
 void _stView;

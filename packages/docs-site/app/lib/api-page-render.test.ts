@@ -479,6 +479,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
     expect(md).toMatchSnapshot();
   });
+
+  test("the migrated tweener page pins to Insality/defold-tweener, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const tweener = pages.find((p) => p.namespace === "tweener");
+    expect(tweener).toBeDefined();
+    if (!tweener) return;
+    expect(tweener.category).toBe("library");
+    const md = apiPageMarkdown(tweener, apiLinkify(pages));
+    expect(md).toContain("[Insality/defold-tweener](https://github.com/Insality/defold-tweener)");
+    expect(md).not.toContain("ts-defold/library");
+  });
 });
 
 describe("apiPageMarkdown display name", () => {

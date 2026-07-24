@@ -300,13 +300,6 @@
       ]
     },
     {
-      "dir": "defold-tweener",
-      "classification": "already-vendored",
-      "modules": [
-        "tweener.tweener"
-      ]
-    },
-    {
       "dir": "defold-uuid4",
       "classification": "native",
       "modules": [

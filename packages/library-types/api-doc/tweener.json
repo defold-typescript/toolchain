@@ -1,0 +1,339 @@
+{
+  "info": {
+    "namespace": "tweener",
+    "brief": "A tweener module to manage tweening operations. Tween functions are based on the Defold timer.delay function.",
+    "description": "A tweener module to manage tweening operations. Tween functions are based on the Defold timer.delay function.\nUse `tweener.tween` to create a tween, and `tweener.ease` to get the result of an easing function.\nYou can track the final call of tween by last parameter of the callback function."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "tween",
+      "brief": "Starts a tweening operation. Return a tween object to manage the tween.",
+      "description": "Starts a tweening operation. Return a tween object to manage the tween.",
+      "parameters": [
+        {
+          "name": "easing_function",
+          "doc": "The easing function to use",
+          "types": [
+            "easing_function"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "from",
+          "doc": "The starting value to tween from",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "to",
+          "doc": "The target value to tween to",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "time",
+          "doc": "The duration of the tween in seconds, default is 1",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "The callback function to call on each update",
+          "types": [
+            "(value: number, is_end: boolean, time_elapsed: number, time_total: number) => void"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "update_delta_time",
+          "doc": "Default is 1/60, the time between updates",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "A new created tween state",
+          "types": [
+            "tween"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ease",
+      "brief": "Returns the result of an easing function.",
+      "description": "Returns the result of an easing function.",
+      "parameters": [
+        {
+          "name": "easing_function",
+          "doc": "",
+          "types": [
+            "easing_function"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "time",
+          "doc": "The duration of the tween in seconds, default is 1",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "time_elapsed",
+          "doc": "current time [0 .. t - from]",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result of easing",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_active",
+      "brief": "Check if a tween exists",
+      "description": "Check if a tween exists",
+      "parameters": [
+        {
+          "name": "tween",
+          "doc": "the tween handle returned by `tween` function",
+          "types": [
+            "tween"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "if the tween is active, false if the tween finished",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel",
+      "brief": "Cancel a previous running tween.",
+      "description": "Cancel a previous running tween.",
+      "parameters": [
+        {
+          "name": "tween",
+          "doc": "the tween handle returned by `tween` function",
+          "types": [
+            "tween | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "if the tween was active, false if the tween is already cancelled / complete",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_paused",
+      "brief": "Check if a tween is paused",
+      "description": "Check if a tween is paused",
+      "parameters": [
+        {
+          "name": "tween",
+          "doc": "the tween handle returned by `tween` function",
+          "types": [
+            "tween"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the tween is active and paused, false if the tween is running",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_pause",
+      "brief": "Sets the pause on a running tween.",
+      "description": "Sets the pause on a running tween.",
+      "parameters": [
+        {
+          "name": "tween",
+          "doc": "the tween handle returned by `tween` function",
+          "types": [
+            "tween"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "is_paused",
+          "doc": "the tween paused state",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "custom_ease",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "easing",
+          "doc": "The array of easing values, Example: {0, 0.5, 1, 2, 1}. Must have at least two elements.",
+          "types": [
+            "number[]"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "t",
+          "doc": "current time [0 .. t - from]",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "b",
+          "doc": "beginning value",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "c",
+          "doc": "change in value",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "d",
+          "doc": "duration",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result of easing",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "tween",
+      "properties": [
+        {
+          "name": "timer_id",
+          "brief": "The timer id handle from the `timer.delay` function",
+          "description": "The timer id handle from the `timer.delay` function",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "is_paused",
+          "brief": "Whether the tween is paused",
+          "description": "Whether the tween is paused",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "tweener"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "easing_function"
+    }
+  ]
+}
