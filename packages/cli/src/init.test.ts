@@ -90,6 +90,7 @@ describe("runInit (add-TS mode)", () => {
         "CLAUDE.md",
         ".gitignore",
         ".gitattributes",
+        ".defignore",
         ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
         ".vscode/extensions.json",
@@ -137,6 +138,7 @@ describe("runInit (add-TS mode)", () => {
         "CLAUDE.md",
         ".gitignore",
         ".gitattributes",
+        ".defignore",
         ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
         ".vscode/extensions.json",
@@ -633,6 +635,56 @@ describe("runInit (add-TS mode)", () => {
     expect(goLines).toHaveLength(1);
   });
 
+  test("new-project .defignore excludes the tooling and generated-type dirs", () => {
+    runInit({ cwd });
+
+    const defignore = readFileSync(path.join(cwd, ".defignore"), "utf8");
+    expect(defignore.split("\n").filter((line) => line.trim() !== "")).toEqual([
+      "/node_modules",
+      "/.defold-types",
+      "/.vscode",
+    ]);
+  });
+
+  test("add-TS mode writes the same .defignore over an existing game.project", () => {
+    touch("game.project", "[project]\n");
+
+    runInit({ cwd });
+
+    const defignore = readFileSync(path.join(cwd, ".defignore"), "utf8");
+    expect(defignore.split("\n").filter((line) => line.trim() !== "")).toEqual([
+      "/node_modules",
+      "/.defold-types",
+      "/.vscode",
+    ]);
+  });
+
+  test(".defignore merge preserves a user line and adds the managed lines once", () => {
+    touch("game.project", "[project]\n");
+    touch(".defignore", "/my/asset.go\n");
+
+    runInit({ cwd });
+
+    const lines = readFileSync(path.join(cwd, ".defignore"), "utf8")
+      .split("\n")
+      .filter((line) => line.trim() !== "");
+    expect(lines).toContain("/my/asset.go");
+    for (const managed of ["/node_modules", "/.defold-types", "/.vscode"]) {
+      expect(lines.filter((line) => line === managed)).toHaveLength(1);
+    }
+  });
+
+  test("re-init over a complete .defignore appends nothing", () => {
+    touch("game.project", "[project]\n");
+    const complete = "/node_modules\n/.defold-types\n/.vscode\n";
+    touch(".defignore", complete);
+
+    runInit({ cwd });
+
+    const defignore = readFileSync(path.join(cwd, ".defignore"), "utf8");
+    expect(defignore).toBe(complete);
+  });
+
   test("scaffolded .gitignore and biome.json exclude the gui/render-script suffixes too", () => {
     touch("game.project", "[project]\n");
 
@@ -911,6 +963,7 @@ describe("runInit (new-project mode)", () => {
     "package.json",
     ".gitignore",
     ".gitattributes",
+    ".defignore",
     "biome.json",
     ".vscode/extensions.json",
     ".vscode/settings.json",

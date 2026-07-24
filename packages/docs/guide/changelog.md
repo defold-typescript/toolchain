@@ -31,6 +31,9 @@ changes are called out first because the toolchain is pre-1.0.
   overrides for correct GitHub rendering and language stats) and ignores Windows
   `Thumbs.db` alongside `.DS_Store`. Both merge into existing files on upgrade,
   so an editor-created project gains only what it was missing.
+- `init` now writes a `.defignore` so the Defold editor and bob skip
+  `node_modules`, `.defold-types`, and `.vscode` when scanning for resources.
+  It merges into an existing file, keeping any lines you added.
 
 ## v0.21.1
 
