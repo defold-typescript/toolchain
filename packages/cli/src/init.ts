@@ -65,6 +65,17 @@ const GITIGNORE_LINES = [
   "/defold_typescript_timers.lua.map",
 ];
 
+// The Defold editor and bob read neither `.gitignore` nor `.vscode`; they scan
+// the whole project tree for resources. `.defignore` (one root-relative path per
+// line) is how a project tells them to skip a folder. These three carry files
+// the editor would otherwise misread as project resources: `node_modules`
+// dependency trees, the resolver-generated `.defold-types` LuaLS surface, and
+// `.vscode` config plus the multi-MB debug engine binary. `src/` is never
+// listed — its emitted `.ts.script`/`.gui_script`/`.lua` components are exactly
+// what Defold must load. Committed config (not in `GITIGNORE_LINES`, like
+// `.vscode`).
+const DEFIGNORE_LINES = ["/node_modules", "/.defold-types", "/.vscode"];
+
 // The Defold editor's empty-template `.gitattributes` verbatim: linguist-language
 // overrides so GitHub renders and classifies Defold's protobuf-text assets, JSON
 // buffers, GLSL shaders, and Lua scripts. Kept byte-for-byte identical to the
@@ -498,6 +509,22 @@ function writeGitattributes(cwd: string): void {
     writeFileSync(gitattributesPath, `${existing}${prefix}${missing.join("\n")}\n`);
   } else {
     writeFileSync(gitattributesPath, `${GITATTRIBUTES_LINES.join("\n")}\n`);
+  }
+}
+
+function writeDefignore(cwd: string): void {
+  const defignorePath = path.join(cwd, ".defignore");
+  if (existsSync(defignorePath)) {
+    const existing = readFileSync(defignorePath, "utf8");
+    const present = new Set(existing.split("\n").map((line) => line.trim()));
+    const missing = DEFIGNORE_LINES.filter((line) => !present.has(line));
+    if (missing.length === 0) {
+      return;
+    }
+    const prefix = existing.endsWith("\n") || existing === "" ? "" : "\n";
+    writeFileSync(defignorePath, `${existing}${prefix}${missing.join("\n")}\n`);
+  } else {
+    writeFileSync(defignorePath, `${DEFIGNORE_LINES.join("\n")}\n`);
   }
 }
 
@@ -946,6 +973,9 @@ function writeTsSurface(
 
   writeGitattributes(cwd);
   written.push(".gitattributes");
+
+  writeDefignore(cwd);
+  written.push(".defignore");
 
   writeBiome(cwd, written, force);
   writeMiseTasks(cwd, written);
