@@ -62,11 +62,22 @@ export function isEditorFactoryOnlyImport(node: ts.ImportDeclaration): boolean {
   if (clause === undefined || clause.name !== undefined) {
     return false;
   }
+  // A whole-clause `import type { ... }` binds nothing at runtime; leave it for
+  // the normal transform, which elides it.
+  if (clause.isTypeOnly) {
+    return false;
+  }
   const bindings = clause.namedBindings;
   if (bindings === undefined || !ts.isNamedImports(bindings)) {
     return false;
   }
-  return bindings.elements.every(
+  // Type-only specifiers ride along and drop with the erased statement; erase
+  // only when every runtime specifier is the editor factory itself.
+  const runtime = bindings.elements.filter((element) => !element.isTypeOnly);
+  if (runtime.length === 0) {
+    return false;
+  }
+  return runtime.every(
     (element) => (element.propertyName ?? element.name).text === EDITOR_FACTORY_NAME,
   );
 }
