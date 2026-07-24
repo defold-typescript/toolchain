@@ -20,7 +20,9 @@ changes are called out first because the toolchain is pre-1.0.
 
 - Editor scripts are now recognized and built: a source that does
   `export default defineEditorScript({ get_commands, ... })` compiles to a
-  `<name>.ts.editor_script` that returns the hooks table the Defold editor loads.
+  `<name>.ts.editor_script` returning the hooks table the Defold editor loads —
+  mixing an `EditorCommand` type import with the factory erases cleanly (no stray
+  `require`), and editor-only directories are never offered as per-kind type walls.
   The typed `editor.*` API and project scaffolding land in follow-ups.
 
 ### Fixes

@@ -13,7 +13,9 @@ import {
 } from "./script-kind";
 
 // The kinds a wall may narrow against. Must stay in sync with
-// `KIND_MODULE_MANIFEST` (regen.ts).
+// `KIND_MODULE_MANIFEST` (regen.ts). Also gates source-wall eligibility: a kind
+// recognized for emit but absent here (e.g. `editor-script`, which has no
+// per-kind entrypoint yet) is never offered as a wall target.
 const PINNED_KIND_SUBPATHS: readonly string[] = ["script", "gui-script", "render-script"];
 
 // `materializeRefDocSurface` writes the per-kind modules at
@@ -93,7 +95,7 @@ export function planSourceDirectoryWalls(cwd: string): DirectoryWall[] {
   const walls: DirectoryWall[] = [];
   for (const [dir, kinds] of groupSourceScriptKindsByDirectory(cwd)) {
     const kind = selectScriptKind(kinds);
-    if (kind !== null) {
+    if (kind !== null && PINNED_KIND_SUBPATHS.includes(kind)) {
       walls.push(describeWall(dir, kind));
     }
   }
