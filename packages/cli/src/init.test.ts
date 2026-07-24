@@ -43,6 +43,7 @@ const DEFOLD_ARTIFACT_IGNORE_LINES = [
   "/.editor_settings",
   "builtins/",
   ".DS_Store",
+  "Thumbs.db",
 ];
 const ROOT_TSTL_BUNDLE_IGNORE_LINES = [
   "/lualib_bundle.lua",
@@ -88,6 +89,7 @@ describe("runInit (add-TS mode)", () => {
         "AGENTS.md",
         "CLAUDE.md",
         ".gitignore",
+        ".gitattributes",
         ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
         ".vscode/extensions.json",
@@ -134,6 +136,7 @@ describe("runInit (add-TS mode)", () => {
         "AGENTS.md",
         "CLAUDE.md",
         ".gitignore",
+        ".gitattributes",
         ".vscode/defold-debug.ts",
         ".vscode/defold-typescript.code-snippets",
         ".vscode/extensions.json",
@@ -545,6 +548,91 @@ describe("runInit (add-TS mode)", () => {
     expect(lines.filter((line) => line.trim() === "/.internal")).toHaveLength(1);
   });
 
+  test("new-project .gitignore ignores Thumbs.db", () => {
+    runInit({ cwd });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
+    expect(gitignore).toMatch(/^Thumbs\.db$/m);
+  });
+
+  const EDITOR_GITATTRIBUTES = `# Defold Protocol Buffer Text Files (https://github.com/github/linguist/issues/5091)
+*.animationset linguist-language=JSON5
+*.atlas linguist-language=JSON5
+*.camera linguist-language=JSON5
+*.collection linguist-language=JSON5
+*.collectionfactory linguist-language=JSON5
+*.collectionproxy linguist-language=JSON5
+*.collisionobject linguist-language=JSON5
+*.cubemap linguist-language=JSON5
+*.display_profiles linguist-language=JSON5
+*.factory linguist-language=JSON5
+*.font linguist-language=JSON5
+*.gamepads linguist-language=JSON5
+*.go linguist-language=JSON5
+*.gui linguist-language=JSON5
+*.input_binding linguist-language=JSON5
+*.label linguist-language=JSON5
+*.material linguist-language=JSON5
+*.mesh linguist-language=JSON5
+*.model linguist-language=JSON5
+*.particlefx linguist-language=JSON5
+*.render linguist-language=JSON5
+*.sound linguist-language=JSON5
+*.sprite linguist-language=JSON5
+*.spinemodel linguist-language=JSON5
+*.spinescene linguist-language=JSON5
+*.texture_profiles linguist-language=JSON5
+*.tilemap linguist-language=JSON5
+*.tilesource linguist-language=JSON5
+
+# Defold JSON Files
+*.buffer linguist-language=JSON
+
+# Defold GLSL Shaders
+*.fp linguist-language=GLSL
+*.vp linguist-language=GLSL
+
+# Defold Lua Files
+*.editor_script linguist-language=Lua
+*.render_script linguist-language=Lua
+*.script linguist-language=Lua
+*.gui_script linguist-language=Lua
+`;
+
+  test("new-project .gitattributes carries Defold's linguist overrides", () => {
+    runInit({ cwd });
+
+    const gitattributes = readFileSync(path.join(cwd, ".gitattributes"), "utf8");
+    expect(gitattributes).toMatch(/^\*\.collection linguist-language=JSON5$/m);
+    expect(gitattributes).toMatch(/^\*\.script linguist-language=Lua$/m);
+    expect(gitattributes).toMatch(/^\*\.fp linguist-language=GLSL$/m);
+    expect(gitattributes).toMatch(/^\*\.buffer linguist-language=JSON$/m);
+  });
+
+  test("re-init over an editor-identical .gitattributes appends nothing", () => {
+    touch("game.project", "[project]\n");
+    touch(".gitattributes", EDITOR_GITATTRIBUTES);
+
+    runInit({ cwd });
+
+    const gitattributes = readFileSync(path.join(cwd, ".gitattributes"), "utf8");
+    expect(gitattributes).toBe(EDITOR_GITATTRIBUTES);
+  });
+
+  test(".gitattributes merge backfills missing rules onto a partial file", () => {
+    touch("game.project", "[project]\n");
+    touch(".gitattributes", "*.go linguist-language=JSON5\n");
+
+    runInit({ cwd });
+
+    const gitattributes = readFileSync(path.join(cwd, ".gitattributes"), "utf8");
+    expect(gitattributes).toMatch(/^\*\.script linguist-language=Lua$/m);
+    const goLines = gitattributes
+      .split("\n")
+      .filter((line) => line.trim() === "*.go linguist-language=JSON5");
+    expect(goLines).toHaveLength(1);
+  });
+
   test("scaffolded .gitignore and biome.json exclude the gui/render-script suffixes too", () => {
     touch("game.project", "[project]\n");
 
@@ -822,6 +910,7 @@ describe("runInit (new-project mode)", () => {
     "tsconfig.json",
     "package.json",
     ".gitignore",
+    ".gitattributes",
     "biome.json",
     ".vscode/extensions.json",
     ".vscode/settings.json",
