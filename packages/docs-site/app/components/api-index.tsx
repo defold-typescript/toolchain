@@ -7,6 +7,7 @@ import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { getStartedPages } from "../lib/get-started";
 import type { GuidePage } from "../lib/guide";
 import { groupGuidePages } from "../lib/guide-groups";
+import { AUTHORED_LIBRARY_HINT, authoredLibraryPin } from "../lib/markdown";
 import { humanize } from "../lib/nav";
 import {
   apiCardBadgeHtml,
@@ -349,6 +350,11 @@ export function LibraryIndex({
                   href={page.route}
                   title={<LibraryPath creator="" dir={lib.label} namespace={page.namespace} />}
                   description={apiPageCardDescription(page) || null}
+                  badgeHtml={
+                    page.libraryMeta?.authoredHere
+                      ? authoredLibraryPin(AUTHORED_LIBRARY_HINT)
+                      : null
+                  }
                 />
               )),
             )}

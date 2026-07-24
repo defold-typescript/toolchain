@@ -48,19 +48,32 @@ function count(haystack: string, needle: string): number {
   return haystack.split(needle).length - 1;
 }
 
+// The inner HTML of the anchor whose href resolves to `route`.
+function anchorInner(html: string, route: string): string {
+  const match = html.match(new RegExp(`<a href="[^"]*${route}"[^>]*>(.*?)</a>`, "s"));
+  if (!match) throw new Error(`no anchor for ${route}`);
+  return match[1] ?? "";
+}
+
 describe("SidebarItems — authored-library pin", () => {
-  test("the authored library group header carries exactly one pin and its hint", () => {
+  test("exactly one pin renders and it carries its hint", () => {
     const html = librariesCategoryHtml();
     expect(count(html, '<span class="authored-pin"')).toBe(1);
     expect(html).toContain("Type bindings maintained in this repo");
   });
 
-  test("the vendored library group header renders unmarked", () => {
+  test("the pin sits inside the druid namespace leaf anchor, not a group header", () => {
     const html = librariesCategoryHtml();
-    // Only druid is pinned (single-pin count above); the monarch header still
-    // renders its text without a pin.
+    // The single pin lives inside the /api/druid leaf anchor...
+    expect(anchorInner(html, "/api/druid")).toContain('<span class="authored-pin"');
+    // ...and no group-header <p> carries it.
+    expect(html).not.toMatch(/<p[^>]*>[^<]*<span class="authored-pin"/);
+  });
+
+  test("the vendored namespace leaf renders unmarked", () => {
+    const html = librariesCategoryHtml();
     expect(html).toContain("monarch");
-    expect(count(html, '<span class="authored-pin"')).toBe(1);
+    expect(anchorInner(html, "/api/monarch.monarch")).not.toContain("authored-pin");
   });
 
   test("plain route-less headers still render their text", () => {
