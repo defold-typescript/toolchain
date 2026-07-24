@@ -14,6 +14,15 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.21.2
+
+### Fixes
+
+- `init` now scaffolds the `.gitattributes` the Defold editor emits (linguist
+  overrides for correct GitHub rendering and language stats) and ignores Windows
+  `Thumbs.db` alongside `.DS_Store`. Both merge into existing files on upgrade,
+  so an editor-created project gains only what it was missing.
+
 ## v0.21.1
 
 ### Improved
