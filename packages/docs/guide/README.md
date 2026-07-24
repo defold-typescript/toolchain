@@ -47,6 +47,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Messages](./messages.md) — the `BuiltinMessages` catalog, `msg.post` send-side payload narrowing, and the `isMessage` / `onMessage` receive-side helpers.
 - [Where script state lives](./script-state.md) — the four state tiers — per-instance `self`, a shared module local, a cross-script module singleton, and VM-global `declare global` — each grounded in the emitted Lua.
 - [Vector math](./vector-math.md) — the method-form arithmetic surface (`add`, `sub`, `mul`, `div`, `unm`) on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`, plus why you cannot write `v3 + v3`.
+- [Editor scripts](./editor-scripts.md) — extend the Defold editor with `defineEditorScript`; the `<name>.ts.editor_script` artifact, auto-load discovery, and the `EditorCommand` shape.
 
 ### CLI
 
