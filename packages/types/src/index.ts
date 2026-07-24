@@ -38,6 +38,11 @@ export {
   renderDocComment,
 } from "./doc-comment";
 export {
+  defineEditorScript,
+  type EditorCommand,
+  type EditorScriptModule,
+} from "./editor";
+export {
   type EmitOptions,
   emitDeclarations,
   emitSymbolSignatures,
