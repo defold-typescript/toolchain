@@ -58,10 +58,61 @@ const GITIGNORE_LINES = [
   "/.editor_settings",
   "builtins/",
   ".DS_Store",
+  "Thumbs.db",
   "/lualib_bundle.lua",
   "/lualib_bundle.lua.map",
   "/defold_typescript_timers.lua",
   "/defold_typescript_timers.lua.map",
+];
+
+// The Defold editor's empty-template `.gitattributes` verbatim: linguist-language
+// overrides so GitHub renders and classifies Defold's protobuf-text assets, JSON
+// buffers, GLSL shaders, and Lua scripts. Kept byte-for-byte identical to the
+// editor's block so merging over an editor-created project is a no-op. Blank
+// "" entries are the separators between sections.
+const GITATTRIBUTES_LINES = [
+  "# Defold Protocol Buffer Text Files (https://github.com/github/linguist/issues/5091)",
+  "*.animationset linguist-language=JSON5",
+  "*.atlas linguist-language=JSON5",
+  "*.camera linguist-language=JSON5",
+  "*.collection linguist-language=JSON5",
+  "*.collectionfactory linguist-language=JSON5",
+  "*.collectionproxy linguist-language=JSON5",
+  "*.collisionobject linguist-language=JSON5",
+  "*.cubemap linguist-language=JSON5",
+  "*.display_profiles linguist-language=JSON5",
+  "*.factory linguist-language=JSON5",
+  "*.font linguist-language=JSON5",
+  "*.gamepads linguist-language=JSON5",
+  "*.go linguist-language=JSON5",
+  "*.gui linguist-language=JSON5",
+  "*.input_binding linguist-language=JSON5",
+  "*.label linguist-language=JSON5",
+  "*.material linguist-language=JSON5",
+  "*.mesh linguist-language=JSON5",
+  "*.model linguist-language=JSON5",
+  "*.particlefx linguist-language=JSON5",
+  "*.render linguist-language=JSON5",
+  "*.sound linguist-language=JSON5",
+  "*.sprite linguist-language=JSON5",
+  "*.spinemodel linguist-language=JSON5",
+  "*.spinescene linguist-language=JSON5",
+  "*.texture_profiles linguist-language=JSON5",
+  "*.tilemap linguist-language=JSON5",
+  "*.tilesource linguist-language=JSON5",
+  "",
+  "# Defold JSON Files",
+  "*.buffer linguist-language=JSON",
+  "",
+  "# Defold GLSL Shaders",
+  "*.fp linguist-language=GLSL",
+  "*.vp linguist-language=GLSL",
+  "",
+  "# Defold Lua Files",
+  "*.editor_script linguist-language=Lua",
+  "*.render_script linguist-language=Lua",
+  "*.script linguist-language=Lua",
+  "*.gui_script linguist-language=Lua",
 ];
 
 export const BIOME_JSON_CONTENT = {
@@ -430,6 +481,23 @@ function writeGitignore(cwd: string): void {
     writeFileSync(gitignorePath, `${existing}${prefix}${missing.join("\n")}\n`);
   } else {
     writeFileSync(gitignorePath, `${GITIGNORE_LINES.join("\n")}\n`);
+  }
+}
+
+function writeGitattributes(cwd: string): void {
+  const gitattributesPath = path.join(cwd, ".gitattributes");
+  if (existsSync(gitattributesPath)) {
+    const existing = readFileSync(gitattributesPath, "utf8");
+    const present = new Set(existing.split("\n").map((line) => line.trim()));
+    // Skip blank separators so they never re-append; only real rules merge.
+    const missing = GITATTRIBUTES_LINES.filter((line) => line.trim() !== "" && !present.has(line));
+    if (missing.length === 0) {
+      return;
+    }
+    const prefix = existing.endsWith("\n") || existing === "" ? "" : "\n";
+    writeFileSync(gitattributesPath, `${existing}${prefix}${missing.join("\n")}\n`);
+  } else {
+    writeFileSync(gitattributesPath, `${GITATTRIBUTES_LINES.join("\n")}\n`);
   }
 }
 
@@ -875,6 +943,9 @@ function writeTsSurface(
 
   writeGitignore(cwd);
   written.push(".gitignore");
+
+  writeGitattributes(cwd);
+  written.push(".gitattributes");
 
   writeBiome(cwd, written, force);
   writeMiseTasks(cwd, written);
