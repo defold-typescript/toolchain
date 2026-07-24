@@ -180,16 +180,18 @@ export function buildNav(
     const libraryLinks = reference.libraries.map((creator) =>
       toNavGroup(
         creator.label,
-        creator.libraries.map((lib) => {
-          const node = toNavGroup(
+        creator.libraries.map((lib) =>
+          toNavGroup(
             lib.label,
-            lib.modules.map(({ label, route }) => toNavLink(label, route)),
-          );
-          if (lib.authoredHere) {
-            node.labelHtml += authoredLibraryPin(AUTHORED_LIBRARY_HINT);
-          }
-          return node;
-        }),
+            lib.modules.map(({ label, route }) => {
+              const leaf = toNavLink(label, route);
+              if (lib.authoredHere) {
+                leaf.labelHtml += authoredLibraryPin(AUTHORED_LIBRARY_HINT);
+              }
+              return leaf;
+            }),
+          ),
+        ),
       ),
     );
     categories.push({

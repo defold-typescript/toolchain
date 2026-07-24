@@ -208,7 +208,7 @@ describe("buildNav", () => {
     expect(labels.every((label) => !label.includes("/"))).toBe(true);
   });
 
-  test("appends the authored-pin marker to LuaLS library group labels only", () => {
+  test("appends the authored-pin marker to the LuaLS library namespace leaf only", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -242,16 +242,20 @@ describe("buildNav", () => {
       ],
     });
     const libraries = nav.find((c) => c.id === "libraries");
-    const druid = libraries?.links
+    const druidGroup = libraries?.links
       .find((l) => l.label === "Insality")
       ?.children?.find((l) => l.label === "druid");
-    const monarch = libraries?.links
+    const druidLeaf = druidGroup?.children?.find((l) => l.route === "/api/druid");
+    const monarchGroup = libraries?.links
       .find((l) => l.label === "britzl")
       ?.children?.find((l) => l.label === "monarch");
-    expect(druid?.labelHtml).toContain("authored-pin");
-    expect(druid?.labelHtml).toContain("Type bindings maintained in this repo");
-    expect(monarch?.labelHtml).not.toContain("authored-pin");
-    expect(monarch?.labelHtml).toBe("monarch");
+    const monarchLeaf = monarchGroup?.children?.find((l) => l.route === "/api/monarch.monarch");
+    expect(druidLeaf?.labelHtml).toContain("authored-pin");
+    expect(druidLeaf?.labelHtml).toContain("Type bindings maintained in this repo");
+    expect(druidGroup?.labelHtml).not.toContain("authored-pin");
+    expect(monarchGroup?.labelHtml).not.toContain("authored-pin");
+    expect(monarchLeaf?.labelHtml).not.toContain("authored-pin");
+    expect(monarchLeaf?.labelHtml).toBe("monarch.monarch");
   });
 
   test("activeCategoryId resolves the Libraries index and nested namespace leaves", () => {
