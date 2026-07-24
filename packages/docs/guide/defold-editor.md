@@ -36,6 +36,8 @@ Lifecycle-factory files — those whose `export default` is one of these factori
 
 A source exporting no lifecycle factory compiles to a Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you import through the `.ts` and never edit or reference by hand. Keep generated output up to date with `build` or `watch` while you work.
 
+Editor scripts are a separate, auto-loaded kind — the editor loads every `*.editor_script` itself, so they never appear in the table above as an attached component; see [Editor scripts](./editor-scripts.md).
+
 Set a concrete `outDir` if you prefer the outputs collected under a separate tree.
 
 ## Attach a script to a game object

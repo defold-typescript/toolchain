@@ -63,6 +63,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Messages](./messages.md) — the `BuiltinMessages` catalog, `msg.post` send-side payload narrowing, and the `isMessage` / `onMessage` receive-side helpers.
 - [Where script state lives](./script-state.md) — the four state tiers — per-instance `self`, a shared module local, a cross-script module singleton, and VM-global `declare global` — each grounded in the emitted Lua.
 - [Vector math](./vector-math.md) — the method-form arithmetic surface (`add`, `sub`, `mul`, `div`, `unm`) on `Vector3`, `Vector4`, `Quaternion`, and `Matrix4`, plus why you cannot write `v3 + v3`.
+- [Editor scripts](./editor-scripts.md) — extend the Defold editor with `defineEditorScript`; the `<name>.ts.editor_script` artifact, auto-load discovery, and the `EditorCommand` shape.
 
 ##### CLI
 
@@ -393,6 +394,8 @@ Lifecycle-factory files — those whose `export default` is one of these factori
 | `defineRenderScript` | `<name>.ts.render_script` | the render pipeline (a `.render` file, set via `game.project`) |
 
 A source exporting no lifecycle factory compiles to a Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you import through the `.ts` and never edit or reference by hand. Keep generated output up to date with `build` or `watch` while you work.
+
+Editor scripts are a separate, auto-loaded kind — the editor loads every `*.editor_script` itself, so they never appear in the table above as an attached component; see [Editor scripts](./editor-scripts.md).
 
 Set a concrete `outDir` if you prefer the outputs collected under a separate tree.
 
@@ -1620,6 +1623,42 @@ Whole-vector operations read left-to-right as a chain of `Vector3` methods (`go.
 TypeScript's binary `+`, `-`, `*`, `/` operators require both operands to be `number` (or `+` accepts `string`). The type-checker rejects `v3a + v3b` with TS2362/TS2365 because `Vector3` is not assignable to either, so writing the operator form fails to compile and you cannot ship code that would crash at runtime.
 
 There is **one** exception: **unary minus**. TypeScript does not flag `-v3a`; it silently produces `number`. This is a TS-level gap the toolchain cannot close with types alone. The typed alternative is `v.unm()`. See [unary minus on Vector3 silently produces number](./typescript-gotchas.md#unary-minus-on-vector3--vector4-silently-produces-number) on the gotchas page for the full story.
+
+### Editor scripts
+
+An editor script extends the Defold **editor** itself — custom menu commands, save and bundle hooks, language servers — rather than the running game. It loads into the editor's own restricted Lua VM and talks to the `editor.*` API, a surface disjoint from the `go` / `gui` / `render` runtime. It is a fourth, separate script kind alongside the runtime factories in [Script lifecycle](./script-lifecycle.md).
+
+#### The factory
+
+Import `defineEditorScript` from `@defold-typescript/types` and `export default` a hooks table. The factory is an identity at runtime — it exists only to type the table — and the transpiler erases the import, so nothing of `@defold-typescript/types` reaches the emitted chunk.
+
+```ts
+import { defineEditorScript } from "@defold-typescript/types";
+
+export default defineEditorScript({
+  get_commands: () => [
+    { label: "Say Hi", locations: ["Edit"], run: () => print("hi") },
+  ],
+});
+```
+
+#### Artifact and discovery
+
+The source compiles to `<name>.ts.editor_script`. Unlike a runtime script you never attach it to anything: the editor auto-loads every `*.editor_script` in the project on open. Contrast this with the attach flow — components pointed at a `.ts.script` / `.ts.gui_script` / `.ts.render_script` — described in [Defold editor](./defold-editor.md).
+
+#### Hooks and the `EditorCommand` shape
+
+The hooks table's keystone entries are `get_commands` (returns the commands this script contributes) and `get_language_servers` (returns language-server descriptors). Every hook is optional; the editor calls the ones present.
+
+Each `EditorCommand` returned by `get_commands` has:
+
+- `label` — the menu text.
+- `locations` — the editor UI locations it appears in (e.g. `"Edit"`, `"Assets"`, `"Outline"`, `"View"`).
+- `query` (optional) — declares the command's context arguments.
+- `active` (optional) — decides whether the command is currently enabled; omit to always enable.
+- `run` — invoked when the command is chosen.
+
+> [!NOTE] `run` and `active` receive a loosely-typed opts bag for now. The full typed `editor.*` global API and a per-kind [wall](./wall.md) entrypoint are deferred follow-ups, so there is no `@defold-typescript/types` editor-script subpath yet and `wall` does not target editor-script directories.
 
 ### Init
 
