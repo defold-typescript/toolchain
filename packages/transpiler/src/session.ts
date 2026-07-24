@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
@@ -32,6 +33,7 @@ const COMPILER_OPTIONS: tstl.CompilerOptions = {
   noImplicitSelf: true,
   luaPlugins: [
     { plugin: lifecycleErasurePlugin },
+    { plugin: editorScriptErasurePlugin },
     { plugin: messageGuardLoweringPlugin },
     { plugin: windowEventGuardLoweringPlugin },
     { plugin: messageDispatchLoweringPlugin },

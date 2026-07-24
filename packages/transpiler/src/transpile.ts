@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import type * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import {
   findDirectGoPropertyCalls,
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
@@ -128,6 +129,9 @@ function buildAmbientFiles(): Record<string, string> {
       "src/message-dispatch.d.ts",
     ),
     "node_modules/@defold-typescript/types/src/lifecycle.ts": readAmbient("src/lifecycle.ts"),
+    // The editor-script factory + hook types. A `.ts` (not `.d.ts`), so it needs
+    // explicit seeding like lifecycle.ts — the `src/*.d.ts` loop below skips it.
+    "node_modules/@defold-typescript/types/src/editor.ts": readAmbient("src/editor.ts"),
     // Ambient `declare module "@defold-typescript/types/timers"` so user code
     // type-resolves the polyfill import in the virtual program; the lowering
     // rewrites the specifier to a flat require at emit.
@@ -137,6 +141,8 @@ function buildAmbientFiles(): Record<string, string> {
     "node_modules/@defold-typescript/types/index.ts": [
       'export { defineGuiScript, defineRenderScript, defineScript } from "./src/lifecycle";',
       'export type { GuiScriptHooks, InputAction, InputTouch, RenderScriptHooks, ScriptHooks, ScriptProperties, ScriptProperty } from "./src/lifecycle";',
+      'export { defineEditorScript } from "./src/editor";',
+      'export type { EditorCommand, EditorScriptModule } from "./src/editor";',
       'export type { Hash, Matrix4, Quaternion, Url, Vector, Vector3, Vector4 } from "./src/core-types";',
       "",
     ].join("\n"),
@@ -282,6 +288,7 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
     noImplicitSelf: true,
     luaPlugins: [
       { plugin: lifecycleErasurePlugin },
+      { plugin: editorScriptErasurePlugin },
       { plugin: messageGuardLoweringPlugin },
       { plugin: windowEventGuardLoweringPlugin },
       { plugin: messageDispatchLoweringPlugin },
