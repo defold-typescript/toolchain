@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import { scanFilesSync } from "./scan";
 
-export type ScriptKind = "script" | "gui-script" | "render-script";
+export type ScriptKind = "script" | "gui-script" | "render-script" | "editor-script";
 
 export const DEFAULT_TYPES_ENTRYPOINT = "@defold-typescript/types";
 

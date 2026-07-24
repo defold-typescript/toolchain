@@ -88,6 +88,11 @@ export {
   renderDocComment,
 } from "./src/doc-comment";
 export {
+  defineEditorScript,
+  type EditorCommand,
+  type EditorScriptModule,
+} from "./src/editor";
+export {
   type EmitOptions,
   emitDeclarations,
   TS_IDENTIFIER,

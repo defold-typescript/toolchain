@@ -131,6 +131,15 @@ describe("detectSourceOutputKind", () => {
     ].join("\n");
     expect(detectSourceOutputKind(source)).toBe("render-script");
   });
+
+  test("a defineEditorScript call is an editor-script; the import alone does not decide", () => {
+    expect(detectSourceOutputKind("export default defineEditorScript({});")).toBe("editor-script");
+    expect(
+      detectSourceOutputKind(
+        'import { defineEditorScript } from "@defold-typescript/types";\nexport const helper = 1;',
+      ),
+    ).toBe("module");
+  });
 });
 
 describe("detectSourceScriptKind", () => {
@@ -194,6 +203,28 @@ describe("computeOutputRel and computeScriptRel kind suffix", () => {
     expect(computeScriptRel("src/hud.ts", { outDir: "build", include }, "gui-script")).toBe(
       "build/hud.ts.gui_script",
     );
+  });
+
+  test("editor-script emits a .ts.editor_script suffix", () => {
+    expect(computeOutputRel("src/tools.ts", { outDir: undefined, include }, "editor-script")).toBe(
+      "src/tools.ts.editor_script",
+    );
+  });
+
+  test("outDir mode re-roots and applies the editor-script suffix", () => {
+    expect(computeOutputRel("src/tools.ts", { outDir: "build", include }, "editor-script")).toBe(
+      "build/tools.ts.editor_script",
+    );
+  });
+});
+
+describe("outputRelsForSource editor-script coverage", () => {
+  const include = ["src/**/*.ts"];
+
+  test("includes the editor-script output and its map so a kind switch prunes it", () => {
+    const rels = outputRelsForSource("src/tools.ts", { outDir: undefined, include });
+    expect(rels).toContain("src/tools.ts.editor_script");
+    expect(rels).toContain("src/tools.ts.editor_script.map");
   });
 });
 

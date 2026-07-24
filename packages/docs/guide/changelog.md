@@ -14,7 +14,14 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.21.2
+## v0.22.0
+
+### Added
+
+- Editor scripts are now recognized and built: a source that does
+  `export default defineEditorScript({ get_commands, ... })` compiles to a
+  `<name>.ts.editor_script` that returns the hooks table the Defold editor loads.
+  The typed `editor.*` API and project scaffolding land in follow-ups.
 
 ### Fixes
 
