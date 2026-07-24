@@ -186,12 +186,6 @@
       "generated": "generated/dicebag.dicebag.d.ts"
     },
     {
-      "module": "tweener.tweener",
-      "path": "packages/defold-tweener/tweener.tweener.d.ts",
-      "fixture": "fixtures/ts-defold/tweener.tweener.d.ts",
-      "generated": "generated/tweener.tweener.d.ts"
-    },
-    {
       "module": "squid.squid",
       "path": "packages/squid/squid.squid.d.ts",
       "fixture": "fixtures/ts-defold/squid.squid.d.ts",

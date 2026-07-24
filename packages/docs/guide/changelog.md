@@ -14,7 +14,11 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.22.1
+## v0.23.0
+
+### Breaking
+
+- The `tweener` library types are now maintained in this repo, regenerated from upstream `Insality/defold-tweener` (pinned tag `6`) through the same LuaLS pipeline as druid and decore, and marked with the maintained-here pin in the docs. The surface follows upstream's annotations, so it differs from the previous hand-written binding (notably the per-easing helpers are no longer exposed as module-level constants).
 
 ### Improved
 

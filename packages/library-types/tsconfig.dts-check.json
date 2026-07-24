@@ -4,5 +4,10 @@
     "skipLibCheck": false,
     "noEmit": true
   },
-  "include": ["generated/druid.d.ts", "generated/decore.d.ts", "test-d/dts-check-ambient.ts"]
+  "include": [
+    "generated/druid.d.ts",
+    "generated/decore.d.ts",
+    "generated/tweener.d.ts",
+    "test-d/dts-check-ambient.ts"
+  ]
 }

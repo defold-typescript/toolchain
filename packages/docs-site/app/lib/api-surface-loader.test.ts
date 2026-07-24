@@ -163,6 +163,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("monarch.monarch").authoredHere).toBe(false);
     expect(meta("gooey").authoredHere).toBe(false);
   });
+
+  test("attributes tweener to Insality/defold-tweener as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("tweener").authoredHere).toBe(true);
+    expect(meta("tweener").authorUrl).toBe("https://github.com/Insality/defold-tweener");
+  });
 });
 
 describe("loadApiSurface — druid library page", () => {
