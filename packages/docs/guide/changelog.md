@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.22.1
+
+### Improved
+
+- The editor-scripting authoring path is now documented: a Core-concepts guide page walks through `defineEditorScript`, the `<name>.ts.editor_script` artifact, and the editor's auto-load discovery, with a worked custom-command example.
+
 ## v0.22.0
 
 ### Added
