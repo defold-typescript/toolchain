@@ -204,7 +204,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     expect(err()).toBe("");
-    expect(out()).toMatch(/wrote 17 files/);
+    expect(out()).toMatch(/wrote 18 files/);
     expect(out()).toContain("game.project");
     expect(out()).toContain("AGENTS.md");
     expect(out()).toContain("CLAUDE.md");
