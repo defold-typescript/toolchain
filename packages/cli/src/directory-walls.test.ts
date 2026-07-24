@@ -161,6 +161,25 @@ describe("planSourceDirectoryWalls", () => {
     touch("src/util.ts", "export const add = (a: number, b: number) => a + b;");
     expect(planSourceDirectoryWalls(cwd)).toEqual([]);
   });
+
+  test("an editor-script-only directory yields no descriptor even though single-kind", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/editor/menu.ts", "export default defineEditorScript({});");
+    expect(planSourceDirectoryWalls(cwd)).toEqual([]);
+  });
+
+  test("an editor directory beside a gui-script directory yields only the gui-script wall", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/editor/menu.ts", "export default defineEditorScript({});");
+    touch("src/ui/hud.ts", "export default defineGuiScript({});");
+    expect(planSourceDirectoryWalls(cwd)).toEqual([
+      {
+        dir: "src/ui",
+        kind: "gui-script",
+        typesEntrypoint: "@defold-typescript/types/gui-script",
+      },
+    ] satisfies DirectoryWall[]);
+  });
 });
 
 function wall(dir: string, kind: ScriptKind, typesEntrypoint: string): DirectoryWall {

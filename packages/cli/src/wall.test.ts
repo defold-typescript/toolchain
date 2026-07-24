@@ -77,6 +77,14 @@ describe("eligibleWalls", () => {
     touch("a/y.ts", "export default defineGuiScript({});");
     expect(eligibleWalls(cwd)).toEqual([]);
   });
+
+  test("omits an editor-script-only directory (no per-kind entrypoint to narrow to)", () => {
+    writeRootTsconfig({ include: ["src/**/*.ts"] });
+    touch("src/ui/hud.ts", "export default defineGuiScript({});");
+    touch("src/render/cam.ts", "export default defineRenderScript({});");
+    touch("src/editor/menu.ts", "export default defineEditorScript({});");
+    expect(eligibleWalls(cwd).map((w) => w.dir)).toEqual(["src/render", "src/ui"]);
+  });
 });
 
 describe("applyWallSelection", () => {
@@ -165,6 +173,15 @@ describe("applyWallSelection", () => {
   test("selecting an unknown directory is rejected and writes nothing", () => {
     scaffold();
     expect(() => applyWallSelection(cwd, ["src/nope"])).toThrow(/single-kind source directory/);
+    expect("references" in readRootTsconfig()).toBe(false);
+  });
+
+  test("selecting an editor-script-only directory is rejected and writes nothing", () => {
+    writeRootTsconfig({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] });
+    touch("src/editor/menu.ts", "export default defineEditorScript({});");
+
+    expect(() => applyWallSelection(cwd, ["src/editor"])).toThrow(/single-kind source directory/);
+    expect(existsSync(path.join(cwd, "src/editor/tsconfig.json"))).toBe(false);
     expect("references" in readRootTsconfig()).toBe(false);
   });
 });
