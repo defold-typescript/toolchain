@@ -25,6 +25,12 @@ changes are called out first because the toolchain is pre-1.0.
   `require`), and editor-only directories are never offered as per-kind type walls.
   The typed `editor.*` API and project scaffolding land in follow-ups.
 
+### Improved
+
+- The repo-maintained-library marker in the API reference is now green and easier
+  to spot: in the sidebar it sits on each library namespace leaf instead of the
+  parent folder row, and it also appears on the `/libraries` index cards.
+
 ### Fixes
 
 - `init` now scaffolds the `.gitattributes` the Defold editor emits (linguist
