@@ -23,6 +23,7 @@ changes are called out first because the toolchain is pre-1.0.
 ### Improved
 
 - The editor-scripting authoring path is now documented: a Core-concepts guide page walks through `defineEditorScript`, the `<name>.ts.editor_script` artifact, and the editor's auto-load discovery, with a worked custom-command example.
+- Library types can now be sourced from a library's own committed `.script_api` snapshot, generated through the same ref-doc emitter the built-in extensions use, with `Playgama/bridge-defold` (pinned `v2.0.0`) as the first such source; the shipped bridge types are unchanged pending switchover.
 
 ## v0.22.0
 

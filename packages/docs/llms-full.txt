@@ -4603,6 +4603,46 @@ four commands emits `generated/druid.d.ts`, which
 [`resolve`](./resolve.md#vendored-library-types) materializes into a consuming
 project as `druid.druid`.
 
+#### Libraries that ship a `.script_api`
+
+A native or hybrid library that ships an extension `.script_api` (the same YAML
+format the four built-in extensions use) has a **third** ingestion mode, distinct
+from the LuaLS front-end above: `packages/library-types/scripts/sync-script-api-types.ts`,
+driven by `packages/library-types/script-api-targets.json`. Instead of parsing
+`---@` annotations, it routes the committed `.script_api` snapshot through the
+**shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
+the exact path the built-in extensions and resolve-time extension typing use — so
+one-level nested sub-namespaces (`bridge.platform`, `bridge.achievements`) survive
+into nested `namespace` blocks.
+
+Each entry pins `repo`, `ref`, `scriptApi` (the path to the `.script_api` in the
+repo), `moduleId`, `namespace`, and the exact `generated` / `apiDoc` / `fidelity`
+output paths. The generate arms mirror the LuaLS ones:
+
+```sh
+cd packages/library-types
+
+bun scripts/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
+bun scripts/sync-script-api-types.ts --emit       # emit the pinned generated/<...>.d.ts
+bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the built-in extensions)
+bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
+```
+
+The pilot target is **`Playgama/bridge-defold`** (pinned `v2.0.0`). Two things are
+specific to a script_api target and worth knowing:
+
+- **Output paths are pinned explicitly, under `*/script-api/` subtrees.** bridge
+  currently also has a ts-defold-sourced `generated/bridge.bridge.d.ts` (a
+  different, newer surface) that a byte-drift guard freezes, so the script_api
+  goldens live at `generated/script-api/`, `api-doc/script-api/`, and
+  `fidelity/script-api/` and do not collide. A later migration slice repoints the
+  canonical path and drops the ts-defold source.
+- **Fidelity mirrors the emitter, so an unmapped token counts against coverage.**
+  The report is computed over the ref-doc doc with the emitter's own type map: a
+  token the emitter renders as `unknown` (bridge's `string | nil` return union has
+  no mapping) is counted in `unknownFallbacks` and listed in `unknownTokens` rather
+  than hidden — bridge lands at `coverage` `0.962` for exactly this reason.
+
 ### API docs vs. ts-defold-types
 
 How the JSDoc that `@defold-typescript/types` emits compares with the incumbent
