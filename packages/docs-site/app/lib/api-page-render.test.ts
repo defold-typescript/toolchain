@@ -490,6 +490,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).toContain("[Insality/defold-tweener](https://github.com/Insality/defold-tweener)");
     expect(md).not.toContain("ts-defold/library");
   });
+
+  test("the migrated bridge page pins to Playgama/bridge-defold, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const bridge = pages.find((p) => p.namespace === "bridge");
+    expect(bridge).toBeDefined();
+    if (!bridge) return;
+    expect(bridge.category).toBe("library");
+    const md = apiPageMarkdown(bridge, apiLinkify(pages));
+    expect(md).toContain("[Playgama/bridge-defold](https://github.com/Playgama/bridge-defold)");
+    expect(md).not.toContain("ts-defold/library");
+  });
 });
 
 describe("apiPageMarkdown display name", () => {

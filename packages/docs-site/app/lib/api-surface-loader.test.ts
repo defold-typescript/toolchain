@@ -47,6 +47,11 @@ describe("libraryOwnerByDir", () => {
     expect(owners.get("druid")).toBe("Insality");
     expect(owners.get("decore")).toBe("Insality");
   });
+
+  test("attributes script_api-sourced libraries to their repo owner so they nest under it", () => {
+    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
+    expect(owners.get("bridge")).toBe("Playgama");
+  });
 });
 
 describe("libraryDisplayName", () => {
@@ -168,6 +173,26 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(meta("tweener").authoredHere).toBe(true);
     expect(meta("tweener").authorUrl).toBe("https://github.com/Insality/defold-tweener");
+  });
+});
+
+describe("loadLibraryProvenance — script_api-sourced libraries", () => {
+  test("attributes bridge to Playgama/bridge-defold at the script-api-targets ref", () => {
+    // The page (and provenance) key is the api-doc file stem, which the migration
+    // names for the single-segment `namespace` — `bridge`, like the LuaLS libraries.
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("bridge");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("v2.0.0");
+    expect(meta.authorUrl).toBe("https://github.com/Playgama/bridge-defold");
+    expect(meta.sourceUrl).toBe("https://github.com/Playgama/bridge-defold/tree/v2.0.0");
+    expect(meta.license).toBe("MIT");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
+  test("a genuinely vendored ts-defold namespace still reports authoredHere false", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("monarch.monarch").authoredHere).toBe(false);
+    expect(meta("gooey").authoredHere).toBe(false);
   });
 });
 

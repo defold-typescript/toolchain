@@ -11,9 +11,11 @@ import * as path from "node:path";
 import {
   buildLibraryRegistry,
   buildLualsRegistryEntries,
+  buildScriptApiRegistryEntries,
   type LibraryClassification,
   type LibraryTargets,
   type LualsTargets,
+  type ScriptApiRegistryTargets,
   type VendoredLibrary,
 } from "./library-match";
 
@@ -57,6 +59,7 @@ export function loadVendoredLibraryRegistry(
       registry: [
         ...buildLibraryRegistry(classification, targets),
         ...readLualsRegistryEntries(root),
+        ...readScriptApiRegistryEntries(root),
       ],
       generatedDir: path.join(root, "generated"),
     };
@@ -77,6 +80,24 @@ function readLualsRegistryEntries(root: string): VendoredLibrary[] {
   try {
     const targets = JSON.parse(readFileSync(lualsTargetsPath, "utf8")) as LualsTargets;
     return buildLualsRegistryEntries(targets);
+  } catch {
+    return [];
+  }
+}
+
+// script_api libraries are recognized from `script-api-targets.json`, mirroring
+// the LuaLS lane. A missing or unparseable file degrades to the other registries
+// rather than throwing, so a corpus without it still resolves the rest.
+function readScriptApiRegistryEntries(root: string): VendoredLibrary[] {
+  const scriptApiTargetsPath = path.join(root, "script-api-targets.json");
+  if (!existsSync(scriptApiTargetsPath)) {
+    return [];
+  }
+  try {
+    const targets = JSON.parse(
+      readFileSync(scriptApiTargetsPath, "utf8"),
+    ) as ScriptApiRegistryTargets;
+    return buildScriptApiRegistryEntries(targets);
   } catch {
     return [];
   }

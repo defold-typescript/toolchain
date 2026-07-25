@@ -8,7 +8,7 @@
     "generated/druid.d.ts",
     "generated/decore.d.ts",
     "generated/tweener.d.ts",
-    "generated/script-api/bridge.bridge.d.ts",
+    "generated/bridge.d.ts",
     "test-d/bridge-usage.test-d.ts",
     "test-d/dts-check-ambient.ts"
   ]

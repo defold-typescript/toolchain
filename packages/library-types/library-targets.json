@@ -252,12 +252,6 @@
       "generated": "generated/yagames.yagames.d.ts"
     },
     {
-      "module": "bridge.bridge",
-      "path": "packages/defold-bridge/bridge.bridge.d.ts",
-      "fixture": "fixtures/ts-defold/bridge.bridge.d.ts",
-      "generated": "generated/bridge.bridge.d.ts"
-    },
-    {
       "module": "zzfx.api",
       "path": "packages/defold-zzfx/zzfx.api.d.ts",
       "fixture": "fixtures/ts-defold/zzfx.api.d.ts",

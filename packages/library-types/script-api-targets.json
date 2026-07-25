@@ -7,9 +7,9 @@
       "scriptApi": "bridge/api/bridge.script_api",
       "moduleId": "bridge.bridge",
       "namespace": "bridge",
-      "generated": "generated/script-api/bridge.bridge.d.ts",
-      "apiDoc": "api-doc/script-api/bridge.bridge.json",
-      "fidelity": "fidelity/script-api/bridge.bridge.json"
+      "generated": "generated/bridge.d.ts",
+      "apiDoc": "api-doc/bridge.json",
+      "fidelity": "fidelity/bridge.json"
     }
   ]
 }

@@ -4,11 +4,13 @@ import { join } from "node:path";
 import {
   buildLibraryRegistry,
   buildLualsRegistryEntries,
+  buildScriptApiRegistryEntries,
   type LibraryClassification,
   type LibraryTargets,
   type LualsTargets,
   matchVendoredLibrary,
   normalizeSourceId,
+  type ScriptApiRegistryTargets,
   type VendoredLibrary,
 } from "./library-match";
 
@@ -139,6 +141,32 @@ describe("buildLualsRegistryEntries", () => {
 
   test("returns no entries for an empty target list", () => {
     expect(buildLualsRegistryEntries({ targets: [] })).toEqual([]);
+  });
+});
+
+describe("buildScriptApiRegistryEntries", () => {
+  const bridgeTargets: ScriptApiRegistryTargets = {
+    targets: [
+      {
+        repo: "https://github.com/Playgama/bridge-defold",
+        moduleId: "bridge.bridge",
+        namespace: "bridge",
+      },
+    ],
+  };
+
+  test("maps a script_api target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
+    expect(buildScriptApiRegistryEntries(bridgeTargets)).toEqual([
+      {
+        sourceId: "bridge-defold",
+        modules: ["bridge.bridge"],
+        generatedStems: { "bridge.bridge": "bridge" },
+      },
+    ]);
+  });
+
+  test("returns no entries for an empty target list", () => {
+    expect(buildScriptApiRegistryEntries({ targets: [] })).toEqual([]);
   });
 });
 
