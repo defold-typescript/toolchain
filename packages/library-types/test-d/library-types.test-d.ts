@@ -3,7 +3,6 @@
 
 import * as bzAnim from "bzAnim.bzLibrary";
 import * as boom from "boom.boom";
-import * as bridge from "bridge.bridge";
 import * as defcon from "defcon.console";
 import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
@@ -278,17 +277,6 @@ yagames.player_get_data(undefined, (ctx, err, data) => {
   void data;
 });
 
-const _bridgeDevice: string = bridge.device.type();
-const _bridgeInterstitialDelay: number = bridge.advertisement.minimum_delay_between_interstitial();
-bridge.leaderboards.set_score(
-  "score",
-  100,
-  () => {},
-  (error) => {
-    void error;
-  },
-);
-
 const _zzfxSample: ReturnType<typeof zzfx.build_sample> = zzfx.build_sample(1, 0, 440);
 zzfx.play_sample(_zzfxSample);
 zzfx.samplerate(44100);
@@ -372,8 +360,6 @@ void _nakamaSession;
 void _yagamesPlayerId;
 void _yagamesDevice;
 void _yagamesStorageLength;
-void _bridgeDevice;
-void _bridgeInterstitialDelay;
 void _zzfxSample;
 void _boomObject;
 void _boomVec;

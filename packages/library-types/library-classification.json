@@ -91,13 +91,6 @@
       ]
     },
     {
-      "dir": "defold-bridge",
-      "classification": "already-vendored",
-      "modules": [
-        "bridge.bridge"
-      ]
-    },
-    {
       "dir": "defold-clipboard",
       "classification": "native",
       "modules": [
