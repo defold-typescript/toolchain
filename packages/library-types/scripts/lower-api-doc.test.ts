@@ -481,18 +481,27 @@ test("the committed druid golden carries the emitter-equivalent vararg + multi-r
   ]);
 });
 
-test("regenerating druid from the committed fixtures matches the committed golden api-doc byte-for-byte", () => {
-  const packageRoot = join(import.meta.dir, "..");
-  const druid = readLualsTargets(packageRoot).find((t) => t.namespace === "druid");
-  if (!druid) throw new Error("druid target missing from luals-targets.json");
+const packageRoot = join(import.meta.dir, "..");
+const targets = readLualsTargets(packageRoot);
 
-  const model = buildTargetModel(packageRoot, druid);
-  const lowered = lowerLibraryModel(model, {
-    namespace: druid.namespace,
-    typeRenames: druid.typeRenames,
+for (const target of targets) {
+  test(`regenerating ${target.namespace} from the committed fixtures matches its committed api-doc golden byte-for-byte`, () => {
+    const model = buildTargetModel(packageRoot, target);
+    const lowered = lowerLibraryModel(model, {
+      namespace: target.namespace,
+      typeRenames: target.typeRenames,
+    });
+    const emitted = `${JSON.stringify(lowered, null, 2)}\n`;
+    const golden = readFileSync(join(packageRoot, "api-doc", `${target.namespace}.json`), "utf8");
+
+    expect(emitted).toBe(golden);
   });
-  const emitted = `${JSON.stringify(lowered, null, 2)}\n`;
-  const golden = readFileSync(join(packageRoot, "api-doc", `${druid.namespace}.json`), "utf8");
+}
 
-  expect(emitted).toBe(golden);
+test("the regen-drift guard covers every LuaLS target (druid, decore, tweener)", () => {
+  expect(targets.length).toBeGreaterThan(0);
+  const namespaces = new Set(targets.map((t) => t.namespace));
+  for (const required of ["druid", "decore", "tweener"]) {
+    expect(namespaces.has(required)).toBe(true);
+  }
 });
