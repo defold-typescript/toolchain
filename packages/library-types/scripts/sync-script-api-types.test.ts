@@ -19,8 +19,10 @@ const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 // The bridge target as it appears in a validated config. Unlike the LuaLS
 // front-end (which pins source globs), a script_api target pins one `.script_api`
-// path and the exact non-canonical golden paths it owns — the ts-defold
-// `generated/bridge.bridge.d.ts` stays byte-frozen until the migration slice.
+// path and the exact canonical golden paths it owns. bridge is now the sole type
+// maintainer for its namespace, so — like the LuaLS libraries — its goldens are
+// named for the single-segment `namespace` (`generated/bridge.d.ts`), not the
+// dotted `moduleId`, keeping the docs tree and file layout clean.
 const BRIDGE: ScriptApiTarget = {
   repo: "https://github.com/Playgama/bridge-defold",
   ref: "v2.0.0",
@@ -28,9 +30,9 @@ const BRIDGE: ScriptApiTarget = {
   scriptApi: "bridge/api/bridge.script_api",
   moduleId: "bridge.bridge",
   namespace: "bridge",
-  generated: "generated/script-api/bridge.bridge.d.ts",
-  apiDoc: "api-doc/script-api/bridge.bridge.json",
-  fidelity: "fidelity/script-api/bridge.bridge.json",
+  generated: "generated/bridge.d.ts",
+  apiDoc: "api-doc/bridge.json",
+  fidelity: "fidelity/bridge.json",
 };
 
 function writeConfig(config: unknown): string {
@@ -48,8 +50,8 @@ describe("readScriptApiTargets", () => {
     expect(bridge?.repo).toBe("https://github.com/Playgama/bridge-defold");
     expect(bridge?.ref).toBe("v2.0.0");
     expect(bridge?.scriptApi).toBe("bridge/api/bridge.script_api");
-    expect(bridge?.generated).toBe("generated/script-api/bridge.bridge.d.ts");
-    expect(bridge?.apiDoc).toBe("api-doc/script-api/bridge.bridge.json");
+    expect(bridge?.generated).toBe("generated/bridge.d.ts");
+    expect(bridge?.apiDoc).toBe("api-doc/bridge.json");
   });
 
   test("throws naming the missing field and the offending entry", () => {
@@ -66,12 +68,39 @@ describe("readScriptApiTargets", () => {
     expect(() => readScriptApiTargets(root)).toThrow(/0/);
   });
 
-  test("defaults fidelity to fidelity/script-api/<moduleId>.json and license to '' when omitted", () => {
+  test("defaults fidelity to fidelity/<namespace>.json and license to '' when omitted", () => {
     const { fidelity: _f, license: _l, ...bare } = BRIDGE;
     const root = writeConfig({ targets: [bare] });
     const [target] = readScriptApiTargets(root);
-    expect(target?.fidelity).toBe("fidelity/script-api/bridge.bridge.json");
+    expect(target?.fidelity).toBe("fidelity/bridge.json");
     expect(target?.license).toBe("");
+  });
+});
+
+describe("bridge migrated off the ts-defold corpus", () => {
+  test("bridge.bridge is no longer a ts-defold library-targets row", () => {
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "bridge.bridge")).toBe(false);
+  });
+
+  test("the defold-bridge dir is gone from the ts-defold classification", () => {
+    const classification = readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8");
+    expect(classification).not.toContain("defold-bridge");
+  });
+
+  test("the retired ts-defold bridge fixture is deleted", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/bridge.bridge.d.ts"))).toBe(false);
+  });
+
+  test("the script_api goldens are named for the namespace, not the dotted module or a subtree", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/bridge.d.ts"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/bridge.json"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "fidelity/bridge.json"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/bridge.bridge.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/script-api/bridge.bridge.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/script-api/bridge.bridge.json"))).toBe(false);
   });
 });
 
@@ -111,7 +140,7 @@ describe("emitScriptApiDeclaration", () => {
 });
 
 describe("script_api goldens regenerate byte-for-byte", () => {
-  test("each target's .d.ts matches its committed generated/script-api golden", async () => {
+  test("each target's .d.ts matches its committed generated golden", async () => {
     for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
       const regenerated = await emitScriptApiDeclaration(PACKAGE_ROOT, target);
       const committed = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
@@ -119,7 +148,7 @@ describe("script_api goldens regenerate byte-for-byte", () => {
     }
   });
 
-  test("each target's lowered api-doc matches its committed api-doc/script-api golden", async () => {
+  test("each target's lowered api-doc matches its committed api-doc golden", async () => {
     for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
       const regenerated = await lowerScriptApiApiDoc(PACKAGE_ROOT, target);
       const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
@@ -129,7 +158,7 @@ describe("script_api goldens regenerate byte-for-byte", () => {
 });
 
 describe("script_api fidelity", () => {
-  test("each target's report matches its committed fidelity/script-api golden", async () => {
+  test("each target's report matches its committed fidelity golden", async () => {
     for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
       const report = await buildScriptApiFidelity(PACKAGE_ROOT, target);
       const committed = readFileSync(join(PACKAGE_ROOT, target.fidelity), "utf8");

@@ -188,6 +188,13 @@ export function libraryOwnerByDir(libraryTypesDir: string): Map<string, string> 
     const owner = githubOwner(provenance.repo);
     if (owner) ownerByDir.set(namespace, owner);
   }
+  // script_api-sourced libraries (bridge) are likewise absent from NOTICE and the
+  // ts-defold classification; attribute each to its own repo owner so it nests
+  // under that owner in the Libraries tree just like the LuaLS libraries.
+  for (const [namespace, provenance] of loadScriptApiProvenance(libraryTypesDir)) {
+    const owner = githubOwner(provenance.repo);
+    if (owner) ownerByDir.set(namespace, owner);
+  }
   return ownerByDir;
 }
 
@@ -203,6 +210,23 @@ interface LualsProvenance {
 
 function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
   const path = join(libraryTypesDir, "luals-targets.json");
+  if (!existsSync(path)) return new Map();
+  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
+    targets: { namespace: string; repo: string; ref: string; license?: string }[];
+  };
+  return new Map(
+    targets.map((t) => [t.namespace, { repo: t.repo, ref: t.ref, license: t.license ?? "" }]),
+  );
+}
+
+// A script_api-sourced library's own pin, read from `script-api-targets.json`.
+// Same shape and role as `loadLualsProvenance`: a library this repo maintains
+// from a primary source (here the upstream's own `.script_api`) that is absent
+// from the ts-defold classification, so it carries its own repo/ref rather than
+// the shared vendored commit. Keyed by the single-segment `namespace`, which is
+// also the committed `generated/<namespace>.d.ts` stem and thus the page key.
+function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
+  const path = join(libraryTypesDir, "script-api-targets.json");
   if (!existsSync(path)) return new Map();
   const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
     targets: { namespace: string; repo: string; ref: string; license?: string }[];
@@ -233,19 +257,25 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
 
   const moduleDir = libraryModuleDirs(libraryTypesDir);
   const modulePath = libraryModulePaths(libraryTypesDir);
-  const luals = loadLualsProvenance(libraryTypesDir);
+  // A namespace this repo maintains from primary source — LuaLS *or* script_api —
+  // is authored-here and carries its own upstream pin. Both loaders yield the
+  // same `{repo, ref, license}` shape keyed by namespace.
+  const maintainedHere = new Map([
+    ...loadLualsProvenance(libraryTypesDir),
+    ...loadScriptApiProvenance(libraryTypesDir),
+  ]);
 
   const { repo, commit, license } = classification.source;
   return (namespace: string): LibraryMeta => {
-    const lualsEntry = moduleDir.has(namespace) ? undefined : luals.get(namespace);
-    if (lualsEntry) {
+    const authoredEntry = moduleDir.has(namespace) ? undefined : maintainedHere.get(namespace);
+    if (authoredEntry) {
       return {
         author: "",
-        authorUrl: lualsEntry.repo,
-        commit: lualsEntry.ref,
-        sourceUrl: `${lualsEntry.repo}/tree/${lualsEntry.ref}`,
+        authorUrl: authoredEntry.repo,
+        commit: authoredEntry.ref,
+        sourceUrl: `${authoredEntry.repo}/tree/${authoredEntry.ref}`,
         importString: libraryImportString(namespace),
-        license: lualsEntry.license,
+        license: authoredEntry.license,
         authoredHere: true,
       };
     }

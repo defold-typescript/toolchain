@@ -191,15 +191,17 @@ bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<.
 bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
 
-The pilot target is **`Playgama/bridge-defold`** (pinned `v2.0.0`). Two things are
-specific to a script_api target and worth knowing:
+The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.0.0`),
+maintained entirely from its `.script_api` — its former ts-defold binding is
+gone. Two things are specific to a script_api target and worth knowing:
 
-- **Output paths are pinned explicitly, under `*/script-api/` subtrees.** bridge
-  currently also has a ts-defold-sourced `generated/bridge.bridge.d.ts` (a
-  different, newer surface) that a byte-drift guard freezes, so the script_api
-  goldens live at `generated/script-api/`, `api-doc/script-api/`, and
-  `fidelity/script-api/` and do not collide. A later migration slice repoints the
-  canonical path and drops the ts-defold source.
+- **Output paths are pinned explicitly and named for the single-segment
+  `namespace`.** Like the LuaLS libraries, a migrated script_api library is the
+  sole maintainer of its namespace, so its goldens are `generated/bridge.d.ts`,
+  `api-doc/bridge.json`, and `fidelity/bridge.json` — not the dotted `moduleId` —
+  which keeps the docs Libraries tree and the file layout uniform with druid. The
+  require specifier is still the `moduleId` (`declare module 'bridge.bridge'`), so
+  `resolve` materializes it unchanged via the registry's module→stem mapping.
 - **Fidelity mirrors the emitter, so an unmapped token counts against coverage.**
   The report is computed over the ref-doc doc with the emitter's own type map: a
   token the emitter renders as `unknown` (bridge's `string | nil` return union has

@@ -10,12 +10,11 @@ import type { FidelityReport } from "./luals-fidelity";
  * the four built-in extensions and the resolve-time extension path use — rather
  * than the LuaLS `emitLibraryDeclarations` (which consumes a `LibraryModel`).
  *
- * Each target pins its exact output paths. bridge's canonical
- * `generated/bridge.bridge.d.ts` is a *different* (newer) ts-defold-sourced
- * surface that the `sync-library-types.ts` transform-drift guard byte-freezes, so
- * the script_api goldens live under non-colliding `script-api/` subtrees of
- * `generated/`, `api-doc/`, and `fidelity/` until the migration slice drops
- * bridge from `library-targets.json` and repoints the canonical path.
+ * Each target pins its exact output paths. Like the LuaLS libraries, a migrated
+ * script_api library is the sole maintainer of its namespace, so its goldens are
+ * named for the single-segment `namespace` (`generated/bridge.d.ts`,
+ * `api-doc/bridge.json`, `fidelity/bridge.json`) at the canonical roots — not the
+ * dotted `moduleId` — keeping the docs tree and file layout uniform with druid.
  */
 export interface ScriptApiTarget {
   repo: string;
@@ -25,7 +24,7 @@ export interface ScriptApiTarget {
   namespace: string;
   generated: string;
   apiDoc: string;
-  // Defaults to `fidelity/script-api/<moduleId>.json` when omitted.
+  // Defaults to `fidelity/<namespace>.json` when omitted.
   fidelity: string;
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
   // in the config; defaults to "".
@@ -48,7 +47,7 @@ const REQUIRED_FIELDS = [
 
 /**
  * Read `script-api-targets.json`, validate every required field per entry, and
- * fill optional defaults (`fidelity` → `fidelity/script-api/<moduleId>.json`,
+ * fill optional defaults (`fidelity` → `fidelity/<namespace>.json`,
  * `license` → ""). Throws on the first missing field naming both the field and
  * the offending entry (its `moduleId`, or its index when `moduleId` itself is
  * absent) — the loud-fail discipline `readLualsTargets` uses. No network.
@@ -75,7 +74,7 @@ export function readScriptApiTargets(packageRoot: string): ScriptApiTarget[] {
       namespace: entry.namespace as string,
       generated: entry.generated as string,
       apiDoc: entry.apiDoc as string,
-      fidelity: entry.fidelity ?? `fidelity/script-api/${moduleId}.json`,
+      fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",
     };
   });
