@@ -27,6 +27,11 @@ describe("@defold-typescript/library-types publish surface", () => {
     expect(paths).toContain("generated/druid.d.ts");
   });
 
+  test("ships the script_api resolve manifest so installed packages can resolve bridge", () => {
+    expect(paths).toContain("script-api-targets.json");
+    expect(paths).toContain("generated/bridge.d.ts");
+  });
+
   test("keeps the already-shipped registry JSONs", () => {
     expect(paths).toContain("library-targets.json");
     expect(paths).toContain("library-classification.json");

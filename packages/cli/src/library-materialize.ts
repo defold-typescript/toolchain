@@ -37,9 +37,10 @@ export function materializeVendoredLibraries(
 
   const modules = [...new Set(matched.flatMap((library) => library.modules))].sort();
 
-  // The committed source file stem differs from the module id only for LuaLS
-  // libraries (druid ships `druid.druid` but its types live in
-  // `generated/druid.d.ts`); pure-Lua modules map to themselves.
+  // The committed source file stem differs from the module id for LuaLS and
+  // script_api libraries (druid ships `druid.druid` but its types live in
+  // `generated/druid.d.ts`; bridge ships `bridge.bridge` from
+  // `generated/bridge.d.ts`); pure-Lua modules map to themselves.
   const stemOf = new Map<string, string>();
   for (const library of matched) {
     for (const module of library.modules) {

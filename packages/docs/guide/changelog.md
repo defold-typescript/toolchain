@@ -25,6 +25,10 @@ changes are called out first because the toolchain is pre-1.0.
 
 - The editor-scripting authoring path is now documented: a Core-concepts guide page walks through `defineEditorScript`, the `<name>.ts.editor_script` artifact, and the editor's auto-load discovery, with a worked custom-command example.
 
+### Fixed
+
+- Installed packages can now resolve the `bridge` library again — its script_api resolve manifest was missing from the published tarball, so `defold-typescript resolve` silently dropped `bridge` on a real install.
+
 ## v0.22.0
 
 ### Added
