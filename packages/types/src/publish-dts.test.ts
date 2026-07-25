@@ -192,20 +192,20 @@ describe("wrapAsModule", () => {
     expect(out).not.toContain("import type");
   });
 
-  test("imports only the engine types actually referenced, banner-first", () => {
+  test("references engine handles as ambient globals: no import, module stays a script", () => {
     const out = wrapAsModule({
       namespace: "x",
       emitted: "declare namespace x {\n  function f(): Vector3 | Url;\n}\n",
       importsFrom: "../src/core-types",
       moduleId: "x.x",
     });
-    expect(out).toContain('import type { Url, Vector3 } from "../src/core-types";');
+    // A top-level `import type` would make the `.d.ts` a module, demoting
+    // `declare module '<id>'` to an augmentation of an unresolvable specifier;
+    // the handles resolve as ambient globals instead, so no import is emitted.
+    expect(out).not.toContain("import type");
     const lines = out.split("\n");
     expect(lines[0]).toBe("/** @noSelfInFile */");
     expect(lines[1]).toBe("/** @noResolution */");
-    const importIdx = lines.findIndex((l) => l.startsWith("import type"));
-    const moduleIdx = lines.findIndex((l) => l.startsWith("declare module"));
-    expect(importIdx).toBeGreaterThan(1);
-    expect(moduleIdx).toBeGreaterThan(importIdx);
+    expect(lines[2]).toBe("declare module 'x.x' {");
   });
 });
