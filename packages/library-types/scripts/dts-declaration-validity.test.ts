@@ -22,16 +22,17 @@ const LUALS_GOLDENS = readLualsTargets(PACKAGE_ROOT).map((t) => `generated/${t.n
 // importable `declare module '<moduleId>'` surfaces keyed by moduleId (dotted),
 // so the golden path is read straight from the target rather than reconstructed.
 const SCRIPT_API_GOLDENS = readScriptApiTargets(PACKAGE_ROOT).map((t) => t.generated);
-const ALL_GOLDENS = [...LUALS_GOLDENS, ...SCRIPT_API_GOLDENS];
 
 // Type-check the committed goldens with `skipLibCheck: false` so any invalid
 // declaration in a whole golden — a base/subinterface variance regression (`TS2430`)
 // or a merged duplicate-member class (`TS2300`/`TS2717`) — surfaces as a real
 // diagnostic instead of hiding behind the repo-wide `skipLibCheck: true`. The
-// offender filter is anchored on each committed golden path so the out-of-scope
-// `../types/generated/physics.d.ts` `diameter` duplicate (a separate
-// `packages/types` defect) and node_modules type conflicts do not gate this proof.
-test("every committed luals + script_api golden carries no diagnostics under skipLibCheck: false", () => {
+// offender filter is anchored on every dts-check compile input (goldens plus the
+// `test-d/` import proofs and the ambient loader) so a `TS` error attributed to a
+// compiled proof also gates; the out-of-scope `../types/generated/physics.d.ts`
+// `diameter` duplicate (a separate `packages/types` defect) and node_modules type
+// conflicts stay dodged because their paths are not `include` entries.
+test("every dts-check compile input carries no diagnostics under skipLibCheck: false", () => {
   const proc = Bun.spawnSync(
     ["bunx", "tsc", "-p", "tsconfig.dts-check.json", "--noEmit", "--pretty", "false"],
     { cwd: PACKAGE_ROOT, stdout: "pipe", stderr: "pipe" },
@@ -41,7 +42,9 @@ test("every committed luals + script_api golden carries no diagnostics under ski
       /\\/g,
       "/",
     );
-  const alternation = ALL_GOLDENS.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const alternation = readDtsCheckInclude()
+    .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
   const offenderRe = new RegExp(`(${alternation}).*error TS`);
   const offenders = output.split("\n").filter((line) => offenderRe.test(line));
   expect(offenders).toEqual([]);
@@ -75,10 +78,31 @@ test("missingDtsCheckIncludes reports a golden absent from the include", () => {
   ).toEqual(["generated/gooey.d.ts"]);
 });
 
+// `tsconfig.dts-check.json` must declare its own `exclude`; a child `exclude`
+// fully replaces the parent's, so without one the config inherits whatever the
+// parent excludes and a future parent-exclude change could silently drop a
+// `test-d/*.test-d.ts` import proof from compilation, ungating it. Assert the
+// own exclude exists and lists no `test-d` proof.
+test("tsconfig.dts-check.json declares its own exclude that keeps the test-d proofs compiled", () => {
+  const exclude = readDtsCheckExclude();
+  expect(Array.isArray(exclude)).toBe(true);
+  expect(exclude.length).toBeGreaterThan(0);
+  expect(exclude.some((entry) => /test-d\/.*\.test-d\.ts$/.test(entry.replace(/\\/g, "/")))).toBe(
+    false,
+  );
+});
+
+function readDtsCheckConfig(): { include: string[]; exclude?: string[] } {
+  return JSON.parse(readFileSync(resolve(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8")) as {
+    include: string[];
+    exclude?: string[];
+  };
+}
+
 function readDtsCheckInclude(): string[] {
-  return (
-    JSON.parse(readFileSync(resolve(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8")) as {
-      include: string[];
-    }
-  ).include;
+  return readDtsCheckConfig().include;
+}
+
+function readDtsCheckExclude(): string[] {
+  return readDtsCheckConfig().exclude ?? [];
 }

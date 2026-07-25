@@ -10,6 +10,9 @@
     "generated/tweener.d.ts",
     "generated/bridge.d.ts",
     "test-d/bridge-usage.test-d.ts",
+    "test-d/fixtures/engine-handle-module.d.ts",
+    "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"
-  ]
+  ],
+  "exclude": ["node_modules", "dist", "**/dist"]
 }

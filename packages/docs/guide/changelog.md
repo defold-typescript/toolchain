@@ -28,6 +28,7 @@ changes are called out first because the toolchain is pre-1.0.
 ### Fixed
 
 - Installed packages can now resolve the `bridge` library again — its script_api resolve manifest was missing from the published tarball, so `defold-typescript resolve` silently dropped `bridge` on a real install.
+- A script_api library whose types reference engine handles (`Hash`, `Vector3`, `Url`, ...) now emits an importable `declare module` instead of a broken module augmentation, so `import { ... } from "<library>"` resolves instead of failing with `TS2307`.
 
 ## v0.22.0
 
