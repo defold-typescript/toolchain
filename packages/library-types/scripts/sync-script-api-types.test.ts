@@ -100,8 +100,10 @@ describe("fetchScriptApiFixture", () => {
 describe("emitScriptApiDeclaration", () => {
   test("routes the vendored .script_api through scriptApiToFixtureJson -> generateModuleDeclaration", async () => {
     const contents = await emitScriptApiDeclaration(PACKAGE_ROOT, BRIDGE);
-    // The top namespace and a one-level nested sub-namespace both survive the parser.
-    expect(contents).toContain("namespace bridge {");
+    // The output is an importable module keyed by moduleId, not a global namespace.
+    expect(contents).toContain("declare module 'bridge.bridge' {");
+    expect(contents).toContain("export namespace bridge {");
+    // The one-level nested sub-namespace survives the parser.
     expect(contents).toContain("namespace achievements {");
     // A stable exported function symbol (assert on the symbol, not the whole blob).
     expect(contents).toContain("function get_achievements(");
@@ -136,9 +138,8 @@ describe("script_api fidelity", () => {
   });
 
   // The emitter has no mapping for the `string | nil` union token (it renders
-  // `unknown`), so bridge's honest coverage is below 1 — the report surfaces the
-  // gap rather than hiding it. Decision 3's "coverage 1" premise was wrong; see
-  // docs/impl/library-script-api-ingest--script-api-ingestion-mode.md.
+  // `unknown`), so bridge's honest coverage is 0.962, below 1 — the report
+  // surfaces the gap rather than hiding it.
   test("bridge fidelity reflects the real emitter: coverage 0.962, string | nil unmapped", async () => {
     const report = await buildScriptApiFidelity(PACKAGE_ROOT, BRIDGE);
     expect(report.namespace).toBe("bridge");

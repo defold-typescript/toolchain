@@ -153,6 +153,7 @@ interface RegenModule {
     doc: unknown;
     outFile: string;
     importsFrom?: string;
+    moduleId?: string;
   }) => { contents: string; dropped: string[] };
 }
 
@@ -223,8 +224,8 @@ function parseFixtureDoc(
 
 /**
  * `.script_api` -> `scriptApiToFixtureJson` -> `generateModuleDeclaration`. Returns
- * the ambient-namespace `.d.ts` contents (one-level nested sub-namespaces intact,
- * per the nested-namespace parser slice).
+ * an importable module keyed by `moduleId` (`declare module '<moduleId>'`), with
+ * one-level nested sub-namespaces intact per the nested-namespace parser slice.
  */
 export async function emitScriptApiDeclaration(
   packageRoot: string,
@@ -237,6 +238,7 @@ export async function emitScriptApiDeclaration(
     doc,
     outFile: `${target.moduleId}.d.ts`,
     importsFrom: SCRIPT_API_CORE_TYPES_IMPORT,
+    moduleId: target.moduleId,
   });
   return contents;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { wrapAsAmbientGlobal } from "./publish-dts";
+import { wrapAsAmbientGlobal, wrapAsModule } from "./publish-dts";
 
 describe("wrapAsAmbientGlobal", () => {
   test("preserves leading namespace JSDoc while rewriting declare namespace", () => {
@@ -130,5 +130,82 @@ describe("wrapAsAmbientGlobal", () => {
       importsFrom: "../src/core-types",
     });
     expect(withNewline).toBe(withoutNewline);
+  });
+});
+
+describe("wrapAsModule", () => {
+  test("wraps the emitted namespace as an importable declare module", () => {
+    const out = wrapAsModule({
+      namespace: "bridge",
+      emitted:
+        "/**\n" +
+        " * Functions and constants for interacting with bridge\n" +
+        " */\n" +
+        "declare namespace bridge {\n" +
+        "  namespace achievements {\n" +
+        "    function get_achievements(): void;\n" +
+        "  }\n" +
+        "}\n",
+      importsFrom: "../src/core-types",
+      moduleId: "bridge.bridge",
+    });
+    expect(out).toBe(
+      "/** @noSelfInFile */\n" +
+        "/** @noResolution */\n" +
+        "declare module 'bridge.bridge' {\n" +
+        "  /**\n" +
+        "   * Functions and constants for interacting with bridge\n" +
+        "   */\n" +
+        "  export namespace bridge {\n" +
+        "    namespace achievements {\n" +
+        "      function get_achievements(): void;\n" +
+        "    }\n" +
+        "  }\n" +
+        "}\n",
+    );
+  });
+
+  test("carries both banners, rewrites only the top namespace, and emits no export tail", () => {
+    const out = wrapAsModule({
+      namespace: "bridge",
+      emitted: "declare namespace bridge {\n  namespace achievements {\n  }\n}\n",
+      importsFrom: "../src/core-types",
+      moduleId: "bridge.bridge",
+    });
+    expect(out.split("\n")[0]).toBe("/** @noSelfInFile */");
+    expect(out.split("\n")[1]).toBe("/** @noResolution */");
+    expect(out).toContain("declare module 'bridge.bridge' {");
+    expect(out).toContain("export namespace bridge {");
+    expect(out).toContain("namespace achievements {");
+    expect(out).not.toContain("declare global");
+    expect(out).not.toContain("declare namespace");
+    expect(out).not.toContain("export {};");
+  });
+
+  test("emits no engine-type import line when no branded handle is referenced", () => {
+    const out = wrapAsModule({
+      namespace: "bridge",
+      emitted: "declare namespace bridge {\n  function f(): string;\n}\n",
+      importsFrom: "../src/core-types",
+      moduleId: "bridge.bridge",
+    });
+    expect(out).not.toContain("import type");
+  });
+
+  test("imports only the engine types actually referenced, banner-first", () => {
+    const out = wrapAsModule({
+      namespace: "x",
+      emitted: "declare namespace x {\n  function f(): Vector3 | Url;\n}\n",
+      importsFrom: "../src/core-types",
+      moduleId: "x.x",
+    });
+    expect(out).toContain('import type { Url, Vector3 } from "../src/core-types";');
+    const lines = out.split("\n");
+    expect(lines[0]).toBe("/** @noSelfInFile */");
+    expect(lines[1]).toBe("/** @noResolution */");
+    const importIdx = lines.findIndex((l) => l.startsWith("import type"));
+    const moduleIdx = lines.findIndex((l) => l.startsWith("declare module"));
+    expect(importIdx).toBeGreaterThan(1);
+    expect(moduleIdx).toBeGreaterThan(importIdx);
   });
 });
