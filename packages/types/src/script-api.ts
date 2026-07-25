@@ -73,15 +73,31 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
   }
   const members = Array.isArray(table.members) ? table.members : [];
   const elements: RefDocElement[] = [];
+  const fnElement = (name: string, member: Record<string, unknown>): RefDocElement => ({
+    type: "FUNCTION",
+    name,
+    description: stringOr(member.desc, ""),
+    parameters: mapParameters(member.parameters),
+    returnvalues: mapParameters(member.returns),
+  });
   for (const member of members) {
-    if (!isRecord(member) || member.type !== "function") continue;
-    elements.push({
-      type: "FUNCTION",
-      name: `${namespace}.${stringOr(member.name, "")}`,
-      description: stringOr(member.desc, ""),
-      parameters: mapParameters(member.parameters),
-      returnvalues: mapParameters(member.returns),
-    });
+    if (!isRecord(member)) continue;
+    if (member.type === "function") {
+      elements.push(fnElement(`${namespace}.${stringOr(member.name, "")}`, member));
+      continue;
+    }
+    if (member.type === "table") {
+      const sub = stringOr(member.name, "");
+      // A nameless sub-namespace can't form a valid dotted name; skip it.
+      if (sub.length === 0) continue;
+      const subMembers = Array.isArray(member.members) ? member.members : [];
+      for (const subMember of subMembers) {
+        // Recurse exactly one level: a `type: table` nested here is 2nd-level,
+        // whose functions the emitter's one-dot pass would silently drop.
+        if (!isRecord(subMember) || subMember.type !== "function") continue;
+        elements.push(fnElement(`${namespace}.${sub}.${stringOr(subMember.name, "")}`, subMember));
+      }
+    }
   }
   const doc: RefDoc = {
     info: { namespace, brief: stringOr(table.desc, ""), description: stringOr(table.desc, "") },
