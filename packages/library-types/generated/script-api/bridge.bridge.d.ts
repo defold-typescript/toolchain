@@ -1,9 +1,10 @@
 /** @noSelfInFile */
-declare global {
+/** @noResolution */
+declare module 'bridge.bridge' {
   /**
    * Functions and constants for interacting with bridge
    */
-  namespace bridge {
+  export namespace bridge {
     namespace achievements {
       /**
        * Returns the achievement list in JSON.
@@ -420,21 +421,22 @@ declare global {
        * @param on_success - function(_)
        * @param on_failure - function(_, error)
        */
-      function delete(table_keys: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function _delete(table_keys: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Retrieve stored data based on a key or multiple keys to restore player progress or settings.
        *
        * @param on_success - function(_, data)
        * @param on_failure - function(_, error)
        */
-      function get(table_keys: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      export function get(table_keys: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Save data to the storage with a key to retain player progress or settings.
        *
        * @param on_success - function(_)
        * @param on_failure - function(_, error)
        */
-      function set(table_data: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      export function set(table_data: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      export { _delete as delete };
     }
     namespace tasks {
       /**
@@ -464,5 +466,3 @@ declare global {
     }
   }
 }
-
-export {};

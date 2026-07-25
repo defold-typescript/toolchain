@@ -173,7 +173,10 @@ driven by `packages/library-types/script-api-targets.json`. Instead of parsing
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
 the exact path the built-in extensions and resolve-time extension typing use — so
 one-level nested sub-namespaces (`bridge.platform`, `bridge.achievements`) survive
-into nested `namespace` blocks.
+into nested `namespace` blocks. The output is an importable module keyed by
+`moduleId` (`declare module 'bridge.bridge'`), matching the LuaLS library goldens,
+so the library imports under its pinned specifier; the built-in extensions'
+`declare global` form is unchanged.
 
 Each entry pins `repo`, `ref`, `scriptApi` (the path to the `.script_api` in the
 repo), `moduleId`, `namespace`, and the exact `generated` / `apiDoc` / `fidelity`

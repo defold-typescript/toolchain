@@ -1565,12 +1565,25 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   const nestedIndent = `${INDENT}${INDENT}`;
   for (const segment of nestedSegments) {
     const group = nestedGroups.get(segment) ?? [];
+    // A reserved-name function inside a nested namespace gets the same recovery as
+    // a top-level one: emitted un-exported as `_<name>` and re-exported under the
+    // reserved name. The alias switches this namespace out of implicit-export mode,
+    // so its siblings then need an explicit `export` to stay reachable.
+    const segmentAliases: { internal: string; public: string }[] = [];
+    const segmentDecl = group.some((fn) => TS_RESERVED_NAMES.has(fn.name)) ? "export " : "";
     lines.push(`${INDENT}${decl}namespace ${segment} {`);
     for (const fn of group) {
+      const reserved = TS_RESERVED_NAMES.has(fn.name);
+      const emitName = aliasName(fn.name, segmentAliases);
       for (const docLine of functionDocLines(fn.original, translations, nestedIndent)) {
         lines.push(docLine);
       }
-      lines.push(`${nestedIndent}${decl}${emitFunction(fn, fn.name, mapType, resolver)}`);
+      lines.push(
+        `${nestedIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver)}`,
+      );
+    }
+    for (const alias of [...segmentAliases].sort((a, b) => a.public.localeCompare(b.public))) {
+      lines.push(`${nestedIndent}export { ${alias.internal} as ${alias.public} };`);
     }
     lines.push(`${INDENT}}`);
   }

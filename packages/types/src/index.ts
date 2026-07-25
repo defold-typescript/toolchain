@@ -80,7 +80,12 @@ export {
   type ScriptPropertiesOf,
   type ScriptProperty,
 } from "./lifecycle";
-export { type WrapOptions, wrapAsAmbientGlobal } from "./publish-dts";
+export {
+  type ModuleWrapOptions,
+  type WrapOptions,
+  wrapAsAmbientGlobal,
+  wrapAsModule,
+} from "./publish-dts";
 export {
   lookupSignature,
   type SignatureOverride,

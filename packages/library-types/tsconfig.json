@@ -5,5 +5,9 @@
     "rootDir": "."
   },
   "include": ["scripts/**/*.ts", "test-d/**/*.ts", "generated/*.d.ts"],
-  "exclude": ["node_modules", "dist", "**/dist"]
+  // bridge-usage.test-d.ts asserts the script_api `declare module 'bridge.bridge'`,
+  // which collides with the byte-frozen ts-defold module of the same specifier that
+  // this config's `generated/*.d.ts` glob pulls in; it compiles only under
+  // tsconfig.dts-check.json, which sees the script_api golden alone.
+  "exclude": ["node_modules", "dist", "**/dist", "test-d/bridge-usage.test-d.ts"]
 }
