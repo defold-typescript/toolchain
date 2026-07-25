@@ -1,0 +1,1558 @@
+{
+  "info": {
+    "namespace": "bridge",
+    "brief": "Functions and constants for interacting with bridge",
+    "description": "Functions and constants for interacting with bridge"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.on",
+      "description": "State changed events.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "function(_, state)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.id",
+      "description": "Identify the platform on which the game is currently running to customize features and settings accordingly.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string | nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.tld",
+      "description": "Retrieve the top-level domain of the platform to handle domain-specific configurations and behavior.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string | nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.language",
+      "description": "Get the language set by the user on the platform or the browser language if not provided by the platform, to localize game content.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.payload",
+      "description": "Embed auxiliary information into the game URL to pass additional data or settings when launching the game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string | nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.send_message",
+      "description": "Send predefined messages to the platform to trigger specific actions or events, such as signaling that the game is ready.",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "One of message types: `game_ready` `in_game_loading_started`",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional message-specific options (may be omitted).",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.send_custom_message",
+      "description": "Send a custom message with an arbitrary id to the platform.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The custom message id.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional message-specific options (may be omitted).",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.get_server_time",
+      "description": "Server Time",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, time)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.is_audio_enabled",
+      "description": "Check if the audio is enabled on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.is_external_calls_supported",
+      "description": "Check if external calls are supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.is_external_links_allowed",
+      "description": "Check if external links are allowed on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.cross_promo.get_games",
+      "description": "Get the cross-promo games list. Resolves to an empty array when unsupported. Each game has the shape { id, name, url, icon_url, cover_url, payload }.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, games)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.cross_promo.show",
+      "description": "Show the built-in cross-promo HTML overlay.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.cross_promo.hide",
+      "description": "Hide the built-in cross-promo HTML overlay.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.cross_promo.is_visible",
+      "description": "Check whether the cross-promo overlay is currently shown.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.storage.get",
+      "description": "Retrieve stored data based on a key or multiple keys to restore player progress or settings.",
+      "parameters": [
+        {
+          "name": "table_keys",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, data)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.storage.set",
+      "description": "Save data to the storage with a key to retain player progress or settings.",
+      "parameters": [
+        {
+          "name": "table_data",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.storage.delete",
+      "description": "Remove data from the storage by key to manage player data and settings effectively.",
+      "parameters": [
+        {
+          "name": "table_keys",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.show_banner",
+      "description": "Display a banner ad within your game to generate revenue through advertising.",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.hide_banner",
+      "description": "Hide the currently displayed banner ad when it is no longer needed.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.banner_state",
+      "description": "Hide the currently displayed banner ad when it is no longer needed.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.is_banner_supported",
+      "description": "Check if the platform supports displaying banner ads. Use this to determine if you can include banner advertisements in your game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.is_interstitial_supported",
+      "description": "Check if the platform supports displaying interstitial ads. Use this to determine if you can include interstitial advertisements in your game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.is_rewarded_supported",
+      "description": "Check if the platform supports displaying rewarded ads. Use this to determine if you can include rewarded advertisements in your game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.on",
+      "description": "State changed events.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "function(_, state)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.show_interstitial",
+      "description": "Display an interstitial ad at appropriate moments, such as during level transitions or game over screens.",
+      "parameters": [
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.interstitial_state",
+      "description": "Track the state of the interstitial ad to manage ad display and user experience.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.minimum_delay_between_interstitial",
+      "description": "Minimum time interval between interstitial ad displays to comply with platform requirements and improve user experience.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.set_minimum_delay_between_interstitial",
+      "description": "Set the minimum time interval between interstitial ad displays to comply with platform requirements and improve user experience.",
+      "parameters": [
+        {
+          "name": "delay",
+          "doc": "60 from default",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.rewarded_state",
+      "description": "Monitor the state of the rewarded ad (loading, opened, closed, rewarded, failed) to manage the reward process.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.rewarded_placement",
+      "description": "Monitor the placement of the rewarded ad to manage the reward process.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.show_rewarded",
+      "description": "Display a rewarded ad and provide incentives to players for watching the entire ad.",
+      "parameters": [
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.is_advanced_banners_supported",
+      "description": "Check if the platform supports displaying advanced banner ads.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.advanced_banners_state",
+      "description": "Track the state of the advanced banners to manage ad display and user experience.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.show_advanced_banners",
+      "description": "Display advanced banners at appropriate moments of the game.",
+      "parameters": [
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.hide_advanced_banners",
+      "description": "Hide the currently displayed advanced banners when they are no longer needed.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.advertisement.check_ad_block",
+      "description": "Check if the ad blocker is enabled.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, bool)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.device.type",
+      "description": "Determine the type of device (mobile, tablet, desktop, tv) the game is being played on to adjust the game`s interface and performance settings.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.is_authorization_supported",
+      "description": "Check if the platform supports player authorization to enable features that require user authentication, such as saving game progress or accessing social features.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.is_authorized",
+      "description": "Verify if the player is currently authorized on the platform. This allows you to enable personalized features, such as saving high scores or providing user-specific content.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.is_guest",
+      "description": "Check if the player is unauthorized or running as a guest.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.id",
+      "description": "Get the player’s unique ID on the platform to manage user-specific data and settings. Use this ID to track player progress, achievements, and purchases.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string | nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.name",
+      "description": "Retrieve the player's name to personalize the game experience. Display the name in leaderboards, friend lists, or when sending notifications and messages.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string | nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.extra",
+      "description": "Get the extra information about player.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.photos",
+      "description": "Get the count of player avatars available. Use this to manage and display user profile images effectively, such as showing the avatar in multiplayer lobbies or profile screens.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.player.authorize",
+      "description": "Authorize the player on the platform to access protected features and personalize the game experience. For example, prompting the player to log in to save their progress or unlock social sharing features.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function()",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_share_supported",
+      "description": "Check if the share functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.share",
+      "description": "Use this to allow players to share game content or achievements on social media platforms.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_join_community_supported",
+      "description": "Check if the join community functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.join_community",
+      "description": "Use this to allow players to share game content or achievements on social media platforms.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_invite_friends_supported",
+      "description": "Check if the invite friends functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.invite_friends",
+      "description": "Allow players to invite their friends to play the game, helping to grow your player base organically.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_create_post_supported",
+      "description": "Check if the create post functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.create_post",
+      "description": "Use this to let players create posts about their achievements or updates directly from the game.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_add_to_favorites_supported",
+      "description": "Check if the add to favorites functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.add_to_favorites",
+      "description": "Allow players to bookmark your game for easy access in the future.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_add_to_home_screen_supported",
+      "description": "Check if the add to home screen functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.add_to_home_screen",
+      "description": "Enable players to add a shortcut to your game on their home screen for quick access.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_rate_supported",
+      "description": "Check if the rate game functionality is supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.rate",
+      "description": "Encourage players to rate your game, providing valuable feedback and improving visibility.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.payments.is_supported",
+      "description": "Check if in-game purchases are supported to offer items or upgrades within the game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.payments.purchase",
+      "description": "Allow players to buy items or upgrades in your game to enhance their gameplay experience.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, purchase)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.payments.consume_purchase",
+      "description": "Consume purchased items, such as in-game currency, once they are used, to manage inventory and player progression.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, purchase)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.payments.get_catalog",
+      "description": "Retrieve a list of all available in-game items that players can purchase to display in the game store.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, catalogItems)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.payments.get_purchases",
+      "description": "Retrieve a list of items that the player has purchased to manage their inventory and provide access to purchased content.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(nil, purchases)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.achievements.unlock",
+      "description": "Unlocks achievement for a player.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, result)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.achievements.get_achievements",
+      "description": "Returns the achievement list in JSON.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, list)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.daily_rewards.get_rewards",
+      "description": "Returns the configured ordered list of reward ids as a JSON string.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, rewards)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.daily_rewards.get_current_day",
+      "description": "Returns the 0-based index of the reward the player is currently on.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, day)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.daily_rewards.get_current_reward",
+      "description": "Returns the id of the reward claimable today, or nil when nothing can be claimed.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, reward)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.daily_rewards.claim_current_reward",
+      "description": "Claims the reward available today. Calls on_success when claimed, on_failure otherwise.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.tasks.get_tasks",
+      "description": "Returns every active task across all groups, with live progress, as a JSON string.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, tasks)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.tasks.add_progress",
+      "description": "Advances every active target whose id equals the given metric, clamped to the target amount.",
+      "parameters": [
+        {
+          "name": "metric",
+          "doc": "The metric id to advance.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "amount",
+          "doc": "The amount to add (defaults to 1).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.tasks.claim_reward",
+      "description": "Claims a completed task's rewards. Calls on_success with true when claimed, false otherwise.",
+      "parameters": [
+        {
+          "name": "task_id",
+          "doc": "The id of the task to claim.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, claimed)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.leaderboards.type",
+      "description": "Check the leaderboards type on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.leaderboards.set_score",
+      "description": "Submit the player's score to the leaderboard to update their rank and position.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function()",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.leaderboards.get_entries",
+      "description": "Retrieve entries from the leaderboard, including the player's rank and score, to display a comprehensive leaderboard.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, entries)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.leaderboards.show_native_popup",
+      "description": "Show native popup leaderboard.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function()",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.remote_config.is_supported",
+      "description": "Check if remote configuration is supported to manage game settings without releasing updates.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.remote_config.set_context",
+      "description": "Set dynamic game/player parameters used for config segmentation. Accumulates across calls; only used by platforms that support it.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.remote_config.get",
+      "description": "Encourage players to rate your game, providing valuable feedback and improving visibility.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, data)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
