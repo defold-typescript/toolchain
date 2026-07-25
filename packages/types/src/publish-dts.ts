@@ -46,12 +46,14 @@ export function wrapAsAmbientGlobal(opts: WrapOptions): string {
 }
 
 export function wrapAsModule(opts: ModuleWrapOptions): string {
-  const { importLine, indented } = prepareWrapBody(
-    opts.emitted,
-    opts.importsFrom,
-    "export namespace",
-  );
-  return `/** @noSelfInFile */\n/** @noResolution */\n${importLine}declare module '${opts.moduleId}' {\n${indented}\n}\n`;
+  // ambient-globals-only: the module form references engine handles (`Hash`,
+  // `Vector3`, ...) as ambient globals and emits no top-level import. A top-level
+  // `import type` would make the `.d.ts` a module, demoting `declare module
+  // '<id>'` to an augmentation of an unresolvable specifier that a consumer
+  // `import` cannot resolve (`TS2307`). `importsFrom` stays in the signature for
+  // caller symmetry but is unused here; `wrapAsAmbientGlobal` still imports it.
+  const { indented } = prepareWrapBody(opts.emitted, opts.importsFrom, "export namespace");
+  return `/** @noSelfInFile */\n/** @noResolution */\ndeclare module '${opts.moduleId}' {\n${indented}\n}\n`;
 }
 
 function collectEngineTypes(emitted: string): EngineType[] {
