@@ -113,6 +113,34 @@ export function buildLualsRegistryEntries(targets: LualsTargets): VendoredLibrar
   }));
 }
 
+// A single library entry in `packages/library-types/script-api-targets.json`,
+// projected to what registry matching needs: the upstream `repo` (source id) and
+// the require `moduleId` shipped by the archive, plus the single-segment
+// `namespace` the committed `generated/<namespace>.d.ts` is named for.
+export interface ScriptApiRegistryTarget {
+  readonly repo: string;
+  readonly moduleId: string;
+  readonly namespace: string;
+}
+
+export interface ScriptApiRegistryTargets {
+  readonly targets: readonly ScriptApiRegistryTarget[];
+}
+
+// Turn the script_api target list into `VendoredLibrary` entries. Like the LuaLS
+// libraries, a script_api target verifies against its shipped `moduleId` but
+// sources its types from `generated/<namespace>.d.ts`, so the stem is recorded
+// separately (`bridge.bridge` -> `bridge`).
+export function buildScriptApiRegistryEntries(
+  targets: ScriptApiRegistryTargets,
+): VendoredLibrary[] {
+  return targets.targets.map((target) => ({
+    sourceId: normalizeSourceId(target.repo),
+    modules: [target.moduleId],
+    generatedStems: { [target.moduleId]: target.namespace },
+  }));
+}
+
 export function normalizeSourceId(url: string): string {
   const withoutFragment = url.split(/[?#]/, 1)[0] ?? "";
   const withoutProtocol = withoutFragment.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");

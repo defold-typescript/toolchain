@@ -19,11 +19,11 @@ changes are called out first because the toolchain is pre-1.0.
 ### Breaking
 
 - The `tweener` library types are now maintained in this repo, regenerated from upstream `Insality/defold-tweener` (pinned tag `6`) through the same LuaLS pipeline as druid and decore, and marked with the maintained-here pin in the docs. The surface follows upstream's annotations, so it differs from the previous hand-written binding (notably the per-easing helpers are no longer exposed as module-level constants).
+- The `bridge.bridge` types (`Playgama/bridge-defold`, pinned `v2.0.0`) are now maintained in this repo, regenerated from the library's own committed `.script_api` through the shared ref-doc pipeline as an importable `declare module`, and carry the maintained-here pin in the docs. The surface follows upstream's `.script_api`, so it differs from the previous hand-written ts-defold binding.
 
 ### Improved
 
 - The editor-scripting authoring path is now documented: a Core-concepts guide page walks through `defineEditorScript`, the `<name>.ts.editor_script` artifact, and the editor's auto-load discovery, with a worked custom-command example.
-- Library types can now be sourced from a library's own committed `.script_api` snapshot, emitted through the same ref-doc pipeline as the built-in extensions as an importable `declare module` keyed by the library's module id, with `Playgama/bridge-defold` (pinned `v2.0.0`) as the first such source; the shipped bridge types are unchanged pending switchover.
 
 ## v0.22.0
 

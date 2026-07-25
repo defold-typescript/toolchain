@@ -137,7 +137,7 @@
       "types": "./generated/yagames.yagames.d.ts"
     },
     "./bridge.bridge": {
-      "types": "./generated/bridge.bridge.d.ts"
+      "types": "./generated/bridge.d.ts"
     },
     "./zzfx.api": {
       "types": "./generated/zzfx.api.d.ts"

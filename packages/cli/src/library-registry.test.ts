@@ -46,4 +46,12 @@ describe("loadVendoredLibraryRegistry", () => {
     // the pure-Lua corpus is still present, so the LuaLS append is additive.
     expect(registry.length).toBeGreaterThan(1);
   });
+
+  test("includes the bridge script_api target so resolve still materializes it", () => {
+    const { registry } = loadVendoredLibraryRegistry();
+    const bridge = registry.find((library) => library.sourceId === "bridge-defold");
+    expect(bridge).toBeDefined();
+    expect(bridge?.modules).toEqual(["bridge.bridge"]);
+    expect(bridge?.generatedStems?.["bridge.bridge"]).toBe("bridge");
+  });
 });
