@@ -8,11 +8,12 @@
 //
 // A declared dependency URL is a moving/forked ref (`.../archive/main.zip`, a
 // fork, a pinned tag), so the match keys on a normalized source identity, not
-// string equality. The registries pin one canonical ts-defold/library package
+// string equality. The pure-Lua/vendored registry pins one canonical package
 // dir per vendored module, and those dir names mirror the upstream repo name, so
 // the identity is the normalized repo name (host, owner, `/archive/<ref>.zip`,
 // and query stripped) rather than a full `owner/repo` — the registries carry no
-// per-library owner to key on.
+// per-library owner to key on. The LuaLS and script_api arms key on the upstream
+// `repo` directly rather than a vendored dir.
 
 export interface LibraryClassificationDir {
   readonly dir: string;
