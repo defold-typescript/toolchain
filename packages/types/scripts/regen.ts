@@ -9,7 +9,7 @@ import {
   parseMessagesDoc,
 } from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
-import { wrapAsAmbientGlobal } from "../src/publish-dts";
+import { wrapAsAmbientGlobal, wrapAsModule } from "../src/publish-dts";
 import {
   type DocSourceProvenance,
   type DownloadRefDoc,
@@ -90,6 +90,7 @@ export interface ModuleManifestEntry {
   readonly outFile: string;
   readonly skipFunctions?: readonly string[];
   readonly importsFrom?: string;
+  readonly moduleId?: string;
   readonly sourceProvenance?: DocSourceProvenance;
 }
 
@@ -239,11 +240,10 @@ export function generateModuleDeclaration(
     options,
   );
   const emitted = emitDeclarations(module, { knownConstantFqns, translations });
-  const contents = wrapAsAmbientGlobal({
-    namespace: module.namespace,
-    emitted,
-    importsFrom: entry.importsFrom ?? "../src/core-types",
-  });
+  const importsFrom = entry.importsFrom ?? "../src/core-types";
+  const contents = entry.moduleId
+    ? wrapAsModule({ namespace: module.namespace, emitted, importsFrom, moduleId: entry.moduleId })
+    : wrapAsAmbientGlobal({ namespace: module.namespace, emitted, importsFrom });
   return { contents, dropped };
 }
 

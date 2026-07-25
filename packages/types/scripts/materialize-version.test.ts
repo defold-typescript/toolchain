@@ -279,6 +279,25 @@ describe("buildVersionedSurfaceFiles", () => {
     );
   });
 
+  test("generateModuleDeclaration wraps a declare module when moduleId is set, declare global otherwise", async () => {
+    const { fakeZip, cacheDir } = labelRefDocZip();
+    const target = defold198Target();
+    const resolveOpts = { cacheDir, readZip: () => fakeZip, download: noDownload };
+    const entry = (await resolveTargetModules(target, resolveOpts))[0];
+    expect(entry).toBeDefined();
+    if (!entry) return;
+
+    const ambient = generateModuleDeclaration(entry).contents;
+    expect(ambient).toContain("declare global {");
+    expect(ambient).not.toContain("declare module");
+
+    const moduleForm = generateModuleDeclaration({ ...entry, moduleId: "sample.mod" }).contents;
+    expect(moduleForm).toContain("declare module 'sample.mod' {");
+    expect(moduleForm).not.toContain("declare global");
+    expect(moduleForm.split("\n")[0]).toBe("/** @noSelfInFile */");
+    expect(moduleForm.split("\n")[1]).toBe("/** @noResolution */");
+  });
+
   test("the package.json entry parses to the materialized package name and types entrypoint", async () => {
     const { fakeZip, cacheDir } = labelRefDocZip();
     const target = defold198Target();
