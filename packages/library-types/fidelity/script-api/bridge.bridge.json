@@ -1,0 +1,11 @@
+{
+  "namespace": "bridge",
+  "totalMembers": 81,
+  "totalTypeTokens": 130,
+  "unknownFallbacks": 5,
+  "unknownTokens": [
+    "string | nil"
+  ],
+  "undocumentedMembers": 0,
+  "coverage": 0.962
+}

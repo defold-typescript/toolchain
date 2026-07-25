@@ -1,0 +1,15 @@
+{
+  "targets": [
+    {
+      "repo": "https://github.com/Playgama/bridge-defold",
+      "ref": "v2.0.0",
+      "license": "MIT",
+      "scriptApi": "bridge/api/bridge.script_api",
+      "moduleId": "bridge.bridge",
+      "namespace": "bridge",
+      "generated": "generated/script-api/bridge.bridge.d.ts",
+      "apiDoc": "api-doc/script-api/bridge.bridge.json",
+      "fidelity": "fidelity/script-api/bridge.bridge.json"
+    }
+  ]
+}
