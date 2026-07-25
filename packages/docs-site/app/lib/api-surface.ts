@@ -179,7 +179,8 @@ export interface LibraryMeta {
   /** SPDX-style license id from the classification `source`. */
   license: string;
   /**
-   * `true` for a LuaLS-sourced library this repo maintains via `luals-targets.json`
+   * `true` for a library this repo maintains via `luals-targets.json` (LuaLS
+   * lane) or `script-api-targets.json` (script_api lane, e.g. bridge)
    * (namespace absent from `moduleDir`); `false` for a vendored library.
    */
   authoredHere: boolean;
@@ -214,7 +215,7 @@ export interface ApiPage {
    * rendered under the "Global types" reference category — never emitted from
    * `ref-doc.zip`. `library` for vendored third-party library modules
    * (`monarch.monarch`, `in.button`, …) sourced from `@defold-typescript/library-types`
-   * fixtures, pinned to a ts-defold/library commit rather than a Defold version,
+   * fixtures, pinned to an upstream-library commit rather than a Defold version,
    * and surfaced default-only under the "Libraries" reference category.
    */
   category: ApiPageCategory;
@@ -367,8 +368,8 @@ function projectParams(list: ApiParameter[], mapType: MapType = mapDocType): Api
 }
 
 // `isLibrary` gates the emitter-equivalent variadic (`...args: T[]`) and multi-return
-// (`LuaMultiReturn<[...]>`) forms so a LuaLS-sourced library `/api` page matches its
-// `generated/<ns>.d.ts`; engine pages keep `...: T` and comma-joined returns.
+// (`LuaMultiReturn<[...]>`) forms so a LuaLS- or script_api-sourced library `/api`
+// page matches its `generated/<ns>.d.ts`; engine pages keep `...: T` and comma-joined returns.
 function functionSignature(
   fn: ApiFunction,
   mapType: MapType = mapDocType,

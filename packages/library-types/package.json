@@ -159,6 +159,7 @@
     "library-targets.json",
     "library-classification.json",
     "luals-targets.json",
+    "script-api-targets.json",
     "NOTICE",
     "!scripts/**/*.test.ts"
   ],

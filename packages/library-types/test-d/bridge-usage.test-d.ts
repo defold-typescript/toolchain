@@ -8,7 +8,7 @@ import { bridge } from "bridge.bridge";
 // sub-namespace surface type-checks against the emitted signature. No assertions
 // execute; `tsc --noEmit` is the gate (both the general typecheck and the strict
 // `tsconfig.dts-check.json` declaration check compile it against the sole
-// script_api `generated/bridge.bridge.d.ts`). A regression (the golden reverting
+// script_api `generated/bridge.d.ts`). A regression (the golden reverting
 // to `declare global`, or the module dropping the `bridge` export) is a compile
 // error here.
 
