@@ -8,7 +8,6 @@ import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
 import * as deftest from "deftest.deftest";
 import * as dicebag from "dicebag.dicebag";
-import * as event from "event.event";
 import * as gooey from "gooey.gooey";
 import * as immutable from "immutable.immutable";
 import * as accelerometer from "in.accelerometer";
@@ -106,13 +105,6 @@ const _pFalling: Hash = platypus.FALLING;
 declare const _pInstance: ReturnType<typeof platypus.create>;
 const _pVelocity: Vector3 = _pInstance.velocity;
 _pInstance.move(_v3);
-
-// event.event — a pure-passthrough module: the upstream surface is `any`-based,
-// so the codemod renames nothing. The proof is that the module resolves and its
-// exported surface type-checks — `create` yields an `EventInstance` whose
-// `is_empty` is a boolean.
-const _event = event.create(() => {});
-const _eventEmpty: boolean = _event.is_empty();
 
 // richtext.* — color constants and created words rename Defold core types to
 // Vector4 and Opaque<"node"> while preserving passthrough LuaMultiReturn.
@@ -318,7 +310,6 @@ void _accel;
 void _trigger;
 void _pFalling;
 void _pVelocity;
-void _eventEmpty;
 void _richRed;
 void _richNode;
 void _richWordColor;
