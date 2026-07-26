@@ -47,6 +47,16 @@
       "namespace": "event",
       "typeRenames": {},
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/Insality/defold-lang",
+      "ref": "5",
+      "license": "MIT",
+      "sourceGlobs": ["lang/**/*.lua"],
+      "moduleId": "lang.lang",
+      "namespace": "lang",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }

@@ -132,12 +132,6 @@
       "generated": "generated/defcon.console.d.ts"
     },
     {
-      "module": "lang.lang",
-      "path": "packages/defold-lang/lang.lang.d.ts",
-      "fixture": "fixtures/ts-defold/lang.lang.d.ts",
-      "generated": "generated/lang.lang.d.ts"
-    },
-    {
       "module": "saver.saver",
       "path": "packages/defold-saver/saver.saver.d.ts",
       "fixture": "fixtures/ts-defold/saver.saver.d.ts",
