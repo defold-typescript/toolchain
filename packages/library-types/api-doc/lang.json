@@ -1,0 +1,528 @@
+{
+  "info": {
+    "namespace": "lang",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "on_lang_changed",
+      "brief": "Global callback after language is loaded and translations are ready.\nCalled by `set_lang`, `set_next_lang`, and `load_langs`. Set once at startup to refresh UI.",
+      "description": "Global callback after language is loaded and translations are ready.\nCalled by `set_lang`, `set_next_lang`, and `load_langs`. Set once at startup to refresh UI.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Call this to initialize lang module",
+      "description": "Call this to initialize lang module",
+      "parameters": [
+        {
+          "name": "available_langs",
+          "doc": "List of { id = \"en\", path = \"/locales/en.json\" }",
+          "types": [
+            "lang_data[]"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "lang_on_start",
+          "doc": "Language code to set on start, override saved language",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_langs",
+      "brief": "Load additional locale pack and refresh current language",
+      "description": "Load additional locale pack and refresh current language",
+      "parameters": [
+        {
+          "name": "pack_id",
+          "doc": "Pack id for future unload",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "langs",
+          "doc": "List of { id = \"en\", path = \"/locales/en.json\" }",
+          "types": [
+            "lang_data[]"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "on_lang_changed",
+          "doc": "",
+          "types": [
+            "unknown | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_lang",
+      "brief": "Set current language",
+      "description": "Set current language",
+      "parameters": [
+        {
+          "name": "lang_id",
+          "doc": "current language code (en, jp, ru, etc.)",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "on_lang_changed",
+          "doc": "",
+          "types": [
+            "unknown | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_next_lang",
+      "brief": "Set next language from lang list and return it's code",
+      "description": "Set next language from lang list and return it's code",
+      "parameters": [
+        {
+          "name": "on_lang_changed",
+          "doc": "",
+          "types": [
+            "unknown | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The language code being switched to",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_next_lang",
+      "brief": "Get next language from lang list and return it's code",
+      "description": "Get next language from lang list and return it's code",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "next language code",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_lang",
+      "brief": "Get current language",
+      "description": "Get current language",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Current language code",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_langs",
+      "brief": "Return list of available languages",
+      "description": "Return list of available languages",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "List of available languages",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "txt",
+      "brief": "Get translation for text id",
+      "description": "Get translation for text id",
+      "parameters": [
+        {
+          "name": "text_id",
+          "doc": "text id from your localization",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "(\"ui_hello_world\") -> \"Hello, World!\"",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "txp",
+      "brief": "Get translation for text id with params",
+      "description": "Get translation for text id with params",
+      "parameters": [
+        {
+          "name": "text_id",
+          "doc": "Text id from your localization",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "...args",
+          "doc": "Params for translation",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "(\"ui_hello_name\", \"John\") -> \"Hello, John!\"",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "txr",
+      "brief": "Get random translation for text id, split by \\n symbol",
+      "description": "Get random translation for text id, split by \\n symbol",
+      "parameters": [
+        {
+          "name": "text_id",
+          "doc": "text id from your localization",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "(\"ui_hint\") -> \"Hint 1\" or \"Hint 2\" or ...",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_exist",
+      "brief": "Check is translation with text_id exist",
+      "description": "Check is translation with text_id exist",
+      "parameters": [
+        {
+          "name": "text_id",
+          "doc": "text id from your localization",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Is translation exist for text_id",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "Set logger for lang module. Pass nil to use empty logger",
+      "description": "Set logger for lang module. Pass nil to use empty logger",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "",
+          "types": [
+            "lang_logger | LuaTable | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset_state",
+      "brief": "Reset module lang state",
+      "description": "Reset module lang state",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_state",
+      "brief": "Get lang module state",
+      "description": "Get lang module state",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "lang_state"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_state",
+      "brief": "Set lang module state",
+      "description": "Set lang module state",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "lang_state"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_default_lang",
+      "brief": "Get default language",
+      "description": "Get default language",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Default language code",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_lang_table",
+      "brief": "Get current lang table { key = \"value\" }",
+      "description": "Get current lang table { key = \"value\" }",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable<string, string>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_lang_available",
+      "brief": "Check if language is available",
+      "description": "Check if language is available",
+      "parameters": [
+        {
+          "name": "lang_id",
+          "doc": "Language code to check",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if language is available",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "lang_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "lang_registry"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "lang",
+      "properties": [
+        {
+          "name": "state",
+          "brief": "",
+          "description": "",
+          "types": [
+            "lang_state"
+          ]
+        },
+        {
+          "name": "on_lang_changed",
+          "brief": "Called after translations are loaded",
+          "description": "Called after translations are loaded",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "lang_state",
+      "properties": [
+        {
+          "name": "lang",
+          "brief": "current language name (en, jp, ru, etc.)",
+          "description": "current language name (en, jp, ru, etc.)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "lang_data",
+      "properties": [
+        {
+          "name": "path",
+          "brief": "Lua table, json or csv path, ex: \"/resources/lang/en.json\", \"/resources/lang/en.csv\"",
+          "description": "Lua table, json or csv path, ex: \"/resources/lang/en.json\", \"/resources/lang/en.csv\"",
+          "types": [
+            "string | LuaTable | undefined"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "Language code, ex: \"en\". If csv file, it's a header name",
+          "description": "Language code, ex: \"en\". If csv file, it's a header name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "loader",
+          "brief": "Optional async loader function with signature: loader(path, on_success, on_error)",
+          "description": "Optional async loader function with signature: loader(path, on_success, on_error)",
+          "types": [
+            "unknown | undefined"
+          ]
+        }
+      ]
+    }
+  ]
+}

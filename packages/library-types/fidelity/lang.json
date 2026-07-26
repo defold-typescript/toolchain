@@ -1,0 +1,12 @@
+{
+  "namespace": "lang",
+  "totalMembers": 30,
+  "totalTypeTokens": 39,
+  "unknownFallbacks": 10,
+  "unknownTokens": [
+    "_",
+    "function"
+  ],
+  "undocumentedMembers": 6,
+  "coverage": 0.744
+}

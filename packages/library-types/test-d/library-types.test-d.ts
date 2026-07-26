@@ -14,7 +14,6 @@ import * as accelerometer from "in.accelerometer";
 import * as button from "in.button";
 import * as state from "in.state";
 import * as triggers from "in.triggers";
-import * as lang from "lang.lang";
 import * as log from "log.log";
 import * as fps from "metrics.fps";
 import * as mem from "metrics.mem";
@@ -132,13 +131,6 @@ const _storyTags: string[] = _story.get_tags("start");
 defcon.register_command("ping", "desc", () => "pong");
 defcon.start(8090);
 defcon.stop();
-
-// lang.lang — scalar helpers and logger removal overload resolve from the
-// vendored declaration.
-const _langId: string = lang.get_lang();
-const _langs: string[] = lang.get_langs();
-const _translated: string = lang.txp("score", 1);
-lang.set_logger(undefined);
 
 // saver.* — the persistence API resolves scalar returns and logger removal
 // overloads while storage keeps typed scalar getter helpers.
@@ -318,9 +310,6 @@ void _taggedNode;
 void _canContinue;
 void _continued;
 void _storyTags;
-void _langId;
-void _langs;
-void _translated;
 void _saveOk;
 void _savePath;
 void _projectFolder;

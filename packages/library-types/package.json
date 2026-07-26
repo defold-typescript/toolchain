@@ -87,9 +87,6 @@
     "./defcon.console": {
       "types": "./generated/defcon.console.d.ts"
     },
-    "./lang.lang": {
-      "types": "./generated/lang.lang.d.ts"
-    },
     "./package.json": "./package.json",
     "./saver.saver": {
       "types": "./generated/saver.saver.d.ts"
