@@ -256,7 +256,7 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         },
         {
@@ -295,7 +295,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             },
             {
@@ -304,7 +304,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -7717,7 +7717,7 @@
               "types": [
                 "string | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],

@@ -56,7 +56,7 @@ Create back handler component with druid: \`druid:new_back_handler(callback)\`
         },
         {
           "doc": "Custom args to pass in the callback",
-          "isOptional": false,
+          "isOptional": true,
           "name": "params",
           "types": [
             "any?",
@@ -82,6 +82,7 @@ Create back handler component with druid: \`druid:new_back_handler(callback)\`
             },
             {
               "doc": "Custom args to pass in the callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "params",
@@ -273,7 +274,7 @@ You can override this component styles params in Druid styles table or create yo
       "fields": [
         {
           "doc": "Minimum time to trigger on_hold_callback. Default: 0.4",
-          "isOptional": false,
+          "isOptional": true,
           "name": "LONGTAP_TIME",
           "types": [
             "number|nil",
@@ -281,7 +282,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "Maximum hold time to trigger button release while holding. Default: 0.8",
-          "isOptional": false,
+          "isOptional": true,
           "name": "AUTOHOLD_TRIGGER",
           "types": [
             "number|nil",
@@ -289,7 +290,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "Time between double taps. Default: 0.4",
-          "isOptional": false,
+          "isOptional": true,
           "name": "DOUBLETAP_TIME",
           "types": [
             "number|nil",
@@ -297,7 +298,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_init",
           "types": [
             "fun(self)|nil",
@@ -305,7 +306,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_click",
           "types": [
             "fun(self, node)|nil",
@@ -313,7 +314,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_click_disabled",
           "types": [
             "fun(self, node)|nil",
@@ -321,7 +322,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_hover",
           "types": [
             "fun(self, node, hover_state)|nil",
@@ -329,7 +330,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_mouse_hover",
           "types": [
             "fun(self, node, hover_state)|nil",
@@ -337,7 +338,7 @@ You can override this component styles params in Druid styles table or create yo
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_set_enabled",
           "types": [
             "fun(self, node, enabled_state)|nil",
@@ -467,7 +468,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
         },
         {
           "doc": "Click zone node to restrict click area",
-          "isOptional": false,
+          "isOptional": true,
           "name": "click_zone",
           "types": [
             "node|nil",
@@ -1050,7 +1051,7 @@ If the game is not HTML, html mode will be not enabled"
         },
         {
           "doc": "The click zone of Drag component",
-          "isOptional": false,
+          "isOptional": true,
           "name": "click_zone",
           "types": [
             "node|nil",
@@ -1507,7 +1508,7 @@ touches exists to switch to another touch."
       "fields": [
         {
           "doc": "Mouse hover style on node hover",
-          "isOptional": false,
+          "isOptional": true,
           "name": "ON_HOVER_CURSOR",
           "types": [
             "string|number|nil",
@@ -1515,7 +1516,7 @@ touches exists to switch to another touch."
         },
         {
           "doc": "Mouse hover style on node mouse hover",
-          "isOptional": false,
+          "isOptional": true,
           "name": "ON_MOUSE_HOVER_CURSOR",
           "types": [
             "string|number|nil",
@@ -1572,7 +1573,7 @@ touches exists to switch to another touch."
         },
         {
           "doc": "True if the node is hovered",
-          "isOptional": false,
+          "isOptional": true,
           "name": "_is_hovered",
           "types": [
             "boolean|nil",
@@ -1581,7 +1582,7 @@ touches exists to switch to another touch."
         },
         {
           "doc": "True if the node is mouse hovered",
-          "isOptional": false,
+          "isOptional": true,
           "name": "_is_mouse_hovered",
           "types": [
             "boolean|nil",
@@ -1590,7 +1591,7 @@ touches exists to switch to another touch."
         },
         {
           "doc": "True if the hover component is enabled",
-          "isOptional": false,
+          "isOptional": true,
           "name": "_is_enabled",
           "types": [
             "boolean|nil",
@@ -1860,7 +1861,7 @@ any hover events"
       "fields": [
         {
           "doc": "Multiplier for free inertion. Default: 0",
-          "isOptional": false,
+          "isOptional": true,
           "name": "FRICT",
           "types": [
             "number|nil",
@@ -1868,7 +1869,7 @@ any hover events"
         },
         {
           "doc": "Multiplier for inertion, while touching. Default: 0",
-          "isOptional": false,
+          "isOptional": true,
           "name": "FRICT_HOLD",
           "types": [
             "number|nil",
@@ -1876,7 +1877,7 @@ any hover events"
         },
         {
           "doc": "Scroll speed to stop inertion. Default: 3",
-          "isOptional": false,
+          "isOptional": true,
           "name": "INERT_THRESHOLD",
           "types": [
             "number|nil",
@@ -1884,7 +1885,7 @@ any hover events"
         },
         {
           "doc": "Multiplier for inertion speed. Default: 30",
-          "isOptional": false,
+          "isOptional": true,
           "name": "INERT_SPEED",
           "types": [
             "number|nil",
@@ -1892,7 +1893,7 @@ any hover events"
         },
         {
           "doc": "Speed to check points of interests in no_inertion mode. Default: 20",
-          "isOptional": false,
+          "isOptional": true,
           "name": "POINTS_DEADZONE",
           "types": [
             "number|nil",
@@ -1900,7 +1901,7 @@ any hover events"
         },
         {
           "doc": "Scroll back returning lerp speed. Default: 35",
-          "isOptional": false,
+          "isOptional": true,
           "name": "BACK_SPEED",
           "types": [
             "number|nil",
@@ -1908,7 +1909,7 @@ any hover events"
         },
         {
           "doc": "Scroll gui.animation speed for scroll_to function. Default: 2",
-          "isOptional": false,
+          "isOptional": true,
           "name": "ANIM_SPEED",
           "types": [
             "number|nil",
@@ -1916,7 +1917,7 @@ any hover events"
         },
         {
           "doc": "extra size in pixels outside of scroll (stretch effect). Default: 0",
-          "isOptional": false,
+          "isOptional": true,
           "name": "EXTRA_STRETCH_SIZE",
           "types": [
             "number|nil",
@@ -1924,7 +1925,7 @@ any hover events"
         },
         {
           "doc": "If true, content node with size less than view node size can be scrolled. Default: false",
-          "isOptional": false,
+          "isOptional": true,
           "name": "SMALL_CONTENT_SCROLL",
           "types": [
             "boolean|nil",
@@ -1932,7 +1933,7 @@ any hover events"
         },
         {
           "doc": "The scroll speed via mouse wheel scroll or touchpad. Set to 0 to disable wheel scrolling. Default: 0",
-          "isOptional": false,
+          "isOptional": true,
           "name": "WHEEL_SCROLL_SPEED",
           "types": [
             "number|nil",
@@ -1940,7 +1941,7 @@ any hover events"
         },
         {
           "doc": "If true, invert direction for touchpad and mouse wheel scroll. Default: false",
-          "isOptional": false,
+          "isOptional": true,
           "name": "WHEEL_SCROLL_INVERTED",
           "types": [
             "boolean|nil",
@@ -1948,7 +1949,7 @@ any hover events"
         },
         {
           "doc": "If true, wheel will add inertion to scroll. Direct set position otherwise.. Default: false",
-          "isOptional": false,
+          "isOptional": true,
           "name": "WHEEL_SCROLL_BY_INERTION",
           "types": [
             "boolean|nil",
@@ -1991,7 +1992,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
         },
         {
           "doc": "Optional click zone to restrict scroll area",
-          "isOptional": false,
+          "isOptional": true,
           "name": "click_zone",
           "types": [
             "node|nil",
@@ -2095,7 +2096,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
         },
         {
           "doc": "Current selected point of interest index",
-          "isOptional": false,
+          "isOptional": true,
           "name": "selected",
           "types": [
             "number|nil",
@@ -2929,7 +2930,7 @@ Field y have to <= field w"
       "fields": [
         {
           "doc": "If true, always center grid content as grid pivot sets. Default: false",
-          "isOptional": false,
+          "isOptional": true,
           "name": "IS_DYNAMIC_NODE_POSES",
           "types": [
             "boolean|nil",
@@ -2937,7 +2938,7 @@ Field y have to <= field w"
         },
         {
           "doc": "If true, always align last row of the grid as grid pivot sets. Default: false",
-          "isOptional": false,
+          "isOptional": true,
           "name": "IS_ALIGN_LAST_ROW",
           "types": [
             "boolean|nil",
@@ -3853,7 +3854,7 @@ but when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset."
       "fields": [
         {
           "doc": "The postfix for TRIM adjust type. Default: ...",
-          "isOptional": false,
+          "isOptional": true,
           "name": "TRIM_POSTFIX",
           "types": [
             "string|nil",
@@ -3861,7 +3862,7 @@ but when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset."
         },
         {
           "doc": "The default adjust type for any text component. Default: DOWNSCALE",
-          "isOptional": false,
+          "isOptional": true,
           "name": "DEFAULT_ADJUST",
           "types": [
             "string|nil",
@@ -3869,7 +3870,7 @@ but when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset."
         },
         {
           "doc": "Amount of iterations for text adjust by height. Default: 20",
-          "isOptional": false,
+          "isOptional": true,
           "name": "ADJUST_STEPS",
           "types": [
             "number|nil",
@@ -3877,7 +3878,7 @@ but when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset."
         },
         {
           "doc": "Scale step on each height adjust step. Default: 0.02",
-          "isOptional": false,
+          "isOptional": true,
           "name": "ADJUST_SCALE_DELTA",
           "types": [
             "number|nil",
@@ -4508,7 +4509,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "nodes",
           "types": [
             "table<hash, node>|nil",
@@ -4516,7 +4517,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "style",
           "types": [
             "table|nil",
@@ -4548,7 +4549,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "parent",
           "types": [
             "druid.component|nil",
@@ -4629,7 +4630,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when component is created",
-          "isOptional": false,
+          "isOptional": true,
           "name": "init",
           "types": [
             "fun(self:druid.component, ...)|nil",
@@ -4638,7 +4639,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called every frame",
-          "isOptional": false,
+          "isOptional": true,
           "name": "update",
           "types": [
             "fun(self:druid.component, dt:number)|nil",
@@ -4647,7 +4648,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when component is removed",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_remove",
           "types": [
             "fun(self:druid.component)|nil",
@@ -4656,7 +4657,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when input event is triggered",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_input",
           "types": [
             "fun(self:druid.component, action_id:hash, action:table)|nil",
@@ -4665,7 +4666,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when input event is consumed before",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_input_interrupt",
           "types": [
             "fun(self:druid.component, action_id:hash, action:table)|nil",
@@ -4674,7 +4675,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when message is received",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_message",
           "types": [
             "fun(self:druid.component, message_id:hash, message:table, sender:url)|nil",
@@ -4683,7 +4684,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called before update once time after GUI init",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_late_init",
           "types": [
             "fun(self:druid.component)|nil",
@@ -4692,7 +4693,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when app lost focus",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_focus_lost",
           "types": [
             "fun(self:druid.component)|nil",
@@ -4701,7 +4702,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when app gained focus",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_focus_gained",
           "types": [
             "fun(self:druid.component)|nil",
@@ -4710,7 +4711,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when style is changed",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_style_change",
           "types": [
             "fun(self:druid.component, style: table)|nil",
@@ -4719,7 +4720,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when GUI layout is changed",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_layout_change",
           "types": [
             "fun(self:druid.component)|nil",
@@ -4728,7 +4729,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when window is resized",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_window_resized",
           "types": [
             "fun(self:druid.component)|nil",
@@ -4737,7 +4738,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
         },
         {
           "doc": "Called when language is changed",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_language_change",
           "types": [
             "fun(self:druid.component)|nil",
@@ -6030,7 +6031,7 @@ Recursive for all children components."
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "offset_x",
           "types": [
             "number|nil",
@@ -6038,7 +6039,7 @@ Recursive for all children components."
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "offset_y",
           "types": [
             "number|nil",
@@ -6046,7 +6047,7 @@ Recursive for all children components."
         },
         {
           "doc": "",
-          "isOptional": false,
+          "isOptional": true,
           "name": "node_size",
           "types": [
             "vector3|nil",
@@ -6106,7 +6107,7 @@ Recursive for all children components."
         },
         {
           "doc": "Anchor position when pivot is set (keeps content in place on resize)",
-          "isOptional": false,
+          "isOptional": true,
           "name": "_anchor",
           "types": [
             "vector3|nil",
@@ -6595,7 +6596,7 @@ Create container component with druid: \`container = druid:new_container(node, m
         },
         {
           "doc": "The minimum size x",
-          "isOptional": false,
+          "isOptional": true,
           "name": "min_size_x",
           "types": [
             "number|nil",
@@ -6603,7 +6604,7 @@ Create container component with druid: \`container = druid:new_container(node, m
         },
         {
           "doc": "The minimum size y",
-          "isOptional": false,
+          "isOptional": true,
           "name": "min_size_y",
           "types": [
             "number|nil",
@@ -6611,7 +6612,7 @@ Create container component with druid: \`container = druid:new_container(node, m
         },
         {
           "doc": "The maximum size x",
-          "isOptional": false,
+          "isOptional": true,
           "name": "max_size_x",
           "types": [
             "number|nil",
@@ -6619,7 +6620,7 @@ Create container component with druid: \`container = druid:new_container(node, m
         },
         {
           "doc": "The maximum size y",
-          "isOptional": false,
+          "isOptional": true,
           "name": "max_size_y",
           "types": [
             "number|nil",
@@ -7811,7 +7812,7 @@ Create hotkey component with druid: \`hotkey = druid:new_hotkey(keys, callback, 
         },
         {
           "doc": "The node to bind the hotkey to",
-          "isOptional": false,
+          "isOptional": true,
           "name": "_node",
           "types": [
             "node|nil",
@@ -8085,7 +8086,7 @@ Create hotkey component with druid: \`hotkey = druid:new_hotkey(keys, callback, 
         },
         {
           "doc": "Callback when input is initialized, use to set custom properties on self",
-          "isOptional": false,
+          "isOptional": true,
           "name": "on_init",
           "types": [
             "fun(self: druid.input)|nil",
@@ -8342,6 +8343,7 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
           "params": [
             {
               "doc": "The string to apply for input field, if nil - will be set to empty string",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "input_text",
@@ -9567,7 +9569,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
       "fields": [
         {
           "doc": "Progress bar fill rate. Higher value means faster fill. Default: 5",
-          "isOptional": false,
+          "isOptional": true,
           "name": "SPEED",
           "types": [
             "number|nil",
@@ -9575,7 +9577,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
         },
         {
           "doc": "Minimum step to fill progress bar. Default: 0.005",
-          "isOptional": false,
+          "isOptional": true,
           "name": "MIN_DELTA",
           "types": [
             "number|nil",
@@ -10068,7 +10070,7 @@ Create slider component with druid: \`slider = druid:new_slider(node_name, end_p
         },
         {
           "doc": "The steps of the slider",
-          "isOptional": false,
+          "isOptional": true,
           "name": "steps",
           "types": [
             "number[]?",
@@ -10381,7 +10383,7 @@ This function require the Defold version 1.3.0+"
       "fields": [
         {
           "doc": "Maximum time for swipe trigger. Default: 0.4",
-          "isOptional": false,
+          "isOptional": true,
           "name": "SWIPE_TIME",
           "types": [
             "number|nil",
@@ -10389,7 +10391,7 @@ This function require the Defold version 1.3.0+"
         },
         {
           "doc": "Minimum distance for swipe trigger. Default: 50",
-          "isOptional": false,
+          "isOptional": true,
           "name": "SWIPE_THRESHOLD",
           "types": [
             "number|nil",
@@ -10397,7 +10399,7 @@ This function require the Defold version 1.3.0+"
         },
         {
           "doc": "If true, trigger on swipe moving, not only release action. Default: false",
-          "isOptional": false,
+          "isOptional": true,
           "name": "SWIPE_TRIGGER_ON_MOVE",
           "types": [
             "boolean|nil",
@@ -10728,7 +10730,7 @@ Create timer component with druid: \`timer = druid:new_timer(text_node, from_sec
         },
         {
           "doc": "True if the timer is on",
-          "isOptional": false,
+          "isOptional": true,
           "name": "is_on",
           "types": [
             "boolean|nil",
@@ -11448,7 +11450,7 @@ You can use these functions in your projects as well."
         },
         {
           "doc": "Accelerometer x value (if present).",
-          "isOptional": false,
+          "isOptional": true,
           "name": "acc_x",
           "types": [
             "number|nil",
@@ -11456,7 +11458,7 @@ You can use these functions in your projects as well."
         },
         {
           "doc": "Accelerometer y value (if present).",
-          "isOptional": false,
+          "isOptional": true,
           "name": "acc_y",
           "types": [
             "number|nil",
@@ -11464,7 +11466,7 @@ You can use these functions in your projects as well."
         },
         {
           "doc": "Accelerometer z value (if present).",
-          "isOptional": false,
+          "isOptional": true,
           "name": "acc_z",
           "types": [
             "number|nil",
@@ -11552,7 +11554,7 @@ You can use these functions in your projects as well."
         },
         {
           "doc": "Components that should not receive input",
-          "isOptional": false,
+          "isOptional": true,
           "name": "_input_blacklist",
           "types": [
             "druid.component[]|nil",
@@ -11561,7 +11563,7 @@ You can use these functions in your projects as well."
         },
         {
           "doc": "Components that should receive input",
-          "isOptional": false,
+          "isOptional": true,
           "name": "_input_whitelist",
           "types": [
             "druid.component[]|nil",
@@ -14115,6 +14117,7 @@ Only one widget can be set per game object."
       "params": [
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "name",
@@ -15577,6 +15580,7 @@ Offset shown in [-0.5 .. 0.5] range, where -0.5 is left or bottom, 0.5 is right 
         },
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "depth",
@@ -15859,6 +15863,7 @@ Thanks to Dragosha! ( ・ω・ ) <  Hey friend!"
         },
         {
           "doc": "Druid style table",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "style",
