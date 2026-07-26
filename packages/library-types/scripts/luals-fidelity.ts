@@ -80,6 +80,9 @@ export function buildFidelityReport(
       );
     }
     mapConstraints(iface.generics, ifaceCtx);
+    // A class `@overload fun(...)` is emitted as a call signature, so its type token
+    // counts toward coverage exactly like a field or method type.
+    for (const overload of iface.overloads ?? []) mapTokens([overload.type], ifaceCtx);
     for (const field of iface.fields) {
       totalMembers++;
       if (undocumented(field.doc)) undocumentedMembers++;

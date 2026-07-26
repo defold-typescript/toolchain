@@ -106,7 +106,7 @@ declare module 'druid.druid' {
 		/**
 		 * The constructor for the button component
 		 */
-		init(node_or_node_id: Opaque<"node"> | string, callback: (() => void) | undefined, custom_args: unknown | undefined, anim_node: Opaque<"node"> | string | undefined): void;
+		init(node_or_node_id: Opaque<"node"> | string, callback?: (() => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): void;
 		on_style_change(style: druid_button_style): void;
 		/**
 		 * Remove default button style animations
@@ -120,7 +120,7 @@ declare module 'druid.druid' {
 		 * The style.on_set_enabled will be triggered.
 		 * Disabled button is not clickable.
 		 */
-		set_enabled(state: boolean | undefined): druid_button;
+		set_enabled(state?: boolean | undefined): druid_button;
 		/**
 		 * Get button enabled state.
 		 * By default all Buttons are enabled on creating.
@@ -131,7 +131,7 @@ declare module 'druid.druid' {
 		 * Useful to restrict click outside of stencil node or scrollable content.
 		 * If button node placed inside stencil node, it will be automatically set to this stencil node.
 		 */
-		set_click_zone(zone: Opaque<"node"> | string | undefined): druid_button;
+		set_click_zone(zone?: Opaque<"node"> | string | undefined): druid_button;
 		/**
 		 * Set key name to trigger this button by keyboard.
 		 */
@@ -143,7 +143,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set function for additional check for button click availability.
 		 */
-		set_check_function(check_function: unknown | undefined, failure_callback: unknown | undefined): druid_button;
+		set_check_function(check_function?: unknown | undefined, failure_callback?: unknown | undefined): druid_button;
 		/**
 		 * Set Button mode to work inside user HTML5 interaction event.
 		 *
@@ -152,7 +152,7 @@ declare module 'druid.druid' {
 		 *
 		 * If the game is not HTML, html mode will be not enabled
 		 */
-		set_web_user_interaction(is_web_mode: boolean | undefined): druid_button;
+		set_web_user_interaction(is_web_mode?: boolean | undefined): druid_button;
 		_is_input_match(action_id: Hash): boolean;
 		/**
 		 * Call button style on_hover callback
@@ -231,7 +231,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set Drag click zone
 		 */
-		set_click_zone(node: Opaque<"node"> | string | undefined): druid_drag;
+		set_click_zone(node?: Opaque<"node"> | string | undefined): druid_drag;
 		/**
 		 * Set Drag component enabled state.
 		 */
@@ -241,7 +241,7 @@ declare module 'druid.druid' {
 		 */
 		is_enabled(): boolean;
 		_start_touch(): void;
-		_end_touch(touch: touch | undefined): void;
+		_end_touch(touch?: touch | undefined): void;
 		_process_touch(touch: touch): void;
 		/**
 		 * Return current touch action from action input data
@@ -282,7 +282,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set hover state
 		 */
-		set_hover(state: boolean | undefined): void;
+		set_hover(state?: boolean | undefined): void;
 		/**
 		 * Return current hover state. True if touch action was on the node at current time
 		 */
@@ -290,7 +290,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set mouse hover state
 		 */
-		set_mouse_hover(state: boolean | undefined): void;
+		set_mouse_hover(state?: boolean | undefined): void;
 		/**
 		 * Return current hover state. True if nil action_id (usually desktop mouse) was on the node at current time
 		 */
@@ -298,13 +298,13 @@ declare module 'druid.druid' {
 		/**
 		 * Strict hover click area. Useful for no click events outside stencil node
 		 */
-		set_click_zone(zone: Opaque<"node"> | string | undefined): void;
+		set_click_zone(zone?: Opaque<"node"> | string | undefined): void;
 		/**
 		 * Set enable state of hover component.
 		 * If hover is not enabled, it will not generate
 		 * any hover events
 		 */
-		set_enabled(state: boolean | undefined): void;
+		set_enabled(state?: boolean | undefined): void;
 		/**
 		 * Return current hover enabled state
 		 */
@@ -387,19 +387,19 @@ declare module 'druid.druid' {
 		/**
 		 * Start scroll to target point.
 		 */
-		scroll_to(point: Vector3, is_instant: boolean | undefined): void;
+		scroll_to(point: Vector3, is_instant?: boolean | undefined): void;
 		/**
 		 * Scroll to the node, if node is not visible in scroll view
 		 */
-		scroll_to_make_node_visible(node: Opaque<"node">, is_instant: boolean | undefined): void;
+		scroll_to_make_node_visible(node: Opaque<"node">, is_instant?: boolean | undefined): void;
 		/**
 		 * Scroll to item in scroll by point index.
 		 */
-		scroll_to_index(index: number, is_silent: boolean | undefined, is_instant: boolean | undefined): void;
+		scroll_to_index(index: number, is_silent?: boolean | undefined, is_instant?: boolean | undefined): void;
 		/**
 		 * Start scroll to target scroll percent
 		 */
-		scroll_to_percent(percent: Vector3, is_instant: boolean | undefined): void;
+		scroll_to_percent(percent: Vector3, is_instant?: boolean | undefined): void;
 		/**
 		 * Return current scroll progress status.
 		 */
@@ -407,7 +407,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set scroll content size.
 		 */
-		set_size(size: Vector3, offset: Vector3 | undefined): druid_scroll;
+		set_size(size: Vector3, offset?: Vector3 | undefined): druid_scroll;
 		/**
 		 * Set new scroll view size in case the node size was changed.
 		 */
@@ -427,7 +427,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set extra size for scroll stretching
 		 */
-		set_extra_stretch_size(stretch_size: number | undefined): druid_scroll;
+		set_extra_stretch_size(stretch_size?: number | undefined): druid_scroll;
 		/**
 		 * Return vector of scroll size with width and height.
 		 */
@@ -451,11 +451,11 @@ declare module 'druid.druid' {
 		/**
 		 * Bind the grid component (Static or Dynamic) to recalculate
 		 */
-		bind_grid(grid: druid_grid | undefined): druid_scroll;
+		bind_grid(grid?: druid_grid | undefined): druid_scroll;
 		/**
 		 * Bind the layout component to recalculate
 		 */
-		bind_layout(layout: druid_layout | undefined): druid_scroll;
+		bind_layout(layout?: druid_layout | undefined): druid_scroll;
 		/**
 		 * Strict drag scroll area. Useful for
 		 */
@@ -514,7 +514,7 @@ declare module 'druid.druid' {
 		/**
 		 * The constructor for the grid component
 		 */
-		init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row: number | undefined): void;
+		init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row?: number | undefined): void;
 		on_style_change(style: druid_grid_style): void;
 		/**
 		 * Return pos for grid node index
@@ -548,15 +548,15 @@ declare module 'druid.druid' {
 		/**
 		 * Add new item to the grid
 		 */
-		add(item: Opaque<"node">, index: number | undefined, shift_policy: number | undefined, is_instant: boolean | undefined): druid_grid;
+		add(item: Opaque<"node">, index?: number | undefined, shift_policy?: number | undefined, is_instant?: boolean | undefined): druid_grid;
 		/**
 		 * Set new items to the grid. All previous items will be removed
 		 */
-		set_items(nodes: Opaque<"node">[], is_instant: boolean | undefined): druid_grid;
+		set_items(nodes: Opaque<"node">[], is_instant?: boolean | undefined): druid_grid;
 		/**
 		 * Remove the item from the grid. Note that gui node will be not deleted
 		 */
-		remove(index: number, shift_policy: number | undefined, is_instant: boolean | undefined): Opaque<"node">;
+		remove(index: number, shift_policy?: number | undefined, is_instant?: boolean | undefined): Opaque<"node">;
 		/**
 		 * Return items count in grid
 		 */
@@ -596,7 +596,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set new node size for grid
 		 */
-		set_item_size(width: number | undefined, height: number | undefined): druid_grid;
+		set_item_size(width?: number | undefined, height?: number | undefined): druid_grid;
 		/**
 		 * Sort grid nodes by custom comparator function
 		 */
@@ -604,7 +604,7 @@ declare module 'druid.druid' {
 		/**
 		 * Update grid inner state
 		 */
-		_update(is_instant: boolean | undefined): void;
+		_update(is_instant?: boolean | undefined): void;
 		/**
 		 * Update first and last indexes of grid nodes
 		 */
@@ -616,7 +616,7 @@ declare module 'druid.druid' {
 		/**
 		 * Update grid nodes position
 		 */
-		_update_pos(is_instant: boolean | undefined): void;
+		_update_pos(is_instant?: boolean | undefined): void;
 		/**
 		 * Return dynamic centering offset. Only non-zero when IS_DYNAMIC_NODE_POSES is enabled,
 		 * centers grid content according to pivot within its current borders.
@@ -667,13 +667,13 @@ declare module 'druid.druid' {
 		/**
 		 * The Text constructor
 		 */
-		init(node: string | Opaque<"node">, value: string | undefined, adjust_type: druid_text_adjust_type | undefined): void;
+		init(node: string | Opaque<"node">, value?: string | undefined, adjust_type?: druid_text_adjust_type | undefined): void;
 		on_style_change(style: druid_text_style): void;
 		on_layout_change(): void;
 		/**
 		 * Calculate text width with font with respect to trailing space
 		 */
-		get_text_size(text: string | undefined): LuaMultiReturn<[number, number]>;
+		get_text_size(text?: string | undefined): LuaMultiReturn<[number, number]>;
 		/**
 		 * Get chars count by width
 		 */
@@ -711,7 +711,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set text adjust, refresh the current text visuals, if needed
 		 */
-		set_text_adjust(adjust_type: druid_text_adjust_type | undefined, minimal_scale: number | undefined): druid_text;
+		set_text_adjust(adjust_type?: druid_text_adjust_type | undefined, minimal_scale?: number | undefined): druid_text;
 		/**
 		 * Set minimal scale for "downscale_limited" or "scale_then_scroll" adjust types
 		 */
@@ -818,13 +818,13 @@ declare module 'druid.druid' {
 		/**
 		 * Set component style. Pass nil to clear style
 		 */
-		set_style<T>(self: T, druid_style: LuaTable | undefined): T;
+		set_style<T>(self: T, druid_style?: LuaTable | undefined): T;
 		/**
 		 * Set component template name. Pass nil to clear template.
 		 * This template id used to access nodes inside the template on GUI scene.
 		 * Parent template will be added automatically if exist.
 		 */
-		set_template<T>(self: T, template: string | undefined): T;
+		set_template<T>(self: T, template?: string | undefined): T;
 		/**
 		 * Get full template name.
 		 */
@@ -832,7 +832,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set current component nodes, returned from `gui.clone_tree` function.
 		 */
-		set_nodes(nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component;
+		set_nodes(nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component;
 		/**
 		 * Return current component context
 		 */
@@ -844,7 +844,7 @@ declare module 'druid.druid' {
 		/**
 		 * Get Druid instance for inner component creation.
 		 */
-		get_druid(template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_instance;
+		get_druid(template?: string | undefined, nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_instance;
 		/**
 		 * Get component name
 		 */
@@ -860,7 +860,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set component input priority, the bigger number processed first. Default value: 10
 		 */
-		set_input_priority(value: number, is_temporary: boolean | undefined): druid_component;
+		set_input_priority(value: number, is_temporary?: boolean | undefined): druid_component;
 		/**
 		 * Reset component input priority to it's default value, that was set in `create` function or `set_input_priority`
 		 */
@@ -1025,7 +1025,7 @@ declare module 'druid.druid' {
 		_settings: LuaTable;
 		_split_to_characters: boolean;
 		_anchor: Vector3 | undefined;
-		init(text_node: Opaque<"node"> | string, value: string | undefined): void;
+		init(text_node: Opaque<"node"> | string, value?: string | undefined): void;
 		on_layout_change(): void;
 		on_style_change(style: druid_rich_text_style): void;
 		/**
@@ -1058,7 +1058,7 @@ declare module 'druid.druid' {
 		 * rich_text:set_text("＜img=texture:image,size＞Display image with size")
 		 * rich_text:set_text("＜img=texture:image,width,height＞Display image with width and height")
 		 */
-		set_text(text: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>;
+		set_text(text?: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>;
 		/**
 		 * Get the current text of the rich text
 		 */
@@ -1146,7 +1146,7 @@ declare module 'druid.druid' {
 		/**
 		 * The Container constructor
 		 */
-		init(node: Opaque<"node">, mode: string, callback: ((self: druid_container, size: Vector3) => void) | undefined): void;
+		init(node: Opaque<"node">, mode: string, callback?: ((self: druid_container, size: Vector3) => void) | undefined): void;
 		on_late_init(): void;
 		on_remove(): void;
 		/**
@@ -1161,7 +1161,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set new size of layout node
 		 */
-		set_size(width: number | undefined, height: number | undefined, anchor_pivot: Opaque<"constant"> | undefined): druid_container;
+		set_size(width?: number | undefined, height?: number | undefined, anchor_pivot?: Opaque<"constant"> | undefined): druid_container;
 		/**
 		 * Get the position of the container
 		 */
@@ -1187,9 +1187,9 @@ declare module 'druid.druid' {
 		 */
 		fit_into_window(): druid_container;
 		on_window_resized(): void;
-		add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode: druid_container_mode | undefined, on_resize_callback: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container;
+		add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode?: druid_container_mode | undefined, on_resize_callback?: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container;
 		remove_container_by_node(): druid_container | undefined;
-		set_parent_container(parent_container: druid_container | undefined): void;
+		set_parent_container(parent_container?: druid_container | undefined): void;
 		refresh(): void;
 		refresh_scale(): void;
 		update_child_containers(): void;
@@ -1203,11 +1203,11 @@ declare module 'druid.druid' {
 		/**
 		 * Set the minimum size of the container
 		 */
-		set_min_size(min_size_x: number | undefined, min_size_y: number | undefined): druid_container;
+		set_min_size(min_size_x?: number | undefined, min_size_y?: number | undefined): druid_container;
 		/**
 		 * Set the maximum size of the container
 		 */
-		set_max_size(max_size_x: number | undefined, max_size_y: number | undefined): druid_container;
+		set_max_size(max_size_x?: number | undefined, max_size_y?: number | undefined): druid_container;
 	}
 	/**
 	 * Druid component to manage a list of data with a scrollable view, used to manage huge list data and render only visible elements.
@@ -1257,15 +1257,15 @@ declare module 'druid.druid' {
 		/**
 		 * Add element to DataList
 		 */
-		add(data: LuaTable, index: number | undefined, shift_policy: number | undefined): druid_data_list;
+		add(data: LuaTable, index?: number | undefined, shift_policy?: number | undefined): druid_data_list;
 		/**
 		 * Remove element from DataList
 		 */
-		remove(index: number | undefined, shift_policy: number | undefined): druid_data_list;
+		remove(index?: number | undefined, shift_policy?: number | undefined): druid_data_list;
 		/**
 		 * Remove element from DataList by data value
 		 */
-		remove_by_data(data: LuaTable, shift_policy: number | undefined): druid_data_list;
+		remove_by_data(data: LuaTable, shift_policy?: number | undefined): druid_data_list;
 		/**
 		 * Clear the DataList and refresh visuals
 		 */
@@ -1333,12 +1333,12 @@ declare module 'druid.druid' {
 		/**
 		 * The Hotkey constructor
 		 */
-		init(keys: string[] | string, callback: unknown, callback_argument: unknown | undefined): void;
+		init(keys: string[] | string, callback: unknown, callback_argument?: unknown | undefined): void;
 		on_style_change(style: druid_hotkey_style): void;
 		/**
 		 * Add hotkey for component callback
 		 */
-		add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument: unknown | undefined): druid_hotkey;
+		add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument?: unknown | undefined): druid_hotkey;
 		is_processing(): void;
 		on_focus_gained(): void;
 		_is_modificator_active(modificator: Hash, time: number): boolean;
@@ -1350,7 +1350,7 @@ declare module 'druid.druid' {
 		/**
 		 * If node is provided, the hotkey can be disabled, if the node is disabled
 		 */
-		bind_node(node: Opaque<"node"> | undefined): druid_hotkey;
+		bind_node(node?: Opaque<"node"> | undefined): druid_hotkey;
 	}
 	interface druid_input_style {
 		MASK_DEFAULT_CHAR: string;
@@ -1384,7 +1384,7 @@ declare module 'druid.druid' {
 		on_input_wrong: unknown;
 		on_select_cursor_change: unknown;
 		style: druid_input_style;
-		init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type: Opaque<"constant"> | undefined): void;
+		init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type?: Opaque<"constant"> | undefined): void;
 		on_style_change(style: druid_input_style): void;
 		on_input(action_id: Hash | undefined, action: action): boolean;
 		on_focus_lost(): void;
@@ -1429,7 +1429,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set cursor position in input field
 		 */
-		select_cursor(cursor_index: number | undefined, start_index: number | undefined, end_index: number | undefined): druid_input;
+		select_cursor(cursor_index?: number | undefined, start_index?: number | undefined, end_index?: number | undefined): druid_input;
 		/**
 		 * Change cursor position by delta
 		 */
@@ -1453,7 +1453,7 @@ declare module 'druid.druid' {
 		on_change: unknown;
 		last_locale_args: LuaTable;
 		last_locale: string;
-		init(node: string | Opaque<"node">, locale_id: string | undefined, adjust_type: string | undefined): void;
+		init(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined): void;
 		on_language_change(): void;
 		/**
 		 * Setup raw text to lang_text component. This will clear any locale settings.
@@ -1522,8 +1522,8 @@ declare module 'druid.druid' {
 		/**
 		 * Set the margin of the layout
 		 */
-		set_margin(margin_x: number | undefined, margin_y: number | undefined): druid_layout;
-		set_padding(padding_x: number | undefined, padding_y: number | undefined, padding_z: number | undefined, padding_w: number | undefined): druid_layout;
+		set_margin(margin_x?: number | undefined, margin_y?: number | undefined): druid_layout;
+		set_padding(padding_x?: number | undefined, padding_y?: number | undefined, padding_z?: number | undefined, padding_w?: number | undefined): druid_layout;
 		set_dirty(): druid_layout;
 		set_justify(is_justify: boolean): druid_layout;
 		set_type(layout_type: druid_layout_type): druid_layout;
@@ -1538,7 +1538,7 @@ declare module 'druid.druid' {
 		remove(node_or_node_id: Opaque<"node"> | string): druid_layout;
 		get_size(): Vector3;
 		get_content_size(): unknown;
-		refresh_layout(is_instant: boolean | undefined): druid_layout;
+		refresh_layout(is_instant?: boolean | undefined): druid_layout;
 		clear_layout(): druid_layout;
 		get_node_size(node: Opaque<"node">): LuaMultiReturn<[number, number]>;
 		/**
@@ -1574,7 +1574,7 @@ declare module 'druid.druid' {
 		style: druid_progress_style;
 		key: string;
 		prop: Hash;
-		init(node: string | Opaque<"node">, key: string, init_value: number | undefined): void;
+		init(node: string | Opaque<"node">, key: string, init_value?: number | undefined): void;
 		on_style_change(style: druid_progress_style): void;
 		on_layout_change(): void;
 		on_remove(): void;
@@ -1602,12 +1602,12 @@ declare module 'druid.druid' {
 		/**
 		 * Start animation of a progress bar
 		 */
-		to(to: number, callback: unknown | undefined): druid_progress;
+		to(to: number, callback?: unknown | undefined): druid_progress;
 		/**
 		 * Set progress bar max node size
 		 */
 		set_max_size(max_size: Vector3): druid_progress;
-		_check_steps(from: number, to: number, exactly: number | undefined): void;
+		_check_steps(from: number, to: number, exactly?: number | undefined): void;
 		_set_bar_to(set_to: number): void;
 	}
 	/**
@@ -1638,7 +1638,7 @@ declare module 'druid.druid' {
 		/**
 		 * The Slider constructor
 		 */
-		init(node: Opaque<"node">, end_pos: Vector3, callback: unknown | undefined): void;
+		init(node: Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined): void;
 		on_layout_change(): void;
 		on_remove(): void;
 		on_style_change(style: LuaTable): void;
@@ -1647,7 +1647,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set value for slider
 		 */
-		set(value: number, is_silent: boolean | undefined): druid_slider;
+		set(value: number, is_silent?: boolean | undefined): druid_slider;
 		/**
 		 * Set slider steps. Pin node will
 		 * apply closest step position
@@ -1663,7 +1663,7 @@ declare module 'druid.druid' {
 		 * move at this position and node drag will start.
 		 * This function require the Defold version 1.3.0+
 		 */
-		set_input_node(input_node: Opaque<"node"> | string | undefined): druid_slider;
+		set_input_node(input_node?: Opaque<"node"> | string | undefined): druid_slider;
 		/**
 		 * Set Slider input enabled or disabled
 		 */
@@ -1701,7 +1701,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set the click zone for the swipe, useful for restricting events outside stencil node
 		 */
-		set_click_zone(zone: Opaque<"node"> | string | undefined): void;
+		set_click_zone(zone?: Opaque<"node"> | string | undefined): void;
 		/**
 		 * Start swipe event
 		 */
@@ -1735,7 +1735,7 @@ declare module 'druid.druid' {
 		target: number;
 		value: number;
 		is_on: boolean | undefined;
-		init(node: Opaque<"node">, seconds_from: number | undefined, seconds_to: number | undefined, callback: unknown | undefined): void;
+		init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): void;
 		update(): void;
 		on_layout_change(): void;
 		/**
@@ -1745,7 +1745,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set the timer to a specific value
 		 */
-		set_state(is_on: boolean | undefined): druid_timer;
+		set_state(is_on?: boolean | undefined): druid_timer;
 		/**
 		 * Set the timer interval
 		 */
@@ -1919,11 +1919,11 @@ declare module 'druid.druid' {
 		/**
 		 * Create new Druid widget instance
 		 */
-		new_widget<T extends druid_component>(widget: T, template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T;
+		new_widget<T extends druid_component>(widget: T, template?: string | undefined, nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T;
 		/**
 		 * Create Button component
 		 */
-		new_button(node: string | Opaque<"node">, callback: unknown | unknown | undefined, params: unknown | undefined, anim_node: Opaque<"node"> | string | undefined): druid_button;
+		new_button(node: string | Opaque<"node">, callback?: unknown | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button;
 		/**
 		 * Create Blocker component
 		 */
@@ -1931,19 +1931,19 @@ declare module 'druid.druid' {
 		/**
 		 * Create BackHandler component
 		 */
-		new_back_handler(callback: unknown | unknown | undefined, params: unknown | undefined): druid_back_handler;
+		new_back_handler(callback?: unknown | unknown | undefined, params?: unknown | undefined): druid_back_handler;
 		/**
 		 * Create Hover component
 		 */
-		new_hover(node: string | Opaque<"node">, on_hover_callback: unknown | undefined, on_mouse_hover_callback: unknown | undefined): druid_hover;
+		new_hover(node: string | Opaque<"node">, on_hover_callback?: unknown | undefined, on_mouse_hover_callback?: unknown | undefined): druid_hover;
 		/**
 		 * Create Text component
 		 */
-		new_text(node: string | Opaque<"node"> | druid_text, value: string | undefined, adjust_type: string | undefined): druid_text;
+		new_text(node: string | Opaque<"node"> | druid_text, value?: string | undefined, adjust_type?: string | undefined): druid_text;
 		/**
 		 * Create Grid component
 		 */
-		new_grid(parent_node: string | Opaque<"node">, item: string | Opaque<"node">, in_row: number | undefined): druid_grid;
+		new_grid(parent_node: string | Opaque<"node">, item: string | Opaque<"node">, in_row?: number | undefined): druid_grid;
 		/**
 		 * Create Scroll component
 		 */
@@ -1951,23 +1951,23 @@ declare module 'druid.druid' {
 		/**
 		 * Create Drag component
 		 */
-		new_drag(node: string | Opaque<"node">, on_drag_callback: unknown | undefined): druid_drag;
+		new_drag(node: string | Opaque<"node">, on_drag_callback?: unknown | undefined): druid_drag;
 		/**
 		 * Create Swipe component
 		 */
-		new_swipe(node: string | Opaque<"node">, on_swipe_callback: unknown | undefined): druid_swipe;
+		new_swipe(node: string | Opaque<"node">, on_swipe_callback?: unknown | undefined): druid_swipe;
 		/**
 		 * Create LangText component
 		 */
-		new_lang_text(node: string | Opaque<"node">, locale_id: string | undefined, adjust_type: string | undefined): druid_lang_text;
+		new_lang_text(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined): druid_lang_text;
 		/**
 		 * Create Slider component
 		 */
-		new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback: unknown | undefined): druid_slider;
+		new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined): druid_slider;
 		/**
 		 * Create Input component
 		 */
-		new_input(click_node: string | Opaque<"node">, text_node: string | Opaque<"node"> | druid_text, keyboard_type: number | undefined): druid_input;
+		new_input(click_node: string | Opaque<"node">, text_node: string | Opaque<"node"> | druid_text, keyboard_type?: number | undefined): druid_input;
 		/**
 		 * Create DataList component
 		 */
@@ -1975,39 +1975,39 @@ declare module 'druid.druid' {
 		/**
 		 * Create Timer component
 		 */
-		new_timer(node: string | Opaque<"node">, seconds_from: number | undefined, seconds_to: number | undefined, callback: unknown | undefined): druid_timer;
+		new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): druid_timer;
 		/**
 		 * Create Progress component
 		 */
-		new_progress(node: string | Opaque<"node">, key: string, init_value: number | undefined): druid_progress;
+		new_progress(node: string | Opaque<"node">, key: string, init_value?: number | undefined): druid_progress;
 		/**
 		 * Create Layout component
 		 */
-		new_layout(node: string | Opaque<"node">, mode: string | undefined): druid_layout;
+		new_layout(node: string | Opaque<"node">, mode?: string | undefined): druid_layout;
 		/**
 		 * Create Container component
 		 */
-		new_container(node: string | Opaque<"node">, mode: druid_container_mode | undefined, callback: ((self: druid_container, size: Vector3) => void) | undefined): druid_container;
+		new_container(node: string | Opaque<"node">, mode?: druid_container_mode | undefined, callback?: ((self: druid_container, size: Vector3) => void) | undefined): druid_container;
 		/**
 		 * Create Hotkey component
 		 */
-		new_hotkey(keys_array: string | string[], callback: unknown | unknown | undefined, callback_argument: unknown | undefined): druid_hotkey;
+		new_hotkey(keys_array: string | string[], callback?: unknown | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey;
 		/**
 		 * Create RichText component.
 		 */
-		new_rich_text(text_node: string | Opaque<"node">, value: string | undefined): druid_rich_text;
+		new_rich_text(text_node: string | Opaque<"node">, value?: string | undefined): druid_rich_text;
 		/**
 		 * Create RichInput component.
 		 * As a template please check rich_input.gui layout.
 		 */
-		new_rich_input(template: string, nodes: LuaTable | undefined): druid_rich_input;
+		new_rich_input(template: string, nodes?: LuaTable | undefined): druid_rich_input;
 	}
 	interface druid_system_settings {
 	}
 	/**
 	 * Create a new Druid instance for creating GUI components.
 	 */
-	export function new_(this: void, context: LuaTable, style: LuaTable | undefined): druid_instance;
+	export function new_(this: void, context: LuaTable, style?: LuaTable | undefined): druid_instance;
 	export { new_ as new };
 	/**
 	 * Register a new external Druid component.
@@ -2051,7 +2051,7 @@ declare module 'druid.druid' {
 	 * msg.url(nil, nil, "gui_widget") -- current game object
 	 * msg.url(nil, object_url, "gui_widget") -- other game object
 	 */
-	export function get_widget<T extends druid_widget>(this: void, widget_class: T, gui_url: Url | string, params: unknown | undefined): T;
+	export function get_widget<T extends druid_widget>(this: void, widget_class: T, gui_url: Url | string, params?: unknown | undefined): T;
 	/**
 	 * Bind a Druid GUI instance to the current game object.
 	 * This instance now can produce widgets from `druid.get_widget()` function.
@@ -2062,6 +2062,6 @@ declare module 'druid.druid' {
 	 * Should be called on final, where druid instance is destroyed.
 	 */
 	export function unregister_druid_as_widget(this: void): void;
-	export function set_logger(this: void, logger_instance: druid_logger | LuaTable | undefined): void;
-	export function get_logger(this: void, name: string | undefined, level: string | undefined): druid_logger;
+	export function set_logger(this: void, logger_instance?: druid_logger | LuaTable | undefined): void;
+	export function get_logger(this: void, name: string | undefined, level?: string | undefined): druid_logger;
 }

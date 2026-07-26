@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { type MapContext, mapLualsType } from "./map-luals-types";
+import { type MapContext, mapLualsCallSignature, mapLualsType } from "./map-luals-types";
 
 const ctx = (over: Partial<MapContext> = {}): MapContext => ({
   knownNames: over.knownNames ?? new Set<string>(),
@@ -180,6 +180,39 @@ describe("mapLualsType reference resolution", () => {
     const r = mapLualsType("some_unlisted_class", ctx());
     expect(r.ts).toBe("unknown");
     expect(r.unknowns).toEqual(["some_unlisted_class"]);
+  });
+});
+
+describe("mapLualsCallSignature", () => {
+  const sig = (token: string, over: Partial<MapContext> = {}): string =>
+    mapLualsCallSignature(token, ctx(over)).ts;
+
+  test("a `fun(vararg:any): any|nil` becomes a colon-return call signature, not an arrow", () => {
+    expect(sig("fun(vararg:any): any|nil")).toBe("(vararg: unknown): unknown | undefined");
+  });
+
+  test("a `fun(value:any): nil` maps its return through the scalar map", () => {
+    expect(sig("fun(value:any): nil")).toBe("(value: unknown): undefined");
+  });
+
+  test("no return maps to a `: void` call signature", () => {
+    expect(sig("fun()")).toBe("(): void");
+  });
+
+  test("nested callback params and multi-returns survive intact", () => {
+    expect(sig("fun(cb: fun(a: string): string): number, string")).toBe(
+      "(cb: (a: string) => string): LuaMultiReturn<[number, string]>",
+    );
+  });
+
+  test("an unresolved param type is recorded as an unknown fallback", () => {
+    const r = mapLualsCallSignature("fun(x: some_unlisted): nil", ctx());
+    expect(r.ts).toBe("(x: unknown): undefined");
+    expect(r.unknowns).toEqual(["some_unlisted"]);
+  });
+
+  test("a non-`fun` token is rejected", () => {
+    expect(() => mapLualsCallSignature("string", ctx())).toThrow();
   });
 });
 

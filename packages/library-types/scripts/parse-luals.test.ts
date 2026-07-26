@@ -343,6 +343,64 @@ describe("parseLualsSource module ownership and spaced fun returns", () => {
   });
 });
 
+describe("parseLualsSource nil-bearing params and @overload", () => {
+  test("a `string|nil` param is flagged nil-bearing; plain and `?` params are not", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param a string the required",
+        "---@param b string|nil the nullable",
+        "---@param c? string the optional",
+        "function M.f(a, b, c)",
+        "end",
+      ),
+    );
+    const params = model.moduleFunctions[0]?.params ?? [];
+    const [a, b, c] = params;
+    expect(a && Object.keys(a)).not.toContain("isNilable");
+    expect(b?.isNilable).toBe(true);
+    expect(b?.isOptional).toBe(false);
+    // A trailing `?` still drives the existing isOptional flag, not isNilable.
+    expect(c?.isOptional).toBe(true);
+    expect(c && Object.keys(c)).not.toContain("isNilable");
+  });
+
+  test("the top-level-nil detector honors bracket depth: a `fun():a|nil` return-union is not an outer nil", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param cb fun(): a|nil the callback returning a nullable",
+        "---@param gone fun()|nil the nullable callback",
+        "function M.f(cb, gone)",
+        "end",
+      ),
+    );
+    const [cb, gone] = model.moduleFunctions[0]?.params ?? [];
+    // The `|nil` sits inside the fun's return, so the param itself is not nil-bearing.
+    expect(cb?.types).toEqual(["fun(): a|nil"]);
+    expect(cb && Object.keys(cb)).not.toContain("isNilable");
+    // A `|nil` right after the `)` makes the whole function type nullable.
+    expect(gone?.isNilable).toBe(true);
+  });
+
+  test("a class-level `@overload fun(...)` is captured onto the interface with its token and doc", () => {
+    const model = parseLualsSource(
+      lua(
+        "---The widget module",
+        "---@overload fun(a:string): number Build the widget",
+        "---@class widget",
+        "local M = {}",
+      ),
+    );
+    const iface = model.interfaces.find((i) => i.name === "widget");
+    expect(iface?.overloads).toEqual([{ type: "fun(a:string): number", doc: "Build the widget" }]);
+  });
+
+  test("a non-`fun` @overload is ignored, leaving no overloads on the interface", () => {
+    const model = parseLualsSource(lua("---@overload string", "---@class widget", "local M = {}"));
+    const iface = model.interfaces.find((i) => i.name === "widget");
+    expect(iface && Object.keys(iface)).not.toContain("overloads");
+  });
+});
+
 describe("druid parse snapshot", () => {
   const druidRoot = join(PACKAGE_ROOT, "fixtures/luals/druid");
   const files = readdirSync(druidRoot, { recursive: true })
