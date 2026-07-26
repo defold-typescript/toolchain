@@ -135,13 +135,6 @@
       ]
     },
     {
-      "dir": "defold-lang",
-      "classification": "already-vendored",
-      "modules": [
-        "lang.lang"
-      ]
-    },
-    {
       "dir": "defold-lfs",
       "classification": "native",
       "modules": [
