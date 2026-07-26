@@ -27,6 +27,7 @@ import {
 } from "@defold-typescript/types";
 import {
   type MapContext,
+  mapLualsCallSignature,
   mapLualsType,
   matchSelfHookField,
   scopeGenerics,
@@ -113,14 +114,40 @@ function renderExtends(
   return parents.length > 0 ? ` extends ${parents.join(", ")}` : "";
 }
 
+/**
+ * Which non-vararg params may be emitted with a trailing `?`. Walking right-to-left,
+ * a param is emitted-optional iff it is itself omittable (`isOptional || isNilable`)
+ * and every later non-vararg param is too — a required param blocks every param to
+ * its left, since TS forbids a required parameter after an optional one. A trailing
+ * vararg (rendered `...args`, never `?`) does not break the preceding run. Exported so
+ * the api-doc lowering keys `is_optional` off the identical rule, keeping the rendered
+ * `/api` signature byte-consistent with the `.d.ts`.
+ */
+export function paramOptionalFlags(params: readonly LibraryParam[]): boolean[] {
+  const flags = new Array<boolean>(params.length).fill(false);
+  let laterAllOptional = true;
+  for (let i = params.length - 1; i >= 0; i--) {
+    const param = params[i] as LibraryParam;
+    if (param.isVararg) continue;
+    const selfOptional = param.isOptional || param.isNilable === true;
+    if (laterAllOptional && selfOptional) {
+      flags[i] = true;
+    } else {
+      laterAllOptional = false;
+    }
+  }
+  return flags;
+}
+
 function renderParams(params: readonly LibraryParam[], ctx: MapContext): string {
+  const optionalFlags = paramOptionalFlags(params);
   return params
     .map((param, index) => {
       const mapped = mapTypes(param.types, ctx);
       if (param.isVararg) {
         return `...args: ${varargElementType(mapped)}`;
       }
-      const optional = param.isOptional ? "?" : "";
+      const optional = optionalFlags[index] ? "?" : "";
       return `${safeParamName(param.name, index)}${optional}: ${mapped}`;
     })
     .join(", ");
@@ -181,6 +208,13 @@ function renderInterface(
         methodCtx,
       )}): ${renderReturn(method.returns, methodCtx)};`,
     );
+  }
+  // A class `@overload fun(...)` becomes an interface call signature, making the
+  // instance callable (`event(...)`, `promise(...)`) the way the metatable's `__call`
+  // does at runtime. Rendered after the members with its own doc comment.
+  for (const overload of iface.overloads ?? []) {
+    pushDoc(lines, overload.doc, body);
+    lines.push(`${body}${mapLualsCallSignature(overload.type, ifaceCtx).ts};`);
   }
   lines.push(`${INDENT}}`);
   return lines;

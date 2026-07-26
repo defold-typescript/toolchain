@@ -51,7 +51,7 @@ Create a new Druid instance and adjust the Druid settings here.
 
 <div class="api-overview" aria-label="Function overview">
 
-- [\`new(context: LuaTable, style: LuaTable | undefined): druid_instance\`](#newcontext-luatable-style-luatable--undefined-druid_instance)
+- [\`new(context: LuaTable, style?: LuaTable | undefined): druid_instance\`](#newcontext-luatable-style-luatable--undefined-druid_instance)
 - [\`register(name: string, module: LuaTable)\`](#registername-string-module-luatable)
 - [\`set_default_style(style: LuaTable)\`](#set_default_stylestyle-luatable)
 - [\`set_text_function(callback: (text_id: string) => string)\`](#set_text_functioncallback-text_id-string--string)
@@ -59,15 +59,15 @@ Create a new Druid instance and adjust the Druid settings here.
 - [\`init_window_listener()\`](#init_window_listener)
 - [\`on_window_callback(window_event: Opaque<"constant">)\`](#on_window_callbackwindow_event-opaqueconstant)
 - [\`on_language_change()\`](#on_language_change)
-- [\`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params: unknown | undefined): T\`](#get_widgett-extends-druid_widgetwidget_class-t-gui_url-url--string-params-unknown--undefined-t)
+- [\`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined): T\`](#get_widgett-extends-druid_widgetwidget_class-t-gui_url-url--string-params-unknown--undefined-t)
 - [\`register_druid_as_widget(druid: druid_instance)\`](#register_druid_as_widgetdruid-druid_instance)
 - [\`unregister_druid_as_widget()\`](#unregister_druid_as_widget)
-- [\`set_logger(logger_instance: druid_logger | LuaTable | undefined)\`](#set_loggerlogger_instance-druid_logger--luatable--undefined)
-- [\`get_logger(name: string | undefined, level: string | undefined): druid_logger\`](#get_loggername-string--undefined-level-string--undefined-druid_logger)
+- [\`set_logger(logger_instance?: druid_logger | LuaTable | undefined)\`](#set_loggerlogger_instance-druid_logger--luatable--undefined)
+- [\`get_logger(name: string | undefined, level?: string | undefined): druid_logger\`](#get_loggername-string--undefined-level-string--undefined-druid_logger)
 
 </div>
 
-### \`new(context: LuaTable, style: LuaTable | undefined): druid_instance\`
+### \`new(context: LuaTable, style?: LuaTable | undefined): druid_instance\`
 
 <div class="api-symbol-body">
 
@@ -76,7 +76,7 @@ Create a new Druid instance for creating GUI components.
 **Parameters**
 
 - \`context\`: \`LuaTable\` — The Druid context. Usually, this is the self of the gui_script. It is passed into all Druid callbacks.
-- \`style\`: \`LuaTable | undefined\` — The Druid style table to override style parameters for this Druid instance.
+- \`style\`?: \`LuaTable | undefined\` — The Druid style table to override style parameters for this Druid instance.
 
 **Returns**
 
@@ -167,7 +167,7 @@ It will notify all Druid instances to update the lang text components.
 
 </div>
 
-### \`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params: unknown | undefined): T\`
+### \`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined): T\`
 
 <div class="api-symbol-body">
 
@@ -182,7 +182,7 @@ Widget class here is your lua file for the GUI scene (widgets in Druid)
 
 - \`widget_class\`: \`T\` — The class of the widget to return
 - \`gui_url\`: \`Url | string\` — GUI url or string of component name near current script
-- \`params\`: \`unknown | undefined\` — Additional parameters to pass to the widget's init function
+- \`params\`?: \`unknown | undefined\` — Additional parameters to pass to the widget's init function
 
 **Returns**
 
@@ -212,24 +212,24 @@ Should be called on final, where druid instance is destroyed.
 
 </div>
 
-### \`set_logger(logger_instance: druid_logger | LuaTable | undefined)\`
+### \`set_logger(logger_instance?: druid_logger | LuaTable | undefined)\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
-- \`logger_instance\`: \`druid_logger | LuaTable | undefined\`
+- \`logger_instance\`?: \`druid_logger | LuaTable | undefined\`
 
 </div>
 
-### \`get_logger(name: string | undefined, level: string | undefined): druid_logger\`
+### \`get_logger(name: string | undefined, level?: string | undefined): druid_logger\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
 - \`name\`: \`string | undefined\`
-- \`level\`: \`string | undefined\`
+- \`level\`?: \`string | undefined\`
 
 **Returns**
 
@@ -382,7 +382,7 @@ Time between double taps. Default: 0.4
 
 ### \`druid_button_style.on_set_enabled: ((self: unknown, node: unknown, enabled_state: unknown) => void) | undefined\`
 
-### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback: (() => void) | undefined, custom_args: unknown | undefined, anim_node: Opaque<"node"> | string | undefined)\`
+### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback?: (() => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -391,9 +391,9 @@ The constructor for the button component
 **Parameters**
 
 - \`node_or_node_id\`: \`Opaque<"node"> | string\` — Node name or GUI Node itself
-- \`callback\`: \`(() => void) | undefined\` — Callback on button click
-- \`custom_args\`: \`unknown | undefined\` — Custom args for any Button event, will be passed to callbacks
-- \`anim_node\`: \`Opaque<"node"> | string | undefined\` — Node to animate instead of trigger node, useful for animating small icons on big panels
+- \`callback\`?: \`(() => void) | undefined\` — Callback on button click
+- \`custom_args\`?: \`unknown | undefined\` — Custom args for any Button event, will be passed to callbacks
+- \`anim_node\`?: \`Opaque<"node"> | string | undefined\` — Node to animate instead of trigger node, useful for animating small icons on big panels
 
 </div>
 
@@ -438,7 +438,7 @@ Remove default button style animations
 
 ### \`druid_button.on_input_interrupt()\`
 
-### \`druid_button.set_enabled(state: boolean | undefined): druid_button\`
+### \`druid_button.set_enabled(state?: boolean | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -448,7 +448,7 @@ Disabled button is not clickable.
 
 **Parameters**
 
-- \`state\`: \`boolean | undefined\` — Enabled state
+- \`state\`?: \`boolean | undefined\` — Enabled state
 
 **Returns**
 
@@ -469,7 +469,7 @@ By default all Buttons are enabled on creating.
 
 </div>
 
-### \`druid_button.set_click_zone(zone: Opaque<"node"> | string | undefined): druid_button\`
+### \`druid_button.set_click_zone(zone?: Opaque<"node"> | string | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -479,7 +479,7 @@ If button node placed inside stencil node, it will be automatically set to this 
 
 **Parameters**
 
-- \`zone\`: \`Opaque<"node"> | string | undefined\` — Gui node
+- \`zone\`?: \`Opaque<"node"> | string | undefined\` — Gui node
 
 **Returns**
 
@@ -515,7 +515,7 @@ Get current key name to trigger this button.
 
 </div>
 
-### \`druid_button.set_check_function(check_function: unknown | undefined, failure_callback: unknown | undefined): druid_button\`
+### \`druid_button.set_check_function(check_function?: unknown | undefined, failure_callback?: unknown | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -523,8 +523,8 @@ Set function for additional check for button click availability.
 
 **Parameters**
 
-- \`check_function\`: \`unknown | undefined\` — Should return true or false. If true - button can be pressed.
-- \`failure_callback\`: \`unknown | undefined\` — Function will be called on button click, if check function returns false
+- \`check_function\`?: \`unknown | undefined\` — Should return true or false. If true - button can be pressed.
+- \`failure_callback\`?: \`unknown | undefined\` — Function will be called on button click, if check function returns false
 
 **Returns**
 
@@ -532,7 +532,7 @@ Set function for additional check for button click availability.
 
 </div>
 
-### \`druid_button.set_web_user_interaction(is_web_mode: boolean | undefined): druid_button\`
+### \`druid_button.set_web_user_interaction(is_web_mode?: boolean | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -545,7 +545,7 @@ If the game is not HTML, html mode will be not enabled
 
 **Parameters**
 
-- \`is_web_mode\`: \`boolean | undefined\` — If true - button will be called inside html5 callback
+- \`is_web_mode\`?: \`boolean | undefined\` — If true - button will be called inside html5 callback
 
 **Returns**
 
@@ -853,7 +853,7 @@ Set Drag component enabled state.
 
 </div>
 
-### \`druid_drag.set_click_zone(node: Opaque<"node"> | string | undefined): druid_drag\`
+### \`druid_drag.set_click_zone(node?: Opaque<"node"> | string | undefined): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -861,7 +861,7 @@ Set Drag click zone
 
 **Parameters**
 
-- \`node\`: \`Opaque<"node"> | string | undefined\` — Node or node id
+- \`node\`?: \`Opaque<"node"> | string | undefined\` — Node or node id
 
 **Returns**
 
@@ -899,13 +899,13 @@ Check if Drag component is capture input
 
 ### \`druid_drag._start_touch()\`
 
-### \`druid_drag._end_touch(touch: touch | undefined)\`
+### \`druid_drag._end_touch(touch?: touch | undefined)\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
-- \`touch\`: \`touch | undefined\`
+- \`touch\`?: \`touch | undefined\`
 
 </div>
 
@@ -1172,7 +1172,7 @@ The constructor for the hover component
 
 ### \`druid_hover.on_input_interrupt()\`
 
-### \`druid_hover.set_hover(state: boolean | undefined)\`
+### \`druid_hover.set_hover(state?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1180,7 +1180,7 @@ Set hover state
 
 **Parameters**
 
-- \`state\`: \`boolean | undefined\` — The hover state
+- \`state\`?: \`boolean | undefined\` — The hover state
 
 </div>
 
@@ -1196,7 +1196,7 @@ Return current hover state. True if touch action was on the node at current time
 
 </div>
 
-### \`druid_hover.set_mouse_hover(state: boolean | undefined)\`
+### \`druid_hover.set_mouse_hover(state?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1204,7 +1204,7 @@ Set mouse hover state
 
 **Parameters**
 
-- \`state\`: \`boolean | undefined\` — The mouse hover state
+- \`state\`?: \`boolean | undefined\` — The mouse hover state
 
 </div>
 
@@ -1220,7 +1220,7 @@ Return current hover state. True if nil action_id (usually desktop mouse) was on
 
 </div>
 
-### \`druid_hover.set_click_zone(zone: Opaque<"node"> | string | undefined)\`
+### \`druid_hover.set_click_zone(zone?: Opaque<"node"> | string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1228,11 +1228,11 @@ Strict hover click area. Useful for no click events outside stencil node
 
 **Parameters**
 
-- \`zone\`: \`Opaque<"node"> | string | undefined\` — Gui node
+- \`zone\`?: \`Opaque<"node"> | string | undefined\` — Gui node
 
 </div>
 
-### \`druid_hover.set_enabled(state: boolean | undefined)\`
+### \`druid_hover.set_enabled(state?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1242,7 +1242,7 @@ any hover events
 
 **Parameters**
 
-- \`state\`: \`boolean | undefined\` — The hover enabled state
+- \`state\`?: \`boolean | undefined\` — The hover enabled state
 
 </div>
 
@@ -1431,7 +1431,7 @@ The Scroll constructor
 
 ### \`druid_scroll.on_remove()\`
 
-### \`druid_scroll.scroll_to(point: Vector3, is_instant: boolean | undefined)\`
+### \`druid_scroll.scroll_to(point: Vector3, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1440,11 +1440,11 @@ Start scroll to target point.
 **Parameters**
 
 - \`point\`: \`Vector3\` — Target point
-- \`is_instant\`: \`boolean | undefined\` — Instant scroll flag
+- \`is_instant\`?: \`boolean | undefined\` — Instant scroll flag
 
 </div>
 
-### \`druid_scroll.scroll_to_make_node_visible(node: Opaque<"node">, is_instant: boolean | undefined)\`
+### \`druid_scroll.scroll_to_make_node_visible(node: Opaque<"node">, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1453,11 +1453,11 @@ Scroll to the node, if node is not visible in scroll view
 **Parameters**
 
 - \`node\`: \`Opaque<"node">\` — The node to make visible
-- \`is_instant\`: \`boolean | undefined\` — Instant scroll flag
+- \`is_instant\`?: \`boolean | undefined\` — Instant scroll flag
 
 </div>
 
-### \`druid_scroll.scroll_to_index(index: number, is_silent: boolean | undefined, is_instant: boolean | undefined)\`
+### \`druid_scroll.scroll_to_index(index: number, is_silent?: boolean | undefined, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1466,12 +1466,12 @@ Scroll to item in scroll by point index.
 **Parameters**
 
 - \`index\`: \`number\` — Point index
-- \`is_silent\`: \`boolean | undefined\` — If true, skip the point callback
-- \`is_instant\`: \`boolean | undefined\` — Instant scroll flag
+- \`is_silent\`?: \`boolean | undefined\` — If true, skip the point callback
+- \`is_instant\`?: \`boolean | undefined\` — Instant scroll flag
 
 </div>
 
-### \`druid_scroll.scroll_to_percent(percent: Vector3, is_instant: boolean | undefined)\`
+### \`druid_scroll.scroll_to_percent(percent: Vector3, is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1480,7 +1480,7 @@ Start scroll to target scroll percent
 **Parameters**
 
 - \`percent\`: \`Vector3\` — target percent
-- \`is_instant\`: \`boolean | undefined\` — instant scroll flag
+- \`is_instant\`?: \`boolean | undefined\` — instant scroll flag
 
 </div>
 
@@ -1496,7 +1496,7 @@ Return current scroll progress status.
 
 </div>
 
-### \`druid_scroll.set_size(size: Vector3, offset: Vector3 | undefined): druid_scroll\`
+### \`druid_scroll.set_size(size: Vector3, offset?: Vector3 | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1505,7 +1505,7 @@ Set scroll content size.
 **Parameters**
 
 - \`size\`: \`Vector3\` — The new size for content node
-- \`offset\`: \`Vector3 | undefined\` — Offset value to set, where content is starts
+- \`offset\`?: \`Vector3 | undefined\` — Offset value to set, where content is starts
 
 **Returns**
 
@@ -1569,7 +1569,7 @@ Return if scroll have inertion
 
 </div>
 
-### \`druid_scroll.set_extra_stretch_size(stretch_size: number | undefined): druid_scroll\`
+### \`druid_scroll.set_extra_stretch_size(stretch_size?: number | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1577,7 +1577,7 @@ Set extra size for scroll stretching
 
 **Parameters**
 
-- \`stretch_size\`: \`number | undefined\` — Size in pixels of additional scroll area
+- \`stretch_size\`?: \`number | undefined\` — Size in pixels of additional scroll area
 
 **Returns**
 
@@ -1661,7 +1661,7 @@ Check node if it visible now on scroll.
 
 </div>
 
-### \`druid_scroll.bind_grid(grid: druid_grid | undefined): druid_scroll\`
+### \`druid_scroll.bind_grid(grid?: druid_grid | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1669,7 +1669,7 @@ Bind the grid component (Static or Dynamic) to recalculate
 
 **Parameters**
 
-- \`grid\`: \`druid_grid | undefined\` — Druid grid component
+- \`grid\`?: \`druid_grid | undefined\` — Druid grid component
 
 **Returns**
 
@@ -1677,7 +1677,7 @@ Bind the grid component (Static or Dynamic) to recalculate
 
 </div>
 
-### \`druid_scroll.bind_layout(layout: druid_layout | undefined): druid_scroll\`
+### \`druid_scroll.bind_layout(layout?: druid_layout | undefined): druid_scroll\`
 
 <div class="api-symbol-body">
 
@@ -1685,7 +1685,7 @@ Bind the layout component to recalculate
 
 **Parameters**
 
-- \`layout\`: \`druid_layout | undefined\` — Druid layout component
+- \`layout\`?: \`druid_layout | undefined\` — Druid layout component
 
 **Returns**
 
@@ -1926,7 +1926,7 @@ If true, always align last row of the grid as grid pivot sets. Default: false
 
 </div>
 
-### \`druid_grid.init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row: number | undefined)\`
+### \`druid_grid.init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row?: number | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -1936,7 +1936,7 @@ The constructor for the grid component
 
 - \`parent\`: \`string | Opaque<"node">\` — The GUI Node container, where grid's items will be placed
 - \`element\`: \`Opaque<"node">\` — Element prefab. Need to get it size
-- \`in_row\`: \`number | undefined\` — How many nodes in row can be placed. By default 1
+- \`in_row\`?: \`number | undefined\` — How many nodes in row can be placed. By default 1
 
 </div>
 
@@ -2057,7 +2057,7 @@ Set grid pivot
 
 </div>
 
-### \`druid_grid.add(item: Opaque<"node">, index: number | undefined, shift_policy: number | undefined, is_instant: boolean | undefined): druid_grid\`
+### \`druid_grid.add(item: Opaque<"node">, index?: number | undefined, shift_policy?: number | undefined, is_instant?: boolean | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2066,9 +2066,9 @@ Add new item to the grid
 **Parameters**
 
 - \`item\`: \`Opaque<"node">\` — GUI node
-- \`index\`: \`number | undefined\` — The item position. By default add as last item
-- \`shift_policy\`: \`number | undefined\` — How shift nodes, if required. Default: const.SHIFT.RIGHT
-- \`is_instant\`: \`boolean | undefined\` — If true, update node positions instantly
+- \`index\`?: \`number | undefined\` — The item position. By default add as last item
+- \`shift_policy\`?: \`number | undefined\` — How shift nodes, if required. Default: const.SHIFT.RIGHT
+- \`is_instant\`?: \`boolean | undefined\` — If true, update node positions instantly
 
 **Returns**
 
@@ -2076,7 +2076,7 @@ Add new item to the grid
 
 </div>
 
-### \`druid_grid.set_items(nodes: Opaque<"node">[], is_instant: boolean | undefined): druid_grid\`
+### \`druid_grid.set_items(nodes: Opaque<"node">[], is_instant?: boolean | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2085,7 +2085,7 @@ Set new items to the grid. All previous items will be removed
 **Parameters**
 
 - \`nodes\`: \`Opaque<"node">[]\` — The new grid nodes
-- \`is_instant\`: \`boolean | undefined\` — If true, update node positions instantly
+- \`is_instant\`?: \`boolean | undefined\` — If true, update node positions instantly
 
 **Returns**
 
@@ -2093,7 +2093,7 @@ Set new items to the grid. All previous items will be removed
 
 </div>
 
-### \`druid_grid.remove(index: number, shift_policy: number | undefined, is_instant: boolean | undefined): Opaque<"node">\`
+### \`druid_grid.remove(index: number, shift_policy?: number | undefined, is_instant?: boolean | undefined): Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -2102,8 +2102,8 @@ Remove the item from the grid. Note that gui node will be not deleted
 **Parameters**
 
 - \`index\`: \`number\` — The grid node index to remove
-- \`shift_policy\`: \`number | undefined\` — How shift nodes, if required. Default: const.SHIFT.RIGHT
-- \`is_instant\`: \`boolean | undefined\` — If true, update node positions instantly
+- \`shift_policy\`?: \`number | undefined\` — How shift nodes, if required. Default: const.SHIFT.RIGHT
+- \`is_instant\`?: \`boolean | undefined\` — If true, update node positions instantly
 
 **Returns**
 
@@ -2231,7 +2231,7 @@ Set new in_row elements for grid
 
 </div>
 
-### \`druid_grid.set_item_size(width: number | undefined, height: number | undefined): druid_grid\`
+### \`druid_grid.set_item_size(width?: number | undefined, height?: number | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2239,8 +2239,8 @@ Set new node size for grid
 
 **Parameters**
 
-- \`width\`: \`number | undefined\` — The new node width
-- \`height\`: \`number | undefined\` — The new node height
+- \`width\`?: \`number | undefined\` — The new node width
+- \`height\`?: \`number | undefined\` — The new node height
 
 **Returns**
 
@@ -2264,7 +2264,7 @@ Sort grid nodes by custom comparator function
 
 </div>
 
-### \`druid_grid._update(is_instant: boolean | undefined)\`
+### \`druid_grid._update(is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -2272,7 +2272,7 @@ Update grid inner state
 
 **Parameters**
 
-- \`is_instant\`: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
+- \`is_instant\`?: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
 
 </div>
 
@@ -2292,7 +2292,7 @@ Update grid content borders, recalculate min and max values
 
 </div>
 
-### \`druid_grid._update_pos(is_instant: boolean | undefined)\`
+### \`druid_grid._update_pos(is_instant?: boolean | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -2300,7 +2300,7 @@ Update grid nodes position
 
 **Parameters**
 
-- \`is_instant\`: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
+- \`is_instant\`?: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
 
 </div>
 
@@ -2496,7 +2496,7 @@ Scale step on each height adjust step. Default: 0.02
 
 </div>
 
-### \`druid_text.init(node: string | Opaque<"node">, value: string | undefined, adjust_type: druid_text_adjust_type | undefined)\`
+### \`druid_text.init(node: string | Opaque<"node">, value?: string | undefined, adjust_type?: druid_text_adjust_type | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -2505,8 +2505,8 @@ The Text constructor
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — Node name or GUI Text Node itself
-- \`value\`: \`string | undefined\` — Initial text. Default value is node text from GUI scene. Default: nil
-- \`adjust_type\`: \`druid_text_adjust_type | undefined\` — Adjust type for text. By default is "downscale". Options: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
+- \`value\`?: \`string | undefined\` — Initial text. Default value is node text from GUI scene. Default: nil
+- \`adjust_type\`?: \`druid_text_adjust_type | undefined\` — Adjust type for text. By default is "downscale". Options: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
 
 </div>
 
@@ -2522,7 +2522,7 @@ The Text constructor
 
 ### \`druid_text.on_layout_change()\`
 
-### \`druid_text.get_text_size(text: string | undefined): LuaMultiReturn<[number, number]>\`
+### \`druid_text.get_text_size(text?: string | undefined): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
@@ -2530,7 +2530,7 @@ Calculate text width with font with respect to trailing space
 
 **Parameters**
 
-- \`text\`: \`string | undefined\` — The text to calculate the size of, if nil - use current text
+- \`text\`?: \`string | undefined\` — The text to calculate the size of, if nil - use current text
 
 **Returns**
 
@@ -2667,7 +2667,7 @@ Return true, if text with line break
 
 </div>
 
-### \`druid_text.set_text_adjust(adjust_type: druid_text_adjust_type | undefined, minimal_scale: number | undefined): druid_text\`
+### \`druid_text.set_text_adjust(adjust_type?: druid_text_adjust_type | undefined, minimal_scale?: number | undefined): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -2675,8 +2675,8 @@ Set text adjust, refresh the current text visuals, if needed
 
 **Parameters**
 
-- \`adjust_type\`: \`druid_text_adjust_type | undefined\` — The adjust type to set, values: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
-- \`minimal_scale\`: \`number | undefined\` — To remove minimal scale, use \`text:set_minimal_scale(nil)\`, if pass nil - not change minimal scale
+- \`adjust_type\`?: \`druid_text_adjust_type | undefined\` — The adjust type to set, values: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
+- \`minimal_scale\`?: \`number | undefined\` — To remove minimal scale, use \`text:set_minimal_scale(nil)\`, if pass nil - not change minimal scale
 
 **Returns**
 
@@ -2860,7 +2860,7 @@ The current scale of the text
 
 ### \`druid_component_component._uid: number\`
 
-### \`druid_component.set_style<T>(self: T, druid_style: LuaTable | undefined): T\`
+### \`druid_component.set_style<T>(self: T, druid_style?: LuaTable | undefined): T\`
 
 <div class="api-symbol-body">
 
@@ -2869,7 +2869,7 @@ Set component style. Pass nil to clear style
 **Parameters**
 
 - \`self\`: \`T\`
-- \`druid_style\`: \`LuaTable | undefined\`
+- \`druid_style\`?: \`LuaTable | undefined\`
 
 **Returns**
 
@@ -2877,7 +2877,7 @@ Set component style. Pass nil to clear style
 
 </div>
 
-### \`druid_component.set_template<T>(self: T, template: string | undefined): T\`
+### \`druid_component.set_template<T>(self: T, template?: string | undefined): T\`
 
 <div class="api-symbol-body">
 
@@ -2888,7 +2888,7 @@ Parent template will be added automatically if exist.
 **Parameters**
 
 - \`self\`: \`T\`
-- \`template\`: \`string | undefined\`
+- \`template\`?: \`string | undefined\`
 
 **Returns**
 
@@ -2908,7 +2908,7 @@ Get full template name.
 
 </div>
 
-### \`druid_component.set_nodes(nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component\`
+### \`druid_component.set_nodes(nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component\`
 
 <div class="api-symbol-body">
 
@@ -2916,7 +2916,7 @@ Set current component nodes, returned from \`gui.clone_tree\` function.
 
 **Parameters**
 
-- \`nodes\`: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
 
 **Returns**
 
@@ -2952,7 +2952,7 @@ Get component node by node_id. Respect to current template and nodes.
 
 </div>
 
-### \`druid_component.get_druid(template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_instance\`
+### \`druid_component.get_druid(template?: string | undefined, nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_instance\`
 
 <div class="api-symbol-body">
 
@@ -2960,8 +2960,8 @@ Get Druid instance for inner component creation.
 
 **Parameters**
 
-- \`template\`: \`string | undefined\`
-- \`nodes\`: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- \`template\`?: \`string | undefined\`
+- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
 
 **Returns**
 
@@ -3005,7 +3005,7 @@ Get component input priority, the bigger number processed first. Default value: 
 
 </div>
 
-### \`druid_component.set_input_priority(value: number, is_temporary: boolean | undefined): druid_component\`
+### \`druid_component.set_input_priority(value: number, is_temporary?: boolean | undefined): druid_component\`
 
 <div class="api-symbol-body">
 
@@ -3014,7 +3014,7 @@ Set component input priority, the bigger number processed first. Default value: 
 **Parameters**
 
 - \`value\`: \`number\`
-- \`is_temporary\`: \`boolean | undefined\` — If true, the reset input priority will return to previous value
+- \`is_temporary\`?: \`boolean | undefined\` — If true, the reset input priority will return to previous value
 
 **Returns**
 
@@ -3435,14 +3435,14 @@ The position of the cursor
 
 ### \`druid_rich_text_metrics.node_size: Vector3 | undefined\`
 
-### \`druid_rich_text.init(text_node: Opaque<"node"> | string, value: string | undefined)\`
+### \`druid_rich_text.init(text_node: Opaque<"node"> | string, value?: string | undefined)\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
 - \`text_node\`: \`Opaque<"node"> | string\` — The text node to make Rich Text
-- \`value\`: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+- \`value\`?: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
 
 </div>
 
@@ -3458,7 +3458,7 @@ The position of the cursor
 
 </div>
 
-### \`druid_rich_text.set_text(text: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>\`
+### \`druid_rich_text.set_text(text?: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>\`
 
 <div class="api-symbol-body">
 
@@ -3493,7 +3493,7 @@ rich_text:set_text("＜img=texture:image,width,height＞Display image with width
 
 **Parameters**
 
-- \`text\`: \`string | undefined\` — The text to set
+- \`text\`?: \`string | undefined\` — The text to set
 
 **Returns**
 
@@ -3670,7 +3670,7 @@ Color of debug draggable corners
 
 </div>
 
-### \`druid_container.init(node: Opaque<"node">, mode: string, callback: ((self: druid_container, size: Vector3) => void) | undefined)\`
+### \`druid_container.init(node: Opaque<"node">, mode: string, callback?: ((self: druid_container, size: Vector3) => void) | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -3680,7 +3680,7 @@ The Container constructor
 
 - \`node\`: \`Opaque<"node">\` — Gui node
 - \`mode\`: \`string\` — Layout mode
-- \`callback\`: \`((self: druid_container, size: Vector3) => void) | undefined\` — Callback on size changed
+- \`callback\`?: \`((self: druid_container, size: Vector3) => void) | undefined\` — Callback on size changed
 
 </div>
 
@@ -3718,7 +3718,7 @@ Set the pivot of the container
 
 </div>
 
-### \`druid_container.set_size(width: number | undefined, height: number | undefined, anchor_pivot: Opaque<"constant"> | undefined): druid_container\`
+### \`druid_container.set_size(width?: number | undefined, height?: number | undefined, anchor_pivot?: Opaque<"constant"> | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3726,9 +3726,9 @@ Set new size of layout node
 
 **Parameters**
 
-- \`width\`: \`number | undefined\` — The width to set
-- \`height\`: \`number | undefined\` — The height to set
-- \`anchor_pivot\`: \`Opaque<"constant"> | undefined\` — If set will keep the corner position relative to the new size
+- \`width\`?: \`number | undefined\` — The width to set
+- \`height\`?: \`number | undefined\` — The height to set
+- \`anchor_pivot\`?: \`Opaque<"constant"> | undefined\` — If set will keep the corner position relative to the new size
 
 **Returns**
 
@@ -3815,15 +3815,15 @@ Set current size for layout node to fit inside it
 
 ### \`druid_container.on_window_resized()\`
 
-### \`druid_container.add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode: druid_container_mode | undefined, on_resize_callback: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container\`
+### \`druid_container.add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode?: druid_container_mode | undefined, on_resize_callback?: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
 - \`node_or_container\`: \`Opaque<"node"> | string | druid_container | LuaTable\` — The node or container to add
-- \`mode\`: \`druid_container_mode | undefined\` — stretch, fit, stretch_x, stretch_y. Default: Pick from node, "fit" or "stretch"
-- \`on_resize_callback\`: \`((self: Opaque<"userdata">, size: Vector3) => void) | undefined\`
+- \`mode\`?: \`druid_container_mode | undefined\` — stretch, fit, stretch_x, stretch_y. Default: Pick from node, "fit" or "stretch"
+- \`on_resize_callback\`?: \`((self: Opaque<"userdata">, size: Vector3) => void) | undefined\`
 
 **Returns**
 
@@ -3841,13 +3841,13 @@ Set current size for layout node to fit inside it
 
 </div>
 
-### \`druid_container.set_parent_container(parent_container: druid_container | undefined)\`
+### \`druid_container.set_parent_container(parent_container?: druid_container | undefined)\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
-- \`parent_container\`: \`druid_container | undefined\`
+- \`parent_container\`?: \`druid_container | undefined\`
 
 </div>
 
@@ -3895,7 +3895,7 @@ Set node for layout node to fit inside it. Pass nil to reset
 
 </div>
 
-### \`druid_container.set_min_size(min_size_x: number | undefined, min_size_y: number | undefined): druid_container\`
+### \`druid_container.set_min_size(min_size_x?: number | undefined, min_size_y?: number | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3903,8 +3903,8 @@ Set the minimum size of the container
 
 **Parameters**
 
-- \`min_size_x\`: \`number | undefined\` — The minimum size x
-- \`min_size_y\`: \`number | undefined\` — The minimum size y
+- \`min_size_x\`?: \`number | undefined\` — The minimum size x
+- \`min_size_y\`?: \`number | undefined\` — The minimum size y
 
 **Returns**
 
@@ -3912,7 +3912,7 @@ Set the minimum size of the container
 
 </div>
 
-### \`druid_container.set_max_size(max_size_x: number | undefined, max_size_y: number | undefined): druid_container\`
+### \`druid_container.set_max_size(max_size_x?: number | undefined, max_size_y?: number | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -3920,8 +3920,8 @@ Set the maximum size of the container
 
 **Parameters**
 
-- \`max_size_x\`: \`number | undefined\` — The maximum size x
-- \`max_size_y\`: \`number | undefined\` — The maximum size y
+- \`max_size_x\`?: \`number | undefined\` — The maximum size x
+- \`max_size_y\`?: \`number | undefined\` — The maximum size y
 
 **Returns**
 
@@ -4141,7 +4141,7 @@ Return current data from DataList component
 
 </div>
 
-### \`druid_data_list.add(data: LuaTable, index: number | undefined, shift_policy: number | undefined): druid_data_list\`
+### \`druid_data_list.add(data: LuaTable, index?: number | undefined, shift_policy?: number | undefined): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -4150,8 +4150,8 @@ Add element to DataList
 **Parameters**
 
 - \`data\`: \`LuaTable\` — The data to add
-- \`index\`: \`number | undefined\` — The index to add the data at
-- \`shift_policy\`: \`number | undefined\` — The constant from const.SHIFT.*
+- \`index\`?: \`number | undefined\` — The index to add the data at
+- \`shift_policy\`?: \`number | undefined\` — The constant from const.SHIFT.*
 
 **Returns**
 
@@ -4159,7 +4159,7 @@ Add element to DataList
 
 </div>
 
-### \`druid_data_list.remove(index: number | undefined, shift_policy: number | undefined): druid_data_list\`
+### \`druid_data_list.remove(index?: number | undefined, shift_policy?: number | undefined): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -4167,8 +4167,8 @@ Remove element from DataList
 
 **Parameters**
 
-- \`index\`: \`number | undefined\` — The index to remove the data at
-- \`shift_policy\`: \`number | undefined\` — The constant from const.SHIFT.*
+- \`index\`?: \`number | undefined\` — The index to remove the data at
+- \`shift_policy\`?: \`number | undefined\` — The constant from const.SHIFT.*
 
 **Returns**
 
@@ -4176,7 +4176,7 @@ Remove element from DataList
 
 </div>
 
-### \`druid_data_list.remove_by_data(data: LuaTable, shift_policy: number | undefined): druid_data_list\`
+### \`druid_data_list.remove_by_data(data: LuaTable, shift_policy?: number | undefined): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -4185,7 +4185,7 @@ Remove element from DataList by data value
 **Parameters**
 
 - \`data\`: \`LuaTable\` — The data to remove
-- \`shift_policy\`: \`number | undefined\` — The constant from const.SHIFT.*
+- \`shift_policy\`?: \`number | undefined\` — The constant from const.SHIFT.*
 
 **Returns**
 
@@ -4381,7 +4381,7 @@ Time in seconds to keep modificator active after release
 
 </div>
 
-### \`druid_hotkey.init(keys: string[] | string, callback: unknown, callback_argument: unknown | undefined)\`
+### \`druid_hotkey.init(keys: string[] | string, callback: unknown, callback_argument?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4391,7 +4391,7 @@ The Hotkey constructor
 
 - \`keys\`: \`string[] | string\` — The keys to be pressed for trigger callback. Should contains one key and any modificator keys
 - \`callback\`: \`unknown\` — The callback function
-- \`callback_argument\`: \`unknown | undefined\` — The argument to pass into the callback function
+- \`callback_argument\`?: \`unknown | undefined\` — The argument to pass into the callback function
 
 </div>
 
@@ -4405,7 +4405,7 @@ The Hotkey constructor
 
 </div>
 
-### \`druid_hotkey.add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument: unknown | undefined): druid_hotkey\`
+### \`druid_hotkey.add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument?: unknown | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -4414,7 +4414,7 @@ Add hotkey for component callback
 **Parameters**
 
 - \`keys\`: \`string[] | Hash[] | string | Hash\` — that have to be pressed before key pressed to activate
-- \`callback_argument\`: \`unknown | undefined\` — The argument to pass into the callback function
+- \`callback_argument\`?: \`unknown | undefined\` — The argument to pass into the callback function
 
 **Returns**
 
@@ -4472,7 +4472,7 @@ If true, the callback will be triggered on action.repeated
 
 </div>
 
-### \`druid_hotkey.bind_node(node: Opaque<"node"> | undefined): druid_hotkey\`
+### \`druid_hotkey.bind_node(node?: Opaque<"node"> | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -4480,7 +4480,7 @@ If node is provided, the hotkey can be disabled, if the node is disabled
 
 **Parameters**
 
-- \`node\`: \`Opaque<"node"> | undefined\` — The node to bind the hotkey to. Nil to unbind the node
+- \`node\`?: \`Opaque<"node"> | undefined\` — The node to bind the hotkey to. Nil to unbind the node
 
 **Returns**
 
@@ -4568,7 +4568,7 @@ Callback on wrong user input
 
 </div>
 
-### \`druid_input.init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type: Opaque<"constant"> | undefined)\`
+### \`druid_input.init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type?: Opaque<"constant"> | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4576,7 +4576,7 @@ Callback on wrong user input
 
 - \`click_node\`: \`Opaque<"node">\` — Node to enabled input component
 - \`text_node\`: \`Opaque<"node"> | druid_text\` — Text node what will be changed on user input. You can pass text component instead of text node name Text
-- \`keyboard_type\`: \`Opaque<"constant"> | undefined\` — Gui keyboard type for input field
+- \`keyboard_type\`?: \`Opaque<"constant"> | undefined\` — Gui keyboard type for input field
 
 </div>
 
@@ -4714,7 +4714,7 @@ Reset current input selection and return previous value
 
 </div>
 
-### \`druid_input.select_cursor(cursor_index: number | undefined, start_index: number | undefined, end_index: number | undefined): druid_input\`
+### \`druid_input.select_cursor(cursor_index?: number | undefined, start_index?: number | undefined, end_index?: number | undefined): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -4722,9 +4722,9 @@ Set cursor position in input field
 
 **Parameters**
 
-- \`cursor_index\`: \`number | undefined\` — Cursor index for cursor position, if nil - will be set to the end of the text
-- \`start_index\`: \`number | undefined\` — Start index for cursor position, if nil - will be set to the end of the text
-- \`end_index\`: \`number | undefined\` — End index for cursor position, if nil - will be set to the start_index
+- \`cursor_index\`?: \`number | undefined\` — Cursor index for cursor position, if nil - will be set to the end of the text
+- \`start_index\`?: \`number | undefined\` — Start index for cursor position, if nil - will be set to the end of the text
+- \`end_index\`?: \`number | undefined\` — End index for cursor position, if nil - will be set to the start_index
 
 **Returns**
 
@@ -4814,15 +4814,15 @@ The style of the input component
 
 </div>
 
-### \`druid_lang_text.init(node: string | Opaque<"node">, locale_id: string | undefined, adjust_type: string | undefined)\`
+### \`druid_lang_text.init(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined)\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`locale_id\`: \`string | undefined\` — Default locale id or text from node as default. If not provided, will use text from the node
-- \`adjust_type\`: \`string | undefined\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
+- \`locale_id\`?: \`string | undefined\` — Default locale id or text from node as default. If not provided, will use text from the node
+- \`adjust_type\`?: \`string | undefined\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
 
 </div>
 
@@ -4985,7 +4985,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
 
-### \`druid_layout.set_margin(margin_x: number | undefined, margin_y: number | undefined): druid_layout\`
+### \`druid_layout.set_margin(margin_x?: number | undefined, margin_y?: number | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4993,8 +4993,8 @@ Set the margin of the layout
 
 **Parameters**
 
-- \`margin_x\`: \`number | undefined\` — The margin x
-- \`margin_y\`: \`number | undefined\` — The margin y
+- \`margin_x\`?: \`number | undefined\` — The margin x
+- \`margin_y\`?: \`number | undefined\` — The margin y
 
 **Returns**
 
@@ -5002,16 +5002,16 @@ Set the margin of the layout
 
 </div>
 
-### \`druid_layout.set_padding(padding_x: number | undefined, padding_y: number | undefined, padding_z: number | undefined, padding_w: number | undefined): druid_layout\`
+### \`druid_layout.set_padding(padding_x?: number | undefined, padding_y?: number | undefined, padding_z?: number | undefined, padding_w?: number | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
-- \`padding_x\`: \`number | undefined\` — From Left
-- \`padding_y\`: \`number | undefined\` — From Top
-- \`padding_z\`: \`number | undefined\` — From Right
-- \`padding_w\`: \`number | undefined\` — From Bottom
+- \`padding_x\`?: \`number | undefined\` — From Left
+- \`padding_y\`?: \`number | undefined\` — From Top
+- \`padding_z\`?: \`number | undefined\` — From Right
+- \`padding_w\`?: \`number | undefined\` — From Bottom
 
 **Returns**
 
@@ -5124,13 +5124,13 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.refresh_layout(is_instant: boolean | undefined): druid_layout\`
+### \`druid_layout.refresh_layout(is_instant?: boolean | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
-- \`is_instant\`: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
+- \`is_instant\`?: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
 
 **Returns**
 
@@ -5311,7 +5311,7 @@ Minimum step to fill progress bar. Default: 0.005
 
 </div>
 
-### \`druid_progress.init(node: string | Opaque<"node">, key: string, init_value: number | undefined)\`
+### \`druid_progress.init(node: string | Opaque<"node">, key: string, init_value?: number | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5319,7 +5319,7 @@ Minimum step to fill progress bar. Default: 0.005
 
 - \`node\`: \`string | Opaque<"node">\` — Node name or GUI Node itself.
 - \`key\`: \`string\` — Progress bar direction: "x" or "y"
-- \`init_value\`: \`number | undefined\` — Initial value of progress bar (0 to 1). Default: 1
+- \`init_value\`?: \`number | undefined\` — Initial value of progress bar (0 to 1). Default: 1
 
 </div>
 
@@ -5416,7 +5416,7 @@ Set points on progress bar to fire the callback
 
 </div>
 
-### \`druid_progress.to(to: number, callback: unknown | undefined): druid_progress\`
+### \`druid_progress.to(to: number, callback?: unknown | undefined): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -5425,7 +5425,7 @@ Start animation of a progress bar
 **Parameters**
 
 - \`to\`: \`number\` — value between 0..1
-- \`callback\`: \`unknown | undefined\` — Callback on animation ends
+- \`callback\`?: \`unknown | undefined\` — Callback on animation ends
 
 **Returns**
 
@@ -5449,7 +5449,7 @@ Set progress bar max node size
 
 </div>
 
-### \`druid_progress._check_steps(from: number, to: number, exactly: number | undefined)\`
+### \`druid_progress._check_steps(from: number, to: number, exactly?: number | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5457,7 +5457,7 @@ Set progress bar max node size
 
 - \`from\`: \`number\` — The start value
 - \`to\`: \`number\` — The end value
-- \`exactly\`: \`number | undefined\` — The exact value
+- \`exactly\`?: \`number | undefined\` — The exact value
 
 </div>
 
@@ -5511,7 +5511,7 @@ Property for scaling the progress bar
 
 </div>
 
-### \`druid_slider.init(node: Opaque<"node">, end_pos: Vector3, callback: unknown | undefined)\`
+### \`druid_slider.init(node: Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5521,7 +5521,7 @@ The Slider constructor
 
 - \`node\`: \`Opaque<"node">\` — GUI node to drag as a slider
 - \`end_pos\`: \`Vector3\` — The end position of slider, should be on the same axis as the node
-- \`callback\`: \`unknown | undefined\` — On slider change callback
+- \`callback\`?: \`unknown | undefined\` — On slider change callback
 
 </div>
 
@@ -5556,7 +5556,7 @@ The Slider constructor
 
 </div>
 
-### \`druid_slider.set(value: number, is_silent: boolean | undefined): druid_slider\`
+### \`druid_slider.set(value: number, is_silent?: boolean | undefined): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5565,7 +5565,7 @@ Set value for slider
 **Parameters**
 
 - \`value\`: \`number\` — Value from 0 to 1
-- \`is_silent\`: \`boolean | undefined\` — Don't trigger event if true
+- \`is_silent\`?: \`boolean | undefined\` — Don't trigger event if true
 
 **Returns**
 
@@ -5606,7 +5606,7 @@ Adjust the end position of the slider
 
 </div>
 
-### \`druid_slider.set_input_node(input_node: Opaque<"node"> | string | undefined): druid_slider\`
+### \`druid_slider.set_input_node(input_node?: Opaque<"node"> | string | undefined): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5617,7 +5617,7 @@ This function require the Defold version 1.3.0+
 
 **Parameters**
 
-- \`input_node\`: \`Opaque<"node"> | string | undefined\`
+- \`input_node\`?: \`Opaque<"node"> | string | undefined\`
 
 **Returns**
 
@@ -5745,7 +5745,7 @@ If true, trigger on swipe moving, not only release action. Default: false
 
 ### \`druid_swipe.on_input_interrupt()\`
 
-### \`druid_swipe.set_click_zone(zone: Opaque<"node"> | string | undefined)\`
+### \`druid_swipe.set_click_zone(zone?: Opaque<"node"> | string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5753,7 +5753,7 @@ Set the click zone for the swipe, useful for restricting events outside stencil 
 
 **Parameters**
 
-- \`zone\`: \`Opaque<"node"> | string | undefined\` — Gui node
+- \`zone\`?: \`Opaque<"node"> | string | undefined\` — Gui node
 
 </div>
 
@@ -5822,16 +5822,16 @@ The click zone of the swipe
 
 </div>
 
-### \`druid_timer.init(node: Opaque<"node">, seconds_from: number | undefined, seconds_to: number | undefined, callback: unknown | undefined)\`
+### \`druid_timer.init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
 - \`node\`: \`Opaque<"node">\` — Gui text node
-- \`seconds_from\`: \`number | undefined\` — Start timer value in seconds
-- \`seconds_to\`: \`number | undefined\` — End timer value in seconds
-- \`callback\`: \`unknown | undefined\` — Function that triggers when timer value equals to seconds_to
+- \`seconds_from\`?: \`number | undefined\` — Start timer value in seconds
+- \`seconds_to\`?: \`number | undefined\` — End timer value in seconds
+- \`callback\`?: \`unknown | undefined\` — Function that triggers when timer value equals to seconds_to
 
 </div>
 
@@ -5855,7 +5855,7 @@ Set the timer to a specific value
 
 </div>
 
-### \`druid_timer.set_state(is_on: boolean | undefined): druid_timer\`
+### \`druid_timer.set_state(is_on?: boolean | undefined): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -5863,7 +5863,7 @@ Set the timer to a specific value
 
 **Parameters**
 
-- \`is_on\`: \`boolean | undefined\` — Timer enable state
+- \`is_on\`?: \`boolean | undefined\` — Timer enable state
 
 **Returns**
 
@@ -6485,7 +6485,7 @@ Remove all components on late remove step DruidInstance
 
 </div>
 
-### \`druid_instance.new_widget<T extends druid_component>(widget: T, template: string | undefined, nodes: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T\`
+### \`druid_instance.new_widget<T extends druid_component>(widget: T, template?: string | undefined, nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined, ...args: unknown[]): T\`
 
 <div class="api-symbol-body">
 
@@ -6494,8 +6494,8 @@ Create new Druid widget instance
 **Parameters**
 
 - \`widget\`: \`T\` — The widget class to create
-- \`template\`: \`string | undefined\` — The template name used by widget
-- \`nodes\`: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- \`template\`?: \`string | undefined\` — The template name used by widget
+- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
 - \`...args\`: \`unknown\` — Additional arguments to pass to the widget's init function
 
 **Returns**
@@ -6504,7 +6504,7 @@ Create new Druid widget instance
 
 </div>
 
-### \`druid_instance.new_button(node: string | Opaque<"node">, callback: unknown | unknown | undefined, params: unknown | undefined, anim_node: Opaque<"node"> | string | undefined): druid_button\`
+### \`druid_instance.new_button(node: string | Opaque<"node">, callback?: unknown | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -6513,9 +6513,9 @@ Create Button component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`callback\`: \`unknown | unknown | undefined\` — Button callback
-- \`params\`: \`unknown | undefined\` — Button callback params
-- \`anim_node\`: \`Opaque<"node"> | string | undefined\` — Button anim node (node, if not provided)
+- \`callback\`?: \`unknown | unknown | undefined\` — Button callback
+- \`params\`?: \`unknown | undefined\` — Button callback params
+- \`anim_node\`?: \`Opaque<"node"> | string | undefined\` — Button anim node (node, if not provided)
 
 **Returns**
 
@@ -6539,7 +6539,7 @@ Create Blocker component
 
 </div>
 
-### \`druid_instance.new_back_handler(callback: unknown | unknown | undefined, params: unknown | undefined): druid_back_handler\`
+### \`druid_instance.new_back_handler(callback?: unknown | unknown | undefined, params?: unknown | undefined): druid_back_handler\`
 
 <div class="api-symbol-body">
 
@@ -6547,8 +6547,8 @@ Create BackHandler component
 
 **Parameters**
 
-- \`callback\`: \`unknown | unknown | undefined\` — The callback(self, custom_args) to call on back event
-- \`params\`: \`unknown | undefined\` — Callback argument
+- \`callback\`?: \`unknown | unknown | undefined\` — The callback(self, custom_args) to call on back event
+- \`params\`?: \`unknown | undefined\` — Callback argument
 
 **Returns**
 
@@ -6556,7 +6556,7 @@ Create BackHandler component
 
 </div>
 
-### \`druid_instance.new_hover(node: string | Opaque<"node">, on_hover_callback: unknown | undefined, on_mouse_hover_callback: unknown | undefined): druid_hover\`
+### \`druid_instance.new_hover(node: string | Opaque<"node">, on_hover_callback?: unknown | undefined, on_mouse_hover_callback?: unknown | undefined): druid_hover\`
 
 <div class="api-symbol-body">
 
@@ -6565,8 +6565,8 @@ Create Hover component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`on_hover_callback\`: \`unknown | undefined\` — Hover callback
-- \`on_mouse_hover_callback\`: \`unknown | undefined\` — Mouse hover callback
+- \`on_hover_callback\`?: \`unknown | undefined\` — Hover callback
+- \`on_mouse_hover_callback\`?: \`unknown | undefined\` — Mouse hover callback
 
 **Returns**
 
@@ -6574,7 +6574,7 @@ Create Hover component
 
 </div>
 
-### \`druid_instance.new_text(node: string | Opaque<"node"> | druid_text, value: string | undefined, adjust_type: string | undefined): druid_text\`
+### \`druid_instance.new_text(node: string | Opaque<"node"> | druid_text, value?: string | undefined, adjust_type?: string | undefined): druid_text\`
 
 <div class="api-symbol-body">
 
@@ -6583,8 +6583,8 @@ Create Text component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node"> | druid_text\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`value\`: \`string | undefined\` — Initial text. Default value is node text from GUI scene.
-- \`adjust_type\`: \`string | undefined\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
+- \`value\`?: \`string | undefined\` — Initial text. Default value is node text from GUI scene.
+- \`adjust_type\`?: \`string | undefined\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
 
 **Returns**
 
@@ -6592,7 +6592,7 @@ Create Text component
 
 </div>
 
-### \`druid_instance.new_grid(parent_node: string | Opaque<"node">, item: string | Opaque<"node">, in_row: number | undefined): druid_grid\`
+### \`druid_instance.new_grid(parent_node: string | Opaque<"node">, item: string | Opaque<"node">, in_row?: number | undefined): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -6602,7 +6602,7 @@ Create Grid component
 
 - \`parent_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Parent of all Grid items.
 - \`item\`: \`string | Opaque<"node">\` — Item prefab. Required to get grid's item size. Can be adjusted separately.
-- \`in_row\`: \`number | undefined\` — How many nodes can be placed in a row
+- \`in_row\`?: \`number | undefined\` — How many nodes can be placed in a row
 
 **Returns**
 
@@ -6627,7 +6627,7 @@ Create Scroll component
 
 </div>
 
-### \`druid_instance.new_drag(node: string | Opaque<"node">, on_drag_callback: unknown | undefined): druid_drag\`
+### \`druid_instance.new_drag(node: string | Opaque<"node">, on_drag_callback?: unknown | undefined): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -6636,7 +6636,7 @@ Create Drag component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`on_drag_callback\`: \`unknown | undefined\` — Callback for on_drag_event(self, dx, dy)
+- \`on_drag_callback\`?: \`unknown | undefined\` — Callback for on_drag_event(self, dx, dy)
 
 **Returns**
 
@@ -6644,7 +6644,7 @@ Create Drag component
 
 </div>
 
-### \`druid_instance.new_swipe(node: string | Opaque<"node">, on_swipe_callback: unknown | undefined): druid_swipe\`
+### \`druid_instance.new_swipe(node: string | Opaque<"node">, on_swipe_callback?: unknown | undefined): druid_swipe\`
 
 <div class="api-symbol-body">
 
@@ -6653,7 +6653,7 @@ Create Swipe component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`on_swipe_callback\`: \`unknown | undefined\` — Swipe callback for on_swipe_end event
+- \`on_swipe_callback\`?: \`unknown | undefined\` — Swipe callback for on_swipe_end event
 
 **Returns**
 
@@ -6661,7 +6661,7 @@ Create Swipe component
 
 </div>
 
-### \`druid_instance.new_lang_text(node: string | Opaque<"node">, locale_id: string | undefined, adjust_type: string | undefined): druid_lang_text\`
+### \`druid_instance.new_lang_text(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -6670,8 +6670,8 @@ Create LangText component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`locale_id\`: \`string | undefined\` — Default locale id or text from node as default
-- \`adjust_type\`: \`string | undefined\` — Adjust type for text node. Default: "downscale"
+- \`locale_id\`?: \`string | undefined\` — Default locale id or text from node as default
+- \`adjust_type\`?: \`string | undefined\` — Adjust type for text node. Default: "downscale"
 
 **Returns**
 
@@ -6679,7 +6679,7 @@ Create LangText component
 
 </div>
 
-### \`druid_instance.new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback: unknown | undefined): druid_slider\`
+### \`druid_instance.new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -6689,7 +6689,7 @@ Create Slider component
 
 - \`pin_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
 - \`end_pos\`: \`Vector3\` — The end position of slider
-- \`callback\`: \`unknown | undefined\` — On slider change callback
+- \`callback\`?: \`unknown | undefined\` — On slider change callback
 
 **Returns**
 
@@ -6697,7 +6697,7 @@ Create Slider component
 
 </div>
 
-### \`druid_instance.new_input(click_node: string | Opaque<"node">, text_node: string | Opaque<"node"> | druid_text, keyboard_type: number | undefined): druid_input\`
+### \`druid_instance.new_input(click_node: string | Opaque<"node">, text_node: string | Opaque<"node"> | druid_text, keyboard_type?: number | undefined): druid_input\`
 
 <div class="api-symbol-body">
 
@@ -6707,7 +6707,7 @@ Create Input component
 
 - \`click_node\`: \`string | Opaque<"node">\` — Button node to enable input component
 - \`text_node\`: \`string | Opaque<"node"> | druid_text\` — Text node that will be changed on user input
-- \`keyboard_type\`: \`number | undefined\` — Gui keyboard type for input field
+- \`keyboard_type\`?: \`number | undefined\` — Gui keyboard type for input field
 
 **Returns**
 
@@ -6733,7 +6733,7 @@ Create DataList component
 
 </div>
 
-### \`druid_instance.new_timer(node: string | Opaque<"node">, seconds_from: number | undefined, seconds_to: number | undefined, callback: unknown | undefined): druid_timer\`
+### \`druid_instance.new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -6742,9 +6742,9 @@ Create Timer component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — Gui text node
-- \`seconds_from\`: \`number | undefined\` — Start timer value in seconds
-- \`seconds_to\`: \`number | undefined\` — End timer value in seconds
-- \`callback\`: \`unknown | undefined\` — Function on timer end
+- \`seconds_from\`?: \`number | undefined\` — Start timer value in seconds
+- \`seconds_to\`?: \`number | undefined\` — End timer value in seconds
+- \`callback\`?: \`unknown | undefined\` — Function on timer end
 
 **Returns**
 
@@ -6752,7 +6752,7 @@ Create Timer component
 
 </div>
 
-### \`druid_instance.new_progress(node: string | Opaque<"node">, key: string, init_value: number | undefined): druid_progress\`
+### \`druid_instance.new_progress(node: string | Opaque<"node">, key: string, init_value?: number | undefined): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -6762,7 +6762,7 @@ Create Progress component
 
 - \`node\`: \`string | Opaque<"node">\` — Progress bar fill node or node name
 - \`key\`: \`string\` — Progress bar direction: "x" or "y"
-- \`init_value\`: \`number | undefined\` — Initial value of progress bar. Default: 1
+- \`init_value\`?: \`number | undefined\` — Initial value of progress bar. Default: 1
 
 **Returns**
 
@@ -6770,7 +6770,7 @@ Create Progress component
 
 </div>
 
-### \`druid_instance.new_layout(node: string | Opaque<"node">, mode: string | undefined): druid_layout\`
+### \`druid_instance.new_layout(node: string | Opaque<"node">, mode?: string | undefined): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -6779,7 +6779,7 @@ Create Layout component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
-- \`mode\`: \`string | undefined\` — vertical|horizontal|horizontal_wrap. Default: horizontal
+- \`mode\`?: \`string | undefined\` — vertical|horizontal|horizontal_wrap. Default: horizontal
 
 **Returns**
 
@@ -6787,7 +6787,7 @@ Create Layout component
 
 </div>
 
-### \`druid_instance.new_container(node: string | Opaque<"node">, mode: druid_container_mode | undefined, callback: ((self: druid_container, size: Vector3) => void) | undefined): druid_container\`
+### \`druid_instance.new_container(node: string | Opaque<"node">, mode?: druid_container_mode | undefined, callback?: ((self: druid_container, size: Vector3) => void) | undefined): druid_container\`
 
 <div class="api-symbol-body">
 
@@ -6796,8 +6796,8 @@ Create Container component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
-- \`mode\`: \`druid_container_mode | undefined\` — Layout mode. Default Fit or Stretch depends from node adjust mode from GUI scene
-- \`callback\`: \`((self: druid_container, size: Vector3) => void) | undefined\` — Callback on size changed
+- \`mode\`?: \`druid_container_mode | undefined\` — Layout mode. Default Fit or Stretch depends from node adjust mode from GUI scene
+- \`callback\`?: \`((self: druid_container, size: Vector3) => void) | undefined\` — Callback on size changed
 
 **Returns**
 
@@ -6805,7 +6805,7 @@ Create Container component
 
 </div>
 
-### \`druid_instance.new_hotkey(keys_array: string | string[], callback: unknown | unknown | undefined, callback_argument: unknown | undefined): druid_hotkey\`
+### \`druid_instance.new_hotkey(keys_array: string | string[], callback?: unknown | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -6814,8 +6814,8 @@ Create Hotkey component
 **Parameters**
 
 - \`keys_array\`: \`string | string[]\` — Keys for trigger action. Should contains one action key and any amount of modificator keys
-- \`callback\`: \`unknown | unknown | undefined\` — The callback function
-- \`callback_argument\`: \`unknown | undefined\` — The argument to pass into the callback function
+- \`callback\`?: \`unknown | unknown | undefined\` — The callback function
+- \`callback_argument\`?: \`unknown | undefined\` — The argument to pass into the callback function
 
 **Returns**
 
@@ -6823,7 +6823,7 @@ Create Hotkey component
 
 </div>
 
-### \`druid_instance.new_rich_text(text_node: string | Opaque<"node">, value: string | undefined): druid_rich_text\`
+### \`druid_instance.new_rich_text(text_node: string | Opaque<"node">, value?: string | undefined): druid_rich_text\`
 
 <div class="api-symbol-body">
 
@@ -6832,7 +6832,7 @@ Create RichText component.
 **Parameters**
 
 - \`text_node\`: \`string | Opaque<"node">\` — The text node to make Rich Text
-- \`value\`: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+- \`value\`?: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
 
 **Returns**
 
@@ -6840,7 +6840,7 @@ Create RichText component.
 
 </div>
 
-### \`druid_instance.new_rich_input(template: string, nodes: LuaTable | undefined): druid_rich_input\`
+### \`druid_instance.new_rich_input(template: string, nodes?: LuaTable | undefined): druid_rich_input\`
 
 <div class="api-symbol-body">
 
@@ -6850,7 +6850,7 @@ As a template please check rich_input.gui layout.
 **Parameters**
 
 - \`template\`: \`string\` — The template string name
-- \`nodes\`: \`LuaTable | undefined\` — Nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
+- \`nodes\`?: \`LuaTable | undefined\` — Nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
 
 **Returns**
 

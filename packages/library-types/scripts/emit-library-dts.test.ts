@@ -374,6 +374,107 @@ test("emits a bare generic param when the constraint resolves to unknown, not <T
   expect(out).not.toContain("extends unknown");
 });
 
+test("renders a trailing run of nil-bearing params as optional, stopping at the first required from the right", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "f",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "a",
+            types: ["string|nil"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+          { name: "b", types: ["string"], doc: "", isOptional: false, isVararg: false },
+          {
+            name: "c",
+            types: ["string|nil"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain(
+    "export function f(this: void, a: string | undefined, b: string, c?: string | undefined): void;",
+  );
+});
+
+test("a trailing vararg does not block the preceding nil-bearing run from being optional", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "g",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "a",
+            types: ["string|nil"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+          { name: "...", types: ["number"], doc: "", isOptional: false, isVararg: true },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain(
+    "export function g(this: void, a?: string | undefined, ...args: number[]): void;",
+  );
+});
+
+test("renders each interface @overload as a call signature line inside the interface block", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "widget",
+        generics: [],
+        fields: [],
+        methods: [],
+        brief: "",
+        overloads: [
+          { type: "fun(vararg:any): any|nil", doc: "Trigger it." },
+          { type: "fun(): nil", doc: "" },
+        ],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("(vararg: unknown): unknown | undefined;");
+  expect(out).toContain("(): undefined;");
+  // The call signatures live inside the interface block, after any members.
+  expect(out).toMatch(
+    /interface widget \{[\s\S]*\(vararg: unknown\): unknown \| undefined;[\s\S]*\}/,
+  );
+});
+
 const EMIT_TARGETS = readLualsTargets(join(import.meta.dir, "..")).map(
   (target) => [target.namespace, target] as const,
 );

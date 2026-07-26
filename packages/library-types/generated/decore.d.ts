@@ -129,12 +129,12 @@ declare module 'decore.decore' {
 		/**
 		 * Processes a specified event, returning the list of events and optionally calling callback with the full list.
 		 */
-		process(event_name: Hash | string, callback: ((events: unknown[]) => void) | ((context: unknown, events: unknown[]) => void) | undefined, context: unknown | undefined): unknown[] | undefined;
+		process(event_name: Hash | string, callback?: ((events: unknown[]) => void) | ((context: unknown, events: unknown[]) => void) | undefined, context?: unknown | undefined): unknown[] | undefined;
 		process_all(): void;
 		/**
 		 * You can set the merge policy for an event. This is useful when you want to merge events of the same type.
 		 */
-		set_merge_policy(event_name: string, merge_callback: ((new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean) | undefined): void;
+		set_merge_policy(event_name: string, merge_callback?: ((new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean) | undefined): void;
 		clear_events(): void;
 		stash_to_events(): void;
 		get_events(): void;
@@ -154,15 +154,15 @@ declare module 'decore.decore' {
 	/**
 	 * Add window event to the world event bus
 	 */
-	export function on_message(this: void, world: world, message_id: Hash, message: LuaTable | undefined, sender: Url | undefined): void;
-	export function system<T>(this: void, system_module: T, system_id: string, require_all_filters: string | string[] | undefined): T;
-	export function processing_system<T>(this: void, system_module: T, system_id: string, require_all_filters: string | string[] | undefined): T;
-	export function sorted_system<T>(this: void, system_module: T, system_id: string, require_all_filters: string | string[] | undefined): T;
-	export function sorted_processing_system<T>(this: void, system_module: T, system_id: string, require_all_filters: string | string[] | undefined): T;
+	export function on_message(this: void, world: world, message_id: Hash, message?: LuaTable | undefined, sender?: Url | undefined): void;
+	export function system<T>(this: void, system_module: T, system_id: string, require_all_filters?: string | string[] | undefined): T;
+	export function processing_system<T>(this: void, system_module: T, system_id: string, require_all_filters?: string | string[] | undefined): T;
+	export function sorted_system<T>(this: void, system_module: T, system_id: string, require_all_filters?: string | string[] | undefined): T;
+	export function sorted_processing_system<T>(this: void, system_module: T, system_id: string, require_all_filters?: string | string[] | undefined): T;
 	/**
 	 * Register entity to create it with `create_prefab` function
 	 */
-	export function register_entity(this: void, entity_id: string, entity_data: LuaTable, pack_id: string | undefined): void;
+	export function register_entity(this: void, entity_id: string, entity_data: LuaTable, pack_id?: string | undefined): void;
 	/**
 	 * Add entities pack to decore entities
 	 * If entities pack with same id already loaded, do nothing.
@@ -180,11 +180,11 @@ declare module 'decore.decore' {
 	/**
 	 * Create new entity instance from prefab
 	 */
-	export function create_prefab(this: void, prefab_id: string | Hash | undefined, pack_id: string | undefined, components: LuaTable<string, unknown> | undefined): entity;
+	export function create_prefab(this: void, prefab_id?: string | Hash | undefined, pack_id?: string | undefined, components?: LuaTable<string, unknown> | undefined): entity;
 	/**
 	 * Register component to decore components
 	 */
-	export function register_component(this: void, component_id: string, component_data: LuaTable | string | number | boolean, pack_id: string | undefined): void;
+	export function register_component(this: void, component_id: string, component_data: LuaTable | string | number | boolean, pack_id?: string | undefined): void;
 	/**
 	 * Register components pack to decore components
 	 */
@@ -196,25 +196,25 @@ declare module 'decore.decore' {
 	/**
 	 * Return new component instance from prefab
 	 */
-	export function create_component(this: void, component_id: string, component_pack_id: string | undefined): unknown | undefined;
+	export function create_component(this: void, component_id: string, component_pack_id?: string | undefined): unknown | undefined;
 	/**
 	 * Add component to entity.
 	 * If component not exists, it will be created with default values
 	 * If component already exists, it will be merged with the new data
 	 * To refresh system filters, call world:addEntity(entity) after this function
 	 */
-	export function apply_component(this: void, entity: entity, component_id: string, component_data: unknown | undefined): entity;
+	export function apply_component(this: void, entity: entity, component_id: string, component_data?: unknown | undefined): entity;
 	/**
 	 * Add components to entity
 	 * To refresh system filters, call world:addEntity(entity) after this function
 	 */
-	export function apply_components(this: void, entity: entity, components: LuaTable<string, unknown> | undefined): entity;
+	export function apply_components(this: void, entity: entity, components?: LuaTable<string, unknown> | undefined): entity;
 	export function get_entity_by_id(this: void, world: world, id: number): entity | undefined;
 	/**
 	 * Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.
 	 * It looks for component_id in entity and entityToChange tables
 	 */
-	export function find_entities(this: void, world: world, component_id: string, component_value: unknown | undefined): entity[];
+	export function find_entities(this: void, world: world, component_id: string, component_value?: unknown | undefined): entity[];
 	/**
 	 * Log all loaded packs for entities, components and worlds
 	 */
@@ -223,6 +223,6 @@ declare module 'decore.decore' {
 	 * Log all loaded systems
 	 */
 	export function print_loaded_systems_debug_info(this: void, world: world): void;
-	export function set_logger(this: void, logger_instance: decore_logger | LuaTable | undefined): void;
-	export function get_logger(this: void, name: string | undefined, level: string | undefined): decore_logger;
+	export function set_logger(this: void, logger_instance?: decore_logger | LuaTable | undefined): void;
+	export function get_logger(this: void, name: string | undefined, level?: string | undefined): decore_logger;
 }

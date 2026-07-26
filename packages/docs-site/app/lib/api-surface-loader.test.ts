@@ -215,13 +215,13 @@ describe("loadApiSurface — druid library page", () => {
     if (!druid) throw new Error("druid page missing");
     const byName = new Map(apiModuleSymbols(druid).map((s) => [s.name, s.signature]));
     expect(byName.get("new")).toBe(
-      "new(context: LuaTable, style: LuaTable | undefined): druid_instance",
+      "new(context: LuaTable, style?: LuaTable | undefined): druid_instance",
     );
     expect(byName.get("get_widget")).toBe(
-      "get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params: unknown | undefined): T",
+      "get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined): T",
     );
     expect(byName.get("druid_button.set_enabled")).toBe(
-      "druid_button.set_enabled(state: boolean | undefined): druid_button",
+      "druid_button.set_enabled(state?: boolean | undefined): druid_button",
     );
   });
 
@@ -237,7 +237,7 @@ describe("loadApiSurface — druid library page", () => {
       "druid_lang_text.format(...args: string[]): druid_lang_text",
     );
     expect(byName.get("druid_text.get_text_size")).toBe(
-      "druid_text.get_text_size(text: string | undefined): LuaMultiReturn<[number, number]>",
+      "druid_text.get_text_size(text?: string | undefined): LuaMultiReturn<[number, number]>",
     );
   });
 });
