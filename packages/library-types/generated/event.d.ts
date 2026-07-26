@@ -104,8 +104,8 @@ declare module 'event.event' {
 		cancellation: promise_cancelled_context;
 		on_resolve: event;
 		on_reject: event;
-		_tail: promise | undefined;
-		_cancel_children: LuaTable<promise, boolean> | undefined;
+		_tail?: promise | undefined;
+		_cancel_children?: LuaTable<promise, boolean> | undefined;
 		/**
 		 * Attach resolve and reject handlers to the promise.
 		 * Returns a new promise that will be resolved or rejected based on the handlers' return values.

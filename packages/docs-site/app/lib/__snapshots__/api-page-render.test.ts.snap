@@ -63,7 +63,7 @@ Create a new Druid instance and adjust the Druid settings here.
 - [\`register_druid_as_widget(druid: druid_instance)\`](#register_druid_as_widgetdruid-druid_instance)
 - [\`unregister_druid_as_widget()\`](#unregister_druid_as_widget)
 - [\`set_logger(logger_instance?: druid_logger | LuaTable | undefined)\`](#set_loggerlogger_instance-druid_logger--luatable--undefined)
-- [\`get_logger(name: string | undefined, level?: string | undefined): druid_logger\`](#get_loggername-string--undefined-level-string--undefined-druid_logger)
+- [\`get_logger(name?: string | undefined, level?: string | undefined): druid_logger\`](#get_loggername-string--undefined-level-string--undefined-druid_logger)
 
 </div>
 
@@ -222,13 +222,13 @@ Should be called on final, where druid instance is destroyed.
 
 </div>
 
-### \`get_logger(name: string | undefined, level?: string | undefined): druid_logger\`
+### \`get_logger(name?: string | undefined, level?: string | undefined): druid_logger\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
-- \`name\`: \`string | undefined\`
+- \`name\`?: \`string | undefined\`
 - \`level\`?: \`string | undefined\`
 
 **Returns**
@@ -239,7 +239,7 @@ Should be called on final, where druid instance is destroyed.
 
 ## Types
 
-### \`druid_back_handler.init(callback: unknown | undefined, params: unknown | undefined)\`
+### \`druid_back_handler.init(callback?: unknown | undefined, params?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -247,8 +247,8 @@ The Back Handler constructor
 
 **Parameters**
 
-- \`callback\`: \`unknown | undefined\` — The callback to call when the back handler is triggered
-- \`params\`: \`unknown | undefined\` — Custom args to pass in the callback
+- \`callback\`?: \`unknown | undefined\` — The callback to call when the back handler is triggered
+- \`params\`?: \`unknown | undefined\` — Custom args to pass in the callback
 
 </div>
 
@@ -4625,7 +4625,7 @@ Replace selected text with new text
 
 </div>
 
-### \`druid_input.set_text(input_text: string | undefined)\`
+### \`druid_input.set_text(input_text?: string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4633,7 +4633,7 @@ Set text for input field
 
 **Parameters**
 
-- \`input_text\`: \`string | undefined\` — The string to apply for input field, if nil - will be set to empty string
+- \`input_text\`?: \`string | undefined\` — The string to apply for input field, if nil - will be set to empty string
 
 </div>
 
