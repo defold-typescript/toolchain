@@ -174,6 +174,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("tweener").authoredHere).toBe(true);
     expect(meta("tweener").authorUrl).toBe("https://github.com/Insality/defold-tweener");
   });
+
+  test("attributes event to Insality/defold-event as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("event").authoredHere).toBe(true);
+    expect(meta("event").authorUrl).toBe("https://github.com/Insality/defold-event");
+  });
 });
 
 describe("loadLibraryProvenance — script_api-sourced libraries", () => {

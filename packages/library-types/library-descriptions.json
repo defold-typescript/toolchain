@@ -4,7 +4,6 @@
   "decore": "Defold ECS Data Manager",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
-  "defold-event": "Cross-Context Defold Event System",
   "defold-input": "Cross-platform input handling for Defold: keyboard, mouse, gamepad, touch, and on-screen controls.",
   "defold-lang": "Localization helpers for Defold: string tables, pluralization, and locale fallback.",
   "defold-log": "Logger with Performance Metrics for Defold",

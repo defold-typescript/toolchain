@@ -491,6 +491,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the migrated event page pins to Insality/defold-event, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const event = pages.find((p) => p.namespace === "event");
+    expect(event).toBeDefined();
+    if (!event) return;
+    expect(event.category).toBe("library");
+    const md = apiPageMarkdown(event, apiLinkify(pages));
+    expect(md).toContain("[Insality/defold-event](https://github.com/Insality/defold-event)");
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("the migrated bridge page pins to Playgama/bridge-defold, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const bridge = pages.find((p) => p.namespace === "bridge");
