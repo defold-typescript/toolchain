@@ -446,6 +446,116 @@ test("a trailing vararg does not block the preceding nil-bearing run from being 
   );
 });
 
+test("renders trailing type-suffix nil-bearing params optional and a nilable field with a `?`", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "opts",
+        generics: [],
+        brief: "",
+        methods: [],
+        fields: [
+          { name: "loader", types: ["function|nil"], doc: "", isOptional: true },
+          { name: "id", types: ["string"], doc: "", isOptional: false },
+        ],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "h",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "a",
+            types: ["string?"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+          {
+            name: "b",
+            types: ["function?"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+        ],
+        returns: [],
+      },
+      {
+        name: "both",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "cb",
+            types: ["function|nil"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+          {
+            name: "params",
+            types: ["any?"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("loader?: unknown | undefined;");
+  expect(out).toContain("id: string;");
+  expect(out).toContain(
+    "export function h(this: void, a?: string | undefined, b?: unknown | undefined): void;",
+  );
+  // The back_handler shape: two adjacent trailing nil-bearing params are both optional.
+  expect(out).toContain(
+    "export function both(this: void, cb?: unknown | undefined, params?: unknown | undefined): void;",
+  );
+});
+
+test("a nil-bearing param that precedes a required one stays `| undefined` with no `?` (contiguity)", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "pre",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "a",
+            types: ["string?"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+          { name: "b", types: ["string"], doc: "", isOptional: false, isVararg: false },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("export function pre(this: void, a: string | undefined, b: string): void;");
+});
+
 test("renders each interface @overload as a call signature line inside the interface block", () => {
   const model: LibraryModel = {
     interfaces: [

@@ -16,11 +16,11 @@ declare module 'druid.druid' {
 	 */
 	interface druid_back_handler extends druid_component {
 		on_back: unknown;
-		params: unknown | undefined;
+		params?: unknown | undefined;
 		/**
 		 * The Back Handler constructor
 		 */
-		init(callback: unknown | undefined, params: unknown | undefined): void;
+		init(callback?: unknown | undefined, params?: unknown | undefined): void;
 		on_input(action_id: Hash, action: LuaTable): boolean;
 	}
 	/**
@@ -56,15 +56,15 @@ declare module 'druid.druid' {
 	 * You can override this component styles params in Druid styles table or create your own style
 	 */
 	interface druid_button_style {
-		LONGTAP_TIME: number | undefined;
-		AUTOHOLD_TRIGGER: number | undefined;
-		DOUBLETAP_TIME: number | undefined;
-		on_init: ((self: unknown) => void) | undefined;
-		on_click: ((self: unknown, node: unknown) => void) | undefined;
-		on_click_disabled: ((self: unknown, node: unknown) => void) | undefined;
-		on_hover: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined;
-		on_mouse_hover: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined;
-		on_set_enabled: ((self: unknown, node: unknown, enabled_state: unknown) => void) | undefined;
+		LONGTAP_TIME?: number | undefined;
+		AUTOHOLD_TRIGGER?: number | undefined;
+		DOUBLETAP_TIME?: number | undefined;
+		on_init?: ((self: unknown) => void) | undefined;
+		on_click?: ((self: unknown, node: unknown) => void) | undefined;
+		on_click_disabled?: ((self: unknown, node: unknown) => void) | undefined;
+		on_hover?: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined;
+		on_mouse_hover?: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined;
+		on_set_enabled?: ((self: unknown, node: unknown, enabled_state: unknown) => void) | undefined;
 	}
 	/**
 	 * Basic Druid input component. Handle input on node and provide different callbacks on touch events.
@@ -97,7 +97,7 @@ declare module 'druid.druid' {
 		anim_node: Opaque<"node">;
 		params: unknown;
 		hover: druid_hover;
-		click_zone: Opaque<"node"> | undefined;
+		click_zone?: Opaque<"node"> | undefined;
 		start_scale: Vector3;
 		start_pos: Vector3;
 		disabled: boolean;
@@ -199,7 +199,7 @@ declare module 'druid.druid' {
 		on_drag: unknown;
 		on_drag_end: unknown;
 		style: druid_drag_style;
-		click_zone: Opaque<"node"> | undefined;
+		click_zone?: Opaque<"node"> | undefined;
 		is_touch: boolean;
 		is_drag: boolean;
 		can_x: boolean;
@@ -255,8 +255,8 @@ declare module 'druid.druid' {
 		_on_touch_release(action_id: Hash, action: LuaTable, touch: LuaTable): void;
 	}
 	interface druid_hover_style {
-		ON_HOVER_CURSOR: string | number | undefined;
-		ON_MOUSE_HOVER_CURSOR: string | number | undefined;
+		ON_HOVER_CURSOR?: string | number | undefined;
+		ON_MOUSE_HOVER_CURSOR?: string | number | undefined;
 	}
 	/**
 	 * The component for handling hover events on a node
@@ -267,9 +267,9 @@ declare module 'druid.druid' {
 		on_mouse_hover: unknown;
 		style: druid_hover_style;
 		click_zone: Opaque<"node">;
-		_is_hovered: boolean | undefined;
-		_is_mouse_hovered: boolean | undefined;
-		_is_enabled: boolean | undefined;
+		_is_hovered?: boolean | undefined;
+		_is_mouse_hovered?: boolean | undefined;
+		_is_enabled?: boolean | undefined;
 		_is_mobile: boolean;
 		/**
 		 * The constructor for the hover component
@@ -316,18 +316,18 @@ declare module 'druid.druid' {
 	 * Scroll style parameters
 	 */
 	interface druid_scroll_style {
-		FRICT: number | undefined;
-		FRICT_HOLD: number | undefined;
-		INERT_THRESHOLD: number | undefined;
-		INERT_SPEED: number | undefined;
-		POINTS_DEADZONE: number | undefined;
-		BACK_SPEED: number | undefined;
-		ANIM_SPEED: number | undefined;
-		EXTRA_STRETCH_SIZE: number | undefined;
-		SMALL_CONTENT_SCROLL: boolean | undefined;
-		WHEEL_SCROLL_SPEED: number | undefined;
-		WHEEL_SCROLL_INVERTED: boolean | undefined;
-		WHEEL_SCROLL_BY_INERTION: boolean | undefined;
+		FRICT?: number | undefined;
+		FRICT_HOLD?: number | undefined;
+		INERT_THRESHOLD?: number | undefined;
+		INERT_SPEED?: number | undefined;
+		POINTS_DEADZONE?: number | undefined;
+		BACK_SPEED?: number | undefined;
+		ANIM_SPEED?: number | undefined;
+		EXTRA_STRETCH_SIZE?: number | undefined;
+		SMALL_CONTENT_SCROLL?: boolean | undefined;
+		WHEEL_SCROLL_SPEED?: number | undefined;
+		WHEEL_SCROLL_INVERTED?: boolean | undefined;
+		WHEEL_SCROLL_BY_INERTION?: boolean | undefined;
 	}
 	/**
 	 * Basic Druid scroll component. Handles all scrolling behavior in Druid GUI.
@@ -350,7 +350,7 @@ declare module 'druid.druid' {
 	 */
 	interface druid_scroll extends druid_component {
 		node: Opaque<"node">;
-		click_zone: Opaque<"node"> | undefined;
+		click_zone?: Opaque<"node"> | undefined;
 		on_scroll: unknown;
 		on_scroll_to: unknown;
 		on_point_scroll: unknown;
@@ -363,7 +363,7 @@ declare module 'druid.druid' {
 		available_pos: Vector4;
 		available_size: Vector3;
 		drag: druid_drag;
-		selected: number | undefined;
+		selected?: number | undefined;
 		is_animate: boolean;
 		style: druid_scroll_style;
 		_is_inert: boolean;
@@ -489,8 +489,8 @@ declare module 'druid.druid' {
 		_get_size_vector(vector: Vector4): Vector3;
 	}
 	interface druid_grid_style {
-		IS_DYNAMIC_NODE_POSES: boolean | undefined;
-		IS_ALIGN_LAST_ROW: boolean | undefined;
+		IS_DYNAMIC_NODE_POSES?: boolean | undefined;
+		IS_ALIGN_LAST_ROW?: boolean | undefined;
 	}
 	/**
 	 * The component for manage the nodes position in the grid with various options
@@ -630,10 +630,10 @@ declare module 'druid.druid' {
 		_extend_border(border: Vector4, pos: Vector3, size: Vector3, pivot: Vector3): void;
 	}
 	interface druid_text_style {
-		TRIM_POSTFIX: string | undefined;
-		DEFAULT_ADJUST: string | undefined;
-		ADJUST_STEPS: number | undefined;
-		ADJUST_SCALE_DELTA: number | undefined;
+		TRIM_POSTFIX?: string | undefined;
+		DEFAULT_ADJUST?: string | undefined;
+		ADJUST_STEPS?: number | undefined;
+		ADJUST_SCALE_DELTA?: number | undefined;
 	}
 	/**
 	 * Basic Druid text component. Text components by default have the text size adjusting.
@@ -744,12 +744,12 @@ declare module 'druid.druid' {
 	interface druid_component_meta {
 		template: string;
 		context: LuaTable;
-		nodes: LuaTable<Hash, Opaque<"node">> | undefined;
-		style: LuaTable | undefined;
+		nodes?: LuaTable<Hash, Opaque<"node">> | undefined;
+		style?: LuaTable | undefined;
 		druid: druid_instance;
 		input_enabled: boolean;
 		children: LuaTable;
-		parent: druid_component | undefined;
+		parent?: druid_component | undefined;
 		instance_class: LuaTable;
 	}
 	interface druid_component_component {
@@ -1011,9 +1011,9 @@ declare module 'druid.druid' {
 	interface druid_rich_text_metrics {
 		width: number;
 		height: number;
-		offset_x: number | undefined;
-		offset_y: number | undefined;
-		node_size: Vector3 | undefined;
+		offset_x?: number | undefined;
+		offset_y?: number | undefined;
+		node_size?: Vector3 | undefined;
 	}
 	/**
 	 * The component that handles a rich text display, allows to custom color, size, font, etc. of the parts of the text
@@ -1024,7 +1024,7 @@ declare module 'druid.druid' {
 		_last_value: string;
 		_settings: LuaTable;
 		_split_to_characters: boolean;
-		_anchor: Vector3 | undefined;
+		_anchor?: Vector3 | undefined;
 		init(text_node: Opaque<"node"> | string, value?: string | undefined): void;
 		on_layout_change(): void;
 		on_style_change(style: druid_rich_text_style): void;
@@ -1135,10 +1135,10 @@ declare module 'druid.druid' {
 		center_offset: Vector3;
 		mode: druid_container_mode;
 		fit_size: Vector3;
-		min_size_x: number | undefined;
-		min_size_y: number | undefined;
-		max_size_x: number | undefined;
-		max_size_y: number | undefined;
+		min_size_x?: number | undefined;
+		min_size_y?: number | undefined;
+		max_size_x?: number | undefined;
+		max_size_y?: number | undefined;
 		on_size_changed: unknown;
 		_parent_container: druid_container;
 		_containers: LuaTable;
@@ -1329,7 +1329,7 @@ declare module 'druid.druid' {
 		_hotkeys: LuaTable;
 		_modificators: LuaTable<Hash, boolean>;
 		_modificator_released_at: LuaTable<Hash, number>;
-		_node: Opaque<"node"> | undefined;
+		_node?: Opaque<"node"> | undefined;
 		/**
 		 * The Hotkey constructor
 		 */
@@ -1356,7 +1356,7 @@ declare module 'druid.druid' {
 		MASK_DEFAULT_CHAR: string;
 		IS_LONGTAP_ERASE: boolean;
 		IS_UNSELECT_ON_RESELECT: boolean;
-		on_init: ((self: druid_input) => void) | undefined;
+		on_init?: ((self: druid_input) => void) | undefined;
 		on_select: (self: druid_input, button_node: Opaque<"node">) => void;
 		on_unselect: (self: druid_input, button_node: Opaque<"node">) => void;
 		on_input_wrong: (self: druid_input, button_node: Opaque<"node">) => void;
@@ -1396,7 +1396,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set text for input field
 		 */
-		set_text(input_text: string | undefined): void;
+		set_text(input_text?: string | undefined): void;
 		/**
 		 * Select input field. It will show the keyboard and trigger on_select events
 		 */
@@ -1552,8 +1552,8 @@ declare module 'druid.druid' {
 		set_position_function(callback: unknown): druid_layout;
 	}
 	interface druid_progress_style {
-		SPEED: number | undefined;
-		MIN_DELTA: number | undefined;
+		SPEED?: number | undefined;
+		MIN_DELTA?: number | undefined;
 	}
 	/**
 	 * Basic Druid progress bar component. Changes the size or scale of a node to represent progress.
@@ -1634,7 +1634,7 @@ declare module 'druid.druid' {
 		dist: Vector3;
 		is_drag: boolean;
 		value: number;
-		steps: number[] | undefined;
+		steps?: number[] | undefined;
 		/**
 		 * The Slider constructor
 		 */
@@ -1676,9 +1676,9 @@ declare module 'druid.druid' {
 		_set_position(): void;
 	}
 	interface druid_swipe_style {
-		SWIPE_TIME: number | undefined;
-		SWIPE_THRESHOLD: number | undefined;
-		SWIPE_TRIGGER_ON_MOVE: boolean | undefined;
+		SWIPE_TIME?: number | undefined;
+		SWIPE_THRESHOLD?: number | undefined;
+		SWIPE_TRIGGER_ON_MOVE?: boolean | undefined;
 	}
 	/**
 	 * The component to manage swipe events over a node
@@ -1734,7 +1734,7 @@ declare module 'druid.druid' {
 		from: number;
 		target: number;
 		value: number;
-		is_on: boolean | undefined;
+		is_on?: boolean | undefined;
 		init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): void;
 		update(): void;
 		on_layout_change(): void;
@@ -1829,9 +1829,9 @@ declare module 'druid.druid' {
 		y: number;
 		dx: number;
 		dy: number;
-		acc_x: number | undefined;
-		acc_y: number | undefined;
-		acc_z: number | undefined;
+		acc_x?: number | undefined;
+		acc_y?: number | undefined;
+		acc_z?: number | undefined;
 	}
 	/**
 	 * The Druid Factory used to create components
@@ -1845,8 +1845,8 @@ declare module 'druid.druid' {
 		_late_init_timer_id: number;
 		_late_remove: druid_component[];
 		_is_late_remove_enabled: boolean;
-		_input_blacklist: druid_component[] | undefined;
-		_input_whitelist: druid_component[] | undefined;
+		_input_blacklist?: druid_component[] | undefined;
+		_input_whitelist?: druid_component[] | undefined;
 		/**
 		 * Check whitelists and blacklists for input components
 		 */
@@ -2063,5 +2063,5 @@ declare module 'druid.druid' {
 	 */
 	export function unregister_druid_as_widget(this: void): void;
 	export function set_logger(this: void, logger_instance?: druid_logger | LuaTable | undefined): void;
-	export function get_logger(this: void, name: string | undefined, level?: string | undefined): druid_logger;
+	export function get_logger(this: void, name?: string | undefined, level?: string | undefined): druid_logger;
 }

@@ -171,6 +171,9 @@ function hasTopLevelNil(rawToken: string): boolean {
     )
       return false;
   }
+  // A type-suffix `T?` (`string?`, `fun()?`, `(a|b)?`) is nil-bearing. Placed after the
+  // fun-return guard so a nullable return (`fun(): a|nil`, `fun(): string?`) never flags.
+  if (token.endsWith("?")) return true;
   const isNilSeg = (from: number, to: number): boolean => token.slice(from, to).trim() === "nil";
   let depth = 0;
   let inQuote = false;
@@ -245,9 +248,12 @@ function parseField(rest: string): LibraryField {
   const spaceAt = body.search(/\s/);
   const rawName = spaceAt === -1 ? body : body.slice(0, spaceAt);
   const afterName = spaceAt === -1 ? "" : body.slice(spaceAt).trim();
-  const isOptional = rawName.endsWith("?");
-  const name = isOptional ? rawName.slice(0, -1) : rawName;
+  const nameSuffix = rawName.endsWith("?");
+  const name = nameSuffix ? rawName.slice(0, -1) : rawName;
   const { type, rest: doc } = readTypeToken(afterName);
+  // Interface properties carry no optional-before-required rule, so a `|nil`/`?` type
+  // folds straight into the field's optionality.
+  const isOptional = nameSuffix || (type !== "" && hasTopLevelNil(type));
   return {
     name,
     types: type ? [type] : [],

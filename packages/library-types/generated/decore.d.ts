@@ -4,7 +4,7 @@ declare module 'decore.decore' {
 		event_bus: decore_event_bus;
 		entities: entity[];
 		systems: system[];
-		speed: number | undefined;
+		speed?: number | undefined;
 		add?(...args: any[]): unknown;
 		addEntity?(...args: any[]): entity;
 		addSystem?(...args: any[]): system;
@@ -42,13 +42,13 @@ declare module 'decore.decore' {
 		components: LuaTable<string, unknown>;
 	}
 	interface entity {
-		id: number | undefined;
-		prefab_id: string | undefined;
-		pack_id: string | undefined;
-		parent_prefab_id: string | undefined;
-		child_instancies: entity | undefined;
-		parent_id: number | undefined;
-		children_ids: number[] | undefined;
+		id?: number | undefined;
+		prefab_id?: string | undefined;
+		pack_id?: string | undefined;
+		parent_prefab_id?: string | undefined;
+		child_instancies?: entity | undefined;
+		parent_id?: number | undefined;
+		children_ids?: number[] | undefined;
 	}
 	/**
 	 * System Decore class to manage child-parent relationships and default components
@@ -74,22 +74,22 @@ declare module 'decore.decore' {
 		nocache: boolean;
 		index: number;
 		modified: boolean;
-		interval: number | undefined;
-		bufferedTime: number | undefined;
+		interval?: number | undefined;
+		bufferedTime?: number | undefined;
 		onAdd?(...args: any[]): void;
 		onRemove?(...args: any[]): void;
 		onModify?(...args: any[]): void;
 		onAddToWorld?(...args: any[]): void;
 		onRemoveFromWorld?(...args: any[]): void;
-		preWrap: ((system: system, dt: number) => void) | undefined;
-		postWrap: ((system: system, dt: number) => void) | undefined;
-		update: ((system: system, dt: number) => void) | undefined;
-		fixed_update: ((system: system, dt: number) => void) | undefined;
-		late_update: ((system: system, dt: number) => void) | undefined;
-		preProcess: ((system: system, dt: number) => void) | undefined;
-		process: ((system: system, entity: entity, dt: number) => void) | undefined;
-		postProcess: ((system: system, dt: number) => void) | undefined;
-		compare: ((e1: entity, e2: entity) => void) | undefined;
+		preWrap?: ((system: system, dt: number) => void) | undefined;
+		postWrap?: ((system: system, dt: number) => void) | undefined;
+		update?: ((system: system, dt: number) => void) | undefined;
+		fixed_update?: ((system: system, dt: number) => void) | undefined;
+		late_update?: ((system: system, dt: number) => void) | undefined;
+		preProcess?: ((system: system, dt: number) => void) | undefined;
+		process?: ((system: system, entity: entity, dt: number) => void) | undefined;
+		postProcess?: ((system: system, dt: number) => void) | undefined;
+		compare?: ((e1: entity, e2: entity) => void) | undefined;
 	}
 	interface tiny_ecs_Tiny_ECS_module {
 		requireAll: (...args: unknown[]) => unknown;
@@ -224,5 +224,5 @@ declare module 'decore.decore' {
 	 */
 	export function print_loaded_systems_debug_info(this: void, world: world): void;
 	export function set_logger(this: void, logger_instance?: decore_logger | LuaTable | undefined): void;
-	export function get_logger(this: void, name: string | undefined, level?: string | undefined): decore_logger;
+	export function get_logger(this: void, name?: string | undefined, level?: string | undefined): decore_logger;
 }
