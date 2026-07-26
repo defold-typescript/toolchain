@@ -105,13 +105,6 @@
       ]
     },
     {
-      "dir": "defold-event",
-      "classification": "already-vendored",
-      "modules": [
-        "event.event"
-      ]
-    },
-    {
       "dir": "defold-extension-unity-ads",
       "classification": "native",
       "modules": [
