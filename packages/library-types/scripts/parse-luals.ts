@@ -25,6 +25,16 @@ export interface LibraryInterface {
   fields: LibraryField[];
   methods: LibraryMethod[];
   brief: string;
+  // A class-level `---@overload fun(...)`, kept as its raw `fun(...)` token plus the
+  // trailing description. Present only on interfaces that declare one (like `extends`),
+  // so an interface without overloads carries no key. The emitter renders each as an
+  // interface call signature; the mapper maps the token to a `(params): ret` form.
+  overloads?: LibraryOverload[];
+}
+
+export interface LibraryOverload {
+  type: string;
+  doc: string;
 }
 
 export interface LibraryMethod {
@@ -41,6 +51,11 @@ export interface LibraryParam {
   doc: string;
   isOptional: boolean;
   isVararg: boolean;
+  // True when the raw type token carries a top-level `nil` union member (`T|nil`),
+  // distinct from the literal trailing `?` that drives `isOptional`. Set only when
+  // true (like a field's `visibility`), so a non-nil-bearing param carries no key.
+  // The emitter's trailing-run rule treats `isOptional || isNilable` as omittable.
+  isNilable?: boolean;
 }
 
 export type LibraryFieldVisibility = "public" | "protected" | "private" | "package";
@@ -69,9 +84,16 @@ interface Pending {
   params: LibraryParam[];
   returns: LibraryParam[];
   generics: LibraryGeneric[];
+  overloads: LibraryOverload[];
 }
 
-const emptyPending = (): Pending => ({ doc: [], params: [], returns: [], generics: [] });
+const emptyPending = (): Pending => ({
+  doc: [],
+  params: [],
+  returns: [],
+  generics: [],
+  overloads: [],
+});
 
 /**
  * Read a single raw type token from the head of `rest`, honoring bracket depth so
@@ -101,6 +123,75 @@ function readTypeToken(rest: string): { type: string; rest: string } {
   return { type: rest.slice(0, i), rest: rest.slice(i).trim() };
 }
 
+/** Index of the bracket matching the opener at `open`, or -1 if unbalanced. */
+function matchCloser(s: string, open: number): number {
+  const pairs: Record<string, string> = { "<": ">", "(": ")", "[": "]", "{": "}" };
+  const want = pairs[s[open] as string];
+  let depth = 0;
+  let inQuote = false;
+  for (let i = open; i < s.length; i++) {
+    const c = s[i];
+    if (inQuote) {
+      if (c === '"') inQuote = false;
+      continue;
+    }
+    if (c === '"') inQuote = true;
+    else if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
+    else if (c === ">" || c === ")" || c === "]" || c === "}") {
+      depth--;
+      if (depth === 0) return c === want ? i : -1;
+    }
+  }
+  return -1;
+}
+
+/**
+ * True when the raw type token has a top-level `nil` union member (`T|nil`,
+ * `fun()|nil`) — the signal that a parameter is nil-bearing and can be emitted
+ * TS-optional. Bracket- and quote-depth aware so a `nil` nested in
+ * `table<...>`/`{...}`/a `"..."` literal does not count, and a `fun(...): ret|nil`
+ * return-union (whose `|nil` sits at depth 0 after the `)`) is recognized as the
+ * function's own return, not an outer nullable — only a `|nil` applied to the whole
+ * token flags the param. Self-contained: the parser is upstream of the mapper and
+ * must not import it.
+ */
+function hasTopLevelNil(rawToken: string): boolean {
+  let token = rawToken.trim();
+  while (token.startsWith("(") && matchCloser(token, 0) === token.length - 1) {
+    token = token.slice(1, -1).trim();
+  }
+  if (/^fun\s*\(/.test(token)) {
+    const close = matchCloser(token, token.indexOf("("));
+    if (
+      close !== -1 &&
+      token
+        .slice(close + 1)
+        .trim()
+        .startsWith(":")
+    )
+      return false;
+  }
+  const isNilSeg = (from: number, to: number): boolean => token.slice(from, to).trim() === "nil";
+  let depth = 0;
+  let inQuote = false;
+  let segStart = 0;
+  for (let i = 0; i < token.length; i++) {
+    const c = token[i];
+    if (inQuote) {
+      if (c === '"') inQuote = false;
+      continue;
+    }
+    if (c === '"') inQuote = true;
+    else if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
+    else if (c === ">" || c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && c === "|") {
+      if (isNilSeg(segStart, i)) return true;
+      segStart = i + 1;
+    }
+  }
+  return isNilSeg(segStart, token.length);
+}
+
 /** A bare lowercase identifier — the shape druid uses for an optional `@return` name. */
 const RETURN_NAME = /^[a-z_][A-Za-z0-9_]*$/;
 
@@ -112,7 +203,9 @@ function parseParam(rest: string): LibraryParam {
   const isOptional = !isVararg && rawName.endsWith("?");
   const name = isOptional ? rawName.slice(0, -1) : rawName;
   const { type, rest: doc } = readTypeToken(afterName);
-  return { name, types: type ? [type] : [], doc, isOptional, isVararg };
+  const param: LibraryParam = { name, types: type ? [type] : [], doc, isOptional, isVararg };
+  if (type && hasTopLevelNil(type)) param.isNilable = true;
+  return param;
 }
 
 function parseReturn(rest: string): LibraryParam {
@@ -166,7 +259,15 @@ function parseField(rest: string): LibraryField {
 
 function parseVararg(rest: string): LibraryParam {
   const { type, rest: doc } = readTypeToken(rest);
-  return { name: "...", types: type ? [type] : [], doc, isOptional: false, isVararg: true };
+  const param: LibraryParam = {
+    name: "...",
+    types: type ? [type] : [],
+    doc,
+    isOptional: false,
+    isVararg: true,
+  };
+  if (type && hasTopLevelNil(type)) param.isNilable = true;
+  return param;
 }
 
 function parseGenerics(rest: string): LibraryGeneric[] {
@@ -300,6 +401,7 @@ export function parseLualsSource(source: string): LibraryModel {
           if (head.extends) iface.extends = head.extends;
           if (pending.doc.length > 0 && iface.brief === "") iface.brief = pending.doc.join("\n");
           if (pending.generics.length > 0) iface.generics = pending.generics;
+          if (pending.overloads.length > 0) iface.overloads = pending.overloads;
           openClass = iface;
           lastOpenedClass = head.name;
           pending = emptyPending();
@@ -325,6 +427,15 @@ export function parseLualsSource(source: string): LibraryModel {
           pending.generics.push(...parseGenerics(rest));
           break;
         }
+        case "overload": {
+          // A class-level `---@overload fun(...)`: keep the raw `fun(...)` token via
+          // readTypeToken (its spaced `): ret` return stays whole) plus the trailing
+          // doc, and transfer to the interface on the following `@class` — like brief
+          // and generics. A non-`fun` overload is outside the modeled subset and dropped.
+          const { type, rest: doc } = readTypeToken(rest);
+          if (/^fun\s*\(/.test(type)) pending.overloads.push({ type, doc });
+          break;
+        }
         case "alias": {
           const spaceAt = rest.search(/\s/);
           const name = spaceAt === -1 ? rest : rest.slice(0, spaceAt);
@@ -334,8 +445,8 @@ export function parseLualsSource(source: string): LibraryModel {
           break;
         }
         default:
-          // @private, @protected, @cast, @type, @diagnostic, @overload, ... — outside
-          // the Druid subset; recognized as a tag and skipped, never treated as doc.
+          // @private, @protected, @cast, @type, @diagnostic, ... — outside the Druid
+          // subset; recognized as a tag and skipped, never treated as doc.
           break;
       }
       continue;
@@ -395,6 +506,9 @@ export function mergeLibraryModels(models: LibraryModel[]): LibraryModel {
           fields: [...iface.fields],
           methods: [...iface.methods],
           brief: iface.brief,
+          ...(iface.overloads && iface.overloads.length > 0
+            ? { overloads: [...iface.overloads] }
+            : {}),
         };
         byName.set(iface.name, copy);
         interfaces.push(copy);
@@ -406,6 +520,13 @@ export function mergeLibraryModels(models: LibraryModel[]): LibraryModel {
       if (existing.brief === "" && iface.brief !== "") existing.brief = iface.brief;
       if (existing.generics.length === 0 && iface.generics.length > 0) {
         existing.generics = [...iface.generics];
+      }
+      if (
+        (!existing.overloads || existing.overloads.length === 0) &&
+        iface.overloads &&
+        iface.overloads.length > 0
+      ) {
+        existing.overloads = [...iface.overloads];
       }
     }
     aliases.push(...model.aliases);

@@ -126,7 +126,17 @@ function needsArrayParens(tsExpr: string): boolean {
   );
 }
 
-function mapFunction(token: string, ctx: MapContext, unknowns: string[]): string {
+/**
+ * The mapped `(params)` list and `ret` type of a `fun(...)` token, shared by the
+ * arrow-form `mapFunction` and the colon-return `mapLualsCallSignature`. The only
+ * difference between the two consumers is the separator (`=>` vs `:`), so both the
+ * param handling (typed/untyped/vararg) and the single/multi-return logic live here.
+ */
+function functionParts(
+  token: string,
+  ctx: MapContext,
+  unknowns: string[],
+): { paramList: string; ret: string } {
   const open = token.indexOf("(");
   const close = matchBracket(token, open);
   const paramsStr = token.slice(open + 1, close).trim();
@@ -171,6 +181,11 @@ function mapFunction(token: string, ctx: MapContext, unknowns: string[]): string
       ret = `LuaMultiReturn<[${inner}]>`;
     }
   }
+  return { paramList, ret };
+}
+
+function mapFunction(token: string, ctx: MapContext, unknowns: string[]): string {
+  const { paramList, ret } = functionParts(token, ctx, unknowns);
   return `(${paramList}) => ${ret}`;
 }
 
@@ -273,6 +288,24 @@ export function mapLualsType(token: string, ctx: MapContext): MapResult {
   const unknowns: string[] = [];
   const ts = mapToken(token, ctx, unknowns);
   return { ts, unknowns };
+}
+
+/**
+ * Map a `fun(...)` token (a class `@overload`) to a TypeScript **call signature** —
+ * the colon-return form `(params): ret` an interface uses to become callable, not
+ * the `=>` arrow a field/param function type takes. Shares the exact param/return
+ * computation as `mapFunction`, so nested callback params and multi-returns map
+ * identically. Throws on a non-`fun` token; the parser only ever records `fun(...)`
+ * overloads, so this guards a programming error rather than user input.
+ */
+export function mapLualsCallSignature(token: string, ctx: MapContext): MapResult {
+  const trimmed = token.trim();
+  if (!/^fun\s*\(/.test(trimmed)) {
+    throw new Error(`mapLualsCallSignature: expected a "fun(...)" token, got "${token}".`);
+  }
+  const unknowns: string[] = [];
+  const { paramList, ret } = functionParts(trimmed, ctx, unknowns);
+  return { ts: `(${paramList}): ${ret}`, unknowns };
 }
 
 /**

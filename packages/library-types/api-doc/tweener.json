@@ -62,7 +62,7 @@
           "types": [
             "number | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -176,7 +176,7 @@
           "types": [
             "tween | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],

@@ -16,6 +16,7 @@
 import {
   buildModelContext,
   mapTypes,
+  paramOptionalFlags,
   renderGenericParams,
   sanitizeTypeName,
 } from "./emit-library-dts";
@@ -35,14 +36,20 @@ function mapTokens(tokens: readonly string[], ctx: MapContext): string[] {
   return tokens.map((token) => mapTypes([token], ctx));
 }
 
-function parameterElement(param: LibraryParam, ctx: MapContext): Record<string, unknown> {
+function parameterElement(
+  param: LibraryParam,
+  isOptional: boolean,
+  ctx: MapContext,
+): Record<string, unknown> {
   // A vararg's element type stays a plain mapped token here; the renderer arrayifies
   // it (`...args: T[]`) from the `is_vararg` flag, keeping the JSON structurally honest.
+  // `isOptional` comes from the emitter's trailing-run rule (paramOptionalFlags), not
+  // `param.isOptional` alone, so the `/api` signature matches the emitted `.d.ts`.
   return {
     name: param.isVararg ? "...args" : param.name,
     doc: param.doc,
     types: mapTokens(param.types, ctx),
-    is_optional: param.isOptional ? "True" : "False",
+    is_optional: isOptional ? "True" : "False",
     is_vararg: param.isVararg ? "True" : "False",
   };
 }
@@ -54,13 +61,16 @@ function returnElement(ret: LibraryParam, ctx: MapContext): Record<string, unkno
 function functionElement(method: LibraryMethod, ctx: MapContext): Record<string, unknown> {
   const fnCtx = scopeGenerics(ctx, method.generics);
   const generics = renderGenericParams(method.generics, fnCtx);
+  const optionalFlags = paramOptionalFlags(method.params);
   return {
     type: "FUNCTION",
     name: method.name,
     brief: method.brief,
     description: method.brief,
     ...(generics !== "" ? { generics } : {}),
-    parameters: method.params.map((param) => parameterElement(param, fnCtx)),
+    parameters: method.params.map((param, index) =>
+      parameterElement(param, optionalFlags[index] ?? false, fnCtx),
+    ),
     returnvalues: method.returns.map((ret) => returnElement(ret, fnCtx)),
   };
 }
