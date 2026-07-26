@@ -180,6 +180,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("event").authoredHere).toBe(true);
     expect(meta("event").authorUrl).toBe("https://github.com/Insality/defold-event");
   });
+
+  test("attributes lang to Insality/defold-lang as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("lang").authoredHere).toBe(true);
+    expect(meta("lang").authorUrl).toBe("https://github.com/Insality/defold-lang");
+  });
 });
 
 describe("loadLibraryProvenance — script_api-sourced libraries", () => {

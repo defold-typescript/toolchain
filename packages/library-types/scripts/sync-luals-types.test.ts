@@ -280,3 +280,26 @@ describe("event migrated off the ts-defold corpus onto the LuaLS front-end", () 
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/event.event.json"))).toBe(false);
   });
 });
+
+describe("lang migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("lang is a luals namespace and no longer a ts-defold target or classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "lang")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "lang.lang")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "defold-lang")).toBe(false);
+  });
+
+  test("the retired ts-defold lang artifacts are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/lang.lang.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/lang.lang.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/lang.lang.json"))).toBe(false);
+  });
+});
