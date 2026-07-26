@@ -171,13 +171,14 @@ describe("parseLualsSource", () => {
       "fun(self):number",
       "table<K,V>",
     ]);
-    // The `?` here is part of the type token, so isOptional stays false.
+    // A type-suffix `?` now flags `isNilable`, not `isOptional`.
     expect(params[1]).toEqual({
       name: "b",
       types: ["string?"],
       doc: "maybe nil",
       isOptional: false,
       isVararg: false,
+      isNilable: true,
     });
   });
 
@@ -379,6 +380,63 @@ describe("parseLualsSource nil-bearing params and @overload", () => {
     expect(cb && Object.keys(cb)).not.toContain("isNilable");
     // A `|nil` right after the `)` makes the whole function type nullable.
     expect(gone?.isNilable).toBe(true);
+  });
+
+  test("a type-suffix `?` param is flagged nil-bearing; a plain param is not", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param a string? maybe the string",
+        "---@param b function? maybe the callback",
+        "---@param c any? maybe anything",
+        "---@param d string the required",
+        "function M.f(a, b, c, d)",
+        "end",
+      ),
+    );
+    const [a, b, c, d] = model.moduleFunctions[0]?.params ?? [];
+    expect(a?.isNilable).toBe(true);
+    expect(a?.isOptional).toBe(false);
+    expect(b?.isNilable).toBe(true);
+    expect(b?.isOptional).toBe(false);
+    expect(c?.isNilable).toBe(true);
+    expect(c?.isOptional).toBe(false);
+    expect(d && Object.keys(d)).not.toContain("isNilable");
+    expect(d?.isOptional).toBe(false);
+  });
+
+  test("the fun-return guard survives the type-suffix rule: `fun(): a|nil` is not flagged, `fun()?` is", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param cb fun(): a|nil the callback returning a nullable",
+        "---@param x fun()? maybe the callback",
+        "function M.f(cb, x)",
+        "end",
+      ),
+    );
+    const [cb, x] = model.moduleFunctions[0]?.params ?? [];
+    // A nullable *return* still never flags the param.
+    expect(cb && Object.keys(cb)).not.toContain("isNilable");
+    // A trailing `?` on the whole `fun()` token flags it nil-bearing.
+    expect(x?.isNilable).toBe(true);
+  });
+
+  test("a `|nil` or type-suffix `?` field is optional; a plain field is not", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class widget",
+        "---@field loader function|nil the optional loader",
+        "---@field path string|table|nil the optional path",
+        "---@field id string the required id",
+        "---@field on_click? fun() the optional handler",
+        "local M = {}",
+      ),
+    );
+    const iface = model.interfaces.find((i) => i.name === "widget");
+    const byName = (n: string) => iface?.fields.find((f) => f.name === n);
+    expect(byName("loader")?.isOptional).toBe(true);
+    expect(byName("path")?.isOptional).toBe(true);
+    expect(byName("id")?.isOptional).toBe(false);
+    expect(byName("on_click")?.isOptional).toBe(true);
   });
 
   test("a class-level `@overload fun(...)` is captured onto the interface with its token and doc", () => {
