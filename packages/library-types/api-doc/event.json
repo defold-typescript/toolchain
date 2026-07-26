@@ -17,7 +17,7 @@
           "types": [
             "unknown | event | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         },
         {
@@ -26,7 +26,7 @@
           "types": [
             "unknown | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -78,7 +78,7 @@
           "types": [
             "event_logger | LuaTable | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -177,7 +177,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -212,7 +212,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -247,7 +247,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -282,7 +282,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -397,7 +397,7 @@
               "types": [
                 "unknown | promise | event | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             },
             {
@@ -406,7 +406,7 @@
               "types": [
                 "unknown | promise | event | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             },
             {
@@ -415,7 +415,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -450,7 +450,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -485,7 +485,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -790,7 +790,7 @@
               "types": [
                 "unknown | event | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             },
             {
@@ -799,7 +799,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -826,7 +826,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -861,7 +861,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -896,7 +896,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -931,7 +931,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -973,7 +973,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -991,7 +991,7 @@
               "types": [
                 "unknown | event | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             },
             {
@@ -1000,7 +1000,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],

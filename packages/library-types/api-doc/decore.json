@@ -61,7 +61,7 @@
           "types": [
             "LuaTable | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         },
         {
@@ -70,7 +70,7 @@
           "types": [
             "Url | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -107,7 +107,7 @@
           "types": [
             "string | string[] | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -152,7 +152,7 @@
           "types": [
             "string | string[] | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -197,7 +197,7 @@
           "types": [
             "string | string[] | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -242,7 +242,7 @@
           "types": [
             "string | string[] | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -286,7 +286,7 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -375,7 +375,7 @@
           "types": [
             "string | Hash | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         },
         {
@@ -384,7 +384,7 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         },
         {
@@ -393,7 +393,7 @@
           "types": [
             "LuaTable<string, unknown> | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -437,7 +437,7 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -508,7 +508,7 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -552,7 +552,7 @@
           "types": [
             "unknown | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -587,7 +587,7 @@
           "types": [
             "LuaTable<string, unknown> | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -666,7 +666,7 @@
           "types": [
             "unknown | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -718,7 +718,7 @@
           "types": [
             "decore_logger | LuaTable | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -745,7 +745,7 @@
           "types": [
             "string | undefined"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -1705,7 +1705,7 @@
               "types": [
                 "((events: unknown[]) => void) | ((context: unknown, events: unknown[]) => void) | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             },
             {
@@ -1714,7 +1714,7 @@
               "types": [
                 "unknown | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -1757,7 +1757,7 @@
               "types": [
                 "((new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean) | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],

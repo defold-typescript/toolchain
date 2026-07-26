@@ -72,6 +72,7 @@ Create back handler component with druid: \`druid:new_back_handler(callback)\`
           "params": [
             {
               "doc": "The callback to call when the back handler is triggered",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -531,6 +532,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
             },
             {
               "doc": "Callback on button click",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -540,6 +542,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
             },
             {
               "doc": "Custom args for any Button event, will be passed to callbacks",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "custom_args",
@@ -549,6 +552,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
             },
             {
               "doc": "Node to animate instead of trigger node, useful for animating small icons on big panels",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "anim_node",
@@ -654,6 +658,7 @@ Disabled button is not clickable."
           "params": [
             {
               "doc": "Enabled state",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "state",
@@ -705,6 +710,7 @@ If button node placed inside stencil node, it will be automatically set to this 
           "params": [
             {
               "doc": "Gui node",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "zone",
@@ -776,6 +782,7 @@ If button node placed inside stencil node, it will be automatically set to this 
           "params": [
             {
               "doc": "Should return true or false. If true - button can be pressed.",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "check_function",
@@ -785,6 +792,7 @@ If button node placed inside stencil node, it will be automatically set to this 
             },
             {
               "doc": "Function will be called on button click, if check function returns false",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "failure_callback",
@@ -819,6 +827,7 @@ If the game is not HTML, html mode will be not enabled"
           "params": [
             {
               "doc": "If true - button will be called inside html5 callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_web_mode",
@@ -1297,6 +1306,7 @@ If the game is not HTML, html mode will be not enabled"
           "params": [
             {
               "doc": "Node or node id",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "node",
@@ -1375,6 +1385,7 @@ If the game is not HTML, html mode will be not enabled"
           "params": [
             {
               "doc": "",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "touch",
@@ -1707,6 +1718,7 @@ touches exists to switch to another touch."
           "params": [
             {
               "doc": "The hover state",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "state",
@@ -1741,6 +1753,7 @@ touches exists to switch to another touch."
           "params": [
             {
               "doc": "The mouse hover state",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "state",
@@ -1775,6 +1788,7 @@ touches exists to switch to another touch."
           "params": [
             {
               "doc": "Gui node",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "zone",
@@ -1796,6 +1810,7 @@ any hover events"
           "params": [
             {
               "doc": "The hover enabled state",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "state",
@@ -2271,6 +2286,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
             },
             {
               "doc": "Instant scroll flag",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -2297,6 +2313,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
             },
             {
               "doc": "Instant scroll flag",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -2323,6 +2340,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
             },
             {
               "doc": "If true, skip the point callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_silent",
@@ -2332,6 +2350,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
             },
             {
               "doc": "Instant scroll flag",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -2358,6 +2377,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
             },
             {
               "doc": "instant scroll flag",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -2401,6 +2421,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
             },
             {
               "doc": "Offset value to set, where content is starts",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "offset",
@@ -2516,6 +2537,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
           "params": [
             {
               "doc": "Size in pixels of additional scroll area",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "stretch_size",
@@ -2668,6 +2690,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
           "params": [
             {
               "doc": "Druid grid component",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "grid",
@@ -2695,6 +2718,7 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
           "params": [
             {
               "doc": "Druid layout component",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "layout",
@@ -3076,6 +3100,7 @@ Field y have to <= field w"
             },
             {
               "doc": "How many nodes in row can be placed. By default 1",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "in_row",
@@ -3304,6 +3329,7 @@ Field y have to <= field w"
             },
             {
               "doc": "The item position. By default add as last item",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "index",
@@ -3313,6 +3339,7 @@ Field y have to <= field w"
             },
             {
               "doc": "How shift nodes, if required. Default: const.SHIFT.RIGHT",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "shift_policy",
@@ -3322,6 +3349,7 @@ Field y have to <= field w"
             },
             {
               "doc": "If true, update node positions instantly",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -3358,6 +3386,7 @@ Field y have to <= field w"
             },
             {
               "doc": "If true, update node positions instantly",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -3394,6 +3423,7 @@ Field y have to <= field w"
             },
             {
               "doc": "How shift nodes, if required. Default: const.SHIFT.RIGHT",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "shift_policy",
@@ -3403,6 +3433,7 @@ Field y have to <= field w"
             },
             {
               "doc": "If true, update node positions instantly",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -3613,6 +3644,7 @@ Field y have to <= field w"
           "params": [
             {
               "doc": "The new node width",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "width",
@@ -3622,6 +3654,7 @@ Field y have to <= field w"
             },
             {
               "doc": "The new node height",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "height",
@@ -3676,6 +3709,7 @@ Field y have to <= field w"
           "params": [
             {
               "doc": "If true, node position update instantly, otherwise with set_position_function callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -3707,6 +3741,7 @@ Field y have to <= field w"
           "params": [
             {
               "doc": "If true, node position update instantly, otherwise with set_position_function callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -3959,6 +3994,7 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
             },
             {
               "doc": "Initial text. Default value is node text from GUI scene. Default: nil",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "value",
@@ -3968,6 +4004,7 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
             },
             {
               "doc": "Adjust type for text. By default is "downscale". Options: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "adjust_type",
@@ -4009,6 +4046,7 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
           "params": [
             {
               "doc": "The text to calculate the size of, if nil - use current text",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "text",
@@ -4265,6 +4303,7 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
           "params": [
             {
               "doc": "The adjust type to set, values: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "adjust_type",
@@ -4274,6 +4313,7 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
             },
             {
               "doc": "To remove minimal scale, use \`text:set_minimal_scale(nil)\`, if pass nil - not change minimal scale",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "minimal_scale",
@@ -4745,6 +4785,7 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
             },
             {
               "doc": "",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "druid_style",
@@ -4789,6 +4830,7 @@ Parent template will be added automatically if exist."
             },
             {
               "doc": "",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "template",
@@ -4833,6 +4875,7 @@ Parent template will be added automatically if exist."
           "params": [
             {
               "doc": "The nodes table from gui.clone_tree or prefab node to use for clone or node id to clone",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "nodes",
@@ -4904,6 +4947,7 @@ Parent template will be added automatically if exist."
           "params": [
             {
               "doc": "",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "template",
@@ -4913,6 +4957,7 @@ Parent template will be added automatically if exist."
             },
             {
               "doc": "The nodes table from gui.clone_tree or prefab node to use for clone or node id to clone",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "nodes",
@@ -5000,6 +5045,7 @@ Parent template will be added automatically if exist."
             },
             {
               "doc": "If true, the reset input priority will return to previous value",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_temporary",
@@ -6086,6 +6132,7 @@ Recursive for all children components."
             },
             {
               "doc": "The initial text value. Default will be gui.get_text(text_node)",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "value",
@@ -6156,6 +6203,7 @@ rich_text:set_text("＜img=texture:image,width,height＞Display image with width
           "params": [
             {
               "doc": "The text to set",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "text",
@@ -6637,6 +6685,7 @@ Create container component with druid: \`container = druid:new_container(node, m
             },
             {
               "doc": "Callback on size changed",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -6709,6 +6758,7 @@ Create container component with druid: \`container = druid:new_container(node, m
           "params": [
             {
               "doc": "The width to set",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "width",
@@ -6718,6 +6768,7 @@ Create container component with druid: \`container = druid:new_container(node, m
             },
             {
               "doc": "The height to set",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "height",
@@ -6727,6 +6778,7 @@ Create container component with druid: \`container = druid:new_container(node, m
             },
             {
               "doc": "If set will keep the corner position relative to the new size",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "anchor_pivot",
@@ -6891,6 +6943,7 @@ Create container component with druid: \`container = druid:new_container(node, m
             },
             {
               "doc": "stretch, fit, stretch_x, stretch_y. Default: Pick from node, "fit" or "stretch"",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "mode",
@@ -6900,6 +6953,7 @@ Create container component with druid: \`container = druid:new_container(node, m
             },
             {
               "doc": "",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "on_resize_callback",
@@ -6944,6 +6998,7 @@ Create container component with druid: \`container = druid:new_container(node, m
           "params": [
             {
               "doc": "",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "parent_container",
@@ -7050,6 +7105,7 @@ Create container component with druid: \`container = druid:new_container(node, m
           "params": [
             {
               "doc": "The minimum size x",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "min_size_x",
@@ -7059,6 +7115,7 @@ Create container component with druid: \`container = druid:new_container(node, m
             },
             {
               "doc": "The minimum size y",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "min_size_y",
@@ -7086,6 +7143,7 @@ Create container component with druid: \`container = druid:new_container(node, m
           "params": [
             {
               "doc": "The maximum size x",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "max_size_x",
@@ -7095,6 +7153,7 @@ Create container component with druid: \`container = druid:new_container(node, m
             },
             {
               "doc": "The maximum size y",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "max_size_y",
@@ -7376,6 +7435,7 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
             },
             {
               "doc": "The index to add the data at",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "index",
@@ -7385,6 +7445,7 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
             },
             {
               "doc": "The constant from const.SHIFT.*",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "shift_policy",
@@ -7412,6 +7473,7 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
           "params": [
             {
               "doc": "The index to remove the data at",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "index",
@@ -7421,6 +7483,7 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
             },
             {
               "doc": "The constant from const.SHIFT.*",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "shift_policy",
@@ -7457,6 +7520,7 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
             },
             {
               "doc": "The constant from const.SHIFT.*",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "shift_policy",
@@ -7782,6 +7846,7 @@ Create hotkey component with druid: \`hotkey = druid:new_hotkey(keys, callback, 
             },
             {
               "doc": "The argument to pass into the callback function",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback_argument",
@@ -7825,6 +7890,7 @@ Create hotkey component with druid: \`hotkey = druid:new_hotkey(keys, callback, 
             },
             {
               "doc": "The argument to pass into the callback function",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback_argument",
@@ -7902,6 +7968,7 @@ Create hotkey component with druid: \`hotkey = druid:new_hotkey(keys, callback, 
           "params": [
             {
               "doc": "The action id",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "action_id",
@@ -7965,6 +8032,7 @@ Create hotkey component with druid: \`hotkey = druid:new_hotkey(keys, callback, 
           "params": [
             {
               "doc": "The node to bind the hotkey to. Nil to unbind the node",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "node",
@@ -8161,6 +8229,7 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
             },
             {
               "doc": "Gui keyboard type for input field",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "keyboard_type",
@@ -8195,6 +8264,7 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
           "params": [
             {
               "doc": "The action id",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "action_id",
@@ -8400,6 +8470,7 @@ ex: [^%s] to allow only non-space characters"
           "params": [
             {
               "doc": "Cursor index for cursor position, if nil - will be set to the end of the text",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "cursor_index",
@@ -8409,6 +8480,7 @@ ex: [^%s] to allow only non-space characters"
             },
             {
               "doc": "Start index for cursor position, if nil - will be set to the end of the text",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "start_index",
@@ -8418,6 +8490,7 @@ ex: [^%s] to allow only non-space characters"
             },
             {
               "doc": "End index for cursor position, if nil - will be set to the start_index",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "end_index",
@@ -8562,6 +8635,7 @@ Create lang text component with druid: \`text = druid:new_lang_text(node_name, l
             },
             {
               "doc": "Default locale id or text from node as default. If not provided, will use text from the node",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "locale_id",
@@ -8571,6 +8645,7 @@ Create lang text component with druid: \`text = druid:new_lang_text(node_name, l
             },
             {
               "doc": "Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "adjust_type",
@@ -9030,6 +9105,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
           "params": [
             {
               "doc": "The margin x",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "margin_x",
@@ -9039,6 +9115,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
             },
             {
               "doc": "The margin y",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "margin_y",
@@ -9066,6 +9143,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
           "params": [
             {
               "doc": "From Left",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "padding_x",
@@ -9075,6 +9153,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
             },
             {
               "doc": "From Top",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "padding_y",
@@ -9084,6 +9163,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
             },
             {
               "doc": "From Right",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "padding_z",
@@ -9093,6 +9173,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
             },
             {
               "doc": "From Bottom",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "padding_w",
@@ -9315,6 +9396,7 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
           "params": [
             {
               "doc": "If true, node position update instantly, otherwise with set_position_function callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_instant",
@@ -9588,6 +9670,7 @@ Create progress bar component with druid: \`progress = druid:new_progress(node_n
             },
             {
               "doc": "Initial value of progress bar (0 to 1). Default: 1",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "init_value",
@@ -9776,6 +9859,7 @@ Create progress bar component with druid: \`progress = druid:new_progress(node_n
             },
             {
               "doc": "Callback on animation ends",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -9848,6 +9932,7 @@ Create progress bar component with druid: \`progress = druid:new_progress(node_n
             },
             {
               "doc": "The exact value",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "exactly",
@@ -10018,6 +10103,7 @@ Create slider component with druid: \`slider = druid:new_slider(node_name, end_p
             },
             {
               "doc": "On slider change callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -10118,6 +10204,7 @@ Create slider component with druid: \`slider = druid:new_slider(node_name, end_p
             },
             {
               "doc": "Don't trigger event if true",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_silent",
@@ -10207,6 +10294,7 @@ This function require the Defold version 1.3.0+"
           "params": [
             {
               "doc": "",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "input_node",
@@ -10504,6 +10592,7 @@ This function require the Defold version 1.3.0+"
           "params": [
             {
               "doc": "Gui node",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "zone",
@@ -10664,6 +10753,7 @@ Create timer component with druid: \`timer = druid:new_timer(text_node, from_sec
             },
             {
               "doc": "Start timer value in seconds",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "seconds_from",
@@ -10673,6 +10763,7 @@ Create timer component with druid: \`timer = druid:new_timer(text_node, from_sec
             },
             {
               "doc": "End timer value in seconds",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "seconds_to",
@@ -10682,6 +10773,7 @@ Create timer component with druid: \`timer = druid:new_timer(text_node, from_sec
             },
             {
               "doc": "Function that triggers when timer value equals to seconds_to",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -10740,6 +10832,7 @@ Create timer component with druid: \`timer = druid:new_timer(text_node, from_sec
           "params": [
             {
               "doc": "Timer enable state",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "is_on",
@@ -11839,6 +11932,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "The template name used by widget",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "template",
@@ -11848,6 +11942,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "The nodes table from gui.clone_tree or prefab node to use for clone or node id to clone",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "nodes",
@@ -11893,6 +11988,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Button callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -11902,6 +11998,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Button callback params",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "params",
@@ -11911,6 +12008,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Button anim node (node, if not provided)",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "anim_node",
@@ -11965,6 +12063,7 @@ component will be not processed on the input step DruidInstance"
           "params": [
             {
               "doc": "The callback(self, custom_args) to call on back event",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -11974,6 +12073,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Callback argument",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "params",
@@ -12010,6 +12110,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Hover callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "on_hover_callback",
@@ -12019,6 +12120,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Mouse hover callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "on_mouse_hover_callback",
@@ -12055,6 +12157,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Initial text. Default value is node text from GUI scene.",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "value",
@@ -12064,6 +12167,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "adjust_type",
@@ -12109,6 +12213,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "How many nodes can be placed in a row",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "in_row",
@@ -12181,6 +12286,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Callback for on_drag_event(self, dx, dy)",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "on_drag_callback",
@@ -12217,6 +12323,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Swipe callback for on_swipe_end event",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "on_swipe_callback",
@@ -12253,6 +12360,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Default locale id or text from node as default",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "locale_id",
@@ -12262,6 +12370,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Adjust type for text node. Default: "downscale"",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "adjust_type",
@@ -12307,6 +12416,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "On slider change callback",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -12352,6 +12462,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Gui keyboard type for input field",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "keyboard_type",
@@ -12433,6 +12544,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Start timer value in seconds",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "seconds_from",
@@ -12442,6 +12554,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "End timer value in seconds",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "seconds_to",
@@ -12451,6 +12564,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Function on timer end",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -12496,6 +12610,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Initial value of progress bar. Default: 1",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "init_value",
@@ -12532,6 +12647,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "vertical|horizontal|horizontal_wrap. Default: horizontal",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "mode",
@@ -12568,6 +12684,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Layout mode. Default Fit or Stretch depends from node adjust mode from GUI scene",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "mode",
@@ -12577,6 +12694,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "Callback on size changed",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -12613,6 +12731,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "The callback function",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback",
@@ -12622,6 +12741,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "The argument to pass into the callback function",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "callback_argument",
@@ -12658,6 +12778,7 @@ component will be not processed on the input step DruidInstance"
             },
             {
               "doc": "The initial text value. Default will be gui.get_text(text_node)",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "value",
@@ -12697,6 +12818,7 @@ As a template please check rich_input.gui layout."
             },
             {
               "doc": "Nodes table from gui.clone_tree",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "nodes",
@@ -12914,6 +13036,7 @@ If color_id is not found in palette and not a hex string, returns white."
         },
         {
           "doc": "Default is 1",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "alpha",
@@ -12968,6 +13091,7 @@ If color_id is not found in palette and not a hex string, returns white."
         },
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "alpha",
@@ -13022,6 +13146,7 @@ If color_id is not found in palette and not a hex string, returns white."
         },
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "alpha",
@@ -13101,6 +13226,7 @@ If color_id is not found in palette and not a hex string, returns white."
       "params": [
         {
           "doc": "The name of the component",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "name",
@@ -13110,6 +13236,7 @@ If color_id is not found in palette and not a hex string, returns white."
         },
         {
           "doc": "The input priority. The bigger number processed first. Default value: 10",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "input_priority",
@@ -13585,6 +13712,7 @@ which are treated as having a length of 1"
         },
         {
           "doc": "The tag to search for. Nil to search for words without a tag",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "tag",
@@ -13735,6 +13863,7 @@ which are treated as having a length of 1"
         },
         {
           "doc": "The Druid style table to override style parameters for this Druid instance.",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "style",
@@ -13912,6 +14041,7 @@ msg.url(nil, object_url, "gui_widget") -- other game object"
         },
         {
           "doc": "Additional parameters to pass to the widget's init function",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "params",
@@ -13967,6 +14097,7 @@ Only one widget can be set per game object."
       "params": [
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "logger_instance",
@@ -13993,6 +14124,7 @@ Only one widget can be set per game object."
         },
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "level",
@@ -14211,6 +14343,7 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
         },
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "property_name",
@@ -14598,6 +14731,7 @@ text_node will be first (at left side)"
       "params": [
         {
           "doc": "Gui text node",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "text_node",
@@ -14607,6 +14741,7 @@ text_node will be first (at left side)"
         },
         {
           "doc": "Gui box node",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "icon_node",
@@ -14647,6 +14782,7 @@ icon_node will be first (at left side)"
       "params": [
         {
           "doc": "Gui box node",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "icon_node",
@@ -14656,6 +14792,7 @@ icon_node will be first (at left side)"
         },
         {
           "doc": "Gui text node",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "text_node",
@@ -14665,6 +14802,7 @@ icon_node will be first (at left side)"
         },
         {
           "doc": "Offset between nodes",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "margin",
@@ -14697,6 +14835,7 @@ The centrate will be around 0 x position."
       "params": [
         {
           "doc": "Offset between nodes",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "margin",
@@ -14742,6 +14881,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "Full path to the template",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "template",
@@ -14751,6 +14891,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "Nodes created with gui.clone_tree",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "nodes",
@@ -14875,6 +15016,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "Min value. If nil, value will be clamped to positive infinity",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "v1",
@@ -14884,6 +15026,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "Max value If nil, value will be clamped to negative infinity",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "v2",
@@ -15001,6 +15144,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "Decimal places",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "num_decimal_places",
@@ -15145,6 +15289,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "The source array to get elements from",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "source",
@@ -15199,6 +15344,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "Additional node to check for click area. If nil, only node will be checked",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "node_click_area",
@@ -15252,6 +15398,7 @@ The centrate will be around 0 x position."
         },
         {
           "doc": "True if add current node scale to result",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "include_passed_node_scale",
@@ -15439,6 +15586,7 @@ Offset shown in [-0.5 .. 0.5] range, where -0.5 is left or bottom, 0.5 is right 
         },
         {
           "doc": "Internal parameter",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "result",
@@ -15475,6 +15623,7 @@ Offset shown in [-0.5 .. 0.5] range, where -0.5 is left or bottom, 0.5 is right 
         },
         {
           "doc": "Offset from node position. Pass current node position to get non relative border values",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "offset",
@@ -15550,6 +15699,7 @@ Shift policy can be: left, right, no_shift"
         },
         {
           "doc": "Index to insert. If nil, item will be inserted at the end of array",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "index",
@@ -15559,6 +15709,7 @@ Shift policy can be: left, right, no_shift"
         },
         {
           "doc": "The druid_const.SHIFT.* constant",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "shift_policy",
@@ -15595,6 +15746,7 @@ Shift policy can be: left, right, no_shift"
         },
         {
           "doc": "Index to remove. If nil, item will be removed from the end of array",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "index",
@@ -15604,6 +15756,7 @@ Shift policy can be: left, right, no_shift"
         },
         {
           "doc": "The druid_const.SHIFT.* constant",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "shift_policy",
@@ -15640,6 +15793,7 @@ Shift policy can be: left, right, no_shift"
         },
         {
           "doc": "GUI root node to stop search",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "root",
@@ -15732,6 +15886,7 @@ Thanks to Dragosha! ( ・ω・ ) <  Hey friend!"
       "params": [
         {
           "doc": "",
+          "isNilable": true,
           "isOptional": false,
           "isVararg": false,
           "name": "logger",

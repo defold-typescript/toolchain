@@ -168,6 +168,26 @@ describe("buildFidelityReport", () => {
     expect(report.unknownTokens).toContain("Ghost2");
   });
 
+  test("a class overload counts its type token in totalTypeTokens without adding unknown fallbacks", () => {
+    const model: LibraryModel = {
+      interfaces: [
+        {
+          name: "Widget",
+          generics: [],
+          brief: "w",
+          methods: [],
+          fields: [],
+          overloads: [{ type: "fun(vararg:any): any", doc: "" }],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const report = buildFidelityReport("x", model, {});
+    expect(report.totalTypeTokens).toBe(1);
+    expect(report.unknownFallbacks).toBe(0);
+  });
+
   test("building twice over the same model yields deeply-equal reports", () => {
     expect(buildFidelityReport("widgets", tinyModel, {})).toEqual(
       buildFidelityReport("widgets", tinyModel, {}),

@@ -457,7 +457,7 @@ describe("apiPageMarkdown library provenance block", () => {
     // Emitter-equivalent signatures: a mapped/sanitized generic module function and a
     // sanitized typedef method, not the raw LuaLS `druid.`-dotted / unbound-`T` form.
     expect(md).toContain("get_widget<T extends druid_widget>");
-    expect(md).toContain("druid_button.set_enabled(state: boolean | undefined): druid_button");
+    expect(md).toContain("druid_button.set_enabled(state?: boolean | undefined): druid_button");
     // No raw LuaLS token survives in a signature position (heading lines). Prose doc
     // text may still mention `fun(self, ...)` and `druid.<component>` verbatim.
     const signatureLines = md

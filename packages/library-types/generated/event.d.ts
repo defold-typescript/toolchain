@@ -39,25 +39,25 @@ declare module 'event.event' {
 		 * event_2 = event.create()
 		 * event_2:subscribe(event_1) -- Now event2 will trigger event1
 		 */
-		subscribe(callback: unknown | event, callback_context: unknown | undefined): boolean;
+		subscribe(callback: unknown | event, callback_context?: unknown | undefined): boolean;
 		/**
 		 * Subscribe a callback for a single trigger. After the first trigger the callback is automatically unsubscribed.
 		 * on_click_event:subscribe_once(function(self) print("one-time click!") end, self)
 		 */
-		subscribe_once(callback: unknown | event, callback_context: unknown | undefined): boolean;
+		subscribe_once(callback: unknown | event, callback_context?: unknown | undefined): boolean;
 		/**
 		 * Remove a previously subscribed callback from the event.
 		 * The callback_context should be the same as the one used when subscribing the callback.
 		 * If there is no callback_context provided, all callbacks with the same function will be unsubscribed.
 		 * on_click_event:unsubscribe(callback, self)
 		 */
-		unsubscribe(callback: unknown | event, callback_context: unknown | undefined): boolean;
+		unsubscribe(callback: unknown | event, callback_context?: unknown | undefined): boolean;
 		/**
 		 * Determine if a specific callback is currently subscribed to the event.
 		 * The callback_context should be the same as the one used when subscribing the callback.
 		 * local is_subscribed = on_click_event:is_subscribed(callback, self)
 		 */
-		is_subscribed(callback: unknown | event, callback_context: unknown | undefined): LuaMultiReturn<[boolean, number | undefined]>;
+		is_subscribed(callback: unknown | event, callback_context?: unknown | undefined): LuaMultiReturn<[boolean, number | undefined]>;
 		/**
 		 * Trigger the event, causing all subscribed callbacks to be executed.
 		 * Any parameters passed to trigger will be forwarded to the callbacks.
@@ -79,6 +79,10 @@ declare module 'event.event' {
 		 * on_click_event:clear()
 		 */
 		clear(): void;
+		/**
+		 * Trigger the event. All subscribed callbacks will be called in the order they were subscribed.
+		 */
+		(vararg: unknown): unknown | undefined;
 	}
 	/**
 	 * Global events module that allows creation and management of global events that can be triggered from anywhere in your game.
@@ -107,12 +111,12 @@ declare module 'event.event' {
 		 * Returns a new promise that will be resolved or rejected based on the handlers' return values.
 		 * load_data():next(function(data) return process(data) end):next(display):catch(show_error)
 		 */
-		next(on_resolved: unknown | promise | event | undefined, on_rejected: unknown | promise | event | undefined, context: unknown | undefined): promise;
+		next(on_resolved?: unknown | promise | event | undefined, on_rejected?: unknown | promise | event | undefined, context?: unknown | undefined): promise;
 		/**
 		 * Attach a rejection handler to the promise. Equivalent to next(nil, on_rejected).
 		 * load_data():catch(function(err) print("Failed:", err) end)
 		 */
-		"catch"(on_rejected: unknown | event, context: unknown | undefined): promise;
+		"catch"(on_rejected: unknown | event, context?: unknown | undefined): promise;
 		/**
 		 * Attach a handler that is called regardless of whether the promise is resolved or rejected.
 		 * The handler is called with the resolved value or rejection reason.
@@ -120,7 +124,7 @@ declare module 'event.event' {
 		 * The handler return value is ignored.
 		 * load_data():finally(function() hide_loading_spinner() end)
 		 */
-		"finally"(on_finally: unknown | event, context: unknown | undefined): promise;
+		"finally"(on_finally: unknown | event, context?: unknown | undefined): promise;
 		/**
 		 * Check if the promise is in pending state.
 		 */
@@ -194,6 +198,10 @@ declare module 'event.event' {
 		 * Cancel the promise chain.
 		 */
 		_cancel_promise(): void;
+		/**
+		 * Call the promise to resolve it with value
+		 */
+		(value: unknown): undefined;
 	}
 	interface queue_event_data {
 		data: unknown;
@@ -215,7 +223,7 @@ declare module 'event.event' {
 		 * my_queue:push(save_data)
 		 * my_queue:push(save_data, function() print("saved!") end)
 		 */
-		push(data: unknown, on_handle: unknown | event | undefined, context: unknown | undefined): void;
+		push(data: unknown, on_handle?: unknown | event | undefined, context?: unknown | undefined): void;
 		/**
 		 * Subscribe a handler to this queue instance. When an event is pushed to this queue,
 		 * the handler will be called. If there are already events in the queue, they will be processed immediately.
@@ -226,35 +234,35 @@ declare module 'event.event' {
 		 * end
 		 * my_queue:subscribe(on_save, self)
 		 */
-		subscribe(handler: unknown | event, context: unknown | undefined): boolean;
+		subscribe(handler: unknown | event, context?: unknown | undefined): boolean;
 		/**
 		 * Subscribe a handler until it handles one event. The handler is invoked for each event in the queue until it returns non-nil (handles an event)
 		 * then it is automatically unsubscribed and will not be invoked again, even if more events remain in the queue.
 		 * my_queue:subscribe_once(function(self, data) return process(data) end, self)
 		 */
-		subscribe_once(handler: unknown | event, context: unknown | undefined): boolean;
+		subscribe_once(handler: unknown | event, context?: unknown | undefined): boolean;
 		/**
 		 * Unsubscribe a handler from this queue instance.
 		 * my_queue:unsubscribe(on_save, self)
 		 */
-		unsubscribe(handler: unknown | event, context: unknown | undefined): boolean;
+		unsubscribe(handler: unknown | event, context?: unknown | undefined): boolean;
 		/**
 		 * Check if a handler is subscribed to this queue instance.
 		 * local ok = my_queue:is_subscribed(on_save, self)
 		 */
-		is_subscribed(handler: unknown | event, context: unknown | undefined): LuaMultiReturn<[boolean, number | undefined]>;
+		is_subscribed(handler: unknown | event, context?: unknown | undefined): LuaMultiReturn<[boolean, number | undefined]>;
 		/**
 		 * Process all events in this queue immediately. Subscribers will not be called in this function.
 		 * Events can be handled and removed in event handler callback. If event is handled, it will be removed from the queue.
 		 * my_queue:process(function(self, data) return handle(data) end, self)
 		 */
-		process(event_handler: unknown | event, context: unknown | undefined): void;
+		process(event_handler: unknown | event, context?: unknown | undefined): void;
 		/**
 		 * Process exactly one queued event with a specific handler (subscribers will NOT be called).
 		 * If the handler returns non-nil the event will be removed from the queue.
 		 * local handled = my_queue:process_next(function(data) return handle(data) end)
 		 */
-		process_next(event_handler: unknown | event | undefined, context: unknown | undefined): boolean;
+		process_next(event_handler?: unknown | event | undefined, context?: unknown | undefined): boolean;
 		/**
 		 * Get all pending events in this queue.
 		 * for _, event_data in ipairs(my_queue:get_events()) do
@@ -311,7 +319,7 @@ declare module 'event.event' {
 	 * local e = event.create()
 	 * local e = event.create(function(self) print("ok") end, self)
 	 */
-	export function create(this: void, callback: unknown | event | undefined, callback_context: unknown | undefined): event;
+	export function create(this: void, callback?: unknown | event | undefined, callback_context?: unknown | undefined): event;
 	/**
 	 * Check if the table is an event instance.
 	 * if event.is_event(my_value) then
@@ -323,7 +331,7 @@ declare module 'event.event' {
 	 * Customize the logging mechanism used by Event module. You can use **Defold Log** library or provide a custom logger.
 	 * By default, the module uses the `pprint` logger for errors.
 	 */
-	export function set_logger(this: void, logger_instance: event_logger | LuaTable | undefined): void;
+	export function set_logger(this: void, logger_instance?: event_logger | LuaTable | undefined): void;
 	/**
 	 * Set the mode of the event module.
 	 */

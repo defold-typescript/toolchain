@@ -18,7 +18,7 @@ declare module 'tweener.tweener' {
 	/**
 	 * Starts a tweening operation. Return a tween object to manage the tween.
 	 */
-	export function tween(this: void, easing_function: easing_function, from: number, to: number, time: number | undefined, callback: (value: number, is_end: boolean, time_elapsed: number, time_total: number) => void, update_delta_time: number | undefined): tween;
+	export function tween(this: void, easing_function: easing_function, from: number, to: number, time: number | undefined, callback: (value: number, is_end: boolean, time_elapsed: number, time_total: number) => void, update_delta_time?: number | undefined): tween;
 	/**
 	 * Returns the result of an easing function.
 	 */
@@ -30,7 +30,7 @@ declare module 'tweener.tweener' {
 	/**
 	 * Cancel a previous running tween.
 	 */
-	export function cancel(this: void, tween: tween | undefined): boolean;
+	export function cancel(this: void, tween?: tween | undefined): boolean;
 	/**
 	 * Check if a tween is paused
 	 */

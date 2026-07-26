@@ -410,6 +410,53 @@ test("emits moduleFunctions, then interfaces, then aliases in order", () => {
   ]);
 });
 
+test("a trailing nil-bearing param lowers to is_optional True; a mid-list one stays False", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "f",
+        brief: "",
+        generics: [],
+        params: [
+          {
+            name: "a",
+            types: ["string|nil"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+          { name: "b", types: ["string"], doc: "", isOptional: false, isVararg: false },
+          {
+            name: "c",
+            types: ["string|nil"],
+            doc: "",
+            isOptional: false,
+            isVararg: false,
+            isNilable: true,
+          },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const flags = (fn?.parameters as { name: string; is_optional: string }[]).map((p) => [
+    p.name,
+    p.is_optional,
+  ]);
+  // Same trailing-run rule as the emitter: a is nil-bearing but a required b follows,
+  // so only the trailing c is optional. Keeps the `/api` signature matching the `.d.ts`.
+  expect(flags).toEqual([
+    ["a", "False"],
+    ["b", "False"],
+    ["c", "True"],
+  ]);
+});
+
 test("the lowered object round-trips through parseDefoldApiDoc", () => {
   const model: LibraryModel = {
     interfaces: [
