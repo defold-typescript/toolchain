@@ -1,0 +1,1108 @@
+{
+  "info": {
+    "namespace": "event",
+    "brief": "The Event module, used to create and manage events. Allows to subscribe to events and trigger them.",
+    "description": "The Event module, used to create and manage events. Allows to subscribe to events and trigger them."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Generate a new event instance. This instance can then be used to subscribe to and trigger events.\nThe callback function will be called when the event is triggered. The callback_context parameter is optional\nand will be passed as the first parameter to the callback function. Usually, it is used to pass the self instance.\nlocal e = event.create()\nlocal e = event.create(function(self) print(\"ok\") end, self)",
+      "description": "Generate a new event instance. This instance can then be used to subscribe to and trigger events.\nThe callback function will be called when the event is triggered. The callback_context parameter is optional\nand will be passed as the first parameter to the callback function. Usually, it is used to pass the self instance.\nlocal e = event.create()\nlocal e = event.create(function(self) print(\"ok\") end, self)",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function to be called when the event is triggered. Or the event instance to subscribe.",
+          "types": [
+            "unknown | event | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "callback_context",
+          "doc": "The first parameter to be passed to the callback function.",
+          "types": [
+            "unknown | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "A new event instance.",
+          "types": [
+            "event"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_event",
+      "brief": "Check if the table is an event instance.\nif event.is_event(my_value) then\nmy_value:trigger()\nend",
+      "description": "Check if the table is an event instance.\nif event.is_event(my_value) then\nmy_value:trigger()\nend",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "Customize the logging mechanism used by Event module. You can use **Defold Log** library or provide a custom logger.\nBy default, the module uses the `pprint` logger for errors.",
+      "description": "Customize the logging mechanism used by Event module. You can use **Defold Log** library or provide a custom logger.\nBy default, the module uses the `pprint` logger for errors.",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "A logger object that follows the specified logging interface, including methods for `trace`, `debug`, `info`, `warn`, `error`. Pass `nil` to remove the default logger.",
+          "types": [
+            "event_logger | LuaTable | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_mode",
+      "brief": "Set the mode of the event module.",
+      "description": "Set the mode of the event module.",
+      "parameters": [
+        {
+          "name": "mode",
+          "doc": "| \"xpcall\" | \"none\" The mode to set.",
+          "types": [
+            "\"pcall\""
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "event_callback_data"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "event_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "Log a trace message.",
+          "description": "Log a trace message.",
+          "types": [
+            "(logger: event_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "Log a debug message.",
+          "description": "Log a debug message.",
+          "types": [
+            "(logger: event_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "Log an info message.",
+          "description": "Log an info message.",
+          "types": [
+            "(logger: event_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "Log a warning message.",
+          "description": "Log a warning message.",
+          "types": [
+            "(logger: event_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "Log an error message.",
+          "description": "Log an error message.",
+          "types": [
+            "(logger: event_logger, message: string, data: unknown | undefined) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "event",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "subscribe",
+          "brief": "Subscribe a callback to the event or other event. The callback will be invoked whenever the event is triggered.\nThe callback_context parameter is optional and will be passed as the first parameter to the callback function.\nIf the callback with context is already subscribed, the warning will be logged.\nlocal function callback(self)\nprint(\"clicked!\")\nend\non_click_event:subscribe(callback, self)\n\n-- Subscribe an event to another event\nevent_1 = event.create(callback)\nevent_2 = event.create()\nevent_2:subscribe(event_1) -- Now event2 will trigger event1",
+          "description": "Subscribe a callback to the event or other event. The callback will be invoked whenever the event is triggered.\nThe callback_context parameter is optional and will be passed as the first parameter to the callback function.\nIf the callback with context is already subscribed, the warning will be logged.\nlocal function callback(self)\nprint(\"clicked!\")\nend\non_click_event:subscribe(callback, self)\n\n-- Subscribe an event to another event\nevent_1 = event.create(callback)\nevent_2 = event.create()\nevent_2:subscribe(event_1) -- Now event2 will trigger event1",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "The function to be executed when the event occurs.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "callback_context",
+              "doc": "The first parameter to be passed to the callback function.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if event is subscribed (Will return false if the callback is already subscribed)",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "subscribe_once",
+          "brief": "Subscribe a callback for a single trigger. After the first trigger the callback is automatically unsubscribed.\non_click_event:subscribe_once(function(self) print(\"one-time click!\") end, self)",
+          "description": "Subscribe a callback for a single trigger. After the first trigger the callback is automatically unsubscribed.\non_click_event:subscribe_once(function(self) print(\"one-time click!\") end, self)",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "The function or event to run once.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "callback_context",
+              "doc": "Same as subscribe.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if subscribed",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "unsubscribe",
+          "brief": "Remove a previously subscribed callback from the event.\nThe callback_context should be the same as the one used when subscribing the callback.\nIf there is no callback_context provided, all callbacks with the same function will be unsubscribed.\non_click_event:unsubscribe(callback, self)",
+          "description": "Remove a previously subscribed callback from the event.\nThe callback_context should be the same as the one used when subscribing the callback.\nIf there is no callback_context provided, all callbacks with the same function will be unsubscribed.\non_click_event:unsubscribe(callback, self)",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "The callback function to unsubscribe.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "callback_context",
+              "doc": "The first parameter to be passed to the callback function. If not provided, will unsubscribe all callbacks with the same function.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if event is unsubscribed",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_subscribed",
+          "brief": "Determine if a specific callback is currently subscribed to the event.\nThe callback_context should be the same as the one used when subscribing the callback.\nlocal is_subscribed = on_click_event:is_subscribed(callback, self)",
+          "description": "Determine if a specific callback is currently subscribed to the event.\nThe callback_context should be the same as the one used when subscribing the callback.\nlocal is_subscribed = on_click_event:is_subscribed(callback, self)",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "The callback function in question. Or the event instance to check.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "callback_context",
+              "doc": "The first parameter to be passed to the callback function.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the callback is subscribed to the event",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "",
+              "doc": "Index of callback in event if subscribed (return first found index)",
+              "types": [
+                "number | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "trigger",
+          "brief": "Trigger the event, causing all subscribed callbacks to be executed.\nAny parameters passed to trigger will be forwarded to the callbacks.\nThe return value of the last executed callback is returned.\nThe event:trigger(...) can be called as event(...).\non_click_event:trigger(\"arg1\", \"arg2\")\n\n-- The event can be triggered as a function\non_click_event(\"arg1\", \"arg2\")",
+          "description": "Trigger the event, causing all subscribed callbacks to be executed.\nAny parameters passed to trigger will be forwarded to the callbacks.\nThe return value of the last executed callback is returned.\nThe event:trigger(...) can be called as event(...).\non_click_event:trigger(\"arg1\", \"arg2\")\n\n-- The event can be triggered as a function\non_click_event(\"arg1\", \"arg2\")",
+          "parameters": [
+            {
+              "name": "...args",
+              "doc": "Any number of parameters to be passed to the subscribed callbacks.",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Result of the last triggered callback",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_empty",
+          "brief": "Check if the event has no subscribed callbacks.\nlocal is_empty = on_click_event:is_empty()",
+          "description": "Check if the event has no subscribed callbacks.\nlocal is_empty = on_click_event:is_empty()",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the event has no subscribed callbacks",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clear",
+          "brief": "Remove all callbacks subscribed to the event, effectively resetting it.\non_click_event:clear()",
+          "description": "Remove all callbacks subscribed to the event, effectively resetting it.\non_click_event:clear()",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "events"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "promise_cancelled_context",
+      "properties": [
+        {
+          "name": "is_cancelled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "on_cancel",
+          "brief": "",
+          "description": "",
+          "types": [
+            "event"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "promise",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "next",
+          "brief": "Attach resolve and reject handlers to the promise.\nReturns a new promise that will be resolved or rejected based on the handlers' return values.\nload_data():next(function(data) return process(data) end):next(display):catch(show_error)",
+          "description": "Attach resolve and reject handlers to the promise.\nReturns a new promise that will be resolved or rejected based on the handlers' return values.\nload_data():next(function(data) return process(data) end):next(display):catch(show_error)",
+          "parameters": [
+            {
+              "name": "on_resolved",
+              "doc": "Handler called when promise is resolved. If nil, value passes through.",
+              "types": [
+                "unknown | promise | event | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "on_rejected",
+              "doc": "Handler called when promise is rejected. If nil, rejection passes through.",
+              "types": [
+                "unknown | promise | event | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to call the handlers with.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A new promise representing the result of the handlers.",
+              "types": [
+                "promise"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "catch",
+          "brief": "Attach a rejection handler to the promise. Equivalent to next(nil, on_rejected).\nload_data():catch(function(err) print(\"Failed:\", err) end)",
+          "description": "Attach a rejection handler to the promise. Equivalent to next(nil, on_rejected).\nload_data():catch(function(err) print(\"Failed:\", err) end)",
+          "parameters": [
+            {
+              "name": "on_rejected",
+              "doc": "Handler called when promise is rejected.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to call the handler with.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A new promise representing the result of the handler.",
+              "types": [
+                "promise"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "finally",
+          "brief": "Attach a handler that is called regardless of whether the promise is resolved or rejected.\nThe handler is called with the resolved value or rejection reason.\nWhen context is provided, it is passed as the first argument.\nThe handler return value is ignored.\nload_data():finally(function() hide_loading_spinner() end)",
+          "description": "Attach a handler that is called regardless of whether the promise is resolved or rejected.\nThe handler is called with the resolved value or rejection reason.\nWhen context is provided, it is passed as the first argument.\nThe handler return value is ignored.\nload_data():finally(function() hide_loading_spinner() end)",
+          "parameters": [
+            {
+              "name": "on_finally",
+              "doc": "Handler called when promise is finished (resolved or rejected).",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to call the handler with.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A new promise that resolves/rejects with the same value/reason as the original.",
+              "types": [
+                "promise"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_pending",
+          "brief": "Check if the promise is in pending state.",
+          "description": "Check if the promise is in pending state.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the promise is pending.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_resolved",
+          "brief": "Check if the promise is in resolved state.",
+          "description": "Check if the promise is in resolved state.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the promise is resolved.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_rejected",
+          "brief": "Check if the promise is in rejected state.",
+          "description": "Check if the promise is in rejected state.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the promise is rejected.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_finished",
+          "brief": "Check if the promise is finished (either resolved or rejected).",
+          "description": "Check if the promise is finished (either resolved or rejected).",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the promise is finished.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_cancelled",
+          "brief": "Check if the shared cancel_context was cancelled.",
+          "description": "Check if the shared cancel_context was cancelled.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the promise chain was cancelled.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "Call the promise to resolve it with a single value (e.g. as a one-argument callback).",
+          "description": "Call the promise to resolve it with a single value (e.g. as a one-argument callback).",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "resolve",
+          "brief": "Resolve the promise.\nmy_promise:resolve(result)",
+          "description": "Resolve the promise.\nmy_promise:resolve(result)",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The value to resolve with.",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reject",
+          "brief": "Reject the promise.\nmy_promise:reject(\"failed\")",
+          "description": "Reject the promise.\nmy_promise:reject(\"failed\")",
+          "parameters": [
+            {
+              "name": "reason",
+              "doc": "The reason to reject with.",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cancel",
+          "brief": "Cancel the promise chain. Triggers cleanup and rejects if still pending.\nmy_promise:cancel()",
+          "description": "Cancel the promise chain. Triggers cleanup and rejects if still pending.\nmy_promise:cancel()",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "append",
+          "brief": "Append a task to this promise's internal sequence without reassigning.\nThe task may return a value or a promise. If `task` is a promise, the pipeline waits for it\nto finish and adopts its result. The incoming value is not forwarded into `task`\n(same as `append(function() return task end)`).\nReturns self for chaining.\nAlmost similar to `promise = promise:next(task)`, but without reassigning the promise.\npipeline:append(step1)\npipeline:append(step2)\npipeline:append(step3)\nlocal last = pipeline:tail()\nprint(\"Is going to check status of\", last:is_pending())",
+          "description": "Append a task to this promise's internal sequence without reassigning.\nThe task may return a value or a promise. If `task` is a promise, the pipeline waits for it\nto finish and adopts its result. The incoming value is not forwarded into `task`\n(same as `append(function() return task end)`).\nReturns self for chaining.\nAlmost similar to `promise = promise:next(task)`, but without reassigning the promise.\npipeline:append(step1)\npipeline:append(step2)\npipeline:append(step3)\nlocal last = pipeline:tail()\nprint(\"Is going to check status of\", last:is_pending())",
+          "parameters": [
+            {
+              "name": "task",
+              "doc": "",
+              "types": [
+                "((value: unknown) => unknown) | promise"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "promise"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "tail",
+          "brief": "Get the current tail promise representing all appended work.\nlocal last = pipeline:tail()\nlast:next(on_complete)",
+          "description": "Get the current tail promise representing all appended work.\nlocal last = pipeline:tail()\nlast:next(on_complete)",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "promise"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reset",
+          "brief": "Reset the internal sequence to an already resolved promise.\npipeline:reset()\npipeline:append(new_step)",
+          "description": "Reset the internal sequence to an already resolved promise.\npipeline:reset()\npipeline:append(new_step)",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "promise"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_reject_cancel_children",
+          "brief": "Reject pending child promises when a settled promise is cancelled.",
+          "description": "Reject pending child promises when a settled promise is cancelled.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_cancel_promise",
+          "brief": "Cancel the promise chain.",
+          "description": "Cancel the promise chain.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "state",
+          "brief": "Current state of the promise (pending, resolved, rejected)",
+          "description": "Current state of the promise (pending, resolved, rejected)",
+          "types": [
+            "promise_state"
+          ]
+        },
+        {
+          "name": "value",
+          "brief": "The resolved value or rejection reason",
+          "description": "The resolved value or rejection reason",
+          "types": [
+            "unknown"
+          ]
+        },
+        {
+          "name": "cancellation",
+          "brief": "Shared cancelled context for a promise chain",
+          "description": "Shared cancelled context for a promise chain",
+          "types": [
+            "promise_cancelled_context"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "queue_event_data",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ]
+        },
+        {
+          "name": "on_handle",
+          "brief": "",
+          "description": "",
+          "types": [
+            "event"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "queue",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "push",
+          "brief": "Push a new event to the queue. The event will exist until it's handled by a subscriber.\nIf there are already subscribers for this queue instance, they will be called immediately.\nIf multiple subscribers handle the event, all subscribers will still be called. The on_handle callback\nwill be called for each subscriber that handles the event.\nmy_queue:push(save_data)\nmy_queue:push(save_data, function() print(\"saved!\") end)",
+          "description": "Push a new event to the queue. The event will exist until it's handled by a subscriber.\nIf there are already subscribers for this queue instance, they will be called immediately.\nIf multiple subscribers handle the event, all subscribers will still be called. The on_handle callback\nwill be called for each subscriber that handles the event.\nmy_queue:push(save_data)\nmy_queue:push(save_data, function() print(\"saved!\") end)",
+          "parameters": [
+            {
+              "name": "data",
+              "doc": "The data associated with the event.",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "on_handle",
+              "doc": "Callback function or event to be called when the event is handled.",
+              "types": [
+                "unknown | event | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to be passed as the first parameter to the on_handle function when the event is handled.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "subscribe",
+          "brief": "Subscribe a handler to this queue instance. When an event is pushed to this queue,\nthe handler will be called. If there are already events in the queue, they will be processed immediately.\nReturn a non-nil value from the handler to mark the event as handled and remove it from the queue.\nlocal function on_save(self, data)\ndo_save(data)\nreturn true\nend\nmy_queue:subscribe(on_save, self)",
+          "description": "Subscribe a handler to this queue instance. When an event is pushed to this queue,\nthe handler will be called. If there are already events in the queue, they will be processed immediately.\nReturn a non-nil value from the handler to mark the event as handled and remove it from the queue.\nlocal function on_save(self, data)\ndo_save(data)\nreturn true\nend\nmy_queue:subscribe(on_save, self)",
+          "parameters": [
+            {
+              "name": "handler",
+              "doc": "The handler function or event to be called when an event is pushed.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to be passed as the first parameter to the handler function.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if handler was subscribed successfully",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "subscribe_once",
+          "brief": "Subscribe a handler until it handles one event. The handler is invoked for each event in the queue until it returns non-nil (handles an event)\nthen it is automatically unsubscribed and will not be invoked again, even if more events remain in the queue.\nmy_queue:subscribe_once(function(self, data) return process(data) end, self)",
+          "description": "Subscribe a handler until it handles one event. The handler is invoked for each event in the queue until it returns non-nil (handles an event)\nthen it is automatically unsubscribed and will not be invoked again, even if more events remain in the queue.\nmy_queue:subscribe_once(function(self, data) return process(data) end, self)",
+          "parameters": [
+            {
+              "name": "handler",
+              "doc": "The handler function or event to be called when an event is pushed.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to be passed as the first parameter to the handler function.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if handler was subscribed successfully",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "unsubscribe",
+          "brief": "Unsubscribe a handler from this queue instance.\nmy_queue:unsubscribe(on_save, self)",
+          "description": "Unsubscribe a handler from this queue instance.\nmy_queue:unsubscribe(on_save, self)",
+          "parameters": [
+            {
+              "name": "handler",
+              "doc": "The handler function or event to unsubscribe.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context that was passed when subscribing.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if handler was unsubscribed successfully",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_subscribed",
+          "brief": "Check if a handler is subscribed to this queue instance.\nlocal ok = my_queue:is_subscribed(on_save, self)",
+          "description": "Check if a handler is subscribed to this queue instance.\nlocal ok = my_queue:is_subscribed(on_save, self)",
+          "parameters": [
+            {
+              "name": "handler",
+              "doc": "The handler function or event to check.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context that was passed when subscribing.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if handler is subscribed",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "",
+              "doc": "Index of handler if subscribed",
+              "types": [
+                "number | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "process",
+          "brief": "Process all events in this queue immediately. Subscribers will not be called in this function.\nEvents can be handled and removed in event handler callback. If event is handled, it will be removed from the queue.\nmy_queue:process(function(self, data) return handle(data) end, self)",
+          "description": "Process all events in this queue immediately. Subscribers will not be called in this function.\nEvents can be handled and removed in event handler callback. If event is handled, it will be removed from the queue.\nmy_queue:process(function(self, data) return handle(data) end, self)",
+          "parameters": [
+            {
+              "name": "event_handler",
+              "doc": "Specific handler or event to process the events. If this function returns non-nil, the event will be removed from the queue.",
+              "types": [
+                "unknown | event"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to be passed to the handler.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "process_next",
+          "brief": "Process exactly one queued event with a specific handler (subscribers will NOT be called).\nIf the handler returns non-nil the event will be removed from the queue.\nlocal handled = my_queue:process_next(function(data) return handle(data) end)",
+          "description": "Process exactly one queued event with a specific handler (subscribers will NOT be called).\nIf the handler returns non-nil the event will be removed from the queue.\nlocal handled = my_queue:process_next(function(data) return handle(data) end)",
+          "parameters": [
+            {
+              "name": "event_handler",
+              "doc": "Specific handler or event to process the event. If this function returns non-nil, the event will be removed from the queue.",
+              "types": [
+                "unknown | event | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "The context to be passed to the handler.",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the head event was handled and removed",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_events",
+          "brief": "Get all pending events in this queue.\nfor _, event_data in ipairs(my_queue:get_events()) do\nprint(event_data.data)\nend",
+          "description": "Get all pending events in this queue.\nfor _, event_data in ipairs(my_queue:get_events()) do\nprint(event_data.data)\nend",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A table of pending events.",
+              "types": [
+                "queue_event_data[]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clear_events",
+          "brief": "Clear all pending events in this queue.\nmy_queue:clear_events()",
+          "description": "Clear all pending events in this queue.\nmy_queue:clear_events()",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clear_subscribers",
+          "brief": "Clear all subscribers from this queue instance.\nmy_queue:clear_subscribers()",
+          "description": "Clear all subscribers from this queue instance.\nmy_queue:clear_subscribers()",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_empty",
+          "brief": "Check if this queue has no pending events.\nif my_queue:is_empty() then\nreturn\nend",
+          "description": "Check if this queue has no pending events.\nif my_queue:is_empty() then\nreturn\nend",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the queue has no pending events",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "has_subscribers",
+          "brief": "Check if this queue instance has no subscribed handlers.\nif my_queue:has_subscribers() then\nmy_queue:push(data)\nend",
+          "description": "Check if this queue instance has no subscribed handlers.\nif my_queue:has_subscribers() then\nmy_queue:push(data)\nend",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "True if the queue instance has subscribed handlers",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clear",
+          "brief": "Remove all events and handlers from this queue instance, effectively resetting it.\nmy_queue:clear()",
+          "description": "Remove all events and handlers from this queue instance, effectively resetting it.\nmy_queue:clear()",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_check_subscribers",
+          "brief": "Process the events if there are subscribers for this queue instance.\nIf event is handled, it will be removed from the queue.\nAll subscribers will be called for each event, even if it's already been handled.",
+          "description": "Process the events if there are subscribers for this queue instance.\nIf event is handled, it will be removed from the queue.\nAll subscribers will be called for each event, even if it's already been handled.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "queues"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "promise_state"
+    }
+  ]
+}

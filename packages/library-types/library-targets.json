@@ -102,12 +102,6 @@
       "generated": "generated/platypus.platypus.d.ts"
     },
     {
-      "module": "event.event",
-      "path": "packages/defold-event/event.event.d.ts",
-      "fixture": "fixtures/ts-defold/event.event.d.ts",
-      "generated": "generated/event.event.d.ts"
-    },
-    {
       "module": "richtext.color",
       "path": "packages/defold-richtext/richtext.color.d.ts",
       "fixture": "fixtures/ts-defold/richtext.color.d.ts",

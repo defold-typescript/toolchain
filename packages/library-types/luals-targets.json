@@ -37,6 +37,16 @@
         "vector4": "Vector4"
       },
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/Insality/defold-event",
+      "ref": "19",
+      "license": "MIT",
+      "sourceGlobs": ["event/**/*.lua"],
+      "moduleId": "event.event",
+      "namespace": "event",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }

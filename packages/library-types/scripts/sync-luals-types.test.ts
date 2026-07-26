@@ -257,3 +257,26 @@ describe("tweener migrated off the ts-defold corpus onto the LuaLS front-end", (
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/tweener.tweener.d.ts"))).toBe(false);
   });
 });
+
+describe("event migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("event is a luals namespace and no longer a ts-defold target or classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "event")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "event.event")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "defold-event")).toBe(false);
+  });
+
+  test("the retired ts-defold event artifacts are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/event.event.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/event.event.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/event.event.json"))).toBe(false);
+  });
+});

@@ -72,9 +72,6 @@
     "./platypus.platypus": {
       "types": "./generated/platypus.platypus.d.ts"
     },
-    "./event.event": {
-      "types": "./generated/event.event.d.ts"
-    },
     "./richtext.color": {
       "types": "./generated/richtext.color.d.ts"
     },
