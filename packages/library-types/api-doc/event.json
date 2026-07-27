@@ -581,24 +581,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "__call",
-          "brief": "Call the promise to resolve it with a single value (e.g. as a one-argument callback).",
-          "description": "Call the promise to resolve it with a single value (e.g. as a one-argument callback).",
-          "parameters": [
-            {
-              "name": "value",
-              "doc": "",
-              "types": [
-                "unknown"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "resolve",
           "brief": "Resolve the promise.\nmy_promise:resolve(result)",
           "description": "Resolve the promise.\nmy_promise:resolve(result)",
@@ -704,14 +686,6 @@
           "name": "_reject_cancel_children",
           "brief": "Reject pending child promises when a settled promise is cancelled.",
           "description": "Reject pending child promises when a settled promise is cancelled.",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_cancel_promise",
-          "brief": "Cancel the promise chain.",
-          "description": "Cancel the promise chain.",
           "parameters": [],
           "returnvalues": []
         }
@@ -1083,14 +1057,6 @@
           "name": "clear",
           "brief": "Remove all events and handlers from this queue instance, effectively resetting it.\nmy_queue:clear()",
           "description": "Remove all events and handlers from this queue instance, effectively resetting it.\nmy_queue:clear()",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_check_subscribers",
-          "brief": "Process the events if there are subscribers for this queue instance.\nIf event is handled, it will be removed from the queue.\nAll subscribers will be called for each event, even if it's already been handled.",
-          "description": "Process the events if there are subscribers for this queue instance.\nIf event is handled, it will be removed from the queue.\nAll subscribers will be called for each event, even if it's already been handled.",
           "parameters": [],
           "returnvalues": []
         }

@@ -303,6 +303,67 @@ describe("parseLualsSource field visibility and @vararg", () => {
   });
 });
 
+describe("parseLualsSource method visibility", () => {
+  test("a @local before a colon method sets visibility to local, leaving name/params/returns/brief intact", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class Comp",
+        "local Comp = {}",
+        "---Do the thing",
+        "---@local",
+        "---@param x number the x",
+        "---@return boolean ok whether it worked",
+        "function Comp:run(x)",
+        "end",
+      ),
+    );
+    const method = model.interfaces.find((i) => i.name === "Comp")?.methods[0];
+    expect(method).toEqual({
+      name: "run",
+      brief: "Do the thing",
+      generics: [],
+      params: [{ name: "x", types: ["number"], doc: "the x", isOptional: false, isVararg: false }],
+      returns: [
+        {
+          name: "ok",
+          types: ["boolean"],
+          doc: "whether it worked",
+          isOptional: false,
+          isVararg: false,
+        },
+      ],
+      visibility: "local",
+    });
+  });
+
+  test("each of @private/@protected/@package before a method is captured as that visibility", () => {
+    for (const scope of ["private", "protected", "package"] as const) {
+      const model = parseLualsSource(
+        lua("---@class Comp", "local Comp = {}", `---@${scope}`, "function Comp:secret()", "end"),
+      );
+      expect(model.interfaces.find((i) => i.name === "Comp")?.methods[0]?.visibility).toBe(scope);
+    }
+  });
+
+  test("a @local before a dotted module function sets its visibility", () => {
+    const model = parseLualsSource(
+      lua("---@local", "---@param id string the id", "function mod.cleanup(id)", "end"),
+    );
+    const fn = model.moduleFunctions[0];
+    expect(fn?.name).toBe("cleanup");
+    expect(fn?.visibility).toBe("local");
+  });
+
+  test("an unmarked method carries no visibility key at all", () => {
+    const model = parseLualsSource(
+      lua("---@class Comp", "local Comp = {}", "---@param x number", "function Comp:run(x)", "end"),
+    );
+    const method = model.interfaces.find((i) => i.name === "Comp")?.methods[0];
+    expect(method?.visibility).toBeUndefined();
+    expect(method && Object.keys(method)).not.toContain("visibility");
+  });
+});
+
 describe("parseLualsSource module ownership and spaced fun returns", () => {
   test("a spaced `fun(...): ret` return survives the top-level colon; the trailer is doc", () => {
     const model = parseLualsSource(

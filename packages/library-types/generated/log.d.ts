@@ -4,16 +4,6 @@ declare module 'log.log' {
 	interface log {
 		name: string;
 		level: string;
-		_last_gc_memory: number;
-		_last_message_time: number;
-		/**
-		 * Format log message
-		 */
-		format(level: string, message: string, context: unknown): string | undefined;
-		/**
-		 * Log message with specified level and message
-		 */
-		log(level: string, message: string, context: unknown): void;
 		/**
 		 * Log message with TRACE level
 		 */

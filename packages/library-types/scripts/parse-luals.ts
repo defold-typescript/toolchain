@@ -43,6 +43,11 @@ export interface LibraryMethod {
   generics: LibraryGeneric[];
   params: LibraryParam[];
   returns: LibraryParam[];
+  // A standalone `---@local`/`---@private`/`---@protected`/`---@package` before the
+  // function declaration. Set only when marked (like a field's `visibility`), so an
+  // unmarked method carries no key. `local` has no `@field` analogue (LuaLS field
+  // scope has no `local`), so a method's visibility widens the field set with it.
+  visibility?: LibraryMethodVisibility;
 }
 
 export interface LibraryParam {
@@ -59,6 +64,8 @@ export interface LibraryParam {
 }
 
 export type LibraryFieldVisibility = "public" | "protected" | "private" | "package";
+
+export type LibraryMethodVisibility = LibraryFieldVisibility | "local";
 
 export interface LibraryField {
   name: string;
@@ -85,6 +92,7 @@ interface Pending {
   returns: LibraryParam[];
   generics: LibraryGeneric[];
   overloads: LibraryOverload[];
+  visibility?: LibraryMethodVisibility;
 }
 
 const emptyPending = (): Pending => ({
@@ -389,6 +397,7 @@ export function parseLualsSource(source: string): LibraryModel {
     generics: pending.generics,
     params: pending.params,
     returns: pending.returns,
+    ...(pending.visibility ? { visibility: pending.visibility } : {}),
   });
 
   for (const raw of source.split("\n")) {
@@ -450,9 +459,19 @@ export function parseLualsSource(source: string): LibraryModel {
           pending = emptyPending();
           break;
         }
+        case "private":
+        case "protected":
+        case "package":
+        case "local": {
+          // A standalone visibility tag on the pending block marks the next function
+          // declaration's method/module-function `visibility` (a `@class` or `@alias`
+          // that consumes the block first resets it, so it never leaks onto a type).
+          pending.visibility = tag as LibraryMethodVisibility;
+          break;
+        }
         default:
-          // @private, @protected, @cast, @type, @diagnostic, ... — outside the Druid
-          // subset; recognized as a tag and skipped, never treated as doc.
+          // @cast, @type, @diagnostic, ... — outside the Druid subset; recognized as a
+          // tag and skipped, never treated as doc.
           break;
       }
       continue;
