@@ -79,6 +79,18 @@ function propertyElement(field: LibraryField, ctx: MapContext): Record<string, u
   };
 }
 
+// A module object's field lowered as a top-level `VARIABLE` — the ref-doc shape for a
+// module constant (`squid.TRACE`), matching the emitter's module-level `export const`.
+function variableElement(field: LibraryField, ctx: MapContext): Record<string, unknown> {
+  return {
+    type: "VARIABLE",
+    name: field.name,
+    brief: field.doc,
+    description: field.doc,
+    types: mapTokens(field.types, ctx),
+  };
+}
+
 export function lowerLibraryModel(
   model: LibraryModel,
   { namespace, typeRenames }: { namespace: string; typeRenames?: Record<string, string> },
@@ -93,6 +105,15 @@ export function lowerLibraryModel(
 
   for (const iface of model.interfaces) {
     const ifaceCtx = scopeGenerics(ctx, iface.generics);
+    // The module object's public fields are module-level constants, lowered as top-level
+    // VARIABLE elements rather than a TYPEDEF named after the class.
+    if (iface.name === model.moduleObject) {
+      for (const field of iface.fields) {
+        if (!isPublicField(field)) continue;
+        elements.push(variableElement(field, ifaceCtx));
+      }
+      continue;
+    }
     const functions = iface.methods
       .filter(isPublicMethod)
       .map((method) => functionElement(method, ifaceCtx));
@@ -111,11 +132,14 @@ export function lowerLibraryModel(
     elements.push({ type: "TYPEDEF", name: sanitizeTypeName(alias.name) });
   }
 
-  // The module's own `@class` (named for the namespace, e.g. `@class druid`)
-  // carries the library's summary; use it as the page description so a
-  // LuaLS-sourced library reads with an intro like every other `/api` page,
-  // rather than opening on a bare provenance block. `brief` is its first line.
-  const moduleClass = model.interfaces.find((iface) => iface.name === namespace);
+  // The module's own `@class` carries the library's summary; use it as the page
+  // description so a LuaLS-sourced library reads with an intro like every other `/api`
+  // page, rather than opening on a bare provenance block. `brief` is its first line.
+  // A tracked `moduleObject` names it directly (squid's `Squid` != namespace `squid`);
+  // otherwise fall back to the class named for the namespace (`@class druid`).
+  const moduleClass = model.interfaces.find(
+    (iface) => iface.name === (model.moduleObject ?? namespace),
+  );
   const description = moduleClass?.brief ?? "";
   const brief = description.split("\n")[0] ?? "";
 

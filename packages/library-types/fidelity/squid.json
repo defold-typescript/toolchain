@@ -1,9 +1,9 @@
 {
   "namespace": "squid",
-  "totalMembers": 41,
-  "totalTypeTokens": 54,
+  "totalMembers": 51,
+  "totalTypeTokens": 70,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 20,
+  "undocumentedMembers": 30,
   "coverage": 1
 }
