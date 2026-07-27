@@ -1,12 +1,12 @@
 {
   "namespace": "narrator",
-  "totalMembers": 69,
+  "totalMembers": 46,
   "totalTypeTokens": 55,
   "unknownFallbacks": 2,
   "unknownTokens": [
     "...",
     "variable"
   ],
-  "undocumentedMembers": 52,
+  "undocumentedMembers": 29,
   "coverage": 0.964
 }
