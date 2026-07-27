@@ -270,9 +270,9 @@ describe("buildNav", () => {
           label: "subsoap",
           libraries: [
             {
-              dir: "defold-saver",
-              label: "defold-saver",
-              authoredHere: false,
+              dir: "saver",
+              label: "saver",
+              authoredHere: true,
               modules: [
                 { label: "saver.saver", route: "/api/saver.saver" },
                 { label: "saver.storage", route: "/api/saver.storage" },
@@ -589,5 +589,26 @@ describe("libraryCreatorGroups", () => {
     expect(group?.creator).toBe("orphan-lib");
     expect(group?.libraries[0]?.label).toBe("orphan-lib");
     expect(group?.libraries[0]?.modules[0]?.label).toBe("orphan.module");
+  });
+
+  test("groups two authored-here modules sharing a top namespace segment into one library", () => {
+    const groups = libraryCreatorGroups(
+      [
+        { namespace: "saver.storage", route: "/api/saver.storage" },
+        { namespace: "saver.saver", route: "/api/saver.saver" },
+      ],
+      new Map(),
+      new Map([["saver", "Insality"]]),
+    );
+    expect(groups.map((group) => group.label)).toEqual(["Insality"]);
+    const libraries = groups[0]?.libraries ?? [];
+    expect(libraries).toHaveLength(1);
+    expect(libraries[0]?.dir).toBe("saver");
+    expect(libraries[0]?.label).toBe("saver");
+    expect(libraries[0]?.authoredHere).toBe(true);
+    expect(libraries[0]?.modules).toEqual([
+      { label: "saver.saver", route: "/api/saver.saver" },
+      { label: "saver.storage", route: "/api/saver.storage" },
+    ]);
   });
 });
