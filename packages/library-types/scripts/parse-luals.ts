@@ -557,17 +557,8 @@ export function parseLualsSource(source: string): LibraryModel {
     const typeMatch = /^---@type\s+(.+)$/.exec(line);
     if (typeMatch) {
       const { type } = readTypeToken(typeMatch[1] ?? "");
-      if (/^fun\s*\(/.test(type)) lc.pendingType = type;
-      return;
-    }
-    const returnMatch = /^return\s+([A-Za-z_]\w*)\s*$/.exec(line);
-    if (returnMatch) {
-      if (returnMatch[1] === lc.localVar) lc.returnedSelf = true;
-      return;
-    }
-    const local = LOCAL_ASSIGN.exec(line);
-    if (local) {
-      lc.localVar = local[1] ?? null;
+      // A non-`fun` `---@type` also disarms a previously-armed one.
+      lc.pendingType = /^fun\s*\(/.test(type) ? type : null;
       return;
     }
     if (lc.pendingType) {
@@ -582,7 +573,22 @@ export function parseLualsSource(source: string): LibraryModel {
           returns,
         });
         lc.pendingType = null;
+        return;
       }
+      // Not the immediately-following member key: the armed type has no member.
+      lc.pendingType = null;
+    }
+    const returnMatch = /^return\s+([A-Za-z_]\w*)\s*$/.exec(line);
+    if (returnMatch) {
+      if (returnMatch[1] === lc.localVar) lc.returnedSelf = true;
+      return;
+    }
+    const local = LOCAL_ASSIGN.exec(line);
+    if (local) {
+      // A `---@class` annotates the immediately-following declaration, so only the
+      // first local after the class opens is the instance; a later local must not rebind.
+      if (lc.localVar === null) lc.localVar = local[1] ?? null;
+      return;
     }
   };
 

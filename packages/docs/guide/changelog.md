@@ -40,6 +40,7 @@ changes are called out first because the toolchain is pre-1.0.
 - LuaLS library types (druid, event, log, tweener) no longer leak non-public members: fields and methods marked `@private`/`@protected`/`@package` (and methods marked `@local`) are hidden from the generated declarations, the `/api` docs, and the fidelity report alike, so the three surfaces describe one identical public set. For example the `log` logger drops `_last_gc_memory`/`_last_message_time`/`format`/`log`, and druid components drop the base's protected lifecycle hooks and `get_uid`.
 - A dependency shipping several modules from one repository (for example defold-saver's `saver` and `storage`) now materializes every module. `defold-typescript resolve` previously kept only the first module and silently dropped the rest.
 - A library shipping several modules from one repository (for example defold-saver's `saver` and `storage`) now appears as a single grouped entry in the docs-site Libraries navigation instead of one entry per module.
+- The LuaLS front-end now reliably infers a constructor's return type and its instance methods even when the function-local class declares extra locals or has intervening lines between a member's type annotation and its key — a latent mis-emit fixed before any maintained library shipped it.
 
 ## v0.22.0
 
