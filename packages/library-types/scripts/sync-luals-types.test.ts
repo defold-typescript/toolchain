@@ -303,3 +303,26 @@ describe("lang migrated off the ts-defold corpus onto the LuaLS front-end", () =
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/lang.lang.json"))).toBe(false);
   });
 });
+
+describe("log migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("log is a luals namespace and no longer a ts-defold target or classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "log")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "log.log")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "defold-log")).toBe(false);
+  });
+
+  test("the retired ts-defold log artifacts are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/log.log.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/log.log.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/log.log.json"))).toBe(false);
+  });
+});

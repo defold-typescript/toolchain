@@ -1,0 +1,11 @@
+{
+  "namespace": "log",
+  "totalMembers": 13,
+  "totalTypeTokens": 27,
+  "unknownFallbacks": 1,
+  "unknownTokens": [
+    "debuginfo"
+  ],
+  "undocumentedMembers": 4,
+  "coverage": 0.963
+}

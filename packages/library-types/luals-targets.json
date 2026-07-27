@@ -57,6 +57,16 @@
       "namespace": "lang",
       "typeRenames": {},
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/Insality/defold-log",
+      "ref": "6",
+      "license": "MIT",
+      "sourceGlobs": ["log/**/*.lua"],
+      "moduleId": "log.log",
+      "namespace": "log",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }
