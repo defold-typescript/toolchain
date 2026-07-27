@@ -551,6 +551,108 @@ describe("parseLualsSource nil-bearing params and @overload", () => {
   });
 });
 
+describe("parseLualsSource returned module object and function-local class", () => {
+  test("a `return <name>` bound to a @class marks the module object; the class stays a normal interface", () => {
+    const model = parseLualsSource(
+      lua("---@class M", "---@field K integer", "local M = {}", "return M"),
+    );
+    expect(model.moduleObject).toBe("M");
+    const iface = model.interfaces.find((i) => i.name === "M");
+    expect(iface?.fields.map((f) => f.name)).toEqual(["K"]);
+    expect(iface?.fields[0]?.types).toEqual(["integer"]);
+  });
+
+  test("a `return <name>` that resolves to no @class leaves moduleObject unset", () => {
+    const model = parseLualsSource(lua("local M = {}", "function M.f()", "end", "return M"));
+    expect(model.moduleObject).toBeUndefined();
+  });
+
+  test("a function-local @class is captured as an interface with methods and infers the function return", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param tag? string the tag",
+        "function M.new(tag)",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\ttag = tag,",
+        "\t\t---@type fun(self: Inst, a: string)",
+        "\t\tlog = function(self, a) end,",
+        "\t\t---@type fun()",
+        "\t\tsave = function() end,",
+        "\t}",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const inst = model.interfaces.find((i) => i.name === "Inst");
+    expect(inst).toBeDefined();
+    expect(inst?.methods.map((m) => m.name)).toEqual(["log", "save"]);
+    // `self` is elided and the remaining params keep their raw types.
+    expect(inst?.methods.find((m) => m.name === "log")?.params).toEqual([
+      { name: "a", types: ["string"], doc: "", isOptional: false, isVararg: false },
+    ]);
+    // A `fun()` member is a no-arg method.
+    expect(inst?.methods.find((m) => m.name === "save")?.params).toEqual([]);
+    // `tag = tag,` has no `---@type`, so it never becomes a member.
+    expect(inst?.fields).toEqual([]);
+    // The enclosing function has no `---@return`, so its return infers to the local's class.
+    const fn = model.moduleFunctions.find((f) => f.name === "new");
+    expect(fn?.returns).toEqual([
+      { name: "", types: ["Inst"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("column-0 discipline holds: indented @cast/@type outside a local @class create nothing", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param x number the x",
+        "function M.f(x)",
+        "\t---@cast x integer",
+        "\t---@type table",
+        "\tlocal y = x",
+        "end",
+      ),
+    );
+    // No stray interface from the indented narrowing lines, and pending is untouched.
+    expect(model.interfaces).toHaveLength(0);
+    const fn = model.moduleFunctions.find((f) => f.name === "f");
+    expect(fn?.params.map((p) => p.name)).toEqual(["x"]);
+    expect(fn?.returns).toEqual([]);
+  });
+
+  test("an explicit @return wins over the returned-local inference", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@return Other",
+        "function M.make()",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\t---@type fun(self: Inst)",
+        "\t\tping = function(self) end,",
+        "\t}",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const fn = model.moduleFunctions.find((f) => f.name === "make");
+    expect(fn?.returns).toEqual([
+      { name: "", types: ["Other"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("mergeLibraryModels carries the first non-empty moduleObject", () => {
+    const without: LibraryModel = { interfaces: [], aliases: [], moduleFunctions: [] };
+    const withMod: LibraryModel = {
+      interfaces: [],
+      aliases: [],
+      moduleFunctions: [],
+      moduleObject: "Squid",
+    };
+    expect(mergeLibraryModels([without, withMod]).moduleObject).toBe("Squid");
+    expect(mergeLibraryModels([without]).moduleObject).toBeUndefined();
+  });
+});
+
 describe("druid parse snapshot", () => {
   const druidRoot = join(PACKAGE_ROOT, "fixtures/luals/druid");
   const files = readdirSync(druidRoot, { recursive: true })

@@ -1,19 +1,40 @@
 /** @noResolution */
 declare module 'squid.squid' {
 	/**
-	 * SQUID
-	 * version: 1.1
-	 * Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold
-	 * License: MIT
-	 * Copyright Paweł Jarosz 2024-2025
+	 * @(1) trace logging level constant
 	 */
-	interface Squid {
-		TRACE: number;
-		DEBUG: number;
-		INFO: number;
-		WARN: number;
-		ERROR: number;
-		ALLOWLIST: LuaTable;
+	export const TRACE: number;
+	/**
+	 * @(2) debug logging level constant
+	 */
+	export const DEBUG: number;
+	/**
+	 * @(3) info logging level constant
+	 */
+	export const INFO: number;
+	/**
+	 * @(4) warning logging level constant
+	 */
+	export const WARN: number;
+	/**
+	 * @(5) error logging level constant
+	 */
+	export const ERROR: number;
+	/**
+	 * @Public list of allowed tags (pairs tag[string] - is_allowed[boolean])
+	 */
+	export const ALLOWLIST: LuaTable;
+	interface SquidInstance {
+		log(message: string | number, level: number, data?: unknown): void;
+		trace(message: string | number, data?: unknown): void;
+		debug(message: string | number, data?: unknown): void;
+		info(message: string | number, data?: unknown): void;
+		warn(message: string | number, data?: unknown): void;
+		error(message: string | number, data?: unknown): void;
+		set_allowed(this_tag?: string, this_is_allowed?: boolean): void;
+		save_logs(): void;
+		init(): void;
+		final(): void;
 	}
 	interface SquidConfig {
 		app_catalog: string;
@@ -93,7 +114,7 @@ declare module 'squid.squid' {
 	/**
 	 * Create a new instance of the Squid logger
 	 */
-	export function new_(this: void, tag?: string, is_allowed?: boolean): void;
+	export function new_(this: void, tag?: string, is_allowed?: boolean): SquidInstance;
 	export { new_ as new };
 	/**
 	 * Get Squid configuration

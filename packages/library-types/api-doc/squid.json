@@ -1,8 +1,8 @@
 {
   "info": {
     "namespace": "squid",
-    "brief": "",
-    "description": ""
+    "brief": "SQUID",
+    "description": "SQUID\nversion: 1.1\nSquid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold\nLicense: MIT\nCopyright Paweł Jarosz 2024-2025"
   },
   "elements": [
     {
@@ -332,7 +332,15 @@
           "is_vararg": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "SquidInstance"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -369,56 +377,284 @@
       "returnvalues": []
     },
     {
+      "type": "VARIABLE",
+      "name": "TRACE",
+      "brief": "@(1) trace logging level constant",
+      "description": "@(1) trace logging level constant",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DEBUG",
+      "brief": "@(2) debug logging level constant",
+      "description": "@(2) debug logging level constant",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "INFO",
+      "brief": "@(3) info logging level constant",
+      "description": "@(3) info logging level constant",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WARN",
+      "brief": "@(4) warning logging level constant",
+      "description": "@(4) warning logging level constant",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR",
+      "brief": "@(5) error logging level constant",
+      "description": "@(5) error logging level constant",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALLOWLIST",
+      "brief": "@Public list of allowed tags (pairs tag[string] - is_allowed[boolean])",
+      "description": "@Public list of allowed tags (pairs tag[string] - is_allowed[boolean])",
+      "types": [
+        "LuaTable"
+      ]
+    },
+    {
       "type": "TYPEDEF",
-      "name": "Squid",
-      "properties": [
+      "name": "SquidInstance",
+      "functions": [
         {
-          "name": "TRACE",
-          "brief": "@(1) trace logging level constant",
-          "description": "@(1) trace logging level constant",
-          "types": [
-            "number"
-          ]
+          "type": "FUNCTION",
+          "name": "log",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "level",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
         },
         {
-          "name": "DEBUG",
-          "brief": "@(2) debug logging level constant",
-          "description": "@(2) debug logging level constant",
-          "types": [
-            "number"
-          ]
+          "type": "FUNCTION",
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
         },
         {
-          "name": "INFO",
-          "brief": "@(3) info logging level constant",
-          "description": "@(3) info logging level constant",
-          "types": [
-            "number"
-          ]
+          "type": "FUNCTION",
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
         },
         {
-          "name": "WARN",
-          "brief": "@(4) warning logging level constant",
-          "description": "@(4) warning logging level constant",
-          "types": [
-            "number"
-          ]
+          "type": "FUNCTION",
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
         },
         {
-          "name": "ERROR",
-          "brief": "@(5) error logging level constant",
-          "description": "@(5) error logging level constant",
-          "types": [
-            "number"
-          ]
+          "type": "FUNCTION",
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
         },
         {
-          "name": "ALLOWLIST",
-          "brief": "@Public list of allowed tags (pairs tag[string] - is_allowed[boolean])",
-          "description": "@Public list of allowed tags (pairs tag[string] - is_allowed[boolean])",
-          "types": [
-            "LuaTable"
-          ]
+          "type": "FUNCTION",
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_allowed",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "this_tag",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "this_is_allowed",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "save_logs",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "final",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
         }
       ]
     },
