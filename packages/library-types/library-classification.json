@@ -149,13 +149,6 @@
       ]
     },
     {
-      "dir": "defold-log",
-      "classification": "already-vendored",
-      "modules": [
-        "log.log"
-      ]
-    },
-    {
       "dir": "defold-metrics",
       "classification": "already-vendored",
       "modules": [
