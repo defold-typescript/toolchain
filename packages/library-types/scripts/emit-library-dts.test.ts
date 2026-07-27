@@ -1,7 +1,12 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { emitLibraryDeclarations } from "./emit-library-dts";
+import {
+  emitLibraryDeclarations,
+  isPublicField,
+  isPublicMethod,
+  sanitizeTypeName,
+} from "./emit-library-dts";
 import type { LibraryModel } from "./parse-luals";
 import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
 
@@ -661,4 +666,124 @@ test.each(
   const golden = readFileSync(join(packageRoot, "generated", `${namespace}.d.ts`), "utf8");
 
   expect(emitted).toBe(golden);
+});
+
+// A declaration is present for every public modeled surface: each non-moduleObject
+// interface, each moduleObject field (as an `export const`), and each module function
+// (its identifier, or its reserved-name `as <name>` re-export). Catches root cause C:
+// a public member silently dropped from the emitted `.d.ts`.
+function missingDeclarations(model: LibraryModel, out: string): string[] {
+  const missing: string[] = [];
+  for (const iface of model.interfaces) {
+    if (iface.name === model.moduleObject) {
+      for (const field of iface.fields) {
+        if (!isPublicField(field)) continue;
+        if (!out.includes(`export const ${field.name}:`)) missing.push(`const ${field.name}`);
+      }
+      continue;
+    }
+    if (!out.includes(`interface ${sanitizeTypeName(iface.name)}`)) {
+      missing.push(`interface ${iface.name}`);
+    }
+  }
+  for (const fn of model.moduleFunctions) {
+    if (!isPublicMethod(fn)) continue;
+    // A plain function emits `export function name(` or, when generic, `export function
+    // name<`; a reserved name is re-exported `as name }`.
+    const direct =
+      out.includes(`export function ${fn.name}(`) || out.includes(`export function ${fn.name}<`);
+    const reExported = out.includes(`as ${fn.name} }`);
+    if (!direct && !reExported) missing.push(`function ${fn.name}`);
+  }
+  return missing;
+}
+
+const moduleObjectModel: LibraryModel = {
+  moduleObject: "Squid",
+  interfaces: [
+    {
+      name: "Squid",
+      generics: [],
+      fields: [
+        { name: "TRACE", types: ["integer"], doc: "trace level", isOptional: false },
+        { name: "ALLOWLIST", types: ["table"], doc: "", isOptional: false },
+      ],
+      methods: [],
+      brief: "The squid module.\nSaveable logging.",
+    },
+    {
+      name: "SquidInstance",
+      generics: [],
+      fields: [],
+      methods: [
+        {
+          name: "log",
+          brief: "",
+          generics: [],
+          params: [
+            {
+              name: "message",
+              types: ["string|number"],
+              doc: "",
+              isOptional: false,
+              isVararg: false,
+            },
+            { name: "data", types: ["any"], doc: "", isOptional: true, isVararg: false },
+          ],
+          returns: [],
+        },
+      ],
+      brief: "",
+    },
+  ],
+  aliases: [],
+  moduleFunctions: [
+    {
+      name: "new",
+      brief: "Create a new instance.",
+      generics: [],
+      params: [{ name: "tag", types: ["string"], doc: "", isOptional: true, isVararg: false }],
+      returns: [
+        { name: "", types: ["SquidInstance"], doc: "", isOptional: false, isVararg: false },
+      ],
+    },
+  ],
+};
+
+test("a moduleObject lifts its fields to export consts, drops its interface, and keeps full-typed instance methods", () => {
+  const out = emitLibraryDeclarations(moduleObjectModel, { moduleId: "squid.squid" });
+  // Module constants become module-level export consts.
+  expect(out).toContain("export const TRACE: number;");
+  expect(out).toContain("export const ALLOWLIST: LuaTable;");
+  // The module-object class itself is not a standalone interface.
+  expect(out).not.toContain("interface Squid {");
+  // The captured instance interface survives with a full-typed method (not a hook).
+  expect(out).toContain("interface SquidInstance {");
+  expect(out).toContain("log(message: string | number, data?: unknown): void;");
+  expect(out).not.toContain("log?(...args: any[])");
+  // The inferred return flows through: `new` (reserved) is aliased and returns the instance.
+  expect(out).toContain("export function new_(this: void, tag?: string): SquidInstance;");
+  expect(out).toContain("export { new_ as new };");
+});
+
+test("emit drops no public modeled surface for a hand-built moduleObject model", () => {
+  const out = emitLibraryDeclarations(moduleObjectModel, { moduleId: "squid.squid" });
+  expect(missingDeclarations(moduleObjectModel, out)).toEqual([]);
+});
+
+test("the structural drop guard reds when a modeled declaration is absent from the output", () => {
+  const emptyOut = "/** @noResolution */\ndeclare module 'squid.squid' {\n}\n";
+  expect(missingDeclarations(moduleObjectModel, emptyOut).length).toBeGreaterThan(0);
+});
+
+test.each(
+  EMIT_TARGETS,
+)("emit drops no public modeled surface for the real %s model", (_namespace, target) => {
+  const packageRoot = join(import.meta.dir, "..");
+  const model = buildTargetModel(packageRoot, target);
+  const out = emitLibraryDeclarations(model, {
+    moduleId: target.moduleId,
+    typeRenames: target.typeRenames,
+  });
+  expect(missingDeclarations(model, out)).toEqual([]);
 });

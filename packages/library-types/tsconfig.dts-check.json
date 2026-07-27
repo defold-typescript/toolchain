@@ -21,6 +21,7 @@
     "test-d/event-usage.test-d.ts",
     "test-d/lang-usage.test-d.ts",
     "test-d/log-usage.test-d.ts",
+    "test-d/squid-usage.test-d.ts",
     "test-d/fixtures/engine-handle-module.d.ts",
     "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"

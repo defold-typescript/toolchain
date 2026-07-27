@@ -237,6 +237,25 @@ function renderInterface(
   return lines;
 }
 
+/**
+ * The module object's public fields rendered as module-level `export const`s — the
+ * constants a returned module table (`return Squid`) carries. Emitted in place of the
+ * standalone interface, since consumers reach them as `squid.TRACE`, not `Squid.TRACE`.
+ */
+function renderModuleConstants(iface: LibraryInterface, ctx: MapContext): string[] {
+  const lines: string[] = [];
+  for (const field of iface.fields) {
+    if (!isPublicField(field)) continue;
+    pushDoc(lines, field.doc, INDENT);
+    const name =
+      TS_IDENTIFIER.test(field.name) && !TS_RESERVED_NAMES.has(field.name)
+        ? field.name
+        : sanitizeTypeName(field.name);
+    lines.push(`${INDENT}export const ${name}: ${mapTypes(field.types, ctx)};`);
+  }
+  return lines;
+}
+
 function renderModuleFunction(fn: LibraryMethod, ctx: MapContext): string[] {
   const lines: string[] = [];
   pushDoc(lines, fn.brief, INDENT);
@@ -296,7 +315,15 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
   const interfaceNames = new Set(model.interfaces.map((iface) => iface.name));
   const out: string[] = ["/** @noResolution */", `declare module '${opts.moduleId}' {`];
   for (const alias of model.aliases) out.push(...renderAlias(alias, ctx));
-  for (const iface of model.interfaces) out.push(...renderInterface(iface, ctx, interfaceNames));
+  for (const iface of model.interfaces) {
+    // The module object's fields become module-level `export const`s (below), so it is
+    // not also rendered as a standalone interface.
+    if (iface.name === model.moduleObject) {
+      out.push(...renderModuleConstants(iface, ctx));
+      continue;
+    }
+    out.push(...renderInterface(iface, ctx, interfaceNames));
+  }
   for (const fn of model.moduleFunctions) {
     if (!isPublicMethod(fn)) continue;
     out.push(...renderModuleFunction(fn, ctx));

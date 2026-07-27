@@ -16,6 +16,11 @@ export interface LibraryModel {
   interfaces: LibraryInterface[];
   aliases: LibraryAlias[];
   moduleFunctions: LibraryMethod[];
+  // The name of the `---@class` a `return <name>` at column 0 hands back as the module
+  // table. Its public fields are the module's own constants (`export const`s), not a
+  // standalone interface. Set only when a returned local resolves to an opened class,
+  // so a module with a plain returned table carries no key.
+  moduleObject?: string;
 }
 
 export interface LibraryInterface {
@@ -151,6 +156,98 @@ function matchCloser(s: string, open: number): number {
     }
   }
   return -1;
+}
+
+/**
+ * Split `s` on every top-level occurrence of the single-character `sep`, honoring
+ * bracket depth and double-quoted string literals so a separator nested inside
+ * `<...>`, `(...)`, `[...]`, `{...}`, or a `"..."` literal does not split. A parser-
+ * local copy of the mapper's identical helper — the parser is upstream of the mapper
+ * and must not import it (`hasTopLevelNil`'s comment).
+ */
+function splitTopLevel(s: string, sep: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let inQuote = false;
+  let start = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inQuote) {
+      if (c === '"') inQuote = false;
+      continue;
+    }
+    if (c === '"') inQuote = true;
+    else if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
+    else if (c === ">" || c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && c === sep) {
+      parts.push(s.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(s.slice(start));
+  return parts;
+}
+
+/**
+ * Decompose a `fun(...)` token into a method's `params`/`returns`, dropping a leading
+ * `self`. Used for a function-local `---@class` member typed by `---@type fun(...)`:
+ * modeling it as a method (each param keeping its raw type token) rather than a field
+ * makes the emitter render a full-typed method instead of the lossy permissive hook
+ * `matchSelfHookField` would produce. An unbalanced token yields empty lists.
+ */
+function funToMethodParts(token: string): { params: LibraryParam[]; returns: LibraryParam[] } {
+  const open = token.indexOf("(");
+  const close = open === -1 ? -1 : matchCloser(token, open);
+  if (open === -1 || close === -1) return { params: [], returns: [] };
+  const paramsStr = token.slice(open + 1, close).trim();
+  const afterClose = token.slice(close + 1).trim();
+
+  const params: LibraryParam[] = [];
+  const rawParams = paramsStr === "" ? [] : splitTopLevel(paramsStr, ",");
+  for (const rawPart of rawParams) {
+    const part = rawPart.trim();
+    if (part === "") continue;
+    if (part.startsWith("...")) {
+      const after = part.slice(3).trim();
+      const type = after.startsWith(":") ? after.slice(1).trim() : "";
+      const vararg: LibraryParam = {
+        name: "...",
+        types: type ? [type] : [],
+        doc: "",
+        isOptional: false,
+        isVararg: true,
+      };
+      if (type && hasTopLevelNil(type)) vararg.isNilable = true;
+      params.push(vararg);
+      continue;
+    }
+    const colon = splitTopLevel(part, ":");
+    const rawName = (colon[0] ?? "").trim();
+    const typeExpr = colon.length >= 2 ? colon.slice(1).join(":").trim() : "";
+    const isOptional = rawName.endsWith("?");
+    const name = isOptional ? rawName.slice(0, -1) : rawName;
+    const param: LibraryParam = {
+      name,
+      types: typeExpr ? [typeExpr] : [],
+      doc: "",
+      isOptional,
+      isVararg: false,
+    };
+    if (typeExpr && hasTopLevelNil(typeExpr)) param.isNilable = true;
+    params.push(param);
+  }
+  if (params[0]?.name === "self") params.shift();
+
+  const returns: LibraryParam[] = [];
+  if (afterClose.startsWith(":")) {
+    const retStr = afterClose.slice(1).trim();
+    for (const raw of retStr === "" ? [] : splitTopLevel(retStr, ",")) {
+      const type = raw.trim();
+      if (type)
+        returns.push({ name: "", types: [type], doc: "", isOptional: false, isVararg: false });
+    }
+  }
+  return { params, returns };
 }
 
 /**
@@ -413,6 +510,19 @@ export function parseLualsSource(source: string): LibraryModel {
   let pending = emptyPending();
   let openClass: LibraryInterface | null = null;
   let lastOpenedClass: string | null = null;
+  let moduleObject: string | undefined;
+  let lastModuleFunction: LibraryMethod | null = null;
+  // The one open function-local `---@class` block (squid's `SquidInstance` inside
+  // `Squid.new`). `owner` is the function whose body it sits in, so a returned local
+  // bound to it infers the function's return; `pendingType` is a `---@type fun(...)`
+  // armed for the next member key.
+  let localClass: {
+    iface: LibraryInterface;
+    localVar: string | null;
+    owner: LibraryMethod | null;
+    pendingType: string | null;
+    returnedSelf: boolean;
+  } | null = null;
 
   const ensureInterface = (name: string): LibraryInterface => {
     const existing = byName.get(name);
@@ -438,9 +548,84 @@ export function parseLualsSource(source: string): LibraryModel {
     ...(pending.visibility ? { visibility: pending.visibility } : {}),
   });
 
+  // Interpret one indented line while a function-local `---@class` block is open. Only
+  // the `---@type fun(...)` + next `<key> = ...` member pattern, the backing `local`,
+  // and the `return <local>` are recognized; every other indented line stays opaque.
+  const handleLocalClassLine = (line: string): void => {
+    const lc = localClass;
+    if (!lc) return;
+    const typeMatch = /^---@type\s+(.+)$/.exec(line);
+    if (typeMatch) {
+      const { type } = readTypeToken(typeMatch[1] ?? "");
+      if (/^fun\s*\(/.test(type)) lc.pendingType = type;
+      return;
+    }
+    const returnMatch = /^return\s+([A-Za-z_]\w*)\s*$/.exec(line);
+    if (returnMatch) {
+      if (returnMatch[1] === lc.localVar) lc.returnedSelf = true;
+      return;
+    }
+    const local = LOCAL_ASSIGN.exec(line);
+    if (local) {
+      lc.localVar = local[1] ?? null;
+      return;
+    }
+    if (lc.pendingType) {
+      const keyMatch = /^([A-Za-z_]\w*)\s*=/.exec(line);
+      if (keyMatch) {
+        const { params, returns } = funToMethodParts(lc.pendingType);
+        lc.iface.methods.push({
+          name: keyMatch[1] as string,
+          brief: "",
+          generics: [],
+          params,
+          returns,
+        });
+        lc.pendingType = null;
+      }
+    }
+  };
+
   for (const raw of source.split("\n")) {
-    // Column-0 discipline: a line with leading whitespace is opaque to the scanner.
-    if (/^\s/.test(raw) || raw.length === 0) continue;
+    const indented = /^\s/.test(raw);
+    if (indented || raw.length === 0) {
+      if (localClass) {
+        handleLocalClassLine(raw.trim());
+      } else if (indented) {
+        // Only an indented `---@class` opens function-local capture; every other
+        // indented line (druid-style `---@cast`/`---@type` narrowing) stays opaque.
+        const classMatch = /^---@class\s+(.+)$/.exec(raw.trim());
+        if (classMatch) {
+          const head = parseClassHead(classMatch[1] ?? "");
+          const iface = ensureInterface(head.name);
+          if (head.extends) iface.extends = head.extends;
+          localClass = {
+            iface,
+            localVar: null,
+            owner: lastModuleFunction,
+            pendingType: null,
+            returnedSelf: false,
+          };
+        }
+      }
+      continue;
+    }
+
+    // A column-0 line ends any open function-local class (dedent). Apply the inferred
+    // return to the owner only when it declared no explicit `---@return`.
+    if (localClass) {
+      const lc = localClass;
+      if (lc.returnedSelf && lc.owner && lc.owner.returns.length === 0) {
+        lc.owner.returns.push({
+          name: "",
+          types: [lc.iface.name],
+          doc: "",
+          isOptional: false,
+          isVararg: false,
+        });
+      }
+      localClass = null;
+    }
 
     if (raw.startsWith("---@")) {
       const tagMatch = /^---@([a-zA-Z]+)\s*(.*)$/.exec(raw);
@@ -522,12 +707,16 @@ export function parseLualsSource(source: string): LibraryModel {
 
     const decl = parseFunctionDecl(raw);
     if (decl) {
+      const method = methodFromPending(decl.name);
       if (decl.kind === "method") {
         const target = decl.receiver ? (receiverBinding.get(decl.receiver) ?? decl.receiver) : "";
-        ensureInterface(target).methods.push(methodFromPending(decl.name));
+        ensureInterface(target).methods.push(method);
       } else if (decl.qualified) {
-        moduleFunctions.push(methodFromPending(decl.name));
+        moduleFunctions.push(method);
       }
+      // Any function may host a function-local `---@class`; remember the enclosing
+      // function so a returned local can infer its return, even a bare helper.
+      lastModuleFunction = method;
       pending = emptyPending();
       openClass = null;
       continue;
@@ -540,10 +729,34 @@ export function parseLualsSource(source: string): LibraryModel {
       lastOpenedClass = null;
       openClass = null;
       pending = emptyPending();
+      continue;
+    }
+
+    // A column-0 `return <name>` handing back a local bound to an opened `---@class`
+    // marks that class as the module object (its fields become module-level consts).
+    // Restricted to squid's constants-table idiom to keep every other library's golden
+    // untouched: the returned local is named after its class (`local Squid = {}` /
+    // `return Squid`, not a generic `local M` alias), the class carries at least one
+    // public field, and it has no methods. A component/instance class (colon methods),
+    // an opaque handle (no fields), or an `M`-aliased module table is a type consumers
+    // reference or a plain namespace, so it stays a standalone interface.
+    const returnStmt = /^return\s+([A-Za-z_][\w.]*)\s*$/.exec(raw);
+    if (returnStmt) {
+      const name = returnStmt[1] as string;
+      const resolvedName = receiverBinding.get(name) ?? (byName.has(name) ? name : undefined);
+      const resolved = resolvedName ? byName.get(resolvedName) : undefined;
+      if (
+        resolved &&
+        resolvedName === name &&
+        resolved.methods.length === 0 &&
+        resolved.fields.some((f) => f.visibility === undefined || f.visibility === "public")
+      ) {
+        moduleObject = resolved.name;
+      }
     }
   }
 
-  return { interfaces, aliases, moduleFunctions };
+  return { interfaces, aliases, moduleFunctions, ...(moduleObject ? { moduleObject } : {}) };
 }
 
 /**
@@ -557,8 +770,10 @@ export function mergeLibraryModels(models: LibraryModel[]): LibraryModel {
   const byName = new Map<string, LibraryInterface>();
   const aliases: LibraryAlias[] = [];
   const moduleFunctions: LibraryMethod[] = [];
+  let moduleObject: string | undefined;
 
   for (const model of models) {
+    if (!moduleObject && model.moduleObject) moduleObject = model.moduleObject;
     for (const iface of model.interfaces) {
       const existing = byName.get(iface.name);
       if (!existing) {
@@ -603,7 +818,7 @@ export function mergeLibraryModels(models: LibraryModel[]): LibraryModel {
   // overloaded module functions keep every signature.
   for (const iface of interfaces) iface.fields = dedupeByName(iface.fields);
 
-  return { interfaces, aliases, moduleFunctions };
+  return { interfaces, aliases, moduleFunctions, ...(moduleObject ? { moduleObject } : {}) };
 }
 
 function dedupeByName<T extends { name: string }>(items: T[]): T[] {
