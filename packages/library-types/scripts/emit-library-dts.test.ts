@@ -52,6 +52,60 @@ test("emits a declare module block with an interface, its field and method, and 
   expect(out).toContain("export function create(this: void): widget;");
 });
 
+test("omits a non-public field and method but keeps public members and a public self-hook field", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "comp",
+        generics: [],
+        fields: [
+          { name: "secret", types: ["number"], doc: "", isOptional: false, visibility: "private" },
+          { name: "count", types: ["number"], doc: "", isOptional: false },
+          { name: "on_init", types: ["fun(self:comp):number"], doc: "", isOptional: false },
+        ],
+        methods: [
+          {
+            name: "hidden",
+            brief: "",
+            generics: [],
+            params: [],
+            returns: [],
+            visibility: "local",
+          },
+          { name: "shown", brief: "", generics: [], params: [], returns: [] },
+        ],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).not.toContain("secret");
+  expect(out).not.toContain("hidden");
+  expect(out).toContain("count: number;");
+  expect(out).toContain("on_init?(...args: any[]): number;");
+  expect(out).toContain("shown(): void;");
+});
+
+test("omits a non-public moduleFunction while keeping a public one", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      { name: "helper", brief: "", generics: [], params: [], returns: [], visibility: "local" },
+      { name: "create", brief: "", generics: [], params: [], returns: [] },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).not.toContain("helper");
+  expect(out).toContain("export function create(this: void): void;");
+});
+
 test("emits a reserved-word member through the reserved-name path, not raw", () => {
   const model: LibraryModel = {
     interfaces: [

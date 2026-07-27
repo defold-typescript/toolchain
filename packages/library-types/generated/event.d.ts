@@ -102,10 +102,6 @@ declare module 'event.event' {
 		state: promise_state;
 		value: unknown;
 		cancellation: promise_cancelled_context;
-		on_resolve: event;
-		on_reject: event;
-		_tail?: promise | undefined;
-		_cancel_children?: LuaTable<promise, boolean> | undefined;
 		/**
 		 * Attach resolve and reject handlers to the promise.
 		 * Returns a new promise that will be resolved or rejected based on the handlers' return values.
@@ -145,10 +141,6 @@ declare module 'event.event' {
 		 * Check if the shared cancel_context was cancelled.
 		 */
 		is_cancelled(): boolean;
-		/**
-		 * Call the promise to resolve it with a single value (e.g. as a one-argument callback).
-		 */
-		__call(value: unknown): void;
 		/**
 		 * Resolve the promise.
 		 * my_promise:resolve(result)
@@ -195,10 +187,6 @@ declare module 'event.event' {
 		 */
 		_reject_cancel_children(): void;
 		/**
-		 * Cancel the promise chain.
-		 */
-		_cancel_promise(): void;
-		/**
 		 * Call the promise to resolve it with value
 		 */
 		(value: unknown): undefined;
@@ -212,9 +200,6 @@ declare module 'event.event' {
 	 * Events are stored in the queue until they are handled by subscribers, following first-in-first-out (FIFO) order.
 	 */
 	interface queue {
-		events: queue_event_data[];
-		handlers: event[];
-		once_state: LuaTable<event, number>;
 		/**
 		 * Push a new event to the queue. The event will exist until it's handled by a subscriber.
 		 * If there are already subscribers for this queue instance, they will be called immediately.
@@ -299,12 +284,6 @@ declare module 'event.event' {
 		 * my_queue:clear()
 		 */
 		clear(): void;
-		/**
-		 * Process the events if there are subscribers for this queue instance.
-		 * If event is handled, it will be removed from the queue.
-		 * All subscribers will be called for each event, even if it's already been handled.
-		 */
-		_check_subscribers(): void;
 	}
 	/**
 	 * Global queues module that allows creation and management of global FIFO event queues that can be accessed from anywhere in your game.

@@ -244,68 +244,6 @@
       "returnvalues": []
     },
     {
-      "type": "FUNCTION",
-      "name": "custom_ease",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "easing",
-          "doc": "The array of easing values, Example: {0, 0.5, 1, 2, 1}. Must have at least two elements.",
-          "types": [
-            "number[]"
-          ],
-          "is_optional": "False",
-          "is_vararg": "False"
-        },
-        {
-          "name": "t",
-          "doc": "current time [0 .. t - from]",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False",
-          "is_vararg": "False"
-        },
-        {
-          "name": "b",
-          "doc": "beginning value",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False",
-          "is_vararg": "False"
-        },
-        {
-          "name": "c",
-          "doc": "change in value",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False",
-          "is_vararg": "False"
-        },
-        {
-          "name": "d",
-          "doc": "duration",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False",
-          "is_vararg": "False"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "The result of easing",
-          "types": [
-            "number"
-          ]
-        }
-      ]
-    },
-    {
       "type": "TYPEDEF",
       "name": "tween",
       "properties": [

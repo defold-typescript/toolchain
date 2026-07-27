@@ -188,6 +188,55 @@ describe("buildFidelityReport", () => {
     expect(report.unknownFallbacks).toBe(0);
   });
 
+  test("non-public members are excluded from the tally and never contribute unknown tokens", () => {
+    const build = (hidden: boolean): LibraryModel => ({
+      interfaces: [
+        {
+          name: "Comp",
+          generics: [],
+          brief: "c",
+          fields: [
+            {
+              name: "secret",
+              types: ["some_unknown_field_class"],
+              doc: "d",
+              isOptional: false,
+              ...(hidden ? { visibility: "private" as const } : {}),
+            },
+          ],
+          methods: [
+            {
+              name: "hidden",
+              brief: "m",
+              generics: [],
+              params: [
+                {
+                  name: "x",
+                  types: ["some_unknown_param_class"],
+                  doc: "",
+                  isOptional: false,
+                  isVararg: false,
+                },
+              ],
+              returns: [],
+              ...(hidden ? { visibility: "local" as const } : {}),
+            },
+          ],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    });
+
+    const pub = buildFidelityReport("x", build(false), {});
+    const nonpub = buildFidelityReport("x", build(true), {});
+    expect(nonpub.totalMembers).toBeLessThan(pub.totalMembers);
+    expect(nonpub.totalTypeTokens).toBeLessThan(pub.totalTypeTokens);
+    expect(nonpub.unknownTokens).not.toContain("some_unknown_field_class");
+    expect(nonpub.unknownTokens).not.toContain("some_unknown_param_class");
+    expect(pub.unknownTokens).toContain("some_unknown_field_class");
+  });
+
   test("building twice over the same model yields deeply-equal reports", () => {
     expect(buildFidelityReport("widgets", tinyModel, {})).toEqual(
       buildFidelityReport("widgets", tinyModel, {}),

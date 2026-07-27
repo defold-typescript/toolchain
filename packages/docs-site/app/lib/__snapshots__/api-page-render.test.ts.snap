@@ -252,21 +252,6 @@ The Back Handler constructor
 
 </div>
 
-### \`druid_back_handler.on_input(action_id: Hash, action: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash\` — The action id
-- \`action\`: \`LuaTable\` — The action table
-
-**Returns**
-
-- \`boolean\` — True if the input was consumed
-
-</div>
-
 ### \`druid_back_handler.on_back: unknown\`
 
 <div class="api-symbol-body">
@@ -292,21 +277,6 @@ The Blocker constructor
 **Parameters**
 
 - \`node\`: \`Opaque<"node"> | string\` — The node to use as a blocker
-
-</div>
-
-### \`druid_blocker.on_input(action_id: string, action: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`string\` — The action id
-- \`action\`: \`LuaTable\` — The action table
-
-**Returns**
-
-- \`boolean\` — True if the input was consumed
 
 </div>
 
@@ -397,16 +367,6 @@ The constructor for the button component
 
 </div>
 
-### \`druid_button.on_style_change(style: druid_button_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_button_style\`
-
-</div>
-
 ### \`druid_button.set_animations_disabled(): druid_button\`
 
 <div class="api-symbol-body">
@@ -418,25 +378,6 @@ Remove default button style animations
 - \`druid_button\` — The current button instance
 
 </div>
-
-### \`druid_button.on_late_init()\`
-
-### \`druid_button.on_input(action_id: Hash, action: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash\` — The action id
-- \`action\`: \`LuaTable\` — The action table
-
-**Returns**
-
-- \`boolean\` — True if the input was consumed
-
-</div>
-
-### \`druid_button.on_input_interrupt()\`
 
 ### \`druid_button.set_enabled(state?: boolean | undefined): druid_button\`
 
@@ -810,16 +751,6 @@ The constructor for Drag component
 
 </div>
 
-### \`druid_drag.on_style_change(style: druid_drag_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_drag_style\` — The style of Drag component
-
-</div>
-
 ### \`druid_drag.set_drag_cursors(is_enabled: boolean)\`
 
 <div class="api-symbol-body">
@@ -829,27 +760,6 @@ Set Drag component enabled state.
 **Parameters**
 
 - \`is_enabled\`: \`boolean\` — True if Drag component is enabled
-
-</div>
-
-### \`druid_drag.on_late_init()\`
-
-### \`druid_drag.on_window_resized()\`
-
-### \`druid_drag.on_input_interrupt()\`
-
-### \`druid_drag.on_input(action_id: Hash, action: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash\` — Action id from on_input
-- \`action\`: \`LuaTable\` — Action from on_input
-
-**Returns**
-
-- \`boolean\` — True if the input was consumed
 
 </div>
 
@@ -1143,35 +1053,6 @@ The constructor for the hover component
 
 </div>
 
-### \`druid_hover.on_late_init()\`
-
-### \`druid_hover.on_style_change(style: druid_hover_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_hover_style\`
-
-</div>
-
-### \`druid_hover.on_input(action_id: Hash, action: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash\` — Action id from on_input
-- \`action\`: \`LuaTable\` — Action from on_input
-
-**Returns**
-
-- \`boolean\` — True if the input was consumed
-
-</div>
-
-### \`druid_hover.on_input_interrupt()\`
-
 ### \`druid_hover.set_hover(state?: boolean | undefined)\`
 
 <div class="api-symbol-body">
@@ -1257,10 +1138,6 @@ Return current hover enabled state
 - \`boolean\` — The hover enabled state
 
 </div>
-
-### \`druid_hover.on_remove()\`
-
-### \`druid_hover._set_cursor()\`
 
 ### \`druid_hover.node: Opaque<"node">\`
 
@@ -1410,26 +1287,6 @@ The Scroll constructor
 - \`content_node\`: \`string | Opaque<"node">\` — GUI content scroll node - the dynamic part that will change position
 
 </div>
-
-### \`druid_scroll.on_style_change(style: druid_scroll_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_scroll_style\`
-
-</div>
-
-### \`druid_scroll.on_late_init()\`
-
-### \`druid_scroll.on_layout_change()\`
-
-### \`druid_scroll.update()\`
-
-### \`druid_scroll.on_input()\`
-
-### \`druid_scroll.on_remove()\`
 
 ### \`druid_scroll.scroll_to(point: Vector3, is_instant?: boolean | undefined)\`
 
@@ -1713,14 +1570,6 @@ Strict drag scroll area. Useful for
 
 ### \`druid_scroll._set_scroll_position()\`
 
-### \`druid_scroll._check_points()\`
-
-<div class="api-symbol-body">
-
-Find closer point of interest
-
-</div>
-
 ### \`druid_scroll._check_threshold()\`
 
 ### \`druid_scroll._update_free_scroll()\`
@@ -1940,16 +1789,6 @@ The constructor for the grid component
 
 </div>
 
-### \`druid_grid.on_style_change(style: druid_grid_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_grid_style\`
-
-</div>
-
 ### \`druid_grid.get_pos(index: number): Vector3\`
 
 <div class="api-symbol-body">
@@ -2014,8 +1853,6 @@ Return grid index by node
 - \`number | undefined\` — The node index
 
 </div>
-
-### \`druid_grid.on_layout_change()\`
 
 ### \`druid_grid.set_anchor(anchor: Vector3)\`
 
@@ -2264,73 +2101,6 @@ Sort grid nodes by custom comparator function
 
 </div>
 
-### \`druid_grid._update(is_instant?: boolean | undefined)\`
-
-<div class="api-symbol-body">
-
-Update grid inner state
-
-**Parameters**
-
-- \`is_instant\`?: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
-
-</div>
-
-### \`druid_grid._update_indexes()\`
-
-<div class="api-symbol-body">
-
-Update first and last indexes of grid nodes
-
-</div>
-
-### \`druid_grid._update_borders()\`
-
-<div class="api-symbol-body">
-
-Update grid content borders, recalculate min and max values
-
-</div>
-
-### \`druid_grid._update_pos(is_instant?: boolean | undefined)\`
-
-<div class="api-symbol-body">
-
-Update grid nodes position
-
-**Parameters**
-
-- \`is_instant\`?: \`boolean | undefined\` — If true, node position update instantly, otherwise with set_position_function callback
-
-</div>
-
-### \`druid_grid._get_dynamic_offset(): LuaMultiReturn<[number, number]>\`
-
-<div class="api-symbol-body">
-
-Return dynamic centering offset. Only non-zero when IS_DYNAMIC_NODE_POSES is enabled,
-centers grid content according to pivot within its current borders.
-
-**Returns**
-
-- \`number\`
-- \`number\`
-
-</div>
-
-### \`druid_grid._get_row_offset_x(): number\`
-
-<div class="api-symbol-body">
-
-Return x offset for a given row. For most rows returns _base_offset.x,
-but when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset.
-
-**Returns**
-
-- \`number\` — The offset x value
-
-</div>
-
 ### \`druid_grid._extend_border(border: Vector4, pos: Vector3, size: Vector3, pivot: Vector3)\`
 
 <div class="api-symbol-body">
@@ -2509,18 +2279,6 @@ The Text constructor
 - \`adjust_type\`?: \`druid_text_adjust_type | undefined\` — Adjust type for text. By default is "downscale". Options: "downscale", "trim", "no_adjust", "downscale_limited", "scroll", "scale_then_scroll", "trim_left", "scale_then_trim", "scale_then_trim_left"
 
 </div>
-
-### \`druid_text.on_style_change(style: druid_text_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_text_style\`
-
-</div>
-
-### \`druid_text.on_layout_change()\`
 
 ### \`druid_text.get_text_size(text?: string | undefined): LuaMultiReturn<[number, number]>\`
 
@@ -2712,62 +2470,6 @@ Return current text adjust type
 
 </div>
 
-### \`druid_text._update_text_size()\`
-
-### \`druid_text._reset_default_scale()\`
-
-<div class="api-symbol-body">
-
-Reset initial scale for text
-
-</div>
-
-### \`druid_text._is_fit_info_area(metrics: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`metrics\`: \`LuaTable\`
-
-**Returns**
-
-- \`boolean\`
-
-</div>
-
-### \`druid_text._update_text_area_size()\`
-
-<div class="api-symbol-body">
-
-Setup scale x, but can only be smaller, than start text scale
-
-</div>
-
-### \`druid_text._update_text_with_trim(trim_postfix: string)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`trim_postfix\`: \`string\`
-
-</div>
-
-### \`druid_text._update_text_with_trim_left(trim_postfix: string)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`trim_postfix\`: \`string\`
-
-</div>
-
-### \`druid_text._update_text_with_anchor_shift()\`
-
-### \`druid_text._update_adjust()\`
-
 ### \`druid_text.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
@@ -2924,18 +2626,6 @@ Set current component nodes, returned from \`gui.clone_tree\` function.
 
 </div>
 
-### \`druid_component.get_context(): unknown\`
-
-<div class="api-symbol-body">
-
-Return current component context
-
-**Returns**
-
-- \`unknown\` — Usually it's self of script but can be any other Druid component
-
-</div>
-
 ### \`druid_component.get_node(node_id: string | Opaque<"node">): Opaque<"node">\`
 
 <div class="api-symbol-body">
@@ -2952,23 +2642,6 @@ Get component node by node_id. Respect to current template and nodes.
 
 </div>
 
-### \`druid_component.get_druid(template?: string | undefined, nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_instance\`
-
-<div class="api-symbol-body">
-
-Get Druid instance for inner component creation.
-
-**Parameters**
-
-- \`template\`?: \`string | undefined\`
-- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
-
-**Returns**
-
-- \`druid_instance\`
-
-</div>
-
 ### \`druid_component.get_name(): string\`
 
 <div class="api-symbol-body">
@@ -2978,18 +2651,6 @@ Get component name
 **Returns**
 
 - \`string\` — The component name + uid
-
-</div>
-
-### \`druid_component.get_parent_name(): string | undefined\`
-
-<div class="api-symbol-body">
-
-Get parent component name
-
-**Returns**
-
-- \`string | undefined\` — The parent component name if exist or nil
 
 </div>
 
@@ -3031,18 +2692,6 @@ Reset component input priority to it's default value, that was set in \`create\`
 **Returns**
 
 - \`druid_component\` — The component itself for chaining
-
-</div>
-
-### \`druid_component.get_uid(): number\`
-
-<div class="api-symbol-body">
-
-Get component UID, unique identifier created in component creation order.
-
-**Returns**
-
-- \`number\` — The component uid
 
 </div>
 
@@ -3088,97 +2737,6 @@ Get parent component
 
 </div>
 
-### \`druid_component.setup_component(druid_instance: druid_instance, context: LuaTable, style: LuaTable, instance_class: LuaTable): druid_component\`
-
-<div class="api-symbol-body">
-
-Setup component context and his style table
-
-**Parameters**
-
-- \`druid_instance\`: \`druid_instance\` — The parent druid instance
-- \`context\`: \`LuaTable\` — Druid context. Usually it is self of script
-- \`style\`: \`LuaTable\` — Druid style module
-- \`instance_class\`: \`LuaTable\` — The component instance class
-
-**Returns**
-
-- \`druid_component\` — BaseComponent itself
-
-</div>
-
-### \`druid_component._is_input_priority_changed()\`
-
-<div class="api-symbol-body">
-
-Return true, if input priority was changed
-
-</div>
-
-### \`druid_component._reset_input_priority_changed()\`
-
-<div class="api-symbol-body">
-
-Reset is_input_priority_changed field
-
-</div>
-
-### \`druid_component.get_nodes(): LuaTable<Hash, Opaque<"node">> | undefined\`
-
-<div class="api-symbol-body">
-
-Get current component nodes
-
-**Returns**
-
-- \`LuaTable<Hash, Opaque<"node">> | undefined\`
-
-</div>
-
-### \`druid_component.__add_child<T extends druid_component>(child: T): T\`
-
-<div class="api-symbol-body">
-
-Add child to component children list
-
-**Parameters**
-
-- \`child\`: \`T\` — The druid component instance
-
-**Returns**
-
-- \`T\` — The component itself for chaining
-
-</div>
-
-### \`druid_component.__remove_child<T extends druid_component>(child: T): boolean\`
-
-<div class="api-symbol-body">
-
-Remove child from component children list
-
-**Parameters**
-
-- \`child\`: \`T\` — The druid component instance
-
-**Returns**
-
-- \`boolean\` — if child was removed
-
-</div>
-
-### \`druid_component.get_childrens(): LuaTable\`
-
-<div class="api-symbol-body">
-
-Return all children components, recursive
-
-**Returns**
-
-- \`LuaTable\` — Array of childrens if the Druid component instance
-
-</div>
-
 ### \`druid_rich_input.init(template: string, nodes: LuaTable)\`
 
 <div class="api-symbol-body">
@@ -3187,21 +2745,6 @@ Return all children components, recursive
 
 - \`template\`: \`string\` — The template string name
 - \`nodes\`: \`LuaTable\` — Nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
-
-</div>
-
-### \`druid_rich_input.on_input(action_id: Hash, action: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash\` — Action id from on_input
-- \`action\`: \`LuaTable\` — Action table from on_input
-
-**Returns**
-
-- \`boolean\` — True if input was consumed
 
 </div>
 
@@ -3446,18 +2989,6 @@ The position of the cursor
 
 </div>
 
-### \`druid_rich_text.on_layout_change()\`
-
-### \`druid_rich_text.on_style_change(style: druid_rich_text_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_rich_text_style\`
-
-</div>
-
 ### \`druid_rich_text.set_text(text?: string | undefined): LuaMultiReturn<[druid_rich_text_word[], druid_rich_text_lines_metrics]>\`
 
 <div class="api-symbol-body">
@@ -3530,8 +3061,6 @@ Set pivot and keep the content in place (anchor). After this, resizing the root 
 
 </div>
 
-### \`druid_rich_text.on_remove()\`
-
 ### \`druid_rich_text.clear()\`
 
 <div class="api-symbol-body">
@@ -3593,16 +3122,6 @@ Get the current line metrics
 **Returns**
 
 - \`druid_rich_text_lines_metrics\` — The line metrics of the rich text
-
-</div>
-
-### \`druid_rich_text._create_settings(): LuaTable\`
-
-<div class="api-symbol-body">
-
-**Returns**
-
-- \`LuaTable\` — The settings of the rich text, they are created based on the root node on the GUI scene
 
 </div>
 
@@ -3684,10 +3203,6 @@ The Container constructor
 
 </div>
 
-### \`druid_container.on_late_init()\`
-
-### \`druid_container.on_remove()\`
-
 ### \`druid_container.refresh_origins()\`
 
 <div class="api-symbol-body">
@@ -3705,16 +3220,6 @@ Set the pivot of the container
 **Parameters**
 
 - \`pivot\`: \`Opaque<"constant">\` — The pivot to set
-
-</div>
-
-### \`druid_container.on_style_change(style: druid_container_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_container_style\`
 
 </div>
 
@@ -3812,8 +3317,6 @@ Set current size for layout node to fit inside it
 - \`druid_container\` — Current container instance
 
 </div>
-
-### \`druid_container.on_window_resized()\`
 
 ### \`druid_container.add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode?: druid_container_mode | undefined, on_resize_callback?: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container\`
 
@@ -4095,8 +3598,6 @@ The DataList constructor
 
 </div>
 
-### \`druid_data_list.on_remove()\`
-
 ### \`druid_data_list.set_use_cache(is_use_cache: boolean): druid_data_list\`
 
 <div class="api-symbol-body">
@@ -4253,54 +3754,6 @@ Instant scroll to element with passed index
 
 </div>
 
-### \`druid_data_list._add_at(index: number)\`
-
-<div class="api-symbol-body">
-
-Add element at passed index using cache or create new
-
-**Parameters**
-
-- \`index\`: \`number\` — The index to add the element at
-
-</div>
-
-### \`druid_data_list._remove_at(index: number)\`
-
-<div class="api-symbol-body">
-
-Remove element from passed index and add it to cache if applicable
-
-**Parameters**
-
-- \`index\`: \`number\` — The index to remove the element at
-
-</div>
-
-### \`druid_data_list._get_visible_bounds(): LuaMultiReturn<[number, number, number, number]>\`
-
-<div class="api-symbol-body">
-
-Get the visible area bounds in content-local coordinates (top-left and bottom-right),
-clamped to the grid coordinate range so get_index_xy produces valid results.
-
-**Returns**
-
-- \`number\`
-- \`number\`
-- \`number\`
-- \`number\`
-
-</div>
-
-### \`druid_data_list._refresh()\`
-
-<div class="api-symbol-body">
-
-Refresh all elements in DataList
-
-</div>
-
 ### \`druid_data_list.scroll: druid_scroll\`
 
 <div class="api-symbol-body">
@@ -4395,16 +3848,6 @@ The Hotkey constructor
 
 </div>
 
-### \`druid_hotkey.on_style_change(style: druid_hotkey_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_hotkey_style\`
-
-</div>
-
 ### \`druid_hotkey.add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument?: unknown | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
@@ -4423,38 +3866,6 @@ Add hotkey for component callback
 </div>
 
 ### \`druid_hotkey.is_processing()\`
-
-### \`druid_hotkey.on_focus_gained()\`
-
-### \`druid_hotkey._is_modificator_active(modificator: Hash, time: number): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`modificator\`: \`Hash\`
-- \`time\`: \`number\` — The current time
-
-**Returns**
-
-- \`boolean\`
-
-</div>
-
-### \`druid_hotkey.on_input(action_id: Hash | undefined, action: action): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash | undefined\` — The action id
-- \`action\`: \`action\` — The action
-
-**Returns**
-
-- \`boolean\` — True if the action is consumed
-
-</div>
 
 ### \`druid_hotkey.set_repeat(is_enabled_repeated: boolean): druid_hotkey\`
 
@@ -4579,33 +3990,6 @@ Callback on wrong user input
 - \`keyboard_type\`?: \`Opaque<"constant"> | undefined\` — Gui keyboard type for input field
 
 </div>
-
-### \`druid_input.on_style_change(style: druid_input_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_input_style\`
-
-</div>
-
-### \`druid_input.on_input(action_id: Hash | undefined, action: action): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash | undefined\` — The action id
-- \`action\`: \`action\` — The action
-
-**Returns**
-
-- \`boolean\` — True if the action is consumed
-
-</div>
-
-### \`druid_input.on_focus_lost()\`
 
 ### \`druid_input.get_text_selected()\`
 
@@ -4825,8 +4209,6 @@ The style of the input component
 - \`adjust_type\`?: \`string | undefined\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
 
 </div>
-
-### \`druid_lang_text.on_language_change()\`
 
 ### \`druid_lang_text.set_to(text: string): druid_lang_text\`
 
@@ -5163,18 +4545,6 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.calculate_rows_data(): druid_layout_rows_data\`
-
-<div class="api-symbol-body">
-
-Calculate rows data for layout. Contains total width, height and rows info (width, height, count of elements in row)
-
-**Returns**
-
-- \`druid_layout_rows_data\`
-
-</div>
-
 ### \`druid_layout.set_node_position(node: Opaque<"node">, x: number, y: number): Opaque<"node">\`
 
 <div class="api-symbol-body">
@@ -5323,20 +4693,6 @@ Minimum step to fill progress bar. Default: 0.005
 
 </div>
 
-### \`druid_progress.on_style_change(style: druid_progress_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_progress_style\`
-
-</div>
-
-### \`druid_progress.on_layout_change()\`
-
-### \`druid_progress.on_remove()\`
-
 ### \`druid_progress.update(dt: number)\`
 
 <div class="api-symbol-body">
@@ -5449,28 +4805,6 @@ Set progress bar max node size
 
 </div>
 
-### \`druid_progress._check_steps(from: number, to: number, exactly?: number | undefined)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`from\`: \`number\` — The start value
-- \`to\`: \`number\` — The end value
-- \`exactly\`?: \`number | undefined\` — The exact value
-
-</div>
-
-### \`druid_progress._set_bar_to(set_to: number)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`set_to\`: \`number\` — The value to set the progress bar to
-
-</div>
-
 ### \`druid_progress.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
@@ -5522,37 +4856,6 @@ The Slider constructor
 - \`node\`: \`Opaque<"node">\` — GUI node to drag as a slider
 - \`end_pos\`: \`Vector3\` — The end position of slider, should be on the same axis as the node
 - \`callback\`?: \`unknown | undefined\` — On slider change callback
-
-</div>
-
-### \`druid_slider.on_layout_change()\`
-
-### \`druid_slider.on_remove()\`
-
-### \`druid_slider.on_style_change(style: LuaTable)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`LuaTable\`
-
-</div>
-
-### \`druid_slider.on_window_resized()\`
-
-### \`druid_slider.on_input(action_id: Hash, action: LuaTable): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash\` — Action id from on_input
-- \`action\`: \`LuaTable\` — Action table from on_input
-
-**Returns**
-
-- \`boolean\` — True if input was consumed
 
 </div>
 
@@ -5653,10 +4956,6 @@ Check if Slider component is enabled
 
 </div>
 
-### \`druid_slider._on_change_value()\`
-
-### \`druid_slider._set_position()\`
-
 ### \`druid_slider.node: Opaque<"node">\`
 
 <div class="api-symbol-body">
@@ -5715,35 +5014,6 @@ If true, trigger on swipe moving, not only release action. Default: false
 - \`on_swipe_callback\`: \`unknown\`
 
 </div>
-
-### \`druid_swipe.on_late_init()\`
-
-### \`druid_swipe.on_style_change(style: druid_swipe_style)\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`style\`: \`druid_swipe_style\`
-
-</div>
-
-### \`druid_swipe.on_input(action_id: Hash, action: action): boolean\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`action_id\`: \`Hash\` — The action id
-- \`action\`: \`action\` — The action table
-
-**Returns**
-
-- \`boolean\` — True if the input was consumed
-
-</div>
-
-### \`druid_swipe.on_input_interrupt()\`
 
 ### \`druid_swipe.set_click_zone(zone?: Opaque<"node"> | string | undefined)\`
 
@@ -5835,10 +5105,6 @@ The click zone of the swipe
 
 </div>
 
-### \`druid_timer.update()\`
-
-### \`druid_timer.on_layout_change()\`
-
 ### \`druid_timer.set_to(set_to: number): druid_timer\`
 
 <div class="api-symbol-body">
@@ -5885,20 +5151,6 @@ Set the timer interval
 **Returns**
 
 - \`druid_timer\` — Current timer instance
-
-</div>
-
-### \`druid_timer._second_string_min(sec: number): string\`
-
-<div class="api-symbol-body">
-
-**Parameters**
-
-- \`sec\`: \`number\` — Seconds to convert
-
-**Returns**
-
-- \`string\` — The formatted time string
 
 </div>
 
@@ -6343,40 +5595,6 @@ Component \`on_remove\` function will be invoked, if exist.
 
 </div>
 
-### \`druid_instance.get_context(): unknown\`
-
-<div class="api-symbol-body">
-
-Get a context of Druid instance (usually a self of gui script)
-
-**Returns**
-
-- \`unknown\` — The Druid context
-
-</div>
-
-### \`druid_instance.get_style(): LuaTable\`
-
-<div class="api-symbol-body">
-
-Get a style of Druid instance
-
-**Returns**
-
-- \`LuaTable\` — The Druid style table
-
-</div>
-
-### \`druid_instance.late_init()\`
-
-<div class="api-symbol-body">
-
-Druid late update function called after initialization and before the regular update step.
-This function is used to check the GUI state and perform actions after all components and nodes have been created.
-An example use case is performing an auto stencil check in the GUI hierarchy for input components.
-
-</div>
-
 ### \`druid_instance.update(dt: number)\`
 
 <div class="api-symbol-body">
@@ -6432,15 +5650,6 @@ Called when the window event occurs
 
 </div>
 
-### \`druid_instance.on_language_change()\`
-
-<div class="api-symbol-body">
-
-Calls the on_language_change function in all related components
-This one called by global <a href="/api/druid#on_language_change" class="symbol-xref">druid.on_language_change</a>, but can be called manually to update all translations
-
-</div>
-
 ### \`druid_instance.set_whitelist(whitelist_components: LuaTable | druid_component[]): druid_instance\`
 
 <div class="api-symbol-body">
@@ -6474,14 +5683,6 @@ component will be not processed on the input step DruidInstance
 **Returns**
 
 - \`druid_instance\` — The Druid instance
-
-</div>
-
-### \`druid_instance._clear_late_remove()\`
-
-<div class="api-symbol-body">
-
-Remove all components on late remove step DruidInstance
 
 </div>
 
