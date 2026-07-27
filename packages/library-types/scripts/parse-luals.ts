@@ -296,12 +296,50 @@ function parseGenerics(rest: string): LibraryGeneric[] {
     });
 }
 
-/** Parse a `@class Name[ : parent]` head. The parent is kept as a single raw token. */
+/**
+ * Read one class-head token from `s` starting at `start`, tracking `<[({` depth so a
+ * generic like `Bar<A, B>` stays whole. Ends at the first top-level space/tab, `:`, or
+ * `,` (none consumed). Returns the trimmed token and its end index. Distinct from
+ * `readTypeToken`, whose `fun(...)` `:`/`,` continuation rule wrongly glues a
+ * `Name: Parent` head together.
+ */
+function readClassToken(s: string, start: number): { token: string; end: number } {
+  let depth = 0;
+  let i = start;
+  for (; i < s.length; i++) {
+    const c = s[i];
+    if (c === "<" || c === "(" || c === "[" || c === "{") depth++;
+    else if (c === ">" || c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && (c === " " || c === "\t" || c === ":" || c === ",")) break;
+  }
+  return { token: s.slice(start, i).trim(), end: i };
+}
+
+/**
+ * Parse a `@class Name[: parent[, parent...]] [description]` head. The identifier and
+ * optional parent list are read as bracket-aware tokens; any trailing human
+ * description is dropped. Multiple parents are joined with `", "` to match the single
+ * `extends` string the emitter renders.
+ */
 function parseClassHead(rest: string): { name: string; extends?: string } {
-  const colon = rest.indexOf(":");
-  if (colon === -1) return { name: rest.trim() };
-  const parent = rest.slice(colon + 1).trim();
-  return { name: rest.slice(0, colon).trim(), ...(parent ? { extends: parent } : {}) };
+  const s = rest.trim();
+  const { token: name, end: afterName } = readClassToken(s, 0);
+  let i = afterName;
+  while (i < s.length && (s[i] === " " || s[i] === "\t")) i++;
+  if (s[i] !== ":") return { name };
+  i++;
+  const parents: string[] = [];
+  while (true) {
+    while (i < s.length && (s[i] === " " || s[i] === "\t")) i++;
+    const { token, end } = readClassToken(s, i);
+    if (token !== "") parents.push(token);
+    i = end;
+    while (i < s.length && (s[i] === " " || s[i] === "\t")) i++;
+    if (s[i] !== ",") break;
+    i++;
+  }
+  const extendsStr = parents.join(", ");
+  return { name, ...(extendsStr ? { extends: extendsStr } : {}) };
 }
 
 interface FunctionDecl {
