@@ -375,6 +375,29 @@ describe("immutable migrated off the ts-defold corpus onto the LuaLS front-end",
   });
 });
 
+describe("squid migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("squid is a luals namespace and no longer a ts-defold target or classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "squid")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "squid.squid")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "squid")).toBe(false);
+  });
+
+  test("the retired ts-defold squid artifacts are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/squid.squid.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/squid.squid.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/squid.squid.json"))).toBe(false);
+  });
+});
+
 describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("saver.saver and saver.storage are luals namespaces, no longer ts-defold targets or a classified dir", () => {
     const luals = readLualsTargets(PACKAGE_ROOT);

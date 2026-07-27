@@ -156,12 +156,6 @@
       "generated": "generated/dicebag.dicebag.d.ts"
     },
     {
-      "module": "squid.squid",
-      "path": "packages/squid/squid.squid.d.ts",
-      "fixture": "fixtures/ts-defold/squid.squid.d.ts",
-      "generated": "generated/squid.squid.d.ts"
-    },
-    {
       "module": "starly.starly",
       "path": "packages/starly/starly.starly.d.ts",
       "fixture": "fixtures/ts-defold/starly.starly.d.ts",
