@@ -107,6 +107,16 @@
       "namespace": "immutable",
       "typeRenames": {},
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/paweljarosz/squid",
+      "ref": "1.2",
+      "license": "MIT",
+      "sourceGlobs": ["squid/**/*.lua"],
+      "moduleId": "squid.squid",
+      "namespace": "squid",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }

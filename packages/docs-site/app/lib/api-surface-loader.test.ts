@@ -214,6 +214,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("immutable").authorUrl).toBe("https://github.com/paweljarosz/lua-immutable");
   });
 
+  test("attributes squid to paweljarosz/squid as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("squid").authoredHere).toBe(true);
+    expect(meta("squid").authorUrl).toBe("https://github.com/paweljarosz/squid");
+  });
+
   test("attributes saver.saver to Insality/defold-saver as an authored-here LuaLS library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(meta("saver.saver").authoredHere).toBe(true);

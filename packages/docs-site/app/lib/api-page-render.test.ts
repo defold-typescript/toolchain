@@ -548,6 +548,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the migrated squid page pins to paweljarosz/squid, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const squid = pages.find((p) => p.namespace === "squid");
+    expect(squid).toBeDefined();
+    if (!squid) return;
+    expect(squid.category).toBe("library");
+    const md = apiPageMarkdown(squid, apiLinkify(pages));
+    expect(md).toContain("[paweljarosz/squid](https://github.com/paweljarosz/squid)");
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("the migrated saver.saver page pins to Insality/defold-saver, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const saver = pages.find((p) => p.namespace === "saver.saver");

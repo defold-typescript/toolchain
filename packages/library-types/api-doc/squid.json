@@ -1,0 +1,610 @@
+{
+  "info": {
+    "namespace": "squid",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "------\n------\n------\n------\nInitialize Squid for error and crash handling and logging",
+      "description": "------\n------\n------\n------\nInitialize Squid for error and crash handling and logging",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_allowed",
+      "brief": "Set if logs should be saved to file",
+      "description": "Set if logs should be saved to file",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "@Tag to change",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "is_allowed",
+          "doc": "@True if tag should be logged, false otherwise",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "trace",
+      "brief": "Log TRACE level message with optional data and tag",
+      "description": "Log TRACE level message with optional data and tag",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "@Message to log",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_or_tag",
+          "doc": "@Optional non-string data to log or tag if string provided",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional tag string, if provided, used instead of data_or_tag string as a matter of priority",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "debug",
+      "brief": "Log DEBUG level message with optional data and tag",
+      "description": "Log DEBUG level message with optional data and tag",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "@Message to log",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_or_tag",
+          "doc": "@Optional non-string data to log or tag if string provided",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional tag string, if provided, used instead of data_or_tag string as a matter of priority",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "info",
+      "brief": "Log INFO level message with optional data and tag",
+      "description": "Log INFO level message with optional data and tag",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "@Message to log",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_or_tag",
+          "doc": "@Optional non-string data to log or tag if string provided",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional tag string, if provided, used instead of data_or_tag string as a matter of priority",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "warn",
+      "brief": "Log WARNING level message with optional data and tag",
+      "description": "Log WARNING level message with optional data and tag",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "@Message to log",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_or_tag",
+          "doc": "@Optional non-string data to log or tag if string provided",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional tag string, if provided, used instead of data_or_tag string as a matter of priority",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "error",
+      "brief": "Log ERROR level message with optional data and tag",
+      "description": "Log ERROR level message with optional data and tag",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "@Message to log",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_or_tag",
+          "doc": "@Optional non-string data to log or tag if string provided",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional tag string, if provided, used instead of data_or_tag string as a matter of priority",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "log",
+      "brief": "Log message with provided level, message, data and tag",
+      "description": "Log message with provided level, message, data and tag",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "@Message to log",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "level",
+          "doc": "@Log level (if not provided, using Squid.INFO by default)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_or_tag",
+          "doc": "@Optional non-string data to log or tag if string provided",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional tag string, if provided, used instead of data_or_tag string as a matter of priority",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_logs",
+      "brief": "Explicitly save buffer of unsaved logs to a file",
+      "description": "Explicitly save buffer of unsaved logs to a file",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if saved logs succesfully, false otherwise",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_error_callback",
+      "brief": "Set error callback function that will be called on error after logging it",
+      "description": "Set error callback function that will be called on error after logging it",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "(source: string, message: string, traceback: string) => void"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Finalize Squid logging - check for crashes and saved all unsaved buffered logs",
+      "description": "Finalize Squid logging - check for crashes and saved all unsaved buffered logs",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Create a new instance of the Squid logger",
+      "description": "Create a new instance of the Squid logger",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "@Optional tag used for all logs when invoked within this instance",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "is_allowed",
+          "doc": "@Optional flag to set if instance's tag is allowed to be logged initially",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_config",
+      "brief": "Get Squid configuration",
+      "description": "Get Squid configuration",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@User configuration table compatible with SquidConfig",
+          "types": [
+            "SquidConfig"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_config",
+      "brief": "Set and use user configuration",
+      "description": "Set and use user configuration",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "@User configuration table compatible with SquidConfig",
+          "types": [
+            "SquidConfig"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Squid",
+      "properties": [
+        {
+          "name": "TRACE",
+          "brief": "@(1) trace logging level constant",
+          "description": "@(1) trace logging level constant",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "DEBUG",
+          "brief": "@(2) debug logging level constant",
+          "description": "@(2) debug logging level constant",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "INFO",
+          "brief": "@(3) info logging level constant",
+          "description": "@(3) info logging level constant",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "WARN",
+          "brief": "@(4) warning logging level constant",
+          "description": "@(4) warning logging level constant",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "ERROR",
+          "brief": "@(5) error logging level constant",
+          "description": "@(5) error logging level constant",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "ALLOWLIST",
+          "brief": "@Public list of allowed tags (pairs tag[string] - is_allowed[boolean])",
+          "description": "@Public list of allowed tags (pairs tag[string] - is_allowed[boolean])",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SquidConfig",
+      "properties": [
+        {
+          "name": "app_catalog",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "log_file_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "log_file_extension",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "is_enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_enabled_in_release",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_printing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_saving",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_adding_timestamp",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_using_allowlist",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "days_to_delete_logs",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min_log_level",
+          "brief": "1|2|3|4|5",
+          "description": "1|2|3|4|5",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "unsaved_logs_buffer",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_data_length",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_data_depth",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "is_printing_crashes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_saving_crashes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "crash_file_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "crash_file_extension",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SystemHelper",
+      "properties": [
+        {
+          "name": "is_linux",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_mobile",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TableToString"
+    }
+  ]
+}
