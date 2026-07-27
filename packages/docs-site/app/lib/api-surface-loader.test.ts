@@ -11,6 +11,7 @@ import {
   loadLibraryProvenance,
   loadVersionIndependentPages,
 } from "./api-surface-loader";
+import { libraryCreatorGroups } from "./nav";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
@@ -51,6 +52,14 @@ describe("libraryOwnerByDir", () => {
   test("attributes script_api-sourced libraries to their repo owner so they nest under it", () => {
     const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
     expect(owners.get("bridge")).toBe("Playgama");
+  });
+
+  test("keys a multi-module same-repo library's owner on its top namespace segment", () => {
+    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
+    expect(owners.get("saver")).toBe("Insality");
+    expect(owners.get("saver.saver")).toBeUndefined();
+    expect(owners.get("saver.storage")).toBeUndefined();
+    expect(owners.get("druid")).toBe("Insality");
   });
 });
 
@@ -268,6 +277,36 @@ describe("loadApiSurface — druid library page", () => {
     );
     expect(byName.get("druid_text.get_text_size")).toBe(
       "druid_text.get_text_size(text?: string | undefined): LuaMultiReturn<[number, number]>",
+    );
+  });
+});
+
+describe("loadApiSurface — multi-module same-repo library grouping (real corpus)", () => {
+  function libraryGroups() {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR)
+      .filter((p) => p.category === "library")
+      .map((p) => ({ namespace: p.namespace, route: p.route }));
+    return libraryCreatorGroups(
+      pages,
+      libraryModuleDirs(REAL_LIBRARY_TYPES_DIR),
+      libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR),
+    );
+  }
+
+  test("groups defold-saver's two modules into exactly one authored-here library under Insality", () => {
+    const groups = libraryGroups();
+    const insality = groups.find((group) => group.creator === "Insality");
+    const saver = insality?.libraries.filter((lib) => lib.dir === "saver") ?? [];
+    expect(saver).toHaveLength(1);
+    expect(saver[0]?.label).toBe("saver");
+    expect(saver[0]?.authoredHere).toBe(true);
+    expect(saver[0]?.modules.map((m) => m.label)).toEqual(["saver.saver", "saver.storage"]);
+  });
+
+  test("keeps the · <leaf> distinguisher on a shared-dir saver page whose leaf differs from the dir", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    expect(pages.find((p) => p.namespace === "saver.storage")?.displayName).toBe(
+      "Insality / saver · storage",
     );
   });
 });

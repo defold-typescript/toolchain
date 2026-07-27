@@ -14,6 +14,7 @@ import {
   type SignaturesArtifact,
 } from "./combined-surface";
 import { parseGlobalTypes } from "./global-types";
+import { libraryGroupKey } from "./nav";
 
 interface ApiTarget {
   id: string;
@@ -186,14 +187,14 @@ export function libraryOwnerByDir(libraryTypesDir: string): Map<string, string> 
   // like the ts-defold libraries do.
   for (const [namespace, provenance] of loadLualsProvenance(libraryTypesDir)) {
     const owner = githubOwner(provenance.repo);
-    if (owner) ownerByDir.set(namespace, owner);
+    if (owner) ownerByDir.set(libraryGroupKey(namespace), owner);
   }
   // script_api-sourced libraries (bridge) are likewise absent from NOTICE and the
   // ts-defold classification; attribute each to its own repo owner so it nests
   // under that owner in the Libraries tree just like the LuaLS libraries.
   for (const [namespace, provenance] of loadScriptApiProvenance(libraryTypesDir)) {
     const owner = githubOwner(provenance.repo);
-    if (owner) ownerByDir.set(namespace, owner);
+    if (owner) ownerByDir.set(libraryGroupKey(namespace), owner);
   }
   return ownerByDir;
 }
@@ -340,7 +341,7 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   // distinguisher; a single-module dir drops it.
   const dirCounts = new Map<string, number>();
   for (const namespace of namespaces) {
-    const dir = moduleDir.get(namespace) ?? namespace;
+    const dir = moduleDir.get(namespace) ?? libraryGroupKey(namespace);
     dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
   }
 
@@ -362,9 +363,9 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
       displayOverrides.get(namespace) ??
       libraryDisplayName(
         namespace,
-        dir ?? namespace,
+        dir ?? libraryGroupKey(namespace),
         githubOwner(meta.authorUrl),
-        dirCounts.get(dir ?? namespace) ?? 1,
+        dirCounts.get(dir ?? libraryGroupKey(namespace)) ?? 1,
       );
     pages.push({
       namespace,
