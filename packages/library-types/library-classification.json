@@ -620,13 +620,6 @@
       ]
     },
     {
-      "dir": "lua-immutable",
-      "classification": "already-vendored",
-      "modules": [
-        "immutable.immutable"
-      ]
-    },
-    {
       "dir": "monarch",
       "classification": "already-vendored",
       "modules": [

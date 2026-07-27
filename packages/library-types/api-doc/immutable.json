@@ -1,0 +1,65 @@
+{
+  "info": {
+    "namespace": "immutable",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "is_immutable",
+      "brief": "Checks if a given table `table_to_check` is immutable",
+      "description": "Checks if a given table `table_to_check` is immutable",
+      "parameters": [
+        {
+          "name": "table_to_check",
+          "doc": "@table to check if is immutable",
+          "types": [
+            "LuaTable | unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@true if table is immutable, false otherwise",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "make",
+      "brief": "Makes a given table immutable, including nested tables",
+      "description": "Makes a given table immutable, including nested tables",
+      "parameters": [
+        {
+          "name": "original_table",
+          "doc": "@table to convert",
+          "types": [
+            "LuaTable | unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@converted table",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Immutable_Immutable_class_to_convert_any_table_into_runtime_read_only_table"
+    }
+  ]
+}
