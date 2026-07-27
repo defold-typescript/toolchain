@@ -198,6 +198,18 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("proto").authoredHere).toBe(true);
     expect(meta("proto").authorUrl).toBe("https://github.com/Insality/defold-proto");
   });
+
+  test("attributes saver.saver to Insality/defold-saver as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("saver.saver").authoredHere).toBe(true);
+    expect(meta("saver.saver").authorUrl).toBe("https://github.com/Insality/defold-saver");
+  });
+
+  test("attributes saver.storage to Insality/defold-saver as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("saver.storage").authoredHere).toBe(true);
+    expect(meta("saver.storage").authorUrl).toBe("https://github.com/Insality/defold-saver");
+  });
 });
 
 describe("loadLibraryProvenance — script_api-sourced libraries", () => {

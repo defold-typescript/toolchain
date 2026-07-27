@@ -132,18 +132,6 @@
       "generated": "generated/defcon.console.d.ts"
     },
     {
-      "module": "saver.saver",
-      "path": "packages/defold-saver/saver.saver.d.ts",
-      "fixture": "fixtures/ts-defold/saver.saver.d.ts",
-      "generated": "generated/saver.saver.d.ts"
-    },
-    {
-      "module": "saver.storage",
-      "path": "packages/defold-saver/saver.storage.d.ts",
-      "fixture": "fixtures/ts-defold/saver.storage.d.ts",
-      "generated": "generated/saver.storage.d.ts"
-    },
-    {
       "module": "defsave.defsave",
       "path": "packages/defsave/defsave.defsave.d.ts",
       "fixture": "fixtures/ts-defold/defsave.defsave.d.ts",

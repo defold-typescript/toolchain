@@ -201,14 +201,6 @@
       ]
     },
     {
-      "dir": "defold-saver",
-      "classification": "already-vendored",
-      "modules": [
-        "saver.saver",
-        "saver.storage"
-      ]
-    },
-    {
       "dir": "defold-scene3d",
       "classification": "native",
       "modules": [

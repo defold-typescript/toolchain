@@ -85,12 +85,6 @@
       "types": "./generated/defcon.console.d.ts"
     },
     "./package.json": "./package.json",
-    "./saver.saver": {
-      "types": "./generated/saver.saver.d.ts"
-    },
-    "./saver.storage": {
-      "types": "./generated/saver.storage.d.ts"
-    },
     "./defsave.defsave": {
       "types": "./generated/defsave.defsave.d.ts"
     },

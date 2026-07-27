@@ -7,33 +7,36 @@
   "elements": [
     {
       "type": "FUNCTION",
-      "name": "init",
-      "brief": "",
-      "description": "",
-      "parameters": [],
+      "name": "set_logger",
+      "brief": "File format enum (mirrors saver_internal.FORMAT)\nCustomize the logging mechanism used by Defold Saver.\nYou can use Defold Log library or provide a custom logger.\nlocal log = require(\"log.log\")\nlocal saver = require(\"saver.saver\")\n\nsaver.set_logger(log.get_logger(\"saver\"))",
+      "description": "File format enum (mirrors saver_internal.FORMAT)\nCustomize the logging mechanism used by Defold Saver.\nYou can use Defold Log library or provide a custom logger.\nlocal log = require(\"log.log\")\nlocal saver = require(\"saver.saver\")\n\nsaver.set_logger(log.get_logger(\"saver\"))",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "A logger object that follows the specified logging interface, including methods for trace, debug, info, warn, error. Pass nil to remove the default logger.",
+          "types": [
+            "saver_logger | LuaTable | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
-      "name": "bind_save_part",
-      "brief": "",
-      "description": "",
+      "name": "init",
+      "brief": "Initialize the Saver module. Should be called at the start of your game to set up the module.\nCall it after saver.set_migrations if you are using migrations.\nThis function loads the game state from a file and starts the autosave timer.\nIf the game state file does not exist, a new game state is created.\nsaver.init()",
+      "description": "Initialize the Saver module. Should be called at the start of your game to set up the module.\nCall it after saver.set_migrations if you are using migrations.\nThis function loads the game state from a file and starts the autosave timer.\nIf the game state file does not exist, a new game state is created.\nsaver.init()",
       "parameters": [
         {
-          "name": "keyId",
-          "doc": "",
+          "name": "config",
+          "doc": "Configuration table.",
           "types": [
-            "string"
+            "saver_config | undefined"
           ],
-          "is_optional": "False"
-        },
-        {
-          "name": "tableReference",
-          "doc": "",
-          "types": [
-            "any"
-          ],
-          "is_optional": "False"
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
@@ -41,22 +44,23 @@
     {
       "type": "FUNCTION",
       "name": "save_game_state",
-      "brief": "",
-      "description": "",
+      "brief": "Save the current game state to a file. If no file name is provided, the default file name specified in the game.project file is used.\n-- Save the game with default name\nsaver.save_game_state()\n\n-- Save the game with custom name\nsaver.save_game_state(\"custom_save\")",
+      "description": "Save the current game state to a file. If no file name is provided, the default file name specified in the game.project file is used.\n-- Save the game with default name\nsaver.save_game_state()\n\n-- Save the game with custom name\nsaver.save_game_state(\"custom_save\")",
       "parameters": [
         {
-          "name": "fileName",
-          "doc": "",
+          "name": "save_name",
+          "doc": "The name of the file to save the game state to. Default is the file name specified in the game.project file under the saver.save_file key.",
           "types": [
-            "string"
+            "string | undefined"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "true if the game state was saved successfully, false otherwise.",
           "types": [
             "boolean"
           ]
@@ -66,22 +70,49 @@
     {
       "type": "FUNCTION",
       "name": "load_game_state",
-      "brief": "",
-      "description": "",
+      "brief": "Load the game state from a file. If no file name is provided, the default file name specified in the game.project file is used.\nlocal is_loaded = saver.load_game_state() -- Load the game state with default name\nlocal is_loaded = saver.load_game_state(\"custom_save\") -- Load the game state with custom name",
+      "description": "Load the game state from a file. If no file name is provided, the default file name specified in the game.project file is used.\nlocal is_loaded = saver.load_game_state() -- Load the game state with default name\nlocal is_loaded = saver.load_game_state(\"custom_save\") -- Load the game state with custom name",
       "parameters": [
         {
-          "name": "fileName",
-          "doc": "",
+          "name": "save_name",
+          "doc": "The name of the file to load the game state from. Default is the file name specified in the game.project file.",
           "types": [
-            "string"
+            "string | undefined"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "true if the game state was loaded successfully, false if the new game state is created",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_game_state",
+      "brief": "Delete the game state file. Doesn't affect the current game state.\nIf autosave is enabled, it will be rescheduled, so probably you want to immediately restart the game.\n-- Delete the game state with default name\nsaver.delete_game_state()\n\n-- Delete the game state with custom name\nsaver.delete_game_state(\"custom_save\")",
+      "description": "Delete the game state file. Doesn't affect the current game state.\nIf autosave is enabled, it will be rescheduled, so probably you want to immediately restart the game.\n-- Delete the game state with default name\nsaver.delete_game_state()\n\n-- Delete the game state with custom name\nsaver.delete_game_state(\"custom_save\")",
+      "parameters": [
+        {
+          "name": "save_name",
+          "doc": "The name of the file to delete the game state from. Default is the file name specified in the game.project file.",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the game state was deleted successfully, false otherwise.",
           "types": [
             "boolean"
           ]
@@ -91,15 +122,15 @@
     {
       "type": "FUNCTION",
       "name": "get_game_state",
-      "brief": "",
-      "description": "",
+      "brief": "Returns the current game state.\nlocal game_state = saver.get_game_state()\npprint(game_state)",
+      "description": "Returns the current game state.\nlocal game_state = saver.get_game_state()\npprint(game_state)",
       "parameters": [],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The current game state.",
           "types": [
-            "unknown"
+            "saver_game_state"
           ]
         }
       ]
@@ -107,22 +138,23 @@
     {
       "type": "FUNCTION",
       "name": "set_game_state",
-      "brief": "",
-      "description": "",
+      "brief": "Sets the current game state to the specified state.\nlocal game_state = saver.get_game_state()\ngame_state.game.level = 5\nsaver.set_game_state(game_state)",
+      "description": "Sets the current game state to the specified state.\nlocal game_state = saver.get_game_state()\ngame_state.game.level = 5\nsaver.set_game_state(game_state)",
       "parameters": [
         {
-          "name": "state",
-          "doc": "",
+          "name": "data",
+          "doc": "The state to set the game state to.",
           "types": [
-            "any"
+            "LuaTable"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "true if the game state was set successfully, false otherwise.",
           "types": [
             "boolean"
           ]
@@ -131,31 +163,112 @@
     },
     {
       "type": "FUNCTION",
-      "name": "save_file_by_path",
-      "brief": "",
-      "description": "",
+      "name": "bind_save_state",
+      "brief": "Binds a table reference as a part of the game state. When the game state is saved, all table references will be saved.\nThis is a main function to use to save your game state. You can bind multiple tables to different parts of the game state.\nAfter binding, the table_reference will be updated with the saved data if it exists.\nlocal game_state = {\nlevel = 1,\nmoney = 100\n}\n\nsaver.bind_save_state(\"game\", game_state)\n\n-- If we have previously saved game state, the game_state will be changed to the saved data\nprint(game_state.level) -- 5 (if it was saved before)",
+      "description": "Binds a table reference as a part of the game state. When the game state is saved, all table references will be saved.\nThis is a main function to use to save your game state. You can bind multiple tables to different parts of the game state.\nAfter binding, the table_reference will be updated with the saved data if it exists.\nlocal game_state = {\nlevel = 1,\nmoney = 100\n}\n\nsaver.bind_save_state(\"game\", game_state)\n\n-- If we have previously saved game state, the game_state will be changed to the saved data\nprint(game_state.level) -- 5 (if it was saved before)",
       "parameters": [
         {
-          "name": "data",
-          "doc": "",
-          "types": [
-            "any"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "filePath",
-          "doc": "",
+          "name": "table_key_id",
+          "doc": "The table key to set the value for.",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "table_reference",
+          "doc": "The table reference to bind to the game state.",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The table_reference",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_file_by_path",
+      "brief": "Saves the specified data to a file at the specified path. The data format is chosen by file path extension.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nsaver.save_file_by_path(data, file_path)",
+      "description": "Saves the specified data to a file at the specified path. The data format is chosen by file path extension.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nsaver.save_file_by_path(data, file_path)",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The lua table to save to the file.",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "path",
+          "doc": "The absolute path to save the file to. Contains the file name and extension. Extension can be empty, .json or .lua",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "format",
+          "doc": "Optional format override (json, lua, serialized, binary). If not specified, format will be detected from paths extension or data type.",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the file was saved successfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_binary_by_path",
+      "brief": "Saves the specified data to a file at the specified path. The data format is binary.",
+      "description": "Saves the specified data to a file at the specified path. The data format is binary.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The binary data to save to the file.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "path",
+          "doc": "The absolute path to save the file to. Contains the file name and extension.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the file was saved successfully, false otherwise.",
           "types": [
             "boolean"
           ]
@@ -165,24 +278,112 @@
     {
       "type": "FUNCTION",
       "name": "load_file_by_path",
-      "brief": "",
-      "description": "",
+      "brief": "Loads the data from a file at the specified path.\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nlocal data = saver.load_file_by_path(file_path)\npprint(data)\nNOTE: For binary data like images, use `saver.load_binary_by_path` instead.",
+      "description": "Loads the data from a file at the specified path.\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nlocal data = saver.load_file_by_path(file_path)\npprint(data)\nNOTE: For binary data like images, use `saver.load_binary_by_path` instead.",
       "parameters": [
         {
           "name": "path",
-          "doc": "",
+          "doc": "The absolute path to load the file from. Contains the file name and extension.",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "format",
+          "doc": "Optional format override (json, lua, serialized). If not specified, format will be detected from paths extension.",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The data loaded from the file. If the file does not exist, returns nil.",
           "types": [
-            "unknown"
+            "LuaTable | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_binary_by_path",
+      "brief": "Loads the binary data from a file at the specified path.",
+      "description": "Loads the binary data from a file at the specified path.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The absolute path to the file to load. Contains the file name and extension.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The binary data loaded from the file. If the file does not exist, returns nil.",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_file_by_path",
+      "brief": "Deletes the file at the specified path.",
+      "description": "Deletes the file at the specified path.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The absolute path to the file to delete. Contains the file name and extension.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the file was deleted successfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_file_exists_by_path",
+      "brief": "Checks if the file exists at the specified path.\nlocal is_project_file_exists = saver.is_file_exists_by_path(absolute_path_to_file)",
+      "description": "Checks if the file exists at the specified path.\nlocal is_project_file_exists = saver.is_file_exists_by_path(absolute_path_to_file)",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The absolute path to the file to check. Contains the file name and extension.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the file exists, false otherwise.",
+          "types": [
+            "boolean"
           ]
         }
       ]
@@ -190,30 +391,76 @@
     {
       "type": "FUNCTION",
       "name": "save_file_by_name",
-      "brief": "",
-      "description": "",
+      "brief": "Saves the specified data to a file with the specified name. The file is saved in the game save folder. Filename supports subfolders.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Save the data to the game save folder\nsaver.save_file_by_name(data, \"data.json\")",
+      "description": "Saves the specified data to a file with the specified name. The file is saved in the game save folder. Filename supports subfolders.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Save the data to the game save folder\nsaver.save_file_by_name(data, \"data.json\")",
       "parameters": [
         {
           "name": "data",
-          "doc": "",
+          "doc": "The lua table to save to the file.",
           "types": [
-            "any"
+            "LuaTable"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
-          "name": "fileName",
-          "doc": "",
+          "name": "filename",
+          "doc": "The name of the file to save the data to. Can contain subfolders.",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "format",
+          "doc": "Optional format override (json, lua, serialized, binary)",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "true if the file was saved successfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_binary_by_name",
+      "brief": "Saves the specified data to a file with the specified name. The data format is binary.",
+      "description": "Saves the specified data to a file with the specified name. The data format is binary.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The binary data to save to the file.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "filename",
+          "doc": "The name of the file to save the data to. Can contain subfolders.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the file was saved successfully, false otherwise.",
           "types": [
             "boolean"
           ]
@@ -223,64 +470,136 @@
     {
       "type": "FUNCTION",
       "name": "load_file_by_name",
-      "brief": "",
-      "description": "",
+      "brief": "Loads the data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.\nlocal data = saver.load_file_by_name(\"data.json\")\npprint(data)\nNOTE: For binary data like images, use saver.load_binary_by_name instead.",
+      "description": "Loads the data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.\nlocal data = saver.load_file_by_name(\"data.json\")\npprint(data)\nNOTE: For binary data like images, use saver.load_binary_by_name instead.",
       "parameters": [
         {
-          "name": "fileName",
-          "doc": "",
+          "name": "filename",
+          "doc": "The name of the file to load the data from. Can contain subfolders.",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "format",
+          "doc": "Optional format override (json, lua, serialized, binary)",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The data loaded from the file. If the file does not exist, returns nil.",
           "types": [
-            "unknown"
+            "LuaTable | undefined"
           ]
         }
       ]
     },
     {
       "type": "FUNCTION",
-      "name": "set_autosave_timer",
-      "brief": "",
-      "description": "",
+      "name": "load_binary_by_name",
+      "brief": "Loads the binary data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.",
+      "description": "Loads the binary data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.",
       "parameters": [
         {
-          "name": "seconds",
-          "doc": "",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
-      "name": "get_save_path",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "fileName",
-          "doc": "",
+          "name": "filename",
+          "doc": "The name of the file to load the binary data from. Can contain subfolders.",
           "types": [
             "string"
           ],
-          "is_optional": "True"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The binary data loaded from the file. If the file does not exist, returns nil.",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_file_by_name",
+      "brief": "Deletes the file with the specified name. The file is deleted from the game save folder. Filename supports subfolders.\nsaver.delete_file_by_name(\"data.json\")",
+      "description": "Deletes the file with the specified name. The file is deleted from the game save folder. Filename supports subfolders.\nsaver.delete_file_by_name(\"data.json\")",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "The name of the file to delete. Can contain subfolders.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the file was deleted successfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_file_exists_by_name",
+      "brief": "Checks if the file exists with the specified name. The file is checked in the game save folder. Filename supports subfolders.",
+      "description": "Checks if the file exists with the specified name. The file is checked in the game save folder. Filename supports subfolders.",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "The name of the file to check. Can contain subfolders.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the file exists, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_save_path",
+      "brief": "Returns the absolute path to the game save folder. If a file name is provided, the path to the file in the game save folder is returned. Filename supports subfolders.\nlocal folder_path = saver.get_save_path()\nprint(folder_path) -- \"/Users/user/Library/Application Support/Defold Saver/\"\n\nlocal file_path = saver.get_save_path(\"data.json\")\nprint(file_path) -- \"/Users/user/Library/Application Support/Defold Saver/data.json\"\n\nlocal file_path_2 = saver.get_save_path(\"profiles/profile1.json\")\nprint(file_path_2) -- \"/Users/user/Library/Application Support/Defold Saver/profiles/profile1.json\"",
+      "description": "Returns the absolute path to the game save folder. If a file name is provided, the path to the file in the game save folder is returned. Filename supports subfolders.\nlocal folder_path = saver.get_save_path()\nprint(folder_path) -- \"/Users/user/Library/Application Support/Defold Saver/\"\n\nlocal file_path = saver.get_save_path(\"data.json\")\nprint(file_path) -- \"/Users/user/Library/Application Support/Defold Saver/data.json\"\n\nlocal file_path_2 = saver.get_save_path(\"profiles/profile1.json\")\nprint(file_path_2) -- \"/Users/user/Library/Application Support/Defold Saver/profiles/profile1.json\"",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "The name of the file to get the path for. Can contain subfolders. If nil, returns the folder path.",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The absolute path to the game save folder, or the path to the file in the game save folder if a file name is provided.",
           "types": [
             "string"
           ]
@@ -290,13 +609,13 @@
     {
       "type": "FUNCTION",
       "name": "get_save_version",
-      "brief": "",
-      "description": "",
+      "brief": "Returns the current save version of the game state. The save version is used to check if the game state is older than the current version. The save version increments when the game state is saved.\nlocal save_version = saver.get_save_version()\nprint(save_version)",
+      "description": "Returns the current save version of the game state. The save version is used to check if the game state is older than the current version. The save version increments when the game state is saved.\nlocal save_version = saver.get_save_version()\nprint(save_version)",
       "parameters": [],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The current save version of the game state.",
           "types": [
             "number"
           ]
@@ -305,73 +624,48 @@
     },
     {
       "type": "FUNCTION",
-      "name": "set_migrations",
-      "brief": "",
-      "description": "",
+      "name": "set_autosave_timer",
+      "brief": "Sets the autosave timer to the specified number of seconds. The autosave timer is used to automatically save the game state at regular intervals.\nUse 0 to disable autosave.\nsaver.set_autosave_timer(5) -- Autosave every 5 seconds\nsaver.set_autosave_timer(0) -- Disable autosave",
+      "description": "Sets the autosave timer to the specified number of seconds. The autosave timer is used to automatically save the game state at regular intervals.\nUse 0 to disable autosave.\nsaver.set_autosave_timer(5) -- Autosave every 5 seconds\nsaver.set_autosave_timer(0) -- Disable autosave",
       "parameters": [
         {
-          "name": "migrationList",
-          "doc": "",
+          "name": "timer",
+          "doc": "The number of seconds between autosaves. Use 0 to disable autosave.",
           "types": [
-            "((this: void, gameState: any, logger: LoggerInstance) => any)[]"
+            "number"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
-      "name": "apply_migrations",
-      "brief": "",
-      "description": "",
-      "parameters": [],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
-      "name": "set_logger",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "logger",
-          "doc": "",
-          "types": [
-            "LoggerInstance"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
-      "name": "set_logger",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "remove_logger",
-          "doc": "",
-          "types": [
-            "undefined"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
-      "name": "get_current_game_project_folder",
-      "brief": "",
-      "description": "",
+      "name": "get_autosave_timer",
+      "brief": "Returns the current autosave timer.",
+      "description": "Returns the current autosave timer.",
       "parameters": [],
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The current autosave timer.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_current_game_project_folder",
+      "brief": "Returns the absolute path to the current game project folder. It is useful when you need to save or load files from the game project folder at development.\nReturns nil if the game project folder is not found. Used only at desktop platforms and if game started from the Defold Editor.\nlocal project_folder = saver.get_current_game_project_folder()\nprint(project_folder) -- \"/Users/user/projects/my_game\"",
+      "description": "Returns the absolute path to the current game project folder. It is useful when you need to save or load files from the game project folder at development.\nReturns nil if the game project folder is not found. Used only at desktop platforms and if game started from the Defold Editor.\nlocal project_folder = saver.get_current_game_project_folder()\nprint(project_folder) -- \"/Users/user/projects/my_game\"",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The absolute path to the current game project folder. Nil if the game.project folder is not found.",
           "types": [
             "string | undefined"
           ]
@@ -379,175 +673,331 @@
       ]
     },
     {
-      "type": "TYPEDEF",
-      "name": "LoggerInstance",
-      "functions": [
+      "type": "FUNCTION",
+      "name": "set_migrations",
+      "brief": "Sets the list of migrations to apply after loading the game state manually with saver.apply_migrations() function.\nMigrations are used to update the game state in case of changes to the game state structure.\nMigrations are applied in order. Each migration should be a function that takes the game state as a parameter and returns the updated game state.\nlocal migrations = {\n-- Migration 1\nfunction(game_state, logger)\n-- Assume we have new level_data field in the game state and we need to move level and score to it\ngame_state.game.level_data = {\nlevel = game_state.game.level,\nscore = game_state.game.score\n}\ngame_state.game.level = nil\ngame_state.game.score = nil\nreturn game_state\n},\n-- Migration 2\nfunction(game_state, logger)\n-- Just an example, multiply the score by 1000. For example we changed our score system\ngame_state.game.level_data.score = game_state.game.level_data.score * 1000\nreturn game_state\n}\n}\n\nsaver.set_migrations(migrations)\nsaver.init()\nsaver.bind_save_state(\"game\", game_state)\nsaver.apply_migrations()",
+      "description": "Sets the list of migrations to apply after loading the game state manually with saver.apply_migrations() function.\nMigrations are used to update the game state in case of changes to the game state structure.\nMigrations are applied in order. Each migration should be a function that takes the game state as a parameter and returns the updated game state.\nlocal migrations = {\n-- Migration 1\nfunction(game_state, logger)\n-- Assume we have new level_data field in the game state and we need to move level and score to it\ngame_state.game.level_data = {\nlevel = game_state.game.level,\nscore = game_state.game.score\n}\ngame_state.game.level = nil\ngame_state.game.score = nil\nreturn game_state\n},\n-- Migration 2\nfunction(game_state, logger)\n-- Just an example, multiply the score by 1000. For example we changed our score system\ngame_state.game.level_data.score = game_state.game.level_data.score * 1000\nreturn game_state\n}\n}\n\nsaver.set_migrations(migrations)\nsaver.init()\nsaver.bind_save_state(\"game\", game_state)\nsaver.apply_migrations()",
+      "parameters": [
         {
-          "type": "FUNCTION",
+          "name": "migrations_table",
+          "doc": "Array of migration functions",
+          "types": [
+            "((game_state: saver_game_state, logger: saver_logger) => undefined)[]"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "apply_migrations",
+      "brief": "Applies the migrations set by saver.set_migrations function. It should be called after loading the game state manually with saver.init() function.\nsaver.apply_migrations()",
+      "description": "Applies the migrations set by saver.set_migrations function. It should be called after loading the game state manually with saver.init() function.\nsaver.apply_migrations()",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_value",
+      "brief": "Gets the value from the saver storage. If the value does not exist, it will return the default value.",
+      "description": "Gets the value from the saver storage. If the value does not exist, it will return the default value.",
+      "generics": "<T>",
+      "parameters": [
+        {
+          "name": "key_id",
+          "doc": "The storage field name",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "default_value",
+          "doc": "The default value",
+          "types": [
+            "T | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The value from the saver storage",
+          "types": [
+            "T"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_value",
+      "brief": "Sets the value in the saver storage.",
+      "description": "Sets the value in the saver storage.",
+      "parameters": [
+        {
+          "name": "key_id",
+          "doc": "The storage field name",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "value",
+          "doc": "value",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_value_exists",
+      "brief": "Checks if the value exists in the saver storage.",
+      "description": "Checks if the value exists in the saver storage.",
+      "parameters": [
+        {
+          "name": "key_id",
+          "doc": "The storage field name",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "true if the value exists, false otherwise",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_state",
+      "properties": [
+        {
+          "name": "storage",
+          "brief": "Table with key-value data",
+          "description": "Table with key-value data",
+          "types": [
+            "LuaTable<string, unknown>"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "Current save version",
+          "description": "Current save version",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "last_game_version",
+          "brief": "Last game version",
+          "description": "Last game version",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "migration_version",
+          "brief": "Current migration version",
+          "description": "Current migration version",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_game_state",
+      "properties": [
+        {
+          "name": "saver",
+          "brief": "Saver state",
+          "description": "Saver state",
+          "types": [
+            "saver_state"
+          ]
+        },
+        {
+          "name": "storage",
+          "brief": "Storage state",
+          "description": "Storage state",
+          "types": [
+            "saver_storage_state"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_config",
+      "properties": [
+        {
+          "name": "save_folder",
+          "brief": "Save folder name. Default is project name without special characters",
+          "description": "Save folder name. Default is project name without special characters",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "save_name",
+          "brief": "Save file name, use \".json\" or \".lua\" extension to use these formats. Default is \"game\"",
+          "description": "Save file name, use \".json\" or \".lua\" extension to use these formats. Default is \"game\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "saver_key",
+          "brief": "Saver key, where saver internal data will be stored. Default is \"saver\"",
+          "description": "Saver key, where saver internal data will be stored. Default is \"saver\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "storage_key",
+          "brief": "Storage key, where storage internal data will be stored. Deprecated. Default is \"storage\"",
+          "description": "Storage key, where storage internal data will be stored. Deprecated. Default is \"storage\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "autosave_timer",
+          "brief": "Autosave timer in seconds. Default is 3 seconds",
+          "description": "Autosave timer in seconds. Default is 3 seconds",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "lua_require_as_string",
+          "brief": "If true, the `require()` function will load Lua files as strings instead of Lua tables. Default is false",
+          "description": "If true, the `require()` function will load Lua files as strings instead of Lua tables. Default is false",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_logger",
+      "properties": [
+        {
           "name": "trace",
           "brief": "",
           "description": "",
-          "parameters": [
-            {
-              "name": "this",
-              "doc": "",
-              "types": [
-                "any"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "message",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "data",
-              "doc": "",
-              "types": [
-                "{}"
-              ],
-              "is_optional": "True"
-            }
-          ],
-          "returnvalues": []
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
         },
         {
-          "type": "FUNCTION",
           "name": "debug",
           "brief": "",
           "description": "",
-          "parameters": [
-            {
-              "name": "this",
-              "doc": "",
-              "types": [
-                "any"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "message",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "data",
-              "doc": "",
-              "types": [
-                "{}"
-              ],
-              "is_optional": "True"
-            }
-          ],
-          "returnvalues": []
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
         },
         {
-          "type": "FUNCTION",
           "name": "info",
           "brief": "",
           "description": "",
-          "parameters": [
-            {
-              "name": "this",
-              "doc": "",
-              "types": [
-                "any"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "message",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "data",
-              "doc": "",
-              "types": [
-                "{}"
-              ],
-              "is_optional": "True"
-            }
-          ],
-          "returnvalues": []
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
         },
         {
-          "type": "FUNCTION",
           "name": "warn",
           "brief": "",
           "description": "",
-          "parameters": [
-            {
-              "name": "this",
-              "doc": "",
-              "types": [
-                "any"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "message",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "data",
-              "doc": "",
-              "types": [
-                "{}"
-              ],
-              "is_optional": "True"
-            }
-          ],
-          "returnvalues": []
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
         },
         {
-          "type": "FUNCTION",
           "name": "error",
           "brief": "",
           "description": "",
-          "parameters": [
-            {
-              "name": "this",
-              "doc": "",
-              "types": [
-                "any"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "message",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "data",
-              "doc": "",
-              "types": [
-                "{}"
-              ],
-              "is_optional": "True"
-            }
-          ],
-          "returnvalues": []
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
         }
       ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_storage_state",
+      "properties": [
+        {
+          "name": "storage",
+          "brief": "The storage data",
+          "description": "The storage data",
+          "types": [
+            "LuaTable<string, saver_storage_value>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_storage_value",
+      "properties": [
+        {
+          "name": "s_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "i_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "b_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_storage"
     }
   ]
 }
