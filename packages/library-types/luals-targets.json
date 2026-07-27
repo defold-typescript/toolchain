@@ -67,6 +67,16 @@
       "namespace": "log",
       "typeRenames": {},
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/Insality/defold-proto",
+      "ref": "1",
+      "license": "MIT",
+      "sourceGlobs": ["proto/**/*.lua"],
+      "moduleId": "proto.proto",
+      "namespace": "proto",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }

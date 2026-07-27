@@ -185,13 +185,6 @@
       ]
     },
     {
-      "dir": "defold-proto",
-      "classification": "already-vendored",
-      "modules": [
-        "proto.proto"
-      ]
-    },
-    {
       "dir": "defold-random",
       "classification": "native",
       "modules": [
