@@ -1,0 +1,313 @@
+{
+  "info": {
+    "namespace": "log",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get_logger",
+      "brief": "Return the new logger instance",
+      "description": "Return the new logger instance",
+      "parameters": [
+        {
+          "name": "logger_name",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "force_logger_level_in_debug",
+          "doc": "Default is DEBUG, values: FATAL, ERROR, WARN, INFO, DEBUG, TRACE",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "logger"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_default_logger_name",
+      "brief": "Return the basename of the current file",
+      "description": "Return the basename of the current file",
+      "parameters": [
+        {
+          "name": "debuginfo",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "log",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "format",
+          "brief": "Format log message",
+          "description": "Format log message",
+          "parameters": [
+            {
+              "name": "level",
+              "doc": "TRACE, DEBUG, INFO, WARN, ERROR",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "message",
+              "doc": "Message to log",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "Additional data to log",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "string | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "log",
+          "brief": "Log message with specified level and message",
+          "description": "Log message with specified level and message",
+          "parameters": [
+            {
+              "name": "level",
+              "doc": "One of the next level: TRACE, DEBUG, INFO, WARN, ERROR",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "message",
+              "doc": "The log message.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "context",
+              "doc": "Additional data to include with the log message.",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "trace",
+          "brief": "Log message with TRACE level",
+          "description": "Log message with TRACE level",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "Message to log",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "debug",
+          "brief": "Log message with DEBUG level",
+          "description": "Log message with DEBUG level",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "Message to log",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "info",
+          "brief": "Log message with INFO level",
+          "description": "Log message with INFO level",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "warn",
+          "brief": "Log message with WARN level",
+          "description": "Log message with WARN level",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "error",
+          "brief": "Log message with ERROR level",
+          "description": "Log message with ERROR level",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "level",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "logger"
+    }
+  ]
+}
