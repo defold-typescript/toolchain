@@ -30,8 +30,6 @@ import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
-import * as saver from "saver.saver";
-import * as storage from "saver.storage";
 import * as squid from "squid.squid";
 import * as starly from "starly.starly";
 import * as yagames from "yagames.yagames";
@@ -129,18 +127,6 @@ const _storyTags: string[] = _story.get_tags("start");
 defcon.register_command("ping", "desc", () => "pong");
 defcon.start(8090);
 defcon.stop();
-
-// saver.* — the persistence API resolves scalar returns and logger removal
-// overloads while storage keeps typed scalar getter helpers.
-saver.init();
-const _saveOk: boolean = saver.save_game_state();
-const _savePath: string = saver.get_save_path();
-const _projectFolder: string | undefined = saver.get_current_game_project_folder();
-saver.set_logger(undefined);
-const _storageSet: boolean = storage.set("volume", 1);
-const _storageNumber: number = storage.get_number("volume");
-const _storageString: string = storage.get_string("name");
-const _storageBoolean: boolean = storage.get_boolean("muted");
 
 // defsave.defsave — scalar config helpers compile and unknown payloads stay
 // weakly typed to match the upstream declaration.
@@ -286,13 +272,6 @@ void _taggedNode;
 void _canContinue;
 void _continued;
 void _storyTags;
-void _saveOk;
-void _savePath;
-void _projectFolder;
-void _storageSet;
-void _storageNumber;
-void _storageString;
-void _storageBoolean;
 void _defsaveAppName;
 void _defsaveLoaded;
 void _defsaveVolume;
