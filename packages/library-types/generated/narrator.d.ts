@@ -38,33 +38,6 @@ declare module 'narrator.narrator' {
 		tunnels?: LuaTable | undefined;
 		path: LuaTable;
 	}
-	interface Object {
-		"new"(): void;
-		extend(): void;
-		implement(): void;
-		is(): void;
-		__tostring(): void;
-		__call(): void;
-	}
-	interface constructor {
-		add_node(): void;
-		add_inclusion(): void;
-		add_list(): void;
-		add_constant(): void;
-		add_variable(): void;
-		add_function(): void;
-		add_knot(): void;
-		add_stitch(): void;
-		add_switch(): void;
-		add_sequence(): void;
-		add_return(): void;
-		add_assignment(): void;
-		add_paragraph(): void;
-		add_choice(): void;
-		add_item(): void;
-		compute_variable(): void;
-		compute_variables(): void;
-	}
 	interface Narrator_Story {
 		global_tags: string[];
 		constants: LuaTable<string, unknown>;
@@ -82,7 +55,7 @@ declare module 'narrator.narrator' {
 		/**
 		 * Pull the current paragraphs from the queue.
 		 */
-		"continue"(steps?: number | undefined): Narrator_Paragraph[];
+		"continue"(steps?: number | undefined): Narrator_Paragraph[] | Narrator_Paragraph;
 		/**
 		 * Does the story have choices to output or not.
 		 * Also returns false if there are available paragraphs to continue.
@@ -140,7 +113,7 @@ declare module 'narrator.narrator' {
 	 * Use it during development, but prefer already parsed and stored books in production
 	 * Requires `lpeg`
 	 */
-	export function parse_content(this: void, content: string, inclusions: string[]): Narrator_Book;
+	export function parse_content(this: void, content: string, inclusions?: string[]): Narrator_Book;
 	/**
 	 * Init a story based on the book
 	 */

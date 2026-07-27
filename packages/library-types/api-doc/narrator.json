@@ -61,7 +61,7 @@
           "types": [
             "string[]"
           ],
-          "is_optional": "False",
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -347,202 +347,6 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Object",
-      "functions": [
-        {
-          "type": "FUNCTION",
-          "name": "new",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "extend",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "implement",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "is",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "__tostring",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "__call",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        }
-      ]
-    },
-    {
-      "type": "TYPEDEF",
-      "name": "constructor",
-      "functions": [
-        {
-          "type": "FUNCTION",
-          "name": "add_node",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_inclusion",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_list",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_constant",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_variable",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_function",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_knot",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_stitch",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_switch",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_sequence",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_return",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_assignment",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_paragraph",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_choice",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "add_item",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "compute_variable",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "compute_variables",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        }
-      ]
-    },
-    {
-      "type": "TYPEDEF",
       "name": "Narrator_Story",
       "functions": [
         {
@@ -590,7 +394,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Narrator_Paragraph[]"
+                "Narrator_Paragraph[] | Narrator_Paragraph"
               ]
             }
           ]

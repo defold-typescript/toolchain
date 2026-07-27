@@ -122,11 +122,21 @@
       "repo": "https://github.com/astrochili/narrator",
       "ref": "1.8",
       "license": "MIT",
-      "sourceGlobs": ["narrator/**/*.lua"],
+      "sourceGlobs": ["narrator/annotations.lua", "narrator/narrator.lua", "narrator/story.lua"],
       "moduleId": "narrator.narrator",
       "namespace": "narrator",
       "typeRenames": {},
-      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "parse_content": { "params": { "inclusions": { "optional": true } } }
+        },
+        "interfaces": {
+          "Narrator.Story": {
+            "methods": { "continue": { "return": "Narrator.Paragraph[]|Narrator.Paragraph" } }
+          }
+        }
+      }
     }
   ]
 }
