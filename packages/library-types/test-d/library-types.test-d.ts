@@ -21,7 +21,6 @@ import * as transitionsGui from "monarch.transitions.gui";
 import * as nakamaEngine from "nakama.engine.defold";
 import * as nakama from "nakama.nakama";
 import * as nakamaLog from "nakama.util.log";
-import * as narrator from "narrator.narrator";
 import * as camera from "orthographic.camera";
 import * as persist from "persist.persist";
 import * as platypus from "platypus.platypus";
@@ -111,14 +110,6 @@ const _taggedWords = richtext.tagged(_richWords, "em");
 declare const _taggedWord: (typeof _taggedWords)[number];
 const _taggedNode: Opaque<"node"> = _taggedWord.node;
 richtextTags.register("em", () => {});
-
-// narrator.narrator — a mostly structural pure-Lua surface: story parsing and
-// runtime helpers resolve without relying on Defold core-type renames.
-const _story = narrator.init_story(narrator.parse_content("== start\nHello"));
-const _canContinue: boolean = _story.can_continue();
-const _continued: { text: string; tags?: string[] }[] | { text: string; tags?: string[] } =
-  _story.continue();
-const _storyTags: string[] = _story.get_tags("start");
 
 // defcon.console — command registration and server lifecycle compile through the
 // package subpath export.
@@ -256,9 +247,6 @@ void _richNode;
 void _richWordColor;
 void _richWidth;
 void _taggedNode;
-void _canContinue;
-void _continued;
-void _storyTags;
 void _defsaveAppName;
 void _defsaveLoaded;
 void _defsaveVolume;

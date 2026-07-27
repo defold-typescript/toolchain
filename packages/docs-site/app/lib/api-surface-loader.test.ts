@@ -220,6 +220,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("squid").authorUrl).toBe("https://github.com/paweljarosz/squid");
   });
 
+  test("attributes narrator to astrochili/narrator as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("narrator").authoredHere).toBe(true);
+    expect(meta("narrator").authorUrl).toBe("https://github.com/astrochili/narrator");
+  });
+
   test("attributes saver.saver to Insality/defold-saver as an authored-here LuaLS library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(meta("saver.saver").authoredHere).toBe(true);
