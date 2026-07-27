@@ -142,6 +142,51 @@ describe("buildLualsRegistryEntries", () => {
   test("returns no entries for an empty target list", () => {
     expect(buildLualsRegistryEntries({ targets: [] })).toEqual([]);
   });
+
+  test("groups two same-repo targets into one entry with every module and a merged generatedStems", () => {
+    const saverTargets: LualsTargets = {
+      targets: [
+        {
+          repo: "https://github.com/Insality/defold-saver",
+          moduleId: "saver.saver",
+          namespace: "saver.saver",
+        },
+        {
+          repo: "https://github.com/Insality/defold-saver",
+          moduleId: "saver.storage",
+          namespace: "saver.storage",
+        },
+      ],
+    };
+    expect(buildLualsRegistryEntries(saverTargets)).toEqual([
+      {
+        sourceId: "defold-saver",
+        modules: ["saver.saver", "saver.storage"],
+        generatedStems: { "saver.saver": "saver.saver", "saver.storage": "saver.storage" },
+      },
+    ]);
+  });
+
+  test("keeps two different repos as separate entries in first-seen order", () => {
+    const twoRepos: LualsTargets = {
+      targets: [
+        { repo: "https://github.com/Insality/druid", moduleId: "druid.druid", namespace: "druid" },
+        {
+          repo: "https://github.com/Insality/defold-saver",
+          moduleId: "saver.saver",
+          namespace: "saver.saver",
+        },
+      ],
+    };
+    expect(buildLualsRegistryEntries(twoRepos)).toEqual([
+      { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+      {
+        sourceId: "defold-saver",
+        modules: ["saver.saver"],
+        generatedStems: { "saver.saver": "saver.saver" },
+      },
+    ]);
+  });
 });
 
 describe("buildScriptApiRegistryEntries", () => {
@@ -167,6 +212,22 @@ describe("buildScriptApiRegistryEntries", () => {
 
   test("returns no entries for an empty target list", () => {
     expect(buildScriptApiRegistryEntries({ targets: [] })).toEqual([]);
+  });
+
+  test("groups two same-repo targets into one entry the same way (symmetry with LuaLS)", () => {
+    const sameRepo: ScriptApiRegistryTargets = {
+      targets: [
+        { repo: "https://github.com/acme/thing", moduleId: "thing.a", namespace: "thing.a" },
+        { repo: "https://github.com/acme/thing", moduleId: "thing.b", namespace: "thing.b" },
+      ],
+    };
+    expect(buildScriptApiRegistryEntries(sameRepo)).toEqual([
+      {
+        sourceId: "thing",
+        modules: ["thing.a", "thing.b"],
+        generatedStems: { "thing.a": "thing.a", "thing.b": "thing.b" },
+      },
+    ]);
   });
 });
 

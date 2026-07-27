@@ -103,15 +103,41 @@ export function buildLibraryRegistry(
   return registry;
 }
 
+// Group registry targets by normalized source id so a repository shipping more
+// than one module yields a single entry carrying every module and a merged
+// `generatedStems`. Both the LuaLS and script_api lanes feed the same
+// `{ repo, moduleId, namespace }` shape here; `matchVendoredLibrary`'s `find`
+// returns one entry per repo, and `resolve`'s per-module `confirmed` filter then
+// verifies each module against the archive independently.
+function groupTargetsBySourceId(
+  targets: readonly { repo: string; moduleId: string; namespace: string }[],
+): VendoredLibrary[] {
+  const bySource = new Map<string, VendoredLibrary>();
+  for (const target of targets) {
+    const sourceId = normalizeSourceId(target.repo);
+    const existing = bySource.get(sourceId);
+    if (existing === undefined) {
+      bySource.set(sourceId, {
+        sourceId,
+        modules: [target.moduleId],
+        generatedStems: { [target.moduleId]: target.namespace },
+      });
+      continue;
+    }
+    existing.modules.push(target.moduleId);
+    (existing.generatedStems as Record<string, string>)[target.moduleId] = target.namespace;
+  }
+  return [...bySource.values()].map((entry) => ({
+    ...entry,
+    modules: entry.modules.slice().sort(),
+  }));
+}
+
 // Turn the LuaLS target list into `VendoredLibrary` entries. Each target
 // verifies against the archive's shipped `moduleId` but sources its committed
 // types from `generated/<namespace>.d.ts`, so the stem is recorded separately.
 export function buildLualsRegistryEntries(targets: LualsTargets): VendoredLibrary[] {
-  return targets.targets.map((target) => ({
-    sourceId: normalizeSourceId(target.repo),
-    modules: [target.moduleId],
-    generatedStems: { [target.moduleId]: target.namespace },
-  }));
+  return groupTargetsBySourceId(targets.targets);
 }
 
 // A single library entry in `packages/library-types/script-api-targets.json`,
@@ -135,11 +161,7 @@ export interface ScriptApiRegistryTargets {
 export function buildScriptApiRegistryEntries(
   targets: ScriptApiRegistryTargets,
 ): VendoredLibrary[] {
-  return targets.targets.map((target) => ({
-    sourceId: normalizeSourceId(target.repo),
-    modules: [target.moduleId],
-    generatedStems: { [target.moduleId]: target.namespace },
-  }));
+  return groupTargetsBySourceId(targets.targets);
 }
 
 export function normalizeSourceId(url: string): string {

@@ -54,4 +54,13 @@ describe("loadVendoredLibraryRegistry", () => {
     expect(bridge?.modules).toEqual(["bridge.bridge"]);
     expect(bridge?.generatedStems?.["bridge.bridge"]).toBe("bridge");
   });
+
+  test("groups defold-saver's two modules into a single entry with both generated stems", () => {
+    const { registry } = loadVendoredLibraryRegistry();
+    const saver = registry.filter((library) => library.sourceId === "defold-saver");
+    expect(saver).toHaveLength(1);
+    expect(saver[0]?.modules).toEqual(["saver.saver", "saver.storage"]);
+    expect(saver[0]?.generatedStems?.["saver.saver"]).toBe("saver.saver");
+    expect(saver[0]?.generatedStems?.["saver.storage"]).toBe("saver.storage");
+  });
 });
