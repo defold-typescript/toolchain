@@ -52,6 +52,60 @@ describe("buildFidelityReport", () => {
     expect(() => buildFidelityReport("broken", model, {})).toThrow(/vmath\.made_up/);
   });
 
+  test("a moduleObject's constant fields and a captured instance interface's methods count toward totalMembers", () => {
+    const model: LibraryModel = {
+      moduleObject: "Squid",
+      interfaces: [
+        {
+          name: "Squid",
+          generics: [],
+          brief: "the module",
+          methods: [],
+          fields: [
+            { name: "TRACE", types: ["integer"], doc: "t", isOptional: false },
+            { name: "ALLOWLIST", types: ["table"], doc: "a", isOptional: false },
+          ],
+        },
+        {
+          name: "SquidInstance",
+          generics: [],
+          brief: "the instance",
+          fields: [],
+          methods: [
+            {
+              name: "log",
+              brief: "log it",
+              generics: [],
+              params: [
+                { name: "message", types: ["string"], doc: "", isOptional: false, isVararg: false },
+              ],
+              returns: [],
+            },
+            { name: "save_logs", brief: "save", generics: [], params: [], returns: [] },
+          ],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [
+        {
+          name: "new",
+          brief: "make",
+          generics: [],
+          params: [],
+          returns: [
+            { name: "", types: ["SquidInstance"], doc: "", isOptional: false, isVararg: false },
+          ],
+        },
+      ],
+    };
+    const report = buildFidelityReport("squid", model, {});
+    // 2 module constants + 2 instance methods + 1 module function.
+    expect(report.totalMembers).toBe(5);
+    // The instance-method and module-function type tokens flow through the tally cleanly.
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.coverage).toBe(1);
+  });
+
   test("coverage clamps to 0 when one token records more unknowns than tokens", () => {
     const multiUnknownModel: LibraryModel = {
       interfaces: [

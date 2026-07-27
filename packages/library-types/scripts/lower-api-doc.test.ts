@@ -541,6 +541,74 @@ test("the committed druid golden carries the emitter-equivalent vararg + multi-r
   ]);
 });
 
+test("a moduleObject sources the page description and lowers its fields as module-level VARIABLEs, not a TYPEDEF", () => {
+  const model: LibraryModel = {
+    moduleObject: "Squid",
+    interfaces: [
+      {
+        name: "Squid",
+        generics: [],
+        fields: [
+          { name: "TRACE", types: ["integer"], doc: "trace level", isOptional: false },
+          { name: "ALLOWLIST", types: ["table"], doc: "the allowlist", isOptional: false },
+        ],
+        methods: [],
+        brief: "The squid module.\nSaveable logging.",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "save_logs",
+        brief: "Save logs.",
+        generics: [],
+        params: [],
+        returns: [{ name: "", types: ["boolean"], doc: "", isOptional: false, isVararg: false }],
+      },
+    ],
+  };
+  const lowered = lowerLibraryModel(model, { namespace: "squid" });
+  const info = isRecord(lowered) && isRecord(lowered.info) ? lowered.info : {};
+  // The page description comes from the moduleObject class, though its name != namespace.
+  expect(info.description).toBe("The squid module.\nSaveable logging.");
+  expect(info.brief).toBe("The squid module.");
+  const elements = elementsOf(lowered);
+  // Module constants lower as top-level VARIABLE elements with mapped types.
+  const trace = elements.find((e) => e.type === "VARIABLE" && e.name === "TRACE");
+  expect(trace).toEqual({
+    type: "VARIABLE",
+    name: "TRACE",
+    brief: "trace level",
+    description: "trace level",
+    types: ["number"],
+  });
+  expect(elements.find((e) => e.type === "VARIABLE" && e.name === "ALLOWLIST")).toBeDefined();
+  // The moduleObject is not lowered as a TYPEDEF named after the class.
+  expect(elements.some((e) => e.type === "TYPEDEF" && e.name === "Squid")).toBe(false);
+});
+
+test("with no moduleObject, the namespace-named class still sources the description and stays a TYPEDEF", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "druid",
+        generics: [],
+        fields: [{ name: "config", types: ["table"], doc: "cfg", isOptional: false }],
+        methods: [],
+        brief: "The druid module.",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+  const lowered = lowerLibraryModel(model, { namespace: "druid" });
+  const info = isRecord(lowered) && isRecord(lowered.info) ? lowered.info : {};
+  expect(info.description).toBe("The druid module.");
+  const elements = elementsOf(lowered);
+  expect(elements.some((e) => e.type === "TYPEDEF" && e.name === "druid")).toBe(true);
+  expect(elements.some((e) => e.type === "VARIABLE")).toBe(false);
+});
+
 const packageRoot = join(import.meta.dir, "..");
 const targets = readLualsTargets(packageRoot);
 
