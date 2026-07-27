@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import { buildLualsRegistryEntries } from "./library-match";
 import { runResolve } from "./resolve";
 
 function tmp(): string {
@@ -820,5 +821,85 @@ describe("runResolve druid LuaLS library", () => {
     expect(result.libraries).toEqual([
       { url, source: "druid", modules: [], provenance: "vendored", verified: false },
     ]);
+  });
+});
+
+describe("runResolve a multi-module same-repo LuaLS library", () => {
+  const SAVER = "declare module 'saver.saver' { export const version: string; }\n";
+  const STORAGE = "declare module 'saver.storage' { export const version: string; }\n";
+
+  // defold-saver ships two modules (saver.saver, saver.storage) from one repo,
+  // so the registry must group them into a single entry carrying both.
+  const saverRegistry = buildLualsRegistryEntries({
+    targets: [
+      {
+        repo: "https://github.com/Insality/defold-saver",
+        moduleId: "saver.saver",
+        namespace: "saver.saver",
+      },
+      {
+        repo: "https://github.com/Insality/defold-saver",
+        moduleId: "saver.storage",
+        namespace: "saver.storage",
+      },
+    ],
+  });
+
+  function seedSaverGenerated(): string {
+    const dir = tmp();
+    writeFileSync(join(dir, "saver.saver.d.ts"), SAVER);
+    writeFileSync(join(dir, "saver.storage.d.ts"), STORAGE);
+    return dir;
+  }
+
+  // An asset-only archive shipping both saver Lua modules under the GitHub
+  // wrapper dir, so the `defold-saver` match verifies both modules.
+  function verifiedSaverArchive(url: string): Record<string, FakeArchive> {
+    return {
+      [extensionArchiveKey(url)]: {
+        entries: [
+          "defold-saver-8/saver/saver.lua",
+          "defold-saver-8/saver/storage.lua",
+          "defold-saver-8/asset/foo.png",
+        ],
+        contents: {},
+      },
+    };
+  }
+
+  test("materializes every module of a same-repo multi-module library and reports them all verified", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/Insality/defold-saver/archive/8.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(verifiedSaverArchive(url)),
+      libraryRegistry: saverRegistry,
+      libraryGeneratedDir: seedSaverGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "libraries", "saver.saver.d.ts"), "utf8")).toBe(
+      SAVER,
+    );
+    expect(
+      readFileSync(join(cwd, ".defold-types", "libraries", "saver.storage.d.ts"), "utf8"),
+    ).toBe(STORAGE);
+    expect(result.libraries).toEqual([
+      {
+        url,
+        source: "defold-saver",
+        modules: ["saver.saver", "saver.storage"],
+        provenance: "vendored",
+        verified: true,
+      },
+    ]);
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).toContain("libraries");
   });
 });
