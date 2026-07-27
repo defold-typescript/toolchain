@@ -350,6 +350,31 @@ describe("proto migrated off the ts-defold corpus onto the LuaLS front-end", () 
   });
 });
 
+describe("immutable migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("immutable is a luals namespace and no longer a ts-defold target or classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "immutable")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "immutable.immutable")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "lua-immutable")).toBe(false);
+  });
+
+  test("the retired ts-defold immutable artifacts are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/immutable.immutable.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/immutable.immutable.d.ts"))).toBe(
+      false,
+    );
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/immutable.immutable.json"))).toBe(false);
+  });
+});
+
 describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("saver.saver and saver.storage are luals namespaces, no longer ts-defold targets or a classified dir", () => {
     const luals = readLualsTargets(PACKAGE_ROOT);

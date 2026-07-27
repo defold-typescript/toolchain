@@ -57,9 +57,6 @@
     "./in.triggers": {
       "types": "./generated/in.triggers.d.ts"
     },
-    "./immutable.immutable": {
-      "types": "./generated/immutable.immutable.d.ts"
-    },
     "./metrics.fps": {
       "types": "./generated/metrics.fps.d.ts"
     },

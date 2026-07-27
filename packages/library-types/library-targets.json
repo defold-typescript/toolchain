@@ -186,12 +186,6 @@
       "generated": "generated/deftest.deftest.d.ts"
     },
     {
-      "module": "immutable.immutable",
-      "path": "packages/lua-immutable/immutable.immutable.d.ts",
-      "fixture": "fixtures/ts-defold/immutable.immutable.d.ts",
-      "generated": "generated/immutable.immutable.d.ts"
-    },
-    {
       "module": "nakama.engine.defold",
       "path": "packages/nakama-defold/nakama.engine.defold.d.ts",
       "fixture": "fixtures/ts-defold/nakama.engine.defold.d.ts",

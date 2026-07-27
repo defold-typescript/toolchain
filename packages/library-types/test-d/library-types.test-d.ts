@@ -9,7 +9,6 @@ import * as defsave from "defsave.defsave";
 import * as deftest from "deftest.deftest";
 import * as dicebag from "dicebag.dicebag";
 import * as gooey from "gooey.gooey";
-import * as immutable from "immutable.immutable";
 import * as accelerometer from "in.accelerometer";
 import * as button from "in.button";
 import * as state from "in.state";
@@ -184,12 +183,6 @@ deftest.add(() => {});
 deftest.run();
 deftest.run({ coverage: { enabled: true }, pattern: "foo" });
 
-// immutable.immutable — generic `Readonly<T>` output and scalar predicate resolve
-// alongside tstl language-extension collection aliases.
-const _immutableStats = immutable.make({ hp: 10 });
-const _immutableHp: number = _immutableStats.hp;
-const _isImmutable: boolean = immutable.is_immutable(_immutableStats);
-
 const _nakamaUuid: string = nakamaEngine.uuid();
 declare const _nakamaSocket: symbol;
 nakamaEngine.socket_create({}, (socket, message) => {
@@ -284,7 +277,6 @@ void _sqSaved;
 void _sqEnabled;
 void _stView;
 void _stShaking;
-void _isImmutable;
 void _nakamaUuid;
 void _nakamaAccount;
 void _nakamaSession;

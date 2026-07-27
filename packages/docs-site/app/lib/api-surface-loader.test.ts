@@ -208,6 +208,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("proto").authorUrl).toBe("https://github.com/Insality/defold-proto");
   });
 
+  test("attributes immutable to paweljarosz/lua-immutable as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("immutable").authoredHere).toBe(true);
+    expect(meta("immutable").authorUrl).toBe("https://github.com/paweljarosz/lua-immutable");
+  });
+
   test("attributes saver.saver to Insality/defold-saver as an authored-here LuaLS library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(meta("saver.saver").authoredHere).toBe(true);
