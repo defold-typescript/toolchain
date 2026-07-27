@@ -15,6 +15,7 @@
     "generated/saver.saver.d.ts",
     "generated/saver.storage.d.ts",
     "generated/immutable.d.ts",
+    "generated/squid.d.ts",
     "generated/bridge.d.ts",
     "test-d/bridge-usage.test-d.ts",
     "test-d/event-usage.test-d.ts",

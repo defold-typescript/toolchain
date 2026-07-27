@@ -9,5 +9,6 @@
   "proto": "Protocol-buffer style message encoding for compact Defold network payloads.",
   "saver.saver": "Persistent save helpers for Defold: typed tables, versioned slots, and atomic writes.",
   "saver.storage": "Key-value storage over the Defold saver state: typed number, string, and boolean getters and setters.",
+  "squid": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold.",
   "starly": "Scene orchestration for Defold: data-driven game states, transitions, and lifecycle hooks."
 }
