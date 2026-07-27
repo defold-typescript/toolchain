@@ -75,9 +75,6 @@
     "./richtext.tags": {
       "types": "./generated/richtext.tags.d.ts"
     },
-    "./narrator.narrator": {
-      "types": "./generated/narrator.narrator.d.ts"
-    },
     "./defcon.console": {
       "types": "./generated/defcon.console.d.ts"
     },
