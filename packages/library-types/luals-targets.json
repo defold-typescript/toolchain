@@ -97,6 +97,16 @@
       "namespace": "saver.storage",
       "typeRenames": {},
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/paweljarosz/lua-immutable",
+      "ref": "v1.1",
+      "license": "MIT",
+      "sourceGlobs": ["immutable/**/*.lua"],
+      "moduleId": "immutable.immutable",
+      "namespace": "immutable",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }

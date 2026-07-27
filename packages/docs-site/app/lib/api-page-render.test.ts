@@ -535,6 +535,19 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the migrated immutable page pins to paweljarosz/lua-immutable, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const immutable = pages.find((p) => p.namespace === "immutable");
+    expect(immutable).toBeDefined();
+    if (!immutable) return;
+    expect(immutable.category).toBe("library");
+    const md = apiPageMarkdown(immutable, apiLinkify(pages));
+    expect(md).toContain(
+      "[paweljarosz/lua-immutable](https://github.com/paweljarosz/lua-immutable)",
+    );
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("the migrated saver.saver page pins to Insality/defold-saver, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const saver = pages.find((p) => p.namespace === "saver.saver");
