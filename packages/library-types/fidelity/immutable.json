@@ -2,10 +2,8 @@
   "namespace": "immutable",
   "totalMembers": 2,
   "totalTypeTokens": 4,
-  "unknownFallbacks": 3,
-  "unknownTokens": [
-    "Immutable"
-  ],
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
   "undocumentedMembers": 0,
-  "coverage": 0.25
+  "coverage": 1
 }
