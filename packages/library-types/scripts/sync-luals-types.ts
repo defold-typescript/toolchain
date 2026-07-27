@@ -1,5 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { type AnnotationOverrides, applyAnnotationOverrides } from "./apply-luals-overrides";
 import { emitLibraryDeclarations } from "./emit-library-dts";
 import { lowerLibraryModel } from "./lower-api-doc";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
@@ -22,6 +23,10 @@ export interface LualsTarget {
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
   // in the config; the docs-site defaults an absent value to "".
   license?: string;
+  // Post-merge corrections applied in `buildTargetModel` for the cases where an
+  // upstream annotation the fixtures freeze diverges from the runtime. Optional and
+  // loud-failing on an absent key — see `apply-luals-overrides.ts`.
+  annotationOverrides?: AnnotationOverrides;
 }
 
 export interface LualsTargets {
@@ -57,6 +62,9 @@ export function readLualsTargets(packageRoot: string): LualsTarget[] {
       typeRenames: entry.typeRenames ?? {},
       ignore: entry.ignore ?? [],
       ...(entry.license !== undefined ? { license: entry.license } : {}),
+      ...(entry.annotationOverrides !== undefined
+        ? { annotationOverrides: entry.annotationOverrides }
+        : {}),
     };
   });
 }
@@ -188,7 +196,13 @@ export function buildTargetModel(
   const parsed = new Map<string, LibraryModel>();
   for (const rel of files) parsed.set(rel, parseLualsSource(readFileSync(join(root, rel), "utf8")));
   const merged = mergeLibraryModels([...parsed.values()]);
-  return { ...merged, moduleFunctions: parsed.get(ownFile)?.moduleFunctions ?? [] };
+  const model: LibraryModel = {
+    ...merged,
+    moduleFunctions: parsed.get(ownFile)?.moduleFunctions ?? [],
+  };
+  return target.annotationOverrides
+    ? applyAnnotationOverrides(model, target.annotationOverrides)
+    : model;
 }
 
 export function buildTargetFidelity(packageRoot: string, target: LualsTarget): FidelityReport {
