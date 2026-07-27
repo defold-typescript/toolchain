@@ -448,3 +448,64 @@ describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () 
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/saver.storage.json"))).toBe(true);
   });
 });
+
+describe("narrator ingestion restricted to its public surface", () => {
+  const NARRATOR_PUBLIC_INTERFACES = [
+    "Narrator.Book.Version",
+    "Narrator.Book",
+    "Narrator.ParsingParams",
+    "Narrator.Paragraph",
+    "Narrator.Choice",
+    "Narrator.State",
+    "Narrator.Story",
+  ];
+
+  const narratorTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "narrator");
+
+  test("sourceGlobs pin only the three type-bearing fixtures", () => {
+    expect(narratorTarget?.sourceGlobs).toEqual([
+      "narrator/annotations.lua",
+      "narrator/narrator.lua",
+      "narrator/story.lua",
+    ]);
+  });
+
+  test("the model carries the public interfaces and drops the internal Object/constructor tables", () => {
+    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    const names = buildTargetModel(PACKAGE_ROOT, narratorTarget).interfaces.map((i) => i.name);
+    for (const name of NARRATOR_PUBLIC_INTERFACES) expect(names).toContain(name);
+    expect(names).not.toContain("Object");
+    expect(names).not.toContain("constructor");
+  });
+
+  test("the committed api-doc declares no Object/constructor element", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/narrator.json"), "utf8")) as {
+      elements: { name: string }[];
+    };
+    const names = doc.elements.map((e) => e.name);
+    expect(names).not.toContain("Object");
+    expect(names).not.toContain("constructor");
+  });
+});
+
+describe("narrator annotation overrides make the surface runtime-faithful", () => {
+  const narratorTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "narrator");
+
+  test("parse_content's trailing inclusions param is optional", () => {
+    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    const parseContent = buildTargetModel(PACKAGE_ROOT, narratorTarget).moduleFunctions.find(
+      (f) => f.name === "parse_content",
+    );
+    expect(parseContent?.params.find((p) => p.name === "inclusions")?.isOptional).toBe(true);
+  });
+
+  test("Narrator.Story.continue returns the array-or-paragraph union", () => {
+    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    const story = buildTargetModel(PACKAGE_ROOT, narratorTarget).interfaces.find(
+      (i) => i.name === "Narrator.Story",
+    );
+    const cont = story?.methods.find((m) => m.name === "continue");
+    expect(cont?.returns).toHaveLength(1);
+    expect(cont?.returns[0]?.types).toEqual(["Narrator.Paragraph[]|Narrator.Paragraph"]);
+  });
+});

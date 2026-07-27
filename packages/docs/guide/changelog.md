@@ -28,7 +28,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **[saver.saver](/api/saver.saver)** and **[saver.storage](/api/saver.storage)** (`Insality/defold-saver`, tag `8`) — `init`, `save_game_state`, `get_save_path`, and `set_logger` take their typed optional arguments and the full save and key-value storage APIs are surfaced.
   - **[immutable](/api/immutable.immutable)** (`paweljarosz/lua-immutable`, tag `v1.1`) — `make` returns the typed `Immutable` interface rather than a generic `Readonly<T>`.
   - **[squid](/api/squid.squid)** (`paweljarosz/squid`, tag `1.2`) — the previous binding typed only `save_logs`/`get_config().is_enabled`; the surface now exports the module log-level constants and logging API, a typed `get_config`/`SquidConfig`, and a typed `SquidInstance` from `new()`.
-  - **[narrator](/api/narrator)** (`astrochili/narrator`, tag `1.8`) — the previous binding was a hand-written passthrough typing only `parse_content`/`init_story`; the surface now carries the full parser plus the `Narrator.Story` runtime API (`continue`, `choose`, `get_choices`, `get_tags`, `save_state`, …) generated from upstream.
+  - **[narrator](/api/narrator)** (`astrochili/narrator`, tag `1.8`) — replaces the hand-written passthrough with the upstream parser plus the `Narrator.Story` runtime API, made runtime-faithful: `parse_content` takes its `inclusions` argument optionally, `continue()` returns a single paragraph or an array of them, and the internal `Object`/`constructor` tables no longer leak into the surface.
 
 ### Improved
 
