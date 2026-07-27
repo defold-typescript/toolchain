@@ -640,6 +640,54 @@ describe("parseLualsSource returned module object and function-local class", () 
     ]);
   });
 
+  test("a later local does not rebind the class instance", () => {
+    const model = parseLualsSource(
+      lua(
+        "function M.make()",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\t---@type fun(self: Inst)",
+        "\t\tping = function(self) end,",
+        "\t}",
+        "\tlocal scratch = compute()",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const inst = model.interfaces.find((i) => i.name === "Inst");
+    expect(inst?.methods.map((m) => m.name)).toEqual(["ping"]);
+    // The trailing `local scratch` must not steal the instance binding, so the
+    // `return instance` still infers the function's return.
+    const fn = model.moduleFunctions.find((f) => f.name === "make");
+    expect(fn?.returns).toEqual([
+      { name: "", types: ["Inst"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("an unmatched pending type cannot attach to a later key", () => {
+    const model = parseLualsSource(
+      lua(
+        "function M.make()",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\t---@type fun(self: Inst, a: string)",
+        "\t\tlog = function(self, a) end,",
+        "\t\t---@type fun(self: Inst)",
+        "\t\t-- persist to disk",
+        "\t\tsave = function() end,",
+        "\t}",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const inst = model.interfaces.find((i) => i.name === "Inst");
+    // The stray comment drops the armed `---@type`, so `save` is never captured.
+    expect(inst?.methods.map((m) => m.name)).toEqual(["log"]);
+    expect(inst?.methods.find((m) => m.name === "log")?.params).toEqual([
+      { name: "a", types: ["string"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
   test("mergeLibraryModels carries the first non-empty moduleObject", () => {
     const without: LibraryModel = { interfaces: [], aliases: [], moduleFunctions: [] };
     const withMod: LibraryModel = {
