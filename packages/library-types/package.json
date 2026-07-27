@@ -97,9 +97,6 @@
     "./persist.persist": {
       "types": "./generated/persist.persist.d.ts"
     },
-    "./proto.proto": {
-      "types": "./generated/proto.proto.d.ts"
-    },
     "./defmath.defmath": {
       "types": "./generated/defmath.defmath.d.ts"
     },

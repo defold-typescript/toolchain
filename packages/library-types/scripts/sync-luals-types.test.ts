@@ -326,3 +326,26 @@ describe("log migrated off the ts-defold corpus onto the LuaLS front-end", () =>
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/log.log.json"))).toBe(false);
   });
 });
+
+describe("proto migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("proto is a luals namespace and no longer a ts-defold target or classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "proto")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "proto.proto")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "defold-proto")).toBe(false);
+  });
+
+  test("the retired ts-defold proto artifacts are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/proto.proto.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/proto.proto.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/proto.proto.json"))).toBe(false);
+  });
+});

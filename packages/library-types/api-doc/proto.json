@@ -1,0 +1,995 @@
+{
+  "info": {
+    "namespace": "proto",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Loads proto files from the specified paths in the game.project\nUnder the \"proto.proto_paths\" key in the game.project",
+      "description": "Loads proto files from the specified paths in the game.project\nUnder the \"proto.proto_paths\" key in the game.project",
+      "parameters": [
+        {
+          "name": "proto_config_or_path",
+          "doc": "Lua table or path to proto list config. Example: \"/resources/proto.json\"",
+          "types": [
+            "LuaTable | string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "Set the logger instance",
+      "description": "Set the logger instance",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "",
+          "types": [
+            "proto_logger | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Create a new instance of the proto message",
+      "description": "Create a new instance of the proto message",
+      "parameters": [
+        {
+          "name": "proto_type",
+          "doc": "@The full proto message name (e.g. \"game.data\", where game is package and data is message name)",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "encode",
+      "brief": "Encode data to bytes",
+      "description": "Encode data to bytes",
+      "parameters": [
+        {
+          "name": "proto_type",
+          "doc": "@The full proto message name (e.g. \"game.data\", where game is package and data is message name)",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data",
+          "doc": "@The data to encode",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "decode",
+      "brief": "Decode bytes to lua table",
+      "description": "Decode bytes to lua table",
+      "parameters": [
+        {
+          "name": "proto_type",
+          "doc": "@The full proto message name (e.g. \"game.data\", where game is package and data is message name)",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "bytes",
+          "doc": "@The bytes to decode",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "verify",
+      "brief": "Verify data to match the proto_type. Return data with all default values according to proto_type, remove extra fields",
+      "description": "Verify data to match the proto_type. Return data with all default values according to proto_type, remove extra fields",
+      "parameters": [
+        {
+          "name": "proto_type",
+          "doc": "@The full proto message name (e.g. \"game.data\", where game is package and data is message name)",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data",
+          "doc": "@The data to verify",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_with_default_messages",
+      "brief": "Update data to match the proto_type.\n- All default values will be added to the data if they are not present\n- All extra fields will be removed from the data",
+      "description": "Update data to match the proto_type.\n- All default values will be added to the data if they are not present\n- All extra fields will be removed from the data",
+      "parameters": [
+        {
+          "name": "proto_type",
+          "doc": "@The full proto message name (e.g. \"game.data\", where game is package and data is message name)",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data",
+          "doc": "@The data to update",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "proto_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: proto_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: proto_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: proto_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: proto_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: proto_logger, message: string, data: unknown | undefined) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Lexer",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "test",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "expected",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "pos2loc",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "opterror",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "whitespace",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "comment",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "line_end",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "eof",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "keyword",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "ident",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "full_ident",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "integer",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "number",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "quote",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "structure",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "array",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "constant",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "option_name",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "type_name",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "test",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "expected",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "pos2loc",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "opterror",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "whitespace",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "comment",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "line_end",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "eof",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "keyword",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "ident",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "full_ident",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "integer",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "number",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "quote",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "table",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "constant",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "option_name",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "type_name",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Parser",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "addpath",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "parsefile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "parse",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "resolve",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "compile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "compilefile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "load",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "loadfile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "addpath",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "parsefile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "parse",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "resolve",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "compile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "compilefile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "load",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "loadfile",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "toplevel",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "package",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "import",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "enum",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "option",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "extend",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "service",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "package",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "import",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "enum",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "option",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "extend",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "service",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "msg_body",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "enum",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "extend",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "extensions",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reserved",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "oneof",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "option",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "enum",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "extend",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "extensions",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reserved",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "oneof",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "svr_body",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "rpc",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "option",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "rpc",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "proto"
+    }
+  ]
+}

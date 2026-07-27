@@ -26,7 +26,6 @@ import * as narrator from "narrator.narrator";
 import * as camera from "orthographic.camera";
 import * as persist from "persist.persist";
 import * as platypus from "platypus.platypus";
-import * as proto from "proto.proto";
 import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
@@ -159,15 +158,6 @@ persist.create("slot", { volume: 1 });
 persist.write("slot", "volume", 1);
 persist.flush("slot");
 persist.save("slot");
-
-// proto.proto — serialization helpers preserve object-map payloads and logger
-// removal overloads.
-proto.init({ player: "/proto/player.proto" });
-const _protoSchema: { [key: string]: unknown } = proto.get("Player");
-const _protoDecoded: { [key: string]: unknown } = proto.decode("Player", "");
-const _protoVerified: { [key: string]: unknown } = proto.verify("Player", { name: "Ada" });
-const _protoEncoded: string = proto.encode("Player", { name: "Ada" });
-proto.set_logger(undefined);
 
 // defmath.defmath — `round` is a scalar helper; `vect_to_quat` accepts a
 // `Vector3 | Vector4` and returns a `Quaternion`, proving the `vmath.quaternion`
@@ -307,10 +297,6 @@ void _defsaveAppName;
 void _defsaveLoaded;
 void _defsaveVolume;
 void _persistLoaded;
-void _protoSchema;
-void _protoDecoded;
-void _protoVerified;
-void _protoEncoded;
 void _dmRound;
 void _dmQuat;
 void _dbFlip;
