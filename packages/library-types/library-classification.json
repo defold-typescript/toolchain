@@ -652,13 +652,6 @@
       ]
     },
     {
-      "dir": "squid",
-      "classification": "already-vendored",
-      "modules": [
-        "squid.squid"
-      ]
-    },
-    {
       "dir": "starly",
       "classification": "already-vendored",
       "modules": [

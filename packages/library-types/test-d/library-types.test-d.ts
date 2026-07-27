@@ -29,7 +29,6 @@ import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
-import * as squid from "squid.squid";
 import * as starly from "starly.starly";
 import * as yagames from "yagames.yagames";
 import * as zzfx from "zzfx.api";
@@ -155,11 +154,6 @@ const _dmQuat: Quaternion = defmath.vect_to_quat(_v3);
 const _dbFlip: boolean = dicebag.flip_coin();
 const _dbDraw: boolean = dicebag.bag_draw(_hash);
 
-// squid.squid — an `export =` module: the default object exposes `save_logs`
-// returning a boolean and a `SquidConfig` whose `is_enabled` is a boolean.
-const _sqSaved: boolean = squid.save_logs();
-const _sqEnabled: boolean = squid.get_config().is_enabled;
-
 // starly.starly — an `export =` module: `get_view` returns a `Matrix4` (upstream
 // `vmath.matrix4`) for a `Hash` camera id, and `is_shaking` returns a boolean.
 const _stView: Matrix4 = starly.get_view(_hash);
@@ -273,8 +267,6 @@ void _dmRound;
 void _dmQuat;
 void _dbFlip;
 void _dbDraw;
-void _sqSaved;
-void _sqEnabled;
 void _stView;
 void _stShaking;
 void _nakamaUuid;

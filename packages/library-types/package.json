@@ -97,9 +97,6 @@
     "./dicebag.dicebag": {
       "types": "./generated/dicebag.dicebag.d.ts"
     },
-    "./squid.squid": {
-      "types": "./generated/squid.squid.d.ts"
-    },
     "./starly.starly": {
       "types": "./generated/starly.starly.d.ts"
     },
