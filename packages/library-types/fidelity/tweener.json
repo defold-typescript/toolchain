@@ -1,9 +1,9 @@
 {
   "namespace": "tweener",
-  "totalMembers": 9,
-  "totalTypeTokens": 30,
+  "totalMembers": 8,
+  "totalTypeTokens": 24,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 1,
+  "undocumentedMembers": 0,
   "coverage": 1
 }

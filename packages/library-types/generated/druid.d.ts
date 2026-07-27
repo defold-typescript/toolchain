@@ -21,7 +21,6 @@ declare module 'druid.druid' {
 		 * The Back Handler constructor
 		 */
 		init(callback?: unknown | undefined, params?: unknown | undefined): void;
-		on_input(action_id: Hash, action: LuaTable): boolean;
 	}
 	/**
 	 * Druid component for block input. Use it to block input in special zone.
@@ -36,12 +35,10 @@ declare module 'druid.druid' {
 	 */
 	interface druid_blocker extends druid_component {
 		node: Opaque<"node">;
-		_is_enabled: boolean;
 		/**
 		 * The Blocker constructor
 		 */
 		init(node: Opaque<"node"> | string): void;
-		on_input(action_id: string, action: LuaTable): boolean;
 		/**
 		 * Set blocker enabled state
 		 */
@@ -107,14 +104,10 @@ declare module 'druid.druid' {
 		 * The constructor for the button component
 		 */
 		init(node_or_node_id: Opaque<"node"> | string, callback?: (() => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): void;
-		on_style_change(style: druid_button_style): void;
 		/**
 		 * Remove default button style animations
 		 */
 		set_animations_disabled(): druid_button;
-		on_late_init(): void;
-		on_input(action_id: Hash, action: LuaTable): boolean;
-		on_input_interrupt(): void;
 		/**
 		 * Set button enabled state.
 		 * The style.on_set_enabled will be triggered.
@@ -212,22 +205,14 @@ declare module 'druid.druid' {
 		screen_x: number;
 		screen_y: number;
 		touch_start_pos: Vector3;
-		_is_enabled: boolean;
-		_x_koef: number;
-		_y_koef: number;
 		/**
 		 * The constructor for Drag component
 		 */
 		init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, touch: unknown) => void): void;
-		on_style_change(style: druid_drag_style): void;
 		/**
 		 * Set Drag component enabled state.
 		 */
 		set_drag_cursors(is_enabled: boolean): void;
-		on_late_init(): void;
-		on_window_resized(): void;
-		on_input_interrupt(): void;
-		on_input(action_id: Hash, action: LuaTable): boolean;
 		/**
 		 * Set Drag click zone
 		 */
@@ -267,18 +252,10 @@ declare module 'druid.druid' {
 		on_mouse_hover: unknown;
 		style: druid_hover_style;
 		click_zone: Opaque<"node">;
-		_is_hovered?: boolean | undefined;
-		_is_mouse_hovered?: boolean | undefined;
-		_is_enabled?: boolean | undefined;
-		_is_mobile: boolean;
 		/**
 		 * The constructor for the hover component
 		 */
 		init(node: Opaque<"node">, on_hover_callback: unknown, on_mouse_hover: unknown): void;
-		on_late_init(): void;
-		on_style_change(style: druid_hover_style): void;
-		on_input(action_id: Hash, action: LuaTable): boolean;
-		on_input_interrupt(): void;
 		/**
 		 * Set hover state
 		 */
@@ -309,8 +286,6 @@ declare module 'druid.druid' {
 		 * Return current hover enabled state
 		 */
 		is_enabled(): boolean;
-		on_remove(): void;
-		_set_cursor(): void;
 	}
 	/**
 	 * Scroll style parameters
@@ -366,24 +341,10 @@ declare module 'druid.druid' {
 		selected?: number | undefined;
 		is_animate: boolean;
 		style: druid_scroll_style;
-		_is_inert: boolean;
-		inertion: Vector3;
-		_is_horizontal_scroll: boolean;
-		_is_vertical_scroll: boolean;
-		_grid_on_change: unknown;
-		_grid_on_change_callback: unknown;
-		_offset: Vector3;
-		_layout_on_change_callback: unknown;
 		/**
 		 * The Scroll constructor
 		 */
 		init(view_node: string | Opaque<"node">, content_node: string | Opaque<"node">): void;
-		on_style_change(style: druid_scroll_style): void;
-		on_late_init(): void;
-		on_layout_change(): void;
-		update(): void;
-		on_input(): void;
-		on_remove(): void;
 		/**
 		 * Start scroll to target point.
 		 */
@@ -464,10 +425,6 @@ declare module 'druid.druid' {
 		_check_soft_zone(): void;
 		_cancel_animate(): void;
 		_set_scroll_position(): void;
-		/**
-		 * Find closer point of interest
-		 */
-		_check_points(): void;
 		_check_threshold(): void;
 		_update_free_scroll(): void;
 		_update_hand_scroll(): void;
@@ -515,7 +472,6 @@ declare module 'druid.druid' {
 		 * The constructor for the grid component
 		 */
 		init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row?: number | undefined): void;
-		on_style_change(style: druid_grid_style): void;
 		/**
 		 * Return pos for grid node index
 		 */
@@ -532,7 +488,6 @@ declare module 'druid.druid' {
 		 * Return grid index by node
 		 */
 		get_index_by_node(node: Opaque<"node">): number | undefined;
-		on_layout_change(): void;
 		/**
 		 * Set grid anchor. Default anchor is equal to anchor of grid parent node
 		 */
@@ -601,32 +556,6 @@ declare module 'druid.druid' {
 		 * Sort grid nodes by custom comparator function
 		 */
 		sort_nodes(comparator: unknown): druid_grid;
-		/**
-		 * Update grid inner state
-		 */
-		_update(is_instant?: boolean | undefined): void;
-		/**
-		 * Update first and last indexes of grid nodes
-		 */
-		_update_indexes(): void;
-		/**
-		 * Update grid content borders, recalculate min and max values
-		 */
-		_update_borders(): void;
-		/**
-		 * Update grid nodes position
-		 */
-		_update_pos(is_instant?: boolean | undefined): void;
-		/**
-		 * Return dynamic centering offset. Only non-zero when IS_DYNAMIC_NODE_POSES is enabled,
-		 * centers grid content according to pivot within its current borders.
-		 */
-		_get_dynamic_offset(): LuaMultiReturn<[number, number]>;
-		/**
-		 * Return x offset for a given row. For most rows returns _base_offset.x,
-		 * but when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset.
-		 */
-		_get_row_offset_x(): number;
 		_extend_border(border: Vector4, pos: Vector3, size: Vector3, pivot: Vector3): void;
 	}
 	interface druid_text_style {
@@ -668,8 +597,6 @@ declare module 'druid.druid' {
 		 * The Text constructor
 		 */
 		init(node: string | Opaque<"node">, value?: string | undefined, adjust_type?: druid_text_adjust_type | undefined): void;
-		on_style_change(style: druid_text_style): void;
-		on_layout_change(): void;
 		/**
 		 * Calculate text width with font with respect to trailing space
 		 */
@@ -720,20 +647,6 @@ declare module 'druid.druid' {
 		 * Return current text adjust type
 		 */
 		get_text_adjust(): string;
-		_update_text_size(): void;
-		/**
-		 * Reset initial scale for text
-		 */
-		_reset_default_scale(): void;
-		_is_fit_info_area(metrics: LuaTable): boolean;
-		/**
-		 * Setup scale x, but can only be smaller, than start text scale
-		 */
-		_update_text_area_size(): void;
-		_update_text_with_trim(trim_postfix: string): void;
-		_update_text_with_trim_left(trim_postfix: string): void;
-		_update_text_with_anchor_shift(): void;
-		_update_adjust(): void;
 	}
 	/**
 	 * Color palette and utility functions for working with colors.
@@ -760,61 +673,6 @@ declare module 'druid.druid' {
 		_uid: number;
 	}
 	interface druid_component {
-		druid: druid_instance;
-		/**
-		 * Called when component is created
-		 */
-		init?(...args: any[]): void;
-		/**
-		 * Called every frame
-		 */
-		update?(...args: any[]): void;
-		/**
-		 * Called when component is removed
-		 */
-		on_remove?(...args: any[]): void;
-		/**
-		 * Called when input event is triggered
-		 */
-		on_input?(...args: any[]): void;
-		/**
-		 * Called when input event is consumed before
-		 */
-		on_input_interrupt?(...args: any[]): void;
-		/**
-		 * Called when message is received
-		 */
-		on_message?(...args: any[]): void;
-		/**
-		 * Called before update once time after GUI init
-		 */
-		on_late_init?(...args: any[]): void;
-		/**
-		 * Called when app lost focus
-		 */
-		on_focus_lost?(...args: any[]): void;
-		/**
-		 * Called when app gained focus
-		 */
-		on_focus_gained?(...args: any[]): void;
-		/**
-		 * Called when style is changed
-		 */
-		on_style_change?(...args: any[]): void;
-		/**
-		 * Called when GUI layout is changed
-		 */
-		on_layout_change?(...args: any[]): void;
-		/**
-		 * Called when window is resized
-		 */
-		on_window_resized?(...args: any[]): void;
-		/**
-		 * Called when language is changed
-		 */
-		on_language_change?(...args: any[]): void;
-		_component: druid_component_component;
-		_meta: druid_component_meta;
 		/**
 		 * Set component style. Pass nil to clear style
 		 */
@@ -834,25 +692,13 @@ declare module 'druid.druid' {
 		 */
 		set_nodes(nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_component;
 		/**
-		 * Return current component context
-		 */
-		get_context(): unknown;
-		/**
 		 * Get component node by node_id. Respect to current template and nodes.
 		 */
 		get_node(node_id: string | Opaque<"node">): Opaque<"node">;
 		/**
-		 * Get Druid instance for inner component creation.
-		 */
-		get_druid(template?: string | undefined, nodes?: LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined): druid_instance;
-		/**
 		 * Get component name
 		 */
 		get_name(): string;
-		/**
-		 * Get parent component name
-		 */
-		get_parent_name(): string | undefined;
 		/**
 		 * Get component input priority, the bigger number processed first. Default value: 10
 		 */
@@ -865,10 +711,6 @@ declare module 'druid.druid' {
 		 * Reset component input priority to it's default value, that was set in `create` function or `set_input_priority`
 		 */
 		reset_input_priority(): druid_component;
-		/**
-		 * Get component UID, unique identifier created in component creation order.
-		 */
-		get_uid(): number;
 		/**
 		 * Set component input state. By default it's enabled.
 		 * If input is disabled, the component will not receive input events.
@@ -883,34 +725,6 @@ declare module 'druid.druid' {
 		 * Get parent component
 		 */
 		get_parent_component(): druid_component | undefined;
-		/**
-		 * Setup component context and his style table
-		 */
-		setup_component(druid_instance: druid_instance, context: LuaTable, style: LuaTable, instance_class: LuaTable): druid_component;
-		/**
-		 * Return true, if input priority was changed
-		 */
-		_is_input_priority_changed(): void;
-		/**
-		 * Reset is_input_priority_changed field
-		 */
-		_reset_input_priority_changed(): void;
-		/**
-		 * Get current component nodes
-		 */
-		get_nodes(): LuaTable<Hash, Opaque<"node">> | undefined;
-		/**
-		 * Add child to component children list
-		 */
-		__add_child<T extends druid_component>(child: T): T;
-		/**
-		 * Remove child from component children list
-		 */
-		__remove_child<T extends druid_component>(child: T): boolean;
-		/**
-		 * Return all children components, recursive
-		 */
-		get_childrens(): LuaTable;
 	}
 	interface druid_system_const {
 	}
@@ -924,7 +738,6 @@ declare module 'druid.druid' {
 		cursor_text: Opaque<"node">;
 		cursor_position: Vector3;
 		init(template: string, nodes: LuaTable): void;
-		on_input(action_id: Hash, action: LuaTable): boolean;
 		/**
 		 * Set placeholder text
 		 */
@@ -1021,13 +834,7 @@ declare module 'druid.druid' {
 	interface druid_rich_text extends druid_component {
 		root: Opaque<"node">;
 		text_prefab: Opaque<"node">;
-		_last_value: string;
-		_settings: LuaTable;
-		_split_to_characters: boolean;
-		_anchor?: Vector3 | undefined;
 		init(text_node: Opaque<"node"> | string, value?: string | undefined): void;
-		on_layout_change(): void;
-		on_style_change(style: druid_rich_text_style): void;
 		/**
 		 * Set text for Rich Text
 		 * -- Color
@@ -1067,7 +874,6 @@ declare module 'druid.druid' {
 		 * Set pivot and keep the content in place (anchor). After this, resizing the root will keep the anchor fixed.
 		 */
 		set_pivot(pivot: number): druid_rich_text;
-		on_remove(): void;
 		/**
 		 * Clear all created words.
 		 */
@@ -1088,7 +894,6 @@ declare module 'druid.druid' {
 		 * Get the current line metrics
 		 */
 		get_line_metric(): druid_rich_text_lines_metrics;
-		_create_settings(): LuaTable;
 		/**
 		 * Set the width of the rich text, not affects the size of current spawned words
 		 */
@@ -1147,8 +952,6 @@ declare module 'druid.druid' {
 		 * The Container constructor
 		 */
 		init(node: Opaque<"node">, mode: string, callback?: ((self: druid_container, size: Vector3) => void) | undefined): void;
-		on_late_init(): void;
-		on_remove(): void;
 		/**
 		 * Refresh the origins of the container, origins is the size and position of the container when it was created
 		 */
@@ -1157,7 +960,6 @@ declare module 'druid.druid' {
 		 * Set the pivot of the container
 		 */
 		set_pivot(pivot: Opaque<"constant">): void;
-		on_style_change(style: druid_container_style): void;
 		/**
 		 * Set new size of layout node
 		 */
@@ -1186,7 +988,6 @@ declare module 'druid.druid' {
 		 * Set current size for layout node to fit inside it
 		 */
 		fit_into_window(): druid_container;
-		on_window_resized(): void;
 		add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode?: druid_container_mode | undefined, on_resize_callback?: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container;
 		remove_container_by_node(): druid_container | undefined;
 		set_parent_container(parent_container?: druid_container | undefined): void;
@@ -1232,16 +1033,10 @@ declare module 'druid.druid' {
 		top_index: number;
 		last_index: number;
 		scroll_progress: number;
-		_create_function: unknown;
-		_is_use_cache: boolean;
-		_cache: LuaTable;
-		_data: LuaTable;
-		_data_visual: LuaTable;
 		/**
 		 * The DataList constructor
 		 */
 		init(scroll: druid_scroll, grid: druid_grid, create_function: unknown): void;
-		on_remove(): void;
 		/**
 		 * Set use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove
 		 */
@@ -1286,23 +1081,6 @@ declare module 'druid.druid' {
 		 * Instant scroll to element with passed index
 		 */
 		scroll_to_index(index: number): void;
-		/**
-		 * Add element at passed index using cache or create new
-		 */
-		_add_at(index: number): void;
-		/**
-		 * Remove element from passed index and add it to cache if applicable
-		 */
-		_remove_at(index: number): void;
-		/**
-		 * Get the visible area bounds in content-local coordinates (top-left and bottom-right),
-		 * clamped to the grid coordinate range so get_index_xy produces valid results.
-		 */
-		_get_visible_bounds(): LuaMultiReturn<[number, number, number, number]>;
-		/**
-		 * Refresh all elements in DataList
-		 */
-		_refresh(): void;
 	}
 	interface druid_hotkey_style {
 		MODIFICATORS: string[] | Hash[];
@@ -1326,23 +1104,15 @@ declare module 'druid.druid' {
 		on_hotkey_pressed: unknown;
 		on_hotkey_released: unknown;
 		style: druid_hotkey_style;
-		_hotkeys: LuaTable;
-		_modificators: LuaTable<Hash, boolean>;
-		_modificator_released_at: LuaTable<Hash, number>;
-		_node?: Opaque<"node"> | undefined;
 		/**
 		 * The Hotkey constructor
 		 */
 		init(keys: string[] | string, callback: unknown, callback_argument?: unknown | undefined): void;
-		on_style_change(style: druid_hotkey_style): void;
 		/**
 		 * Add hotkey for component callback
 		 */
 		add_hotkey(keys: string[] | Hash[] | string | Hash, callback_argument?: unknown | undefined): druid_hotkey;
 		is_processing(): void;
-		on_focus_gained(): void;
-		_is_modificator_active(modificator: Hash, time: number): boolean;
-		on_input(action_id: Hash | undefined, action: action): boolean;
 		/**
 		 * If true, the callback will be triggered on action.repeated
 		 */
@@ -1385,9 +1155,6 @@ declare module 'druid.druid' {
 		on_select_cursor_change: unknown;
 		style: druid_input_style;
 		init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type?: Opaque<"constant"> | undefined): void;
-		on_style_change(style: druid_input_style): void;
-		on_input(action_id: Hash | undefined, action: action): boolean;
-		on_focus_lost(): void;
 		get_text_selected(): void;
 		/**
 		 * Replace selected text with new text
@@ -1451,10 +1218,7 @@ declare module 'druid.druid' {
 		text: druid_text;
 		node: Opaque<"node">;
 		on_change: unknown;
-		last_locale_args: LuaTable;
-		last_locale: string;
 		init(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined): void;
-		on_language_change(): void;
 		/**
 		 * Setup raw text to lang_text component. This will clear any locale settings.
 		 */
@@ -1541,10 +1305,6 @@ declare module 'druid.druid' {
 		refresh_layout(is_instant?: boolean | undefined): druid_layout;
 		clear_layout(): druid_layout;
 		get_node_size(node: Opaque<"node">): LuaMultiReturn<[number, number]>;
-		/**
-		 * Calculate rows data for layout. Contains total width, height and rows info (width, height, count of elements in row)
-		 */
-		calculate_rows_data(): druid_layout_rows_data;
 		set_node_position(node: Opaque<"node">, x: number, y: number): Opaque<"node">;
 		/**
 		 * Set custom position function for layout nodes. It will call on update poses on layout elements. Default: gui.set_position
@@ -1575,9 +1335,6 @@ declare module 'druid.druid' {
 		key: string;
 		prop: Hash;
 		init(node: string | Opaque<"node">, key: string, init_value?: number | undefined): void;
-		on_style_change(style: druid_progress_style): void;
-		on_layout_change(): void;
-		on_remove(): void;
 		update(dt: number): void;
 		/**
 		 * Fill the progress bar
@@ -1607,8 +1364,6 @@ declare module 'druid.druid' {
 		 * Set progress bar max node size
 		 */
 		set_max_size(max_size: Vector3): druid_progress;
-		_check_steps(from: number, to: number, exactly?: number | undefined): void;
-		_set_bar_to(set_to: number): void;
 	}
 	/**
 	 * Basic Druid slider component. Creates a draggable node over a line with progress reporting.
@@ -1627,23 +1382,10 @@ declare module 'druid.druid' {
 		node: Opaque<"node">;
 		on_change_value: unknown;
 		style: LuaTable;
-		start_pos: Vector3;
-		pos: Vector3;
-		target_pos: Vector3;
-		end_pos: Vector3;
-		dist: Vector3;
-		is_drag: boolean;
-		value: number;
-		steps?: number[] | undefined;
 		/**
 		 * The Slider constructor
 		 */
 		init(node: Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined): void;
-		on_layout_change(): void;
-		on_remove(): void;
-		on_style_change(style: LuaTable): void;
-		on_window_resized(): void;
-		on_input(action_id: Hash, action: LuaTable): boolean;
 		/**
 		 * Set value for slider
 		 */
@@ -1672,8 +1414,6 @@ declare module 'druid.druid' {
 		 * Check if Slider component is enabled
 		 */
 		is_enabled(): boolean;
-		_on_change_value(): void;
-		_set_position(): void;
 	}
 	interface druid_swipe_style {
 		SWIPE_TIME?: number | undefined;
@@ -1688,16 +1428,7 @@ declare module 'druid.druid' {
 		on_swipe: unknown;
 		style: druid_swipe_style;
 		click_zone: Opaque<"node">;
-		_trigger_on_move: boolean;
-		_swipe_start_time: number;
-		_start_pos: Vector3;
-		_is_enabled: boolean;
-		_is_mobile: boolean;
 		init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: unknown): void;
-		on_late_init(): void;
-		on_style_change(style: druid_swipe_style): void;
-		on_input(action_id: Hash, action: action): boolean;
-		on_input_interrupt(): void;
 		/**
 		 * Set the click zone for the swipe, useful for restricting events outside stencil node
 		 */
@@ -1736,8 +1467,6 @@ declare module 'druid.druid' {
 		value: number;
 		is_on?: boolean | undefined;
 		init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): void;
-		update(): void;
-		on_layout_change(): void;
 		/**
 		 * Set the timer to a specific value
 		 */
@@ -1750,7 +1479,6 @@ declare module 'druid.druid' {
 		 * Set the timer interval
 		 */
 		set_interval(from: number, to: number): druid_timer;
-		_second_string_min(sec: number): string;
 	}
 	/**
 	 * The helper module contains various functions that are used in the Druid library.
@@ -1768,7 +1496,6 @@ declare module 'druid.druid' {
 		v: Vector4;
 	}
 	interface druid_widget extends druid_component {
-		druid: druid_instance;
 	}
 	interface druid_logger {
 		trace: (message: string, context: unknown) => void;
@@ -1837,16 +1564,6 @@ declare module 'druid.druid' {
 	 * The Druid Factory used to create components
 	 */
 	interface druid_instance {
-		input_inited: boolean;
-		components_all: druid_component[];
-		components_interest: LuaTable<string, druid_component[]>;
-		_context: LuaTable;
-		_style: LuaTable;
-		_late_init_timer_id: number;
-		_late_remove: druid_component[];
-		_is_late_remove_enabled: boolean;
-		_input_blacklist?: druid_component[] | undefined;
-		_input_whitelist?: druid_component[] | undefined;
 		/**
 		 * Check whitelists and blacklists for input components
 		 */
@@ -1866,20 +1583,6 @@ declare module 'druid.druid' {
 		 */
 		remove<T extends druid_component>(component: T): boolean;
 		/**
-		 * Get a context of Druid instance (usually a self of gui script)
-		 */
-		get_context(): unknown;
-		/**
-		 * Get a style of Druid instance
-		 */
-		get_style(): LuaTable;
-		/**
-		 * Druid late update function called after initialization and before the regular update step.
-		 * This function is used to check the GUI state and perform actions after all components and nodes have been created.
-		 * An example use case is performing an auto stencil check in the GUI hierarchy for input components.
-		 */
-		late_init(): void;
-		/**
 		 * Call this in gui_script update function.
 		 */
 		update(dt: number): void;
@@ -1896,11 +1599,6 @@ declare module 'druid.druid' {
 		 */
 		on_window_event(window_event: number): void;
 		/**
-		 * Calls the on_language_change function in all related components
-		 * This one called by global druid.on_language_change, but can be called manually to update all translations
-		 */
-		on_language_change(): void;
-		/**
 		 * Set whitelist components for input processing.
 		 * If whitelist is not empty and component not contains in this list,
 		 * component will be not processed on the input step
@@ -1912,10 +1610,6 @@ declare module 'druid.druid' {
 		 * component will be not processed on the input step DruidInstance
 		 */
 		set_blacklist(blacklist_components: LuaTable | druid_component[]): druid_instance;
-		/**
-		 * Remove all components on late remove step DruidInstance
-		 */
-		_clear_late_remove(): void;
 		/**
 		 * Create new Druid widget instance
 		 */

@@ -15,6 +15,8 @@
 
 import {
   buildModelContext,
+  isPublicField,
+  isPublicMethod,
   mapTypes,
   paramOptionalFlags,
   renderGenericParams,
@@ -22,13 +24,6 @@ import {
 } from "./emit-library-dts";
 import { type MapContext, scopeGenerics } from "./map-luals-types";
 import type { LibraryField, LibraryMethod, LibraryModel, LibraryParam } from "./parse-luals";
-
-// A field with an explicit non-public visibility is internal surface; keep only
-// fields with no visibility or an explicit `public`, mirroring how LuaLS hides
-// `private`/`protected`/`package` members from a class's public shape.
-function isPublicField(field: LibraryField): boolean {
-  return field.visibility === undefined || field.visibility === "public";
-}
 
 // Each type token is mapped independently (one mapped TS string per token) so the
 // ref-doc `types` array stays token-per-slot the way engine ref-docs are shaped.
@@ -92,12 +87,15 @@ export function lowerLibraryModel(
   const elements: Record<string, unknown>[] = [];
 
   for (const fn of model.moduleFunctions) {
+    if (!isPublicMethod(fn)) continue;
     elements.push(functionElement(fn, ctx));
   }
 
   for (const iface of model.interfaces) {
     const ifaceCtx = scopeGenerics(ctx, iface.generics);
-    const functions = iface.methods.map((method) => functionElement(method, ifaceCtx));
+    const functions = iface.methods
+      .filter(isPublicMethod)
+      .map((method) => functionElement(method, ifaceCtx));
     const properties = iface.fields
       .filter(isPublicField)
       .map((field) => propertyElement(field, ifaceCtx));
