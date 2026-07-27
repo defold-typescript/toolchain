@@ -398,6 +398,29 @@ describe("squid migrated off the ts-defold corpus onto the LuaLS front-end", () 
   });
 });
 
+describe("narrator migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("narrator is a luals namespace and no longer a ts-defold target or classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "narrator")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "narrator.narrator")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "narrator")).toBe(false);
+  });
+
+  test("the retired ts-defold narrator artifacts are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/narrator.narrator.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/narrator.narrator.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/narrator.narrator.json"))).toBe(false);
+  });
+});
+
 describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("saver.saver and saver.storage are luals namespaces, no longer ts-defold targets or a classified dir", () => {
     const luals = readLualsTargets(PACKAGE_ROOT);

@@ -559,6 +559,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the migrated narrator page pins to astrochili/narrator, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const narrator = pages.find((p) => p.namespace === "narrator");
+    expect(narrator).toBeDefined();
+    if (!narrator) return;
+    expect(narrator.category).toBe("library");
+    const md = apiPageMarkdown(narrator, apiLinkify(pages));
+    expect(md).toContain("[astrochili/narrator](https://github.com/astrochili/narrator)");
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("the migrated saver.saver page pins to Insality/defold-saver, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const saver = pages.find((p) => p.namespace === "saver.saver");

@@ -6,6 +6,7 @@
   "immutable": "Runtime immutable Lua table implementation",
   "lang": "Localization helpers for Defold: string tables, pluralization, and locale fallback.",
   "monarch": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
+  "narrator": "The Ink language parser and runtime implementation in Lua",
   "proto": "Protocol-buffer style message encoding for compact Defold network payloads.",
   "saver.saver": "Persistent save helpers for Defold: typed tables, versioned slots, and atomic writes.",
   "saver.storage": "Key-value storage over the Defold saver state: typed number, string, and boolean getters and setters.",
