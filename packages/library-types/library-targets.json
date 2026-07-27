@@ -156,12 +156,6 @@
       "generated": "generated/persist.persist.d.ts"
     },
     {
-      "module": "proto.proto",
-      "path": "packages/defold-proto/proto.proto.d.ts",
-      "fixture": "fixtures/ts-defold/proto.proto.d.ts",
-      "generated": "generated/proto.proto.d.ts"
-    },
-    {
       "module": "defmath.defmath",
       "path": "packages/defmath/defmath.defmath.d.ts",
       "fixture": "fixtures/ts-defold/defmath.defmath.d.ts",
