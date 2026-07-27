@@ -10,6 +10,7 @@
  * sorted-unique token list so the gap is visible instead of silent.
  */
 
+import { isPublicField, isPublicMethod } from "./emit-library-dts";
 import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
 import type { LibraryGeneric, LibraryModel } from "./parse-luals";
 
@@ -84,11 +85,13 @@ export function buildFidelityReport(
     // counts toward coverage exactly like a field or method type.
     for (const overload of iface.overloads ?? []) mapTokens([overload.type], ifaceCtx);
     for (const field of iface.fields) {
+      if (!isPublicField(field)) continue;
       totalMembers++;
       if (undocumented(field.doc)) undocumentedMembers++;
       mapTokens(field.types, ifaceCtx);
     }
     for (const method of iface.methods) {
+      if (!isPublicMethod(method)) continue;
       totalMembers++;
       if (undocumented(method.brief)) undocumentedMembers++;
       const methodCtx = scopeGenerics(ifaceCtx, method.generics);
@@ -99,6 +102,7 @@ export function buildFidelityReport(
   }
 
   for (const fn of model.moduleFunctions) {
+    if (!isPublicMethod(fn)) continue;
     totalMembers++;
     if (undocumented(fn.brief)) undocumentedMembers++;
     const fnCtx = scopeGenerics(ctx, fn.generics);

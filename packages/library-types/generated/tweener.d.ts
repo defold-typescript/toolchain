@@ -39,5 +39,4 @@ declare module 'tweener.tweener' {
 	 * Sets the pause on a running tween.
 	 */
 	export function set_pause(this: void, tween: tween, is_paused: boolean): void;
-	export function custom_ease(this: void, easing: number[], t: number, b: number, c: number, d: number): number;
 }

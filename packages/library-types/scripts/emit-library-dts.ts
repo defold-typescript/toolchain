@@ -34,6 +34,7 @@ import {
 } from "./map-luals-types";
 import type {
   LibraryAlias,
+  LibraryField,
   LibraryGeneric,
   LibraryInterface,
   LibraryMethod,
@@ -47,6 +48,20 @@ export interface EmitLibraryOptions {
 }
 
 const INDENT = "\t";
+
+// A member with an explicit non-public visibility is internal surface; keep only
+// members with no visibility or an explicit `public`, mirroring how LuaLS hides
+// `private`/`protected`/`package` (and, for methods, `local`) from a class's public
+// shape. Shared by all three consumers — the emitter, the api-doc lowering, and the
+// fidelity report — so the declaration, documentation, and coverage surfaces
+// describe one identical public member set.
+export function isPublicField(field: LibraryField): boolean {
+  return field.visibility === undefined || field.visibility === "public";
+}
+
+export function isPublicMethod(method: LibraryMethod): boolean {
+  return method.visibility === undefined || method.visibility === "public";
+}
 
 /** A model type name (dotted like `druid.button`) reduced to a legal TS identifier. */
 export function sanitizeTypeName(name: string): string {
@@ -183,6 +198,7 @@ function renderInterface(
   lines.push(`${INDENT}interface ${sanitizeTypeName(iface.name)}${params}${extendsClause} {`);
   const body = INDENT + INDENT;
   for (const field of iface.fields) {
+    if (!isPublicField(field)) continue;
     // A base's self-receiving lifecycle hook is emitted as a permissive optional
     // method (`name?(...args: any[]): ret`) so a concrete subinterface's refined
     // override stays assignable under `extends`; strict function-field variance
@@ -199,6 +215,7 @@ function renderInterface(
     lines.push(`${body}${memberKey(field.name)}${optional}: ${mapTypes(field.types, ifaceCtx)};`);
   }
   for (const method of iface.methods) {
+    if (!isPublicMethod(method)) continue;
     pushDoc(lines, method.brief, body);
     const methodCtx = scopeGenerics(ifaceCtx, method.generics);
     const methodParams = renderGenericParams(method.generics, methodCtx);
@@ -280,7 +297,10 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
   const out: string[] = ["/** @noResolution */", `declare module '${opts.moduleId}' {`];
   for (const alias of model.aliases) out.push(...renderAlias(alias, ctx));
   for (const iface of model.interfaces) out.push(...renderInterface(iface, ctx, interfaceNames));
-  for (const fn of model.moduleFunctions) out.push(...renderModuleFunction(fn, ctx));
+  for (const fn of model.moduleFunctions) {
+    if (!isPublicMethod(fn)) continue;
+    out.push(...renderModuleFunction(fn, ctx));
+  }
   out.push("}");
   return `${out.join("\n")}\n`;
 }

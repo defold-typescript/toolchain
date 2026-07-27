@@ -309,41 +309,6 @@
             }
           ],
           "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "The action id",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "The action table",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
         }
       ],
       "properties": [
@@ -386,41 +351,6 @@
             }
           ],
           "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "The action id",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "The action table",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
         },
         {
           "type": "FUNCTION",
@@ -605,24 +535,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_button_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_animations_disabled",
           "brief": "Remove default button style animations",
           "description": "Remove default button style animations",
@@ -636,57 +548,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_late_init",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "The action id",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "The action table",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input_interrupt",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
         },
         {
           "type": "FUNCTION",
@@ -1182,24 +1043,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "The style of Drag component",
-              "types": [
-                "druid_drag_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_drag_cursors",
           "brief": "Set Drag component enabled state.",
           "description": "Set Drag component enabled state.",
@@ -1215,65 +1058,6 @@
             }
           ],
           "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_late_init",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_window_resized",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input_interrupt",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "Action id from on_input",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "Action from on_input",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
         },
         {
           "type": "FUNCTION",
@@ -1695,75 +1479,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_late_init",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_hover_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "Action id from on_input",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "Action from on_input",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input_interrupt",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_hover",
           "brief": "Set hover state",
           "description": "Set hover state",
@@ -1881,22 +1596,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_remove",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_set_cursor",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
         }
       ],
       "properties": [
@@ -2073,64 +1772,6 @@
               "is_vararg": "False"
             }
           ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_scroll_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_late_init",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_layout_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "update",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_remove",
-          "brief": "",
-          "description": "",
-          "parameters": [],
           "returnvalues": []
         },
         {
@@ -2635,14 +2276,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "_check_points",
-          "brief": "Find closer point of interest",
-          "description": "Find closer point of interest",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "_check_threshold",
           "brief": "",
           "description": "",
@@ -2978,24 +2611,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_grid_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "get_pos",
           "brief": "Return pos for grid node index",
           "description": "Return pos for grid node index",
@@ -3106,14 +2721,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_layout_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
         },
         {
           "type": "FUNCTION",
@@ -3544,97 +3151,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "_update",
-          "brief": "Update grid inner state",
-          "description": "Update grid inner state",
-          "parameters": [
-            {
-              "name": "is_instant",
-              "doc": "If true, node position update instantly, otherwise with set_position_function callback",
-              "types": [
-                "boolean | undefined"
-              ],
-              "is_optional": "True",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_indexes",
-          "brief": "Update first and last indexes of grid nodes",
-          "description": "Update first and last indexes of grid nodes",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_borders",
-          "brief": "Update grid content borders, recalculate min and max values",
-          "description": "Update grid content borders, recalculate min and max values",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_pos",
-          "brief": "Update grid nodes position",
-          "description": "Update grid nodes position",
-          "parameters": [
-            {
-              "name": "is_instant",
-              "doc": "If true, node position update instantly, otherwise with set_position_function callback",
-              "types": [
-                "boolean | undefined"
-              ],
-              "is_optional": "True",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_get_dynamic_offset",
-          "brief": "Return dynamic centering offset. Only non-zero when IS_DYNAMIC_NODE_POSES is enabled,\ncenters grid content according to pivot within its current borders.",
-          "description": "Return dynamic centering offset. Only non-zero when IS_DYNAMIC_NODE_POSES is enabled,\ncenters grid content according to pivot within its current borders.",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "number"
-              ]
-            },
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "number"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_get_row_offset_x",
-          "brief": "Return x offset for a given row. For most rows returns _base_offset.x,\nbut when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset.",
-          "description": "Return x offset for a given row. For most rows returns _base_offset.x,\nbut when IS_ALIGN_LAST_ROW is enabled, the last row gets a different offset.",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The offset x value",
-              "types": [
-                "number"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
           "name": "_extend_border",
           "brief": "",
           "description": "",
@@ -3878,32 +3394,6 @@
               "is_vararg": "False"
             }
           ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_text_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_layout_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
           "returnvalues": []
         },
         {
@@ -4229,108 +3719,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_text_size",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_reset_default_scale",
-          "brief": "Reset initial scale for text",
-          "description": "Reset initial scale for text",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_is_fit_info_area",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "metrics",
-              "doc": "",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_text_area_size",
-          "brief": "Setup scale x, but can only be smaller, than start text scale",
-          "description": "Setup scale x, but can only be smaller, than start text scale",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_text_with_trim",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "trim_postfix",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_text_with_trim_left",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "trim_postfix",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_text_with_anchor_shift",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_update_adjust",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
         }
       ],
       "properties": [
@@ -4648,22 +4036,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "get_context",
-          "brief": "Return current component context",
-          "description": "Return current component context",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "Usually it's self of script but can be any other Druid component",
-              "types": [
-                "unknown"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
           "name": "get_node",
           "brief": "Get component node by node_id. Respect to current template and nodes.",
           "description": "Get component node by node_id. Respect to current template and nodes.",
@@ -4690,41 +4062,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "get_druid",
-          "brief": "Get Druid instance for inner component creation.",
-          "description": "Get Druid instance for inner component creation.",
-          "parameters": [
-            {
-              "name": "template",
-              "doc": "",
-              "types": [
-                "string | undefined"
-              ],
-              "is_optional": "True",
-              "is_vararg": "False"
-            },
-            {
-              "name": "nodes",
-              "doc": "The nodes table from gui.clone_tree or prefab node to use for clone or node id to clone",
-              "types": [
-                "LuaTable<Hash, Opaque<\"node\">> | Opaque<\"node\"> | string | undefined"
-              ],
-              "is_optional": "True",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "druid_instance"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
           "name": "get_name",
           "brief": "Get component name",
           "description": "Get component name",
@@ -4735,22 +4072,6 @@
               "doc": "The component name + uid",
               "types": [
                 "string"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "get_parent_name",
-          "brief": "Get parent component name",
-          "description": "Get parent component name",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The parent component name if exist or nil",
-              "types": [
-                "string | undefined"
               ]
             }
           ]
@@ -4824,22 +4145,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "get_uid",
-          "brief": "Get component UID, unique identifier created in component creation order.",
-          "description": "Get component UID, unique identifier created in component creation order.",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The component uid",
-              "types": [
-                "number"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_input_enabled",
           "brief": "Set component input state. By default it's enabled.\nIf input is disabled, the component will not receive input events.\nRecursive for all children components.",
           "description": "Set component input state. By default it's enabled.\nIf input is disabled, the component will not receive input events.\nRecursive for all children components.",
@@ -4895,161 +4200,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "setup_component",
-          "brief": "Setup component context and his style table",
-          "description": "Setup component context and his style table",
-          "parameters": [
-            {
-              "name": "druid_instance",
-              "doc": "The parent druid instance",
-              "types": [
-                "druid_instance"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "context",
-              "doc": "Druid context. Usually it is self of script",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "style",
-              "doc": "Druid style module",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "instance_class",
-              "doc": "The component instance class",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "BaseComponent itself",
-              "types": [
-                "druid_component"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_is_input_priority_changed",
-          "brief": "Return true, if input priority was changed",
-          "description": "Return true, if input priority was changed",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_reset_input_priority_changed",
-          "brief": "Reset is_input_priority_changed field",
-          "description": "Reset is_input_priority_changed field",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "get_nodes",
-          "brief": "Get current component nodes",
-          "description": "Get current component nodes",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "LuaTable<Hash, Opaque<\"node\">> | undefined"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "__add_child",
-          "brief": "Add child to component children list",
-          "description": "Add child to component children list",
-          "generics": "<T extends druid_component>",
-          "parameters": [
-            {
-              "name": "child",
-              "doc": "The druid component instance",
-              "types": [
-                "T"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The component itself for chaining",
-              "types": [
-                "T"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "__remove_child",
-          "brief": "Remove child from component children list",
-          "description": "Remove child from component children list",
-          "generics": "<T extends druid_component>",
-          "parameters": [
-            {
-              "name": "child",
-              "doc": "The druid component instance",
-              "types": [
-                "T"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "if child was removed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "get_childrens",
-          "brief": "Return all children components, recursive",
-          "description": "Return all children components, recursive",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "Array of childrens if the Druid component instance",
-              "types": [
-                "LuaTable"
-              ]
-            }
-          ]
         }
       ]
     },
@@ -5087,41 +4237,6 @@
             }
           ],
           "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "Action id from on_input",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "Action table from on_input",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
         },
         {
           "type": "FUNCTION",
@@ -5788,32 +4903,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_layout_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_rich_text_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_text",
           "brief": "Set text for Rich Text\n-- Color\nrich_text:set_text(\"＜color=red＞Foobar＜/color＞\")\nrich_text:set_text(\"＜color=1.0,0,0,1.0＞Foobar＜/color＞\")\nrich_text:set_text(\"＜color=#ff0000＞Foobar＜/color＞\")\nrich_text:set_text(\"＜color=#ff0000ff＞Foobar＜/color＞\")\n-- Shadow\nrich_text:set_text(\"＜shadow=red＞Foobar＜/shadow＞\")\nrich_text:set_text(\"＜shadow=1.0,0,0,1.0＞Foobar＜/shadow＞\")\nrich_text:set_text(\"＜shadow=#ff0000＞Foobar＜/shadow＞\")\nrich_text:set_text(\"＜shadow=#ff0000ff＞Foobar＜/shadow＞\")\n-- Outline\nrich_text:set_text(\"＜outline=red＞Foobar＜/outline＞\")\nrich_text:set_text(\"＜outline=1.0,0,0,1.0＞Foobar＜/outline＞\")\nrich_text:set_text(\"＜outline=#ff0000＞Foobar＜/outline＞\")\nrich_text:set_text(\"＜outline=#ff0000ff＞Foobar＜/outline＞\")\n-- Font\nrich_text:set_text(\"＜font=MyCoolFont＞Foobar＜/font＞\")\n-- Size\nrich_text:set_text(\"＜size=2＞Twice as large＜/size＞\")\n-- Line break\nrich_text:set_text(\"＜br/＞Insert a line break\")\n-- No break\nrich_text:set_text(\"＜nobr＞Prevent the text from breaking\")\n-- Image\nrich_text:set_text(\"＜img=texture:image＞Display image\")\nrich_text:set_text(\"＜img=texture:image,size＞Display image with size\")\nrich_text:set_text(\"＜img=texture:image,width,height＞Display image with width and height\")",
           "description": "Set text for Rich Text\n-- Color\nrich_text:set_text(\"＜color=red＞Foobar＜/color＞\")\nrich_text:set_text(\"＜color=1.0,0,0,1.0＞Foobar＜/color＞\")\nrich_text:set_text(\"＜color=#ff0000＞Foobar＜/color＞\")\nrich_text:set_text(\"＜color=#ff0000ff＞Foobar＜/color＞\")\n-- Shadow\nrich_text:set_text(\"＜shadow=red＞Foobar＜/shadow＞\")\nrich_text:set_text(\"＜shadow=1.0,0,0,1.0＞Foobar＜/shadow＞\")\nrich_text:set_text(\"＜shadow=#ff0000＞Foobar＜/shadow＞\")\nrich_text:set_text(\"＜shadow=#ff0000ff＞Foobar＜/shadow＞\")\n-- Outline\nrich_text:set_text(\"＜outline=red＞Foobar＜/outline＞\")\nrich_text:set_text(\"＜outline=1.0,0,0,1.0＞Foobar＜/outline＞\")\nrich_text:set_text(\"＜outline=#ff0000＞Foobar＜/outline＞\")\nrich_text:set_text(\"＜outline=#ff0000ff＞Foobar＜/outline＞\")\n-- Font\nrich_text:set_text(\"＜font=MyCoolFont＞Foobar＜/font＞\")\n-- Size\nrich_text:set_text(\"＜size=2＞Twice as large＜/size＞\")\n-- Line break\nrich_text:set_text(\"＜br/＞Insert a line break\")\n-- No break\nrich_text:set_text(\"＜nobr＞Prevent the text from breaking\")\n-- Image\nrich_text:set_text(\"＜img=texture:image＞Display image\")\nrich_text:set_text(\"＜img=texture:image,size＞Display image with size\")\nrich_text:set_text(\"＜img=texture:image,width,height＞Display image with width and height\")",
@@ -5886,14 +4975,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_remove",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
         },
         {
           "type": "FUNCTION",
@@ -5983,22 +5064,6 @@
               "doc": "The line metrics of the rich text",
               "types": [
                 "druid_rich_text_lines_metrics"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_create_settings",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The settings of the rich text, they are created based on the root node on the GUI scene",
-              "types": [
-                "LuaTable"
               ]
             }
           ]
@@ -6143,22 +5208,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_late_init",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_remove",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "refresh_origins",
           "brief": "Refresh the origins of the container, origins is the size and position of the container when it was created",
           "description": "Refresh the origins of the container, origins is the size and position of the container when it was created",
@@ -6176,24 +5225,6 @@
               "doc": "The pivot to set",
               "types": [
                 "Opaque<\"constant\">"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_container_style"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -6361,14 +5392,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_window_resized",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
         },
         {
           "type": "FUNCTION",
@@ -6806,14 +5829,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_remove",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_use_cache",
           "brief": "Set use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove",
           "description": "Set use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove",
@@ -7077,87 +6092,6 @@
             }
           ],
           "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_add_at",
-          "brief": "Add element at passed index using cache or create new",
-          "description": "Add element at passed index using cache or create new",
-          "parameters": [
-            {
-              "name": "index",
-              "doc": "The index to add the element at",
-              "types": [
-                "number"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_remove_at",
-          "brief": "Remove element from passed index and add it to cache if applicable",
-          "description": "Remove element from passed index and add it to cache if applicable",
-          "parameters": [
-            {
-              "name": "index",
-              "doc": "The index to remove the element at",
-              "types": [
-                "number"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_get_visible_bounds",
-          "brief": "Get the visible area bounds in content-local coordinates (top-left and bottom-right),\nclamped to the grid coordinate range so get_index_xy produces valid results.",
-          "description": "Get the visible area bounds in content-local coordinates (top-left and bottom-right),\nclamped to the grid coordinate range so get_index_xy produces valid results.",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "number"
-              ]
-            },
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "number"
-              ]
-            },
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "number"
-              ]
-            },
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "number"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_refresh",
-          "brief": "Refresh all elements in DataList",
-          "description": "Refresh all elements in DataList",
-          "parameters": [],
-          "returnvalues": []
         }
       ],
       "properties": [
@@ -7291,24 +6225,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_hotkey_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "add_hotkey",
           "brief": "Add hotkey for component callback",
           "description": "Add hotkey for component callback",
@@ -7349,84 +6265,6 @@
           "description": "",
           "parameters": [],
           "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_focus_gained",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_is_modificator_active",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "modificator",
-              "doc": "",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "time",
-              "doc": "The current time",
-              "types": [
-                "number"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "The action id",
-              "types": [
-                "Hash | undefined"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "The action",
-              "types": [
-                "action"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the action is consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
         },
         {
           "type": "FUNCTION",
@@ -7608,67 +6446,6 @@
               "is_vararg": "False"
             }
           ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_input_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "The action id",
-              "types": [
-                "Hash | undefined"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "The action",
-              "types": [
-                "action"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the action is consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_focus_lost",
-          "brief": "",
-          "description": "",
-          "parameters": [],
           "returnvalues": []
         },
         {
@@ -8017,14 +6794,6 @@
               "is_vararg": "False"
             }
           ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_language_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
           "returnvalues": []
         },
         {
@@ -8724,22 +7493,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "calculate_rows_data",
-          "brief": "Calculate rows data for layout. Contains total width, height and rows info (width, height, count of elements in row)",
-          "description": "Calculate rows data for layout. Contains total width, height and rows info (width, height, count of elements in row)",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "",
-              "types": [
-                "druid_layout_rows_data"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_node_position",
           "brief": "",
           "description": "",
@@ -8964,40 +7717,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_progress_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_layout_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_remove",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "update",
           "brief": "",
           "description": "",
@@ -9183,60 +7902,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_check_steps",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "from",
-              "doc": "The start value",
-              "types": [
-                "number"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "to",
-              "doc": "The end value",
-              "types": [
-                "number"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "exactly",
-              "doc": "The exact value",
-              "types": [
-                "number | undefined"
-              ],
-              "is_optional": "True",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_set_bar_to",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "set_to",
-              "doc": "The value to set the progress bar to",
-              "types": [
-                "number"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
         }
       ],
       "properties": [
@@ -9321,83 +7986,6 @@
             }
           ],
           "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_layout_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_remove",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_window_resized",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "Action id from on_input",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "Action table from on_input",
-              "types": [
-                "LuaTable"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
         },
         {
           "type": "FUNCTION",
@@ -9553,22 +8141,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_on_change_value",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_set_position",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
         }
       ],
       "properties": [
@@ -9657,75 +8229,6 @@
               "is_vararg": "False"
             }
           ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_late_init",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_style_change",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "style",
-              "doc": "",
-              "types": [
-                "druid_swipe_style"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "action_id",
-              "doc": "The action id",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
-            {
-              "name": "action",
-              "doc": "The action table",
-              "types": [
-                "action"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "True if the input was consumed",
-              "types": [
-                "boolean"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_input_interrupt",
-          "brief": "",
-          "description": "",
-          "parameters": [],
           "returnvalues": []
         },
         {
@@ -9886,22 +8389,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "update",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "on_layout_change",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_to",
           "brief": "Set the timer to a specific value",
           "description": "Set the timer to a specific value",
@@ -9983,32 +8470,6 @@
               "doc": "Current timer instance",
               "types": [
                 "druid_timer"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_second_string_min",
-          "brief": "",
-          "description": "",
-          "parameters": [
-            {
-              "name": "sec",
-              "doc": "Seconds to convert",
-              "types": [
-                "number"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            }
-          ],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The formatted time string",
-              "types": [
-                "string"
               ]
             }
           ]
@@ -10708,46 +9169,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "get_context",
-          "brief": "Get a context of Druid instance (usually a self of gui script)",
-          "description": "Get a context of Druid instance (usually a self of gui script)",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The Druid context",
-              "types": [
-                "unknown"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "get_style",
-          "brief": "Get a style of Druid instance",
-          "description": "Get a style of Druid instance",
-          "parameters": [],
-          "returnvalues": [
-            {
-              "name": "",
-              "doc": "The Druid style table",
-              "types": [
-                "LuaTable"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "late_init",
-          "brief": "Druid late update function called after initialization and before the regular update step.\nThis function is used to check the GUI state and perform actions after all components and nodes have been created.\nAn example use case is performing an auto stencil check in the GUI hierarchy for input components.",
-          "description": "Druid late update function called after initialization and before the regular update step.\nThis function is used to check the GUI state and perform actions after all components and nodes have been created.\nAn example use case is performing an auto stencil check in the GUI hierarchy for input components.",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "update",
           "brief": "Call this in gui_script update function.",
           "description": "Call this in gui_script update function.",
@@ -10855,14 +9276,6 @@
         },
         {
           "type": "FUNCTION",
-          "name": "on_language_change",
-          "brief": "Calls the on_language_change function in all related components\nThis one called by global druid.on_language_change, but can be called manually to update all translations",
-          "description": "Calls the on_language_change function in all related components\nThis one called by global druid.on_language_change, but can be called manually to update all translations",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_whitelist",
           "brief": "Set whitelist components for input processing.\nIf whitelist is not empty and component not contains in this list,\ncomponent will be not processed on the input step",
           "description": "Set whitelist components for input processing.\nIf whitelist is not empty and component not contains in this list,\ncomponent will be not processed on the input step",
@@ -10912,14 +9325,6 @@
               ]
             }
           ]
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_clear_late_remove",
-          "brief": "Remove all components on late remove step DruidInstance",
-          "description": "Remove all components on late remove step DruidInstance",
-          "parameters": [],
-          "returnvalues": []
         },
         {
           "type": "FUNCTION",

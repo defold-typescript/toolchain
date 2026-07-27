@@ -363,7 +363,7 @@ test("a generic interface method carries a `generics` clause and keeps its bound
   expect(fn?.returnvalues).toEqual([{ name: "", doc: "", types: ["T"] }]);
 });
 
-test("a non-public field is dropped; a field with no visibility is kept and mapped", () => {
+test("a non-public field and method are dropped; public members are kept and mapped", () => {
   const model: LibraryModel = {
     interfaces: [
       {
@@ -382,7 +382,18 @@ test("a non-public field is dropped; a field with no visibility is kept and mapp
           { name: "pkg", types: ["number"], doc: "", isOptional: false, visibility: "package" },
           { name: "shown", types: ["number"], doc: "", isOptional: false, visibility: "public" },
         ],
-        methods: [],
+        methods: [
+          { name: "act", brief: "", generics: [], params: [], returns: [] },
+          { name: "hidden", brief: "", generics: [], params: [], returns: [], visibility: "local" },
+          {
+            name: "internal",
+            brief: "",
+            generics: [],
+            params: [],
+            returns: [],
+            visibility: "private",
+          },
+        ],
         brief: "",
       },
     ],
@@ -394,6 +405,8 @@ test("a non-public field is dropped; a field with no visibility is kept and mapp
   const props = typedef?.properties as { name: string; types: string[] }[];
   expect(props.map((p) => p.name)).toEqual(["kept", "shown"]);
   expect(props[0]?.types).toEqual(["number"]);
+  const fns = typedef?.functions as { name: string }[];
+  expect(fns.map((f) => f.name)).toEqual(["act"]);
 });
 
 test("emits moduleFunctions, then interfaces, then aliases in order", () => {
