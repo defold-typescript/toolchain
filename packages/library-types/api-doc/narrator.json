@@ -1,0 +1,843 @@
+{
+  "info": {
+    "namespace": "narrator",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "parse_file",
+      "brief": "Parse a book from an Ink file\nUse it during development, but prefer already parsed and stored books in production\nRequires `lpeg` and `io`.",
+      "description": "Parse a book from an Ink file\nUse it during development, but prefer already parsed and stored books in production\nRequires `lpeg` and `io`.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "Narrator_ParsingParams | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Narrator_Book"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "parse_content",
+      "brief": "Parse a book from the ink content string\nUse it during development, but prefer already parsed and stored books in production\nRequires `lpeg`",
+      "description": "Parse a book from the ink content string\nUse it during development, but prefer already parsed and stored books in production\nRequires `lpeg`",
+      "parameters": [
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "inclusions",
+          "doc": "",
+          "types": [
+            "string[]"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Narrator_Book"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init_story",
+      "brief": "Init a story based on the book",
+      "description": "Init a story based on the book",
+      "parameters": [
+        {
+          "name": "book",
+          "doc": "",
+          "types": [
+            "Narrator_Book"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Narrator_Story"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Narrator_Book_Version",
+      "properties": [
+        {
+          "name": "engine",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "tree",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Narrator_Book",
+      "properties": [
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Narrator_Book_Version"
+          ]
+        },
+        {
+          "name": "inclusions",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string[]"
+          ]
+        },
+        {
+          "name": "lists",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "constants",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "variables",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "params",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "tree",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Narrator_ParsingParams",
+      "properties": [
+        {
+          "name": "save",
+          "brief": "Save a parsed book to the lua file",
+          "description": "Save a parsed book to the lua file",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Narrator_Paragraph",
+      "properties": [
+        {
+          "name": "text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tags",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string[] | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Narrator_Choice",
+      "properties": [
+        {
+          "name": "text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tags",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string[] | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Narrator_State",
+      "properties": [
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "temp",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "seeds",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "variables",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "params",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable | undefined"
+          ]
+        },
+        {
+          "name": "visits",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "current_path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "paragraphs",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "choices",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "output",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "tunnels",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable | undefined"
+          ]
+        },
+        {
+          "name": "path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Object",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "new",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "extend",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "implement",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "__tostring",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "constructor",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "add_node",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_inclusion",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_list",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_constant",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_variable",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_function",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_knot",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_stitch",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_switch",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_sequence",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_return",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_assignment",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_paragraph",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_choice",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_item",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "compute_variable",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "compute_variables",
+          "brief": "",
+          "description": "",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Narrator_Story",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "begin",
+          "brief": "Start a story\nGenerate the first chunk of paragraphs and choices",
+          "description": "Start a story\nGenerate the first chunk of paragraphs and choices",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "can_continue",
+          "brief": "Does the story have paragraphs to output or not",
+          "description": "Does the story have paragraphs to output or not",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "continue",
+          "brief": "Pull the current paragraphs from the queue.",
+          "description": "Pull the current paragraphs from the queue.",
+          "parameters": [
+            {
+              "name": "steps",
+              "doc": "Count of paragraphs to pull",
+              "types": [
+                "number | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Narrator_Paragraph[]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "can_choose",
+          "brief": "Does the story have choices to output or not.\nAlso returns false if there are available paragraphs to continue.",
+          "description": "Does the story have choices to output or not.\nAlso returns false if there are available paragraphs to continue.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_choices",
+          "brief": "Returns an array of available choice titles.\nAlso returns an empty array if there are available paragraphs to continue.",
+          "description": "Returns an array of available choice titles.\nAlso returns an empty array if there are available paragraphs to continue.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Narrator_Choice[]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "choose",
+          "brief": "Make a choice to continue the story.",
+          "description": "Make a choice to continue the story.",
+          "parameters": [
+            {
+              "name": "index",
+              "doc": "an index of the choice",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "jump_to",
+          "brief": "Jump to the path",
+          "description": "Jump to the path",
+          "parameters": [
+            {
+              "name": "path_string",
+              "doc": "a path string like 'knot.stitch.label'",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_visits",
+          "brief": "Get the number of visits for the path.",
+          "description": "Get the number of visits for the path.",
+          "parameters": [
+            {
+              "name": "path_string",
+              "doc": "a path string like 'knot.stitch.label'",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_tags",
+          "brief": "Get tags for the path",
+          "description": "Get tags for the path",
+          "parameters": [
+            {
+              "name": "path_string",
+              "doc": "a path string with knot or stitch",
+              "types": [
+                "string | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "string[]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "save_state",
+          "brief": "Creates a table with the story state that can be saved and loaded later.\nUse it to save the game.",
+          "description": "Creates a table with the story state that can be saved and loaded later.\nUse it to save the game.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Narrator_State"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "load_state",
+          "brief": "Restore the story state from the saved state.\nUse it to load the game.",
+          "description": "Restore the story state from the saved state.\nUse it to load the game.",
+          "parameters": [
+            {
+              "name": "state",
+              "doc": "",
+              "types": [
+                "Narrator_State"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "observe",
+          "brief": "Assign an observer function to the variable's changes.",
+          "description": "Assign an observer function to the variable's changes.",
+          "parameters": [
+            {
+              "name": "variable",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "observer",
+              "doc": "",
+              "types": [
+                "(variable: unknown) => void"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "bind",
+          "brief": "Bind a function to external calling from the Ink.\nThe function can returns the value or not.",
+          "description": "Bind a function to external calling from the Ink.\nThe function can returns the value or not.",
+          "parameters": [
+            {
+              "name": "func_name",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "handler",
+              "doc": "",
+              "types": [
+                "(...args: unknown[]) => unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "global_tags",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string[]"
+          ]
+        },
+        {
+          "name": "constants",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, unknown>"
+          ]
+        },
+        {
+          "name": "variables",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, unknown>"
+          ]
+        },
+        {
+          "name": "migrate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(state: Narrator_State, old_version: number, new_version: number) => Narrator_State"
+          ]
+        }
+      ]
+    }
+  ]
+}

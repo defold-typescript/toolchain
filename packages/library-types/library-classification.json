@@ -638,13 +638,6 @@
       ]
     },
     {
-      "dir": "narrator",
-      "classification": "already-vendored",
-      "modules": [
-        "narrator.narrator"
-      ]
-    },
-    {
       "dir": "platypus",
       "classification": "already-vendored",
       "modules": [

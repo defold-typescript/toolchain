@@ -117,6 +117,16 @@
       "namespace": "squid",
       "typeRenames": {},
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/astrochili/narrator",
+      "ref": "1.8",
+      "license": "MIT",
+      "sourceGlobs": ["narrator/**/*.lua"],
+      "moduleId": "narrator.narrator",
+      "namespace": "narrator",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }

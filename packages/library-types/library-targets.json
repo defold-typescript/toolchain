@@ -120,12 +120,6 @@
       "generated": "generated/richtext.tags.d.ts"
     },
     {
-      "module": "narrator.narrator",
-      "path": "packages/narrator/narrator.narrator.d.ts",
-      "fixture": "fixtures/ts-defold/narrator.narrator.d.ts",
-      "generated": "generated/narrator.narrator.d.ts"
-    },
-    {
       "module": "defcon.console",
       "path": "packages/defcon/defcon.console.d.ts",
       "fixture": "fixtures/ts-defold/defcon.console.d.ts",
