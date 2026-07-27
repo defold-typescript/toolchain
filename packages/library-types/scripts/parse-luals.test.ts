@@ -39,6 +39,37 @@ describe("parseLualsSource", () => {
     ]);
   });
 
+  test("a @class with a same-line description and no inheritance names the class by its bare identifier", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class Immutable Immutable class to convert any table into runtime read-only table",
+        "local Immutable = {}",
+      ),
+    );
+    expect(model.interfaces).toHaveLength(1);
+    const iface = model.interfaces[0];
+    expect(iface?.name).toBe("Immutable");
+    expect(iface?.extends).toBeUndefined();
+    expect(iface?.name).not.toContain(" ");
+    expect(iface?.name).not.toContain("_");
+  });
+
+  test("a @class with inheritance and a same-line description parses name and parent, dropping the prose", () => {
+    const model = parseLualsSource(
+      lua("---@class Widget : druid.component a reusable widget base", "local Widget = {}"),
+    );
+    expect(model.interfaces).toHaveLength(1);
+    const iface = model.interfaces[0];
+    expect(iface?.name).toBe("Widget");
+    expect(iface?.extends).toBe("druid.component");
+  });
+
+  test("a Name: Parent head with no description is unchanged", () => {
+    const model = parseLualsSource(lua("---@class Button : druid.component", "local Button = {}"));
+    const iface = model.interfaces.find((i) => i.name === "Button");
+    expect(iface?.extends).toBe("druid.component");
+  });
+
   test("a @param/@return block before function mod.new yields a typed module function", () => {
     const model = parseLualsSource(
       lua(

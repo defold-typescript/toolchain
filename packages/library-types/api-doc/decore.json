@@ -1465,7 +1465,7 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "tiny_ecs_Tiny_ECS_module",
+      "name": "tiny_ecs",
       "properties": [
         {
           "name": "requireAll",

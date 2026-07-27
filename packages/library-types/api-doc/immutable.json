@@ -15,7 +15,7 @@
           "name": "table_to_check",
           "doc": "@table to check if is immutable",
           "types": [
-            "LuaTable | unknown"
+            "LuaTable | Immutable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -41,7 +41,7 @@
           "name": "original_table",
           "doc": "@table to convert",
           "types": [
-            "LuaTable | unknown"
+            "LuaTable | Immutable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -52,14 +52,14 @@
           "name": "",
           "doc": "@converted table",
           "types": [
-            "unknown"
+            "Immutable"
           ]
         }
       ]
     },
     {
       "type": "TYPEDEF",
-      "name": "Immutable_Immutable_class_to_convert_any_table_into_runtime_read_only_table"
+      "name": "Immutable"
     }
   ]
 }

@@ -91,7 +91,7 @@ declare module 'decore.decore' {
 		postProcess?: ((system: system, dt: number) => void) | undefined;
 		compare?: ((e1: entity, e2: entity) => void) | undefined;
 	}
-	interface tiny_ecs_Tiny_ECS_module {
+	interface tiny_ecs {
 		requireAll: (...args: unknown[]) => unknown;
 		requireAny: (...args: unknown[]) => unknown;
 		rejectAll: (...args: unknown[]) => unknown;
