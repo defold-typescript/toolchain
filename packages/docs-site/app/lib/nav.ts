@@ -211,6 +211,14 @@ export interface LibraryNavPage {
   route: string;
 }
 
+// The grouping key for an authored-here library (absent from `moduleDir`): its
+// top namespace segment. Same-repo LuaLS/script_api modules share a top segment
+// (e.g. `saver.saver`/`saver.storage`), so they collapse into one library group;
+// single-segment namespaces (`druid`, `event`, …) return themselves unchanged.
+export function libraryGroupKey(namespace: string): string {
+  return namespace.split(".")[0] ?? namespace;
+}
+
 // Group vendored library pages by creator, upstream `dir`, then namespace for
 // the Libraries tab. Labels stay slash-free: owner handle, dir, and namespace.
 export function libraryCreatorGroups(
@@ -220,7 +228,7 @@ export function libraryCreatorGroups(
 ): LibraryCreatorGroup[] {
   const byCreator = new Map<string, Map<string, Namespace[]>>();
   for (const page of pages) {
-    const dir = moduleDir.get(page.namespace) ?? page.namespace;
+    const dir = moduleDir.get(page.namespace) ?? libraryGroupKey(page.namespace);
     const creator = ownerByDir.get(dir) || dir;
     const libraries = byCreator.get(creator) ?? new Map<string, Namespace[]>();
     const modules = libraries.get(dir) ?? [];
