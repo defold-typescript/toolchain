@@ -7,58 +7,35 @@
   "elements": [
     {
       "type": "FUNCTION",
-      "name": "set",
+      "name": "reset_state",
       "brief": "",
       "description": "",
-      "parameters": [
-        {
-          "name": "id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "value",
-          "doc": "",
-          "types": [
-            "boolean | number | string"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "",
-          "types": [
-            "boolean"
-          ]
-        }
-      ]
+      "parameters": [],
+      "returnvalues": []
     },
     {
       "type": "FUNCTION",
       "name": "get",
-      "brief": "",
-      "description": "",
+      "brief": "Get the value from the storage.",
+      "description": "Get the value from the storage.",
       "parameters": [
         {
-          "name": "id",
-          "doc": "",
+          "name": "name",
+          "doc": "The storage field name",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
-          "name": "defaultValue",
-          "doc": "",
+          "name": "default_value",
+          "doc": "The default value",
           "types": [
-            "any"
+            "string | number | boolean | undefined"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
@@ -66,7 +43,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "unknown"
+            "string | number | boolean | undefined"
           ]
         }
       ]
@@ -74,24 +51,26 @@
     {
       "type": "FUNCTION",
       "name": "get_number",
-      "brief": "",
-      "description": "",
+      "brief": "Get the number from the storage.",
+      "description": "Get the number from the storage.",
       "parameters": [
         {
-          "name": "id",
-          "doc": "",
+          "name": "name",
+          "doc": "The storage field name",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
-          "name": "defaultValue",
-          "doc": "",
+          "name": "default_value",
+          "doc": "The default value. If not set, then it will be 0.",
           "types": [
-            "number"
+            "number | undefined"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
@@ -107,24 +86,26 @@
     {
       "type": "FUNCTION",
       "name": "get_string",
-      "brief": "",
-      "description": "",
+      "brief": "Get the string from the storage.",
+      "description": "Get the string from the storage.",
       "parameters": [
         {
-          "name": "id",
-          "doc": "",
+          "name": "name",
+          "doc": "The storage field name",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
-          "name": "defaultValue",
-          "doc": "",
+          "name": "default_value",
+          "doc": "The default value. If not set, then it will be an empty string.",
           "types": [
-            "string"
+            "string | undefined"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
@@ -140,24 +121,26 @@
     {
       "type": "FUNCTION",
       "name": "get_boolean",
-      "brief": "",
-      "description": "",
+      "brief": "Get the boolean from the storage.",
+      "description": "Get the boolean from the storage.",
       "parameters": [
         {
-          "name": "id",
-          "doc": "",
+          "name": "name",
+          "doc": "The storage field name",
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "False",
+          "is_vararg": "False"
         },
         {
-          "name": "defaultValue",
-          "doc": "",
+          "name": "default_value",
+          "doc": "The default value. If not set, then it will be `false`.",
           "types": [
-            "boolean"
+            "boolean | undefined"
           ],
-          "is_optional": "True"
+          "is_optional": "True",
+          "is_vararg": "False"
         }
       ],
       "returnvalues": [
@@ -169,6 +152,253 @@
           ]
         }
       ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "Set the value to storage",
+      "description": "Set the value to storage",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The record id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "value",
+          "doc": "value",
+          "types": [
+            "string | number | boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@true if the value was set, nil otherwise",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_state",
+      "properties": [
+        {
+          "name": "storage",
+          "brief": "Table with key-value data",
+          "description": "Table with key-value data",
+          "types": [
+            "LuaTable<string, unknown>"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "Current save version",
+          "description": "Current save version",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "last_game_version",
+          "brief": "Last game version",
+          "description": "Last game version",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "migration_version",
+          "brief": "Current migration version",
+          "description": "Current migration version",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_game_state",
+      "properties": [
+        {
+          "name": "saver",
+          "brief": "Saver state",
+          "description": "Saver state",
+          "types": [
+            "saver_state"
+          ]
+        },
+        {
+          "name": "storage",
+          "brief": "Storage state",
+          "description": "Storage state",
+          "types": [
+            "saver_storage_state"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_config",
+      "properties": [
+        {
+          "name": "save_folder",
+          "brief": "Save folder name. Default is project name without special characters",
+          "description": "Save folder name. Default is project name without special characters",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "save_name",
+          "brief": "Save file name, use \".json\" or \".lua\" extension to use these formats. Default is \"game\"",
+          "description": "Save file name, use \".json\" or \".lua\" extension to use these formats. Default is \"game\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "saver_key",
+          "brief": "Saver key, where saver internal data will be stored. Default is \"saver\"",
+          "description": "Saver key, where saver internal data will be stored. Default is \"saver\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "storage_key",
+          "brief": "Storage key, where storage internal data will be stored. Deprecated. Default is \"storage\"",
+          "description": "Storage key, where storage internal data will be stored. Deprecated. Default is \"storage\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "autosave_timer",
+          "brief": "Autosave timer in seconds. Default is 3 seconds",
+          "description": "Autosave timer in seconds. Default is 3 seconds",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "lua_require_as_string",
+          "brief": "If true, the `require()` function will load Lua files as strings instead of Lua tables. Default is false",
+          "description": "If true, the `require()` function will load Lua files as strings instead of Lua tables. Default is false",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: saver_logger, message: string, data: unknown | undefined) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_storage_state",
+      "properties": [
+        {
+          "name": "storage",
+          "brief": "The storage data",
+          "description": "The storage data",
+          "types": [
+            "LuaTable<string, saver_storage_value>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_storage_value",
+      "properties": [
+        {
+          "name": "s_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "i_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "b_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "saver_storage"
     }
   ]
 }

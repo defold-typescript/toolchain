@@ -77,6 +77,26 @@
       "namespace": "proto",
       "typeRenames": {},
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/Insality/defold-saver",
+      "ref": "8",
+      "license": "MIT",
+      "sourceGlobs": ["saver/**/*.lua"],
+      "moduleId": "saver.saver",
+      "namespace": "saver.saver",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "repo": "https://github.com/Insality/defold-saver",
+      "ref": "8",
+      "license": "MIT",
+      "sourceGlobs": ["saver/**/*.lua"],
+      "moduleId": "saver.storage",
+      "namespace": "saver.storage",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }

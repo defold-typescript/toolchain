@@ -535,6 +535,28 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the migrated saver.saver page pins to Insality/defold-saver, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const saver = pages.find((p) => p.namespace === "saver.saver");
+    expect(saver).toBeDefined();
+    if (!saver) return;
+    expect(saver.category).toBe("library");
+    const md = apiPageMarkdown(saver, apiLinkify(pages));
+    expect(md).toContain("[Insality/defold-saver](https://github.com/Insality/defold-saver)");
+    expect(md).not.toContain("ts-defold/library");
+  });
+
+  test("the migrated saver.storage page pins to Insality/defold-saver, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const storage = pages.find((p) => p.namespace === "saver.storage");
+    expect(storage).toBeDefined();
+    if (!storage) return;
+    expect(storage.category).toBe("library");
+    const md = apiPageMarkdown(storage, apiLinkify(pages));
+    expect(md).toContain("[Insality/defold-saver](https://github.com/Insality/defold-saver)");
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("the migrated bridge page pins to Playgama/bridge-defold, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const bridge = pages.find((p) => p.namespace === "bridge");

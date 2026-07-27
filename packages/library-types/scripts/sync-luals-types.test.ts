@@ -349,3 +349,31 @@ describe("proto migrated off the ts-defold corpus onto the LuaLS front-end", () 
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/proto.proto.json"))).toBe(false);
   });
 });
+
+describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () => {
+  test("saver.saver and saver.storage are luals namespaces, no longer ts-defold targets or a classified dir", () => {
+    const luals = readLualsTargets(PACKAGE_ROOT);
+    expect(luals.some((t) => t.namespace === "saver.saver")).toBe(true);
+    expect(luals.some((t) => t.namespace === "saver.storage")).toBe(true);
+
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "saver.saver")).toBe(false);
+    expect(targets.targets.some((t) => t.module === "saver.storage")).toBe(false);
+
+    const classification = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(classification.dirs.some((l) => l.dir === "defold-saver")).toBe(false);
+  });
+
+  test("only the retired ts-defold saver fixtures are gone; the regenerated generated/api-doc persist in place", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/saver.saver.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/saver.storage.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/saver.saver.d.ts"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/saver.storage.d.ts"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/saver.saver.json"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/saver.storage.json"))).toBe(true);
+  });
+});

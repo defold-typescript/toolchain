@@ -12,6 +12,8 @@
     "generated/lang.d.ts",
     "generated/log.d.ts",
     "generated/proto.d.ts",
+    "generated/saver.saver.d.ts",
+    "generated/saver.storage.d.ts",
     "generated/bridge.d.ts",
     "test-d/bridge-usage.test-d.ts",
     "test-d/event-usage.test-d.ts",
