@@ -192,6 +192,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("log").authoredHere).toBe(true);
     expect(meta("log").authorUrl).toBe("https://github.com/Insality/defold-log");
   });
+
+  test("attributes proto to Insality/defold-proto as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("proto").authoredHere).toBe(true);
+    expect(meta("proto").authorUrl).toBe("https://github.com/Insality/defold-proto");
+  });
 });
 
 describe("loadLibraryProvenance — script_api-sourced libraries", () => {
