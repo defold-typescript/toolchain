@@ -537,6 +537,54 @@ describe("runResolve library matching", () => {
     expect(result.extensions[0]?.assetOnly).toBe(true);
   });
 
+  test("one asset-only heroiclabs/nakama-defold dependency materializes all three cross-lane modules against the real corpus", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/heroiclabs/nakama-defold/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: [
+          "nakama-defold-main/nakama/nakama.lua",
+          "nakama-defold-main/nakama/engine/defold.lua",
+          "nakama-defold-main/nakama/util/log.lua",
+          "nakama-defold-main/asset/foo.png",
+        ],
+        contents: {},
+      },
+    };
+
+    // No libraryRegistry/libraryGeneratedDir override: this exercises the real
+    // merged corpus, where `nakama.nakama` (ts-defold lane) and
+    // `nakama.engine.defold` + `nakama.util.log` (authored lane) share the
+    // `nakama-defold` sourceId and must fold into one matched entry.
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+    });
+
+    expect(result.ok).toBe(true);
+    const librariesDir = join(cwd, ".defold-types", "libraries");
+    for (const file of [
+      "nakama.engine.defold.d.ts",
+      "nakama.nakama.d.ts",
+      "nakama.util.log.d.ts",
+    ]) {
+      expect(existsSync(join(librariesDir, file))).toBe(true);
+    }
+    expect(result.libraries).toEqual([
+      {
+        url,
+        source: "nakama-defold",
+        modules: ["nakama.engine.defold", "nakama.nakama", "nakama.util.log"],
+        provenance: "vendored",
+        verified: true,
+      },
+    ]);
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+  });
+
   test("a repo-name match whose module path is absent from the archive is not materialized and is reported unverified", async () => {
     const cwd = tmp();
     // The URL's repo name (`mylib`) matches the registry sourceId, but the archive
