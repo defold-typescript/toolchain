@@ -206,12 +206,32 @@ export function lowerMarkdownApiDoc(packageRoot: string, target: MarkdownTarget)
   return `${JSON.stringify(doc, null, 2)}\n`;
 }
 
+// Type tokens a human triaged as acceptably lossy for a markdown cutover: `nil`
+// collapses to optionality and `matrix` (README shorthand for `vmath.matrix4`)
+// emits `unknown`. Seeded from orthographic's `fidelity/orthographic.json`. A new
+// sibling's unexpected token loud-fails at regen until mapped or added here.
+const KNOWN_LOSSY_TOKENS = new Set(["matrix", "nil"]);
+
+/**
+ * markdown-scoped wrapper over the shared `computeScriptApiFidelity`. After the
+ * report is built, any `unknownToken` outside `KNOWN_LOSSY_TOKENS` loud-fails —
+ * a brand-new library's unclassified token must not be swallowed as `unknown` at
+ * regen time. The shared `computeScriptApiFidelity` is left untouched so the
+ * script_api/luals goldens (which legitimately carry unknown tokens) stay green.
+ */
 export function computeMarkdownFidelity(
   namespace: string,
   doc: MarkdownDoc,
   resolver: TypeResolver,
 ): FidelityReport {
-  return computeScriptApiFidelity(namespace, doc as unknown as ScriptApiDoc, resolver);
+  const report = computeScriptApiFidelity(namespace, doc as unknown as ScriptApiDoc, resolver);
+  const unmappable = report.unknownTokens.filter((token) => !KNOWN_LOSSY_TOKENS.has(token));
+  if (unmappable.length > 0) {
+    throw new Error(
+      `markdown fidelity [${namespace}]: unmappable type token(s) ${JSON.stringify(unmappable)} — resolve them or add to KNOWN_LOSSY_TOKENS`,
+    );
+  }
+  return report;
 }
 
 export async function buildMarkdownFidelity(
@@ -223,60 +243,108 @@ export async function buildMarkdownFidelity(
   return computeMarkdownFidelity(target.namespace, doc, resolver);
 }
 
-/** The result of comparing a markdown-parsed surface against the ts-defold
- * `.d.ts` it would replace. `decision` is `no-go` whenever any ts-defold member
- * is absent from the markdown parse (a material fidelity loss). */
+/** The result of comparing an emitted markdown surface against the ts-defold
+ * `.d.ts` it would replace. `decision` is `no-go` whenever a ts-defold member is
+ * absent from the markdown emit (a missing member) **or** a member both surfaces
+ * share was downgraded to `unknown` by the markdown emit (a lost type). */
 export interface FidelityComparison {
-  namespace: string;
   tsDefoldMembers: string[];
   markdownMembers: string[];
   missingMembers: string[];
   addedMembers: string[];
+  downgradedMembers: string[];
   decision: "go" | "no-go";
 }
 
-const TS_DEFOLD_MEMBER = /^\s*export\s+(?:function|const)\s+([A-Za-z_][\w]*)/gm;
-
-/** Extract the exported top-level member locals from a ts-defold module `.d.ts`
- * (both `export function` and `export const`). */
-export function tsDefoldMembers(dts: string): string[] {
-  const names = new Set<string>();
-  for (const match of dts.matchAll(TS_DEFOLD_MEMBER)) names.add(match[1] as string);
-  return [...names].sort();
+interface TsDefoldMember {
+  kind: "function" | "const";
+  signature: string;
 }
 
-/** The function locals a retargeted markdown doc contributes (namespace stripped). */
-export function markdownMembers(doc: MarkdownDoc): string[] {
-  const prefix = `${doc.info.namespace}.`;
-  const names = new Set<string>();
-  for (const element of doc.elements) {
-    names.add(element.name.startsWith(prefix) ? element.name.slice(prefix.length) : element.name);
-  }
-  return [...names].sort();
+// Optional `export`, then `function`/`const`, then the member name. Bare (no
+// `export`) declarations are valid inside `declare module` and the markdown
+// emitter produces them, so `export` must not be required.
+const MEMBER_DECL = /(?:export\s+)?(function|const)\s+([A-Za-z_]\w*)/g;
+
+/** Strip block and line comments so keyword-shaped prose inside a doc comment
+ * (e.g. "This function is called…") never latches onto `MEMBER_DECL`, and so a
+ * `unknown` mentioned in JSDoc never reads as a real type downgrade. */
+function stripComments(dts: string): string {
+  return dts.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
 }
 
 /**
- * Compare a retargeted markdown surface against the ts-defold `.d.ts` it would
- * replace and derive the go/no-go decision. Any ts-defold member (function or
- * constant) the markdown parse does not cover is a fidelity loss → `no-go`.
+ * Extract every top-level `function`/`const` member of a module `.d.ts` — both
+ * `export`ed and bare — with its declaration text (through the terminating
+ * top-level `;`, balancing `()`/`{}` for multiline signatures and object-typed
+ * consts). The emitted markdown module uses bare `function`, so a single
+ * extractor serves both sides of the comparison.
+ */
+export function tsDefoldSurface(dts: string): Map<string, TsDefoldMember> {
+  const src = stripComments(dts);
+  const members = new Map<string, TsDefoldMember>();
+  MEMBER_DECL.lastIndex = 0;
+  let match = MEMBER_DECL.exec(src);
+  while (match !== null) {
+    const kind = match[1] as "function" | "const";
+    const name = match[2] as string;
+    let index = MEMBER_DECL.lastIndex;
+    let parens = 0;
+    let braces = 0;
+    while (index < src.length) {
+      const ch = src[index];
+      if (ch === "(") parens++;
+      else if (ch === ")") parens--;
+      else if (ch === "{") braces++;
+      else if (ch === "}") braces--;
+      else if (ch === ";" && parens === 0 && braces === 0) break;
+      index++;
+    }
+    const signature = src
+      .slice(match.index, index + 1)
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!members.has(name)) members.set(name, { kind, signature });
+    MEMBER_DECL.lastIndex = index + 1;
+    match = MEMBER_DECL.exec(src);
+  }
+  return members;
+}
+
+/** The top-level member locals of a module `.d.ts`, sorted. */
+export function tsDefoldMembers(dts: string): string[] {
+  return [...tsDefoldSurface(dts).keys()].sort();
+}
+
+/**
+ * Compare the emitted markdown `.d.ts` against the ts-defold `.d.ts` it would
+ * replace and derive the go/no-go decision. A ts-defold member absent from the
+ * markdown emit is a missing member; a shared member whose markdown signature
+ * introduced `unknown` the ts-defold declaration lacked is a type downgrade.
+ * Either forces `no-go`.
  */
 export function compareFidelityToTsDefold(
-  doc: MarkdownDoc,
+  markdownEmittedDts: string,
   tsDefoldDts: string,
 ): FidelityComparison {
-  const tsMembers = tsDefoldMembers(tsDefoldDts);
-  const mdMembers = markdownMembers(doc);
-  const md = new Set(mdMembers);
-  const ts = new Set(tsMembers);
-  const missingMembers = tsMembers.filter((name) => !md.has(name));
-  const addedMembers = mdMembers.filter((name) => !ts.has(name));
+  const tsMap = tsDefoldSurface(tsDefoldDts);
+  const mdMap = tsDefoldSurface(markdownEmittedDts);
+  const tsMembers = [...tsMap.keys()].sort();
+  const mdMembers = [...mdMap.keys()].sort();
+  const missingMembers = tsMembers.filter((name) => !mdMap.has(name));
+  const addedMembers = mdMembers.filter((name) => !tsMap.has(name));
+  const hasUnknown = (member: TsDefoldMember | undefined): boolean =>
+    member !== undefined && /\bunknown\b/.test(member.signature);
+  const downgradedMembers = tsMembers.filter(
+    (name) => hasUnknown(mdMap.get(name)) && !hasUnknown(tsMap.get(name)),
+  );
   return {
-    namespace: doc.info.namespace,
     tsDefoldMembers: tsMembers,
     markdownMembers: mdMembers,
     missingMembers,
     addedMembers,
-    decision: missingMembers.length === 0 ? "go" : "no-go",
+    downgradedMembers,
+    decision: missingMembers.length === 0 && downgradedMembers.length === 0 ? "go" : "no-go",
   };
 }
 
