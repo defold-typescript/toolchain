@@ -125,6 +125,7 @@
     "luals-targets.json",
     "script-api-targets.json",
     "authored-targets.json",
+    "openapi-targets.json",
     "NOTICE",
     "!scripts/**/*.test.ts"
   ],

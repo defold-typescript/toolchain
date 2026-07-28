@@ -1,0 +1,7009 @@
+{
+  "info": {
+    "namespace": "nakama",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "nakama.healthcheck",
+      "description": "A healthcheck which load balancers can use to check the service.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.get_account",
+      "description": "Fetch the current user's account.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.delete_account",
+      "description": "Delete the current user's account.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.update_account",
+      "description": "Update fields in the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Update a user's account details.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_apple",
+      "description": "Authenticate a user with an Apple ID against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Apple account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_custom",
+      "description": "Authenticate a user with a custom id against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The custom account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_device",
+      "description": "Authenticate a user with a device id against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The device account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_email",
+      "description": "Authenticate a user with an email+password against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The email account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_facebook",
+      "description": "Authenticate a user with a Facebook OAuth token against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Facebook account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sync",
+          "doc": "Import Facebook friends for the user.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_facebook_instant_game",
+      "description": "Authenticate a user with a Facebook Instant Game token against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Facebook Instant Game account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_game_center",
+      "description": "Authenticate a user with Apple's GameCenter against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Game Center account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_google",
+      "description": "Authenticate a user with Google against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Google account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.authenticate_steam",
+      "description": "Authenticate a user with Steam against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Steam account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sync",
+          "doc": "Import Steam friends for the user.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_apple",
+      "description": "Add an Apple ID to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Apple Sign In token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_custom",
+      "description": "Add a custom ID to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a custom ID to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_device",
+      "description": "Add a device ID to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a device to the server. Used with authenticate/link/unlink and user.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_email",
+      "description": "Add an email+password to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send an email with password to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_facebook",
+      "description": "Add Facebook to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Facebook account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "sync",
+          "doc": "Import Facebook friends for the user.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_facebook_instant_game",
+      "description": "Add Facebook Instant Game to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_game_center",
+      "description": "Add Apple's GameCenter to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_google",
+      "description": "Add Google to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Google token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link_steam",
+      "description": "Add Steam to the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Link Steam to the current user's account.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.session_refresh",
+      "description": "Refresh a user's session using a refresh token retrieved from a previous authentication request.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Authenticate against the server with a refresh token.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_apple",
+      "description": "Remove the Apple ID from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Apple Sign In token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_custom",
+      "description": "Remove the custom ID from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a custom ID to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_device",
+      "description": "Remove the device ID from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a device to the server. Used with authenticate/link/unlink and user.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_email",
+      "description": "Remove the email+password from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send an email with password to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_facebook",
+      "description": "Remove Facebook from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Facebook token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_facebook_instant_game",
+      "description": "Remove Facebook Instant Game profile from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_game_center",
+      "description": "Remove Apple's GameCenter from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_google",
+      "description": "Remove Google from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Google token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.unlink_steam",
+      "description": "Remove Steam from the social profiles on the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send a Steam token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_channel_messages",
+      "description": "List a channel's message history.",
+      "parameters": [
+        {
+          "name": "channelId",
+          "doc": "The channel ID to list from.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "forward",
+          "doc": "True if listing should be older messages to newer, false if reverse.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "A pagination cursor, if any.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.event",
+      "description": "Submit an event for processing in the server's registered runtime custom events handler.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Represents an event to be passed through the server to registered event handlers.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_friends",
+      "description": "List all friends for the current user.",
+      "parameters": [
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "state",
+          "doc": "The friend state to list.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "An optional next page cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.delete_friends",
+      "description": "Delete one or more users by ID or username.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "The account id of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "usernames",
+          "doc": "The account username of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.add_friends",
+      "description": "Add friends by ID or username to a user's account.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "The account id of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "usernames",
+          "doc": "The account username of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.block_friends",
+      "description": "Block one or more users by ID or username.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "The account id of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "usernames",
+          "doc": "The account username of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.import_facebook_friends",
+      "description": "Import Facebook friends and add them to a user's account.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Facebook account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "reset",
+          "doc": "Reset the current user's friends list.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.import_steam_friends",
+      "description": "Import Steam friends and add them to a user's account.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The Facebook account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "reset",
+          "doc": "Reset the current user's friends list.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_groups",
+      "description": "List groups based on given filters.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "List groups that contain this value in their names.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "Optional pagination cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of groups to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "langTag",
+          "doc": "Language tag filter",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "members",
+          "doc": "Number of group members",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "doc": "Optional Open/Closed filter.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_group",
+      "description": "Create a new group with the current user as the owner.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Create a group with the current user as owner.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.delete_group",
+      "description": "Delete a group by ID.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The id of a group.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.update_group",
+      "description": "Update fields in a given group.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The ID of the group to update.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.add_group_users",
+      "description": "Add users to a group.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group to add users to.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "userIds",
+          "doc": "The users to add.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.ban_group_users",
+      "description": "Ban a set of users from a group.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group to ban users from.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "userIds",
+          "doc": "The users to ban.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.demote_group_users",
+      "description": "Demote a set of users in a group to the next role down.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group ID to demote in.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "userIds",
+          "doc": "The users to demote.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.join_group",
+      "description": "Immediately join an open group, or request to join a closed one.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group ID to join. The group must already exist.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.kick_group_users",
+      "description": "Kick a set of users from a group.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group ID to kick from.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "userIds",
+          "doc": "The users to kick.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.leave_group",
+      "description": "Leave a group the user is a member of.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group ID to leave.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.promote_group_users",
+      "description": "Promote a set of users in a group to the next role up.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group ID to promote in.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "userIds",
+          "doc": "The users to promote.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_group_users",
+      "description": "List all users that are part of a group.",
+      "parameters": [
+        {
+          "name": "groupId",
+          "doc": "The group ID to list from.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "state",
+          "doc": "The group user state to list.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "An optional next page cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.validate_purchase_apple",
+      "description": "Validate Apple IAP Receipt",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.validate_purchase_facebook_instant",
+      "description": "Validate FB Instant IAP Receipt",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.validate_purchase_google",
+      "description": "Validate Google IAP Receipt",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.validate_purchase_huawei",
+      "description": "Validate Huawei IAP Receipt",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_subscriptions",
+      "description": "List user's subscriptions.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "List user subscriptions.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.validate_subscription_apple",
+      "description": "Validate Apple Subscription Receipt",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.validate_subscription_google",
+      "description": "Validate Google Subscription Receipt",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.get_subscription",
+      "description": "Get subscription by product id.",
+      "parameters": [
+        {
+          "name": "productId",
+          "doc": "Product id of the subscription",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_leaderboard_records",
+      "description": "List leaderboard records.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "The ID of the leaderboard to list for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ownerIds",
+          "doc": "One or more owners to retrieve records for.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "A next or previous page cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiry",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from. Optional. 0 means from current time.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.delete_leaderboard_record",
+      "description": "Delete a leaderboard record.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "The leaderboard ID to delete from.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.write_leaderboard_record",
+      "description": "Write a record to a leaderboard.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "The ID of the leaderboard to write to.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "record",
+          "doc": "Record input.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_leaderboard_records_around_owner",
+      "description": "List leaderboard records that belong to a user.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "The ID of the tournament to list for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ownerId",
+          "doc": "The owner to retrieve records around.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiry",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "A next or previous page cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_matches",
+      "description": "Fetch list of running matches.",
+      "parameters": [
+        {
+          "name": "limit",
+          "doc": "Limit the number of returned matches.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "authoritative",
+          "doc": "Authoritative or relayed matches.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "label",
+          "doc": "Label filter.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "minSize",
+          "doc": "Minimum user count.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "maxSize",
+          "doc": "Maximum user count.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "query",
+          "doc": "Arbitrary label query.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_notifications",
+      "description": "Fetch list of notifications.",
+      "parameters": [
+        {
+          "name": "limit",
+          "doc": "The number of notifications to get. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cacheableCursor",
+          "doc": "A cursor to page through notifications. May be cached by clients to get from point in time forwards.\n\nvalue from NotificationList.cacheable_cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.delete_notifications",
+      "description": "Delete one or more notifications for the current user.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "The id of notifications.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.rpc_func2",
+      "description": "Execute a Lua function on the server.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The identifier of the function.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "payload",
+          "doc": "The payload of the function which must be a JSON object.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "httpKey",
+          "doc": "The authentication key used when executed as a non-client HTTP request.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.rpc_func",
+      "description": "Execute a Lua function on the server.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The identifier of the function.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "payload",
+          "doc": "The payload of the function which must be a JSON object.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "httpKey",
+          "doc": "The authentication key used when executed as a non-client HTTP request.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.session_logout",
+      "description": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.read_storage_objects",
+      "description": "Get storage objects.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Batch get storage objects.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.write_storage_objects",
+      "description": "Write objects into the storage engine.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Write objects to the storage engine.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.delete_storage_objects",
+      "description": "Delete one or more objects by ID or username.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Batch delete storage objects.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_storage_objects",
+      "description": "List publicly readable storage objects in a given collection.",
+      "parameters": [
+        {
+          "name": "collection",
+          "doc": "The collection which stores the object.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "userId",
+          "doc": "ID of the user.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "doc": "The number of storage objects to list. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "The cursor to page through results from.\n\nvalue from StorageObjectList.cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_storage_objects2",
+      "description": "List publicly readable storage objects in a given collection.",
+      "parameters": [
+        {
+          "name": "collection",
+          "doc": "The collection which stores the object.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "userId",
+          "doc": "ID of the user.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "limit",
+          "doc": "The number of storage objects to list. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "The cursor to page through results from.\n\nvalue from StorageObjectList.cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_tournaments",
+      "description": "List current or upcoming tournaments.",
+      "parameters": [
+        {
+          "name": "categoryStart",
+          "doc": "The start of the categories to include. Defaults to 0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "categoryEnd",
+          "doc": "The end of the categories to include. Defaults to 128.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "startTime",
+          "doc": "The start time for tournaments. Defaults to epoch.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "endTime",
+          "doc": "The end time for tournaments. Defaults to +1 year from current Unix time.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "A next page cursor for listings (optional).",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_tournament_records",
+      "description": "List tournament records.",
+      "parameters": [
+        {
+          "name": "tournamentId",
+          "doc": "The ID of the tournament to list for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ownerIds",
+          "doc": "One or more owners to retrieve records for.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "A next or previous page cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiry",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.delete_tournament_record",
+      "description": "Delete a tournament record.",
+      "parameters": [
+        {
+          "name": "tournamentId",
+          "doc": "The tournament ID to delete from.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.write_tournament_record2",
+      "description": "Write a record to a tournament.",
+      "parameters": [
+        {
+          "name": "tournamentId",
+          "doc": "The tournament ID to write the record for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "record",
+          "doc": "Record input.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.write_tournament_record",
+      "description": "Write a record to a tournament.",
+      "parameters": [
+        {
+          "name": "tournamentId",
+          "doc": "The tournament ID to write the record for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "record",
+          "doc": "Record input.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.join_tournament",
+      "description": "Attempt to join an open and running tournament.",
+      "parameters": [
+        {
+          "name": "tournamentId",
+          "doc": "The ID of the tournament to join. The tournament must already exist.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_tournament_records_around_owner",
+      "description": "List tournament records for a given owner.",
+      "parameters": [
+        {
+          "name": "tournamentId",
+          "doc": "The ID of the tournament to list for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ownerId",
+          "doc": "The owner to retrieve records around.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiry",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "A next or previous page cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.get_users",
+      "description": "Fetch zero or more users by ID and/or username.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "The account id of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "usernames",
+          "doc": "The account username of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "facebookIds",
+          "doc": "The Facebook ID of a user.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_user_groups",
+      "description": "List groups the current user belongs to.",
+      "parameters": [
+        {
+          "name": "userId",
+          "doc": "ID of the user.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "state",
+          "doc": "The user group state to list.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "An optional next page cursor.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_group_user_list_group_user",
+      "description": "A single user-role pair.",
+      "parameters": [
+        {
+          "name": "user",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_user_group_list_user_group",
+      "description": "A single group-role pair.",
+      "parameters": [
+        {
+          "name": "group",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_write_leaderboard_record_request_leaderboard_record_write",
+      "description": "Record values to write.",
+      "parameters": [
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subscore",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "operator",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_write_tournament_record_request_tournament_record_write",
+      "description": "Record values to write.",
+      "parameters": [
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subscore",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "operator",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account",
+      "description": "A user with additional account details. Always the current user.",
+      "parameters": [
+        {
+          "name": "user",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "wallet",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "email",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "devices",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "customId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "verifyTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "disableTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_apple",
+      "description": "Send a Apple Sign In token to the server. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_custom",
+      "description": "Send a custom ID to the server. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_device",
+      "description": "Send a device to the server. Used with authenticate/link/unlink and user.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_email",
+      "description": "Send an email with password to the server. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "email",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "password",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_facebook",
+      "description": "Send a Facebook token to the server. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_facebook_instant_game",
+      "description": "Send a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "signedPlayerInfo",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_game_center",
+      "description": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign",
+      "parameters": [
+        {
+          "name": "playerId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "bundleId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timestampSeconds",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "salt",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "signature",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "publicKeyUrl",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_google",
+      "description": "Send a Google token to the server. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_steam",
+      "description": "Send a Steam token to the server. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_channel_message",
+      "description": "A message sent on a channel.",
+      "parameters": [
+        {
+          "name": "channelId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "messageId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "code",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "senderId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistent",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "roomName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "groupId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "userIdOne",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "userIdTwo",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_channel_message_list",
+      "description": "A list of channel messages, usually a result of a list operation.",
+      "parameters": [
+        {
+          "name": "messages",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nextCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prevCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cacheableCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_create_group_request",
+      "description": "Create a group with the current user as owner.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "langTag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "avatarUrl",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "maxCount",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_delete_storage_object_id",
+      "description": "Storage objects to delete.",
+      "parameters": [
+        {
+          "name": "collection",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_delete_storage_objects_request",
+      "description": "Batch delete storage objects.",
+      "parameters": [
+        {
+          "name": "objectIds",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_event",
+      "description": "Represents an event to be passed through the server to registered event handlers.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "properties",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timestamp",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "external",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_friend",
+      "description": "A friend of a user.",
+      "parameters": [
+        {
+          "name": "user",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_friend_list",
+      "description": "A collection of zero or more friends of the user.",
+      "parameters": [
+        {
+          "name": "friends",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_group",
+      "description": "A group in the server.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "creatorId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "langTag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "avatarUrl",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "edgeCount",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "maxCount",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_group_list",
+      "description": "One or more groups returned from a listing operation.",
+      "parameters": [
+        {
+          "name": "groups",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_group_user_list",
+      "description": "A list of users belonging to a group, along with their role.",
+      "parameters": [
+        {
+          "name": "groupUsers",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_leaderboard_record",
+      "description": "Represents a complete leaderboard record with all scores and associated metadata.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "ownerId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subscore",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "numScore",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiryTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rank",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "maxNumScore",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_leaderboard_record_list",
+      "description": "A set of leaderboard records, may be part of a leaderboard records page or a batch of individual records.",
+      "parameters": [
+        {
+          "name": "records",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "ownerRecords",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nextCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prevCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rankCount",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_link_steam_request",
+      "description": "Link Steam to the current user's account.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sync",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_list_subscriptions_request",
+      "description": "List user subscriptions.",
+      "parameters": [
+        {
+          "name": "limit",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_match",
+      "description": "Represents a realtime match.",
+      "parameters": [
+        {
+          "name": "matchId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "authoritative",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tickRate",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "handlerName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_match_list",
+      "description": "A list of realtime matches.",
+      "parameters": [
+        {
+          "name": "matches",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_notification",
+      "description": "A notification in the server.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subject",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "code",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "senderId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistent",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_notification_list",
+      "description": "A collection of zero or more notifications.",
+      "parameters": [
+        {
+          "name": "notifications",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cacheableCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_read_storage_object_id",
+      "description": "Storage objects to get.",
+      "parameters": [
+        {
+          "name": "collection",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "userId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_read_storage_objects_request",
+      "description": "Batch get storage objects.",
+      "parameters": [
+        {
+          "name": "objectIds",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_rpc",
+      "description": "Execute an Lua function on the server.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "payload",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "httpKey",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_session",
+      "description": "A user's session used to authenticate messages.",
+      "parameters": [
+        {
+          "name": "created",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refreshToken",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_session_logout_request",
+      "description": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+      "parameters": [
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refreshToken",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_session_refresh_request",
+      "description": "Authenticate against the server with a refresh token.",
+      "parameters": [
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_storage_object",
+      "description": "An object within the storage engine.",
+      "parameters": [
+        {
+          "name": "collection",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "userId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permissionRead",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permissionWrite",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_storage_object_ack",
+      "description": "A storage acknowledgement.",
+      "parameters": [
+        {
+          "name": "collection",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "userId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_storage_object_acks",
+      "description": "Batch of acknowledgements for the storage object write.",
+      "parameters": [
+        {
+          "name": "acks",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_storage_object_list",
+      "description": "List of storage objects.",
+      "parameters": [
+        {
+          "name": "objects",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_storage_objects",
+      "description": "Batch of storage objects.",
+      "parameters": [
+        {
+          "name": "objects",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_subscription_list",
+      "description": "A list of validated subscriptions stored by Nakama.",
+      "parameters": [
+        {
+          "name": "validatedSubscriptions",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prevCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_tournament",
+      "description": "A tournament on the server.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "title",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "category",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sortOrder",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "maxSize",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "maxNumScore",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "canEnter",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "endActive",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nextReset",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "startTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "endTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "startActive",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prevReset",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "operator",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "authoritative",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_tournament_list",
+      "description": "A list of tournaments.",
+      "parameters": [
+        {
+          "name": "tournaments",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_tournament_record_list",
+      "description": "A set of tournament records which may be part of a tournament records page or a batch of individual records.",
+      "parameters": [
+        {
+          "name": "records",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "ownerRecords",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nextCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prevCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rankCount",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_update_account_request",
+      "description": "Update a user's account details.",
+      "parameters": [
+        {
+          "name": "username",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "displayName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "avatarUrl",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "langTag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "location",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timezone",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_user",
+      "description": "A user in the server.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "displayName",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "avatarUrl",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "langTag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "location",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timezone",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "facebookId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "googleId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "gamecenterId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "steamId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "online",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "edgeCount",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "facebookInstantGameId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "appleId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_user_group_list",
+      "description": "A list of groups belonging to a user, along with the user's role in each group.",
+      "parameters": [
+        {
+          "name": "userGroups",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_users",
+      "description": "A collection of zero or more users.",
+      "parameters": [
+        {
+          "name": "users",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_purchase_apple_request",
+      "description": "",
+      "parameters": [
+        {
+          "name": "receipt",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persist",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_purchase_facebook_instant_request",
+      "description": "",
+      "parameters": [
+        {
+          "name": "signedRequest",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persist",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_purchase_google_request",
+      "description": "",
+      "parameters": [
+        {
+          "name": "purchase",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persist",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_purchase_huawei_request",
+      "description": "",
+      "parameters": [
+        {
+          "name": "purchase",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "signature",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persist",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_purchase_response",
+      "description": "Validate IAP response.",
+      "parameters": [
+        {
+          "name": "validatedPurchases",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_subscription_apple_request",
+      "description": "",
+      "parameters": [
+        {
+          "name": "receipt",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persist",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_subscription_google_request",
+      "description": "",
+      "parameters": [
+        {
+          "name": "receipt",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persist",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validate_subscription_response",
+      "description": "Validate Subscription response.",
+      "parameters": [
+        {
+          "name": "validatedSubscription",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validated_purchase",
+      "description": "Validated Purchase stored by Nakama.",
+      "parameters": [
+        {
+          "name": "userId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "productId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "transactionId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "store",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "purchaseTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refundTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "providerResponse",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "environment",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "seenBefore",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_validated_subscription",
+      "description": "",
+      "parameters": [
+        {
+          "name": "userId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "productId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "originalTransactionId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "store",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "purchaseTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "updateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "environment",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiryTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refundTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "providerResponse",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "providerNotification",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "active",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_write_storage_object",
+      "description": "The object to store.",
+      "parameters": [
+        {
+          "name": "collection",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permissionRead",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permissionWrite",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_write_storage_objects_request",
+      "description": "Write objects to the storage engine.",
+      "parameters": [
+        {
+          "name": "objects",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_protobuf_any",
+      "description": "",
+      "parameters": [
+        {
+          "name": "@type",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_rpc_status",
+      "description": "",
+      "parameters": [
+        {
+          "name": "code",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "details",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_envelope_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cid",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presences",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "room_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "group_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id_one",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id_two",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_join_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "target",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "persistence",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "hidden",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_leave_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_message_ack_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "code",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "username",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "create_time",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "update_time",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "persistent",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "room_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "group_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id_one",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id_two",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_message_send_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_message_update_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "content",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_message_remove_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_channel_presence_event_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "channel_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "joins",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "leaves",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "room_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "group_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id_one",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id_two",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_error_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "code",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "context",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_match_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "authoritative",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "presences",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_match_create_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_match_data_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presence",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "op_code",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "reliable",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_match_data_send_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "op_code",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presences",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "reliable",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_match_join_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_match_leave_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_match_presence_event_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "joins",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "leaves",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_matchmaker_add_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "min_count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "query",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "string_properties",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "numeric_properties",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "count_multiple",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_matchmaker_matched_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "ticket",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "users",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_matchmaker_remove_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "ticket",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_matchmaker_ticket_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "ticket",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_notifications_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "notifications",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "max_size",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "leader",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "presences",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_create_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "max_size",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_join_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_leave_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_promote_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presence",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_leader_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presence",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_accept_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presence",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_remove_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presence",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_close_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_join_request_list_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_join_request_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presences",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_matchmaker_add_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "min_count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "query",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "string_properties",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "numeric_properties",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "count_multiple",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_matchmaker_remove_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ticket",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_matchmaker_ticket_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ticket",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_data_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "presence",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "op_code",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_data_send_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "op_code",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_presence_event_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "joins",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "leaves",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

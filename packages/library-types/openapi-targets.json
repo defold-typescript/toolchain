@@ -1,0 +1,17 @@
+{
+  "targets": [
+    {
+      "repo": "https://github.com/heroiclabs/nakama",
+      "ref": "v3.21.1",
+      "license": "Apache-2.0",
+      "swagger": "apigrpc/apigrpc.swagger.json",
+      "proto": "vendor/github.com/heroiclabs/nakama-common/rtapi/realtime.proto",
+      "moduleId": "nakama.nakama",
+      "namespace": "nakama",
+      "generated": "generated/openapi/nakama.nakama.d.ts",
+      "apiDoc": "api-doc/openapi/nakama.nakama.json",
+      "fidelity": "fidelity/openapi/nakama.nakama.json",
+      "decision": "no-go"
+    }
+  ]
+}
