@@ -11,6 +11,7 @@ import {
   type LibraryTargets,
   type LualsTargets,
   matchVendoredLibrary,
+  mergeVendoredLibrariesBySourceId,
   normalizeSourceId,
   type ScriptApiRegistryTargets,
   type VendoredLibrary,
@@ -290,5 +291,43 @@ describe("VendoredLibrary generatedStems is optional", () => {
     expect(
       matchVendoredLibrary("https://github.com/paulomrpp/dicebag/archive/main.zip", [pureLua]),
     ).toEqual(pureLua);
+  });
+});
+
+describe("mergeVendoredLibrariesBySourceId", () => {
+  test("folds a stemless and a stemmed entry sharing a sourceId into one, stems only for the stemmed module", () => {
+    const merged = mergeVendoredLibrariesBySourceId([
+      { sourceId: "r", modules: ["a"] },
+      { sourceId: "r", modules: ["b"], generatedStems: { b: "ns" } },
+    ]);
+    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b"], generatedStems: { b: "ns" } }]);
+  });
+
+  test("passes disjoint sourceIds through unchanged in first-seen order", () => {
+    const entries: VendoredLibrary[] = [
+      { sourceId: "second", modules: ["b.b"], generatedStems: { "b.b": "b" } },
+      { sourceId: "first", modules: ["a.a"] },
+    ];
+    expect(mergeVendoredLibrariesBySourceId(entries)).toEqual([
+      { sourceId: "second", modules: ["b.b"], generatedStems: { "b.b": "b" } },
+      { sourceId: "first", modules: ["a.a"] },
+    ]);
+  });
+
+  test("merges two stemless entries with no generatedStems key on the result", () => {
+    const merged = mergeVendoredLibrariesBySourceId([
+      { sourceId: "r", modules: ["a"] },
+      { sourceId: "r", modules: ["b"] },
+    ]);
+    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b"] }]);
+    expect(merged[0]?.generatedStems).toBeUndefined();
+  });
+
+  test("dedupes a module id shared across the two entries and sorts the merged modules", () => {
+    const merged = mergeVendoredLibrariesBySourceId([
+      { sourceId: "r", modules: ["c", "a"] },
+      { sourceId: "r", modules: ["a", "b"] },
+    ]);
+    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b", "c"] }]);
   });
 });

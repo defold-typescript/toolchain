@@ -27,6 +27,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Fixed
 
+- A dependency that ships modules across two of this repo's registry lanes — such as [`heroiclabs/nakama-defold`](/api/nakama.engine.defold), whose `nakama.nakama` is codegen'd while its `nakama.engine.defold` and `nakama.util.log` helpers are forked — now resolves and materializes every module; [`resolve`](./resolve.md) previously kept only the first lane's module and silently dropped the rest.
 - The [forked-library authoring guide](./authoring-forked-library-types.md)'s `defmath.defmath` worked example now correctly describes how a fork's core engine types resolve — through the `@defold-typescript/types` ambient reference the validity gate pulls in — instead of the previous wrong claim about `vmath.*` member types and "vmath aggregation."
 
 ## v0.23.0

@@ -188,6 +188,44 @@ export function buildAuthoredRegistryEntries(targets: AuthoredRegistryTargets): 
   return groupTargetsBySourceId(targets.targets);
 }
 
+// Fold registry entries that share a `sourceId` into one, preserving first-seen
+// order. A single upstream repo can ship modules across more than one lane (the
+// ts-defold lane emits `nakama.nakama`, the authored lane emits
+// `nakama.engine.defold` + `nakama.util.log`, both keyed `nakama-defold`), and
+// `matchVendoredLibrary` matches on `sourceId` with a first-match `find`, so the
+// concatenated lanes must merge to one entry per source or the later lanes'
+// modules are silently dropped. Union `modules` (dedupe + sort), merge every
+// contributor's `generatedStems`, and attach `generatedStems` only when the
+// merged record is non-empty so a wholly stemless source keeps the pure-Lua
+// entry shape. Pure and IO-free.
+export function mergeVendoredLibrariesBySourceId(
+  entries: readonly VendoredLibrary[],
+): VendoredLibrary[] {
+  const bySource = new Map<string, { modules: Set<string>; stems: Record<string, string> }>();
+  const order: string[] = [];
+  for (const entry of entries) {
+    let acc = bySource.get(entry.sourceId);
+    if (acc === undefined) {
+      acc = { modules: new Set<string>(), stems: {} };
+      bySource.set(entry.sourceId, acc);
+      order.push(entry.sourceId);
+    }
+    for (const module of entry.modules) {
+      acc.modules.add(module);
+    }
+    if (entry.generatedStems !== undefined) {
+      Object.assign(acc.stems, entry.generatedStems);
+    }
+  }
+  return order.map((sourceId) => {
+    const acc = bySource.get(sourceId) as { modules: Set<string>; stems: Record<string, string> };
+    const modules = [...acc.modules].sort();
+    return Object.keys(acc.stems).length > 0
+      ? { sourceId, modules, generatedStems: acc.stems }
+      : { sourceId, modules };
+  });
+}
+
 export function normalizeSourceId(url: string): string {
   const withoutFragment = url.split(/[?#]/, 1)[0] ?? "";
   const withoutProtocol = withoutFragment.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
