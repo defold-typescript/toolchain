@@ -613,6 +613,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).toContain("[britzl/defcon](https://github.com/britzl/defcon)");
     expect(md).not.toContain("ts-defold/library");
   });
+
+  test("the forked deftest page pins to britzl/deftest, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const deftest = pages.find((p) => p.namespace === "deftest");
+    expect(deftest).toBeDefined();
+    if (!deftest) return;
+    expect(deftest.category).toBe("library");
+    const md = apiPageMarkdown(deftest, apiLinkify(pages));
+    expect(md).toContain("[britzl/deftest](https://github.com/britzl/deftest)");
+    expect(md).not.toContain("ts-defold/library");
+  });
 });
 
 describe("apiPageMarkdown display name", () => {

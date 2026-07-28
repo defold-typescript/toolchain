@@ -178,3 +178,16 @@ stem, so the goldens are `generated/defcon.d.ts` and `api-doc/defcon.json` — n
 the dotted `moduleId` — keeping the docs Libraries tree and file layout uniform
 with the other severed libraries. The `defcon` page then attributes to
 `britzl/defcon` at `2.6.0`, not the `ts-defold/library` corpus.
+
+## Worked example — `deftest.deftest`
+
+`britzl/deftest` (a test runner, pinned to `2.8.0`) is a second fork with the
+same reference-entry shape as `defcon.console`. It illustrates one wrinkle: its
+`.d.ts` declares ambient top-level globals (`describe`, `before`, `after`,
+`test`, `assert_*`) alongside `declare module 'deftest.deftest'`. A fork copies
+the surface **verbatim**, so those globals carry into `generated/deftest.d.ts`
+and therefore into the `dts-declaration-validity` gate's compilation. That is
+fine — they raise no duplicate-identifier clash — and the api-doc lowering still
+scopes the page to the module's exports (`add`, `run`), so the ambient globals
+never leak into the `deftest` reference page. Do not alter a vendored fork to
+suppress such globals; they are part of the library's real surface.

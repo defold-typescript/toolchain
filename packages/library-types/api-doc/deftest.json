@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "deftest.deftest",
+    "namespace": "deftest",
     "brief": "Unit testing in Defold",
     "description": "Unit testing in Defold"
   },
