@@ -63,13 +63,6 @@
       ]
     },
     {
-      "dir": "defcon",
-      "classification": "already-vendored",
-      "modules": [
-        "defcon.console"
-      ]
-    },
-    {
       "dir": "defmath",
       "classification": "already-vendored",
       "modules": [

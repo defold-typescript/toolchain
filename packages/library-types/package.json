@@ -75,9 +75,6 @@
     "./richtext.tags": {
       "types": "./generated/richtext.tags.d.ts"
     },
-    "./defcon.console": {
-      "types": "./generated/defcon.console.d.ts"
-    },
     "./package.json": "./package.json",
     "./defsave.defsave": {
       "types": "./generated/defsave.defsave.d.ts"

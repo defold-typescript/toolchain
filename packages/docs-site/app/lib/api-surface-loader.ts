@@ -196,6 +196,12 @@ export function libraryOwnerByDir(libraryTypesDir: string): Map<string, string> 
     const owner = githubOwner(provenance.repo);
     if (owner) ownerByDir.set(libraryGroupKey(namespace), owner);
   }
+  // Authored/forked libraries (defcon) are also absent from NOTICE and the
+  // classification; attribute each to its own upstream repo owner the same way.
+  for (const [namespace, provenance] of loadAuthoredProvenance(libraryTypesDir)) {
+    const owner = githubOwner(provenance.repo);
+    if (owner) ownerByDir.set(libraryGroupKey(namespace), owner);
+  }
   return ownerByDir;
 }
 
@@ -228,6 +234,24 @@ function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenan
 // also the committed `generated/<namespace>.d.ts` stem and thus the page key.
 function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
   const path = join(libraryTypesDir, "script-api-targets.json");
+  if (!existsSync(path)) return new Map();
+  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
+    targets: { namespace: string; repo: string; ref: string; license?: string }[];
+  };
+  return new Map(
+    targets.map((t) => [t.namespace, { repo: t.repo, ref: t.ref, license: t.license ?? "" }]),
+  );
+}
+
+// An authored/forked library's own pin, read from `authored-targets.json`. Same
+// shape and role as the LuaLS/script_api loaders: a library this repo maintains
+// as a first-party hand-authored or forked `.d.ts` (its upstream has no usable
+// structured source), absent from the ts-defold classification, so it carries
+// its own repo/ref rather than the shared vendored commit. Keyed by the
+// single-segment `namespace`, which is also the `generated/<namespace>.d.ts`
+// stem and thus the page key.
+function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
+  const path = join(libraryTypesDir, "authored-targets.json");
   if (!existsSync(path)) return new Map();
   const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
     targets: { namespace: string; repo: string; ref: string; license?: string }[];
@@ -274,12 +298,14 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
 
   const moduleDir = libraryModuleDirs(libraryTypesDir);
   const modulePath = libraryModulePaths(libraryTypesDir);
-  // A namespace this repo maintains from primary source — LuaLS *or* script_api —
-  // is authored-here and carries its own upstream pin. Both loaders yield the
-  // same `{repo, ref, license}` shape keyed by namespace.
+  // A namespace this repo maintains from primary source — LuaLS, script_api, *or*
+  // a first-party authored/forked `.d.ts` — is authored-here and carries its own
+  // upstream pin. Every loader yields the same `{repo, ref, license}` shape keyed
+  // by namespace.
   const maintainedHere = new Map([
     ...loadLualsProvenance(libraryTypesDir),
     ...loadScriptApiProvenance(libraryTypesDir),
+    ...loadAuthoredProvenance(libraryTypesDir),
   ]);
 
   const { repo, commit, license } = classification.source;

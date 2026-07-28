@@ -20,6 +20,7 @@
       "!**/library-classification.json",
       "!**/test/fixtures",
       "!**/fixtures/ts-defold",
+      "!**/fixtures/authored",
       "!**/*.lua"
     ]
   },
