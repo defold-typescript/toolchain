@@ -337,7 +337,7 @@ declare module 'nakama.nakama' {
     function create_channel_message_send_message(channel_id: string, content: string): void;
     function create_channel_message_update_message(channel_id: string, message_id: string, content: string): void;
     function create_channel_presence_event_message(channel_id: string, joins: Record<string | number, unknown>, leaves: Record<string | number, unknown>, room_name: string, group_id: string, user_id_one: string, user_id_two: string): void;
-    function create_envelope_message(cid: string): void;
+    function create_envelope_message(cid: string, channel?: Record<string | number, unknown>, channel_join?: Record<string | number, unknown>, channel_leave?: Record<string | number, unknown>, channel_message?: Record<string | number, unknown>, channel_message_ack?: Record<string | number, unknown>, channel_message_send?: Record<string | number, unknown>, channel_message_update?: Record<string | number, unknown>, channel_message_remove?: Record<string | number, unknown>, channel_presence_event?: Record<string | number, unknown>, error?: Record<string | number, unknown>, match?: Record<string | number, unknown>, match_create?: Record<string | number, unknown>, match_data?: Record<string | number, unknown>, match_data_send?: Record<string | number, unknown>, match_join?: Record<string | number, unknown>, match_leave?: Record<string | number, unknown>, match_presence_event?: Record<string | number, unknown>, matchmaker_add?: Record<string | number, unknown>, matchmaker_matched?: Record<string | number, unknown>, matchmaker_remove?: Record<string | number, unknown>, matchmaker_ticket?: Record<string | number, unknown>, notifications?: Record<string | number, unknown>, rpc?: Record<string | number, unknown>, status?: Record<string | number, unknown>, status_follow?: Record<string | number, unknown>, status_presence_event?: Record<string | number, unknown>, status_unfollow?: Record<string | number, unknown>, status_update?: Record<string | number, unknown>, stream_data?: Record<string | number, unknown>, stream_presence_event?: Record<string | number, unknown>, ping?: Record<string | number, unknown>, pong?: Record<string | number, unknown>, party?: Record<string | number, unknown>, party_create?: Record<string | number, unknown>, party_join?: Record<string | number, unknown>, party_leave?: Record<string | number, unknown>, party_promote?: Record<string | number, unknown>, party_leader?: Record<string | number, unknown>, party_accept?: Record<string | number, unknown>, party_remove?: Record<string | number, unknown>, party_close?: Record<string | number, unknown>, party_join_request_list?: Record<string | number, unknown>, party_join_request?: Record<string | number, unknown>, party_matchmaker_add?: Record<string | number, unknown>, party_matchmaker_remove?: Record<string | number, unknown>, party_matchmaker_ticket?: Record<string | number, unknown>, party_data?: Record<string | number, unknown>, party_data_send?: Record<string | number, unknown>, party_presence_event?: Record<string | number, unknown>): void;
     function create_error_message(code: number, message: string, context: Record<string | number, unknown>): void;
     /**
      * Create a new group with the current user as the owner.
@@ -352,12 +352,12 @@ declare module 'nakama.nakama' {
     function create_match_create_message(name: string): void;
     function create_match_data_message(match_id: string, presence: Record<string | number, unknown>, op_code: number, data: string, reliable: boolean): void;
     function create_match_data_send_message(match_id: string, op_code: number, data: string, presences: Record<string | number, unknown>, reliable: boolean): void;
-    function create_match_join_message(metadata: Record<string | number, unknown>): void;
+    function create_match_join_message(match_id: string | undefined, token: string | undefined, metadata: Record<string | number, unknown>): void;
     function create_match_leave_message(match_id: string): void;
     function create_match_message(match_id: string, authoritative: boolean, label: Record<string | number, unknown>, size: number, presences: Record<string | number, unknown>, self: Record<string | number, unknown>): void;
     function create_match_presence_event_message(match_id: string, joins: Record<string | number, unknown>, leaves: Record<string | number, unknown>): void;
     function create_matchmaker_add_message(min_count: number, max_count: number, query: string, string_properties: Record<string | number, unknown>, numeric_properties: Record<string | number, unknown>, count_multiple: Record<string | number, unknown>): void;
-    function create_matchmaker_matched_message(ticket: string, users: Record<string | number, unknown>, self: Record<string | number, unknown>): void;
+    function create_matchmaker_matched_message(ticket: string, match_id: string | undefined, token: string | undefined, users: Record<string | number, unknown>, self: Record<string | number, unknown>): void;
     function create_matchmaker_remove_message(ticket: string): void;
     function create_matchmaker_ticket_message(ticket: string): void;
     function create_notifications_message(notifications: Record<string | number, unknown>): void;
@@ -378,12 +378,23 @@ declare module 'nakama.nakama' {
     function create_party_presence_event_message(party_id: string, joins: Record<string | number, unknown>, leaves: Record<string | number, unknown>): void;
     function create_party_promote_message(party_id: string, presence: Record<string | number, unknown>): void;
     function create_party_remove_message(party_id: string, presence: Record<string | number, unknown>): void;
+    function create_ping_message(): void;
+    function create_pong_message(): void;
     function create_protobuf_any(arg0?: string): Record<string | number, unknown>;
     function create_rpc_status(code?: number, message?: string, details?: Record<string | number, unknown>): Record<string | number, unknown>;
+    function create_status_follow_message(user_ids: Record<string | number, unknown>, usernames: Record<string | number, unknown>): void;
+    function create_status_message(presences: Record<string | number, unknown>): void;
+    function create_status_presence_event_message(joins: Record<string | number, unknown>, leaves: Record<string | number, unknown>): void;
+    function create_status_unfollow_message(user_ids: Record<string | number, unknown>): void;
+    function create_status_update_message(status: Record<string | number, unknown>): void;
+    function create_stream_data_message(stream: Record<string | number, unknown>, sender: Record<string | number, unknown>, data: string, reliable: boolean): void;
+    function create_stream_message(mode: number, subject: string, subcontext: string, label: string): void;
+    function create_stream_presence_event_message(stream: Record<string | number, unknown>, joins: Record<string | number, unknown>, leaves: Record<string | number, unknown>): void;
     /**
      * A single group-role pair.
      */
     function create_user_group_list_user_group(group?: Record<string | number, unknown>, state?: number): Record<string | number, unknown>;
+    function create_user_presence_message(user_id: string, session_id: string, username: string, persistence: boolean, status: Record<string | number, unknown>): void;
     /**
      * Record values to write.
      */

@@ -67,4 +67,61 @@ describe("parseOpenApi on the committed nakama swagger + realtime proto", () => 
       }
     }
   });
+
+  test("an inline empty message does not swallow the following message", () => {
+    const inline = parseOpenApi(
+      "{}",
+      "message Ping {}\nmessage Status {\n  repeated string user_ids = 1;\n}\n",
+    );
+    const ping = element(inline, "create_ping_message");
+    expect(ping).toBeDefined();
+    expect(ping?.parameters).toEqual([]);
+    const status = element(inline, "create_status_message");
+    expect(status).toBeDefined();
+    expect(status?.parameters.map((p) => p.name)).toEqual(["user_ids"]);
+    expect(status?.parameters[0]?.types).toEqual(["table"]);
+  });
+
+  test("the message tail after `Ping {}` is no longer dropped", () => {
+    // Ping (line 583) and every following top-level message through UserPresence
+    // used to accumulate into the never-closed Ping frame and disappear.
+    for (const name of [
+      "create_ping_message",
+      "create_pong_message",
+      "create_status_follow_message",
+      "create_status_unfollow_message",
+      "create_status_update_message",
+      "create_stream_message",
+      "create_stream_data_message",
+      "create_user_presence_message",
+    ]) {
+      expect(element(doc, name)).toBeDefined();
+    }
+  });
+
+  test("a direct `oneof` alternative is a parent field, marked optional", () => {
+    // MatchJoin: `oneof id { string match_id = 1; string token = 2; }` plus the
+    // depth-1 `map<string,string> metadata = 3;`.
+    const join = element(doc, "create_match_join_message");
+    expect(join).toBeDefined();
+    const names = join?.parameters.map((p) => p.name) ?? [];
+    expect(names).toContain("match_id");
+    expect(names).toContain("token");
+    expect(names).toContain("metadata");
+    expect(join?.parameters.find((p) => p.name === "match_id")?.is_optional).toBe("True");
+    expect(join?.parameters.find((p) => p.name === "token")?.is_optional).toBe("True");
+  });
+
+  test("a nested `message` block is isolated, not flattened into its parent", () => {
+    // MatchmakerMatched nests `message MatchmakerUser`; its `presence`/`party_id`
+    // fields must not leak into the parent constructor.
+    const matched = element(doc, "create_matchmaker_matched_message");
+    expect(matched).toBeDefined();
+    const names = matched?.parameters.map((p) => p.name) ?? [];
+    expect(names).not.toContain("presence");
+    expect(names).not.toContain("party_id");
+    // The parent's own oneof alternatives are still present.
+    expect(names).toContain("match_id");
+    expect(names).toContain("token");
+  });
 });

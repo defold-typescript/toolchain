@@ -5878,6 +5878,398 @@
           "types": [
             "string"
           ]
+        },
+        {
+          "name": "channel",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_join",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_leave",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_message",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_message_ack",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_message_send",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_message_update",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_message_remove",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "channel_presence_event",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match_create",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match_data",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match_data_send",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match_join",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match_leave",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match_presence_event",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "matchmaker_add",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "matchmaker_matched",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "matchmaker_remove",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "matchmaker_ticket",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "notifications",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rpc",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "status",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "status_follow",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "status_presence_event",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "status_unfollow",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "status_update",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "stream_data",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "stream_presence_event",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "ping",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pong",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_create",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_join",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_leave",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_promote",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_leader",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_accept",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_remove",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_close",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_join_request_list",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_join_request",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_matchmaker_add",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_matchmaker_remove",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_matchmaker_ticket",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_data",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_data_send",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "party_presence_event",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -6391,6 +6783,22 @@
       "description": "",
       "parameters": [
         {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
           "name": "metadata",
           "doc": "",
           "types": [
@@ -6505,6 +6913,22 @@
           "types": [
             "string"
           ]
+        },
+        {
+          "name": "match_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "token",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
         },
         {
           "name": "users",
@@ -6997,6 +7421,253 @@
         },
         {
           "name": "leaves",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_ping_message",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_pong_message",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_status_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "presences",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_status_follow_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "user_ids",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "usernames",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_status_presence_event_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "joins",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "leaves",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_status_unfollow_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "user_ids",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_status_update_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "status",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_stream_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "mode",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "subject",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "subcontext",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_stream_data_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "stream",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "sender",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "reliable",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_stream_presence_event_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "stream",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "joins",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "leaves",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_user_presence_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "session_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "username",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "persistence",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "status",
           "doc": "",
           "types": [
             "table"
