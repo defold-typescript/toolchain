@@ -88,14 +88,8 @@
     "./starly.starly": {
       "types": "./generated/starly.starly.d.ts"
     },
-    "./nakama.engine.defold": {
-      "types": "./generated/nakama.engine.defold.d.ts"
-    },
     "./nakama.nakama": {
       "types": "./generated/nakama.nakama.d.ts"
-    },
-    "./nakama.util.log": {
-      "types": "./generated/nakama.util.log.d.ts"
     },
     "./yagames.yagames": {
       "types": "./generated/yagames.yagames.d.ts"

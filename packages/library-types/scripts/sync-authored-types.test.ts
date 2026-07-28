@@ -244,3 +244,37 @@ describe("zzfx.api migration integrity", () => {
     expect(golden).toContain("declare module 'zzfx.api' {");
   });
 });
+
+describe("nakama helpers migration integrity", () => {
+  test("both hand-written helpers are registered in authored-targets.json", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    expect(targets.some((t) => t.namespace === "nakama.engine.defold")).toBe(true);
+    expect(targets.some((t) => t.namespace === "nakama.util.log")).toBe(true);
+  });
+
+  test("neither helper is a ts-defold library-targets row any longer", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "nakama.engine.defold")).toBe(false);
+    expect(targets.some((t) => t.module === "nakama.util.log")).toBe(false);
+  });
+
+  test("the nakama-defold dir drops both helpers but retains nakama.nakama", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string; modules: string[] }[] };
+    const nakama = dirs.find((c) => c.dir === "nakama-defold");
+    expect(nakama).toBeDefined();
+    expect(nakama?.modules).toContain("nakama.nakama");
+    expect(nakama?.modules).not.toContain("nakama.engine.defold");
+    expect(nakama?.modules).not.toContain("nakama.util.log");
+  });
+
+  test("the retired ts-defold helper fixtures are gone (authored copies replace them)", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.engine.defold.d.ts"))).toBe(
+      false,
+    );
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.util.log.d.ts"))).toBe(false);
+  });
+});

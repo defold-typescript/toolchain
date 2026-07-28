@@ -648,6 +648,21 @@ describe("apiPageMarkdown library provenance block", () => {
     );
     expect(md).not.toContain("ts-defold/library");
   });
+
+  test("each forked nakama helper page pins to heroiclabs/nakama-defold, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {
+      const page = pages.find((p) => p.namespace === namespace);
+      expect(page).toBeDefined();
+      if (!page) continue;
+      expect(page.category).toBe("library");
+      const md = apiPageMarkdown(page, apiLinkify(pages));
+      expect(md).toContain(
+        "[heroiclabs/nakama-defold](https://github.com/heroiclabs/nakama-defold)",
+      );
+      expect(md).not.toContain("ts-defold/library");
+    }
+  });
 });
 
 describe("apiPageMarkdown display name", () => {
