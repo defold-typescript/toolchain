@@ -22,6 +22,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **[defcon](/api/defcon)** (`britzl/defcon` `2.6.0`) — imported as `import * as defcon from "defcon.console"`.
   - **[deftest](/api/deftest)** (`britzl/deftest` `2.8.0`) — imported as `import * as deftest from "deftest.deftest"`; its ambient test-DSL globals (`describe`, `test`, `assert_*`) carry along in the fork.
   - **[defmath](/api/defmath)** (`subsoap/defmath` `c67c2273`) — imported as `import * as defmath from "defmath.defmath"`; pinned to a commit SHA as upstream ships no tags.
+  - **[zzfx](/api/zzfx)** (`thejustinwalsh/defold-zzfx` `8c90e12c`) — imported as `import * as zzfx from "zzfx.api"`; pinned to a commit SHA as upstream ships no tags.
 
 ### Fixed
 

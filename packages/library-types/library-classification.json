@@ -292,13 +292,6 @@
       ]
     },
     {
-      "dir": "defold-zzfx",
-      "classification": "already-vendored",
-      "modules": [
-        "zzfx.api"
-      ]
-    },
-    {
       "dir": "defos",
       "classification": "native",
       "modules": [
