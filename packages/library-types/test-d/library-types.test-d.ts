@@ -15,9 +15,7 @@ import * as mem from "metrics.mem";
 import * as monarch from "monarch.monarch";
 import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
-import * as nakamaEngine from "nakama.engine.defold";
 import * as nakama from "nakama.nakama";
-import * as nakamaLog from "nakama.util.log";
 import * as camera from "orthographic.camera";
 import * as persist from "persist.persist";
 import * as platypus from "platypus.platypus";
@@ -146,17 +144,6 @@ const _memValue: number = _memMetrics.mem();
 _memMetrics.update();
 _memMetrics.draw();
 
-const _nakamaUuid: string = nakamaEngine.uuid();
-declare const _nakamaSocket: symbol;
-nakamaEngine.socket_create({}, (socket, message) => {
-  void socket;
-  void message;
-});
-nakamaEngine.socket_connect(_nakamaSocket, (success, error) => {
-  void success;
-  void error;
-});
-nakamaEngine.socket_send(_nakamaSocket, "{}", () => {});
 const _nakamaClient = nakama.create_client({
   host: "127.0.0.1",
   port: 7350,
@@ -167,8 +154,6 @@ const _nakamaClient = nakama.create_client({
 const _nakamaAccount: { id: string; vars: unknown } = nakama.create_api_account_custom("user", {});
 const _nakamaSession = nakama.authenticate_custom(_nakamaClient, _nakamaAccount, true, "user");
 nakama.set_bearer_token(_nakamaClient, _nakamaSession.token);
-nakamaLog.print();
-nakamaLog.silent();
 
 const _yagamesPlayerId: string = yagames.player_get_id();
 const _yagamesDevice: "desktop" | "mobile" | "tablet" = yagames.device_info_type();
@@ -229,7 +214,6 @@ void _dbFlip;
 void _dbDraw;
 void _stView;
 void _stShaking;
-void _nakamaUuid;
 void _nakamaAccount;
 void _nakamaSession;
 void _yagamesPlayerId;
