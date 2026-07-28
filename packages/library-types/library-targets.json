@@ -162,12 +162,6 @@
       "generated": "generated/metrics.mem.d.ts"
     },
     {
-      "module": "deftest.deftest",
-      "path": "packages/deftest/deftest.deftest.d.ts",
-      "fixture": "fixtures/ts-defold/deftest.deftest.d.ts",
-      "generated": "generated/deftest.deftest.d.ts"
-    },
-    {
       "module": "nakama.engine.defold",
       "path": "packages/nakama-defold/nakama.engine.defold.d.ts",
       "fixture": "fixtures/ts-defold/nakama.engine.defold.d.ts",

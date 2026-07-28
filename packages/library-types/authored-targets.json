@@ -9,6 +9,16 @@
       "namespace": "defcon",
       "generated": "generated/defcon.d.ts",
       "apiDoc": "api-doc/defcon.json"
+    },
+    {
+      "repo": "https://github.com/britzl/deftest",
+      "ref": "2.8.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/deftest.deftest.d.ts",
+      "moduleId": "deftest.deftest",
+      "namespace": "deftest",
+      "generated": "generated/deftest.d.ts",
+      "apiDoc": "api-doc/deftest.json"
     }
   ]
 }

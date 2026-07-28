@@ -85,9 +85,6 @@
     "./defmath.defmath": {
       "types": "./generated/defmath.defmath.d.ts"
     },
-    "./deftest.deftest": {
-      "types": "./generated/deftest.deftest.d.ts"
-    },
     "./dicebag.dicebag": {
       "types": "./generated/dicebag.dicebag.d.ts"
     },
