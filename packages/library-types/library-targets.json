@@ -180,12 +180,6 @@
       "generated": "generated/yagames.yagames.d.ts"
     },
     {
-      "module": "zzfx.api",
-      "path": "packages/defold-zzfx/zzfx.api.d.ts",
-      "fixture": "fixtures/ts-defold/zzfx.api.d.ts",
-      "generated": "generated/zzfx.api.d.ts"
-    },
-    {
       "module": "boom.boom",
       "path": "packages/boom/boom.boom.d.ts",
       "fixture": "fixtures/ts-defold/boom.boom.d.ts",

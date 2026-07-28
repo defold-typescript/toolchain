@@ -212,3 +212,35 @@ describe("defmath.defmath migration integrity", () => {
     expect(golden).not.toContain("vmath.");
   });
 });
+
+describe("zzfx.api migration integrity", () => {
+  test("zzfx is registered in authored-targets.json", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    expect(targets.some((t) => t.namespace === "zzfx")).toBe(true);
+  });
+
+  test("zzfx.api is no longer a ts-defold library-targets row", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "zzfx.api")).toBe(false);
+  });
+
+  test("the defold-zzfx dir is gone from library-classification.json", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defold-zzfx")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture and dotted generated golden are deleted", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/zzfx.api.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/zzfx.api.d.ts"))).toBe(false);
+  });
+
+  test("the golden carries the module-external opaque handle declaration", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/zzfx.d.ts"), "utf8");
+    expect(golden).toContain("type ZzFXSample = LuaUserdata");
+    expect(golden).toContain("declare module 'zzfx.api' {");
+  });
+});

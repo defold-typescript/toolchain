@@ -103,9 +103,6 @@
     "./bridge.bridge": {
       "types": "./generated/bridge.d.ts"
     },
-    "./zzfx.api": {
-      "types": "./generated/zzfx.api.d.ts"
-    },
     "./boom.boom": {
       "types": "./generated/boom.boom.d.ts"
     },
