@@ -69,7 +69,7 @@ library is the sole maintainer of its namespace, so it carries its own
 | Field | Required | What it is |
 | ----- | -------- | ---------- |
 | `repo` | yes | The GitHub repository URL, e.g. `https://github.com/britzl/defcon`. |
-| `ref` | yes | The exact release tag to pin. Resolve the newest stable tag (`git ls-remote --tags <repo>`) — never invent one. |
+| `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
 | `authored` | yes | Package-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
 | `namespace` | yes | The artifact stem — the emitted files are `generated/<namespace>.d.ts` and `api-doc/<namespace>.json`. |
@@ -191,3 +191,15 @@ fine — they raise no duplicate-identifier clash — and the api-doc lowering s
 scopes the page to the module's exports (`add`, `run`), so the ambient globals
 never leak into the `deftest` reference page. Do not alter a vendored fork to
 suppress such globals; they are part of the library's real surface.
+
+## Worked example — `defmath.defmath`
+
+`subsoap/defmath` (a pure-Lua math-helper module) is a third fork with the same
+reference-entry shape, illustrating the **no-tag** case: upstream publishes no
+git tags, so `ref` pins the default-branch commit SHA
+(`c67c227322334056cea7a631f3ddcdf2bcfd480c`) rather than a semver tag. The
+`defmath` page attributes to that SHA and its `sourceUrl` points at
+`.../tree/c67c2273…` — expected, not a defect. Its surface also references core
+engine types (`vmath.vector3 | vmath.vector4`, `vmath.quaternion`), which resolve
+in the `dts-declaration-validity` gate because that gate's ambient reference
+aggregates `vmath`; a fork consuming engine types needs no special wiring.

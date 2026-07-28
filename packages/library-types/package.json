@@ -82,9 +82,6 @@
     "./persist.persist": {
       "types": "./generated/persist.persist.d.ts"
     },
-    "./defmath.defmath": {
-      "types": "./generated/defmath.defmath.d.ts"
-    },
     "./dicebag.dicebag": {
       "types": "./generated/dicebag.dicebag.d.ts"
     },
