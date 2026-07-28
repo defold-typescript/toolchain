@@ -216,46 +216,75 @@ function protoType(rawType: string): string {
 // ignored by requiring the `= <tag>;` tail.
 const PROTO_FIELD = /^\s*(map<[^>]+>|repeated\s+[\w.]+|[\w.]+)\s+([a-z_]\w*)\s*=\s*\d+\s*;/;
 const PROTO_MESSAGE_OPEN = /^message\s+([A-Za-z_]\w*)\s*\{/;
+// A `oneof` groups alternatives that are the enclosing message's own fields; any
+// other block (`message`/`enum`) owns its fields and must not leak them upward, so
+// non-`oneof` openers default to an isolating `other` frame.
+const PROTO_ONEOF_OPEN = /^\s*oneof\s+[A-Za-z_]\w*\s*\{/;
 
 function parseProtoMessages(protoText: string): OpenApiElement[] {
   const elements: OpenApiElement[] = [];
   const lines = protoText.split("\n");
   let current: { name: string; parameters: OpenApiParam[] } | null = null;
-  let depth = 0;
+  // Block-kind frames nested inside the current message, excluding the message
+  // root (which `current !== null` represents). Integer depth cannot tell a
+  // `oneof` alternative (a parent field) from a nested-`message` field (not one);
+  // the frame kinds carry that distinction.
+  let frames: Array<"oneof" | "other"> = [];
+
+  const emit = () => {
+    if (current === null) return;
+    elements.push({
+      type: "FUNCTION",
+      name: `create_${snake(current.name)}_message`,
+      description: "",
+      parameters: current.parameters,
+      returnvalues: [],
+    });
+    current = null;
+    frames = [];
+  };
+
+  // Account one message-body segment (a whole line, or the tail of the open line
+  // after its header brace): count a field only when the frames above the root
+  // are empty or all `oneof`, then apply the segment's braces — a `}` that finds
+  // no nested frame closes the message root.
+  const processBody = (body: string): void => {
+    if (current === null) return;
+    const field = PROTO_FIELD.exec(body);
+    if (field !== null && frames.every((f) => f === "oneof")) {
+      const slot: OpenApiParam = {
+        name: field[2] as string,
+        doc: "",
+        types: [protoType(field[1] as string)],
+      };
+      if (frames.includes("oneof")) slot.is_optional = "True";
+      current.parameters.push(slot);
+    }
+    const openKind: "oneof" | "other" = PROTO_ONEOF_OPEN.test(body) ? "oneof" : "other";
+    for (let i = 0; i < (body.match(/\{/g) ?? []).length; i++) frames.push(openKind);
+    for (let i = 0; i < (body.match(/\}/g) ?? []).length; i++) {
+      if (frames.length > 0) {
+        frames.pop();
+      } else {
+        emit();
+        return;
+      }
+    }
+  };
+
   for (const line of lines) {
     if (current === null) {
       const open = PROTO_MESSAGE_OPEN.exec(line);
       if (open !== null) {
         current = { name: open[1] as string, parameters: [] };
-        depth = 1;
+        frames = [];
+        // Process the same line's remainder so `message Ping {}` closes here
+        // instead of swallowing every following top-level message.
+        processBody(line.slice(open[0].length));
       }
       continue;
     }
-    // Track brace depth so a nested `message`/`oneof` block does not close the
-    // enclosing message early; only fields at the top level of the message count.
-    const opens = (line.match(/\{/g) ?? []).length;
-    const closes = (line.match(/\}/g) ?? []).length;
-    if (depth === 1) {
-      const field = PROTO_FIELD.exec(line);
-      if (field !== null) {
-        current.parameters.push({
-          name: field[2] as string,
-          doc: "",
-          types: [protoType(field[1] as string)],
-        });
-      }
-    }
-    depth += opens - closes;
-    if (depth <= 0) {
-      elements.push({
-        type: "FUNCTION",
-        name: `create_${snake(current.name)}_message`,
-        description: "",
-        parameters: current.parameters,
-        returnvalues: [],
-      });
-      current = null;
-    }
+    processBody(line);
   }
   return elements;
 }

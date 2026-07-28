@@ -49,4 +49,20 @@ describe("nakama openapi-vs-ts-defold fidelity gate", () => {
     expect(target.decision).toBeDefined();
     expect(target.decision).toBe(decision);
   });
+
+  test("the three status constructors are now source-backed, not missing", async () => {
+    // Once the proto parser flattens the tail after `Ping {}`, these three exist
+    // in the emitted surface and leave the missing set; the hand-written helpers
+    // keep the decision no-go.
+    const { missingMembers, decision } = await comparison();
+    for (const ctor of [
+      "create_status_follow_message",
+      "create_status_unfollow_message",
+      "create_status_update_message",
+    ]) {
+      expect(missingMembers).not.toContain(ctor);
+    }
+    expect(missingMembers).toContain("create_client");
+    expect(decision).toBe("no-go");
+  });
 });
