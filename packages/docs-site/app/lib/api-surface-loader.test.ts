@@ -269,6 +269,16 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.license).toBe("MIT");
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
+
+  test("renders defcon's import with the namespace alias but the moduleId module path", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");
+    expect(meta.importString).toBe('import * as defcon from "defcon.console"');
+  });
+
+  test("a moduleId-less LuaLS library keeps its namespace-as-module import (regression)", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("druid");
+    expect(meta.importString).toBe('import * as druid from "druid"');
+  });
 });
 
 describe("loadApiSurface — druid library page", () => {

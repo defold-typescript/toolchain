@@ -164,6 +164,30 @@ export function buildScriptApiRegistryEntries(
   return groupTargetsBySourceId(targets.targets);
 }
 
+// A single library entry in `packages/library-types/authored-targets.json`,
+// projected to what registry matching needs: the upstream `repo` (source id),
+// the require `moduleId` shipped by the archive, and the single-segment
+// `namespace` the committed `generated/<namespace>.d.ts` is named for. An
+// authored/forked library is one this repo maintains as a first-party
+// hand-authored or forked `.d.ts` (its upstream has no usable structured source).
+export interface AuthoredRegistryTarget {
+  readonly repo: string;
+  readonly moduleId: string;
+  readonly namespace: string;
+}
+
+export interface AuthoredRegistryTargets {
+  readonly targets: readonly AuthoredRegistryTarget[];
+}
+
+// Turn the authored target list into `VendoredLibrary` entries. Like the LuaLS
+// and script_api libraries, an authored target verifies against its shipped
+// `moduleId` but sources its types from `generated/<namespace>.d.ts`, so the
+// stem is recorded separately (`defcon.console` -> `defcon`).
+export function buildAuthoredRegistryEntries(targets: AuthoredRegistryTargets): VendoredLibrary[] {
+  return groupTargetsBySourceId(targets.targets);
+}
+
 export function normalizeSourceId(url: string): string {
   const withoutFragment = url.split(/[?#]/, 1)[0] ?? "";
   const withoutProtocol = withoutFragment.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
