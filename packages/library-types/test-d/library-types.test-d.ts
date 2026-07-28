@@ -3,7 +3,6 @@
 
 import * as bzAnim from "bzAnim.bzLibrary";
 import * as boom from "boom.boom";
-import * as defcon from "defcon.console";
 import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
 import * as deftest from "deftest.deftest";
@@ -110,12 +109,6 @@ const _taggedWords = richtext.tagged(_richWords, "em");
 declare const _taggedWord: (typeof _taggedWords)[number];
 const _taggedNode: Opaque<"node"> = _taggedWord.node;
 richtextTags.register("em", () => {});
-
-// defcon.console — command registration and server lifecycle compile through the
-// package subpath export.
-defcon.register_command("ping", "desc", () => "pong");
-defcon.start(8090);
-defcon.stop();
 
 // defsave.defsave — scalar config helpers compile and unknown payloads stay
 // weakly typed to match the upstream declaration.

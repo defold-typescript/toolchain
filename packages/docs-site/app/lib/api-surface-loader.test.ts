@@ -259,6 +259,18 @@ describe("loadLibraryProvenance — script_api-sourced libraries", () => {
   });
 });
 
+describe("loadLibraryProvenance — authored/forked libraries", () => {
+  test("attributes defcon to britzl/defcon as an authored-here forked library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("2.6.0");
+    expect(meta.authorUrl).toBe("https://github.com/britzl/defcon");
+    expect(meta.sourceUrl).toBe("https://github.com/britzl/defcon/tree/2.6.0");
+    expect(meta.license).toBe("MIT");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+});
+
 describe("loadApiSurface — druid library page", () => {
   test("includes a druid page tagged category library", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
