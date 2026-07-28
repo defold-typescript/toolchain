@@ -200,4 +200,15 @@ describe("defmath.defmath migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defmath.defmath.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "generated/defmath.defmath.d.ts"))).toBe(false);
   });
+
+  test("the golden carries the core-type-renamed ambient engine types", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defmath.d.ts"), "utf8");
+    expect(golden).toContain("Vector3 | Vector4");
+    expect(golden).toContain(": Quaternion");
+  });
+
+  test("the golden references no dotted vmath engine types", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defmath.d.ts"), "utf8");
+    expect(golden).not.toContain("vmath.");
+  });
 });

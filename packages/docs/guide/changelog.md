@@ -23,6 +23,10 @@ changes are called out first because the toolchain is pre-1.0.
   - **[deftest](/api/deftest)** (`britzl/deftest` `2.8.0`) — imported as `import * as deftest from "deftest.deftest"`; its ambient test-DSL globals (`describe`, `test`, `assert_*`) carry along in the fork.
   - **[defmath](/api/defmath)** (`subsoap/defmath` `c67c2273`) — imported as `import * as defmath from "defmath.defmath"`; pinned to a commit SHA as upstream ships no tags.
 
+### Fixed
+
+- The [forked-library authoring guide](./authoring-forked-library-types.md)'s `defmath.defmath` worked example now correctly describes how a fork's core engine types resolve — through the `@defold-typescript/types` ambient reference the validity gate pulls in — instead of the previous wrong claim about `vmath.*` member types and "vmath aggregation."
+
 ## v0.23.0
 
 ### Breaking
