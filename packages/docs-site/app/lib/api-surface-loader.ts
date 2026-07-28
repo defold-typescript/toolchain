@@ -102,10 +102,15 @@ export function libraryRouteSlug(namespace: string): string {
 // name past its first dotted segment, remaining dots collapsed to underscores
 // (`monarch.transitions.easings` -> `transitions_easings`). Double quotes match
 // the module declarations in `@defold-typescript/library-types`.
-function libraryImportString(namespace: string): string {
+//
+// The alias derives from the page `namespace`, but the `from "…"` module path
+// takes `moduleId` — the two differ for an authored library whose page
+// namespace (`defcon`) is not its require module (`defcon.console`). Every other
+// caller passes only `namespace`, so the default keeps the module path identical.
+function libraryImportString(namespace: string, moduleId: string = namespace): string {
   const segments = namespace.split(".");
   const alias = segments.length > 1 ? segments.slice(1).join("_") : segments[0];
-  return `import * as ${alias} from "${namespace}"`;
+  return `import * as ${alias} from "${moduleId}"`;
 }
 
 // The GitHub owner handle is the first path segment of an author URL
@@ -213,6 +218,11 @@ interface LualsProvenance {
   repo: string;
   ref: string;
   license: string;
+  // Authored libraries only: the require module id when it differs from the page
+  // namespace (`defcon` page -> `defcon.console` module). LuaLS/script_api
+  // entries leave it undefined, so the import module path falls back to the
+  // namespace, keeping their `from "…"` output unchanged.
+  moduleId?: string;
 }
 
 function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
@@ -254,10 +264,24 @@ function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProve
   const path = join(libraryTypesDir, "authored-targets.json");
   if (!existsSync(path)) return new Map();
   const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
-    targets: { namespace: string; repo: string; ref: string; license?: string }[];
+    targets: {
+      namespace: string;
+      repo: string;
+      ref: string;
+      license?: string;
+      moduleId?: string;
+    }[];
   };
   return new Map(
-    targets.map((t) => [t.namespace, { repo: t.repo, ref: t.ref, license: t.license ?? "" }]),
+    targets.map((t) => [
+      t.namespace,
+      {
+        repo: t.repo,
+        ref: t.ref,
+        license: t.license ?? "",
+        ...(t.moduleId !== undefined ? { moduleId: t.moduleId } : {}),
+      },
+    ]),
   );
 }
 
@@ -317,7 +341,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         authorUrl: authoredEntry.repo,
         commit: authoredEntry.ref,
         sourceUrl: `${authoredEntry.repo}/tree/${authoredEntry.ref}`,
-        importString: libraryImportString(namespace),
+        importString: libraryImportString(namespace, authoredEntry.moduleId ?? namespace),
         license: authoredEntry.license,
         authoredHere: true,
       };
