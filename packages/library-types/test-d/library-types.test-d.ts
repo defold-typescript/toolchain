@@ -3,7 +3,6 @@
 
 import * as bzAnim from "bzAnim.bzLibrary";
 import * as boom from "boom.boom";
-import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
 import * as dicebag from "dicebag.dicebag";
 import * as gooey from "gooey.gooey";
@@ -126,12 +125,6 @@ persist.write("slot", "volume", 1);
 persist.flush("slot");
 persist.save("slot");
 
-// defmath.defmath — `round` is a scalar helper; `vect_to_quat` accepts a
-// `Vector3 | Vector4` and returns a `Quaternion`, proving the `vmath.quaternion`
-// alias renames onto the same core surface as `vmath.quat`.
-const _dmRound: number = defmath.round(1.5);
-const _dmQuat: Quaternion = defmath.vect_to_quat(_v3);
-
 // dicebag.dicebag — `flip_coin` returns a boolean; `bag_draw` accepts a
 // `string | number | Hash`, proving the upstream `hash` reference was renamed.
 const _dbFlip: boolean = dicebag.flip_coin();
@@ -237,8 +230,6 @@ void _defsaveAppName;
 void _defsaveLoaded;
 void _defsaveVolume;
 void _persistLoaded;
-void _dmRound;
-void _dmQuat;
 void _dbFlip;
 void _dbDraw;
 void _stView;

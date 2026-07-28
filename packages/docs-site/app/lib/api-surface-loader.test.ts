@@ -294,6 +294,23 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("deftest");
     expect(meta.importString).toBe('import * as deftest from "deftest.deftest"');
   });
+
+  test("attributes defmath to subsoap/defmath as an authored-here forked library pinned to a commit SHA", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defmath");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("c67c227322334056cea7a631f3ddcdf2bcfd480c");
+    expect(meta.authorUrl).toBe("https://github.com/subsoap/defmath");
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/subsoap/defmath/tree/c67c227322334056cea7a631f3ddcdf2bcfd480c",
+    );
+    expect(meta.license).toBe("CC0-1.0");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
+  test("renders defmath's import with the namespace alias but the moduleId module path", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defmath");
+    expect(meta.importString).toBe('import * as defmath from "defmath.defmath"');
+  });
 });
 
 describe("loadApiSurface — druid library page", () => {

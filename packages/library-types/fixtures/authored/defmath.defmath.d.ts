@@ -44,13 +44,13 @@ declare module "defmath.defmath" {
   /**
    * Vect to Quat
    */
-  export function vect_to_quat(vect: vmath.vector3 | vmath.vector4): vmath.quaternion;
+  export function vect_to_quat(vect: Vector3 | Vector4): Quaternion;
 
 
   /**
    * Vect to Quat + 90 degrees (perpendicular)
    */
-  export function vect_to_quat90(vect: vmath.vector3 | vmath.vector4): vmath.quaternion;
+  export function vect_to_quat90(vect: Vector3 | Vector4): Quaternion;
 
   /**
    * Random float from -1 to 1
@@ -150,12 +150,12 @@ declare module "defmath.defmath" {
   /**
    * Angle between vmath vectors in radians
    */
-  export function angle_between_vectors(vector1: vmath.vector3 | vmath.vector4, vector2: vmath.vector3 | vmath.vector4): number;
+  export function angle_between_vectors(vector1: Vector3 | Vector4, vector2: Vector3 | Vector4): number;
 
   /**
    * Average midpoint of a set of vmath vectors
    */
-  export function average_midpoint_of_vectors(...vararg: Array<vmath.vector3 | vmath.vector4>): LuaMultiReturn<[number, number]>;
+  export function average_midpoint_of_vectors(...vararg: Array<Vector3 | Vector4>): LuaMultiReturn<[number, number]>;
 
   /**
    * Fraction of
