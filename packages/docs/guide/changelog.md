@@ -18,7 +18,9 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- The [defcon](/api/defcon) library is now a first-party forked `.d.ts` maintained in this repo (pinned to upstream `britzl/defcon` `2.6.0`): declaring `britzl/defcon` as a dependency resolves and materializes its `defcon.console` types through [`resolve`](./resolve.md), and its docs page imports it as `import * as defcon from "defcon.console"`. The type surface is unchanged from the previous binding — only its provenance and end-to-end resolution move.
+- Libraries with no usable upstream structured source are now first-party forked `.d.ts`s maintained in this repo: declaring the upstream dependency resolves and materializes the types through [`resolve`](./resolve.md), and each docs page imports the library under its module id. The type surfaces are unchanged from the previous bindings — only their provenance and end-to-end resolution move.
+  - **[defcon](/api/defcon)** (`britzl/defcon` `2.6.0`) — imported as `import * as defcon from "defcon.console"`.
+  - **[deftest](/api/deftest)** (`britzl/deftest` `2.8.0`) — imported as `import * as deftest from "deftest.deftest"`; its ambient test-DSL globals (`describe`, `test`, `assert_*`) carry along in the fork.
 
 ## v0.23.0
 

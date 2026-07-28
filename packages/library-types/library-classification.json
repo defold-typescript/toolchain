@@ -320,13 +320,6 @@
       ]
     },
     {
-      "dir": "deftest",
-      "classification": "already-vendored",
-      "modules": [
-        "deftest.deftest"
-      ]
-    },
-    {
       "dir": "dicebag",
       "classification": "already-vendored",
       "modules": [
