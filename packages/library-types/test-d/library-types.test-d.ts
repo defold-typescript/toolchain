@@ -5,7 +5,6 @@ import * as bzAnim from "bzAnim.bzLibrary";
 import * as boom from "boom.boom";
 import * as defmath from "defmath.defmath";
 import * as defsave from "defsave.defsave";
-import * as deftest from "deftest.deftest";
 import * as dicebag from "dicebag.dicebag";
 import * as gooey from "gooey.gooey";
 import * as accelerometer from "in.accelerometer";
@@ -154,12 +153,6 @@ const _memMetrics = mem.create();
 const _memValue: number = _memMetrics.mem();
 _memMetrics.update();
 _memMetrics.draw();
-
-// deftest.deftest — module exports compile without pulling the ambient test
-// globals into this proof file.
-deftest.add(() => {});
-deftest.run();
-deftest.run({ coverage: { enabled: true }, pattern: "foo" });
 
 const _nakamaUuid: string = nakamaEngine.uuid();
 declare const _nakamaSocket: symbol;

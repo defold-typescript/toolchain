@@ -279,6 +279,21 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("druid");
     expect(meta.importString).toBe('import * as druid from "druid"');
   });
+
+  test("attributes deftest to britzl/deftest as an authored-here forked library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("deftest");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("2.8.0");
+    expect(meta.authorUrl).toBe("https://github.com/britzl/deftest");
+    expect(meta.sourceUrl).toBe("https://github.com/britzl/deftest/tree/2.8.0");
+    expect(meta.license).toBe("MIT");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
+  test("renders deftest's import with the namespace alias but the moduleId module path", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("deftest");
+    expect(meta.importString).toBe('import * as deftest from "deftest.deftest"');
+  });
 });
 
 describe("loadApiSurface — druid library page", () => {
