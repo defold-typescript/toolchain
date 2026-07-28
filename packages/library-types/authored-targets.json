@@ -39,6 +39,26 @@
       "namespace": "zzfx",
       "generated": "generated/zzfx.d.ts",
       "apiDoc": "api-doc/zzfx.json"
+    },
+    {
+      "repo": "https://github.com/heroiclabs/nakama-defold",
+      "ref": "v3.4.0",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/nakama.engine.defold.d.ts",
+      "moduleId": "nakama.engine.defold",
+      "namespace": "nakama.engine.defold",
+      "generated": "generated/nakama.engine.defold.d.ts",
+      "apiDoc": "api-doc/nakama.engine.defold.json"
+    },
+    {
+      "repo": "https://github.com/heroiclabs/nakama-defold",
+      "ref": "v3.4.0",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/nakama.util.log.d.ts",
+      "moduleId": "nakama.util.log",
+      "namespace": "nakama.util.log",
+      "generated": "generated/nakama.util.log.d.ts",
+      "apiDoc": "api-doc/nakama.util.log.json"
     }
   ]
 }

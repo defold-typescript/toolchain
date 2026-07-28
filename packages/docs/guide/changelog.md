@@ -23,6 +23,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **[deftest](/api/deftest)** (`britzl/deftest` `2.8.0`) — imported as `import * as deftest from "deftest.deftest"`; its ambient test-DSL globals (`describe`, `test`, `assert_*`) carry along in the fork.
   - **[defmath](/api/defmath)** (`subsoap/defmath` `c67c2273`) — imported as `import * as defmath from "defmath.defmath"`; pinned to a commit SHA as upstream ships no tags.
   - **[zzfx](/api/zzfx)** (`thejustinwalsh/defold-zzfx` `8c90e12c`) — imported as `import * as zzfx from "zzfx.api"`; pinned to a commit SHA as upstream ships no tags.
+  - **[nakama helpers](/api/nakama.engine.defold)** (`heroiclabs/nakama-defold` `v3.4.0`) — the two hand-written helper modules `nakama.engine.defold` and `nakama.util.log` are now forked here; the codegen'd `nakama.nakama` stays ts-defold-sourced.
 
 ### Fixed
 

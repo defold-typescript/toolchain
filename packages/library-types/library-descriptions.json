@@ -21,6 +21,8 @@
   "log": "Logger with Performance Metrics for Defold",
   "monarch": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
   "nakama-defold": "Nakama Defold Client SDK",
+  "nakama.engine.defold": "Defold engine adapter for the Nakama client: UUID, HTTP, and realtime socket helpers.",
+  "nakama.util.log": "Logging helpers for the Nakama Defold client.",
   "narrator": "The Ink language parser and runtime implementation in Lua",
   "platypus": "Defold platformer engine",
   "proto": "Protocol-buffer style message encoding for compact Defold network payloads.",

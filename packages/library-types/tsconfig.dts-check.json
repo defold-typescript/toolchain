@@ -22,6 +22,8 @@
     "generated/deftest.d.ts",
     "generated/defmath.d.ts",
     "generated/zzfx.d.ts",
+    "generated/nakama.engine.defold.d.ts",
+    "generated/nakama.util.log.d.ts",
     "test-d/bridge-usage.test-d.ts",
     "test-d/event-usage.test-d.ts",
     "test-d/lang-usage.test-d.ts",

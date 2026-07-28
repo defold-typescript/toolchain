@@ -604,9 +604,7 @@
       "dir": "nakama-defold",
       "classification": "already-vendored",
       "modules": [
-        "nakama.engine.defold",
-        "nakama.nakama",
-        "nakama.util.log"
+        "nakama.nakama"
       ]
     },
     {
