@@ -132,12 +132,6 @@
       "generated": "generated/persist.persist.d.ts"
     },
     {
-      "module": "defmath.defmath",
-      "path": "packages/defmath/defmath.defmath.d.ts",
-      "fixture": "fixtures/ts-defold/defmath.defmath.d.ts",
-      "generated": "generated/defmath.defmath.d.ts"
-    },
-    {
       "module": "dicebag.dicebag",
       "path": "packages/dicebag/dicebag.dicebag.d.ts",
       "fixture": "fixtures/ts-defold/dicebag.dicebag.d.ts",

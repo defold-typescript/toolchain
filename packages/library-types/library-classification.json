@@ -63,13 +63,6 @@
       ]
     },
     {
-      "dir": "defmath",
-      "classification": "already-vendored",
-      "modules": [
-        "defmath.defmath"
-      ]
-    },
-    {
       "dir": "defold-apkx",
       "classification": "native",
       "modules": [
