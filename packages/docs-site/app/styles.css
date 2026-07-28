@@ -1026,6 +1026,17 @@
     opacity: 0.45;
   }
 
+  /* On a narrow viewport a paragraph can carry an atomic, non-wrapping run
+     wider than the content column — a long inline-code token, URL, or hash the
+     `overflow-wrap: anywhere` break can't split, or a `nowrap` signature span.
+     Let each paragraph scroll on its own X axis instead of widening the page.
+     `auto` shows the scrollbar only when a paragraph actually overflows; normal
+     prose still wraps at spaces, and line-height 1.7 leaves room so the forced
+     `overflow-y: auto` never clips descenders. Mirrored in critical.css. */
+  .prose p {
+    overflow-x: auto;
+  }
+
   header.topbar-critical {
     height: auto;
   }

@@ -115,6 +115,14 @@ header.topbar-critical .logo-mark {
   .topic-scroll-frame[data-scroll-right]::after {
     opacity: 0.45;
   }
+  /* A paragraph with an atomic non-wrapping run (long inline-code token, URL,
+     hash, or `nowrap` signature) scrolls on its own X axis on narrow screens
+     instead of widening the page. `auto` only shows a scrollbar on real
+     overflow; line-height 1.7 keeps the forced `overflow-y: auto` from clipping
+     descenders. Mirrors styles.css. */
+  .prose p {
+    overflow-x: auto;
+  }
 }
 
 .prose {
