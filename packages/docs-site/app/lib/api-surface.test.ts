@@ -60,12 +60,26 @@ const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 // Every `api-doc/*.json` fixture that also has a vendored `generated/*.d.ts`
 // sibling — the exact set the loader is expected to surface as `library` pages.
+// A markdown-front-end target whose recorded fidelity `decision` is not `go`
+// stays ts-defold-sourced; its golden is a regeneration proof, not a published
+// page, so it is excluded here exactly as the loader excludes it.
+function markdownDeferredNamespaces(): Set<string> {
+  const path = join(REAL_LIBRARY_TYPES_DIR, "markdown-targets.json");
+  if (!existsSync(path)) return new Set();
+  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
+    targets: { namespace: string; decision?: string }[];
+  };
+  return new Set(targets.filter((t) => t.decision !== "go").map((t) => t.namespace));
+}
+
 function vendoredLibraryModules(): string[] {
   const apiDocDir = join(REAL_LIBRARY_TYPES_DIR, "api-doc");
+  const deferred = markdownDeferredNamespaces();
   return readdirSync(apiDocDir)
     .filter((f) => f.endsWith(".json"))
     .map((f) => f.replace(/\.json$/, ""))
-    .filter((mod) => existsSync(join(REAL_LIBRARY_TYPES_DIR, "generated", `${mod}.d.ts`)));
+    .filter((mod) => existsSync(join(REAL_LIBRARY_TYPES_DIR, "generated", `${mod}.d.ts`)))
+    .filter((mod) => !deferred.has(mod));
 }
 
 describe("loadApiSurface", () => {

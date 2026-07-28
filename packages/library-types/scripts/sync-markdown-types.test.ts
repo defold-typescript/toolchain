@@ -1,0 +1,169 @@
+import { describe, expect, test } from "bun:test";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import {
+  buildMarkdownFidelity,
+  emitMarkdownDeclaration,
+  fetchMarkdownFixture,
+  lowerMarkdownApiDoc,
+  type MarkdownTarget,
+  readMarkdownTargets,
+} from "./sync-markdown-types";
+import type { FetchText } from "./sync-script-api-types";
+
+const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+
+// The orthographic.camera target as it appears in a validated config. A markdown
+// target pins one README/`.md` path plus the publish namespace the README's own
+// `camera.` alias is retargeted onto, and the exact canonical golden paths.
+const ORTHOGRAPHIC: MarkdownTarget = {
+  repo: "https://github.com/britzl/defold-orthographic",
+  ref: "3.6.3",
+  license: "MIT",
+  markdown: "README.md",
+  moduleId: "orthographic.camera",
+  namespace: "orthographic",
+  generated: "generated/orthographic.d.ts",
+  apiDoc: "api-doc/orthographic.json",
+  fidelity: "fidelity/orthographic.json",
+  decision: "no-go",
+};
+
+function writeConfig(config: unknown): string {
+  const root = mkdtempSync(join(tmpdir(), "markdown-targets-config-"));
+  writeFileSync(join(root, "markdown-targets.json"), JSON.stringify(config));
+  return root;
+}
+
+describe("readMarkdownTargets", () => {
+  test("parses the committed orthographic entry into a typed target", () => {
+    const targets = readMarkdownTargets(PACKAGE_ROOT);
+    const ortho = targets.find((t) => t.moduleId === "orthographic.camera");
+    expect(ortho).toBeDefined();
+    expect(ortho?.namespace).toBe("orthographic");
+    expect(ortho?.repo).toBe("https://github.com/britzl/defold-orthographic");
+    expect(ortho?.ref).toBe("3.6.3");
+    expect(ortho?.markdown).toBe("README.md");
+    expect(ortho?.generated).toBe("generated/orthographic.d.ts");
+    expect(ortho?.apiDoc).toBe("api-doc/orthographic.json");
+  });
+
+  test("throws naming the missing field and the offending entry", () => {
+    const { markdown: _drop, ...missingMarkdown } = ORTHOGRAPHIC;
+    const root = writeConfig({ targets: [missingMarkdown] });
+    expect(() => readMarkdownTargets(root)).toThrow(/markdown/);
+    expect(() => readMarkdownTargets(root)).toThrow(/orthographic\.camera/);
+  });
+
+  test("names the entry index when moduleId itself is the missing field", () => {
+    const { moduleId: _drop, ...missingModuleId } = ORTHOGRAPHIC;
+    const root = writeConfig({ targets: [missingModuleId] });
+    expect(() => readMarkdownTargets(root)).toThrow(/moduleId/);
+    expect(() => readMarkdownTargets(root)).toThrow(/0/);
+  });
+
+  test("defaults fidelity to fidelity/<namespace>.json and license to '' when omitted", () => {
+    const { fidelity: _f, license: _l, decision: _d, ...bare } = ORTHOGRAPHIC;
+    const root = writeConfig({ targets: [bare] });
+    const [target] = readMarkdownTargets(root);
+    expect(target?.fidelity).toBe("fidelity/orthographic.json");
+    expect(target?.license).toBe("");
+    expect(target?.decision).toBeUndefined();
+  });
+});
+
+describe("orthographic stays ts-defold-sourced on the no-go decision", () => {
+  test("orthographic.camera is still a ts-defold library-targets row", () => {
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "orthographic.camera")).toBe(true);
+  });
+
+  test("the ts-defold orthographic fixture is retained", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
+      true,
+    );
+  });
+
+  test("the markdown golden is not wired into the dts-check include (no cutover)", () => {
+    const dtsCheck = readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8");
+    expect(dtsCheck).not.toContain("generated/orthographic.d.ts");
+  });
+});
+
+describe("fetchMarkdownFixture", () => {
+  test("snapshots the pinned README under fixtures/markdown/<moduleId>.md, offline", async () => {
+    const root = mkdtempSync(join(tmpdir(), "markdown-fetch-"));
+    const fetched: string[] = [];
+    const fetchText: FetchText = async (url) => {
+      fetched.push(url);
+      return `# ${url}\n`;
+    };
+
+    await fetchMarkdownFixture(root, ORTHOGRAPHIC, { fetchText });
+
+    expect(fetched).toEqual([
+      "https://raw.githubusercontent.com/britzl/defold-orthographic/3.6.3/README.md",
+    ]);
+    const dest = join(root, "fixtures/markdown/orthographic.camera.md");
+    expect(existsSync(dest)).toBe(true);
+    expect(readFileSync(dest, "utf8")).toBe(
+      "# https://raw.githubusercontent.com/britzl/defold-orthographic/3.6.3/README.md\n",
+    );
+  });
+});
+
+describe("emitMarkdownDeclaration", () => {
+  test("routes the README through parseMarkdownApi -> retarget -> generateModuleDeclaration", async () => {
+    const contents = await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC);
+    // Importable module keyed by moduleId, retargeted onto the `orthographic`
+    // namespace (the README documents its API under the `camera.` alias).
+    expect(contents).toContain("declare module 'orthographic.camera' {");
+    expect(contents).toContain("namespace orthographic {");
+    // Stable exported function symbols (assert on symbols, not the whole blob).
+    expect(contents).toContain("function follow(");
+    expect(contents).toContain("function screen_to_world(");
+  });
+});
+
+describe("markdown goldens regenerate byte-for-byte", () => {
+  test("each target's .d.ts matches its committed generated golden", async () => {
+    for (const target of readMarkdownTargets(PACKAGE_ROOT)) {
+      const regenerated = await emitMarkdownDeclaration(PACKAGE_ROOT, target);
+      const committed = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
+      expect(regenerated).toBe(committed);
+    }
+  });
+
+  test("each target's lowered api-doc matches its committed api-doc golden", () => {
+    for (const target of readMarkdownTargets(PACKAGE_ROOT)) {
+      const regenerated = lowerMarkdownApiDoc(PACKAGE_ROOT, target);
+      const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
+      expect(regenerated).toBe(committed);
+    }
+  });
+});
+
+describe("markdown fidelity", () => {
+  test("each target's report matches its committed fidelity golden", async () => {
+    for (const target of readMarkdownTargets(PACKAGE_ROOT)) {
+      const report = await buildMarkdownFidelity(PACKAGE_ROOT, target);
+      const committed = readFileSync(join(PACKAGE_ROOT, target.fidelity), "utf8");
+      expect(`${JSON.stringify(report, null, 2)}\n`).toBe(committed);
+    }
+  });
+
+  // The README uses the `matrix` alias (only `matrix4` maps) and its `nil` union
+  // members render `undefined`, so orthographic's honest coverage is 0.816 — the
+  // report surfaces the downgraded tokens rather than hiding them.
+  test("orthographic fidelity reflects the real emitter: coverage 0.816, matrix + nil unmapped", async () => {
+    const report = await buildMarkdownFidelity(PACKAGE_ROOT, ORTHOGRAPHIC);
+    expect(report.namespace).toBe("orthographic");
+    expect(report.totalMembers).toBe(21);
+    expect(report.unknownTokens).toEqual(["matrix", "nil"]);
+    expect(report.undocumentedMembers).toBe(0);
+    expect(report.coverage).toBe(0.816);
+  });
+});
