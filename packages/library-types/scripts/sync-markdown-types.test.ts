@@ -2,15 +2,17 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import type { MarkdownDoc } from "./parse-markdown-api";
 import {
   buildMarkdownFidelity,
+  computeMarkdownFidelity,
   emitMarkdownDeclaration,
   fetchMarkdownFixture,
   lowerMarkdownApiDoc,
   type MarkdownTarget,
   readMarkdownTargets,
 } from "./sync-markdown-types";
-import type { FetchText } from "./sync-script-api-types";
+import { type FetchText, loadTypeResolver } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -165,5 +167,23 @@ describe("markdown fidelity", () => {
     expect(report.unknownTokens).toEqual(["matrix", "nil"]);
     expect(report.undocumentedMembers).toBe(0);
     expect(report.coverage).toBe(0.816);
+  });
+
+  test("computeMarkdownFidelity throws on an unresolved token outside KNOWN_LOSSY_TOKENS", async () => {
+    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    const doc: MarkdownDoc = {
+      info: { namespace: "demo", brief: "", description: "" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "demo.frob",
+          description: "does a thing",
+          parameters: [{ name: "x", doc: "", types: ["Frobnicate"] }],
+          returnvalues: [],
+        },
+      ],
+    };
+    expect(() => computeMarkdownFidelity("demo", doc, resolver)).toThrow(/demo/);
+    expect(() => computeMarkdownFidelity("demo", doc, resolver)).toThrow(/Frobnicate/);
   });
 });
