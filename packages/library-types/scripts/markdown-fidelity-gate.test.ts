@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { parseMarkdownApi } from "./parse-markdown-api";
 import {
   compareFidelityToTsDefold,
+  emitMarkdownDeclaration,
   type MarkdownTarget,
   readMarkdownTargets,
-  retargetDoc,
+  tsDefoldMembers,
 } from "./sync-markdown-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -19,24 +19,34 @@ function orthographicTarget(): MarkdownTarget {
   return target;
 }
 
-function comparison() {
+// The comparison runs against the *emitted* markdown `.d.ts` (the real emitter is
+// the single source of truth for type resolution), not the parsed doc.
+async function comparison() {
   const target = orthographicTarget();
-  const doc = retargetDoc(
-    parseMarkdownApi(
-      readFileSync(join(PACKAGE_ROOT, "fixtures/markdown", `${target.moduleId}.md`), "utf8"),
-    ),
-    target.namespace,
-  );
+  const markdownEmittedDts = await emitMarkdownDeclaration(PACKAGE_ROOT, target);
   const tsDefold = readFileSync(
     join(PACKAGE_ROOT, "fixtures/ts-defold", `${target.moduleId}.d.ts`),
     "utf8",
   );
-  return { target, ...compareFidelityToTsDefold(doc, tsDefold) };
+  return { target, ...compareFidelityToTsDefold(markdownEmittedDts, tsDefold) };
 }
 
+describe("tsDefoldMembers sees bare export-less declarations", () => {
+  test("extracts bare `function` members from a module written without `export`", () => {
+    const rendy = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/ts-defold", "rendy.rendy.d.ts"),
+      "utf8",
+    );
+    const members = tsDefoldMembers(rendy);
+    for (const fn of ["create_camera", "destroy_camera", "get_stack", "screen_to_world"]) {
+      expect(members).toContain(fn);
+    }
+  });
+});
+
 describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
-  test("reports the ts-defold members the markdown parse does not cover", () => {
-    const { missingMembers } = comparison();
+  test("reports the ts-defold members the markdown parse does not cover", async () => {
+    const { missingMembers } = await comparison();
     // Functions in the ts-defold surface absent from the README API table.
     for (const fn of [
       "add_projector",
@@ -61,21 +71,29 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
     }
   });
 
-  test("surfaces the members the newer README adds over ts-defold", () => {
-    const { addedMembers } = comparison();
+  test("surfaces the members the newer README adds over ts-defold", async () => {
+    const { addedMembers } = await comparison();
     expect(addedMembers).toContain("get_automatic_zoom");
     expect(addedMembers).toContain("set_automatic_zoom");
   });
 
-  test("the missing surface forces a no-go decision", () => {
-    const { missingMembers, decision } = comparison();
+  test("a weaker markdown type downgrade forces a no-go decision", async () => {
+    const { downgradedMembers, decision } = await comparison();
+    // ts-defold returns `vmath.matrix4`; the README's `matrix` token is unresolved,
+    // so the markdown emit downgrades both to `unknown`.
+    expect(downgradedMembers).toContain("get_view");
+    expect(downgradedMembers).toContain("get_projection");
+    expect(decision).toBe("no-go");
+  });
+
+  test("the missing surface forces a no-go decision", async () => {
+    const { missingMembers, decision } = await comparison();
     expect(missingMembers.length).toBeGreaterThan(0);
     expect(decision).toBe("no-go");
   });
 
-  test("the recorded target decision matches the computed comparison", () => {
-    const { target, decision } = comparison();
-    // RED until a decision is recorded on the target; keep-ts-defold here.
+  test("the recorded target decision matches the computed comparison", async () => {
+    const { target, decision } = await comparison();
     expect(target.decision).toBeDefined();
     expect(target.decision).toBe(decision);
   });
