@@ -175,3 +175,29 @@ describe("deftest.deftest migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "generated/deftest.deftest.d.ts"))).toBe(false);
   });
 });
+
+describe("defmath.defmath migration integrity", () => {
+  test("defmath is registered in authored-targets.json", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    expect(targets.some((t) => t.namespace === "defmath")).toBe(true);
+  });
+
+  test("defmath.defmath is no longer a ts-defold library-targets row", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "defmath.defmath")).toBe(false);
+  });
+
+  test("the defmath dir is gone from library-classification.json", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defmath")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture and dotted generated golden are deleted", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defmath.defmath.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/defmath.defmath.d.ts"))).toBe(false);
+  });
+});

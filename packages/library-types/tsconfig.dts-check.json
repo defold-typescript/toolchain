@@ -20,6 +20,7 @@
     "generated/bridge.d.ts",
     "generated/defcon.d.ts",
     "generated/deftest.d.ts",
+    "generated/defmath.d.ts",
     "test-d/bridge-usage.test-d.ts",
     "test-d/event-usage.test-d.ts",
     "test-d/lang-usage.test-d.ts",

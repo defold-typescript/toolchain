@@ -624,6 +624,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).toContain("[britzl/deftest](https://github.com/britzl/deftest)");
     expect(md).not.toContain("ts-defold/library");
   });
+
+  test("the forked defmath page pins to subsoap/defmath, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const defmath = pages.find((p) => p.namespace === "defmath");
+    expect(defmath).toBeDefined();
+    if (!defmath) return;
+    expect(defmath.category).toBe("library");
+    const md = apiPageMarkdown(defmath, apiLinkify(pages));
+    expect(md).toContain("[subsoap/defmath](https://github.com/subsoap/defmath)");
+    expect(md).not.toContain("ts-defold/library");
+  });
 });
 
 describe("apiPageMarkdown display name", () => {
