@@ -1,0 +1,14 @@
+{
+  "targets": [
+    {
+      "repo": "https://github.com/britzl/defcon",
+      "ref": "2.6.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/defcon.console.d.ts",
+      "moduleId": "defcon.console",
+      "namespace": "defcon",
+      "generated": "generated/defcon.d.ts",
+      "apiDoc": "api-doc/defcon.json"
+    }
+  ]
+}
