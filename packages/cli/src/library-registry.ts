@@ -9,6 +9,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import {
+  type AuthoredRegistryTargets,
+  buildAuthoredRegistryEntries,
   buildLibraryRegistry,
   buildLualsRegistryEntries,
   buildScriptApiRegistryEntries,
@@ -60,6 +62,7 @@ export function loadVendoredLibraryRegistry(
         ...buildLibraryRegistry(classification, targets),
         ...readLualsRegistryEntries(root),
         ...readScriptApiRegistryEntries(root),
+        ...readAuthoredRegistryEntries(root),
       ],
       generatedDir: path.join(root, "generated"),
     };
@@ -98,6 +101,29 @@ function readScriptApiRegistryEntries(root: string): VendoredLibrary[] {
       readFileSync(scriptApiTargetsPath, "utf8"),
     ) as ScriptApiRegistryTargets;
     return buildScriptApiRegistryEntries(targets);
+  } catch {
+    return [];
+  }
+}
+
+// Authored/forked libraries are recognized from `authored-targets.json`,
+// mirroring the LuaLS and script_api lanes. The file carries extra
+// `ref`/`license`/`authored`/`generated`/`apiDoc` keys the registry ignores, so
+// each entry is projected to the `{repo, moduleId, namespace}` shape matching
+// needs. A missing or unparseable file degrades to the other registries.
+function readAuthoredRegistryEntries(root: string): VendoredLibrary[] {
+  const authoredTargetsPath = path.join(root, "authored-targets.json");
+  if (!existsSync(authoredTargetsPath)) {
+    return [];
+  }
+  try {
+    const { targets } = JSON.parse(readFileSync(authoredTargetsPath, "utf8")) as {
+      targets: { repo: string; moduleId: string; namespace: string }[];
+    };
+    const projected: AuthoredRegistryTargets = {
+      targets: targets.map(({ repo, moduleId, namespace }) => ({ repo, moduleId, namespace })),
+    };
+    return buildAuthoredRegistryEntries(projected);
   } catch {
     return [];
   }

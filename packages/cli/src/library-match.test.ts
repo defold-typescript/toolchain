@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  type AuthoredRegistryTargets,
+  buildAuthoredRegistryEntries,
   buildLibraryRegistry,
   buildLualsRegistryEntries,
   buildScriptApiRegistryEntries,
@@ -228,6 +230,32 @@ describe("buildScriptApiRegistryEntries", () => {
         generatedStems: { "thing.a": "thing.a", "thing.b": "thing.b" },
       },
     ]);
+  });
+});
+
+describe("buildAuthoredRegistryEntries", () => {
+  const defconTargets: AuthoredRegistryTargets = {
+    targets: [
+      {
+        repo: "https://github.com/britzl/defcon",
+        moduleId: "defcon.console",
+        namespace: "defcon",
+      },
+    ],
+  };
+
+  test("maps an authored target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
+    expect(buildAuthoredRegistryEntries(defconTargets)).toEqual([
+      {
+        sourceId: "defcon",
+        modules: ["defcon.console"],
+        generatedStems: { "defcon.console": "defcon" },
+      },
+    ]);
+  });
+
+  test("returns no entries for an empty target list", () => {
+    expect(buildAuthoredRegistryEntries({ targets: [] })).toEqual([]);
   });
 });
 

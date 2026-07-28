@@ -55,6 +55,14 @@ describe("loadVendoredLibraryRegistry", () => {
     expect(bridge?.generatedStems?.["bridge.bridge"]).toBe("bridge");
   });
 
+  test("includes the defcon authored target so resolve materializes its dotted module", () => {
+    const { registry } = loadVendoredLibraryRegistry();
+    const defcon = registry.find((library) => library.sourceId === "defcon");
+    expect(defcon).toBeDefined();
+    expect(defcon?.modules).toEqual(["defcon.console"]);
+    expect(defcon?.generatedStems?.["defcon.console"]).toBe("defcon");
+  });
+
   test("groups defold-saver's two modules into a single entry with both generated stems", () => {
     const { registry } = loadVendoredLibraryRegistry();
     const saver = registry.filter((library) => library.sourceId === "defold-saver");
