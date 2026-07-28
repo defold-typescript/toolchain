@@ -328,6 +328,24 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("zzfx");
     expect(meta.importString).toBe('import * as zzfx from "zzfx.api"');
   });
+
+  test("attributes both forked nakama helpers to heroiclabs/nakama-defold as authored-here", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {
+      const m = meta(namespace);
+      expect(m.authoredHere).toBe(true);
+      expect(m.commit).toBe("v3.4.0");
+      expect(m.authorUrl).toBe("https://github.com/heroiclabs/nakama-defold");
+      expect(m.sourceUrl).toBe("https://github.com/heroiclabs/nakama-defold/tree/v3.4.0");
+      expect(m.license).toBe("Apache-2.0");
+      expect(m.sourceUrl).not.toContain("ts-defold/library");
+    }
+  });
+
+  test("keeps nakama.nakama ts-defold-sourced — the explicit provenance boundary", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("nakama.nakama");
+    expect(meta.authoredHere).toBe(false);
+  });
 });
 
 describe("loadApiSurface — druid library page", () => {
@@ -397,5 +415,20 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     expect(pages.find((p) => p.namespace === "saver.storage")?.displayName).toBe(
       "Insality / saver · storage",
     );
+  });
+
+  test("groups all three nakama modules under heroiclabs across the authored/ts-defold card split", () => {
+    const groups = libraryGroups();
+    const heroiclabs = groups.find((group) => group.creator === "heroiclabs");
+    expect(heroiclabs).toBeDefined();
+    const authored = heroiclabs?.libraries.find((lib) => lib.dir === "nakama");
+    const tsDefold = heroiclabs?.libraries.find((lib) => lib.dir === "nakama-defold");
+    expect(authored?.authoredHere).toBe(true);
+    expect(authored?.modules.map((m) => m.label)).toEqual([
+      "nakama.engine.defold",
+      "nakama.util.log",
+    ]);
+    expect(tsDefold?.authoredHere).toBe(false);
+    expect(tsDefold?.modules.map((m) => m.label)).toEqual(["nakama.nakama"]);
   });
 });
