@@ -237,6 +237,22 @@ function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProv
   );
 }
 
+// Markdown-front-end namespaces that are NOT published, read from
+// `markdown-targets.json`. The markdown corpus front-end regenerates a golden
+// `generated/<ns>.d.ts` + `api-doc/<ns>.json` for every target, but a target
+// whose recorded fidelity `decision` is not `go` (README parse loses fidelity
+// versus the retired ts-defold `.d.ts`) stays ts-defold-sourced — its markdown
+// golden is a committed regeneration proof only. Those namespaces are hidden from
+// the library-page enumeration so they never shadow the live ts-defold page.
+function loadMarkdownDeferredNamespaces(libraryTypesDir: string): Set<string> {
+  const path = join(libraryTypesDir, "markdown-targets.json");
+  if (!existsSync(path)) return new Set();
+  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
+    targets: { namespace: string; decision?: string }[];
+  };
+  return new Set(targets.filter((t) => t.decision !== "go").map((t) => t.namespace));
+}
+
 // Per-library provenance, joined from `library-classification.json` (repo,
 // pinned commit, license, and the dir each module belongs to) plus `NOTICE`
 // (the upstream author/url). Returns a per-module `LibraryMeta` builder the
@@ -332,10 +348,12 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   const moduleDir = libraryModuleDirs(libraryTypesDir);
   const displayOverrides = loadLibraryDisplayOverrides(libraryTypesDir);
 
+  const markdownDeferred = loadMarkdownDeferredNamespaces(libraryTypesDir);
   const namespaces = readdirSync(apiDocDir)
     .filter((file) => file.endsWith(".json"))
     .map((file) => file.replace(/\.json$/, ""))
-    .filter((namespace) => existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`)));
+    .filter((namespace) => existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`)))
+    .filter((namespace) => !markdownDeferred.has(namespace));
 
   // Modules-per-dir count drives whether the display label keeps its `· <leaf>`
   // distinguisher; a single-module dir drops it.
