@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "zzfx.api",
+    "namespace": "zzfx",
     "brief": "ZzFX extension for Defold",
     "description": "ZzFX extension for Defold"
   },

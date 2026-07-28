@@ -27,7 +27,6 @@ import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
 import * as starly from "starly.starly";
 import * as yagames from "yagames.yagames";
-import * as zzfx from "zzfx.api";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -180,10 +179,6 @@ yagames.player_get_data(undefined, (ctx, err, data) => {
   void data;
 });
 
-const _zzfxSample: ReturnType<typeof zzfx.build_sample> = zzfx.build_sample(1, 0, 440);
-zzfx.play_sample(_zzfxSample);
-zzfx.samplerate(44100);
-
 boom.boom(() => {});
 const _boomObject = add(["player"]);
 const _boomVec = vec2(1, 2);
@@ -240,7 +235,6 @@ void _nakamaSession;
 void _yagamesPlayerId;
 void _yagamesDevice;
 void _yagamesStorageLength;
-void _zzfxSample;
 void _boomObject;
 void _boomVec;
 void _boomRand;
