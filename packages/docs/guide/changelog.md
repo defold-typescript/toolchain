@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.24.0
+
+### Improved
+
+- The [defcon](/api/defcon) library's types are now maintained in this repo as a first-party forked `.d.ts` and carry the maintained-here pin, attributed to upstream `britzl/defcon` (`2.6.0`) instead of the ts-defold corpus. The type surface is unchanged from the previous binding — only its provenance moves.
+
 ## v0.23.0
 
 ### Breaking

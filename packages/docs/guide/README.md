@@ -74,6 +74,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Upgrading to Defold 1.13.0](./upgrading-to-defold-1-13-0.md) — move a project from 1.12.4: the removed and re-signatured Lua APIs (`model.material` removed, `liveupdate.add_mount` re-signatured, …), the source/asset migrations (Collada removal, glTF re-centering, Spine 4.6.0), and the rendering/platform default changes, each with a way to verify.
 - [Native extensions](./extensions.md) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](./resolve.md) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
 - [Authoring LuaLS library types](./authoring-luals-library-types.md) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the `luals-targets.json` entry, the fetch/fidelity/emit/api-doc commands, and how the committed `.d.ts` reaches a consumer via [`resolve`](./resolve.md).
+- [Authoring forked library types](./authoring-forked-library-types.md) — add a library with no structured upstream source by vendoring a forked or hand-authored `.d.ts`: the fork/hand-author/keep cost model, the `authored-targets.json` entry, the emit/api-doc commands, and why a fork's fidelity is 100% by construction.
 
 ### Migration
 

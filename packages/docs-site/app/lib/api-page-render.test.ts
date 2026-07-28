@@ -602,6 +602,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).toContain("[Playgama/bridge-defold](https://github.com/Playgama/bridge-defold)");
     expect(md).not.toContain("ts-defold/library");
   });
+
+  test("the forked defcon page pins to britzl/defcon, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const defcon = pages.find((p) => p.namespace === "defcon");
+    expect(defcon).toBeDefined();
+    if (!defcon) return;
+    expect(defcon.category).toBe("library");
+    const md = apiPageMarkdown(defcon, apiLinkify(pages));
+    expect(md).toContain("[britzl/defcon](https://github.com/britzl/defcon)");
+    expect(md).not.toContain("ts-defold/library");
+  });
 });
 
 describe("apiPageMarkdown display name", () => {
