@@ -311,6 +311,23 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defmath");
     expect(meta.importString).toBe('import * as defmath from "defmath.defmath"');
   });
+
+  test("attributes zzfx to thejustinwalsh/defold-zzfx as an authored-here forked library pinned to a commit SHA", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("zzfx");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("8c90e12c5b83dd39ebc7a6c0fd28aafd8e7b1eac");
+    expect(meta.authorUrl).toBe("https://github.com/thejustinwalsh/defold-zzfx");
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/thejustinwalsh/defold-zzfx/tree/8c90e12c5b83dd39ebc7a6c0fd28aafd8e7b1eac",
+    );
+    expect(meta.license).toBe("MIT");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
+  test("renders zzfx's import with the namespace alias but the moduleId module path", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("zzfx");
+    expect(meta.importString).toBe('import * as zzfx from "zzfx.api"');
+  });
 });
 
 describe("loadApiSurface — druid library page", () => {

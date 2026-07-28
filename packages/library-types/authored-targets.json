@@ -29,6 +29,16 @@
       "namespace": "defmath",
       "generated": "generated/defmath.d.ts",
       "apiDoc": "api-doc/defmath.json"
+    },
+    {
+      "repo": "https://github.com/thejustinwalsh/defold-zzfx",
+      "ref": "8c90e12c5b83dd39ebc7a6c0fd28aafd8e7b1eac",
+      "license": "MIT",
+      "authored": "fixtures/authored/zzfx.api.d.ts",
+      "moduleId": "zzfx.api",
+      "namespace": "zzfx",
+      "generated": "generated/zzfx.d.ts",
+      "apiDoc": "api-doc/zzfx.json"
     }
   ]
 }

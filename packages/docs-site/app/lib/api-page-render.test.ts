@@ -635,6 +635,19 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).toContain("[subsoap/defmath](https://github.com/subsoap/defmath)");
     expect(md).not.toContain("ts-defold/library");
   });
+
+  test("the forked zzfx page pins to thejustinwalsh/defold-zzfx, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const zzfx = pages.find((p) => p.namespace === "zzfx");
+    expect(zzfx).toBeDefined();
+    if (!zzfx) return;
+    expect(zzfx.category).toBe("library");
+    const md = apiPageMarkdown(zzfx, apiLinkify(pages));
+    expect(md).toContain(
+      "[thejustinwalsh/defold-zzfx](https://github.com/thejustinwalsh/defold-zzfx)",
+    );
+    expect(md).not.toContain("ts-defold/library");
+  });
 });
 
 describe("apiPageMarkdown display name", () => {
