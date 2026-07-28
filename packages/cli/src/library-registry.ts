@@ -17,6 +17,7 @@ import {
   type LibraryClassification,
   type LibraryTargets,
   type LualsTargets,
+  mergeVendoredLibrariesBySourceId,
   type ScriptApiRegistryTargets,
   type VendoredLibrary,
 } from "./library-match";
@@ -58,12 +59,16 @@ export function loadVendoredLibraryRegistry(
     ) as LibraryClassification;
     const targets = JSON.parse(readFileSync(targetsPath, "utf8")) as LibraryTargets;
     return {
-      registry: [
+      // Merge across lanes so one upstream repo split across lanes (the ts-defold
+      // `nakama.nakama` + the authored `nakama.engine.defold`/`nakama.util.log`)
+      // holds a single `sourceId` entry; without it, `matchVendoredLibrary`'s
+      // first-match `find` drops every later lane's modules for that source.
+      registry: mergeVendoredLibrariesBySourceId([
         ...buildLibraryRegistry(classification, targets),
         ...readLualsRegistryEntries(root),
         ...readScriptApiRegistryEntries(root),
         ...readAuthoredRegistryEntries(root),
-      ],
+      ]),
       generatedDir: path.join(root, "generated"),
     };
   } catch {
