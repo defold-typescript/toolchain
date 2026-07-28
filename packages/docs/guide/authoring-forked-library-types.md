@@ -200,6 +200,9 @@ git tags, so `ref` pins the default-branch commit SHA
 (`c67c227322334056cea7a631f3ddcdf2bcfd480c`) rather than a semver tag. The
 `defmath` page attributes to that SHA and its `sourceUrl` points at
 `.../tree/c67c2273…` — expected, not a defect. Its surface also references core
-engine types (`vmath.vector3 | vmath.vector4`, `vmath.quaternion`), which resolve
-in the `dts-declaration-validity` gate because that gate's ambient reference
-aggregates `vmath`; a fork consuming engine types needs no special wiring.
+engine types: upstream writes them as `vmath.vector3 | vmath.vector4` /
+`vmath.quaternion`, but the fork — like every vendored declaration in this
+package — carries the core-type-renamed ambient `Vector3 | Vector4` /
+`Quaternion`. These resolve in the `dts-declaration-validity` gate via the
+`@defold-typescript/types` reference that `test-d/dts-check-ambient.ts` pulls
+in, so a fork consuming engine types needs no special wiring.
