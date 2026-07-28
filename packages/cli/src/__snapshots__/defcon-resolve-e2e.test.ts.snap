@@ -1,0 +1,10 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`defcon resolves and its materialized types are usable end to end a consumer compiles against the materialized types and transpiles to require("defcon.console") 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local defcon = require("defcon.console")
+defcon.start(8000)
+return ____exports
+"
+`;

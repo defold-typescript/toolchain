@@ -32,6 +32,11 @@ describe("@defold-typescript/library-types publish surface", () => {
     expect(paths).toContain("generated/bridge.d.ts");
   });
 
+  test("ships the authored resolve manifest so installed packages can resolve defcon", () => {
+    expect(paths).toContain("authored-targets.json");
+    expect(paths).toContain("generated/defcon.d.ts");
+  });
+
   test("keeps the already-shipped registry JSONs", () => {
     expect(paths).toContain("library-targets.json");
     expect(paths).toContain("library-classification.json");

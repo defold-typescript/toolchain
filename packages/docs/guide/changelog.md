@@ -18,7 +18,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- The [defcon](/api/defcon) library's types are now maintained in this repo as a first-party forked `.d.ts` and carry the maintained-here pin, attributed to upstream `britzl/defcon` (`2.6.0`) instead of the ts-defold corpus. The type surface is unchanged from the previous binding — only its provenance moves.
+- The [defcon](/api/defcon) library is now a first-party forked `.d.ts` maintained in this repo (pinned to upstream `britzl/defcon` `2.6.0`): declaring `britzl/defcon` as a dependency resolves and materializes its `defcon.console` types through [`resolve`](./resolve.md), and its docs page imports it as `import * as defcon from "defcon.console"`. The type surface is unchanged from the previous binding — only its provenance and end-to-end resolution move.
 
 ## v0.23.0
 
