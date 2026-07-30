@@ -329,6 +329,21 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.importString).toBe('import * as zzfx from "zzfx.api"');
   });
 
+  test("attributes boom to britzl/boom as an authored-here forked library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("boom");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("1.0.0");
+    expect(meta.authorUrl).toBe("https://github.com/britzl/boom");
+    expect(meta.sourceUrl).toBe("https://github.com/britzl/boom/tree/1.0.0");
+    expect(meta.license).toBe("MIT");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
+  test("renders boom's import with the namespace alias but the moduleId module path", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("boom");
+    expect(meta.importString).toBe('import * as boom from "boom.boom"');
+  });
+
   test("attributes both forked nakama helpers to heroiclabs/nakama-defold as authored-here", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {

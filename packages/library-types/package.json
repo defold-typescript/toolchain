@@ -97,9 +97,6 @@
     "./bridge.bridge": {
       "types": "./generated/bridge.d.ts"
     },
-    "./boom.boom": {
-      "types": "./generated/boom.boom.d.ts"
-    },
     "./bzAnim.bzLibrary": {
       "types": "./generated/bzAnim.bzLibrary.d.ts"
     },
