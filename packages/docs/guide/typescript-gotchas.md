@@ -27,6 +27,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [Component properties are catalogued per namespace](#component-properties-are-catalogued-per-namespace) — read property types off `label.properties["color"]`, not off the namespace object.
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
+- [npm packages do not resolve](#npm-packages-do-not-resolve--vendor-the-source-instead) — the build compiles only your `include`-matched files, so `node_modules` is never read; copy the source into `src/` and import it relatively.
 
 ## Unary minus on Vector3 / Vector4 silently produces `number`
 
@@ -431,3 +432,39 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 **Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (one string), or the all-required `msg.url(hash("level1"), hash("/door"), hash("script"))` — never the two-arg form.
 
 **How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate. The prose pins — this section's heading, its front-digest link, and the `agent-runbooks.md` runbook — are asserted structurally in `packages/types/test/guide-docs.test.ts`.
+
+## npm packages do not resolve — vendor the source instead
+
+**Symptom.** You `bun add` a package and import it by its bare name. The build fails with two errors — one from the Lua require resolver, one from TypeScript:
+
+```text
+defold-typescript build: 2 file(s) failed:
+  <project>: Could not resolve lua source files for require path 'pure-pkg' in file src/main.ts.
+  src/main.ts:1:23: Cannot find module 'pure-pkg' or its corresponding type declarations.
+```
+
+This happens for **every** npm package, including a dependency-free one that uses nothing but plain TypeScript. The failure is loud, never silent: every non-warning diagnostic is fatal, so the build stops here.
+
+**Why.** The CLI does not compile your project from disk. `runBuild` (`packages/cli/src/build.ts`) globs *only* the files matched by your `tsconfig.json` `include` patterns into an in-memory map and compiles that virtual program. The compiler host serves content for those files, the TypeScript `lib.*` files, and the language extensions — and nothing else. `node_modules` is never read, so the package's `.d.ts` is invisible and the import cannot type-check.
+
+The Lua side fails independently: TypeScriptToLua's `node_modules` require resolver only accepts `.lua` files and enforces the extension, so a bare specifier like `"pure-pkg"` never matches. **A package that ships `.lua` alongside its `.d.ts` does not work either** — it fails with the same two errors, and even on a resolver hit the build writes Lua only for `include`-matched sources, so dependency Lua would never reach your output.
+
+**What to do instead.** Copy the source into your project, under a path your `include` already covers, and import it relatively:
+
+```ts
+// before — never resolves
+import { clamp } from "pure-pkg";
+
+// after — src/vendor/pure-pkg.ts is compiled like any other source file
+import { clamp } from "./vendor/pure-pkg";
+```
+
+That emits `build/vendor/pure-pkg.lua` beside `build/main.lua`. Three things to know:
+
+- The scaffold's `include` is `["src/**/*.ts"]`. Vendored source must sit under an include base or it is never compiled at all.
+- The output path strips the **longest matching** include base. With `["src/**/*.ts", "vendor/**/*.ts"]`, `vendor/pure-pkg.ts` lands flattened at `build/pure-pkg.lua` — in the outDir root, where it can collide with a `src/` name. Vendoring under `src/vendor/` keeps the folder in the output.
+- Routing the vendored code back through `node_modules` — a workspace package or a `file:` dependency — reintroduces the no-resolve failure. The import has to stay relative.
+
+For Defold engine features and third-party Defold libraries, do not look on npm at all: the engine namespaces are ambient from `@defold-typescript/types`, and native-extension APIs come from [`resolve`](./resolve.md), which generates ambient namespaces from your `game.project` dependencies.
+
+**How we pin this.** `packages/types/test/guide-docs.test.ts` asserts this section's heading, its front-digest link, and that every `./typescript-gotchas.md#…` link on [TypeScript vs Lua](./typescript-vs-lua.md) resolves to a real heading here — so renaming either side alone fails the gate.

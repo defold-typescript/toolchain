@@ -192,10 +192,11 @@ a runtime surprise.
 
 - **Your own code** is just more TypeScript files — `import` them by relative
   path. No registration step, no manifest.
-- **npm packages** work only if they transpile to self-contained Lua. A package
-  that touches Node.js or browser built-ins (`fs`, `process`, `window`, `fetch`)
-  will not run on the Defold Lua VM, because TypeScriptToLua implements the
-  ECMAScript standard library and nothing host-specific.
+- **npm packages** do not resolve at all — not even a pure, dependency-free one.
+  The build compiles a virtual program of your `include`-matched files only, so
+  `node_modules` is never read and the import fails loudly. Copy the source into
+  your project and import it relatively instead; see
+  [npm packages do not resolve](./typescript-gotchas.md#npm-packages-do-not-resolve--vendor-the-source-instead).
 - **Engine features** come from the ambient `@defold-typescript/types` namespaces
   (`go`, `msg`, `vmath`, …), never from npm. There is no package to install for
   them; they are part of the types surface the scaffold pins.
