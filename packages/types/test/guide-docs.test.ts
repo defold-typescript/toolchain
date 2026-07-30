@@ -1545,11 +1545,18 @@ describe("docs/guide npm package resolution coverage", () => {
     expect(section).not.toContain("build/main.lua");
   });
 
-  test("the include-base stripping bullet is outDir-qualified", async () => {
+  test("the include-base stripping bullet names both alongside outDir exceptions", async () => {
     const section = await readNpmGotchaSection();
     const bullets = section.split("\n").filter((l) => l.includes("longest matching"));
     expect(bullets).toHaveLength(1);
     expect(bullets[0]).toContain("compilerOptions.outDir");
+    expect(bullets[0]).toContain('`""`');
+    expect(bullets[0]).toContain('`"."`');
+  });
+
+  test("the retired outDir-configured stripping claim is gone", async () => {
+    const section = await readNpmGotchaSection();
+    expect(section).not.toContain("only when `compilerOptions.outDir` is configured");
   });
 
   test("the supported relative-import workaround survives", async () => {
