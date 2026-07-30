@@ -95,6 +95,27 @@ describe("orthographic stays ts-defold-sourced on the no-go decision", () => {
   });
 });
 
+describe("defold-input registers no markdown target on the all-no-go outcome", () => {
+  test("markdown-targets.json carries no in.* entry", () => {
+    const targets = readMarkdownTargets(PACKAGE_ROOT);
+    expect(targets.filter((t) => t.moduleId.startsWith("in."))).toEqual([]);
+  });
+
+  // A markdown target's goldens are the canonical `generated/<ns>.d.ts` +
+  // `api-doc/<ns>.json`, and for defold-input the markdown namespace `in.<mod>`
+  // is the *same* key the live ts-defold module already publishes under (unlike
+  // orthographic, whose `orthographic` namespace differs from `orthographic.camera`).
+  // Registering a no-go target would therefore overwrite the live artifacts, and
+  // the namespace-keyed `decision != "go"` skip would drop the module's docs page
+  // outright. The decisions live in `markdown-fidelity-gate.test.ts` instead.
+  test("the live ts-defold in.* goldens are the ones the docs site still enumerates", () => {
+    for (const mod of ["cursor", "state"]) {
+      expect(existsSync(join(PACKAGE_ROOT, "generated", `in.${mod}.d.ts`))).toBe(true);
+      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `in.${mod}.json`))).toBe(true);
+    }
+  });
+});
+
 describe("fetchMarkdownFixture", () => {
   test("snapshots the pinned README under fixtures/markdown/<moduleId>.md, offline", async () => {
     const root = mkdtempSync(join(tmpdir(), "markdown-fetch-"));
