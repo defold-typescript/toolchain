@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "boom.boom",
+    "namespace": "boom",
     "brief": "Boom is a game framework built on top of Defold.",
     "description": "Boom is a game framework built on top of Defold."
   },

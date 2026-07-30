@@ -41,6 +41,16 @@
       "apiDoc": "api-doc/zzfx.json"
     },
     {
+      "repo": "https://github.com/britzl/boom",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/boom.boom.d.ts",
+      "moduleId": "boom.boom",
+      "namespace": "boom",
+      "generated": "generated/boom.d.ts",
+      "apiDoc": "api-doc/boom.json"
+    },
+    {
       "repo": "https://github.com/heroiclabs/nakama-defold",
       "ref": "v3.4.0",
       "license": "Apache-2.0",

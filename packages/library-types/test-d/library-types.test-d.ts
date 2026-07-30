@@ -2,7 +2,6 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as bzAnim from "bzAnim.bzLibrary";
-import * as boom from "boom.boom";
 import * as defsave from "defsave.defsave";
 import * as dicebag from "dicebag.dicebag";
 import * as gooey from "gooey.gooey";
@@ -164,12 +163,6 @@ yagames.player_get_data(undefined, (ctx, err, data) => {
   void data;
 });
 
-boom.boom(() => {});
-const _boomObject = add(["player"]);
-const _boomVec = vec2(1, 2);
-const _boomRand: number = rand();
-const _boomRed = RED;
-
 const _bzInfoLevel: 1 = bzAnim.INFO_LEVEL;
 const _bzAnimId: string = bzAnim.animate({ obj: _hash, easing: "TYPE_LINEAR" });
 const _bzSeqId: string = bzAnim.animateSequence({ obj: undefined, easing: "TYPE_INQUAD" });
@@ -219,10 +212,6 @@ void _nakamaSession;
 void _yagamesPlayerId;
 void _yagamesDevice;
 void _yagamesStorageLength;
-void _boomObject;
-void _boomVec;
-void _boomRand;
-void _boomRed;
 void _bzInfoLevel;
 void _bzSeqId;
 void _bzReady;
