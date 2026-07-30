@@ -649,6 +649,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the forked boom page pins to britzl/boom, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const boom = pages.find((p) => p.namespace === "boom");
+    expect(boom).toBeDefined();
+    if (!boom) return;
+    expect(boom.category).toBe("library");
+    const md = apiPageMarkdown(boom, apiLinkify(pages));
+    expect(md).toContain("[britzl/boom](https://github.com/britzl/boom)");
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("each forked nakama helper page pins to heroiclabs/nakama-defold, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {

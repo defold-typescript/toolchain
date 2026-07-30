@@ -290,16 +290,16 @@ interface BoomBlankGameObject {
 	c(tag: BoomTag): BoomBlankGameObject &
 		Partial<BoomComponent> & {
 			readonly tag: BoomTag;
-			readonly __url?: url;
+			readonly __url?: Url;
 		};
 
 	readonly dirty: boolean;
 	readonly children: LuaMap;
 	readonly comps: LuaMap<string | number, LuaMap<string, unknown>>;
 	readonly properties: LuaMap<string, unknown>;
-	readonly id: hash;
-	readonly ids: LuaMap<hash, hash>;
-	readonly tags: LuaMap<string | hash, boolean>;
+	readonly id: Hash;
+	readonly ids: LuaMap<Hash, Hash>;
+	readonly tags: LuaMap<string | Hash, boolean>;
 	readonly pre_update?: LuaSet<Function>;
 	readonly update?: LuaSet<Function>;
 	readonly post_update?: LuaSet<Function>;
@@ -457,7 +457,7 @@ interface AreaComp {
 	 * Url of the collision object used by the area.
 	 * Undefined on the first frame that the object is created.
 	 */
-	readonly area_url: url | undefined;
+	readonly area_url: Url | undefined;
 
 	readonly init?: () => void;
 	readonly pre_update?: () => void;
@@ -1065,7 +1065,7 @@ declare function scale(x: number, y?: number): ScaleComp;
 declare function sprite(
 	anim: string,
 	options?: {
-		atlas?: string | hash;
+		atlas?: string | Hash;
 		flip_x?: boolean;
 		flip_y?: boolean;
 		width?: number;
@@ -1119,7 +1119,7 @@ declare function z(index: number): ZComp;
  * @noSelf
  */
 interface BoomCollision {
-	normal: vmath.vector3;
+	normal: Vector3;
 	distance: number;
 	source: BoomBlankGameObject & Omit<AreaComp, 'tag'> & Partial<BoomComponent>;
 	target: BoomBlankGameObject & Omit<AreaComp, 'tag'> & Partial<BoomComponent>;
@@ -1260,7 +1260,7 @@ declare type Vec2 = {
 	x: number;
 	y: number;
 	readonly z: 0;
-	readonly __type: vmath.vector3;
+	readonly __type: Vector3;
 
 	/**
 	 * Get distance between this and another vector.
