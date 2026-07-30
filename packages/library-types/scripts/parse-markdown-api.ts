@@ -61,13 +61,18 @@ function bracketedArgs(argList: string): Set<string> {
 /** Parse one `* `name` (type) doc` bullet into a slot, splitting a `a|b|nil`
  * union into single tokens. Throws naming `fnName` when the bullet names a
  * parameter but carries no `(type)`. */
-function parseSlot(fnName: string, line: string, optionalNames: Set<string>): MarkdownParam {
+function parseSlot(
+  label: string,
+  fnName: string,
+  line: string,
+  optionalNames: Set<string>,
+): MarkdownParam {
   const typed = TYPED_BULLET.exec(line);
   if (typed === null) {
     const named = NAMED_BULLET.exec(line);
     const name = named?.[1] ?? line.trim();
     throw new Error(
-      `parse-markdown-api: ${fnName} row for \`${name}\` has no (type) — cannot resolve to a typed param (row: ${line.trim()})`,
+      `parse-markdown-api: ${label}: ${fnName} row for \`${name}\` has no (type) — cannot resolve to a typed param (row: ${line.trim()})`,
     );
   }
   const name = typed[1] as string;
@@ -97,6 +102,7 @@ function sections(lines: string[]): { header: RegExpExecArray; body: string[] }[
 }
 
 function parseSection(
+  label: string,
   fnName: string,
   body: string[],
   optionalNames: Set<string>,
@@ -124,11 +130,11 @@ function parseSection(
     }
     const isBullet = line.trimStart().startsWith("* ");
     if (isBullet && mode === "params") {
-      parameters.push(parseSlot(fnName, line, optionalNames));
+      parameters.push(parseSlot(label, fnName, line, optionalNames));
       continue;
     }
     if (isBullet && mode === "returns") {
-      returnvalues.push(parseSlot(fnName, line, optionalNames));
+      returnvalues.push(parseSlot(label, fnName, line, optionalNames));
       continue;
     }
     // Any non-bullet line closes an open list, so a blank line before an
@@ -142,7 +148,13 @@ function parseSection(
   return { description: descriptionLines.join(" "), parameters, returnvalues };
 }
 
-export function parseMarkdownApi(text: string): MarkdownDoc {
+/**
+ * `label` names the offending module in every loud-fail message. A library whose
+ * `.md` is usage/tutorial prose (defold-input ships six such modules) yields no
+ * signature section at all; emitting that as an empty namespace would silently
+ * publish a module with no members, so it throws instead.
+ */
+export function parseMarkdownApi(text: string, label = "markdown document"): MarkdownDoc {
   const elements: MarkdownElement[] = [];
   const prefixes = new Set<string>();
 
@@ -152,6 +164,7 @@ export function parseMarkdownApi(text: string): MarkdownDoc {
     const name = `${prefix}.${fn}`;
     prefixes.add(prefix);
     const { description, parameters, returnvalues } = parseSection(
+      label,
       name,
       body,
       bracketedArgs(header[3] as string),
@@ -162,6 +175,11 @@ export function parseMarkdownApi(text: string): MarkdownDoc {
   if (prefixes.size > 1) {
     throw new Error(
       `parse-markdown-api: non-uniform module prefix across headers: ${[...prefixes].sort().join(", ")}`,
+    );
+  }
+  if (elements.length === 0) {
+    throw new Error(
+      `parse-markdown-api: ${label} has no \`### <receiver>.<fn>(...)\` API signature section — refusing to emit an empty namespace`,
     );
   }
   const namespace = [...prefixes][0] ?? "";
