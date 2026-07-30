@@ -155,7 +155,7 @@ async function loadGenerate(
 
 function parseFixtureDoc(packageRoot: string, target: MarkdownTarget): MarkdownDoc {
   const text = readFileSync(fixturePath(packageRoot, target), "utf8");
-  return parseMarkdownApi(text);
+  return parseMarkdownApi(text, target.moduleId);
 }
 
 /**
