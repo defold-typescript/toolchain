@@ -1085,15 +1085,15 @@ import { clamp } from "pure-pkg";
 import { clamp } from "./vendor/pure-pkg";
 ```
 
-That emits `build/vendor/pure-pkg.lua` beside `build/main.lua`. Three things to know:
+The scaffold configures no `outDir`, so generated Lua lands next to its source: that emits `src/vendor/pure-pkg.lua`, beside the `src/main.ts.script` your entry point compiles to. Three things to know:
 
 - The scaffold's `include` is `["src/**/*.ts"]`. Vendored source must sit under an include base or it is never compiled at all.
-- The output path strips the **longest matching** include base. With `["src/**/*.ts", "vendor/**/*.ts"]`, `vendor/pure-pkg.ts` lands flattened at `build/pure-pkg.lua` — in the outDir root, where it can collide with a `src/` name. Vendoring under `src/vendor/` keeps the folder in the output.
+- The output path strips the **longest matching** include base, but **only when `compilerOptions.outDir` is configured** — with no `outDir` the output tree mirrors the source tree exactly. In `outDir` mode (say `"build"`) with `["src/**/*.ts", "vendor/**/*.ts"]`, `vendor/pure-pkg.ts` lands flattened at `build/pure-pkg.lua` — in the outDir root, where it can collide with a `src/` name. Vendoring under `src/vendor/` keeps the folder in the output either way.
 - Routing the vendored code back through `node_modules` — a workspace package or a `file:` dependency — reintroduces the no-resolve failure. The import has to stay relative.
 
 For Defold engine features and third-party Defold libraries, do not look on npm at all: the engine namespaces are ambient from `@defold-typescript/types`, and native-extension APIs come from [`resolve`](./resolve.md), which generates ambient namespaces from your `game.project` dependencies.
 
-**How we pin this.** `packages/types/test/guide-docs.test.ts` asserts this section's heading, its front-digest link, and that every `./typescript-gotchas.md#…` link on [TypeScript vs Lua](./typescript-vs-lua.md) resolves to a real heading here — so renaming either side alone fails the gate.
+**How we pin this.** `packages/types/test/guide-docs.test.ts` asserts this section's heading, its front-digest link, and that every `./typescript-gotchas.md#…` link on [TypeScript vs Lua](./typescript-vs-lua.md) resolves to a real heading here — so renaming either side alone fails the gate. It also pins this section's output paths against the scaffold's no-`outDir` layout and requires the include-base stripping bullet to stay `outDir`-qualified, so the wording cannot drift back to an `outDir`-only claim.
 
 ### Data structures: what's built in
 
