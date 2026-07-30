@@ -72,6 +72,59 @@ describe("parseMarkdownApi on the committed orthographic README", () => {
   });
 });
 
+// The eight `in/<mod>.md` files defold-input ships at tag 4.7.1, snapshotted under
+// `fixtures/markdown/in.<mod>.md`. They are the committed evidence behind each
+// module's recorded no-go: six document usage prose with no API signature section
+// at all, and the two that do carry `### <recv>.<fn>(...)` headers document almost
+// none of the surface. `in.keyboard` and `in.triggers` ship no `.md` upstream, so
+// they have no fixture here at all.
+const SIGNATURELESS = ["accelerometer", "button", "gesture", "mapper", "onscreen", "textbox"];
+
+function inputFixture(mod: string): string {
+  return readFileSync(join(PACKAGE_ROOT, "fixtures/markdown", `in.${mod}.md`), "utf8");
+}
+
+describe("defold-input module docs at the pinned 4.7.1 snapshot", () => {
+  test.each(
+    SIGNATURELESS,
+  )("in.%s carries no signature section and loud-fails rather than emitting an empty namespace", (mod) => {
+    const parse = () => parseMarkdownApi(inputFixture(mod), `in.${mod}`);
+    expect(parse).toThrow(new RegExp(`in\\.${mod}`));
+    expect(parse).toThrow(/signature/);
+  });
+
+  test("in.cursor lifts the one documented function", () => {
+    const doc = parseMarkdownApi(inputFixture("cursor"), "in.cursor");
+    expect(doc.info.namespace).toBe("cursor");
+    expect(doc.elements.map((e) => e.name)).toEqual(["cursor.listen"]);
+  });
+
+  test("in.state lifts its six documented functions", () => {
+    const doc = parseMarkdownApi(inputFixture("state"), "in.state");
+    expect(doc.info.namespace).toBe("state");
+    expect(doc.elements.map((e) => e.name).sort()).toEqual([
+      "state.acquire",
+      "state.clear",
+      "state.create",
+      "state.is_pressed",
+      "state.on_input",
+      "state.release",
+    ]);
+  });
+});
+
+describe("parseMarkdownApi loud-fails on a document with no API signature", () => {
+  test("throws naming the module when prose carries no dotted signature header", () => {
+    const prose = ["# Textbox", "", "# Usage", "Require the module and call it.", ""].join("\n");
+    expect(() => parseMarkdownApi(prose, "in.textbox")).toThrow(/in\.textbox/);
+    expect(() => parseMarkdownApi(prose, "in.textbox")).toThrow(/signature/);
+  });
+
+  test("falls back to a generic label when the caller names no module", () => {
+    expect(() => parseMarkdownApi("# Just prose\n")).toThrow(/signature/);
+  });
+});
+
 describe("parseMarkdownApi loud-fails on an unresolvable row", () => {
   test("throws naming the function and parameter when a bullet has no (type)", () => {
     const bad = [
