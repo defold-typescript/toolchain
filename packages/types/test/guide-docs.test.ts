@@ -1524,4 +1524,37 @@ describe("docs/guide npm package resolution coverage", () => {
     expect(line).toBeDefined();
     expect(line).not.toContain("Future entries land here");
   });
+
+  async function readNpmGotchaSection(): Promise<string> {
+    const body = await readGuide("typescript-gotchas.md");
+    const start = body.indexOf(NPM_GOTCHA_HEADING);
+    expect(start).toBeGreaterThan(-1);
+    const end = body.indexOf("\n## ", start + 1);
+    return end === -1 ? body.slice(start) : body.slice(start, end);
+  }
+
+  test("the vendoring workaround states the scaffold's alongside output paths", async () => {
+    const section = await readNpmGotchaSection();
+    expect(section).toContain("src/vendor/pure-pkg.lua");
+    expect(section).toContain("src/main.ts.script");
+  });
+
+  test("the vendoring workaround drops the outDir-mode paths no scaffold produces", async () => {
+    const section = await readNpmGotchaSection();
+    expect(section).not.toContain("build/vendor/pure-pkg.lua");
+    expect(section).not.toContain("build/main.lua");
+  });
+
+  test("the include-base stripping bullet is outDir-qualified", async () => {
+    const section = await readNpmGotchaSection();
+    const bullets = section.split("\n").filter((l) => l.includes("longest matching"));
+    expect(bullets).toHaveLength(1);
+    expect(bullets[0]).toContain("compilerOptions.outDir");
+  });
+
+  test("the supported relative-import workaround survives", async () => {
+    const section = await readNpmGotchaSection();
+    expect(section).toContain('import { clamp } from "./vendor/pure-pkg";');
+    expect(section).toContain('["src/**/*.ts"]');
+  });
 });
