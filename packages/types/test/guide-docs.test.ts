@@ -1494,9 +1494,11 @@ describe("docs/guide npm package resolution coverage", () => {
   test("every typescript-vs-lua.md cross-link resolves to a typescript-gotchas.md heading", async () => {
     const map = await readGuide("typescript-vs-lua.md");
     const gotchas = await readGuide("typescript-gotchas.md");
-    const anchors = [...map.matchAll(/\.\/typescript-gotchas\.md#([\w-]+)/g)].map((m) => m[1]);
+    const anchors = [...map.matchAll(/\.\/typescript-gotchas\.md#([\w-]+)/g)].map(
+      (m) => m[1] as string,
+    );
     expect(anchors.length).toBeGreaterThan(0);
-    const headings = [...gotchas.matchAll(/^#{2,3} (.+)$/gm)].map((m) => slugify(m[1]));
+    const headings = [...gotchas.matchAll(/^#{2,3} (.+)$/gm)].map((m) => slugify(m[1] as string));
     for (const anchor of anchors) {
       expect(headings).toContain(anchor);
     }
