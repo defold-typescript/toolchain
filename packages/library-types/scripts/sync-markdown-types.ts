@@ -348,6 +348,30 @@ export function compareFidelityToTsDefold(
   };
 }
 
+/**
+ * Evaluate one cutover candidate without writing anything: emit the markdown
+ * surface in memory and compare it against the `fixtures/ts-defold/<moduleId>.d.ts`
+ * it would replace.
+ *
+ * This is the entry point for a library whose markdown `namespace` *equals* its
+ * live `moduleId` (defold-input, monarch), where the canonical
+ * `generated`/`api-doc`/`fidelity` paths a registered target would write are the
+ * very files the live ts-defold module already owns. Registering a no-go target
+ * to obtain its comparison would overwrite them in place; passing an unregistered
+ * in-memory target here computes the same decision and leaves them untouched.
+ */
+export async function evaluateMarkdownCandidate(
+  packageRoot: string,
+  target: MarkdownTarget,
+): Promise<FidelityComparison & { emitted: string }> {
+  const emitted = await emitMarkdownDeclaration(packageRoot, target);
+  const tsDefold = readFileSync(
+    join(packageRoot, "fixtures/ts-defold", `${target.moduleId}.d.ts`),
+    "utf8",
+  );
+  return { emitted, ...compareFidelityToTsDefold(emitted, tsDefold) };
+}
+
 const defaultFetchText: FetchText = async (url) => {
   const res = await fetch(url);
   if (!res.ok) {
