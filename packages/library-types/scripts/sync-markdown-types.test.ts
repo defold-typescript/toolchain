@@ -7,6 +7,7 @@ import {
   buildMarkdownFidelity,
   computeMarkdownFidelity,
   emitMarkdownDeclaration,
+  evaluateMarkdownCandidate,
   fetchMarkdownFixture,
   lowerMarkdownApiDoc,
   type MarkdownTarget,
@@ -113,6 +114,48 @@ describe("defold-input registers no markdown target on the all-no-go outcome", (
       expect(existsSync(join(PACKAGE_ROOT, "generated", `in.${mod}.d.ts`))).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `in.${mod}.json`))).toBe(true);
     }
+  });
+});
+
+describe("evaluateMarkdownCandidate", () => {
+  // An unregistered in-memory target for a library whose markdown namespace is
+  // its live ts-defold moduleId. Evaluating it must not touch the canonical
+  // paths that module already publishes under.
+  const MONARCH: MarkdownTarget = {
+    repo: "https://github.com/britzl/monarch",
+    ref: "6.0.2",
+    license: "MIT",
+    markdown: "README_API.md",
+    moduleId: "monarch.monarch",
+    namespace: "monarch.monarch",
+    generated: "generated/monarch.monarch.d.ts",
+    apiDoc: "api-doc/monarch.monarch.json",
+    fidelity: "fidelity/monarch.monarch.json",
+    decision: "no-go",
+  };
+
+  test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
+    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH);
+    expect(result.emitted).toContain("declare module 'monarch.monarch' {");
+    expect(result.emitted).toContain("function show(");
+    expect(result.markdownMembers).toContain("show");
+    expect(result.tsDefoldMembers).toContain("show");
+    expect(result.decision).toBe("no-go");
+  });
+
+  test("writes nothing — the live in-place goldens survive byte-identical", async () => {
+    const live = [MONARCH.generated, MONARCH.apiDoc].map((rel) => ({
+      rel,
+      before: readFileSync(join(PACKAGE_ROOT, rel), "utf8"),
+    }));
+
+    await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH);
+
+    for (const { rel, before } of live) {
+      expect(readFileSync(join(PACKAGE_ROOT, rel), "utf8")).toBe(before);
+    }
+    // The fidelity path has no live occupant, so it must simply never appear.
+    expect(existsSync(join(PACKAGE_ROOT, MONARCH.fidelity))).toBe(false);
   });
 });
 

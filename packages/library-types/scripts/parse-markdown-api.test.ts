@@ -113,6 +113,85 @@ describe("defold-input module docs at the pinned 4.7.1 snapshot", () => {
   });
 });
 
+describe("parseMarkdownApi accepts both ## and ### signature header levels", () => {
+  const body = [
+    "Show a screen.",
+    "",
+    "**PARAMETERS**",
+    "* `screen_id` (hash|string) - Id of the screen to show",
+    "* `options` (table) - Table with options",
+    "",
+    "**RETURN**",
+    "* `success` (boolean) - Whether the screen was shown",
+    "",
+  ];
+
+  test("a ## heading yields the same element as the identical ### heading", () => {
+    const signature = "monarch.show(screen_id, [options])";
+    const two = parseMarkdownApi([`## ${signature}`, ...body].join("\n"));
+    const three = parseMarkdownApi([`### ${signature}`, ...body].join("\n"));
+    const shown = element(two, "monarch.show");
+    expect(shown).toEqual(element(three, "monarch.show") as MarkdownElement);
+    expect(shown?.parameters.map((p) => p.name)).toEqual(["screen_id", "options"]);
+    expect(shown?.parameters[0]?.types).toEqual(["hash", "string"]);
+    expect(shown?.parameters[1]?.is_optional).toBe("True");
+    expect(shown?.returnvalues.map((r) => r.types)).toEqual([["boolean"]]);
+  });
+
+  test.each([
+    ["#", "h1"],
+    ["####", "h4"],
+  ])("a %s (%s) heading shaped like a signature stays invisible", (marker) => {
+    const doc = [`${marker} monarch.show(screen_id)`, ...body].join("\n");
+    expect(() => parseMarkdownApi(doc, "monarch.monarch")).toThrow(/monarch\.monarch/);
+    expect(() => parseMarkdownApi(doc, "monarch.monarch")).toThrow(/signature/);
+  });
+
+  test("a ## heading with no parens is a constant, not an element", () => {
+    // monarch's README_API.md documents its four `## monarch.SCREEN_TRANSITION_*`
+    // constants as headings; the required parens keep them out of the surface.
+    const doc = [
+      "## monarch.SCREEN_TRANSITION_IN_STARTED",
+      "Message sent when a transition starts.",
+      "",
+      "## monarch.show(screen_id)",
+      "**PARAMETERS**",
+      "* `screen_id` (hash) - Id",
+      "",
+    ].join("\n");
+    expect(parseMarkdownApi(doc).elements.map((e) => e.name)).toEqual(["monarch.show"]);
+  });
+
+  test("a ## prose heading that merely mentions a dotted call stays invisible", () => {
+    // `in.cursor.md` ships `## Combine with physics.set_event_listener()`. The
+    // header anchor is what keeps the widening from lifting prose like this.
+    const doc = [
+      "## Combine with physics.set_event_listener()",
+      "Some prose.",
+      "",
+      "### cursor.listen(url)",
+      "**PARAMETERS**",
+      "* `url` (url) - Target",
+      "",
+    ].join("\n");
+    expect(parseMarkdownApi(doc).elements.map((e) => e.name)).toEqual(["cursor.listen"]);
+  });
+
+  test("mixed ## and ### signature headings still loud-fail on a non-uniform prefix", () => {
+    const mixed = [
+      "## camera.a(x)",
+      "**PARAMETERS**",
+      "* `x` (number) n",
+      "",
+      "### other.b(y)",
+      "**PARAMETERS**",
+      "* `y` (number) n",
+      "",
+    ].join("\n");
+    expect(() => parseMarkdownApi(mixed)).toThrow(/non-uniform module prefix/);
+  });
+});
+
 describe("parseMarkdownApi loud-fails on a document with no API signature", () => {
   test("throws naming the module when prose carries no dotted signature header", () => {
     const prose = ["# Textbox", "", "# Usage", "Require the module and call it.", ""].join("\n");

@@ -5,6 +5,7 @@ import { parseMarkdownApi } from "./parse-markdown-api";
 import {
   compareFidelityToTsDefold,
   emitMarkdownDeclaration,
+  evaluateMarkdownCandidate,
   type MarkdownTarget,
   readMarkdownTargets,
   tsDefoldMembers,
@@ -104,6 +105,141 @@ interface ModuleDecision {
   module: string;
   decision: "go" | "no-go";
   reason: "no-markdown" | "no-signature-section" | "surface-loss";
+  // The upstream `.md` path at the pin, absent exactly when `no-markdown`.
+  markdown?: string;
+}
+
+/** One Bucket-C library's audited cutover record. `<prefix><module>` is both the
+ * moduleId and the publish namespace, so every module here carries the in-place
+ * hazard: its markdown goldens would land on the paths the live ts-defold module
+ * already owns. Evaluation therefore runs through unregistered in-memory targets
+ * (`evaluateMarkdownCandidate`) and only a `go` module is ever registered. */
+interface LibraryRecord {
+  library: string;
+  repo: string;
+  ref: string;
+  license: string;
+  prefix: string;
+  classificationDir: string;
+  decisions: ModuleDecision[];
+}
+
+function candidateTarget(record: LibraryRecord, decision: ModuleDecision): MarkdownTarget {
+  const moduleId = `${record.prefix}${decision.module}`;
+  return {
+    repo: record.repo,
+    ref: record.ref,
+    license: record.license,
+    markdown: decision.markdown ?? "",
+    moduleId,
+    namespace: moduleId,
+    generated: `generated/${moduleId}.d.ts`,
+    apiDoc: `api-doc/${moduleId}.json`,
+    fidelity: `fidelity/${moduleId}.json`,
+    decision: decision.decision,
+  };
+}
+
+function fixtureText(record: LibraryRecord, decision: ModuleDecision): string {
+  return readFileSync(
+    join(PACKAGE_ROOT, "fixtures/markdown", `${record.prefix}${decision.module}.md`),
+    "utf8",
+  );
+}
+
+/**
+ * The four assertions every per-library decision record owes, so a sibling
+ * library costs a decision table plus its own evidence rather than a copied
+ * describe block: the record covers exactly the library's shipped modules, a
+ * `no-markdown` module has no snapshot, a `no-signature-section` module is
+ * refused by the parser, and a `no-go` module stays wired to ts-defold.
+ */
+function describeLibraryDecisions(record: LibraryRecord): void {
+  const { library, ref, decisions } = record;
+  const noGo = decisions.filter((d) => d.decision === "no-go");
+
+  describe(`${library} per-module fidelity decisions at tag ${ref}`, () => {
+    test("the decision record covers exactly the library's library-targets modules", () => {
+      const libraryTargets = JSON.parse(
+        readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      ) as { targets: { module: string }[] };
+      const shipped = libraryTargets.targets
+        .map((t) => t.module)
+        .filter((m) => m.startsWith(record.prefix))
+        .sort();
+      const recorded = decisions.map((d) => `${record.prefix}${d.module}`).sort();
+      // A `go` module is dropped from library-targets.json at cutover, so only
+      // the retained (no-go) modules are still expected to appear there.
+      expect(recorded.filter((m) => shipped.includes(m))).toEqual(shipped);
+      expect(decisions.every((d) => d.reason === "no-markdown" || d.markdown !== undefined)).toBe(
+        true,
+      );
+    });
+
+    const noMarkdown = decisions.filter((d) => d.reason === "no-markdown");
+    if (noMarkdown.length > 0) {
+      test.each(
+        noMarkdown,
+      )(`${record.prefix}$module ships no upstream .md, so it has no snapshot to parse`, (decision) => {
+        expect(
+          existsSync(
+            join(PACKAGE_ROOT, "fixtures/markdown", `${record.prefix}${decision.module}.md`),
+          ),
+        ).toBe(false);
+      });
+    }
+
+    const signatureless = decisions.filter((d) => d.reason === "no-signature-section");
+    if (signatureless.length > 0) {
+      test.each(
+        signatureless,
+      )(`${record.prefix}$module documents no signature section, so the parser refuses it`, (decision) => {
+        const moduleId = `${record.prefix}${decision.module}`;
+        expect(() => parseMarkdownApi(fixtureText(record, decision), moduleId)).toThrow(
+          /signature/,
+        );
+      });
+    }
+  });
+
+  if (noGo.length > 0) {
+    describe(`every no-go ${library} module stays ts-defold-sourced`, () => {
+      const dtsCheck = readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8");
+
+      const shippedModules = (
+        JSON.parse(readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8")) as {
+          targets: { module: string }[];
+        }
+      ).targets.map((t) => t.module);
+
+      test.each(
+        noGo,
+      )(`${record.prefix}$module keeps its ts-defold row and fixture and stays out of the dts-check include`, (decision) => {
+        const moduleId = `${record.prefix}${decision.module}`;
+        expect(shippedModules).toContain(moduleId);
+        expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(true);
+        expect(dtsCheck).not.toContain(`generated/${moduleId}.d.ts`);
+      });
+
+      test("no no-go module is registered as a markdown target", () => {
+        const registered = readMarkdownTargets(PACKAGE_ROOT).map((t) => t.moduleId);
+        for (const decision of noGo) {
+          expect(registered).not.toContain(`${record.prefix}${decision.module}`);
+        }
+      });
+
+      test(`the ${record.classificationDir} dir retains exactly the modules that stayed`, () => {
+        const classification = JSON.parse(
+          readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+        ) as { dirs: { dir: string; modules: string[] }[] };
+        const entry = classification.dirs.find((d) => d.dir === record.classificationDir);
+        expect(entry).toBeDefined();
+        expect([...(entry?.modules ?? [])].sort()).toEqual(
+          noGo.map((d) => `${record.prefix}${d.module}`).sort(),
+        );
+      });
+    });
+  }
 }
 
 // The recorded per-module fidelity decision for `britzl/defold-input` at tag
@@ -116,74 +252,99 @@ interface ModuleDecision {
 //                        `### <recv>.<fn>(...)` header, so the parser loud-fails.
 //   surface-loss         the `.md` parses, but the structural gate reports the
 //                        markdown surface losing members versus ts-defold.
-const DEFOLD_INPUT_DECISIONS: ModuleDecision[] = [
-  { module: "accelerometer", decision: "no-go", reason: "no-signature-section" },
-  { module: "button", decision: "no-go", reason: "no-signature-section" },
-  { module: "cursor", decision: "no-go", reason: "surface-loss" },
-  { module: "gesture", decision: "no-go", reason: "no-signature-section" },
-  { module: "keyboard", decision: "no-go", reason: "no-markdown" },
-  { module: "mapper", decision: "no-go", reason: "no-signature-section" },
-  { module: "onscreen", decision: "no-go", reason: "no-signature-section" },
-  { module: "state", decision: "no-go", reason: "surface-loss" },
-  { module: "textbox", decision: "no-go", reason: "no-signature-section" },
-  { module: "triggers", decision: "no-go", reason: "no-markdown" },
-];
+const DEFOLD_INPUT: LibraryRecord = {
+  library: "defold-input",
+  repo: "https://github.com/britzl/defold-input",
+  ref: "4.7.1",
+  license: "MIT",
+  prefix: "in.",
+  classificationDir: "defold-input",
+  decisions: [
+    {
+      module: "accelerometer",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "in/accelerometer.md",
+    },
+    {
+      module: "button",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "in/button.md",
+    },
+    { module: "cursor", decision: "no-go", reason: "surface-loss", markdown: "in/cursor.md" },
+    {
+      module: "gesture",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "in/gesture.md",
+    },
+    { module: "keyboard", decision: "no-go", reason: "no-markdown" },
+    {
+      module: "mapper",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "in/mapper.md",
+    },
+    {
+      module: "onscreen",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "in/onscreen.md",
+    },
+    { module: "state", decision: "no-go", reason: "surface-loss", markdown: "in/state.md" },
+    {
+      module: "textbox",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "in/textbox.md",
+    },
+    { module: "triggers", decision: "no-go", reason: "no-markdown" },
+  ],
+};
 
-// An unregistered in-memory target for a module that *does* parse. The gate needs
-// only the emitted surface, and `emitMarkdownDeclaration` returns it without
-// writing anything, so the real comparison runs without committing a golden to
-// the canonical in-place paths the live ts-defold module already owns.
-function inputTarget(mod: string): MarkdownTarget {
-  return {
-    repo: "https://github.com/britzl/defold-input",
-    ref: "4.7.1",
-    license: "MIT",
-    markdown: `in/${mod}.md`,
-    moduleId: `in.${mod}`,
-    namespace: `in.${mod}`,
-    generated: `generated/in.${mod}.d.ts`,
-    apiDoc: `api-doc/in.${mod}.json`,
-    fidelity: `fidelity/in.${mod}.json`,
-    decision: "no-go",
-  };
+// The recorded per-module decision for `britzl/monarch` at tag 6.0.2 — the second
+// multi-module Bucket-C library, and the first whose evaluation needed a
+// front-end change: `README_API.md` writes its signatures at `##`, so before the
+// header-level widening the parser saw zero sections and the recorded reason
+// would have been a tooling artifact rather than a fidelity judgment.
+//
+// All three modules are `no-go`, so none is registered and monarch stays
+// ts-defold-sourced in full.
+const MONARCH: LibraryRecord = {
+  library: "monarch",
+  repo: "https://github.com/britzl/monarch",
+  ref: "6.0.2",
+  license: "MIT",
+  prefix: "monarch.",
+  classificationDir: "monarch",
+  decisions: [
+    { module: "monarch", decision: "no-go", reason: "surface-loss", markdown: "README_API.md" },
+    { module: "transitions.easings", decision: "no-go", reason: "no-markdown" },
+    {
+      module: "transitions.gui",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "README_TRANSITIONS.md",
+    },
+  ],
+};
+
+function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
+  const decision = record.decisions.find((d) => d.module === module);
+  if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
+  return decision;
 }
 
-async function inputComparison(mod: string) {
-  const target = inputTarget(mod);
-  const emitted = await emitMarkdownDeclaration(PACKAGE_ROOT, target);
-  const tsDefold = readFileSync(
-    join(PACKAGE_ROOT, "fixtures/ts-defold", `${target.moduleId}.d.ts`),
-    "utf8",
-  );
-  return { emitted, ...compareFidelityToTsDefold(emitted, tsDefold) };
-}
+const comparisonFor = (record: LibraryRecord, module: string) =>
+  evaluateMarkdownCandidate(PACKAGE_ROOT, candidateTarget(record, decisionFor(record, module)));
 
-describe("defold-input per-module fidelity decisions at tag 4.7.1", () => {
-  test("the decision record covers all ten in.* modules and every one is no-go", () => {
-    const libraryTargets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    const shipped = libraryTargets.targets
-      .map((t) => t.module)
-      .filter((m) => m.startsWith("in."))
-      .sort();
-    expect(DEFOLD_INPUT_DECISIONS.map((d) => `in.${d.module}`).sort()).toEqual(shipped);
-    expect(DEFOLD_INPUT_DECISIONS.every((d) => d.decision === "no-go")).toBe(true);
-  });
+const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
 
-  test.each(
-    DEFOLD_INPUT_DECISIONS.filter((d) => d.reason === "no-markdown"),
-  )("in.$module ships no upstream .md, so it has no snapshot to parse", ({ module }) => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/markdown", `in.${module}.md`))).toBe(false);
-  });
+describeLibraryDecisions(DEFOLD_INPUT);
+describeLibraryDecisions(MONARCH);
 
-  test.each(
-    DEFOLD_INPUT_DECISIONS.filter((d) => d.reason === "no-signature-section"),
-  )("in.$module documents no signature section, so the parser refuses it", ({ module }) => {
-    const text = readFileSync(join(PACKAGE_ROOT, "fixtures/markdown", `in.${module}.md`), "utf8");
-    expect(() => parseMarkdownApi(text, `in.${module}`)).toThrow(/signature/);
-  });
-
+describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
     const { markdownMembers, missingMembers, decision } = await inputComparison("cursor");
     // The README documents exactly one function; every constant and the rest of
@@ -215,24 +376,57 @@ describe("defold-input per-module fidelity decisions at tag 4.7.1", () => {
   });
 });
 
-describe("every defold-input module stays ts-defold-sourced", () => {
-  const dtsCheck = readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8");
-
-  test.each(
-    DEFOLD_INPUT_DECISIONS,
-  )("in.$module keeps its ts-defold fixture and stays out of the dts-check include", ({
-    module,
-  }) => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `in.${module}.d.ts`))).toBe(true);
-    expect(dtsCheck).not.toContain(`generated/in.${module}.d.ts`);
+describe("monarch surface-loss evidence at tag 6.0.2", () => {
+  test("monarch.monarch parses after the header-level widening", async () => {
+    const { markdownMembers } = await comparisonFor(MONARCH, "monarch");
+    // The 24 `## monarch.<fn>(...)` signature sections of README_API.md. The four
+    // `## monarch.SCREEN_TRANSITION_*` constant headings carry no parens and stay
+    // out of the surface, which is why they show up as missing members below.
+    expect(markdownMembers.length).toBe(24);
+    expect(markdownMembers).toContain("show");
   });
 
-  test("the defold-input dir is retained in library-classification.json", () => {
-    const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string; modules: string[] }[] };
-    const entry = classification.dirs.find((d) => d.dir === "defold-input");
-    expect(entry).toBeDefined();
-    expect(entry?.modules.length).toBe(10);
+  test("the README documents none of the screen-registration surface", async () => {
+    const { missingMembers, decision } = await comparisonFor(MONARCH, "monarch");
+    for (const fn of [
+      "register_proxy",
+      "register_factory",
+      "unregister",
+      "get_stack",
+      "queue_size",
+      "is_loaded",
+      "is_popup",
+      "on_message",
+    ]) {
+      expect(missingMembers).toContain(fn);
+    }
+    // Every ts-defold constant is invisible to a flat signature parse.
+    for (const constant of ["TRANSITION", "FOCUS", "SCREEN_TRANSITION_FAILED"]) {
+      expect(missingMembers).toContain(constant);
+    }
+    expect(decision).toBe("no-go");
+  });
+
+  test("upstream renamed on_focus_changed, so the markdown surface adds on_focus_change", async () => {
+    const { addedMembers, missingMembers } = await comparisonFor(MONARCH, "monarch");
+    expect(addedMembers).toContain("on_focus_change");
+    expect(missingMembers).toContain("on_focus_changed");
+  });
+
+  test("monarch.transitions.easings has no upstream doc anywhere in the repo", () => {
+    expect(
+      existsSync(join(PACKAGE_ROOT, "fixtures/markdown", "monarch.transitions.easings.md")),
+    ).toBe(false);
+  });
+
+  test("monarch.transitions.gui documents its signatures only in prose bullets", () => {
+    const text = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/markdown", "monarch.transitions.gui.md"),
+      "utf8",
+    );
+    expect(() => parseMarkdownApi(text, "monarch.transitions.gui")).toThrow(
+      /monarch\.transitions\.gui/,
+    );
+    expect(() => parseMarkdownApi(text, "monarch.transitions.gui")).toThrow(/signature/);
   });
 });

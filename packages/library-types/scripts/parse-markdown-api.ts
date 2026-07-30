@@ -8,11 +8,15 @@
  * emit + fidelity machinery.
  *
  * Scope is a **flat signature surface**, not deep prose (a PRD non-goal): the
- * parser lifts one element per `### <receiver>.<fn>(<args>)` API header and its
- * `**PARAMETERS**` / `**RETURN**` bullet lists. Header-only message sections
- * (`### <verb>` with no dotted receiver or parens) and nested option-table
- * bullets are ignored. A signature row that names a parameter but gives it no
- * `(type)` loud-fails rather than silently emitting an untyped `any`.
+ * parser lifts one element per `##`- or `###`-level `<receiver>.<fn>(<args>)` API
+ * header and its `**PARAMETERS**` / `**RETURN**` bullet lists. Both levels are
+ * accepted because the corpus is split on the convention (defold-orthographic and
+ * defold-input write `###`; monarch's `README_API.md` writes `##`); h1 and h4 stay
+ * outside the range, since at those levels a dotted-call-shaped line is document
+ * structure rather than a signature. Header-only message sections (`<verb>` with
+ * no dotted receiver or parens) and nested option-table bullets are ignored. A
+ * signature row that names a parameter but gives it no `(type)` loud-fails rather
+ * than silently emitting an untyped `any`.
  */
 
 /** A single ref-doc parameter or return slot. `is_optional` mirrors the
@@ -40,7 +44,7 @@ export interface MarkdownDoc {
   elements: MarkdownElement[];
 }
 
-const HEADER = /^###\s+([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\((.*)\)\s*$/;
+const HEADER = /^#{2,3}\s+([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\((.*)\)\s*$/;
 const PARAM_MARKER = /^\*\*PARAM(?:ETER|ETERS)?\*\*\s*$/;
 const RETURN_MARKER = /^\*\*RETURNS?\*\*\s*$/;
 // A bullet with a backticked name and a required `(type)` group. A named bullet
@@ -85,8 +89,8 @@ function parseSlot(
   return slot;
 }
 
-/** Split the README into `### <receiver>.<fn>(...)` sections, ignoring headers
- * that are not dotted API signatures. */
+/** Split the README into `##`/`###` `<receiver>.<fn>(...)` sections, ignoring
+ * headers that are not dotted API signatures. */
 function sections(lines: string[]): { header: RegExpExecArray; body: string[] }[] {
   const starts: number[] = [];
   lines.forEach((line, index) => {
@@ -179,7 +183,7 @@ export function parseMarkdownApi(text: string, label = "markdown document"): Mar
   }
   if (elements.length === 0) {
     throw new Error(
-      `parse-markdown-api: ${label} has no \`### <receiver>.<fn>(...)\` API signature section — refusing to emit an empty namespace`,
+      `parse-markdown-api: ${label} has no \`##\`/\`###\` \`<receiver>.<fn>(...)\` API signature section — refusing to emit an empty namespace`,
     );
   }
   const namespace = [...prefixes][0] ?? "";
