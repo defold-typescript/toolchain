@@ -39,7 +39,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 ### TypeScript
 
 - [TypeScript vs Lua](https://defold-typescript.github.io/toolchain/typescript-vs-lua) — the Lua-developer on-ramp: a cheat sheet that translates syntax, tables, modules, and the standard library from Lua to the TypeScript the toolchain expects.
-- [TypeScript gotchas](https://defold-typescript.github.io/toolchain/typescript-gotchas) — the canonical catalog of TS / [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) / Defold sharp edges. Today: the unary-minus quirk that silently produces `number` from a `Vector3`. Future entries land here as the toolchain encounters them.
+- [TypeScript gotchas](https://defold-typescript.github.io/toolchain/typescript-gotchas) — the canonical catalog of TS / [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) / Defold sharp edges: what each symptom looks like, why the toolchain behaves that way, and the workaround to reach for — from unary minus on a vector silently producing `number` to npm packages not resolving at all.
 - [Data structures](https://defold-typescript.github.io/toolchain/data-structures) — what's built in for Defold: `Array`, tuple, `Map`, `Set`, `WeakMap`, `WeakSet`, object record, and `class`, each with its Lua lowering and `lualib` cost, plus the not-available list (regex, `BigInt`, `LinkedList`) and what to reach for instead.
 
 ### Core concepts

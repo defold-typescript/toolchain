@@ -1460,3 +1460,68 @@ describe("docs/guide/authoring-luals-library-types.md empty-description remediat
     expect(body.slice(start)).toContain("decore");
   });
 });
+
+// GitHub's heading-anchor rule, narrowed to what the guide pages use:
+// lowercase, drop everything that is not a word char / space / hyphen (so an
+// em dash vanishes and its two flanking spaces each become a hyphen), then
+// spaces to hyphens.
+function slugify(heading: string): string {
+  return heading
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w -]/g, "")
+    .replace(/ /g, "-");
+}
+
+const NPM_GOTCHA_HEADING = "## npm packages do not resolve — vendor the source instead";
+const NPM_GOTCHA_ANCHOR = "npm-packages-do-not-resolve--vendor-the-source-instead";
+
+describe("docs/guide npm package resolution coverage", () => {
+  test("slugify matches the anchors two existing gotchas headings already use", () => {
+    expect(slugify("Enum constants are branded numbers — a bare number won't do")).toBe(
+      "enum-constants-are-branded-numbers--a-bare-number-wont-do",
+    );
+    expect(slugify("Unary minus on Vector3 / Vector4 silently produces `number`")).toBe(
+      "unary-minus-on-vector3--vector4-silently-produces-number",
+    );
+  });
+
+  test("typescript-gotchas.md carries the npm-packages-do-not-resolve entry", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    expect(body).toContain(NPM_GOTCHA_HEADING);
+  });
+
+  test("every typescript-vs-lua.md cross-link resolves to a typescript-gotchas.md heading", async () => {
+    const map = await readGuide("typescript-vs-lua.md");
+    const gotchas = await readGuide("typescript-gotchas.md");
+    const anchors = [...map.matchAll(/\.\/typescript-gotchas\.md#([\w-]+)/g)].map((m) => m[1]);
+    expect(anchors.length).toBeGreaterThan(0);
+    const headings = [...gotchas.matchAll(/^#{2,3} (.+)$/gm)].map((m) => slugify(m[1]));
+    for (const anchor of anchors) {
+      expect(headings).toContain(anchor);
+    }
+  });
+
+  test("the front digest links the npm entry", async () => {
+    const body = await readGuide("typescript-gotchas.md");
+    const start = body.indexOf("## Before you start");
+    expect(start).toBeGreaterThan(-1);
+    const digest = body.slice(start, body.indexOf("\n## ", start + 1));
+    expect(digest).toContain(`#${NPM_GOTCHA_ANCHOR}`);
+  });
+
+  test("typescript-vs-lua.md drops the misleading self-contained-Lua claim", async () => {
+    const body = await readGuide("typescript-vs-lua.md");
+    expect(body).not.toContain("work only if they transpile to self-contained Lua");
+  });
+
+  test("docs/guide/README.md no longer describes typescript-gotchas.md as a single entry", async () => {
+    const body = await readGuide("README.md");
+    expect(body).not.toContain("Today: the unary-minus quirk");
+    const line = body
+      .split("\n")
+      .find((l) => l.includes("[TypeScript gotchas](./typescript-gotchas.md)"));
+    expect(line).toBeDefined();
+    expect(line).not.toContain("Future entries land here");
+  });
+});
