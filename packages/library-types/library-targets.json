@@ -168,12 +168,6 @@
       "generated": "generated/yagames.yagames.d.ts"
     },
     {
-      "module": "boom.boom",
-      "path": "packages/boom/boom.boom.d.ts",
-      "fixture": "fixtures/ts-defold/boom.boom.d.ts",
-      "generated": "generated/boom.boom.d.ts"
-    },
-    {
       "module": "bzAnim.bzLibrary",
       "path": "packages/bzAnim/bzAnim.bzAnim.d.ts",
       "fixture": "fixtures/ts-defold/bzAnim.bzAnim.d.ts",

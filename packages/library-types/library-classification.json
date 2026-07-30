@@ -28,13 +28,6 @@
       ]
     },
     {
-      "dir": "boom",
-      "classification": "already-vendored",
-      "modules": [
-        "boom.boom"
-      ]
-    },
-    {
       "dir": "bzAnim",
       "classification": "already-vendored",
       "modules": [

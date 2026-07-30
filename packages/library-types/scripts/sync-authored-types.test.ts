@@ -278,3 +278,43 @@ describe("nakama helpers migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.util.log.d.ts"))).toBe(false);
   });
 });
+
+describe("boom.boom migration integrity", () => {
+  test("boom is registered in authored-targets.json", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    expect(targets.some((t) => t.namespace === "boom")).toBe(true);
+  });
+
+  test("boom.boom is no longer a ts-defold library-targets row", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "boom.boom")).toBe(false);
+  });
+
+  test("the boom dir is gone from library-classification.json", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "boom")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, and dotted api-doc are deleted", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/boom.boom.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/boom.boom.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/boom.boom.json"))).toBe(false);
+  });
+
+  test("the golden carries the core-type-renamed Hash/Url at every site ts-defold spelled lowercase", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/boom.d.ts"), "utf8");
+    expect(golden).toContain("readonly __url?: Url;");
+    expect(golden).toContain("readonly id: Hash;");
+    expect(golden).toContain("readonly ids: LuaMap<Hash, Hash>;");
+    expect(golden).toContain("readonly tags: LuaMap<string | Hash, boolean>;");
+    expect(golden).toContain("readonly area_url: Url | undefined;");
+    expect(golden).toContain("atlas?: string | Hash;");
+    for (const lowercase of [": hash", ": url", "<hash", "| hash", "| url"]) {
+      expect(golden).not.toContain(lowercase);
+    }
+  });
+});
