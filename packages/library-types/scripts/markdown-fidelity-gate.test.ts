@@ -154,6 +154,54 @@ function fixtureText(record: LibraryRecord, decision: ModuleDecision): string {
   );
 }
 
+// Drop the sections belonging to the other receiver so the remainder satisfies
+// the parser's uniform-prefix invariant. Test-local on purpose: per-receiver
+// splitting is a front-end feature the measured verdicts show would buy no
+// decision change on either library that needs it.
+function filterToReceiver(markdown: string, receiver: string): string {
+  const kept: string[] = [];
+  let dropping = false;
+  for (const line of markdown.split("\n")) {
+    const heading = line.match(/^#{2,3}\s+([A-Za-z_]\w*)\.[A-Za-z_]\w*\(.*\)\s*$/);
+    if (heading !== null) dropping = heading[1] !== receiver;
+    else if (/^#{1,6}\s/.test(line)) dropping = false;
+    if (!dropping) kept.push(line);
+  }
+  return kept.join("\n");
+}
+
+/**
+ * Run one test-rewritten reading of a refused `shared-document` snapshot through
+ * the real pipeline — parse, retarget onto the publish namespace, emit, compare
+ * against the ts-defold surface it would replace. `evaluateMarkdownCandidate`
+ * cannot serve here because it reads the snapshot as committed, which is exactly
+ * the string the parser refuses.
+ */
+async function comparisonForMarkdown(markdown: string, moduleId: string) {
+  const doc = retargetDoc(parseMarkdownApi(markdown, moduleId), moduleId);
+  const regen = (await import(join(PACKAGE_ROOT, "..", "types", "scripts", "regen.ts"))) as {
+    generateModuleDeclaration: (entry: {
+      namespace: string;
+      doc: unknown;
+      outFile: string;
+      importsFrom?: string;
+      moduleId?: string;
+    }) => { contents: string };
+  };
+  const { contents } = regen.generateModuleDeclaration({
+    namespace: moduleId,
+    doc,
+    outFile: `${moduleId}.d.ts`,
+    importsFrom: "../src/core-types",
+    moduleId,
+  });
+  const tsDefold = readFileSync(
+    join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`),
+    "utf8",
+  );
+  return { doc, emitted: contents, ...compareFidelityToTsDefold(contents, tsDefold) };
+}
+
 /**
  * The four assertions every per-library decision record owes, so a sibling
  * library costs a decision table plus its own evidence rather than a copied
@@ -214,8 +262,9 @@ function describeLibraryDecisions(record: LibraryRecord): void {
     }
 
     // A third refusal class, proven the same way but by a different message: the
-    // parser reads the sections and rejects them for spanning two receivers, so
-    // the `/signature/` matcher above would not match it.
+    // parser reads the sections and rejects them for spanning two receivers —
+    // sibling modules or a module plus its returned instance's methods — so the
+    // `/signature/` matcher above would not match it.
     const sharedDocument = decisions.filter((d) => d.reason === "shared-document");
     if (sharedDocument.length > 0) {
       test.each(
@@ -283,11 +332,17 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 //                        independent evidence that a dialect-aware parse would
 //                        not change the decision.
 //   shared-document      the parser reads the `.md`'s convention fine, but one
-//                        document covers several modules under different
-//                        receivers, so the uniform-prefix invariant refuses it.
-//                        A granularity gap, not a dialect gap — recorded only
-//                        alongside evidence that a per-receiver parse would not
-//                        change the decision either.
+//                        document documents more than one receiver, so the
+//                        uniform-prefix invariant refuses it. Two forms: sibling
+//                        modules sharing a README (metrics' `fps.`/`mem.`), and a
+//                        module plus the instance-method family of the object it
+//                        returns (platypus' `platypus.`/`instance.`). The
+//                        invariant refuses both identically, but the remedy
+//                        differs — a per-receiver parse would help the first and
+//                        actively harm the second, which would hoist instance
+//                        methods into module scope. A granularity gap, not a
+//                        dialect gap — recorded only alongside evidence that a
+//                        per-receiver parse would not change the decision either.
 //   surface-loss         the `.md` parses, but the structural gate reports the
 //                        markdown surface losing members versus ts-defold.
 //   signature-loss       the `.md` parses and loses no member, but the members it
@@ -622,6 +677,64 @@ const RENDY: LibraryRecord = {
   ],
 };
 
+// The recorded decision for `britzl/platypus` at tag `4.3.1` (commit
+// `a58d54c1fc1b95d67089a039feb5d904c3524298`) — the ninth Bucket-C library, one
+// module, and the second `shared-document` refusal, on the second *form* of that
+// class.
+//
+// The root `README.md`'s `# Platypus API` carries 20 signature headings: one
+// `### platypus.create(config)` and 19 `### instance.<fn>(...)`. The as-is parse
+// throws, byte-identically to metrics':
+//
+//   parse-markdown-api: non-uniform module prefix across headers: instance, platypus
+//
+// The dialect is fully accepted — bare `###` headings, `**PARAMETERS**`,
+// `**RETURN**`, `* \`name\` (type) - doc` bullets, no `<kbd>` — so this is
+// `shared-document`, not `doc-dialect`.
+//
+// What differs from metrics is *what* the second receiver is. metrics' `fps.` and
+// `mem.` are two sibling modules, so a per-receiver parse is at least a coherent
+// (if insufficient) path. platypus' `instance.` is not a module: it is the object
+// `create` returns, ts-defold's `PlatypusInstance`. A per-receiver parse would
+// emit those 19 methods as *module-level* functions — wrong rather than
+// incomplete. That is why the class is widened to name both forms instead of
+// teaching the front-end a per-receiver parse.
+//
+// `tsDefoldMembers` is 13 — `create` plus 12 constants (7 message hashes and 5
+// `DIR_*` values). Every reading of the document lands no-go, on independently
+// decisive terms:
+//
+//   term                  platypus. only    unified prefix        instance. only
+//   elements parsed       1                 20                    19
+//   missingMembers        the 12 constants  the 12 constants      all 13
+//   addedMembers          []                the 19 methods        the 19 methods
+//   downgradedMembers     ["create"]        ["create"]            []
+//   signature/optionality []                []                    []
+//
+// The constants are unreachable under any reading: `DIR_UP`/`DIR_LEFT`/
+// `DIR_RIGHT`/`DIR_DOWN`/`DIR_ALL` appear only inside a code example, and the 7
+// message hashes are paren-less `### platypus.FALLING` headings under
+// `## Messages` that `HEADER` does not match. `create` downgrades because the
+// README types both its parameter and its return as bare `(table)`.
+//
+// The recorded terms are a floor on the loss, not a measure of it. `MEMBER_DECL`
+// sees only top-level `function`/`const`, so `PlatypusConfig` (12 optional fields
+// plus a nested `collisions` shape) and `PlatypusInstance` (19 methods plus
+// `velocity: vmath.vector3`) never enter the comparison at all — exactly as
+// metrics' `Metrics` interface and gooey's state aliases did not. Both collapse
+// to `Record<string | number, unknown>` in the markdown emit.
+const PLATYPUS: LibraryRecord = {
+  library: "platypus",
+  repo: "https://github.com/britzl/platypus",
+  ref: "4.3.1",
+  license: "MIT",
+  prefix: "platypus.",
+  classificationDir: "platypus",
+  decisions: [
+    { module: "platypus", decision: "no-go", reason: "shared-document", markdown: "README.md" },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -641,6 +754,7 @@ describeLibraryDecisions(YAGAMES);
 describeLibraryDecisions(GOOEY);
 describeLibraryDecisions(METRICS);
 describeLibraryDecisions(RENDY);
+describeLibraryDecisions(PLATYPUS);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -990,50 +1104,8 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
 describe("metrics shared-README evidence at tag 1.2.1", () => {
   const readme = (module: string) => fixtureText(METRICS, decisionFor(METRICS, module));
 
-  // Drop the sections belonging to the other receiver so the remainder satisfies
-  // the parser's uniform-prefix invariant. Test-local on purpose: per-receiver
-  // splitting is a front-end feature the measured verdict shows would buy no
-  // decision change here.
-  function filterToReceiver(markdown: string, receiver: string): string {
-    const kept: string[] = [];
-    let dropping = false;
-    for (const line of markdown.split("\n")) {
-      const heading = line.match(/^#{2,3}\s+([A-Za-z_]\w*)\.[A-Za-z_]\w*\(.*\)\s*$/);
-      if (heading !== null) dropping = heading[1] !== receiver;
-      else if (/^#{1,6}\s/.test(line)) dropping = false;
-      if (!dropping) kept.push(line);
-    }
-    return kept.join("\n");
-  }
-
-  async function receiverComparison(module: string) {
-    const moduleId = `metrics.${module}`;
-    const doc = retargetDoc(
-      parseMarkdownApi(filterToReceiver(readme(module), module), moduleId),
-      moduleId,
-    );
-    const regen = (await import(join(PACKAGE_ROOT, "..", "types", "scripts", "regen.ts"))) as {
-      generateModuleDeclaration: (entry: {
-        namespace: string;
-        doc: unknown;
-        outFile: string;
-        importsFrom?: string;
-        moduleId?: string;
-      }) => { contents: string };
-    };
-    const { contents } = regen.generateModuleDeclaration({
-      namespace: moduleId,
-      doc,
-      outFile: `${moduleId}.d.ts`,
-      importsFrom: "../src/core-types",
-      moduleId,
-    });
-    const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`),
-      "utf8",
-    );
-    return { doc, ...compareFidelityToTsDefold(contents, tsDefold) };
-  }
+  const receiverComparison = (module: string) =>
+    comparisonForMarkdown(filterToReceiver(readme(module), module), `metrics.${module}`);
 
   test("both snapshots are the one upstream README, byte for byte", () => {
     expect(readme("fps")).toBe(readme("mem"));
@@ -1150,5 +1222,147 @@ describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081
     expect(destroy?.description).toBe(
       "Destroys a camera. This function is called automatically by the *rendy.go* game object.",
     );
+  });
+});
+
+describe("platypus shared-document evidence at tag 4.3.1", () => {
+  const readme = () => fixtureText(PLATYPUS, decisionFor(PLATYPUS, "platypus"));
+
+  // The 12 ts-defold constants, sorted as `compareFidelityToTsDefold` reports
+  // them: the 7 message hashes and the 5 `DIR_*` direction values.
+  const CONSTANTS = [
+    "DIR_ALL",
+    "DIR_DOWN",
+    "DIR_LEFT",
+    "DIR_RIGHT",
+    "DIR_UP",
+    "DOUBLE_JUMP",
+    "FALLING",
+    "GROUND_CONTACT",
+    "JUMP",
+    "WALL_CONTACT",
+    "WALL_JUMP",
+    "WALL_SLIDE",
+  ];
+
+  // The 19 `instance.` methods, sorted the same way.
+  const INSTANCE_METHODS = [
+    "abort_jump",
+    "abort_wall_slide",
+    "down",
+    "force_jump",
+    "has_ground_contact",
+    "has_wall_contact",
+    "is_falling",
+    "is_jumping",
+    "is_wall_jumping",
+    "is_wall_sliding",
+    "jump",
+    "left",
+    "move",
+    "on_message",
+    "right",
+    "set_collisions",
+    "toggle_debug",
+    "up",
+    "update",
+  ];
+
+  // The most generous reading available: rewrite the instance receiver to the
+  // module's own so the uniform-prefix invariant accepts the whole document.
+  const unified = () => readme().replace(/^(#{2,3}\s+)instance\./gm, "$1platypus.");
+
+  test("the parser refuses the shared document, naming both receivers", () => {
+    expect(() => parseMarkdownApi(readme(), "platypus.platypus")).toThrow(
+      /non-uniform module prefix across headers: instance, platypus/,
+    );
+  });
+
+  test("the dialect is not the blocker — it is the one the front-end already reads", () => {
+    const text = readme();
+    expect(/^\*\*PARAMETERS\*\*\s*$/m.test(text)).toBe(true);
+    expect(/^\*\*RETURN\*\*\s*$/m.test(text)).toBe(true);
+    expect(text).not.toContain("<kbd>");
+    // Every signature heading is a bare `###` — none carries rendy's `function`
+    // keyword, and none is demoted to `##`.
+    const headings = text.split("\n").filter((line) => /^#{1,6}\s+\w+\.\w+\(.*\)\s*$/.test(line));
+    expect(headings.length).toBe(20);
+    expect(headings.every((line) => /^### (?:platypus|instance)\./.test(line))).toBe(true);
+  });
+
+  test("the platypus receiver alone parses to just `create` and loses every constant", async () => {
+    const { doc, decision, missingMembers, addedMembers, downgradedMembers } =
+      await comparisonForMarkdown(filterToReceiver(readme(), "platypus"), "platypus.platypus");
+    expect(doc.elements.map((e) => e.name.split(".").pop())).toEqual(["create"]);
+    expect(missingMembers).toEqual(CONSTANTS);
+    expect(addedMembers).toEqual([]);
+    expect(downgradedMembers).toEqual(["create"]);
+    expect(decision).toBe("no-go");
+  });
+
+  test("the generous unified reading adds only hoisted instance methods, and still loses the constants", async () => {
+    const { doc, decision, missingMembers, addedMembers, downgradedMembers } =
+      await comparisonForMarkdown(unified(), "platypus.platypus");
+    expect(doc.elements.length).toBe(20);
+    expect(missingMembers).toEqual(CONSTANTS);
+    // Not a surface gain: these are `create`'s returned-instance methods lifted
+    // into module scope, which is wrong rather than incomplete.
+    expect(addedMembers).toEqual(INSTANCE_METHODS);
+    expect(downgradedMembers).toEqual(["create"]);
+    expect(decision).toBe("no-go");
+  });
+
+  test("the instance receiver alone loses the whole ts-defold surface", async () => {
+    const { doc, decision, missingMembers, addedMembers, downgradedMembers } =
+      await comparisonForMarkdown(
+        filterToReceiver(readme(), "instance").replace(/^(#{2,3}\s+)instance\./gm, "$1platypus."),
+        "platypus.platypus",
+      );
+    expect(doc.elements.length).toBe(19);
+    expect(missingMembers).toEqual(["create", ...CONSTANTS].sort());
+    expect(addedMembers).toEqual(INSTANCE_METHODS);
+    expect(downgradedMembers).toEqual([]);
+    expect(decision).toBe("no-go");
+  });
+
+  test("the constants are unreachable under every reading", () => {
+    const text = readme();
+    // The 5 direction values appear only inside a code example, never as a
+    // heading; the 7 message hashes are paren-less `### platypus.<NAME>`
+    // headings under `## Messages` that `HEADER` does not match.
+    for (const constant of CONSTANTS) {
+      expect(new RegExp(`^#{2,3}\\s+platypus\\.${constant}\\(`, "m").test(text)).toBe(false);
+    }
+    for (const message of ["FALLING", "GROUND_CONTACT", "JUMP", "WALL_SLIDE"]) {
+      expect(text).toContain(`### platypus.${message}\n`);
+    }
+  });
+
+  test("neither loss class rendy and metrics recorded fires here", async () => {
+    for (const markdown of [filterToReceiver(readme(), "platypus"), unified()]) {
+      const { signatureLossMembers, optionalityLossMembers } = await comparisonForMarkdown(
+        markdown,
+        "platypus.platypus",
+      );
+      expect(signatureLossMembers).toEqual([]);
+      expect(optionalityLossMembers).toEqual([]);
+    }
+  });
+
+  test("the comparator never sees the config and instance interfaces, so the recorded loss is a floor", () => {
+    const tsDefold = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/ts-defold", "platypus.platypus.d.ts"),
+      "utf8",
+    );
+    // `MEMBER_DECL` reads top-level `function`/`const` only, so the 12-field
+    // `PlatypusConfig` and the 19-method `PlatypusInstance` are outside the
+    // comparison even though the markdown emit collapses both to a bare record.
+    expect(tsDefold).toContain("interface PlatypusConfig");
+    expect(tsDefold).toContain("interface PlatypusInstance");
+    expect(tsDefoldMembers(tsDefold).sort()).toEqual(["create", ...CONSTANTS].sort());
+  });
+
+  test("the recorded reason is the widened shared-document class", () => {
+    expect(decisionFor(PLATYPUS, "platypus").reason).toBe("shared-document");
   });
 });
