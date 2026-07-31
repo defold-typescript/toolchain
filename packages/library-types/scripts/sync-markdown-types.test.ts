@@ -13,6 +13,7 @@ import {
   lowerMarkdownApiDoc,
   type MarkdownTarget,
   readMarkdownTargets,
+  tsDefoldMembers,
 } from "./sync-markdown-types";
 import { type FetchText, loadTypeResolver } from "./sync-script-api-types";
 
@@ -317,5 +318,62 @@ describe("compareFidelityToTsDefold signature-loss term", () => {
       "function f(a: Record<string, number>, b: string): void;",
     );
     expect(comparison.signatureLossMembers).toContain("f");
+  });
+});
+
+// `//* Section` is a line comment whose second character happens to be `*`. A
+// stripper that removes block comments before line comments latches its `/*`
+// onto the marker and deletes everything up to the next `*/` — the closing line
+// of some later JSDoc — silently shrinking the ts-defold surface every term of
+// the comparison is measured against.
+describe("comment stripping treats `//*` as a line comment", () => {
+  test("a `//*` section marker does not swallow the declaration after it", () => {
+    const dts = ["export function a(): void;", "//* Section", "export function b(): void;"].join(
+      "\n",
+    );
+    expect(tsDefoldMembers(dts)).toEqual(["a", "b"]);
+  });
+
+  test("declarations between a `//*` marker and a later JSDoc survive", () => {
+    const dts = [
+      "//* Advertisement",
+      "export function adv_show_fullscreen_adv(): void;",
+      "export function adv_show_rewarded_video(): void;",
+      "/** Initialise the player. */",
+      "export function player_init(): void;",
+    ].join("\n");
+    expect(tsDefoldMembers(dts)).toEqual([
+      "adv_show_fullscreen_adv",
+      "adv_show_rewarded_video",
+      "player_init",
+    ]);
+  });
+
+  test("a real block comment still hides the declaration it wraps", () => {
+    const dts = [
+      "export function kept(): void;",
+      "/*",
+      "export function hidden(): void;",
+      "*/",
+    ].join("\n");
+    expect(tsDefoldMembers(dts)).toEqual(["kept"]);
+  });
+
+  test("a `//`-style URL inside a block comment does not terminate it early", () => {
+    const dts = [
+      "/** @see {@link https://example.com/x} */",
+      "export function documented(): void;",
+    ].join("\n");
+    expect(tsDefoldMembers(dts)).toEqual(["documented"]);
+  });
+
+  test("a JSDoc mentioning `unknown` above a typed declaration is still not a downgrade", () => {
+    const dts = [
+      "/** Returns unknown when the SDK is absent. */",
+      "function f(a: string): string;",
+    ].join("\n");
+    const comparison = compareFidelityToTsDefold(dts, dts);
+    expect(comparison.downgradedMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
   });
 });

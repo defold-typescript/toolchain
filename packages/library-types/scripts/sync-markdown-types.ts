@@ -271,9 +271,28 @@ const MEMBER_DECL = /(?:export\s+)?(function|const)\s+([A-Za-z_]\w*)/g;
 
 /** Strip block and line comments so keyword-shaped prose inside a doc comment
  * (e.g. "This function is called…") never latches onto `MEMBER_DECL`, and so a
- * `unknown` mentioned in JSDoc never reads as a real type downgrade. */
+ * `unknown` mentioned in JSDoc never reads as a real type downgrade. A single
+ * left-to-right scan decides at each `/` which form opens, so `//*` — a section
+ * marker some bindings use — reads as a line comment rather than as a block
+ * comment running to the next block-comment terminator many declarations
+ * later. */
 function stripComments(dts: string): string {
-  return dts.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  let out = "";
+  let index = 0;
+  while (index < dts.length) {
+    if (dts[index] === "/" && dts[index + 1] === "/") {
+      const end = dts.indexOf("\n", index);
+      if (end === -1) break;
+      index = end;
+    } else if (dts[index] === "/" && dts[index + 1] === "*") {
+      const end = dts.indexOf("*/", index + 2);
+      index = end === -1 ? dts.length : end + 2;
+    } else {
+      out += dts[index];
+      index++;
+    }
+  }
+  return out;
 }
 
 /**
