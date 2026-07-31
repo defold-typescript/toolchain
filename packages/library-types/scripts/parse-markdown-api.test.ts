@@ -192,6 +192,88 @@ describe("parseMarkdownApi accepts both ## and ### signature header levels", () 
   });
 });
 
+describe("parseMarkdownApi accepts an optional `function` declaration keyword", () => {
+  const body = [
+    "Set a camera property.",
+    "",
+    "**PARAMETERS**",
+    "* `camera_id` (hash) - Id of the camera",
+    "* `property` (string) - Property to set",
+    "",
+  ];
+
+  test.each([
+    ["##"],
+    ["###"],
+  ])("a %s heading with the keyword yields the same element as the bare form", (marker) => {
+    const signature = "rendy.set(camera_id, property)";
+    const keyword = parseMarkdownApi([`${marker} function ${signature}`, ...body].join("\n"));
+    const bare = parseMarkdownApi([`${marker} ${signature}`, ...body].join("\n"));
+    const set = element(keyword, "rendy.set");
+    expect(set).toEqual(element(bare, "rendy.set") as MarkdownElement);
+    expect(set?.parameters.map((p) => p.name)).toEqual(["camera_id", "property"]);
+    expect(keyword.info.namespace).toBe("rendy");
+  });
+
+  test("a keyword-prefixed section still ends at the next header", () => {
+    // rendy writes 9 of its 11 headings with the keyword; before the widening the
+    // unmatched ones did not close the preceding section, so the rest of the API
+    // section landed inside the previous function's description.
+    const doc = parseMarkdownApi(
+      [
+        "### rendy.destroy_camera(camera_id)",
+        "Destroy a camera.",
+        "",
+        "### function rendy.set(camera_id, property)",
+        "Set a camera property.",
+        "",
+      ].join("\n"),
+    );
+    expect(element(doc, "rendy.destroy_camera")?.description).toBe("Destroy a camera.");
+    expect(element(doc, "rendy.set")?.description).toBe("Set a camera property.");
+  });
+
+  test("the keyword is not swallowed as the receiver in a mixed document", () => {
+    const doc = parseMarkdownApi(
+      [
+        "### rendy.create_camera(camera_id)",
+        "Create a camera.",
+        "",
+        "### function rendy.set(camera_id, property)",
+        "Set a camera property.",
+        "",
+      ].join("\n"),
+    );
+    expect(doc.info.namespace).toBe("rendy");
+    expect(doc.elements.map((e) => e.name)).toEqual(["rendy.create_camera", "rendy.set"]);
+  });
+
+  test("a keyword-prefixed prose heading with no dotted call stays invisible", () => {
+    const doc = parseMarkdownApi(
+      ["### function overview", "Some prose.", "", "### function rendy.set(camera_id)", ""].join(
+        "\n",
+      ),
+    );
+    expect(doc.elements.map((e) => e.name)).toEqual(["rendy.set"]);
+  });
+
+  test("a #### keyword heading stays outside the accepted range", () => {
+    const doc = ["#### function rendy.set(camera_id)", ...body].join("\n");
+    expect(() => parseMarkdownApi(doc, "rendy.rendy")).toThrow(/rendy\.rendy/);
+    expect(() => parseMarkdownApi(doc, "rendy.rendy")).toThrow(/signature/);
+  });
+
+  test("only `function` is accepted — a prose keyword does not read as a signature", () => {
+    // A general `\w+\s+` prefix would lift `### see rendy.set(...)` prose lines.
+    const doc = parseMarkdownApi(
+      ["### see rendy.get(camera_id)", "Prose.", "", "### function rendy.set(camera_id)", ""].join(
+        "\n",
+      ),
+    );
+    expect(doc.elements.map((e) => e.name)).toEqual(["rendy.set"]);
+  });
+});
+
 describe("parseMarkdownApi loud-fails on a document with no API signature", () => {
   test("throws naming the module when prose carries no dotted signature header", () => {
     const prose = ["# Textbox", "", "# Usage", "Require the module and call it.", ""].join("\n");
