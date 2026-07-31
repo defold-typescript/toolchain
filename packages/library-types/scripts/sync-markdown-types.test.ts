@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import type { MarkdownDoc } from "./parse-markdown-api";
 import {
   buildMarkdownFidelity,
+  compareFidelityToTsDefold,
   computeMarkdownFidelity,
   emitMarkdownDeclaration,
   evaluateMarkdownCandidate,
@@ -249,5 +250,72 @@ describe("markdown fidelity", () => {
     };
     expect(() => computeMarkdownFidelity("demo", doc, resolver)).toThrow(/demo/);
     expect(() => computeMarkdownFidelity("demo", doc, resolver)).toThrow(/Frobnicate/);
+  });
+});
+
+// A prose-only README documents member *names* with no `**PARAMETERS**` /
+// `**RETURN**` blocks, so the flat parse keeps every member and emits it
+// zero-arity `(): void`. Neither the missing-member term nor the `unknown`
+// downgrade term sees that, so the loss needs a term of its own.
+describe("compareFidelityToTsDefold signature-loss term", () => {
+  test("a dropped parameter list is a loss even when no member and no type token is lost", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(): void;",
+      "function f(a: string): void;",
+    );
+    expect(comparison.signatureLossMembers).toContain("f");
+    expect(comparison.missingMembers).toEqual([]);
+    expect(comparison.downgradedMembers).toEqual([]);
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("a non-void return lost to void is a loss on its own", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function g(a: string): void;",
+      "function g(a: string): string;",
+    );
+    expect(comparison.signatureLossMembers).toContain("g");
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("identical signatures keep the decision at go", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a: string, b?: number): string;",
+      "function f(a: string, b?: number): string;",
+    );
+    expect(comparison.signatureLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("extra markdown parameters are an addition, not a loss", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a: string, b: number): void;",
+      "function f(a: string): void;",
+    );
+    expect(comparison.signatureLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("gaining a return where ts-defold had void is an addition, not a loss", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a: string): string;",
+      "function f(a: string): void;",
+    );
+    expect(comparison.signatureLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("a const member is exempt — it has no parameter list to compare", () => {
+    const comparison = compareFidelityToTsDefold("const C: number;", "const C: number;");
+    expect(comparison.signatureLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("a top-level comma inside a parameter's own type does not inflate the arity", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a: Record<string, number>): void;",
+      "function f(a: Record<string, number>, b: string): void;",
+    );
+    expect(comparison.signatureLossMembers).toContain("f");
   });
 });

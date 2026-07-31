@@ -104,7 +104,7 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
 interface ModuleDecision {
   module: string;
   decision: "go" | "no-go";
-  reason: "no-markdown" | "no-signature-section" | "surface-loss";
+  reason: "no-markdown" | "no-signature-section" | "surface-loss" | "signature-loss";
   // The upstream `.md` path at the pin, absent exactly when `no-markdown`.
   markdown?: string;
 }
@@ -252,6 +252,9 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 //                        `### <recv>.<fn>(...)` header, so the parser loud-fails.
 //   surface-loss         the `.md` parses, but the structural gate reports the
 //                        markdown surface losing members versus ts-defold.
+//   signature-loss       the `.md` parses and loses no member, but the members it
+//                        keeps lost their parameters or their non-`void` return —
+//                        a prose-only README that documents names, not types.
 const DEFOLD_INPUT: LibraryRecord = {
   library: "defold-input",
   repo: "https://github.com/britzl/defold-input",
@@ -354,6 +357,35 @@ const RICHTEXT: LibraryRecord = {
   ],
 };
 
+// The recorded decision for `whiteboxdev/library-defold-persist` at commit
+// `b37f61040740f232d86f68e2606f27b6f1bd15c4` — the fourth Bucket-C library, and
+// the first pinned to a SHA rather than a tag: upstream publishes no tags and no
+// releases at all, and its README installs from `archive/main.zip`. Its license is
+// Zlib, not the MIT every prior sibling carried.
+//
+// It is also the library that exposed the fidelity gate's false `go`. The single
+// root `README.md` documents 6 `### persist.<fn>(...)` headings with no
+// `**PARAMETERS**` / `**RETURN**` block anywhere, so the parse keeps every member
+// name — `missingMembers` is empty — and emits six argument-less `(): void` stubs
+// that contain no `unknown` token, so `downgradedMembers` is empty too. Both terms
+// of the old two-term rule read clean and the gate computed `go`, which would have
+// retired a fully-typed five-function surface. The comparator now scores a dropped
+// parameter list and a lost non-`void` return as `signatureLossMembers`, and the
+// decision is `no-go` on its own evidence. Upstream is abandoned (the README's
+// first line redirects to `Klaleus/defold-checkpoint`), so this decision is final
+// rather than provisional.
+const PERSIST: LibraryRecord = {
+  library: "persist",
+  repo: "https://github.com/whiteboxdev/library-defold-persist",
+  ref: "b37f61040740f232d86f68e2606f27b6f1bd15c4",
+  license: "Zlib",
+  prefix: "persist.",
+  classificationDir: "library-defold-persist",
+  decisions: [
+    { module: "persist", decision: "no-go", reason: "signature-loss", markdown: "README.md" },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -368,6 +400,7 @@ const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
 describeLibraryDecisions(DEFOLD_INPUT);
 describeLibraryDecisions(MONARCH);
 describeLibraryDecisions(RICHTEXT);
+describeLibraryDecisions(PERSIST);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -503,5 +536,49 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
   test("richtext.richtext's decision is no-go", async () => {
     const { decision } = await comparisonFor(RICHTEXT, "richtext");
     expect(decision).toBe("no-go");
+  });
+});
+
+describe("persist signature-loss evidence at pin b37f61040740f232d86f68e2606f27b6f1bd15c4", () => {
+  test("the README parses cleanly to exactly the 6 documented functions", async () => {
+    const { markdownMembers } = await comparisonFor(PERSIST, "persist");
+    expect(markdownMembers.length).toBe(6);
+    expect(markdownMembers).toContain("create");
+    expect(markdownMembers).toContain("exists");
+  });
+
+  test("upstream documents a function ts-defold never declared, and loses no member", async () => {
+    const { addedMembers, missingMembers } = await comparisonFor(PERSIST, "persist");
+    expect(addedMembers).toEqual(["exists"]);
+    expect(missingMembers).toEqual([]);
+  });
+
+  test("the signature collapse is the whole decision", async () => {
+    const { emitted, signatureLossMembers } = await comparisonFor(PERSIST, "persist");
+    // ts-defold declares `create(file_name, data, overwrite?)` and
+    // `load(file_name): {} | undefined`. The README's `### persist.<fn>(...)`
+    // headings carry no `**PARAMETERS**` bullets, so every function emits
+    // zero-arity and every return collapses to `void`.
+    expect(emitted).toContain("function create(): void;");
+    expect(emitted).toContain("function load(): void;");
+    expect(signatureLossMembers).toEqual(["create", "flush", "load", "save", "write"]);
+  });
+
+  test("persist.persist is no-go on signature-loss, not on the richtext unknown-downgrade class", async () => {
+    const { decision, downgradedMembers } = await comparisonFor(PERSIST, "persist");
+    expect(decision).toBe("no-go");
+    // No emitted signature carries an `unknown` token — a zero-arity stub has no
+    // tokens at all — so the record cannot be misread as a type downgrade.
+    expect(downgradedMembers).toEqual([]);
+  });
+
+  test("the recorded reason matches the term that actually drove the decision", async () => {
+    const { signatureLossMembers, missingMembers, downgradedMembers } = await comparisonFor(
+      PERSIST,
+      "persist",
+    );
+    expect(decisionFor(PERSIST, "persist").reason).toBe("signature-loss");
+    expect(signatureLossMembers.length).toBeGreaterThan(0);
+    expect([...missingMembers, ...downgradedMembers]).toEqual([]);
   });
 });

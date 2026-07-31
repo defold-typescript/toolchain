@@ -245,14 +245,17 @@ export async function buildMarkdownFidelity(
 
 /** The result of comparing an emitted markdown surface against the ts-defold
  * `.d.ts` it would replace. `decision` is `no-go` whenever a ts-defold member is
- * absent from the markdown emit (a missing member) **or** a member both surfaces
- * share was downgraded to `unknown` by the markdown emit (a lost type). */
+ * absent from the markdown emit (a missing member), **or** a member both surfaces
+ * share was downgraded to `unknown` by the markdown emit (a lost type), **or** a
+ * shared member kept its name but lost part of its signature (dropped parameters,
+ * or a non-`void` return collapsed to `void`). */
 export interface FidelityComparison {
   tsDefoldMembers: string[];
   markdownMembers: string[];
   missingMembers: string[];
   addedMembers: string[];
   downgradedMembers: string[];
+  signatureLossMembers: string[];
   decision: "go" | "no-go";
 }
 
@@ -316,12 +319,84 @@ export function tsDefoldMembers(dts: string): string[] {
   return [...tsDefoldSurface(dts).keys()].sort();
 }
 
+/** Whether a closing bracket at `index` really closes a type group. `>` is the
+ * only ambiguous one: in `(x: string) => void` it belongs to the arrow, not to a
+ * generic argument list. */
+function closesGroup(text: string, index: number): boolean {
+  const ch = text[index];
+  if (ch === ")" || ch === "]" || ch === "}") return true;
+  return ch === ">" && text[index - 1] !== "=";
+}
+
+function opensGroup(ch: string | undefined): boolean {
+  return ch === "(" || ch === "[" || ch === "{" || ch === "<";
+}
+
+/** Split a parameter list on its top-level commas, so a comma inside a
+ * parameter's own type (`Record<string, number>`, `[a, b]`) never reads as a
+ * separator. */
+function splitParameters(inner: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (let i = 0; i < inner.length; i++) {
+    const ch = inner[i] as string;
+    if (opensGroup(ch)) depth++;
+    else if (closesGroup(inner, i)) depth--;
+    if (ch === "," && depth === 0) {
+      parts.push(current);
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  parts.push(current);
+  return parts.map((part) => part.trim()).filter((part) => part !== "");
+}
+
+interface SignatureShape {
+  parameters: string[];
+  returnType: string;
+}
+
+/** The top-level parameter list and return type of a `function` declaration.
+ * `undefined` when the text carries no balanced parameter list at all — a `const`
+ * declaration, or a signature the extractor truncated. */
+function signatureShape(signature: string): SignatureShape | undefined {
+  const open = signature.indexOf("(");
+  if (open === -1) return undefined;
+  let depth = 0;
+  let close = -1;
+  for (let i = open; i < signature.length; i++) {
+    if (opensGroup(signature[i])) depth++;
+    else if (closesGroup(signature, i)) {
+      depth--;
+      if (depth === 0) {
+        close = i;
+        break;
+      }
+    }
+  }
+  if (close === -1) return undefined;
+  const tail = signature
+    .slice(close + 1)
+    .trim()
+    .replace(/;\s*$/, "")
+    .trim();
+  return {
+    parameters: splitParameters(signature.slice(open + 1, close)),
+    returnType: tail.startsWith(":") ? tail.slice(1).trim() : "",
+  };
+}
+
 /**
  * Compare the emitted markdown `.d.ts` against the ts-defold `.d.ts` it would
  * replace and derive the go/no-go decision. A ts-defold member absent from the
  * markdown emit is a missing member; a shared member whose markdown signature
- * introduced `unknown` the ts-defold declaration lacked is a type downgrade.
- * Either forces `no-go`.
+ * introduced `unknown` the ts-defold declaration lacked is a type downgrade; a
+ * shared member that kept its name but dropped parameters, or collapsed a
+ * non-`void` return to `void`, is a signature loss. Any of the three forces
+ * `no-go`.
  */
 export function compareFidelityToTsDefold(
   markdownEmittedDts: string,
@@ -338,13 +413,33 @@ export function compareFidelityToTsDefold(
   const downgradedMembers = tsMembers.filter(
     (name) => hasUnknown(mdMap.get(name)) && !hasUnknown(tsMap.get(name)),
   );
+  const signatureLossMembers = tsMembers.filter((name) => {
+    const ts = tsMap.get(name);
+    const md = mdMap.get(name);
+    if (ts === undefined || md === undefined) return false;
+    if (ts.kind !== "function" || md.kind !== "function") return false;
+    const tsShape = signatureShape(ts.signature);
+    const mdShape = signatureShape(md.signature);
+    if (tsShape === undefined || mdShape === undefined) return false;
+    if (mdShape.parameters.length < tsShape.parameters.length) return true;
+    // An unannotated ts-defold return has nothing to lose against.
+    return (
+      mdShape.returnType === "void" && tsShape.returnType !== "void" && tsShape.returnType !== ""
+    );
+  });
   return {
     tsDefoldMembers: tsMembers,
     markdownMembers: mdMembers,
     missingMembers,
     addedMembers,
     downgradedMembers,
-    decision: missingMembers.length === 0 && downgradedMembers.length === 0 ? "go" : "no-go",
+    signatureLossMembers,
+    decision:
+      missingMembers.length === 0 &&
+      downgradedMembers.length === 0 &&
+      signatureLossMembers.length === 0
+        ? "go"
+        : "no-go",
   };
 }
 
