@@ -31,6 +31,16 @@
       "apiDoc": "api-doc/defmath.json"
     },
     {
+      "repo": "https://github.com/subsoap/defsave",
+      "ref": "v1.2.6",
+      "license": "CC0-1.0",
+      "authored": "fixtures/authored/defsave.defsave.d.ts",
+      "moduleId": "defsave.defsave",
+      "namespace": "defsave",
+      "generated": "generated/defsave.d.ts",
+      "apiDoc": "api-doc/defsave.json"
+    },
+    {
       "repo": "https://github.com/thejustinwalsh/defold-zzfx",
       "ref": "8c90e12c5b83dd39ebc7a6c0fd28aafd8e7b1eac",
       "license": "MIT",

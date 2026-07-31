@@ -318,3 +318,52 @@ describe("boom.boom migration integrity", () => {
     }
   });
 });
+
+describe("defsave.defsave migration integrity", () => {
+  test("defsave is registered in authored-targets.json", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    expect(targets.some((t) => t.namespace === "defsave")).toBe(true);
+  });
+
+  test("defsave.defsave is no longer a ts-defold library-targets row", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "defsave.defsave")).toBe(false);
+  });
+
+  test("the defsave dir is gone from library-classification.json", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defsave")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, and dotted api-doc are deleted", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defsave.defsave.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/defsave.defsave.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/defsave.defsave.json"))).toBe(false);
+  });
+
+  test("the golden declares the members ts-defold omitted and corrects the wrong returns", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defsave.d.ts"), "utf8");
+    for (const added of [
+      "function obfuscate(",
+      "function get_file_path(",
+      "function key_exists(",
+      "function isset(",
+      "function reset_to_default(",
+      "function is_loaded(",
+      "function final(",
+    ]) {
+      expect(golden).toContain(added);
+    }
+    expect(golden).toContain("let enable_obfuscation: boolean;");
+    expect(golden).toContain("function save(file: string, force?: boolean): boolean | undefined;");
+    expect(golden).toContain(
+      "function set(file: string, key: string, value: any): boolean | undefined;",
+    );
+    expect(golden).not.toContain("function save(config: string): void;");
+    expect(golden).not.toContain("function set(config: string, name: string, value: any): void;");
+  });
+});

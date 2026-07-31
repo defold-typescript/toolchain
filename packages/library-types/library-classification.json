@@ -292,13 +292,6 @@
       ]
     },
     {
-      "dir": "defsave",
-      "classification": "already-vendored",
-      "modules": [
-        "defsave.defsave"
-      ]
-    },
-    {
       "dir": "dicebag",
       "classification": "already-vendored",
       "modules": [
