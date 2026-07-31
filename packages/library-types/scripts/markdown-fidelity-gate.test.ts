@@ -8,6 +8,7 @@ import {
   evaluateMarkdownCandidate,
   type MarkdownTarget,
   readMarkdownTargets,
+  retargetDoc,
   tsDefoldMembers,
 } from "./sync-markdown-types";
 
@@ -108,6 +109,7 @@ interface ModuleDecision {
     | "no-markdown"
     | "no-signature-section"
     | "doc-dialect"
+    | "shared-document"
     | "surface-loss"
     | "signature-loss";
   // The upstream `.md` path at the pin, absent exactly when `no-markdown`.
@@ -210,6 +212,21 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         );
       });
     }
+
+    // A third refusal class, proven the same way but by a different message: the
+    // parser reads the sections and rejects them for spanning two receivers, so
+    // the `/signature/` matcher above would not match it.
+    const sharedDocument = decisions.filter((d) => d.reason === "shared-document");
+    if (sharedDocument.length > 0) {
+      test.each(
+        sharedDocument,
+      )(`${record.prefix}$module is refused because one document covers several modules`, (decision) => {
+        const moduleId = `${record.prefix}${decision.module}`;
+        expect(() => parseMarkdownApi(fixtureText(record, decision), moduleId)).toThrow(
+          /non-uniform module prefix/,
+        );
+      });
+    }
   });
 
   if (noGo.length > 0) {
@@ -265,6 +282,12 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 //                        loud-fails all the same. Recorded only alongside
 //                        independent evidence that a dialect-aware parse would
 //                        not change the decision.
+//   shared-document      the parser reads the `.md`'s convention fine, but one
+//                        document covers several modules under different
+//                        receivers, so the uniform-prefix invariant refuses it.
+//                        A granularity gap, not a dialect gap — recorded only
+//                        alongside evidence that a per-receiver parse would not
+//                        change the decision either.
 //   surface-loss         the `.md` parses, but the structural gate reports the
 //                        markdown surface losing members versus ts-defold.
 //   signature-loss       the `.md` parses and loses no member, but the members it
@@ -488,6 +511,64 @@ const GOOEY: LibraryRecord = {
   ],
 };
 
+// The recorded decision for `britzl/defold-metrics` at tag `1.2.1` — the seventh
+// Bucket-C library, and the first whose *one* document covers *two* modules.
+//
+// Every prior sibling ships one `.md` per module. `defold-metrics` documents both
+// `metrics.fps` and `metrics.mem` in a single root `README.md` under two
+// receivers — `### fps.create(...)` and `### mem.create(...)` — so the front-end's
+// uniform-prefix invariant refuses it, identically for either moduleId:
+//
+//   parse-markdown-api: non-uniform module prefix across headers: fps, mem
+//
+// The dialect itself is fully accepted (`**PARAMETERS**`, `**RETURNS**`,
+// `* \`name\` (type) - doc`), which is why this is `shared-document` rather than
+// `doc-dialect`: the gap is document granularity, not convention support.
+//
+// Filtering the README to one receiver before parsing yields 4 elements per
+// module and still lands `no-go`, on a single term for each:
+//
+//   term                   metrics.fps                 metrics.mem
+//   tsDefoldMembers        ["create"]                  ["create"]
+//   missingMembers         []                          []
+//   signatureLossMembers   []                          []
+//   downgradedMembers      ["create"]                  ["create"]
+//   addedMembers           ["draw","fps","update"]     ["draw","mem","update"]
+//
+// ts-defold hand-writes a factory — `create(...): Metrics` over an interface of
+// `fps()`/`update()`/`draw()` — while the README types the return as bare `table`,
+// emitting `Record<string | number, unknown>`. The `Metrics` interface is outside
+// `MEMBER_DECL`'s function/const surface and never enters the comparison, exactly
+// as gooey's state aliases did not.
+//
+// The `addedMembers` are real, not an artifact: upstream `metrics/fps.lua` holds
+// `local singleton = M.create()` plus module-level `M.update`/`M.fps`/`M.draw`
+// delegating to it, and ts-defold omits all three. So metrics is the closest
+// Bucket-C has come to a `go` — it loses no member and drops no parameter, and
+// *adds* three genuine ones. Only the factory return blocks it.
+//
+// metrics is also the library that exposed the gate's unscored optionality loss.
+// ts-defold declares every `create` parameter optional; the markdown emit declares
+// all of them required, because optionality reaches the front-end only through a
+// `[name]` bracket in the heading and this README writes it in prose ("Optional
+// sample count") under a bare `fps.create(samples, format, position, color)`.
+// Same arity, same names — so had the `**RETURNS**` named a mappable token
+// instead of `table`, both modules would have computed `go` while breaking every
+// existing `create()` call site. The comparator now scores that as
+// `optionalityLossMembers`.
+const METRICS: LibraryRecord = {
+  library: "metrics",
+  repo: "https://github.com/britzl/defold-metrics",
+  ref: "1.2.1",
+  license: "MIT",
+  prefix: "metrics.",
+  classificationDir: "defold-metrics",
+  decisions: [
+    { module: "fps", decision: "no-go", reason: "shared-document", markdown: "README.md" },
+    { module: "mem", decision: "no-go", reason: "shared-document", markdown: "README.md" },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -505,6 +586,7 @@ describeLibraryDecisions(RICHTEXT);
 describeLibraryDecisions(PERSIST);
 describeLibraryDecisions(YAGAMES);
 describeLibraryDecisions(GOOEY);
+describeLibraryDecisions(METRICS);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -848,5 +930,104 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     const body = lines.slice(firstH5 + 1, nextH3 === -1 ? undefined : nextH3);
     expect(body.some((line) => /^\*\*PARAMETERS\*\*\s*$/.test(line))).toBe(false);
     expect(body.some((line) => /^\*\*RETURN\*\*\s*$/.test(line))).toBe(false);
+  });
+});
+
+describe("metrics shared-README evidence at tag 1.2.1", () => {
+  const readme = (module: string) => fixtureText(METRICS, decisionFor(METRICS, module));
+
+  // Drop the sections belonging to the other receiver so the remainder satisfies
+  // the parser's uniform-prefix invariant. Test-local on purpose: per-receiver
+  // splitting is a front-end feature the measured verdict shows would buy no
+  // decision change here.
+  function filterToReceiver(markdown: string, receiver: string): string {
+    const kept: string[] = [];
+    let dropping = false;
+    for (const line of markdown.split("\n")) {
+      const heading = line.match(/^#{2,3}\s+([A-Za-z_]\w*)\.[A-Za-z_]\w*\(.*\)\s*$/);
+      if (heading !== null) dropping = heading[1] !== receiver;
+      else if (/^#{1,6}\s/.test(line)) dropping = false;
+      if (!dropping) kept.push(line);
+    }
+    return kept.join("\n");
+  }
+
+  async function receiverComparison(module: string) {
+    const moduleId = `metrics.${module}`;
+    const doc = retargetDoc(
+      parseMarkdownApi(filterToReceiver(readme(module), module), moduleId),
+      moduleId,
+    );
+    const regen = (await import(join(PACKAGE_ROOT, "..", "types", "scripts", "regen.ts"))) as {
+      generateModuleDeclaration: (entry: {
+        namespace: string;
+        doc: unknown;
+        outFile: string;
+        importsFrom?: string;
+        moduleId?: string;
+      }) => { contents: string };
+    };
+    const { contents } = regen.generateModuleDeclaration({
+      namespace: moduleId,
+      doc,
+      outFile: `${moduleId}.d.ts`,
+      importsFrom: "../src/core-types",
+      moduleId,
+    });
+    const tsDefold = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`),
+      "utf8",
+    );
+    return { doc, ...compareFidelityToTsDefold(contents, tsDefold) };
+  }
+
+  test("both snapshots are the one upstream README, byte for byte", () => {
+    expect(readme("fps")).toBe(readme("mem"));
+  });
+
+  test("the parser refuses the shared document for either moduleId, naming both receivers", () => {
+    for (const module of ["fps", "mem"]) {
+      expect(() => parseMarkdownApi(readme(module), `metrics.${module}`)).toThrow(
+        /non-uniform module prefix across headers: fps, mem/,
+      );
+    }
+  });
+
+  test.each([
+    ["fps", ["draw", "fps", "update"]],
+    ["mem", ["draw", "mem", "update"]],
+  ])("a receiver-filtered metrics.%s still lands no-go on create's table return", async (module, added) => {
+    const { doc, decision, missingMembers, signatureLossMembers, downgradedMembers, addedMembers } =
+      await receiverComparison(module as string);
+
+    expect(doc.elements.length).toBe(4);
+    expect(doc.elements.map((e) => e.name.split(".").pop()).sort()).toEqual(
+      ["create", "draw", module, "update"].sort(),
+    );
+
+    expect(decision).toBe("no-go");
+    expect(missingMembers).toEqual([]);
+    expect(signatureLossMembers).toEqual([]);
+    expect(downgradedMembers).toEqual(["create"]);
+    expect(addedMembers).toEqual(added as string[]);
+  });
+
+  test.each([
+    "fps",
+    "mem",
+  ])("metrics.%s loses every optional create parameter — the term that would have hidden a false go", async (module) => {
+    const { optionalityLossMembers } = await receiverComparison(module);
+    expect(optionalityLossMembers).toContain("create");
+  });
+
+  test.each([
+    "fps",
+    "mem",
+  ])("the ts-defold surface of metrics.%s is exactly the factory, so Metrics never enters the comparison", (module) => {
+    expect(
+      tsDefoldMembers(
+        readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `metrics.${module}.d.ts`), "utf8"),
+      ),
+    ).toEqual(["create"]);
   });
 });

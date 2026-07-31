@@ -321,6 +321,67 @@ describe("compareFidelityToTsDefold signature-loss term", () => {
   });
 });
 
+// A markdown source that writes optionality in prose rather than as a `[name]`
+// bracket emits every parameter required. Arity and names both match, so neither
+// the missing-member, downgrade, nor signature-loss term fires — yet every
+// existing call site that omitted the optional argument breaks. The loss needs a
+// term of its own.
+describe("compareFidelityToTsDefold optionality-loss term", () => {
+  test("an optional ts-defold parameter emitted required is a loss no other term sees", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a: string): void;",
+      "function f(a?: string): void;",
+    );
+    expect(comparison.optionalityLossMembers).toContain("f");
+    expect(comparison.missingMembers).toEqual([]);
+    expect(comparison.downgradedMembers).toEqual([]);
+    expect(comparison.signatureLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("optional on both sides is no loss", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a?: string): void;",
+      "function f(a?: string): void;",
+    );
+    expect(comparison.optionalityLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("markdown gaining optionality ts-defold lacked is an addition, not a loss", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a?: string): void;",
+      "function f(a: string): void;",
+    );
+    expect(comparison.optionalityLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("a `?` inside a parameter's own type is not the parameter's optionality", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function g(cb: (x?: number) => void): void;",
+      "function g(cb: (x?: number) => void): void;",
+    );
+    expect(comparison.optionalityLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("markdown parameters past the ts-defold arity are unscored", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a?: string, b: number): void;",
+      "function f(a?: string): void;",
+    );
+    expect(comparison.optionalityLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+
+  test("a const member is exempt — it has no parameter list to compare", () => {
+    const comparison = compareFidelityToTsDefold("const C: number;", "const C: number;");
+    expect(comparison.optionalityLossMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+});
+
 // `//* Section` is a line comment whose second character happens to be `*`. A
 // stripper that removes block comments before line comments latches its `/*`
 // onto the marker and deletes everything up to the next `*/` — the closing line

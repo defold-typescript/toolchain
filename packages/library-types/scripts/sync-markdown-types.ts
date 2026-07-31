@@ -248,7 +248,8 @@ export async function buildMarkdownFidelity(
  * absent from the markdown emit (a missing member), **or** a member both surfaces
  * share was downgraded to `unknown` by the markdown emit (a lost type), **or** a
  * shared member kept its name but lost part of its signature (dropped parameters,
- * or a non-`void` return collapsed to `void`). */
+ * or a non-`void` return collapsed to `void`), **or** a shared member kept its
+ * arity but emitted an optional ts-defold parameter as required. */
 export interface FidelityComparison {
   tsDefoldMembers: string[];
   markdownMembers: string[];
@@ -256,6 +257,7 @@ export interface FidelityComparison {
   addedMembers: string[];
   downgradedMembers: string[];
   signatureLossMembers: string[];
+  optionalityLossMembers: string[];
   decision: "go" | "no-go";
 }
 
@@ -373,6 +375,13 @@ function splitParameters(inner: string): string[] {
   return parts.map((part) => part.trim()).filter((part) => part !== "");
 }
 
+/** Whether a parameter slot is declared optional. Optionality is a `?` on the
+ * parameter *name*; a `?` anywhere in the parameter's own type (`cb: (x?: number)
+ * => void`) belongs to that type, not to the slot. */
+function isOptionalParameter(parameter: string): boolean {
+  return /^[A-Za-z_]\w*\?\s*:/.test(parameter.trim());
+}
+
 interface SignatureShape {
   parameters: string[];
   returnType: string;
@@ -414,8 +423,9 @@ function signatureShape(signature: string): SignatureShape | undefined {
  * markdown emit is a missing member; a shared member whose markdown signature
  * introduced `unknown` the ts-defold declaration lacked is a type downgrade; a
  * shared member that kept its name but dropped parameters, or collapsed a
- * non-`void` return to `void`, is a signature loss. Any of the three forces
- * `no-go`.
+ * non-`void` return to `void`, is a signature loss; a shared member that kept
+ * every ts-defold parameter but emitted an optional one as required is an
+ * optionality loss. Any of the four forces `no-go`.
  */
 export function compareFidelityToTsDefold(
   markdownEmittedDts: string,
@@ -446,6 +456,23 @@ export function compareFidelityToTsDefold(
       mdShape.returnType === "void" && tsShape.returnType !== "void" && tsShape.returnType !== ""
     );
   });
+  const optionalityLossMembers = tsMembers.filter((name) => {
+    const ts = tsMap.get(name);
+    const md = mdMap.get(name);
+    if (ts === undefined || md === undefined) return false;
+    if (ts.kind !== "function" || md.kind !== "function") return false;
+    const tsShape = signatureShape(ts.signature);
+    const mdShape = signatureShape(md.signature);
+    if (tsShape === undefined || mdShape === undefined) return false;
+    return tsShape.parameters.some((parameter, index) => {
+      const counterpart = mdShape.parameters[index];
+      return (
+        counterpart !== undefined &&
+        isOptionalParameter(parameter) &&
+        !isOptionalParameter(counterpart)
+      );
+    });
+  });
   return {
     tsDefoldMembers: tsMembers,
     markdownMembers: mdMembers,
@@ -453,10 +480,12 @@ export function compareFidelityToTsDefold(
     addedMembers,
     downgradedMembers,
     signatureLossMembers,
+    optionalityLossMembers,
     decision:
       missingMembers.length === 0 &&
       downgradedMembers.length === 0 &&
-      signatureLossMembers.length === 0
+      signatureLossMembers.length === 0 &&
+      optionalityLossMembers.length === 0
         ? "go"
         : "no-go",
   };
