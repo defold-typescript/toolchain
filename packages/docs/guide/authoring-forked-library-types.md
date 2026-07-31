@@ -206,3 +206,28 @@ package — carries the core-type-renamed ambient `Vector3 | Vector4` /
 `Quaternion`. These resolve in the `dts-declaration-validity` gate via the
 `@defold-typescript/types` reference that `test-d/dts-check-ambient.ts` pulls
 in, so a fork consuming engine types needs no special wiring.
+
+## Worked example — `defsave.defsave`
+
+`subsoap/defsave` (a save/load helper, pinned to the `v1.2.6` tag) is the first
+fork to **correct** a surface rather than re-home it: the ts-defold binding
+declared 8 of upstream's 14 functions and none of its 16 config fields, and
+three of the eight returned the wrong type. Neither pure option fits — *keep*
+fails the cost model (upstream is frozen and the surface is tiny) and a *fork*
+alone would knowingly re-home a half-missing surface, while a full *hand-author*
+would rewrite five declarations that are already right. So fork first, then
+hand-correct against the pin: copy the retired `.d.ts`, add the missing members,
+and fix the wrong signatures reading upstream's Lua as the authority. Fidelity
+stays 100% by construction — the identity diff compares the golden to the
+vendored fixture, not to the retired ts-defold surface, so extending a fork is
+gate-safe. Narrowing a wrong return is a breaking change for consumers and
+belongs in the changelog's `### Breaking` section; a types package's value is
+accuracy, so do not keep a declaration you can see is wrong.
+
+Two limits are worth knowing before you correct a surface. Upstream Lua that
+falls off the end of a function returns `nil`, so a predicate like defsave's
+`key_exists` is `boolean | undefined`, not `boolean` — read every branch, not
+just the explicit `return`s. And a module's `export let` fields are still
+read-only through a consumer's `import * as ns`, so a compile proof pins their
+types by reading them; there is no way to prove assignability through a
+namespace import.
