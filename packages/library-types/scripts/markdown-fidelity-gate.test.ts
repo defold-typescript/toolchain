@@ -330,6 +330,30 @@ const MONARCH: LibraryRecord = {
   ],
 };
 
+// The recorded per-module decision for `britzl/defold-richtext` at tag 5.22.1 —
+// the third multi-module Bucket-C library, and the first whose documented module
+// parses cleanly: the single root `README.md` yields 8 fully-typed `richtext.*`
+// functions with no loud-fail. It is `no-go` anyway, and the reason is a fidelity
+// judgment rather than a tooling gap: ts-defold's surface is a hand-crafted
+// structural API (`Word`, a 16-field `Settings`, `TextMetrics`, branded
+// `Alignment`/`VAlignment`) plus 7 paren-less `ALIGN_*`/`VALIGN_*` constant
+// headings, and a flat signature parse collapses all of it. `color` and `tags`
+// are documented nowhere as signature sections — only inside fenced Lua examples
+// and prose bullets — so both are `no-markdown`, not `no-signature-section`.
+const RICHTEXT: LibraryRecord = {
+  library: "richtext",
+  repo: "https://github.com/britzl/defold-richtext",
+  ref: "5.22.1",
+  license: "MIT",
+  prefix: "richtext.",
+  classificationDir: "defold-richtext",
+  decisions: [
+    { module: "color", decision: "no-go", reason: "no-markdown" },
+    { module: "richtext", decision: "no-go", reason: "surface-loss", markdown: "README.md" },
+    { module: "tags", decision: "no-go", reason: "no-markdown" },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -343,6 +367,7 @@ const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
 
 describeLibraryDecisions(DEFOLD_INPUT);
 describeLibraryDecisions(MONARCH);
+describeLibraryDecisions(RICHTEXT);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -428,5 +453,55 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
       /monarch\.transitions\.gui/,
     );
     expect(() => parseMarkdownApi(text, "monarch.transitions.gui")).toThrow(/signature/);
+  });
+});
+
+describe("richtext surface-loss evidence at tag 5.22.1", () => {
+  test("richtext.richtext parses cleanly to exactly the 8 documented functions", async () => {
+    const { markdownMembers } = await comparisonFor(RICHTEXT, "richtext");
+    // The `# API` section's `### richtext.<fn>(...)` sections. Unlike every prior
+    // Bucket-C module this one neither loud-fails nor parses empty.
+    expect(markdownMembers.length).toBe(8);
+    expect(markdownMembers).toContain("create");
+    expect(markdownMembers).toContain("plaintext");
+  });
+
+  test("the 7 paren-less constant headings stay out of the surface", async () => {
+    const { missingMembers, addedMembers } = await comparisonFor(RICHTEXT, "richtext");
+    expect(missingMembers).toEqual([
+      "ALIGN_CENTER",
+      "ALIGN_JUSTIFY",
+      "ALIGN_LEFT",
+      "ALIGN_RIGHT",
+      "VALIGN_BOTTOM",
+      "VALIGN_MIDDLE",
+      "VALIGN_TOP",
+    ]);
+    // Every documented function still exists under the same name upstream.
+    expect(addedMembers).toEqual([]);
+  });
+
+  test("the hand-crafted structural surface collapses to the README's bare tables", async () => {
+    const { emitted, downgradedMembers, decision } = await comparisonFor(RICHTEXT, "richtext");
+    // ts-defold declares `create(text, font, settings?): LuaMultiReturn<[Word[],
+    // TextMetrics]>`. The README's header is `richtext.create(text, font,
+    // settings)` — unbracketed — so `settings` comes back required, and while the
+    // multi-return *shape* survives, both of its element types degrade to the bare
+    // table token. This is why lifting the constant headings would not flip the
+    // decision: the downgrade is independent of the missing members.
+    expect(emitted).toContain(
+      "function create(text: string, font: string, settings: Record<string | number, unknown>): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;",
+    );
+    // None of ts-defold's named structural types survives the flat parse.
+    for (const type of ["Word[]", ": Settings", "TextMetrics", "Alignment", "FontsTable"]) {
+      expect(emitted).not.toContain(type);
+    }
+    expect(downgradedMembers).toContain("create");
+    expect(decision).toBe("no-go");
+  });
+
+  test("richtext.richtext's decision is no-go", async () => {
+    const { decision } = await comparisonFor(RICHTEXT, "richtext");
+    expect(decision).toBe("no-go");
   });
 });
