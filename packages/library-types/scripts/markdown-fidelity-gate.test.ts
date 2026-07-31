@@ -718,8 +718,8 @@ const RENDY: LibraryRecord = {
 // README types both its parameter and its return as bare `(table)`.
 //
 // The recorded terms are a floor on the loss, not a measure of it. `MEMBER_DECL`
-// sees only top-level `function`/`const`, so `PlatypusConfig` (12 optional fields
-// plus a nested `collisions` shape) and `PlatypusInstance` (19 methods plus
+// sees only top-level `function`/`const`, so `PlatypusConfig` (11 optional fields
+// plus a required nested `collisions` shape) and `PlatypusInstance` (19 methods plus
 // `velocity: vmath.vector3`) never enter the comparison at all — exactly as
 // metrics' `Metrics` interface and gooey's state aliases did not. Both collapse
 // to `Record<string | number, unknown>` in the markdown emit.
