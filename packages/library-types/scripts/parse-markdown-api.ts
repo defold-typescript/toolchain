@@ -13,7 +13,10 @@
  * accepted because the corpus is split on the convention (defold-orthographic and
  * defold-input write `###`; monarch's `README_API.md` writes `##`); h1 and h4 stay
  * outside the range, since at those levels a dotted-call-shaped line is document
- * structure rather than a signature. Header-only message sections (`<verb>` with
+ * structure rather than a signature. At either level the receiver may be preceded
+ * by a literal `function ` declaration keyword (rendy writes 9 of its 11 headings
+ * that way); no other prefix is accepted, so prose such as `### see mod.fn()` is
+ * still not a signature. Header-only message sections (`<verb>` with
  * no dotted receiver or parens) and nested option-table bullets are ignored. A
  * signature row that names a parameter but gives it no `(type)` loud-fails rather
  * than silently emitting an untyped `any`.
@@ -44,7 +47,9 @@ export interface MarkdownDoc {
   elements: MarkdownElement[];
 }
 
-const HEADER = /^#{2,3}\s+([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\((.*)\)\s*$/;
+// Only the literal `function` keyword is accepted before the receiver — a general
+// `\w+\s+` prefix would make prose like `### see rendy.set(...)` read as a signature.
+const HEADER = /^#{2,3}\s+(?:function\s+)?([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\((.*)\)\s*$/;
 const PARAM_MARKER = /^\*\*PARAM(?:ETER|ETERS)?\*\*\s*$/;
 const RETURN_MARKER = /^\*\*RETURNS?\*\*\s*$/;
 // A bullet with a backticked name and a required `(type)` group. A named bullet
