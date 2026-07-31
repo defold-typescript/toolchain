@@ -14,10 +14,12 @@ import { extractApiDoc } from "./extract-api-doc";
  * A vendored authored `.d.ts` is already target-form — a `declare module
  * '<moduleId>'` ambient — so the lane is light: it emits the vendored source
  * verbatim as the bare-namespace `generated/<namespace>.d.ts` golden and runs
- * `extractApiDoc` for the `api-doc/<namespace>.json` the docs-site consumes. A
- * fork's fidelity is 100% by construction (the emitted surface *is* the retired
- * ts-defold surface), so there is no fidelity/coverage comparison here; the
- * go/no-go gate is a forked-vs-generated identity diff (see the golden loop).
+ * `extractApiDoc` for the `api-doc/<namespace>.json` the docs-site consumes. The
+ * emitted surface *is* the vendored authored source, so the go/no-go gate is a
+ * forked-vs-generated identity diff (see the golden loop) — emission fidelity.
+ * There is no coverage comparison against a primary source because there is
+ * none; a corrected fork's accuracy rests on its manual audit against upstream
+ * plus the per-library shape assertions in the sibling test.
  */
 export interface AuthoredTarget {
   repo: string;
@@ -30,8 +32,9 @@ export interface AuthoredTarget {
   generated: string;
   apiDoc: string;
   // Defaults to `fidelity/<namespace>.json` when omitted. A fork carries no
-  // fidelity artifact (100% by construction), but the field mirrors the sibling
-  // lanes so a future hand-authored target can record one.
+  // fidelity artifact — there is no primary source to measure against, and the
+  // emit is lossless by construction — but the field mirrors the sibling lanes
+  // so a future hand-authored target can record one.
   fidelity: string;
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
   // in the config; defaults to "".
@@ -93,8 +96,9 @@ function readAuthoredSource(packageRoot: string, target: AuthoredTarget): string
 /**
  * The bare-namespace `generated/<namespace>.d.ts` golden. The vendored authored
  * `.d.ts` is already a `declare module '<moduleId>'` ambient, so the emit is the
- * source verbatim — the fork's surface passes through unchanged, which is what
- * makes its fidelity 100% by construction.
+ * source verbatim — the vendored surface passes through unchanged, which is what
+ * makes the emission lossless. It says nothing about how that vendored surface
+ * compares to upstream.
  */
 export function emitAuthoredDeclaration(packageRoot: string, target: AuthoredTarget): string {
   return readAuthoredSource(packageRoot, target);

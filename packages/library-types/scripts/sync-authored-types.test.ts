@@ -111,10 +111,11 @@ describe("authored goldens regenerate byte-for-byte", () => {
   });
 });
 
-// A fork's fidelity is 100% by construction: the emitted surface IS the vendored
+// A fork's emit is lossless by construction: the emitted surface IS the vendored
 // `.d.ts`. The go/no-go gate is therefore a forked-vs-generated identity diff,
-// not a coverage comparison.
-describe("fork identity (100% by construction)", () => {
+// not a coverage comparison — it proves emission fidelity, not that the vendored
+// surface matches upstream.
+describe("fork identity (lossless emit by construction)", () => {
   test("the generated golden is byte-identical to its vendored authored source", () => {
     for (const target of readAuthoredTargets(PACKAGE_ROOT)) {
       const vendored = readFileSync(join(PACKAGE_ROOT, target.authored), "utf8");
@@ -365,5 +366,15 @@ describe("defsave.defsave migration integrity", () => {
     );
     expect(golden).not.toContain("function save(config: string): void;");
     expect(golden).not.toContain("function set(config: string, name: string, value: any): void;");
+  });
+
+  test("the golden declares exactly 14 module functions", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defsave.d.ts"), "utf8");
+    expect(golden.match(/^\s*export function /gm)?.length).toBe(14);
+  });
+
+  test("the golden declares exactly 16 module fields", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defsave.d.ts"), "utf8");
+    expect(golden.match(/^\s*export let /gm)?.length).toBe(16);
   });
 });
