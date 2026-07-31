@@ -104,10 +104,10 @@ bun scripts/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.jso
   page renders.
 
 There is **no fetch command** — the source is vendored by hand, not snapshotted
-from a primary source — and **no fidelity command**: a fork's fidelity is 100% by
-construction (see below).
+from a primary source — and **no fidelity command**: there is no primary source to
+compare against, and the emit is lossless by construction (see below).
 
-## 3. Fidelity is by construction
+## 3. Emission fidelity is by construction
 
 The generated lanes report a coverage number because a parse can lose type
 information the original had. An authored `.d.ts` cannot: the emitted golden is
@@ -116,6 +116,17 @@ diff** — `generated/<namespace>.d.ts` is byte-identical to the vendored
 `fixtures/authored/<moduleId>.d.ts`. The package tests assert exactly this parity,
 so a stray edit to one file but not the other fails loudly. No `fidelity/` artifact
 is written.
+
+Read that gate narrowly. It proves **emission** fidelity — both sides of the diff
+are this repo's own files, so all it certifies is that the golden loses nothing
+relative to the vendored `.d.ts`. It says nothing about whether the vendored
+surface matches upstream, and there is no primary source to measure it against —
+that is what "no structured type source" means. A *verbatim* fork inherits
+whatever accuracy the binding it copied already had; a *corrected* fork (see
+`defsave` below) is only as accurate as the manual audit behind it. So pin the
+corrections with per-library shape assertions in
+`packages/library-types/scripts/sync-authored-types.test.ts` — the closest thing
+this lane has to an upstream check.
 
 ## 4. Cut the library over and validate
 
@@ -211,18 +222,23 @@ in, so a fork consuming engine types needs no special wiring.
 
 `subsoap/defsave` (a save/load helper, pinned to the `v1.2.6` tag) is the first
 fork to **correct** a surface rather than re-home it: the ts-defold binding
-declared 8 of upstream's 14 functions and none of its 16 config fields, and
-three of the eight returned the wrong type. Neither pure option fits — *keep*
-fails the cost model (upstream is frozen and the surface is tiny) and a *fork*
-alone would knowingly re-home a half-missing surface, while a full *hand-author*
-would rewrite five declarations that are already right. So fork first, then
-hand-correct against the pin: copy the retired `.d.ts`, add the missing members,
-and fix the wrong signatures reading upstream's Lua as the authority. Fidelity
-stays 100% by construction — the identity diff compares the golden to the
-vendored fixture, not to the retired ts-defold surface, so extending a fork is
-gate-safe. Narrowing a wrong return is a breaking change for consumers and
-belongs in the changelog's `### Breaking` section; a types package's value is
-accuracy, so do not keep a declaration you can see is wrong.
+declared 7 of upstream's 14 functions and just one of its 16 config fields
+(`appname`), and three of the seven returned the wrong type. Neither pure option
+fits — *keep* fails the cost model (upstream is frozen and the surface is tiny)
+and a *fork* alone would knowingly re-home a half-missing surface, while a full
+*hand-author* would rewrite five declarations that are already right (four
+correct functions plus `appname`). So fork first, then hand-correct against the
+pin: copy the retired `.d.ts`, add the missing members, and fix the wrong
+signatures reading upstream's Lua as the authority. Extending a fork is
+gate-safe: the identity diff compares the golden to the vendored fixture, not to
+the retired ts-defold surface. But that diff proves **emission** fidelity only —
+the golden loses nothing relative to the vendored `.d.ts`; it does not check the
+vendored surface against upstream. That accuracy rests on the manual audit
+against `defsave.lua` at the pin plus the per-library shape assertions in
+`packages/library-types/scripts/sync-authored-types.test.ts`, so correcting a
+fork moves the accuracy burden onto the author, not onto a gate. Narrowing a wrong return is a breaking change
+for consumers and belongs in the changelog's `### Breaking` section; a types
+package's value is accuracy, so do not keep a declaration you can see is wrong.
 
 Two limits are worth knowing before you correct a surface. Upstream Lua that
 falls off the end of a function returns `nil`, so a predicate like defsave's
