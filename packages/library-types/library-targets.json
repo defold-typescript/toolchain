@@ -120,12 +120,6 @@
       "generated": "generated/richtext.tags.d.ts"
     },
     {
-      "module": "defsave.defsave",
-      "path": "packages/defsave/defsave.defsave.d.ts",
-      "fixture": "fixtures/ts-defold/defsave.defsave.d.ts",
-      "generated": "generated/defsave.defsave.d.ts"
-    },
-    {
       "module": "persist.persist",
       "path": "packages/library-defold-persist/persist.persist.d.ts",
       "fixture": "fixtures/ts-defold/persist.persist.d.ts",

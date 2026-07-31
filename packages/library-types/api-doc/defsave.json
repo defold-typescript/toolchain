@@ -1,0 +1,486 @@
+{
+  "info": {
+    "namespace": "defsave",
+    "brief": "Save and load config and user data persistently between a Defold project's sessions",
+    "description": "Save and load config and user data persistently between a Defold project's sessions"
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "autosave",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "autosave_timer",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "timer",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "changed",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "verbose",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "block_reloading",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "appname",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "loaded",
+      "types": [
+        "LuaMap<string, unknown>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "sysinfo",
+      "types": [
+        "ReturnType<typeof sys.get_sys_info>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "use_default_data",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "enable_encryption",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "encryption_key",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "enable_obfuscation",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "obfuscation_key",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "use_serialize",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "default_data",
+      "types": [
+        "LuaMap<string, unknown>"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_appname",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "obfuscate",
+      "brief": "XOR the input against a key, cycling the key as needed. Defaults to obfuscation_key.",
+      "description": "XOR the input against a key, cycling the key as needed. Defaults to obfuscation_key.",
+      "parameters": [
+        {
+          "name": "input",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_file_path",
+      "brief": "The save path a file resolves to, or nil when no file was given",
+      "description": "The save path a file resolves to, or nil when no file was given",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_all",
+      "brief": "You can save all files at once. By default, it will only actually save files with changes, but you can force saving all files by setting the force flag to true.",
+      "description": "You can save all files at once. By default, it will only actually save files with changes, but you can force saving all files by setting the force flag to true.",
+      "parameters": [
+        {
+          "name": "force",
+          "doc": "false only saves changed files and true saves all files",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "key_exists",
+      "brief": "Whether a key is set on a loaded file. Returns nil when the file is loaded but the key is absent.",
+      "description": "Whether a key is set on a loaded file. Returns nil when the file is loaded but the key is absent.",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "isset",
+      "brief": "Alias of key_exists",
+      "description": "Alias of key_exists",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset_to_default",
+      "brief": "Reset a file to its default_data entry, or to empty when it has none",
+      "description": "Reset a file to its default_data entry, or to empty when it has none",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_loaded",
+      "brief": "Whether a file is currently in the loaded list",
+      "description": "Whether a file is currently in the loaded list",
+      "parameters": [
+        {
+          "name": "file",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "In your update, if you want autosave to be enabled, you will need to include",
+      "description": "In your update, if you want autosave to be enabled, you will need to include",
+      "parameters": [
+        {
+          "name": "dt",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Save all loaded files; call from your script's final",
+      "description": "Save all loaded files; call from your script's final",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

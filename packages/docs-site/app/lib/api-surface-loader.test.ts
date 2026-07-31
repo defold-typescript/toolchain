@@ -344,6 +344,21 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.importString).toBe('import * as boom from "boom.boom"');
   });
 
+  test("attributes defsave to subsoap/defsave as an authored-here forked library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defsave");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("v1.2.6");
+    expect(meta.authorUrl).toBe("https://github.com/subsoap/defsave");
+    expect(meta.sourceUrl).toBe("https://github.com/subsoap/defsave/tree/v1.2.6");
+    expect(meta.license).toBe("CC0-1.0");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
+  test("renders defsave's import with the namespace alias but the moduleId module path", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defsave");
+    expect(meta.importString).toBe('import * as defsave from "defsave.defsave"');
+  });
+
   test("attributes both forked nakama helpers to heroiclabs/nakama-defold as authored-here", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {

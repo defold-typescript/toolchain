@@ -16,15 +16,20 @@ changes are called out first because the toolchain is pre-1.0.
 
 ## v0.24.0
 
+### Breaking
+
+- [defsave](/api/defsave)'s results are typed accurately now that its surface is maintained here and corrected against upstream `v1.2.6`: `save` and `set` returned `void` and now return `boolean | undefined`, and `load` narrows from `unknown` to `boolean | undefined`. Code that assigned or asserted on those results may need updating.
+
 ### Improved
 
-- Libraries with no usable upstream structured source are now first-party forked `.d.ts`s maintained in this repo: declaring the upstream dependency resolves and materializes the types through [`resolve`](./resolve.md), and each docs page imports the library under its module id. The type surfaces are unchanged from the previous bindings — only their provenance and end-to-end resolution move.
+- Libraries with no usable upstream structured source are now first-party forked `.d.ts`s maintained in this repo: declaring the upstream dependency resolves and materializes the types through [`resolve`](./resolve.md), and each docs page imports the library under its module id. Type surfaces generally carry over unchanged — only their provenance and end-to-end resolution move; [defsave](/api/defsave) is the exception, where being maintained here is what let a half-missing surface be corrected against its pin.
   - **[defcon](/api/defcon)** (`britzl/defcon` `2.6.0`) — imported as `import * as defcon from "defcon.console"`.
   - **[deftest](/api/deftest)** (`britzl/deftest` `2.8.0`) — imported as `import * as deftest from "deftest.deftest"`; its ambient test-DSL globals (`describe`, `test`, `assert_*`) carry along in the fork.
   - **[defmath](/api/defmath)** (`subsoap/defmath` `c67c2273`) — imported as `import * as defmath from "defmath.defmath"`; pinned to a commit SHA as upstream ships no tags.
   - **[zzfx](/api/zzfx)** (`thejustinwalsh/defold-zzfx` `8c90e12c`) — imported as `import * as zzfx from "zzfx.api"`; pinned to a commit SHA as upstream ships no tags.
   - **[boom](/api/boom)** (`britzl/boom` `1.0.0`) — imported as `import * as boom from "boom.boom"`; the game framework's ambient globals (`add`, `vec2`, `rand`, the color constants) and component interfaces carry along in the fork.
   - **[nakama helpers](/api/nakama.engine.defold)** (`heroiclabs/nakama-defold` `v3.4.0`) — the two hand-written helper modules `nakama.engine.defold` and `nakama.util.log` are now forked here; the codegen'd `nakama.nakama` stays ts-defold-sourced.
+  - **[defsave](/api/defsave)** (`subsoap/defsave` `v1.2.6`) — imported as `import * as defsave from "defsave.defsave"`; the previous binding declared about half the module, so the fork adds the seven missing functions (`obfuscate`, `get_file_path`, `key_exists`, `isset`, `reset_to_default`, `is_loaded`, `final`) and the config fields (`autosave`, `enable_obfuscation`, …), and gives `save` its `force` argument.
 
 ### Fixed
 
