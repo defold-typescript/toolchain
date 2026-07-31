@@ -569,6 +569,59 @@ const METRICS: LibraryRecord = {
   ],
 };
 
+// The recorded decision for `whiteboxdev/library-defold-rendy` at commit
+// `b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3` — the eighth Bucket-C library, one
+// module, and the second SHA pin in the corpus: like its persist sibling (same
+// upstream author) it publishes no tags and no releases, and carries Zlib rather
+// than the MIT every other sibling ships. The ts-defold fixture header cites
+// `klaytonkowalski/library-defold-rendy`, which now 301-redirects to the
+// `whiteboxdev` slug used here — the same account rename persist recorded.
+//
+// rendy is the library that widened `HEADER` by an optional `function` keyword.
+// Its `## API` section writes 2 of its 11 headings bare (`### rendy.create_camera(
+// camera_id)`) and the other 9 as `### function rendy.set(camera_id, property,
+// value)`. The keyword form did not match, so the as-is parse returned 2 elements
+// rather than throwing — no refusal class applied — and the comparison read 11
+// missing members against a `["create_camera","destroy_camera"]` markdown surface.
+// Recording that as `surface-loss` would have filed a header dialect as a fidelity
+// judgment, the trap the monarch slice fixed at the `##` level. The unmatched
+// headings also did not close the preceding section, so the whole rest of the API
+// section landed inside `destroy_camera`'s description — a second, independent
+// harm the widening removes.
+//
+// The dialect-aware parse lifts all 11 documented members and does not move the
+// verdict:
+//
+//   missingMembers         ["animate","cancel_animations"]  (undocumented upstream)
+//   signatureLossMembers   all 11 shared members
+//   downgraded / added / optionalityLoss   []
+//
+// The README carries no `**PARAMETERS**` and no `**RETURN**` block anywhere —
+// a heading and one line of prose per function — so every member emits as a
+// zero-arity `(): void` stub, discarding `get_display_size(): vmath.vector3`,
+// `get_stack(screen_x, screen_y): CameraId[]`, `screen_to_world(camera_id,
+// screen_position): vmath.vector3`, the 5-parameter `shake` with its optional
+// `scaler`, and the `CameraId` alias itself. Both terms are independently
+// decisive; the dominant one — 11 members against 2 — is the signature collapse,
+// so the reason is persist's `signature-loss` class, for persist's reason: a
+// prose-only README that documents names, not types.
+//
+// One note for a future re-evaluation: `shake`'s heading writes its optional
+// argument as `duration \[, scaler]`, an escaped bracket `bracketedArgs` does not
+// read as optional. Inert here — with no `**PARAMETERS**` bullets there are no
+// parameters to mark either way — so it is recorded rather than fixed.
+const RENDY: LibraryRecord = {
+  library: "rendy",
+  repo: "https://github.com/whiteboxdev/library-defold-rendy",
+  ref: "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
+  license: "Zlib",
+  prefix: "rendy.",
+  classificationDir: "library-defold-rendy",
+  decisions: [
+    { module: "rendy", decision: "no-go", reason: "signature-loss", markdown: "README.md" },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -587,6 +640,7 @@ describeLibraryDecisions(PERSIST);
 describeLibraryDecisions(YAGAMES);
 describeLibraryDecisions(GOOEY);
 describeLibraryDecisions(METRICS);
+describeLibraryDecisions(RENDY);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -1029,5 +1083,72 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
         readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `metrics.${module}.d.ts`), "utf8"),
       ),
     ).toEqual(["create"]);
+  });
+});
+
+describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3", () => {
+  const readme = () => fixtureText(RENDY, decisionFor(RENDY, "rendy"));
+
+  test("the keyword-prefixed headings are read — the snapshot parses to all 11 members", async () => {
+    const { markdownMembers } = await comparisonFor(RENDY, "rendy");
+    expect(markdownMembers.length).toBe(11);
+    // Three of the nine headings that carry the `function ` keyword upstream.
+    for (const fn of ["set", "get", "world_to_screen"]) {
+      expect(markdownMembers).toContain(fn);
+    }
+  });
+
+  test("the two missing members are genuinely undocumented upstream", async () => {
+    const { missingMembers, addedMembers } = await comparisonFor(RENDY, "rendy");
+    expect(missingMembers).toEqual(["animate", "cancel_animations"]);
+    expect(addedMembers).toEqual([]);
+    // Neither name appears anywhere in the README — not as a heading, not in
+    // prose. The only near-match is the word "animated" in the shake section.
+    expect(/\brendy\.(animate|cancel_animations)\b/.test(readme())).toBe(false);
+  });
+
+  test("the signature collapse covers every shared member and is the leading term", async () => {
+    const { emitted, signatureLossMembers } = await comparisonFor(RENDY, "rendy");
+    // No `**PARAMETERS**` and no `**RETURN**` block anywhere in the README, so
+    // `get_stack(screen_x, screen_y): CameraId[]` and `screen_to_world(camera_id,
+    // screen_position): vmath.vector3` both emit as zero-arity `(): void`.
+    expect(/^\*\*(PARAMETERS?|RETURNS?)\*\*\s*$/m.test(readme())).toBe(false);
+    expect(emitted).toContain("function get_stack(): void;");
+    expect(emitted).toContain("function screen_to_world(): void;");
+    expect(signatureLossMembers.length).toBe(11);
+    expect(signatureLossMembers).toContain("shake");
+  });
+
+  test("no other term fires, so the record cannot be misread as gooey's or metrics' class", async () => {
+    const { decision, downgradedMembers, optionalityLossMembers } = await comparisonFor(
+      RENDY,
+      "rendy",
+    );
+    expect(decision).toBe("no-go");
+    // A zero-arity stub carries no type tokens, so there is no downgrade; and
+    // with no parameters at all there is no optionality to lose.
+    expect(downgradedMembers).toEqual([]);
+    expect(optionalityLossMembers).toEqual([]);
+    expect(decisionFor(RENDY, "rendy").reason).toBe("signature-loss");
+  });
+
+  test("the header widening is what lifted the surface: stripping the keyword changes nothing", () => {
+    const asCommitted = parseMarkdownApi(readme(), "rendy.rendy");
+    const stripped = parseMarkdownApi(
+      readme().replace(/^(#{2,3}\s+)function\s+/gm, "$1"),
+      "rendy.rendy",
+    );
+    expect(stripped.elements.map((e) => e.name)).toEqual(asCommitted.elements.map((e) => e.name));
+    expect(asCommitted.elements.length).toBe(11);
+  });
+
+  test("a keyword-prefixed heading closes the preceding section", () => {
+    // Before the widening the 9 unmatched headings did not end a section, so the
+    // rest of the API section pooled into `destroy_camera`'s description.
+    const doc = parseMarkdownApi(readme(), "rendy.rendy");
+    const destroy = doc.elements.find((e) => e.name === "rendy.destroy_camera");
+    expect(destroy?.description).toBe(
+      "Destroys a camera. This function is called automatically by the *rendy.go* game object.",
+    );
   });
 });
