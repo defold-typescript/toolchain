@@ -104,7 +104,12 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
 interface ModuleDecision {
   module: string;
   decision: "go" | "no-go";
-  reason: "no-markdown" | "no-signature-section" | "surface-loss" | "signature-loss";
+  reason:
+    | "no-markdown"
+    | "no-signature-section"
+    | "doc-dialect"
+    | "surface-loss"
+    | "signature-loss";
   // The upstream `.md` path at the pin, absent exactly when `no-markdown`.
   markdown?: string;
 }
@@ -189,11 +194,16 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       });
     }
 
-    const signatureless = decisions.filter((d) => d.reason === "no-signature-section");
+    // Both classes are proven the same way — the front-end refuses the snapshot.
+    // They differ in *why*: `no-signature-section` documents no signatures at
+    // all, `doc-dialect` documents them in a convention the parser cannot read.
+    const signatureless = decisions.filter(
+      (d) => d.reason === "no-signature-section" || d.reason === "doc-dialect",
+    );
     if (signatureless.length > 0) {
       test.each(
         signatureless,
-      )(`${record.prefix}$module documents no signature section, so the parser refuses it`, (decision) => {
+      )(`${record.prefix}$module is refused by the markdown parser ($reason)`, (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(() => parseMarkdownApi(fixtureText(record, decision), moduleId)).toThrow(
           /signature/,
@@ -250,6 +260,11 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 //   no-markdown          upstream ships no `in/<mod>.md` at the pin at all.
 //   no-signature-section the `.md` is usage/tutorial prose with no
 //                        `### <recv>.<fn>(...)` header, so the parser loud-fails.
+//   doc-dialect          the `.md` does document signature sections, but in a
+//                        markdown convention the front-end does not parse, so it
+//                        loud-fails all the same. Recorded only alongside
+//                        independent evidence that a dialect-aware parse would
+//                        not change the decision.
 //   surface-loss         the `.md` parses, but the structural gate reports the
 //                        markdown surface losing members versus ts-defold.
 //   signature-loss       the `.md` parses and loses no member, but the members it
@@ -386,6 +401,44 @@ const PERSIST: LibraryRecord = {
   ],
 };
 
+// The recorded decision for `indiesoftby/defold-yagames` at tag `0.19.0` — the
+// fifth Bucket-C library, one module, and the first `doc-dialect` record.
+//
+// Upstream's single root `README.md` is a full API reference: 70 backticked
+// `#### <recv>.<fn>(...)` headings, 66 under `yagames.` and 4 under `sitelock.`.
+// The front-end reads none of it, because the document diverges from the corpus
+// convention four independent ways — `####` and backticked headings against
+// `##`/`###` bare ones, `**Parameters:**`/`**Returns:**` against
+// `**PARAMETERS**`/`**RETURN**`, `- ` bullets against `* `, and
+// `` `x` <kbd>type</kbd> `` against `` `x` (type) ``. That vocabulary is eight
+// bare Lua tokens with no structural types at all, against a ts-defold surface
+// of hand-written interfaces and named callback types.
+//
+// None of that dialect work would change the outcome. Against the corrected
+// 52-member ts-defold surface, upstream 0.19.0 documents no `banner_init`,
+// `banner_create`, `banner_delete`, `banner_refresh`, `banner_set` (the banner
+// family moved to `adv_show_banner_adv`/`adv_hide_banner_adv`/
+// `adv_get_banner_adv_status`), no `leaderboards_init` and no `player_get_id` —
+// 7 missing members under the most generous reading, so any parser lands on
+// `no-go` for surface-loss. Reading only the `yagames.` prefix the uniform-prefix
+// rule would enforce, it is 11.
+//
+// yagames is also the library that exposed the comparator's `//*` comment-strip
+// defect: its fixture's `//* Advertisement` section markers opened a block
+// comment that ran to the next JSDoc terminator, reporting 43 of its 52 members.
+// Every term of a comparison against that truncated surface fails toward `go`.
+const YAGAMES: LibraryRecord = {
+  library: "yagames",
+  repo: "https://github.com/indiesoftby/defold-yagames",
+  ref: "0.19.0",
+  license: "MIT",
+  prefix: "yagames.",
+  classificationDir: "defold-yagames",
+  decisions: [
+    { module: "yagames", decision: "no-go", reason: "doc-dialect", markdown: "README.md" },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -401,6 +454,7 @@ describeLibraryDecisions(DEFOLD_INPUT);
 describeLibraryDecisions(MONARCH);
 describeLibraryDecisions(RICHTEXT);
 describeLibraryDecisions(PERSIST);
+describeLibraryDecisions(YAGAMES);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -580,5 +634,76 @@ describe("persist signature-loss evidence at pin b37f61040740f232d86f68e2606f27b
     expect(decisionFor(PERSIST, "persist").reason).toBe("signature-loss");
     expect(signatureLossMembers.length).toBeGreaterThan(0);
     expect([...missingMembers, ...downgradedMembers]).toEqual([]);
+  });
+});
+
+describe("yagames doc-dialect evidence at tag 0.19.0", () => {
+  const readme = () => fixtureText(YAGAMES, decisionFor(YAGAMES, "yagames"));
+  const HEADING = /^#### `([A-Za-z_]\w*)\.([A-Za-z_]\w*)\((.*)\)`\s*$/;
+  const headings = () =>
+    readme()
+      .split("\n")
+      .map((line) => line.match(HEADING))
+      .filter((match): match is RegExpMatchArray => match !== null);
+
+  const tsSurface = () =>
+    tsDefoldMembers(
+      readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", "yagames.yagames.d.ts"), "utf8"),
+    );
+
+  test("the refusal is a dialect gap, not an absent API doc — the README documents 70 signatures", () => {
+    const byReceiver = new Map<string, number>();
+    for (const [, receiver] of headings()) {
+      byReceiver.set(receiver as string, (byReceiver.get(receiver as string) ?? 0) + 1);
+    }
+    expect(headings().length).toBe(70);
+    expect(byReceiver.get("yagames")).toBe(66);
+    expect(byReceiver.get("sitelock")).toBe(4);
+  });
+
+  test("the parameter and return markers are the corpus concept in a spelling the parser does not match", () => {
+    const lines = readme().split("\n");
+    expect(lines.filter((line) => /^\*\*Parameters:\*\*\s*$/.test(line)).length).toBe(47);
+    expect(lines.filter((line) => /^\*\*Returns:\*\*\s*$/.test(line)).length).toBe(22);
+    // The typed bullets exist, as `- \`x\` <kbd>type</kbd>` — never in the `* \`x\` (type)`
+    // form `TYPED_BULLET` accepts, so the parser reads zero of them.
+    expect(lines.filter((line) => /^\*\s+`[^`]+`\s*\([^)]*\)/.test(line)).length).toBe(0);
+    expect(lines.filter((line) => /^-\s+`[^`]+`\s*<kbd>/.test(line)).length).toBe(76);
+  });
+
+  test("the front-end refuses the snapshot", () => {
+    expect(() => parseMarkdownApi(readme(), "yagames.yagames")).toThrow(/signature/);
+  });
+
+  test("dialect support could not flip the decision — 7 documented-member gaps remain", () => {
+    // The generous reading: every heading regardless of receiver, which is more
+    // than the parser's uniform-prefix rule would allow through.
+    const documented = new Set(headings().map(([, , member]) => member as string));
+    expect(tsSurface().filter((member) => !documented.has(member))).toEqual([
+      "banner_create",
+      "banner_delete",
+      "banner_init",
+      "banner_refresh",
+      "banner_set",
+      "leaderboards_init",
+      "player_get_id",
+    ]);
+  });
+
+  test("reading only the `yagames.` prefix the parser would enforce, the gap widens to 11", () => {
+    const documented = new Set(
+      headings()
+        .filter(([, receiver]) => receiver === "yagames")
+        .map(([, , member]) => member as string),
+    );
+    expect(tsSurface().filter((member) => !documented.has(member)).length).toBe(11);
+  });
+
+  test("the comment-strip fix is load-bearing: the fixture surface is 52 members, not 43", () => {
+    const surface = tsSurface();
+    expect(surface.length).toBe(52);
+    // The nine a `//*`-blind stripper silently dropped, sampled at both ends.
+    expect(surface).toContain("adv_show_fullscreen_adv");
+    expect(surface).toContain("player_get_data");
   });
 });
