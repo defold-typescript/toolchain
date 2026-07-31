@@ -2,7 +2,6 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as bzAnim from "bzAnim.bzLibrary";
-import * as defsave from "defsave.defsave";
 import * as dicebag from "dicebag.dicebag";
 import * as gooey from "gooey.gooey";
 import * as accelerometer from "in.accelerometer";
@@ -104,15 +103,6 @@ declare const _taggedWord: (typeof _taggedWords)[number];
 const _taggedNode: Opaque<"node"> = _taggedWord.node;
 richtextTags.register("em", () => {});
 
-// defsave.defsave — scalar config helpers compile and unknown payloads stay
-// weakly typed to match the upstream declaration.
-const _defsaveAppName: string = defsave.appname;
-const _defsaveLoaded: unknown = defsave.load("settings");
-const _defsaveVolume: unknown = defsave.get("settings", "volume");
-defsave.set("settings", "volume", 1);
-defsave.save_all();
-defsave.update(1 / 60);
-
 // persist.persist — structural persistence helpers preserve the upstream
 // object-or-undefined load result.
 const _persistLoaded: Record<never, never> | undefined = persist.load("slot");
@@ -199,9 +189,6 @@ void _richNode;
 void _richWordColor;
 void _richWidth;
 void _taggedNode;
-void _defsaveAppName;
-void _defsaveLoaded;
-void _defsaveVolume;
 void _persistLoaded;
 void _dbFlip;
 void _dbDraw;

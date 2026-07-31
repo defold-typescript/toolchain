@@ -660,6 +660,17 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the forked defsave page pins to subsoap/defsave, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const defsave = pages.find((p) => p.namespace === "defsave");
+    expect(defsave).toBeDefined();
+    if (!defsave) return;
+    expect(defsave.category).toBe("library");
+    const md = apiPageMarkdown(defsave, apiLinkify(pages));
+    expect(md).toContain("[subsoap/defsave](https://github.com/subsoap/defsave)");
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("each forked nakama helper page pins to heroiclabs/nakama-defold, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {
