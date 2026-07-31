@@ -439,6 +439,55 @@ const YAGAMES: LibraryRecord = {
   ],
 };
 
+// The recorded decision for `britzl/gooey` at tag `10.5.3` — the sixth Bucket-C
+// library, one module, and the first to trip all three no-go terms at once.
+//
+// Unlike yagames the dialect is fully accepted: the README writes bare
+// `### gooey.<fn>(...)` headings, `**PARAMETERS**`/`**RETURN**`, and
+// `* \`name\` (type) - doc` bullets — exactly the corpus convention — so the
+// parser returns 8 elements rather than refusing. This is a structural fidelity
+// judgment, not a tooling gap. Against a 12-function ts-defold surface:
+//
+//   surface-loss    4 missing members. `horizontal_dynamic_list`,
+//                   `vertical_dynamic_list`, `horizontal_static_list` and
+//                   `vertical_static_list` are documented at `#####` under a
+//                   `**HORIZONTAL AND VERTICAL LISTS**` prose block, and
+//                   `HEADER` accepts `#{2,3}` only.
+//   type downgrade  8 of 8 parsed members. The README's vocabulary is bare Lua
+//                   tokens — `table`, `function`, and `bool` (an upstream typo
+//                   for `boolean`) — against ts-defold's six hand-written state
+//                   interfaces threaded through typed callbacks.
+//   signature loss  1 member. `dynamic_list`'s heading names 11 arguments but
+//                   its `**PARAMETERS**` list documents 10; `root_id` is absent.
+//
+// Widening `HEADER` past `#{2,3}` cannot flip the verdict, on three independent
+// counts: the four `#####` sections have empty bodies, so parsing them would emit
+// four zero-arity `(): void` stubs and trade surface-loss for signature-loss; the
+// static pair is written upstream with the *dynamic* signature
+// (`root_id, item_id, data`) where ts-defold declares `item_ids` and neither
+// `root_id` nor `data`; and the 8 type downgrades are independent of header level
+// entirely. Upstream is not poorer than ts-defold on content — it documents
+// `group` with four parameters where ts-defold declares two — but the state
+// tables it describes live in `The state table contains the following fields:`
+// bullet blocks that the flat signature parser deliberately ignores, and lifting
+// those into named types is deep-prose work the PRD lists as a non-goal.
+//
+// One note for a future re-evaluation: `bool` is not in `KNOWN_LOSSY_TOKENS`, so
+// building a fidelity report for this module would loud-fail in
+// `computeMarkdownFidelity`. No report is built for a no-go module, so nothing is
+// added — recorded here so that loud-fail is not later read as a regression.
+const GOOEY: LibraryRecord = {
+  library: "gooey",
+  repo: "https://github.com/britzl/gooey",
+  ref: "10.5.3",
+  license: "MIT",
+  prefix: "gooey.",
+  classificationDir: "gooey",
+  decisions: [
+    { module: "gooey", decision: "no-go", reason: "surface-loss", markdown: "README.md" },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -455,6 +504,7 @@ describeLibraryDecisions(MONARCH);
 describeLibraryDecisions(RICHTEXT);
 describeLibraryDecisions(PERSIST);
 describeLibraryDecisions(YAGAMES);
+describeLibraryDecisions(GOOEY);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -705,5 +755,98 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
     // The nine a `//*`-blind stripper silently dropped, sampled at both ends.
     expect(surface).toContain("adv_show_fullscreen_adv");
     expect(surface).toContain("player_get_data");
+  });
+});
+
+describe("gooey surface-loss evidence at tag 10.5.3", () => {
+  const readme = () => fixtureText(GOOEY, decisionFor(GOOEY, "gooey"));
+  const PARSED_MEMBERS = [
+    "button",
+    "checkbox",
+    "radio",
+    "static_list",
+    "dynamic_list",
+    "vertical_scrollbar",
+    "input",
+    "group",
+  ];
+
+  test("the front-end accepts the snapshot — this is a fidelity judgment, not a dialect gap", () => {
+    const doc = parseMarkdownApi(readme(), "gooey.gooey");
+    expect(doc.elements.length).toBe(8);
+    expect(doc.info.namespace).toBe("gooey");
+  });
+
+  test("gooey.gooey is no-go", async () => {
+    const { decision } = await comparisonFor(GOOEY, "gooey");
+    expect(decision).toBe("no-go");
+  });
+
+  test("the four `#####` list variants are the leading term — 4 missing members", async () => {
+    const { missingMembers, addedMembers } = await comparisonFor(GOOEY, "gooey");
+    expect(missingMembers).toEqual([
+      "horizontal_dynamic_list",
+      "horizontal_static_list",
+      "vertical_dynamic_list",
+      "vertical_static_list",
+    ]);
+    // Upstream adds no member ts-defold lacks, so the loss is one-directional.
+    expect(addedMembers).toEqual([]);
+  });
+
+  test("every one of the 8 parsed members downgrades on the README's bare Lua tokens", async () => {
+    const { downgradedMembers } = await comparisonFor(GOOEY, "gooey");
+    expect([...downgradedMembers].sort()).toEqual([...PARSED_MEMBERS].sort());
+  });
+
+  test("dynamic_list's PARAMETERS block documents one argument fewer than its heading", async () => {
+    const { signatureLossMembers } = await comparisonFor(GOOEY, "gooey");
+    expect(signatureLossMembers).toEqual(["dynamic_list"]);
+
+    const lines = readme().split("\n");
+    const heading = lines.findIndex((line) => /^###\s+gooey\.dynamic_list\(/.test(line));
+    expect(heading).toBeGreaterThan(-1);
+    const headingArgs = (lines[heading]?.match(/\(([^)]*)\)/)?.[1] ?? "").split(",");
+    expect(headingArgs.length).toBe(11);
+    expect(headingArgs.map((a) => a.trim())).toContain("root_id");
+
+    const paramMarker = lines.findIndex(
+      (line, i) => i > heading && /^\*\*PARAMETERS\*\*\s*$/.test(line),
+    );
+    // The parameter list is the *contiguous* bullet run after the marker. It ends
+    // at the blank line before `The \`config\` table can contain the following
+    // values:`, whose own two bullets are option keys rather than parameters — so
+    // a boundary drawn at `**RETURN**` would over-count this list as 12.
+    const params: string[] = [];
+    for (let i = paramMarker + 1; i < lines.length; i++) {
+      const bullet = lines[i]?.match(/^\*\s+`([^`]+)`\s*\(/);
+      if (bullet === null || bullet === undefined) break;
+      params.push(bullet[1] as string);
+    }
+    expect(params.length).toBe(10);
+    expect(params).not.toContain("root_id");
+  });
+
+  test("the ts-defold surface the comparison runs against is 12 functions", () => {
+    const surface = tsDefoldMembers(
+      readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", "gooey.gooey.d.ts"), "utf8"),
+    );
+    expect(surface.length).toBe(12);
+  });
+
+  test("widening the header range would trade surface-loss for signature-loss, not fix it", () => {
+    const lines = readme().split("\n");
+    const h3 = lines.filter((line) => /^###\s+gooey\.\w+\(.*\)\s*$/.test(line));
+    const h5 = lines.filter((line) => /^#####\s+gooey\.\w+\(.*\)\s*$/.test(line));
+    expect(h3.length).toBe(8);
+    expect(h5.length).toBe(4);
+
+    // The `#####` sections carry no documented parameters or return at all, so
+    // parsing them would emit four zero-arity `(): void` stubs.
+    const firstH5 = lines.findIndex((line) => /^#####\s+gooey\.\w+\(.*\)\s*$/.test(line));
+    const nextH3 = lines.findIndex((line, i) => i > firstH5 && /^###\s/.test(line));
+    const body = lines.slice(firstH5 + 1, nextH3 === -1 ? undefined : nextH3);
+    expect(body.some((line) => /^\*\*PARAMETERS\*\*\s*$/.test(line))).toBe(false);
+    expect(body.some((line) => /^\*\*RETURN\*\*\s*$/.test(line))).toBe(false);
   });
 });
