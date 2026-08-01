@@ -4767,7 +4767,7 @@ library is the sole maintainer of its namespace, so it carries its own
 | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
 | `authored` | yes | Package-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
-| `namespace` | yes | The artifact stem — the emitted files are `generated/<namespace>.d.ts` and `api-doc/<namespace>.json`. |
+| `namespace` | yes | The artifact stem — the emitted files are `generated/<namespace>.d.ts` and `api-doc/<namespace>.json`. Either a bare stem (`defcon`) or the dotted `moduleId` (`orthographic.camera`): fork onto the retired module name when it already equals the publish namespace, and reach for a bare stem only when nothing else owns it. The `orthographic.camera` worked example below settles the choice. |
 | `generated` | yes | The committed `.d.ts` output path (`generated/<namespace>.d.ts`). |
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
 | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
@@ -4779,8 +4779,14 @@ entry.
 #### 2. Vendor the `.d.ts` and generate the artifacts
 
 Put the authored/forked declaration at the `authored` path. For a fork, that is a
-verbatim copy of the retired `fixtures/ts-defold/<moduleId>.d.ts`; for a
-hand-authored library, it is the declaration you wrote. Either way it must be a
+verbatim copy of the retired library's shipped `generated/<moduleId>.d.ts`
+golden — not the raw ts-defold fixture, which the ts-defold lane type-maps on the
+way out (`hash`/`url`/`vmath.vector3` → `Hash`/`Url`/`Vector3`) while the authored
+lane emits its input verbatim, so forking the fixture would ship upstream's Lua
+type names and fail the `dts-declaration-validity` gate. The two forms coincide
+when the library references no mapped core types (persist), which is why the rule
+is safe to state unconditionally. For a hand-authored library, it is the
+declaration you wrote. Either way it must be a
 `declare module '<moduleId>'` ambient — the target form the emit passes through
 unchanged. Then run the two commands from `packages/library-types`:
 
@@ -4791,9 +4797,10 @@ bun scripts/sync-authored-types.ts --emit       # emit generated/<namespace>.d.t
 bun scripts/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.json — the docs-site model
 ```
 
-- **`--emit`** writes the vendored `.d.ts` verbatim to the bare-namespace
-  `generated/<namespace>.d.ts` golden. There is no parse or transform: an authored
-  source is already target-form, so the emitted surface *is* the vendored surface.
+- **`--emit`** writes the vendored `.d.ts` verbatim to the
+  `generated/<namespace>.d.ts` golden, for whatever stem the entry pins. There is
+  no parse or transform: an authored source is already target-form, so the
+  emitted surface *is* the vendored surface.
 - **`--api-doc`** runs `extractApiDoc` over the vendored `.d.ts` under the pinned
   publish `namespace`, producing the `api-doc/<namespace>.json` the docs-site `/api`
   page renders.
@@ -4830,8 +4837,11 @@ generated lanes use:
 
 - Drop the library's row from `library-targets.json` and its dir from
   `library-classification.json`, and delete the retired
-  `fixtures/ts-defold/<moduleId>.d.ts`, `generated/<moduleId>.d.ts`, and
-  `api-doc/<moduleId>.json`. The namespace now resolves to your authored artifacts.
+  `fixtures/ts-defold/<moduleId>.d.ts`. Its `generated/<moduleId>.d.ts` and
+  `api-doc/<moduleId>.json` goldens are deleted only when the fork publishes under
+  a *different* namespace; when `namespace` === `moduleId` they are instead
+  overwritten in place by the two commands above. The namespace now resolves to
+  your authored artifacts.
 - Remove the `./<moduleId>` subpath from `package.json` `exports` if present —
   authored libraries carry none, matching the LuaLS libraries.
 - Add `generated/<namespace>.d.ts` to the `include` list in
@@ -4882,7 +4892,8 @@ and pin to the real upstream. The reference entry:
 module` a consumer imports; `namespace` `defcon` is the single-segment artifact
 stem, so the goldens are `generated/defcon.d.ts` and `api-doc/defcon.json` — not
 the dotted `moduleId` — keeping the docs Libraries tree and file layout uniform
-with the other severed libraries. The `defcon` page then attributes to
+with the other bare-stem severed libraries. Nothing else owned `defcon`, so it was
+free to take; `orthographic.camera` below is the case where it is not. The `defcon` page then attributes to
 `britzl/defcon` at `2.6.0`, not the `ts-defold/library` corpus.
 
 #### Worked example — `deftest.deftest`

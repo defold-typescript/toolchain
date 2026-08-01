@@ -257,9 +257,9 @@ function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProv
 // shape and role as the LuaLS/script_api loaders: a library this repo maintains
 // as a first-party hand-authored or forked `.d.ts` (its upstream has no usable
 // structured source), absent from the ts-defold classification, so it carries
-// its own repo/ref rather than the shared vendored commit. Keyed by the
-// single-segment `namespace`, which is also the `generated/<namespace>.d.ts`
-// stem and thus the page key.
+// its own repo/ref rather than the shared vendored commit. Keyed by the entry's
+// `namespace`, bare or dotted, which is also the `generated/<namespace>.d.ts`
+// stem and thus the page key either way.
 function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
   const path = join(libraryTypesDir, "authored-targets.json");
   if (!existsSync(path)) return new Map();
@@ -289,9 +289,12 @@ function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProve
 // `markdown-targets.json`. The markdown corpus front-end regenerates a golden
 // `generated/<ns>.d.ts` + `api-doc/<ns>.json` for every target, but a target
 // whose recorded fidelity `decision` is not `go` (README parse loses fidelity
-// versus the retired ts-defold `.d.ts`) stays ts-defold-sourced — its markdown
-// golden is a committed regeneration proof only. Those namespaces are hidden from
-// the library-page enumeration so they never shadow the live ts-defold page.
+// versus the retired ts-defold `.d.ts`) keeps its markdown golden as an inert
+// regeneration proof rather than a published surface. Hiding the namespace from
+// the library-page enumeration is what makes that stick: the proof never renders
+// as a page, whether the library is still ts-defold-sourced or has since been
+// severed onto the authored lane under a different namespace — `orthographic` is
+// the latter, hidden here while `orthographic.camera` is the live authored page.
 function loadMarkdownDeferredNamespaces(libraryTypesDir: string): Set<string> {
   const path = join(libraryTypesDir, "markdown-targets.json");
   if (!existsSync(path)) return new Set();
