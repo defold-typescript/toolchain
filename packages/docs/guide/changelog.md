@@ -22,7 +22,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- Libraries whose upstream ships no usable structured source — or only one too lossy to generate from — are now first-party forked `.d.ts`s maintained in this repo: declaring the upstream dependency resolves and materializes the types through [`resolve`](./resolve.md), and each docs page imports the library under its module id. Type surfaces generally carry over unchanged — only their provenance and end-to-end resolution move; [defsave](/api/defsave) is the exception, where being maintained here is what let a half-missing surface be corrected against its pin.
+- Libraries whose upstream ships no usable structured source — or only one too lossy to generate from — are now first-party forked `.d.ts`s maintained in this repo: declaring the upstream dependency resolves and materializes the types through [`resolve`](./resolve.md), and each docs page imports the library under its module id. Type surfaces generally carry over unchanged — only their provenance and end-to-end resolution move; [defsave](/api/defsave) and [orthographic](/api/orthographic.camera) are the exceptions, where being maintained here is what let a surface be corrected against its pin.
   - **[defcon](/api/defcon)** (`britzl/defcon` `2.6.0`) — imported as `import * as defcon from "defcon.console"`.
   - **[deftest](/api/deftest)** (`britzl/deftest` `2.8.0`) — imported as `import * as deftest from "deftest.deftest"`; its ambient test-DSL globals (`describe`, `test`, `assert_*`) carry along in the fork.
   - **[defmath](/api/defmath)** (`subsoap/defmath` `c67c2273`) — imported as `import * as defmath from "defmath.defmath"`; pinned to a commit SHA as upstream ships no tags.
@@ -31,6 +31,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **[nakama helpers](/api/nakama.engine.defold)** (`heroiclabs/nakama-defold` `v3.4.0`) — the two hand-written helper modules `nakama.engine.defold` and `nakama.util.log` are now forked here; the codegen'd `nakama.nakama` stays ts-defold-sourced.
   - **[defsave](/api/defsave)** (`subsoap/defsave` `v1.2.6`) — imported as `import * as defsave from "defsave.defsave"`; the previous binding declared about half the module, so the fork adds the seven missing functions (`obfuscate`, `get_file_path`, `key_exists`, `isset`, `reset_to_default`, `is_loaded`, `final`) and the config fields (`autosave`, `enable_obfuscation`, …), and gives `save` its `force` argument.
   - **[persist](/api/persist)** (`whiteboxdev/library-defold-persist` `b37f6104`) — imported as `import * as persist from "persist.persist"`; its types are unchanged, and its reference page moves from `/api/persist.persist` to `/api/persist`.
+  - **[orthographic](/api/orthographic.camera)** (`britzl/defold-orthographic` `3.6.3`) — imported as `import * as camera from "orthographic.camera"`, with its page and import unchanged; `camera.follow` now accepts an array of game objects as well as a single one, matching what upstream documents.
 
 ### Fixed
 

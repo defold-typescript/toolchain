@@ -425,3 +425,63 @@ describe("persist.persist migration integrity", () => {
     expect(include).not.toContain("generated/persist.persist.d.ts");
   });
 });
+
+// The second Bucket-C severance, and the first whose publish namespace must stay
+// dotted: the markdown lane's `no-go` proof already owns the bare `orthographic`
+// namespace (`generated/orthographic.d.ts`, `api-doc/orthographic.json`) and is
+// hidden from page enumeration, so forking under `orthographic` would collide
+// with the proof artifacts and render no page. The dotted namespace overwrites
+// the retired ts-defold golden in place instead, keeping route and import string
+// byte-identical.
+describe("orthographic.camera migration integrity", () => {
+  test("orthographic is registered in authored-targets.json under its dotted namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const orthographic = targets.find((t) => t.namespace === "orthographic.camera");
+    expect(orthographic).toBeDefined();
+    expect(orthographic?.moduleId).toBe("orthographic.camera");
+    expect(orthographic?.repo).toBe("https://github.com/britzl/defold-orthographic");
+    expect(orthographic?.ref).toBe("3.6.3");
+    expect(orthographic?.license).toBe("MIT");
+    expect(orthographic?.authored).toBe("fixtures/authored/orthographic.camera.d.ts");
+    expect(orthographic?.generated).toBe("generated/orthographic.camera.d.ts");
+    expect(orthographic?.apiDoc).toBe("api-doc/orthographic.camera.json");
+  });
+
+  test("orthographic.camera is no longer a ts-defold library-targets row", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "orthographic.camera")).toBe(false);
+  });
+
+  test("the defold-orthographic dir is gone from library-classification.json", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defold-orthographic")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture and package subpath are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
+      false,
+    );
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./orthographic.camera" in exports).toBe(false);
+  });
+
+  test("the dotted golden joins the dts-check include and the markdown proof stays inert", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/orthographic.camera.d.ts");
+    expect(include).not.toContain("generated/orthographic.d.ts");
+  });
+
+  test("the golden widens follow to accept one target or an array of targets", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/orthographic.camera.d.ts"), "utf8");
+    expect(golden).toContain("targets: Hash | Url | (Hash | Url)[],");
+    expect(golden).not.toContain("target: Hash | Url,");
+  });
+});

@@ -24,12 +24,6 @@
       "generated": "generated/monarch.transitions.gui.d.ts"
     },
     {
-      "module": "orthographic.camera",
-      "path": "packages/defold-orthographic/orthographic.camera.d.ts",
-      "fixture": "fixtures/ts-defold/orthographic.camera.d.ts",
-      "generated": "generated/orthographic.camera.d.ts"
-    },
-    {
       "module": "gooey.gooey",
       "path": "packages/gooey/gooey.gooey.d.ts",
       "fixture": "fixtures/ts-defold/gooey.gooey.d.ts",
