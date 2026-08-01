@@ -11,8 +11,8 @@
  */
 
 import {
+  buildModelContext,
   type ExternalTypeRef,
-  externalTypeRenames,
   isPublicField,
   isPublicMethod,
 } from "./emit-library-dts";
@@ -34,14 +34,14 @@ function round3(value: number): number {
 }
 
 /**
- * Build the fidelity report for one namespace. `knownNames` is drawn from the
- * model's own interface and alias names so a reference to a sibling library type
- * resolves rather than falling to `unknown`. `externalTypes` folds in the tokens the
- * emitter resolves through a cross-module import, so the report and the emitted
- * `.d.ts` cannot disagree about what resolved. Every field, every param and return
- * of every method and module function, and every alias expression is mapped;
- * `undocumentedMembers` counts fields/methods/moduleFunctions whose doc or brief
- * is empty. Deterministic; no I/O.
+ * Build the fidelity report for one namespace. Tokens map through the same
+ * `buildModelContext` the emitter and the api-doc lowering use, so all three agree
+ * on what resolves — the model's own interface and alias names, plus the
+ * `externalTypes` tokens reached through a cross-module import — and all three
+ * reject an external alias that collides with a declared name. Every field, every
+ * param and return of every method and module function, and every alias expression
+ * is mapped; `undocumentedMembers` counts fields/methods/moduleFunctions whose doc
+ * or brief is empty. Deterministic; no I/O.
  */
 export function buildFidelityReport(
   namespace: string,
@@ -49,12 +49,7 @@ export function buildFidelityReport(
   typeRenames: Record<string, string>,
   externalTypes?: Record<string, ExternalTypeRef>,
 ): FidelityReport {
-  const knownNames = new Set<string>();
-  for (const iface of model.interfaces) knownNames.add(iface.name);
-  for (const alias of model.aliases) knownNames.add(alias.name);
-  const externalRenames = externalTypeRenames(externalTypes);
-  for (const alias of Object.values(externalRenames)) knownNames.add(alias);
-  const ctx: MapContext = { knownNames, typeRenames: { ...typeRenames, ...externalRenames } };
+  const ctx = buildModelContext(model, typeRenames, externalTypes);
 
   let totalMembers = 0;
   let totalTypeTokens = 0;

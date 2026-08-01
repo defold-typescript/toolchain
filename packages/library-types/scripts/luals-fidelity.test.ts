@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { emitLibraryDeclarations } from "./emit-library-dts";
 import { buildFidelityReport } from "./luals-fidelity";
 import type { LibraryModel } from "./parse-luals";
 import { buildTargetFidelity, readLualsTargets } from "./sync-luals-types";
@@ -407,5 +408,53 @@ describe("buildFidelityReport with externalTypes", () => {
   test("the same model without the external map still records the token as unknown", () => {
     const report = buildFidelityReport("demo", externalModel, {});
     expect(report.unknownTokens).toEqual(["ext"]);
+  });
+
+  test("an external alias colliding with a declared interface name throws, naming both", () => {
+    const model: LibraryModel = {
+      interfaces: [{ name: "ext", generics: [], fields: [], methods: [], brief: "" }],
+      aliases: [],
+      moduleFunctions: [],
+    };
+
+    expect(() =>
+      buildFidelityReport("demo", model, {}, { ext: { module: "other.mod", name: "ext" } }),
+    ).toThrow(/ext/);
+  });
+
+  test("an external alias colliding with a declared alias only after sanitization throws", () => {
+    const model: LibraryModel = {
+      interfaces: [],
+      aliases: [{ name: "ext.ra", types: ["string"], doc: "" }],
+      moduleFunctions: [],
+    };
+
+    expect(() =>
+      buildFidelityReport("demo", model, {}, { ext_ra: { module: "other.mod", name: "ra" } }),
+    ).toThrow(/ext_ra[\s\S]*ext\.ra/);
+  });
+
+  test("the report's unknown tokens are exactly the tokens the emitter lowers to unknown", () => {
+    const fields = [
+      { name: "hook", types: ["ext"], doc: "the hook", isOptional: false },
+      { name: "mystery", types: ["some_unlisted_class"], doc: "the mystery", isOptional: false },
+    ];
+    const model: LibraryModel = {
+      interfaces: [{ name: "holder", generics: [], brief: "a holder", methods: [], fields }],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const externalTypes = { ext: { module: "other.mod", name: "ext" } };
+
+    const emitted = emitLibraryDeclarations(model, { moduleId: "demo.demo", externalTypes });
+    const loweredToUnknown = fields
+      .filter((field) => emitted.includes(`${field.name}: unknown;`))
+      .flatMap((field) => field.types)
+      .sort();
+
+    expect(loweredToUnknown).toEqual(["some_unlisted_class"]);
+    expect(buildFidelityReport("demo", model, {}, externalTypes).unknownTokens).toEqual(
+      loweredToUnknown,
+    );
   });
 });
