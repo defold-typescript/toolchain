@@ -56,12 +56,12 @@ declare module 'druid.druid' {
 		LONGTAP_TIME?: number | undefined;
 		AUTOHOLD_TRIGGER?: number | undefined;
 		DOUBLETAP_TIME?: number | undefined;
-		on_init?: ((self: unknown) => void) | undefined;
-		on_click?: ((self: unknown, node: unknown) => void) | undefined;
-		on_click_disabled?: ((self: unknown, node: unknown) => void) | undefined;
-		on_hover?: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined;
-		on_mouse_hover?: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined;
-		on_set_enabled?: ((self: unknown, node: unknown, enabled_state: unknown) => void) | undefined;
+		on_init?: ((self: druid_button) => void) | undefined;
+		on_click?: ((self: druid_button, node: Opaque<"node">) => void) | undefined;
+		on_click_disabled?: ((self: druid_button, node: Opaque<"node">) => void) | undefined;
+		on_hover?: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined;
+		on_mouse_hover?: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined;
+		on_set_enabled?: ((self: druid_button, node: Opaque<"node">, enabled_state: boolean | undefined) => void) | undefined;
 	}
 	/**
 	 * Basic Druid input component. Handle input on node and provide different callbacks on touch events.
@@ -208,7 +208,7 @@ declare module 'druid.druid' {
 		/**
 		 * The constructor for Drag component
 		 */
-		init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, touch: unknown) => void): void;
+		init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, touch: touch) => void): void;
 		/**
 		 * Set Drag component enabled state.
 		 */
@@ -1249,7 +1249,7 @@ declare module 'druid.druid' {
 		total_height: number;
 		nodes_width: LuaTable<Opaque<"node">, number>;
 		nodes_height: LuaTable<Opaque<"node">, number>;
-		rows: unknown;
+		rows: druid_layout_row_data[];
 	}
 	/**
 	 * Druid component to manage the layout of nodes, placing them inside the node size with respect to the size and pivot of each node.
@@ -1301,7 +1301,7 @@ declare module 'druid.druid' {
 		 */
 		remove(node_or_node_id: Opaque<"node"> | string): druid_layout;
 		get_size(): Vector3;
-		get_content_size(): unknown;
+		get_content_size(): LuaMultiReturn<[number, number]>;
 		refresh_layout(is_instant?: boolean | undefined): druid_layout;
 		clear_layout(): druid_layout;
 		get_node_size(node: Opaque<"node">): LuaMultiReturn<[number, number]>;

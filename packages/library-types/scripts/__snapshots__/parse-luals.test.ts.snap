@@ -9461,7 +9461,16 @@ Create layout component with druid: \`layout = druid:new_layout(node, layout_typ
               "isVararg": false,
               "name": "",
               "types": [
-                "number, number",
+                "number",
+              ],
+            },
+            {
+              "doc": "",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "",
+              "types": [
+                "number",
               ],
             },
           ],
@@ -13118,7 +13127,25 @@ If color_id is not found in palette and not a hex string, returns white."
           "isVararg": false,
           "name": "",
           "types": [
-            "number, number, number",
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number",
           ],
         },
       ],
@@ -13210,7 +13237,34 @@ If color_id is not found in palette and not a hex string, returns white."
           "isVararg": false,
           "name": "",
           "types": [
-            "number, number, number, number",
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number",
           ],
         },
       ],
@@ -13265,7 +13319,34 @@ If color_id is not found in palette and not a hex string, returns white."
           "isVararg": false,
           "name": "",
           "types": [
-            "number, number, number, number|nil",
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "number|nil",
           ],
         },
       ],
@@ -14354,7 +14435,16 @@ Only one widget can be set per game object."
           "isVararg": false,
           "name": "",
           "types": [
-            "table|nil, string|nil",
+            "table|nil",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "string|nil",
           ],
         },
       ],
@@ -14393,7 +14483,16 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
           "isVararg": false,
           "name": "",
           "types": [
-            "boolean, string|nil",
+            "boolean",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "string|nil",
           ],
         },
       ],
@@ -14665,12 +14764,21 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       ],
       "returns": [
         {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "string|nil",
+          ],
+        },
+        {
           "doc": "@success, reason",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "string|nil, string|nil",
+            "string|nil",
           ],
         },
       ],
@@ -14701,12 +14809,21 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       ],
       "returns": [
         {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "boolean",
+          ],
+        },
+        {
           "doc": "@success, reason",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "boolean, string|nil",
+            "string|nil",
           ],
         },
       ],
@@ -14745,12 +14862,39 @@ The path file extension will be used to determine the Defold format (*.atlas, *.
       ],
       "returns": [
         {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "string",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "string",
+          ],
+        },
+        {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "string",
+          ],
+        },
+        {
           "doc": "@new_object_name, name, value, end_struct_flag",
           "isOptional": false,
           "isVararg": false,
           "name": "",
           "types": [
-            "string, string, string, boolean",
+            "boolean",
           ],
         },
       ],
@@ -15706,12 +15850,21 @@ Offset shown in [-0.5 .. 0.5] range, where -0.5 is left or bottom, 0.5 is right 
       ],
       "returns": [
         {
+          "doc": "",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "",
+          "types": [
+            "string",
+          ],
+        },
+        {
           "doc": "String representation of table, Is max string length reached",
           "isOptional": false,
           "isVararg": false,
           "name": "result",
           "types": [
-            "string, boolean",
+            "boolean",
           ],
         },
       ],
