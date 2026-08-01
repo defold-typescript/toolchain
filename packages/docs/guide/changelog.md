@@ -35,6 +35,8 @@ changes are called out first because the toolchain is pre-1.0.
 
 - Callback parameters documented only as `function` in [event](/api/event), [lang](/api/lang), and [druid](/api/druid) are now callable types instead of `unknown`, so you can pass a typed function literal and call the value back without a cast.
 
+- Every generated library's type coverage is now pinned by a committed floor, so regenerating it can no longer quietly reduce how much of its surface is typed — a drop fails the suite instead of rewriting the report. [Authoring LuaLS library types](./authoring-luals-library-types.md) covers locking in a genuine improvement.
+
 ### Fixed
 
 - A dependency that ships modules across two of this repo's registry lanes — such as [`heroiclabs/nakama-defold`](/api/nakama.engine.defold), whose `nakama.nakama` is codegen'd while its `nakama.engine.defold` and `nakama.util.log` helpers are forked — now resolves and materializes every module; [`resolve`](./resolve.md) previously kept only the first lane's module and silently dropped the rest.
