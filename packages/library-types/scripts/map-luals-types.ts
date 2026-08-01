@@ -53,6 +53,14 @@ const SCALARS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * LuaLS's bare `function` — any callable, signature unspecified. Params are `any[]`
+ * because under `strictFunctionTypes` an `unknown[]` rest would reject every concrete
+ * callback a consumer passes; the return stays `unknown` because return position is
+ * covariant, so `any` there would only leak unchecked values into call sites.
+ */
+const CALLABLE_UNSPECIFIED = "(...args: any[]) => unknown";
+
+/**
  * Split `s` on every top-level occurrence of the single-character `sep`, honoring
  * bracket depth and double-quoted string literals so a separator nested inside
  * `<...>`, `(...)`, `[...]`, `{...}`, or a `"..."` literal does not split.
@@ -215,15 +223,11 @@ function mapToken(raw: string, ctx: MapContext, unknowns: string[]): string {
 
   if (token === "") return "unknown";
 
-  // Optional suffix.
-  if (token.length > 1 && token.endsWith("?")) {
-    const base = mapToken(token.slice(0, -1), ctx, unknowns);
-    const members = splitTopLevel(base, "|").map((m) => m.trim());
-    return members.includes("undefined") ? base : `${base} | undefined`;
-  }
-
-  // A `fun(...)` whose return follows the `)` keeps its return-type `|` inside the
-  // function; splitting the union first would cut `fun(): a|b` into `(fun) | b`.
+  // A `fun(...)` whose return follows the `)` keeps its return-type `|` and `?` inside
+  // the function; splitting the union first would cut `fun(): a|b` into `(fun) | b`, and
+  // peeling the optional suffix first would turn `fun(): number?` — a function with an
+  // optional *return* — into an optional function. The whole-function optional is spelled
+  // with explicit parentheses, `(fun(): number)?`, which does not match here.
   // `fun()|nil` (a `|` right after the `)`) falls through to the union split.
   if (/^fun\s*\(/.test(token)) {
     const close = matchBracket(token, token.indexOf("("));
@@ -231,6 +235,13 @@ function mapToken(raw: string, ctx: MapContext, unknowns: string[]): string {
     if (close !== -1 && afterClose.startsWith(":")) {
       return mapFunction(token, ctx, unknowns);
     }
+  }
+
+  // Optional suffix.
+  if (token.length > 1 && token.endsWith("?")) {
+    const base = mapToken(token.slice(0, -1), ctx, unknowns);
+    const members = splitTopLevel(base, "|").map((m) => m.trim());
+    return members.includes("undefined") ? base : `${wrapForUnion(base)} | undefined`;
   }
 
   // Top-level union.
@@ -262,6 +273,10 @@ function mapToken(raw: string, ctx: MapContext, unknowns: string[]): string {
 
   // String literal — passthrough.
   if (token.startsWith('"') && token.endsWith('"')) return token;
+
+  // Signature-less callable. Placed after every composite branch so `function[]`,
+  // `function|nil`, and `fun(cb: function)` route through those first.
+  if (token === "function") return CALLABLE_UNSPECIFIED;
 
   // Scalars.
   const scalar = SCALARS[token];

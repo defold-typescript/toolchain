@@ -93,9 +93,10 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
   sits around `0.9`; a healthy new library lands in the same range. Near-zero means
   the source is not meaningfully annotated — reconsider the target.
 - **`unknownTokens`** — the distinct type names that fell back to `unknown`. Cross-
-  library references (another Insality module) and generic placeholders (`_`,
-  `function`) are expected here and are safe fallbacks. A rename that *should* have
-  applied shows up as an unexpected entry — fix `typeRenames` and re-emit.
+  library references (another Insality module) and the generic placeholder `_` are
+  expected here and are safe fallbacks; a bare `function` is not among them, because it
+  now lowers to the callable type `(...args: any[]) => unknown`. A rename that *should*
+  have applied shows up as an unexpected entry — fix `typeRenames` and re-emit.
 - **`undocumentedMembers`** — members with no annotation at all; informational.
 
 ## 4. Check the API-doc description

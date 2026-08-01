@@ -2,11 +2,10 @@
   "namespace": "lang",
   "totalMembers": 30,
   "totalTypeTokens": 39,
-  "unknownFallbacks": 10,
+  "unknownFallbacks": 5,
   "unknownTokens": [
-    "_",
-    "function"
+    "_"
   ],
   "undocumentedMembers": 6,
-  "coverage": 0.744
+  "coverage": 0.872
 }

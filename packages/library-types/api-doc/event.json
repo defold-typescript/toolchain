@@ -15,7 +15,7 @@
           "name": "callback",
           "doc": "The function to be called when the event is triggered. Or the event instance to subscribe.",
           "types": [
-            "unknown | event | undefined"
+            "((...args: any[]) => unknown) | event | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -166,7 +166,7 @@
               "name": "callback",
               "doc": "The function to be executed when the event occurs.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -201,7 +201,7 @@
               "name": "callback",
               "doc": "The function or event to run once.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -236,7 +236,7 @@
               "name": "callback",
               "doc": "The callback function to unsubscribe.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -271,7 +271,7 @@
               "name": "callback",
               "doc": "The callback function in question. Or the event instance to check.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -395,7 +395,7 @@
               "name": "on_resolved",
               "doc": "Handler called when promise is resolved. If nil, value passes through.",
               "types": [
-                "unknown | promise | event | undefined"
+                "((...args: any[]) => unknown) | promise | event | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -404,7 +404,7 @@
               "name": "on_rejected",
               "doc": "Handler called when promise is rejected. If nil, rejection passes through.",
               "types": [
-                "unknown | promise | event | undefined"
+                "((...args: any[]) => unknown) | promise | event | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -439,7 +439,7 @@
               "name": "on_rejected",
               "doc": "Handler called when promise is rejected.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -474,7 +474,7 @@
               "name": "on_finally",
               "doc": "Handler called when promise is finished (resolved or rejected).",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -762,7 +762,7 @@
               "name": "on_handle",
               "doc": "Callback function or event to be called when the event is handled.",
               "types": [
-                "unknown | event | undefined"
+                "((...args: any[]) => unknown) | event | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -789,7 +789,7 @@
               "name": "handler",
               "doc": "The handler function or event to be called when an event is pushed.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -824,7 +824,7 @@
               "name": "handler",
               "doc": "The handler function or event to be called when an event is pushed.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -859,7 +859,7 @@
               "name": "handler",
               "doc": "The handler function or event to unsubscribe.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -894,7 +894,7 @@
               "name": "handler",
               "doc": "The handler function or event to check.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -936,7 +936,7 @@
               "name": "event_handler",
               "doc": "Specific handler or event to process the events. If this function returns non-nil, the event will be removed from the queue.",
               "types": [
-                "unknown | event"
+                "((...args: any[]) => unknown) | event"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -963,7 +963,7 @@
               "name": "event_handler",
               "doc": "Specific handler or event to process the event. If this function returns non-nil, the event will be removed from the queue.",
               "types": [
-                "unknown | event | undefined"
+                "((...args: any[]) => unknown) | event | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"

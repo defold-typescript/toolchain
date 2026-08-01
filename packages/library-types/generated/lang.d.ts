@@ -11,7 +11,7 @@ declare module 'lang.lang' {
 	}
 	interface lang {
 		state: lang_state;
-		on_lang_changed: unknown;
+		on_lang_changed: (...args: any[]) => unknown;
 	}
 	interface lang_state {
 		lang: string;
@@ -19,7 +19,7 @@ declare module 'lang.lang' {
 	interface lang_data {
 		path?: string | LuaTable | undefined;
 		id: string;
-		loader?: unknown | undefined;
+		loader?: ((...args: any[]) => unknown) | undefined;
 	}
 	/**
 	 * Global callback after language is loaded and translations are ready.
@@ -33,15 +33,15 @@ declare module 'lang.lang' {
 	/**
 	 * Load additional locale pack and refresh current language
 	 */
-	export function load_langs(this: void, pack_id: string, langs: lang_data[], on_lang_changed?: unknown | undefined): void;
+	export function load_langs(this: void, pack_id: string, langs: lang_data[], on_lang_changed?: ((...args: any[]) => unknown) | undefined): void;
 	/**
 	 * Set current language
 	 */
-	export function set_lang(this: void, lang_id: string, on_lang_changed?: unknown | undefined): void;
+	export function set_lang(this: void, lang_id: string, on_lang_changed?: ((...args: any[]) => unknown) | undefined): void;
 	/**
 	 * Set next language from lang list and return it's code
 	 */
-	export function set_next_lang(this: void, on_lang_changed?: unknown | undefined): string;
+	export function set_next_lang(this: void, on_lang_changed?: ((...args: any[]) => unknown) | undefined): string;
 	/**
 	 * Get next language from lang list and return it's code
 	 */
