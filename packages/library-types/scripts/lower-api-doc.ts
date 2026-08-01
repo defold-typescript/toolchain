@@ -15,6 +15,7 @@
 
 import {
   buildModelContext,
+  type ExternalTypeRef,
   isPublicField,
   isPublicMethod,
   mapTypes,
@@ -93,9 +94,17 @@ function variableElement(field: LibraryField, ctx: MapContext): Record<string, u
 
 export function lowerLibraryModel(
   model: LibraryModel,
-  { namespace, typeRenames }: { namespace: string; typeRenames?: Record<string, string> },
+  {
+    namespace,
+    typeRenames,
+    externalTypes,
+  }: {
+    namespace: string;
+    typeRenames?: Record<string, string>;
+    externalTypes?: Record<string, ExternalTypeRef> | undefined;
+  },
 ): unknown {
-  const ctx = buildModelContext(model, typeRenames);
+  const ctx = buildModelContext(model, typeRenames, externalTypes);
   const elements: Record<string, unknown>[] = [];
 
   for (const fn of model.moduleFunctions) {

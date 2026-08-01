@@ -1,5 +1,6 @@
 /** @noResolution */
 declare module 'druid.druid' {
+	import { event } from 'event.event';
 	type druid_text_adjust_type = "downscale" | "trim" | "no_adjust" | "downscale_limited" | "scroll" | "scale_then_scroll" | "trim_left" | "scale_then_trim" | "scale_then_trim_left";
 	type color = Vector4 | Vector3 | string;
 	type druid_container_mode = "stretch" | "fit" | "stretch_x" | "stretch_y";
@@ -15,7 +16,7 @@ declare module 'druid.druid' {
 	 * - It uses a key_back and key_backspace action ids
 	 */
 	interface druid_back_handler extends druid_component {
-		on_back: unknown;
+		on_back: event;
 		params?: unknown | undefined;
 		/**
 		 * The Back Handler constructor
@@ -82,13 +83,13 @@ declare module 'druid.druid' {
 	 * -
 	 */
 	interface druid_button extends druid_component {
-		on_click: unknown;
-		on_pressed: unknown;
-		on_repeated_click: unknown;
-		on_long_click: unknown;
-		on_double_click: unknown;
-		on_hold_callback: unknown;
-		on_click_outside: unknown;
+		on_click: event;
+		on_pressed: event;
+		on_repeated_click: event;
+		on_long_click: event;
+		on_double_click: event;
+		on_hold_callback: event;
+		on_click_outside: event;
 		node: Opaque<"node">;
 		node_id: Hash;
 		anim_node: Opaque<"node">;
@@ -186,11 +187,11 @@ declare module 'druid.druid' {
 	 */
 	interface druid_drag extends druid_component {
 		node: Opaque<"node">;
-		on_touch_start: unknown;
-		on_touch_end: unknown;
-		on_drag_start: unknown;
-		on_drag: unknown;
-		on_drag_end: unknown;
+		on_touch_start: event;
+		on_touch_end: event;
+		on_drag_start: event;
+		on_drag: event;
+		on_drag_end: event;
 		style: druid_drag_style;
 		click_zone?: Opaque<"node"> | undefined;
 		is_touch: boolean;
@@ -248,8 +249,8 @@ declare module 'druid.druid' {
 	 */
 	interface druid_hover extends druid_component {
 		node: Opaque<"node">;
-		on_hover: unknown;
-		on_mouse_hover: unknown;
+		on_hover: event;
+		on_mouse_hover: event;
 		style: druid_hover_style;
 		click_zone: Opaque<"node">;
 		/**
@@ -326,9 +327,9 @@ declare module 'druid.druid' {
 	interface druid_scroll extends druid_component {
 		node: Opaque<"node">;
 		click_zone?: Opaque<"node"> | undefined;
-		on_scroll: unknown;
-		on_scroll_to: unknown;
-		on_point_scroll: unknown;
+		on_scroll: event;
+		on_scroll_to: event;
+		on_point_scroll: event;
 		view_node: Opaque<"node">;
 		view_border: Vector4;
 		content_node: Opaque<"node">;
@@ -453,11 +454,11 @@ declare module 'druid.druid' {
 	 * The component for manage the nodes position in the grid with various options
 	 */
 	interface druid_grid extends druid_component {
-		on_add_item: unknown;
-		on_remove_item: unknown;
-		on_change_items: unknown;
-		on_clear: unknown;
-		on_update_positions: unknown;
+		on_add_item: event;
+		on_remove_item: event;
+		on_change_items: event;
+		on_clear: event;
+		on_update_positions: event;
 		parent: Opaque<"node">;
 		nodes: Opaque<"node">[];
 		first_index: number;
@@ -586,9 +587,9 @@ declare module 'druid.druid' {
 	 */
 	interface druid_text extends druid_component {
 		node: Opaque<"node">;
-		on_set_text: unknown;
-		on_update_text_scale: unknown;
-		on_set_pivot: unknown;
+		on_set_text: event;
+		on_update_text_scale: event;
+		on_set_pivot: event;
 		style: druid_text_style;
 		start_pivot: number;
 		start_scale: Vector3;
@@ -944,7 +945,7 @@ declare module 'druid.druid' {
 		min_size_y?: number | undefined;
 		max_size_x?: number | undefined;
 		max_size_y?: number | undefined;
-		on_size_changed: unknown;
+		on_size_changed: event;
 		_parent_container: druid_container;
 		_containers: LuaTable;
 		_draggable_corners: LuaTable;
@@ -1027,9 +1028,9 @@ declare module 'druid.druid' {
 	interface druid_data_list extends druid_component {
 		scroll: druid_scroll;
 		grid: druid_grid;
-		on_scroll_progress_change: unknown;
-		on_element_add: unknown;
-		on_element_remove: unknown;
+		on_scroll_progress_change: event;
+		on_element_add: event;
+		on_element_remove: event;
 		top_index: number;
 		last_index: number;
 		scroll_progress: number;
@@ -1101,8 +1102,8 @@ declare module 'druid.druid' {
 	 * - Hotkey can be set to repeat on key hold
 	 */
 	interface druid_hotkey extends druid_component {
-		on_hotkey_pressed: unknown;
-		on_hotkey_released: unknown;
+		on_hotkey_pressed: event;
+		on_hotkey_released: event;
 		style: druid_hotkey_style;
 		/**
 		 * The Hotkey constructor
@@ -1146,13 +1147,13 @@ declare module 'druid.druid' {
 	 * - You can setup allowed characters. On add not allowed characters `on_input_wrong` will be called
 	 */
 	interface druid_input extends druid_component {
-		on_input_select: unknown;
-		on_input_unselect: unknown;
-		on_input_text: unknown;
-		on_input_empty: unknown;
-		on_input_full: unknown;
-		on_input_wrong: unknown;
-		on_select_cursor_change: unknown;
+		on_input_select: event;
+		on_input_unselect: event;
+		on_input_text: event;
+		on_input_empty: event;
+		on_input_full: event;
+		on_input_wrong: event;
+		on_select_cursor_change: event;
 		style: druid_input_style;
 		init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type?: Opaque<"constant"> | undefined): void;
 		get_text_selected(): void;
@@ -1217,7 +1218,7 @@ declare module 'druid.druid' {
 	interface druid_lang_text extends druid_component {
 		text: druid_text;
 		node: Opaque<"node">;
-		on_change: unknown;
+		on_change: event;
 		init(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined): void;
 		/**
 		 * Setup raw text to lang_text component. This will clear any locale settings.
@@ -1236,8 +1237,7 @@ declare module 'druid.druid' {
 		 */
 		format(...args: string[]): druid_lang_text;
 	}
-	interface event_on_size_changed {
-		subscribe: (_: unknown, callback: (new_size: Vector3) => void, context: unknown | undefined) => void;
+	interface event_on_size_changed extends event {
 	}
 	interface druid_layout_row_data {
 		width: number;
@@ -1330,7 +1330,7 @@ declare module 'druid.druid' {
 	 */
 	interface druid_progress extends druid_component {
 		node: Opaque<"node">;
-		on_change: unknown;
+		on_change: event;
 		style: druid_progress_style;
 		key: string;
 		prop: Hash;
@@ -1380,7 +1380,7 @@ declare module 'druid.druid' {
 	 */
 	interface druid_slider extends druid_component {
 		node: Opaque<"node">;
-		on_change_value: unknown;
+		on_change_value: event;
 		style: LuaTable;
 		/**
 		 * The Slider constructor
@@ -1425,7 +1425,7 @@ declare module 'druid.druid' {
 	 */
 	interface druid_swipe extends druid_component {
 		node: Opaque<"node">;
-		on_swipe: unknown;
+		on_swipe: event;
 		style: druid_swipe_style;
 		click_zone: Opaque<"node">;
 		init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: (...args: any[]) => unknown): void;
@@ -1458,9 +1458,9 @@ declare module 'druid.druid' {
 	 * - Timer uses update function to handle time
 	 */
 	interface druid_timer extends druid_component {
-		on_tick: unknown;
-		on_set_enabled: unknown;
-		on_timer_end: unknown;
+		on_tick: event;
+		on_set_enabled: event;
+		on_timer_end: event;
 		node: Opaque<"node">;
 		from: number;
 		target: number;
@@ -1617,7 +1617,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create Button component
 		 */
-		new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button;
+		new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button;
 		/**
 		 * Create Blocker component
 		 */
@@ -1625,7 +1625,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create BackHandler component
 		 */
-		new_back_handler(callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined): druid_back_handler;
+		new_back_handler(callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined): druid_back_handler;
 		/**
 		 * Create Hover component
 		 */
@@ -1685,7 +1685,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create Hotkey component
 		 */
-		new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey;
+		new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | event | undefined, callback_argument?: unknown | undefined): druid_hotkey;
 		/**
 		 * Create RichText component.
 		 */

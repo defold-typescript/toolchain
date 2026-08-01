@@ -10,7 +10,12 @@
  * sorted-unique token list so the gap is visible instead of silent.
  */
 
-import { isPublicField, isPublicMethod } from "./emit-library-dts";
+import {
+  type ExternalTypeRef,
+  externalTypeRenames,
+  isPublicField,
+  isPublicMethod,
+} from "./emit-library-dts";
 import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
 import type { LibraryGeneric, LibraryModel } from "./parse-luals";
 
@@ -31,7 +36,9 @@ function round3(value: number): number {
 /**
  * Build the fidelity report for one namespace. `knownNames` is drawn from the
  * model's own interface and alias names so a reference to a sibling library type
- * resolves rather than falling to `unknown`. Every field, every param and return
+ * resolves rather than falling to `unknown`. `externalTypes` folds in the tokens the
+ * emitter resolves through a cross-module import, so the report and the emitted
+ * `.d.ts` cannot disagree about what resolved. Every field, every param and return
  * of every method and module function, and every alias expression is mapped;
  * `undocumentedMembers` counts fields/methods/moduleFunctions whose doc or brief
  * is empty. Deterministic; no I/O.
@@ -40,11 +47,14 @@ export function buildFidelityReport(
   namespace: string,
   model: LibraryModel,
   typeRenames: Record<string, string>,
+  externalTypes?: Record<string, ExternalTypeRef>,
 ): FidelityReport {
   const knownNames = new Set<string>();
   for (const iface of model.interfaces) knownNames.add(iface.name);
   for (const alias of model.aliases) knownNames.add(alias.name);
-  const ctx: MapContext = { knownNames, typeRenames };
+  const externalRenames = externalTypeRenames(externalTypes);
+  for (const alias of Object.values(externalRenames)) knownNames.add(alias);
+  const ctx: MapContext = { knownNames, typeRenames: { ...typeRenames, ...externalRenames } };
 
   let totalMembers = 0;
   let totalTypeTokens = 0;

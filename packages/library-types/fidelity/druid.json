@@ -1,11 +1,9 @@
 {
   "namespace": "druid",
-  "totalMembers": 637,
-  "totalTypeTokens": 905,
-  "unknownFallbacks": 50,
-  "unknownTokens": [
-    "event"
-  ],
-  "undocumentedMembers": 168,
-  "coverage": 0.945
+  "totalMembers": 636,
+  "totalTypeTokens": 904,
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
+  "undocumentedMembers": 167,
+  "coverage": 1
 }

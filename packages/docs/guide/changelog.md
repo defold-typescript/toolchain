@@ -20,6 +20,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 - [defsave](/api/defsave)'s results are typed accurately now that its surface is maintained here and corrected against upstream `v1.2.6`: `save` and `set` returned `void` and now return `boolean | undefined`, and `load` narrows from `unknown` to `boolean | undefined`. Code that assigned or asserted on those results may need updating.
 - [druid](/api/druid)'s drag callback now declares the six parameters the runtime really passes — `(self, dx, dy, x, y, touch)` — instead of `(self, touch)`. A handler written against the old shape read `touch` out of the second argument, which is actually `dx`; it no longer type-checks until its parameter list is updated.
+- [druid](/api/druid)'s `layout.on_size_changed.subscribe` now takes the inherited [event](/api/event) signature — `subscribe(callback, context?)` returning `boolean` — instead of the three-argument `(_, callback, context)` form the old annotation restated. Calls passing a leading placeholder argument need it removed.
 
 ### Improved
 
@@ -38,6 +39,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **Callback parameters** — arguments documented only as `function` in [event](/api/event), [lang](/api/lang), and [druid](/api/druid) are callable types now, so you can pass a typed function literal and call the value back without a cast.
   - **Nullable unions** — values documented as a union with nil, such as [bridge](/api/bridge.bridge)'s `platform.id`, `platform.tld`, `platform.payload`, `player.id`, and `player.name`, type as `string | undefined`, so you can use them after a null check without a cast.
   - **[druid](/api/druid) callbacks and multi-returns** — `druid.button`'s six style hooks and `druid.drag`'s `init` callback name their real parameter types now, and `druid.layout`'s `rows` field is a `druid_layout_row_data[]`. A function documented with several return values, such as `druid.layout.get_content_size`, returns a `LuaMultiReturn` tuple instead of `unknown`.
+  - **[druid](/api/druid) callback fields** — `on_click`, `on_hover`, and every other component callback field are [event](/api/event) objects you can `subscribe` to, rather than `unknown`. Declare `defold-event` alongside druid so the type resolves.
 
 - Every generated library's type coverage is now pinned by a committed floor, so regenerating it can no longer quietly reduce how much of its surface is typed — a drop fails the suite instead of rewriting the report. [Authoring LuaLS library types](./authoring-luals-library-types.md) covers locking in a genuine improvement.
 
