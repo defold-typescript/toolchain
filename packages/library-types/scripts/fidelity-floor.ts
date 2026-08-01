@@ -6,7 +6,8 @@
  * but a regeneration that lowers coverage rewrites the report too, so the drop
  * lands silently. `fidelity-floor.json` pins each report's coverage from the
  * outside: `regen` never touches it, so the only way a floor moves is the
- * explicit, monotone `--raise` below.
+ * explicit, monotone `--raise` below — which also makes it the one hand-editable
+ * input here, so it is parsed under a validating contract (`parseFloors`).
  *
  * Reports are keyed by package-root-relative POSIX path, not by namespace:
  * `fidelity/openapi/nakama.nakama.json` reports `namespace: "nakama"`, and two
@@ -66,11 +67,41 @@ export function collectFidelityReports(root: string): Record<string, FidelityFlo
   return reports;
 }
 
+// `JSON.stringify` renders NaN and Infinity as `null` and returns `undefined` for
+// `undefined`, both of which would misreport the value the manifest actually holds.
+function describeFloor(value: unknown): string {
+  if (typeof value === "number") return String(value);
+  return JSON.stringify(value) ?? String(value);
+}
+
+/**
+ * The floor manifest's parse-time contract: a plain object of finite numbers in
+ * `[0, 1]`. Every consuming assertion compares coercively, so an unvalidated
+ * `null` or `false` floor would pass `floor !== undefined` and fail every
+ * `coverage < floor` comparison — switching that report's ratchet off silently.
+ * Key order is the writer's contract and is preserved here, not sorted.
+ */
+export function parseFloors(raw: unknown, path: string): Record<string, number> {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error(`${path}: expected a JSON object of floors, got ${describeFloor(raw)}`);
+  }
+  const floors: Record<string, number> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+      throw new Error(
+        `${path}: floor "${key}" must be a finite number in [0, 1], got ${describeFloor(value)}`,
+      );
+    }
+    floors[key] = value;
+  }
+  return floors;
+}
+
 /** The committed floor manifest, or an empty manifest when it does not exist yet. */
 export function readFloors(root: string): Record<string, number> {
   const path = join(root, FLOOR_MANIFEST_FILE);
   if (!existsSync(path)) return {};
-  return JSON.parse(readFileSync(path, "utf8")) as Record<string, number>;
+  return parseFloors(JSON.parse(readFileSync(path, "utf8")), FLOOR_MANIFEST_FILE);
 }
 
 /**
