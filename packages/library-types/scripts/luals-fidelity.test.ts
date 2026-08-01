@@ -291,6 +291,66 @@ describe("buildFidelityReport", () => {
     expect(pub.unknownTokens).toContain("some_unknown_field_class");
   });
 
+  test("typing a callback field's params clears the unknown fallbacks an untyped fun(...) records", () => {
+    const build = (fieldType: string): LibraryModel => ({
+      interfaces: [
+        { name: "druid.button", generics: [], brief: "the button", methods: [], fields: [] },
+        {
+          name: "druid.button.style",
+          generics: [],
+          brief: "the style",
+          methods: [],
+          fields: [{ name: "on_click", types: [fieldType], doc: "d", isOptional: false }],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    });
+
+    const untyped = buildFidelityReport("druid", build("fun(self, node)|nil"), {});
+    expect(untyped.unknownFallbacks).toBe(2);
+    expect(untyped.unknownTokens).toEqual(["node", "self"]);
+
+    const typed = buildFidelityReport(
+      "druid",
+      build("fun(self: druid.button, node: node)|nil"),
+      {},
+    );
+    expect(typed.unknownFallbacks).toBe(0);
+    expect(typed.unknownTokens).toEqual([]);
+    expect(typed.coverage).toBe(1);
+  });
+
+  test("a method with two return entries counts two type tokens, not one", () => {
+    const model: LibraryModel = {
+      interfaces: [
+        {
+          name: "Layout",
+          generics: [],
+          brief: "l",
+          fields: [],
+          methods: [
+            {
+              name: "get_content_size",
+              brief: "size",
+              generics: [],
+              params: [],
+              returns: [
+                { name: "", types: ["number"], doc: "", isOptional: false, isVararg: false },
+                { name: "", types: ["number"], doc: "", isOptional: false, isVararg: false },
+              ],
+            },
+          ],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [],
+    };
+    const report = buildFidelityReport("x", model, {});
+    expect(report.totalTypeTokens).toBe(2);
+    expect(report.unknownFallbacks).toBe(0);
+  });
+
   test("building twice over the same model yields deeply-equal reports", () => {
     expect(buildFidelityReport("widgets", tinyModel, {})).toEqual(
       buildFidelityReport("widgets", tinyModel, {}),

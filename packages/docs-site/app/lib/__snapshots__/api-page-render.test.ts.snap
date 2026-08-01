@@ -340,17 +340,17 @@ Time between double taps. Default: 0.4
 
 </div>
 
-### \`druid_button_style.on_init: ((self: unknown) => void) | undefined\`
+### \`druid_button_style.on_init: ((self: druid_button) => void) | undefined\`
 
-### \`druid_button_style.on_click: ((self: unknown, node: unknown) => void) | undefined\`
+### \`druid_button_style.on_click: ((self: druid_button, node: Opaque<"node">) => void) | undefined\`
 
-### \`druid_button_style.on_click_disabled: ((self: unknown, node: unknown) => void) | undefined\`
+### \`druid_button_style.on_click_disabled: ((self: druid_button, node: Opaque<"node">) => void) | undefined\`
 
-### \`druid_button_style.on_hover: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined\`
+### \`druid_button_style.on_hover: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined\`
 
-### \`druid_button_style.on_mouse_hover: ((self: unknown, node: unknown, hover_state: unknown) => void) | undefined\`
+### \`druid_button_style.on_mouse_hover: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined\`
 
-### \`druid_button_style.on_set_enabled: ((self: unknown, node: unknown, enabled_state: unknown) => void) | undefined\`
+### \`druid_button_style.on_set_enabled: ((self: druid_button, node: Opaque<"node">, enabled_state: boolean | undefined) => void) | undefined\`
 
 ### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback?: (() => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined)\`
 
@@ -738,7 +738,7 @@ If screen aspect ratio affects on drag values. Default: false
 
 </div>
 
-### \`druid_drag.init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, touch: unknown) => void)\`
+### \`druid_drag.init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, touch: touch) => void)\`
 
 <div class="api-symbol-body">
 
@@ -747,7 +747,7 @@ The constructor for Drag component
 **Parameters**
 
 - \`node_or_node_id\`: \`Opaque<"node"> | string\` — The node to subscribe to drag events over
-- \`on_drag_callback\`: \`(self: unknown, touch: unknown) => void\` — The callback to call when a drag occurs
+- \`on_drag_callback\`: \`(self: unknown, touch: touch) => void\` — The callback to call when a drag occurs
 
 </div>
 
@@ -4315,7 +4315,7 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 ### \`druid_layout_rows_data.nodes_height: LuaTable<Opaque<"node">, number>\`
 
-### \`druid_layout_rows_data.rows: unknown\`
+### \`druid_layout_rows_data.rows: druid_layout_row_data[]\`
 
 ### \`druid_layout.init(node_or_node_id: Opaque<"node"> | string, layout_type: druid_layout_type)\`
 
@@ -4496,13 +4496,14 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.get_content_size(): unknown\`
+### \`druid_layout.get_content_size(): LuaMultiReturn<[number, number]>\`
 
 <div class="api-symbol-body">
 
 **Returns**
 
-- \`unknown\`
+- \`number\`
+- \`number\`
 
 </div>
 
