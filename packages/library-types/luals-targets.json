@@ -12,7 +12,37 @@
         "vector3": "Vector3",
         "vector4": "Vector4"
       },
-      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"],
+      "annotationOverrides": {
+        "interfaces": {
+          "druid.layout.rows_data": {
+            "fields": { "rows": { "type": "druid.layout.row_data[]" } }
+          },
+          "druid.button.style": {
+            "fields": {
+              "on_init": { "type": "fun(self: druid.button)|nil" },
+              "on_click": { "type": "fun(self: druid.button, node: node)|nil" },
+              "on_click_disabled": { "type": "fun(self: druid.button, node: node)|nil" },
+              "on_hover": {
+                "type": "fun(self: druid.button, node: node, hover_state: boolean)|nil"
+              },
+              "on_mouse_hover": {
+                "type": "fun(self: druid.button, node: node, hover_state: boolean)|nil"
+              },
+              "on_set_enabled": {
+                "type": "fun(self: druid.button, node: node, enabled_state: boolean|nil)|nil"
+              }
+            }
+          },
+          "druid.drag": {
+            "methods": {
+              "init": {
+                "params": { "on_drag_callback": { "type": "fun(self: any, touch: touch)" } }
+              }
+            }
+          }
+        }
+      }
     },
     {
       "repo": "https://github.com/Insality/decore",

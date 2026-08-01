@@ -316,7 +316,14 @@ function parseParam(rest: string): LibraryParam {
   return param;
 }
 
-function parseReturn(rest: string): LibraryParam {
+/**
+ * A single `---@return` line may declare several values (`---@return number, number`),
+ * which `readTypeToken`'s comma continuation hands back as one token. Split it on
+ * top-level commas into one entry per value; LuaLS attaches the optional trailing name
+ * and description to the whole line, so only the last segment carries them. The
+ * emitter's `renderReturn` already lowers a multi-entry `returns` to `LuaMultiReturn`.
+ */
+function parseReturn(rest: string): LibraryParam[] {
   const { type, rest: afterType } = readTypeToken(rest);
   const spaceAt = afterType.search(/\s/);
   const head = spaceAt === -1 ? afterType : afterType.slice(0, spaceAt);
@@ -326,7 +333,22 @@ function parseReturn(rest: string): LibraryParam {
     name = head;
     doc = spaceAt === -1 ? "" : afterType.slice(spaceAt).trim();
   }
-  return { name, types: type ? [type] : [], doc, isOptional: false, isVararg: false };
+  const segments = (type ? splitTopLevel(type, ",") : [""])
+    .map((segment) => segment.trim())
+    .filter((segment) => segment !== "");
+  if (segments.length === 0) {
+    return [{ name, types: [], doc, isOptional: false, isVararg: false }];
+  }
+  return segments.map((segment, index) => {
+    const isLast = index === segments.length - 1;
+    return {
+      name: isLast ? name : "",
+      types: [segment],
+      doc: isLast ? doc : "",
+      isOptional: false,
+      isVararg: false,
+    };
+  });
 }
 
 const VISIBILITY_KEYWORDS = new Set<LibraryFieldVisibility>([
@@ -664,7 +686,7 @@ export function parseLualsSource(source: string): LibraryModel {
           break;
         }
         case "return": {
-          pending.returns.push(parseReturn(rest));
+          pending.returns.push(...parseReturn(rest));
           break;
         }
         case "generic": {

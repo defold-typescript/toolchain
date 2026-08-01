@@ -2,19 +2,27 @@
  * Per-target corrections applied to a parsed `LibraryModel` after the merge, for the
  * cases where upstream LuaLS annotations diverge from the library's runtime and the
  * fixtures freeze the annotation verbatim (so it is not hand-patchable in the fixture
- * or the emitted `.d.ts`). The two shapes covered are a module function whose trailing
- * parameter is runtime-optional despite a non-`|nil` `@param`, and an interface method
- * whose `@return` omits an alternative arm. Every named target must exist — a missing
- * function, param, interface, or method throws naming the absent key, mirroring
- * `buildTargetModel`'s loud-fail on an absent `ownFile`, so a stale override never
- * degrades into a silent no-op.
+ * or the emitted `.d.ts`). The four shapes covered are a module function whose trailing
+ * parameter is runtime-optional despite a non-`|nil` `@param`, an interface method
+ * whose `@return` omits an alternative arm, an interface field whose type token is
+ * wrong or underspecified (a stray character, or an untyped `fun(...)` callback), and
+ * an interface method parameter with the same underspecification. Every named target
+ * must exist — a missing function, param, interface, field, or method throws naming the
+ * absent key, mirroring `buildTargetModel`'s loud-fail on an absent `ownFile`, so a
+ * stale override never degrades into a silent no-op.
  */
 
 import type { LibraryModel } from "./parse-luals";
 
 export interface AnnotationOverrides {
   moduleFunctions?: Record<string, { params?: Record<string, { optional?: boolean }> }>;
-  interfaces?: Record<string, { methods?: Record<string, { return?: string }> }>;
+  interfaces?: Record<
+    string,
+    {
+      fields?: Record<string, { type?: string }>;
+      methods?: Record<string, { return?: string; params?: Record<string, { type?: string }> }>;
+    }
+  >;
 }
 
 export function applyAnnotationOverrides(
@@ -45,6 +53,15 @@ export function applyAnnotationOverrides(
         `applyAnnotationOverrides: interface "${ifaceName}" is absent from the model.`,
       );
     }
+    for (const [fieldName, fieldOverride] of Object.entries(ifaceOverride.fields ?? {})) {
+      const field = iface.fields.find((f) => f.name === fieldName);
+      if (!field) {
+        throw new Error(
+          `applyAnnotationOverrides: field "${fieldName}" of interface "${ifaceName}" is absent from the model.`,
+        );
+      }
+      if (fieldOverride.type !== undefined) field.types = [fieldOverride.type];
+    }
     for (const [methodName, methodOverride] of Object.entries(ifaceOverride.methods ?? {})) {
       const method = iface.methods.find((m) => m.name === methodName);
       if (!method) {
@@ -56,6 +73,15 @@ export function applyAnnotationOverrides(
         method.returns = [
           { name: "", types: [methodOverride.return], doc: "", isOptional: false, isVararg: false },
         ];
+      }
+      for (const [paramName, paramOverride] of Object.entries(methodOverride.params ?? {})) {
+        const param = method.params.find((p) => p.name === paramName);
+        if (!param) {
+          throw new Error(
+            `applyAnnotationOverrides: param "${paramName}" of method "${methodName}" of interface "${ifaceName}" is absent from the model.`,
+          );
+        }
+        if (paramOverride.type !== undefined) param.types = [paramOverride.type];
       }
     }
   }

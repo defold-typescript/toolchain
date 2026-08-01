@@ -234,6 +234,91 @@ describe("parseLualsSource", () => {
     ]);
   });
 
+  test("a multi-value @return splits into one entry per top-level comma segment", () => {
+    const model = parseLualsSource(lua("---@return number, number", "function M.size()", "end"));
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["number"], doc: "", isOptional: false, isVararg: false },
+      { name: "", types: ["number"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("a multi-value @return with an @-doc splits without reading the doc as a third type", () => {
+    const model = parseLualsSource(
+      lua("---@return string|nil, string|nil @success, reason", "function M.load()", "end"),
+    );
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["string|nil"], doc: "", isOptional: false, isVararg: false },
+      {
+        name: "",
+        types: ["string|nil"],
+        doc: "@success, reason",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a multi-value @return attaches the trailing name and doc to the last segment only", () => {
+    const model = parseLualsSource(
+      lua("---@return string, boolean result String representation", "function M.dump()", "end"),
+    );
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["string"], doc: "", isOptional: false, isVararg: false },
+      {
+        name: "result",
+        types: ["boolean"],
+        doc: "String representation",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a comma nested inside brackets never splits a @return", () => {
+    const generic = parseLualsSource(
+      lua("---@return table<string, number>", "function M.a()", "end"),
+    );
+    expect(generic.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["table<string, number>"], doc: "", isOptional: false, isVararg: false },
+    ]);
+
+    const callable = parseLualsSource(
+      lua("---@return fun(a: number, b: string)", "function M.b()", "end"),
+    );
+    expect(callable.moduleFunctions[0]?.returns).toEqual([
+      {
+        name: "",
+        types: ["fun(a: number, b: string)"],
+        doc: "",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a named single @return is unchanged by the split", () => {
+    const model = parseLualsSource(
+      lua("---@return boolean is_saved true if saved", "function M.c()", "end"),
+    );
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      {
+        name: "is_saved",
+        types: ["boolean"],
+        doc: "true if saved",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a @return ending in a vararg placeholder splits and keeps the placeholder token", () => {
+    const model = parseLualsSource(lua("---@return world, ...", "function M.d()", "end"));
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["world"], doc: "", isOptional: false, isVararg: false },
+      { name: "", types: ["..."], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
   test("parsing the same source twice yields deeply-equal models (determinism)", () => {
     const source = lua(
       "---@class Widget : druid.component",

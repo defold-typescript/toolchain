@@ -45,6 +45,42 @@ function interfaceModel(): LibraryModel {
   };
 }
 
+function classShapeModel(): LibraryModel {
+  return {
+    interfaces: [
+      {
+        name: "I",
+        generics: [],
+        brief: "",
+        fields: [
+          { name: "cb", types: ["fun(self, node)|nil"], doc: "", isOptional: false },
+          { name: "count", types: ["number"], doc: "", isOptional: false },
+        ],
+        methods: [
+          {
+            name: "init",
+            brief: "",
+            generics: [],
+            params: [
+              { name: "node", types: ["node"], doc: "", isOptional: false, isVararg: false },
+              {
+                name: "on_drag",
+                types: ["fun(self, touch)"],
+                doc: "",
+                isOptional: false,
+                isVararg: false,
+              },
+            ],
+            returns: [],
+          },
+        ],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+}
+
 describe("applyAnnotationOverrides", () => {
   test("marks a named module-function param optional and leaves siblings unchanged", () => {
     const model = moduleFnModel();
@@ -100,5 +136,72 @@ describe("applyAnnotationOverrides", () => {
         interfaces: { I: { methods: { ghost: { return: "A" } } } },
       }),
     ).toThrow(/ghost/);
+  });
+
+  test("replaces a named interface field's types and leaves sibling fields unchanged", () => {
+    const result = applyAnnotationOverrides(classShapeModel(), {
+      interfaces: {
+        I: { fields: { cb: { type: "fun(self: druid.button, node: node)|nil" } } },
+      },
+    });
+    const iface = result.interfaces.find((i) => i.name === "I");
+    expect(iface?.fields.find((f) => f.name === "cb")?.types).toEqual([
+      "fun(self: druid.button, node: node)|nil",
+    ]);
+    expect(iface?.fields.find((f) => f.name === "count")?.types).toEqual(["number"]);
+  });
+
+  test("throws naming an absent interface when a field override targets it", () => {
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { Ghost: { fields: { cb: { type: "number" } } } },
+      }),
+    ).toThrow(/Ghost/);
+  });
+
+  test("throws naming an absent interface field", () => {
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { fields: { nope: { type: "number" } } } },
+      }),
+    ).toThrow(/nope/);
+  });
+
+  test("replaces a named method param's types and leaves sibling params unchanged", () => {
+    const result = applyAnnotationOverrides(classShapeModel(), {
+      interfaces: {
+        I: { methods: { init: { params: { on_drag: { type: "fun(self: any, touch: touch)" } } } } },
+      },
+    });
+    const method = result.interfaces
+      .find((i) => i.name === "I")
+      ?.methods.find((m) => m.name === "init");
+    expect(method?.params.find((p) => p.name === "on_drag")?.types).toEqual([
+      "fun(self: any, touch: touch)",
+    ]);
+    expect(method?.params.find((p) => p.name === "node")?.types).toEqual(["node"]);
+  });
+
+  test("throws naming an absent method when a param override targets it", () => {
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { methods: { ghost: { params: { on_drag: { type: "fun()" } } } } } },
+      }),
+    ).toThrow(/ghost/);
+  });
+
+  test("throws naming an absent method param", () => {
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { methods: { init: { params: { nope: { type: "fun()" } } } } } },
+      }),
+    ).toThrow(/nope/);
+  });
+
+  test("an empty override object is a no-op returning the same model", () => {
+    const model = classShapeModel();
+    const result = applyAnnotationOverrides(model, {});
+    expect(result).toBe(model);
+    expect(result).toEqual(classShapeModel());
   });
 });

@@ -439,7 +439,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "((self: unknown) => void) | undefined"
+            "((self: druid_button) => void) | undefined"
           ]
         },
         {
@@ -447,7 +447,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "((self: unknown, node: unknown) => void) | undefined"
+            "((self: druid_button, node: Opaque<\"node\">) => void) | undefined"
           ]
         },
         {
@@ -455,7 +455,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "((self: unknown, node: unknown) => void) | undefined"
+            "((self: druid_button, node: Opaque<\"node\">) => void) | undefined"
           ]
         },
         {
@@ -463,7 +463,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "((self: unknown, node: unknown, hover_state: unknown) => void) | undefined"
+            "((self: druid_button, node: Opaque<\"node\">, hover_state: boolean) => void) | undefined"
           ]
         },
         {
@@ -471,7 +471,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "((self: unknown, node: unknown, hover_state: unknown) => void) | undefined"
+            "((self: druid_button, node: Opaque<\"node\">, hover_state: boolean) => void) | undefined"
           ]
         },
         {
@@ -479,7 +479,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "((self: unknown, node: unknown, enabled_state: unknown) => void) | undefined"
+            "((self: druid_button, node: Opaque<\"node\">, enabled_state: boolean | undefined) => void) | undefined"
           ]
         }
       ]
@@ -1033,7 +1033,7 @@
               "name": "on_drag_callback",
               "doc": "The callback to call when a drag occurs",
               "types": [
-                "(self: unknown, touch: unknown) => void"
+                "(self: unknown, touch: touch) => void"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -7022,7 +7022,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "unknown"
+            "druid_layout_row_data[]"
           ]
         }
       ]
@@ -7411,7 +7411,14 @@
               "name": "",
               "doc": "",
               "types": [
-                "unknown"
+                "number"
+              ]
+            },
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
               ]
             }
           ]
