@@ -61,6 +61,16 @@ const SCALARS: Readonly<Record<string, string>> = {
 const CALLABLE_UNSPECIFIED = "(...args: any[]) => unknown";
 
 /**
+ * LuaLS's two placeholders: the throwaway param name `_`, and a bare `...` in vararg
+ * or return position. Neither declares a type at all, so lowering it to `unknown`
+ * loses nothing an author wrote — the same reasoning that already exempts `any` from
+ * the fallback count. The boundary is deliberate: an untyped `self` or `ctx` *is* an
+ * upstream omission and stays recorded.
+ */
+const LUALS_THROWAWAY_PARAM = "_";
+const LUALS_VARARG_TOKEN = "...";
+
+/**
  * Split `s` on every top-level occurrence of the single-character `sep`, honoring
  * bracket depth and double-quoted string literals so a separator nested inside
  * `<...>`, `(...)`, `[...]`, `{...}`, or a `"..."` literal does not split.
@@ -154,21 +164,18 @@ function functionParts(
   const paramList = params
     .map((raw) => raw.trim())
     .map((part) => {
-      if (part.startsWith("...")) {
+      if (part.startsWith(LUALS_VARARG_TOKEN)) {
         const after = part.slice(3).trim();
-        let element: string;
-        if (after.startsWith(":")) {
-          element = mapToken(after.slice(1).trim(), ctx, unknowns);
-        } else {
-          element = "unknown";
-          unknowns.push("...");
-        }
+        const element = after.startsWith(":")
+          ? mapToken(after.slice(1).trim(), ctx, unknowns)
+          : "unknown";
         return `...args: ${needsArrayParens(element) ? `(${element})[]` : `${element}[]`}`;
       }
       const colon = splitTopLevel(part, ":");
       if (colon.length < 2) {
-        // Untyped param (`self`, `_`, `ctx`): a recorded gap, not a silent `any`.
-        unknowns.push(part);
+        // Untyped param (`self`, `ctx`): a recorded gap, not a silent `any`. A bare `_`
+        // is LuaLS's deliberate throwaway and records nothing.
+        if (part !== LUALS_THROWAWAY_PARAM) unknowns.push(part);
         return `${part}: unknown`;
       }
       const name = colon[0]?.trim() ?? "";
@@ -277,6 +284,11 @@ function mapToken(raw: string, ctx: MapContext, unknowns: string[]): string {
   // Signature-less callable. Placed after every composite branch so `function[]`,
   // `function|nil`, and `fun(cb: function)` route through those first.
   if (token === "function") return CALLABLE_UNSPECIFIED;
+
+  // Placeholder vararg in return position — not a `SCALARS` entry, which maps real Lua
+  // type names. Sits beside the callable branch so `...[]` and `...|nil` reach their
+  // structural handlers first.
+  if (token === LUALS_VARARG_TOKEN) return "unknown";
 
   // Scalars.
   const scalar = SCALARS[token];
