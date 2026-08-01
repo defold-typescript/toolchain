@@ -4731,7 +4731,8 @@ about where the surface should be maintained. That second question is this
 lane's, and a `no-go` library reaches question 4 with it still open — so run the
 cost model below on it exactly as you would on a library that never had a README
 at all. `keep` is a legitimate answer, but it has to be *chosen*, not inherited
-from the refusal. `persist.persist` is the worked example.
+from the refusal. `persist.persist` and `orthographic.camera` are the worked
+examples.
 
 ##### The cost model
 
@@ -4967,6 +4968,41 @@ precisely because a verbatim fork is byte-identical to it. Keeping a dead
 `library-targets.json` row alive to feed that lookup would have been the wrong
 fix: it would make the file stop meaning *still ts-defold-sourced*, which is the
 signal the remaining Bucket-C libraries are measured against.
+
+#### Worked example — `orthographic.camera`
+
+`britzl/defold-orthographic` (a camera suite, pinned to tag `3.6.3`) is a second
+markdown `no-go` that answered *fork*, and it settles two questions persist's
+surface never raised.
+
+**Which namespace does the fork publish under?** persist took the bare
+`persist`. orthographic cannot: it is the markdown lane's one registered target,
+so `generated/orthographic.d.ts` and `api-doc/orthographic.json` are already
+committed regeneration proofs owned by that lane, and the `no-go` hides the bare
+`orthographic` namespace from page enumeration. Forking under it would overwrite
+the proofs *and* render no page. So the authored target keeps the **dotted**
+`orthographic.camera` — the `nakama.engine.defold` shape — which overwrites the
+retired ts-defold golden in place and leaves the route and import string
+byte-identical. The rule generalizes: when the retired module name already equals
+the publish namespace, fork onto it; only reach for a bare namespace when nothing
+else owns it.
+
+**Which file do you copy?** The ts-defold lane runs a type-mapping pass, so
+`fixtures/ts-defold/orthographic.camera.d.ts` says `hash`/`url`/`vmath.vector3`
+while the shipped `generated/` golden says `Hash`/`Url`/`Vector3`. persist's two
+forms were identical, so the template never had to choose. Copy the **`generated/`
+golden** — the authored lane emits its input verbatim, so forking the raw fixture
+would ship ts-defold's upstream type names and fail the declaration-validity
+gate. Forking the golden makes the cutover a byte-for-byte no-op, which is what
+lets you prove the severance and any type correction as two separate diffs.
+
+orthographic then took that second diff: upstream documents `follow` as accepting
+one game object *or a table of them*, and the ts-defold binding typed only the
+singular `target: Hash | Url`. On a file this repo now owns, widening it to
+`targets: Hash | Url | (Hash | Url)[]` is a one-line edit plus a re-emit. It
+moves no recorded gate number — the fidelity comparison scores member names, the
+`unknown` token, parameter *count*, return `void`-ness, and optionality, and a
+rename plus a union widening touches none of them.
 
 ### API docs vs. ts-defold-types
 

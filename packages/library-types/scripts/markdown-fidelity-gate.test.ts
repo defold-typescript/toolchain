@@ -24,13 +24,19 @@ function orthographicTarget(): MarkdownTarget {
 
 // The comparison runs against the *emitted* markdown `.d.ts` (the real emitter is
 // the single source of truth for type resolution), not the parsed doc.
+//
+// orthographic severed its ts-defold dependency into the authored lane, so the
+// retired `fixtures/ts-defold/` snapshot is gone and the recorded verdict now
+// resolves against the vendored fork. The fork was taken verbatim from the
+// ts-defold-lane golden, so the comparison it feeds is the same one the no-go was
+// recorded from — the `follow` correction that landed on top of it renames a
+// parameter and widens a union, neither of which the gate scores.
+const AUTHORED_SNAPSHOT = "fixtures/authored/orthographic.camera.d.ts";
+
 async function comparison() {
   const target = orthographicTarget();
   const markdownEmittedDts = await emitMarkdownDeclaration(PACKAGE_ROOT, target);
-  const tsDefold = readFileSync(
-    join(PACKAGE_ROOT, "fixtures/ts-defold", `${target.moduleId}.d.ts`),
-    "utf8",
-  );
+  const tsDefold = readFileSync(join(PACKAGE_ROOT, AUTHORED_SNAPSHOT), "utf8");
   return { target, ...compareFidelityToTsDefold(markdownEmittedDts, tsDefold) };
 }
 

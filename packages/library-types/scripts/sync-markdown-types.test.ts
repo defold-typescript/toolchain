@@ -78,23 +78,41 @@ describe("readMarkdownTargets", () => {
   });
 });
 
-describe("orthographic stays ts-defold-sourced on the no-go decision", () => {
-  test("orthographic.camera is still a ts-defold library-targets row", () => {
+// A markdown `no-go` judges the markdown source, not the ts-defold dependency:
+// orthographic severed into the authored lane while its markdown verdict stands.
+// The proof artifacts the no-go produced are untouched by that severance.
+describe("orthographic severed to the authored lane without disturbing the markdown proof", () => {
+  test("orthographic.camera is no longer a ts-defold library-targets row", () => {
     const targets = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
-    expect(targets.targets.some((t) => t.module === "orthographic.camera")).toBe(true);
+    expect(targets.targets.some((t) => t.module === "orthographic.camera")).toBe(false);
   });
 
-  test("the ts-defold orthographic fixture is retained", () => {
+  test("the vendored authored fork replaced the retired ts-defold fixture", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/authored/orthographic.camera.d.ts"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
-      true,
+      false,
     );
   });
 
-  test("the markdown golden is not wired into the dts-check include (no cutover)", () => {
-    const dtsCheck = readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8");
-    expect(dtsCheck).not.toContain("generated/orthographic.d.ts");
+  test("the markdown golden is still not wired into the dts-check include (no cutover)", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).not.toContain("generated/orthographic.d.ts");
+  });
+
+  test("the markdown target, its no-go decision, and its fidelity artifact are untouched", () => {
+    const target = readMarkdownTargets(PACKAGE_ROOT).find(
+      (t) => t.moduleId === "orthographic.camera",
+    );
+    expect(target).toBeDefined();
+    expect(target?.namespace).toBe("orthographic");
+    expect(target?.generated).toBe("generated/orthographic.d.ts");
+    expect(target?.apiDoc).toBe("api-doc/orthographic.json");
+    expect(target?.decision).toBe("no-go");
+    expect(existsSync(join(PACKAGE_ROOT, "fidelity/orthographic.json"))).toBe(true);
   });
 });
 

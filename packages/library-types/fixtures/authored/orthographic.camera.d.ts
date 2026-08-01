@@ -6,14 +6,14 @@
  */
 declare module 'orthographic.camera' {
 	/**
-	 * Follow a game object.
+	 * Follow one or more game objects. When following multiple objects the camera will follow the center point between the objects.
 	 * @param camera_id undefined for the first camera
-	 * @param target Game object to follow
+	 * @param targets Game object(s) to follow
 	 * @param options Options
 	 */
 	export function follow(
-		camera_id: hash | url | undefined,
-		target: hash | url,
+		camera_id: Hash | Url | undefined,
+		targets: Hash | Url | (Hash | Url)[],
 		options?: {
 			/**
 			 *  Lerp from current position to target position with lerp as t.
@@ -22,7 +22,7 @@ declare module 'orthographic.camera' {
 			/**
 			 *  Camera offset from target position.
 			 */
-			offset?: vmath.vector3;
+			offset?: Vector3;
 			/**
 			 *  True if following the target along the horizontal axis.
 			 */
@@ -42,7 +42,7 @@ declare module 'orthographic.camera' {
 	 * Get the current zoom level of the camera.
 	 * @param camera_id (hash | url), undefined for the first camera
 	 */
-	export function get_zoom(camera_id: hash | url | undefined): number;
+	export function get_zoom(camera_id: Hash | Url | undefined): number;
 
 	/**
 	 * Change the zoom level of the camera.
@@ -50,7 +50,7 @@ declare module 'orthographic.camera' {
 	 * @param zoom  The new zoom level of the camera
 	 */
 	export function set_zoom(
-		camera_id: hash | url | undefined,
+		camera_id: Hash | Url | undefined,
 		zoom: number,
 	): void;
 
@@ -63,7 +63,7 @@ declare module 'orthographic.camera' {
 	 * @param cb Function to call when the shake has finished. Optional.
 	 */
 	export function shake(
-		camera_id: hash | url | undefined,
+		camera_id: Hash | Url | undefined,
 		intensity?: number,
 		duration?: number,
 		direction?: { both?: boolean; horizontal?: boolean; vertical?: boolean },
@@ -74,7 +74,7 @@ declare module 'orthographic.camera' {
 	 * Stop shaking the camera.
 	 * @param camera_id (hash | url), undefined for the first camera
 	 */
-	export function stop_shaking(camera_id: hash | url | undefined): void;
+	export function stop_shaking(camera_id: Hash | Url | undefined): void;
 
 	/**
 	 * Translate screen coordinates to world coordinates, based on the view and projection of the camera.
@@ -82,9 +82,9 @@ declare module 'orthographic.camera' {
 	 * @param screen Screen coordinates to convert
 	 */
 	export function screen_to_world(
-		camera_id: hash | url | undefined,
-		screen: vmath.vector3,
-	): vmath.vector3;
+		camera_id: Hash | Url | undefined,
+		screen: Vector3,
+	): Vector3;
 
 	/**
 	 * Translate window coordinates to world coordinates, based on the view and projection of the camera.
@@ -92,9 +92,9 @@ declare module 'orthographic.camera' {
 	 * @param window Window coordinates to convert
 	 */
 	export function window_to_world(
-		camera_id: hash | url | undefined,
-		window: vmath.vector3,
-	): vmath.vector3;
+		camera_id: Hash | Url | undefined,
+		window: Vector3,
+	): Vector3;
 
 	/**
 	 * Get the display size (ie from game.project).
@@ -109,20 +109,20 @@ declare module 'orthographic.camera' {
 	/**
 	 * Get list of camera ids.
 	 */
-	export function get_cameras(): Array<hash | url | undefined>;
+	export function get_cameras(): Array<Hash | Url | undefined>;
 
 	/**
 	 * Get the current view of the camera.
 	 * @param camera_id undefined for the first camera
 	 */
-	export function get_view(camera_id: hash | url | undefined): vmath.matrix4;
+	export function get_view(camera_id: Hash | Url | undefined): Matrix4;
 
 	/**
 	 * Get the current viewport of the camera.
 	 * @param camera_id undefined for the first camera
 	 */
 	export function get_viewport(
-		camera_id: hash | url | undefined,
+		camera_id: Hash | Url | undefined,
 	): LuaMultiReturn<[number, number, number, number]>;
 
 	/**
@@ -130,14 +130,14 @@ declare module 'orthographic.camera' {
 	 * @param camera_id undefined for the first camera
 	 */
 	export function get_projection(
-		camera_id: hash | url | undefined,
-	): vmath.matrix4;
+		camera_id: Hash | Url | undefined,
+	): Matrix4;
 
 	/**
 	 * Get the current projection id of the camera.
 	 * @param camera_id undefined for the first camera
 	 */
-	export function get_projection_id(camera_id: hash | url | undefined): hash;
+	export function get_projection_id(camera_id: Hash | Url | undefined): Hash;
 
 	/**
 	 * Apply a recoil effect to the camera. The recoil will decay using linear interpolation.
@@ -146,8 +146,8 @@ declare module 'orthographic.camera' {
 	 * @param duration Duration of the recoil, in seconds. Defaults to 0.5
 	 */
 	export function recoil(
-		camera_id: hash | url,
-		offset: vmath.vector3,
+		camera_id: Hash | Url,
+		offset: Vector3,
 		duration?: number,
 	): void;
 
@@ -155,7 +155,7 @@ declare module 'orthographic.camera' {
 	 * Get the current offset of the camera (caused by shake or recoil)
 	 * @param camera_id undefined for the first camera
 	 */
-	export function get_offset(camera_id: hash | url | undefined): vmath.vector3;
+	export function get_offset(camera_id: Hash | Url | undefined): Vector3;
 
 	/**
 	 * Change the camera follow offset.
@@ -163,15 +163,15 @@ declare module 'orthographic.camera' {
 	 * @param offset Camera offset from target position.
 	 */
 	export function follow_offset(
-		camera_id: hash | url | undefined,
-		offset: vmath.vector3,
+		camera_id: Hash | Url | undefined,
+		offset: Vector3,
 	): void;
 
 	/**
 	 * Stop following a game object.
 	 * @param camera_id undefined for the first camera
 	 */
-	export function unfollow(camera_id: hash | url | undefined): void;
+	export function unfollow(camera_id: Hash | Url | undefined): void;
 
 	/**
 	 * If following a game object this will add a deadzone around the camera position where the camera position will not update. If the target moves to the edge of the deadzone the camera will start to follow until the target returns within the bounds of the deadzone.
@@ -182,7 +182,7 @@ declare module 'orthographic.camera' {
 	 * @param bottom Number of pixels below the camera
 	 */
 	export function deadzone(
-		camera_id: hash | url | undefined,
+		camera_id: Hash | Url | undefined,
 		left: number,
 		top: number,
 		right: number,
@@ -198,7 +198,7 @@ declare module 'orthographic.camera' {
 	 * @param bottom Bottom edge of camera bounds
 	 */
 	export function bounds(
-		camera_id: hash | url | undefined,
+		camera_id: Hash | Url | undefined,
 		left: number,
 		top: number,
 		right: number,
@@ -210,8 +210,8 @@ declare module 'orthographic.camera' {
 	 * @param camera_id undefined for the first camera
 	 */
 	export function screen_to_world_bounds(
-		camera_id: hash | url | undefined,
-	): vmath.vector4;
+		camera_id: Hash | Url | undefined,
+	): Vector4;
 
 	/**
 	 * Translate world coordinates to screen coordinates, based on the view and projection of the camera, optionally taking into account an adjust mode. This is useful when manually culling game objects and you need to determine if a world coordinate will be visible or not. It can also be used to position gui nodes on top of game objects.
@@ -220,13 +220,13 @@ declare module 'orthographic.camera' {
 	 * @param adjust_mode One of gui.ADJUST_FIT, gui.ADJUST_ZOOM and gui.ADJUST_STRETCH, or undefined to not take into account the adjust mode.
 	 */
 	export function world_to_screen(
-		camera_id: hash | url | undefined,
-		world: vmath.vector3,
+		camera_id: Hash | Url | undefined,
+		world: Vector3,
 		adjust_mode?:
 			| typeof gui.ADJUST_FIT
 			| typeof gui.ADJUST_STRETCH
 			| typeof gui.ADJUST_ZOOM,
-	): vmath.vector3;
+	): Vector3;
 
 	/**
 	 * Translate screen coordinates to world coordinates using the specified view and projection.
@@ -235,10 +235,10 @@ declare module 'orthographic.camera' {
 	 * @param screen Screen coordinates to convert
 	 */
 	export function unproject(
-		view: vmath.matrix4,
-		projection: vmath.matrix4,
-		screen: vmath.vector3,
-	): vmath.vector3;
+		view: Matrix4,
+		projection: Matrix4,
+		screen: Vector3,
+	): Vector3;
 
 	/**
 	 * Translate world coordinates to screen coordinates using the specified view and projection.
@@ -247,10 +247,10 @@ declare module 'orthographic.camera' {
 	 * @param world World coordinates to convert
 	 */
 	export function project(
-		view: vmath.matrix4,
-		projection: vmath.matrix4,
-		world: vmath.vector3,
-	): vmath.vector3;
+		view: Matrix4,
+		projection: Matrix4,
+		world: Vector3,
+	): Vector3;
 
 	/**
 	 * Add a custom projector that can be used by cameras in your project (see configuration above).
@@ -258,8 +258,8 @@ declare module 'orthographic.camera' {
 	 * @param projector_fn The function to call when a projection matrix is needed for the camera. The function will receive the id, near_z and far_z values of the camera.
 	 */
 	export function add_projector(
-		projector_id: hash,
-		projector_fn: (id: hash, near_z: number, far_z: number) => void,
+		projector_id: Hash,
+		projector_fn: (id: Hash, near_z: number, far_z: number) => void,
 	): void;
 
 	/**
@@ -268,8 +268,8 @@ declare module 'orthographic.camera' {
 	 * @param projector_id  Id of the projector.
 	 */
 	export function use_projector(
-		camera_id: hash | url | undefined,
-		projector_id: hash,
+		camera_id: Hash | Url | undefined,
+		projector_id: Hash,
 	): void;
 
 	/**
@@ -279,30 +279,30 @@ declare module 'orthographic.camera' {
 	export function set_window_scaling_factor(scaling_factor: number): void;
 
 	export const PROJECTOR: {
-		FIXED_ZOOM: hash;
-		DEFAULT: hash;
-		FIXED_AUTO: hash;
+		FIXED_ZOOM: Hash;
+		DEFAULT: Hash;
+		FIXED_AUTO: Hash;
 	};
 
-	export const SHAKE_BOTH: hash;
-	export const SHAKE_VERTICAL: hash;
-	export const SHAKE_HORIZONTAL: hash;
+	export const SHAKE_BOTH: Hash;
+	export const SHAKE_VERTICAL: Hash;
+	export const SHAKE_HORIZONTAL: Hash;
 
 	export const ORTHOGRAPHIC_RENDER_SCRIPT_USED: boolean;
 
-	export const MSG_DISABLE: hash;
-	export const MSG_UNFOLLOW: hash;
-	export const MSG_FOLLOW: hash;
-	export const MSG_FOLLOW_OFFSET: hash;
-	export const MSG_RECOIL: hash;
-	export const MSG_SHAKE: hash;
-	export const MSG_SHAKE_COMPLETED: hash;
-	export const MSG_STOP_SHAKING: hash;
-	export const MSG_DEADZONE: hash;
-	export const MSG_BOUNDS: hash;
-	export const MSG_UPDATE_CAMERA: hash;
-	export const MSG_ZOOM_TO: hash;
-	export const MSG_USE_PROJECTION: hash;
-	export const MSG_VIEWPORT: hash;
-	export const MSG_ENABLE: hash;
+	export const MSG_DISABLE: Hash;
+	export const MSG_UNFOLLOW: Hash;
+	export const MSG_FOLLOW: Hash;
+	export const MSG_FOLLOW_OFFSET: Hash;
+	export const MSG_RECOIL: Hash;
+	export const MSG_SHAKE: Hash;
+	export const MSG_SHAKE_COMPLETED: Hash;
+	export const MSG_STOP_SHAKING: Hash;
+	export const MSG_DEADZONE: Hash;
+	export const MSG_BOUNDS: Hash;
+	export const MSG_UPDATE_CAMERA: Hash;
+	export const MSG_ZOOM_TO: Hash;
+	export const MSG_USE_PROJECTION: Hash;
+	export const MSG_VIEWPORT: Hash;
+	export const MSG_ENABLE: Hash;
 }

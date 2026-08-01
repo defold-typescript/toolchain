@@ -216,22 +216,37 @@ describe("loadApiSurface library pages", () => {
   });
 
   test("builds a structured libraryMeta with author/upstream repo, commit pin, import, and license", () => {
+    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
+    expect(monarch).toBeDefined();
+    const meta = monarch?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.author).toBe("Britzl");
+    expect(meta.authorUrl).toBe("https://github.com/britzl/monarch");
+    expect(meta.commit).toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
+    // Links to the exact `.d.ts` the types were generated from, at the pin.
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/monarch/monarch.monarch.d.ts",
+    );
+    expect(meta.importString).toBe('import * as monarch from "monarch.monarch"');
+    expect(meta.license).toBe("MIT");
+    expect("commitUrl" in meta).toBe(false);
+    expect("attribution" in meta).toBe(false);
+  });
+
+  // orthographic severed to the authored lane under its dotted namespace, so its
+  // pin swings from the shared ts-defold/library commit to the upstream tag while
+  // the route and import string stay byte-identical.
+  test("a severed library's libraryMeta pins upstream and keeps its import string", () => {
     const camera = libraryPages.find((p) => p.namespace === "orthographic.camera");
     expect(camera).toBeDefined();
     const meta = camera?.libraryMeta;
     expect(meta).toBeDefined();
     if (!meta) return;
-    expect(meta.author).toBe("Britzl");
+    expect(meta.authoredHere).toBe(true);
     expect(meta.authorUrl).toBe("https://github.com/britzl/defold-orthographic");
-    expect(meta.commit).toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
-    // Links to the exact `.d.ts` the types were generated from, at the pin.
-    expect(meta.sourceUrl).toBe(
-      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
-    );
+    expect(meta.commit).toBe("3.6.3");
     expect(meta.importString).toBe('import * as camera from "orthographic.camera"');
-    expect(meta.license).toBe("MIT");
-    expect("commitUrl" in meta).toBe(false);
-    expect("attribution" in meta).toBe(false);
   });
 
   test("no longer prepends the prose provenance note into a library module description", () => {
@@ -277,10 +292,12 @@ describe("loadApiSurface library descriptions", () => {
     }
   });
 
+  // orthographic severed into the authored lane, so it has no classification dir
+  // left to key on and resolves through the namespace half of the fallback.
   test("a description-less api-doc page (orthographic.camera) gets its description from the vendored map", () => {
     const orthographic = libraryPages.find((p) => p.namespace === "orthographic.camera");
     expect(orthographic).toBeDefined();
-    expect(orthographic?.module.description).toBe(descByDir["defold-orthographic"]);
+    expect(orthographic?.module.description).toBe(descByDir["orthographic.camera"]);
     expect(orthographic?.module.description ?? "").not.toContain("vendored via");
     expect(orthographic?.module.description ?? "").not.toContain("tree/");
   });

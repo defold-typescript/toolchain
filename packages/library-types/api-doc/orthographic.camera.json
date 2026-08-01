@@ -8,8 +8,8 @@
     {
       "type": "FUNCTION",
       "name": "follow",
-      "brief": "Follow a game object.",
-      "description": "Follow a game object.",
+      "brief": "Follow one or more game objects. When following multiple objects the camera will follow the center point between the objects.",
+      "description": "Follow one or more game objects. When following multiple objects the camera will follow the center point between the objects.",
       "parameters": [
         {
           "name": "camera_id",
@@ -20,10 +20,10 @@
           "is_optional": "False"
         },
         {
-          "name": "target",
-          "doc": "Game object to follow",
+          "name": "targets",
+          "doc": "Game object(s) to follow",
           "types": [
-            "Hash | Url"
+            "Hash | Url | (Hash | Url)[]"
           ],
           "is_optional": "False"
         },

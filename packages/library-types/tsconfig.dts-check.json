@@ -27,6 +27,7 @@
     "generated/persist.d.ts",
     "generated/nakama.engine.defold.d.ts",
     "generated/nakama.util.log.d.ts",
+    "generated/orthographic.camera.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",
@@ -35,6 +36,7 @@
     "test-d/log-usage.test-d.ts",
     "test-d/squid-usage.test-d.ts",
     "test-d/narrator-usage.test-d.ts",
+    "test-d/orthographic-usage.test-d.ts",
     "test-d/fixtures/engine-handle-module.d.ts",
     "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"
