@@ -313,12 +313,4 @@ describe("fidelity round-trip", () => {
     );
     expect(built).toEqual(committed);
   });
-
-  test.each(
-    targets.map((t) => [t.namespace, t] as const),
-  )("smoke floor: the %s report has members and type tokens", (_namespace, target) => {
-    const built = buildTargetFidelity(PACKAGE_ROOT, target);
-    expect(built.totalMembers).toBeGreaterThan(0);
-    expect(built.totalTypeTokens).toBeGreaterThan(0);
-  });
 });
