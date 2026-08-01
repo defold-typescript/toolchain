@@ -76,9 +76,6 @@
       "types": "./generated/richtext.tags.d.ts"
     },
     "./package.json": "./package.json",
-    "./persist.persist": {
-      "types": "./generated/persist.persist.d.ts"
-    },
     "./dicebag.dicebag": {
       "types": "./generated/dicebag.dicebag.d.ts"
     },

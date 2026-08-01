@@ -130,6 +130,8 @@ interface LibraryRecord {
   prefix: string;
   classificationDir: string;
   decisions: ModuleDecision[];
+  // Set once the library severs its ts-defold dependency; see `SeveredSource`.
+  severedSource?: SeveredSource;
 }
 
 interface LibraryTargetRow {
@@ -139,23 +141,40 @@ interface LibraryTargetRow {
   generated: string;
 }
 
+/** The two `library-targets.json` fields a severed library's record supplies
+ * itself. A markdown `no-go` judges the markdown source, not the ts-defold
+ * dependency, so a no-go library may still fork into the authored lane and drop
+ * its row — but it still owes its recorded verdict a resolvable snapshot and
+ * classification module. Keeping a dead row to satisfy the lookup would make
+ * `library-targets.json` stop meaning "still ts-defold-sourced", so the override
+ * lives on the one record that severed. A verbatim fork is byte-identical to the
+ * retired snapshot, so `fixture` may point at the vendored authored copy and the
+ * recorded comparison still holds. */
+interface SeveredSource {
+  path: string;
+  fixture: string;
+}
+
 /** The `library-targets.json` row a moduleId ships from. The ts-defold snapshot
  * path and the classification module name are read from the row rather than
  * composed from the moduleId, because the two coincide only by convention:
  * `bzAnim.bzLibrary` ships in `packages/bzAnim/bzAnim.bzAnim.d.ts`, so both
  * guesses would miss. `writeClassification` derives the classification name from
  * the upstream filename, which is what `basename(path)` reproduces. */
-function targetFor(moduleId: string): LibraryTargetRow {
+function targetFor(moduleId: string, severed?: SeveredSource): LibraryTargetRow {
   const { targets } = JSON.parse(
     readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
   ) as { targets: LibraryTargetRow[] };
   const row = targets.find((t) => t.module === moduleId);
-  if (row === undefined) throw new Error(`no library-targets row for ${moduleId}`);
-  return row;
+  if (row !== undefined) return row;
+  if (severed !== undefined) {
+    return { module: moduleId, ...severed, generated: `generated/${moduleId}.d.ts` };
+  }
+  throw new Error(`no library-targets row for ${moduleId}`);
 }
 
-function classificationModule(moduleId: string): string {
-  return basename(targetFor(moduleId).path, ".d.ts");
+function classificationModule(moduleId: string, severed?: SeveredSource): string {
+  return basename(targetFor(moduleId, severed).path, ".d.ts");
 }
 
 function candidateTarget(record: LibraryRecord, decision: ModuleDecision): MarkdownTarget {
@@ -302,7 +321,12 @@ function describeLibraryDecisions(record: LibraryRecord): void {
     }
   });
 
-  if (noGo.length > 0) {
+  // A `no-go` retires the *markdown* front-end as this library's regeneration
+  // path. Whether it also keeps the ts-defold dependency is a separate question,
+  // and the two answers get opposite assertions: an unsevered library must still
+  // carry its row, fixture, and classification entry; a severed one must have
+  // dropped all three, its verdict now resolving through `severedSource`.
+  if (noGo.length > 0 && record.severedSource === undefined) {
     describe(`every no-go ${library} module stays ts-defold-sourced`, () => {
       const dtsCheck = readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8");
 
@@ -337,6 +361,47 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         expect([...(entry?.modules ?? [])].sort()).toEqual(
           noGo.map((d) => classificationModule(`${record.prefix}${d.module}`)).sort(),
         );
+      });
+    });
+  }
+
+  const severed = record.severedSource;
+  if (noGo.length > 0 && severed !== undefined) {
+    describe(`every no-go ${library} module severed ts-defold for the authored lane`, () => {
+      const shippedModules = (
+        JSON.parse(readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8")) as {
+          targets: { module: string }[];
+        }
+      ).targets.map((t) => t.module);
+
+      test.each(
+        noGo,
+      )(`${record.prefix}$module dropped its ts-defold row and dotted golden`, (decision) => {
+        const moduleId = `${record.prefix}${decision.module}`;
+        expect(shippedModules).not.toContain(moduleId);
+        expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(false);
+      });
+
+      test("no no-go module is registered as a markdown target", () => {
+        const registered = readMarkdownTargets(PACKAGE_ROOT).map((t) => t.moduleId);
+        for (const decision of noGo) {
+          expect(registered).not.toContain(`${record.prefix}${decision.module}`);
+        }
+      });
+
+      test(`the ${record.classificationDir} dir is gone from library-classification.json`, () => {
+        const classification = JSON.parse(
+          readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+        ) as { dirs: { dir: string }[] };
+        expect(classification.dirs.some((d) => d.dir === record.classificationDir)).toBe(false);
+      });
+
+      test.each(
+        noGo,
+      )(`${record.prefix}$module still resolves its snapshot and classification module`, (decision) => {
+        const moduleId = `${record.prefix}${decision.module}`;
+        expect(existsSync(join(PACKAGE_ROOT, targetFor(moduleId, severed).fixture))).toBe(true);
+        expect(classificationModule(moduleId, severed)).toBe(moduleId);
       });
     });
   }
@@ -502,6 +567,14 @@ const RICHTEXT: LibraryRecord = {
 // decision is `no-go` on its own evidence. Upstream is abandoned (the README's
 // first line redirects to `Klaleus/defold-checkpoint`), so this decision is final
 // rather than provisional.
+//
+// It is also the first library to sever ts-defold on a `no-go`. The verdict below
+// is unchanged and final; what changed is the answer to the separate question a
+// `no-go` never asked — where the types are *maintained*. persist's ts-defold
+// surface is small, fully typed, and better than its README, so it forked into
+// the authored lane verbatim rather than staying a ts-defold consumer, and
+// `severedSource` supplies the `library-targets.json` fields the dropped row used
+// to.
 const PERSIST: LibraryRecord = {
   library: "persist",
   repo: "https://github.com/whiteboxdev/library-defold-persist",
@@ -512,6 +585,10 @@ const PERSIST: LibraryRecord = {
   decisions: [
     { module: "persist", decision: "no-go", reason: "signature-loss", markdown: "README.md" },
   ],
+  severedSource: {
+    path: "packages/library-defold-persist/persist.persist.d.ts",
+    fixture: "fixtures/authored/persist.persist.d.ts",
+  },
 };
 
 // The recorded decision for `indiesoftby/defold-yagames` at tag `0.19.0` — the
@@ -993,8 +1070,15 @@ function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   return decision;
 }
 
+// A severed record compares against its `severedSource` snapshot rather than the
+// `fixtures/ts-defold/` entry it no longer has; the two are byte-identical for a
+// verbatim fork, so the recorded evidence reproduces unchanged.
 const comparisonFor = (record: LibraryRecord, module: string) =>
-  evaluateMarkdownCandidate(PACKAGE_ROOT, candidateTarget(record, decisionFor(record, module)));
+  evaluateMarkdownCandidate(
+    PACKAGE_ROOT,
+    candidateTarget(record, decisionFor(record, module)),
+    record.severedSource?.fixture,
+  );
 
 const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
 

@@ -120,12 +120,6 @@
       "generated": "generated/richtext.tags.d.ts"
     },
     {
-      "module": "persist.persist",
-      "path": "packages/library-defold-persist/persist.persist.d.ts",
-      "fixture": "fixtures/ts-defold/persist.persist.d.ts",
-      "generated": "generated/persist.persist.d.ts"
-    },
-    {
       "module": "dicebag.dicebag",
       "path": "packages/dicebag/dicebag.dicebag.d.ts",
       "fixture": "fixtures/ts-defold/dicebag.dicebag.d.ts",

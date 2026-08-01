@@ -15,7 +15,6 @@ import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
 import * as nakama from "nakama.nakama";
 import * as camera from "orthographic.camera";
-import * as persist from "persist.persist";
 import * as platypus from "platypus.platypus";
 import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
@@ -103,14 +102,6 @@ declare const _taggedWord: (typeof _taggedWords)[number];
 const _taggedNode: Opaque<"node"> = _taggedWord.node;
 richtextTags.register("em", () => {});
 
-// persist.persist — structural persistence helpers preserve the upstream
-// object-or-undefined load result.
-const _persistLoaded: Record<never, never> | undefined = persist.load("slot");
-persist.create("slot", { volume: 1 });
-persist.write("slot", "volume", 1);
-persist.flush("slot");
-persist.save("slot");
-
 // dicebag.dicebag — `flip_coin` returns a boolean; `bag_draw` accepts a
 // `string | number | Hash`, proving the upstream `hash` reference was renamed.
 const _dbFlip: boolean = dicebag.flip_coin();
@@ -189,7 +180,6 @@ void _richNode;
 void _richWordColor;
 void _richWidth;
 void _taggedNode;
-void _persistLoaded;
 void _dbFlip;
 void _dbDraw;
 void _stView;

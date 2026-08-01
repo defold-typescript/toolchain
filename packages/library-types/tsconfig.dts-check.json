@@ -24,6 +24,7 @@
     "generated/zzfx.d.ts",
     "generated/boom.d.ts",
     "generated/defsave.d.ts",
+    "generated/persist.d.ts",
     "generated/nakama.engine.defold.d.ts",
     "generated/nakama.util.log.d.ts",
     "test-d/boom-usage.test-d.ts",
