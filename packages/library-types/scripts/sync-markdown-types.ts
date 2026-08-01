@@ -249,7 +249,9 @@ export async function buildMarkdownFidelity(
  * share was downgraded to `unknown` by the markdown emit (a lost type), **or** a
  * shared member kept its name but lost part of its signature (dropped parameters,
  * or a non-`void` return collapsed to `void`), **or** a shared member kept its
- * arity but emitted an optional ts-defold parameter as required. */
+ * arity but emitted an optional ts-defold parameter as required, **or** the
+ * ts-defold side presents no comparable member at all (an opaque surface), which
+ * would otherwise leave every other term vacuously empty and read as `go`. */
 export interface FidelityComparison {
   tsDefoldMembers: string[];
   markdownMembers: string[];
@@ -258,6 +260,7 @@ export interface FidelityComparison {
   downgradedMembers: string[];
   signatureLossMembers: string[];
   optionalityLossMembers: string[];
+  opaqueTsDefoldSurface: boolean;
   decision: "go" | "no-go";
 }
 
@@ -425,7 +428,11 @@ function signatureShape(signature: string): SignatureShape | undefined {
  * shared member that kept its name but dropped parameters, or collapsed a
  * non-`void` return to `void`, is a signature loss; a shared member that kept
  * every ts-defold parameter but emitted an optional one as required is an
- * optionality loss. Any of the four forces `no-go`.
+ * optionality loss. A ts-defold side whose only top-level declaration is its
+ * `export =` re-export handle — or which declares no top-level member at all,
+ * publishing through `interface`/`type` the extractor cannot read — is an opaque
+ * surface: there is nothing to compare against, so every other term is vacuously
+ * empty. Any of the five forces `no-go`.
  */
 export function compareFidelityToTsDefold(
   markdownEmittedDts: string,
@@ -473,6 +480,12 @@ export function compareFidelityToTsDefold(
       );
     });
   });
+  // `tsDefoldMembers` keeps reporting what the extractor really saw; only the
+  // predicate discounts the re-export handle, so a record can still quote the
+  // handle as the evidence for the surface being opaque.
+  const reExportHandle = /export\s*=\s*(\w+)\s*;/.exec(tsDefoldDts)?.[1];
+  const comparableTsMembers = tsMembers.filter((name) => name !== reExportHandle);
+  const opaqueTsDefoldSurface = comparableTsMembers.length === 0;
   return {
     tsDefoldMembers: tsMembers,
     markdownMembers: mdMembers,
@@ -481,11 +494,13 @@ export function compareFidelityToTsDefold(
     downgradedMembers,
     signatureLossMembers,
     optionalityLossMembers,
+    opaqueTsDefoldSurface,
     decision:
       missingMembers.length === 0 &&
       downgradedMembers.length === 0 &&
       signatureLossMembers.length === 0 &&
-      optionalityLossMembers.length === 0
+      optionalityLossMembers.length === 0 &&
+      !opaqueTsDefoldSurface
         ? "go"
         : "no-go",
   };
