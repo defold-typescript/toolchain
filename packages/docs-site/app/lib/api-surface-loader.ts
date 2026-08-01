@@ -240,8 +240,8 @@ function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenan
 // Same shape and role as `loadLualsProvenance`: a library this repo maintains
 // from a primary source (here the upstream's own `.script_api`) that is absent
 // from the ts-defold classification, so it carries its own repo/ref rather than
-// the shared vendored commit. Keyed by the single-segment `namespace`, which is
-// also the committed `generated/<namespace>.d.ts` stem and thus the page key.
+// the shared vendored commit. Keyed by the entry's `namespace`, which is also
+// the committed `generated/<namespace>.d.ts` stem and thus the page key.
 function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
   const path = join(libraryTypesDir, "script-api-targets.json");
   if (!existsSync(path)) return new Map();
