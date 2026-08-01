@@ -2,13 +2,12 @@
   "namespace": "druid",
   "totalMembers": 637,
   "totalTypeTokens": 904,
-  "unknownFallbacks": 94,
+  "unknownFallbacks": 69,
   "unknownTokens": [
     "_",
     "druid.layout.row_data[]>",
     "enabled_state",
     "event",
-    "function",
     "hover_state",
     "node",
     "number, number",
@@ -16,5 +15,5 @@
     "touch"
   ],
   "undocumentedMembers": 168,
-  "coverage": 0.896
+  "coverage": 0.924
 }

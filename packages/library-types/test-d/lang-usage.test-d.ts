@@ -15,3 +15,7 @@ import * as lang from "lang.lang";
 lang.init([{ id: "en", path: "/locales/en.json" }]);
 lang.set_lang("en");
 lang.set_next_lang();
+
+// `set_lang`'s trailing `function?` param lowers to an optional callable, so a
+// plain literal is accepted where the type used to be `unknown | undefined`.
+lang.set_lang("en", () => {});

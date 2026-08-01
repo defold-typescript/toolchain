@@ -33,6 +33,8 @@ changes are called out first because the toolchain is pre-1.0.
   - **[persist](/api/persist)** (`whiteboxdev/library-defold-persist` `b37f6104`) — imported as `import * as persist from "persist.persist"`; its types are unchanged, and its reference page moves from `/api/persist.persist` to `/api/persist`.
   - **[orthographic](/api/orthographic.camera)** (`britzl/defold-orthographic` `3.6.3`) — imported as `import * as camera from "orthographic.camera"`, with its page and import unchanged; `camera.follow` now accepts an array of game objects as well as a single one, matching what upstream documents.
 
+- Callback parameters documented only as `function` in [event](/api/event), [lang](/api/lang), and [druid](/api/druid) are now callable types instead of `unknown`, so you can pass a typed function literal and call the value back without a cast.
+
 ### Fixed
 
 - A dependency that ships modules across two of this repo's registry lanes — such as [`heroiclabs/nakama-defold`](/api/nakama.engine.defold), whose `nakama.nakama` is codegen'd while its `nakama.engine.defold` and `nakama.util.log` helpers are forked — now resolves and materializes every module; [`resolve`](./resolve.md) previously kept only the first lane's module and silently dropped the rest.

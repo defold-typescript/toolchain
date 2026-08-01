@@ -21,3 +21,10 @@ const withCallback = event.create(cb);
 created.subscribe(cb);
 const triggered: unknown = withCallback(cb);
 void triggered;
+
+// The callback param lowers from LuaLS's bare `function`, so it must stay wide
+// enough to accept a concretely-typed literal: `any[]` params, not `unknown[]`,
+// which `strictFunctionTypes` would reject here.
+created.subscribe((value: string) => {
+  print(value);
+});

@@ -2,10 +2,8 @@
   "namespace": "event",
   "totalMembers": 51,
   "totalTypeTokens": 85,
-  "unknownFallbacks": 17,
-  "unknownTokens": [
-    "function"
-  ],
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
   "undocumentedMembers": 4,
-  "coverage": 0.8
+  "coverage": 1
 }

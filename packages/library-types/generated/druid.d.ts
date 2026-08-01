@@ -20,7 +20,7 @@ declare module 'druid.druid' {
 		/**
 		 * The Back Handler constructor
 		 */
-		init(callback?: unknown | undefined, params?: unknown | undefined): void;
+		init(callback?: ((...args: any[]) => unknown) | undefined, params?: unknown | undefined): void;
 	}
 	/**
 	 * Druid component for block input. Use it to block input in special zone.
@@ -136,7 +136,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set function for additional check for button click availability.
 		 */
-		set_check_function(check_function?: unknown | undefined, failure_callback?: unknown | undefined): druid_button;
+		set_check_function(check_function?: ((...args: any[]) => unknown) | undefined, failure_callback?: ((...args: any[]) => unknown) | undefined): druid_button;
 		/**
 		 * Set Button mode to work inside user HTML5 interaction event.
 		 *
@@ -255,7 +255,7 @@ declare module 'druid.druid' {
 		/**
 		 * The constructor for the hover component
 		 */
-		init(node: Opaque<"node">, on_hover_callback: unknown, on_mouse_hover: unknown): void;
+		init(node: Opaque<"node">, on_hover_callback: (...args: any[]) => unknown, on_mouse_hover: (...args: any[]) => unknown): void;
 		/**
 		 * Set hover state
 		 */
@@ -535,7 +535,7 @@ declare module 'druid.druid' {
 		/**
 		 * Change set position function for grid nodes. It will call on
 		 */
-		set_position_function(callback: unknown): druid_grid;
+		set_position_function(callback: (...args: any[]) => unknown): druid_grid;
 		/**
 		 * Clear grid nodes array. GUI nodes will be not deleted!
 		 */
@@ -555,7 +555,7 @@ declare module 'druid.druid' {
 		/**
 		 * Sort grid nodes by custom comparator function
 		 */
-		sort_nodes(comparator: unknown): druid_grid;
+		sort_nodes(comparator: (...args: any[]) => unknown): druid_grid;
 		_extend_border(border: Vector4, pos: Vector3, size: Vector3, pivot: Vector3): void;
 	}
 	interface druid_text_style {
@@ -1036,7 +1036,7 @@ declare module 'druid.druid' {
 		/**
 		 * The DataList constructor
 		 */
-		init(scroll: druid_scroll, grid: druid_grid, create_function: unknown): void;
+		init(scroll: druid_scroll, grid: druid_grid, create_function: (...args: any[]) => unknown): void;
 		/**
 		 * Set use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove
 		 */
@@ -1107,7 +1107,7 @@ declare module 'druid.druid' {
 		/**
 		 * The Hotkey constructor
 		 */
-		init(keys: string[] | string, callback: unknown, callback_argument?: unknown | undefined): void;
+		init(keys: string[] | string, callback: (...args: any[]) => unknown, callback_argument?: unknown | undefined): void;
 		/**
 		 * Add hotkey for component callback
 		 */
@@ -1309,7 +1309,7 @@ declare module 'druid.druid' {
 		/**
 		 * Set custom position function for layout nodes. It will call on update poses on layout elements. Default: gui.set_position
 		 */
-		set_position_function(callback: unknown): druid_layout;
+		set_position_function(callback: (...args: any[]) => unknown): druid_layout;
 	}
 	interface druid_progress_style {
 		SPEED?: number | undefined;
@@ -1355,11 +1355,11 @@ declare module 'druid.druid' {
 		/**
 		 * Set points on progress bar to fire the callback
 		 */
-		set_steps(steps: number[], callback: unknown): druid_progress;
+		set_steps(steps: number[], callback: (...args: any[]) => unknown): druid_progress;
 		/**
 		 * Start animation of a progress bar
 		 */
-		to(to: number, callback?: unknown | undefined): druid_progress;
+		to(to: number, callback?: ((...args: any[]) => unknown) | undefined): druid_progress;
 		/**
 		 * Set progress bar max node size
 		 */
@@ -1385,7 +1385,7 @@ declare module 'druid.druid' {
 		/**
 		 * The Slider constructor
 		 */
-		init(node: Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined): void;
+		init(node: Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined): void;
 		/**
 		 * Set value for slider
 		 */
@@ -1428,7 +1428,7 @@ declare module 'druid.druid' {
 		on_swipe: unknown;
 		style: druid_swipe_style;
 		click_zone: Opaque<"node">;
-		init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: unknown): void;
+		init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: (...args: any[]) => unknown): void;
 		/**
 		 * Set the click zone for the swipe, useful for restricting events outside stencil node
 		 */
@@ -1466,7 +1466,7 @@ declare module 'druid.druid' {
 		target: number;
 		value: number;
 		is_on?: boolean | undefined;
-		init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): void;
+		init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined): void;
 		/**
 		 * Set the timer to a specific value
 		 */
@@ -1617,7 +1617,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create Button component
 		 */
-		new_button(node: string | Opaque<"node">, callback?: unknown | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button;
+		new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button;
 		/**
 		 * Create Blocker component
 		 */
@@ -1625,11 +1625,11 @@ declare module 'druid.druid' {
 		/**
 		 * Create BackHandler component
 		 */
-		new_back_handler(callback?: unknown | unknown | undefined, params?: unknown | undefined): druid_back_handler;
+		new_back_handler(callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined): druid_back_handler;
 		/**
 		 * Create Hover component
 		 */
-		new_hover(node: string | Opaque<"node">, on_hover_callback?: unknown | undefined, on_mouse_hover_callback?: unknown | undefined): druid_hover;
+		new_hover(node: string | Opaque<"node">, on_hover_callback?: ((...args: any[]) => unknown) | undefined, on_mouse_hover_callback?: ((...args: any[]) => unknown) | undefined): druid_hover;
 		/**
 		 * Create Text component
 		 */
@@ -1645,11 +1645,11 @@ declare module 'druid.druid' {
 		/**
 		 * Create Drag component
 		 */
-		new_drag(node: string | Opaque<"node">, on_drag_callback?: unknown | undefined): druid_drag;
+		new_drag(node: string | Opaque<"node">, on_drag_callback?: ((...args: any[]) => unknown) | undefined): druid_drag;
 		/**
 		 * Create Swipe component
 		 */
-		new_swipe(node: string | Opaque<"node">, on_swipe_callback?: unknown | undefined): druid_swipe;
+		new_swipe(node: string | Opaque<"node">, on_swipe_callback?: ((...args: any[]) => unknown) | undefined): druid_swipe;
 		/**
 		 * Create LangText component
 		 */
@@ -1657,7 +1657,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create Slider component
 		 */
-		new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined): druid_slider;
+		new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined): druid_slider;
 		/**
 		 * Create Input component
 		 */
@@ -1665,11 +1665,11 @@ declare module 'druid.druid' {
 		/**
 		 * Create DataList component
 		 */
-		new_data_list(druid_scroll: druid_scroll, druid_grid: druid_grid, create_function: unknown): druid_data_list;
+		new_data_list(druid_scroll: druid_scroll, druid_grid: druid_grid, create_function: (...args: any[]) => unknown): druid_data_list;
 		/**
 		 * Create Timer component
 		 */
-		new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): druid_timer;
+		new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined): druid_timer;
 		/**
 		 * Create Progress component
 		 */
@@ -1685,7 +1685,7 @@ declare module 'druid.druid' {
 		/**
 		 * Create Hotkey component
 		 */
-		new_hotkey(keys_array: string | string[], callback?: unknown | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey;
+		new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey;
 		/**
 		 * Create RichText component.
 		 */
