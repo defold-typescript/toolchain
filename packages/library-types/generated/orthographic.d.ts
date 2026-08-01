@@ -64,14 +64,14 @@ declare module 'orthographic.camera' {
      * @param camera_id - nil for the first camera
      * @returns The current projection
      */
-    function get_projection(camera_id?: Hash | Url): unknown;
+    function get_projection(camera_id?: Hash | Url): Matrix4;
     /**
      * Get the current view of the camera.
      *
      * @param camera_id - nil for the first camera
      * @returns The current view
      */
-    function get_view(camera_id?: Hash | Url): unknown;
+    function get_view(camera_id?: Hash | Url): Matrix4;
     /**
      * Get the current viewport of the camera.
      *

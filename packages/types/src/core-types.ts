@@ -188,6 +188,9 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   vector4: "Vector4",
   quaternion: "Quaternion",
   matrix4: "Matrix4",
+  // Authored-README shorthand for `vmath.matrix4`; absent from every engine
+  // ref-doc, which a core-types.test.ts guard keeps true as releases import.
+  matrix: "Matrix4",
   "vmath.vector3": "Vector3",
   "vmath.vector4": "Vector4",
   "vmath.matrix4": "Matrix4",

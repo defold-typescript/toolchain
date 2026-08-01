@@ -206,11 +206,11 @@ export function lowerMarkdownApiDoc(packageRoot: string, target: MarkdownTarget)
   return `${JSON.stringify(doc, null, 2)}\n`;
 }
 
-// Type tokens a human triaged as acceptably lossy for a markdown cutover: `nil`
-// collapses to optionality and `matrix` (README shorthand for `vmath.matrix4`)
-// emits `unknown`. Seeded from orthographic's `fidelity/orthographic.json`. A new
-// sibling's unexpected token loud-fails at regen until mapped or added here.
-const KNOWN_LOSSY_TOKENS = new Set(["matrix", "nil"]);
+// Type tokens a human triaged as acceptably lossy for a markdown cutover. The
+// allowlist is drained — every token orthographic's README uses now maps to a
+// real TS type — but the mechanism stays: a new sibling's unexpected token
+// loud-fails at regen until it is mapped or deliberately added here.
+const KNOWN_LOSSY_TOKENS = new Set<string>([]);
 
 /**
  * markdown-scoped wrapper over the shared `computeScriptApiFidelity`. After the

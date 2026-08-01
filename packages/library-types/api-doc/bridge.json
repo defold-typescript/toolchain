@@ -37,7 +37,8 @@
           "name": "result",
           "doc": "",
           "types": [
-            "string | nil"
+            "string",
+            "nil"
           ]
         }
       ]
@@ -52,7 +53,8 @@
           "name": "result",
           "doc": "",
           "types": [
-            "string | nil"
+            "string",
+            "nil"
           ]
         }
       ]
@@ -82,7 +84,8 @@
           "name": "result",
           "doc": "",
           "types": [
-            "string | nil"
+            "string",
+            "nil"
           ]
         }
       ]
@@ -684,7 +687,8 @@
           "name": "result",
           "doc": "",
           "types": [
-            "string | nil"
+            "string",
+            "nil"
           ]
         }
       ]
@@ -699,7 +703,8 @@
           "name": "result",
           "doc": "",
           "types": [
-            "string | nil"
+            "string",
+            "nil"
           ]
         }
       ]

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import {
   DEFOLD_TYPE_MAP,
@@ -173,6 +173,7 @@ describe("core-types", () => {
       ["vector4", "Vector4"],
       ["quaternion", "Quaternion"],
       ["matrix4", "Matrix4"],
+      ["matrix", "Matrix4"],
       ["hash", "Hash"],
       ["url", "Url"],
       ["node", 'Opaque<"node">'],
@@ -198,6 +199,44 @@ describe("core-types", () => {
     for (const [defoldToken, tsType] of rows) {
       expect(DEFOLD_TYPE_MAP[defoldToken]).toBe(tsType);
     }
+  });
+
+  // `matrix` is an authored-README shorthand; every engine ref-doc spells the
+  // type `matrix4`. Mapping the shorthand globally is only safe while that stays
+  // true, so a release import that introduces a bare `matrix` fails here.
+  test("no engine ref-doc fixture uses a bare `matrix` type token", () => {
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const target = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(target);
+          continue;
+        }
+        if (!entry.name.endsWith("_doc.json")) continue;
+        let doc: unknown;
+        try {
+          doc = JSON.parse(readFileSync(target, "utf8"));
+        } catch {
+          continue;
+        }
+        const elements = (doc as { elements?: unknown }).elements;
+        if (!Array.isArray(elements)) continue;
+        for (const element of elements as ReadonlyArray<Record<string, unknown>>) {
+          const slots = [
+            ...((element.parameters as { types?: string[] }[] | undefined) ?? []),
+            ...((element.returnvalues as { types?: string[] }[] | undefined) ?? []),
+          ];
+          for (const slot of slots) {
+            for (const token of slot.types ?? []) {
+              if (token === "matrix") offenders.push(`${target}: ${String(element.name)}`);
+            }
+          }
+        }
+      }
+    };
+    walk(path.resolve(import.meta.dir, "..", "fixtures"));
+    expect(offenders).toEqual([]);
   });
 });
 
