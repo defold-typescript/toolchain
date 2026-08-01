@@ -71,6 +71,16 @@
       "apiDoc": "api-doc/persist.json"
     },
     {
+      "repo": "https://github.com/britzl/defold-orthographic",
+      "ref": "3.6.3",
+      "license": "MIT",
+      "authored": "fixtures/authored/orthographic.camera.d.ts",
+      "moduleId": "orthographic.camera",
+      "namespace": "orthographic.camera",
+      "generated": "generated/orthographic.camera.d.ts",
+      "apiDoc": "api-doc/orthographic.camera.json"
+    },
+    {
       "repo": "https://github.com/heroiclabs/nakama-defold",
       "ref": "v3.4.0",
       "license": "Apache-2.0",

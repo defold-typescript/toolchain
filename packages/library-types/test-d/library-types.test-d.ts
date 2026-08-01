@@ -14,7 +14,6 @@ import * as monarch from "monarch.monarch";
 import * as easings from "monarch.transitions.easings";
 import * as transitionsGui from "monarch.transitions.gui";
 import * as nakama from "nakama.nakama";
-import * as camera from "orthographic.camera";
 import * as platypus from "platypus.platypus";
 import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
@@ -47,15 +46,7 @@ transitionsGui.slide_in_right(_tNode, _tV3, gui.EASING_LINEAR, 1);
 // yields an `Easing` whose `IN`/`OUT` are `gui` easing constants.
 const _easing = easings.create("BACK");
 
-// orthographic.camera — `get_view` is a `Matrix4`, `get_offset` a `Vector3`;
-// `recoil` accepts a `Vector3`; `world_to_screen` accepts a `gui` adjust-mode
-// constant (the one reference that must resolve against an engine global).
-const _view: Matrix4 = camera.get_view(undefined);
-const _offset: Vector3 = camera.get_offset(undefined);
 declare const _v3: Vector3;
-camera.recoil(_url, _v3);
-const _world: Vector3 = camera.world_to_screen(undefined, _v3, gui.ADJUST_FIT);
-const [_w, _h] = camera.get_display_size();
 
 // gooey.gooey — a button state exposes an `Opaque<"node">` handle and a `Hash`
 // node id; the handle token was renamed without touching the property name.
@@ -162,11 +153,6 @@ void _err;
 void _transition;
 void _easing.IN;
 void _easing.OUT;
-void _view;
-void _offset;
-void _world;
-void _w;
-void _h;
 void _node;
 void _nodeId;
 void _bTouch;

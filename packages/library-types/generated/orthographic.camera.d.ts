@@ -6,14 +6,14 @@
  */
 declare module 'orthographic.camera' {
 	/**
-	 * Follow a game object.
+	 * Follow one or more game objects. When following multiple objects the camera will follow the center point between the objects.
 	 * @param camera_id undefined for the first camera
-	 * @param target Game object to follow
+	 * @param targets Game object(s) to follow
 	 * @param options Options
 	 */
 	export function follow(
 		camera_id: Hash | Url | undefined,
-		target: Hash | Url,
+		targets: Hash | Url | (Hash | Url)[],
 		options?: {
 			/**
 			 *  Lerp from current position to target position with lerp as t.

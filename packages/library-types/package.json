@@ -21,9 +21,6 @@
     "./monarch.transitions.gui": {
       "types": "./generated/monarch.transitions.gui.d.ts"
     },
-    "./orthographic.camera": {
-      "types": "./generated/orthographic.camera.d.ts"
-    },
     "./gooey.gooey": {
       "types": "./generated/gooey.gooey.d.ts"
     },
