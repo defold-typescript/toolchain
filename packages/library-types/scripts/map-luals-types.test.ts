@@ -121,6 +121,24 @@ describe("mapLualsType functions", () => {
     expect(r.unknowns).toEqual(["self", "ctx"]);
   });
 
+  test("an underscore param is unknown and is not recorded as a fallback", () => {
+    const r = mapLualsType("fun(_, msg: string, data: any)", ctx());
+    expect(r.ts).toBe("(_: unknown, msg: string, data: unknown) => void");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("the underscore exemption does not extend to self or ctx", () => {
+    const r = mapLualsType("fun(_, self, ctx)", ctx());
+    expect(r.ts).toBe("(_: unknown, self: unknown, ctx: unknown) => void");
+    expect(r.unknowns).toEqual(["self", "ctx"]);
+  });
+
+  test("a typed underscore param keeps its declared type", () => {
+    const r = mapLualsType("fun(_: string)", ctx());
+    expect(r.ts).toBe("(_: string) => void");
+    expect(r.unknowns).toEqual([]);
+  });
+
   test("inline multi-return becomes LuaMultiReturn", () => {
     expect(ts("fun(): number, string")).toBe("() => LuaMultiReturn<[number, string]>");
   });
@@ -129,24 +147,42 @@ describe("mapLualsType functions", () => {
     expect(ts("fun()|nil")).toBe("(() => void) | undefined");
   });
 
-  test("Druid vararg form: bare vararg becomes a rest param and is recorded", () => {
+  test("Druid vararg form: bare vararg becomes a rest param and is not recorded", () => {
     const r = mapLualsType(
       "fun(self:druid.component, ...)|nil",
       ctx({ knownNames: new Set(["druid.component"]) }),
     );
     expect(r.ts).toBe("((self: druid.component, ...args: unknown[]) => void) | undefined");
-    expect(r.unknowns).toEqual(["..."]);
+    expect(r.unknowns).toEqual([]);
   });
 
-  test("bare vararg alone becomes a rest param and is recorded", () => {
+  test("bare vararg alone becomes a rest param and is not recorded", () => {
     const r = mapLualsType("fun(...)", ctx());
     expect(r.ts).toBe("(...args: unknown[]) => void");
-    expect(r.unknowns).toEqual(["..."]);
+    expect(r.unknowns).toEqual([]);
   });
 
   test("typed vararg becomes a typed rest param and records nothing", () => {
     const r = mapLualsType("fun(...:string)", ctx());
     expect(r.ts).toBe("(...args: string[]) => void");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("a bare vararg return token is unknown and is not recorded", () => {
+    const r = mapLualsType("fun(...): ...", ctx());
+    expect(r.ts).toBe("(...args: unknown[]) => unknown");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("a trailing vararg return stays a single tuple element", () => {
+    const r = mapLualsType("fun(...): world, ...", ctx({ knownNames: new Set(["world"]) }));
+    expect(r.ts).toBe("(...args: unknown[]) => LuaMultiReturn<[world, unknown]>");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("the vararg token in isolation is unknown and is not recorded", () => {
+    const r = mapLualsType("...", ctx());
+    expect(r.ts).toBe("unknown");
     expect(r.unknowns).toEqual([]);
   });
 
