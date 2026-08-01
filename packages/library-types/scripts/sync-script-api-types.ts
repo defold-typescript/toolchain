@@ -158,10 +158,7 @@ interface RegenModule {
 
 interface EmitDtsModule {
   recoverCallbackSignature: (token: string) => string | null;
-}
-
-interface CoreTypesModule {
-  DEFOLD_TYPE_MAP: Readonly<Record<string, string>>;
+  isKnownDefoldTypeToken: (token: string) => boolean;
 }
 
 interface TypesModules {
@@ -181,24 +178,24 @@ const SCRIPT_API_CORE_TYPES_IMPORT = "../src/core-types";
  * the sibling `@defold-typescript/types` package by resolved path, mirroring
  * `extension-emit.ts`'s `loadEmitter`: `scriptApiToFixtureJson` (YAML -> ref-doc
  * JSON) and `generateModuleDeclaration` live in the types package's `scripts/`,
- * `recoverCallbackSignature`/`DEFOLD_TYPE_MAP` in its `src/`. This is a repo-only
- * build script (never shipped), so the sibling `../types` path is sufficient.
+ * `recoverCallbackSignature`/`isKnownDefoldTypeToken` in its `src/`. This is a
+ * repo-only build script (never shipped), so the sibling `../types` path is
+ * sufficient.
  *
- * A token resolves iff it is in `DEFOLD_TYPE_MAP` or `recoverCallbackSignature`
- * recognizes it — the exact non-`unknown` predicate `defaultMapType` applies,
- * so fidelity mirrors the emitter's real output (a `string | nil` union, absent
- * from the map, renders `unknown` and counts as an unknown fallback).
+ * Resolution delegates to the emitter's own exported `isKnownDefoldTypeToken` —
+ * the predicate the engine-release importer already trusts — rather than
+ * re-deriving it here, so fidelity mirrors the emitter's real output. That
+ * includes `nil`, which is absent from `DEFOLD_TYPE_MAP` because the emitter
+ * lowers it structurally (parameter-side optionality, return-side `undefined`)
+ * rather than by lookup.
  */
 async function loadTypesModules(packageRoot: string): Promise<TypesModules> {
   const typesRoot = join(packageRoot, "..", "types");
   const sync = (await import(join(typesRoot, "scripts", "sync-api-docs.ts"))) as SyncApiDocsModule;
   const regen = (await import(join(typesRoot, "scripts", "regen.ts"))) as RegenModule;
   const emitDts = (await import(join(typesRoot, "src", "emit-dts.ts"))) as EmitDtsModule;
-  const core = (await import(join(typesRoot, "src", "core-types.ts"))) as CoreTypesModule;
   const resolver: TypeResolver = {
-    resolves: (token) =>
-      Object.hasOwn(core.DEFOLD_TYPE_MAP, token) ||
-      emitDts.recoverCallbackSignature(token) !== null,
+    resolves: (token) => emitDts.isKnownDefoldTypeToken(token),
   };
   return {
     scriptApiToFixtureJson: sync.scriptApiToFixtureJson,

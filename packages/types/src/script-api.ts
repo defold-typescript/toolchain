@@ -27,6 +27,17 @@ function stringOr(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
+// A `.script_api` `type:` may spell a union inline (`string | nil`), where the
+// core ref-doc format carries one token per alternative. Splitting here keeps the
+// downstream emitter and fidelity resolver working in single tokens.
+function splitTypeTokens(type: unknown): string[] {
+  if (typeof type !== "string") return [];
+  return type
+    .split("|")
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+}
+
 function mapParameters(raw: unknown): RefDocParameter[] {
   if (!Array.isArray(raw)) return [];
   const out: RefDocParameter[] = [];
@@ -36,11 +47,10 @@ function mapParameters(raw: unknown): RefDocParameter[] {
     // The script_api lists the implicit `self` the engine passes; the emitter
     // stamps @noSelfInFile, so generated signatures must not declare it.
     if (name === "self") continue;
-    const type = item.type;
     out.push({
       name,
       doc: stringOr(item.desc, ""),
-      types: typeof type === "string" ? [type] : [],
+      types: splitTypeTokens(item.type),
     });
   }
   return out;

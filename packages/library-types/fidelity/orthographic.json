@@ -2,11 +2,8 @@
   "namespace": "orthographic",
   "totalMembers": 21,
   "totalTypeTokens": 87,
-  "unknownFallbacks": 16,
-  "unknownTokens": [
-    "matrix",
-    "nil"
-  ],
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
   "undocumentedMembers": 0,
-  "coverage": 0.816
+  "coverage": 1
 }
