@@ -78,12 +78,47 @@ describe("readLualsTargets", () => {
     expect(druid?.repo).toBe("https://github.com/Insality/druid");
   });
 
+  test("passes externalTypes through when present and leaves it undefined when absent", () => {
+    const externalTypes = { ext: { module: "other.mod", name: "ext" } };
+    const withExternal = writeConfig({ targets: [{ ...DRUID, externalTypes }] });
+    expect(readLualsTargets(withExternal)[0]?.externalTypes).toEqual(externalTypes);
+
+    const without = writeConfig({ targets: [DRUID] });
+    expect(readLualsTargets(without)[0]?.externalTypes).toBeUndefined();
+  });
+
+  test("every committed entry reads back with the fields its config declares", () => {
+    const raw = JSON.parse(readFileSync(join(PACKAGE_ROOT, "luals-targets.json"), "utf8")) as {
+      targets: Record<string, unknown>[];
+    };
+    const targets = readLualsTargets(PACKAGE_ROOT);
+    expect(targets).toHaveLength(raw.targets.length);
+    for (const [index, entry] of raw.targets.entries()) {
+      const target = targets[index] as unknown as Record<string, unknown>;
+      for (const [key, value] of Object.entries(entry)) expect(target[key]).toEqual(value);
+    }
+  });
+
   test("reads the committed second luals target (decore) — the generality proof", () => {
     const targets = readLualsTargets(PACKAGE_ROOT);
     const decore = targets.find((t) => t.moduleId === "decore.decore");
     expect(decore).toBeDefined();
     expect(decore?.namespace).toBe("decore");
     expect(decore?.repo).toBe("https://github.com/Insality/decore");
+  });
+});
+
+describe("druid's external event dependency", () => {
+  const targets = readLualsTargets(PACKAGE_ROOT);
+
+  test("the druid target resolves `event` to the committed event target's own moduleId", () => {
+    const druid = targets.find((t) => t.moduleId === "druid.druid");
+    const event = targets.find((t) => t.namespace === "event");
+    expect(event?.moduleId).toBeDefined();
+    expect(druid?.externalTypes?.event).toEqual({
+      module: event?.moduleId as string,
+      name: "event",
+    });
   });
 });
 

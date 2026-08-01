@@ -1,7 +1,7 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { type AnnotationOverrides, applyAnnotationOverrides } from "./apply-luals-overrides";
-import { emitLibraryDeclarations } from "./emit-library-dts";
+import { type ExternalTypeRef, emitLibraryDeclarations } from "./emit-library-dts";
 import { lowerLibraryModel } from "./lower-api-doc";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
 import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
@@ -27,6 +27,11 @@ export interface LualsTarget {
   // upstream annotation the fixtures freeze diverges from the runtime. Optional and
   // loud-failing on an absent key — see `apply-luals-overrides.ts`.
   annotationOverrides?: AnnotationOverrides;
+  // Type tokens this library references but another target owns, keyed by the token:
+  // the emitter writes a real cross-module `import` for each. A project consuming this
+  // library must declare the named upstream dependency too — `resolve` materializes no
+  // inter-library graph. See `emit-library-dts.ts`.
+  externalTypes?: Record<string, ExternalTypeRef>;
 }
 
 export interface LualsTargets {
@@ -65,6 +70,7 @@ export function readLualsTargets(packageRoot: string): LualsTarget[] {
       ...(entry.annotationOverrides !== undefined
         ? { annotationOverrides: entry.annotationOverrides }
         : {}),
+      ...(entry.externalTypes !== undefined ? { externalTypes: entry.externalTypes } : {}),
     };
   });
 }
@@ -210,6 +216,7 @@ export function buildTargetFidelity(packageRoot: string, target: LualsTarget): F
     target.namespace,
     buildTargetModel(packageRoot, target),
     target.typeRenames,
+    target.externalTypes,
   );
 }
 
@@ -293,6 +300,7 @@ if (import.meta.main) {
       const declarations = emitLibraryDeclarations(model, {
         moduleId: target.moduleId,
         typeRenames: target.typeRenames,
+        externalTypes: target.externalTypes,
       });
       const dest = join(root, "generated", `${target.namespace}.d.ts`);
       mkdirSync(dirname(dest), { recursive: true });
@@ -307,6 +315,7 @@ if (import.meta.main) {
       const lowered = lowerLibraryModel(model, {
         namespace: target.namespace,
         typeRenames: target.typeRenames,
+        externalTypes: target.externalTypes,
       });
       const dest = join(root, "api-doc", `${target.namespace}.json`);
       mkdirSync(dirname(dest), { recursive: true });

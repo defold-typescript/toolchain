@@ -374,3 +374,38 @@ describe("fidelity round-trip", () => {
     expect(built).toEqual(committed);
   });
 });
+
+describe("buildFidelityReport with externalTypes", () => {
+  const externalModel: LibraryModel = {
+    interfaces: [
+      {
+        name: "holder",
+        generics: [],
+        brief: "a holder",
+        methods: [],
+        fields: [{ name: "hook", types: ["ext"], doc: "the hook", isOptional: false }],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  test("an external token resolves rather than counting as an unknown fallback", () => {
+    const report = buildFidelityReport(
+      "demo",
+      externalModel,
+      {},
+      {
+        ext: { module: "other.mod", name: "ext" },
+      },
+    );
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.coverage).toBe(1);
+  });
+
+  test("the same model without the external map still records the token as unknown", () => {
+    const report = buildFidelityReport("demo", externalModel, {});
+    expect(report.unknownTokens).toEqual(["ext"]);
+  });
+});
