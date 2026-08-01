@@ -33,9 +33,10 @@ changes are called out first because the toolchain is pre-1.0.
   - **[persist](/api/persist)** (`whiteboxdev/library-defold-persist` `b37f6104`) — imported as `import * as persist from "persist.persist"`; its types are unchanged, and its reference page moves from `/api/persist.persist` to `/api/persist`.
   - **[orthographic](/api/orthographic.camera)** (`britzl/defold-orthographic` `3.6.3`) — imported as `import * as camera from "orthographic.camera"`, with its page and import unchanged. `camera.follow` now accepts an array of game objects as well as a single one, and `camera.get_view` and `camera.get_projection` return [`Matrix4`](/api/Matrix4) instead of `unknown` — both matching what upstream documents.
 
-- Callback parameters documented only as `function` in [event](/api/event), [lang](/api/lang), and [druid](/api/druid) are now callable types instead of `unknown`, so you can pass a typed function literal and call the value back without a cast.
-
-- Nullable values documented as a union — such as [bridge](/api/bridge.bridge)'s `platform.id`, `platform.tld`, `platform.payload`, `player.id`, and `player.name` — now type as `string | undefined` instead of `unknown`, so you can use them after a null check without a cast.
+- More of each generated library's surface now carries a real type where it previously fell back to `unknown`.
+  - **Callback parameters** — arguments documented only as `function` in [event](/api/event), [lang](/api/lang), and [druid](/api/druid) are callable types now, so you can pass a typed function literal and call the value back without a cast.
+  - **Nullable unions** — values documented as a union with nil, such as [bridge](/api/bridge.bridge)'s `platform.id`, `platform.tld`, `platform.payload`, `player.id`, and `player.name`, type as `string | undefined`, so you can use them after a null check without a cast.
+  - **[druid](/api/druid) callbacks and multi-returns** — `druid.button`'s six style hooks and `druid.drag`'s `init` callback name their real parameter types now, and `druid.layout`'s `rows` field is a `druid_layout_row_data[]`. A function documented with several return values, such as `druid.layout.get_content_size`, returns a `LuaMultiReturn` tuple instead of `unknown`.
 
 - Every generated library's type coverage is now pinned by a committed floor, so regenerating it can no longer quietly reduce how much of its surface is typed — a drop fails the suite instead of rewriting the report. [Authoring LuaLS library types](./authoring-luals-library-types.md) covers locking in a genuine improvement.
 
