@@ -625,6 +625,19 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
+  test("the forked persist page pins to whiteboxdev/library-defold-persist, not the ts-defold/library corpus", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const persist = pages.find((p) => p.namespace === "persist");
+    expect(persist).toBeDefined();
+    if (!persist) return;
+    expect(persist.category).toBe("library");
+    const md = apiPageMarkdown(persist, apiLinkify(pages));
+    expect(md).toContain(
+      "[whiteboxdev/library-defold-persist](https://github.com/whiteboxdev/library-defold-persist)",
+    );
+    expect(md).not.toContain("ts-defold/library");
+  });
+
   test("the forked defmath page pins to subsoap/defmath, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const defmath = pages.find((p) => p.namespace === "defmath");

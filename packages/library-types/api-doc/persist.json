@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "persist.persist",
+    "namespace": "persist",
     "brief": "A simple interface for saving and loading data.",
     "description": "A simple interface for saving and loading data."
   },

@@ -295,6 +295,20 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.importString).toBe('import * as deftest from "deftest.deftest"');
   });
 
+  test("attributes persist to whiteboxdev/library-defold-persist as an authored-here forked library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("persist");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("b37f61040740f232d86f68e2606f27b6f1bd15c4");
+    expect(meta.authorUrl).toBe("https://github.com/whiteboxdev/library-defold-persist");
+    expect(meta.license).toBe("Zlib");
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
+  test("renders persist's import with the namespace alias but the moduleId module path", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("persist");
+    expect(meta.importString).toBe('import * as persist from "persist.persist"');
+  });
+
   test("attributes defmath to subsoap/defmath as an authored-here forked library pinned to a commit SHA", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defmath");
     expect(meta.authoredHere).toBe(true);

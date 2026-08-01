@@ -4720,10 +4720,18 @@ Reach this lane only after ruling out the generated ones. Ask, in order:
 2. **Does its Lua carry inline `---@` annotations?** → it is a
    [LuaLS target](./authoring-luals-library-types.md).
 3. **Does its README document the full surface precisely?** → it may be a
-   markdown target (gated on a fidelity comparison; a lossy README stays
-   ts-defold-sourced).
+   markdown target (gated on a fidelity comparison; a lossy README is a `no-go`
+   and the library does not regenerate from markdown).
 4. **None of the above** → it is an **authored** target, and you choose between
    *fork*, *hand-author*, and *keep*.
+
+A markdown `no-go` is a verdict on the **markdown source**, not on the ts-defold
+dependency. It says the README cannot regenerate the surface; it says nothing
+about where the surface should be maintained. That second question is this
+lane's, and a `no-go` library reaches question 4 with it still open — so run the
+cost model below on it exactly as you would on a library that never had a README
+at all. `keep` is a legitimate answer, but it has to be *chosen*, not inherited
+from the refusal. `persist.persist` is the worked example.
 
 ##### The cost model
 
@@ -4933,6 +4941,32 @@ just the explicit `return`s. And a module's `export let` fields are still
 read-only through a consumer's `import * as ns`, so a compile proof pins their
 types by reading them; there is no way to prove assignability through a
 namespace import.
+
+#### Worked example — `persist.persist`
+
+`whiteboxdev/library-defold-persist` (a save/load helper, pinned to the
+`b37f6104…` commit SHA since upstream publishes no tags) is the first fork to
+arrive here from a **markdown `no-go`** rather than from having no documented
+source at all. Its README documents all six functions by name but no parameters
+and no returns, so the markdown gate scored `signature-loss` and refused the
+cutover. That verdict retired the README as a regeneration path — and nothing
+more. Running the cost model on the still-open maintenance question gives
+*fork*: the ts-defold surface is five fully-typed functions in 34 lines,
+upstream is abandoned (its README redirects to a successor project) so the
+surface cannot churn, and the recorded loss was the README's, not the `.d.ts`'s.
+So the fork is **verbatim** — the identity diff makes fidelity 100% by
+construction, and the cutover ships no type change at all. Enrichment from
+upstream prose, if ever wanted, is a later and separately-auditable edit to a
+file this repo now owns.
+
+Severing does not erase the markdown verdict. persist's `no-go`/`signature-loss`
+record and its README snapshot stay exactly as recorded, and the gate still
+re-derives the decision on every run — it just compares against the vendored
+fork instead of the deleted `fixtures/ts-defold/` snapshot, which is sound
+precisely because a verbatim fork is byte-identical to it. Keeping a dead
+`library-targets.json` row alive to feed that lookup would have been the wrong
+fix: it would make the file stop meaning *still ts-defold-sourced*, which is the
+signal the remaining Bucket-C libraries are measured against.
 
 ### API docs vs. ts-defold-types
 
