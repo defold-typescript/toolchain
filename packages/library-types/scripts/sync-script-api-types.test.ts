@@ -166,18 +166,18 @@ describe("script_api fidelity", () => {
     }
   });
 
-  // The emitter has no mapping for the `string | nil` union token (it renders
-  // `unknown`), so bridge's honest coverage is 0.962, below 1 — the report
-  // surfaces the gap rather than hiding it.
-  test("bridge fidelity reflects the real emitter: coverage 0.962, string | nil unmapped", async () => {
+  // A pipe-separated `.script_api` `type:` now parses into its tokens, so
+  // bridge's five `string | nil` returns count as two resolved tokens each
+  // rather than one unmapped union — 130 tokens becomes 135, all resolved.
+  test("bridge fidelity reflects the real emitter: coverage 1, no unmapped tokens", async () => {
     const report = await buildScriptApiFidelity(PACKAGE_ROOT, BRIDGE);
     expect(report.namespace).toBe("bridge");
     expect(report.totalMembers).toBe(81);
-    expect(report.totalTypeTokens).toBe(130);
-    expect(report.unknownFallbacks).toBe(5);
-    expect(report.unknownTokens).toEqual(["string | nil"]);
+    expect(report.totalTypeTokens).toBe(135);
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.unknownTokens).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);
-    expect(report.coverage).toBe(0.962);
+    expect(report.coverage).toBe(1);
   });
 
   test("computeScriptApiFidelity loudly surfaces an unmapped token in unknownTokens", () => {
@@ -208,5 +208,36 @@ describe("script_api fidelity", () => {
     expect(resolver.resolves("function")).toBe(true);
     expect(resolver.resolves("string | nil")).toBe(false);
     expect(resolver.resolves("Frobnicate")).toBe(false);
+  });
+
+  // `nil` is absent from `DEFOLD_TYPE_MAP` because the emitter lowers it
+  // structurally — stripped into optionality in parameter position, rendered
+  // `undefined` in return position — so counting it unresolved understated
+  // coverage for a token that is in fact fully mapped.
+  test("the real emitter resolver counts `nil` as resolved", async () => {
+    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    expect(resolver.resolves("nil")).toBe(true);
+    expect(resolver.resolves("enabled_state")).toBe(false);
+  });
+
+  test("a doc whose only slot type is `nil` reports full coverage", async () => {
+    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    const doc: ScriptApiDoc = {
+      info: { namespace: "x" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "x.f",
+          description: "d",
+          parameters: [],
+          returnvalues: [{ types: ["nil"] }],
+        },
+      ],
+    };
+    const report = computeScriptApiFidelity("x", doc, resolver);
+    expect(report.totalTypeTokens).toBe(1);
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.coverage).toBe(1);
   });
 });

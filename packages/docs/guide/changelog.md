@@ -35,6 +35,8 @@ changes are called out first because the toolchain is pre-1.0.
 
 - Callback parameters documented only as `function` in [event](/api/event), [lang](/api/lang), and [druid](/api/druid) are now callable types instead of `unknown`, so you can pass a typed function literal and call the value back without a cast.
 
+- Nullable values documented as a union — such as [bridge](/api/bridge.bridge)'s `platform.id`, `platform.tld`, `platform.payload`, `player.id`, and `player.name` — now type as `string | undefined` instead of `unknown`, so you can use them after a null check without a cast.
+
 - Every generated library's type coverage is now pinned by a committed floor, so regenerating it can no longer quietly reduce how much of its surface is typed — a drop fails the suite instead of rewriting the report. [Authoring LuaLS library types](./authoring-luals-library-types.md) covers locking in a genuine improvement.
 
 ### Fixed

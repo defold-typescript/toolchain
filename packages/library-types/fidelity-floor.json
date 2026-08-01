@@ -1,5 +1,5 @@
 {
-  "fidelity/bridge.json": 0.962,
+  "fidelity/bridge.json": 1,
   "fidelity/decore.json": 1,
   "fidelity/druid.json": 0.925,
   "fidelity/event.json": 1,
@@ -8,7 +8,7 @@
   "fidelity/log.json": 0.944,
   "fidelity/narrator.json": 0.982,
   "fidelity/openapi/nakama.nakama.json": 1,
-  "fidelity/orthographic.json": 0.816,
+  "fidelity/orthographic.json": 1,
   "fidelity/proto.json": 1,
   "fidelity/saver.saver.json": 1,
   "fidelity/saver.storage.json": 1,

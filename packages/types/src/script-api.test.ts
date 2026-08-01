@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { parse } from "yaml";
 import { parseDefoldApiDoc } from "./api-doc";
 import { emitDeclarations } from "./emit-dts";
-import { parseScriptApi, type RefDoc, scriptApiToRefDoc } from "./script-api";
+import { parseScriptApi, type RefDoc, type RefDocElement, scriptApiToRefDoc } from "./script-api";
 
 const SAMPLE = `
 - name: demo
@@ -187,5 +189,97 @@ describe("scriptApiToRefDoc nested namespaces", () => {
     const names = mixedDoc().elements.map((e) => e.name);
     expect(names).toContain("mixed.flat_fn");
     expect(names).toContain("mixed.sub.nested_fn");
+  });
+});
+
+const UNION_TYPES = `
+- name: u
+  type: table
+  desc: The u namespace.
+  members:
+  - name: plain
+    type: function
+    desc: single-word type
+    returns:
+    - name: value
+      type: string
+      desc: a string
+  - name: spaced
+    type: function
+    desc: canonical spacing
+    returns:
+    - name: value
+      type: string | nil
+      desc: a string or nil
+  - name: tight
+    type: function
+    desc: no spacing
+    returns:
+    - name: value
+      type: string|nil
+      desc: a string or nil
+  - name: wide
+    type: function
+    desc: extra spacing and a trailing separator
+    parameters:
+    - name: value
+      type: "string  |  nil |"
+      desc: a string or nil
+`;
+
+function unionReturn(name: string): string[] | undefined {
+  const doc = scriptApiToRefDoc(parse(UNION_TYPES));
+  return doc.elements.find((e) => e.name === `u.${name}`)?.returnvalues[0]?.types;
+}
+
+describe("scriptApiToRefDoc pipe-separated types", () => {
+  it("splits a union type into one token per alternative", () => {
+    expect(unionReturn("spaced")).toEqual(["string", "nil"]);
+  });
+
+  it("parses irregular spacing identically", () => {
+    expect(unionReturn("tight")).toEqual(["string", "nil"]);
+    const wide = scriptApiToRefDoc(parse(UNION_TYPES)).elements.find((e) => e.name === "u.wide");
+    expect(wide?.parameters[0]?.types).toEqual(["string", "nil"]);
+  });
+
+  it("leaves a single-word type as a one-element array", () => {
+    expect(unionReturn("plain")).toEqual(["string"]);
+  });
+
+  // The `.script_api` sources for the built-in extensions are fetched, not
+  // committed, so the offline guard that the split moves no frozen golden runs
+  // over the emitted fixtures: none of them carries a pipe-bearing type token,
+  // therefore none of them can re-emit differently once `|` is split.
+  it("no committed engine fixture carries a pipe-bearing type token", () => {
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(path);
+          continue;
+        }
+        if (!entry.name.endsWith(".json")) continue;
+        let doc: unknown;
+        try {
+          doc = JSON.parse(readFileSync(path, "utf8"));
+        } catch {
+          continue;
+        }
+        const elements = (doc as { elements?: unknown }).elements;
+        if (!Array.isArray(elements)) continue;
+        for (const element of elements as RefDocElement[]) {
+          const slots = [...(element.parameters ?? []), ...(element.returnvalues ?? [])];
+          for (const slot of slots) {
+            for (const token of slot.types ?? []) {
+              if (token.includes("|")) offenders.push(`${path}: ${element.name} -> ${token}`);
+            }
+          }
+        }
+      }
+    };
+    walk(resolve(import.meta.dir, "..", "fixtures"));
+    expect(offenders).toEqual([]);
   });
 });

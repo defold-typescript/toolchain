@@ -15,3 +15,13 @@ import { bridge } from "bridge.bridge";
 const cb = (...args: unknown[]): unknown => args;
 
 bridge.achievements.get_achievements(cb, cb);
+
+// A `.script_api` `type: string | nil` return is lowered to `string | undefined`
+// rather than collapsing to `unknown`: it assigns to the nullable type and a bare
+// `string` rejects it, so the nullability survives into the consumer.
+const _payload: string | undefined = bridge.platform.payload();
+// @ts-expect-error the return is nullable and must be narrowed before use
+const _required: string = bridge.platform.payload();
+
+void _payload;
+void _required;

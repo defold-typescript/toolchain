@@ -86,12 +86,13 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
     expect(addedMembers).toContain("set_automatic_zoom");
   });
 
-  test("a weaker markdown type downgrade forces a no-go decision", async () => {
+  test("the README's matrix-returning members are no longer downgraded", async () => {
     const { downgradedMembers, decision } = await comparison();
-    // ts-defold returns `vmath.matrix4`; the README's `matrix` token is unresolved,
-    // so the markdown emit downgrades both to `unknown`.
-    expect(downgradedMembers).toContain("get_view");
-    expect(downgradedMembers).toContain("get_projection");
+    // ts-defold returns `vmath.matrix4` and the README's `matrix` shorthand now
+    // maps to the same `Matrix4`, so neither member loses its type. The missing
+    // surface is the sole remaining driver of the no-go.
+    expect(downgradedMembers).not.toContain("get_view");
+    expect(downgradedMembers).not.toContain("get_projection");
     expect(decision).toBe("no-go");
   });
 
