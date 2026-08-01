@@ -79,6 +79,77 @@ function jsdocSummary(name: string): string {
   return terminator < 0 ? body : body.slice(0, terminator);
 }
 
+type TypeToken = { token: string; channel: "types" | "brief"; label: string };
+
+// A ref-doc spells types in two channels: a `types` array, which can sit at any
+// depth (parameters, return values, nested `fields`, `functions` under a
+// TYPEDEF), and an element's `brief` type span, which is a PROPERTY's only type
+// carrier. Keying on the `types` key alone — never on the enclosing key name —
+// is what keeps the walk generic as fixtures grow new positions. The `brief`
+// scan mirrors `parseProperty` (`api-doc.ts:126-134`); keep the two in sync.
+function typeTokens(value: unknown, label = ""): TypeToken[] {
+  const tokens: TypeToken[] = [];
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      tokens.push(...typeTokens(item, `${label}[${index}]`));
+    });
+    return tokens;
+  }
+  if (value === null || typeof value !== "object") return tokens;
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    const childLabel = label ? `${label}.${key}` : key;
+    if (key === "types" && Array.isArray(child)) {
+      child.forEach((item, index) => {
+        if (typeof item === "string") {
+          tokens.push({ token: item, channel: "types", label: `${childLabel}[${index}]` });
+          return;
+        }
+        tokens.push(...typeTokens(item, `${childLabel}[${index}]`));
+      });
+      continue;
+    }
+    if (key === "brief" && typeof child === "string") {
+      const span = /<span class="type">([^<]+)<\/span>/.exec(child);
+      if (span?.[1] !== undefined) {
+        for (const token of span[1]
+          .split("|")
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0)) {
+          tokens.push({ token, channel: "brief", label: childLabel });
+        }
+      }
+      continue;
+    }
+    tokens.push(...typeTokens(child, childLabel));
+  }
+  return tokens;
+}
+
+function bareMatrixTokens(doc: unknown, label = ""): string[] {
+  return typeTokens(doc, label)
+    .filter((entry) => entry.token === "matrix")
+    .map((entry) => entry.label);
+}
+
+function fixtureDocs(): Array<{ file: string; doc: unknown }> {
+  const docs: Array<{ file: string; doc: unknown }> = [];
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const target = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(target);
+        continue;
+      }
+      if (!entry.name.endsWith("_doc.json")) continue;
+      try {
+        docs.push({ file: target, doc: JSON.parse(readFileSync(target, "utf8")) });
+      } catch {}
+    }
+  };
+  walk(path.resolve(import.meta.dir, "..", "fixtures"));
+  return docs;
+}
+
 describe("core-types", () => {
   test("Vector3 is assignable to { x: number; y: number; z: number }", () => {
     const v = { x: 1, y: 2, z: 3 } as unknown as Vector3;
@@ -203,41 +274,169 @@ describe("core-types", () => {
 
   // `matrix` is an authored-README shorthand; every engine ref-doc spells the
   // type `matrix4`. Mapping the shorthand globally is only safe while that stays
-  // true, so a release import that introduces a bare `matrix` fails here.
+  // true, so a release import that introduces a bare `matrix` fails here. The
+  // scan covers every type-bearing position, including the `brief` type span
+  // that is a PROPERTY's only type carrier.
   test("no engine ref-doc fixture uses a bare `matrix` type token", () => {
     const offenders: string[] = [];
-    const walk = (dir: string): void => {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        const target = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-          walk(target);
-          continue;
-        }
-        if (!entry.name.endsWith("_doc.json")) continue;
-        let doc: unknown;
-        try {
-          doc = JSON.parse(readFileSync(target, "utf8"));
-        } catch {
-          continue;
-        }
-        const elements = (doc as { elements?: unknown }).elements;
-        if (!Array.isArray(elements)) continue;
-        for (const element of elements as ReadonlyArray<Record<string, unknown>>) {
-          const slots = [
-            ...((element.parameters as { types?: string[] }[] | undefined) ?? []),
-            ...((element.returnvalues as { types?: string[] }[] | undefined) ?? []),
-          ];
-          for (const slot of slots) {
-            for (const token of slot.types ?? []) {
-              if (token === "matrix") offenders.push(`${target}: ${String(element.name)}`);
-            }
-          }
-        }
-      }
-    };
-    walk(path.resolve(import.meta.dir, "..", "fixtures"));
+    for (const { file, doc } of fixtureDocs()) {
+      offenders.push(...bareMatrixTokens(doc, file));
+    }
     expect(offenders).toEqual([]);
   });
+
+  test("the corpus walk observes tokens in both channels", () => {
+    let typesTokens = 0;
+    let briefTokens = 0;
+    for (const { doc } of fixtureDocs()) {
+      for (const token of typeTokens(doc)) {
+        if (token.channel === "types") typesTokens++;
+        else briefTokens++;
+      }
+    }
+    expect(typesTokens).toBeGreaterThan(1000);
+    expect(briefTokens).toBeGreaterThan(100);
+  });
+
+  const DETECTED: ReadonlyArray<readonly [string, unknown]> = [
+    [
+      "a FUNCTION parameter's `types`",
+      {
+        elements: [{ type: "FUNCTION", name: "f", parameters: [{ name: "m", types: ["matrix"] }] }],
+      },
+    ],
+    [
+      "a FUNCTION return value's `types`",
+      {
+        elements: [
+          { type: "FUNCTION", name: "f", returnvalues: [{ name: "out", types: ["matrix"] }] },
+        ],
+      },
+    ],
+    [
+      "a nested parameter `fields[].types`",
+      {
+        elements: [
+          {
+            type: "FUNCTION",
+            name: "f",
+            parameters: [
+              {
+                name: "opts",
+                types: ["table"],
+                fields: [{ name: "inner", fields: [{ name: "m", types: ["matrix"] }] }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      "a MESSAGE parameter's `types`",
+      {
+        elements: [
+          { type: "MESSAGE", name: "msg", parameters: [{ name: "m", types: ["matrix"] }] },
+        ],
+      },
+    ],
+    [
+      "a TYPEDEF parameter's `types`",
+      {
+        elements: [{ type: "TYPEDEF", name: "td", parameters: [{ name: "m", types: ["matrix"] }] }],
+      },
+    ],
+    [
+      "an element-level `types` array",
+      { elements: [{ type: "VARIABLE", name: "v", types: ["matrix"] }] },
+    ],
+    [
+      "a PROPERTY `brief` span alone",
+      {
+        elements: [
+          { type: "PROPERTY", name: "p", brief: '<span class="type">matrix</span> the thing' },
+        ],
+      },
+    ],
+    [
+      "a PROPERTY `brief` span in a union",
+      {
+        elements: [
+          { type: "PROPERTY", name: "p", brief: '<span class="type">matrix|nil</span> the thing' },
+        ],
+      },
+    ],
+    [
+      "a PROPERTY `brief` span with irregular spacing",
+      {
+        elements: [
+          {
+            type: "PROPERTY",
+            name: "p",
+            brief: '<span class="type">nil |  matrix </span> the thing',
+          },
+        ],
+      },
+    ],
+    [
+      "a `types` array under `element.functions[].parameters[]`",
+      {
+        elements: [
+          {
+            type: "TYPEDEF",
+            name: "td",
+            functions: [{ name: "g", parameters: [{ name: "m", types: ["matrix"] }] }],
+          },
+        ],
+      },
+    ],
+  ];
+
+  for (const [position, doc] of DETECTED) {
+    test(`a bare \`matrix\` is detected in ${position}`, () => {
+      expect(bareMatrixTokens(doc)).toHaveLength(1);
+    });
+  }
+
+  const NOT_DETECTED: ReadonlyArray<readonly [string, unknown]> = [
+    [
+      "`matrix4`",
+      {
+        elements: [
+          { type: "FUNCTION", name: "f", parameters: [{ name: "m", types: ["matrix4"] }] },
+        ],
+      },
+    ],
+    [
+      "`vmath.matrix4`",
+      {
+        elements: [
+          {
+            type: "FUNCTION",
+            name: "f",
+            returnvalues: [{ name: "out", types: ["vmath.matrix4"] }],
+          },
+        ],
+      },
+    ],
+    [
+      "the word `matrix` in `brief` prose outside a type span",
+      {
+        elements: [
+          {
+            type: "PROPERTY",
+            name: "p",
+            brief: '<span class="type">matrix4</span> the transformation matrix',
+          },
+        ],
+      },
+    ],
+  ];
+
+  for (const [subject, doc] of NOT_DETECTED) {
+    test(`${subject} is not reported as a bare \`matrix\``, () => {
+      expect(bareMatrixTokens(doc)).toEqual([]);
+    });
+  }
 });
 
 describe("core-types.ts canonical JSDoc", () => {
