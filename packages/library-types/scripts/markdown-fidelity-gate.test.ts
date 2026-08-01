@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { parseMarkdownApi } from "./parse-markdown-api";
 import {
   compareFidelityToTsDefold,
@@ -132,6 +132,32 @@ interface LibraryRecord {
   decisions: ModuleDecision[];
 }
 
+interface LibraryTargetRow {
+  module: string;
+  path: string;
+  fixture: string;
+  generated: string;
+}
+
+/** The `library-targets.json` row a moduleId ships from. The ts-defold snapshot
+ * path and the classification module name are read from the row rather than
+ * composed from the moduleId, because the two coincide only by convention:
+ * `bzAnim.bzLibrary` ships in `packages/bzAnim/bzAnim.bzAnim.d.ts`, so both
+ * guesses would miss. `writeClassification` derives the classification name from
+ * the upstream filename, which is what `basename(path)` reproduces. */
+function targetFor(moduleId: string): LibraryTargetRow {
+  const { targets } = JSON.parse(
+    readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+  ) as { targets: LibraryTargetRow[] };
+  const row = targets.find((t) => t.module === moduleId);
+  if (row === undefined) throw new Error(`no library-targets row for ${moduleId}`);
+  return row;
+}
+
+function classificationModule(moduleId: string): string {
+  return basename(targetFor(moduleId).path, ".d.ts");
+}
+
 function candidateTarget(record: LibraryRecord, decision: ModuleDecision): MarkdownTarget {
   const moduleId = `${record.prefix}${decision.module}`;
   return {
@@ -196,10 +222,7 @@ async function comparisonForMarkdown(markdown: string, moduleId: string) {
     importsFrom: "../src/core-types",
     moduleId,
   });
-  const tsDefold = readFileSync(
-    join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`),
-    "utf8",
-  );
+  const tsDefold = readFileSync(join(PACKAGE_ROOT, targetFor(moduleId).fixture), "utf8");
   return { doc, emitted: contents, ...compareFidelityToTsDefold(contents, tsDefold) };
 }
 
@@ -294,7 +317,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       )(`${record.prefix}$module keeps its ts-defold row and fixture and stays out of the dts-check include`, (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(shippedModules).toContain(moduleId);
-        expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(true);
+        expect(existsSync(join(PACKAGE_ROOT, targetFor(moduleId).fixture))).toBe(true);
         expect(dtsCheck).not.toContain(`generated/${moduleId}.d.ts`);
       });
 
@@ -312,7 +335,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         const entry = classification.dirs.find((d) => d.dir === record.classificationDir);
         expect(entry).toBeDefined();
         expect([...(entry?.modules ?? [])].sort()).toEqual(
-          noGo.map((d) => `${record.prefix}${d.module}`).sort(),
+          noGo.map((d) => classificationModule(`${record.prefix}${d.module}`)).sort(),
         );
       });
     });
@@ -902,6 +925,68 @@ const DICEBAG: LibraryRecord = {
   ],
 };
 
+// The recorded decision for `jbp4444/bzAnim` at tag `v.1.2` (commit
+// `43412de571fc880849f1b58a0ef52d65ca71e6c8`) — the twelfth Bucket-C library and
+// one module. The PRD left the repo unresolved; it is `jbp4444/bzAnim`, which the
+// ts-defold fixture's `@see` and `NOTICE` already named. Apache-2.0 is the first
+// Apache license in Bucket C. `main` is 3.5 years ahead of the tag, but
+// `README.md` is byte-identical at both, so the pin is not stale evidence.
+//
+// This is the first Bucket-C library whose *only* document carries no signature
+// heading at all. Its ten headings are prose section titles (`## Installation`,
+// `## Usage`, `## Helper Functions`, ...) and not one matches
+// `##`/`###` `<recv>.<fn>(...)`, so the front-end refuses the whole library —
+// `no-signature-section`, the class defold-input's six prose modules already
+// carry, but there as one module of ten.
+//
+// The structural reason runs deeper than the dialect. Both animation entry points
+// take a single options table (`animate(args: AnimateArgs): string`), and a flat
+// signature table cannot express an options-table parameter at all, so even a
+// README rewritten into the parser's dialect could not carry `AnimateArgs`.
+//
+// Nor does the verdict depend on that gap being fixable. Hoisting every function
+// the README names anywhere — the 7 `bz.<fn>(...)` calls in its Lua snippets —
+// into `### bzAnim.<fn>(...)` headings yields 7 elements and:
+//
+//   missingMembers          ["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL"]
+//   addedMembers            ["setMaxPts"]
+//   signatureLossMembers    all 6 shared functions — every one emits `(): void`
+//   downgradedMembers       []
+//   optionalityLossMembers  []
+//   decision                no-go
+//
+// The README documents no parameter bullets anywhere, so every function collapses
+// to a zero-arity `void` stub, `animate`'s `string` return included.
+//
+// Two findings that do not move the verdict: the README's `bz.setMaxPts( 15 )`
+// does not exist upstream (`bzAnim/bzLibrary.lua` defines `bz.setMaxPoints`) and
+// the README omits `registerController`/`unregisterController` that the Lua
+// exports, so the document is not a faithful surface even on its own terms; and
+// `bzLibrary.lua` carries no LuaLS annotations, confirming the audit's Bucket-C
+// placement.
+//
+// bzAnim is also the one target whose upstream filename and declared module
+// diverge — it ships `packages/bzAnim/bzAnim.bzAnim.d.ts` as module
+// `bzAnim.bzLibrary` — which is why the shared record resolves the ts-defold
+// snapshot and the classification name through `targetFor` instead of composing
+// them from the moduleId.
+const BZANIM: LibraryRecord = {
+  library: "bzAnim",
+  repo: "https://github.com/jbp4444/bzAnim",
+  ref: "v.1.2",
+  license: "Apache-2.0",
+  prefix: "bzAnim.",
+  classificationDir: "bzAnim",
+  decisions: [
+    {
+      module: "bzLibrary",
+      decision: "no-go",
+      reason: "no-signature-section",
+      markdown: "README.md",
+    },
+  ],
+};
+
 function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
   const decision = record.decisions.find((d) => d.module === module);
   if (decision === undefined) throw new Error(`no recorded decision for ${module}`);
@@ -924,6 +1009,7 @@ describeLibraryDecisions(RENDY);
 describeLibraryDecisions(PLATYPUS);
 describeLibraryDecisions(STARLY);
 describeLibraryDecisions(DICEBAG);
+describeLibraryDecisions(BZANIM);
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -1813,5 +1899,122 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
 
   test("the recorded reason is type-downgrade", () => {
     expect(decisionFor(DICEBAG, "dicebag").reason).toBe("type-downgrade");
+  });
+});
+
+describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
+  const readme = () => fixtureText(BZANIM, decisionFor(BZANIM, "bzLibrary"));
+
+  // The heading form `parse-markdown-api` reads as a signature section.
+  const SIGNATURE_HEADING = /^#{2,3}\s+[A-Za-z_]\w*\.[A-Za-z_]\w*\(.*\)\s*$/;
+
+  // The 3 constants and 6 functions of the retained ts-defold surface, sorted as
+  // `compareFidelityToTsDefold` reports them.
+  const TS_DEFOLD_MEMBERS = [
+    "DEBUG_LEVEL",
+    "INFO_LEVEL",
+    "TRACE_LEVEL",
+    "animate",
+    "animateSequence",
+    "cancel",
+    "info",
+    "isReady",
+    "setDebugLevel",
+  ];
+
+  const SHARED_FUNCTIONS = [
+    "animate",
+    "animateSequence",
+    "cancel",
+    "info",
+    "isReady",
+    "setDebugLevel",
+  ];
+
+  // The most generous reading available: hoist every function the README names
+  // anywhere — its Lua snippets call them as `bz.<fn>(...)` — into the signature
+  // headings the document itself never writes. Test-local for `filterToReceiver`'s
+  // reason: what it measures is that the verdict holds even against a front-end
+  // that could read this document, so the decision does not rest on the dialect
+  // gap being fixable.
+  const generous = () => {
+    const named = [
+      ...new Set([...readme().matchAll(/\bbz\.([A-Za-z_]\w*)\(/g)].map((m) => m[1] as string)),
+    ].sort();
+    return [readme(), "", ...named.map((fn) => `### bzAnim.${fn}()\n`)].join("\n");
+  };
+
+  test("the front-end refuses the snapshot for the right reason — no signature section", () => {
+    // Not `/non-uniform module prefix/`: there is no receiver to disagree about.
+    expect(() => parseMarkdownApi(readme(), "bzAnim.bzLibrary")).toThrow(
+      /no .*API signature section/,
+    );
+  });
+
+  test("not one heading reads as a signature, and the prose headings are all there is", () => {
+    const headings = readme()
+      .split("\n")
+      .filter((line) => /^#{1,6}\s/.test(line));
+    expect(headings.filter((line) => SIGNATURE_HEADING.test(line))).toEqual([]);
+    // The snapshot is refused because the document documents prose, not because
+    // the fixture is empty.
+    expect(headings).toContain("## Helper Functions");
+    expect(headings).toContain("## Usage");
+    expect(headings.length).toBeGreaterThan(1);
+  });
+
+  test("the ts-defold surface is 9 members and its entry points take an options table", () => {
+    const tsDefold = readFileSync(
+      join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary").fixture),
+      "utf8",
+    );
+    expect(tsDefoldMembers(tsDefold)).toEqual(TS_DEFOLD_MEMBERS);
+    // The shape a flat signature table is structurally unable to express, which
+    // is why this is a stronger no-go than the dialect gap alone.
+    for (const shape of ["AnimateArgs", "AnimateSequenceArgs", "type Path", "type Segment"]) {
+      expect(tsDefold).toContain(shape);
+    }
+    expect(tsDefold).toContain("function animate(args: AnimateArgs): string;");
+  });
+
+  test("the generous reading lifts the 7 README-named functions and is still no-go", async () => {
+    const {
+      doc,
+      decision,
+      missingMembers,
+      addedMembers,
+      downgradedMembers,
+      signatureLossMembers,
+      optionalityLossMembers,
+    } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary");
+    expect(doc.elements.length).toBe(7);
+    // Every constant is invisible to a flat signature parse, and `setMaxPts` is
+    // the README's own name for what upstream calls `setMaxPoints`.
+    expect(missingMembers).toEqual(["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL"]);
+    expect(addedMembers).toEqual(["setMaxPts"]);
+    // Not a precision loss and not a lost optional — the document carries no
+    // parameter bullets at all, so every shared function collapses whole.
+    expect(signatureLossMembers).toEqual(SHARED_FUNCTIONS);
+    expect(downgradedMembers).toEqual([]);
+    expect(optionalityLossMembers).toEqual([]);
+    expect(decision).toBe("no-go");
+  });
+
+  test("every generously hoisted function emits a zero-arity void stub", async () => {
+    const { emitted } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary");
+    for (const fn of SHARED_FUNCTIONS) {
+      expect(emitted).toContain(`function ${fn}(): void;`);
+    }
+  });
+
+  test("the README names a function upstream does not export", () => {
+    // `bzAnim/bzLibrary.lua` defines `bz.setMaxPoints`, so the document is not a
+    // faithful surface even on its own terms.
+    expect(readme()).toContain("bz.setMaxPts");
+    expect(readme()).not.toContain("bz.setMaxPoints");
+  });
+
+  test("the recorded reason is no-signature-section", () => {
+    expect(decisionFor(BZANIM, "bzLibrary").reason).toBe("no-signature-section");
   });
 });
