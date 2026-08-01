@@ -116,7 +116,8 @@
     "luals:fetch": "bun scripts/sync-luals-types.ts --fetch",
     "luals:fidelity": "bun scripts/sync-luals-types.ts --fidelity",
     "luals:emit": "bun scripts/sync-luals-types.ts --emit",
-    "luals:api-doc": "bun scripts/sync-luals-types.ts --api-doc"
+    "luals:api-doc": "bun scripts/sync-luals-types.ts --api-doc",
+    "fidelity:floor": "bun scripts/fidelity-floor.ts --raise"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*"

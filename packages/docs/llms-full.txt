@@ -4578,6 +4578,19 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
   have applied shows up as an unexpected entry — fix `typeRenames` and re-emit.
 - **`undocumentedMembers`** — members with no annotation at all; informational.
 
+Each report's `coverage` is pinned by a committed floor in
+`packages/library-types/fidelity-floor.json`, so a regeneration that lowers it fails
+the suite instead of quietly rewriting the report. The floor covers every emitting
+lane — LuaLS, markdown, script_api, and openapi — not just this one. Regenerating
+never touches the floors; when you genuinely improve coverage, lock the win in with
+
+```sh
+bun run --cwd packages/library-types fidelity:floor
+```
+
+which raises each floor to the current coverage and can never lower one. A drop is
+therefore always a real regression to fix at the source, never a floor to edit down.
+
 #### 4. Check the API-doc description
 
 After `luals:api-doc`, open `api-doc/<namespace>.json` and inspect
@@ -4608,10 +4621,15 @@ package tests:
 ```sh
 bun test          # from packages/library-types
 bun run typecheck  # from the repo root
+bun run --cwd packages/library-types fidelity:floor  # from the repo root
 ```
 
-Commit the new entry, the snapshotted `fixtures/luals/<namespace>/`, and all three
-emitted artifacts (`generated/`, `fidelity/`, `api-doc/`) together. Every commit
+A brand-new library has no floor entry yet, and the floor gate fails until it gets
+one — `fidelity:floor` seeds it at the coverage you just measured.
+
+Commit the new entry, the snapshotted `fixtures/luals/<namespace>/`, all three
+emitted artifacts (`generated/`, `fidelity/`, `api-doc/`), and the updated
+`fidelity-floor.json` together. Every commit
 must also add a [changelog](./changelog.md) bullet — a pre-commit gate enforces it.
 
 #### Worked example — druid
