@@ -235,7 +235,7 @@ declare module 'bridge.bridge' {
       /**
        * Identify the platform on which the game is currently running to customize features and settings accordingly.
        */
-      function id(): unknown;
+      function id(): string | undefined;
       /**
        * Check if the audio is enabled on the platform.
        */
@@ -261,7 +261,7 @@ declare module 'bridge.bridge' {
       /**
        * Embed auxiliary information into the game URL to pass additional data or settings when launching the game.
        */
-      function payload(): unknown;
+      function payload(): string | undefined;
       /**
        * Send a custom message with an arbitrary id to the platform.
        *
@@ -279,7 +279,7 @@ declare module 'bridge.bridge' {
       /**
        * Retrieve the top-level domain of the platform to handle domain-specific configurations and behavior.
        */
-      function tld(): unknown;
+      function tld(): string | undefined;
     }
     namespace player {
       /**
@@ -296,7 +296,7 @@ declare module 'bridge.bridge' {
       /**
        * Get the player’s unique ID on the platform to manage user-specific data and settings. Use this ID to track player progress, achievements, and purchases.
        */
-      function id(): unknown;
+      function id(): string | undefined;
       /**
        * Check if the platform supports player authorization to enable features that require user authentication, such as saving game progress or accessing social features.
        */
@@ -312,7 +312,7 @@ declare module 'bridge.bridge' {
       /**
        * Retrieve the player's name to personalize the game experience. Display the name in leaderboards, friend lists, or when sending notifications and messages.
        */
-      function name(): unknown;
+      function name(): string | undefined;
       /**
        * Get the count of player avatars available. Use this to manage and display user profile images effectively, such as showing the avatar in multiplayer lobbies or profile screens.
        */

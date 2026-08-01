@@ -212,6 +212,21 @@ describe("emitMarkdownDeclaration", () => {
     expect(contents).toContain("function follow(");
     expect(contents).toContain("function screen_to_world(");
   });
+
+  // The golden is deliberately outside `tsconfig.dts-check.json` (no cutover), so
+  // the proof that the README's `matrix` shorthand reaches a real type is the
+  // emitted text rather than a consumer compile.
+  test("renders the README's `matrix` returns as Matrix4", async () => {
+    const contents = await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC);
+    expect(contents).toContain("function get_view(");
+    expect(contents).toContain("function get_projection(");
+    expect(contents).not.toContain("): unknown;");
+    for (const line of contents.split("\n")) {
+      if (line.includes("function get_view(") || line.includes("function get_projection(")) {
+        expect(line).toContain("Matrix4");
+      }
+    }
+  });
 });
 
 describe("markdown goldens regenerate byte-for-byte", () => {
@@ -241,16 +256,18 @@ describe("markdown fidelity", () => {
     }
   });
 
-  // The README uses the `matrix` alias (only `matrix4` maps) and its `nil` union
-  // members render `undefined`, so orthographic's honest coverage is 0.816 — the
-  // report surfaces the downgraded tokens rather than hiding them.
-  test("orthographic fidelity reflects the real emitter: coverage 0.816, matrix + nil unmapped", async () => {
+  // The README's `matrix` alias maps to `Matrix4` and its `nil` union members
+  // render `undefined`, so every one of orthographic's type tokens now reaches a
+  // real TS type.
+  test("orthographic fidelity reflects the real emitter: coverage 1, no unmapped tokens", async () => {
     const report = await buildMarkdownFidelity(PACKAGE_ROOT, ORTHOGRAPHIC);
     expect(report.namespace).toBe("orthographic");
     expect(report.totalMembers).toBe(21);
-    expect(report.unknownTokens).toEqual(["matrix", "nil"]);
+    expect(report.totalTypeTokens).toBe(87);
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.unknownTokens).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);
-    expect(report.coverage).toBe(0.816);
+    expect(report.coverage).toBe(1);
   });
 
   test("computeMarkdownFidelity throws on an unresolved token outside KNOWN_LOSSY_TOKENS", async () => {

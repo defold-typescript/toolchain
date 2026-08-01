@@ -225,6 +225,7 @@ gone. Two things are specific to a script_api target and worth knowing:
   `resolve` materializes it unchanged via the registry's module→stem mapping.
 - **Fidelity mirrors the emitter, so an unmapped token counts against coverage.**
   The report is computed over the ref-doc doc with the emitter's own type map: a
-  token the emitter renders as `unknown` (bridge's `string | nil` return union has
-  no mapping) is counted in `unknownFallbacks` and listed in `unknownTokens` rather
-  than hidden — bridge lands at `coverage` `0.962` for exactly this reason.
+  token the emitter renders as `unknown` is counted in `unknownFallbacks` and
+  listed in `unknownTokens` rather than hidden. A pipe-separated `type:` is split
+  into one token per alternative before that check, so bridge's `string | nil`
+  returns resolve to `string | undefined` and bridge lands at `coverage` `1`.
