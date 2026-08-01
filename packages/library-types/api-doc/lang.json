@@ -68,7 +68,7 @@
           "name": "on_lang_changed",
           "doc": "",
           "types": [
-            "unknown | undefined"
+            "((...args: any[]) => unknown) | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -95,7 +95,7 @@
           "name": "on_lang_changed",
           "doc": "",
           "types": [
-            "unknown | undefined"
+            "((...args: any[]) => unknown) | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -113,7 +113,7 @@
           "name": "on_lang_changed",
           "doc": "",
           "types": [
-            "unknown | undefined"
+            "((...args: any[]) => unknown) | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -475,7 +475,7 @@
           "brief": "Called after translations are loaded",
           "description": "Called after translations are loaded",
           "types": [
-            "unknown"
+            "(...args: any[]) => unknown"
           ]
         }
       ]
@@ -519,7 +519,7 @@
           "brief": "Optional async loader function with signature: loader(path, on_success, on_error)",
           "description": "Optional async loader function with signature: loader(path, on_success, on_error)",
           "types": [
-            "unknown | undefined"
+            "((...args: any[]) => unknown) | undefined"
           ]
         }
       ]

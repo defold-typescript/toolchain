@@ -293,7 +293,7 @@
               "name": "callback",
               "doc": "The callback to call when the back handler is triggered",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -669,7 +669,7 @@
               "name": "check_function",
               "doc": "Should return true or false. If true - button can be pressed.",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -678,7 +678,7 @@
               "name": "failure_callback",
               "doc": "Function will be called on button click, if check function returns false",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1460,7 +1460,7 @@
               "name": "on_hover_callback",
               "doc": "Hover callback",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -1469,7 +1469,7 @@
               "name": "on_mouse_hover",
               "doc": "On mouse hover callback",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -3014,7 +3014,7 @@
               "name": "callback",
               "doc": "Function on node set position",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -3133,7 +3133,7 @@
               "name": "comparator",
               "doc": "The comparator function. (a, b) -> boolean",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -5819,7 +5819,7 @@
               "name": "create_function",
               "doc": "The create function callback(self, data, index, data_list). Function should return (node, [component])",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -6206,7 +6206,7 @@
               "name": "callback",
               "doc": "The callback function",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -7545,7 +7545,7 @@
               "name": "callback",
               "doc": "",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -7826,7 +7826,7 @@
               "name": "callback",
               "doc": "Callback on intersect step value",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -7861,7 +7861,7 @@
               "name": "callback",
               "doc": "Callback on animation ends",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -7979,7 +7979,7 @@
               "name": "callback",
               "doc": "On slider change callback",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -8223,7 +8223,7 @@
               "name": "on_swipe_callback",
               "doc": "",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -8379,7 +8379,7 @@
               "name": "callback",
               "doc": "Function that triggers when timer value equals to seconds_to",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9399,7 +9399,7 @@
               "name": "callback",
               "doc": "Button callback",
               "types": [
-                "unknown | unknown | undefined"
+                "((...args: any[]) => unknown) | unknown | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9469,7 +9469,7 @@
               "name": "callback",
               "doc": "The callback(self, custom_args) to call on back event",
               "types": [
-                "unknown | unknown | undefined"
+                "((...args: any[]) => unknown) | unknown | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9513,7 +9513,7 @@
               "name": "on_hover_callback",
               "doc": "Hover callback",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9522,7 +9522,7 @@
               "name": "on_mouse_hover_callback",
               "doc": "Mouse hover callback",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9680,7 +9680,7 @@
               "name": "on_drag_callback",
               "doc": "Callback for on_drag_event(self, dx, dy)",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9715,7 +9715,7 @@
               "name": "on_swipe_callback",
               "doc": "Swipe callback for on_swipe_end event",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9803,7 +9803,7 @@
               "name": "callback",
               "doc": "On slider change callback",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9891,7 +9891,7 @@
               "name": "create_function",
               "doc": "The create function callback(self, data, index, data_list). Function should return (node, [component])",
               "types": [
-                "unknown"
+                "(...args: any[]) => unknown"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -9944,7 +9944,7 @@
               "name": "callback",
               "doc": "Function on timer end",
               "types": [
-                "unknown | undefined"
+                "((...args: any[]) => unknown) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -10102,7 +10102,7 @@
               "name": "callback",
               "doc": "The callback function",
               "types": [
-                "unknown | unknown | undefined"
+                "((...args: any[]) => unknown) | unknown | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
