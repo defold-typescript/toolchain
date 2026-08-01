@@ -1,0 +1,17 @@
+{
+  "fidelity/bridge.json": 0.962,
+  "fidelity/decore.json": 0.864,
+  "fidelity/druid.json": 0.924,
+  "fidelity/event.json": 1,
+  "fidelity/immutable.json": 1,
+  "fidelity/lang.json": 0.872,
+  "fidelity/log.json": 0.944,
+  "fidelity/narrator.json": 0.964,
+  "fidelity/openapi/nakama.nakama.json": 1,
+  "fidelity/orthographic.json": 0.816,
+  "fidelity/proto.json": 1,
+  "fidelity/saver.saver.json": 1,
+  "fidelity/saver.storage.json": 1,
+  "fidelity/squid.json": 1,
+  "fidelity/tweener.json": 1
+}
