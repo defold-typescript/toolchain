@@ -382,6 +382,67 @@ describe("compareFidelityToTsDefold optionality-loss term", () => {
   });
 });
 
+// `MEMBER_DECL` reads only top-level `function`/`const`, so a ts-defold fixture
+// that publishes through `interface`/`type` plus `export = handle` presents a
+// surface of one re-export handle — or, when the handle is a type rather than a
+// const, of nothing at all. With nothing to compare against, every loss term is
+// vacuously empty and the decision reads `go` against a surface the comparator
+// never saw. The guard makes an uncomparable ts-defold side decisive on its own.
+describe("compareFidelityToTsDefold opaque-surface term", () => {
+  test("a ts-defold side that is only an `export =` handle is opaque, not comparable", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function create(id: string): void;",
+      ["declare const exportThis: Starly;", "export = exportThis;"].join("\n"),
+    );
+    expect(comparison.opaqueTsDefoldSurface).toBe(true);
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("a ts-defold side with no top-level member at all is opaque", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function create(id: string): void;",
+      ["interface CoreModule {", "  create(id: string): void;", "}", "export = CoreModule;"].join(
+        "\n",
+      ),
+    );
+    expect(comparison.tsDefoldMembers).toEqual([]);
+    expect(comparison.opaqueTsDefoldSurface).toBe(true);
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("a real member beside the `export =` handle leaves the existing terms deciding", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function create(id: string): void;",
+      [
+        "declare function create(id: string): void;",
+        "declare const exportThis: Starly;",
+        "export = exportThis;",
+      ].join("\n"),
+    );
+    expect(comparison.opaqueTsDefoldSurface).toBe(false);
+    expect(comparison.tsDefoldMembers).toEqual(["create", "exportThis"]);
+    expect(comparison.missingMembers).toEqual(["exportThis"]);
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("the reported ts-defold surface still shows the handle the extractor saw", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function create(id: string): void;",
+      ["declare const exportThis: Starly;", "export = exportThis;"].join("\n"),
+    );
+    expect(comparison.tsDefoldMembers).toEqual(["exportThis"]);
+  });
+
+  test("a comparable ts-defold side is never opaque, so a shipped go cannot flip", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(a: string): string;",
+      "function f(a: string): string;",
+    );
+    expect(comparison.opaqueTsDefoldSurface).toBe(false);
+    expect(comparison.decision).toBe("go");
+  });
+});
+
 // `//* Section` is a line comment whose second character happens to be `*`. A
 // stripper that removes block comments before line comments latches its `/*`
 // onto the marker and deletes everything up to the next `*/` — the closing line
