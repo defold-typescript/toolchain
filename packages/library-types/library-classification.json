@@ -564,13 +564,6 @@
       ]
     },
     {
-      "dir": "library-defold-persist",
-      "classification": "already-vendored",
-      "modules": [
-        "persist.persist"
-      ]
-    },
-    {
       "dir": "library-defold-rendy",
       "classification": "already-vendored",
       "modules": [

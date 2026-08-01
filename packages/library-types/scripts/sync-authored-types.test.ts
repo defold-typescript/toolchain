@@ -378,3 +378,50 @@ describe("defsave.defsave migration integrity", () => {
     expect(golden.match(/^\s*export let /gm)?.length).toBe(16);
   });
 });
+
+// The first Bucket-C library to sever: its markdown `no-go` retired the markdown
+// front-end as a regeneration path but left the ts-defold dependency untouched,
+// and the authored lane answers that second question. The fork is verbatim, so
+// the generic regen-drift and fork-identity loops above already cover fidelity.
+describe("persist.persist migration integrity", () => {
+  test("persist is registered in authored-targets.json", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const persist = targets.find((t) => t.namespace === "persist");
+    expect(persist).toBeDefined();
+    expect(persist?.moduleId).toBe("persist.persist");
+    expect(persist?.repo).toBe("https://github.com/whiteboxdev/library-defold-persist");
+    expect(persist?.ref).toBe("b37f61040740f232d86f68e2606f27b6f1bd15c4");
+    expect(persist?.license).toBe("Zlib");
+  });
+
+  test("persist.persist is no longer a ts-defold library-targets row", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "persist.persist")).toBe(false);
+  });
+
+  test("the library-defold-persist dir is gone from library-classification.json", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "library-defold-persist")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, and dotted api-doc are deleted", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/persist.persist.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/persist.persist.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/persist.persist.json"))).toBe(false);
+  });
+
+  // The dts-check gate compiles whatever the include lists, so a golden left out
+  // of it is silently never type-checked — the compile proof the retired
+  // `test-d/library-types.test-d.ts` block used to provide would just be gone.
+  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/persist.d.ts");
+    expect(include).not.toContain("generated/persist.persist.d.ts");
+  });
+});

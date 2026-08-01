@@ -517,14 +517,22 @@ export function compareFidelityToTsDefold(
  * very files the live ts-defold module already owns. Registering a no-go target
  * to obtain its comparison would overwrite them in place; passing an unregistered
  * in-memory target here computes the same decision and leaves them untouched.
+ *
+ * `snapshot` overrides the compared-against surface, package-root-relative. A
+ * library that severed its ts-defold dependency (forking its surface into the
+ * authored lane) has no `fixtures/ts-defold/` entry left, but its recorded
+ * markdown verdict is still owed a comparison: a verbatim fork is byte-identical
+ * to the retired snapshot, so pointing this at the vendored copy reproduces the
+ * decision exactly.
  */
 export async function evaluateMarkdownCandidate(
   packageRoot: string,
   target: MarkdownTarget,
+  snapshot?: string,
 ): Promise<FidelityComparison & { emitted: string }> {
   const emitted = await emitMarkdownDeclaration(packageRoot, target);
   const tsDefold = readFileSync(
-    join(packageRoot, "fixtures/ts-defold", `${target.moduleId}.d.ts`),
+    join(packageRoot, snapshot ?? join("fixtures/ts-defold", `${target.moduleId}.d.ts`)),
     "utf8",
   );
   return { emitted, ...compareFidelityToTsDefold(emitted, tsDefold) };
