@@ -34,6 +34,18 @@ const enabled = widget.set_enabled(false);
 const enabledState: boolean = enabled.is_enabled();
 const widgetName: string = widget.get_name();
 
+// The drag callback the runtime actually calls: `on_drag:trigger` passes the
+// context plus five values, and druid's own `rich_input` consumer declares
+// `(self, dx, dy, x, y, touch)`. A two-parameter generated type reds this line.
+const drag = instance.new_drag("drag_node", undefined);
+drag.init("drag_node", (self, dx, dy, x, y, touch) => {
+  const travelled: number = dx + dy + x + y;
+  const touchX: number = touch.x;
+  void self;
+  void travelled;
+  void touchX;
+});
+
 void buttonName;
 void enabledState;
 void widgetName;

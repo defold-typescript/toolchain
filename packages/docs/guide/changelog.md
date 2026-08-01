@@ -19,6 +19,7 @@ changes are called out first because the toolchain is pre-1.0.
 ### Breaking
 
 - [defsave](/api/defsave)'s results are typed accurately now that its surface is maintained here and corrected against upstream `v1.2.6`: `save` and `set` returned `void` and now return `boolean | undefined`, and `load` narrows from `unknown` to `boolean | undefined`. Code that assigned or asserted on those results may need updating.
+- [druid](/api/druid)'s drag callback now declares the six parameters the runtime really passes — `(self, dx, dy, x, y, touch)` — instead of `(self, touch)`. A handler written against the old shape read `touch` out of the second argument, which is actually `dx`; it no longer type-checks until its parameter list is updated.
 
 ### Improved
 

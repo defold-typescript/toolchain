@@ -208,7 +208,7 @@ declare module 'druid.druid' {
 		/**
 		 * The constructor for Drag component
 		 */
-		init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, touch: touch) => void): void;
+		init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void): void;
 		/**
 		 * Set Drag component enabled state.
 		 */

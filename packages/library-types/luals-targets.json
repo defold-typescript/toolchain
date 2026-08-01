@@ -37,7 +37,11 @@
           "druid.drag": {
             "methods": {
               "init": {
-                "params": { "on_drag_callback": { "type": "fun(self: any, touch: touch)" } }
+                "params": {
+                  "on_drag_callback": {
+                    "type": "fun(self: any, dx: number, dy: number, x: number, y: number, touch: touch)"
+                  }
+                }
               }
             }
           }

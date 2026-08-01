@@ -1033,7 +1033,7 @@
               "name": "on_drag_callback",
               "doc": "The callback to call when a drag occurs",
               "types": [
-                "(self: unknown, touch: touch) => void"
+                "(self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void"
               ],
               "is_optional": "False",
               "is_vararg": "False"
