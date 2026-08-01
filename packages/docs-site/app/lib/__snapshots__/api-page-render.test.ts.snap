@@ -239,7 +239,7 @@ Should be called on final, where druid instance is destroyed.
 
 ## Types
 
-### \`druid_back_handler.init(callback?: unknown | undefined, params?: unknown | undefined)\`
+### \`druid_back_handler.init(callback?: ((...args: any[]) => unknown) | undefined, params?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -247,7 +247,7 @@ The Back Handler constructor
 
 **Parameters**
 
-- \`callback\`?: \`unknown | undefined\` — The callback to call when the back handler is triggered
+- \`callback\`?: \`((...args: any[]) => unknown) | undefined\` — The callback to call when the back handler is triggered
 - \`params\`?: \`unknown | undefined\` — Custom args to pass in the callback
 
 </div>
@@ -456,7 +456,7 @@ Get current key name to trigger this button.
 
 </div>
 
-### \`druid_button.set_check_function(check_function?: unknown | undefined, failure_callback?: unknown | undefined): druid_button\`
+### \`druid_button.set_check_function(check_function?: ((...args: any[]) => unknown) | undefined, failure_callback?: ((...args: any[]) => unknown) | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -464,8 +464,8 @@ Set function for additional check for button click availability.
 
 **Parameters**
 
-- \`check_function\`?: \`unknown | undefined\` — Should return true or false. If true - button can be pressed.
-- \`failure_callback\`?: \`unknown | undefined\` — Function will be called on button click, if check function returns false
+- \`check_function\`?: \`((...args: any[]) => unknown) | undefined\` — Should return true or false. If true - button can be pressed.
+- \`failure_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Function will be called on button click, if check function returns false
 
 **Returns**
 
@@ -1039,7 +1039,7 @@ Mouse hover style on node mouse hover
 
 </div>
 
-### \`druid_hover.init(node: Opaque<"node">, on_hover_callback: unknown, on_mouse_hover: unknown)\`
+### \`druid_hover.init(node: Opaque<"node">, on_hover_callback: (...args: any[]) => unknown, on_mouse_hover: (...args: any[]) => unknown)\`
 
 <div class="api-symbol-body">
 
@@ -1048,8 +1048,8 @@ The constructor for the hover component
 **Parameters**
 
 - \`node\`: \`Opaque<"node">\` — Gui node
-- \`on_hover_callback\`: \`unknown\` — Hover callback
-- \`on_mouse_hover\`: \`unknown\` — On mouse hover callback
+- \`on_hover_callback\`: \`(...args: any[]) => unknown\` — Hover callback
+- \`on_mouse_hover\`: \`(...args: any[]) => unknown\` — On mouse hover callback
 
 </div>
 
@@ -2012,7 +2012,7 @@ Return array of all node positions
 
 </div>
 
-### \`druid_grid.set_position_function(callback: unknown): druid_grid\`
+### \`druid_grid.set_position_function(callback: (...args: any[]) => unknown): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2020,7 +2020,7 @@ Change set position function for grid nodes. It will call on
 
 **Parameters**
 
-- \`callback\`: \`unknown\` — Function on node set position
+- \`callback\`: \`(...args: any[]) => unknown\` — Function on node set position
 
 **Returns**
 
@@ -2085,7 +2085,7 @@ Set new node size for grid
 
 </div>
 
-### \`druid_grid.sort_nodes(comparator: unknown): druid_grid\`
+### \`druid_grid.sort_nodes(comparator: (...args: any[]) => unknown): druid_grid\`
 
 <div class="api-symbol-body">
 
@@ -2093,7 +2093,7 @@ Sort grid nodes by custom comparator function
 
 **Parameters**
 
-- \`comparator\`: \`unknown\` — The comparator function. (a, b) -> boolean
+- \`comparator\`: \`(...args: any[]) => unknown\` — The comparator function. (a, b) -> boolean
 
 **Returns**
 
@@ -3584,7 +3584,7 @@ The draggable corners
 
 </div>
 
-### \`druid_data_list.init(scroll: druid_scroll, grid: druid_grid, create_function: unknown)\`
+### \`druid_data_list.init(scroll: druid_scroll, grid: druid_grid, create_function: (...args: any[]) => unknown)\`
 
 <div class="api-symbol-body">
 
@@ -3594,7 +3594,7 @@ The DataList constructor
 
 - \`scroll\`: \`druid_scroll\` — The Scroll instance for Data List component
 - \`grid\`: \`druid_grid\` — The StaticGrid instance for Data List component
-- \`create_function\`: \`unknown\` — The create function callback(self, data, index, data_list). Function should return (node, [component])
+- \`create_function\`: \`(...args: any[]) => unknown\` — The create function callback(self, data, index, data_list). Function should return (node, [component])
 
 </div>
 
@@ -3834,7 +3834,7 @@ Time in seconds to keep modificator active after release
 
 </div>
 
-### \`druid_hotkey.init(keys: string[] | string, callback: unknown, callback_argument?: unknown | undefined)\`
+### \`druid_hotkey.init(keys: string[] | string, callback: (...args: any[]) => unknown, callback_argument?: unknown | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -3843,7 +3843,7 @@ The Hotkey constructor
 **Parameters**
 
 - \`keys\`: \`string[] | string\` — The keys to be pressed for trigger callback. Should contains one key and any modificator keys
-- \`callback\`: \`unknown\` — The callback function
+- \`callback\`: \`(...args: any[]) => unknown\` — The callback function
 - \`callback_argument\`?: \`unknown | undefined\` — The argument to pass into the callback function
 
 </div>
@@ -4561,7 +4561,7 @@ Remove node from layout
 
 </div>
 
-### \`druid_layout.set_position_function(callback: unknown): druid_layout\`
+### \`druid_layout.set_position_function(callback: (...args: any[]) => unknown): druid_layout\`
 
 <div class="api-symbol-body">
 
@@ -4569,7 +4569,7 @@ Set custom position function for layout nodes. It will call on update poses on l
 
 **Parameters**
 
-- \`callback\`: \`unknown\`
+- \`callback\`: \`(...args: any[]) => unknown\`
 
 **Returns**
 
@@ -4755,7 +4755,7 @@ Return the current value of the progress bar
 
 </div>
 
-### \`druid_progress.set_steps(steps: number[], callback: unknown): druid_progress\`
+### \`druid_progress.set_steps(steps: number[], callback: (...args: any[]) => unknown): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -4764,7 +4764,7 @@ Set points on progress bar to fire the callback
 **Parameters**
 
 - \`steps\`: \`number[]\` — Array of progress bar values
-- \`callback\`: \`unknown\` — Callback on intersect step value
+- \`callback\`: \`(...args: any[]) => unknown\` — Callback on intersect step value
 
 **Returns**
 
@@ -4772,7 +4772,7 @@ Set points on progress bar to fire the callback
 
 </div>
 
-### \`druid_progress.to(to: number, callback?: unknown | undefined): druid_progress\`
+### \`druid_progress.to(to: number, callback?: ((...args: any[]) => unknown) | undefined): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -4781,7 +4781,7 @@ Start animation of a progress bar
 **Parameters**
 
 - \`to\`: \`number\` — value between 0..1
-- \`callback\`?: \`unknown | undefined\` — Callback on animation ends
+- \`callback\`?: \`((...args: any[]) => unknown) | undefined\` — Callback on animation ends
 
 **Returns**
 
@@ -4845,7 +4845,7 @@ Property for scaling the progress bar
 
 </div>
 
-### \`druid_slider.init(node: Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined)\`
+### \`druid_slider.init(node: Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -4855,7 +4855,7 @@ The Slider constructor
 
 - \`node\`: \`Opaque<"node">\` — GUI node to drag as a slider
 - \`end_pos\`: \`Vector3\` — The end position of slider, should be on the same axis as the node
-- \`callback\`?: \`unknown | undefined\` — On slider change callback
+- \`callback\`?: \`((...args: any[]) => unknown) | undefined\` — On slider change callback
 
 </div>
 
@@ -5004,14 +5004,14 @@ If true, trigger on swipe moving, not only release action. Default: false
 
 </div>
 
-### \`druid_swipe.init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: unknown)\`
+### \`druid_swipe.init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: (...args: any[]) => unknown)\`
 
 <div class="api-symbol-body">
 
 **Parameters**
 
 - \`node_or_node_id\`: \`Opaque<"node"> | string\`
-- \`on_swipe_callback\`: \`unknown\`
+- \`on_swipe_callback\`: \`(...args: any[]) => unknown\`
 
 </div>
 
@@ -5092,7 +5092,7 @@ The click zone of the swipe
 
 </div>
 
-### \`druid_timer.init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined)\`
+### \`druid_timer.init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -5101,7 +5101,7 @@ The click zone of the swipe
 - \`node\`: \`Opaque<"node">\` — Gui text node
 - \`seconds_from\`?: \`number | undefined\` — Start timer value in seconds
 - \`seconds_to\`?: \`number | undefined\` — End timer value in seconds
-- \`callback\`?: \`unknown | undefined\` — Function that triggers when timer value equals to seconds_to
+- \`callback\`?: \`((...args: any[]) => unknown) | undefined\` — Function that triggers when timer value equals to seconds_to
 
 </div>
 
@@ -5705,7 +5705,7 @@ Create new Druid widget instance
 
 </div>
 
-### \`druid_instance.new_button(node: string | Opaque<"node">, callback?: unknown | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button\`
+### \`druid_instance.new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -5714,7 +5714,7 @@ Create Button component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`callback\`?: \`unknown | unknown | undefined\` — Button callback
+- \`callback\`?: \`((...args: any[]) => unknown) | unknown | undefined\` — Button callback
 - \`params\`?: \`unknown | undefined\` — Button callback params
 - \`anim_node\`?: \`Opaque<"node"> | string | undefined\` — Button anim node (node, if not provided)
 
@@ -5740,7 +5740,7 @@ Create Blocker component
 
 </div>
 
-### \`druid_instance.new_back_handler(callback?: unknown | unknown | undefined, params?: unknown | undefined): druid_back_handler\`
+### \`druid_instance.new_back_handler(callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined): druid_back_handler\`
 
 <div class="api-symbol-body">
 
@@ -5748,7 +5748,7 @@ Create BackHandler component
 
 **Parameters**
 
-- \`callback\`?: \`unknown | unknown | undefined\` — The callback(self, custom_args) to call on back event
+- \`callback\`?: \`((...args: any[]) => unknown) | unknown | undefined\` — The callback(self, custom_args) to call on back event
 - \`params\`?: \`unknown | undefined\` — Callback argument
 
 **Returns**
@@ -5757,7 +5757,7 @@ Create BackHandler component
 
 </div>
 
-### \`druid_instance.new_hover(node: string | Opaque<"node">, on_hover_callback?: unknown | undefined, on_mouse_hover_callback?: unknown | undefined): druid_hover\`
+### \`druid_instance.new_hover(node: string | Opaque<"node">, on_hover_callback?: ((...args: any[]) => unknown) | undefined, on_mouse_hover_callback?: ((...args: any[]) => unknown) | undefined): druid_hover\`
 
 <div class="api-symbol-body">
 
@@ -5766,8 +5766,8 @@ Create Hover component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`on_hover_callback\`?: \`unknown | undefined\` — Hover callback
-- \`on_mouse_hover_callback\`?: \`unknown | undefined\` — Mouse hover callback
+- \`on_hover_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Hover callback
+- \`on_mouse_hover_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Mouse hover callback
 
 **Returns**
 
@@ -5828,7 +5828,7 @@ Create Scroll component
 
 </div>
 
-### \`druid_instance.new_drag(node: string | Opaque<"node">, on_drag_callback?: unknown | undefined): druid_drag\`
+### \`druid_instance.new_drag(node: string | Opaque<"node">, on_drag_callback?: ((...args: any[]) => unknown) | undefined): druid_drag\`
 
 <div class="api-symbol-body">
 
@@ -5837,7 +5837,7 @@ Create Drag component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`on_drag_callback\`?: \`unknown | undefined\` — Callback for on_drag_event(self, dx, dy)
+- \`on_drag_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Callback for on_drag_event(self, dx, dy)
 
 **Returns**
 
@@ -5845,7 +5845,7 @@ Create Drag component
 
 </div>
 
-### \`druid_instance.new_swipe(node: string | Opaque<"node">, on_swipe_callback?: unknown | undefined): druid_swipe\`
+### \`druid_instance.new_swipe(node: string | Opaque<"node">, on_swipe_callback?: ((...args: any[]) => unknown) | undefined): druid_swipe\`
 
 <div class="api-symbol-body">
 
@@ -5854,7 +5854,7 @@ Create Swipe component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`on_swipe_callback\`?: \`unknown | undefined\` — Swipe callback for on_swipe_end event
+- \`on_swipe_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Swipe callback for on_swipe_end event
 
 **Returns**
 
@@ -5880,7 +5880,7 @@ Create LangText component
 
 </div>
 
-### \`druid_instance.new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: unknown | undefined): druid_slider\`
+### \`druid_instance.new_slider(pin_node: string | Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined): druid_slider\`
 
 <div class="api-symbol-body">
 
@@ -5890,7 +5890,7 @@ Create Slider component
 
 - \`pin_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
 - \`end_pos\`: \`Vector3\` — The end position of slider
-- \`callback\`?: \`unknown | undefined\` — On slider change callback
+- \`callback\`?: \`((...args: any[]) => unknown) | undefined\` — On slider change callback
 
 **Returns**
 
@@ -5916,7 +5916,7 @@ Create Input component
 
 </div>
 
-### \`druid_instance.new_data_list(druid_scroll: druid_scroll, druid_grid: druid_grid, create_function: unknown): druid_data_list\`
+### \`druid_instance.new_data_list(druid_scroll: druid_scroll, druid_grid: druid_grid, create_function: (...args: any[]) => unknown): druid_data_list\`
 
 <div class="api-symbol-body">
 
@@ -5926,7 +5926,7 @@ Create DataList component
 
 - \`druid_scroll\`: \`druid_scroll\` — The Scroll instance for Data List component
 - \`druid_grid\`: \`druid_grid\` — The Grid instance for Data List component
-- \`create_function\`: \`unknown\` — The create function callback(self, data, index, data_list). Function should return (node, [component])
+- \`create_function\`: \`(...args: any[]) => unknown\` — The create function callback(self, data, index, data_list). Function should return (node, [component])
 
 **Returns**
 
@@ -5934,7 +5934,7 @@ Create DataList component
 
 </div>
 
-### \`druid_instance.new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: unknown | undefined): druid_timer\`
+### \`druid_instance.new_timer(node: string | Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined): druid_timer\`
 
 <div class="api-symbol-body">
 
@@ -5945,7 +5945,7 @@ Create Timer component
 - \`node\`: \`string | Opaque<"node">\` — Gui text node
 - \`seconds_from\`?: \`number | undefined\` — Start timer value in seconds
 - \`seconds_to\`?: \`number | undefined\` — End timer value in seconds
-- \`callback\`?: \`unknown | undefined\` — Function on timer end
+- \`callback\`?: \`((...args: any[]) => unknown) | undefined\` — Function on timer end
 
 **Returns**
 
@@ -6006,7 +6006,7 @@ Create Container component
 
 </div>
 
-### \`druid_instance.new_hotkey(keys_array: string | string[], callback?: unknown | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey\`
+### \`druid_instance.new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -6015,7 +6015,7 @@ Create Hotkey component
 **Parameters**
 
 - \`keys_array\`: \`string | string[]\` — Keys for trigger action. Should contains one action key and any amount of modificator keys
-- \`callback\`?: \`unknown | unknown | undefined\` — The callback function
+- \`callback\`?: \`((...args: any[]) => unknown) | unknown | undefined\` — The callback function
 - \`callback_argument\`?: \`unknown | undefined\` — The argument to pass into the callback function
 
 **Returns**

@@ -42,6 +42,18 @@ describe("mapLualsType optional suffix", () => {
   test("no duplicate undefined when the base already yields it", () => {
     expect(ts("nil?")).toBe("undefined");
   });
+
+  test("function? parenthesizes the callable before the union", () => {
+    expect(ts("function?")).toBe("((...args: any[]) => unknown) | undefined");
+  });
+
+  test("a fun return suffix stays on the return type", () => {
+    expect(ts("fun(a: string): number?")).toBe("(a: string) => number | undefined");
+  });
+
+  test("a parenthesized whole function is optional as a whole", () => {
+    expect(ts("(fun(a: string): number)?")).toBe("((a: string) => number) | undefined");
+  });
 });
 
 describe("mapLualsType unions", () => {
@@ -144,6 +156,36 @@ describe("mapLualsType functions", () => {
 
   test("params plus a return union", () => {
     expect(ts("fun(x: integer): number | nil")).toBe("(x: number) => number | undefined");
+  });
+
+  test("bare function becomes a callable and is not recorded as a fallback", () => {
+    const r = mapLualsType("function", ctx());
+    expect(r.ts).toBe("(...args: any[]) => unknown");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("bare function in a union is parenthesized", () => {
+    const r = mapLualsType("function|event", ctx({ knownNames: new Set(["event"]) }));
+    expect(r.ts).toBe("((...args: any[]) => unknown) | event");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("function|nil becomes an optional callable", () => {
+    expect(ts("function|nil")).toBe("((...args: any[]) => unknown) | undefined");
+  });
+
+  test("function|event|nil keeps every member", () => {
+    expect(ts("function|event|nil", { knownNames: new Set(["event"]) })).toBe(
+      "((...args: any[]) => unknown) | event | undefined",
+    );
+  });
+
+  test("array of bare function parenthesizes the element", () => {
+    expect(ts("function[]")).toBe("((...args: any[]) => unknown)[]");
+  });
+
+  test("bare function composes as a fun param", () => {
+    expect(ts("fun(cb: function): nil")).toBe("(cb: (...args: any[]) => unknown) => undefined");
   });
 });
 

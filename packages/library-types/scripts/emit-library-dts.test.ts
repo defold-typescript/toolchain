@@ -574,14 +574,14 @@ test("renders trailing type-suffix nil-bearing params optional and a nilable fie
 
   const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
 
-  expect(out).toContain("loader?: unknown | undefined;");
+  expect(out).toContain("loader?: ((...args: any[]) => unknown) | undefined;");
   expect(out).toContain("id: string;");
   expect(out).toContain(
-    "export function h(this: void, a?: string | undefined, b?: unknown | undefined): void;",
+    "export function h(this: void, a?: string | undefined, b?: ((...args: any[]) => unknown) | undefined): void;",
   );
   // The back_handler shape: two adjacent trailing nil-bearing params are both optional.
   expect(out).toContain(
-    "export function both(this: void, cb?: unknown | undefined, params?: unknown | undefined): void;",
+    "export function both(this: void, cb?: ((...args: any[]) => unknown) | undefined, params?: unknown | undefined): void;",
   );
 });
 
