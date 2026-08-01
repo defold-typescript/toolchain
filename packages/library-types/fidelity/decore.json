@@ -2,11 +2,8 @@
   "namespace": "decore",
   "totalMembers": 135,
   "totalTypeTokens": 176,
-  "unknownFallbacks": 24,
-  "unknownTokens": [
-    "...",
-    "_"
-  ],
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
   "undocumentedMembers": 78,
-  "coverage": 0.864
+  "coverage": 1
 }
