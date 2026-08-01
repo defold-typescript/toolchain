@@ -13,8 +13,12 @@
         "vector4": "Vector4"
       },
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"],
+      "externalTypes": { "event": { "module": "event.event", "name": "event" } },
       "annotationOverrides": {
         "interfaces": {
+          "event.on_size_changed": {
+            "fields": { "subscribe": { "drop": true } }
+          },
           "druid.layout.rows_data": {
             "fields": { "rows": { "type": "druid.layout.row_data[]" } }
           },

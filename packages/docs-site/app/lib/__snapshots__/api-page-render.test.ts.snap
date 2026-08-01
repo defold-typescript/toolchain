@@ -252,7 +252,7 @@ The Back Handler constructor
 
 </div>
 
-### \`druid_back_handler.on_back: unknown\`
+### \`druid_back_handler.on_back: event\`
 
 <div class="api-symbol-body">
 
@@ -578,7 +578,7 @@ Call button hold callback
 
 ### \`druid_button._on_button_release()\`
 
-### \`druid_button.on_click: unknown\`
+### \`druid_button.on_click: event\`
 
 <div class="api-symbol-body">
 
@@ -586,7 +586,7 @@ fun(self, custom_args, button_instance)
 
 </div>
 
-### \`druid_button.on_pressed: unknown\`
+### \`druid_button.on_pressed: event\`
 
 <div class="api-symbol-body">
 
@@ -594,7 +594,7 @@ fun(self, custom_args, button_instance)
 
 </div>
 
-### \`druid_button.on_repeated_click: unknown\`
+### \`druid_button.on_repeated_click: event\`
 
 <div class="api-symbol-body">
 
@@ -602,7 +602,7 @@ fun(self, custom_args, button_instance, click_count) Repeated click callback, wh
 
 </div>
 
-### \`druid_button.on_long_click: unknown\`
+### \`druid_button.on_long_click: event\`
 
 <div class="api-symbol-body">
 
@@ -610,7 +610,7 @@ fun(self, custom_args, button_instance, hold_time) Callback on long button tap
 
 </div>
 
-### \`druid_button.on_double_click: unknown\`
+### \`druid_button.on_double_click: event\`
 
 <div class="api-symbol-body">
 
@@ -618,7 +618,7 @@ fun(self, custom_args, button_instance, click_amount) Different callback, if tap
 
 </div>
 
-### \`druid_button.on_hold_callback: unknown\`
+### \`druid_button.on_hold_callback: event\`
 
 <div class="api-symbol-body">
 
@@ -626,7 +626,7 @@ fun(self, custom_args, button_instance, press_time) Hold callback, before long_c
 
 </div>
 
-### \`druid_button.on_click_outside: unknown\`
+### \`druid_button.on_click_outside: event\`
 
 <div class="api-symbol-body">
 
@@ -871,7 +871,7 @@ The node to subscribe to drag events over
 
 </div>
 
-### \`druid_drag.on_touch_start: unknown\`
+### \`druid_drag.on_touch_start: event\`
 
 <div class="api-symbol-body">
 
@@ -879,7 +879,7 @@ fun(self, touch) The event triggered when a touch starts
 
 </div>
 
-### \`druid_drag.on_touch_end: unknown\`
+### \`druid_drag.on_touch_end: event\`
 
 <div class="api-symbol-body">
 
@@ -887,7 +887,7 @@ fun(self, touch) The event triggered when a touch ends
 
 </div>
 
-### \`druid_drag.on_drag_start: unknown\`
+### \`druid_drag.on_drag_start: event\`
 
 <div class="api-symbol-body">
 
@@ -895,7 +895,7 @@ fun(self, touch) The event triggered when a drag starts
 
 </div>
 
-### \`druid_drag.on_drag: unknown\`
+### \`druid_drag.on_drag: event\`
 
 <div class="api-symbol-body">
 
@@ -903,7 +903,7 @@ fun(self, touch) The event triggered when a drag occurs
 
 </div>
 
-### \`druid_drag.on_drag_end: unknown\`
+### \`druid_drag.on_drag_end: event\`
 
 <div class="api-symbol-body">
 
@@ -1147,7 +1147,7 @@ Gui node
 
 </div>
 
-### \`druid_hover.on_hover: unknown\`
+### \`druid_hover.on_hover: event\`
 
 <div class="api-symbol-body">
 
@@ -1155,7 +1155,7 @@ fun(self: druid.hover, is_hover: boolean) Hover event
 
 </div>
 
-### \`druid_hover.on_mouse_hover: unknown\`
+### \`druid_hover.on_mouse_hover: event\`
 
 <div class="api-symbol-body">
 
@@ -1639,7 +1639,7 @@ Optional click zone to restrict scroll area
 
 </div>
 
-### \`druid_scroll.on_scroll: unknown\`
+### \`druid_scroll.on_scroll: event\`
 
 <div class="api-symbol-body">
 
@@ -1647,7 +1647,7 @@ fun(self: druid.scroll, position: vector3) Triggered on scroll move
 
 </div>
 
-### \`druid_scroll.on_scroll_to: unknown\`
+### \`druid_scroll.on_scroll_to: event\`
 
 <div class="api-symbol-body">
 
@@ -1655,7 +1655,7 @@ fun(self: druid.scroll, target: vector3, is_instant: boolean) Triggered on scrol
 
 </div>
 
-### \`druid_scroll.on_point_scroll: unknown\`
+### \`druid_scroll.on_point_scroll: event\`
 
 <div class="api-symbol-body">
 
@@ -2114,7 +2114,7 @@ Sort grid nodes by custom comparator function
 
 </div>
 
-### \`druid_grid.on_add_item: unknown\`
+### \`druid_grid.on_add_item: event\`
 
 <div class="api-symbol-body">
 
@@ -2122,7 +2122,7 @@ fun(self: druid.grid, item: node, index: number) Trigger on add item event
 
 </div>
 
-### \`druid_grid.on_remove_item: unknown\`
+### \`druid_grid.on_remove_item: event\`
 
 <div class="api-symbol-body">
 
@@ -2130,7 +2130,7 @@ fun(self: druid.grid, index: number) Trigger on remove item event
 
 </div>
 
-### \`druid_grid.on_change_items: unknown\`
+### \`druid_grid.on_change_items: event\`
 
 <div class="api-symbol-body">
 
@@ -2138,7 +2138,7 @@ fun(self: druid.grid, index: number) Trigger on change items event
 
 </div>
 
-### \`druid_grid.on_clear: unknown\`
+### \`druid_grid.on_clear: event\`
 
 <div class="api-symbol-body">
 
@@ -2146,7 +2146,7 @@ fun(self: druid.grid) Trigger on clear event
 
 </div>
 
-### \`druid_grid.on_update_positions: unknown\`
+### \`druid_grid.on_update_positions: event\`
 
 <div class="api-symbol-body">
 
@@ -2478,7 +2478,7 @@ The text node
 
 </div>
 
-### \`druid_text.on_set_text: unknown\`
+### \`druid_text.on_set_text: event\`
 
 <div class="api-symbol-body">
 
@@ -2486,7 +2486,7 @@ fun(self: druid.text, text: string) The event triggered when the text is set
 
 </div>
 
-### \`druid_text.on_update_text_scale: unknown\`
+### \`druid_text.on_update_text_scale: event\`
 
 <div class="api-symbol-body">
 
@@ -2494,7 +2494,7 @@ fun(self: druid.text, scale: vector3, metrics: table) The event triggered when t
 
 </div>
 
-### \`druid_text.on_set_pivot: unknown\`
+### \`druid_text.on_set_pivot: event\`
 
 <div class="api-symbol-body">
 
@@ -3552,7 +3552,7 @@ The maximum size y
 
 </div>
 
-### \`druid_container.on_size_changed: unknown\`
+### \`druid_container.on_size_changed: event\`
 
 <div class="api-symbol-body">
 
@@ -3770,7 +3770,7 @@ The StaticGrid or DynamicGrid instance for Data List component
 
 </div>
 
-### \`druid_data_list.on_scroll_progress_change: unknown\`
+### \`druid_data_list.on_scroll_progress_change: event\`
 
 <div class="api-symbol-body">
 
@@ -3778,7 +3778,7 @@ fun(self: druid.data_list, progress: number) The event triggered when the scroll
 
 </div>
 
-### \`druid_data_list.on_element_add: unknown\`
+### \`druid_data_list.on_element_add: event\`
 
 <div class="api-symbol-body">
 
@@ -3786,7 +3786,7 @@ fun(self: druid.data_list, index: number, node: node, instance: druid.component,
 
 </div>
 
-### \`druid_data_list.on_element_remove: unknown\`
+### \`druid_data_list.on_element_remove: event\`
 
 <div class="api-symbol-body">
 
@@ -3899,7 +3899,7 @@ If node is provided, the hotkey can be disabled, if the node is disabled
 
 </div>
 
-### \`druid_hotkey.on_hotkey_pressed: unknown\`
+### \`druid_hotkey.on_hotkey_pressed: event\`
 
 <div class="api-symbol-body">
 
@@ -3907,7 +3907,7 @@ fun(self, context, callback_argument) The event triggered when a hotkey is press
 
 </div>
 
-### \`druid_hotkey.on_hotkey_released: unknown\`
+### \`druid_hotkey.on_hotkey_released: event\`
 
 <div class="api-symbol-body">
 
@@ -4134,7 +4134,7 @@ Change cursor position by delta
 
 </div>
 
-### \`druid_input.on_input_select: unknown\`
+### \`druid_input.on_input_select: event\`
 
 <div class="api-symbol-body">
 
@@ -4142,7 +4142,7 @@ fun(self: druid.input, input: druid.input) The event triggered when the input fi
 
 </div>
 
-### \`druid_input.on_input_unselect: unknown\`
+### \`druid_input.on_input_unselect: event\`
 
 <div class="api-symbol-body">
 
@@ -4150,7 +4150,7 @@ fun(self: druid.input, text: string, input: druid.input) The event triggered whe
 
 </div>
 
-### \`druid_input.on_input_text: unknown\`
+### \`druid_input.on_input_text: event\`
 
 <div class="api-symbol-body">
 
@@ -4158,7 +4158,7 @@ fun(self: druid.input) The event triggered when the input field is changed
 
 </div>
 
-### \`druid_input.on_input_empty: unknown\`
+### \`druid_input.on_input_empty: event\`
 
 <div class="api-symbol-body">
 
@@ -4166,7 +4166,7 @@ fun(self: druid.input) The event triggered when the input field is empty
 
 </div>
 
-### \`druid_input.on_input_full: unknown\`
+### \`druid_input.on_input_full: event\`
 
 <div class="api-symbol-body">
 
@@ -4174,7 +4174,7 @@ fun(self: druid.input) The event triggered when the input field is full
 
 </div>
 
-### \`druid_input.on_input_wrong: unknown\`
+### \`druid_input.on_input_wrong: event\`
 
 <div class="api-symbol-body">
 
@@ -4182,7 +4182,7 @@ fun(self: druid.input) The event triggered when the input field is wrong
 
 </div>
 
-### \`druid_input.on_select_cursor_change: unknown\`
+### \`druid_input.on_select_cursor_change: event\`
 
 <div class="api-symbol-body">
 
@@ -4291,15 +4291,13 @@ The node of the text component
 
 </div>
 
-### \`druid_lang_text.on_change: unknown\`
+### \`druid_lang_text.on_change: event\`
 
 <div class="api-symbol-body">
 
 fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
-
-### \`event_on_size_changed.subscribe: (_: unknown, callback: (new_size: Vector3) => void, context: unknown | undefined) => void\`
 
 ### \`druid_layout_row_data.width: number\`
 
@@ -4814,7 +4812,7 @@ The progress bar node
 
 </div>
 
-### \`druid_progress.on_change: unknown\`
+### \`druid_progress.on_change: event\`
 
 <div class="api-symbol-body">
 
@@ -4965,7 +4963,7 @@ The node to manage the slider
 
 </div>
 
-### \`druid_slider.on_change_value: unknown\`
+### \`druid_slider.on_change_value: event\`
 
 <div class="api-symbol-body">
 
@@ -5069,7 +5067,7 @@ The node to manage the swipe
 
 </div>
 
-### \`druid_swipe.on_swipe: unknown\`
+### \`druid_swipe.on_swipe: event\`
 
 <div class="api-symbol-body">
 
@@ -5155,7 +5153,7 @@ Set the timer interval
 
 </div>
 
-### \`druid_timer.on_tick: unknown\`
+### \`druid_timer.on_tick: event\`
 
 <div class="api-symbol-body">
 
@@ -5163,7 +5161,7 @@ fun(context, value) The event triggered when the timer ticks
 
 </div>
 
-### \`druid_timer.on_set_enabled: unknown\`
+### \`druid_timer.on_set_enabled: event\`
 
 <div class="api-symbol-body">
 
@@ -5171,7 +5169,7 @@ fun(context, is_on) The event triggered when the timer is enabled
 
 </div>
 
-### \`druid_timer.on_timer_end: unknown\`
+### \`druid_timer.on_timer_end: event\`
 
 <div class="api-symbol-body">
 
@@ -5706,7 +5704,7 @@ Create new Druid widget instance
 
 </div>
 
-### \`druid_instance.new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button\`
+### \`druid_instance.new_button(node: string | Opaque<"node">, callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): druid_button\`
 
 <div class="api-symbol-body">
 
@@ -5715,7 +5713,7 @@ Create Button component
 **Parameters**
 
 - \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
-- \`callback\`?: \`((...args: any[]) => unknown) | unknown | undefined\` — Button callback
+- \`callback\`?: \`((...args: any[]) => unknown) | event | undefined\` — Button callback
 - \`params\`?: \`unknown | undefined\` — Button callback params
 - \`anim_node\`?: \`Opaque<"node"> | string | undefined\` — Button anim node (node, if not provided)
 
@@ -5741,7 +5739,7 @@ Create Blocker component
 
 </div>
 
-### \`druid_instance.new_back_handler(callback?: ((...args: any[]) => unknown) | unknown | undefined, params?: unknown | undefined): druid_back_handler\`
+### \`druid_instance.new_back_handler(callback?: ((...args: any[]) => unknown) | event | undefined, params?: unknown | undefined): druid_back_handler\`
 
 <div class="api-symbol-body">
 
@@ -5749,7 +5747,7 @@ Create BackHandler component
 
 **Parameters**
 
-- \`callback\`?: \`((...args: any[]) => unknown) | unknown | undefined\` — The callback(self, custom_args) to call on back event
+- \`callback\`?: \`((...args: any[]) => unknown) | event | undefined\` — The callback(self, custom_args) to call on back event
 - \`params\`?: \`unknown | undefined\` — Callback argument
 
 **Returns**
@@ -6007,7 +6005,7 @@ Create Container component
 
 </div>
 
-### \`druid_instance.new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | unknown | undefined, callback_argument?: unknown | undefined): druid_hotkey\`
+### \`druid_instance.new_hotkey(keys_array: string | string[], callback?: ((...args: any[]) => unknown) | event | undefined, callback_argument?: unknown | undefined): druid_hotkey\`
 
 <div class="api-symbol-body">
 
@@ -6016,7 +6014,7 @@ Create Hotkey component
 **Parameters**
 
 - \`keys_array\`: \`string | string[]\` — Keys for trigger action. Should contains one action key and any amount of modificator keys
-- \`callback\`?: \`((...args: any[]) => unknown) | unknown | undefined\` — The callback function
+- \`callback\`?: \`((...args: any[]) => unknown) | event | undefined\` — The callback function
 - \`callback_argument\`?: \`unknown | undefined\` — The argument to pass into the callback function
 
 **Returns**

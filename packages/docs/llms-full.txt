@@ -4533,9 +4533,47 @@ annotations, and each lives in its own repo at its own release. The fields:
 | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
 | `typeRenames` | no | Map from a LuaLS type name to the TypeScript name to emit (e.g. `{ "vector3": "Vector3" }`). Omit or `{}` when the library references no renamed types. |
 | `ignore` | no | Globs excluded from `sourceGlobs` — tests, examples, editor widgets. Defaults to `[]`. |
+| `externalTypes` | no | Map from a type name another target owns to `{ "module": "<its moduleId>", "name": "<its export>" }` — see below. Omit when the library references no other library's types. |
 
 A missing required field fails loudly, naming both the field and the offending
 entry.
+
+##### Types another library owns
+
+A library that `require`s a second library annotates the borrowed type by its bare
+name (druid's `---@field on_click event`). Left alone that token resolves to
+nothing local and lowers to `unknown`. Naming its owner in `externalTypes` instead
+makes the emitter write a real import at the top of the `declare module` block and
+resolve every use of the token to it:
+
+```json
+"externalTypes": { "event": { "module": "event.event", "name": "event" } }
+```
+
+emits `import { event } from 'event.event';`, types all 46 of druid's callback
+fields as `event`, and resolves the `---@class event.on_size_changed: event`
+parent to a real `extends`. The key is the LuaLS token as written; `module` must
+be the owning target's `moduleId` exactly, and `name` its exported type. A token
+whose local name would collide with one the library declares itself fails loudly
+rather than silently shadowing it.
+
+The consuming project must declare that upstream library too. `resolve` builds no
+inter-library dependency graph, so a project that lists druid alone materializes
+`generated/druid.d.ts` without `generated/event.d.ts` — the import then degrades
+to an error-`any` under the repo-wide `skipLibCheck`. Declare both; druid does not
+run without `event.event` at runtime either.
+
+Prefer `externalTypes` over a `typeRenames` entry pointing at an `import(...)`
+type: the api-doc lowering maps through the same context, so an inline
+`import('event.event').event` would render as the user-facing signature on the
+library's `/api` page, where `externalTypes` renders the clean `event`.
+
+Where an upstream annotation restates a member it inherits from such a parent, and
+restates it incompatibly enough that the emitted redeclaration would not
+type-check, drop the restatement with an `annotationOverrides` field override —
+`"fields": { "subscribe": { "drop": true } }` — and let the member inherit. Like
+every override, a `drop` naming an absent field throws rather than passing
+silently.
 
 #### 2. Generate the artifacts
 
@@ -4571,9 +4609,9 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
 - **`coverage`** — the fraction of type tokens that resolved to a known type. Druid
   sits around `0.9`; a healthy new library lands in the same range. Near-zero means
   the source is not meaningfully annotated — reconsider the target.
-- **`unknownTokens`** — the distinct type names that fell back to `unknown`. Cross-
-  library references (another Insality module) are the expected entries here and are
-  safe fallbacks; the LuaLS placeholders `_` and a bare `...` are not among them,
+- **`unknownTokens`** — the distinct type names that fell back to `unknown`. A cross-
+  library reference (another Insality module) shows up here until you name its owner
+  in `externalTypes`, which resolves it; the LuaLS placeholders `_` and a bare `...` are not among them,
   because they declare no type and now lower to `unknown` without counting against
   coverage, and neither is a bare `function`, because it
   now lowers to the callable type `(...args: any[]) => unknown`. A rename that *should*
@@ -4651,14 +4689,17 @@ The druid entry is the reference shape:
     "vector3": "Vector3",
     "vector4": "Vector4"
   },
-  "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+  "ignore": ["**/test/**", "**/example/**", "**/example_*/**"],
+  "externalTypes": { "event": { "module": "event.event", "name": "event" } }
 }
 ```
 
 `sourceGlobs` snapshots the whole `druid/` tree; `ignore` drops its tests and
 examples; `moduleId` `druid.druid` scopes the exported functions to
 `druid/druid.lua` while the interfaces merge from every file; `typeRenames` maps
-druid's vmath references onto the toolchain's branded `Vector*` types. Running the
+druid's vmath references onto the toolchain's branded `Vector*` types;
+`externalTypes` hands druid's callback fields to the `event` library that owns
+them. Running the
 four commands emits `generated/druid.d.ts`, which
 [`resolve`](./resolve.md#vendored-library-types) materializes into a consuming
 project as `druid.druid`.

@@ -46,6 +46,25 @@ drag.init("drag_node", (self, dx, dy, x, y, touch) => {
   void touchX;
 });
 
+// The primary way a user wires druid UI: subscribing to a component's callback
+// field. The field is an `event` owned by the `event.event` module, so this line
+// only compiles once the cross-module import resolves — an `unknown` field reds it.
+const subscribed: boolean = button.on_click.subscribe((self: unknown) => {
+  void self;
+});
+
+// @ts-expect-error a non-callable subscriber is rejected, so the field is genuinely
+// typed rather than widened back to `any`.
+button.on_click.subscribe(42);
+
+// Reaching an inherited member through the external `extends` parent proves the
+// `---@class event.on_size_changed: event` inheritance resolved across modules.
+const layout = instance.new_layout("layout_node", undefined);
+layout.on_size_changed.subscribe((self: unknown) => {
+  void self;
+});
+
 void buttonName;
 void enabledState;
 void widgetName;
+void subscribed;
