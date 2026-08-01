@@ -509,3 +509,58 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
     expect(cont?.returns[0]?.types).toEqual(["Narrator.Paragraph[]|Narrator.Paragraph"]);
   });
 });
+
+describe("druid.drag's on_drag_callback override matches the runtime arity", () => {
+  // Naive comma split: safe because no parameter type in this token carries a comma.
+  // A future override that needs one should make this bracket-aware, not looser.
+  function splitParams(body: string): { name: string; type: string }[] {
+    return body
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0)
+      .map((entry) => {
+        const colon = entry.indexOf(":");
+        return colon === -1
+          ? { name: entry, type: "" }
+          : { name: entry.slice(0, colon).trim(), type: entry.slice(colon + 1).trim() };
+      });
+  }
+
+  function overrideToken(): string {
+    const druid = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "druid");
+    if (!druid) throw new Error("druid target missing from luals-targets.json");
+    const token =
+      druid.annotationOverrides?.interfaces?.["druid.drag"]?.methods?.init?.params?.on_drag_callback
+        ?.type;
+    if (!token) throw new Error("druid.drag.init on_drag_callback override missing");
+    return token;
+  }
+
+  function overrideParams(): { name: string; type: string }[] {
+    const token = overrideToken();
+    return splitParams(token.slice(token.indexOf("(") + 1, token.lastIndexOf(")")));
+  }
+
+  test("its parameter names equal the fixture's own on_drag_callback declaration", () => {
+    const fixture = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/luals/druid/druid/custom/rich_input/rich_input.lua"),
+      "utf8",
+    );
+    const declared = /^local function on_drag_callback\(([^)]*)\)/m.exec(fixture);
+    if (!declared?.[1]) throw new Error("on_drag_callback declaration missing from rich_input.lua");
+    expect(overrideParams().map((p) => p.name)).toEqual(
+      splitParams(declared[1]).map((p) => p.name),
+    );
+  });
+
+  test("it types the four deltas as number and the touch as touch", () => {
+    expect(overrideParams()).toEqual([
+      { name: "self", type: "any" },
+      { name: "dx", type: "number" },
+      { name: "dy", type: "number" },
+      { name: "x", type: "number" },
+      { name: "y", type: "number" },
+      { name: "touch", type: "touch" },
+    ]);
+  });
+});

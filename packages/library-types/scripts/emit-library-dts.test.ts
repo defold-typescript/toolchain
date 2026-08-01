@@ -668,6 +668,17 @@ test.each(
   expect(emitted).toBe(golden);
 });
 
+// The neighbouring round-trip proves the golden matches a rebuild; this names the
+// contract, so a regeneration that silently drops parameters reports as an arity
+// regression rather than as an opaque golden diff.
+test("the committed druid golden carries drag's full six-parameter callback signature", () => {
+  const golden = readFileSync(join(import.meta.dir, "..", "generated", "druid.d.ts"), "utf8");
+
+  expect(golden).toContain(
+    "on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void",
+  );
+});
+
 // A declaration is present for every public modeled surface: each non-moduleObject
 // interface, each moduleObject field (as an `export const`), and each module function
 // (its identifier, or its reserved-name `as <name>` re-export). Catches root cause C:

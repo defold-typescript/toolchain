@@ -738,7 +738,7 @@ If screen aspect ratio affects on drag values. Default: false
 
 </div>
 
-### \`druid_drag.init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, touch: touch) => void)\`
+### \`druid_drag.init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void)\`
 
 <div class="api-symbol-body">
 
@@ -747,7 +747,7 @@ The constructor for Drag component
 **Parameters**
 
 - \`node_or_node_id\`: \`Opaque<"node"> | string\` — The node to subscribe to drag events over
-- \`on_drag_callback\`: \`(self: unknown, touch: touch) => void\` — The callback to call when a drag occurs
+- \`on_drag_callback\`: \`(self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void\` — The callback to call when a drag occurs
 
 </div>
 
