@@ -136,13 +136,6 @@
       ]
     },
     {
-      "dir": "defold-orthographic",
-      "classification": "already-vendored",
-      "modules": [
-        "orthographic.camera"
-      ]
-    },
-    {
       "dir": "defold-playable-ads",
       "classification": "native",
       "modules": [

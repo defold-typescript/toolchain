@@ -24,6 +24,7 @@
   "nakama.engine.defold": "Defold engine adapter for the Nakama client: UUID, HTTP, and realtime socket helpers.",
   "nakama.util.log": "Logging helpers for the Nakama Defold client.",
   "narrator": "The Ink language parser and runtime implementation in Lua",
+  "orthographic.camera": "Orthographic camera functionality for the Defold game engine",
   "platypus": "Defold platformer engine",
   "proto": "Protocol-buffer style message encoding for compact Defold network payloads.",
   "saver.saver": "Persistent save helpers for Defold: typed tables, versioned slots, and atomic writes.",
