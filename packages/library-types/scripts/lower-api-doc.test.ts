@@ -618,6 +618,7 @@ for (const target of targets) {
     const lowered = lowerLibraryModel(model, {
       namespace: target.namespace,
       typeRenames: target.typeRenames,
+      externalTypes: target.externalTypes,
     });
     const emitted = `${JSON.stringify(lowered, null, 2)}\n`;
     const golden = readFileSync(join(packageRoot, "api-doc", `${target.namespace}.json`), "utf8");
@@ -632,4 +633,29 @@ test("the regen-drift guard covers every LuaLS target (druid, decore, tweener)",
   for (const required of ["druid", "decore", "tweener"]) {
     expect(namespaces.has(required)).toBe(true);
   }
+});
+
+test("an external token lowers to its local alias, not unknown and not an import expression", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "holder",
+        generics: [],
+        fields: [{ name: "hook", types: ["ext"], doc: "the hook", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const lowered = lowerLibraryModel(model, {
+    namespace: "demo",
+    externalTypes: { ext: { module: "other.mod", name: "ext" } },
+  });
+  const [typedef] = elementsOf(lowered);
+  const properties = typedef?.properties as Record<string, unknown>[] | undefined;
+
+  expect(properties?.[0]?.types).toEqual(["ext"]);
 });

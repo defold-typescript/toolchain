@@ -15,7 +15,12 @@
  * `name` is scoped into a child `MapContext` (an identity rename) so a bare `T`
  * resolves to `T` instead of lowering to `unknown`, constraints and `extends`
  * targets map through the existing rename map, and an `extends` clause is emitted
- * only for parents that resolve to a declared interface.
+ * only for parents that resolve to a declared interface or an imported external type.
+ *
+ * A token owned by another target is declared through `externalTypes`: the emitter
+ * writes a real `import { <name> } from '<module>';` into the `declare module` block
+ * and resolves the token to that binding, so a cross-library reference carries its
+ * real type instead of lowering to `unknown`.
  */
 
 import {
@@ -42,9 +47,20 @@ import type {
   LibraryParam,
 } from "./parse-luals";
 
+/**
+ * A type token owned by another target: the module id that declares it and the name
+ * it exports. Resolving one emits a real `import` into the `declare module` block
+ * rather than lowering the token to `unknown`.
+ */
+export interface ExternalTypeRef {
+  module: string;
+  name: string;
+}
+
 export interface EmitLibraryOptions {
   moduleId: string;
   typeRenames?: Record<string, string>;
+  externalTypes?: Record<string, ExternalTypeRef> | undefined;
 }
 
 const INDENT = "\t";
@@ -85,6 +101,42 @@ function safeParamName(name: string, index: number): string {
   return TS_RESERVED_NAMES.has(name) ? `${name}_` : name;
 }
 
+/**
+ * The token -> local-alias rename map an `externalTypes` config contributes, aliasing
+ * exactly as a declared name would (dotted `event.foo` -> `event_foo`). Shared by the
+ * emitter, the fidelity report, and the api-doc lowering so all three resolve an
+ * external reference to the same identifier the import binds.
+ */
+export function externalTypeRenames(
+  externalTypes?: Record<string, ExternalTypeRef>,
+): Record<string, string> {
+  const renames: Record<string, string> = {};
+  for (const token of Object.keys(externalTypes ?? {})) renames[token] = sanitizeTypeName(token);
+  return renames;
+}
+
+/**
+ * `import { ... } from '<module>';` lines for the external tokens, one per source
+ * module with its names sorted and the modules sorted by id, so re-rendering is
+ * byte-identical. A token whose local alias differs from the export name binds
+ * through an `as` clause.
+ */
+function renderExternalImports(externalTypes?: Record<string, ExternalTypeRef>): string[] {
+  const byModule = new Map<string, Set<string>>();
+  for (const [token, ref] of Object.entries(externalTypes ?? {})) {
+    const alias = sanitizeTypeName(token);
+    const binding = alias === ref.name ? ref.name : `${ref.name} as ${alias}`;
+    const names = byModule.get(ref.module) ?? new Set<string>();
+    names.add(binding);
+    byModule.set(ref.module, names);
+  }
+  return [...byModule.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(
+      ([module, names]) => `${INDENT}import { ${[...names].sort().join(", ")} } from '${module}';`,
+    );
+}
+
 export function mapTypes(types: readonly string[], ctx: MapContext): string {
   if (types.length === 0) return "unknown";
   return types.map((token) => mapLualsType(token, ctx).ts).join(" | ");
@@ -112,19 +164,21 @@ function renderHookReturn(returnTokens: readonly string[], ctx: MapContext): str
 
 /**
  * An ` extends X, Y` clause built from `iface.extends` split on commas, keeping only
- * parents that name a declared interface (so no `extends unknown` is ever emitted),
- * mapped through the rename map; `""` when none survive.
+ * parents that name a declared interface or an imported external type (so no
+ * `extends unknown` is ever emitted), mapped through the rename map; `""` when none
+ * survive.
  */
 function renderExtends(
   iface: LibraryInterface,
   ctx: MapContext,
   interfaceNames: ReadonlySet<string>,
+  externalTokens: ReadonlySet<string>,
 ): string {
   if (!iface.extends) return "";
   const parents = iface.extends
     .split(",")
     .map((name) => name.trim())
-    .filter((name) => interfaceNames.has(name))
+    .filter((name) => interfaceNames.has(name) || externalTokens.has(name))
     .map((name) => mapTypes([name], ctx));
   return parents.length > 0 ? ` extends ${parents.join(", ")}` : "";
 }
@@ -189,12 +243,13 @@ function renderInterface(
   iface: LibraryInterface,
   ctx: MapContext,
   interfaceNames: ReadonlySet<string>,
+  externalTokens: ReadonlySet<string>,
 ): string[] {
   const lines: string[] = [];
   pushDoc(lines, iface.brief, INDENT);
   const ifaceCtx = scopeGenerics(ctx, iface.generics);
   const params = renderGenericParams(iface.generics, ifaceCtx);
-  const extendsClause = renderExtends(iface, ifaceCtx, interfaceNames);
+  const extendsClause = renderExtends(iface, ifaceCtx, interfaceNames, externalTokens);
   lines.push(`${INDENT}interface ${sanitizeTypeName(iface.name)}${params}${extendsClause} {`);
   const body = INDENT + INDENT;
   for (const field of iface.fields) {
@@ -290,6 +345,7 @@ function renderModuleFunction(fn: LibraryMethod, ctx: MapContext): string[] {
 export function buildModelContext(
   model: LibraryModel,
   typeRenames?: Record<string, string>,
+  externalTypes?: Record<string, ExternalTypeRef>,
 ): MapContext {
   const declaredNames = [
     ...model.interfaces.map((iface) => iface.name),
@@ -297,9 +353,18 @@ export function buildModelContext(
   ];
   const nameRenames: Record<string, string> = {};
   for (const name of declaredNames) nameRenames[name] = sanitizeTypeName(name);
+  const externalRenames = externalTypeRenames(externalTypes);
+  for (const [token, alias] of Object.entries(externalRenames)) {
+    const collision = declaredNames.find((name) => sanitizeTypeName(name) === alias);
+    if (collision !== undefined) {
+      throw new Error(
+        `buildModelContext: external type "${token}" resolves to local name "${alias}", which the model already declares as "${collision}".`,
+      );
+    }
+  }
   return {
-    knownNames: new Set(declaredNames),
-    typeRenames: { ...(typeRenames ?? {}), ...nameRenames },
+    knownNames: new Set([...declaredNames, ...Object.values(externalRenames)]),
+    typeRenames: { ...(typeRenames ?? {}), ...externalRenames, ...nameRenames },
   };
 }
 
@@ -310,10 +375,12 @@ export function buildModelContext(
  * `unknown` inside `mapLualsType` exactly as the fidelity report records them.
  */
 export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOptions): string {
-  const ctx = buildModelContext(model, opts.typeRenames);
+  const ctx = buildModelContext(model, opts.typeRenames, opts.externalTypes);
 
   const interfaceNames = new Set(model.interfaces.map((iface) => iface.name));
+  const externalTokens = new Set(Object.keys(opts.externalTypes ?? {}));
   const out: string[] = ["/** @noResolution */", `declare module '${opts.moduleId}' {`];
+  out.push(...renderExternalImports(opts.externalTypes));
   for (const alias of model.aliases) out.push(...renderAlias(alias, ctx));
   for (const iface of model.interfaces) {
     // The module object's fields become module-level `export const`s (below), so it is
@@ -322,7 +389,7 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
       out.push(...renderModuleConstants(iface, ctx));
       continue;
     }
-    out.push(...renderInterface(iface, ctx, interfaceNames));
+    out.push(...renderInterface(iface, ctx, interfaceNames, externalTokens));
   }
   for (const fn of model.moduleFunctions) {
     if (!isPublicMethod(fn)) continue;

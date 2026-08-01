@@ -662,6 +662,7 @@ test.each(
   const emitted = emitLibraryDeclarations(model, {
     moduleId: target.moduleId,
     typeRenames: target.typeRenames,
+    externalTypes: target.externalTypes,
   });
   const golden = readFileSync(join(packageRoot, "generated", `${namespace}.d.ts`), "utf8");
 
@@ -795,6 +796,98 @@ test.each(
   const out = emitLibraryDeclarations(model, {
     moduleId: target.moduleId,
     typeRenames: target.typeRenames,
+    externalTypes: target.externalTypes,
   });
   expect(missingDeclarations(model, out)).toEqual([]);
+});
+
+const externalModel: LibraryModel = {
+  interfaces: [
+    {
+      name: "holder",
+      generics: [],
+      fields: [{ name: "hook", types: ["ext"], doc: "", isOptional: false }],
+      methods: [],
+      brief: "",
+    },
+  ],
+  aliases: [],
+  moduleFunctions: [],
+};
+
+test("an external token emits an import as the first line in the block and types the field", () => {
+  const out = emitLibraryDeclarations(externalModel, {
+    moduleId: "demo.demo",
+    externalTypes: { ext: { module: "other.mod", name: "ext" } },
+  });
+
+  expect(out.split("\n")[2]).toBe("\timport { ext } from 'other.mod';");
+  expect(out).toContain("hook: ext;");
+  expect(out).not.toContain("unknown");
+});
+
+test("two tokens from one external module emit a single sorted import, rendered deterministically", () => {
+  const opts = {
+    moduleId: "demo.demo",
+    externalTypes: {
+      zeta: { module: "other.mod", name: "zeta" },
+      ext: { module: "other.mod", name: "ext" },
+    },
+  };
+
+  const out = emitLibraryDeclarations(externalModel, opts);
+
+  expect(out).toContain("import { ext, zeta } from 'other.mod';");
+  expect(out.match(/import /g)).toHaveLength(1);
+  expect(emitLibraryDeclarations(externalModel, opts)).toBe(out);
+});
+
+test("two external modules emit two imports sorted by module id", () => {
+  const out = emitLibraryDeclarations(externalModel, {
+    moduleId: "demo.demo",
+    externalTypes: {
+      ext: { module: "zed.mod", name: "ext" },
+      other: { module: "alpha.mod", name: "other" },
+    },
+  });
+
+  const imports = out.split("\n").filter((line) => line.includes("import "));
+  expect(imports).toEqual([
+    "\timport { other } from 'alpha.mod';",
+    "\timport { ext } from 'zed.mod';",
+  ]);
+});
+
+test("an external alias colliding with a declared name throws, naming the token and the declaration", () => {
+  const model: LibraryModel = {
+    interfaces: [{ name: "ext", generics: [], fields: [], methods: [], brief: "" }],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  expect(() =>
+    emitLibraryDeclarations(model, {
+      moduleId: "demo.demo",
+      externalTypes: { ext: { module: "other.mod", name: "ext" } },
+    }),
+  ).toThrow(/ext/);
+});
+
+test("an extends naming an external token emits the clause; an undeclared parent still emits none", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      { name: "child", extends: "ext", generics: [], fields: [], methods: [], brief: "" },
+      { name: "orphan", extends: "nope", generics: [], fields: [], methods: [], brief: "" },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, {
+    moduleId: "demo.demo",
+    externalTypes: { ext: { module: "other.mod", name: "ext" } },
+  });
+
+  expect(out).toContain("interface child extends ext {");
+  expect(out).toContain("interface orphan {");
 });

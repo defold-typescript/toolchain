@@ -317,7 +317,7 @@
           "brief": "fun(self: druid.back_handler, params: any?) Trigger on back handler action",
           "description": "fun(self: druid.back_handler, params: any?) Trigger on back handler action",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -847,7 +847,7 @@
           "brief": "fun(self, custom_args, button_instance)",
           "description": "fun(self, custom_args, button_instance)",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -855,7 +855,7 @@
           "brief": "fun(self, custom_args, button_instance)",
           "description": "fun(self, custom_args, button_instance)",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -863,7 +863,7 @@
           "brief": "fun(self, custom_args, button_instance, click_count) Repeated click callback, while holding the button",
           "description": "fun(self, custom_args, button_instance, click_count) Repeated click callback, while holding the button",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -871,7 +871,7 @@
           "brief": "fun(self, custom_args, button_instance, hold_time) Callback on long button tap",
           "description": "fun(self, custom_args, button_instance, hold_time) Callback on long button tap",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -879,7 +879,7 @@
           "brief": "fun(self, custom_args, button_instance, click_amount) Different callback, if tap button 2+ in row",
           "description": "fun(self, custom_args, button_instance, click_amount) Different callback, if tap button 2+ in row",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -887,7 +887,7 @@
           "brief": "fun(self, custom_args, button_instance, press_time) Hold callback, before long_click trigger",
           "description": "fun(self, custom_args, button_instance, press_time) Hold callback, before long_click trigger",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -895,7 +895,7 @@
           "brief": "fun(self, custom_args, button_instance)",
           "description": "fun(self, custom_args, button_instance)",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -1266,7 +1266,7 @@
           "brief": "fun(self, touch) The event triggered when a touch starts",
           "description": "fun(self, touch) The event triggered when a touch starts",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -1274,7 +1274,7 @@
           "brief": "fun(self, touch) The event triggered when a touch ends",
           "description": "fun(self, touch) The event triggered when a touch ends",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -1282,7 +1282,7 @@
           "brief": "fun(self, touch) The event triggered when a drag starts",
           "description": "fun(self, touch) The event triggered when a drag starts",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -1290,7 +1290,7 @@
           "brief": "fun(self, touch) The event triggered when a drag occurs",
           "description": "fun(self, touch) The event triggered when a drag occurs",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -1298,7 +1298,7 @@
           "brief": "fun(self, touch) The event triggered when a drag ends",
           "description": "fun(self, touch) The event triggered when a drag ends",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -1612,7 +1612,7 @@
           "brief": "fun(self: druid.hover, is_hover: boolean) Hover event",
           "description": "fun(self: druid.hover, is_hover: boolean) Hover event",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -1620,7 +1620,7 @@
           "brief": "fun(self: druid.hover, is_hover: boolean) Mouse hover event",
           "description": "fun(self: druid.hover, is_hover: boolean) Mouse hover event",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -2430,7 +2430,7 @@
           "brief": "fun(self: druid.scroll, position: vector3) Triggered on scroll move",
           "description": "fun(self: druid.scroll, position: vector3) Triggered on scroll move",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -2438,7 +2438,7 @@
           "brief": "fun(self: druid.scroll, target: vector3, is_instant: boolean) Triggered on scroll_to",
           "description": "fun(self: druid.scroll, target: vector3, is_instant: boolean) Triggered on scroll_to",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -2446,7 +2446,7 @@
           "brief": "fun(self: druid.scroll, index: number, point: vector3) Triggered on scroll_to_index",
           "description": "fun(self: druid.scroll, index: number, point: vector3) Triggered on scroll_to_index",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3201,7 +3201,7 @@
           "brief": "fun(self: druid.grid, item: node, index: number) Trigger on add item event",
           "description": "fun(self: druid.grid, item: node, index: number) Trigger on add item event",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3209,7 +3209,7 @@
           "brief": "fun(self: druid.grid, index: number) Trigger on remove item event",
           "description": "fun(self: druid.grid, index: number) Trigger on remove item event",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3217,7 +3217,7 @@
           "brief": "fun(self: druid.grid, index: number) Trigger on change items event",
           "description": "fun(self: druid.grid, index: number) Trigger on change items event",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3225,7 +3225,7 @@
           "brief": "fun(self: druid.grid) Trigger on clear event",
           "description": "fun(self: druid.grid) Trigger on clear event",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3233,7 +3233,7 @@
           "brief": "fun(self: druid.grid) Trigger on update positions event",
           "description": "fun(self: druid.grid) Trigger on update positions event",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3735,7 +3735,7 @@
           "brief": "fun(self: druid.text, text: string) The event triggered when the text is set",
           "description": "fun(self: druid.text, text: string) The event triggered when the text is set",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3743,7 +3743,7 @@
           "brief": "fun(self: druid.text, scale: vector3, metrics: table) The event triggered when the text scale is updated",
           "description": "fun(self: druid.text, scale: vector3, metrics: table) The event triggered when the text scale is updated",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -3751,7 +3751,7 @@
           "brief": "fun(self: druid.text, pivot: userdata) The event triggered when the text pivot is set",
           "description": "fun(self: druid.text, pivot: userdata) The event triggered when the text pivot is set",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -5758,7 +5758,7 @@
           "brief": "fun(self: druid.container, size: vector3) The event triggered when the size changes",
           "description": "fun(self: druid.container, size: vector3) The event triggered when the size changes",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6116,7 +6116,7 @@
           "brief": "fun(self: druid.data_list, progress: number) The event triggered when the scroll progress changes",
           "description": "fun(self: druid.data_list, progress: number) The event triggered when the scroll progress changes",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6124,7 +6124,7 @@
           "brief": "fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when a new element is added",
           "description": "fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when a new element is added",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6132,7 +6132,7 @@
           "brief": "fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when an element is removed",
           "description": "fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when an element is removed",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6325,7 +6325,7 @@
           "brief": "fun(self, context, callback_argument) The event triggered when a hotkey is pressed",
           "description": "fun(self, context, callback_argument) The event triggered when a hotkey is pressed",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6333,7 +6333,7 @@
           "brief": "fun(self, context, callback_argument) The event triggered when a hotkey is released",
           "description": "fun(self, context, callback_argument) The event triggered when a hotkey is released",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6695,7 +6695,7 @@
           "brief": "fun(self: druid.input, input: druid.input) The event triggered when the input field is selected",
           "description": "fun(self: druid.input, input: druid.input) The event triggered when the input field is selected",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6703,7 +6703,7 @@
           "brief": "fun(self: druid.input, text: string, input: druid.input) The event triggered when the input field is unselected",
           "description": "fun(self: druid.input, text: string, input: druid.input) The event triggered when the input field is unselected",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6711,7 +6711,7 @@
           "brief": "fun(self: druid.input) The event triggered when the input field is changed",
           "description": "fun(self: druid.input) The event triggered when the input field is changed",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6719,7 +6719,7 @@
           "brief": "fun(self: druid.input) The event triggered when the input field is empty",
           "description": "fun(self: druid.input) The event triggered when the input field is empty",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6727,7 +6727,7 @@
           "brief": "fun(self: druid.input) The event triggered when the input field is full",
           "description": "fun(self: druid.input) The event triggered when the input field is full",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6735,7 +6735,7 @@
           "brief": "fun(self: druid.input) The event triggered when the input field is wrong",
           "description": "fun(self: druid.input) The event triggered when the input field is wrong",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6743,7 +6743,7 @@
           "brief": "fun(self: druid.input, cursor_index: number, start_index: number, end_index: number) The event triggered when the cursor index is changed",
           "description": "fun(self: druid.input, cursor_index: number, start_index: number, end_index: number) The event triggered when the cursor index is changed",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -6932,24 +6932,14 @@
           "brief": "fun(self: druid.lang_text) The event triggered when the text is changed",
           "description": "fun(self: druid.lang_text) The event triggered when the text is changed",
           "types": [
-            "unknown"
+            "event"
           ]
         }
       ]
     },
     {
       "type": "TYPEDEF",
-      "name": "event_on_size_changed",
-      "properties": [
-        {
-          "name": "subscribe",
-          "brief": "",
-          "description": "",
-          "types": [
-            "(_: unknown, callback: (new_size: Vector3) => void, context: unknown | undefined) => void"
-          ]
-        }
-      ]
+      "name": "event_on_size_changed"
     },
     {
       "type": "TYPEDEF",
@@ -7925,7 +7915,7 @@
           "brief": "fun(self: druid.progress, value: number) Event triggered when progress value changes",
           "description": "fun(self: druid.progress, value: number) Event triggered when progress value changes",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -8164,7 +8154,7 @@
           "brief": "fun(self: druid.slider, value: number) The event triggered when the slider value changes",
           "description": "fun(self: druid.slider, value: number) The event triggered when the slider value changes",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -8324,7 +8314,7 @@
           "brief": "fun(context, side, dist, dt) The event triggered when a swipe is detected",
           "description": "fun(context, side, dist, dt) The event triggered when a swipe is detected",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -8488,7 +8478,7 @@
           "brief": "fun(context, value) The event triggered when the timer ticks",
           "description": "fun(context, value) The event triggered when the timer ticks",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -8496,7 +8486,7 @@
           "brief": "fun(context, is_on) The event triggered when the timer is enabled",
           "description": "fun(context, is_on) The event triggered when the timer is enabled",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -8504,7 +8494,7 @@
           "brief": "fun(context) The event triggered when the timer ends",
           "description": "fun(context) The event triggered when the timer ends",
           "types": [
-            "unknown"
+            "event"
           ]
         },
         {
@@ -9406,7 +9396,7 @@
               "name": "callback",
               "doc": "Button callback",
               "types": [
-                "((...args: any[]) => unknown) | unknown | undefined"
+                "((...args: any[]) => unknown) | event | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9476,7 +9466,7 @@
               "name": "callback",
               "doc": "The callback(self, custom_args) to call on back event",
               "types": [
-                "((...args: any[]) => unknown) | unknown | undefined"
+                "((...args: any[]) => unknown) | event | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -10109,7 +10099,7 @@
               "name": "callback",
               "doc": "The callback function",
               "types": [
-                "((...args: any[]) => unknown) | unknown | undefined"
+                "((...args: any[]) => unknown) | event | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"

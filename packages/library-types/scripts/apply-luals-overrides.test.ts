@@ -198,6 +198,44 @@ describe("applyAnnotationOverrides", () => {
     ).toThrow(/nope/);
   });
 
+  test("a dropped field is removed while every sibling field and method survives", () => {
+    const result = applyAnnotationOverrides(classShapeModel(), {
+      interfaces: { I: { fields: { cb: { drop: true } } } },
+    });
+    const iface = result.interfaces.find((i) => i.name === "I");
+    expect(iface?.fields.map((f) => f.name)).toEqual(["count"]);
+    expect(iface?.methods.map((m) => m.name)).toEqual(["init"]);
+  });
+
+  test("throws naming the field and the interface when a dropped field is absent", () => {
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { fields: { nope: { drop: true } } } },
+      }),
+    ).toThrow(/nope/);
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { fields: { nope: { drop: true } } } },
+      }),
+    ).toThrow(/"I"/);
+  });
+
+  test("drop: false keeps the field, and a type-only override still retypes it", () => {
+    const kept = applyAnnotationOverrides(classShapeModel(), {
+      interfaces: { I: { fields: { cb: { drop: false } } } },
+    });
+    expect(kept.interfaces[0]?.fields.map((f) => f.name)).toEqual(["cb", "count"]);
+    expect(kept.interfaces[0]?.fields.find((f) => f.name === "cb")?.types).toEqual([
+      "fun(self, node)|nil",
+    ]);
+
+    const retyped = applyAnnotationOverrides(classShapeModel(), {
+      interfaces: { I: { fields: { cb: { type: "number" } } } },
+    });
+    expect(retyped.interfaces[0]?.fields.map((f) => f.name)).toEqual(["cb", "count"]);
+    expect(retyped.interfaces[0]?.fields.find((f) => f.name === "cb")?.types).toEqual(["number"]);
+  });
+
   test("an empty override object is a no-op returning the same model", () => {
     const model = classShapeModel();
     const result = applyAnnotationOverrides(model, {});
