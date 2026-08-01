@@ -61,6 +61,16 @@
       "apiDoc": "api-doc/boom.json"
     },
     {
+      "repo": "https://github.com/whiteboxdev/library-defold-persist",
+      "ref": "b37f61040740f232d86f68e2606f27b6f1bd15c4",
+      "license": "Zlib",
+      "authored": "fixtures/authored/persist.persist.d.ts",
+      "moduleId": "persist.persist",
+      "namespace": "persist",
+      "generated": "generated/persist.d.ts",
+      "apiDoc": "api-doc/persist.json"
+    },
+    {
       "repo": "https://github.com/heroiclabs/nakama-defold",
       "ref": "v3.4.0",
       "license": "Apache-2.0",
