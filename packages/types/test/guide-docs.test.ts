@@ -1567,3 +1567,64 @@ describe("docs/guide npm package resolution coverage", () => {
     expect(section).toContain('["src/**/*.ts"]');
   });
 });
+
+describe("docs/guide/authoring-forked-library-types.md fork-source and namespace rules", () => {
+  // Every assertion below is scoped to the *generic* numbered procedure, so a
+  // worked example that names the retired ts-defold fixture cannot satisfy it.
+  async function readForkedGuideSection(heading: string): Promise<string> {
+    const body = await readGuide("authoring-forked-library-types.md");
+    const start = body.indexOf(heading);
+    expect(start).toBeGreaterThan(-1);
+    const nextSection = body.indexOf("\n## ", start + 1);
+    return body.slice(start, nextSection === -1 ? undefined : nextSection);
+  }
+
+  const VENDOR_HEADING = "## 2. Vendor the `.d.ts` and generate the artifacts";
+  const ENTRY_HEADING = "## 1. Add an `authored-targets.json` entry";
+  const CUTOVER_HEADING = "## 4. Cut the library over and validate";
+
+  async function dottedNamespaces(): Promise<string[]> {
+    const raw = await Bun.file(
+      resolve(REPO_ROOT, "packages", "library-types", "authored-targets.json"),
+    ).json();
+    return (raw.targets as { namespace: string }[])
+      .map((t) => t.namespace)
+      .filter((ns) => ns.includes("."));
+  }
+
+  test("the fork source is the shipped generated/ golden, not the ts-defold fixture", async () => {
+    const section = await readForkedGuideSection(VENDOR_HEADING);
+    expect(section).toContain("generated/<moduleId>.d.ts");
+    expect(section).not.toContain("fixtures/ts-defold/<moduleId>.d.ts");
+  });
+
+  test("the emit target carries no bare-namespace claim", async () => {
+    const section = await readForkedGuideSection(VENDOR_HEADING);
+    expect(section).toContain("generated/<namespace>.d.ts");
+    expect(section).not.toContain("bare-namespace");
+    expect(section).not.toContain("single-segment");
+  });
+
+  test("the namespace field says the stem may be bare or dotted", async () => {
+    const section = await readForkedGuideSection(ENTRY_HEADING);
+    const row = section.split("\n").find((line) => line.startsWith("| `namespace` |"));
+    expect(row).toBeDefined();
+    expect(row).toContain("dotted");
+    expect(section).not.toContain("bare-namespace");
+    expect(section).not.toContain("single-segment");
+  });
+
+  test("the cutover deletes the ts-defold fixture and overwrites the goldens in place", async () => {
+    const section = await readForkedGuideSection(CUTOVER_HEADING);
+    expect(section).toContain("fixtures/ts-defold/<moduleId>.d.ts");
+    expect(section).toContain("overwritten in place");
+    expect(section).toContain("`namespace` === `moduleId`");
+  });
+
+  test("the dotted-namespace rule is anchored in real authored-targets.json entries", async () => {
+    const dotted = await dottedNamespaces();
+    expect(dotted.length).toBeGreaterThan(0);
+    const section = await readForkedGuideSection(ENTRY_HEADING);
+    expect(dotted.some((ns) => section.includes(ns))).toBe(true);
+  });
+});

@@ -8,12 +8,12 @@ import { extractApiDoc } from "./extract-api-doc";
  * markdown (`sync-markdown-types.ts`) lanes. The other three ingest a *non-*`.d.ts`
  * primary source and generate a declaration; this one is for a library whose
  * upstream has no usable structured source, so its `.d.ts` is hand-authored or
- * forked from the retired ts-defold surface and vendored under
+ * forked from the retired ts-defold `generated/` golden and vendored under
  * `fixtures/authored/<moduleId>.d.ts`.
  *
  * A vendored authored `.d.ts` is already target-form — a `declare module
  * '<moduleId>'` ambient — so the lane is light: it emits the vendored source
- * verbatim as the bare-namespace `generated/<namespace>.d.ts` golden and runs
+ * verbatim as the `generated/<namespace>.d.ts` golden and runs
  * `extractApiDoc` for the `api-doc/<namespace>.json` the docs-site consumes. The
  * emitted surface *is* the vendored authored source, so the go/no-go gate is a
  * forked-vs-generated identity diff (see the golden loop) — emission fidelity.
@@ -94,7 +94,8 @@ function readAuthoredSource(packageRoot: string, target: AuthoredTarget): string
 }
 
 /**
- * The bare-namespace `generated/<namespace>.d.ts` golden. The vendored authored
+ * The `generated/<namespace>.d.ts` golden, under whatever stem the entry pins —
+ * a bare segment or the dotted `moduleId`. The vendored authored
  * `.d.ts` is already a `declare module '<moduleId>'` ambient, so the emit is the
  * source verbatim — the vendored surface passes through unchanged, which is what
  * makes the emission lossless. It says nothing about how that vendored surface
