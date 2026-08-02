@@ -31,6 +31,7 @@ import {
   varargElementType,
 } from "@defold-typescript/types";
 import {
+  LUALS_VARARG_TOKEN,
   type MapContext,
   mapLualsCallSignature,
   mapLualsType,
@@ -159,7 +160,10 @@ export function renderGenericParams(generics: readonly LibraryGeneric[], ctx: Ma
 function renderHookReturn(returnTokens: readonly string[], ctx: MapContext): string {
   if (returnTokens.length === 0) return "void";
   if (returnTokens.length === 1) return mapTypes([returnTokens[0] as string], ctx);
-  return luaMultiReturn(returnTokens.map((token) => mapTypes([token], ctx)));
+  return luaMultiReturn(
+    returnTokens.map((token) => mapTypes([token], ctx)),
+    returnTokens.at(-1) === LUALS_VARARG_TOKEN,
+  );
 }
 
 /**
@@ -225,7 +229,12 @@ function renderParams(params: readonly LibraryParam[], ctx: MapContext): string 
 function renderReturn(returns: readonly LibraryParam[], ctx: MapContext): string {
   if (returns.length === 0) return "void";
   if (returns.length === 1) return mapTypes((returns[0] as LibraryParam).types, ctx);
-  return luaMultiReturn(returns.map((ret) => mapTypes(ret.types, ctx)));
+  const last = returns[returns.length - 1] as LibraryParam;
+  const restTail = last.types.length === 1 && last.types[0] === LUALS_VARARG_TOKEN;
+  return luaMultiReturn(
+    returns.map((ret) => mapTypes(ret.types, ctx)),
+    restTail,
+  );
 }
 
 function pushDoc(lines: string[], summary: string, indent: string): void {

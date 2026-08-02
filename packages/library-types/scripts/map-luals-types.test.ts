@@ -174,9 +174,21 @@ describe("mapLualsType functions", () => {
     expect(r.unknowns).toEqual([]);
   });
 
-  test("a trailing vararg return stays a single tuple element", () => {
+  test("a trailing vararg return becomes a rest tuple element", () => {
     const r = mapLualsType("fun(...): world, ...", ctx({ knownNames: new Set(["world"]) }));
-    expect(r.ts).toBe("(...args: unknown[]) => LuaMultiReturn<[world, unknown]>");
+    expect(r.ts).toBe("(...args: unknown[]) => LuaMultiReturn<[world, ...unknown[]]>");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("the rest tail keys on the last token, not on arity", () => {
+    const r = mapLualsType("fun(): world, string, ...", ctx({ knownNames: new Set(["world"]) }));
+    expect(r.ts).toBe("() => LuaMultiReturn<[world, string, ...unknown[]]>");
+    expect(r.unknowns).toEqual([]);
+  });
+
+  test("a non-trailing vararg return token gets no rest treatment", () => {
+    const r = mapLualsType("fun(): ..., world", ctx({ knownNames: new Set(["world"]) }));
+    expect(r.ts).toBe("() => LuaMultiReturn<[unknown, world]>");
     expect(r.unknowns).toEqual([]);
   });
 
@@ -281,6 +293,15 @@ describe("mapLualsCallSignature", () => {
     expect(sig("fun(cb: fun(a: string): string): number, string")).toBe(
       "(cb: (a: string) => string): LuaMultiReturn<[number, string]>",
     );
+  });
+
+  test("a trailing vararg return carries the rest tail into a call signature", () => {
+    const r = mapLualsCallSignature(
+      "fun(cb: fun(a: string): string): world, ...",
+      ctx({ knownNames: new Set(["world"]) }),
+    );
+    expect(r.ts).toBe("(cb: (a: string) => string): LuaMultiReturn<[world, ...unknown[]]>");
+    expect(r.unknowns).toEqual([]);
   });
 
   test("an unresolved param type is recorded as an unknown fallback", () => {

@@ -40,4 +40,14 @@ describe("luaMultiReturn", () => {
     expect(luaMultiReturn(["number", "number"])).toBe("LuaMultiReturn<[number, number]>");
     expect(luaMultiReturn(["a", "b", "c"])).toBe("LuaMultiReturn<[a, b, c]>");
   });
+
+  test("renders the last element as a rest tail when asked", () => {
+    expect(luaMultiReturn(["world", "unknown"], true)).toBe(
+      "LuaMultiReturn<[world, ...unknown[]]>",
+    );
+  });
+
+  test("parenthesizes a union rest tail", () => {
+    expect(luaMultiReturn(["a", "b | c"], true)).toBe("LuaMultiReturn<[a, ...(b | c)[]]>");
+  });
 });
