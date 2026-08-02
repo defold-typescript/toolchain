@@ -17,7 +17,9 @@ const logger = log.get_logger("game");
 const name: string = logger.name;
 const level: string = logger.level;
 const trace: (message: string, data: unknown) => void = logger.trace;
-const debug: (message: string, data: unknown) => void = logger.debug;
+// Not named `debug`: that would shadow the ambient `debug` namespace the
+// get_default_logger_name proof below calls into.
+const debugMethod: (message: string, data: unknown) => void = logger.debug;
 const info: (message: string, data: unknown) => void = logger.info;
 const warn: (message: string, data: unknown) => void = logger.warn;
 const error: (message: string, data: unknown) => void = logger.error;
@@ -31,10 +33,20 @@ void logger.format;
 // @ts-expect-error log is @local, absent from the public surface
 void logger.log;
 
+// get_default_logger_name takes the real `debug.getinfo()` table, so a caller can
+// read `short_src` off it and hand the same table straight back.
+const frame = debug.getinfo(1);
+if (frame) {
+  const src: string = frame.short_src;
+  const loggerName: string = log.get_default_logger_name(frame);
+  void src;
+  void loggerName;
+}
+
 void name;
 void level;
 void trace;
-void debug;
+void debugMethod;
 void info;
 void warn;
 void error;
