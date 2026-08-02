@@ -30,6 +30,7 @@ import {
   upstreamLockOwnerPath,
   upstreamLockPath,
   upstreamRequestReservationPath,
+  upstreamReservationSuccessionPath,
   writeUpstreamState,
 } from "./upstream-check";
 
@@ -510,55 +511,122 @@ describe("acquireUpstreamLock", () => {
   });
 });
 
-describe("upstreamRequestReservationPath / reserveUpstreamRequest", () => {
+describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / reserveUpstreamRequest", () => {
   const now = 1_700_000_000_000;
   const intervalMs = 1000;
-  const bucket = Math.floor(now / intervalMs);
 
-  test("the reservation path is the channel state path plus its interval bucket", () => {
+  test("the reservation is one slot per channel, named without an interval", () => {
     const cacheDir = "/c";
-    expect(upstreamRequestReservationPath({ channel: "stable", cacheDir }, now, intervalMs)).toBe(
-      join("/c", `stable.json.${bucket}.req`),
+    expect(upstreamRequestReservationPath({ channel: "stable", cacheDir })).toBe(
+      join("/c", "stable.json.req"),
     );
-    expect(upstreamRequestReservationPath({ channel: "beta", cacheDir }, now, intervalMs)).toBe(
-      join("/c", `beta.json.${bucket}.req`),
-    );
-  });
-
-  test("the default interval is the one shouldRefreshUpstream quantizes", () => {
-    const key = { channel: "stable", cacheDir: "/c" } as const;
-    expect(upstreamRequestReservationPath(key, now)).toBe(
-      upstreamRequestReservationPath(key, now, UPSTREAM_CHECK_INTERVAL_MS),
+    expect(upstreamRequestReservationPath({ channel: "beta", cacheDir })).toBe(
+      join("/c", "beta.json.req"),
     );
   });
 
-  test("the first reservation in a bucket wins and a second at the same instant loses", () => {
+  test("the succession key is the predecessor value, and unparsable content collapses to `invalid`", () => {
+    const reservationPath = join("/c", "stable.json.req");
+    expect(upstreamReservationSuccessionPath(reservationPath, String(now))).toBe(
+      `${reservationPath}.${now}.succ`,
+    );
+    // Content never reaches a filename verbatim, so nothing in the file can
+    // escape into a path.
+    expect(upstreamReservationSuccessionPath(reservationPath, "../../x\n")).toBe(
+      `${reservationPath}.invalid.succ`,
+    );
+    expect(upstreamReservationSuccessionPath(reservationPath, "")).toBe(
+      `${reservationPath}.invalid.succ`,
+    );
+  });
+
+  test("the first reservation wins holding its own timestamp, a second at the same instant loses", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
-    const reservationPath = upstreamRequestReservationPath(key, now, intervalMs);
+    const reservationPath = upstreamRequestReservationPath(key);
 
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    expect(existsSync(reservationPath)).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
     const before = readFileSync(reservationPath);
 
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
   });
 
-  test("a later bucket is winnable, and aging a reservation never makes its own bucket re-winnable", () => {
+  test("a reservation taken one millisecond below a bucket boundary still blocks across it", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
+    const belowBoundary = now - 1;
+    expect(Math.floor(belowBoundary / intervalMs)).not.toBe(Math.floor(now / intervalMs));
 
-    // Expiry is by name, not by mtime: the artifact a stale-window check would
-    // hand back stays lost.
-    ageStale(upstreamRequestReservationPath(key, now, intervalMs), now);
+    expect(reserveUpstreamRequest(key, belowBoundary, intervalMs)).toBe(true);
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
   });
 
-  test("winning a bucket prunes reservations two or more buckets old and nothing else", () => {
+  test("the window is exactly intervalMs measured from the holder's timestamp", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now + intervalMs - 1, intervalMs)).toBe(false);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + intervalMs));
+  });
+
+  test("the default window is the interval shouldRefreshUpstream defaults to", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    expect(reserveUpstreamRequest(key, now)).toBe(true);
+    expect(reserveUpstreamRequest(key, now + UPSTREAM_CHECK_INTERVAL_MS - 1)).toBe(false);
+    expect(reserveUpstreamRequest(key, now + UPSTREAM_CHECK_INTERVAL_MS)).toBe(true);
+  });
+
+  test("a reservation timestamped in the future blocks rather than reading as expired", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    expect(reserveUpstreamRequest(key, now + 10 * intervalMs, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
+  });
+
+  test("expiry is by recorded timestamp, not by mtime", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+
+    ageStale(reservationPath, now);
+    expect(reserveUpstreamRequest(key, now + intervalMs - 1, intervalMs)).toBe(false);
+  });
+
+  test("two successors of one expired reservation cannot both win", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    const before = readFileSync(reservationPath);
+
+    // The rival already holds the only succession this value ever offers.
+    writeFileSync(upstreamReservationSuccessionPath(reservationPath, String(now)), "rival");
+
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(readFileSync(reservationPath)).toEqual(before);
+  });
+
+  test("content that is not a finite number is healed once under the `invalid` key", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    writeFileSync(reservationPath, "not-a-number\n");
+
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+
+    // The `invalid` succession is held now, so a second healer at the same
+    // instant cannot also win it.
+    writeFileSync(reservationPath, "not-a-number\n");
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe("not-a-number\n");
+  });
+
+  test("a win prunes spent successions and legacy bucket reservations, and nothing else", () => {
     const cacheDir = tmp();
     const key = { channel: "stable", cacheDir } as const;
     const statePath = upstreamCachePath(key);
+    const reservationPath = upstreamRequestReservationPath(key);
     const lockPath = upstreamLockPath(key);
     const ownerPath = upstreamLockOwnerPath(lockPath, "tok");
     const claimPath = `${lockPath}.other.claim`;
@@ -567,10 +635,11 @@ describe("upstreamRequestReservationPath / reserveUpstreamRequest", () => {
     writeFileSync(lockPath, "tok");
     writeFileSync(ownerPath, "tok");
     writeFileSync(claimPath, "other");
-    writeFileSync(`${statePath}.${bucket - 2}.req`, "two buckets old");
-    writeFileSync(`${statePath}.${bucket - 1}.req`, "one bucket old");
+    writeFileSync(`${statePath}.${Math.floor(now / intervalMs)}.req`, "a bucket-named reservation");
 
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    writeFileSync(upstreamReservationSuccessionPath(reservationPath, String(now - 5)), "spent");
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
 
     expect(dirEntries(cacheDir)).toEqual(
       [
@@ -578,8 +647,8 @@ describe("upstreamRequestReservationPath / reserveUpstreamRequest", () => {
         basename(lockPath),
         basename(ownerPath),
         basename(claimPath),
-        `${basename(statePath)}.${bucket - 1}.req`,
-        `${basename(statePath)}.${bucket}.req`,
+        basename(reservationPath),
+        `${basename(reservationPath)}.${now}.succ`,
       ].sort(),
     );
   });
@@ -615,7 +684,7 @@ describe("refreshUpstreamState", () => {
       fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc" }),
     });
     expect(dirEntries(cacheDir)).toEqual(
-      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key, now))].sort(),
+      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key))].sort(),
     );
     expect(
       dirEntries(cacheDir).filter((entry) => /\.(lock|own|claim|released)$/.test(entry)),
@@ -789,10 +858,16 @@ describe("refreshUpstreamState", () => {
     latestVersion: "1.12.0",
   };
 
-  // Session A owns the lock legitimately and parks inside `fetchChannelInfo`;
-  // the lock ages past the stale window while its request is still open, so B
-  // steals it correctly. Runs B to completion, then lets A finish.
-  async function stealFromParkedOwner(cacheDir: string) {
+  // Session A owns the lock legitimately at `nowA` and parks inside
+  // `fetchChannelInfo`; the lock ages past the stale window while its request is
+  // still open, so B steals it correctly at `nowB`. Runs B to completion, then
+  // lets A finish.
+  async function stealFromParkedOwner(
+    cacheDir: string,
+    nowA: number = now,
+    nowB: number = nowA,
+    intervalMs?: number,
+  ) {
     const key = { channel: "stable", cacheDir } as const;
     const lockPath = upstreamLockPath(key);
     writeUpstreamState(upstreamCachePath(key), parkedCache);
@@ -802,12 +877,14 @@ describe("refreshUpstreamState", () => {
     const gate = new Promise<void>((resolve) => {
       openGate = resolve;
     });
+    const window = intervalMs === undefined ? {} : { intervalMs };
 
     // An async function runs synchronously to its first await, so A already
     // holds the lock and sits inside the fetch once this expression returns.
     const a = refreshUpstreamState({
       ...key,
-      now,
+      ...window,
+      now: nowA,
       fetchChannelInfo: async () => {
         calls += 1;
         await gate;
@@ -816,14 +893,25 @@ describe("refreshUpstreamState", () => {
     });
     const parked = { calls, locked: existsSync(lockPath) };
 
-    ageStale(lockPath, now);
-    const fromB = await refreshUpstreamState({ ...key, now, fetchChannelInfo: noFetch });
+    ageStale(lockPath, nowA);
+    const fromB = await refreshUpstreamState({
+      ...key,
+      ...window,
+      now: nowB,
+      fetchChannelInfo: noFetch,
+    });
     const afterB = { calls, locked: existsSync(lockPath) };
 
     openGate();
     const fromA = await a;
     return { key, parked, fromB, afterB, fromA, calls };
   }
+
+  // One millisecond apart, either side of a `Math.floor(now / intervalMs)`
+  // boundary: the seam a bucket-named reservation cannot fence.
+  const straddleIntervalMs = 1000;
+  const straddleA = 1_699_999_999_999;
+  const straddleB = 1_700_000_000_000;
 
   test("a stale lock stolen from a parked owner cannot double-fetch", async () => {
     const r = await stealFromParkedOwner(tmp());
@@ -843,7 +931,37 @@ describe("refreshUpstreamState", () => {
     const cacheDir = tmp();
     const { key } = await stealFromParkedOwner(cacheDir);
     expect(dirEntries(cacheDir)).toEqual(
-      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key, now))].sort(),
+      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key))].sort(),
+    );
+  });
+
+  test("a stale lock stolen across a bucket boundary still cannot double-fetch", async () => {
+    expect(Math.floor(straddleA / straddleIntervalMs)).not.toBe(
+      Math.floor(straddleB / straddleIntervalMs),
+    );
+
+    const r = await stealFromParkedOwner(tmp(), straddleA, straddleB, straddleIntervalMs);
+    expect(r.parked).toEqual({ calls: 1, locked: true });
+
+    // B genuinely ran the recovery path: it took the aged lock over and released
+    // it, which a session that merely failed to acquire could not have done. It
+    // lands in the next bucket and still cannot fetch, because A's reservation
+    // fences a full interval from A's own attempt.
+    expect(r.afterB.locked).toBe(false);
+    expect(r.fromB).toEqual(parkedCache);
+    expect(r.calls).toBe(1);
+    expect(r.fromA).toEqual({
+      checkedAt: straddleA,
+      channel: "stable",
+      latestVersion: "1.13.0",
+    });
+  });
+
+  test("both settle across a boundary leaving one state file and one reservation", async () => {
+    const cacheDir = tmp();
+    const { key } = await stealFromParkedOwner(cacheDir, straddleA, straddleB, straddleIntervalMs);
+    expect(dirEntries(cacheDir)).toEqual(
+      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key))].sort(),
     );
   });
 
@@ -882,7 +1000,7 @@ describe("refreshUpstreamState", () => {
     expect(await refreshUpstreamState({ ...key, now, fetchChannelInfo: fetcher })).toEqual(fresh);
     expect(calls).toBe(1);
     expect(dirEntries(cacheDir)).toEqual(
-      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key, now))].sort(),
+      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key))].sort(),
     );
   });
 
@@ -921,6 +1039,16 @@ describe("refreshUpstreamState", () => {
         throw new Error("offline");
       },
     });
+
+    // The boundary is exact: one millisecond short of the interval is still
+    // fenced, and the interval itself retries.
+    const tooSoon = await refreshUpstreamState({
+      ...key,
+      now: now + intervalMs - 1,
+      intervalMs,
+      fetchChannelInfo: noFetch,
+    });
+    expect(tooSoon).toBeUndefined();
 
     const state = await refreshUpstreamState({
       ...key,

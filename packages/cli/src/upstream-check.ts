@@ -97,27 +97,42 @@ export function shouldRefreshUpstream(
 }
 
 // The second gate on the same interval, and the only one written *before* a
-// request. Quantizing the interval into the filename makes an exclusive create
-// the entire protocol: there is no expiry to detect and nothing to reclaim, so
-// no suspension, crash, or doubled ownership can produce a second winner for one
-// bucket. The default must stay the constant `shouldRefreshUpstream` defaults to
-// so the two gates always quantize the same interval.
-export function upstreamRequestReservationPath(
-  key: UpstreamCacheKey,
-  now: number,
-  intervalMs: number = UPSTREAM_CHECK_INTERVAL_MS,
-): string {
-  return `${upstreamCachePath(key)}.${Math.floor(now / intervalMs)}.req`;
+// request. One slot per channel: the window lives in the file's content, not in
+// its name, so the reservation covers `[t, t + intervalMs)` measured from the
+// attempt that took it rather than quantizing to a wall-clock bucket that a pair
+// of sessions can sit either side of. The path is created once and afterwards
+// only ever overwritten in place — never vacated, never renamed.
+export function upstreamRequestReservationPath(key: UpstreamCacheKey): string {
+  return `${upstreamCachePath(key)}.req`;
 }
 
-// The immediately-preceding bucket is kept, so a clock-skewed peer cannot re-win
-// one we just removed. The suffix match has to be exact: this prefix is also the
-// prefix of `<channel>.json.lock` and of every `.own`, `.claim`, and `.released`
-// artifact the lock's ownership depends on.
-function pruneUpstreamRequestReservations(statePath: string, bucket: number): void {
+// A sliding reservation cannot be identified by name, so the right to replace it
+// is granted by an exclusive create keyed on the value being replaced: exactly
+// one caller per predecessor can hold this, and values strictly increase, so a
+// stale observation cannot displace a fresh reservation. Content never reaches
+// the filename verbatim — anything but digits collapses to a fixed key, so no
+// path separator or newline in the file can escape into a path.
+export function upstreamReservationSuccessionPath(
+  reservationPath: string,
+  predecessor: string,
+): string {
+  return `${reservationPath}.${isReservationTimestamp(predecessor) ? predecessor : "invalid"}.succ`;
+}
+
+function isReservationTimestamp(content: string): boolean {
+  return /^\d+$/.test(content);
+}
+
+// Runs only on a win, and removes exactly two classes: reservations left behind
+// by the superseded bucket naming, and successions other than the one just
+// claimed. Both matches have to be exact — this prefix is also the prefix of
+// `<channel>.json.lock`, of every `.own`, `.claim`, and `.released` artifact the
+// lock's ownership depends on, and of the canonical reservation itself, none of
+// which may ever be unlinked.
+function pruneUpstreamRequestReservations(statePath: string, keptSuccession: string): void {
   const dir = path.dirname(statePath);
-  const prefix = `${path.basename(statePath)}.`;
-  const suffix = ".req";
+  const legacyPrefix = `${path.basename(statePath)}.`;
+  const successionPrefix = `${path.basename(statePath)}.req.`;
   let entries: string[];
   try {
     entries = readdirSync(dir);
@@ -125,11 +140,13 @@ function pruneUpstreamRequestReservations(statePath: string, bucket: number): vo
     return;
   }
   for (const entry of entries) {
-    if (!entry.startsWith(prefix) || !entry.endsWith(suffix)) {
-      continue;
-    }
-    const digits = entry.slice(prefix.length, -suffix.length);
-    if (!/^\d+$/.test(digits) || Number(digits) >= bucket - 1) {
+    const legacyBucket =
+      entry.startsWith(legacyPrefix) &&
+      entry.endsWith(".req") &&
+      isReservationTimestamp(entry.slice(legacyPrefix.length, -".req".length));
+    const spentSuccession =
+      entry.startsWith(successionPrefix) && entry.endsWith(".succ") && entry !== keptSuccession;
+    if (!legacyBucket && !spentSuccession) {
       continue;
     }
     try {
@@ -140,25 +157,71 @@ function pruneUpstreamRequestReservations(statePath: string, bucket: number): vo
   }
 }
 
+// Take over a reservation whose window has run out. Expiry is by the recorded
+// timestamp alone — mtime says nothing here, and a timestamp in the future gives
+// a negative difference, so it blocks rather than reading as long expired, the
+// same way `shouldRefreshUpstream` treats a future `checkedAt`. Unreadable
+// content is expired too: a hand-corrupted reservation must not wedge every
+// future check forever, and the exclusive create still admits one healer.
+function succeedUpstreamRequestReservation(
+  statePath: string,
+  reservationPath: string,
+  now: number,
+  intervalMs: number,
+): boolean {
+  let held: string;
+  try {
+    held = readFileSync(reservationPath, "utf8");
+  } catch {
+    return false;
+  }
+  if (isReservationTimestamp(held) && now - Number(held) < intervalMs) {
+    return false;
+  }
+  const successionPath = upstreamReservationSuccessionPath(reservationPath, held);
+  try {
+    writeFileSync(successionPath, String(now), { flag: "wx" });
+  } catch {
+    return false;
+  }
+  try {
+    // In-place overwrite, not a rename: the canonical path is never vacant, which
+    // is what makes the exclusive-create bootstrap and this handover between them
+    // total.
+    writeFileSync(reservationPath, String(now));
+  } catch {
+    try {
+      unlinkSync(successionPath);
+    } catch {
+      // Never created.
+    }
+    return false;
+  }
+  pruneUpstreamRequestReservations(statePath, path.basename(successionPath));
+  return true;
+}
+
 // Record the attempt before making it. `checkedAt` is written only once a request
 // has returned, so it can fence nothing while one is in flight; this artifact is
-// what does.
+// what does, for a full interval from the attempt wherever it falls.
 export function reserveUpstreamRequest(
   key: UpstreamCacheKey,
   now: number,
   intervalMs: number = UPSTREAM_CHECK_INTERVAL_MS,
 ): boolean {
   const statePath = upstreamCachePath(key);
+  const reservationPath = upstreamRequestReservationPath(key);
   try {
     mkdirSync(path.dirname(statePath), { recursive: true });
-    writeFileSync(upstreamRequestReservationPath(key, now, intervalMs), String(now), {
-      flag: "wx",
-    });
-  } catch {
-    // A lost race and an unwritable cache dir are the same outcome: no request.
-    return false;
+    writeFileSync(reservationPath, String(now), { flag: "wx" });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
+      // An unwritable cache dir and a lost race are the same outcome: no request.
+      return false;
+    }
+    return succeedUpstreamRequestReservation(statePath, reservationPath, now, intervalMs);
   }
-  pruneUpstreamRequestReservations(statePath, Math.floor(now / intervalMs));
+  pruneUpstreamRequestReservations(statePath, "");
   return true;
 }
 
@@ -452,10 +515,13 @@ export async function refreshUpstreamState(
     }
     // The lock cannot be the fence here: it can be stolen from an owner that
     // suspended mid-fetch, and an aged claim can be re-adopted, so two sessions
-    // can hold a handle over the same interval. The bucket name is what makes
-    // this exclusive create total. It is deliberately never rolled back — the
-    // invariant is one *attempt* per interval, so a failed request waits for the
-    // next bucket rather than retrying on the next command.
+    // can hold a handle over the same interval. What makes this total is that the
+    // canonical reservation is never vacated and succession to it is exclusive
+    // per predecessor value; and because it fences a full interval from the
+    // attempt, a stale takeover of a parked owner cannot slip a second request
+    // through on the far side of a boundary. It is deliberately never rolled back
+    // — the invariant is one *attempt* per interval, so a failed request waits
+    // out that interval rather than retrying on the next command.
     if (!reserveUpstreamRequest(opts, opts.now, opts.intervalMs)) {
       return cached;
     }
