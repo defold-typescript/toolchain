@@ -96,6 +96,72 @@ export function shouldRefreshUpstream(
   return now - state.checkedAt >= intervalMs;
 }
 
+// The second gate on the same interval, and the only one written *before* a
+// request. Quantizing the interval into the filename makes an exclusive create
+// the entire protocol: there is no expiry to detect and nothing to reclaim, so
+// no suspension, crash, or doubled ownership can produce a second winner for one
+// bucket. The default must stay the constant `shouldRefreshUpstream` defaults to
+// so the two gates always quantize the same interval.
+export function upstreamRequestReservationPath(
+  key: UpstreamCacheKey,
+  now: number,
+  intervalMs: number = UPSTREAM_CHECK_INTERVAL_MS,
+): string {
+  return `${upstreamCachePath(key)}.${Math.floor(now / intervalMs)}.req`;
+}
+
+// The immediately-preceding bucket is kept, so a clock-skewed peer cannot re-win
+// one we just removed. The suffix match has to be exact: this prefix is also the
+// prefix of `<channel>.json.lock` and of every `.own`, `.claim`, and `.released`
+// artifact the lock's ownership depends on.
+function pruneUpstreamRequestReservations(statePath: string, bucket: number): void {
+  const dir = path.dirname(statePath);
+  const prefix = `${path.basename(statePath)}.`;
+  const suffix = ".req";
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (!entry.startsWith(prefix) || !entry.endsWith(suffix)) {
+      continue;
+    }
+    const digits = entry.slice(prefix.length, -suffix.length);
+    if (!/^\d+$/.test(digits) || Number(digits) >= bucket - 1) {
+      continue;
+    }
+    try {
+      unlinkSync(path.join(dir, entry));
+    } catch {
+      // Pruned by a peer between the scan and the unlink.
+    }
+  }
+}
+
+// Record the attempt before making it. `checkedAt` is written only once a request
+// has returned, so it can fence nothing while one is in flight; this artifact is
+// what does.
+export function reserveUpstreamRequest(
+  key: UpstreamCacheKey,
+  now: number,
+  intervalMs: number = UPSTREAM_CHECK_INTERVAL_MS,
+): boolean {
+  const statePath = upstreamCachePath(key);
+  try {
+    mkdirSync(path.dirname(statePath), { recursive: true });
+    writeFileSync(upstreamRequestReservationPath(key, now, intervalMs), String(now), {
+      flag: "wx",
+    });
+  } catch {
+    // A lost race and an unwritable cache dir are the same outcome: no request.
+    return false;
+  }
+  pruneUpstreamRequestReservations(statePath, Math.floor(now / intervalMs));
+  return true;
+}
+
 export const UPSTREAM_LOCK_STALE_MS = 60_000;
 
 // The lock's identity is its content, not its existence: a holder proves
@@ -382,6 +448,15 @@ export async function refreshUpstreamState(
     // invariant holds only for the first.
     const cached = readUpstreamState(upstreamCachePath(opts));
     if (!shouldRefreshUpstream(cached, opts.now, opts.intervalMs)) {
+      return cached;
+    }
+    // The lock cannot be the fence here: it can be stolen from an owner that
+    // suspended mid-fetch, and an aged claim can be re-adopted, so two sessions
+    // can hold a handle over the same interval. The bucket name is what makes
+    // this exclusive create total. It is deliberately never rolled back — the
+    // invariant is one *attempt* per interval, so a failed request waits for the
+    // next bucket rather than retrying on the next command.
+    if (!reserveUpstreamRequest(opts, opts.now, opts.intervalMs)) {
       return cached;
     }
     const info = await opts.fetchChannelInfo(opts.channel);
