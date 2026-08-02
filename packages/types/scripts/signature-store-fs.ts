@@ -22,6 +22,8 @@ export const PACKAGE_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signature
 export const BASE_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "base.json");
 export const SOCKET_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "socket.json");
 export const VMATH_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "vmath.json");
+export const GO_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "go.json");
+export const MSG_SIGNATURES_PATH = resolve(import.meta.dir, "..", "signatures", "msg.json");
 
 export function loadSignatureFile(path: string): SignatureStore {
   let raw: string;

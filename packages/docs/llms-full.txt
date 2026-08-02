@@ -5885,7 +5885,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cancel_animations(url: string | Hash | Url, property?: string | Hash): void;
 - function _delete(id?: string | Hash | Url | (string | Hash | Url)[], recursive?: boolean): void;
 - function exists(url: string | Hash | Url): boolean;
-- go.get(url: string | Hash | Url, property: string | Hash, options?: Record<string | number, unknown>): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">
+- go.get<P>(): <K extends keyof P>(url: string | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
+- go.get<K extends keyof go.properties>(url: string | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
+- go.get(url: string | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">
 - function get_id(path?: string): Hash;
 - function get_parent(id?: string | Hash | Url): Hash | undefined;
 - function get_position(id?: string | Hash | Url): Vector3;
@@ -5897,8 +5899,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_world_scale(id?: string | Hash | Url): Vector3;
 - function get_world_scale_uniform(id?: string | Hash | Url): number;
 - function get_world_transform(id?: string | Hash | Url): Matrix4;
-- go.property(name: string, value: number | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource"> | boolean)
-- go.set(url: string | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">, options?: Record<string | number, unknown>)
+- go.property(name: string, value: number): ScriptProperty<number>
+- go.property(name: string, value: boolean): ScriptProperty<boolean>
+- go.property(name: string, value: Hash): ScriptProperty<Hash>
+- go.property(name: string, value: Url): ScriptProperty<Url>
+- go.property(name: string, value: Vector3): ScriptProperty<Vector3>
+- go.property(name: string, value: Vector4): ScriptProperty<Vector4>
+- go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
+- go.property(name: string, value: Opaque<"resource">): ScriptProperty<Opaque<"resource">>
+- go.set<P>(): <K extends keyof P>(url: string | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
+- go.set<K extends keyof go.properties>(url: string | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
+- go.set(url: string | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">, options?: GoPropertyOptions): void
 - function set_parent(id?: string | Hash | Url, parent_id?: string | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: string | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: string | Hash | Url): void;
@@ -6437,10 +6448,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### msg
 
-- msg.post(receiver: string | Url | Hash, message_id: string | Hash, message?: Record<string | number, unknown> | nil)
+- msg.post<K extends string>(receiver: string | Url | Hash, message_id: K, message?: MsgPostPayload<K>): void
+- msg.post(receiver: string | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
 - msg.url(urlstring: string): Url
-- msg.url(socket?: string | Hash, path?: string | Hash, fragment?: string | Hash): Url
+- msg.url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url
 
 ### particlefx
 
