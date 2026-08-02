@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import * as path from "node:path";
 import { DEFOLD_CHANNELS, type DefoldChannel } from "./defold-target";
@@ -90,37 +90,89 @@ export function shouldRefreshUpstream(
 
 export const UPSTREAM_LOCK_STALE_MS = 60_000;
 
-// Exclusive-create lock with stale detection. Returns a boolean rather than
+// The lock's identity is its content, not its existence: a holder proves
+// ownership by matching the token it wrote, so a lock stolen as stale is never
+// released by the session it was taken from.
+export interface UpstreamLockHandle {
+  readonly lockPath: string;
+  readonly token: string;
+}
+
+let lockCounter = 0;
+
+// Unique per acquire within a process and across processes by pid, with no `:`
+// or path separator, because the token also names the takeover path.
+function nextLockToken(): string {
+  return `${process.pid}-${++lockCounter}`;
+}
+
+// Capture a stale lock without ever unlinking it. Renaming an existing file away
+// is the serialization point: of two sessions that both saw the same stale lock,
+// only one rename can find it, so the loser declines instead of also winning.
+export function takeOverStaleUpstreamLock(
+  lockPath: string,
+  now: number,
+  token: string,
+): UpstreamLockHandle | undefined {
+  const takeoverPath = `${lockPath}.${token}.takeover`;
+  try {
+    if (statSync(lockPath).mtimeMs >= now - UPSTREAM_LOCK_STALE_MS) {
+      return undefined;
+    }
+    renameSync(lockPath, takeoverPath);
+  } catch {
+    return undefined;
+  }
+  try {
+    // A rival may have taken over and re-locked the path between our staleness
+    // check and the capture, in which case what we hold is its fresh lock rather
+    // than the stale one we meant to reclaim — put it back and decline.
+    if (statSync(takeoverPath).mtimeMs >= now - UPSTREAM_LOCK_STALE_MS) {
+      renameSync(takeoverPath, lockPath);
+      return undefined;
+    }
+    writeFileSync(lockPath, token, { flag: "wx" });
+    return { lockPath, token };
+  } catch {
+    return undefined;
+  } finally {
+    try {
+      unlinkSync(takeoverPath);
+    } catch {
+      // Renamed back to the lock path, or never captured in the first place.
+    }
+  }
+}
+
+// Exclusive-create lock with stale detection. Returns a handle rather than
 // waiting: the refresh is advisory, so a session that loses the race skips it
 // entirely instead of blocking the command it is attached to. Any unexpected
-// error also returns `false` — the lock must never break the command.
-export function acquireUpstreamLock(lockPath: string, now: number): boolean {
+// error also returns `undefined` — the lock must never break the command.
+export function acquireUpstreamLock(lockPath: string, now: number): UpstreamLockHandle | undefined {
+  const token = nextLockToken();
   try {
     // The very first check on a machine runs before the cache dir exists; without
     // this the exclusive create fails ENOENT and the refresh never happens.
     mkdirSync(path.dirname(lockPath), { recursive: true });
-    writeFileSync(lockPath, String(process.pid), { flag: "wx" });
-    return true;
+    writeFileSync(lockPath, token, { flag: "wx" });
+    return { lockPath, token };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
-      return false;
+      return undefined;
     }
   }
-  try {
-    if (statSync(lockPath).mtimeMs >= now - UPSTREAM_LOCK_STALE_MS) {
-      return false;
-    }
-    unlinkSync(lockPath);
-    writeFileSync(lockPath, String(process.pid), { flag: "wx" });
-    return true;
-  } catch {
-    return false;
-  }
+  return takeOverStaleUpstreamLock(lockPath, now, token);
 }
 
-export function releaseUpstreamLock(lockPath: string): void {
+export function releaseUpstreamLock(handle: UpstreamLockHandle): void {
   try {
-    unlinkSync(lockPath);
+    // Read-then-unlink leaves a window in which the lock is stolen as stale
+    // between the two calls and we then delete the thief's lock. That window is
+    // bounded by the stale interval and is strictly narrower than the
+    // unconditional unlink it replaces, which had no ownership check at all.
+    if (readFileSync(handle.lockPath, "utf8") === handle.token) {
+      unlinkSync(handle.lockPath);
+    }
   } catch {
     // Already gone: released twice, or stolen as stale by another session.
   }
@@ -128,6 +180,7 @@ export function releaseUpstreamLock(lockPath: string): void {
 
 export interface UpstreamRefreshOptions extends UpstreamCacheKey {
   readonly now: number;
+  readonly intervalMs?: number;
   readonly fetchChannelInfo: (channel: DefoldChannel) => Promise<{
     version: string;
     sha1: string;
@@ -140,11 +193,19 @@ export interface UpstreamRefreshOptions extends UpstreamCacheKey {
 export async function refreshUpstreamState(
   opts: UpstreamRefreshOptions,
 ): Promise<UpstreamCheckState | undefined> {
-  const lockPath = upstreamLockPath(opts);
-  if (!acquireUpstreamLock(lockPath, opts.now)) {
+  const handle = acquireUpstreamLock(upstreamLockPath(opts), opts.now);
+  if (handle === undefined) {
     return undefined;
   }
   try {
+    // Re-read the throttle under the lock. Sessions that all observed the same
+    // stale `checkedAt` serialize here rather than dedupe, so without this every
+    // one of them fetches in turn and the at-most-one-request-per-interval
+    // invariant holds only for the first.
+    const cached = readUpstreamState(upstreamCachePath(opts));
+    if (!shouldRefreshUpstream(cached, opts.now, opts.intervalMs)) {
+      return cached;
+    }
     const info = await opts.fetchChannelInfo(opts.channel);
     const state: UpstreamCheckState = {
       checkedAt: opts.now,
@@ -156,7 +217,7 @@ export async function refreshUpstreamState(
   } catch {
     return undefined;
   } finally {
-    releaseUpstreamLock(lockPath);
+    releaseUpstreamLock(handle);
   }
 }
 
