@@ -1,4 +1,12 @@
-import { mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import * as path from "node:path";
 import { DEFOLD_CHANNELS, type DefoldChannel } from "./defold-target";
@@ -101,45 +109,127 @@ export interface UpstreamLockHandle {
 let lockCounter = 0;
 
 // Unique per acquire within a process and across processes by pid, with no `:`
-// or path separator, because the token also names the takeover path.
+// or path separator, because the token also names the owner marker and the
+// claim artifact.
 function nextLockToken(): string {
   return `${process.pid}-${++lockCounter}`;
 }
 
-// Capture a stale lock without ever unlinking it. Renaming an existing file away
-// is the serialization point: of two sessions that both saw the same stale lock,
-// only one rename can find it, so the loser declines instead of also winning.
+// The second, uniquely-named handle every owner holds on its own ownership.
+// POSIX offers no conditional unlink of the canonical path, so ownership is
+// transferred by renaming this marker instead — see `claimStaleUpstreamLock`.
+export function upstreamLockOwnerPath(lockPath: string, token: string): string {
+  return `${lockPath}.${token}.own`;
+}
+
+function upstreamLockClaimPath(lockPath: string, token: string): string {
+  return `${lockPath}.${token}.claim`;
+}
+
+// Compare-and-swap on a lock's ownership: renaming the victim's marker away
+// succeeds for exactly one caller, so of a release and a stale takeover racing
+// the same owner only one proceeds and the other declines untouched.
+export function claimStaleUpstreamLock(
+  lockPath: string,
+  victimToken: string,
+  token: string,
+): boolean {
+  try {
+    renameSync(
+      upstreamLockOwnerPath(lockPath, victimToken),
+      upstreamLockClaimPath(lockPath, token),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// A claim artifact inside the stale window is a takeover still in flight, which
+// already holds the claim we would be racing for.
+function hasLiveUpstreamClaim(lockPath: string, now: number): boolean {
+  const dir = path.dirname(lockPath);
+  const prefix = `${path.basename(lockPath)}.`;
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return false;
+  }
+  for (const entry of entries) {
+    if (!entry.startsWith(prefix) || !entry.endsWith(".claim")) {
+      continue;
+    }
+    try {
+      if (statSync(path.join(dir, entry)).mtimeMs >= now - UPSTREAM_LOCK_STALE_MS) {
+        return true;
+      }
+    } catch {
+      // Vanished mid-scan: the takeover holding it has already finished.
+    }
+  }
+  return false;
+}
+
+// Steal a stale lock in place. The canonical path is never vacated, so a rival
+// can neither find it free nor have a fresh replacement captured out from under
+// it — the only contended resource is the victim's marker.
 export function takeOverStaleUpstreamLock(
   lockPath: string,
   now: number,
   token: string,
 ): UpstreamLockHandle | undefined {
-  const takeoverPath = `${lockPath}.${token}.takeover`;
+  let victimToken: string;
   try {
     if (statSync(lockPath).mtimeMs >= now - UPSTREAM_LOCK_STALE_MS) {
       return undefined;
     }
-    renameSync(lockPath, takeoverPath);
+    victimToken = readFileSync(lockPath, "utf8");
   } catch {
     return undefined;
   }
-  try {
-    // A rival may have taken over and re-locked the path between our staleness
-    // check and the capture, in which case what we hold is its fresh lock rather
-    // than the stale one we meant to reclaim — put it back and decline.
-    if (statSync(takeoverPath).mtimeMs >= now - UPSTREAM_LOCK_STALE_MS) {
-      renameSync(takeoverPath, lockPath);
+
+  if (!claimStaleUpstreamLock(lockPath, victimToken, token)) {
+    if (hasLiveUpstreamClaim(lockPath, now)) {
       return undefined;
     }
-    writeFileSync(lockPath, token, { flag: "wx" });
+    // No live claim and no marker means a crash orphaned the lock, so re-adopt
+    // the marker on the victim's behalf; the exclusive create is what serializes
+    // two recoverers. Residual exposure: a recoverer that passed this scan
+    // before a rival's claim existed can re-adopt after that rival finished and
+    // overwrite the lock, leaving the loser holding a token that is no longer
+    // the lock's content. Its release re-reads and finds the mismatch, so the
+    // worst case is one duplicate upstream fetch after a crash — never a
+    // deleted or displaced lock.
+    try {
+      writeFileSync(upstreamLockOwnerPath(lockPath, victimToken), victimToken, { flag: "wx" });
+    } catch {
+      return undefined;
+    }
+    if (!claimStaleUpstreamLock(lockPath, victimToken, token)) {
+      return undefined;
+    }
+  }
+
+  const ownerPath = upstreamLockOwnerPath(lockPath, token);
+  try {
+    writeFileSync(ownerPath, token, { flag: "wx" });
+    // In-place overwrite, not a rename: the victim provably cannot release (its
+    // marker is ours now) and no plain acquire can take a non-empty path.
+    writeFileSync(lockPath, token);
     return { lockPath, token };
   } catch {
+    try {
+      unlinkSync(ownerPath);
+    } catch {
+      // Never created.
+    }
     return undefined;
   } finally {
     try {
-      unlinkSync(takeoverPath);
+      unlinkSync(upstreamLockClaimPath(lockPath, token));
     } catch {
-      // Renamed back to the lock path, or never captured in the first place.
+      // Never claimed.
     }
   }
 }
@@ -150,13 +240,26 @@ export function takeOverStaleUpstreamLock(
 // error also returns `undefined` — the lock must never break the command.
 export function acquireUpstreamLock(lockPath: string, now: number): UpstreamLockHandle | undefined {
   const token = nextLockToken();
+  const ownerPath = upstreamLockOwnerPath(lockPath, token);
   try {
     // The very first check on a machine runs before the cache dir exists; without
     // this the exclusive create fails ENOENT and the refresh never happens.
     mkdirSync(path.dirname(lockPath), { recursive: true });
+    // Marker before lock: a lock is never observable without the ownership
+    // handle that release and takeover compare-and-swap on.
+    writeFileSync(ownerPath, token, { flag: "wx" });
+  } catch {
+    return undefined;
+  }
+  try {
     writeFileSync(lockPath, token, { flag: "wx" });
     return { lockPath, token };
   } catch (err) {
+    try {
+      unlinkSync(ownerPath);
+    } catch {
+      // Never created.
+    }
     if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
       return undefined;
     }
@@ -165,16 +268,30 @@ export function acquireUpstreamLock(lockPath: string, now: number): UpstreamLock
 }
 
 export function releaseUpstreamLock(handle: UpstreamLockHandle): void {
+  const ownerPath = upstreamLockOwnerPath(handle.lockPath, handle.token);
+  const releasedPath = `${ownerPath}.released`;
   try {
-    // Read-then-unlink leaves a window in which the lock is stolen as stale
-    // between the two calls and we then delete the thief's lock. That window is
-    // bounded by the stale interval and is strictly narrower than the
-    // unconditional unlink it replaces, which had no ownership check at all.
+    // Renaming our own marker away is the compare-and-swap: it fails exactly
+    // when a takeover already claimed us (or we already released), and on
+    // success no takeover can target us and no plain acquire can take the
+    // non-empty canonical path — so the lock is provably still ours.
+    renameSync(ownerPath, releasedPath);
+  } catch {
+    return;
+  }
+  try {
+    // Cheap identity re-proof; it also covers the orphan-recovery corner where
+    // a second recoverer overwrote the lock under us.
     if (readFileSync(handle.lockPath, "utf8") === handle.token) {
       unlinkSync(handle.lockPath);
     }
   } catch {
-    // Already gone: released twice, or stolen as stale by another session.
+    // Already gone: the lock never existed, or a recoverer removed it.
+  }
+  try {
+    unlinkSync(releasedPath);
+  } catch {
+    // Already gone.
   }
 }
 
