@@ -192,6 +192,40 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(true);
   });
 
+  test("the guide's explicit type-argument factory builds to its component suffix", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/menu.ts",
+      [
+        'import { defineGuiScript, type Hash } from "@defold-typescript/types";',
+        "",
+        "type MenuSelf = {",
+        "  root: Hash;",
+        "};",
+        "",
+        "export default defineGuiScript<MenuSelf>({",
+        "  on_input(_self, action_id, action) {",
+        "    if (action_id == null) {",
+        "      return;",
+        "    }",
+        "",
+        "    if (action.released) {",
+        "      const text = action.text;",
+        "      void text;",
+        "    }",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toEqual(["src/menu.ts.gui_script"]);
+    expect(existsSync(path.join(cwd, "src/menu.ts.gui_script"))).toBe(true);
+    expect(existsSync(path.join(cwd, "src/menu.lua"))).toBe(false);
+  });
+
   test("writes lualib_bundle.lua at the output root when a source uses a lualib feature", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/main.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");

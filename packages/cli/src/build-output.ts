@@ -98,17 +98,26 @@ const SCRIPT_SUFFIX_BY_KIND: Record<ScriptKind, string> = {
 
 export type SourceOutputKind = ScriptKind | "module";
 
+// Excluding parens from the type-argument body keeps a later call expression on
+// the same line from being swallowed into it; one nesting level covers `Box<T>`.
+const TYPE_ARGS = String.raw`(?:<(?:[^<>()]|<[^<>()]*>)*>\s*)?`;
+
+function factoryCall(name: string): RegExp {
+  return new RegExp(String.raw`\b${name}\s*${TYPE_ARGS}\(`);
+}
+
 // A `.ts` source carries no Defold component kind of its own; the lifecycle
-// factory it calls is the signal. The call is matched (trailing `(`) so a bare
-// import of the factories does not decide the kind. `editor-script` is a
-// disjoint marker, so its order relative to the runtime three is irrelevant;
-// precedence among the runtime kinds is render > gui > script; a source using no
-// factory emits as a Lua module.
+// factory it calls is the signal. The call is matched (trailing `(`, with or
+// without an explicit type-argument list) so a bare import of the factories does
+// not decide the kind. `editor-script` is a disjoint marker, so its order
+// relative to the runtime three is irrelevant; precedence among the runtime
+// kinds is render > gui > script; a source using no factory emits as a Lua
+// module.
 const FACTORY_KINDS: ReadonlyArray<readonly [ScriptKind, RegExp]> = [
-  ["editor-script", /\bdefineEditorScript\s*\(/],
-  ["render-script", /\bdefineRenderScript\s*\(/],
-  ["gui-script", /\bdefineGuiScript\s*\(/],
-  ["script", /\bdefineScript\s*\(/],
+  ["editor-script", factoryCall("defineEditorScript")],
+  ["render-script", factoryCall("defineRenderScript")],
+  ["gui-script", factoryCall("defineGuiScript")],
+  ["script", factoryCall("defineScript")],
 ];
 
 export function detectSourceOutputKind(source: string): SourceOutputKind {
