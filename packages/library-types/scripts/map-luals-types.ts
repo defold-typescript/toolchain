@@ -13,6 +13,7 @@
  * verbatim and the emitter sanitizes it later.
  */
 
+import { luaMultiReturn } from "@defold-typescript/types";
 import { CORE_TYPE_RENAMES } from "./sync-library-types";
 
 export interface MapContext {
@@ -68,7 +69,7 @@ const CALLABLE_UNSPECIFIED = "(...args: any[]) => unknown";
  * upstream omission and stays recorded.
  */
 const LUALS_THROWAWAY_PARAM = "_";
-const LUALS_VARARG_TOKEN = "...";
+export const LUALS_VARARG_TOKEN = "...";
 
 /**
  * Split `s` on every top-level occurrence of the single-character `sep`, honoring
@@ -192,8 +193,11 @@ function functionParts(
     if (retTokens.length === 1) {
       ret = mapToken(retTokens[0] as string, ctx, unknowns);
     } else if (retTokens.length > 1) {
-      const inner = retTokens.map((r) => mapToken(r, ctx, unknowns)).join(", ");
-      ret = `LuaMultiReturn<[${inner}]>`;
+      const restTail = retTokens.at(-1) === LUALS_VARARG_TOKEN;
+      ret = luaMultiReturn(
+        retTokens.map((r) => mapToken(r, ctx, unknowns)),
+        restTail,
+      );
     }
   }
   return { paramList, ret };
