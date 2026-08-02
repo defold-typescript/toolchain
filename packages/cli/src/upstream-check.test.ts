@@ -20,6 +20,7 @@ import {
   releaseUpstreamLock,
   reserveUpstreamRequest,
   shouldRefreshUpstream,
+  succeedUpstreamRequestReservation,
   takeOverStaleUpstreamLock,
   UPSTREAM_CHECK_INTERVAL_MS,
   UPSTREAM_LOCK_STALE_MS,
@@ -599,30 +600,159 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
     const before = readFileSync(reservationPath);
 
-    // The rival already holds the only succession this value ever offers.
+    // A rival already holds the only stage this value ever offers, and what it
+    // holds is not a timestamp, so it reads as a write that never finished.
     writeFileSync(upstreamReservationSuccessionPath(reservationPath, String(now)), "rival");
 
     expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
   });
 
-  test("content that is not a finite number is healed once under the `invalid` key", () => {
+  test("an interrupted handover is completed by the next caller, without granting a duplicate", () => {
+    const cacheDir = tmp();
+    const key = { channel: "stable", cacheDir } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    // Staged and never renamed into place: the process exited between the two.
+    writeFileSync(
+      upstreamReservationSuccessionPath(reservationPath, String(now)),
+      String(now + intervalMs),
+    );
+
+    expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs)).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + intervalMs));
+    expect(dirEntries(cacheDir).filter((entry) => entry.endsWith(".succ"))).toEqual([]);
+
+    expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs)).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + 2 * intervalMs));
+  });
+
+  test("a live successor's staged claim is not stolen", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    writeFileSync(reservationPath, "not-a-number\n");
+    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
+    writeFileSync(stagedPath, String(now + intervalMs));
+    const reservationBefore = readFileSync(reservationPath);
+    const stagedBefore = readFileSync(stagedPath);
+
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(readFileSync(reservationPath)).toEqual(reservationBefore);
+    expect(readFileSync(stagedPath)).toEqual(stagedBefore);
+  });
+
+  test("an unfinished stage is discarded rather than wedging the slot", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
+    // A crash between the exclusive-create open and the write that follows it.
+    writeFileSync(stagedPath, "");
+    const before = readFileSync(reservationPath);
+
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(existsSync(stagedPath)).toBe(false);
+    expect(readFileSync(reservationPath)).toEqual(before);
+
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + intervalMs));
+  });
+
+  test("a delayed reader replaying an obsolete observation cannot overwrite a newer reservation", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const statePath = upstreamCachePath(key);
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
+    const before = readFileSync(reservationPath);
+
+    expect(
+      succeedUpstreamRequestReservation(
+        statePath,
+        reservationPath,
+        String(now),
+        now + 2 * intervalMs,
+        intervalMs,
+      ),
+    ).toBe(false);
+    expect(readFileSync(reservationPath)).toEqual(before);
+    expect(existsSync(upstreamReservationSuccessionPath(reservationPath, String(now)))).toBe(false);
+  });
+
+  test("an empty observation, what a truncating writer would expose, cannot make a second winner", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const statePath = upstreamCachePath(key);
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    const before = readFileSync(reservationPath);
+
+    expect(succeedUpstreamRequestReservation(statePath, reservationPath, "", now, intervalMs)).toBe(
+      false,
+    );
+    expect(readFileSync(reservationPath)).toEqual(before);
+    expect(existsSync(upstreamReservationSuccessionPath(reservationPath, ""))).toBe(false);
+  });
+
+  test("a digit run too long to be a safe integer never reaches a filename verbatim", () => {
+    const reservationPath = join("/c", "stable.json.req");
+    expect(upstreamReservationSuccessionPath(reservationPath, "9".repeat(400))).toBe(
+      `${reservationPath}.invalid.succ`,
+    );
+    expect(upstreamReservationSuccessionPath(reservationPath, String(now))).toBe(
+      `${reservationPath}.${now}.succ`,
+    );
+  });
+
+  test("a reservation Number maps to Infinity is succeeded, not read as permanently fresh", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const statePath = upstreamCachePath(key);
+    const reservationPath = upstreamRequestReservationPath(key);
+    const overflowing = "9".repeat(400);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    writeFileSync(reservationPath, overflowing);
 
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
     expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
 
-    // The `invalid` succession is held now, so a second healer at the same
-    // instant cannot also win it.
-    writeFileSync(reservationPath, "not-a-number\n");
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
-    expect(readFileSync(reservationPath, "utf8")).toBe("not-a-number\n");
+    expect(
+      succeedUpstreamRequestReservation(statePath, reservationPath, overflowing, now, intervalMs),
+    ).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
   });
 
-  test("a win prunes spent successions and legacy bucket reservations, and nothing else", () => {
+  test("malformed content heals once per corruption event, and a pre-heal observation is refused", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const statePath = upstreamCachePath(key);
+    const reservationPath = upstreamRequestReservationPath(key);
+    const malformed = "not-a-number\n";
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    writeFileSync(reservationPath, malformed);
+
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+
+    // Refused by revalidation now, not by a spent exclusive create.
+    expect(
+      succeedUpstreamRequestReservation(statePath, reservationPath, malformed, now, intervalMs),
+    ).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+    expect(existsSync(upstreamReservationSuccessionPath(reservationPath, malformed))).toBe(false);
+  });
+
+  test("the handover consumes its own token rather than leaving it for prune to sweep", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    // A zero window is the one case where the succession a win offers and the one
+    // it consumes share a name, so prune cannot stand in for the rename here: only
+    // replacing the canonical file *with* the stage leaves nothing behind.
+    expect(reserveUpstreamRequest(key, now, 0)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, 0)).toBe(true);
+
+    expect(existsSync(upstreamReservationSuccessionPath(reservationPath, String(now)))).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+  });
+
+  test("a win prunes spent successions and legacy bucket reservations, and consumes its own token", () => {
     const cacheDir = tmp();
     const key = { channel: "stable", cacheDir } as const;
     const statePath = upstreamCachePath(key);
@@ -648,7 +778,6 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
         basename(ownerPath),
         basename(claimPath),
         basename(reservationPath),
-        `${basename(reservationPath)}.${now}.succ`,
       ].sort(),
     );
   });
