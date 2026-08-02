@@ -18,6 +18,7 @@ import {
   readUpstreamState,
   refreshUpstreamState,
   releaseUpstreamLock,
+  reserveUpstreamRequest,
   shouldRefreshUpstream,
   takeOverStaleUpstreamLock,
   UPSTREAM_CHECK_INTERVAL_MS,
@@ -28,6 +29,7 @@ import {
   upstreamCachePath,
   upstreamLockOwnerPath,
   upstreamLockPath,
+  upstreamRequestReservationPath,
   writeUpstreamState,
 } from "./upstream-check";
 
@@ -144,47 +146,47 @@ describe("shouldRefreshUpstream", () => {
   });
 });
 
+function ageStale(lockPath: string, now: number): void {
+  const seconds = (now - UPSTREAM_LOCK_STALE_MS - 1000) / 1000;
+  utimesSync(lockPath, seconds, seconds);
+}
+
+function mustAcquire(lockPath: string, now: number): UpstreamLockHandle {
+  const handle = acquireUpstreamLock(lockPath, now);
+  if (handle === undefined) {
+    throw new Error(`expected to acquire ${lockPath}`);
+  }
+  return handle;
+}
+
+// Finish what a won `claimStaleUpstreamLock` started, through the same call
+// `takeOverStaleUpstreamLock` ends at. Lets a proof hold a takeover mid-flight
+// and resume it after mutating the directory the way a race would.
+function mustCapture(
+  lockPath: string,
+  victimToken: string,
+  token: string,
+  now: number,
+): UpstreamLockHandle {
+  const handle = captureClaimedUpstreamLock(lockPath, victimToken, token, now);
+  if (handle === undefined) {
+    throw new Error(`expected to capture ${lockPath} claimed from ${victimToken}`);
+  }
+  return handle;
+}
+
+function dirEntries(dir: string): string[] {
+  return readdirSync(dir).sort();
+}
+
+function expectedEntries(lockPath: string, ...tokens: string[]): string[] {
+  return [
+    basename(lockPath),
+    ...tokens.map((token) => basename(upstreamLockOwnerPath(lockPath, token))),
+  ].sort();
+}
+
 describe("acquireUpstreamLock", () => {
-  function ageStale(lockPath: string, now: number): void {
-    const seconds = (now - UPSTREAM_LOCK_STALE_MS - 1000) / 1000;
-    utimesSync(lockPath, seconds, seconds);
-  }
-
-  function mustAcquire(lockPath: string, now: number): UpstreamLockHandle {
-    const handle = acquireUpstreamLock(lockPath, now);
-    if (handle === undefined) {
-      throw new Error(`expected to acquire ${lockPath}`);
-    }
-    return handle;
-  }
-
-  // Finish what a won `claimStaleUpstreamLock` started, through the same call
-  // `takeOverStaleUpstreamLock` ends at. Lets a proof hold a takeover mid-flight
-  // and resume it after mutating the directory the way a race would.
-  function mustCapture(
-    lockPath: string,
-    victimToken: string,
-    token: string,
-    now: number,
-  ): UpstreamLockHandle {
-    const handle = captureClaimedUpstreamLock(lockPath, victimToken, token, now);
-    if (handle === undefined) {
-      throw new Error(`expected to capture ${lockPath} claimed from ${victimToken}`);
-    }
-    return handle;
-  }
-
-  function dirEntries(dir: string): string[] {
-    return readdirSync(dir).sort();
-  }
-
-  function expectedEntries(lockPath: string, ...tokens: string[]): string[] {
-    return [
-      basename(lockPath),
-      ...tokens.map((token) => basename(upstreamLockOwnerPath(lockPath, token))),
-    ].sort();
-  }
-
   test("free path acquires; a held lock refuses", () => {
     const lockPath = join(tmp(), "stable.json.lock");
     const now = Date.now();
@@ -508,6 +510,81 @@ describe("acquireUpstreamLock", () => {
   });
 });
 
+describe("upstreamRequestReservationPath / reserveUpstreamRequest", () => {
+  const now = 1_700_000_000_000;
+  const intervalMs = 1000;
+  const bucket = Math.floor(now / intervalMs);
+
+  test("the reservation path is the channel state path plus its interval bucket", () => {
+    const cacheDir = "/c";
+    expect(upstreamRequestReservationPath({ channel: "stable", cacheDir }, now, intervalMs)).toBe(
+      join("/c", `stable.json.${bucket}.req`),
+    );
+    expect(upstreamRequestReservationPath({ channel: "beta", cacheDir }, now, intervalMs)).toBe(
+      join("/c", `beta.json.${bucket}.req`),
+    );
+  });
+
+  test("the default interval is the one shouldRefreshUpstream quantizes", () => {
+    const key = { channel: "stable", cacheDir: "/c" } as const;
+    expect(upstreamRequestReservationPath(key, now)).toBe(
+      upstreamRequestReservationPath(key, now, UPSTREAM_CHECK_INTERVAL_MS),
+    );
+  });
+
+  test("the first reservation in a bucket wins and a second at the same instant loses", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key, now, intervalMs);
+
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(existsSync(reservationPath)).toBe(true);
+    const before = readFileSync(reservationPath);
+
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
+    expect(readFileSync(reservationPath)).toEqual(before);
+  });
+
+  test("a later bucket is winnable, and aging a reservation never makes its own bucket re-winnable", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
+
+    // Expiry is by name, not by mtime: the artifact a stale-window check would
+    // hand back stays lost.
+    ageStale(upstreamRequestReservationPath(key, now, intervalMs), now);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
+  });
+
+  test("winning a bucket prunes reservations two or more buckets old and nothing else", () => {
+    const cacheDir = tmp();
+    const key = { channel: "stable", cacheDir } as const;
+    const statePath = upstreamCachePath(key);
+    const lockPath = upstreamLockPath(key);
+    const ownerPath = upstreamLockOwnerPath(lockPath, "tok");
+    const claimPath = `${lockPath}.other.claim`;
+
+    writeUpstreamState(statePath, { checkedAt: 1, channel: "stable", latestVersion: "1.12.0" });
+    writeFileSync(lockPath, "tok");
+    writeFileSync(ownerPath, "tok");
+    writeFileSync(claimPath, "other");
+    writeFileSync(`${statePath}.${bucket - 2}.req`, "two buckets old");
+    writeFileSync(`${statePath}.${bucket - 1}.req`, "one bucket old");
+
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+
+    expect(dirEntries(cacheDir)).toEqual(
+      [
+        basename(statePath),
+        basename(lockPath),
+        basename(ownerPath),
+        basename(claimPath),
+        `${basename(statePath)}.${bucket - 1}.req`,
+        `${basename(statePath)}.${bucket}.req`,
+      ].sort(),
+    );
+  });
+});
+
 describe("refreshUpstreamState", () => {
   const now = 1_700_000_000_000;
 
@@ -529,17 +606,20 @@ describe("refreshUpstreamState", () => {
     expect(existsSync(upstreamLockPath({ channel: "stable", cacheDir }))).toBe(false);
   });
 
-  test("a completed refresh leaves exactly the channel state file behind", async () => {
+  test("a completed refresh leaves the state file and the interval's reservation behind", async () => {
     const cacheDir = tmp();
+    const key = { channel: "stable", cacheDir } as const;
     await refreshUpstreamState({
-      channel: "stable",
-      cacheDir,
+      ...key,
       now,
       fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc" }),
     });
-    expect(readdirSync(cacheDir)).toEqual([
-      basename(upstreamCachePath({ channel: "stable", cacheDir })),
-    ]);
+    expect(dirEntries(cacheDir)).toEqual(
+      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key, now))].sort(),
+    );
+    expect(
+      dirEntries(cacheDir).filter((entry) => /\.(lock|own|claim|released)$/.test(entry)),
+    ).toEqual([]);
   });
 
   test("a rejecting fetch is silent and leaves a pre-existing state byte-identical", async () => {
@@ -701,6 +781,158 @@ describe("refreshUpstreamState", () => {
     });
     expect(seen).toEqual(["alpha"]);
     expect(state).toEqual({ checkedAt: now, channel: "alpha", latestVersion: "1.14.0" });
+  });
+
+  const parkedCache: UpstreamCheckState = {
+    checkedAt: 1,
+    channel: "stable",
+    latestVersion: "1.12.0",
+  };
+
+  // Session A owns the lock legitimately and parks inside `fetchChannelInfo`;
+  // the lock ages past the stale window while its request is still open, so B
+  // steals it correctly. Runs B to completion, then lets A finish.
+  async function stealFromParkedOwner(cacheDir: string) {
+    const key = { channel: "stable", cacheDir } as const;
+    const lockPath = upstreamLockPath(key);
+    writeUpstreamState(upstreamCachePath(key), parkedCache);
+
+    let calls = 0;
+    let openGate!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      openGate = resolve;
+    });
+
+    // An async function runs synchronously to its first await, so A already
+    // holds the lock and sits inside the fetch once this expression returns.
+    const a = refreshUpstreamState({
+      ...key,
+      now,
+      fetchChannelInfo: async () => {
+        calls += 1;
+        await gate;
+        return { version: "1.13.0", sha1: "abc" };
+      },
+    });
+    const parked = { calls, locked: existsSync(lockPath) };
+
+    ageStale(lockPath, now);
+    const fromB = await refreshUpstreamState({ ...key, now, fetchChannelInfo: noFetch });
+    const afterB = { calls, locked: existsSync(lockPath) };
+
+    openGate();
+    const fromA = await a;
+    return { key, parked, fromB, afterB, fromA, calls };
+  }
+
+  test("a stale lock stolen from a parked owner cannot double-fetch", async () => {
+    const r = await stealFromParkedOwner(tmp());
+    expect(r.parked).toEqual({ calls: 1, locked: true });
+
+    // B genuinely ran the recovery path: it took the aged lock over and released
+    // it, which a session that merely failed to acquire could not have done. And
+    // resolving to the cached state is the reservation-lost return, not the
+    // silent-failure one.
+    expect(r.afterB.locked).toBe(false);
+    expect(r.fromB).toEqual(parkedCache);
+    expect(r.calls).toBe(1);
+    expect(r.fromA).toEqual({ checkedAt: now, channel: "stable", latestVersion: "1.13.0" });
+  });
+
+  test("both settle leaving only the state file and the interval's reservation", async () => {
+    const cacheDir = tmp();
+    const { key } = await stealFromParkedOwner(cacheDir);
+    expect(dirEntries(cacheDir)).toEqual(
+      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key, now))].sort(),
+    );
+  });
+
+  test("an aged claim that reads as abandoned still yields exactly one fetch", async () => {
+    const cacheDir = tmp();
+    const key = { channel: "stable", cacheDir } as const;
+    const lockPath = upstreamLockPath(key);
+    const victim = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    expect(claimStaleUpstreamLock(lockPath, victim.token, "a")).toBe(true);
+
+    // Age the claim itself: the exact artifact `hasLiveUpstreamClaim` misreads as
+    // abandoned, which is what lets a recoverer fabricate the victim's marker and
+    // end up holding a lock the claimant also believes it can capture.
+    const claimPath = `${lockPath}.a.claim`;
+    ageStale(claimPath, now);
+
+    let calls = 0;
+    const fetcher = async () => {
+      calls += 1;
+      return { version: "1.13.0", sha1: "abc" };
+    };
+    const fresh: UpstreamCheckState = {
+      checkedAt: now,
+      channel: "stable",
+      latestVersion: "1.13.0",
+    };
+
+    expect(await refreshUpstreamState({ ...key, now, fetchChannelInfo: fetcher })).toEqual(fresh);
+    expect(calls).toBe(1);
+
+    // The claimant resumes against a lock that is gone: it declines and drops its
+    // claim, and a replay at the same instant adds no second request.
+    expect(captureClaimedUpstreamLock(lockPath, victim.token, "a", now)).toBeUndefined();
+    expect(existsSync(claimPath)).toBe(false);
+    expect(await refreshUpstreamState({ ...key, now, fetchChannelInfo: fetcher })).toEqual(fresh);
+    expect(calls).toBe(1);
+    expect(dirEntries(cacheDir)).toEqual(
+      [basename(upstreamCachePath(key)), basename(upstreamRequestReservationPath(key, now))].sort(),
+    );
+  });
+
+  test("a rejecting fetch consumes the interval it attempted", async () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const rejected = await refreshUpstreamState({
+      ...key,
+      now,
+      fetchChannelInfo: async () => {
+        throw new Error("offline");
+      },
+    });
+    expect(rejected).toBeUndefined();
+
+    let retries = 0;
+    const second = await refreshUpstreamState({
+      ...key,
+      now,
+      fetchChannelInfo: async () => {
+        retries += 1;
+        return noFetch();
+      },
+    });
+    expect(retries).toBe(0);
+    expect(second).toBeUndefined();
+  });
+
+  test("the interval after a rejecting fetch is not burned", async () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const intervalMs = 1000;
+    await refreshUpstreamState({
+      ...key,
+      now,
+      intervalMs,
+      fetchChannelInfo: async () => {
+        throw new Error("offline");
+      },
+    });
+
+    const state = await refreshUpstreamState({
+      ...key,
+      now: now + intervalMs,
+      intervalMs,
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc" }),
+    });
+    expect(state).toEqual({
+      checkedAt: now + intervalMs,
+      channel: "stable",
+      latestVersion: "1.13.0",
+    });
   });
 });
 
