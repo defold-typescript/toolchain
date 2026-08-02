@@ -158,6 +158,22 @@ describe("runInitAgents", () => {
     expect(block).toContain("defineScript<T>");
   });
 
+  test("renderAgentsBlock permits both self-typing factory forms", () => {
+    const block = renderAgentsBlock();
+    for (const retired of [
+      "Do not call the generic form",
+      "goes undetected",
+      "silently compiles",
+      "annotate `init(): T` instead",
+    ]) {
+      expect(block).not.toContain(retired);
+    }
+    expect(block).toContain("Either self-typing form");
+    expect(block).toContain("`init(): T`");
+    expect(block).toContain("defineScript<T>(...)");
+    expect(block).toContain("defineGuiScript<T>(...)");
+  });
+
   test("renderAgentsBlock names the upgrade command and its guide", () => {
     const block = renderAgentsBlock();
     expect(block).toContain("@defold-typescript/cli@latest upgrade");
