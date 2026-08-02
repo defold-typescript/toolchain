@@ -312,13 +312,22 @@ export function isFactoryOnlyImport(node: ts.ImportDeclaration): boolean {
   if (clause === undefined || clause.name !== undefined) {
     return false;
   }
+  // A whole-clause `import type { ... }` binds nothing at runtime; leave it for
+  // the normal transform, which elides it.
+  if (clause.isTypeOnly) {
+    return false;
+  }
   const bindings = clause.namedBindings;
   if (bindings === undefined || !ts.isNamedImports(bindings)) {
     return false;
   }
-  return bindings.elements.every((element) =>
-    FACTORY_NAMES.has((element.propertyName ?? element.name).text),
-  );
+  // Type-only specifiers ride along and drop with the erased statement; erase
+  // only when every runtime specifier is a lifecycle factory.
+  const runtime = bindings.elements.filter((element) => !element.isTypeOnly);
+  if (runtime.length === 0) {
+    return false;
+  }
+  return runtime.every((element) => FACTORY_NAMES.has((element.propertyName ?? element.name).text));
 }
 
 export const lifecycleErasurePlugin: Plugin = {

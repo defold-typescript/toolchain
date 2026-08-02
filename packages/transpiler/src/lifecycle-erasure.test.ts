@@ -555,6 +555,27 @@ describe("lifecycle erasure", () => {
         firstImport('import { defineScript } from "@defold-typescript/types/core-types";'),
       ),
     ).toBe(false);
+
+    // A type-only specifier riding along binds nothing at runtime, so the import
+    // is still factory-only and erases with the call it served.
+    expect(
+      isFactoryOnlyImport(
+        firstImport('import { defineGuiScript, type Hash } from "@defold-typescript/types";'),
+      ),
+    ).toBe(true);
+    // A whole-clause `import type { ... }` binds nothing either; the normal
+    // transform elides it.
+    expect(
+      isFactoryOnlyImport(
+        firstImport('import type { defineScript } from "@defold-typescript/types";'),
+      ),
+    ).toBe(false);
+    // A runtime non-factory name still blocks erasure, type-only siblings or not.
+    expect(
+      isFactoryOnlyImport(
+        firstImport('import { defineScript, hash, type Hash } from "@defold-typescript/types";'),
+      ),
+    ).toBe(false);
   });
 
   test("does not erase a factory name that does not resolve to the types package", () => {
