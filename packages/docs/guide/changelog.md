@@ -43,6 +43,8 @@ changes are called out first because the toolchain is pre-1.0.
 
 - Every generated library's type coverage is now pinned by a committed floor, so regenerating it can no longer quietly reduce how much of its surface is typed — a drop fails the suite instead of rewriting the report. [Authoring LuaLS library types](./authoring-luals-library-types.md) covers locking in a genuine improvement.
 
+- The [agent runbooks](./agent-runbooks.md) now warn that the script lifecycle factory needs a *value* import — the `import type` plus `declare const` form builds `ok: true` while leaving the hooks unerased — and route Defold's resulting `FORMAT_ERROR` resource cascade back to that fix.
+
 ### Fixed
 
 - A dependency that ships modules across two of this repo's registry lanes — such as [`heroiclabs/nakama-defold`](/api/nakama.engine.defold), whose `nakama.nakama` is codegen'd while its `nakama.engine.defold` and `nakama.util.log` helpers are forked — now resolves and materializes every module; [`resolve`](./resolve.md) previously kept only the first lane's module and silently dropped the rest.

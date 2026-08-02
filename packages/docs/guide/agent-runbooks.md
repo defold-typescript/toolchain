@@ -247,6 +247,34 @@ input arrives through the `on_input` hook, not a polling API.
 | `hash("player")`                  | `hash("player")`, or a pre-hashed `Hash` id |
 | `msg.post("#comp", "msg", {})`    | `msg.post("#comp", "msg", {})`              |
 
+The first row carries a requirement the table cannot show: the lifecycle factory
+must be a **value** import from `@defold-typescript/types`, or from the matching
+`@defold-typescript/types/script`, `/gui-script`, or `/render-script` subpath.
+The rule is the same for `defineScript`, `defineGuiScript`, and
+`defineRenderScript` — erasure resolves the callee back to the types package, so
+a name that merely reads correctly is not enough. See
+[Script lifecycle](./script-lifecycle.md) for the hook model itself.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+import type { Hash } from "@defold-typescript/types";
+```
+
+The form to avoid re-declares the factory locally. It type-checks, `build`
+reports `ok: true`, and the lifecycle hooks are never erased:
+
+```ts
+import type { defineScript as defineScriptType } from "@defold-typescript/types";
+
+declare const defineScript: typeof defineScriptType;
+```
+
+**The tell** is in the emitted artifact, not in the build report: if the
+`.ts.script` contains `____exports.default = defineScript(`, erasure declined. A
+correct build has top-level `function init(` and `function update(` and no
+`defineScript` symbol at all. Recovery is in
+[Fix the Lua output](#fix-the-lua-output).
+
 ### Fetch upstream on demand (gitignored, not a submodule)
 
 When you need the engine's own API data or source, pull it on demand into a
@@ -699,6 +727,23 @@ that compile clean but surprise under Lua, and
 [Transpile diagnostics](./transpile-diagnostics.md) for what the diagnostic pass
 surfaces. Repeat until `ok` is `true`, then read `written` as in
 [Add a script](#add-a-script).
+
+**The failure `ok` cannot report:** `build` answers `ok: true` and Defold still
+rejects the resources, as a cascade in the engine log:
+
+```
+WARNING:RESOURCE: Unable to create resource: /game/player.ts.scriptc: FORMAT_ERROR
+WARNING:RESOURCE: Unable to create resource: /_generated_*.goc: FORMAT_ERROR
+WARNING:RESOURCE: Unable to create resource: /game/game.collectionc: FORMAT_ERROR
+```
+
+The emitted script is not a Defold script. Read the **first** line, not the last:
+the cascade names the `.goc` and `.collectionc` that *reference* the script, not
+the `.ts` source. Check the artifact for `____exports.default = defineScript(`,
+then recover in order: fix the import as in
+[Reach upstream Lua docs and convert](#reach-upstream-lua-docs-and-convert),
+re-run `bunx @defold-typescript/cli build --json`, and clear the Defold project's
+`build/` output if stale compiled resources keep failing.
 
 ## Drive the engine build
 
