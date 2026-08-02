@@ -458,3 +458,37 @@ describe("buildFidelityReport with externalTypes", () => {
     );
   });
 });
+
+describe("buildFidelityReport with an ambient stdlib rename", () => {
+  const stdlibRenameModel: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "get_default_logger_name",
+        brief: "",
+        generics: [],
+        params: [
+          { name: "debuginfo", types: ["debuginfo"], doc: "", isOptional: false, isVararg: false },
+        ],
+        returns: [{ name: "", types: ["string"], doc: "", isOptional: false, isVararg: false }],
+      },
+    ],
+  };
+
+  test("a dotted stdlib rename counts as resolved on the coverage surface", () => {
+    const report = buildFidelityReport("demo", stdlibRenameModel, {
+      debuginfo: "debug.FunctionInfo",
+    });
+
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.coverage).toBe(1);
+  });
+
+  test("the same model without the rename still records the token as unknown", () => {
+    const report = buildFidelityReport("demo", stdlibRenameModel, {});
+
+    expect(report.unknownTokens).toEqual(["debuginfo"]);
+  });
+});

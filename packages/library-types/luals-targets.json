@@ -103,7 +103,7 @@
       "sourceGlobs": ["log/**/*.lua"],
       "moduleId": "log.log",
       "namespace": "log",
-      "typeRenames": {},
+      "typeRenames": { "debuginfo": "debug.FunctionInfo" },
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     },
     {
