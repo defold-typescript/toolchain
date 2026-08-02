@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import {
   acquireUpstreamLock,
   readCachedUpstreamLatest,
@@ -9,9 +16,11 @@ import {
   refreshUpstreamState,
   releaseUpstreamLock,
   shouldRefreshUpstream,
+  takeOverStaleUpstreamLock,
   UPSTREAM_CHECK_INTERVAL_MS,
   UPSTREAM_LOCK_STALE_MS,
   type UpstreamCheckState,
+  type UpstreamLockHandle,
   upstreamCacheDir,
   upstreamCachePath,
   upstreamLockPath,
@@ -132,46 +141,109 @@ describe("shouldRefreshUpstream", () => {
 });
 
 describe("acquireUpstreamLock", () => {
+  function ageStale(lockPath: string, now: number): void {
+    const seconds = (now - UPSTREAM_LOCK_STALE_MS - 1000) / 1000;
+    utimesSync(lockPath, seconds, seconds);
+  }
+
+  function mustAcquire(lockPath: string, now: number): UpstreamLockHandle {
+    const handle = acquireUpstreamLock(lockPath, now);
+    if (handle === undefined) {
+      throw new Error(`expected to acquire ${lockPath}`);
+    }
+    return handle;
+  }
+
   test("free path acquires; a held lock refuses", () => {
     const lockPath = join(tmp(), "stable.json.lock");
     const now = Date.now();
-    expect(acquireUpstreamLock(lockPath, now)).toBe(true);
+    const handle = acquireUpstreamLock(lockPath, now);
+    expect(handle).toBeDefined();
     expect(existsSync(lockPath)).toBe(true);
-    expect(acquireUpstreamLock(lockPath, now)).toBe(false);
+    expect(acquireUpstreamLock(lockPath, now)).toBeUndefined();
   });
 
-  test("a lock older than the stale window is stolen", () => {
+  test("the handle's token is the lock file's exact content", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const handle = mustAcquire(lockPath, Date.now());
+    expect(handle.lockPath).toBe(lockPath);
+    expect(readFileSync(lockPath, "utf8")).toBe(handle.token);
+  });
+
+  test("a lock older than the stale window is stolen under a fresh token", () => {
     const lockPath = join(tmp(), "stable.json.lock");
     const now = Date.now();
-    expect(acquireUpstreamLock(lockPath, now)).toBe(true);
-    const staleSeconds = (now - UPSTREAM_LOCK_STALE_MS - 1000) / 1000;
-    utimesSync(lockPath, staleSeconds, staleSeconds);
-    expect(acquireUpstreamLock(lockPath, now)).toBe(true);
-    expect(existsSync(lockPath)).toBe(true);
+    const first = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+
+    const second = mustAcquire(lockPath, now);
+    expect(second.token).not.toBe(first.token);
+    expect(readFileSync(lockPath, "utf8")).toBe(second.token);
+  });
+
+  test("a successful steal leaves no takeover residue", () => {
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
+    const now = Date.now();
+    expect(acquireUpstreamLock(lockPath, now)).toBeDefined();
+    ageStale(lockPath, now);
+    expect(acquireUpstreamLock(lockPath, now)).toBeDefined();
+    expect(readdirSync(dir)).toEqual([basename(lockPath)]);
   });
 
   test("a lock inside the stale window is not stolen", () => {
     const lockPath = join(tmp(), "stable.json.lock");
     const now = Date.now();
-    expect(acquireUpstreamLock(lockPath, now)).toBe(true);
+    expect(acquireUpstreamLock(lockPath, now)).toBeDefined();
     const freshSeconds = (now - (UPSTREAM_LOCK_STALE_MS - 1000)) / 1000;
     utimesSync(lockPath, freshSeconds, freshSeconds);
-    expect(acquireUpstreamLock(lockPath, now)).toBe(false);
+    expect(acquireUpstreamLock(lockPath, now)).toBeUndefined();
   });
 
   test("creates the cache directory when acquiring for the first time", () => {
     const lockPath = join(tmp(), "nested", "stable.json.lock");
-    expect(acquireUpstreamLock(lockPath, Date.now())).toBe(true);
+    expect(acquireUpstreamLock(lockPath, Date.now())).toBeDefined();
     expect(existsSync(lockPath)).toBe(true);
   });
 
-  test("releaseUpstreamLock is idempotent", () => {
+  test("a losing stealer neither owns nor destroys a fresh lock", () => {
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
+    const now = Date.now();
+    mustAcquire(lockPath, now);
+    const before = readFileSync(lockPath);
+
+    expect(takeOverStaleUpstreamLock(lockPath, now, "rival")).toBeUndefined();
+    expect(readFileSync(lockPath)).toEqual(before);
+    expect(readdirSync(dir)).toEqual([basename(lockPath)]);
+  });
+
+  test("releaseUpstreamLock is ownership-checked", () => {
     const lockPath = join(tmp(), "stable.json.lock");
-    expect(acquireUpstreamLock(lockPath, 1)).toBe(true);
-    releaseUpstreamLock(lockPath);
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    const b = mustAcquire(lockPath, now);
+
+    releaseUpstreamLock(a);
+    expect(existsSync(lockPath)).toBe(true);
+    expect(readFileSync(lockPath, "utf8")).toBe(b.token);
+
+    releaseUpstreamLock(b);
     expect(existsSync(lockPath)).toBe(false);
-    releaseUpstreamLock(lockPath);
+  });
+
+  test("releaseUpstreamLock is idempotent, and a never-created lock is a no-op", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const handle = mustAcquire(lockPath, 1);
+    releaseUpstreamLock(handle);
     expect(existsSync(lockPath)).toBe(false);
+    releaseUpstreamLock(handle);
+    expect(existsSync(lockPath)).toBe(false);
+
+    const absent = join(tmp(), "never-existed.lock");
+    expect(() => releaseUpstreamLock({ lockPath: absent, token: "t" })).not.toThrow();
+    expect(existsSync(absent)).toBe(false);
   });
 });
 
@@ -237,7 +309,7 @@ describe("refreshUpstreamState", () => {
     const cacheDir = tmp();
     const held = Date.now();
     const lockPath = upstreamLockPath({ channel: "stable", cacheDir });
-    expect(acquireUpstreamLock(lockPath, held)).toBe(true);
+    expect(acquireUpstreamLock(lockPath, held)).toBeDefined();
 
     const state = await refreshUpstreamState({
       channel: "stable",
@@ -247,6 +319,98 @@ describe("refreshUpstreamState", () => {
     });
     expect(state).toBeUndefined();
     expect(existsSync(lockPath)).toBe(true);
+  });
+
+  test("a state refreshed inside the interval is returned without fetching", async () => {
+    const cacheDir = tmp();
+    const statePath = upstreamCachePath({ channel: "stable", cacheDir });
+    const cached: UpstreamCheckState = {
+      checkedAt: now,
+      channel: "stable",
+      latestVersion: "1.13.0",
+    };
+    writeUpstreamState(statePath, cached);
+    const before = readFileSync(statePath);
+
+    const state = await refreshUpstreamState({
+      channel: "stable",
+      cacheDir,
+      now,
+      fetchChannelInfo: noFetch,
+    });
+    expect(state).toEqual(cached);
+    expect(readFileSync(statePath)).toEqual(before);
+    expect(existsSync(upstreamLockPath({ channel: "stable", cacheDir }))).toBe(false);
+  });
+
+  test("two sequential refreshes at the same instant fetch exactly once", async () => {
+    const cacheDir = tmp();
+    let calls = 0;
+    const opts = {
+      channel: "stable",
+      cacheDir,
+      now,
+      fetchChannelInfo: async () => {
+        calls += 1;
+        return { version: "1.13.0", sha1: "abc" };
+      },
+    } as const;
+
+    const first = await refreshUpstreamState(opts);
+    const second = await refreshUpstreamState(opts);
+    const expected: UpstreamCheckState = {
+      checkedAt: now,
+      channel: "stable",
+      latestVersion: "1.13.0",
+    };
+    expect(calls).toBe(1);
+    expect(first).toEqual(expected);
+    expect(second).toEqual(expected);
+  });
+
+  test("intervalMs is honored under the lock", async () => {
+    const cacheDir = tmp();
+    const cached: UpstreamCheckState = {
+      checkedAt: now - 5,
+      channel: "stable",
+      latestVersion: "1.12.0",
+    };
+    writeUpstreamState(upstreamCachePath({ channel: "stable", cacheDir }), cached);
+
+    const skipped = await refreshUpstreamState({
+      channel: "stable",
+      cacheDir,
+      now,
+      intervalMs: 10,
+      fetchChannelInfo: noFetch,
+    });
+    expect(skipped).toEqual(cached);
+
+    const refreshed = await refreshUpstreamState({
+      channel: "stable",
+      cacheDir,
+      now,
+      intervalMs: 5,
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc" }),
+    });
+    expect(refreshed).toEqual({ checkedAt: now, channel: "stable", latestVersion: "1.13.0" });
+  });
+
+  test("a cached state older than the interval still reaches the fetcher", async () => {
+    const cacheDir = tmp();
+    writeUpstreamState(upstreamCachePath({ channel: "stable", cacheDir }), {
+      checkedAt: 1,
+      channel: "stable",
+      latestVersion: "1.12.0",
+    });
+
+    const state = await refreshUpstreamState({
+      channel: "stable",
+      cacheDir,
+      now,
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc" }),
+    });
+    expect(state).toEqual({ checkedAt: now, channel: "stable", latestVersion: "1.13.0" });
   });
 
   test("resolves the requested channel, not a hardcoded one", async () => {
