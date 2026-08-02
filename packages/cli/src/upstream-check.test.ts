@@ -4,6 +4,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  unlinkSync,
   utimesSync,
   writeFileSync,
 } from "node:fs";
@@ -11,6 +12,7 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import {
   acquireUpstreamLock,
+  claimStaleUpstreamLock,
   readCachedUpstreamLatest,
   readUpstreamState,
   refreshUpstreamState,
@@ -23,6 +25,7 @@ import {
   type UpstreamLockHandle,
   upstreamCacheDir,
   upstreamCachePath,
+  upstreamLockOwnerPath,
   upstreamLockPath,
   writeUpstreamState,
 } from "./upstream-check";
@@ -154,6 +157,27 @@ describe("acquireUpstreamLock", () => {
     return handle;
   }
 
+  // Finish what a won `claimStaleUpstreamLock` started, exactly as
+  // `takeOverStaleUpstreamLock` does: adopt the marker, overwrite the lock in
+  // place, drop the claim artifact. Lets a proof hold a takeover mid-flight.
+  function completeClaim(lockPath: string, token: string): UpstreamLockHandle {
+    writeFileSync(upstreamLockOwnerPath(lockPath, token), token, { flag: "wx" });
+    writeFileSync(lockPath, token);
+    unlinkSync(`${lockPath}.${token}.claim`);
+    return { lockPath, token };
+  }
+
+  function dirEntries(dir: string): string[] {
+    return readdirSync(dir).sort();
+  }
+
+  function expectedEntries(lockPath: string, ...tokens: string[]): string[] {
+    return [
+      basename(lockPath),
+      ...tokens.map((token) => basename(upstreamLockOwnerPath(lockPath, token))),
+    ].sort();
+  }
+
   test("free path acquires; a held lock refuses", () => {
     const lockPath = join(tmp(), "stable.json.lock");
     const now = Date.now();
@@ -170,6 +194,17 @@ describe("acquireUpstreamLock", () => {
     expect(readFileSync(lockPath, "utf8")).toBe(handle.token);
   });
 
+  test("an acquired lock carries a marker named by, and holding, its owner token", () => {
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
+    const handle = mustAcquire(lockPath, Date.now());
+    const ownerPath = upstreamLockOwnerPath(lockPath, handle.token);
+
+    expect(ownerPath).toBe(`${lockPath}.${handle.token}.own`);
+    expect(readFileSync(ownerPath, "utf8")).toBe(handle.token);
+    expect(dirEntries(dir)).toEqual(expectedEntries(lockPath, handle.token));
+  });
+
   test("a lock older than the stale window is stolen under a fresh token", () => {
     const lockPath = join(tmp(), "stable.json.lock");
     const now = Date.now();
@@ -181,23 +216,31 @@ describe("acquireUpstreamLock", () => {
     expect(readFileSync(lockPath, "utf8")).toBe(second.token);
   });
 
-  test("a successful steal leaves no takeover residue", () => {
+  test("a successful steal leaves the lock and only the winner's marker", () => {
     const dir = tmp();
     const lockPath = join(dir, "stable.json.lock");
     const now = Date.now();
     expect(acquireUpstreamLock(lockPath, now)).toBeDefined();
     ageStale(lockPath, now);
-    expect(acquireUpstreamLock(lockPath, now)).toBeDefined();
-    expect(readdirSync(dir)).toEqual([basename(lockPath)]);
+    const winner = mustAcquire(lockPath, now);
+    expect(dirEntries(dir)).toEqual(expectedEntries(lockPath, winner.token));
+
+    releaseUpstreamLock(winner);
+    expect(dirEntries(dir)).toEqual([]);
   });
 
   test("a lock inside the stale window is not stolen", () => {
-    const lockPath = join(tmp(), "stable.json.lock");
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
     const now = Date.now();
-    expect(acquireUpstreamLock(lockPath, now)).toBeDefined();
+    const held = mustAcquire(lockPath, now);
     const freshSeconds = (now - (UPSTREAM_LOCK_STALE_MS - 1000)) / 1000;
     utimesSync(lockPath, freshSeconds, freshSeconds);
+    const before = readFileSync(lockPath);
+
     expect(acquireUpstreamLock(lockPath, now)).toBeUndefined();
+    expect(readFileSync(lockPath)).toEqual(before);
+    expect(dirEntries(dir)).toEqual(expectedEntries(lockPath, held.token));
   });
 
   test("creates the cache directory when acquiring for the first time", () => {
@@ -210,12 +253,12 @@ describe("acquireUpstreamLock", () => {
     const dir = tmp();
     const lockPath = join(dir, "stable.json.lock");
     const now = Date.now();
-    mustAcquire(lockPath, now);
+    const held = mustAcquire(lockPath, now);
     const before = readFileSync(lockPath);
 
     expect(takeOverStaleUpstreamLock(lockPath, now, "rival")).toBeUndefined();
     expect(readFileSync(lockPath)).toEqual(before);
-    expect(readdirSync(dir)).toEqual([basename(lockPath)]);
+    expect(dirEntries(dir)).toEqual(expectedEntries(lockPath, held.token));
   });
 
   test("releaseUpstreamLock is ownership-checked", () => {
@@ -231,19 +274,136 @@ describe("acquireUpstreamLock", () => {
 
     releaseUpstreamLock(b);
     expect(existsSync(lockPath)).toBe(false);
+    expect(existsSync(upstreamLockOwnerPath(lockPath, b.token))).toBe(false);
   });
 
   test("releaseUpstreamLock is idempotent, and a never-created lock is a no-op", () => {
-    const lockPath = join(tmp(), "stable.json.lock");
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
     const handle = mustAcquire(lockPath, 1);
     releaseUpstreamLock(handle);
-    expect(existsSync(lockPath)).toBe(false);
+    expect(dirEntries(dir)).toEqual([]);
     releaseUpstreamLock(handle);
-    expect(existsSync(lockPath)).toBe(false);
+    expect(dirEntries(dir)).toEqual([]);
 
-    const absent = join(tmp(), "never-existed.lock");
+    const absentDir = tmp();
+    const absent = join(absentDir, "never-existed.lock");
     expect(() => releaseUpstreamLock({ lockPath: absent, token: "t" })).not.toThrow();
-    expect(existsSync(absent)).toBe(false);
+    expect(dirEntries(absentDir)).toEqual([]);
+  });
+
+  test("release on an already-claimed marker touches nothing", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+
+    expect(claimStaleUpstreamLock(lockPath, a.token, "rival")).toBe(true);
+    const before = readFileSync(lockPath);
+
+    releaseUpstreamLock(a);
+    expect(readFileSync(lockPath)).toEqual(before);
+    expect(existsSync(upstreamLockOwnerPath(lockPath, a.token))).toBe(false);
+  });
+
+  test("a displaced owner's release cannot delete its successor's lock", () => {
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    expect(claimStaleUpstreamLock(lockPath, a.token, "rival")).toBe(true);
+    const rival = completeClaim(lockPath, "rival");
+
+    releaseUpstreamLock(a);
+    expect(readFileSync(lockPath, "utf8")).toBe(rival.token);
+    expect(dirEntries(dir)).toEqual(expectedEntries(lockPath, rival.token));
+  });
+
+  test("a stale check that raced a replacement cannot claim the fresh owner", () => {
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
+    const now = Date.now();
+    const c = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    releaseUpstreamLock(c);
+    const d = mustAcquire(lockPath, now);
+    const lockBefore = readFileSync(lockPath);
+    const markerBefore = readFileSync(upstreamLockOwnerPath(lockPath, d.token));
+
+    expect(claimStaleUpstreamLock(lockPath, c.token, "rival")).toBe(false);
+    expect(readFileSync(lockPath)).toEqual(lockBefore);
+    expect(readFileSync(upstreamLockOwnerPath(lockPath, d.token))).toEqual(markerBefore);
+    expect(dirEntries(dir)).toEqual(expectedEntries(lockPath, d.token));
+  });
+
+  test("the canonical path is never free mid-takeover", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    expect(claimStaleUpstreamLock(lockPath, a.token, "rival")).toBe(true);
+    const before = readFileSync(lockPath);
+
+    expect(acquireUpstreamLock(lockPath, now)).toBeUndefined();
+    expect(readFileSync(lockPath)).toEqual(before);
+  });
+
+  test("two stealers of one stale lock cannot both win the claim", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+
+    expect(claimStaleUpstreamLock(lockPath, a.token, "s1")).toBe(true);
+    expect(claimStaleUpstreamLock(lockPath, a.token, "s2")).toBe(false);
+  });
+
+  test("a second takeover at the same instant sees the stolen lock as fresh", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const now = Date.now();
+    mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    expect(acquireUpstreamLock(lockPath, now)).toBeDefined();
+
+    expect(takeOverStaleUpstreamLock(lockPath, now, "late")).toBeUndefined();
+  });
+
+  test("a crash-orphaned lock is recovered by re-adopting its marker", () => {
+    const dir = tmp();
+    const lockPath = join(dir, "stable.json.lock");
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    unlinkSync(upstreamLockOwnerPath(lockPath, a.token));
+
+    const recovered = takeOverStaleUpstreamLock(lockPath, now, "recoverer");
+    expect(recovered?.token).toBe("recoverer");
+    expect(readFileSync(lockPath, "utf8")).toBe("recoverer");
+    expect(dirEntries(dir)).toEqual(expectedEntries(lockPath, "recoverer"));
+  });
+
+  test("two sequential orphan recoveries do not both win", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    unlinkSync(upstreamLockOwnerPath(lockPath, a.token));
+
+    expect(takeOverStaleUpstreamLock(lockPath, now, "r1")).toBeDefined();
+    expect(takeOverStaleUpstreamLock(lockPath, now, "r2")).toBeUndefined();
+  });
+
+  test("an orphaned lock held by a live claim is not recovered", () => {
+    const lockPath = join(tmp(), "stable.json.lock");
+    const now = Date.now();
+    const a = mustAcquire(lockPath, now);
+    ageStale(lockPath, now);
+    expect(claimStaleUpstreamLock(lockPath, a.token, "rival")).toBe(true);
+    const before = readFileSync(lockPath);
+
+    expect(takeOverStaleUpstreamLock(lockPath, now, "late")).toBeUndefined();
+    expect(readFileSync(lockPath)).toEqual(before);
   });
 });
 
@@ -266,6 +426,19 @@ describe("refreshUpstreamState", () => {
     expect(state).toEqual(expected);
     expect(readUpstreamState(upstreamCachePath({ channel: "stable", cacheDir }))).toEqual(expected);
     expect(existsSync(upstreamLockPath({ channel: "stable", cacheDir }))).toBe(false);
+  });
+
+  test("a completed refresh leaves exactly the channel state file behind", async () => {
+    const cacheDir = tmp();
+    await refreshUpstreamState({
+      channel: "stable",
+      cacheDir,
+      now,
+      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc" }),
+    });
+    expect(readdirSync(cacheDir)).toEqual([
+      basename(upstreamCachePath({ channel: "stable", cacheDir })),
+    ]);
   });
 
   test("a rejecting fetch is silent and leaves a pre-existing state byte-identical", async () => {
