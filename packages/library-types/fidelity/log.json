@@ -2,10 +2,8 @@
   "namespace": "log",
   "totalMembers": 9,
   "totalTypeTokens": 18,
-  "unknownFallbacks": 1,
-  "unknownTokens": [
-    "debuginfo"
-  ],
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
   "undocumentedMembers": 2,
-  "coverage": 0.944
+  "coverage": 1
 }

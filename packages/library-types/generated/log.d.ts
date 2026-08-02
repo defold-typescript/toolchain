@@ -32,5 +32,5 @@ declare module 'log.log' {
 	/**
 	 * Return the basename of the current file
 	 */
-	export function get_default_logger_name(this: void, debuginfo: unknown): string;
+	export function get_default_logger_name(this: void, debuginfo: debug.FunctionInfo): string;
 }

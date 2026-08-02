@@ -659,3 +659,30 @@ test("an external token lowers to its local alias, not unknown and not an import
 
   expect(properties?.[0]?.types).toEqual(["ext"]);
 });
+
+test("an ambient stdlib rename lowers to the same dotted text the emitter writes", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "get_default_logger_name",
+        brief: "",
+        generics: [],
+        params: [
+          { name: "debuginfo", types: ["debuginfo"], doc: "", isOptional: false, isVararg: false },
+        ],
+        returns: [{ name: "", types: ["string"], doc: "", isOptional: false, isVararg: false }],
+      },
+    ],
+  };
+
+  const lowered = lowerLibraryModel(model, {
+    namespace: "demo",
+    typeRenames: { debuginfo: "debug.FunctionInfo" },
+  });
+  const [fn] = elementsOf(lowered);
+  const parameters = fn?.parameters as Record<string, unknown>[] | undefined;
+
+  expect(parameters?.[0]?.types).toEqual(["debug.FunctionInfo"]);
+});

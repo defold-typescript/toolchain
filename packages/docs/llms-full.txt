@@ -4576,7 +4576,7 @@ annotations, and each lives in its own repo at its own release. The fields:
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `druid.druid`). This names the emitted `declare module` and scopes the module-function surface to `<moduleId-as-path>.lua`. |
 | `namespace` | yes | The artifact stem — the emitted files are `generated/<namespace>.d.ts`, `fidelity/<namespace>.json`, `api-doc/<namespace>.json`. |
 | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
-| `typeRenames` | no | Map from a LuaLS type name to the TypeScript name to emit (e.g. `{ "vector3": "Vector3" }`). Omit or `{}` when the library references no renamed types. |
+| `typeRenames` | no | Map from a LuaLS type name to the TypeScript type *text* to emit (e.g. `{ "vector3": "Vector3" }`). The value is emitted verbatim and may name an ambient global, including a dotted one like `debug.FunctionInfo` — it never contributes an import. Omit or `{}` when the library references no renamed types. |
 | `ignore` | no | Globs excluded from `sourceGlobs` — tests, examples, editor widgets. Defaults to `[]`. |
 | `externalTypes` | no | Map from a type name another target owns to `{ "module": "<its moduleId>", "name": "<its export>" }` — see below. Omit when the library references no other library's types. |
 
@@ -4612,6 +4612,26 @@ Prefer `externalTypes` over a `typeRenames` entry pointing at an `import(...)`
 type: the api-doc lowering maps through the same context, so an inline
 `import('event.event').event` would render as the user-facing signature on the
 library's `/api` page, where `externalTypes` renders the clean `event`.
+
+##### Types the Lua stdlib already owns
+
+Some tokens belong to no target at all — the ambient Lua standard library already
+declares them. `log`'s `---@param debuginfo debuginfo` names the table
+`debug.getinfo()` returns, which `lua-types` types as `debug.FunctionInfo`. That
+takes a `typeRenames` entry, not an `externalTypes` one:
+
+```json
+"typeRenames": { "debuginfo": "debug.FunctionInfo" }
+```
+
+The emitted signature reads `debuginfo: debug.FunctionInfo` with no import line,
+and `/api/log.log` renders that same dotted name — the way `Vector3` and
+`Opaque<"node">` already render there.
+
+The rule: a token another **target** owns takes `externalTypes` and gets an
+import; a token the **ambient** stdlib already declares takes a dotted
+`typeRenames` value and gets none. A library that declares the token itself wins
+over either, so a rename never shadows a real local declaration.
 
 Where an upstream annotation restates a member it inherits from such a parent, and
 restates it incompatibly enough that the emitted redeclaration would not

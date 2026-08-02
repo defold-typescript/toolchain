@@ -18,6 +18,10 @@ export interface LualsTarget {
   sourceGlobs: string[];
   moduleId: string;
   namespace: string;
+  // Token -> TypeScript type *text*, not an identifier: the mapper emits the value
+  // verbatim. The value may name an ambient global that needs no import — a core
+  // rename (`Vector3`, `Opaque<"node">`) or a type the Lua stdlib already declares
+  // (`debug.FunctionInfo`) — which is what distinguishes it from `externalTypes`.
   typeRenames: Record<string, string>;
   ignore: string[];
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
