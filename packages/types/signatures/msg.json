@@ -1,0 +1,20 @@
+{
+  "msg.post": {
+    "signatures": [
+      "msg.post<K extends string>(receiver: string | Url | Hash, message_id: K, message?: MsgPostPayload<K>): void",
+      "msg.post(receiver: string | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void"
+    ],
+    "docs": [
+      "Post a message to a receiving URL. The most common case is to send messages to a component. If the component part of the receiver is omitted, the message is broadcast to all components in the game object. The following receiver shorthands are available:\n\n- `\".\"` the current game object\n\n- `\"#\"` the current component\n\nThere is a 2 kilobyte limit to the message parameter table size.",
+      null
+    ]
+  },
+  "msg.url": {
+    "signatures": [
+      "msg.url(): Url",
+      "msg.url(urlstring: string): Url",
+      "msg.url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url"
+    ],
+    "docs": ["Construct a URL. A URL is `[socket:][path][#fragment]`.", null, null]
+  }
+}

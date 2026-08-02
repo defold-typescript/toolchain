@@ -1252,6 +1252,67 @@ describe("apiModuleSymbols", () => {
     expect(lerp[1]?.docMarkdown).toBe(fixtureLerpVectorDoc);
     expect(lerp[2]?.docMarkdown).toBe(fixtureLerpVectorDoc);
   });
+
+  // The committed override files, read the way `loadSignatureStore` reads them,
+  // so these assertions run against the bytes `/api/go` and `/api/msg` render.
+  function committedStore(file: string): SignatureStore {
+    return JSON.parse(
+      readFileSync(join(REAL_TYPES_DIR, "signatures", `${file}.json`), "utf8"),
+    ) as SignatureStore;
+  }
+
+  function fixturePage(fixture: string): ApiPage {
+    const raw = JSON.parse(
+      readFileSync(join(REAL_TYPES_DIR, "fixtures", `${fixture}_doc.json`), "utf8"),
+    );
+    return pageWith(parseDefoldApiDoc(raw));
+  }
+
+  test("msg.url collapses its 3 fixture entries to the 3 authored override rows", () => {
+    const store = committedStore("msg");
+    const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(
+      (s) => s.name === "msg.url",
+    );
+    // 3 fixture entries x 3 authored signatures would render 9 rows without the
+    // collapse; the authored set is a different length than the fixture's, so
+    // neither count can stand in for the other.
+    expect(rows).toHaveLength(3);
+    expect(rows.map((s) => s.signature)).toEqual(store["msg.url"]?.signatures ?? []);
+  });
+
+  test("go.get renders 3 rows and its undocumented overloads fall back to the fixture prose", () => {
+    const store = committedStore("go");
+    const page = fixturePage("go");
+    const fixtureGetDoc =
+      apiModuleSymbols(page, {}, {}).find((s) => s.name === "go.get")?.docMarkdown ?? "";
+    const rows = apiModuleSymbols(page, {}, store).filter((s) => s.name === "go.get");
+
+    expect(rows).toHaveLength(3);
+    expect(rows.map((s) => s.signature)).toEqual(store["go.get"]?.signatures ?? []);
+    expect(rows[0]?.signature).toContain("<K extends keyof P>");
+    expect(rows[1]?.docMarkdown).toBe(fixtureGetDoc);
+    expect(rows[2]?.docMarkdown).toBe(fixtureGetDoc);
+  });
+
+  test("go.set renders 3 rows and go.property renders its 8 authored overloads", () => {
+    const store = committedStore("go");
+    const symbols = apiModuleSymbols(fixturePage("go"), {}, store);
+    expect(symbols.filter((s) => s.name === "go.set").map((s) => s.signature)).toEqual(
+      store["go.set"]?.signatures ?? [],
+    );
+    expect(symbols.filter((s) => s.name === "go.property")).toHaveLength(8);
+  });
+
+  test("msg.post's primary row keeps the authored bullet list through the projection", () => {
+    const store = committedStore("msg");
+    const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(
+      (s) => s.name === "msg.post",
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.docMarkdown).toContain('- `"."` the current game object');
+    expect(rows[0]?.docMarkdown).toContain('- `"#"` the current component');
+    expect(rows[0]?.docMarkdown).toContain("\n\n");
+  });
 });
 
 describe("apiModuleSymbols / apiModuleMarkdown authoritative signatures", () => {
