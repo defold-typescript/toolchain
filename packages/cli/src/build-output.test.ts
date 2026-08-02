@@ -140,6 +140,46 @@ describe("detectSourceOutputKind", () => {
       ),
     ).toBe("module");
   });
+
+  test("each factory in its explicit type-argument form classifies as its own kind", () => {
+    expect(detectSourceOutputKind("export default defineEditorScript<S>({});")).toBe(
+      "editor-script",
+    );
+    expect(detectSourceOutputKind("export default defineRenderScript<S>({});")).toBe(
+      "render-script",
+    );
+    expect(detectSourceOutputKind("export default defineGuiScript<MenuSelf>({});")).toBe(
+      "gui-script",
+    );
+    expect(detectSourceOutputKind("export default defineScript<Self>({});")).toBe("script");
+  });
+
+  test("a generic call still keys on the call, not the import", () => {
+    const imports =
+      'import { defineScript, defineGuiScript, defineRenderScript } from "@defold-typescript/types";';
+    expect(
+      detectSourceOutputKind([imports, "export default defineRenderScript<S>({});"].join("\n")),
+    ).toBe("render-script");
+    expect(detectSourceOutputKind([imports, "export const helper = 1;"].join("\n"))).toBe("module");
+  });
+
+  test("a nested generic and an inline object-literal type argument both classify", () => {
+    expect(detectSourceOutputKind("export default defineScript<Box<T>>({});")).toBe("script");
+    expect(detectSourceOutputKind("export default defineScript<{ speed: number }>({});")).toBe(
+      "script",
+    );
+  });
+
+  test("whitespace and newlines around the type-argument brackets are accepted", () => {
+    expect(detectSourceOutputKind("export default defineScript <Self> ({});")).toBe("script");
+    expect(detectSourceOutputKind("export default defineGuiScript<\n  MenuSelf,\n>(\n{});")).toBe(
+      "gui-script",
+    );
+  });
+
+  test("a `<` that is not a type-argument list does not classify", () => {
+    expect(detectSourceOutputKind("const flag = defineScript < threshold;")).toBe("module");
+  });
 });
 
 describe("detectSourceScriptKind", () => {
@@ -163,6 +203,12 @@ describe("detectSourceScriptKind", () => {
       "export default defineRenderScript({});",
     ].join("\n");
     expect(detectSourceScriptKind(source)).toBe("render-script");
+  });
+
+  test("a generic defineGuiScript call is a gui-script", () => {
+    expect(detectSourceScriptKind("export default defineGuiScript<MenuSelf>({ init() {} });")).toBe(
+      "gui-script",
+    );
   });
 });
 
