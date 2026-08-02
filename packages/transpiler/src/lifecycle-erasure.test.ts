@@ -26,6 +26,10 @@ describe("lifecycle erasure", () => {
       return ____exports
       "
     `);
+    // Symmetric positive for the negative pin below: a value import erases to a
+    // top-level hook, never to an `____exports.default = defineScript(` call.
+    expect(result.lua).toContain("function init(");
+    expect(result.lua).not.toContain("____exports.default");
     expect(result.lua).not.toContain("defineScript");
     expect(result.lua).not.toContain("require(");
     // No value return -> flat init, no builder/merge.
@@ -373,6 +377,8 @@ describe("lifecycle erasure", () => {
       return ____exports
       "
     `);
+    expect(result.lua).toContain("function init(");
+    expect(result.lua).not.toContain("____exports.default");
     expect(result.lua).not.toContain("defineRenderScript");
     expect(result.lua).not.toContain("require(");
   });
@@ -399,6 +405,8 @@ describe("lifecycle erasure", () => {
       return ____exports
       "
     `);
+    expect(result.lua).toContain("function init(");
+    expect(result.lua).not.toContain("____exports.default");
     expect(result.lua).not.toContain("defineGuiScript");
     expect(result.lua).not.toContain("require(");
   });
@@ -422,6 +430,8 @@ describe("lifecycle erasure", () => {
       return ____exports
       "
     `);
+    expect(result.lua).toContain("function init(");
+    expect(result.lua).not.toContain("____exports.default");
     expect(result.lua).not.toContain("defineScript");
   });
 
@@ -545,6 +555,39 @@ describe("lifecycle erasure", () => {
         firstImport('import { defineScript } from "@defold-typescript/types/core-types";'),
       ),
     ).toBe(false);
+  });
+
+  test("does not erase a factory name that does not resolve to the types package", () => {
+    const source = [
+      'import type { defineScript as defineScriptType } from "@defold-typescript/types";',
+      "",
+      "declare const defineScript: typeof defineScriptType;",
+      "",
+      "export default defineScript({",
+      "  init() {},",
+      "  update(self, dt) {},",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    // Erasure gates on the callee's declaration file, not its name: a local
+    // ambient re-declaration keeps the name and loses the provenance. Pinned so
+    // the runbook's tell cannot drift -- this is today's behavior, not a wish.
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      ____exports.default = defineScript({
+          init = function(self)
+          end,
+          update = function(self, ____self, dt)
+          end
+      })
+      return ____exports
+      "
+    `);
+    expect(result.lua).toContain("____exports.default = defineScript(");
+    expect(result.lua).not.toContain("function init(");
   });
 
   test("does not erase a non-factory local call of the same name", () => {
