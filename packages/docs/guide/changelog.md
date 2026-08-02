@@ -41,6 +41,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **[druid](/api/druid) callbacks and multi-returns** — `druid.button`'s six style hooks and `druid.drag`'s `init` callback name their real parameter types now, and `druid.layout`'s `rows` field is a `druid_layout_row_data[]`. A function documented with several return values, such as `druid.layout.get_content_size`, returns a `LuaMultiReturn` tuple instead of `unknown`.
   - **[druid](/api/druid) callback fields** — `on_click`, `on_hover`, and every other component callback field are [event](/api/event) objects you can `subscribe` to, rather than `unknown`. Declare `defold-event` alongside druid so the type resolves.
   - **[log](/api/log.log)** — `get_default_logger_name` takes the real `debug.getinfo()` table instead of `unknown`, so reading `short_src` off it type-checks.
+  - **[decore](/api/decore)** — `ecs.world` returns a world plus a variable number of further values, so its type is now a rest tuple you can spread instead of a fixed pair whose second slot was a single anonymous `unknown`.
 
 - Every generated library's type coverage is now pinned by a committed floor, so regenerating it can no longer quietly reduce how much of its surface is typed — a drop fails the suite instead of rewriting the report. [Authoring LuaLS library types](./authoring-luals-library-types.md) covers locking in a genuine improvement.
 
