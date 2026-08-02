@@ -101,17 +101,20 @@ export function shouldRefreshUpstream(
 // its name, so the reservation covers `[t, t + intervalMs)` measured from the
 // attempt that took it rather than quantizing to a wall-clock bucket that a pair
 // of sessions can sit either side of. The path is created once and afterwards
-// only ever overwritten in place — never vacated, never renamed.
+// only ever replaced whole by an atomic rename — never vacated, never truncated,
+// so a concurrent reader cannot observe an empty or partial value.
 export function upstreamRequestReservationPath(key: UpstreamCacheKey): string {
   return `${upstreamCachePath(key)}.req`;
 }
 
 // A sliding reservation cannot be identified by name, so the right to replace it
 // is granted by an exclusive create keyed on the value being replaced: exactly
-// one caller per predecessor can hold this, and values strictly increase, so a
-// stale observation cannot displace a fresh reservation. Content never reaches
-// the filename verbatim — anything but digits collapses to a fixed key, so no
-// path separator or newline in the file can escape into a path.
+// one caller per predecessor can hold this. The file it names is not a receipt
+// but the successor itself — staged complete, then renamed onto the canonical
+// path — which makes it a single-use token, consumed by the handover it
+// authorizes. Content never reaches the filename verbatim: anything that is not
+// a usable timestamp collapses to a fixed key, so no path separator, newline, or
+// unbounded digit run in the file can escape into a path.
 export function upstreamReservationSuccessionPath(
   reservationPath: string,
   predecessor: string,
@@ -119,13 +122,20 @@ export function upstreamReservationSuccessionPath(
   return `${reservationPath}.${isReservationTimestamp(predecessor) ? predecessor : "invalid"}.succ`;
 }
 
+// The single predicate behind both the succession key and the window check, so
+// "readable as a timestamp" and "keyed by its own value" can never disagree. The
+// safe-integer bound is what keeps a long digit run from converting to
+// `Infinity`, which would make `now - Infinity` read as permanently fresh and
+// block every future refresh.
 function isReservationTimestamp(content: string): boolean {
-  return /^\d+$/.test(content);
+  return /^\d+$/.test(content) && Number.isSafeInteger(Number(content));
 }
 
 // Runs only on a win, and removes exactly two classes: reservations left behind
-// by the superseded bucket naming, and successions other than the one just
-// claimed. Both matches have to be exact — this prefix is also the prefix of
+// by the superseded bucket naming, and every succession but the one the
+// just-installed value offers — deleting *that* one would cost a successor
+// already staging its rename. Both matches have to be exact — this prefix is
+// also the prefix of
 // `<channel>.json.lock`, of every `.own`, `.claim`, and `.released` artifact the
 // lock's ownership depends on, and of the canonical reservation itself, none of
 // which may ever be unlinked.
@@ -157,48 +167,114 @@ function pruneUpstreamRequestReservations(statePath: string, keptSuccession: str
   }
 }
 
-// Take over a reservation whose window has run out. Expiry is by the recorded
-// timestamp alone — mtime says nothing here, and a timestamp in the future gives
-// a negative difference, so it blocks rather than reading as long expired, the
-// same way `shouldRefreshUpstream` treats a future `checkedAt`. Unreadable
-// content is expired too: a hand-corrupted reservation must not wedge every
-// future check forever, and the exclusive create still admits one healer.
-function succeedUpstreamRequestReservation(
-  statePath: string,
-  reservationPath: string,
-  now: number,
-  intervalMs: number,
-): boolean {
-  let held: string;
+function reservationStillHolds(reservationPath: string, held: string): boolean {
   try {
-    held = readFileSync(reservationPath, "utf8");
+    return readFileSync(reservationPath, "utf8") === held;
   } catch {
     return false;
   }
+}
+
+function discardReservationStage(successionPath: string): void {
+  try {
+    unlinkSync(successionPath);
+  } catch {
+    // Consumed by the rename, taken by a peer, or never created.
+  }
+}
+
+// Reached only when the stage for this predecessor already exists. Recovery
+// adopts an interrupted attempt's interval, it never takes one: no path here
+// grants a win, so healing can cost a request but can never duplicate one.
+function recoverReservationStage(
+  successionPath: string,
+  reservationPath: string,
+  held: string,
+  now: number,
+  intervalMs: number,
+): void {
+  let staged: string;
+  try {
+    staged = readFileSync(successionPath, "utf8");
+  } catch {
+    return;
+  }
+  if (!isReservationTimestamp(staged)) {
+    // A stage whose write never landed, so nothing can interpret it. Clear it and
+    // let the next call stage cleanly.
+    discardReservationStage(successionPath);
+    return;
+  }
+  if (now - Number(staged) < intervalMs) {
+    // A live successor holds it, and its interval covers this caller too.
+    return;
+  }
+  // An attempt that staged its value and exited before the rename. Finish it on
+  // that process's behalf, but only against the predecessor it observed, so a
+  // stale recoverer cannot install it over a newer reservation. Two recoverers
+  // race to one rename and the loser finds no source, which is what keeps the
+  // token single-use.
+  if (!reservationStillHolds(reservationPath, held)) {
+    return;
+  }
+  try {
+    renameSync(successionPath, reservationPath);
+  } catch {
+    // Lost to a peer recoverer, or the path is momentarily unrenamable; the next
+    // caller re-reads and decides again.
+  }
+}
+
+// Take over a reservation whose window has run out. Expiry is by the recorded
+// timestamp alone — mtime says nothing here, and a timestamp in the future gives
+// a negative difference, so it blocks rather than reading as long expired, the
+// same way `shouldRefreshUpstream` treats a future `checkedAt`. Unusable content
+// is expired too: a hand-corrupted reservation must not wedge every future check
+// forever.
+//
+// `held` is the predecessor the caller observed, a parameter rather than a read
+// hidden in here, so the observation and the replacement it authorizes are one
+// decision that can be revalidated. Stage the complete successor under an
+// exclusive create, confirm the canonical file still holds exactly what was
+// observed, then rename the stage onto it. Holding the stage is the only right to
+// replace the value it names, so nothing else can move the reservation between
+// the revalidation and the rename.
+export function succeedUpstreamRequestReservation(
+  statePath: string,
+  reservationPath: string,
+  held: string,
+  now: number,
+  intervalMs: number,
+): boolean {
   if (isReservationTimestamp(held) && now - Number(held) < intervalMs) {
     return false;
   }
   const successionPath = upstreamReservationSuccessionPath(reservationPath, held);
   try {
     writeFileSync(successionPath, String(now), { flag: "wx" });
-  } catch {
-    return false;
-  }
-  try {
-    // In-place overwrite, not a rename: the canonical path is never vacant, which
-    // is what makes the exclusive-create bootstrap and this handover between them
-    // total.
-    writeFileSync(reservationPath, String(now));
-  } catch {
-    try {
-      unlinkSync(successionPath);
-    } catch {
-      // Never created.
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "EEXIST") {
+      recoverReservationStage(successionPath, reservationPath, held, now, intervalMs);
     }
     return false;
   }
-  pruneUpstreamRequestReservations(statePath, path.basename(successionPath));
+  if (!reservationStillHolds(reservationPath, held)) {
+    discardReservationStage(successionPath);
+    return false;
+  }
+  try {
+    renameSync(successionPath, reservationPath);
+  } catch {
+    discardReservationStage(successionPath);
+    return false;
+  }
+  pruneUpstreamRequestReservations(statePath, successionOffered(reservationPath, now));
   return true;
+}
+
+// The succession the value just installed offers, which prune must keep.
+function successionOffered(reservationPath: string, now: number): string {
+  return path.basename(upstreamReservationSuccessionPath(reservationPath, String(now)));
 }
 
 // Record the attempt before making it. `checkedAt` is written only once a request
@@ -219,9 +295,15 @@ export function reserveUpstreamRequest(
       // An unwritable cache dir and a lost race are the same outcome: no request.
       return false;
     }
-    return succeedUpstreamRequestReservation(statePath, reservationPath, now, intervalMs);
+    let held: string;
+    try {
+      held = readFileSync(reservationPath, "utf8");
+    } catch {
+      return false;
+    }
+    return succeedUpstreamRequestReservation(statePath, reservationPath, held, now, intervalMs);
   }
-  pruneUpstreamRequestReservations(statePath, "");
+  pruneUpstreamRequestReservations(statePath, successionOffered(reservationPath, now));
   return true;
 }
 
