@@ -891,3 +891,49 @@ test("an extends naming an external token emits the clause; an undeclared parent
   expect(out).toContain("interface child extends ext {");
   expect(out).toContain("interface orphan {");
 });
+
+const stdlibRenameModel: LibraryModel = {
+  interfaces: [],
+  aliases: [],
+  moduleFunctions: [
+    {
+      name: "get_default_logger_name",
+      brief: "",
+      generics: [],
+      params: [
+        { name: "debuginfo", types: ["debuginfo"], doc: "", isOptional: false, isVararg: false },
+      ],
+      returns: [{ name: "", types: ["string"], doc: "", isOptional: false, isVararg: false }],
+    },
+  ],
+};
+
+test("an ambient stdlib rename types the param as the dotted global and emits no import", () => {
+  const out = emitLibraryDeclarations(stdlibRenameModel, {
+    moduleId: "demo.demo",
+    typeRenames: { debuginfo: "debug.FunctionInfo" },
+  });
+
+  expect(out).toContain(
+    "export function get_default_logger_name(this: void, debuginfo: debug.FunctionInfo): string;",
+  );
+  expect(out).not.toContain("import");
+  expect(out).not.toContain("unknown");
+});
+
+test("a model declaring the token itself wins over the ambient stdlib rename", () => {
+  const model: LibraryModel = {
+    ...stdlibRenameModel,
+    interfaces: [{ name: "debuginfo", generics: [], fields: [], methods: [], brief: "" }],
+  };
+
+  const out = emitLibraryDeclarations(model, {
+    moduleId: "demo.demo",
+    typeRenames: { debuginfo: "debug.FunctionInfo" },
+  });
+
+  expect(out).toContain(
+    "export function get_default_logger_name(this: void, debuginfo: debuginfo): string;",
+  );
+  expect(out).not.toContain("debug.FunctionInfo");
+});
