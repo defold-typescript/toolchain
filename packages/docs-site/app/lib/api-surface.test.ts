@@ -23,6 +23,7 @@ import {
   functionOverviewCards,
   groupFunctionSymbols,
   mapDocType,
+  outerCallArity,
 } from "./api-surface";
 import {
   libraryRouteSlug,
@@ -1069,19 +1070,23 @@ describe("apiModuleSymbols", () => {
     expect(symbols.map((s) => s.name)).toEqual(["file:read", "file:read", "file:read"]);
     expect(symbols.map((s) => s.signature)).toEqual(signatures);
     expect(symbols[0]?.docMarkdown).toBe("Reads the file.");
-    expect(symbols[0]?.parameters).toEqual([
+    // the zero-argument row cannot take the entry's `format` table, so it moves
+    // to the one-argument row that accepts it; the example stays on row 1
+    expect(symbols[0]?.parameters).toEqual([]);
+    expect(symbols[0]?.returnValues).toEqual([]);
+    expect(symbols[0]?.exampleMarkdown).toContain("```lua");
+    expect(symbols[1]?.parameters).toEqual([
       { name: "format", doc: "the read format", types: ["string"], isOptional: true },
     ]);
-    expect(symbols[0]?.returnValues).toEqual([
+    expect(symbols[1]?.returnValues).toEqual([
       { name: "", doc: "the data read", types: ["string"], isOptional: false },
     ]);
-    expect(symbols[0]?.exampleMarkdown).toContain("```lua");
     for (const i of [1, 2]) {
       expect(symbols[i]?.docMarkdown).toBe("Reads the file.");
-      expect(symbols[i]?.parameters).toEqual([]);
-      expect(symbols[i]?.returnValues).toEqual([]);
       expect(symbols[i]?.exampleMarkdown).toBeUndefined();
     }
+    expect(symbols[2]?.parameters).toEqual([]);
+    expect(symbols[2]?.returnValues).toEqual([]);
   });
 
   test("a function absent from the store keeps its ref-doc signature; non-functions are untouched", () => {
@@ -1312,6 +1317,111 @@ describe("apiModuleSymbols", () => {
     expect(rows[0]?.docMarkdown).toContain('- `"."` the current game object');
     expect(rows[0]?.docMarkdown).toContain('- `"#"` the current component');
     expect(rows[0]?.docMarkdown).toContain("\n\n");
+  });
+
+  test("msg.url's rows report the arity of their own call list", () => {
+    expect(outerCallArity("msg.url(): Url")).toBe(0);
+    expect(
+      outerCallArity(
+        "msg.url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url",
+      ),
+    ).toBe(3);
+  });
+
+  test("a leading generic list and a nested one never split the call list", () => {
+    expect(
+      outerCallArity(
+        "msg.post<K extends string>(receiver: string | Url | Hash, message_id: K, message?: MsgPostPayload<K>): void",
+      ),
+    ).toBe(3);
+  });
+
+  test("a curried form reports its outer arity, not the function it returns", () => {
+    expect(
+      outerCallArity(
+        "go.get<P>(): <K extends keyof P>(url: string | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]",
+      ),
+    ).toBe(0);
+  });
+
+  test("a rest parameter counts once and a Lua method colon is not an annotation", () => {
+    expect(outerCallArity("string.format(formatstring: string, ...args: unknown[]): string")).toBe(
+      2,
+    );
+    expect(outerCallArity("file:read(): string")).toBe(0);
+  });
+
+  test("a property-shaped override signature has no call arity", () => {
+    const authored = committedStore("package")["package.loaders"]?.signatures[0] ?? "";
+    expect(authored).toContain("package.loaders: ");
+    expect(outerCallArity(authored)).toBeNull();
+  });
+
+  test("each msg.url row renders the fixture entry its call shape selects", () => {
+    const store = committedStore("msg");
+    const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(
+      (s) => s.name === "msg.url",
+    );
+    expect(rows).toHaveLength(3);
+    expect(rows[1]?.docMarkdown).toContain("[socket:][path][#fragment]");
+    expect(rows[2]?.docMarkdown).toContain("separate arguments");
+    expect(rows[1]?.docMarkdown).not.toBe(rows[0]?.docMarkdown);
+    expect(rows[2]?.docMarkdown).not.toBe(rows[0]?.docMarkdown);
+  });
+
+  test("msg.url still collapses to 3 authored rows, each carrying its own parameters", () => {
+    const store = committedStore("msg");
+    const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(
+      (s) => s.name === "msg.url",
+    );
+    expect(rows.map((s) => s.signature)).toEqual(store["msg.url"]?.signatures ?? []);
+    expect(rows[0]?.parameters).toEqual([]);
+    expect(rows[1]?.parameters.map((p) => p.name)).toEqual(["urlstring"]);
+    expect(rows[2]?.parameters.map((p) => p.name)).toEqual(["socket", "path", "fragment"]);
+  });
+
+  test("the curried go.get/go.set rows drop tables the row that accepts them takes over", () => {
+    const store = committedStore("go");
+    const symbols = apiModuleSymbols(fixturePage("go"), {}, store);
+    for (const [fqn, params] of [
+      ["go.get", ["url", "property", "options"]],
+      ["go.set", ["url", "property", "value", "options"]],
+    ] as const) {
+      const rows = symbols.filter((s) => s.name === fqn);
+      expect(rows).toHaveLength(3);
+      expect(rows[0]?.parameters).toEqual([]);
+      expect(rows[0]?.returnValues).toEqual([]);
+      expect(rows[1]?.parameters.map((p) => p.name)).toEqual([...params]);
+      expect(rows[2]?.parameters).toEqual([]);
+    }
+    // the `value` return row moves with the parameter table it belongs to
+    expect(symbols.filter((s) => s.name === "go.get")[1]?.returnValues.map((r) => r.name)).toEqual([
+      "value",
+    ]);
+  });
+
+  test("no rendered zero-argument row on any real page carries a parameter table", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    expect(pages.length).toBeGreaterThan(0);
+    const offenders: string[] = [];
+    for (const page of pages) {
+      for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+        if (outerCallArity(symbol.signature) === 0 && symbol.parameters.length > 0) {
+          offenders.push(`${page.route} ${symbol.signature}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("debug.getinfo's softer arity mismatch keeps its row-1 parameter table", () => {
+    const store = committedStore("debug");
+    const rows = apiModuleSymbols(fixturePage("debug"), {}, store).filter(
+      (s) => s.name === "debug.getinfo",
+    );
+    expect(rows).toHaveLength(1);
+    expect(outerCallArity(rows[0]?.signature ?? "")).toBe(2);
+    expect(rows[0]?.parameters.map((p) => p.name)).toEqual(["thread", "function", "what"]);
   });
 });
 
