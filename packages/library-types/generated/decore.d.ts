@@ -101,7 +101,7 @@ declare module 'decore.decore' {
 		processingSystem: (table: system | undefined) => system;
 		sortedSystem: (table: system | undefined) => system;
 		sortedProcessingSystem: (table: system | undefined) => system;
-		world: (...args: unknown[]) => LuaMultiReturn<[world, unknown]>;
+		world: (...args: unknown[]) => LuaMultiReturn<[world, ...unknown[]]>;
 		addEntity: (world: world, entity: entity) => entity;
 		addSystem: (world: world, system: system) => system;
 		add: (world: world, ...args: unknown[]) => unknown;

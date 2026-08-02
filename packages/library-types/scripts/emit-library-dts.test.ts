@@ -412,6 +412,75 @@ test("preserves a self-hook's union + nullable + multi-return when lowering to a
   expect(out).not.toContain("sample: (");
 });
 
+test("renders a trailing vararg return as a rest tuple element", () => {
+  const model: LibraryModel = {
+    interfaces: [{ name: "world", generics: [], fields: [], methods: [], brief: "" }],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "spawn",
+        brief: "",
+        generics: [],
+        params: [],
+        returns: [
+          { name: "w", types: ["world"], doc: "", isOptional: false, isVararg: false },
+          { name: "", types: ["..."], doc: "", isOptional: false, isVararg: false },
+        ],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("): LuaMultiReturn<[world, ...unknown[]]>;");
+});
+
+test("keeps a fixed-arity multi-return unchanged", () => {
+  const model: LibraryModel = {
+    interfaces: [{ name: "world", generics: [], fields: [], methods: [], brief: "" }],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "spawn",
+        brief: "",
+        generics: [],
+        params: [],
+        returns: [
+          { name: "w", types: ["world"], doc: "", isOptional: false, isVararg: false },
+          { name: "s", types: ["string"], doc: "", isOptional: false, isVararg: false },
+        ],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("): LuaMultiReturn<[world, string]>;");
+});
+
+test("renders a self-hook's trailing vararg return as a rest tuple element", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "base",
+        generics: [],
+        fields: [
+          { name: "sample", types: ["fun(self:base): world, ..."], doc: "", isOptional: false },
+        ],
+        methods: [],
+        brief: "",
+      },
+      { name: "world", generics: [], fields: [], methods: [], brief: "" },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("sample?(...args: any[]): LuaMultiReturn<[world, ...unknown[]]>;");
+});
+
 test("emits a bare generic param when the constraint resolves to unknown, not <T extends unknown>", () => {
   const model: LibraryModel = {
     interfaces: [

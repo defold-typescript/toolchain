@@ -29,7 +29,15 @@ export function varargElementType(mapped: string): string {
   return needsArrayParens(mapped) ? `(${mapped})[]` : `${mapped}[]`;
 }
 
-/** Wrap `>1` mapped return tokens in the `LuaMultiReturn<[...]>` tuple form. */
-export function luaMultiReturn(mapped: readonly string[]): string {
-  return `LuaMultiReturn<[${mapped.join(", ")}]>`;
+/**
+ * Wrap `>1` mapped return tokens in the `LuaMultiReturn<[...]>` tuple form. With
+ * `restTail`, the last element renders as a rest element — the shape a LuaLS
+ * multi-return whose final value is a bare vararg (`fun(): T, ...`) calls for.
+ */
+export function luaMultiReturn(mapped: readonly string[], restTail = false): string {
+  const elements =
+    restTail && mapped.length > 0
+      ? [...mapped.slice(0, -1), `...${varargElementType(mapped[mapped.length - 1] as string)}`]
+      : mapped;
+  return `LuaMultiReturn<[${elements.join(", ")}]>`;
 }

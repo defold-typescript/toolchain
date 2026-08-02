@@ -1544,7 +1544,7 @@
           "brief": "Creates a new world",
           "description": "Creates a new world",
           "types": [
-            "(...args: unknown[]) => LuaMultiReturn<[world, unknown]>"
+            "(...args: unknown[]) => LuaMultiReturn<[world, ...unknown[]]>"
           ]
         },
         {
