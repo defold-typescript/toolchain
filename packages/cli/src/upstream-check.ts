@@ -171,6 +171,87 @@ function hasLiveUpstreamClaim(lockPath: string, now: number): boolean {
   return false;
 }
 
+// Put a held claim back the way it was found. The claim artifact *is* the
+// victim's marker, so the disposition follows from what the lock proves: a lock
+// still holding the victim's token means it is a live owner and must stay
+// releasable, while a lock that is absent or holds another token proves the
+// victim is gone and a restored marker would be litter nothing collects.
+function disposeUpstreamClaim(
+  lockPath: string,
+  victimToken: string,
+  token: string,
+  victimIsGone: boolean,
+): void {
+  const claimPath = upstreamLockClaimPath(lockPath, token);
+  try {
+    if (victimIsGone) {
+      unlinkSync(claimPath);
+    } else {
+      renameSync(claimPath, upstreamLockOwnerPath(lockPath, victimToken));
+    }
+  } catch {
+    // Never claimed, or already gone.
+  }
+}
+
+// Finish a won claim, but only against the state that was actually observed.
+// Precondition: the caller holds `upstreamLockClaimPath(lockPath, token)` — the
+// victim's marker, renamed away. That is what makes this recheck conclusive: the
+// victim cannot release (its CAS fails), no plain acquire can take the non-empty
+// canonical path, and a rival takeover is fenced off by our live claim. So a
+// lock that still holds `victimToken` and is still stale cannot change under us,
+// and anything else means the observation the claim was made from is obsolete.
+export function captureClaimedUpstreamLock(
+  lockPath: string,
+  victimToken: string,
+  token: string,
+  now: number,
+): UpstreamLockHandle | undefined {
+  let stale: boolean;
+  let victimStillOwns: boolean;
+  try {
+    stale = statSync(lockPath).mtimeMs < now - UPSTREAM_LOCK_STALE_MS;
+    victimStillOwns = readFileSync(lockPath, "utf8") === victimToken;
+  } catch (err) {
+    // Absence proves the victim is no longer the owner; any other failure proves
+    // nothing, and must not cost the victim its marker.
+    disposeUpstreamClaim(
+      lockPath,
+      victimToken,
+      token,
+      (err as NodeJS.ErrnoException).code === "ENOENT",
+    );
+    return undefined;
+  }
+
+  if (stale && victimStillOwns) {
+    const ownerPath = upstreamLockOwnerPath(lockPath, token);
+    try {
+      writeFileSync(ownerPath, token, { flag: "wx" });
+      // In-place overwrite, not a rename: the victim provably cannot release (its
+      // marker is ours now) and no plain acquire can take a non-empty path.
+      writeFileSync(lockPath, token);
+    } catch {
+      try {
+        unlinkSync(ownerPath);
+      } catch {
+        // Never created.
+      }
+      disposeUpstreamClaim(lockPath, victimToken, token, false);
+      return undefined;
+    }
+    try {
+      unlinkSync(upstreamLockClaimPath(lockPath, token));
+    } catch {
+      // Never claimed.
+    }
+    return { lockPath, token };
+  }
+
+  disposeUpstreamClaim(lockPath, victimToken, token, !victimStillOwns);
+  return undefined;
+}
+
 // Steal a stale lock in place. The canonical path is never vacated, so a rival
 // can neither find it free nor have a fresh replacement captured out from under
 // it — the only contended resource is the victim's marker.
@@ -195,12 +276,10 @@ export function takeOverStaleUpstreamLock(
     }
     // No live claim and no marker means a crash orphaned the lock, so re-adopt
     // the marker on the victim's behalf; the exclusive create is what serializes
-    // two recoverers. Residual exposure: a recoverer that passed this scan
-    // before a rival's claim existed can re-adopt after that rival finished and
-    // overwrite the lock, leaving the loser holding a token that is no longer
-    // the lock's content. Its release re-reads and finds the mismatch, so the
-    // worst case is one duplicate upstream fetch after a crash — never a
-    // deleted or displaced lock.
+    // two recoverers. A recoverer that passed this scan before a rival's claim
+    // existed can still fabricate a marker for a token the lock no longer holds,
+    // but the capture that follows either proves the lock is that token's and
+    // stale, or drops the fabrication and leaves the directory as it was.
     try {
       writeFileSync(upstreamLockOwnerPath(lockPath, victimToken), victimToken, { flag: "wx" });
     } catch {
@@ -211,27 +290,9 @@ export function takeOverStaleUpstreamLock(
     }
   }
 
-  const ownerPath = upstreamLockOwnerPath(lockPath, token);
-  try {
-    writeFileSync(ownerPath, token, { flag: "wx" });
-    // In-place overwrite, not a rename: the victim provably cannot release (its
-    // marker is ours now) and no plain acquire can take a non-empty path.
-    writeFileSync(lockPath, token);
-    return { lockPath, token };
-  } catch {
-    try {
-      unlinkSync(ownerPath);
-    } catch {
-      // Never created.
-    }
-    return undefined;
-  } finally {
-    try {
-      unlinkSync(upstreamLockClaimPath(lockPath, token));
-    } catch {
-      // Never claimed.
-    }
-  }
+  // The claim is not the end of the takeover, only the point at which a recheck
+  // becomes conclusive — capture owns the claim artifact from here.
+  return captureClaimedUpstreamLock(lockPath, victimToken, token, now);
 }
 
 // Exclusive-create lock with stale detection. Returns a handle rather than
