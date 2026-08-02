@@ -367,6 +367,92 @@ function projectParams(list: ApiParameter[], mapType: MapType = mapDocType): Api
   }));
 }
 
+/**
+ * Argument count of the outermost call list in a rendered signature, or `null`
+ * when the text is not a call at all. A `: ` before any `(` or `<` marks a
+ * property annotation, so a function-typed value is never read as a call list;
+ * only the first parenthesized list is read, so a curried return type
+ * (`go.get<P>(): <K …>(url, …) => P[K]`) reports the outer form's arity — zero —
+ * rather than the arity of the function it returns. This is a property of the
+ * rendered signature text, not of the ref-doc model.
+ */
+export function outerCallArity(signature: string): number | null {
+  let i = 0;
+  for (; i < signature.length; i++) {
+    const ch = signature[i];
+    if (ch === "(" || ch === "<") break;
+    if (ch === ":" && /\s/.test(signature[i + 1] ?? "")) return null;
+  }
+  if (signature[i] === "<") {
+    let generic = 0;
+    for (; i < signature.length; i++) {
+      const ch = signature[i];
+      // an arrow's `>` closes nothing — skip it before the depth bookkeeping
+      if (ch === "=" && signature[i + 1] === ">") {
+        i++;
+      } else if (ch === "<") {
+        generic++;
+      } else if (ch === ">" && --generic === 0) {
+        i++;
+        break;
+      }
+    }
+    while (i < signature.length && signature[i] !== "(") i++;
+  }
+  if (signature[i] !== "(") return null;
+
+  let depth = 0;
+  let commas = 0;
+  let hasArguments = false;
+  for (; i < signature.length; i++) {
+    const ch = signature[i] as string;
+    if (ch === "=" && signature[i + 1] === ">") {
+      i++;
+    } else if (ch === "(" || ch === "<" || ch === "[" || ch === "{") {
+      depth++;
+    } else if (ch === ")" || ch === ">" || ch === "]" || ch === "}") {
+      if (--depth === 0) return hasArguments ? commas + 1 : 0;
+    } else if (depth === 1 && ch === ",") {
+      commas++;
+    } else if (!/\s/.test(ch)) {
+      hasArguments = true;
+    }
+  }
+  return null;
+}
+
+/**
+ * Pair each authored override row with the ref-doc entry its call shape selects,
+ * or `null` when the shapes cannot pick one out unambiguously — equal row and
+ * entry counts, pairwise-distinct entry arities, and every entry's arity equal
+ * to its row's. `vmath.lerp`/`vmath.slerp` fail the distinctness test (their
+ * entries are arity-identical), so they keep the entry-0 projection.
+ */
+function pairFixtureEntries(
+  entries: readonly ApiFunction[],
+  rowSignatures: readonly string[],
+): readonly ApiFunction[] | null {
+  if (entries.length !== rowSignatures.length) return null;
+  const arities = entries.map((e) => e.parameters.length);
+  if (new Set(arities).size !== arities.length) return null;
+  for (const [i, arity] of arities.entries()) {
+    if (outerCallArity(rowSignatures[i] as string) !== arity) return null;
+  }
+  return entries;
+}
+
+/**
+ * Which unpaired row carries the ref-doc entry's parameter and return tables:
+ * row 1 as before, unless row 1 is a zero-argument form the tables cannot
+ * describe (the curried `go.get`/`go.set` factories), in which case they move to
+ * the first row whose arity accepts them — or `-1`, nowhere, if none does.
+ */
+function unpairedTableRow(entry: ApiFunction, rowSignatures: readonly string[]): number {
+  if (entry.parameters.length === 0) return 0;
+  if (outerCallArity(rowSignatures[0] ?? "") !== 0) return 0;
+  return rowSignatures.findIndex((s) => outerCallArity(s) === entry.parameters.length);
+}
+
 // `isLibrary` gates the emitter-equivalent variadic (`...args: T[]`) and multi-return
 // (`LuaMultiReturn<[...]>`) forms so a LuaLS- or script_api-sourced library `/api`
 // page matches its `generated/<ns>.d.ts`; engine pages keep `...: T` and comma-joined returns.
@@ -600,19 +686,22 @@ export function apiModuleSymbols(
   const authoritative = page.authoritativeSignatures;
   const symbols: ApiSymbol[] = [];
   const overrideEmitted = new Set<string>();
+  // Every ref-doc entry of an override-covered FQN, grouped in source order
+  // before the walk: the collapse below renders only the first entry it meets,
+  // so the pairing needs the whole group to reach the later ones.
+  const overrideEntries = new Map<string, ApiFunction[]>();
+  for (const fn of m.functions) {
+    if (lookupSignature(signatures, fn.name) === null) continue;
+    const group = overrideEntries.get(fn.name);
+    if (group) group.push(fn);
+    else overrideEntries.set(fn.name, [fn]);
+  }
 
   for (const fn of m.functions) {
     const ov = lookupSignature(signatures, fn.name);
     // override-covered FQN: render the store signatures once, not per fixture entry
     // (`vmath.lerp` has 3 ref-doc entries but one authored override set).
     if (ov !== null && overrideEmitted.has(fn.name)) continue;
-    // per-overload description: each override row keeps its own `docs[i]` prose,
-    // falling back to the shared ref-doc fixture description when absent/`null`.
-    const fixtureDoc = htmlToDocText(fn.description || fn.brief);
-    const overloadDoc = (i: number): string => {
-      const authored = ov?.docs?.[i];
-      return authored != null ? htmlToDocText(authored) : fixtureDoc;
-    };
     // The authoritative Combined signature wins over both the token render and
     // the authored override store; on exact-version pages the map is absent, so
     // the existing override/token precedence is unchanged.
@@ -623,17 +712,39 @@ export function apiModuleSymbols(
       fn.name,
       normalizedFunctionSignature(fn),
     );
+    const primarySignature =
+      authSig ??
+      (ov === null
+        ? functionSignature(fn, mapType, isLibrary)
+        : (ov.signatures[0] ?? functionSignature(fn, mapType, isLibrary)));
+    // The rows this FQN renders, in authored order, against the ref-doc entries
+    // the override collapses over. When the call shapes pick an entry out per row
+    // (`msg.url`'s 0/1/3 arities) each row reads its own; otherwise every row
+    // keeps entry 0, exactly as before.
+    const rowSignatures =
+      ov === null ? [primarySignature] : [primarySignature, ...ov.signatures.slice(1)];
+    const entries = ov === null ? [fn] : (overrideEntries.get(fn.name) ?? [fn]);
+    const paired = ov === null ? null : pairFixtureEntries(entries, rowSignatures);
+    const tableRow = paired !== null ? -1 : ov === null ? 0 : unpairedTableRow(fn, rowSignatures);
+    const rowEntry = (i: number): ApiFunction | null => paired?.[i] ?? (i === tableRow ? fn : null);
+    // per-overload description: each override row keeps its own `docs[i]` prose,
+    // falling back to its paired ref-doc entry's description — or, unpaired, to
+    // the shared entry-0 one — when absent/`null`.
+    const fixtureDoc = htmlToDocText(fn.description || fn.brief);
+    const overloadDoc = (i: number): string => {
+      const authored = ov?.docs?.[i];
+      if (authored != null) return htmlToDocText(authored);
+      const entry = paired?.[i];
+      return entry ? htmlToDocText(entry.description || entry.brief) : fixtureDoc;
+    };
+    const primaryEntry = rowEntry(0);
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
-      signature:
-        authSig ??
-        (ov === null
-          ? functionSignature(fn, mapType, isLibrary)
-          : (ov.signatures[0] ?? functionSignature(fn, mapType, isLibrary))),
+      signature: primarySignature,
       docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
-      parameters: projectParams(fn.parameters, mapType),
-      returnValues: projectParams(fn.returnValues, mapType),
+      parameters: primaryEntry ? projectParams(primaryEntry.parameters, mapType) : [],
+      returnValues: primaryEntry ? projectParams(primaryEntry.returnValues, mapType) : [],
     };
     const example = exampleMarkdownFor(fn, translations);
     if (example) symbol.exampleMarkdown = example;
@@ -651,19 +762,21 @@ export function apiModuleSymbols(
     if (av) symbol.availability = av;
     symbols.push(symbol);
     // Each remaining authored overload renders as its own row, reusing the
-    // distinct-row overload pattern: its own `docs[k+1]` prose (else the fixture
-    // description), but no per-parameter block or example since the primary row
-    // already carries them.
+    // distinct-row overload pattern: its own `docs[k+1]` prose (else its paired
+    // ref-doc description), and the parameter/return tables only when an entry
+    // is paired to it or the primary row's call shape could not hold them. The
+    // example stays on the primary row.
     if (ov !== null) {
       overrideEmitted.add(fn.name);
       for (const [k, signature] of ov.signatures.slice(1).entries()) {
+        const entry = rowEntry(k + 1);
         symbols.push({
           kind: "function",
           name: fn.name,
           signature,
           docMarkdown: overloadDoc(k + 1),
-          parameters: [],
-          returnValues: [],
+          parameters: entry ? projectParams(entry.parameters, mapType) : [],
+          returnValues: entry ? projectParams(entry.returnValues, mapType) : [],
         });
       }
     }
