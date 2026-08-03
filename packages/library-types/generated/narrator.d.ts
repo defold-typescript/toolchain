@@ -95,7 +95,7 @@ declare module 'narrator.narrator' {
 		/**
 		 * Assign an observer function to the variable's changes.
 		 */
-		observe(variable: string, observer: (variable: unknown) => void): void;
+		observe(variable: string, observer: (value: unknown) => void): void;
 		/**
 		 * Bind a function to external calling from the Ink.
 		 * The function can returns the value or not.
