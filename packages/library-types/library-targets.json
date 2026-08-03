@@ -144,12 +144,6 @@
       "generated": "generated/nakama.nakama.d.ts"
     },
     {
-      "module": "yagames.yagames",
-      "path": "packages/defold-yagames/yagames.yagames.d.ts",
-      "fixture": "fixtures/ts-defold/yagames.yagames.d.ts",
-      "generated": "generated/yagames.yagames.d.ts"
-    },
-    {
       "module": "bzAnim.bzLibrary",
       "path": "packages/bzAnim/bzAnim.bzAnim.d.ts",
       "fixture": "fixtures/ts-defold/bzAnim.bzAnim.d.ts",

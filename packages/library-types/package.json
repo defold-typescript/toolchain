@@ -82,9 +82,6 @@
     "./nakama.nakama": {
       "types": "./generated/nakama.nakama.d.ts"
     },
-    "./yagames.yagames": {
-      "types": "./generated/yagames.yagames.d.ts"
-    },
     "./bridge.bridge": {
       "types": "./generated/bridge.d.ts"
     },

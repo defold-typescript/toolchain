@@ -99,6 +99,16 @@
       "namespace": "nakama.util.log",
       "generated": "generated/nakama.util.log.d.ts",
       "apiDoc": "api-doc/nakama.util.log.json"
+    },
+    {
+      "repo": "https://github.com/indiesoftby/defold-yagames",
+      "ref": "0.19.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/yagames.yagames.d.ts",
+      "moduleId": "yagames.yagames",
+      "namespace": "yagames",
+      "generated": "generated/yagames.d.ts",
+      "apiDoc": "api-doc/yagames.json"
     }
   ]
 }

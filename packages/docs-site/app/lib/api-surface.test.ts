@@ -250,6 +250,23 @@ describe("loadApiSurface library pages", () => {
     expect(meta.importString).toBe('import * as camera from "orthographic.camera"');
   });
 
+  // yagames severed under the *bare* namespace, so unlike orthographic its route
+  // moves (`/api/yagames.yagames` -> `/api/yagames`) while the import string is
+  // still byte-identical: the alias comes from the namespace's trailing segment
+  // and the path from the unchanged `moduleId`.
+  test("a bare-namespace severed library moves its route but keeps its import string", () => {
+    const yagames = libraryPages.find((p) => p.namespace === "yagames");
+    expect(yagames).toBeDefined();
+    expect(yagames?.route).toBe("/api/yagames");
+    const meta = yagames?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.authorUrl).toBe("https://github.com/indiesoftby/defold-yagames");
+    expect(meta.commit).toBe("0.19.0");
+    expect(meta.importString).toBe('import * as yagames from "yagames.yagames"');
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -301,6 +318,16 @@ describe("loadApiSurface library descriptions", () => {
     expect(orthographic?.module.description).toBe(descByDir["orthographic.camera"]);
     expect(orthographic?.module.description ?? "").not.toContain("vendored via");
     expect(orthographic?.module.description ?? "").not.toContain("tree/");
+  });
+
+  // Same fallback, exercised at the bare namespace: deleting the `defold-yagames`
+  // classification dir kills the dir-keyed lookup, so without a namespace-keyed
+  // entry the page would render description-less.
+  test("a description-less api-doc page (yagames) gets its description from the vendored map", () => {
+    const yagames = libraryPages.find((p) => p.namespace === "yagames");
+    expect(yagames).toBeDefined();
+    expect(yagames?.module.description).toBe(descByDir.yagames);
+    expect(yagames?.module.description?.length ?? 0).toBeGreaterThan(0);
   });
 
   test("a page whose api-doc fixture already carries a description keeps its own richer text", () => {
