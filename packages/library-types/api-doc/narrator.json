@@ -572,7 +572,7 @@
               "name": "observer",
               "doc": "",
               "types": [
-                "(variable: unknown) => void"
+                "(value: unknown) => void"
               ],
               "is_optional": "False",
               "is_vararg": "False"

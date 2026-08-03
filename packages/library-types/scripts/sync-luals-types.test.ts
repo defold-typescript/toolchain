@@ -543,6 +543,46 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
     expect(cont?.returns).toHaveLength(1);
     expect(cont?.returns[0]?.types).toEqual(["Narrator.Paragraph[]|Narrator.Paragraph"]);
   });
+
+  test("Narrator.Story.observe's callback is typed instead of an untyped param name", () => {
+    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    const story = buildTargetModel(PACKAGE_ROOT, narratorTarget).interfaces.find(
+      (i) => i.name === "Narrator.Story",
+    );
+    const observer = story?.methods
+      .find((m) => m.name === "observe")
+      ?.params.find((p) => p.name === "observer");
+    expect(observer?.types).toEqual(["fun(value: any)"]);
+  });
+
+  test("its callback parameters equal the fixture's own observer invocation", () => {
+    // Naive comma split: safe because no parameter type in this token carries a comma.
+    const paramNames = (body: string): string[] =>
+      body
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0)
+        .map((entry) => {
+          const colon = entry.indexOf(":");
+          return (colon === -1 ? entry : entry.slice(0, colon)).trim();
+        });
+
+    const token =
+      narratorTarget?.annotationOverrides?.interfaces?.["Narrator.Story"]?.methods?.observe?.params
+        ?.observer?.type;
+    if (!token) throw new Error("Narrator.Story.observe observer override missing");
+
+    const fixture = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/luals/narrator/narrator/story.lua"),
+      "utf8",
+    );
+    const invoked = /^\s*observer\(([^)]*)\)/m.exec(fixture);
+    if (!invoked) throw new Error("observer invocation missing from story.lua");
+
+    expect(paramNames(token.slice(token.indexOf("(") + 1, token.lastIndexOf(")")))).toEqual(
+      paramNames(invoked[1] ?? ""),
+    );
+  });
 });
 
 describe("druid.drag's on_drag_callback override matches the runtime arity", () => {
