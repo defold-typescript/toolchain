@@ -485,3 +485,99 @@ describe("orthographic.camera migration integrity", () => {
     expect(golden).not.toContain("target: Hash | Url,");
   });
 });
+
+// The third Bucket-C severance, and the second to take the bare namespace. The
+// bare `yagames` is both free and required: nothing owns `generated/yagames.d.ts`
+// or `api-doc/yagames.json` and yagames is not a markdown target, while the
+// shared severed branch asserts a no-go module has no `generated/<moduleId>.d.ts`
+// — the dotted overwrite-in-place shape orthographic used would fail it. The
+// import string survives byte-identical (the alias comes from the namespace's
+// trailing segment, the path from `moduleId`); only the route and the dropped
+// export subpath move.
+//
+// Unlike persist and orthographic the fork does not stay verbatim: upstream
+// 0.19.0 replaced the whole `banner_*` family with the sticky-banner API, so the
+// golden assertions below gate a correction rather than a copy.
+describe("yagames.yagames migration integrity", () => {
+  test("yagames is registered in authored-targets.json under its bare namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const yagames = targets.find((t) => t.namespace === "yagames");
+    expect(yagames).toBeDefined();
+    expect(yagames?.moduleId).toBe("yagames.yagames");
+    expect(yagames?.repo).toBe("https://github.com/indiesoftby/defold-yagames");
+    expect(yagames?.ref).toBe("0.19.0");
+    expect(yagames?.license).toBe("MIT");
+    expect(yagames?.authored).toBe("fixtures/authored/yagames.yagames.d.ts");
+    expect(yagames?.generated).toBe("generated/yagames.d.ts");
+    expect(yagames?.apiDoc).toBe("api-doc/yagames.json");
+  });
+
+  test("yagames.yagames is no longer a ts-defold library-targets row", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "yagames.yagames")).toBe(false);
+  });
+
+  test("the defold-yagames dir is gone from library-classification.json", () => {
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defold-yagames")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/yagames.yagames.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/yagames.yagames.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/yagames.yagames.json"))).toBe(false);
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./yagames.yagames" in exports).toBe(false);
+  });
+
+  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/yagames.d.ts");
+    expect(include).toContain("test-d/yagames-usage.test-d.ts");
+    expect(include).not.toContain("generated/yagames.yagames.d.ts");
+  });
+
+  test("the sticky-banner API replaced the banner_* family in the golden", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/yagames.d.ts"), "utf8");
+    for (const fn of ["adv_show_banner_adv", "adv_hide_banner_adv", "adv_get_banner_adv_status"]) {
+      expect(golden).toContain(`export function ${fn}(`);
+    }
+    for (const fn of [
+      "banner_init",
+      "banner_create",
+      "banner_delete",
+      "banner_refresh",
+      "banner_set",
+    ]) {
+      expect(golden).not.toContain(fn);
+    }
+  });
+
+  // `player_get_id` is deprecated upstream, not removed, so the correction is the
+  // misspelling in the existing tag — asserting only that the text names the
+  // replacement would pass with `unqiue` still sitting beside it.
+  test("player_get_id survives with a correctly spelled deprecation", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/yagames.d.ts"), "utf8");
+    expect(golden).toContain("export function player_get_id(): string;");
+    expect(golden).toContain("Use `player_get_unique_id` instead.");
+    expect(golden).not.toContain("unqiue");
+  });
+
+  // Removal needs positive evidence, and upstream supplies the opposite: at tag
+  // 0.19.0 `M.leaderboards_init` still exists and prints its own deprecation
+  // notice. The README simply stopped documenting it.
+  test("leaderboards_init survives, marked deprecated as upstream marks it", () => {
+    const golden = readFileSync(join(PACKAGE_ROOT, "generated/yagames.d.ts"), "utf8");
+    expect(golden).toContain("export function leaderboards_init(");
+    // Anchored on the declaration so the tag cannot drift onto a neighbour.
+    expect(golden).toMatch(/@deprecated[\s\S]{0,200}?\*\/\s*export function leaderboards_init\(/);
+  });
+});

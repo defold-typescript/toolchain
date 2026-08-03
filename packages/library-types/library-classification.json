@@ -250,13 +250,6 @@
       ]
     },
     {
-      "dir": "defold-yagames",
-      "classification": "already-vendored",
-      "modules": [
-        "yagames.yagames"
-      ]
-    },
-    {
       "dir": "defold-yametrica",
       "classification": "native",
       "modules": [
