@@ -111,10 +111,16 @@ export function upstreamRequestReservationPath(key: UpstreamCacheKey): string {
 // is granted by an exclusive create keyed on the value being replaced: exactly
 // one caller per predecessor can hold this. The file it names is not a receipt
 // but the successor itself — staged complete, then renamed onto the canonical
-// path — which makes it a single-use token, consumed by the handover it
-// authorizes. Content never reaches the filename verbatim: anything that is not
-// a usable timestamp collapses to a fixed key, so no path separator, newline, or
-// unbounded digit run in the file can escape into a path.
+// path — which makes it a single-use token, consumed by its author's own win and
+// by nothing else. This is a reusable name, not an identity: it is a pure
+// function of the predecessor, so any later caller observing the same value
+// recreates it, and one freed by a win or a prune can be recreated while callers
+// still observe that predecessor — which leaves a winner able to rename a peer's
+// freshly staged timestamp onto the canonical path and grant an interval it did
+// not author. Closing that needs the winner confirming the installed value is its
+// own. Content never reaches the filename verbatim: anything that is not a usable
+// timestamp collapses to a fixed key, so no path separator, newline, or unbounded
+// digit run in the file can escape into a path.
 export function upstreamReservationSuccessionPath(
   reservationPath: string,
   predecessor: string,
@@ -183,46 +189,34 @@ function discardReservationStage(successionPath: string): void {
   }
 }
 
-// Reached only when the stage for this predecessor already exists. Recovery
-// adopts an interrupted attempt's interval, it never takes one: no path here
-// grants a win, so healing can cost a request but can never duplicate one.
-function recoverReservationStage(
-  successionPath: string,
-  reservationPath: string,
-  held: string,
-  now: number,
-  intervalMs: number,
-): void {
+// Reached only when the stage for this predecessor already exists. Recovery only
+// ever declines: it adopts no interval and installs no value, so the sole writer
+// of the canonical reservation is a caller renaming bytes it authored itself, and
+// healing can cost a request but can never duplicate one. Adopting an interrupted
+// attempt's interval would save at most one request per crash and would buy it by
+// renaming a path this function does not pin between reading it and moving it —
+// a peer's rename or a prune frees the name, so the bytes installed need not be
+// the bytes judged expired. Declining leaves the canonical at its expired
+// predecessor and the name free, so the next caller stages its own timestamp and
+// wins.
+function recoverReservationStage(successionPath: string, now: number, intervalMs: number): void {
   let staged: string;
   try {
     staged = readFileSync(successionPath, "utf8");
   } catch {
     return;
   }
-  if (!isReservationTimestamp(staged)) {
-    // A stage whose write never landed, so nothing can interpret it. Clear it and
-    // let the next call stage cleanly.
-    discardReservationStage(successionPath);
+  if (isReservationTimestamp(staged) && now - Number(staged) < intervalMs) {
+    // A live successor holds it, and its interval covers this caller too. A staged
+    // timestamp in the future gives a negative difference, so it reads as live
+    // rather than as long expired, the same way the canonical value does.
     return;
   }
-  if (now - Number(staged) < intervalMs) {
-    // A live successor holds it, and its interval covers this caller too.
-    return;
-  }
-  // An attempt that staged its value and exited before the rename. Finish it on
-  // that process's behalf, but only against the predecessor it observed, so a
-  // stale recoverer cannot install it over a newer reservation. Two recoverers
-  // race to one rename and the loser finds no source, which is what keeps the
-  // token single-use.
-  if (!reservationStillHolds(reservationPath, held)) {
-    return;
-  }
-  try {
-    renameSync(successionPath, reservationPath);
-  } catch {
-    // Lost to a peer recoverer, or the path is momentarily unrenamable; the next
-    // caller re-reads and decides again.
-  }
+  // Either a stage whose write never landed, so nothing can interpret it, or an
+  // attempt that staged its value and exited before the rename. Neither is worth
+  // completing, and leaving either in place would wedge the slot against every
+  // caller observing this predecessor.
+  discardReservationStage(successionPath);
 }
 
 // Take over a reservation whose window has run out. Expiry is by the recorded
@@ -254,7 +248,7 @@ export function succeedUpstreamRequestReservation(
     writeFileSync(successionPath, String(now), { flag: "wx" });
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "EEXIST") {
-      recoverReservationStage(successionPath, reservationPath, held, now, intervalMs);
+      recoverReservationStage(successionPath, now, intervalMs);
     }
     return false;
   }
