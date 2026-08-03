@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { emitLibraryDeclarations } from "./emit-library-dts";
+import type { LibraryInterface, LibraryModel } from "./parse-luals";
 import {
   buildTargetModel,
   type FetchText,
@@ -526,6 +527,58 @@ describe("narrator ingestion restricted to its public surface", () => {
 describe("narrator annotation overrides make the surface runtime-faithful", () => {
   const narratorTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "narrator");
 
+  // Naive comma split: safe because no parameter type in this token carries a comma.
+  function splitObserverParams(token: string): { name: string; type: string }[] {
+    return token
+      .slice(token.indexOf("(") + 1, token.lastIndexOf(")"))
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0)
+      .map((entry) => {
+        const colon = entry.indexOf(":");
+        return colon === -1
+          ? { name: entry, type: "" }
+          : { name: entry.slice(0, colon).trim(), type: entry.slice(colon + 1).trim() };
+      });
+  }
+
+  function storyMember(model: LibraryModel): LibraryInterface {
+    const story = model.interfaces.find((i) => i.name === "Narrator.Story");
+    if (!story) throw new Error("Narrator.Story missing from the built model");
+    return story;
+  }
+
+  function observerParams(model: LibraryModel): { name: string; type: string }[] {
+    const types = storyMember(model)
+      .methods.find((m) => m.name === "observe")
+      ?.params.find((p) => p.name === "observer")?.types;
+    if (types?.length !== 1 || !types[0]) {
+      throw new Error(
+        `Narrator.Story.observe observer: expected one type token, saw ${JSON.stringify(types)}`,
+      );
+    }
+    return splitObserverParams(types[0]);
+  }
+
+  // The observed value is whatever was just written into the variable store, so the
+  // store's own declared value type is the callback argument's source of truth.
+  function expectedObserverParamType(model: LibraryModel): string {
+    const field = storyMember(model).fields.find((f) => f.name === "variables");
+    const token = field?.types.length === 1 ? field.types[0] : undefined;
+    if (!token) {
+      throw new Error(
+        `Narrator.Story.variables: expected one type token, saw ${JSON.stringify(field?.types)}`,
+      );
+    }
+    const match = /^table<\s*string\s*,\s*(.+?)\s*>$/.exec(token);
+    if (!match?.[1]) {
+      throw new Error(
+        `Narrator.Story.variables: expected a "table<string, V>" token, saw "${token}"`,
+      );
+    }
+    return match[1];
+  }
+
   test("parse_content's trailing inclusions param is optional", () => {
     if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
     const parseContent = buildTargetModel(PACKAGE_ROOT, narratorTarget).moduleFunctions.find(
@@ -544,15 +597,34 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
     expect(cont?.returns[0]?.types).toEqual(["Narrator.Paragraph[]|Narrator.Paragraph"]);
   });
 
-  test("Narrator.Story.observe's callback is typed instead of an untyped param name", () => {
+  test("its callback's argument type equals the variable store's declared value type", () => {
     if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
-    const story = buildTargetModel(PACKAGE_ROOT, narratorTarget).interfaces.find(
-      (i) => i.name === "Narrator.Story",
+    const model = buildTargetModel(PACKAGE_ROOT, narratorTarget);
+    expect(observerParams(model).map((p) => p.type)).toEqual([expectedObserverParamType(model)]);
+  });
+
+  test("a retyped variable store reds that comparison, proving the derivation is live", () => {
+    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    const root = mkdtempSync(join(tmpdir(), "luals-types-narrator-store-"));
+    const fixtureRoot = join(root, "fixtures/luals/narrator");
+    cpSync(join(PACKAGE_ROOT, "fixtures/luals/narrator"), fixtureRoot, { recursive: true });
+
+    const storyPath = join(fixtureRoot, "narrator/story.lua");
+    const original = readFileSync(storyPath, "utf8");
+    const mutated = original.replace(
+      "---@field variables table<string, any>",
+      "---@field variables table<string, string>",
     );
-    const observer = story?.methods
-      .find((m) => m.name === "observe")
-      ?.params.find((p) => p.name === "observer");
-    expect(observer?.types).toEqual(["fun(value: any)"]);
+    if (mutated === original) throw new Error("variable store field missing from story.lua");
+    writeFileSync(storyPath, mutated);
+
+    // The committed target, so the override still declares `fun(value: any)`.
+    const mutatedModel = buildTargetModel(root, narratorTarget);
+    expect(expectedObserverParamType(mutatedModel)).toBe("string");
+    expect(observerParams(mutatedModel).map((p) => p.type)).not.toEqual(["string"]);
+
+    const pristine = buildTargetModel(PACKAGE_ROOT, narratorTarget);
+    expect(expectedObserverParamType(pristine)).toBe("any");
   });
 
   test("its callback parameters equal the fixture's own observer invocation", () => {
