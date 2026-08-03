@@ -29,7 +29,21 @@ declare module 'yagames.yagames' {
   }
   export function adv_show_rewarded_video(callbacks: RewardedCallbacks): void;
 
-  //* Authentication + Player 
+  export interface StickyBannerStatus {
+    stickyAdvIsShowing: boolean;
+    reason?: "ADV_IS_NOT_CONNECTED" | "UNKNOWN";
+  }
+  export type StickyBannerCallback = (ctx: Context, err?: string, result?: StickyBannerStatus) => void;
+  export function adv_get_banner_adv_status(callback: StickyBannerCallback): void;
+
+  export function adv_show_banner_adv(callback?: StickyBannerCallback): void;
+
+  export type StickyBannerHideCallback = (ctx: Context, err?: string, result?: {
+    stickyAdvIsShowing: boolean;
+  }) => void;
+  export function adv_hide_banner_adv(callback?: StickyBannerHideCallback): void;
+
+  //* Authentication + Player
 
   export function auth_open_auth_dialog(callback: ApiCallback): void;
 
@@ -50,7 +64,7 @@ declare module 'yagames.yagames' {
   export function player_get_stats(keys: Array<string> | undefined, callback: ApiCallback): void;
 
   /**
- * @deprecated Use `player_get_unqiue_id` instead.
+ * @deprecated Use `player_get_unique_id` instead.
  */
   export function player_get_id(): string;
 
@@ -107,6 +121,10 @@ declare module 'yagames.yagames' {
 
   //* Leaderboards
 
+  /**
+ * @deprecated The leaderboards subsystem no longer needs initializing; the other
+ * `leaderboards_*` functions work without it.
+ */
   export function leaderboards_init(callback: ApiCallback): void;
 
   export type LeaderboardsDescriptionCallback = (ctx: Context, err?: string, data?: {
@@ -244,27 +262,6 @@ declare module 'yagames.yagames' {
   export function storage_key(n: number): string | undefined;
 
   export function storage_length(): number;
-
-  //* Banner Ads
-
-  export function banner_init(callback: ApiCallback): void;
-
-  export interface BannerCreateOptions {
-    stat_id?: number;
-    css_styles?: string;
-    css_class?: string;
-    display?: "none" | "block";
-  }
-  export type BannerCreateCallback = (ctx: Context, err?: string, data?: {
-    product: "direct" | "rtb";
-  }) => void;
-  export function banner_create(rtb_id: string, options: BannerCreateOptions, callback?: BannerCreateCallback): void;
-  
-  export function banner_delete(rtb_id: string): void;
-  
-  export function banner_refresh(rtb_id: string, callback?: BannerCreateCallback): void;
-  
-  export function banner_set(rtb_id: string, property: "stat_id" | "css_styles" | "css_class" | "display", value: string): void;
 
   //* Sitelock
   

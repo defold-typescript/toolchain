@@ -20,7 +20,6 @@ import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
 import * as starly from "starly.starly";
-import * as yagames from "yagames.yagames";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -126,15 +125,6 @@ const _nakamaAccount: { id: string; vars: unknown } = nakama.create_api_account_
 const _nakamaSession = nakama.authenticate_custom(_nakamaClient, _nakamaAccount, true, "user");
 nakama.set_bearer_token(_nakamaClient, _nakamaSession.token);
 
-const _yagamesPlayerId: string = yagames.player_get_id();
-const _yagamesDevice: "desktop" | "mobile" | "tablet" = yagames.device_info_type();
-const _yagamesStorageLength: number = yagames.storage_length();
-yagames.player_get_data(undefined, (ctx, err, data) => {
-  void ctx;
-  void err;
-  void data;
-});
-
 const _bzInfoLevel: 1 = bzAnim.INFO_LEVEL;
 const _bzAnimId: string = bzAnim.animate({ obj: _hash, easing: "TYPE_LINEAR" });
 const _bzSeqId: string = bzAnim.animateSequence({ obj: undefined, easing: "TYPE_INQUAD" });
@@ -172,9 +162,6 @@ void _stView;
 void _stShaking;
 void _nakamaAccount;
 void _nakamaSession;
-void _yagamesPlayerId;
-void _yagamesDevice;
-void _yagamesStorageLength;
 void _bzInfoLevel;
 void _bzSeqId;
 void _bzReady;

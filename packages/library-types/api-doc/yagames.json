@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "yagames.yagames",
+    "namespace": "yagames",
     "brief": "",
     "description": ""
   },
@@ -60,6 +60,65 @@
             "RewardedCallbacks"
           ],
           "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "StickyBannerCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adv_get_banner_adv_status",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "StickyBannerCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adv_show_banner_adv",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "StickyBannerCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "StickyBannerHideCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adv_hide_banner_adv",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "StickyBannerHideCallback"
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -943,135 +1002,6 @@
     },
     {
       "type": "FUNCTION",
-      "name": "banner_init",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "callback",
-          "doc": "",
-          "types": [
-            "ApiCallback"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "TYPEDEF",
-      "name": "BannerCreateCallback"
-    },
-    {
-      "type": "FUNCTION",
-      "name": "banner_create",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "rtb_id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "options",
-          "doc": "",
-          "types": [
-            "BannerCreateOptions"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "callback",
-          "doc": "",
-          "types": [
-            "BannerCreateCallback"
-          ],
-          "is_optional": "True"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
-      "name": "banner_delete",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "rtb_id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
-      "name": "banner_refresh",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "rtb_id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "callback",
-          "doc": "",
-          "types": [
-            "BannerCreateCallback"
-          ],
-          "is_optional": "True"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
-      "name": "banner_set",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "rtb_id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "property",
-          "doc": "",
-          "types": [
-            "\"stat_id\" | \"css_styles\" | \"css_class\" | \"display\""
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "value",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
       "name": "add_domain",
       "brief": "",
       "description": "",
@@ -1207,6 +1137,28 @@
           "description": "",
           "types": [
             "(ctx: Context, err: string) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "StickyBannerStatus",
+      "properties": [
+        {
+          "name": "stickyAdvIsShowing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "reason",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"ADV_IS_NOT_CONNECTED\" | \"UNKNOWN\""
           ]
         }
       ]
@@ -1419,44 +1371,6 @@
           "description": "",
           "types": [
             "string"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "TYPEDEF",
-      "name": "BannerCreateOptions",
-      "properties": [
-        {
-          "name": "stat_id",
-          "brief": "",
-          "description": "",
-          "types": [
-            "number"
-          ]
-        },
-        {
-          "name": "css_styles",
-          "brief": "",
-          "description": "",
-          "types": [
-            "string"
-          ]
-        },
-        {
-          "name": "css_class",
-          "brief": "",
-          "description": "",
-          "types": [
-            "string"
-          ]
-        },
-        {
-          "name": "display",
-          "brief": "",
-          "description": "",
-          "types": [
-            "\"none\" | \"block\""
           ]
         }
       ]

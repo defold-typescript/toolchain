@@ -611,19 +611,26 @@ const PERSIST: LibraryRecord = {
 // bare Lua tokens with no structural types at all, against a ts-defold surface
 // of hand-written interfaces and named callback types.
 //
-// None of that dialect work would change the outcome. Against the corrected
-// 52-member ts-defold surface, upstream 0.19.0 documents no `banner_init`,
-// `banner_create`, `banner_delete`, `banner_refresh`, `banner_set` (the banner
-// family moved to `adv_show_banner_adv`/`adv_hide_banner_adv`/
-// `adv_get_banner_adv_status`), no `leaderboards_init` and no `player_get_id` —
-// 7 missing members under the most generous reading, so any parser lands on
-// `no-go` for surface-loss. Reading only the `yagames.` prefix the uniform-prefix
-// rule would enforce, it is 11.
+// None of that dialect work would change the outcome, and the evidence describe
+// below re-measures that against the *forked* snapshot rather than the retired
+// ts-defold one. Unlike persist (verbatim) and orthographic (a rename and a
+// widened union, neither of which the gate scores), the yagames fork drops five
+// members and adds three, so the recorded numbers move with it by design: the
+// severance retired `banner_init`, `banner_create`, `banner_delete`,
+// `banner_refresh`, `banner_set` in favour of the documented
+// `adv_show_banner_adv`/`adv_hide_banner_adv`/`adv_get_banner_adv_status`, taking
+// the surface from 52 members to 50 and the generous-reading gap from 7 to the
+// 2 upstream still declares but no longer documents — `leaderboards_init` and
+// `player_get_id`. Any gap at all forces `no-go` for surface-loss, so the verdict
+// is unchanged; what the smaller number costs is only the size of the margin.
+// Reading only the `yagames.` prefix the uniform-prefix rule would enforce, the
+// gap is 6 — the same 2 plus the 4 sitelock-receiver members.
 //
 // yagames is also the library that exposed the comparator's `//*` comment-strip
 // defect: its fixture's `//* Advertisement` section markers opened a block
-// comment that ran to the next JSDoc terminator, reporting 43 of its 52 members.
-// Every term of a comparison against that truncated surface fails toward `go`.
+// comment that ran to the next JSDoc terminator, truncating the surface it
+// reported. Every term of a comparison against that truncated surface fails
+// toward `go`.
 const YAGAMES: LibraryRecord = {
   library: "yagames",
   repo: "https://github.com/indiesoftby/defold-yagames",
@@ -634,6 +641,10 @@ const YAGAMES: LibraryRecord = {
   decisions: [
     { module: "yagames", decision: "no-go", reason: "doc-dialect", markdown: "README.md" },
   ],
+  severedSource: {
+    path: "packages/defold-yagames/yagames.yagames.d.ts",
+    fixture: "fixtures/authored/yagames.yagames.d.ts",
+  },
 };
 
 // The recorded decision for `britzl/gooey` at tag `10.5.3` — the sixth Bucket-C
@@ -1292,9 +1303,15 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
       .map((line) => line.match(HEADING))
       .filter((match): match is RegExpMatchArray => match !== null);
 
+  // The retired ts-defold snapshot is gone, so the recorded verdict resolves
+  // through `severedSource` at the vendored fork — which carries the upstream
+  // corrections on top of it, and is therefore what the numbers below read.
   const tsSurface = () =>
     tsDefoldMembers(
-      readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", "yagames.yagames.d.ts"), "utf8"),
+      readFileSync(
+        join(PACKAGE_ROOT, targetFor("yagames.yagames", YAGAMES.severedSource).fixture),
+        "utf8",
+      ),
     );
 
   test("the refusal is a dialect gap, not an absent API doc — the README documents 70 signatures", () => {
@@ -1321,36 +1338,43 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
     expect(() => parseMarkdownApi(readme(), "yagames.yagames")).toThrow(/signature/);
   });
 
-  test("dialect support could not flip the decision — 7 documented-member gaps remain", () => {
+  // Exact rather than a count, because this is also what gates the sticky-banner
+  // correction: the three replacement members are documented under `yagames.`, so
+  // any misspelling of one lands it in this list and reds the test.
+  test("dialect support could not flip the decision — 2 documented-member gaps remain", () => {
     // The generous reading: every heading regardless of receiver, which is more
     // than the parser's uniform-prefix rule would allow through.
     const documented = new Set(headings().map(([, , member]) => member as string));
     expect(tsSurface().filter((member) => !documented.has(member))).toEqual([
-      "banner_create",
-      "banner_delete",
-      "banner_init",
-      "banner_refresh",
-      "banner_set",
       "leaderboards_init",
       "player_get_id",
     ]);
   });
 
-  test("reading only the `yagames.` prefix the parser would enforce, the gap widens to 11", () => {
+  test("reading only the `yagames.` prefix the parser would enforce, the gap widens to 6", () => {
     const documented = new Set(
       headings()
         .filter(([, receiver]) => receiver === "yagames")
         .map(([, , member]) => member as string),
     );
-    expect(tsSurface().filter((member) => !documented.has(member)).length).toBe(11);
+    expect(tsSurface().filter((member) => !documented.has(member)).length).toBe(6);
   });
 
-  test("the comment-strip fix is load-bearing: the fixture surface is 52 members, not 43", () => {
+  test("the comment-strip fix is load-bearing: the fixture surface is 50 members", () => {
     const surface = tsSurface();
-    expect(surface.length).toBe(52);
-    // The nine a `//*`-blind stripper silently dropped, sampled at both ends.
+    expect(surface.length).toBe(50);
+    // Members a `//*`-blind stripper silently dropped, sampled at both ends.
     expect(surface).toContain("adv_show_fullscreen_adv");
     expect(surface).toContain("player_get_data");
+  });
+
+  // Without the dropped row the lookup would throw, so the recorded verdict is
+  // only resolvable because `severedSource` supplies both fields it used to read.
+  test("the verdict still resolves once the ts-defold row is gone", () => {
+    expect(targetFor("yagames.yagames", YAGAMES.severedSource).fixture).toBe(
+      "fixtures/authored/yagames.yagames.d.ts",
+    );
+    expect(classificationModule("yagames.yagames", YAGAMES.severedSource)).toBe("yagames.yagames");
   });
 });
 
