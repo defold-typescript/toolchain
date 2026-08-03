@@ -580,4 +580,23 @@ describe("yagames.yagames migration integrity", () => {
     // Anchored on the declaration so the tag cannot drift onto a neighbour.
     expect(golden).toMatch(/@deprecated[\s\S]{0,200}?\*\/\s*export function leaderboards_init\(/);
   });
+
+  // The shipped api-doc is what the docs-site loads, so the deprecation has to
+  // survive lowering — not just sit in the `.d.ts` the site never reads.
+  test("the committed api-doc carries both deprecations with their text", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/yagames.json"), "utf8")) as {
+      elements: Array<{ name: string; deprecated?: string }>;
+    };
+    const named = (name: string) => doc.elements.find((e) => e.name === name);
+
+    expect(named("player_get_id")?.deprecated).toBe("Use `player_get_unique_id` instead.");
+
+    const leaderboards = named("leaderboards_init")?.deprecated ?? "";
+    expect(leaderboards).toStartWith("The leaderboards subsystem no longer needs initializing");
+    expect(leaderboards).toContain("functions work without it.");
+
+    // An untagged neighbour must stay clean, so the key tracks the tag rather
+    // than every element.
+    expect(Object.hasOwn(named("player_get_unique_id") ?? {}, "deprecated")).toBe(false);
+  });
 });

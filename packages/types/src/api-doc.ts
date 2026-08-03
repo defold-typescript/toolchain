@@ -41,6 +41,12 @@ export interface ApiFunction {
    * library functions; engine ref-docs carry no `generics`, so it stays absent.
    */
   generics?: string;
+  /**
+   * Present exactly when the source carried a `@deprecated` tag; `""` for a bare
+   * tag. Absence is the only encoding of "not deprecated", so a bare tag stays
+   * distinguishable from an untagged symbol.
+   */
+  deprecated?: string;
 }
 
 export interface ApiParameter {
@@ -67,6 +73,8 @@ export interface ApiVariable {
   brief: string;
   description: string;
   types: string[];
+  /** See {@link ApiFunction.deprecated}. */
+  deprecated?: string;
 }
 
 export function parseDefoldApiDoc(input: unknown): ApiModule {
@@ -157,6 +165,7 @@ function parseFunction(element: Record<string, unknown>): ApiFunction {
     returnValues: parseParameterList(element.returnvalues),
     examples: stringOr(element.examples, ""),
     ...(typeof element.generics === "string" ? { generics: element.generics } : {}),
+    ...(typeof element.deprecated === "string" ? { deprecated: element.deprecated } : {}),
   };
 }
 
@@ -166,6 +175,7 @@ function parseVariable(element: Record<string, unknown>): ApiVariable {
     brief: stringOr(element.brief, ""),
     description: stringOr(element.description, ""),
     types: parseStringArray(element.types),
+    ...(typeof element.deprecated === "string" ? { deprecated: element.deprecated } : {}),
   };
 }
 
