@@ -14,16 +14,19 @@ import {
   acquireUpstreamLock,
   captureClaimedUpstreamLock,
   claimStaleUpstreamLock,
+  installStagedUpstreamReservation,
   readCachedUpstreamLatest,
   readUpstreamState,
   refreshUpstreamState,
   releaseUpstreamLock,
   reserveUpstreamRequest,
   shouldRefreshUpstream,
+  stageUpstreamReservationSuccession,
   succeedUpstreamRequestReservation,
   takeOverStaleUpstreamLock,
   UPSTREAM_CHECK_INTERVAL_MS,
   UPSTREAM_LOCK_STALE_MS,
+  type UpstreamCacheKey,
   type UpstreamCheckState,
   type UpstreamLockHandle,
   upstreamCacheDir,
@@ -32,6 +35,7 @@ import {
   upstreamLockPath,
   upstreamRequestReservationPath,
   upstreamReservationSuccessionPath,
+  upstreamReservationValue,
   writeUpstreamState,
 } from "./upstream-check";
 
@@ -526,31 +530,65 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     );
   });
 
-  test("the succession key is the predecessor value, and unparsable content collapses to `invalid`", () => {
+  test("the succession key is the whole predecessor value, and unusable content collapses to `invalid`", () => {
     const reservationPath = join("/c", "stable.json.req");
+    expect(
+      upstreamReservationSuccessionPath(reservationPath, upstreamReservationValue(now, "a1")),
+    ).toBe(`${reservationPath}.${now}-a1.succ`);
+    // Two attempts sharing an instant are two reservations, so they never share
+    // the one succession name.
+    expect(
+      upstreamReservationSuccessionPath(reservationPath, upstreamReservationValue(now, "a1")),
+    ).not.toBe(
+      upstreamReservationSuccessionPath(reservationPath, upstreamReservationValue(now, "a2")),
+    );
+    // A value an older version persisted is still keyed by itself.
     expect(upstreamReservationSuccessionPath(reservationPath, String(now))).toBe(
       `${reservationPath}.${now}.succ`,
     );
-    // Content never reaches a filename verbatim, so nothing in the file can
-    // escape into a path.
-    expect(upstreamReservationSuccessionPath(reservationPath, "../../x\n")).toBe(
-      `${reservationPath}.invalid.succ`,
-    );
-    expect(upstreamReservationSuccessionPath(reservationPath, "")).toBe(
-      `${reservationPath}.invalid.succ`,
-    );
+    // Content never reaches a filename verbatim, so no separator, newline,
+    // unusable attempt, or unbounded digit run in the file can escape into a
+    // path.
+    for (const unusable of [
+      "../../x\n",
+      "",
+      `${now}-../x`,
+      `${now}-a\n`,
+      `${now}-`,
+      "9".repeat(400),
+      `${"9".repeat(400)}-a1`,
+    ]) {
+      expect(upstreamReservationSuccessionPath(reservationPath, unusable)).toBe(
+        `${reservationPath}.invalid.succ`,
+      );
+    }
   });
 
-  test("the first reservation wins holding its own timestamp, a second at the same instant loses", () => {
+  test("a win records the caller's own attempt, and a rival at the same instant loses", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
 
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(now, "a1"));
     const before = readFileSync(reservationPath);
 
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a2")).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
+  });
+
+  test("a reservation persisted by an older version as bare digits stays readable", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    // Exactly what a shipped version wrote to this path.
+    writeFileSync(reservationPath, String(now));
+
+    expect(reserveUpstreamRequest(key, now + intervalMs - 1, intervalMs, "a1")).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(
+      upstreamReservationValue(now + intervalMs, "a2"),
+    );
   });
 
   test("a reservation taken one millisecond below a bucket boundary still blocks across it", () => {
@@ -562,14 +600,16 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(false);
   });
 
-  test("the window is exactly intervalMs measured from the holder's timestamp", () => {
+  test("the window is exactly intervalMs measured from the holder's recorded timestamp", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
 
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    expect(reserveUpstreamRequest(key, now + intervalMs - 1, intervalMs)).toBe(false);
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + intervalMs));
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
+    expect(reserveUpstreamRequest(key, now + intervalMs - 1, intervalMs, "a2")).toBe(false);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(
+      upstreamReservationValue(now + intervalMs, "a2"),
+    );
   });
 
   test("the default window is the interval shouldRefreshUpstream defaults to", () => {
@@ -597,14 +637,18 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
   test("two successors of one expired reservation cannot both win", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
     const before = readFileSync(reservationPath);
 
     // A rival already holds the only stage this value ever offers, and what it
-    // holds is not a timestamp, so it reads as a write that never finished.
-    writeFileSync(upstreamReservationSuccessionPath(reservationPath, String(now)), "rival");
+    // holds is not a reservation value, so it reads as a write that never
+    // finished.
+    writeFileSync(
+      upstreamReservationSuccessionPath(reservationPath, upstreamReservationValue(now, "a1")),
+      "rival",
+    );
 
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
   });
 
@@ -612,31 +656,39 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     const cacheDir = tmp();
     const key = { channel: "stable", cacheDir } as const;
     const reservationPath = upstreamRequestReservationPath(key);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
     const before = readFileSync(reservationPath);
-    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
+    const stagedPath = upstreamReservationSuccessionPath(
+      reservationPath,
+      upstreamReservationValue(now, "a1"),
+    );
     // Staged and never renamed into place: the process exited between the two.
-    writeFileSync(stagedPath, String(now + intervalMs));
+    writeFileSync(stagedPath, upstreamReservationValue(now + intervalMs, "ghost"));
 
-    expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs)).toBe(false);
+    expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs, "a2")).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
     expect(existsSync(stagedPath)).toBe(false);
     expect(dirEntries(cacheDir).filter((entry) => entry.endsWith(".succ"))).toEqual([]);
 
-    expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs)).toBe(true);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + 2 * intervalMs));
+    expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs, "a3")).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(
+      upstreamReservationValue(now + 2 * intervalMs, "a3"),
+    );
   });
 
   test("a stage timestamped in the future is read as live, not as expired", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
-    writeFileSync(stagedPath, String(now + 10 * intervalMs));
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
+    const stagedPath = upstreamReservationSuccessionPath(
+      reservationPath,
+      upstreamReservationValue(now, "a1"),
+    );
+    writeFileSync(stagedPath, upstreamReservationValue(now + 10 * intervalMs, "ghost"));
     const reservationBefore = readFileSync(reservationPath);
     const stagedBefore = readFileSync(stagedPath);
 
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(reservationBefore);
     expect(readFileSync(stagedPath)).toEqual(stagedBefore);
   });
@@ -644,13 +696,16 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
   test("a live successor's staged claim is not stolen", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
-    writeFileSync(stagedPath, String(now + intervalMs));
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
+    const stagedPath = upstreamReservationSuccessionPath(
+      reservationPath,
+      upstreamReservationValue(now, "a1"),
+    );
+    writeFileSync(stagedPath, upstreamReservationValue(now + intervalMs, "ghost"));
     const reservationBefore = readFileSync(reservationPath);
     const stagedBefore = readFileSync(stagedPath);
 
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(reservationBefore);
     expect(readFileSync(stagedPath)).toEqual(stagedBefore);
   });
@@ -658,63 +713,60 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
   test("an unfinished stage is discarded rather than wedging the slot", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
+    const stagedPath = upstreamReservationSuccessionPath(
+      reservationPath,
+      upstreamReservationValue(now, "a1"),
+    );
     // A crash between the exclusive-create open and the write that follows it.
     writeFileSync(stagedPath, "");
     const before = readFileSync(reservationPath);
 
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(false);
     expect(existsSync(stagedPath)).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
 
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + intervalMs));
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a3")).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(
+      upstreamReservationValue(now + intervalMs, "a3"),
+    );
   });
 
   test("a delayed reader replaying an obsolete observation cannot overwrite a newer reservation", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const statePath = upstreamCachePath(key);
     const reservationPath = upstreamRequestReservationPath(key);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
+    const obsolete = readFileSync(reservationPath, "utf8");
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(true);
     const before = readFileSync(reservationPath);
 
     expect(
       succeedUpstreamRequestReservation(
         statePath,
         reservationPath,
-        String(now),
+        obsolete,
         now + 2 * intervalMs,
         intervalMs,
+        "a3",
       ),
     ).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
-    expect(existsSync(upstreamReservationSuccessionPath(reservationPath, String(now)))).toBe(false);
+    expect(existsSync(upstreamReservationSuccessionPath(reservationPath, obsolete))).toBe(false);
   });
 
   test("an empty observation, what a truncating writer would expose, cannot make a second winner", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const statePath = upstreamCachePath(key);
     const reservationPath = upstreamRequestReservationPath(key);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
     const before = readFileSync(reservationPath);
 
-    expect(succeedUpstreamRequestReservation(statePath, reservationPath, "", now, intervalMs)).toBe(
-      false,
-    );
+    expect(
+      succeedUpstreamRequestReservation(statePath, reservationPath, "", now, intervalMs, "a2"),
+    ).toBe(false);
     expect(readFileSync(reservationPath)).toEqual(before);
     expect(existsSync(upstreamReservationSuccessionPath(reservationPath, ""))).toBe(false);
-  });
-
-  test("a digit run too long to be a safe integer never reaches a filename verbatim", () => {
-    const reservationPath = join("/c", "stable.json.req");
-    expect(upstreamReservationSuccessionPath(reservationPath, "9".repeat(400))).toBe(
-      `${reservationPath}.invalid.succ`,
-    );
-    expect(upstreamReservationSuccessionPath(reservationPath, String(now))).toBe(
-      `${reservationPath}.${now}.succ`,
-    );
   });
 
   test("a reservation Number maps to Infinity is succeeded, not read as permanently fresh", () => {
@@ -722,16 +774,23 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     const statePath = upstreamCachePath(key);
     const reservationPath = upstreamRequestReservationPath(key);
     const overflowing = "9".repeat(400);
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
     writeFileSync(reservationPath, overflowing);
 
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a2")).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(now, "a2"));
 
     expect(
-      succeedUpstreamRequestReservation(statePath, reservationPath, overflowing, now, intervalMs),
+      succeedUpstreamRequestReservation(
+        statePath,
+        reservationPath,
+        overflowing,
+        now,
+        intervalMs,
+        "a3",
+      ),
     ).toBe(false);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(now, "a2"));
   });
 
   test("malformed content heals once per corruption event, and a pre-heal observation is refused", () => {
@@ -739,31 +798,42 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     const statePath = upstreamCachePath(key);
     const reservationPath = upstreamRequestReservationPath(key);
     const malformed = "not-a-number\n";
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
     writeFileSync(reservationPath, malformed);
 
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a2")).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(now, "a2"));
 
     // Refused by revalidation now, not by a spent exclusive create.
     expect(
-      succeedUpstreamRequestReservation(statePath, reservationPath, malformed, now, intervalMs),
+      succeedUpstreamRequestReservation(
+        statePath,
+        reservationPath,
+        malformed,
+        now,
+        intervalMs,
+        "a3",
+      ),
     ).toBe(false);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(now, "a2"));
     expect(existsSync(upstreamReservationSuccessionPath(reservationPath, malformed))).toBe(false);
   });
 
-  test("the handover consumes its own token rather than leaving it for prune to sweep", () => {
+  test("a win holds the caller's own value and leaves no succession behind", () => {
     const key = { channel: "stable", cacheDir: tmp() } as const;
     const reservationPath = upstreamRequestReservationPath(key);
-    // A zero window is the one case where the succession a win offers and the one
-    // it consumes share a name, so prune cannot stand in for the rename here: only
-    // replacing the canonical file *with* the stage leaves nothing behind.
-    expect(reserveUpstreamRequest(key, now, 0)).toBe(true);
-    expect(reserveUpstreamRequest(key, now, 0)).toBe(true);
+    // Rename-versus-prune is pinned by the ownership confirmation, not by this
+    // case: dropping the rename leaves the canonical holding the predecessor, so
+    // the confirmation fails and the call returns false.
+    expect(reserveUpstreamRequest(key, now, 0, "a1")).toBe(true);
+    expect(reserveUpstreamRequest(key, now, 0, "a2")).toBe(true);
 
-    expect(existsSync(upstreamReservationSuccessionPath(reservationPath, String(now)))).toBe(false);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now));
+    expect(
+      existsSync(
+        upstreamReservationSuccessionPath(reservationPath, upstreamReservationValue(now, "a1")),
+      ),
+    ).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(now, "a2"));
   });
 
   test("a win prunes spent successions and legacy bucket reservations, and consumes its own token", () => {
@@ -781,9 +851,12 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     writeFileSync(claimPath, "other");
     writeFileSync(`${statePath}.${Math.floor(now / intervalMs)}.req`, "a bucket-named reservation");
 
-    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
-    writeFileSync(upstreamReservationSuccessionPath(reservationPath, String(now - 5)), "spent");
-    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(true);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "a1")).toBe(true);
+    writeFileSync(
+      upstreamReservationSuccessionPath(reservationPath, upstreamReservationValue(now - 5, "old")),
+      "spent",
+    );
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs, "a2")).toBe(true);
 
     expect(dirEntries(cacheDir)).toEqual(
       [
@@ -794,6 +867,135 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
         basename(reservationPath),
       ].sort(),
     );
+  });
+
+  // The staging and installing seams, driven with fixed attempts and real
+  // `reserveUpstreamRequest` peers interleaved between them — the one point at
+  // which a winner can rename bytes it never authored onto the canonical path.
+  function seedReservation(cacheDir: string): {
+    key: UpstreamCacheKey;
+    statePath: string;
+    reservationPath: string;
+    held: string;
+  } {
+    const key = { channel: "stable", cacheDir } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs, "seed")).toBe(true);
+    return {
+      key,
+      statePath: upstreamCachePath(key),
+      reservationPath,
+      held: readFileSync(reservationPath, "utf8"),
+    };
+  }
+
+  test("a sole owner installs its own value and consumes its stage", () => {
+    const cacheDir = tmp();
+    const { statePath, reservationPath, held } = seedReservation(cacheDir);
+    const nowA = now + intervalMs;
+
+    expect(stageUpstreamReservationSuccession(reservationPath, held, nowA, "a", intervalMs)).toBe(
+      true,
+    );
+    expect(
+      installStagedUpstreamReservation(
+        statePath,
+        reservationPath,
+        held,
+        upstreamReservationValue(nowA, "a"),
+      ),
+    ).toBe(true);
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(nowA, "a"));
+    expect(dirEntries(cacheDir).filter((entry) => entry.endsWith(".succ"))).toEqual([]);
+  });
+
+  test("a caller displaced between its revalidation and its rename grants nothing", () => {
+    const cacheDir = tmp();
+    const { key, statePath, reservationPath, held } = seedReservation(cacheDir);
+    const nowA = now + intervalMs;
+    const foreign = upstreamReservationSuccessionPath(
+      reservationPath,
+      upstreamReservationValue(now - 5, "elsewhere"),
+    );
+    writeFileSync(foreign, "a peer's token");
+
+    expect(stageUpstreamReservationSuccession(reservationPath, held, nowA, "a", intervalMs)).toBe(
+      true,
+    );
+    // Production recovery discards "a"'s stage, which is expired from here.
+    expect(reserveUpstreamRequest(key, nowA + intervalMs, intervalMs, "peer")).toBe(false);
+    expect(stageUpstreamReservationSuccession(reservationPath, held, nowA, "b", intervalMs)).toBe(
+      true,
+    );
+
+    expect(
+      installStagedUpstreamReservation(
+        statePath,
+        reservationPath,
+        held,
+        upstreamReservationValue(nowA, "a"),
+      ),
+    ).toBe(false);
+    // "b"'s reservation is well-formed and fences its own interval, so no request
+    // is duplicated, and a non-winner runs no prune.
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(nowA, "b"));
+    expect(existsSync(foreign)).toBe(true);
+  });
+
+  test("a trailing clock cannot admit two winners inside one interval", () => {
+    const cacheDir = tmp();
+    const { key, statePath, reservationPath, held } = seedReservation(cacheDir);
+    const nowA = now + 4 * intervalMs;
+    const trailing = nowA - 3 * intervalMs;
+
+    const grants: boolean[] = [];
+    expect(stageUpstreamReservationSuccession(reservationPath, held, nowA, "a", intervalMs)).toBe(
+      true,
+    );
+    grants.push(reserveUpstreamRequest(key, nowA + intervalMs, intervalMs, "peer"));
+    expect(
+      stageUpstreamReservationSuccession(reservationPath, held, trailing, "b", intervalMs),
+    ).toBe(true);
+    grants.push(
+      installStagedUpstreamReservation(
+        statePath,
+        reservationPath,
+        held,
+        upstreamReservationValue(nowA, "a"),
+      ),
+    );
+    // Already expired from "a"'s own clock — the shape that used to admit a
+    // second request inside the interval "a" believed it held.
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(trailing, "b"));
+    grants.push(reserveUpstreamRequest(key, nowA, intervalMs, "next"));
+
+    expect(grants).toEqual([false, false, true]);
+  });
+
+  test("equal timestamps with different attempts cannot pass the confirmation", () => {
+    const cacheDir = tmp();
+    const { key, statePath, reservationPath, held } = seedReservation(cacheDir);
+    const nowA = now + intervalMs;
+
+    expect(stageUpstreamReservationSuccession(reservationPath, held, nowA, "a", intervalMs)).toBe(
+      true,
+    );
+    expect(reserveUpstreamRequest(key, nowA + intervalMs, intervalMs, "peer")).toBe(false);
+    // Byte-identical to "a"'s value but for the attempt: the case a timestamp
+    // comparison passes.
+    expect(stageUpstreamReservationSuccession(reservationPath, held, nowA, "b", intervalMs)).toBe(
+      true,
+    );
+
+    expect(
+      installStagedUpstreamReservation(
+        statePath,
+        reservationPath,
+        held,
+        upstreamReservationValue(nowA, "a"),
+      ),
+    ).toBe(false);
+    expect(readFileSync(reservationPath, "utf8")).toBe(upstreamReservationValue(nowA, "b"));
   });
 });
 
