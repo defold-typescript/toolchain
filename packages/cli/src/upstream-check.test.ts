@@ -608,23 +608,37 @@ describe("upstreamRequestReservationPath / upstreamReservationSuccessionPath / r
     expect(readFileSync(reservationPath)).toEqual(before);
   });
 
-  test("an interrupted handover is completed by the next caller, without granting a duplicate", () => {
+  test("an expired interrupted stage is discarded rather than adopted", () => {
     const cacheDir = tmp();
     const key = { channel: "stable", cacheDir } as const;
     const reservationPath = upstreamRequestReservationPath(key);
     expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    const before = readFileSync(reservationPath);
+    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
     // Staged and never renamed into place: the process exited between the two.
-    writeFileSync(
-      upstreamReservationSuccessionPath(reservationPath, String(now)),
-      String(now + intervalMs),
-    );
+    writeFileSync(stagedPath, String(now + intervalMs));
 
     expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs)).toBe(false);
-    expect(readFileSync(reservationPath, "utf8")).toBe(String(now + intervalMs));
+    expect(readFileSync(reservationPath)).toEqual(before);
+    expect(existsSync(stagedPath)).toBe(false);
     expect(dirEntries(cacheDir).filter((entry) => entry.endsWith(".succ"))).toEqual([]);
 
     expect(reserveUpstreamRequest(key, now + 2 * intervalMs, intervalMs)).toBe(true);
     expect(readFileSync(reservationPath, "utf8")).toBe(String(now + 2 * intervalMs));
+  });
+
+  test("a stage timestamped in the future is read as live, not as expired", () => {
+    const key = { channel: "stable", cacheDir: tmp() } as const;
+    const reservationPath = upstreamRequestReservationPath(key);
+    expect(reserveUpstreamRequest(key, now, intervalMs)).toBe(true);
+    const stagedPath = upstreamReservationSuccessionPath(reservationPath, String(now));
+    writeFileSync(stagedPath, String(now + 10 * intervalMs));
+    const reservationBefore = readFileSync(reservationPath);
+    const stagedBefore = readFileSync(stagedPath);
+
+    expect(reserveUpstreamRequest(key, now + intervalMs, intervalMs)).toBe(false);
+    expect(readFileSync(reservationPath)).toEqual(reservationBefore);
+    expect(readFileSync(stagedPath)).toEqual(stagedBefore);
   });
 
   test("a live successor's staged claim is not stolen", () => {
