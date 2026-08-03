@@ -2,10 +2,8 @@
   "namespace": "narrator",
   "totalMembers": 46,
   "totalTypeTokens": 55,
-  "unknownFallbacks": 1,
-  "unknownTokens": [
-    "variable"
-  ],
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
   "undocumentedMembers": 29,
-  "coverage": 0.982
+  "coverage": 1
 }
