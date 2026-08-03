@@ -264,6 +264,13 @@ export interface ApiSymbol {
    * into text badges and a resolved replacement link.
    */
   availability?: ApiAvailability;
+  /**
+   * The source's `@deprecated` text, carried from the api-doc; `""` for a bare
+   * tag, absent when the symbol is not deprecated. Independent of
+   * {@link ApiAvailability.deprecatedSince}, which is the curated, version-keyed
+   * engine fact — a `library` page carries no availability record at all.
+   */
+  deprecated?: string;
 }
 
 export interface ApiSymbolGroup {
@@ -748,6 +755,9 @@ export function apiModuleSymbols(
     };
     const example = exampleMarkdownFor(fn, translations);
     if (example) symbol.exampleMarkdown = example;
+    // Deprecation is a fact about the symbol, not about one overload identity,
+    // so every authored-override row below carries it too.
+    if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
     // The join keys off the raw ref-doc overload signature — the exact value
     // `api-availability.json` was derived with — so a badge lands on the one
     // overload it identifies. Authored-override extra rows below share the raw
@@ -777,6 +787,7 @@ export function apiModuleSymbols(
           docMarkdown: overloadDoc(k + 1),
           parameters: entry ? projectParams(entry.parameters, mapType) : [],
           returnValues: entry ? projectParams(entry.returnValues, mapType) : [],
+          ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
         });
       }
     }
@@ -795,6 +806,7 @@ export function apiModuleSymbols(
     };
     const av = joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, "");
     if (av) symbol.availability = av;
+    if (v.deprecated !== undefined) symbol.deprecated = v.deprecated;
     symbols.push(symbol);
   }
 
@@ -842,6 +854,7 @@ export function apiModuleSymbols(
       };
       const example = exampleMarkdownFor(fn, translations);
       if (example) symbol.exampleMarkdown = example;
+      if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
       symbols.push(symbol);
     }
     for (const prop of td.properties ?? []) {
@@ -852,6 +865,7 @@ export function apiModuleSymbols(
         docMarkdown: htmlToDocText(prop.description || prop.brief),
         parameters: [],
         returnValues: [],
+        ...(prop.deprecated !== undefined ? { deprecated: prop.deprecated } : {}),
       });
     }
   }

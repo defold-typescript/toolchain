@@ -648,6 +648,61 @@ describe("apiModuleSymbols", () => {
     expect(symbols[0]?.exampleMarkdown).toBeUndefined();
   });
 
+  test("projects a deprecated tag onto function, variable, and typedef-member symbols", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.stale",
+            brief: "",
+            description: "",
+            deprecated: "Use `demo.fresh` instead.",
+            parameters: [],
+            returnValues: [],
+          },
+          { name: "demo.fresh", brief: "", description: "", parameters: [], returnValues: [] },
+        ],
+        variables: [
+          { name: "demo.OLD", brief: "", description: "", types: ["number"], deprecated: "" },
+          { name: "demo.NEW", brief: "", description: "", types: ["number"] },
+        ],
+        typedefs: [
+          {
+            name: "Handle",
+            functions: [
+              {
+                name: "close",
+                brief: "",
+                description: "",
+                deprecated: "Handles close themselves.",
+                parameters: [],
+                returnValues: [],
+              },
+            ],
+            properties: [
+              {
+                name: "tag",
+                brief: "",
+                description: "",
+                types: ["string"],
+                deprecated: "Read `id`.",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    const by = (name: string) => symbols.find((s) => s.name === name);
+
+    expect(by("demo.stale")?.deprecated).toBe("Use `demo.fresh` instead.");
+    expect(by("demo.fresh")?.deprecated).toBeUndefined();
+    // A bare tag survives projection as `""` rather than collapsing to absent.
+    expect(by("demo.OLD")?.deprecated).toBe("");
+    expect(by("demo.NEW")?.deprecated).toBeUndefined();
+    expect(by("Handle.close")?.deprecated).toBe("Handles close themselves.");
+    expect(by("Handle.tag")?.deprecated).toBe("Read `id`.");
+  });
+
   test("yields the correct kind and signature for variables, constants, and properties", () => {
     const symbols = apiModuleSymbols(
       pageWith({

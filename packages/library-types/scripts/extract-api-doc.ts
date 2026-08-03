@@ -108,6 +108,8 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
             name,
             types: decl.type ? [typeText(decl.type, sf)] : [],
             ...(fields ? { fields } : {}),
+            // The `VariableStatement` carries the JSDoc, not the declaration.
+            ...deprecatedKey(stmt),
           });
           emittedNames.add(name);
         }
@@ -145,6 +147,7 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
           name,
           types: member.type ? [typeText(member.type, sf)] : [],
           ...(fields ? { fields } : {}),
+          ...deprecatedKey(member),
         });
         emittedNames.add(name);
       }
@@ -212,6 +215,7 @@ function functionElement(
     parameters,
     returnvalues,
     ...(example === "" ? {} : { examples: example }),
+    ...deprecatedKey(decl),
   };
 }
 
@@ -245,6 +249,7 @@ function typedefElement(
         description: summary,
         types: member.type ? [typeText(member.type, sf)] : [],
         ...(fields ? { fields } : {}),
+        ...deprecatedKey(member),
       });
     }
   }
@@ -410,6 +415,25 @@ function exampleText(decl: ts.FunctionDeclaration | ts.MethodSignature): string 
     }
   }
   return "";
+}
+
+// `undefined` when the node carries no `@deprecated`, the trimmed tag text when
+// it does — `""` for a bare tag. The caller spreads the key only on a defined
+// result, so absence of the key is the sole encoding of "not deprecated" and a
+// bare tag stays distinguishable from an untagged symbol.
+function deprecatedText(node: ts.Node): string | undefined {
+  for (const tag of ts.getJSDocTags(node)) {
+    if (tag.tagName.text === "deprecated") {
+      return (ts.getTextOfJSDocComment(tag.comment) ?? "").trim();
+    }
+  }
+  return undefined;
+}
+
+/** The `{ deprecated }` key to spread onto an element, empty when untagged. */
+function deprecatedKey(node: ts.Node): Record<string, string> {
+  const text = deprecatedText(node);
+  return text === undefined ? {} : { deprecated: text };
 }
 
 /** Trim a JSDoc `@param`/`@returns` comment and drop a leading `-` delimiter. */
