@@ -117,7 +117,9 @@ bun scripts/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.jso
   emitted surface *is* the vendored surface.
 - **`--api-doc`** runs `extractApiDoc` over the vendored `.d.ts` under the pinned
   publish `namespace`, producing the `api-doc/<namespace>.json` the docs-site `/api`
-  page renders.
+  page renders. A member's `@deprecated` tag carries through to the page as a
+  `Deprecated` line, with the tag's own text when it has any — so mark a
+  deprecated member in the fork rather than only saying so in its prose.
 
 There is **no fetch command** — the source is vendored by hand, not snapshotted
 from a primary source — and **no fidelity command**: there is no primary source to

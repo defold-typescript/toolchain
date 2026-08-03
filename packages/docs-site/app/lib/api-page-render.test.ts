@@ -840,6 +840,24 @@ describe("availability badges", () => {
     expect(md).toContain("Available through Defold 1.12.4");
   });
 
+  // The version-keyed engine wording stays authoritative: a symbol carrying both
+  // facts renders one deprecation line, not two.
+  test("an availability-deprecated symbol keeps the version-keyed line and gains no second one", () => {
+    const md = apiPageMarkdown(
+      modelPage(
+        { ...material, deprecated: "Use `model.set_texture`." },
+        {
+          availableIn: ["1.12.4"],
+          deprecatedSince: "1.12.0",
+        },
+      ),
+      noLink,
+    );
+    expect(md).toContain("Deprecated since 1.12.0");
+    expect(md).not.toContain("Deprecated —");
+    expect(md.match(/Deprecated/g)).toHaveLength(1);
+  });
+
   test("renders Box2D backend applicability with no span badge for an all-versions symbol", () => {
     const md = apiPageMarkdown(
       modelPage(material, { availableIn: VERSIONS, box2d: ["v2", "v3"] }),
@@ -1338,5 +1356,70 @@ describe("LibraryHeading — authored-pin marker", () => {
     const h1 = headingHtml(false);
     expect(h1).not.toContain("authored-pin");
     expect(h1).toContain("druid");
+  });
+});
+
+// The `@deprecated` carried from an authored `.d.ts` renders as text in the same
+// availability block that holds the engine lifecycle facts, so a `library` page —
+// which never has an availability record — still shows the fact.
+describe("apiPageMarkdown deprecation from the api-doc tag", () => {
+  const noLink = (text: string) => text;
+
+  function libraryPage(fn: Partial<ApiFunction> & { name: string }): ApiPage {
+    return {
+      namespace: "yagames",
+      route: "/api/yagames",
+      brief: "YaGames",
+      module: {
+        namespace: "yagames",
+        brief: "YaGames",
+        description: "Yandex Games bindings.",
+        functions: [
+          { brief: "", description: "", parameters: [], returnValues: [], ...fn } as ApiFunction,
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "library",
+    };
+  }
+
+  test("renders the label and the tag text as an availability list item", () => {
+    const md = apiPageMarkdown(
+      libraryPage({ name: "player_get_id", deprecated: "Use `player_get_unique_id` instead." }),
+      noLink,
+    );
+    expect(md).toContain('aria-label="Availability"');
+    expect(md).toContain("- Deprecated — Use `player_get_unique_id` instead.");
+  });
+
+  test("renders a bare tag as the label alone, with no dash", () => {
+    const md = apiPageMarkdown(libraryPage({ name: "old_thing", deprecated: "" }), noLink);
+    expect(md).toContain('aria-label="Availability"');
+    expect(md).toContain("- Deprecated\n");
+    expect(md).not.toContain("Deprecated —");
+  });
+
+  test("folds a wrapped tag onto one list item so a continuation cannot break the list", () => {
+    const md = apiPageMarkdown(
+      libraryPage({
+        name: "leaderboards_init",
+        deprecated: "The leaderboards subsystem no longer needs initializing;\n- the others work.",
+      }),
+      noLink,
+    );
+    expect(md).toContain(
+      "- Deprecated — The leaderboards subsystem no longer needs initializing; - the others work.",
+    );
+  });
+
+  test("renders no availability block when the symbol carries neither fact", () => {
+    const md = apiPageMarkdown(libraryPage({ name: "current_thing" }), noLink);
+    expect(md).not.toContain('aria-label="Availability"');
+    expect(md).not.toContain("Deprecated");
   });
 });

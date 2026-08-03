@@ -312,7 +312,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "deprecated": "Use `player_get_unique_id` instead."
     },
     {
       "type": "FUNCTION",
@@ -528,7 +529,8 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "deprecated": "The leaderboards subsystem no longer needs initializing; the other\n`leaderboards_*` functions work without it."
     },
     {
       "type": "TYPEDEF",

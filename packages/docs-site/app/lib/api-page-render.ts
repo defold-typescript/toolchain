@@ -95,14 +95,32 @@ function availabilityBadges(
   versions: readonly string[],
   resolveReplacement: ReplacementResolver,
   indexRoute: string,
+  deprecated?: string,
 ): string {
-  if (!av) return "";
+  // The curated, version-keyed engine fact wins: when it is present the source
+  // tag would only restate it, so a symbol never renders two deprecation lines.
+  // A wrapped JSDoc tag carries newlines, so the text is folded to one line —
+  // a list item whose continuation began with `-` or `#` would otherwise break
+  // out of the item.
+  const tagText = deprecated?.replace(/\s+/g, " ").trim();
+  const tagLine =
+    tagText !== undefined && !av?.deprecatedSince
+      ? tagText === ""
+        ? "Deprecated"
+        : `Deprecated — ${tagText}`
+      : undefined;
+  if (!av) return tagLine === undefined ? "" : availabilityList([tagLine]);
   const items = availabilityLabels(av, versions);
+  if (tagLine !== undefined) items.unshift(tagLine);
   if (av.replacement) {
     const route = resolveReplacement(av.replacement) ?? indexRoute;
     items.push(`Replaced by [${av.replacement.name}](${route})`);
   }
   if (items.length === 0) return "";
+  return availabilityList(items);
+}
+
+function availabilityList(items: readonly string[]): string {
   return [
     '<div class="api-availability" aria-label="Availability">',
     "",
@@ -344,6 +362,7 @@ export function apiPageMarkdown(
       page.availability?.versions ?? [],
       resolveReplacement,
       indexRoute,
+      symbol.deprecated,
     );
     const dots = combinedMarkers
       ? badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []))
