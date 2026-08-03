@@ -171,6 +171,66 @@ declare module 'ref.ref' {
 }
 `;
 
+// A module covering every site the `@deprecated` carrier must reach: a tagged
+// function with text, a bare tag, a tag alongside a real summary, a tagged
+// exported `const`, an untagged control, and a referenced interface whose method
+// and property are each tagged (the `TYPEDEF` path).
+const DEPRECATED = `/**
+ * Deprecation demo.
+ * @noResolution
+ */
+declare module 'dep.dep' {
+	/** @deprecated Use \`fresh\` instead. */
+	export function stale(): void;
+
+	/** @deprecated */
+	export function bare(): void;
+
+	/**
+	 * Still documented.
+	 * @deprecated Prefer \`fresh\`.
+	 */
+	export function documented(x: number): boolean;
+
+	/** @deprecated Superseded by \`FLAG\`. */
+	export const OLD_FLAG: number;
+
+	/** Current API. */
+	export function fresh(): void;
+
+	/** Make a legacy handle. */
+	export function create(): Legacy;
+
+	interface Legacy {
+		/** @deprecated Use \`save\`. */
+		store(): boolean;
+		/** @deprecated */
+		tag: string;
+	}
+}
+`;
+
+// The `export =` interface-backed shape: the same tag must survive the
+// `exportedValueInterfaces` walk for both a method and a property signature.
+const DEPRECATED_INTERFACE = `/**
+ * Deprecation interface demo.
+ * @noResolution
+ */
+declare module 'depi.depi' {
+	interface Core {
+		/** @deprecated Use \`next\`. */
+		old(): void;
+		/** @deprecated */
+		COUNT: number;
+		/** Current. */
+		next(): void;
+	}
+	type T = Readonly<Core>;
+	const v: T;
+	export = v;
+}
+`;
+
 type EmittedField = {
   name: string;
   doc: string;
@@ -410,6 +470,69 @@ describe("extractApiDoc type-token normalization", () => {
     const plain = fn("plain");
     expect(plain.parameters[0]?.types[0]).toBe("number");
     expect(plain.returnvalues[0]?.types[0]).toBe("Hash | Url | undefined");
+  });
+});
+
+describe("extractApiDoc @deprecated carrier", () => {
+  const element = (source: string, moduleName: string, type: string, name: string) => {
+    const { elements } = extractApiDoc(source, moduleName) as {
+      elements: Array<Record<string, unknown>>;
+    };
+    return elements.find((e) => e.type === type && e.name === name) ?? {};
+  };
+
+  test("carries a tagged function's text onto its element", () => {
+    expect(element(DEPRECATED, "dep.dep", "FUNCTION", "stale").deprecated).toBe(
+      "Use `fresh` instead.",
+    );
+  });
+
+  test("emits a present-but-empty key for a bare tag", () => {
+    const bare = element(DEPRECATED, "dep.dep", "FUNCTION", "bare");
+    expect(Object.hasOwn(bare, "deprecated")).toBe(true);
+    expect(bare.deprecated).toBe("");
+  });
+
+  test("emits no key at all for an untagged function", () => {
+    expect(Object.hasOwn(element(DEPRECATED, "dep.dep", "FUNCTION", "fresh"), "deprecated")).toBe(
+      false,
+    );
+  });
+
+  test("leaves an existing summary untouched when the tag is added alongside it", () => {
+    const documented = element(DEPRECATED, "dep.dep", "FUNCTION", "documented");
+    expect(documented.brief).toBe("Still documented.");
+    expect(documented.description).toBe("Still documented.");
+    expect(documented.deprecated).toBe("Prefer `fresh`.");
+  });
+
+  test("carries the tag onto an exported const's VARIABLE element", () => {
+    expect(element(DEPRECATED, "dep.dep", "VARIABLE", "OLD_FLAG").deprecated).toBe(
+      "Superseded by `FLAG`.",
+    );
+  });
+
+  test("carries the tag onto a referenced interface's typedef members", () => {
+    const typedef = element(DEPRECATED, "dep.dep", "TYPEDEF", "Legacy") as {
+      functions?: Array<Record<string, unknown>>;
+      properties?: Array<Record<string, unknown>>;
+    };
+    expect(typedef.functions?.find((f) => f.name === "store")?.deprecated).toBe("Use `save`.");
+    const tag = typedef.properties?.find((p) => p.name === "tag") ?? {};
+    expect(Object.hasOwn(tag, "deprecated")).toBe(true);
+    expect(tag.deprecated).toBe("");
+  });
+
+  test("carries the tag through an export-assigned interface's method and property", () => {
+    expect(element(DEPRECATED_INTERFACE, "depi.depi", "FUNCTION", "old").deprecated).toBe(
+      "Use `next`.",
+    );
+    const count = element(DEPRECATED_INTERFACE, "depi.depi", "VARIABLE", "COUNT");
+    expect(Object.hasOwn(count, "deprecated")).toBe(true);
+    expect(count.deprecated).toBe("");
+    expect(
+      Object.hasOwn(element(DEPRECATED_INTERFACE, "depi.depi", "FUNCTION", "next"), "deprecated"),
+    ).toBe(false);
   });
 });
 

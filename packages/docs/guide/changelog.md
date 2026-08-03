@@ -47,6 +47,8 @@ changes are called out first because the toolchain is pre-1.0.
 
 - Every generated library's type coverage is now pinned by a committed floor, so regenerating it can no longer quietly reduce how much of its surface is typed — a drop fails the suite instead of rewriting the report. [Authoring LuaLS library types](./authoring-luals-library-types.md) covers locking in a genuine improvement.
 
+- A library's `@deprecated` markers now show on its API reference page as a `Deprecated` line carrying the upstream explanation, in the same block the engine pages use for their version-keyed deprecations. [yagames](/api/yagames)'s `player_get_id` and `leaderboards_init` are the first to carry one; [authoring forked library types](./authoring-forked-library-types.md) notes the tag for fork authors.
+
 - The [agent runbooks](./agent-runbooks.md) now warn that the script lifecycle factory needs a *value* import — the `import type` plus `declare const` form builds `ok: true` while leaving the hooks unerased — and route Defold's resulting `FORMAT_ERROR` resource cascade back to that fix.
 
 ### Fixed

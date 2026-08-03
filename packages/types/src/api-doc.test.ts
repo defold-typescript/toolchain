@@ -241,6 +241,44 @@ describe("parseDefoldApiDoc", () => {
     expect(bad?.generics).toBeUndefined();
   });
 
+  test("reads a deprecated tag onto functions and variables, keeping bare and absent distinct", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "ns.stale",
+          deprecated: "Use `ns.fresh` instead.",
+          parameters: [],
+          returnvalues: [],
+        },
+        { type: "FUNCTION", name: "ns.bare", deprecated: "", parameters: [], returnvalues: [] },
+        { type: "FUNCTION", name: "ns.fresh", parameters: [], returnvalues: [] },
+        {
+          type: "FUNCTION",
+          name: "ns.bad",
+          deprecated: 42,
+          parameters: [],
+          returnvalues: [],
+        },
+        { type: "VARIABLE", name: "ns.OLD", deprecated: "Superseded.", types: ["number"] },
+        { type: "VARIABLE", name: "ns.CURRENT", types: ["number"] },
+      ],
+    };
+    const module = parseDefoldApiDoc(doc);
+    const fn = (name: string) => module.functions.find((f) => f.name === name);
+    const v = (name: string) => module.variables.find((x) => x.name === name);
+
+    expect(fn("ns.stale")?.deprecated).toBe("Use `ns.fresh` instead.");
+    expect(fn("ns.bare")?.deprecated).toBe("");
+    expect(fn("ns.fresh")?.deprecated).toBeUndefined();
+    // Non-string values are ignored rather than coerced, matching the file's
+    // other defensive reads.
+    expect(fn("ns.bad")?.deprecated).toBeUndefined();
+    expect(v("ns.OLD")?.deprecated).toBe("Superseded.");
+    expect(v("ns.CURRENT")?.deprecated).toBeUndefined();
+  });
+
   test("every parsed ApiFunction has non-undefined name/parameters/returnValues", () => {
     const module = parseDefoldApiDoc(vmathDoc);
     expect(module.functions.length).toBeGreaterThan(0);
