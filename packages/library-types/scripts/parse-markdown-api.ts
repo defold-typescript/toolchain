@@ -67,9 +67,33 @@ function bracketedArgs(argList: string): Set<string> {
   return optional;
 }
 
-/** Parse one `* `name` (type) doc` bullet into a slot, splitting a `a|b|nil`
- * union into single tokens. Throws naming `fnName` when the bullet names a
- * parameter but carries no `(type)`. */
+/** Split a documented `(type)` group into single tokens. Both `|` and `,` are
+ * union separators — a README is as likely to write `a|b|nil` as `a, b, nil` —
+ * but only at depth 0, so a comma inside a token's own group (`table[k, v]`,
+ * `function(self, dt`) stays part of that token. `<`/`>` are deliberately not
+ * tracked: no group in the corpus uses them, and they need the `=>`
+ * disambiguation the comparator-side splitter carries. */
+function splitTypes(group: string): string[] {
+  const tokens: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of group) {
+    if (ch === "(" || ch === "[" || ch === "{") depth++;
+    else if ((ch === ")" || ch === "]" || ch === "}") && depth > 0) depth--;
+    if ((ch === "|" || ch === ",") && depth === 0) {
+      tokens.push(current);
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  tokens.push(current);
+  return tokens.map((token) => token.trim()).filter((token) => token.length > 0);
+}
+
+/** Parse one `* `name` (type) doc` bullet into a slot, splitting a `a|b|nil` or
+ * `a, b, nil` union into single tokens. Throws naming `fnName` when the bullet
+ * names a parameter but carries no `(type)`. */
 function parseSlot(
   label: string,
   fnName: string,
@@ -85,10 +109,7 @@ function parseSlot(
     );
   }
   const name = typed[1] as string;
-  const types = (typed[2] as string)
-    .split("|")
-    .map((t) => t.trim())
-    .filter((t) => t.length > 0);
+  const types = splitTypes(typed[2] as string);
   const slot: MarkdownParam = { name, doc: (typed[3] as string).trim(), types };
   if (optionalNames.has(name)) slot.is_optional = "True";
   return slot;
