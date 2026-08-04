@@ -68,9 +68,13 @@ function functionElement(method: LibraryMethod, ctx: MapContext): Record<string,
       parameterElement(param, optionalFlags[index] ?? false, fnCtx),
     ),
     returnvalues: method.returns.map((ret) => returnElement(ret, fnCtx)),
+    ...(method.deprecated !== undefined ? { deprecated: method.deprecated } : {}),
   };
 }
 
+// No `deprecated` spread here or on `variableElement`: both take a `LibraryField`,
+// and a one-line `---@field` has no slot for a block tag in this dialect, so a
+// property can never carry one.
 function propertyElement(field: LibraryField, ctx: MapContext): Record<string, unknown> {
   return {
     name: field.name,
@@ -134,11 +138,16 @@ export function lowerLibraryModel(
       name: sanitizeTypeName(iface.name),
       ...(functions.length > 0 ? { functions } : {}),
       ...(properties.length > 0 ? { properties } : {}),
+      ...(iface.deprecated !== undefined ? { deprecated: iface.deprecated } : {}),
     });
   }
 
   for (const alias of model.aliases) {
-    elements.push({ type: "TYPEDEF", name: sanitizeTypeName(alias.name) });
+    elements.push({
+      type: "TYPEDEF",
+      name: sanitizeTypeName(alias.name),
+      ...(alias.deprecated !== undefined ? { deprecated: alias.deprecated } : {}),
+    });
   }
 
   // The module's own `@class` carries the library's summary; use it as the page

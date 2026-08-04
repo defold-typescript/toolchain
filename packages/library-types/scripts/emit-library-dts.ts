@@ -237,13 +237,14 @@ function renderReturn(returns: readonly LibraryParam[], ctx: MapContext): string
   );
 }
 
-function pushDoc(lines: string[], summary: string, indent: string): void {
-  for (const line of renderDocComment({ summary })) lines.push(`${indent}${line}`);
+function pushDoc(lines: string[], summary: string, indent: string, deprecated?: string): void {
+  const parts = deprecated !== undefined ? { summary, deprecated } : { summary };
+  for (const line of renderDocComment(parts)) lines.push(`${indent}${line}`);
 }
 
 function renderAlias(alias: LibraryAlias, ctx: MapContext): string[] {
   const lines: string[] = [];
-  pushDoc(lines, alias.doc, INDENT);
+  pushDoc(lines, alias.doc, INDENT, alias.deprecated);
   lines.push(`${INDENT}type ${sanitizeTypeName(alias.name)} = ${mapTypes(alias.types, ctx)};`);
   return lines;
 }
@@ -255,7 +256,7 @@ function renderInterface(
   externalTokens: ReadonlySet<string>,
 ): string[] {
   const lines: string[] = [];
-  pushDoc(lines, iface.brief, INDENT);
+  pushDoc(lines, iface.brief, INDENT, iface.deprecated);
   const ifaceCtx = scopeGenerics(ctx, iface.generics);
   const params = renderGenericParams(iface.generics, ifaceCtx);
   const extendsClause = renderExtends(iface, ifaceCtx, interfaceNames, externalTokens);
@@ -280,7 +281,7 @@ function renderInterface(
   }
   for (const method of iface.methods) {
     if (!isPublicMethod(method)) continue;
-    pushDoc(lines, method.brief, body);
+    pushDoc(lines, method.brief, body, method.deprecated);
     const methodCtx = scopeGenerics(ifaceCtx, method.generics);
     const methodParams = renderGenericParams(method.generics, methodCtx);
     lines.push(
@@ -322,7 +323,7 @@ function renderModuleConstants(iface: LibraryInterface, ctx: MapContext): string
 
 function renderModuleFunction(fn: LibraryMethod, ctx: MapContext): string[] {
   const lines: string[] = [];
-  pushDoc(lines, fn.brief, INDENT);
+  pushDoc(lines, fn.brief, INDENT, fn.deprecated);
   const fnCtx = scopeGenerics(ctx, fn.generics);
   const genericParams = renderGenericParams(fn.generics, fnCtx);
   const params = renderParams(fn.params, fnCtx);

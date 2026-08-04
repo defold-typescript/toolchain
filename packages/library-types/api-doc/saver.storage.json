@@ -364,7 +364,8 @@
             "LuaTable<string, saver_storage_value>"
           ]
         }
-      ]
+      ],
+      "deprecated": ""
     },
     {
       "type": "TYPEDEF",

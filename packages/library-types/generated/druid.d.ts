@@ -608,6 +608,8 @@ declare module 'druid.druid' {
 		get_text_index_by_width(width: number): number;
 		/**
 		 * Set text to text field
+		 *
+		 * @deprecated
 		 */
 		set_to(set_to: string): druid_text;
 		set_text(): void;

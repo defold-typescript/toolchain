@@ -703,6 +703,47 @@ describe("apiModuleSymbols", () => {
     expect(by("Handle.tag")?.deprecated).toBe("Read `id`.");
   });
 
+  test("a deprecated authored-override function tags every emitted row, not just the primary", () => {
+    const store: SignatureStore = {
+      "demo.stale": {
+        signatures: ["demo.stale(a: number): void", "demo.stale(a: string): void"],
+      },
+      "demo.fresh": {
+        signatures: ["demo.fresh(a: number): void", "demo.fresh(a: string): void"],
+      },
+    };
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.stale",
+            brief: "",
+            description: "",
+            deprecated: "Use `demo.fresh`.",
+            parameters: [],
+            returnValues: [],
+          },
+          { name: "demo.fresh", brief: "", description: "", parameters: [], returnValues: [] },
+        ],
+      }),
+      {},
+      store,
+    );
+
+    // Assert across the whole row list: the rows share a name, so a lookup by
+    // name would silently only ever check the primary.
+    const staleRows = symbols.filter((s) => s.name === "demo.stale");
+    expect(staleRows).toHaveLength(2);
+    expect(staleRows.map((s) => s.deprecated)).toEqual(["Use `demo.fresh`.", "Use `demo.fresh`."]);
+
+    const freshRows = symbols.filter((s) => s.name === "demo.fresh");
+    expect(freshRows).toHaveLength(2);
+    for (const row of freshRows) {
+      expect(row.deprecated).toBeUndefined();
+      expect(Object.keys(row)).not.toContain("deprecated");
+    }
+  });
+
   test("yields the correct kind and signature for variables, constants, and properties", () => {
     const symbols = apiModuleSymbols(
       pageWith({

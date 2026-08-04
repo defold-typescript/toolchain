@@ -2319,6 +2319,12 @@ Get chars count by width
 
 Set text to text field
 
+<div class="api-availability" aria-label="Availability">
+
+- Deprecated
+
+</div>
+
 **Parameters**
 
 - \`set_to\`: \`string\` — Text for node
