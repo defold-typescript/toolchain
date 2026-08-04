@@ -1428,7 +1428,14 @@ describe("apiModuleSymbols", () => {
     expect(symbols.filter((s) => s.name === "go.set").map((s) => s.signature)).toEqual(
       store["go.set"]?.signatures ?? [],
     );
-    expect(symbols.filter((s) => s.name === "go.property")).toHaveLength(8);
+    // Against the store rather than a count, so a wrong signature reds too. The
+    // non-empty guard keeps the comparison from passing vacuously on both sides
+    // if the store ever loses the key.
+    const propertySignatures = store["go.property"]?.signatures ?? [];
+    expect(propertySignatures.length).toBeGreaterThan(1);
+    expect(symbols.filter((s) => s.name === "go.property").map((s) => s.signature)).toEqual(
+      propertySignatures,
+    );
   });
 
   test("msg.post's primary row keeps the authored bullet list through the projection", () => {

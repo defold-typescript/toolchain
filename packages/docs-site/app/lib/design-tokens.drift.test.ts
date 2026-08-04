@@ -21,6 +21,9 @@ const INLINE_ANCHORS = {
 
 // The pre-paint subset the inline block carries. A drop/add on either side must
 // be a deliberate edit here, never a vacuous pass on an empty intersection.
+// This is a name enumeration, not a size pin, and it is load-bearing: the parity
+// test below diffs *from* the inline map, so a token dropped from the inline
+// block leaves that diff empty and passing. Only this set reds on a drop.
 const EXPECTED_INLINE_TOKENS = [
   "--color-bg",
   "--color-surface",
@@ -51,7 +54,7 @@ test("parseThemeColorTokens reads the _renderer.tsx inline THEME_TOKENS block", 
   expect(dark.get("--color-accent")).toBe("#79a8ff");
 });
 
-test("the inline block's --color-* name set is exactly the pinned 12", () => {
+test("the inline block's --color-* name set is exactly the pinned pre-paint set", () => {
   const { light, dark } = parseThemeColorTokens(RENDERER_TSX, INLINE_ANCHORS);
   expect([...light.keys()].sort()).toEqual(EXPECTED_INLINE_TOKENS);
   expect([...dark.keys()].sort()).toEqual(EXPECTED_INLINE_TOKENS);

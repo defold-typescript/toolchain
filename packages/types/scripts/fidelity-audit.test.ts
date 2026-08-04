@@ -1170,7 +1170,10 @@ describe("promoted default surface coverage and record-table gate", () => {
     ]) {
       expect(requireEntry(report, ns)).toBeDefined();
     }
-    expect(Object.keys(report).length).toBe(46);
+    // Both directions against the manifest, so a legitimate module addition never
+    // re-baselines this: the test below proves manifest ⊆ report, and this proves
+    // report ⊆ manifest — the "no invented module" half the bare key count carried.
+    expect(Object.keys(report).sort()).toEqual(MODULE_MANIFEST.map((e) => e.namespace).sort());
   });
 
   test("every module in the promoted target is present in the report (no silent escape)", () => {

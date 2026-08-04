@@ -40,8 +40,15 @@ describe("MISE_TASKS_TOML", () => {
   });
 
   test("each managed task is fronted by the managed marker", () => {
-    const markers = MISE_TASKS_TOML.match(/# managed by @defold-typescript/g) ?? [];
-    expect(markers.length).toBe(6);
+    // Derived from the block itself, so adding a seventh task never re-baselines
+    // this — but adding one *without* its marker line still reds.
+    const lines = MISE_TASKS_TOML.split("\n");
+    const taskHeaders = lines.filter((l) => l.startsWith("[tasks."));
+    expect(taskHeaders.length).toBeGreaterThan(1);
+    for (const [i, line] of lines.entries()) {
+      if (!line.startsWith("[tasks.")) continue;
+      expect(lines[i - 1]).toBe("# managed by @defold-typescript");
+    }
   });
 });
 
@@ -110,8 +117,11 @@ describe("mergeMiseToml", () => {
     expect(merged).toContain('node = "22"');
     expect(merged).toContain('[tasks."my-custom-task"]\nrun = "echo hello"');
 
+    // Against the managed block's own marker count, so the merge is asserted to
+    // carry every marker across rather than a number that drifts with the block.
     const markers = merged.match(/# managed by @defold-typescript/g) ?? [];
-    expect(markers.length).toBe(6);
+    const expected = MISE_TASKS_TOML.match(/# managed by @defold-typescript/g) ?? [];
+    expect(markers.length).toBe(expected.length);
   });
 
   test("strips a stale managed block before re-appending the fresh one", () => {

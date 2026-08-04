@@ -4,9 +4,10 @@ import { buildBenchmarkProject, runIncrementalBenchmark } from "./benchmark-incr
 
 describe("incremental rebuild benchmark", () => {
   test("buildBenchmarkProject returns n user .ts files", () => {
-    const project = buildBenchmarkProject(30);
+    const fileCount = 30;
+    const project = buildBenchmarkProject(fileCount);
     const keys = Object.keys(project.files);
-    expect(keys.length).toBe(30);
+    expect(keys.length).toBe(fileCount);
     for (const key of keys) {
       expect(key).toMatch(/^src\/.*\.ts$/);
     }
