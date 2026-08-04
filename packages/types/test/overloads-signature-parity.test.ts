@@ -329,6 +329,9 @@ describe("curried and multi-paragraph overload rendering", () => {
     expect(get.slice(1)).toEqual([null, null]);
 
     const property = goDescriptions["go.property"] ?? [];
+    // 8 is the published overload count for `go.property` (one documented plus the
+    // seven deprecated typed forms); the slice below enumerates the trailing seven,
+    // so the two assertions pin the same set from both ends.
     expect(property).toHaveLength(8);
     expect(typeof property[0]).toBe("string");
     // the seven trailing overloads carry a `@deprecated`-only JSDoc

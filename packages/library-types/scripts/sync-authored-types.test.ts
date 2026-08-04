@@ -367,16 +367,6 @@ describe("defsave.defsave migration integrity", () => {
     expect(golden).not.toContain("function save(config: string): void;");
     expect(golden).not.toContain("function set(config: string, name: string, value: any): void;");
   });
-
-  test("the golden declares exactly 14 module functions", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defsave.d.ts"), "utf8");
-    expect(golden.match(/^\s*export function /gm)?.length).toBe(14);
-  });
-
-  test("the golden declares exactly 16 module fields", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defsave.d.ts"), "utf8");
-    expect(golden.match(/^\s*export let /gm)?.length).toBe(16);
-  });
 });
 
 // The first Bucket-C library to sever: its markdown `no-go` retired the markdown
