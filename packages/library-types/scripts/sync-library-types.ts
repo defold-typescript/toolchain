@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import ts from "typescript";
 import { extractApiDoc } from "./extract-api-doc";
+import { readAuthoredTargets } from "./sync-authored-types";
 
 /**
  * ts-defold/library core-type references -> the @defold-typescript/types surface.
@@ -330,6 +331,26 @@ export function classifyLibraryDirs(
     .sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
 }
 
+/**
+ * The upstream dirs this repo has severed onto the authored lane. Severance
+ * deletes a library's `library-targets.json` row, but its dir still exists
+ * upstream — so a regen would re-add it under whatever its module shape implies
+ * unless it is filtered out first. The registry gives an exact derivation with
+ * no hand-maintained list: a dir is severed iff it has at least one module and
+ * every module is an authored `moduleId`. A dir mixing authored and unauthored
+ * modules (`nakama-defold`) is still upstream-sourced and stays classified.
+ */
+export function severedDirsFromModules(
+  modulesByDir: Map<string, string[]>,
+  authoredModuleIds: ReadonlySet<string>,
+): Set<string> {
+  const severed = new Set<string>();
+  for (const [dir, modules] of modulesByDir) {
+    if (modules.length > 0 && modules.every((m) => authoredModuleIds.has(m))) severed.add(dir);
+  }
+  return severed;
+}
+
 interface GithubTreeResponse {
   tree?: { path: string }[];
 }
@@ -376,8 +397,10 @@ export type ListTree = (source: LibrarySource) => Promise<string[]>;
 const defaultListTree: ListTree = (source) => githubTreePaths(repoSlug(source.repo), source.commit);
 
 /**
- * Enumerate every ts-defold/library dir at the pin, classify each by its
- * module-name shape, and write `library-classification.json`. The `listTree`
+ * Enumerate every ts-defold/library dir at the pin, drop the dirs severed onto
+ * the authored lane, classify each survivor by its module-name shape, and write
+ * `library-classification.json`. Filtering happens here, not in
+ * `classifyLibraryDirs`, so that pass stays a pure map-and-sort. The `listTree`
  * seam keeps the pass offline-testable; only the CLI wires the real call, and it
  * stays out of CI (mirrors `--check`). The manifest pins the same `source` as
  * `library-targets.json`.
@@ -393,8 +416,14 @@ export async function writeClassification(
   );
   const coveredByGoalDirs = new Set(["defold-lldebugger", "defold-xmath"]);
 
+  const authoredModuleIds = new Set(readAuthoredTargets(packageRoot).map((t) => t.moduleId));
+
   const modulesByDir = libraryModulesFromTree(await listTree(source));
-  const dirs = [...modulesByDir].map(([dir, modules]) => ({ dir, modules }));
+  const severedDirs = severedDirsFromModules(modulesByDir, authoredModuleIds);
+  const dirs = [...modulesByDir]
+    // Vendored wins: a stale authored entry can never erase a live ts-defold row.
+    .filter(([dir]) => !severedDirs.has(dir) || vendoredDirs.has(dir))
+    .map(([dir, modules]) => ({ dir, modules }));
   const entries = classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs });
   writeFileSync(
     join(packageRoot, "library-classification.json"),
