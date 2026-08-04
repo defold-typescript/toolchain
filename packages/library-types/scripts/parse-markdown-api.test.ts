@@ -311,6 +311,16 @@ describe("parseMarkdownApi splits a comma-listed type group into a union", () =>
     expect(typesOf("function(self, dt)")).toEqual(["function(self, dt"]);
   });
 
+  test("a comma inside a token's curly braces keeps it one token", () => {
+    expect(typesOf("{number, string}, nil")).toEqual(["{number, string}", "nil"]);
+  });
+
+  test("an unmatched closing bracket does not disable splitting for the rest", () => {
+    // Depth clamps at 0 rather than going negative, so a stray `]` cannot silently
+    // swallow every separator that follows it.
+    expect(typesOf("table], nil")).toEqual(["table]", "nil"]);
+  });
+
   test("empty segments are dropped", () => {
     expect(typesOf("string, , number")).toEqual(["string", "number"]);
   });

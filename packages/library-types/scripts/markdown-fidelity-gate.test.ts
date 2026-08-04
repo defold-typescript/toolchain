@@ -992,7 +992,7 @@ const STARLY: LibraryRecord = {
 // elements and:
 //
 //   term                    as-is              generous
-//   downgradedMembers       3 — roll_custom_dice, table_create, table_roll
+//   downgradedMembers       the three above    the three above
 //   optionalityLossMembers  ["set_up_rng"]     []
 //   decision                no-go              no-go
 //
