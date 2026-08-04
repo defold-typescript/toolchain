@@ -335,4 +335,88 @@ describe("renderDocComment", () => {
       " */",
     ]);
   });
+
+  test("a bare @deprecated alone is enough to document, where an empty summary alone is not", () => {
+    expect(renderDocComment({ summary: "", deprecated: "" })).toEqual([
+      "/**",
+      " * @deprecated",
+      " */",
+    ]);
+  });
+
+  test("a summary plus @deprecated text emits the separator then the tag", () => {
+    expect(renderDocComment({ summary: "S", deprecated: "text" })).toEqual([
+      "/**",
+      " * S",
+      " *",
+      " * @deprecated text",
+      " */",
+    ]);
+  });
+
+  test("multi-line @deprecated text keeps its continuation lines inside the comment", () => {
+    expect(renderDocComment({ summary: "S", deprecated: "first\n\nthird" })).toEqual([
+      "/**",
+      " * S",
+      " *",
+      " * @deprecated first",
+      " *",
+      " * third",
+      " */",
+    ]);
+  });
+
+  test("@deprecated renders before @param and @returns", () => {
+    expect(
+      renderDocComment({
+        summary: "Does a thing.",
+        deprecated: "Use `other`.",
+        params: [{ name: "id", doc: "the identifier" }],
+        returns: "the result",
+      }),
+    ).toEqual([
+      "/**",
+      " * Does a thing.",
+      " *",
+      " * @deprecated Use `other`.",
+      " * @param id - the identifier",
+      " * @returns the result",
+      " */",
+    ]);
+  });
+
+  test("output for parts carrying no deprecated key is byte-identical to today's", () => {
+    expect(renderDocComment({ summary: "Just a summary." })).toEqual([
+      "/**",
+      " * Just a summary.",
+      " */",
+    ]);
+    expect(renderDocComment({ summary: "Sum.", params: [{ name: "a", doc: "an a" }] })).toEqual([
+      "/**",
+      " * Sum.",
+      " *",
+      " * @param a - an a",
+      " */",
+    ]);
+    expect(
+      renderDocComment({
+        summary: "Sum.",
+        params: [{ name: "a", doc: "an a" }],
+        returns: "the result",
+        example: "local x = 1",
+      }),
+    ).toEqual([
+      "/**",
+      " * Sum.",
+      " *",
+      " * @param a - an a",
+      " * @returns the result",
+      " * @example",
+      " * ```lua",
+      " * local x = 1",
+      " * ```",
+      " */",
+    ]);
+    expect(renderDocComment({ summary: "" })).toEqual([]);
+  });
 });

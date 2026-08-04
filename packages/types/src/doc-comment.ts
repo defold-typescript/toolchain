@@ -107,6 +107,10 @@ export function examplesHtmlToMarkdown(html: string): string {
 
 export interface DocCommentParts {
   summary: string;
+  // Present exactly when the source carried a deprecation tag; `""` is the bare
+  // form and still renders, so this is tested against `undefined` rather than for
+  // truthiness the way the other optional parts are.
+  deprecated?: string;
   params?: { name: string; doc: string }[];
   returns?: string;
   example?: string;
@@ -122,8 +126,15 @@ export function renderDocComment(parts: DocCommentParts): string[] {
   const params = (parts.params ?? []).filter((p) => p.doc.trim() !== "");
   const returns = parts.returns?.trim() ? parts.returns : "";
   const example = parts.example?.trim() ? parts.example : "";
+  const deprecated = parts.deprecated;
 
-  if (summaryLines.length === 0 && params.length === 0 && returns === "" && example === "") {
+  if (
+    summaryLines.length === 0 &&
+    params.length === 0 &&
+    returns === "" &&
+    example === "" &&
+    deprecated === undefined
+  ) {
     return [];
   }
 
@@ -132,11 +143,18 @@ export function renderDocComment(parts: DocCommentParts): string[] {
     lines.push(line === "" ? " *" : ` * ${line}`);
   }
 
-  const hasTags = params.length > 0 || returns !== "" || example !== "";
+  const hasTags = deprecated !== undefined || params.length > 0 || returns !== "" || example !== "";
   if (summaryLines.length > 0 && hasTags) {
     lines.push(" *");
   }
 
+  if (deprecated !== undefined) {
+    const [first, ...rest] = deprecated.split("\n");
+    lines.push(first === "" ? " * @deprecated" : ` * @deprecated ${first}`);
+    for (const line of rest) {
+      lines.push(line === "" ? " *" : ` * ${line}`);
+    }
+  }
   for (const param of params) {
     const [first, ...rest] = param.doc.split("\n");
     lines.push(` * @param ${param.name} - ${first}`);

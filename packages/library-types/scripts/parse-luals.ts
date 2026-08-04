@@ -35,6 +35,7 @@ export interface LibraryInterface {
   // so an interface without overloads carries no key. The emitter renders each as an
   // interface call signature; the mapper maps the token to a `(params): ret` form.
   overloads?: LibraryOverload[];
+  deprecated?: string;
 }
 
 export interface LibraryOverload {
@@ -53,6 +54,10 @@ export interface LibraryMethod {
   // unmarked method carries no key. `local` has no `@field` analogue (LuaLS field
   // scope has no `local`), so a method's visibility widens the field set with it.
   visibility?: LibraryMethodVisibility;
+  // A `---@deprecated` on the pending block. Present exactly when the tag is, with
+  // `""` for the bare form — absence of the key is the sole encoding of "not
+  // deprecated", so a bare tag must never be collapsed away by a truthiness guard.
+  deprecated?: string;
 }
 
 export interface LibraryParam {
@@ -89,6 +94,7 @@ export interface LibraryAlias {
   name: string;
   types: string[];
   doc: string;
+  deprecated?: string;
 }
 
 interface Pending {
@@ -98,6 +104,7 @@ interface Pending {
   generics: LibraryGeneric[];
   overloads: LibraryOverload[];
   visibility?: LibraryMethodVisibility;
+  deprecated?: string;
 }
 
 const emptyPending = (): Pending => ({
@@ -568,6 +575,7 @@ export function parseLualsSource(source: string): LibraryModel {
     params: pending.params,
     returns: pending.returns,
     ...(pending.visibility ? { visibility: pending.visibility } : {}),
+    ...(pending.deprecated !== undefined ? { deprecated: pending.deprecated } : {}),
   });
 
   // Interpret one indented line while a function-local `---@class` block is open. Only
@@ -668,6 +676,7 @@ export function parseLualsSource(source: string): LibraryModel {
           if (pending.doc.length > 0 && iface.brief === "") iface.brief = pending.doc.join("\n");
           if (pending.generics.length > 0) iface.generics = pending.generics;
           if (pending.overloads.length > 0) iface.overloads = pending.overloads;
+          if (pending.deprecated !== undefined) iface.deprecated = pending.deprecated;
           openClass = iface;
           lastOpenedClass = head.name;
           pending = emptyPending();
@@ -706,7 +715,12 @@ export function parseLualsSource(source: string): LibraryModel {
           const spaceAt = rest.search(/\s/);
           const name = spaceAt === -1 ? rest : rest.slice(0, spaceAt);
           const expr = spaceAt === -1 ? "" : rest.slice(spaceAt).trim();
-          aliases.push({ name, types: expr ? [expr] : [], doc: pending.doc.join("\n") });
+          aliases.push({
+            name,
+            types: expr ? [expr] : [],
+            doc: pending.doc.join("\n"),
+            ...(pending.deprecated !== undefined ? { deprecated: pending.deprecated } : {}),
+          });
           pending = emptyPending();
           break;
         }
@@ -718,6 +732,12 @@ export function parseLualsSource(source: string): LibraryModel {
           // declaration's method/module-function `visibility` (a `@class` or `@alias`
           // that consumes the block first resets it, so it never leaks onto a type).
           pending.visibility = tag as LibraryMethodVisibility;
+          break;
+        }
+        case "deprecated": {
+          // `rest` is already trimmed and is `""` for the bare form, which is the
+          // only form the fixtures actually ship; the text form is carried too.
+          pending.deprecated = rest;
           break;
         }
         default:
@@ -815,6 +835,7 @@ export function mergeLibraryModels(models: LibraryModel[]): LibraryModel {
           ...(iface.overloads && iface.overloads.length > 0
             ? { overloads: [...iface.overloads] }
             : {}),
+          ...(iface.deprecated !== undefined ? { deprecated: iface.deprecated } : {}),
         };
         byName.set(iface.name, copy);
         interfaces.push(copy);
@@ -823,6 +844,9 @@ export function mergeLibraryModels(models: LibraryModel[]): LibraryModel {
       existing.fields.push(...iface.fields);
       existing.methods.push(...iface.methods);
       if (!existing.extends && iface.extends) existing.extends = iface.extends;
+      if (existing.deprecated === undefined && iface.deprecated !== undefined) {
+        existing.deprecated = iface.deprecated;
+      }
       if (existing.brief === "" && iface.brief !== "") existing.brief = iface.brief;
       if (existing.generics.length === 0 && iface.generics.length > 0) {
         existing.generics = [...iface.generics];
