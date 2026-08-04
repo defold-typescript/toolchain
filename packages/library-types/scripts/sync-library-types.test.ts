@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { readAuthoredTargets } from "./sync-authored-types";
 import {
   type ClassificationEntry,
   checkDescriptions,
@@ -19,15 +18,12 @@ import {
   maintainedHereModules,
   mergeLibraryDescriptions,
   rawUrl,
+  readMaintainedHereRegistry,
   repoSlug,
   severedDirsFromModules,
   writeClassification,
   writeDescriptions,
 } from "./sync-library-types";
-import { readLualsTargets } from "./sync-luals-types";
-import { readMarkdownTargets } from "./sync-markdown-types";
-import { readOpenApiTargets } from "./sync-openapi-types";
-import { readScriptApiTargets } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const REGISTRY = JSON.parse(
@@ -351,15 +347,9 @@ describe("library-classification.json coverage", () => {
 
   test("no committed module is owned by a maintained-here lane", () => {
     const liveModules = new Set(REGISTRY.targets.map((t) => t.module));
-    const registry = {
-      moduleIds: new Set(readAuthoredTargets(PACKAGE_ROOT).map((t) => t.moduleId)),
-      namespaces: new Set([
-        ...readLualsTargets(PACKAGE_ROOT).map((t) => t.namespace),
-        ...readScriptApiTargets(PACKAGE_ROOT).map((t) => t.namespace),
-        ...readOpenApiTargets(PACKAGE_ROOT).map((t) => t.namespace),
-        ...readMarkdownTargets(PACKAGE_ROOT).map((t) => t.namespace),
-      ]),
-    };
+    // The assembly is shared with production so a lane added there widens this
+    // guard at the same time; only the predicate below stays restated.
+    const registry = readMaintainedHereRegistry(PACKAGE_ROOT);
     // Restated here rather than routed through `maintainedHereModules`, so a bug
     // in the predicate cannot blind the guard at the moment the manifest is wrong.
     const scanned = manifest.dirs.flatMap((e) => e.modules);
@@ -372,6 +362,17 @@ describe("library-classification.json coverage", () => {
     );
     expect(offenders).toEqual([]);
     expect(scanned.length).toBeGreaterThan(0);
+  });
+
+  test("gd-defold is the only dir shipped with no modules", () => {
+    // A resurrected severed dir arrives with every maintained-here module stripped
+    // by the survivor filter, so the module scan above sees nothing and the shape
+    // test resolves its empty `modules` to `native`. This allowlist is what catches
+    // it. `gd-defold` is legitimate: its only upstream entries are a `.ts` source
+    // and a version alias, both dropped by `libraryModulesFromTree`.
+    expect(manifest.dirs.filter((e) => e.modules.length === 0).map((e) => e.dir)).toEqual([
+      "gd-defold",
+    ]);
   });
 });
 
@@ -548,6 +549,12 @@ describe("writeClassification", () => {
       authoredModuleIds: ["yagames.yagames"],
       lualsNamespaces: ["tweener", "saver.saver", "saver.storage"],
       scriptApiNamespaces: ["bridge"],
+      // All five lanes are registered so dropping any one of them from the shared
+      // registry assembly reds here, offline, without waiting for a regen. The
+      // tree omits nakama's live row so the openapi lane's own contribution is
+      // what severs the dir.
+      openApiNamespaces: ["nakama"],
+      markdownNamespaces: ["orthographic"],
     });
     const listTree: ListTree = async () => [
       "packages/monarch/monarch.monarch.d.ts",
@@ -560,6 +567,8 @@ describe("writeClassification", () => {
       "packages/defold-saver/saver.saver.d.ts",
       "packages/defold-saver/saver.storage.d.ts",
       "packages/defold-bridge/bridge.bridge.d.ts",
+      "packages/nakama-defold/nakama.nakama.d.ts",
+      "packages/defold-orthographic/orthographic.camera.d.ts",
       "packages/tsconfig.json",
       "README.md",
     ];
@@ -571,7 +580,14 @@ describe("writeClassification", () => {
     ) as ClassificationManifest;
     expect(written.source.commit).toBe(source.commit);
     const byDir = new Map(written.dirs.map((e) => [e.dir, e] as const));
-    for (const dir of ["defold-yagames", "defold-tweener", "defold-saver", "defold-bridge"]) {
+    for (const dir of [
+      "defold-yagames",
+      "defold-tweener",
+      "defold-saver",
+      "defold-bridge",
+      "nakama-defold",
+      "defold-orthographic",
+    ]) {
       expect(byDir.has(dir)).toBe(false);
     }
     expect(byDir.get("monarch")?.classification).toBe("already-vendored");
@@ -588,7 +604,9 @@ describe("writeClassification", () => {
             dir !== "defold-yagames" &&
             dir !== "defold-tweener" &&
             dir !== "defold-saver" &&
-            dir !== "defold-bridge",
+            dir !== "defold-bridge" &&
+            dir !== "nakama-defold" &&
+            dir !== "defold-orthographic",
         )
         .map(([dir, modules]) => ({ dir, modules })),
       {
@@ -623,17 +641,21 @@ describe("writeClassification", () => {
     expect(entry?.modules).toEqual(["nakama.nakama"]);
   });
 
-  test("a vendored dir survives even when every module is an authored moduleId", async () => {
+  test("a vendored dir survives severance when its live row's module is gone from the tree", async () => {
+    // `orthographic.camera` is the live `library-targets.json` row but an upstream
+    // rename left it stale: the tree now carries only `orthographic.orthographic`,
+    // which is maintained here. Every module the dir still has is severed, so the
+    // dir survives on the vendored rescue alone.
     const root = writeClassifyRoot({
       vendoredPaths: [
         "packages/monarch/monarch.monarch.d.ts",
         "packages/defold-orthographic/orthographic.camera.d.ts",
       ],
-      authoredModuleIds: ["orthographic.camera"],
+      authoredModuleIds: ["orthographic.orthographic"],
     });
     const listTree: ListTree = async () => [
       "packages/monarch/monarch.monarch.d.ts",
-      "packages/defold-orthographic/orthographic.camera.d.ts",
+      "packages/defold-orthographic/orthographic.orthographic.d.ts",
     ];
 
     await writeClassification(root, { listTree });
@@ -642,7 +664,10 @@ describe("writeClassification", () => {
       readFileSync(join(root, "library-classification.json"), "utf8"),
     ) as ClassificationManifest;
     const byDir = new Map(written.dirs.map((e) => [e.dir, e] as const));
-    expect(byDir.get("defold-orthographic")?.classification).toBe("already-vendored");
+    const entry = byDir.get("defold-orthographic");
+    expect(entry?.classification).toBe("already-vendored");
+    // The survivor's evidence is empty: its one tree module is maintained here.
+    expect(entry?.modules).toEqual([]);
   });
 });
 
