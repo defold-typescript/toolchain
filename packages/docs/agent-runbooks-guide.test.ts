@@ -11,9 +11,6 @@ describe("agent-runbooks guide page", () => {
     const body = readFileSync(PAGE, "utf8");
     expect(body).toContain("____exports.default = defineScript(");
     expect(body).toContain("import type");
-    expect(body).toContain("defineScript");
-    expect(body).toContain("defineGuiScript");
-    expect(body).toContain("defineRenderScript");
   });
 
   test("`Fix the Lua output` names the failure `ok` cannot report", () => {

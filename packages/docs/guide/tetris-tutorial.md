@@ -258,7 +258,7 @@ We'll walk `src/pieces.ts` piece by piece below; the complete file is in **Full 
 
 Start by importing the `Cell` type from the previous script and exporting two more types:
 
-```ts title="src/pieces.ts"
+```ts title="src/pieces.ts (partial)"
 import type { Cell } from "./grid";
 
 export type Offset = [number, number]; // [col, row], row grows down

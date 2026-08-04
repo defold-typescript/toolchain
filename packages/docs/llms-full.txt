@@ -1057,7 +1057,7 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 
 **Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (one string), or the all-required `msg.url(hash("level1"), hash("/door"), hash("script"))` — never the two-arg form.
 
-**How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate. The prose pins — this section's heading, its front-digest link, and the `agent-runbooks.md` runbook — are asserted structurally in `packages/types/test/guide-docs.test.ts`.
+**How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate.
 
 #### npm packages do not resolve — vendor the source instead
 
@@ -1093,7 +1093,7 @@ The scaffold configures no `outDir`, so generated Lua lands next to its source: 
 
 For Defold engine features and third-party Defold libraries, do not look on npm at all: the engine namespaces are ambient from `@defold-typescript/types`, and native-extension APIs come from [`resolve`](./resolve.md), which generates ambient namespaces from your `game.project` dependencies.
 
-**How we pin this.** `packages/types/test/guide-docs.test.ts` asserts this section's heading, its front-digest link, and that every `./typescript-gotchas.md#…` link on [TypeScript vs Lua](./typescript-vs-lua.md) resolves to a real heading here — so renaming either side alone fails the gate. It also pins this section's output paths against the scaffold's no-`outDir` layout and requires the include-base stripping bullet to name the `""` and `"."` alongside exceptions, so the wording cannot drift back to a claim that any configured `outDir` strips.
+**How we pin this.** `packages/docs-site/app/lib/guide-links.test.ts` resolves every cross-page link and `#anchor` in the guide against the heading ids the site renderer actually emits — so renaming this heading without retargeting the links that point at it, including the [TypeScript vs Lua](./typescript-vs-lua.md) cross-links, fails the gate.
 
 ### Data structures: what's built in
 
