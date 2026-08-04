@@ -959,7 +959,7 @@ const STARLY: LibraryRecord = {
 //   missingMembers / addedMembers            []
 //   signatureLossMembers                     []
 //   opaqueTsDefoldSurface                    false
-//   downgradedMembers                        7
+//   downgradedMembers                        3
 //   optionalityLossMembers                   ["set_up_rng"]
 //
 // The verdict therefore rests on type precision alone — neither `surface-loss`
@@ -968,15 +968,15 @@ const STARLY: LibraryRecord = {
 // Filing it under `signature-loss` would have made that class's legend false about
 // its own corpus.
 //
-// Six of the seven downgrades lose the same union, because the README writes
-// `id`'s type as the comma-listed token `(string, number, hash)`, which the mapper
-// cannot resolve:
+// This record was first taken at 7 downgrades. Four of those — `bag_create`,
+// `bag_draw`, `bag_reset`, `table_reset` — and part of two more were a front-end
+// gap, not a document one: the README writes `id`'s type as the comma-listed
+// token `(string, number, hash)`, and `parseSlot` split a `(type)` group on `|`
+// alone, so the whole group reached the emitter unmappable and fell to `unknown`.
+// The parser now treats a top-level comma as a union separator too, so `id` emits
+// `string | number | Hash` and those members stopped being downgrades.
 //
-//   ts: bag_create(id: string | number | hash, num_success: number, ...): void
-//   md: bag_create(id: unknown,                num_success: number, ...): void
-//
-// — identically for `bag_draw`, `bag_reset`, `table_create`, `table_reset`,
-// `table_roll`. The seventh is upstream underspecification: `roll_custom_dice`'s
+// The three that remain are upstream underspecification: `roll_custom_dice`'s
 // `sides` is documented `(table)` against ts-defold's `Array<[number, number]>`
 // and its return `(any)`, so the emit is
 // `roll_custom_dice(num_dice: number, sides: Record<string | number, unknown>): unknown`.
@@ -987,20 +987,18 @@ const STARLY: LibraryRecord = {
 // `set_up_rng(seed)` with no brackets, and the optionality lives only in the
 // bullet's prose, which `bracketedArgs` cannot read.
 //
-// Neither of the two fixable front-end gaps is load-bearing. Under a generous
-// reading — `id`'s token rewritten to a single resolvable `(hash)` and the heading
-// rewritten `set_up_rng([seed])` — the parse still yields 11 elements and:
+// The one fixable front-end gap left is not load-bearing either. Under a generous
+// reading — the heading rewritten `set_up_rng([seed])` — the parse still yields 11
+// elements and:
 //
 //   term                    as-is              generous
-//   downgradedMembers       7                  3 — roll_custom_dice, table_create,
-//                                                  table_roll
+//   downgradedMembers       3 — roll_custom_dice, table_create, table_roll
 //   optionalityLossMembers  ["set_up_rng"]     []
 //   decision                no-go              no-go
 //
-// The residue is exactly the underspecification a parser cannot fix. So widening
-// the mapper to split comma-listed type tokens into a union would buy a real
-// improvement and change no decision here — recorded, not built, because it would
-// also move other recorded libraries' numbers.
+// The residue is exactly the underspecification a parser cannot fix, which is why
+// the comma split — real precision, and the one term that did move — still changes
+// no decision here.
 //
 // One finding that is evidence about the *retained* surface rather than a term in
 // the decision: `roll_special_dice`'s `advantage` is documented `(boolean)`
@@ -1929,25 +1927,14 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     "table_roll",
   ];
 
-  const DOWNGRADED = [
-    "bag_create",
-    "bag_draw",
-    "bag_reset",
-    "roll_custom_dice",
-    "table_create",
-    "table_reset",
-    "table_roll",
-  ];
+  const DOWNGRADED = ["roll_custom_dice", "table_create", "table_roll"];
 
-  // The two fixable gaps rewritten, and only those: the comma-listed `id` token
-  // reduced to a single resolvable one, and the `set_up_rng` heading bracketed so
-  // `bracketedArgs` reads the optionality the bullet states only in prose.
-  // Test-local for `filterToReceiver`'s reason — what it measures is that neither
-  // front-end change would move the verdict.
+  // The one remaining fixable gap rewritten, and only it: the `set_up_rng` heading
+  // bracketed so `bracketedArgs` reads the optionality the bullet states only in
+  // prose. Test-local for `filterToReceiver`'s reason — what it measures is that
+  // the front-end change would not move the verdict.
   const generous = () =>
-    readme()
-      .replace(/\(string, number, hash\)/g, "(hash)")
-      .replace(/^(#{2,3}\s+dicebag\.set_up_rng\()seed(\)\s*)$/m, "$1[seed]$2");
+    readme().replace(/^(#{2,3}\s+dicebag\.set_up_rng\()seed(\)\s*)$/m, "$1[seed]$2");
 
   test("the front-end reads the snapshot as-is — 11 elements, no refusal", () => {
     const doc = parseMarkdownApi(readme(), "dicebag.dicebag");
@@ -1973,7 +1960,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     expect(opaqueTsDefoldSurface).toBe(false);
   });
 
-  test("type precision alone drives the no-go — 7 downgrades and one optionality loss", async () => {
+  test("type precision alone drives the no-go — three downgrades and one optionality loss", async () => {
     const { downgradedMembers, optionalityLossMembers, decision } = await comparisonFor(
       DICEBAG,
       "dicebag",
@@ -1983,13 +1970,16 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     expect(decision).toBe("no-go");
   });
 
-  test("the `id` union is lost to the document's comma-listed token, not to the parser", async () => {
+  test("the comma split recovers the `id` union the document always stated", async () => {
     expect(readme()).toContain("* `id` (string, number, hash) - ");
     const { emitted } = await comparisonFor(DICEBAG, "dicebag");
-    expect(emitted).toContain("function bag_draw(id: unknown)");
+    // ts-defold spells the third alternative with its own ambient `hash`; the
+    // shared emitter maps the token to this repo's `Hash`, which the comparator
+    // reads as the same precision rather than a downgrade.
+    expect(emitted).toContain("function bag_draw(id: string | number | Hash)");
   });
 
-  test("the generous reading clears both fixable gaps and is still no-go", async () => {
+  test("the generous reading clears the one fixable gap and is still no-go", async () => {
     const { doc, decision, downgradedMembers, optionalityLossMembers } =
       await comparisonForMarkdown(generous(), "dicebag.dicebag");
     expect(doc.elements.length).toBe(FUNCTIONS.length);

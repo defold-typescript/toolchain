@@ -274,6 +274,48 @@ describe("parseMarkdownApi accepts an optional `function` declaration keyword", 
   });
 });
 
+describe("parseMarkdownApi splits a comma-listed type group into a union", () => {
+  function typesOf(group: string): string[] | undefined {
+    const doc = parseMarkdownApi(
+      [
+        "### dicebag.bag_draw(id)",
+        "Draw from a bag.",
+        "",
+        "**PARAMETERS**",
+        `* \`id\` (${group}) - The bag id`,
+        "",
+      ].join("\n"),
+    );
+    return element(doc, "dicebag.bag_draw")?.parameters[0]?.types;
+  }
+
+  test("a comma-listed group yields one token per alternative", () => {
+    // dicebag documents six members as `(string, number, hash)`; before the split
+    // the whole group reached the emitter as one unmappable token and fell to
+    // `unknown`.
+    expect(typesOf("string, number, hash")).toEqual(["string", "number", "hash"]);
+  });
+
+  test("commas and pipes compose as separators rather than replacing each other", () => {
+    expect(typesOf("hash | url, nil")).toEqual(["hash", "url", "nil"]);
+  });
+
+  test("a comma inside a token's square brackets keeps it one token", () => {
+    expect(typesOf("table[number, number]")).toEqual(["table[number, number]"]);
+  });
+
+  test("a comma inside a token's parentheses keeps it one token", () => {
+    // `TYPED_BULLET`'s `([^)]*)` stops at the first `)`, so the splitter receives
+    // the unbalanced `function(self, dt`; depth tracking on `(` is what keeps that
+    // one token instead of two.
+    expect(typesOf("function(self, dt)")).toEqual(["function(self, dt"]);
+  });
+
+  test("empty segments are dropped", () => {
+    expect(typesOf("string, , number")).toEqual(["string", "number"]);
+  });
+});
+
 describe("parseMarkdownApi loud-fails on a document with no API signature", () => {
   test("throws naming the module when prose carries no dotted signature header", () => {
     const prose = ["# Textbox", "", "# Usage", "Require the module and call it.", ""].join("\n");
