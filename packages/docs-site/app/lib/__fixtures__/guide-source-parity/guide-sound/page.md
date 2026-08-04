@@ -17,3 +17,9 @@ export function useBeta(): number {
   return beta;
 }
 ```
+
+An illustrative call that is not quoted from the file at all:
+
+```ts title="src/delta.ts (snippet)"
+const four = useDelta();
+```

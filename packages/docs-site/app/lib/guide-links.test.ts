@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { renderGuidePage } from "./content";
 import { parseFrontmatter } from "./frontmatter";
+import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
@@ -42,9 +44,27 @@ function isExempt(target: string): boolean {
   return /^https?:\/\//.test(target) || target.startsWith("mailto:") || target.startsWith("/");
 }
 
-async function pageAnchors(dir: string, file: string): Promise<Set<string>> {
-  const body = parseFrontmatter(readFileSync(join(dir, file), "utf8")).body;
-  const html = await renderMarkdown(body);
+type Renderer = (dir: string, file: string) => Promise<string>;
+
+/** Markdown straight through the renderer, with none of the per-page transforms. */
+const bareRenderer: Renderer = (dir, file) =>
+  renderMarkdown(parseFrontmatter(readFileSync(join(dir, file), "utf8")).body);
+
+// The site does not render every page the same way: the changelog gets its tag
+// dates and the index gets its `Overview` h1, and both change the ids those
+// pages emit. Resolving an authored `#anchor` against the bare render would
+// check ids the reader never sees.
+function siteRenderer(dir: string): Renderer {
+  const pages = new Map(listGuidePages(dir).map((page) => [page.file, page]));
+  return (renderDir, file) => {
+    const page = pages.get(file);
+    if (!page) throw new Error(`no guide page for ${file}`);
+    return renderGuidePage(renderDir, page);
+  };
+}
+
+async function pageAnchors(dir: string, file: string, render: Renderer): Promise<Set<string>> {
+  const html = await render(dir, file);
   return new Set([...html.matchAll(HEADING_ID_RE)].map((m) => m[1] as string));
 }
 
@@ -59,10 +79,10 @@ interface CorpusReport {
   inspected: { page: string; target: string }[];
 }
 
-async function checkCorpus(dir: string): Promise<CorpusReport> {
+async function checkCorpus(dir: string, render: Renderer = bareRenderer): Promise<CorpusReport> {
   const pages = readdirSync(dir).filter((f) => f.endsWith(".md"));
   const anchors = new Map<string, Set<string>>();
-  for (const page of pages) anchors.set(page, await pageAnchors(dir, page));
+  for (const page of pages) anchors.set(page, await pageAnchors(dir, page, render));
 
   const broken: Broken[] = [];
   const inspected: { page: string; target: string }[] = [];
@@ -94,27 +114,61 @@ function format(broken: Broken[]): string {
   return broken.map((b) => `  ${b.page} -> ${b.target} (${b.reason})`).join("\n");
 }
 
+// The production path highlights every fence on every guide page; three tests
+// read the same report, so it is rendered once.
+const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR));
+
 describe("docs/guide link and anchor resolution", () => {
   test("every relative link target resolves to a file under the guide directory", async () => {
-    const { broken } = await checkCorpus(GUIDE_DIR);
+    const { broken } = await siteReport;
     const missing = broken.filter((b) => b.reason === "missing file");
     if (missing.length > 0) throw new Error(`unresolvable guide links:\n${format(missing)}`);
     expect(missing).toEqual([]);
   });
 
   test("every link fragment resolves to a heading the renderer really emits", async () => {
-    const { broken } = await checkCorpus(GUIDE_DIR);
+    const { broken } = await siteReport;
     const unknown = broken.filter((b) => b.reason === "unknown anchor");
     if (unknown.length > 0) throw new Error(`unresolvable guide anchors:\n${format(unknown)}`);
     expect(unknown).toEqual([]);
   });
 
   test("the guard actually inspected links across more than one page", async () => {
-    const { inspected } = await checkCorpus(GUIDE_DIR);
+    const { inspected } = await siteReport;
     expect(inspected.length).toBeGreaterThan(0);
     expect(new Set(inspected.map((i) => i.page)).size).toBeGreaterThan(1);
     expect(inspected.some((i) => i.target.includes("#"))).toBe(true);
     expect(inspected.some((i) => i.target.startsWith("#"))).toBe(true);
+  });
+
+  test("the changelog's anchors are the dated ones the site emits, not the authored ones", async () => {
+    const site = siteRenderer(GUIDE_DIR);
+    const bare = await pageAnchors(GUIDE_DIR, "changelog.md", bareRenderer);
+    const production = await pageAnchors(GUIDE_DIR, "changelog.md", site);
+
+    expect(production).not.toEqual(bare);
+    expect([...bare].some((id) => !production.has(id))).toBe(true);
+  });
+
+  test("the guide README's h1 anchor is the overridden one the site emits", async () => {
+    const site = siteRenderer(GUIDE_DIR);
+    const bare = await pageAnchors(GUIDE_DIR, "README.md", bareRenderer);
+    const production = await pageAnchors(GUIDE_DIR, "README.md", site);
+
+    expect(production).not.toEqual(bare);
+    expect([...bare].some((id) => !production.has(id))).toBe(true);
+  });
+
+  test("a corpus resolved through the production render accepts only the ids it emits", async () => {
+    const dir = join(FIXTURES, "guide-links-production");
+    const { broken, inspected } = await checkCorpus(dir, siteRenderer(dir));
+
+    expect(broken.map((b) => `${b.page} ${b.target} ${b.reason}`).sort()).toEqual([
+      "page.md ./README.md#fixture-home unknown anchor",
+      "page.md ./changelog.md#v999 unknown anchor",
+    ]);
+    expect(inspected.map((i) => i.target)).toContain("./changelog.md#v999---unreleased");
+    expect(inspected.map((i) => i.target)).toContain("./README.md#overview");
   });
 
   test("a corpus with a dead file link and dead fragments reports each one", async () => {
