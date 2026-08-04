@@ -23,6 +23,18 @@ A file no example root holds:
 export const gamma = 3;
 ```
 
+A `src/` title whose marker the parser cannot read:
+
+```ts title="src/alpha.ts (Partial)"
+export const alpha = 1;
+```
+
+A filename both example roots hold, with nothing on this page to narrow it:
+
+```ts title="src/shared.ts"
+export const shared = "one";
+```
+
 An untitled fence on a page that elsewhere claims source parity:
 
 ```ts
