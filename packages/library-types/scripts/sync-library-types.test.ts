@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { readAuthoredTargets } from "./sync-authored-types";
 import {
   type ClassificationEntry,
   checkDescriptions,
@@ -15,6 +16,7 @@ import {
   type LibraryTargets,
   type ListTree,
   libraryModulesFromTree,
+  maintainedHereModules,
   mergeLibraryDescriptions,
   rawUrl,
   repoSlug,
@@ -22,6 +24,10 @@ import {
   writeClassification,
   writeDescriptions,
 } from "./sync-library-types";
+import { readLualsTargets } from "./sync-luals-types";
+import { readMarkdownTargets } from "./sync-markdown-types";
+import { readOpenApiTargets } from "./sync-openapi-types";
+import { readScriptApiTargets } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const REGISTRY = JSON.parse(
@@ -342,21 +348,99 @@ describe("library-classification.json coverage", () => {
       expect(byDir.get(dir)?.classification).toBe("already-vendored");
     }
   });
+
+  test("no committed module is owned by a maintained-here lane", () => {
+    const liveModules = new Set(REGISTRY.targets.map((t) => t.module));
+    const registry = {
+      moduleIds: new Set(readAuthoredTargets(PACKAGE_ROOT).map((t) => t.moduleId)),
+      namespaces: new Set([
+        ...readLualsTargets(PACKAGE_ROOT).map((t) => t.namespace),
+        ...readScriptApiTargets(PACKAGE_ROOT).map((t) => t.namespace),
+        ...readOpenApiTargets(PACKAGE_ROOT).map((t) => t.namespace),
+        ...readMarkdownTargets(PACKAGE_ROOT).map((t) => t.namespace),
+      ]),
+    };
+    // Restated here rather than routed through `maintainedHereModules`, so a bug
+    // in the predicate cannot blind the guard at the moment the manifest is wrong.
+    const scanned = manifest.dirs.flatMap((e) => e.modules);
+    const offenders = scanned.filter(
+      (m) =>
+        !liveModules.has(m) &&
+        (registry.moduleIds.has(m) ||
+          registry.namespaces.has(m) ||
+          registry.namespaces.has(m.split(".")[0] as string)),
+    );
+    expect(offenders).toEqual([]);
+    expect(scanned.length).toBeGreaterThan(0);
+  });
+});
+
+// The registry union and live-row set every maintained-here derivation reads,
+// populated with the real pinned values: `yagames.yagames` is an authored
+// moduleId, `tweener` a bare luals namespace, `saver.saver`/`saver.storage` the
+// dotted ones, and `nakama` an openapi namespace that is also a live row.
+const MAINTAINED_HERE_REGISTRY = {
+  moduleIds: new Set(["yagames.yagames", "nakama.engine.defold", "nakama.util.log"]),
+  namespaces: new Set(["tweener", "saver.saver", "saver.storage", "nakama"]),
+};
+const LIVE_MODULES = new Set(["nakama.nakama", "monarch.monarch"]);
+
+describe("maintainedHereModules", () => {
+  test("an authored moduleId is maintained here", () => {
+    expect([
+      ...maintainedHereModules(["yagames.yagames"], MAINTAINED_HERE_REGISTRY, LIVE_MODULES),
+    ]).toEqual(["yagames.yagames"]);
+  });
+
+  test("a module whose top dotted segment is a registered namespace is maintained here", () => {
+    expect([
+      ...maintainedHereModules(["tweener.tweener"], MAINTAINED_HERE_REGISTRY, LIVE_MODULES),
+    ]).toEqual(["tweener.tweener"]);
+  });
+
+  test("a module whose full name is a registered namespace is maintained here", () => {
+    // `saver`'s luals namespaces are dotted, so a top-segment-only match misses both.
+    expect([
+      ...maintainedHereModules(
+        ["saver.saver", "saver.storage"],
+        MAINTAINED_HERE_REGISTRY,
+        LIVE_MODULES,
+      ),
+    ]).toEqual(["saver.saver", "saver.storage"]);
+  });
+
+  test("a live library-targets.json row is not maintained here", () => {
+    expect([
+      ...maintainedHereModules(["nakama.nakama"], MAINTAINED_HERE_REGISTRY, LIVE_MODULES),
+    ]).toEqual([]);
+  });
+
+  test("an unregistered module is not maintained here", () => {
+    expect([
+      ...maintainedHereModules(["monarch.monarch"], MAINTAINED_HERE_REGISTRY, LIVE_MODULES),
+    ]).toEqual([]);
+  });
 });
 
 describe("severedDirsFromModules", () => {
-  test("a dir whose every module is an authored moduleId is severed", () => {
+  test("a dir whose every module is maintained here is severed", () => {
     const severed = severedDirsFromModules(
-      new Map([["defold-yagames", ["yagames.yagames"]]]),
-      new Set(["yagames.yagames"]),
+      new Map([
+        ["defold-tweener", ["tweener.tweener"]],
+        ["defold-saver", ["saver.saver", "saver.storage"]],
+        ["defold-yagames", ["yagames.yagames"]],
+      ]),
+      MAINTAINED_HERE_REGISTRY,
+      LIVE_MODULES,
     );
-    expect([...severed]).toEqual(["defold-yagames"]);
+    expect([...severed].sort()).toEqual(["defold-saver", "defold-tweener", "defold-yagames"]);
   });
 
-  test("a dir mixing authored and unauthored modules is not severed", () => {
+  test("a dir mixing maintained-here and live modules is not severed", () => {
     const severed = severedDirsFromModules(
       new Map([["nakama-defold", ["nakama.engine.defold", "nakama.nakama", "nakama.util.log"]]]),
-      new Set(["nakama.engine.defold", "nakama.util.log"]),
+      MAINTAINED_HERE_REGISTRY,
+      LIVE_MODULES,
     );
     expect([...severed]).toEqual([]);
   });
@@ -364,7 +448,8 @@ describe("severedDirsFromModules", () => {
   test("a dir with no modules is not severed", () => {
     const severed = severedDirsFromModules(
       new Map([["gd-defold", []]]),
-      new Set(["yagames.yagames"]),
+      MAINTAINED_HERE_REGISTRY,
+      LIVE_MODULES,
     );
     expect([...severed]).toEqual([]);
   });
@@ -377,14 +462,54 @@ describe("writeClassification", () => {
     license: "MIT",
   };
 
-  // `writeClassification` reads both registries from the package root, and
-  // `readAuthoredTargets` loud-fails on a missing required field — so the temp
-  // root needs a complete `authored-targets.json`, not a stub.
+  // `writeClassification` reads every maintained-here registry from the package
+  // root, and each reader loud-fails on a missing required field — so the temp
+  // root needs all five complete, not stubs.
   function writeClassifyRoot(opts: {
     vendoredPaths: string[];
     authoredModuleIds: string[];
+    lualsNamespaces?: string[];
+    scriptApiNamespaces?: string[];
+    openApiNamespaces?: string[];
+    markdownNamespaces?: string[];
   }): string {
     const root = mkdtempSync(join(tmpdir(), "library-types-classify-"));
+    const lane = (namespaces: string[] | undefined, extra: Record<string, string>) =>
+      JSON.stringify({
+        targets: (namespaces ?? []).map((namespace) => ({
+          repo: "https://github.com/example/example",
+          ref: "1",
+          moduleId: namespace,
+          namespace,
+          generated: `generated/${namespace}.d.ts`,
+          apiDoc: `api-doc/${namespace}.json`,
+          ...extra,
+        })),
+      });
+    writeFileSync(
+      join(root, "luals-targets.json"),
+      JSON.stringify({
+        targets: (opts.lualsNamespaces ?? []).map((namespace) => ({
+          repo: "https://github.com/example/example",
+          ref: "1",
+          sourceGlobs: ["**/*.lua"],
+          moduleId: namespace,
+          namespace,
+        })),
+      }),
+    );
+    writeFileSync(
+      join(root, "script-api-targets.json"),
+      lane(opts.scriptApiNamespaces, { scriptApi: "api.script_api" }),
+    );
+    writeFileSync(
+      join(root, "openapi-targets.json"),
+      lane(opts.openApiNamespaces, { swagger: "api.swagger.json", proto: "api.proto" }),
+    );
+    writeFileSync(
+      join(root, "markdown-targets.json"),
+      lane(opts.markdownNamespaces, { markdown: "README.md" }),
+    );
     writeFileSync(
       join(root, "library-targets.json"),
       JSON.stringify({
@@ -421,6 +546,8 @@ describe("writeClassification", () => {
     const root = writeClassifyRoot({
       vendoredPaths: ["packages/monarch/monarch.monarch.d.ts"],
       authoredModuleIds: ["yagames.yagames"],
+      lualsNamespaces: ["tweener", "saver.saver", "saver.storage"],
+      scriptApiNamespaces: ["bridge"],
     });
     const listTree: ListTree = async () => [
       "packages/monarch/monarch.monarch.d.ts",
@@ -429,6 +556,10 @@ describe("writeClassification", () => {
       "packages/defold-richtext/richtext.richtext.d.ts",
       "packages/defold-lldebugger/lldebugger.debug.d.ts",
       "packages/defold-yagames/yagames.yagames.d.ts",
+      "packages/defold-tweener/tweener.tweener.d.ts",
+      "packages/defold-saver/saver.saver.d.ts",
+      "packages/defold-saver/saver.storage.d.ts",
+      "packages/defold-bridge/bridge.bridge.d.ts",
       "packages/tsconfig.json",
       "README.md",
     ];
@@ -440,15 +571,25 @@ describe("writeClassification", () => {
     ) as ClassificationManifest;
     expect(written.source.commit).toBe(source.commit);
     const byDir = new Map(written.dirs.map((e) => [e.dir, e] as const));
-    expect(byDir.has("defold-yagames")).toBe(false);
+    for (const dir of ["defold-yagames", "defold-tweener", "defold-saver", "defold-bridge"]) {
+      expect(byDir.has(dir)).toBe(false);
+    }
     expect(byDir.get("monarch")?.classification).toBe("already-vendored");
     expect(byDir.get("DAABBCC")?.classification).toBe("native");
     expect(byDir.get("defold-richtext")?.classification).toBe("pure-lua");
     expect(byDir.get("defold-lldebugger")?.classification).toBe("covered-by-goal");
 
+    // Literal exclusion list, never recomputed from the production predicate — a
+    // recomputed filter stays green under an inverted `every`/`some`.
     const expected = classifyLibraryDirs(
       [...libraryModulesFromTree(await listTree(source))]
-        .filter(([dir]) => dir !== "defold-yagames")
+        .filter(
+          ([dir]) =>
+            dir !== "defold-yagames" &&
+            dir !== "defold-tweener" &&
+            dir !== "defold-saver" &&
+            dir !== "defold-bridge",
+        )
         .map(([dir, modules]) => ({ dir, modules })),
       {
         vendoredDirs: new Set(["monarch"]),
@@ -456,6 +597,30 @@ describe("writeClassification", () => {
       },
     );
     expect(written.dirs).toEqual(expected);
+  });
+
+  test("a surviving dir keeps its live modules and drops its maintained-here ones", async () => {
+    // The committed `nakama-defold` shape: one live ts-defold row under an
+    // openapi namespace, plus two helpers forked onto the authored lane.
+    const root = writeClassifyRoot({
+      vendoredPaths: ["packages/nakama-defold/nakama.nakama.d.ts"],
+      authoredModuleIds: ["nakama.engine.defold", "nakama.util.log"],
+      openApiNamespaces: ["nakama"],
+    });
+    const listTree: ListTree = async () => [
+      "packages/nakama-defold/nakama.engine.defold.d.ts",
+      "packages/nakama-defold/nakama.nakama.d.ts",
+      "packages/nakama-defold/nakama.util.log.d.ts",
+    ];
+
+    await writeClassification(root, { listTree });
+
+    const written = JSON.parse(
+      readFileSync(join(root, "library-classification.json"), "utf8"),
+    ) as ClassificationManifest;
+    const entry = written.dirs.find((e) => e.dir === "nakama-defold");
+    expect(entry?.classification).toBe("already-vendored");
+    expect(entry?.modules).toEqual(["nakama.nakama"]);
   });
 
   test("a vendored dir survives even when every module is an authored moduleId", async () => {
