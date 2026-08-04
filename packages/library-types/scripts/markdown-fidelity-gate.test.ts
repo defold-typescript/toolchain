@@ -1098,18 +1098,177 @@ const comparisonFor = (record: LibraryRecord, module: string) =>
 
 const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
 
-describeLibraryDecisions(DEFOLD_INPUT);
-describeLibraryDecisions(MONARCH);
-describeLibraryDecisions(RICHTEXT);
-describeLibraryDecisions(PERSIST);
-describeLibraryDecisions(YAGAMES);
-describeLibraryDecisions(GOOEY);
-describeLibraryDecisions(METRICS);
-describeLibraryDecisions(RENDY);
-describeLibraryDecisions(PLATYPUS);
-describeLibraryDecisions(STARLY);
-describeLibraryDecisions(DICEBAG);
-describeLibraryDecisions(BZANIM);
+const LIBRARY_RECORDS = [
+  DEFOLD_INPUT,
+  MONARCH,
+  RICHTEXT,
+  PERSIST,
+  YAGAMES,
+  GOOEY,
+  METRICS,
+  RENDY,
+  PLATYPUS,
+  STARLY,
+  DICEBAG,
+  BZANIM,
+];
+
+for (const record of LIBRARY_RECORDS) describeLibraryDecisions(record);
+
+/** Every vendored snapshot a recorded verdict in this file rests on: the upstream
+ * `.md` each decision judges, and the ts-defold surface — or, once a library
+ * severed, the authored fork — it was compared against. Derived from the records
+ * themselves so a new library extends the coverage by existing. */
+function verdictFixturePaths(): string[] {
+  const paths = new Set<string>([
+    AUTHORED_SNAPSHOT,
+    "fixtures/markdown/orthographic.camera.md",
+    "fixtures/ts-defold/rendy.rendy.d.ts",
+  ]);
+  for (const record of LIBRARY_RECORDS) {
+    for (const decision of record.decisions) {
+      const moduleId = `${record.prefix}${decision.module}`;
+      if (decision.reason !== "no-markdown") paths.add(`fixtures/markdown/${moduleId}.md`);
+      paths.add(targetFor(moduleId, record.severedSource).fixture);
+    }
+  }
+  return [...paths].sort();
+}
+
+function fixtureDigest(path: string): string {
+  return new Bun.CryptoHasher("sha256")
+    .update(readFileSync(join(PACKAGE_ROOT, path)))
+    .digest("hex");
+}
+
+/** The pinned SHA-256 of every path `verdictFixturePaths` names. These are
+ * upstream copies taken at a pin, and every decision recorded in this file was
+ * derived by reading them once; an in-place edit or a silent re-vendor changes
+ * what those verdicts are about without changing the verdicts. */
+const VENDORED_FIXTURE_HASHES: Record<string, string> = {
+  "fixtures/authored/orthographic.camera.d.ts":
+    "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
+  "fixtures/authored/persist.persist.d.ts":
+    "f79845a7b47f57f4559d7b365c32ce5527ce12e778999e5eee4db3f45793c622",
+  "fixtures/authored/yagames.yagames.d.ts":
+    "cbb9120f25aa99f6e53c9c7210ddf3178b0f075f22dffc2f4c766bcf008e641a",
+  "fixtures/markdown/bzAnim.bzLibrary.md":
+    "ffc299add5db0e4348fcdf59fa432b4606071c7188aaa51fae4206f7fa04d8b1",
+  "fixtures/markdown/dicebag.dicebag.md":
+    "9590507ceb5c3532f4c967fbc3198282fe523259d265008ec398f06b747dee19",
+  "fixtures/markdown/gooey.gooey.md":
+    "b2a05e8e10f3bfcbfc756d18ac1916dddbfffc7c844b3a2c3336f54a4b57b329",
+  "fixtures/markdown/in.accelerometer.md":
+    "fc229088954b9e7bbb961ecd1d17d93efb0eae20f5c04e80070cb01ae3571d04",
+  "fixtures/markdown/in.button.md":
+    "fb1a285d5bf2744aed3464ca90e3c2c6ed9710c083a65117a9172d355e06f3dd",
+  "fixtures/markdown/in.cursor.md":
+    "c2b1b47ba3814e1e4358cfd16de73a56ecf625903c43056b4a76cb3c185096f3",
+  "fixtures/markdown/in.gesture.md":
+    "1b5c8f39a703dce5a90d7b0060523c9741250795f8a9833467dc1f74b95da548",
+  "fixtures/markdown/in.mapper.md":
+    "5768cac1137dff4ad113ce1abce53143d21f356863e398652b77755fa6bb53ab",
+  "fixtures/markdown/in.onscreen.md":
+    "1515b0bf7a0dff36af3ed6b3df028be86dbf4f798b4c7f9454d72f71c3befd2f",
+  "fixtures/markdown/in.state.md":
+    "3d5b1e4a4b5b6f1dad95c25a6e68bc0f2378f5573052ab238478b09d9ddd7dad",
+  "fixtures/markdown/in.textbox.md":
+    "82265179af4e80ee0f03d05b35307acf956a361a869f10894da64542c9cdb5ee",
+  "fixtures/markdown/metrics.fps.md":
+    "940950ba4e352746634cfcc267d10bbca4094b8e481a7b342eadc68afbdf158f",
+  "fixtures/markdown/metrics.mem.md":
+    "940950ba4e352746634cfcc267d10bbca4094b8e481a7b342eadc68afbdf158f",
+  "fixtures/markdown/monarch.monarch.md":
+    "0fd171fbc8b3d7c04457665640ee46a902bbc8aba63c68789a473e89f1cb0451",
+  "fixtures/markdown/monarch.transitions.gui.md":
+    "7eab84dbe50480492be688804481d9ad322c281579816eb95364c0521e75e8e8",
+  "fixtures/markdown/orthographic.camera.md":
+    "688407034ede0cc4b3ddd6d79609d0e965123c6781724828ac9ced401c6b9995",
+  "fixtures/markdown/persist.persist.md":
+    "6af89cba9ca8ff710105cec1f298299e580b194988979d4d40fdb0a4819f72eb",
+  "fixtures/markdown/platypus.platypus.md":
+    "fcb7d098d898c0e4cc7bf97f6f82d17d11efa9420f8604d29bfa5de814288f1f",
+  "fixtures/markdown/rendy.rendy.md":
+    "3f00ba31525ec646be07899a66a2545fb4d321f0aac4e23d83d00318e5d17d1a",
+  "fixtures/markdown/richtext.richtext.md":
+    "c5cdd5e925f00d3e5ab61ddaa1b219cb9d082392c2b84294abf88a565d15808f",
+  "fixtures/markdown/starly.starly.md":
+    "2499999d90adccc01b253e41da1a6adfb97ee4f3d46481a61f5ae7b362fe0aa7",
+  "fixtures/markdown/yagames.yagames.md":
+    "2e62c65b4324e5fa1878cdefaea71dbf7e0e4951ac7094ba24a659754f6a8f3e",
+  "fixtures/ts-defold/bzAnim.bzAnim.d.ts":
+    "fc109b8425acadead33b4125e822f8d19634c10c2d7a9022027ed22d6c082191",
+  "fixtures/ts-defold/dicebag.dicebag.d.ts":
+    "b8ce58a7ea3a57842fd305a659e042e4c6fea4fd4e5b0fae7fb07b79872a12f6",
+  "fixtures/ts-defold/gooey.gooey.d.ts":
+    "ccb14cf1d623756f7eb014c63b47e86369d42a89dabb7fbc267e2ca580d449e3",
+  "fixtures/ts-defold/in.accelerometer.d.ts":
+    "aaeed91bd30ab3fd1f1b5f7753d63daf30d4fcea298b8cf98fa9768d57682db1",
+  "fixtures/ts-defold/in.button.d.ts":
+    "4c6b0b341a3f210f4f3ffbdaa1d19d540f060a2dce55d536063228d83bee6d09",
+  "fixtures/ts-defold/in.cursor.d.ts":
+    "8c93001ed55f49be295ab6a7e24a77d9fae4a3f135e24fd13248f5441e2c0a0b",
+  "fixtures/ts-defold/in.gesture.d.ts":
+    "2afe9c80f2ea097f9152d0b90d61f846e6c6e3cf793dcae3cf99c825ebe99592",
+  "fixtures/ts-defold/in.keyboard.d.ts":
+    "1ac5b5ef0fb01e7d7b46d39644dcee1211fe6563139eeea1b3b56f8c68b7445a",
+  "fixtures/ts-defold/in.mapper.d.ts":
+    "d52500f818de9d3b5c36ea878ee2b853ab26e4478eea4039948bb808529c93a8",
+  "fixtures/ts-defold/in.onscreen.d.ts":
+    "344895d550bbc2b1cdb67ee05494c62ec6dff3fc9222f8458d3020deea11ad4e",
+  "fixtures/ts-defold/in.state.d.ts":
+    "9ab6bf43d2cd3b5f0e3a3a83bfac177dd831394e2d10ddaa3a245fb19b666a79",
+  "fixtures/ts-defold/in.textbox.d.ts":
+    "efab32ed7edc3d697ef23aea960dfc573dd76142db78d4511dc67addd3926406",
+  "fixtures/ts-defold/in.triggers.d.ts":
+    "57bbece64fcb6b569f1af629a9c9731cc6c955b555058e5106baee7799540909",
+  "fixtures/ts-defold/metrics.fps.d.ts":
+    "76e42a10d9a4697ae13b4cb0871ba634d65256d44404991ff2ae2f12f4e0ad6a",
+  "fixtures/ts-defold/metrics.mem.d.ts":
+    "a0538630062f9fbee67c196fb1c75b3f58817434b0749e4309f4866853b3d592",
+  "fixtures/ts-defold/monarch.monarch.d.ts":
+    "7fd159bb27f893cca8a1e963e4b8ab506c761df54fa3d2f5a7334f34a58edeca",
+  "fixtures/ts-defold/monarch.transitions.easings.d.ts":
+    "e9c3ae5b778ac553533dd1cd9a0e40ef2caecfa0a93106aa1e63386f5473d0f7",
+  "fixtures/ts-defold/monarch.transitions.gui.d.ts":
+    "09e18232dcab53355d304796a02fe4ee0027a4e3b44fc0ff20b78164eb6cd1cc",
+  "fixtures/ts-defold/platypus.platypus.d.ts":
+    "d1e55bb7a6bd64ea1fe31ed64e5fc4ccb4b42fa2e697851ce5afdc67ea27a959",
+  "fixtures/ts-defold/rendy.rendy.d.ts":
+    "3b7d93b2abeeb5f4089dfb10110648ff66a07a3533b8e1e3b1edc07c8d3ddf03",
+  "fixtures/ts-defold/richtext.color.d.ts":
+    "4cae10480441a24c1f233ae96cf3a02223e5c9989712c733d3d517dbc7df2a38",
+  "fixtures/ts-defold/richtext.richtext.d.ts":
+    "759ba92654f34cfc89aa300fa06ea36d1a52b1e3778e836e89f1f63ec56813fd",
+  "fixtures/ts-defold/richtext.tags.d.ts":
+    "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
+  "fixtures/ts-defold/starly.starly.d.ts":
+    "3e5f74791b8591f169486790c53850115a817c9988d549de7dddcfb80564e951",
+};
+
+describe("the vendored snapshots the recorded verdicts were derived from", () => {
+  test("every pinned snapshot still hashes to its recorded digest", () => {
+    const drifted = Object.entries(VENDORED_FIXTURE_HASHES)
+      .filter(([path]) => existsSync(join(PACKAGE_ROOT, path)))
+      .filter(([path, digest]) => fixtureDigest(path) !== digest)
+      .map(
+        ([path]) =>
+          `${path} no longer matches the copy every verdict derived from it was read off. Re-run the evaluation for the modules that read it and rewrite their recorded decision — do not re-baseline this digest.`,
+      );
+    expect(drifted).toEqual([]);
+  });
+
+  test("every pinned path still exists, so a renamed snapshot reds", () => {
+    expect(Object.keys(VENDORED_FIXTURE_HASHES).length).toBeGreaterThan(0);
+    expect(
+      Object.keys(VENDORED_FIXTURE_HASHES).filter((path) => !existsSync(join(PACKAGE_ROOT, path))),
+    ).toEqual([]);
+  });
+
+  test("the pin covers every snapshot a recorded verdict reads", () => {
+    expect(verdictFixturePaths().filter((path) => !(path in VENDORED_FIXTURE_HASHES))).toEqual([]);
+  });
+});
 
 describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   test("in.cursor loses all but one ts-defold member", async () => {
@@ -1146,11 +1305,35 @@ describe("defold-input surface-loss evidence at tag 4.7.1", () => {
 describe("monarch surface-loss evidence at tag 6.0.2", () => {
   test("monarch.monarch parses after the header-level widening", async () => {
     const { markdownMembers } = await comparisonFor(MONARCH, "monarch");
-    // The 24 `## monarch.<fn>(...)` signature sections of README_API.md. The four
-    // `## monarch.SCREEN_TRANSITION_*` constant headings carry no parens and stay
-    // out of the surface, which is why they show up as missing members below.
-    expect(markdownMembers.length).toBe(24);
-    expect(markdownMembers).toContain("show");
+    // Exactly the `## monarch.<fn>(...)` signature sections of README_API.md. The
+    // four `## monarch.SCREEN_TRANSITION_*` constant headings carry no parens and
+    // stay out of the surface, which is why they show up as missing members below.
+    expect(markdownMembers).toEqual([
+      "add_listener",
+      "back",
+      "bottom",
+      "clear",
+      "data",
+      "debug",
+      "hide",
+      "is_busy",
+      "is_preloading",
+      "is_top",
+      "is_visible",
+      "on_focus_change",
+      "on_post",
+      "on_transition",
+      "post",
+      "preload",
+      "remove_listener",
+      "replace",
+      "screen_exists",
+      "set_timestep_below_popup",
+      "show",
+      "top",
+      "unload",
+      "when_preloaded",
+    ]);
   });
 
   test("the README documents none of the screen-registration surface", async () => {
@@ -1203,9 +1386,16 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
     const { markdownMembers } = await comparisonFor(RICHTEXT, "richtext");
     // The `# API` section's `### richtext.<fn>(...)` sections. Unlike every prior
     // Bucket-C module this one neither loud-fails nor parses empty.
-    expect(markdownMembers.length).toBe(8);
-    expect(markdownMembers).toContain("create");
-    expect(markdownMembers).toContain("plaintext");
+    expect(markdownMembers).toEqual([
+      "characters",
+      "create",
+      "length",
+      "on_click",
+      "plaintext",
+      "remove",
+      "tagged",
+      "truncate",
+    ]);
   });
 
   test("the 7 paren-less constant headings stay out of the surface", async () => {
@@ -1251,9 +1441,7 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
 describe("persist signature-loss evidence at pin b37f61040740f232d86f68e2606f27b6f1bd15c4", () => {
   test("the README parses cleanly to exactly the 6 documented functions", async () => {
     const { markdownMembers } = await comparisonFor(PERSIST, "persist");
-    expect(markdownMembers.length).toBe(6);
-    expect(markdownMembers).toContain("create");
-    expect(markdownMembers).toContain("exists");
+    expect(markdownMembers).toEqual(["create", "exists", "flush", "load", "save", "write"]);
   });
 
   test("upstream documents a function ts-defold never declared, and loses no member", async () => {
@@ -1312,26 +1500,13 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
       ),
     );
 
-  test("the refusal is a dialect gap, not an absent API doc — the README documents 70 signatures", () => {
-    const byReceiver = new Map<string, number>();
-    for (const [, receiver] of headings()) {
-      byReceiver.set(receiver as string, (byReceiver.get(receiver as string) ?? 0) + 1);
-    }
-    expect(headings().length).toBe(70);
-    expect(byReceiver.get("yagames")).toBe(66);
-    expect(byReceiver.get("sitelock")).toBe(4);
-  });
-
-  test("the parameter and return markers are the corpus concept in a spelling the parser does not match", () => {
-    const lines = readme().split("\n");
-    expect(lines.filter((line) => /^\*\*Parameters:\*\*\s*$/.test(line)).length).toBe(47);
-    expect(lines.filter((line) => /^\*\*Returns:\*\*\s*$/.test(line)).length).toBe(22);
-    // The typed bullets exist, as `- \`x\` <kbd>type</kbd>` — never in the `* \`x\` (type)`
-    // form `TYPED_BULLET` accepts, so the parser reads zero of them.
-    expect(lines.filter((line) => /^\*\s+`[^`]+`\s*\([^)]*\)/.test(line)).length).toBe(0);
-    expect(lines.filter((line) => /^-\s+`[^`]+`\s*<kbd>/.test(line)).length).toBe(76);
-  });
-
+  // The refusal is a dialect gap, not an absent API doc: the snapshot carries 70
+  // backticked `#### <recv>.<fn>(...)` headings (66 `yagames.`, 4 `sitelock.`),
+  // 47 `**Parameters:**` and 22 `**Returns:**` markers, and 76 typed bullets in
+  // the `` `x` <kbd>type</kbd> `` form — never the `` `x` (type) `` spelling
+  // `TYPED_BULLET` accepts, so the parser reads zero of them. Those figures are
+  // properties of the vendored fixture rather than of the parser, and the digest
+  // pin above is what holds them; the record's header comment reads the same.
   test("the front-end refuses the snapshot", () => {
     expect(() => parseMarkdownApi(readme(), "yagames.yagames")).toThrow(/signature/);
   });
@@ -1355,10 +1530,22 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
         .filter(([, receiver]) => receiver === "yagames")
         .map(([, , member]) => member as string),
     );
-    expect(tsSurface().filter((member) => !documented.has(member)).length).toBe(6);
+    // Exact rather than a count for the same reason as the test above, and it is
+    // what makes the record's "the same 2 plus the 4 sitelock-receiver members"
+    // reading checkable rather than asserted.
+    expect(tsSurface().filter((member) => !documented.has(member))).toEqual([
+      "add_domain",
+      "get_current_domain",
+      "is_release_build",
+      "leaderboards_init",
+      "player_get_id",
+      "verify_domain",
+    ]);
   });
 
   test("the comment-strip fix is load-bearing: the fixture surface is 50 members", () => {
+    // `tsDefoldMembers` — the comparator's own surface reader — over the forked
+    // snapshot; too long to write out, so the samples below carry the specifics.
     const surface = tsSurface();
     expect(surface.length).toBe(50);
     // Members a `//*`-blind stripper silently dropped, sampled at both ends.
@@ -1391,7 +1578,7 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
 
   test("the front-end accepts the snapshot — this is a fidelity judgment, not a dialect gap", () => {
     const doc = parseMarkdownApi(readme(), "gooey.gooey");
-    expect(doc.elements.length).toBe(8);
+    expect(doc.elements.map((e) => e.name)).toEqual(PARSED_MEMBERS.map((m) => `gooey.${m}`));
     expect(doc.info.namespace).toBe("gooey");
   });
 
@@ -1417,48 +1604,42 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     expect([...downgradedMembers].sort()).toEqual([...PARSED_MEMBERS].sort());
   });
 
+  // Why the term fires on this member alone: the `### gooey.dynamic_list(...)`
+  // heading declares 11 arguments, and the contiguous bullet run after its
+  // `**PARAMETERS**` marker documents 10 of them — `root_id` is named in the
+  // heading and never in the list. (The run ends at the blank line before "The
+  // `config` table can contain the following values:", whose own two bullets are
+  // option keys rather than parameters; a boundary drawn at `**RETURN**` would
+  // read the list as 12.)
   test("dynamic_list's PARAMETERS block documents one argument fewer than its heading", async () => {
     const { signatureLossMembers } = await comparisonFor(GOOEY, "gooey");
     expect(signatureLossMembers).toEqual(["dynamic_list"]);
-
-    const lines = readme().split("\n");
-    const heading = lines.findIndex((line) => /^###\s+gooey\.dynamic_list\(/.test(line));
-    expect(heading).toBeGreaterThan(-1);
-    const headingArgs = (lines[heading]?.match(/\(([^)]*)\)/)?.[1] ?? "").split(",");
-    expect(headingArgs.length).toBe(11);
-    expect(headingArgs.map((a) => a.trim())).toContain("root_id");
-
-    const paramMarker = lines.findIndex(
-      (line, i) => i > heading && /^\*\*PARAMETERS\*\*\s*$/.test(line),
-    );
-    // The parameter list is the *contiguous* bullet run after the marker. It ends
-    // at the blank line before `The \`config\` table can contain the following
-    // values:`, whose own two bullets are option keys rather than parameters — so
-    // a boundary drawn at `**RETURN**` would over-count this list as 12.
-    const params: string[] = [];
-    for (let i = paramMarker + 1; i < lines.length; i++) {
-      const bullet = lines[i]?.match(/^\*\s+`([^`]+)`\s*\(/);
-      if (bullet === null || bullet === undefined) break;
-      params.push(bullet[1] as string);
-    }
-    expect(params.length).toBe(10);
-    expect(params).not.toContain("root_id");
   });
 
-  test("the ts-defold surface the comparison runs against is 12 functions", () => {
+  test("the ts-defold surface the comparison runs against is these 12 functions", () => {
     const surface = tsDefoldMembers(
       readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", "gooey.gooey.d.ts"), "utf8"),
     );
-    expect(surface.length).toBe(12);
+    expect(surface).toEqual([
+      "button",
+      "checkbox",
+      "dynamic_list",
+      "group",
+      "horizontal_dynamic_list",
+      "horizontal_static_list",
+      "input",
+      "radio",
+      "static_list",
+      "vertical_dynamic_list",
+      "vertical_scrollbar",
+      "vertical_static_list",
+    ]);
   });
 
   test("widening the header range would trade surface-loss for signature-loss, not fix it", () => {
     const lines = readme().split("\n");
-    const h3 = lines.filter((line) => /^###\s+gooey\.\w+\(.*\)\s*$/.test(line));
-    const h5 = lines.filter((line) => /^#####\s+gooey\.\w+\(.*\)\s*$/.test(line));
-    expect(h3.length).toBe(8);
-    expect(h5.length).toBe(4);
-
+    // The README writes its 8 parsed members as `###` and the 4 missing list
+    // variants as `#####`; the missing four are already pinned by name above.
     // The `#####` sections carry no documented parameters or return at all, so
     // parsing them would emit four zero-arity `(): void` stubs.
     const firstH5 = lines.findIndex((line) => /^#####\s+gooey\.\w+\(.*\)\s*$/.test(line));
@@ -1494,7 +1675,6 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
     const { doc, decision, missingMembers, signatureLossMembers, downgradedMembers, addedMembers } =
       await receiverComparison(module as string);
 
-    expect(doc.elements.length).toBe(4);
     expect(doc.elements.map((e) => e.name.split(".").pop()).sort()).toEqual(
       ["create", "draw", module, "update"].sort(),
     );
@@ -1529,13 +1709,25 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
 describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3", () => {
   const readme = () => fixtureText(RENDY, decisionFor(RENDY, "rendy"));
 
+  // Every member of the parsed surface; nine of these headings carry the
+  // `function ` keyword upstream, which is what the header widening lifted.
+  const MEMBERS = [
+    "cancel_shake",
+    "create_camera",
+    "destroy_camera",
+    "get",
+    "get_display_size",
+    "get_stack",
+    "get_window_size",
+    "screen_to_world",
+    "set",
+    "shake",
+    "world_to_screen",
+  ];
+
   test("the keyword-prefixed headings are read — the snapshot parses to all 11 members", async () => {
     const { markdownMembers } = await comparisonFor(RENDY, "rendy");
-    expect(markdownMembers.length).toBe(11);
-    // Three of the nine headings that carry the `function ` keyword upstream.
-    for (const fn of ["set", "get", "world_to_screen"]) {
-      expect(markdownMembers).toContain(fn);
-    }
+    expect(markdownMembers).toEqual(MEMBERS);
   });
 
   test("the two missing members are genuinely undocumented upstream", async () => {
@@ -1555,8 +1747,7 @@ describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081
     expect(/^\*\*(PARAMETERS?|RETURNS?)\*\*\s*$/m.test(readme())).toBe(false);
     expect(emitted).toContain("function get_stack(): void;");
     expect(emitted).toContain("function screen_to_world(): void;");
-    expect(signatureLossMembers.length).toBe(11);
-    expect(signatureLossMembers).toContain("shake");
+    expect(signatureLossMembers).toEqual(MEMBERS);
   });
 
   test("no other term fires, so the record cannot be misread as gooey's or metrics' class", async () => {
@@ -1579,7 +1770,11 @@ describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081
       "rendy.rendy",
     );
     expect(stripped.elements.map((e) => e.name)).toEqual(asCommitted.elements.map((e) => e.name));
-    expect(asCommitted.elements.length).toBe(11);
+    // Naming the surface keeps the equality above from being two empty parses
+    // agreeing, and pins that the widening is what recovers the keyword headings.
+    expect([...asCommitted.elements.map((e) => e.name)].sort()).toEqual(
+      MEMBERS.map((m) => `rendy.${m}`),
+    );
   });
 
   test("a keyword-prefixed heading closes the preceding section", () => {
@@ -1653,8 +1848,10 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
     expect(text).not.toContain("<kbd>");
     // Every signature heading is a bare `###` — none carries rendy's `function`
     // keyword, and none is demoted to `##`.
+    // The document writes 20 of them, one per member the unified reading below
+    // recovers; what matters here is the level and receiver, not the tally.
     const headings = text.split("\n").filter((line) => /^#{1,6}\s+\w+\.\w+\(.*\)\s*$/.test(line));
-    expect(headings.length).toBe(20);
+    expect(headings.length).toBeGreaterThan(0);
     expect(headings.every((line) => /^### (?:platypus|instance)\./.test(line))).toBe(true);
   });
 
@@ -1671,7 +1868,9 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
   test("the generous unified reading adds only hoisted instance methods, and still loses the constants", async () => {
     const { doc, decision, missingMembers, addedMembers, downgradedMembers } =
       await comparisonForMarkdown(unified(), "platypus.platypus");
-    expect(doc.elements.length).toBe(20);
+    expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(
+      ["create", ...INSTANCE_METHODS].sort(),
+    );
     expect(missingMembers).toEqual(CONSTANTS);
     // Not a surface gain: these are `create`'s returned-instance methods lifted
     // into module scope, which is wrong rather than incomplete.
@@ -1686,7 +1885,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
         filterToReceiver(readme(), "instance").replace(/^(#{2,3}\s+)instance\./gm, "$1platypus."),
         "platypus.platypus",
       );
-    expect(doc.elements.length).toBe(19);
+    expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(INSTANCE_METHODS);
     expect(missingMembers).toEqual(["create", ...CONSTANTS].sort());
     expect(addedMembers).toEqual(INSTANCE_METHODS);
     expect(downgradedMembers).toEqual([]);
@@ -1791,7 +1990,11 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
     const wrapped = readme()
       .split("\n")
       .filter((line) => /^#{2,3}\s+`[A-Za-z_]\w*\.[A-Za-z_]\w*\(.*\)`\s*$/.test(line));
-    expect(wrapped.length).toBe(FUNCTIONS.length);
+    // Tied to `FUNCTIONS` by name rather than by tally, so this reading of the
+    // snapshot has to agree with the surface the generous parse below recovers.
+    expect(wrapped.map((line) => line.replace(/^#{2,3}\s+`\w+\.(\w+)\(.*$/, "$1")).sort()).toEqual(
+      FUNCTIONS,
+    );
     expect(wrapped.every((line) => line.startsWith("### `m_starly."))).toBe(true);
   });
 
@@ -1826,7 +2029,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
       signatureLossMembers,
       optionalityLossMembers,
     } = await comparisonForMarkdown(generous(), "starly.starly");
-    expect(doc.elements.length).toBe(FUNCTIONS.length);
+    expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
     expect(missingMembers).toEqual(["exportThis"]);
     expect(addedMembers).toEqual(FUNCTIONS);
     // Not a comparison that found no loss — a comparison with no shared member to
@@ -1938,7 +2141,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
 
   test("the front-end reads the snapshot as-is — 11 elements, no refusal", () => {
     const doc = parseMarkdownApi(readme(), "dicebag.dicebag");
-    expect(doc.elements.length).toBe(FUNCTIONS.length);
+    expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
   });
 
   test("the surfaces match one-for-one", async () => {
@@ -1982,7 +2185,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
   test("the generous reading clears the one fixable gap and is still no-go", async () => {
     const { doc, decision, downgradedMembers, optionalityLossMembers } =
       await comparisonForMarkdown(generous(), "dicebag.dicebag");
-    expect(doc.elements.length).toBe(FUNCTIONS.length);
+    expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
     expect(optionalityLossMembers).toEqual([]);
     expect(downgradedMembers).toEqual(["roll_custom_dice", "table_create", "table_roll"]);
     expect(decision).toBe("no-go");
@@ -2092,7 +2295,10 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
       signatureLossMembers,
       optionalityLossMembers,
     } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary");
-    expect(doc.elements.length).toBe(7);
+    expect(doc.elements.map((e) => e.name.split(".").pop())).toEqual([
+      ...SHARED_FUNCTIONS,
+      "setMaxPts",
+    ]);
     // Every constant is invisible to a flat signature parse, and `setMaxPts` is
     // the README's own name for what upstream calls `setMaxPoints`.
     expect(missingMembers).toEqual(["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL"]);
