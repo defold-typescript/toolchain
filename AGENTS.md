@@ -24,6 +24,7 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 
 ## Testing
 
+- A test must be able to fail from a production change: assertions on authored prose, and test-local inventories or parsers standing in for a production source, do not qualify.
 - `bun test` runs the full suite from the repo root.
 - Co-locate unit tests next to the source: `foo.ts` ↔ `foo.test.ts`.
 - Snapshot transpiler output for representative inputs; do not assert on Lua substrings.
