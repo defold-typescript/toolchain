@@ -90,6 +90,38 @@ describe("resolveReleaseTarget", () => {
   });
 });
 
+type CommandRunner = (cmd: string[]) => { code: number; output: string };
+
+const spawnRunner: CommandRunner = (cmd) => {
+  try {
+    const proc = Bun.spawnSync(cmd);
+    return { code: proc.exitCode, output: proc.stdout.toString() };
+  } catch {
+    return { code: 1, output: "" };
+  }
+};
+
+function repoReleaseTags(runner: CommandRunner): string[] {
+  const { code, output } = runner(["git", "tag"]);
+  return code === 0 ? releaseTagsAt(output.split("\n")) : [];
+}
+
+describe("committed changelog is release-ready", () => {
+  const tags = repoReleaseTags(spawnRunner);
+  const body = readFileSync(
+    new URL("../packages/docs/guide/changelog.md", import.meta.url),
+    "utf8",
+  );
+
+  test.skipIf(tags.length === 0)("projects a release target over the repo's latest tag", () => {
+    expect(resolveReleaseTarget(body, tags)).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  test("carries no literal ## Unreleased heading", () => {
+    expect(body).not.toMatch(/^## Unreleased$/m);
+  });
+});
+
 describe("sleepSync", () => {
   test("blocks for at least the requested interval", () => {
     const start = performance.now();
