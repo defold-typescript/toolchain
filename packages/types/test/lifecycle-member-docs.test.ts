@@ -240,6 +240,9 @@ describe("lifecycle hook-member docs", () => {
   test("every InputAction field carries a preceding JSDoc block", () => {
     const span = interfaceBraceSpan(lifecycleSource, "InputAction");
     const fields = interfaceFieldNames(span);
+    // InputAction's documented field count. `interfaceFieldNames` is a regex
+    // extractor with no second source to cross-check, so without this a partial
+    // parse would silently make the per-field doc loop below vacuous.
     expect(fields.length).toBe(24);
     for (const f of fields) {
       expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\?:`))).toBe(true);
@@ -249,6 +252,7 @@ describe("lifecycle hook-member docs", () => {
   test("every InputTouch field carries a preceding JSDoc block", () => {
     const span = interfaceBraceSpan(lifecycleSource, "InputTouch");
     const fields = interfaceFieldNames(span);
+    // InputTouch's documented field count — same partial-parse guard as InputAction.
     expect(fields.length).toBe(11);
     for (const f of fields) {
       expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\?:`))).toBe(true);

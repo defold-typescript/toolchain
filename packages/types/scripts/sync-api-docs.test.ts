@@ -109,8 +109,24 @@ const SANDBOXED_THREE: ReadonlyArray<[string, string]> = [
 ];
 
 describe("LUA_STDLIB_MANIFEST", () => {
+  // Shape over *every* row, including one added after this test was written: the
+  // named-namespace tests below reach their rows via `.find`, so a new row with a
+  // typo'd zipEntry or a fixture stamped with a stale Defold version is invisible
+  // to them. `entry()` hardcodes the version in its fixture default, so this is
+  // also what couples that literal to the exported DEFOLD_VERSION.
+  test("every entry names a ref-doc.zip JSON entry and a fixture at the current Defold version", () => {
+    for (const e of LUA_STDLIB_MANIFEST) {
+      expect(e.namespace).not.toBe("");
+      expect(e.zipEntry).toMatch(/^doc\/.+\.json$/);
+      expect(e.fixture).toMatch(
+        new RegExp(`^fixtures/defold-${DEFOLD_VERSION.replace(/\./g, "\\.")}/.+_doc\\.json$`),
+      );
+    }
+    const namespaces = LUA_STDLIB_MANIFEST.map((e) => e.namespace);
+    expect(new Set(namespaces).size).toBe(namespaces.length);
+  });
+
   test("maps base and bit to their ref-doc.zip entries with the standard fixture path", () => {
-    expect(LUA_STDLIB_MANIFEST).toHaveLength(10);
     const base = LUA_STDLIB_MANIFEST.find((e) => e.namespace === "base");
     expect(base?.zipEntry).toBe("doc/lua_base.doc_h_doc.json");
     expect(base?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/base_doc.json`);

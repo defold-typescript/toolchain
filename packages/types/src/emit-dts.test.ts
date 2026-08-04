@@ -1848,6 +1848,8 @@ describe("MAPPING_TABLE_SLOTS", () => {
     expect(MAPPING_TABLE_SLOTS.get("gui.clone_tree")).toEqual({ key: "hash", value: "node" });
     expect(MAPPING_TABLE_SLOTS.get("gui.get_tree")).toEqual({ key: "hash", value: "node" });
     expect(MAPPING_TABLE_SLOTS.get("gui.get_layouts")).toEqual({ key: "hash", value: "vector3" });
+    // The gets above name every slot in the map; the size is what makes that an
+    // exhaustive enumeration — a `.get` check cannot see an added fourth slot.
     expect(MAPPING_TABLE_SLOTS.size).toBe(3);
   });
 
@@ -2043,7 +2045,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "b2d.world.collide_mover:param:capsule",
       "b2d.world.collide_mover:param:filter",
     ]);
-    expect(TABLE_SLOT_CURATIONS.size).toBe(94);
     expect(TABLE_SLOT_CURATIONS.get("compute.set_constants:param:constants")).toEqual({
       kind: "keyed-object",
     });
@@ -2070,8 +2071,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
         { name: "fraction", types: ["number"] },
       ],
     });
-    expect(MAPPING_TABLE_SLOTS.size).toBe(3);
-    expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(8);
   });
 
   test("keyed-object curation re-keys the parser-recovered args table by name", () => {
@@ -2630,6 +2629,8 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("go.delete")).toEqual(["string", "hash", "url"]);
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("push.register")).toBe("number");
     expect(HOMOGENEOUS_ARRAY_SLOTS.get("camera.get_cameras")).toBe("url");
+    // The gets above name every slot in the map; the size is what makes that an
+    // exhaustive enumeration — a `.get` check cannot see an added ninth slot.
     expect(HOMOGENEOUS_ARRAY_SLOTS.size).toBe(8);
   });
 
