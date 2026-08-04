@@ -3,6 +3,10 @@ import { join } from "node:path";
 import ts from "typescript";
 import { extractApiDoc } from "./extract-api-doc";
 import { readAuthoredTargets } from "./sync-authored-types";
+import { readLualsTargets } from "./sync-luals-types";
+import { readMarkdownTargets } from "./sync-markdown-types";
+import { readOpenApiTargets } from "./sync-openapi-types";
+import { readScriptApiTargets } from "./sync-script-api-types";
 
 /**
  * ts-defold/library core-type references -> the @defold-typescript/types surface.
@@ -332,21 +336,57 @@ export function classifyLibraryDirs(
 }
 
 /**
- * The upstream dirs this repo has severed onto the authored lane. Severance
+ * The union every maintained-here lane contributes: authored `moduleId`s, and
+ * the `namespace`s of the LuaLS, script_api, OpenAPI and markdown front-ends.
+ * Namespaces are matched in both forms because the lanes use both — druid-style
+ * libraries register a bare `tweener`, while `defold-saver` registers the dotted
+ * `saver.saver` / `saver.storage`.
+ */
+export interface MaintainedHereRegistry {
+  moduleIds: ReadonlySet<string>;
+  namespaces: ReadonlySet<string>;
+}
+
+/**
+ * The subset of `modules` this repo maintains itself rather than sourcing from
+ * ts-defold/library. A live `library-targets.json` row always wins: `nakama.nakama`
+ * is an OpenAPI `namespace` *and* a vendored module, and it must stay
+ * ts-defold-sourced so `nakama-defold` survives as `already-vendored`.
+ */
+export function maintainedHereModules(
+  modules: readonly string[],
+  registry: MaintainedHereRegistry,
+  liveModules: ReadonlySet<string>,
+): Set<string> {
+  return new Set(
+    modules.filter(
+      (m) =>
+        !liveModules.has(m) &&
+        (registry.moduleIds.has(m) ||
+          registry.namespaces.has(m) ||
+          registry.namespaces.has(m.split(".")[0] as string)),
+    ),
+  );
+}
+
+/**
+ * The upstream dirs this repo has severed onto a maintained-here lane. Severance
  * deletes a library's `library-targets.json` row, but its dir still exists
  * upstream — so a regen would re-add it under whatever its module shape implies
- * unless it is filtered out first. The registry gives an exact derivation with
+ * unless it is filtered out first. The registries give an exact derivation with
  * no hand-maintained list: a dir is severed iff it has at least one module and
- * every module is an authored `moduleId`. A dir mixing authored and unauthored
- * modules (`nakama-defold`) is still upstream-sourced and stays classified.
+ * every module is maintained here. A dir mixing maintained-here and live modules
+ * (`nakama-defold`) is still upstream-sourced and stays classified.
  */
 export function severedDirsFromModules(
   modulesByDir: Map<string, string[]>,
-  authoredModuleIds: ReadonlySet<string>,
+  registry: MaintainedHereRegistry,
+  liveModules: ReadonlySet<string>,
 ): Set<string> {
   const severed = new Set<string>();
   for (const [dir, modules] of modulesByDir) {
-    if (modules.length > 0 && modules.every((m) => authoredModuleIds.has(m))) severed.add(dir);
+    const maintained = maintainedHereModules(modules, registry, liveModules);
+    if (modules.length > 0 && maintained.size === modules.length) severed.add(dir);
   }
   return severed;
 }
@@ -397,8 +437,26 @@ export type ListTree = (source: LibrarySource) => Promise<string[]>;
 const defaultListTree: ListTree = (source) => githubTreePaths(repoSlug(source.repo), source.commit);
 
 /**
+ * Read every maintained-here registry off the package root and union them.
+ * Each reader `readFileSync`s unconditionally and throws on a missing required
+ * field — deliberately no absent-file fallback, so a lane added without its
+ * fixture fails loudly rather than silently un-severing that lane's dirs.
+ */
+function readMaintainedHereRegistry(packageRoot: string): MaintainedHereRegistry {
+  return {
+    moduleIds: new Set(readAuthoredTargets(packageRoot).map((t) => t.moduleId)),
+    namespaces: new Set([
+      ...readLualsTargets(packageRoot).map((t) => t.namespace),
+      ...readScriptApiTargets(packageRoot).map((t) => t.namespace),
+      ...readOpenApiTargets(packageRoot).map((t) => t.namespace),
+      ...readMarkdownTargets(packageRoot).map((t) => t.namespace),
+    ]),
+  };
+}
+
+/**
  * Enumerate every ts-defold/library dir at the pin, drop the dirs severed onto
- * the authored lane, classify each survivor by its module-name shape, and write
+ * a maintained-here lane, classify each survivor by its module-name shape, and write
  * `library-classification.json`. Filtering happens here, not in
  * `classifyLibraryDirs`, so that pass stays a pure map-and-sort. The `listTree`
  * seam keeps the pass offline-testable; only the CLI wires the real call, and it
@@ -415,15 +473,21 @@ export async function writeClassification(
     targets.map((t) => t.path.split("/")[1]).filter((d): d is string => d !== undefined),
   );
   const coveredByGoalDirs = new Set(["defold-lldebugger", "defold-xmath"]);
+  const liveModules = new Set(targets.map((t) => t.module));
 
-  const authoredModuleIds = new Set(readAuthoredTargets(packageRoot).map((t) => t.moduleId));
+  const registry = readMaintainedHereRegistry(packageRoot);
 
   const modulesByDir = libraryModulesFromTree(await listTree(source));
-  const severedDirs = severedDirsFromModules(modulesByDir, authoredModuleIds);
+  const severedDirs = severedDirsFromModules(modulesByDir, registry, liveModules);
   const dirs = [...modulesByDir]
-    // Vendored wins: a stale authored entry can never erase a live ts-defold row.
+    // Vendored wins: a stale maintained-here entry can never erase a live ts-defold row.
     .filter(([dir]) => !severedDirs.has(dir) || vendoredDirs.has(dir))
-    .map(([dir, modules]) => ({ dir, modules }));
+    // A survivor records only its ts-defold-sourced remainder as evidence, so its
+    // written shape agrees with its own `modules` array.
+    .map(([dir, modules]) => {
+      const maintained = maintainedHereModules(modules, registry, liveModules);
+      return { dir, modules: modules.filter((m) => !maintained.has(m)) };
+    });
   const entries = classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs });
   writeFileSync(
     join(packageRoot, "library-classification.json"),
