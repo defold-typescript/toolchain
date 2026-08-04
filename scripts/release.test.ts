@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
   compareVersions,
   latestReleaseTag,
@@ -92,9 +93,11 @@ describe("resolveReleaseTarget", () => {
 
 type CommandRunner = (cmd: string[]) => { code: number; output: string };
 
+// Anchored to the repo root the changelog is read from, not the process cwd, so
+// the tags and the changelog body always describe the same repository.
 const spawnRunner: CommandRunner = (cmd) => {
   try {
-    const proc = Bun.spawnSync(cmd);
+    const proc = Bun.spawnSync(cmd, { cwd: fileURLToPath(new URL("..", import.meta.url)) });
     return { code: proc.exitCode, output: proc.stdout.toString() };
   } catch {
     return { code: 1, output: "" };
@@ -105,6 +108,18 @@ function repoReleaseTags(runner: CommandRunner): string[] {
   const { code, output } = runner(["git", "tag"]);
   return code === 0 ? releaseTagsAt(output.split("\n")) : [];
 }
+
+describe("repoReleaseTags", () => {
+  test("filters the runner's tag lines through releaseTagsAt", () => {
+    const runner: CommandRunner = () => ({ code: 0, output: "v1.2.3\nnightly\nv1.2\n" });
+    expect(repoReleaseTags(runner)).toEqual(["v1.2.3"]);
+  });
+
+  test("yields no tags when the runner exits non-zero", () => {
+    const runner: CommandRunner = () => ({ code: 128, output: "v1.2.3\n" });
+    expect(repoReleaseTags(runner)).toEqual([]);
+  });
+});
 
 describe("committed changelog is release-ready", () => {
   const tags = repoReleaseTags(spawnRunner);
@@ -117,8 +132,8 @@ describe("committed changelog is release-ready", () => {
     expect(resolveReleaseTarget(body, tags)).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  test("carries no literal ## Unreleased heading", () => {
-    expect(body).not.toMatch(/^## Unreleased$/m);
+  test("carries no Unreleased heading in any casing or suffix", () => {
+    expect(body).not.toMatch(/^##\s+Unreleased\b/im);
   });
 });
 
