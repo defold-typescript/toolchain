@@ -12,9 +12,11 @@ import type { FidelityReport } from "./luals-fidelity";
  *
  * Each target pins its exact output paths. Like the LuaLS libraries, a migrated
  * script_api library is the sole maintainer of its namespace, so its goldens are
- * named for the single-segment `namespace` (`generated/bridge.d.ts`,
- * `api-doc/bridge.json`, `fidelity/bridge.json`) at the canonical roots — not the
- * dotted `moduleId` — keeping the docs tree and file layout uniform with druid.
+ * named for the target's `namespace` verbatim (`generated/<namespace>.d.ts`,
+ * `api-doc/<namespace>.json`, `fidelity/<namespace>.json` — so `bridge` lands at
+ * `generated/bridge.d.ts` and `api-doc/bridge.json`) at the canonical roots,
+ * rather than the require `moduleId`, keeping the docs tree and file layout
+ * uniform with druid.
  */
 export interface ScriptApiTarget {
   repo: string;
