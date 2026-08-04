@@ -760,6 +760,8 @@ test("renders @deprecated on a tagged interface, alias, method and module functi
   expect(out).toContain(" * @deprecated Gone in 2.0.");
   // The bare tag on `old_call` renders with no trailing text.
   expect(out).toMatch(/^\s+\* @deprecated$/m);
+  // 4 = the four deprecated members in the fixture above; this is what proves the
+  // tag did not also land on `new_fn`, which declares no deprecation.
   expect(out.match(/@deprecated/g)).toHaveLength(4);
 });
 
