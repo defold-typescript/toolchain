@@ -101,3 +101,8 @@ resolves.
 Bob's exit code is the command's exit code: a failed `bob build` fails the
 command, and `bob run` short-circuits on a failed build with that same code
 before it ever launches.
+
+The one exception is `--fail-on-drift` on `bob build`/`bundle`/`run`, which
+fails an otherwise-successful command when the installed editor has drifted from
+the pin (see [Pinning the Defold target](./pinning-defold-target.md)). It only
+ever replaces a success — a non-zero Bob or engine code is still reported as-is.

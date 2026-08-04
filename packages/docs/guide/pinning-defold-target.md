@@ -97,6 +97,20 @@ warns, naming both the installed version and the pin, and pointing back at
 under `--json`. `bob status`/`bob resolve` inspect rather than build and stay
 quiet. A channel pin tracks its head and never triggers this.
 
+That drift notice is advisory by default: it never changes the exit code. Pass
+`--fail-on-drift` to any of those commands and the *same* drift exits non-zero
+instead — same notice text, same `--json` payload, and the pin is still never
+rewritten. It is the flag for CI, where a warning nobody reads is no signal at
+all. Escalation only ever turns a success into a failure: when the command
+itself already failed, you get its own exit code, not the drift code. On a
+command outside that loop — `bob status`, `resolve`, `init` — the flag is inert
+rather than an error, exactly as `--frozen` and `--force` are off their own
+commands. Do not confuse it with `resolve --frozen`, which is a different
+mechanism entirely: `--frozen` fails when a *native-extension* download would be
+needed because the cache missed, while `--fail-on-drift` fails when the
+*installed editor* has drifted from the version pin. Neither implies the other,
+and `--fail-on-drift` never appears on `resolve`.
+
 `set-target` is a **writer** scoped like `init`'s pin write: it reads
 `package.json`, sets `"defold-typescript"."defold-target"` to a validated value,
 preserves every other key, and reports the transition. Setting the value already
@@ -178,6 +192,11 @@ build`/`bundle`/`run` — adds a `pinMismatch: { installed, pinned }` object
 (alongside the notice in the `warnings` array) naming the installed editor version
 and the pinned version. It is absent when the two match, when no editor is
 detected, and for a channel pin.
+
+Adding `--fail-on-drift` does not change that payload at all — same `warnings`,
+same `pinMismatch`, no extra field. Only the process exit code differs, so a CI
+job can keep parsing the JSON exactly as before and simply stop ignoring the
+result.
 
 ## Materializing the pinned surface
 

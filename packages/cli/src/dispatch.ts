@@ -153,10 +153,27 @@ function readPackageJson(cwd: string): unknown {
   }
 }
 
+// `--fail-on-drift` escalates once, here, rather than at each command's report
+// site: the drift verdict is computed at a single choke point below, so applying
+// it to the whole command's result covers every current and future drift-emitting
+// command and can only turn success into failure — a real failure code is never
+// masked.
 export function dispatch(
   argv: string[],
   io: DispatchIo,
   internals?: DispatchInternals,
+): number | Promise<number> {
+  const drift = { escalate: false };
+  const escalated = (code: number): number => (code === 0 && drift.escalate ? 1 : code);
+  const result = dispatchCommand(argv, io, internals, drift);
+  return typeof result === "number" ? escalated(result) : result.then(escalated);
+}
+
+function dispatchCommand(
+  argv: string[],
+  io: DispatchIo,
+  internals: DispatchInternals | undefined,
+  drift: { escalate: boolean },
 ): number | Promise<number> {
   const json = argv.includes("--json");
 
@@ -181,6 +198,7 @@ export function dispatch(
   const wallRemove = argv.includes("--remove");
   const wallList = argv.includes("--list");
   const frozen = argv.includes("--frozen");
+  const failOnDrift = argv.includes("--fail-on-drift");
   const { value: defoldTargetFlag, rest: afterTargetArgs } = parseValueFlag(argv, "defold-target");
   const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterTargetArgs);
   const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
@@ -200,6 +218,7 @@ export function dispatch(
       a !== "--remove" &&
       a !== "--list" &&
       a !== "--frozen" &&
+      a !== "--fail-on-drift" &&
       a !== "--detected" &&
       a !== "--detect",
   );
@@ -368,6 +387,10 @@ export function dispatch(
     installedForDrift !== undefined && pinnedVersion !== undefined && driftNotice.length > 0
       ? { installed: installedForDrift, pinned: pinnedVersion }
       : undefined;
+  // `driftNotice` is already empty for undetected editors, matching versions,
+  // channel pins, and every command outside `driftCheckedCommand`, so the
+  // escalation inherits that gate exactly rather than re-deriving it.
+  drift.escalate = failOnDrift && driftNotice.length > 0;
   const channelFetch =
     internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
   const versionFetch = internals?.fetchVersionInfo ?? fetchVersionInfo;
