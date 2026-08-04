@@ -20,8 +20,9 @@ import {
  * The README documents its API under the library's own require alias (e.g.
  * `camera.` for defold-orthographic); each target pins the `namespace` this repo
  * publishes it under, so the parsed doc is *retargeted* onto that namespace
- * before emitting — the goldens are named for the single-segment `namespace`
- * (`generated/orthographic.d.ts`), keeping the file layout uniform with druid.
+ * before emitting — the goldens are named for the target's `namespace` verbatim
+ * (`generated/<namespace>.d.ts`, so `generated/orthographic.d.ts`), keeping the
+ * file layout uniform with druid.
  *
  * A markdown parse is likely **lower fidelity** than the hand-written ts-defold
  * `.d.ts` it would replace (a README rarely documents constants or every
