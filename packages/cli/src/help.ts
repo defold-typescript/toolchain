@@ -40,7 +40,12 @@ const COMMANDS: readonly HelpCommand[] = [
     summary:
       "Upgrade to the latest CLI release: hands off to the newer CLI when the running one is behind, then re-scaffolds the managed files and reinstalls.",
     usage: "bunx @defold-typescript/cli upgrade [path]",
-    flags: [],
+    flags: [
+      {
+        flag: "--fail-on-drift",
+        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+      },
+    ],
   },
   {
     name: "set-target",
@@ -62,6 +67,10 @@ const COMMANDS: readonly HelpCommand[] = [
         desc: "override the resolved Defold target",
       },
       { flag: "--force", desc: "rebuild even when outputs look current" },
+      {
+        flag: "--fail-on-drift",
+        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+      },
     ],
   },
   {
@@ -72,6 +81,10 @@ const COMMANDS: readonly HelpCommand[] = [
       {
         flag: "--defold-target <version|stable|beta|alpha>",
         desc: "override the resolved Defold target",
+      },
+      {
+        flag: "--fail-on-drift",
+        desc: "exit non-zero when the installed Defold editor differs from the version pin",
       },
     ],
   },
@@ -114,13 +127,23 @@ const COMMANDS: readonly HelpCommand[] = [
       },
       { flag: "--java <path>", desc: "path to the Java runtime used for bob.jar" },
       { flag: "--build-server <url>", desc: "native-extension build-server URL" },
+      {
+        flag: "--fail-on-drift",
+        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+      },
     ],
   },
   {
     name: "run",
     summary: "Launch an existing build/default build without Bob.",
     usage: "bunx @defold-typescript/cli run [path] [-- <engine args>]",
-    flags: [{ flag: "-- <args>", desc: "pass everything after -- through to the engine" }],
+    flags: [
+      { flag: "-- <args>", desc: "pass everything after -- through to the engine" },
+      {
+        flag: "--fail-on-drift",
+        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+      },
+    ],
   },
 ];
 

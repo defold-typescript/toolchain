@@ -91,6 +91,8 @@ export function describeTargetOverride(
 // a concrete-version pin silently lagging, so name both versions and the one-command
 // fix. The caller supplies `pinned` only for a concrete-version pin (a channel pin
 // tracks its head and never lags), so this helper never sees a channel token.
+// The notice is advisory by default and escalates to a non-zero exit under
+// `--fail-on-drift`, so the text claims only what holds in both modes.
 export function describeInstalledPinMismatch(
   installed: string | undefined,
   pinned: string | undefined,
@@ -99,7 +101,7 @@ export function describeInstalledPinMismatch(
     return [];
   }
   return [
-    `the installed Defold editor (${installed}) differs from the "defold-target" pin (${pinned}); run \`set-target --detected\` to sync the pin. This is advisory and does not change the pin.`,
+    `the installed Defold editor (${installed}) differs from the "defold-target" pin (${pinned}); run \`set-target --detected\` to sync the pin. This does not change the pin.`,
   ];
 }
 

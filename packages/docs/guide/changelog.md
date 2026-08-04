@@ -51,6 +51,8 @@ changes are called out first because the toolchain is pre-1.0.
 
 - The [agent runbooks](./agent-runbooks.md) now warn that the script lifecycle factory needs a *value* import — the `import type` plus `declare const` form builds `ok: true` while leaving the hooks unerased — and route Defold's resulting `FORMAT_ERROR` resource cascade back to that fix.
 
+- A new `--fail-on-drift` flag turns the [installed-editor-vs-pin drift notice](./pinning-defold-target.md) into a non-zero exit on `build`, `watch`, [`run`](./run.md), `upgrade`, and `bob build`/`bundle`/`run`, so CI stops passing on a warning nobody reads — the notice text and `--json` payload are unchanged, and a command that already failed keeps its own exit code. It is unrelated to `resolve --frozen`, which fails on a native-extension cache miss, and never appears on `resolve`.
+
 ### Fixed
 
 - A dependency that ships modules across two of this repo's registry lanes — such as [`heroiclabs/nakama-defold`](/api/nakama.engine.defold), whose `nakama.nakama` is codegen'd while its `nakama.engine.defold` and `nakama.util.log` helpers are forked — now resolves and materializes every module; [`resolve`](./resolve.md) previously kept only the first lane's module and silently dropped the rest.

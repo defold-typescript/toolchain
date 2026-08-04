@@ -62,7 +62,10 @@ Before launching, `run` writes any advisories to `stderr`:
 - **installed-editor pin-drift notice** — when the Defold editor installed on
   this machine differs from the version your project pins, `run` prints a
   one-line heads-up (the same notice the everyday commands share). It is
-  advisory only and never changes the exit code.
+  advisory by default and never changes the exit code; pass `--fail-on-drift`
+  to make that same drift exit non-zero instead. The notice text is identical
+  either way, and the engine's own exit code always wins — escalation turns a
+  clean run into a failure, never a failing run into a different failure.
 
 ## `--json`
 
