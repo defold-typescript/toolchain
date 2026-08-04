@@ -183,9 +183,11 @@ describe("describeInstalledPinMismatch", () => {
     expect(notices).toHaveLength(1);
     expect(notices[0]).toContain("1.13.0");
     expect(notices[0]).toContain("1.12.4");
-    expect(notices[0]).toContain("advisory");
     expect(notices[0]).toContain("does not change the pin");
     expect(notices[0]).toContain("set-target --detected");
+    // The one shared string must stay true under `--fail-on-drift`, where the
+    // notice does change the exit code.
+    expect(notices[0]).not.toContain("advisory");
   });
 
   test("equal, whitespace-only difference, no editor, or no pin produce no notice", () => {
