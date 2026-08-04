@@ -442,7 +442,7 @@ const defaultListTree: ListTree = (source) => githubTreePaths(repoSlug(source.re
  * field — deliberately no absent-file fallback, so a lane added without its
  * fixture fails loudly rather than silently un-severing that lane's dirs.
  */
-function readMaintainedHereRegistry(packageRoot: string): MaintainedHereRegistry {
+export function readMaintainedHereRegistry(packageRoot: string): MaintainedHereRegistry {
   return {
     moduleIds: new Set(readAuthoredTargets(packageRoot).map((t) => t.moduleId)),
     namespaces: new Set([
