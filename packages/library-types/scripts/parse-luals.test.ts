@@ -786,6 +786,115 @@ describe("parseLualsSource returned module object and function-local class", () 
   });
 });
 
+describe("parseLualsSource @deprecated", () => {
+  test("a @deprecated with text before a module function carries the text onto it", () => {
+    const model = parseLualsSource(
+      lua(
+        "---Old entry point",
+        "---@deprecated Use `b` instead.",
+        "function M.old() end",
+        "function M.fresh() end",
+      ),
+    );
+    const old = model.moduleFunctions.find((f) => f.name === "old");
+    expect(old?.deprecated).toBe("Use `b` instead.");
+    const fresh = model.moduleFunctions.find((f) => f.name === "fresh");
+    expect(fresh?.deprecated).toBeUndefined();
+    expect(fresh && Object.keys(fresh)).not.toContain("deprecated");
+  });
+
+  test("a bare @deprecated yields an empty string, distinct from an absent key", () => {
+    const model = parseLualsSource(lua("---@deprecated", "function M.old() end"));
+    expect(model.moduleFunctions[0]?.deprecated).toBe("");
+  });
+
+  test("a @class captures the tag with text, bare, and not at all", () => {
+    const tagged = parseLualsSource(
+      lua("---@deprecated Superseded by Y.", "---@class X", "local X = {}"),
+    );
+    expect(tagged.interfaces[0]?.deprecated).toBe("Superseded by Y.");
+
+    const bare = parseLualsSource(lua("---@deprecated", "---@class X", "local X = {}"));
+    expect(bare.interfaces[0]?.deprecated).toBe("");
+
+    const untagged = parseLualsSource(lua("---@class X", "local X = {}"));
+    const iface = untagged.interfaces[0];
+    expect(iface?.deprecated).toBeUndefined();
+    expect(iface && Object.keys(iface)).not.toContain("deprecated");
+  });
+
+  test("an @alias captures the tag with text, bare, and not at all", () => {
+    const tagged = parseLualsSource(lua("---@deprecated Use `Mode`.", "---@alias OldMode string"));
+    expect(tagged.aliases[0]?.deprecated).toBe("Use `Mode`.");
+
+    const bare = parseLualsSource(lua("---@deprecated", "---@alias OldMode string"));
+    expect(bare.aliases[0]?.deprecated).toBe("");
+
+    const untagged = parseLualsSource(lua("---@alias OldMode string"));
+    const alias = untagged.aliases[0];
+    expect(alias?.deprecated).toBeUndefined();
+    expect(alias && Object.keys(alias)).not.toContain("deprecated");
+  });
+
+  test("a colon method captures the tag with text, bare, and not at all", () => {
+    const tagged = parseLualsSource(
+      lua(
+        "---@class Comp",
+        "local M = {}",
+        "---@deprecated Use `set_text`.",
+        "function M:set_to() end",
+      ),
+    );
+    expect(tagged.interfaces[0]?.methods[0]?.deprecated).toBe("Use `set_text`.");
+
+    const bare = parseLualsSource(
+      lua("---@class Comp", "local M = {}", "---@deprecated", "function M:set_to() end"),
+    );
+    expect(bare.interfaces[0]?.methods[0]?.deprecated).toBe("");
+
+    const untagged = parseLualsSource(
+      lua("---@class Comp", "local M = {}", "function M:set_to() end"),
+    );
+    const method = untagged.interfaces[0]?.methods[0];
+    expect(method?.deprecated).toBeUndefined();
+    expect(method && Object.keys(method)).not.toContain("deprecated");
+  });
+
+  test("a @deprecated consumed by a @class does not leak onto the next declaration", () => {
+    const model = parseLualsSource(
+      lua("---@deprecated Superseded.", "---@class X", "local X = {}", "function M.after() end"),
+    );
+    expect(model.interfaces[0]?.deprecated).toBe("Superseded.");
+    const after = model.moduleFunctions.find((f) => f.name === "after");
+    expect(after?.deprecated).toBeUndefined();
+    expect(after && Object.keys(after)).not.toContain("deprecated");
+  });
+
+  test("a @deprecated consumed by an @alias does not leak onto the next declaration", () => {
+    const model = parseLualsSource(
+      lua("---@deprecated Superseded.", "---@alias OldMode string", "function M.after() end"),
+    );
+    expect(model.aliases[0]?.deprecated).toBe("Superseded.");
+    const after = model.moduleFunctions.find((f) => f.name === "after");
+    expect(after?.deprecated).toBeUndefined();
+    expect(after && Object.keys(after)).not.toContain("deprecated");
+  });
+
+  test("mergeLibraryModels keeps a class's tag when an untagged block for the same class merges, in either order", () => {
+    const tagged = parseLualsSource(
+      lua("---@deprecated Superseded by Y.", "---@class X", "---@field a string", "local X = {}"),
+    );
+    const untagged = parseLualsSource(lua("---@class X", "---@field b string", "local X = {}"));
+
+    expect(mergeLibraryModels([tagged, untagged]).interfaces[0]?.deprecated).toBe(
+      "Superseded by Y.",
+    );
+    expect(mergeLibraryModels([untagged, tagged]).interfaces[0]?.deprecated).toBe(
+      "Superseded by Y.",
+    );
+  });
+});
+
 describe("druid parse snapshot", () => {
   const druidRoot = join(PACKAGE_ROOT, "fixtures/luals/druid");
   const files = readdirSync(druidRoot, { recursive: true })

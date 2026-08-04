@@ -4140,6 +4140,7 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
         },
         {
           "brief": "Set text to text field",
+          "deprecated": "",
           "generics": [],
           "name": "set_to",
           "params": [

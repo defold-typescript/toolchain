@@ -686,3 +686,91 @@ test("an ambient stdlib rename lowers to the same dotted text the emitter writes
 
   expect(parameters?.[0]?.types).toEqual(["debug.FunctionInfo"]);
 });
+
+test("a tagged module function, method, interface and alias each lower their deprecated key; untagged siblings carry none", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "gone",
+        deprecated: "Use `kept`.",
+        generics: [],
+        fields: [],
+        methods: [
+          { name: "old_call", brief: "", deprecated: "", generics: [], params: [], returns: [] },
+          { name: "new_call", brief: "", generics: [], params: [], returns: [] },
+        ],
+        brief: "",
+      },
+      {
+        name: "kept",
+        generics: [],
+        fields: [],
+        methods: [{ name: "call", brief: "", generics: [], params: [], returns: [] }],
+        brief: "",
+      },
+    ],
+    aliases: [
+      { name: "old_mode", types: ["string"], doc: "", deprecated: "Use `mode`." },
+      { name: "mode", types: ["string"], doc: "" },
+    ],
+    moduleFunctions: [
+      {
+        name: "old_fn",
+        brief: "",
+        deprecated: "Gone in 2.0.",
+        generics: [],
+        params: [],
+        returns: [],
+      },
+      { name: "new_fn", brief: "", generics: [], params: [], returns: [] },
+    ],
+  };
+
+  const elements = elementsOf(lowerLibraryModel(model, { namespace: "demo" }));
+  const byName = (name: string) => elements.find((e) => e.name === name);
+
+  expect(byName("old_fn")?.deprecated).toBe("Gone in 2.0.");
+  const newFn = byName("new_fn");
+  expect(newFn && Object.keys(newFn)).not.toContain("deprecated");
+
+  const gone = byName("gone");
+  expect(gone?.type).toBe("TYPEDEF");
+  expect(gone?.deprecated).toBe("Use `kept`.");
+  const goneFns = gone?.functions as Record<string, unknown>[];
+  expect(goneFns.find((f) => f.name === "old_call")?.deprecated).toBe("");
+  const newCall = goneFns.find((f) => f.name === "new_call");
+  expect(newCall && Object.keys(newCall)).not.toContain("deprecated");
+
+  const kept = byName("kept");
+  expect(kept && Object.keys(kept)).not.toContain("deprecated");
+
+  expect(byName("old_mode")?.deprecated).toBe("Use `mode`.");
+  const mode = byName("mode");
+  expect(mode && Object.keys(mode)).not.toContain("deprecated");
+});
+
+test("the committed druid golden marks druid_text's set_to deprecated, leaving its set_text sibling untagged", () => {
+  const golden = JSON.parse(readFileSync(join(packageRoot, "api-doc", "druid.json"), "utf8"));
+  const text = elementsOf(golden).find((e) => e.name === "druid_text");
+  const functions = text?.functions as Record<string, unknown>[];
+
+  expect(functions.find((f) => f.name === "set_to")?.deprecated).toBe("");
+  const setText = functions.find((f) => f.name === "set_text");
+  expect(setText && Object.keys(setText)).not.toContain("deprecated");
+});
+
+for (const namespace of ["saver.storage", "saver.saver"]) {
+  test(`the committed ${namespace} golden marks the saver_storage_state typedef deprecated, leaving its neighbours untagged`, () => {
+    const golden = JSON.parse(
+      readFileSync(join(packageRoot, "api-doc", `${namespace}.json`), "utf8"),
+    );
+    const elements = elementsOf(golden);
+
+    expect(elements.find((e) => e.name === "saver_storage_state")?.deprecated).toBe("");
+    for (const neighbour of ["saver_state", "saver_game_state"]) {
+      const found = elements.find((e) => e.name === neighbour);
+      expect(found).toBeDefined();
+      expect(found && Object.keys(found)).not.toContain("deprecated");
+    }
+  });
+}
