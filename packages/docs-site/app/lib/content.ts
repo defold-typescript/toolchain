@@ -17,13 +17,24 @@ export function guidePages(): GuidePage[] {
   return listGuidePages(GUIDE_DIR);
 }
 
-export function renderGuide(
-  page: GuidePage,
-  opts: { firstHeading?: string } = {},
-): Promise<string> {
-  let body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body;
+// The guide README is the site's landing page; its authored h1 names the product
+// while the page it renders into is the overview of the docs.
+export const INDEX_HEADING = "Overview";
+
+/**
+ * Render one guide page exactly as the site does, from an explicit guide
+ * directory. Which per-page transforms apply is decided here rather than in the
+ * route, so anything checking a rendered page resolves the same ids the reader
+ * sees.
+ */
+export function renderGuidePage(dir: string, page: GuidePage): Promise<string> {
+  let body = parseFrontmatter(readFileSync(join(dir, page.file), "utf8")).body;
   if (page.slug === "changelog") {
     body = applyChangelogTagDates(body, CHANGELOG_TAG_DATES);
   }
-  return renderMarkdown(body, opts);
+  return renderMarkdown(body, page.isIndex ? { firstHeading: INDEX_HEADING } : {});
+}
+
+export function renderGuide(page: GuidePage): Promise<string> {
+  return renderGuidePage(GUIDE_DIR, page);
 }
