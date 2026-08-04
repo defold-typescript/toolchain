@@ -65,15 +65,3 @@ describe("projectedReleaseVersion", () => {
     expect(() => projectedReleaseVersion(body, "not-a-tag")).toThrow();
   });
 });
-
-// describe("committed changelog is release-ready", () => {
-//   const body = readFileSync(
-//     path.join(import.meta.dir, "..", "packages", "docs", "guide", "changelog.md"),
-//     "utf8",
-//   );
-
-//   test("projects to 0.20.9 over the latest tag and carries no literal ## Unreleased heading", () => {
-//     expect(projectedReleaseVersion(body, "v0.20.8")).toBe("0.20.9");
-//     expect(body).not.toMatch(/^## Unreleased$/m);
-//   });
-// });
