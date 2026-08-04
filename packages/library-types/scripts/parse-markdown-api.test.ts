@@ -24,9 +24,32 @@ describe("parseMarkdownApi on the committed orthographic README", () => {
   });
 
   test("lifts every documented function and no message-section header", () => {
-    // 21 `### camera.<fn>(...)` API headers; the `### <verb>` message headers
-    // (no dotted receiver, no parens) must not become elements.
-    expect(doc.elements.length).toBe(21);
+    // Every `### camera.<fn>(...)` API header, in document order; the
+    // `### <verb>` message headers (no dotted receiver, no parens) must not
+    // become elements.
+    expect(doc.elements.map((e) => e.name)).toEqual([
+      "camera.get_view",
+      "camera.get_viewport",
+      "camera.get_projection",
+      "camera.shake",
+      "camera.stop_shaking",
+      "camera.recoil",
+      "camera.get_offset",
+      "camera.get_zoom",
+      "camera.set_zoom",
+      "camera.get_automatic_zoom",
+      "camera.set_automatic_zoom",
+      "camera.follow",
+      "camera.follow_offset",
+      "camera.unfollow",
+      "camera.deadzone",
+      "camera.bounds",
+      "camera.screen_to_world",
+      "camera.screen_to_world_bounds",
+      "camera.world_to_screen",
+      "camera.get_window_size",
+      "camera.get_display_size",
+    ]);
     expect(doc.elements.every((e) => e.type === "FUNCTION")).toBe(true);
     expect(doc.elements.some((e) => e.name === "camera.enable")).toBe(false);
     expect(doc.elements.some((e) => e.name === "camera.zoom_to")).toBe(false);
