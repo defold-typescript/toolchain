@@ -854,6 +854,106 @@ describe("dispatch", () => {
     expect("pinMismatch" in parsed).toBe(false);
   });
 
+  test("build --fail-on-drift exits non-zero when the installed editor drifts from the pin", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--fail-on-drift"], io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(1);
+  });
+
+  test("build --fail-on-drift exits 0 when the installed editor matches the pin", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--fail-on-drift"], io, {
+      detectEditorVersion: () => "1.12.4",
+    });
+
+    expect(code).toBe(0);
+  });
+
+  test("build without the flag still exits 0 on the same drift", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => "1.13.0" });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("set-target --detected");
+  });
+
+  test("build --fail-on-drift exits 0 for a channel pin even when the editor differs", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "stable" } });
+    const { io } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--fail-on-drift"], io, {
+      detectEditorVersion: () => "1.13.0",
+      fetchChannelInfo: async () => ({ version: "1.10.0", sha1: "abc123" }),
+    });
+
+    expect(code).toBe(0);
+  });
+
+  test("build --fail-on-drift writes the same stderr notice as build alone", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const advisory = captureStreams();
+    const advisoryCode = await dispatch(["build", cwd], advisory.io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+    const failing = captureStreams();
+    const failingCode = await dispatch(["build", cwd, "--fail-on-drift"], failing.io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(advisoryCode).toBe(0);
+    expect(failingCode).toBe(1);
+    expect(advisory.err()).toContain("set-target --detected");
+    expect(failing.err()).toBe(advisory.err());
+  });
+
+  test("build --fail-on-drift --json exits 1 with a byte-identical payload", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const advisory = captureStreams();
+    const advisoryCode = await dispatch(["build", cwd, "--json"], advisory.io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+    const failing = captureStreams();
+    const failingCode = await dispatch(["build", cwd, "--fail-on-drift", "--json"], failing.io, {
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(advisoryCode).toBe(0);
+    expect(failingCode).toBe(1);
+    expect(failing.out()).toBe(advisory.out());
+    const parsed = JSON.parse(failing.out()) as {
+      warnings: string[];
+      pinMismatch?: { installed: string; pinned: string };
+    };
+    expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+    expect(parsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(true);
+  });
+
+  test("watch --fail-on-drift exits non-zero on the same drift the notice reports", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, err } = captureStreams();
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const code = await dispatch(["watch", cwd, "--fail-on-drift"], io, {
+      watcherFactory: factory,
+      onWatchStart: (h) => h.stop(),
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("set-target --detected");
+  });
+
   test("watch warns on stderr once at startup when the installed editor drifts from a version pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
     writeFileSync(path.join(cwd, "main.script"), "");
@@ -2988,6 +3088,34 @@ describe("dispatch bob", () => {
     expect(resolve.err()).not.toContain("set-target --detected");
   });
 
+  test("bob build --fail-on-drift exits non-zero on drift without reaching bob's arguments", async () => {
+    pinProject("1.12.4");
+    const { io, err } = captureStreams();
+    const { internals, spawned } = defoldInternals();
+
+    const code = await dispatch(["bob", "build", cwd, "--fail-on-drift"], io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("set-target --detected");
+    expect(spawned.flat()).not.toContain("--fail-on-drift");
+  });
+
+  test("bob status --fail-on-drift exits unchanged — the gate excludes it", async () => {
+    pinProject("1.12.4");
+    const { io } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "status", cwd, "--fail-on-drift"], io, {
+      ...internals,
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+  });
+
   test("the removed defold command is unknown and falls through to top-level usage", async () => {
     const { io, err } = captureStreams();
 
@@ -3705,6 +3833,85 @@ describe("dispatch init --template", () => {
     expect(parsed.exitCode).toBe(0);
     expect(parsed.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
     expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("run --fail-on-drift exits non-zero when a clean engine run drifts from the pin", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--fail-on-drift"], io, {
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("set-target --detected");
+  });
+
+  test("run --fail-on-drift returns the engine's own failure code, never masking it", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const { io } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--fail-on-drift"], io, {
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(7) }),
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(7);
+  });
+
+  test("run --fail-on-drift is never forwarded to the engine after --", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
+    );
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const spawnedArgs: string[][] = [];
+    const { io } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--fail-on-drift", "--", "--verbose"], io, {
+      detectEditorVersion: () => "1.13.0",
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: (argv: string[]) => {
+          spawnedArgs.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(1);
+    expect(spawnedArgs.flat()).toContain("--verbose");
+    expect(spawnedArgs.flat()).not.toContain("--fail-on-drift");
   });
 
   test("run stays silent when the editor matches the pin or the pin is a channel", async () => {

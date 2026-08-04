@@ -111,9 +111,36 @@ describe("renderHelp", () => {
     expect(text).toContain("--detect");
     expect(text.endsWith("\n")).toBe(true);
   });
+
+  test("build help lists --fail-on-drift with the editor-vs-pin meaning", () => {
+    const text = renderHelp("build");
+
+    expect(text).toContain("--fail-on-drift");
+    expect(text).toContain("editor");
+    expect(text).toContain("pin");
+  });
+
+  test("resolve help keeps --frozen's cache meaning and never lists --fail-on-drift", () => {
+    const text = renderHelp("resolve");
+
+    expect(text).toContain("--frozen");
+    expect(text).not.toContain("--fail-on-drift");
+  });
 });
 
 describe("renderHelpJson", () => {
+  test("build JSON flags carry --fail-on-drift, resolve's do not", () => {
+    const build = JSON.parse(renderHelpJson("build"));
+    const drift = build.flags.find((f: { flag: string }) => f.flag === "--fail-on-drift");
+
+    expect(drift).toBeDefined();
+    expect(drift.desc).toContain("editor");
+
+    const resolve = JSON.parse(renderHelpJson("resolve"));
+    expect(resolve.flags.some((f: { flag: string }) => f.flag === "--fail-on-drift")).toBe(false);
+    expect(resolve.flags.some((f: { flag: string }) => f.flag === "--frozen")).toBe(true);
+  });
+
   test("top-level JSON reports command help and a commands array", () => {
     const text = renderHelpJson(null);
 
