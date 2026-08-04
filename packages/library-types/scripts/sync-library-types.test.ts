@@ -18,6 +18,7 @@ import {
   mergeLibraryDescriptions,
   rawUrl,
   repoSlug,
+  severedDirsFromModules,
   writeClassification,
   writeDescriptions,
 } from "./sync-library-types";
@@ -343,34 +344,91 @@ describe("library-classification.json coverage", () => {
   });
 });
 
+describe("severedDirsFromModules", () => {
+  test("a dir whose every module is an authored moduleId is severed", () => {
+    const severed = severedDirsFromModules(
+      new Map([["defold-yagames", ["yagames.yagames"]]]),
+      new Set(["yagames.yagames"]),
+    );
+    expect([...severed]).toEqual(["defold-yagames"]);
+  });
+
+  test("a dir mixing authored and unauthored modules is not severed", () => {
+    const severed = severedDirsFromModules(
+      new Map([["nakama-defold", ["nakama.engine.defold", "nakama.nakama", "nakama.util.log"]]]),
+      new Set(["nakama.engine.defold", "nakama.util.log"]),
+    );
+    expect([...severed]).toEqual([]);
+  });
+
+  test("a dir with no modules is not severed", () => {
+    const severed = severedDirsFromModules(
+      new Map([["gd-defold", []]]),
+      new Set(["yagames.yagames"]),
+    );
+    expect([...severed]).toEqual([]);
+  });
+});
+
 describe("writeClassification", () => {
-  test("writes a manifest matching classifyLibraryDirs on an injected tree (offline)", async () => {
-    const source: LibrarySource = {
-      repo: "https://github.com/ts-defold/library",
-      commit: "0000000000000000000000000000000000000000",
-      license: "MIT",
-    };
+  const source: LibrarySource = {
+    repo: "https://github.com/ts-defold/library",
+    commit: "0000000000000000000000000000000000000000",
+    license: "MIT",
+  };
+
+  // `writeClassification` reads both registries from the package root, and
+  // `readAuthoredTargets` loud-fails on a missing required field — so the temp
+  // root needs a complete `authored-targets.json`, not a stub.
+  function writeClassifyRoot(opts: {
+    vendoredPaths: string[];
+    authoredModuleIds: string[];
+  }): string {
     const root = mkdtempSync(join(tmpdir(), "library-types-classify-"));
     writeFileSync(
       join(root, "library-targets.json"),
       JSON.stringify({
         source,
-        targets: [
-          {
-            module: "monarch.monarch",
-            path: "packages/monarch/monarch.monarch.d.ts",
-            fixture: "f",
-            generated: "g",
-          },
-        ],
+        targets: opts.vendoredPaths.map((path) => ({
+          module: path.split("/")[2]?.replace(/\.d\.ts$/, ""),
+          path,
+          fixture: "f",
+          generated: "g",
+        })),
       }),
     );
+    writeFileSync(
+      join(root, "authored-targets.json"),
+      JSON.stringify({
+        targets: opts.authoredModuleIds.map((moduleId) => {
+          const namespace = moduleId.split(".")[0] as string;
+          return {
+            repo: "https://github.com/example/example",
+            ref: "1",
+            authored: `fixtures/authored/${moduleId}.d.ts`,
+            moduleId,
+            namespace,
+            generated: `generated/${namespace}.d.ts`,
+            apiDoc: `api-doc/${namespace}.json`,
+          };
+        }),
+      }),
+    );
+    return root;
+  }
+
+  test("writes a manifest matching classifyLibraryDirs on an injected tree (offline)", async () => {
+    const root = writeClassifyRoot({
+      vendoredPaths: ["packages/monarch/monarch.monarch.d.ts"],
+      authoredModuleIds: ["yagames.yagames"],
+    });
     const listTree: ListTree = async () => [
       "packages/monarch/monarch.monarch.d.ts",
       "packages/DAABBCC/daabbcc.d.ts",
       "packages/DAABBCC/aabb.d.ts",
       "packages/defold-richtext/richtext.richtext.d.ts",
       "packages/defold-lldebugger/lldebugger.debug.d.ts",
+      "packages/defold-yagames/yagames.yagames.d.ts",
       "packages/tsconfig.json",
       "README.md",
     ];
@@ -382,22 +440,44 @@ describe("writeClassification", () => {
     ) as ClassificationManifest;
     expect(written.source.commit).toBe(source.commit);
     const byDir = new Map(written.dirs.map((e) => [e.dir, e] as const));
+    expect(byDir.has("defold-yagames")).toBe(false);
     expect(byDir.get("monarch")?.classification).toBe("already-vendored");
     expect(byDir.get("DAABBCC")?.classification).toBe("native");
     expect(byDir.get("defold-richtext")?.classification).toBe("pure-lua");
     expect(byDir.get("defold-lldebugger")?.classification).toBe("covered-by-goal");
 
     const expected = classifyLibraryDirs(
-      [...libraryModulesFromTree(await listTree(source))].map(([dir, modules]) => ({
-        dir,
-        modules,
-      })),
+      [...libraryModulesFromTree(await listTree(source))]
+        .filter(([dir]) => dir !== "defold-yagames")
+        .map(([dir, modules]) => ({ dir, modules })),
       {
         vendoredDirs: new Set(["monarch"]),
         coveredByGoalDirs: new Set(["defold-lldebugger", "defold-xmath"]),
       },
     );
     expect(written.dirs).toEqual(expected);
+  });
+
+  test("a vendored dir survives even when every module is an authored moduleId", async () => {
+    const root = writeClassifyRoot({
+      vendoredPaths: [
+        "packages/monarch/monarch.monarch.d.ts",
+        "packages/defold-orthographic/orthographic.camera.d.ts",
+      ],
+      authoredModuleIds: ["orthographic.camera"],
+    });
+    const listTree: ListTree = async () => [
+      "packages/monarch/monarch.monarch.d.ts",
+      "packages/defold-orthographic/orthographic.camera.d.ts",
+    ];
+
+    await writeClassification(root, { listTree });
+
+    const written = JSON.parse(
+      readFileSync(join(root, "library-classification.json"), "utf8"),
+    ) as ClassificationManifest;
+    const byDir = new Map(written.dirs.map((e) => [e.dir, e] as const));
+    expect(byDir.get("defold-orthographic")?.classification).toBe("already-vendored");
   });
 });
 
