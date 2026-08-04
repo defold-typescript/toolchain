@@ -231,6 +231,33 @@ declare module 'depi.depi' {
 }
 `;
 
+// The interface *declaration* itself tagged, rather than its members: a tag with
+// text, a bare tag, and an untagged control, each referenced so it reaches a
+// TYPEDEF element.
+const DEPRECATED_TYPEDEF = `/**
+ * Deprecated typedef demo.
+ * @noResolution
+ */
+declare module 'dept.dept' {
+	/** @deprecated because X */
+	interface Told {
+		keep(): void;
+	}
+	/** @deprecated */
+	interface Tbare {
+		/** @deprecated Use \`next\`. */
+		member(): void;
+	}
+	/** A current type. */
+	interface Tfresh {
+		keep(): void;
+	}
+	export function a(): Told;
+	export function b(): Tbare;
+	export function c(): Tfresh;
+}
+`;
+
 type EmittedField = {
   name: string;
   doc: string;
@@ -533,6 +560,31 @@ describe("extractApiDoc @deprecated carrier", () => {
     expect(
       Object.hasOwn(element(DEPRECATED_INTERFACE, "depi.depi", "FUNCTION", "next"), "deprecated"),
     ).toBe(false);
+  });
+
+  test("carries a tag on the interface declaration itself onto its TYPEDEF element", () => {
+    expect(element(DEPRECATED_TYPEDEF, "dept.dept", "TYPEDEF", "Told").deprecated).toBe(
+      "because X",
+    );
+  });
+
+  test("emits a present-but-empty TYPEDEF key for a bare tag on the declaration, leaving member keys intact", () => {
+    const bare = element(DEPRECATED_TYPEDEF, "dept.dept", "TYPEDEF", "Tbare") as {
+      deprecated?: unknown;
+      functions?: Array<Record<string, unknown>>;
+    };
+    expect(Object.hasOwn(bare, "deprecated")).toBe(true);
+    expect(bare.deprecated).toBe("");
+    expect(bare.functions?.find((f) => f.name === "member")?.deprecated).toBe("Use `next`.");
+  });
+
+  test("emits no TYPEDEF key for an untagged interface declaration", () => {
+    expect(
+      Object.hasOwn(element(DEPRECATED_TYPEDEF, "dept.dept", "TYPEDEF", "Tfresh"), "deprecated"),
+    ).toBe(false);
+    expect(Object.hasOwn(element(DEPRECATED, "dep.dep", "TYPEDEF", "Legacy"), "deprecated")).toBe(
+      false,
+    );
   });
 });
 

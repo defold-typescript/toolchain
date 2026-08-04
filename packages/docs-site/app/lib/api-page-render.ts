@@ -86,10 +86,15 @@ function paramSection(label: string, params: ApiSymbolParam[]): string {
 export type ReplacementResolver = (id: ApiSymbolIdentity) => string | undefined;
 
 // The compact lifecycle/backend badges for one symbol: an accessible text list
-// (labels, never color alone) plus a version-correct replacement link. The
-// replacement resolves within the current surface when possible, else falls back
-// to `indexRoute` (this version's `/api[/version]` index) rather than pointing at
-// another version. Returns `""` when the symbol carries no availability facts.
+// (labels, never color alone) plus a version-correct replacement link, built from
+// two independent inputs — the curated availability record `av` and the
+// `deprecated` tag carried from the symbol's own source. The replacement resolves
+// within the current surface when possible, else falls back to `indexRoute` (this
+// version's `/api[/version]` index) rather than pointing at another version. The
+// engine fact wins: `av.deprecatedSince` suppresses the source tag so a symbol
+// never shows two deprecation lines. Returns `""` only when neither input yields
+// an item — a symbol with no `av` still renders a single-item list when it carries
+// a tag.
 function availabilityBadges(
   av: ApiAvailability | undefined,
   versions: readonly string[],

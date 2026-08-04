@@ -259,6 +259,7 @@ function typedefElement(
     name: iface.name.text,
     ...(functions.length > 0 ? { functions } : {}),
     ...(properties.length > 0 ? { properties } : {}),
+    ...deprecatedKey(iface),
   };
 }
 

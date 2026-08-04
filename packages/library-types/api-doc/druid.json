@@ -3479,7 +3479,8 @@
                 "druid_text"
               ]
             }
-          ]
+          ],
+          "deprecated": ""
         },
         {
           "type": "FUNCTION",

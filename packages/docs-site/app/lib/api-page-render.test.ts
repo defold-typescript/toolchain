@@ -1422,4 +1422,57 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
     expect(md).not.toContain('aria-label="Availability"');
     expect(md).not.toContain("Deprecated");
   });
+
+  // The same page, but with a curated availability record joined onto the symbol —
+  // the state where both an engine fact and a source tag exist at once.
+  function pageWithAvailability(
+    fn: Partial<ApiFunction> & { name: string },
+    record: Omit<ApiAvailability, "identity">,
+  ): ApiPage {
+    const page = libraryPage(fn);
+    const built = page.module.functions[0] as ApiFunction;
+    const identity = {
+      namespace: "yagames",
+      kind: "FUNCTION",
+      name: built.name,
+      signature: normalizedFunctionSignature(built),
+    };
+    const availability: AvailabilityLookup = {
+      versions: ["1.13.0", "1.12.4"],
+      records: new Map([[symbolIdentityKey(identity), { identity, ...record }]]),
+    };
+    return { ...page, availability };
+  }
+
+  test("a span-bearing record with no deprecatedSince still shows the source tag, listed first", () => {
+    const md = apiPageMarkdown(
+      pageWithAvailability(
+        { name: "player_get_id", deprecated: "Use `player_get_unique_id` instead." },
+        { availableIn: ["1.13.0"] },
+      ),
+      noLink,
+    );
+
+    const block = md.slice(md.indexOf('aria-label="Availability"'));
+    expect(md.match(/aria-label="Availability"/g)).toHaveLength(1);
+    const tagAt = block.indexOf("- Deprecated — Use `player_get_unique_id` instead.");
+    const spanAt = block.indexOf("- Since Defold 1.13.0");
+    expect(tagAt).toBeGreaterThanOrEqual(0);
+    expect(spanAt).toBeGreaterThanOrEqual(0);
+    expect(tagAt).toBeLessThan(spanAt);
+  });
+
+  test("a record carrying deprecatedSince keeps the version-keyed line and gains no second one", () => {
+    const md = apiPageMarkdown(
+      pageWithAvailability(
+        { name: "player_get_id", deprecated: "Use `player_get_unique_id` instead." },
+        { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" },
+      ),
+      noLink,
+    );
+
+    expect(md).toContain("Deprecated since 1.12.0");
+    expect(md).not.toContain("Deprecated — Use `player_get_unique_id` instead.");
+    expect(md.match(/- Deprecated/g)).toHaveLength(1);
+  });
 });

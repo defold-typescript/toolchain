@@ -41,6 +41,8 @@ declare module 'saver.storage' {
 	}
 	/**
 	 * Persist data between game sessions
+	 *
+	 * @deprecated
 	 */
 	interface saver_storage_state {
 		storage: LuaTable<string, saver_storage_value>;

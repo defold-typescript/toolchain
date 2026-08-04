@@ -713,6 +713,56 @@ test("renders each interface @overload as a call signature line inside the inter
   );
 });
 
+test("renders @deprecated on a tagged interface, alias, method and module function, and nowhere else", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "gone",
+        deprecated: "Use `kept` instead.",
+        generics: [],
+        fields: [],
+        methods: [
+          {
+            name: "old_call",
+            brief: "",
+            deprecated: "",
+            generics: [],
+            params: [],
+            returns: [],
+          },
+          { name: "new_call", brief: "", generics: [], params: [], returns: [] },
+        ],
+        brief: "",
+      },
+      { name: "kept", generics: [], fields: [], methods: [], brief: "" },
+    ],
+    aliases: [
+      { name: "old_mode", types: ["string"], doc: "", deprecated: "Use `mode`." },
+      { name: "mode", types: ["string"], doc: "" },
+    ],
+    moduleFunctions: [
+      {
+        name: "old_fn",
+        brief: "Legacy.",
+        deprecated: "Gone in 2.0.",
+        generics: [],
+        params: [],
+        returns: [],
+      },
+      { name: "new_fn", brief: "", generics: [], params: [], returns: [] },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain(" * @deprecated Use `kept` instead.");
+  expect(out).toContain(" * @deprecated Use `mode`.");
+  expect(out).toContain(" * @deprecated Gone in 2.0.");
+  // The bare tag on `old_call` renders with no trailing text.
+  expect(out).toMatch(/^\s+\* @deprecated$/m);
+  expect(out.match(/@deprecated/g)).toHaveLength(4);
+});
+
 const EMIT_TARGETS = readLualsTargets(join(import.meta.dir, "..")).map(
   (target) => [target.namespace, target] as const,
 );

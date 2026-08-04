@@ -4694,6 +4694,13 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
 - **`luals:api-doc`** lowers the same model to the JSON the docs-site `/api` page
   renders.
 
+A `---@deprecated` before a `---@class`, `---@alias`, or a function declaration
+carries into both artifacts — as a JSDoc `@deprecated` in the `.d.ts` and as a
+`Deprecated` line on the `/api` page, with the tag's own text when it has any. A
+tag on a *type* still reaches only the `.d.ts`, since a type has no page heading
+of its own to carry the line. Only the strict `---@deprecated` form is read; a
+spaced `--- @deprecated` is treated as prose, as it is for every other tag.
+
 #### 3. Read the fidelity report
 
 `fidelity/<namespace>.json` tells you whether the emit is worth committing:
