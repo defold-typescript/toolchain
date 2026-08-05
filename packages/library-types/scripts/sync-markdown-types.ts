@@ -301,12 +301,171 @@ function stripComments(dts: string): string {
   return out;
 }
 
+/** Scan forward from `start` to the index of the first `end` character that sits
+ * at group depth zero, so a delimiter inside `()`/`[]`/`{}`/`<>` never
+ * terminates the construct being read. `-1` when the source runs out. */
+function findAtDepthZero(src: string, start: number, end: string): number {
+  let depth = 0;
+  for (let i = start; i < src.length; i++) {
+    if (src[i] === end && depth === 0) return i;
+    if (opensGroup(src[i])) depth++;
+    else if (closesGroup(src, i)) depth--;
+  }
+  return -1;
+}
+
+/** Every `interface Name { … }` body and `type Name = …` right-hand side the
+ * source declares, keyed by name. Both forms are read by brace/angle balancing
+ * rather than by line, so a multiline body or a generic argument list carrying
+ * its own delimiters stays intact. */
+function declaredShapes(src: string): Map<string, string> {
+  const shapes = new Map<string, string>();
+  const decl = /\b(interface|type)\s+([A-Za-z_]\w*)/g;
+  let match = decl.exec(src);
+  while (match !== null) {
+    const name = match[2] as string;
+    if (match[1] === "interface") {
+      const open = src.indexOf("{", decl.lastIndex);
+      if (open !== -1) {
+        const close = findAtDepthZero(src, open + 1, "}");
+        if (close !== -1 && !shapes.has(name)) shapes.set(name, src.slice(open, close + 1));
+      }
+    } else {
+      const assign = findAtDepthZero(src, decl.lastIndex, "=");
+      if (assign !== -1) {
+        const end = findAtDepthZero(src, assign + 1, ";");
+        const body = src.slice(assign + 1, end === -1 ? src.length : end);
+        if (!shapes.has(name)) shapes.set(name, body);
+      }
+    }
+    match = decl.exec(src);
+  }
+  return shapes;
+}
+
+/** Split a type expression on its top-level `&`, so an intersection arm keeps
+ * any `&` nested inside its own generic arguments. */
+function splitIntersection(expression: string): string[] {
+  const arms: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (let i = 0; i < expression.length; i++) {
+    const ch = expression[i] as string;
+    if (opensGroup(ch)) depth++;
+    else if (closesGroup(expression, i)) depth--;
+    if (ch === "&" && depth === 0) {
+      arms.push(current);
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  arms.push(current);
+  return arms.map((arm) => arm.trim()).filter((arm) => arm !== "");
+}
+
+/** The inner type of a `Readonly<X>` wrapper, or `undefined` when the
+ * expression is not one. `Readonly<>` only restates members as read-only, so
+ * the module surface underneath it is the same surface. */
+function readonlyInner(expression: string): string | undefined {
+  if (!expression.startsWith("Readonly<") || !expression.endsWith(">")) return undefined;
+  const inner = expression.slice("Readonly<".length, -1);
+  return findAtDepthZero(inner, 0, ">") === -1 ? inner : undefined;
+}
+
+/** The members of an object body (`{ … }`), split on its top-level `;`/`,`
+ * separators. A member with a call signature normalizes to a `function`
+ * declaration and a field to a `const` one, so `signatureShape`,
+ * `isOptionalParameter` and the `unknown` test read a resolved member exactly
+ * as they read a flat one. */
+function objectBodyMembers(body: string): Map<string, TsDefoldMember> {
+  const members = new Map<string, TsDefoldMember>();
+  const inner = body.trim().replace(/^\{/, "").replace(/\}$/, "");
+  const segments: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (let i = 0; i < inner.length; i++) {
+    const ch = inner[i] as string;
+    if (opensGroup(ch)) depth++;
+    else if (closesGroup(inner, i)) depth--;
+    if ((ch === ";" || ch === ",") && depth === 0) {
+      segments.push(current);
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  segments.push(current);
+  for (const segment of segments) {
+    const text = segment
+      .trim()
+      .replace(/^readonly\s+/, "")
+      .replace(/\s+/g, " ");
+    const head = /^([A-Za-z_]\w*)\s*\??\s*([(:])/.exec(text);
+    if (head === null) continue;
+    const name = head[1] as string;
+    if (members.has(name)) continue;
+    if (head[2] === "(") {
+      const open = text.indexOf("(");
+      const close = findAtDepthZero(text, open + 1, ")");
+      if (close === -1) continue;
+      const parameters = text.slice(open + 1, close).trim();
+      const tail = text.slice(close + 1).trim();
+      const returnType = tail.startsWith(":") ? tail.slice(1).trim() : "";
+      members.set(name, {
+        kind: "function",
+        signature: `function ${name}(${parameters})${returnType === "" ? "" : `: ${returnType}`};`,
+      });
+    } else {
+      const type = text.slice(text.indexOf(":") + 1).trim();
+      members.set(name, { kind: "const", signature: `const ${name}: ${type};` });
+    }
+  }
+  return members;
+}
+
+/** Resolve a type expression to the members it publishes: an inline object body,
+ * a named `interface`/`type` the source declares, a `Readonly<>` wrapper, or the
+ * union of an intersection's arms. An arm that names no object shape — an
+ * undeclared token, a `LuaMap<…>`, a primitive — contributes nothing instead of
+ * failing, so a partly-opaque handle still yields the part that is readable. */
+function resolveShapeMembers(
+  expression: string,
+  shapes: Map<string, string>,
+  seen: Set<string> = new Set(),
+): Map<string, TsDefoldMember> {
+  const text = expression.trim();
+  const arms = splitIntersection(text);
+  if (arms.length > 1) {
+    const merged = new Map<string, TsDefoldMember>();
+    for (const arm of arms) {
+      for (const [name, member] of resolveShapeMembers(arm, shapes, seen)) {
+        if (!merged.has(name)) merged.set(name, member);
+      }
+    }
+    return merged;
+  }
+  if (text.startsWith("{") && text.endsWith("}")) return objectBodyMembers(text);
+  const unwrapped = readonlyInner(text);
+  if (unwrapped !== undefined) return resolveShapeMembers(unwrapped, shapes, seen);
+  if (!/^[A-Za-z_]\w*$/.test(text) || seen.has(text)) return new Map();
+  const shape = shapes.get(text);
+  if (shape === undefined) return new Map();
+  return resolveShapeMembers(shape, shapes, new Set([...seen, text]));
+}
+
 /**
  * Extract every top-level `function`/`const` member of a module `.d.ts` — both
  * `export`ed and bare — with its declaration text (through the terminating
  * top-level `;`, balancing `()`/`{}` for multiline signatures and object-typed
  * consts). The emitted markdown module uses bare `function`, so a single
  * extractor serves both sides of the comparison.
+ *
+ * A module that publishes through `export = handle` is read through the handle's
+ * shape instead: the module *is* that object, so the shape's members are the
+ * module's own flat members — the same flattening `emitLibraryDeclarations`
+ * performs on the markdown side. A handle whose type resolves to no member at
+ * all is left standing, so an uncomparable surface still presents as one.
  */
 export function tsDefoldSurface(dts: string): Map<string, TsDefoldMember> {
   const src = stripComments(dts);
@@ -335,6 +494,18 @@ export function tsDefoldSurface(dts: string): Map<string, TsDefoldMember> {
     if (!members.has(name)) members.set(name, { kind, signature });
     MEMBER_DECL.lastIndex = index + 1;
     match = MEMBER_DECL.exec(src);
+  }
+  const handle = /export\s*=\s*([A-Za-z_]\w*)\s*;/.exec(src)?.[1];
+  const handleEntry = handle === undefined ? undefined : members.get(handle);
+  if (handle !== undefined && handleEntry?.kind === "const") {
+    const declaredType = handleEntry.signature.slice(handleEntry.signature.indexOf(":") + 1);
+    const resolved = resolveShapeMembers(declaredType.replace(/;\s*$/, ""), declaredShapes(src));
+    if (resolved.size > 0) {
+      members.delete(handle);
+      for (const [name, member] of resolved) {
+        if (!members.has(name)) members.set(name, member);
+      }
+    }
   }
   return members;
 }
@@ -430,10 +601,11 @@ function signatureShape(signature: string): SignatureShape | undefined {
  * non-`void` return to `void`, is a signature loss; a shared member that kept
  * every ts-defold parameter but emitted an optional one as required is an
  * optionality loss. A ts-defold side whose only top-level declaration is its
- * `export =` re-export handle — or which declares no top-level member at all,
- * publishing through `interface`/`type` the extractor cannot read — is an opaque
- * surface: there is nothing to compare against, so every other term is vacuously
- * empty. Any of the five forces `no-go`.
+ * `export =` re-export handle — one whose type named no readable shape, since a
+ * handle that resolves is already flattened to its members — or which declares
+ * no top-level member at all is an opaque surface: there is nothing to compare
+ * against, so every other term is vacuously empty. Any of the five forces
+ * `no-go`.
  */
 export function compareFidelityToTsDefold(
   markdownEmittedDts: string,
@@ -481,9 +653,10 @@ export function compareFidelityToTsDefold(
       );
     });
   });
-  // `tsDefoldMembers` keeps reporting what the extractor really saw; only the
-  // predicate discounts the re-export handle, so a record can still quote the
-  // handle as the evidence for the surface being opaque.
+  // Reached only by a handle whose type resolved to nothing — a resolved one is
+  // no longer in the surface under its own name. `tsDefoldMembers` keeps
+  // reporting what the extractor really saw; only the predicate discounts the
+  // handle, so a record can still quote it as the evidence for the opacity.
   const reExportHandle = /export\s*=\s*(\w+)\s*;/.exec(tsDefoldDts)?.[1];
   const comparableTsMembers = tsMembers.filter((name) => name !== reExportHandle);
   const opaqueTsDefoldSurface = comparableTsMembers.length === 0;
