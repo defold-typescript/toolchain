@@ -2311,6 +2311,51 @@ describe("dispatch wall command", () => {
     expect(existsSync(path.join(cwd, "src/render/tsconfig.json"))).toBe(renderTsconfigBefore);
   });
 
+  function scaffoldNestedWallProject(): void {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2)}\n`,
+    );
+    for (const leaf of ["hud", "menu"]) {
+      mkdirSync(path.join(cwd, "src", "gui", leaf), { recursive: true });
+      writeFileSync(
+        path.join(cwd, "src", "gui", leaf, "a.ts"),
+        'import { defineGuiScript } from "@defold-typescript/types/gui-script";\nexport default defineGuiScript({});\n',
+      );
+    }
+  }
+
+  test("wall --list --json reports each narrowed directory's origin and declaring ancestor", async () => {
+    scaffoldNestedWallProject();
+    const { io } = captureStreams();
+    await dispatch(["wall", "src/gui"], io, { cwd });
+
+    const { io: io2, out } = captureStreams();
+    const code = await dispatch(["wall", "--list", "--json"], io2, { cwd });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      directoryWalls: { dir: string; kind: string }[];
+      resolved: { dir: string; kind: string; declaredIn: string; origin: string }[];
+    };
+    expect(parsed.directoryWalls).toEqual([{ dir: "src/gui", kind: "gui-script" }]);
+    expect(parsed.resolved).toEqual([
+      { dir: "src/gui/hud", kind: "gui-script", declaredIn: "src/gui", origin: "inherited" },
+      { dir: "src/gui/menu", kind: "gui-script", declaredIn: "src/gui", origin: "inherited" },
+    ]);
+  });
+
+  test("wall --list names the inherited directories and their declaring wall", async () => {
+    scaffoldNestedWallProject();
+    const { io } = captureStreams();
+    await dispatch(["wall", "src/gui"], io, { cwd });
+
+    const { io: io2, out } = captureStreams();
+    await dispatch(["wall", "--list"], io2, { cwd });
+
+    expect(out()).toContain("inherited [src/gui/hud <- src/gui, src/gui/menu <- src/gui]");
+  });
+
   test("wall with no dir and no TTY exits non-zero and writes nothing", async () => {
     scaffoldWallProject();
     const { io, out, err } = captureStreams();

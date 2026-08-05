@@ -6,9 +6,13 @@ import {
   type DirectoryWall,
   directoryWallTsconfig,
   groupSourceScriptKindsByDirectory,
+  groupSourceScriptKindsBySubtree,
+  nearestWall,
   planDirectoryWalls,
   planSourceDirectoryWalls,
+  type ResolvedDirectoryWall,
   resolveActivePinnedSurface,
+  resolveSourceWalls,
   wireWallReferences,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
@@ -130,6 +134,29 @@ describe("groupSourceScriptKindsByDirectory", () => {
   });
 });
 
+describe("groupSourceScriptKindsBySubtree", () => {
+  test("folds each directory's kinds into every ancestor, stopping before '.'", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/gui/hud/a.ts", "export default defineGuiScript({});");
+    touch("src/logic/b.ts", "export default defineScript({});");
+    expect(groupSourceScriptKindsBySubtree(cwd)).toEqual(
+      new Map<string, Set<ScriptKind>>([
+        ["src/gui/hud", new Set(["gui-script"])],
+        ["src/gui", new Set(["gui-script"])],
+        ["src", new Set(["gui-script", "script"])],
+        ["src/logic", new Set(["script"])],
+      ]),
+    );
+  });
+
+  test("'.' keeps only its own direct sources, never a descendant's", () => {
+    writeTsconfig(["**/*.ts"]);
+    touch("main.ts", "export default defineScript({});");
+    touch("src/ui/hud.ts", "export default defineGuiScript({});");
+    expect(groupSourceScriptKindsBySubtree(cwd).get(".")).toEqual(new Set(["script"]));
+  });
+});
+
 describe("planSourceDirectoryWalls", () => {
   test("turns each single-kind source directory into a narrowing descriptor, sorted by dir", () => {
     writeTsconfig(["src/**/*.ts"]);
@@ -179,6 +206,135 @@ describe("planSourceDirectoryWalls", () => {
         typesEntrypoint: "@defold-typescript/types/gui-script",
       },
     ] satisfies DirectoryWall[]);
+  });
+
+  test("a directory holding no direct sources is eligible when its whole subtree is one kind", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/gui/hud/a.ts", "export default defineGuiScript({});");
+    touch("src/gui/menu/b.ts", "export default defineGuiScript({});");
+    expect(planSourceDirectoryWalls(cwd).map((w) => [w.dir, w.kind])).toEqual([
+      ["src", "gui-script"],
+      ["src/gui", "gui-script"],
+      ["src/gui/hud", "gui-script"],
+      ["src/gui/menu", "gui-script"],
+    ]);
+  });
+
+  test("an ancestor whose subtree mixes kinds yields only its single-kind leaves", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/x/ui/a.ts", "export default defineGuiScript({});");
+    touch("src/x/logic/b.ts", "export default defineScript({});");
+    expect(planSourceDirectoryWalls(cwd).map((w) => [w.dir, w.kind])).toEqual([
+      ["src/x/logic", "script"],
+      ["src/x/ui", "gui-script"],
+    ]);
+  });
+
+  test("roll-up stops before '.', so a single-kind project yields src but never a root wall", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/a/one.ts", "export default defineScript({});");
+    touch("src/b/two.ts", "export default defineScript({});");
+    expect(planSourceDirectoryWalls(cwd).map((w) => w.dir)).toEqual(["src", "src/a", "src/b"]);
+  });
+
+  test("a root-level source still yields a '.' descriptor from its own direct kind", () => {
+    writeTsconfig(["**/*.ts"]);
+    touch("main.ts", "export default defineScript({});");
+    touch("src/ui/hud.ts", "export default defineGuiScript({});");
+    expect(planSourceDirectoryWalls(cwd).map((w) => [w.dir, w.kind])).toEqual([
+      [".", "script"],
+      ["src", "gui-script"],
+      ["src/ui", "gui-script"],
+    ]);
+  });
+
+  test("an editor-script-only subtree yields no ancestor descriptor either", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/editor/tools/menu.ts", "export default defineEditorScript({});");
+    expect(planSourceDirectoryWalls(cwd)).toEqual([]);
+  });
+
+  test("a helper-only subtree neither walls itself nor blocks its ancestor's roll-up", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/gui/hud/a.ts", "export default defineGuiScript({});");
+    touch("src/gui/shared/util.ts", "export const add = (a: number, b: number) => a + b;");
+    expect(planSourceDirectoryWalls(cwd).map((w) => w.dir)).toEqual([
+      "src",
+      "src/gui",
+      "src/gui/hud",
+    ]);
+  });
+});
+
+describe("nearestWall", () => {
+  const declared = [
+    wall("src/gui", "gui-script", "@defold-typescript/types/gui-script"),
+    wall("src/gui/hud", "script", "@defold-typescript/types/script"),
+  ];
+
+  test("picks the longest declared prefix over an enclosing one", () => {
+    expect(nearestWall("src/gui/hud/a.ts", declared)?.dir).toBe("src/gui/hud");
+  });
+
+  test("falls back to the enclosing wall when no nearer one is declared", () => {
+    expect(nearestWall("src/gui/menu/b.ts", declared)?.dir).toBe("src/gui");
+  });
+
+  test("a directory equal to a declared wall resolves to itself", () => {
+    expect(nearestWall("src/gui/hud", declared)?.dir).toBe("src/gui/hud");
+  });
+
+  test("a sibling outside every walled subtree resolves to null", () => {
+    expect(nearestWall("src/other/a.ts", declared)).toBe(null);
+  });
+
+  test("a sibling sharing a name prefix is not treated as enclosed", () => {
+    expect(nearestWall("src/guix/a.ts", declared)).toBe(null);
+  });
+});
+
+describe("resolveSourceWalls", () => {
+  test("reports declared and inherited provenance and omits ungoverned source dirs", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/gui/hud/a.ts", "export default defineGuiScript({});");
+    touch("src/gui/menu/deep/b.ts", "export default defineGuiScript({});");
+    touch("src/other/c.ts", "export default defineScript({});");
+
+    expect(resolveSourceWalls(cwd, ["src/gui", "src/gui/hud"])).toEqual([
+      {
+        dir: "src/gui/hud",
+        kind: "gui-script",
+        typesEntrypoint: "@defold-typescript/types/gui-script",
+        declaredIn: "src/gui/hud",
+        origin: "declared",
+      },
+      {
+        dir: "src/gui/menu/deep",
+        kind: "gui-script",
+        typesEntrypoint: "@defold-typescript/types/gui-script",
+        declaredIn: "src/gui",
+        origin: "inherited",
+      },
+    ] satisfies ResolvedDirectoryWall[]);
+  });
+
+  test("a directory holding sources of its own is declared, its descendants inherited", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/x/logic.ts", "export default defineScript({});");
+    touch("src/x/deep/more.ts", "export default defineScript({});");
+
+    expect(resolveSourceWalls(cwd, ["src/x"]).map((r) => [r.dir, r.declaredIn, r.origin])).toEqual([
+      ["src/x", "src/x", "declared"],
+      ["src/x/deep", "src/x", "inherited"],
+    ]);
+  });
+
+  test("a declared dir that is no longer eligible governs nothing", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/mix/a.ts", "export default defineScript({});");
+    touch("src/mix/b.ts", "export default defineGuiScript({});");
+
+    expect(resolveSourceWalls(cwd, ["src/mix"])).toEqual([]);
   });
 });
 
@@ -253,6 +409,29 @@ describe("directoryWallTsconfig", () => {
       include: ["**/*.ts"],
       exclude: [],
     });
+  });
+
+  test("a declared nested wall is excluded from its ancestor's program", () => {
+    expect(
+      directoryWallTsconfig(wall("src/x", "script", "@defold-typescript/types/script"), null, [
+        "src/x/ui",
+      ]).exclude,
+    ).toEqual(["ui/**"]);
+  });
+
+  test("several nested walls are excluded, sorted, each relative to the ancestor", () => {
+    expect(
+      directoryWallTsconfig(wall("src", "script", "@defold-typescript/types/script"), null, [
+        "src/ui/hud",
+        "src/logic",
+      ]).exclude,
+    ).toEqual(["logic/**", "ui/hud/**"]);
+  });
+
+  test("no nested wall keeps the empty exclude", () => {
+    expect(
+      directoryWallTsconfig(wall("src/x", "script", "@defold-typescript/types/script")).exclude,
+    ).toEqual([]);
   });
 
   test("a null pinned surface keeps the installed-package form", () => {
@@ -331,6 +510,42 @@ describe("writeDirectoryWallTsconfigs", () => {
 
   test("writes nothing for an empty wall list", () => {
     expect(writeDirectoryWallTsconfigs(cwd, [])).toEqual([]);
+  });
+
+  test("an ancestor wall excludes its declared descendants so they are not in its program", () => {
+    writeDirectoryWallTsconfigs(cwd, [
+      wall("src/x", "script", "@defold-typescript/types/script"),
+      wall("src/x/ui", "gui-script", "@defold-typescript/types/gui-script"),
+    ]);
+    const read = (rel: string): { exclude: string[] } =>
+      JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
+    expect(read("src/x/tsconfig.json").exclude).toEqual(["ui/**"]);
+    expect(read("src/x/ui/tsconfig.json").exclude).toEqual([]);
+  });
+
+  test("only the nearest descendant is excluded when walls nest two deep", () => {
+    writeDirectoryWallTsconfigs(cwd, [
+      wall("src/x", "script", "@defold-typescript/types/script"),
+      wall("src/x/ui", "gui-script", "@defold-typescript/types/gui-script"),
+      wall("src/x/ui/deep", "script", "@defold-typescript/types/script"),
+    ]);
+    const read = (rel: string): { exclude: string[] } =>
+      JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
+    expect(read("src/x/tsconfig.json").exclude).toEqual(["ui/**"]);
+    expect(read("src/x/ui/tsconfig.json").exclude).toEqual(["deep/**"]);
+  });
+
+  test("dropping a nested wall rewrites the ancestor back to an empty exclude", () => {
+    const ancestor = wall("src/x", "script", "@defold-typescript/types/script");
+    writeDirectoryWallTsconfigs(cwd, [
+      ancestor,
+      wall("src/x/ui", "gui-script", "@defold-typescript/types/gui-script"),
+    ]);
+
+    expect(writeDirectoryWallTsconfigs(cwd, [ancestor])).toEqual(["src/x/tsconfig.json"]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/x/tsconfig.json"), "utf8")).exclude).toEqual(
+      [],
+    );
   });
 
   test("a pinned-surface wall writes the per-kind typeRoots/types and skips when unchanged", () => {

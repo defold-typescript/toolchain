@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { findMainEntryFactoryImports } from "@defold-typescript/transpiler";
 import { readBuildConfig, toPosix } from "./build-output";
+import { nearestWall } from "./directory-walls";
 import { scanFilesSync } from "./scan";
 import { DEFAULT_TYPES_ENTRYPOINT, type ScriptKind } from "./script-kind";
 import { currentWalledDirs, eligibleWalls } from "./wall";
@@ -32,10 +33,6 @@ function readSources(
   return sources;
 }
 
-function isUnderDir(rel: string, dir: string): boolean {
-  return rel.startsWith(`${dir}/`);
-}
-
 export function findWallImportViolations(
   cwd: string,
   files?: Record<string, string>,
@@ -47,16 +44,30 @@ export function findWallImportViolations(
   }
   const sources = readSources(cwd, files);
   const violations: WallImportViolation[] = [];
-  for (const wall of currentWalls) {
+  // Per file, not per wall: nested walls enclose the same sources, and a file is
+  // judged against the one kind that actually governs it.
+  for (const [rel, source] of Object.entries(sources)) {
+    if (!rel.endsWith(".ts")) {
+      continue;
+    }
+    const wall = nearestWall(rel, currentWalls);
+    if (wall === null) {
+      continue;
+    }
     const expected = `${DEFAULT_TYPES_ENTRYPOINT}/${wall.kind}`;
-    for (const [rel, source] of Object.entries(sources)) {
-      if (!rel.endsWith(".ts") || !isUnderDir(rel, wall.dir)) {
-        continue;
-      }
-      for (const factory of findMainEntryFactoryImports(rel, source)) {
-        violations.push({ file: rel, kind: wall.kind, factory, expected });
-      }
+    for (const factory of findMainEntryFactoryImports(rel, source)) {
+      violations.push({ file: rel, kind: wall.kind, factory, expected });
     }
   }
-  return violations;
+  return violations.sort((a, b) =>
+    a.file === b.file
+      ? a.factory < b.factory
+        ? -1
+        : a.factory > b.factory
+          ? 1
+          : 0
+      : a.file < b.file
+        ? -1
+        : 1,
+  );
 }
