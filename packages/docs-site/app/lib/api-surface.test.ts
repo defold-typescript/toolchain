@@ -1422,7 +1422,7 @@ describe("apiModuleSymbols", () => {
     expect(rows[2]?.docMarkdown).toBe(fixtureGetDoc);
   });
 
-  test("go.set renders 3 rows and go.property renders its 8 authored overloads", () => {
+  test("go.set and go.property rows carry exactly the committed store signatures", () => {
     const store = committedStore("go");
     const symbols = apiModuleSymbols(fixturePage("go"), {}, store);
     expect(symbols.filter((s) => s.name === "go.set").map((s) => s.signature)).toEqual(
@@ -1499,7 +1499,7 @@ describe("apiModuleSymbols", () => {
     expect(rows[2]?.docMarkdown).not.toBe(rows[0]?.docMarkdown);
   });
 
-  test("msg.url still collapses to 3 authored rows, each carrying its own parameters", () => {
+  test("msg.url still collapses to the authored rows, each carrying its own parameters", () => {
     const store = committedStore("msg");
     const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(
       (s) => s.name === "msg.url",
