@@ -29,7 +29,8 @@ A `src/` title whose marker the parser cannot read:
 export const alpha = 1;
 ```
 
-A filename both example roots hold, with nothing on this page to narrow it:
+A filename both example roots hold, which this page's other fences narrow to both
+roots at once and so leave ambiguous:
 
 ```ts title="src/shared.ts"
 export const shared = "one";
