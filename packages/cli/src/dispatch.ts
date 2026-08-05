@@ -795,6 +795,7 @@ function dispatchCommand(
   if (command === "wall") {
     return (async (): Promise<number> => {
       const { applyWallSelection, currentWalledDirs, eligibleWalls } = await import("./wall");
+      const { resolveSourceWalls } = await import("./directory-walls");
       const wallCwd = internals?.cwd ?? process.cwd();
       const dirs = rest;
       const toJsonWall = (w: { dir: string; kind: string }): { dir: string; kind: string } => ({
@@ -815,19 +816,31 @@ function dispatchCommand(
         const current = currentWalledDirs(wallCwd);
         const eligible = eligibleWalls(wallCwd);
         const currentWalls = eligible.filter((w) => current.includes(w.dir));
+        const resolved = resolveSourceWalls(wallCwd, current);
         if (json) {
           io.stdout.write(
             renderResult({
               command: "wall",
               directoryWalls: currentWalls.map(toJsonWall),
               eligible: eligible.map(toJsonWall),
+              resolved: resolved.map((r) => ({
+                dir: r.dir,
+                kind: r.kind,
+                declaredIn: r.declaredIn,
+                origin: r.origin,
+              })),
             }),
           );
         } else {
+          const inherited = resolved.filter((r) => r.origin === "inherited");
+          const inheritedNote =
+            inherited.length === 0
+              ? ""
+              : `; inherited [${inherited.map((r) => `${r.dir} <- ${r.declaredIn}`).join(", ")}]`;
           io.stdout.write(
             `defold-typescript wall: walled [${current.join(", ")}]; eligible [${eligible
               .map((w) => w.dir)
-              .join(", ")}]\n`,
+              .join(", ")}]${inheritedNote}\n`,
           );
         }
         return 0;

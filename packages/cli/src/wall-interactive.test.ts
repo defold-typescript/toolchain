@@ -38,6 +38,7 @@ describe("buildWallChoices", () => {
     touch("src/mix/b.ts", "export default defineGuiScript({});");
 
     expect(buildWallChoices(cwd)).toEqual([
+      { value: "src", name: "src", disabled: "mixed: gui-script, render-script, script" },
       { value: "src/mix", name: "src/mix", disabled: "mixed: gui-script, script" },
       { value: "src/render", name: "src/render (render-script)", checked: false },
       { value: "src/ui", name: "src/ui (gui-script)", checked: true },
@@ -47,6 +48,41 @@ describe("buildWallChoices", () => {
   test("a component-free tree yields no choices", () => {
     writeRootTsconfig({ include: ["src/**/*.ts"] });
     touch("src/.gitkeep");
+    expect(buildWallChoices(cwd)).toEqual([]);
+  });
+
+  test("an ancestor directory holding no direct sources is offered", () => {
+    writeRootTsconfig({ include: ["src/**/*.ts"] });
+    touch("src/gui/hud/a.ts", "export default defineGuiScript({});");
+    touch("src/gui/menu/b.ts", "export default defineGuiScript({});");
+
+    expect(buildWallChoices(cwd)).toEqual([
+      { value: "src", name: "src (gui-script)", checked: false },
+      { value: "src/gui", name: "src/gui (gui-script)", checked: false },
+      { value: "src/gui/hud", name: "src/gui/hud (gui-script)", checked: false },
+      { value: "src/gui/menu", name: "src/gui/menu (gui-script)", checked: false },
+    ]);
+  });
+
+  test("a directory governed by an ancestor's wall is annotated, not pre-checked", () => {
+    writeRootTsconfig({ include: ["src/**/*.ts"], references: [{ path: "src/gui" }] });
+    touch("src/gui/hud/a.ts", "export default defineGuiScript({});");
+
+    expect(buildWallChoices(cwd)).toEqual([
+      { value: "src", name: "src (gui-script)", checked: false },
+      { value: "src/gui", name: "src/gui (gui-script)", checked: true },
+      {
+        value: "src/gui/hud",
+        name: "src/gui/hud (gui-script) [inherited from src/gui]",
+        checked: false,
+      },
+    ]);
+  });
+
+  test("a single-kind directory whose kind has no wall subpath is not offered", () => {
+    writeRootTsconfig({ include: ["src/**/*.ts"] });
+    touch("src/editor/menu.ts", "export default defineEditorScript({});");
+
     expect(buildWallChoices(cwd)).toEqual([]);
   });
 });
@@ -91,6 +127,6 @@ describe("runWallInteractive", () => {
 
     await runWallInteractive(cwd, { checkbox });
 
-    expect(seen.map((c) => c.value)).toEqual(["src/render", "src/ui"]);
+    expect(seen.map((c) => c.value)).toEqual(["src", "src/render", "src/ui"]);
   });
 });

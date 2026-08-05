@@ -36,10 +36,27 @@ root program, so `tsc -b --noEmit` builds every walled directory against only it
 narrowed surface — a `render.*` use inside a gui-walled directory becomes a compile
 error, while the rest of the project stays full-surface.
 
-A directory is **eligible** to be walled only when every `.ts` source in it is one
-kind; a directory mixing kinds cannot be walled, because no single narrowing
-applies. `build` and `watch` never touch walls — they are entirely yours to
-manage.
+A directory is **eligible** to be walled only when every `.ts` source **in its
+whole subtree** is one kind; a directory whose subtree mixes kinds cannot be
+walled, because no single narrowing applies. `build` and `watch` never touch
+walls — they are entirely yours to manage.
+
+**Inheritance.** A wall narrows every directory beneath it, so declare it at the
+boundary — `src/gui`, not `src/gui/hud` and `src/gui/menu` separately. A
+directory whose sources all live in subdirectories is eligible on their behalf,
+and a `src/gui/settings/` added later is narrowed with no second `wall` run.
+
+**Override.** A descendant that declares its own wall replaces the inherited one:
+the ancestor excludes that descendant from its program, so the descendant's kind
+subpath cannot widen the ancestor. Without the exclusion the two would
+*intersect* — the descendant's files would stay in the ancestor's program and
+inject their namespaces there, letting `gui.*` type-check inside a `script` wall.
+
+**Kind-neutral helpers.** A `.ts` with no lifecycle factory declares no kind, so
+it never makes a directory eligible and never blocks an ancestor from rolling up
+to a single kind. But a helper *inside* a walled subtree still compiles in that
+wall's narrowed program — so a helper shared across kinds belongs outside every
+walled subtree.
 
 ## Interactive
 
@@ -49,11 +66,14 @@ Run `wall` with no arguments in a terminal:
 bunx @defold-typescript/cli wall
 ```
 
-You get a checkbox of every eligible source directory, pre-checked to the
-directories already walled. Checking an unwalled directory walls it; unchecking a
-walled directory removes its wall. Mixed-kind directories appear disabled, with
-their competing kinds shown as the reason. The final selection **is** the desired
-wall set — the command reconciles the project on disk to exactly what you checked.
+You get a checkbox of every eligible source directory — including the ancestors
+that hold no sources of their own — pre-checked to the directories already
+walled. Checking an unwalled directory walls it; unchecking a walled directory
+removes its wall. A directory already governed by an ancestor's wall is labelled
+`[inherited from <dir>]` rather than pre-checked, since checking it would declare
+a redundant second wall. Mixed-kind directories appear disabled, with their
+competing kinds shown as the reason. The final selection **is** the desired wall
+set — the command reconciles the project on disk to exactly what you checked.
 
 ## Flags
 
@@ -75,6 +95,13 @@ bunx @defold-typescript/cli wall --list --json
 `--json` emits the resulting `directoryWalls` (and, for `--list`, the `eligible`
 set) for machine consumption. `--json` is machine-driven intent, so a bare
 `wall --json` never opens the interactive menu — pass directories or `--list`.
+
+`wall --list --json` also carries `resolved`: one entry per source directory a
+wall actually narrows, so an inherited narrowing is traceable to the declaration
+that caused it. Each entry adds `declaredIn` (the directory the governing wall is
+declared on) and `origin` — `"declared"` when the directory carries the wall
+itself, `"inherited"` when an ancestor's wall governs it. The human `--list` line
+names the inherited directories the same way (`src/gui/hud <- src/gui`).
 
 ## Import the factory from the kind subpath
 

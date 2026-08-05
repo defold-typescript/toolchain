@@ -91,15 +91,101 @@ export function groupSourceScriptKindsByDirectory(cwd: string): Map<string, Set<
   return byDir;
 }
 
+function addKinds(
+  byDir: Map<string, Set<ScriptKind>>,
+  dir: string,
+  kinds: Iterable<ScriptKind>,
+): void {
+  let set = byDir.get(dir);
+  if (set === undefined) {
+    set = new Set<ScriptKind>();
+    byDir.set(dir, set);
+  }
+  for (const kind of kinds) {
+    set.add(kind);
+  }
+}
+
+// Wall eligibility is a property of a directory's whole source subtree, not just
+// the sources it directly holds: a wall's recursive `include` already governs
+// every descendant, so the boundary a user wants to declare (`src/gui`) is often
+// a directory with no sources of its own. Roll-up stops before `.` — the root is
+// the full-surface program, never a wall.
+export function groupSourceScriptKindsBySubtree(cwd: string): Map<string, Set<ScriptKind>> {
+  const bySubtree = new Map<string, Set<ScriptKind>>();
+  for (const [dir, kinds] of groupSourceScriptKindsByDirectory(cwd)) {
+    if (dir === ".") {
+      addKinds(bySubtree, ".", kinds);
+      continue;
+    }
+    const segments = dir.split("/");
+    for (let depth = segments.length; depth > 0; depth--) {
+      addKinds(bySubtree, segments.slice(0, depth).join("/"), kinds);
+    }
+  }
+  return bySubtree;
+}
+
 export function planSourceDirectoryWalls(cwd: string): DirectoryWall[] {
   const walls: DirectoryWall[] = [];
-  for (const [dir, kinds] of groupSourceScriptKindsByDirectory(cwd)) {
+  for (const [dir, kinds] of groupSourceScriptKindsBySubtree(cwd)) {
     const kind = selectScriptKind(kinds);
     if (kind !== null && PINNED_KIND_SUBPATHS.includes(kind)) {
       walls.push(describeWall(dir, kind));
     }
   }
   return walls.sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
+}
+
+function isUnder(rel: string, dir: string): boolean {
+  return rel.startsWith(`${dir}/`);
+}
+
+// The declared wall that actually governs `rel` (a directory or a file path):
+// the longest declared prefix, so a nested declaration overrides the one it sits
+// inside. Every consumer resolves through this — the emitted `exclude`, the
+// import guardrail, and `wall --list` must agree on which wall owns a file.
+export function nearestWall<T extends { dir: string }>(rel: string, walls: readonly T[]): T | null {
+  let nearest: T | null = null;
+  for (const wall of walls) {
+    if (rel !== wall.dir && !isUnder(rel, wall.dir)) {
+      continue;
+    }
+    if (nearest === null || wall.dir.length > nearest.dir.length) {
+      nearest = wall;
+    }
+  }
+  return nearest;
+}
+
+export interface ResolvedDirectoryWall extends DirectoryWall {
+  readonly declaredIn: string;
+  readonly origin: "declared" | "inherited";
+}
+
+// One entry per source directory a declared wall narrows, carrying the wall that
+// caused it. A declared dir that is no longer eligible narrows nothing, matching
+// the `eligible`-intersect every other wall consumer applies.
+export function resolveSourceWalls(
+  cwd: string,
+  declaredDirs: readonly string[],
+): ResolvedDirectoryWall[] {
+  const declared = new Set(declaredDirs);
+  const walls = planSourceDirectoryWalls(cwd).filter((wall) => declared.has(wall.dir));
+  const resolved: ResolvedDirectoryWall[] = [];
+  for (const dir of groupSourceScriptKindsByDirectory(cwd).keys()) {
+    const governing = nearestWall(dir, walls);
+    if (governing === null) {
+      continue;
+    }
+    resolved.push({
+      ...governing,
+      dir,
+      declaredIn: governing.dir,
+      origin: dir === governing.dir ? "declared" : "inherited",
+    });
+  }
+  return resolved.sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
 }
 
 interface WallTsconfig {
@@ -110,20 +196,32 @@ interface WallTsconfig {
     readonly types: string[];
   };
   readonly include: readonly ["**/*.ts"];
-  readonly exclude: readonly [];
+  readonly exclude: readonly string[];
+}
+
+// A wall's `include` is recursive, so without this a declared descendant stays
+// inside its ancestor's program and injects its own kind's ambient namespaces
+// there — the nested wall would intersect with the outer one instead of
+// overriding it. Subtracting the descendant is the whole override mechanism.
+function nestedExcludes(wallDir: string, nestedWallDirs: readonly string[]): string[] {
+  return nestedWallDirs
+    .map((dir) => `${dir.slice(wallDir.length + 1)}/**`)
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 export function directoryWallTsconfig(
   wall: DirectoryWall,
   pinnedSurface: string | null = null,
+  nestedWallDirs: readonly string[] = [],
 ): WallTsconfig {
   const depth = wall.dir.split("/").length;
+  const exclude = nestedExcludes(wall.dir, nestedWallDirs);
   if (pinnedSurface === null) {
     return {
       extends: `${"../".repeat(depth)}tsconfig.json`,
       compilerOptions: { composite: true, typeRoots: null, types: [wall.typesEntrypoint] },
       include: ["**/*.ts"],
-      exclude: [],
+      exclude,
     };
   }
   return {
@@ -134,7 +232,7 @@ export function directoryWallTsconfig(
       types: [`${pinnedSurface}/${wall.kind}`],
     },
     include: ["**/*.ts"],
-    exclude: [],
+    exclude,
   };
 }
 
@@ -249,6 +347,13 @@ export function wireWallReferences(cwd: string, walls: readonly DirectoryWall[])
   }
 }
 
+// Only the walls with no other wall between them and `wall` — excluding `ui/**`
+// already covers `ui/deep/**`, so the emitted list stays minimal.
+function nearestDescendantDirs(wall: DirectoryWall, walls: readonly DirectoryWall[]): string[] {
+  const under = walls.map((w) => w.dir).filter((dir) => isUnder(dir, wall.dir));
+  return under.filter((dir) => !under.some((other) => other !== dir && isUnder(dir, other)));
+}
+
 export function writeDirectoryWallTsconfigs(
   cwd: string,
   walls: DirectoryWall[],
@@ -261,7 +366,7 @@ export function writeDirectoryWallTsconfigs(
     }
     const rel = `${w.dir}/tsconfig.json`;
     const target = path.join(cwd, w.dir, "tsconfig.json");
-    const desired = directoryWallTsconfig(w, pinnedSurface);
+    const desired = directoryWallTsconfig(w, pinnedSurface, nearestDescendantDirs(w, walls));
     if (existsSync(target)) {
       const current = JSON.parse(readFileSync(target, "utf8")) as {
         extends?: string;
