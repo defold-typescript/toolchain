@@ -22,6 +22,7 @@ changes are called out first because the toolchain is pre-1.0.
 - [druid](/api/druid)'s drag callback now declares the six parameters the runtime really passes — `(self, dx, dy, x, y, touch)` — instead of `(self, touch)`. A handler written against the old shape read `touch` out of the second argument, which is actually `dx`; it no longer type-checks until its parameter list is updated.
 - [yagames](/api/yagames)'s banner functions are replaced by the sticky-banner API upstream documents at `0.19.0`: `banner_init`, `banner_create`, `banner_delete`, `banner_refresh` and `banner_set` are gone in favour of `adv_show_banner_adv`, `adv_hide_banner_adv` and `adv_get_banner_adv_status`. Code calling the old family stops type-checking until it moves to the new calls.
 - [druid](/api/druid)'s `layout.on_size_changed.subscribe` now takes the inherited [event](/api/event) signature — `subscribe(callback, context?)` returning `boolean` — instead of the three-argument `(_, callback, context)` form the old annotation restated. Calls passing a leading placeholder argument need it removed.
+- [`wall`](./wall.md) judges a directory by its whole subtree rather than only the sources it directly holds, so a directory whose own files are one kind but whose subdirectories add another is no longer eligible. Wall the single-kind directories beneath it instead.
 
 ### Improved
 
@@ -53,6 +54,11 @@ changes are called out first because the toolchain is pre-1.0.
 - A library's `@deprecated` markers now show on its API reference page as a `Deprecated` line carrying the upstream explanation, in the same block the engine pages use for their version-keyed deprecations — from forked types ([yagames](/api/yagames)'s `player_get_id` and `leaderboards_init`) and generated ones alike ([druid](/api/druid)'s `text:set_to`). A tag on a *type* rather than a member reaches the shipped `.d.ts`, where your editor strikes the name through, but not the page; [authoring forked library types](./authoring-forked-library-types.md) and [authoring LuaLS library types](./authoring-luals-library-types.md) note the tag for authors.
 
 - The [agent runbooks](./agent-runbooks.md) now warn that the script lifecycle factory needs a *value* import — the `import type` plus `declare const` form builds `ok: true` while leaving the hooks unerased — and route Defold's resulting `FORMAT_ERROR` resource cascade back to that fix.
+
+- [`wall`](./wall.md) understands nested walls, so you declare one at the boundary you actually mean instead of at every leaf.
+  - **Inheritance** — a wall can be declared on a parent directory that holds no sources of its own, and it narrows every directory beneath it; a subdirectory added later is covered with no second `wall` run.
+  - **Override** — a nested wall now fully replaces the one it sits inside, instead of leaving its files in the outer program where their kind's namespaces leaked upward and let `gui.*` type-check inside a `script` wall.
+  - **Provenance** — `wall --list --json` reports every narrowed directory with `origin` (`declared` or `inherited`) and the `declaredIn` ancestor that caused it; the plain `--list` line names the inherited pairs.
 
 - A new `--fail-on-drift` flag turns the [installed-editor-vs-pin drift notice](./pinning-defold-target.md) into a non-zero exit on `build`, `watch`, [`run`](./run.md), `upgrade`, and `bob build`/`bundle`/`run`, so CI stops passing on a warning nobody reads — the notice text and `--json` payload are unchanged, and a command that already failed keeps its own exit code. It is unrelated to `resolve --frozen`, which fails on a native-extension cache miss, and never appears on `resolve`.
 

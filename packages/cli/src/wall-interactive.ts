@@ -1,7 +1,7 @@
 import type { DirectoryWall } from "./directory-walls";
-import { groupSourceScriptKindsByDirectory } from "./directory-walls";
+import { groupSourceScriptKindsBySubtree, nearestWall } from "./directory-walls";
 import { selectScriptKind } from "./script-kind";
-import { applyWallSelection, currentWalledDirs } from "./wall";
+import { applyWallSelection, currentWalledDirs, eligibleWalls } from "./wall";
 
 export interface WallChoice {
   readonly value: string;
@@ -22,19 +22,32 @@ export interface WallInteractiveDeps {
   readonly checkbox?: CheckboxPrompt;
 }
 
-// One choice per source directory: a single-kind dir is selectable and
-// pre-checked to its current walled state; a mixed-kind dir is shown disabled
-// with its competing kinds, since no single narrowing applies.
+// One choice per directory that owns sources in its subtree, so the boundary a
+// user wants — an ancestor holding no sources of its own — is offerable. A
+// selectable dir is exactly an eligible wall, pre-checked to its declared state;
+// a dir already governed by an ancestor's wall is annotated with that ancestor
+// instead, since checking it would declare a redundant second wall. A mixed-kind
+// dir is disabled with its competing kinds, since no single narrowing applies.
 export function buildWallChoices(cwd: string): WallChoice[] {
-  const current = new Set(currentWalledDirs(cwd));
+  const declared = new Set(currentWalledDirs(cwd));
+  const eligible = eligibleWalls(cwd);
+  const declaredWalls = eligible.filter((wall) => declared.has(wall.dir));
   const choices: WallChoice[] = [];
-  for (const [dir, kinds] of groupSourceScriptKindsByDirectory(cwd)) {
-    const kind = selectScriptKind(kinds);
-    if (kind === null) {
-      choices.push({ value: dir, name: dir, disabled: `mixed: ${[...kinds].sort().join(", ")}` });
-    } else {
-      choices.push({ value: dir, name: `${dir} (${kind})`, checked: current.has(dir) });
+  for (const wall of eligible) {
+    if (declared.has(wall.dir)) {
+      choices.push({ value: wall.dir, name: `${wall.dir} (${wall.kind})`, checked: true });
+      continue;
     }
+    const governing = nearestWall(wall.dir, declaredWalls);
+    const suffix = governing === null ? "" : ` [inherited from ${governing.dir}]`;
+    choices.push({ value: wall.dir, name: `${wall.dir} (${wall.kind})${suffix}`, checked: false });
+  }
+  const selectable = new Set(eligible.map((wall) => wall.dir));
+  for (const [dir, kinds] of groupSourceScriptKindsBySubtree(cwd)) {
+    if (selectable.has(dir) || selectScriptKind(kinds) !== null) {
+      continue;
+    }
+    choices.push({ value: dir, name: dir, disabled: `mixed: ${[...kinds].sort().join(", ")}` });
   }
   return choices.sort((a, b) => (a.value < b.value ? -1 : a.value > b.value ? 1 : 0));
 }

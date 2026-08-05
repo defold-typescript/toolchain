@@ -78,6 +78,37 @@ describe("findWallImportViolations", () => {
 
     expect(findWallImportViolations(cwd)).toEqual([]);
   });
+
+  test("a file enclosed by two declared walls is reported once, against the nearest", () => {
+    tsconfig();
+    write("src/gui/menu.ts", subpathGui);
+    write("src/gui/hud/bad.ts", offEntryGui);
+    applyWallSelection(cwd, ["src/gui", "src/gui/hud"]);
+
+    expect(findWallImportViolations(cwd)).toEqual([
+      {
+        file: "src/gui/hud/bad.ts",
+        kind: "gui-script",
+        factory: "defineGuiScript",
+        expected: "@defold-typescript/types/gui-script",
+      },
+    ]);
+  });
+
+  test("a file two levels under an inherited wall is still checked against the declaring ancestor", () => {
+    tsconfig();
+    write("src/gui/hud/deep/bad.ts", offEntryGui);
+    applyWallSelection(cwd, ["src/gui"]);
+
+    expect(findWallImportViolations(cwd)).toEqual([
+      {
+        file: "src/gui/hud/deep/bad.ts",
+        kind: "gui-script",
+        factory: "defineGuiScript",
+        expected: "@defold-typescript/types/gui-script",
+      },
+    ]);
+  });
 });
 
 describe("runBuild wall-import guardrail", () => {
