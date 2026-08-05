@@ -44,6 +44,12 @@ export interface RenderResultInput {
   readonly materializedSurface?: string | null;
   readonly directoryWalls?: readonly { readonly dir: string; readonly kind: string }[];
   readonly eligible?: readonly { readonly dir: string; readonly kind: string }[];
+  readonly resolved?: readonly {
+    readonly dir: string;
+    readonly kind: string;
+    readonly declaredIn: string;
+    readonly origin: "declared" | "inherited";
+  }[];
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
@@ -96,10 +102,12 @@ export function renderResult(input: RenderResultInput): string {
       ? { ...withMaterialized, directoryWalls: input.directoryWalls }
       : withMaterialized;
   const withEligible = "eligible" in input ? { ...withWalls, eligible: input.eligible } : withWalls;
+  const withResolved =
+    "resolved" in input ? { ...withEligible, resolved: input.resolved } : withEligible;
   const withInstall =
     "installCommand" in input
-      ? { ...withEligible, installCommand: input.installCommand }
-      : withEligible;
+      ? { ...withResolved, installCommand: input.installCommand }
+      : withResolved;
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;
