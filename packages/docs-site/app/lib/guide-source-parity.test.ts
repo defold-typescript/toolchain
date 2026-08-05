@@ -251,4 +251,13 @@ describe("docs/guide code fences against docs/examples sources", () => {
       "two/shared.ts",
     ]);
   });
+
+  test("a colliding filename no fence on the page can narrow is reported, not resolved", () => {
+    const { violations, checked } = checkParity(
+      join(FIXTURES, "guide-collide-unnarrowed"),
+      join(FIXTURES, "examples"),
+    );
+    expect(violations.map((v) => v.reason)).toEqual(["more than one example root holds this file"]);
+    expect(checked).toEqual([]);
+  });
 });
