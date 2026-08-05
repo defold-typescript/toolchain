@@ -7,7 +7,81 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "AccelerometerInstance"
+      "name": "AccelerometerInstance",
+      "properties": [
+        {
+          "name": "reset",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "calibrate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "on_input",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(action: { acc_x: number; acc_y: number; acc_z: number; }) => void"
+          ]
+        },
+        {
+          "name": "calibrated",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Vector3"
+          ]
+        },
+        {
+          "name": "adjusted",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Vector3"
+          ]
+        },
+        {
+          "name": "average",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Vector3"
+          ]
+        },
+        {
+          "name": "zero",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Vector3"
+          ]
+        },
+        {
+          "name": "latest",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Vector3"
+          ]
+        },
+        {
+          "name": "on_window_resized",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(width: number, height: number) => void"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

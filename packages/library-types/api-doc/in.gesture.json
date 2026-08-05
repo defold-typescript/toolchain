@@ -7,11 +7,402 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "GestureInstance"
+      "name": "GestureInstance",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on_input",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "action",
+              "doc": "",
+              "types": [
+                "{}"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "DetectedGestures"
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "DetectedGestures"
+      "name": "DetectedGestures",
+      "properties": [
+        {
+          "name": "tap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ position: { x: number; y: number; }; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "position",
+              "doc": "",
+              "types": [
+                "{ x: number; y: number; }"
+              ],
+              "is_optional": "False",
+              "fields": [
+                {
+                  "name": "x",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "y",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "double_tap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ position: { x: number; y: number; }; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "position",
+              "doc": "",
+              "types": [
+                "{ x: number; y: number; }"
+              ],
+              "is_optional": "False",
+              "fields": [
+                {
+                  "name": "x",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "y",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "long_press",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ position: { x: number; y: number; }; time: number; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "position",
+              "doc": "",
+              "types": [
+                "{ x: number; y: number; }"
+              ],
+              "is_optional": "False",
+              "fields": [
+                {
+                  "name": "x",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "y",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                }
+              ]
+            },
+            {
+              "name": "time",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "repeated",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "swipe_left",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "swipe_right",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "swipe_up",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "swipe_down",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "swipe",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ from: { x: number; y: number; }; to: { x: number; y: number; }; time: number; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "from",
+              "doc": "",
+              "types": [
+                "{ x: number; y: number; }"
+              ],
+              "is_optional": "False",
+              "fields": [
+                {
+                  "name": "x",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "y",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                }
+              ]
+            },
+            {
+              "name": "to",
+              "doc": "",
+              "types": [
+                "{ x: number; y: number; }"
+              ],
+              "is_optional": "False",
+              "fields": [
+                {
+                  "name": "x",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                },
+                {
+                  "name": "y",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                }
+              ]
+            },
+            {
+              "name": "time",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "two_finger",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ tap?: boolean; double_tap?: boolean; long_press?: boolean; repeated?: boolean; swipe_left?: boolean; swipe_right?: boolean; swipe_up?: boolean; swipe_down?: boolean; pinch?: { center: { x: number; y: number; }; ratio: number; }; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "tap",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "double_tap",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "long_press",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "repeated",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "swipe_left",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "swipe_right",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "swipe_up",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "swipe_down",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "pinch",
+              "doc": "",
+              "types": [
+                "{ center: { x: number; y: number; }; ratio: number; }"
+              ],
+              "is_optional": "True",
+              "fields": [
+                {
+                  "name": "center",
+                  "doc": "",
+                  "types": [
+                    "{ x: number; y: number; }"
+                  ],
+                  "is_optional": "False",
+                  "fields": [
+                    {
+                      "name": "x",
+                      "doc": "",
+                      "types": [
+                        "number"
+                      ],
+                      "is_optional": "False"
+                    },
+                    {
+                      "name": "y",
+                      "doc": "",
+                      "types": [
+                        "number"
+                      ],
+                      "is_optional": "False"
+                    }
+                  ]
+                },
+                {
+                  "name": "ratio",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "False"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "type": "VARIABLE",

@@ -73,6 +73,12 @@ export interface ApiVariable {
   brief: string;
   description: string;
   types: string[];
+  /**
+   * True for an optional member of a typedef shape (`clear?: boolean`). Set only
+   * when the element carries `is_optional: "True"`, so a module-level engine
+   * ref-doc VARIABLE — which never carries the key — leaves it absent.
+   */
+  isOptional?: boolean;
   /** See {@link ApiFunction.deprecated}. */
   deprecated?: string;
 }
@@ -175,6 +181,7 @@ function parseVariable(element: Record<string, unknown>): ApiVariable {
     brief: stringOr(element.brief, ""),
     description: stringOr(element.description, ""),
     types: parseStringArray(element.types),
+    ...(element.is_optional === "True" ? { isOptional: true } : {}),
     ...(typeof element.deprecated === "string" ? { deprecated: element.deprecated } : {}),
   };
 }
