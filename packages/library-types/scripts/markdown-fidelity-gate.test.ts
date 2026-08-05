@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { parseMarkdownApi } from "./parse-markdown-api";
+import { readAuthoredTargets } from "./sync-authored-types";
 import {
   compareFidelityToTsDefold,
   emitMarkdownDeclaration,
@@ -154,9 +155,11 @@ interface LibraryTargetRow {
  * its row — but it still owes its recorded verdict a resolvable snapshot and
  * classification module. Keeping a dead row to satisfy the lookup would make
  * `library-targets.json` stop meaning "still ts-defold-sourced", so the override
- * lives on the one record that severed. A verbatim fork is byte-identical to the
- * retired snapshot, so `fixture` may point at the vendored authored copy and the
- * recorded comparison still holds. */
+ * lives on the one record that severed. A fork starts byte-identical to the
+ * retired snapshot, so `fixture` may point at the vendored authored copy, and the
+ * recorded comparison holds until an authored correction changes a term the
+ * comparison scores — at which point the verdict is re-checked, not the pin
+ * re-baselined blindly. */
 interface SeveredSource {
   path: string;
   fixture: string;
@@ -1141,10 +1144,36 @@ function fixtureDigest(path: string): string {
     .digest("hex");
 }
 
-/** The pinned SHA-256 of every path `verdictFixturePaths` names. These are
- * upstream copies taken at a pin, and every decision recorded in this file was
- * derived by reading them once; an in-place edit or a silent re-vendor changes
- * what those verdicts are about without changing the verdicts. */
+/** Paths `authored-targets.json` declares as this repo's own forked or
+ * hand-authored `.d.ts`. Read from the production config rather than matched on
+ * a directory prefix, so a target re-vendored elsewhere keeps its lane. */
+const AUTHORED_LANE = new Set(readAuthoredTargets(PACKAGE_ROOT).map((target) => target.authored));
+
+/** What a drifted pin means, and whether re-pinning is the correct response.
+ * The two lanes drift for opposite reasons, so they cannot share a remedy: an
+ * upstream copy drifting means a snapshot the repo does not own moved under a
+ * recorded verdict, while an authored-lane fork drifting is the expected result
+ * of deliberate work on a file the repo maintains. */
+function driftRemedy(path: string): { digestMayBeUpdated: boolean; message: string } {
+  if (AUTHORED_LANE.has(path)) {
+    return {
+      digestMayBeUpdated: true,
+      message: `${path} no longer matches the copy every verdict derived from it was read off. It is an authored-lane snapshot this repo owns: re-check the recorded comparison for the modules that read it, then update this digest in the same commit as the edit.`,
+    };
+  }
+  return {
+    digestMayBeUpdated: false,
+    message: `${path} no longer matches the copy every verdict derived from it was read off. Re-run the evaluation for the modules that read it and rewrite their recorded decision — do not re-baseline this digest.`,
+  };
+}
+
+/** The pinned SHA-256 of every path `verdictFixturePaths` names, across both
+ * lanes: the upstream copies taken at a pin, and the authored-lane forks a
+ * severed library's verdict now resolves against. Every decision recorded in
+ * this file was derived by reading them once; an in-place edit or a silent
+ * re-vendor changes what those verdicts are about without changing the
+ * verdicts. The lanes drift for different reasons, so `driftRemedy` reports
+ * them differently. */
 const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/orthographic.camera.d.ts":
     "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
@@ -1251,10 +1280,7 @@ describe("the vendored snapshots the recorded verdicts were derived from", () =>
     const drifted = Object.entries(VENDORED_FIXTURE_HASHES)
       .filter(([path]) => existsSync(join(PACKAGE_ROOT, path)))
       .filter(([path, digest]) => fixtureDigest(path) !== digest)
-      .map(
-        ([path]) =>
-          `${path} no longer matches the copy every verdict derived from it was read off. Re-run the evaluation for the modules that read it and rewrite their recorded decision — do not re-baseline this digest.`,
-      );
+      .map(([path]) => driftRemedy(path).message);
     expect(drifted).toEqual([]);
   });
 
@@ -1267,6 +1293,26 @@ describe("the vendored snapshots the recorded verdicts were derived from", () =>
 
   test("the pin covers every snapshot a recorded verdict reads", () => {
     expect(verdictFixturePaths().filter((path) => !(path in VENDORED_FIXTURE_HASHES))).toEqual([]);
+  });
+
+  test("an authored-lane snapshot's drift remedy permits updating the digest", () => {
+    expect(driftRemedy("fixtures/authored/persist.persist.d.ts").digestMayBeUpdated).toBe(true);
+    expect(driftRemedy("fixtures/markdown/persist.persist.md").digestMayBeUpdated).toBe(false);
+  });
+
+  test("the two lanes do not share a remedy", () => {
+    expect(driftRemedy("fixtures/authored/persist.persist.d.ts").message).not.toBe(
+      driftRemedy("fixtures/markdown/persist.persist.md").message,
+    );
+  });
+
+  test("every pinned authored-lane path is a target the repo declares as its own", () => {
+    const declared = new Set(readAuthoredTargets(PACKAGE_ROOT).map((target) => target.authored));
+    expect(
+      Object.keys(VENDORED_FIXTURE_HASHES).filter(
+        (path) => path.startsWith("fixtures/authored/") && !declared.has(path),
+      ),
+    ).toEqual([]);
   });
 });
 
