@@ -7,7 +7,41 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "FontSettings"
+      "name": "FontSettings",
+      "properties": [
+        {
+          "name": "regular",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "italic",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "bold",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "bold_italic",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
@@ -15,19 +49,341 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "LayersTable"
+      "name": "LayersTable",
+      "properties": [
+        {
+          "name": "fonts",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<Hash, Hash>"
+          ]
+        },
+        {
+          "name": "images",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<Hash, Hash>"
+          ]
+        },
+        {
+          "name": "spinescenes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<Hash, Hash>"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "Settings"
+      "name": "Settings",
+      "properties": [
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "position",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "parent",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fonts",
+          "brief": "",
+          "description": "",
+          "types": [
+            "FontsTable"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "layers",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LayersTable"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "shadow",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "outline",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "align",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Alignment"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "valign",
+          "brief": "",
+          "description": "",
+          "types": [
+            "VAlignment"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "line_spacing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "paragraph_spacing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "image_pixel_grid_snap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "combine_words",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "dryrun",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "Word"
+      "name": "Word",
+      "properties": [
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "shadow",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "outline",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "metrics",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ width: number; height: number; total_width: number; max_descent?: number; max_ascent?: number; }"
+          ],
+          "fields": [
+            {
+              "name": "width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "height",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "total_width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "max_descent",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "max_ascent",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        },
+        {
+          "name": "font",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "TextMetrics"
+      "name": "TextMetrics",
+      "properties": [
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "char_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "img_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "spine_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

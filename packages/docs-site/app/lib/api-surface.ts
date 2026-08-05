@@ -481,7 +481,7 @@ function functionSignature(
 }
 
 function variableSignature(v: ApiVariable, mapType: MapType = mapDocType): string {
-  return `${v.name}: ${typeList(v.types, mapType)}`;
+  return `${v.name}${v.isOptional ? "?" : ""}: ${typeList(v.types, mapType)}`;
 }
 
 function memberBearingTypedefs(typedefs: ApiTypedef[]): ApiTypedef[] {

@@ -11,27 +11,845 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "ButtonState"
+      "name": "ButtonState",
+      "properties": [
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "node_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "consumed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "clicked",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "out_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "long_pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "released_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "CheckboxState"
+      "name": "CheckboxState",
+      "properties": [
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "node_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "consumed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "clicked",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "out_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "checked",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "long_pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "released_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "checked_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "unchecked_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "RadioState"
+      "name": "RadioState",
+      "properties": [
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "node_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "consumed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "clicked",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "out_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "selected",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "long_pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "released_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "selected_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "deselected_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "ListState"
+      "name": "ListState",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "consumed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "items",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ root: Opaque<\"node\">; nodes: LuaMap<Hash, Opaque<\"node\">>; data: unknown; index: number; }[]"
+          ]
+        },
+        {
+          "name": "over",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over_item",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ root: Opaque<\"node\">; nodes: LuaMap<Hash, Opaque<\"node\">>; data: unknown; index: number; }"
+          ],
+          "fields": [
+            {
+              "name": "root",
+              "doc": "",
+              "types": [
+                "Opaque<\"node\">"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "nodes",
+              "doc": "",
+              "types": [
+                "LuaMap<Hash, Opaque<\"node\">>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "index",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "over_item_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ root: Opaque<\"node\">; nodes: LuaMap<Hash, Opaque<\"node\">>; data: unknown; index: number; }"
+          ],
+          "fields": [
+            {
+              "name": "root",
+              "doc": "",
+              "types": [
+                "Opaque<\"node\">"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "nodes",
+              "doc": "",
+              "types": [
+                "LuaMap<Hash, Opaque<\"node\">>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "index",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "out_item_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ root: Opaque<\"node\">; nodes: LuaMap<Hash, Opaque<\"node\">>; data: unknown; index: number; }"
+          ],
+          "fields": [
+            {
+              "name": "root",
+              "doc": "",
+              "types": [
+                "Opaque<\"node\">"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "nodes",
+              "doc": "",
+              "types": [
+                "LuaMap<Hash, Opaque<\"node\">>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "index",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "selected_item",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "pressed_item",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "pressed_item_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "long_pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "released_item_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "scroll",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "is_horizontal",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "ScrollbarState"
+      "name": "ScrollbarState",
+      "properties": [
+        {
+          "name": "enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "released_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "out_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "clicked",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "scroll",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "InputState"
+      "name": "InputState",
+      "properties": [
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "node_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "consumed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "over_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "out_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "selected",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pressed_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "long_pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "released_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "selected_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "deselected_now",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "marked_text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "keyboard_type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "masked_text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "masked_marked_text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "text_width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "marked_text_width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "total_width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

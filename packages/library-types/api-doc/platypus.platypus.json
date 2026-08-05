@@ -186,7 +186,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "reparent",
@@ -194,7 +195,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "gravity",
@@ -202,7 +204,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "max_velocity",
@@ -210,7 +213,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "wall_jump_power_ratio_x",
@@ -218,7 +222,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "wall_jump_power_ratio_y",
@@ -226,7 +231,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "allow_double_jump",
@@ -234,7 +240,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "allow_wall_jump",
@@ -242,7 +249,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "const_wall_jump",
@@ -250,7 +258,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "allow_wall_slide",
@@ -258,7 +267,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "wall_slide_velocity",
@@ -266,7 +276,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },

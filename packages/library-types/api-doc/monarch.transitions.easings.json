@@ -15,7 +15,25 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Easing"
+      "name": "Easing",
+      "properties": [
+        {
+          "name": "IN",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(typeof gui)[`EASING_OUT${EasingOut}`]"
+          ]
+        },
+        {
+          "name": "OUT",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(typeof gui)[`EASING_IN${EasingIn}`]"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
