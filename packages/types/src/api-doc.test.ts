@@ -361,3 +361,27 @@ describe("parseDefoldApiDoc", () => {
     expect(Object.hasOwn(param, "fields")).toBe(false);
   });
 });
+
+describe("parseDefoldApiDoc typedef property optionality", () => {
+  const propertiesOf = (properties: Array<Record<string, unknown>>) =>
+    parseDefoldApiDoc({
+      info: { namespace: "ns" },
+      elements: [{ type: "TYPEDEF", name: "Opts", properties }],
+    }).typedefs[0]?.properties ?? [];
+
+  test('maps is_optional "True" to isOptional true', () => {
+    const [clear] = propertiesOf([{ name: "clear", types: ["boolean"], is_optional: "True" }]);
+    expect(clear?.isOptional).toBe(true);
+  });
+
+  test('leaves isOptional absent for "False" and for an omitted key', () => {
+    const properties = propertiesOf([
+      { name: "explicit", types: ["boolean"], is_optional: "False" },
+      { name: "omitted", types: ["boolean"] },
+    ]);
+    expect(properties.map((p) => p.name)).toEqual(["explicit", "omitted"]);
+    for (const property of properties) {
+      expect(Object.hasOwn(property, "isOptional")).toBe(false);
+    }
+  });
+});

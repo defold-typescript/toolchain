@@ -1161,7 +1161,8 @@
           "description": "",
           "types": [
             "\"ADV_IS_NOT_CONNECTED\" | \"UNKNOWN\""
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -1175,7 +1176,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "scopes",
@@ -1183,7 +1185,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -1205,7 +1208,8 @@
           "description": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -1219,7 +1223,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "quantityAround",
@@ -1227,7 +1232,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "quantityTop",
@@ -1235,7 +1241,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "getAvatarSrc",
@@ -1243,7 +1250,8 @@
           "description": "",
           "types": [
             "\"small\" | \"medium\" | \"large\""
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "getAvatarSrcSet",
@@ -1251,7 +1259,8 @@
           "description": "",
           "types": [
             "\"small\" | \"medium\" | \"large\""
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -1265,7 +1274,8 @@
           "description": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "quantityAround",
@@ -1273,7 +1283,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "quantityTop",
@@ -1281,7 +1292,8 @@
           "description": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "getAvatarSrc",
@@ -1289,7 +1301,8 @@
           "description": "",
           "types": [
             "\"small\" | \"medium\" | \"large\""
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "getAvatarSrcSet",
@@ -1297,7 +1310,8 @@
           "description": "",
           "types": [
             "\"small\" | \"medium\" | \"large\""
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -1373,7 +1387,8 @@
           "description": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     }

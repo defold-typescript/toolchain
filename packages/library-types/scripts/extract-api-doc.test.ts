@@ -677,3 +677,200 @@ declare module 'stub.stub' {
     expect(fixtures).toEqual(generatedModules());
   });
 });
+
+// Every branch the alias-shape reader must separate: an object literal reached
+// from a published parameter, a union / function type / empty literal that stays
+// bare even when reached, a literal nothing reaches, an alias hop ending in a
+// literal, and an interface carrying a member identical to the alias literal's
+// so both member readers can be compared against each other.
+const ALIAS_SHAPES = `/**
+ * Alias shape demo.
+ * @noResolution
+ */
+declare module 'alias.alias' {
+	/** Options for showing. */
+	type ShowOptions = {
+		/** Clear the stack. */
+		clear?: boolean;
+		/** Keep the sequence. */
+		sequential: boolean;
+		/** Run the transition. */
+		run(a: string): void;
+	};
+
+	/** A screen id. */
+	type ScreenId = number | string;
+
+	/** A callback. */
+	type Callback = () => void;
+
+	/** Carries nothing. */
+	type Data = {};
+
+	/** Reached by nothing. */
+	type Hidden = { secret: number };
+
+	/** One hop to the shape. */
+	type Alias = Deep;
+
+	/** The shape behind the hop. */
+	type Deep = {
+		/** Deep field. */
+		deep: number;
+	};
+
+	interface Inst {
+		/** Optional tag. */
+		tag?: string;
+		/** Run the transition. */
+		run(a: string): void;
+	}
+
+	/** Show a screen. */
+	export function show(id: ScreenId, options?: ShowOptions): Data;
+
+	/** Go deep. */
+	export function dive(a: Alias): void;
+
+	/** Make an instance. */
+	export function make(): Inst;
+
+	/** Take a callback. */
+	export function on(cb: Callback): void;
+}
+`;
+
+// An `export =` module: `plumbing` is bare, so it is plumbing behind the
+// re-exported value and stays unemitted — the alias only it names is therefore
+// unreachable and must not be populated.
+const ALIAS_UNREACHABLE = `/**
+ * Internal alias demo.
+ * @noResolution
+ */
+declare module 'ax.ax' {
+	type Internal = { hidden: number };
+
+	function plumbing(x: Internal): void;
+
+	interface Core {
+		/** Go. */
+		go(): void;
+	}
+	type T = Readonly<Core>;
+	const v: T;
+	export = v;
+}
+`;
+
+describe("extractApiDoc alias-backed shapes", () => {
+  const elementsOf = (source: string, moduleName: string) =>
+    (extractApiDoc(source, moduleName) as { elements: Array<Record<string, unknown>> }).elements;
+  const named = (source: string, moduleName: string, name: string) =>
+    elementsOf(source, moduleName).find((e) => e.name === name) ?? {};
+  const aliasElement = (name: string) =>
+    named(ALIAS_SHAPES, "alias.alias", name) as {
+      type?: string;
+      functions?: Array<Record<string, unknown>>;
+      properties?: Array<Record<string, unknown>>;
+    };
+
+  test("populates an alias whose RHS is an object literal, carrying each member's docs", () => {
+    const opts = aliasElement("ShowOptions");
+    expect(opts.type).toBe("TYPEDEF");
+    expect(opts.properties).toEqual([
+      {
+        name: "clear",
+        brief: "Clear the stack.",
+        description: "Clear the stack.",
+        types: ["boolean"],
+        is_optional: "True",
+      },
+      {
+        name: "sequential",
+        brief: "Keep the sequence.",
+        description: "Keep the sequence.",
+        types: ["boolean"],
+      },
+    ]);
+  });
+
+  test("writes is_optional on the optional member only, on both member readers", () => {
+    const optionality = (properties: Array<Record<string, unknown>> | undefined) =>
+      (properties ?? []).map((p) => [p.name, Object.hasOwn(p, "is_optional"), p.is_optional]);
+
+    expect(optionality(aliasElement("ShowOptions").properties)).toEqual([
+      ["clear", true, "True"],
+      ["sequential", false, undefined],
+    ]);
+    expect(optionality(aliasElement("Inst").properties)).toEqual([["tag", true, "True"]]);
+  });
+
+  test("reads a method in an alias literal with the same reader the interface path uses", () => {
+    const fromAlias = aliasElement("ShowOptions").functions;
+    const fromInterface = aliasElement("Inst").functions;
+    expect(fromAlias).toHaveLength(1);
+    expect(fromAlias?.[0]).toEqual({
+      type: "FUNCTION",
+      name: "run",
+      brief: "Run the transition.",
+      description: "Run the transition.",
+      parameters: [{ name: "a", doc: "", types: ["string"], is_optional: "False" }],
+      returnvalues: [],
+    });
+    expect(fromAlias?.[0]).toEqual(fromInterface?.[0] ?? {});
+  });
+
+  test("leaves a reachable non-object alias bare: union, function type, empty literal", () => {
+    for (const name of ["ScreenId", "Callback", "Data"]) {
+      expect(named(ALIAS_SHAPES, "alias.alias", name)).toEqual({ type: "TYPEDEF", name });
+    }
+  });
+
+  test("leaves an alias no emitted member's type names bare", () => {
+    expect(named(ALIAS_SHAPES, "alias.alias", "Hidden")).toEqual({
+      type: "TYPEDEF",
+      name: "Hidden",
+    });
+  });
+
+  test("follows an alias hop, populating the shape behind it and not the hop", () => {
+    expect(named(ALIAS_SHAPES, "alias.alias", "Alias")).toEqual({ type: "TYPEDEF", name: "Alias" });
+    expect(aliasElement("Deep").properties).toEqual([
+      { name: "deep", brief: "Deep field.", description: "Deep field.", types: ["number"] },
+    ]);
+  });
+
+  test("leaves an alias named only by an unemitted declaration bare", () => {
+    expect(named(ALIAS_UNREACHABLE, "ax.ax", "Internal")).toEqual({
+      type: "TYPEDEF",
+      name: "Internal",
+    });
+  });
+
+  test("merges into the element already pushed, preserving name and position", () => {
+    expect(elementsOf(ALIAS_SHAPES, "alias.alias").map((e) => [e.type, e.name])).toEqual([
+      ["TYPEDEF", "ShowOptions"],
+      ["TYPEDEF", "ScreenId"],
+      ["TYPEDEF", "Callback"],
+      ["TYPEDEF", "Data"],
+      ["TYPEDEF", "Hidden"],
+      ["TYPEDEF", "Alias"],
+      ["TYPEDEF", "Deep"],
+      ["FUNCTION", "show"],
+      ["FUNCTION", "dive"],
+      ["FUNCTION", "make"],
+      ["FUNCTION", "on"],
+      ["TYPEDEF", "Inst"],
+    ]);
+  });
+
+  test("round-trips a populated alias into ApiTypedef members", () => {
+    const module = parseDefoldApiDoc(extractApiDoc(ALIAS_SHAPES, "alias.alias"));
+    const opts = module.typedefs.find((t) => t.name === "ShowOptions");
+    expect(opts?.properties?.map((p) => [p.name, p.isOptional])).toEqual([
+      ["clear", true],
+      ["sequential", undefined],
+    ]);
+    expect(opts?.functions?.map((f) => f.name)).toEqual(["run"]);
+  });
+});

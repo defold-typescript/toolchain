@@ -1583,6 +1583,42 @@ describe("apiModuleSymbols", () => {
     expect(outerCallArity(rows[0]?.signature ?? "")).toBe(2);
     expect(rows[0]?.parameters.map((p) => p.name)).toEqual(["thread", "function", "what"]);
   });
+
+  test("renders `?` on an optional typedef property, leaving a required one unchanged", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        typedefs: [
+          {
+            name: "ShowOptions",
+            properties: [
+              {
+                name: "clear",
+                brief: "",
+                description: "",
+                types: ["boolean"],
+                isOptional: true,
+              },
+              { name: "sequential", brief: "", description: "", types: ["boolean"] },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(symbols.map((s) => s.signature)).toEqual([
+      "ShowOptions.clear?: boolean",
+      "ShowOptions.sequential: boolean",
+    ]);
+  });
+
+  test("a real library options shape reaches /api with its optional field marked", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const monarch = pages.find((p) => p.namespace === "monarch.monarch");
+    expect(monarch).toBeDefined();
+    if (!monarch) return;
+    const symbols = apiModuleSymbols(monarch, monarch.translations, monarch.signatures);
+    const clear = symbols.find((s) => s.kind === "type" && s.name === "ShowOptions.clear");
+    expect(clear?.signature).toBe("ShowOptions.clear?: boolean");
+  });
 });
 
 describe("apiModuleSymbols / apiModuleMarkdown authoritative signatures", () => {

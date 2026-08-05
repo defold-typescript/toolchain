@@ -22,19 +22,144 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Path"
+      "name": "Path",
+      "properties": [
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "Segment"
+      "name": "Segment",
+      "properties": [
+        {
+          "name": "duration",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "delay",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Array<Path>"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "AnimateArgs"
+      "name": "AnimateArgs",
+      "properties": [
+        {
+          "name": "obj",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string | undefined"
+          ]
+        },
+        {
+          "name": "easing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "EASING_TYPES"
+          ]
+        },
+        {
+          "name": "duration",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "delay",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Array<Path>"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "AnimateSequenceArgs"
+      "name": "AnimateSequenceArgs",
+      "properties": [
+        {
+          "name": "obj",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string | undefined"
+          ]
+        },
+        {
+          "name": "easing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "EASING_TYPES"
+          ]
+        },
+        {
+          "name": "segments",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Array<Segment>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_complete",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | string"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "FUNCTION",
