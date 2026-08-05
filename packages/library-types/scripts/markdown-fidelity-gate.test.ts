@@ -896,29 +896,37 @@ const PLATYPUS: LibraryRecord = {
 // parse yields all 14 functions and the verdict does not move:
 //
 //   elements parsed        14
-//   tsDefoldMembers        ["exportThis"]
-//   missingMembers         ["exportThis"]
-//   addedMembers           all 14 markdown functions
-//   downgraded / signatureLoss / optionalityLoss   []  (no shared member)
+//   tsDefoldMembers        `CoreModule`'s 21 — 14 methods and 7 `c_*` constants
+//   missingMembers         the 7 `c_*` constants
+//   addedMembers           []
+//   downgradedMembers      ["get_tight_world_area"]
+//   signatureLossMembers   ["screen_to_world", "world_to_screen"]
+//   optionalityLossMembers ["shake"]
 //
-// Those empty terms are the point: `fixtures/ts-defold/starly.starly.d.ts`
-// publishes through `interface CoreModule` + `type CameraMap` + `const
-// exportThis: Starley; export = exportThis;`, and `MEMBER_DECL` reads only
-// top-level `function`/`const`, so the comparator sees one member — the re-export
-// handle — and none of the 21 real ones. starly is the only `export =` fixture in
-// the corpus. Had the handle been a *type* rather than a const, `tsMembers` would
-// have been empty, every loss term vacuously empty, and the decision `go` against
-// nothing. This record is why `opaqueTsDefoldSurface` exists.
+// This record was first taken against a surface of one member, and was re-derived
+// when the extractor learned to read an `export =` handle. `fixtures/ts-defold/
+// starly.starly.d.ts` publishes through `interface CoreModule` + `type CameraMap`
+// + `const exportThis: Starley; export = exportThis;`. While `MEMBER_DECL` read
+// only top-level `function`/`const`, `tsDefoldMembers` was `["exportThis"]`,
+// `missingMembers` was `["exportThis"]`, `addedMembers` was all 14 markdown
+// functions, and the three signature terms were empty for want of any shared
+// member — `opaqueTsDefoldSurface` carried the whole verdict. `tsDefoldSurface`
+// now resolves the handle through its alias, its intersection and `Readonly<>` to
+// `CoreModule`'s members, so the terms above are read off the real surface and the
+// `no-go` rests on them. The verdict and its `doc-dialect` reason are unchanged.
 //
-// The real losses are measurable only by hand, outside the comparator:
+// starly is the only `export =` fixture in the corpus, and the guard stays for a
+// handle that resolves to nothing: were the handle a *type* rather than a const,
+// `tsMembers` would still be empty and the decision would otherwise read `go`
+// against nothing. This record is why `opaqueTsDefoldSurface` exists.
+//
+// The losses behind those terms — and the one the comparator still cannot see:
 //
 //   - 7 module constants — `display_width`/`display_height`/`display_ratio` and
 //     the four `behavior_*` hashes are `**Module Variables**` bullets under
 //     `## Variable API`, never signature headings, so a flat parse cannot reach
-//     them. ts-defold additionally renames them `c_*`.
-//   - 8 `CameraMap` fields — `starly[id].behavior`/`viewport_*`/`near`/`far`/
-//     `zoom` are a `LuaMap<hash, {...}>`; a flat signature surface cannot express
-//     an indexed map.
+//     them. ts-defold additionally renames them `c_*`, and they are the whole of
+//     `missingMembers`.
 //   - 3 dropped parameters across 2 members — the headings declare
 //     `screen_to_world(id, screen_x, screen_y, [visible])` and
 //     `world_to_screen(id, world_position, [visible])`, but both `**Parameters**`
@@ -930,6 +938,10 @@ const PLATYPUS: LibraryRecord = {
 //     brackets in the *name* (`* \`[duration_scalar]\`: \`number\``), which is no
 //     identifier, so even the generous emit renames them `arg4`/`arg5` and drops
 //     their optionality.
+//   - 8 `CameraMap` fields — `starly[id].behavior`/`viewport_*`/`near`/`far`/
+//     `zoom` are a `LuaMap<hash, {...}>` value, not members of the module object,
+//     so they stay outside the comparison: a flat signature surface cannot express
+//     an indexed map. This one is still measurable only by hand.
 //
 // The 14 documented functions do match ts-defold's 14 one-for-one, so this is not
 // gooey's member-count loss. The decision is driven by the dialect refusal plus
@@ -2002,6 +2014,17 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
     "world_to_screen",
   ];
 
+  // The 7 constants `CoreModule` declares, sorted as the comparator reports them.
+  const CONSTANT_MEMBERS = [
+    "c_behavior_center",
+    "c_behavior_expand",
+    "c_behavior_mixed",
+    "c_behavior_stretch",
+    "c_display_height",
+    "c_display_ratio",
+    "c_display_width",
+  ];
+
   // The most generous reading available: rewrite all five dialect axes and reduce
   // `[name = default]` to `[name]` so `bracketedArgs` reads the optional slots.
   // Test-local for gooey's reason — the verdict this produces shows a
@@ -2076,32 +2099,35 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
       optionalityLossMembers,
     } = await comparisonForMarkdown(generous(), "starly.starly");
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
-    expect(missingMembers).toEqual(["exportThis"]);
-    expect(addedMembers).toEqual(FUNCTIONS);
-    // Not a comparison that found no loss — a comparison with no shared member to
-    // score, which is exactly what `opaqueTsDefoldSurface` guards.
-    expect(downgradedMembers).toEqual([]);
-    expect(signatureLossMembers).toEqual([]);
-    expect(optionalityLossMembers).toEqual([]);
+    // The README documents the constants as prose bullets only, so no reading of
+    // it reaches them; the 14 lifted headings match `CoreModule`'s 14 methods by
+    // name, which is why nothing is added.
+    expect(missingMembers).toEqual(CONSTANT_MEMBERS);
+    expect(addedMembers).toEqual([]);
+    // `positions: vmath.vector3[]` emits as `Record<string | number, unknown>`.
+    expect(downgradedMembers).toEqual(["get_tight_world_area"]);
+    // Both drop their coordinate parameters — 4 and 3 slots emit as 2.
+    expect(signatureLossMembers).toEqual(["screen_to_world", "world_to_screen"]);
+    // `durationScalar?`/`radiusScalar?` emit as required `arg4`/`arg5`.
+    expect(optionalityLossMembers).toEqual(["shake"]);
     expect(decision).toBe("no-go");
   });
 
-  test("the ts-defold surface is opaque, so the verdict does not rest on the handle's kind", () => {
+  test("the `export =` handle resolves, so the verdict rests on named loss terms", () => {
     const tsDefold = readFileSync(
       join(PACKAGE_ROOT, "fixtures/ts-defold", "starly.starly.d.ts"),
       "utf8",
     );
-    expect(tsDefoldMembers(tsDefold)).toEqual(["exportThis"]);
     expect(tsDefold).toContain("export = exportThis;");
-    // The 21 real members live inside `CoreModule`, the 8 map fields inside
-    // `CameraMap`; `MEMBER_DECL` reads neither.
-    expect(tsDefold).toContain("interface CoreModule");
-    expect(tsDefold).toContain("type CameraMap");
+    // `Starley = CameraMap & Readonly<CoreModule>`: the 21 real members live
+    // inside `CoreModule` and reach the comparison through the handle, while the
+    // 8 fields inside `CameraMap`'s `LuaMap` value stay out of it.
+    expect(tsDefoldMembers(tsDefold)).toEqual([...FUNCTIONS, ...CONSTANT_MEMBERS].sort());
     const { opaqueTsDefoldSurface } = compareFidelityToTsDefold(
       "function create(): void;",
       tsDefold,
     );
-    expect(opaqueTsDefoldSurface).toBe(true);
+    expect(opaqueTsDefoldSurface).toBe(false);
   });
 
   test("the constants and the camera map are unreachable under every reading", () => {
