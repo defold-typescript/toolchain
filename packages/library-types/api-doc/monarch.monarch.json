@@ -11,23 +11,177 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "ShowOptions"
+      "name": "ShowOptions",
+      "properties": [
+        {
+          "name": "clear",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sequential",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "no_stack",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pop",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "ReplaceOptions"
+      "name": "ReplaceOptions",
+      "properties": [
+        {
+          "name": "clear",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "no_stack",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "RegisterProxyOptions"
+      "name": "RegisterProxyOptions",
+      "properties": [
+        {
+          "name": "popup",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "popup_on_popup",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timestep_below_popup",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "screen_keeps_input_focus_when_below_popup",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "others_keep_input_focus_when_below_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "auto_preload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "BackOptions"
+      "name": "BackOptions",
+      "properties": [
+        {
+          "name": "sequential",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "PreloadOptions"
+      "name": "PreloadOptions",
+      "properties": [
+        {
+          "name": "auto_preload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",

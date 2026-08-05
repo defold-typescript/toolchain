@@ -84,7 +84,41 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "OnscreenInstance"
+      "name": "OnscreenInstance",
+      "properties": [
+        {
+          "name": "reset",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "register_button",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, settings: {} | undefined, fn: (action: Hash, node: Opaque<\"node\">, touch: {}) => void) => void"
+          ]
+        },
+        {
+          "name": "register_analog",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, settings: { radius?: number; threshold?: number; } | undefined, fn: (action: Hash, node: Opaque<\"node\">, touch: {}) => void) => void"
+          ]
+        },
+        {
+          "name": "on_input",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(action_id: Hash, action: {}) => boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

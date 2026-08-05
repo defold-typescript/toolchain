@@ -11,15 +11,117 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Easing"
+      "name": "Easing",
+      "properties": [
+        {
+          "name": "IN",
+          "brief": "",
+          "description": "",
+          "types": [
+            "GuiEasing"
+          ]
+        },
+        {
+          "name": "OUT",
+          "brief": "",
+          "description": "",
+          "types": [
+            "GuiEasing"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "Transition"
+      "name": "Transition",
+      "properties": [
+        {
+          "name": "handle",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(message_id: Hash | string, message: unknown, sender: Url) => void"
+          ]
+        },
+        {
+          "name": "show_in",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        },
+        {
+          "name": "show_out",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        },
+        {
+          "name": "back_in",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        },
+        {
+          "name": "back_out",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "TransitionNodeless"
+      "name": "TransitionNodeless",
+      "properties": [
+        {
+          "name": "handle",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(message_id: Hash | string, message: unknown, sender: Url) => void"
+          ]
+        },
+        {
+          "name": "show_in",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        },
+        {
+          "name": "show_out",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        },
+        {
+          "name": "back_in",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        },
+        {
+          "name": "back_out",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+          ]
+        }
+      ]
     },
     {
       "type": "TYPEDEF",

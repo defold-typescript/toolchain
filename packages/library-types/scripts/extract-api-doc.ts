@@ -86,6 +86,10 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   const elements: Record<string, unknown>[] = [];
   const emittedNames = new Set<string>();
   const referencedTypeNodes: ts.TypeNode[] = [];
+  // Each alias's declaration paired with the bare element it already pushed, so
+  // a reachable object-literal alias is filled in by merging into that element
+  // rather than by appending a second one — element order stays as emitted.
+  const aliasElements: { node: ts.TypeAliasDeclaration; element: Record<string, unknown> }[] = [];
 
   // Members nested in an `export namespace` (`bridge.bridge`) keep their
   // namespace path so same-named members across namespaces (e.g. `is_supported`)
@@ -115,8 +119,10 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         }
       } else if (ts.isTypeAliasDeclaration(stmt)) {
         const name = qualify(stmt.name.text);
-        elements.push({ type: "TYPEDEF", name });
+        const element: Record<string, unknown> = { type: "TYPEDEF", name };
+        elements.push(element);
         emittedNames.add(name);
+        aliasElements.push({ node: stmt, element });
       } else if (
         ts.isModuleDeclaration(stmt) &&
         stmt.body &&
@@ -155,16 +161,28 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   }
 
   const moduleValueInterfaceNames = new Set(moduleValueInterfaces.map((iface) => iface.name.text));
-  for (const iface of referencedInterfaces(
-    moduleBlock,
-    referencedTypeNodes,
-    moduleValueInterfaceNames,
-  )) {
-    if (emittedNames.has(iface.name.text)) continue;
+  const reachable = referencedTypeNames(moduleBlock, referencedTypeNodes);
+  const declared = moduleBlock ? moduleTypeDeclarations(moduleBlock) : undefined;
+
+  for (const { node, element } of aliasElements) {
+    const name = node.name.text;
+    // Reachability is resolved against the module block, so identity keeps a
+    // same-named alias nested in a namespace from borrowing the outer one's.
+    if (declared?.aliases.get(name) !== node) continue;
+    if (!reachable.has(name) || !ts.isTypeLiteralNode(node.type)) continue;
+    const { functions, properties } = shapeMembers(node.type.members, sf);
+    if (functions.length > 0) element.functions = functions;
+    if (properties.length > 0) element.properties = properties;
+  }
+
+  for (const name of reachable) {
+    if (moduleValueInterfaceNames.has(name) || emittedNames.has(name)) continue;
+    const iface = declared?.interfaces.get(name);
+    if (!iface) continue;
     const typedef = typedefElement(iface, sf);
     if (!typedef) continue;
     elements.push(typedef);
-    emittedNames.add(iface.name.text);
+    emittedNames.add(name);
   }
 
   return {
@@ -229,13 +247,22 @@ function collectFunctionReferenceTypes(
   if (decl.type) out.push(decl.type);
 }
 
-function typedefElement(
-  iface: ts.InterfaceDeclaration,
-  sf: ts.SourceFile,
-): Record<string, unknown> | undefined {
+interface ShapeMembers {
+  functions: Record<string, unknown>[];
+  properties: Record<string, unknown>[];
+}
+
+/**
+ * The one member reader shared by both shape carriers — an `interface`
+ * declaration and a `type X = { … }` alias — so the two lanes cannot drift.
+ * `is_optional` is written only on an optional member, matching how
+ * `deprecatedKey` encodes absence and keeping a regen diff proportional to what
+ * actually changed.
+ */
+function shapeMembers(members: readonly ts.TypeElement[], sf: ts.SourceFile): ShapeMembers {
   const functions: Record<string, unknown>[] = [];
   const properties: Record<string, unknown>[] = [];
-  for (const member of iface.members) {
+  for (const member of members) {
     if (!member.name) continue;
     const name = memberName(member.name, sf);
     if (ts.isMethodSignature(member)) {
@@ -248,11 +275,20 @@ function typedefElement(
         brief: briefOf(summary),
         description: summary,
         types: member.type ? [typeText(member.type, sf)] : [],
+        ...(member.questionToken ? { is_optional: "True" } : {}),
         ...(fields ? { fields } : {}),
         ...deprecatedKey(member),
       });
     }
   }
+  return { functions, properties };
+}
+
+function typedefElement(
+  iface: ts.InterfaceDeclaration,
+  sf: ts.SourceFile,
+): Record<string, unknown> | undefined {
+  const { functions, properties } = shapeMembers(iface.members, sf);
   if (functions.length === 0 && properties.length === 0) return undefined;
   return {
     type: "TYPEDEF",
@@ -263,37 +299,48 @@ function typedefElement(
   };
 }
 
-function referencedInterfaces(
-  moduleBlock: ts.ModuleBlock | undefined,
-  typeNodes: ts.TypeNode[],
-  excludedNames: ReadonlySet<string>,
-): ts.InterfaceDeclaration[] {
-  if (!moduleBlock) return [];
+function moduleTypeDeclarations(moduleBlock: ts.ModuleBlock): {
+  aliases: Map<string, ts.TypeAliasDeclaration>;
+  interfaces: Map<string, ts.InterfaceDeclaration>;
+} {
   const aliases = new Map<string, ts.TypeAliasDeclaration>();
   const interfaces = new Map<string, ts.InterfaceDeclaration>();
   for (const stmt of moduleBlock.statements) {
     if (ts.isTypeAliasDeclaration(stmt)) aliases.set(stmt.name.text, stmt);
     if (ts.isInterfaceDeclaration(stmt)) interfaces.set(stmt.name.text, stmt);
   }
+  return { aliases, interfaces };
+}
 
-  const found = new Map<string, ts.InterfaceDeclaration>();
-  const seenAliases = new Set<string>();
+/**
+ * Every module-block alias and interface name reachable from an emitted
+ * member's type, in first-reached order. Both shape lanes gate on this single
+ * traversal — a reachable interface becomes its own TYPEDEF element, a
+ * reachable alias over an object literal has that element's members filled in —
+ * so a shape no published member names stays off `/api` either way.
+ */
+function referencedTypeNames(
+  moduleBlock: ts.ModuleBlock | undefined,
+  typeNodes: ts.TypeNode[],
+): Set<string> {
+  const names = new Set<string>();
+  if (!moduleBlock) return names;
+  const { aliases, interfaces } = moduleTypeDeclarations(moduleBlock);
+
   const visit = (node: ts.Node): void => {
     if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
       const name = node.typeName.text;
-      const iface = interfaces.get(name);
-      if (iface && !excludedNames.has(name)) found.set(name, iface);
       const alias = aliases.get(name);
-      if (alias && !seenAliases.has(name)) {
-        seenAliases.add(name);
-        visit(alias.type);
+      if ((alias || interfaces.has(name)) && !names.has(name)) {
+        names.add(name);
+        if (alias) visit(alias.type);
       }
     }
     ts.forEachChild(node, visit);
   };
 
   for (const node of typeNodes) visit(node);
-  return [...found.values()];
+  return names;
 }
 
 function exportedValueInterfaces(
