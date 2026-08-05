@@ -57,13 +57,43 @@ const RETURN_MARKER = /^\*\*RETURNS?\*\*\s*$/;
 const TYPED_BULLET = /^\*\s+`([^`]+)`\s*\(([^)]*)\)\s*-?\s*(.*)$/;
 const NAMED_BULLET = /^\*\s+`([^`]+)`/;
 
-/** Bracketed header arguments (`[name]`) are optional; collect their bare names. */
+/** Bracketed header arguments are optional; collect their bare names. A bracket
+ * may be escaped (`duration \[, scaler]` — a README authoring artifact so the
+ * upstream renderer does not read `[, scaler]` as a link), may span a comma
+ * (`data [, overwrite]`), and may cover several arguments at once (`[b, c]`),
+ * in which case every argument inside it is optional. Unlike `splitTypes`, a
+ * comma at any depth ends the current argument: in an argument list a comma
+ * always separates arguments, whether or not a bracket group spans it. */
 function bracketedArgs(argList: string): Set<string> {
   const optional = new Set<string>();
-  for (const raw of argList.split(",")) {
-    const arg = raw.trim();
-    if (arg.startsWith("[") && arg.endsWith("]")) optional.add(arg.slice(1, -1).trim());
+  let depth = 0;
+  let current = "";
+  let bracketed = false;
+
+  const flush = () => {
+    const arg = current.trim();
+    if (arg.length > 0 && bracketed) optional.add(arg);
+    current = "";
+    bracketed = false;
+  };
+
+  for (const ch of argList.replace(/\\\[/g, "[").replace(/\\\]/g, "]")) {
+    if (ch === "[") {
+      depth++;
+      continue;
+    }
+    if (ch === "]" && depth > 0) {
+      depth--;
+      continue;
+    }
+    if (ch === ",") {
+      flush();
+      continue;
+    }
+    if (depth > 0 && ch.trim().length > 0) bracketed = true;
+    current += ch;
   }
+  flush();
   return optional;
 }
 
