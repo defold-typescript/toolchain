@@ -109,6 +109,16 @@
       "namespace": "yagames",
       "generated": "generated/yagames.d.ts",
       "apiDoc": "api-doc/yagames.json"
+    },
+    {
+      "repo": "https://github.com/VowSoftware/starly",
+      "ref": "85d1b2af8bf0618e7f297da41d03eb55d27e49b6",
+      "license": "Zlib",
+      "authored": "fixtures/authored/starly.starly.d.ts",
+      "moduleId": "starly.starly",
+      "namespace": "starly",
+      "generated": "generated/starly.d.ts",
+      "apiDoc": "api-doc/starly.json"
     }
   ]
 }

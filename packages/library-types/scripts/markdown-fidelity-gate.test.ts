@@ -232,8 +232,12 @@ function filterToReceiver(markdown: string, receiver: string): string {
  * against the ts-defold surface it would replace. `evaluateMarkdownCandidate`
  * cannot serve here because it reads the snapshot as committed, which is exactly
  * the string the parser refuses.
+ *
+ * A severed library passes its `severedSource` so the comparison still resolves a
+ * snapshot after its `library-targets.json` row is gone — the same override
+ * `comparisonFor` threads into `evaluateMarkdownCandidate`.
  */
-async function comparisonForMarkdown(markdown: string, moduleId: string) {
+async function comparisonForMarkdown(markdown: string, moduleId: string, severed?: SeveredSource) {
   const doc = retargetDoc(parseMarkdownApi(markdown, moduleId), moduleId);
   const regen = (await import(join(PACKAGE_ROOT, "..", "types", "scripts", "regen.ts"))) as {
     generateModuleDeclaration: (entry: {
@@ -251,7 +255,7 @@ async function comparisonForMarkdown(markdown: string, moduleId: string) {
     importsFrom: "../src/core-types",
     moduleId,
   });
-  const tsDefold = readFileSync(join(PACKAGE_ROOT, targetFor(moduleId).fixture), "utf8");
+  const tsDefold = readFileSync(join(PACKAGE_ROOT, targetFor(moduleId, severed).fixture), "utf8");
   return { doc, emitted: contents, ...compareFidelityToTsDefold(contents, tsDefold) };
 }
 
@@ -904,8 +908,8 @@ const PLATYPUS: LibraryRecord = {
 //   optionalityLossMembers ["shake"]
 //
 // This record was first taken against a surface of one member, and was re-derived
-// when the extractor learned to read an `export =` handle. `fixtures/ts-defold/
-// starly.starly.d.ts` publishes through `interface CoreModule` + `type CameraMap`
+// when the extractor learned to read an `export =` handle. The snapshot publishes
+// through `interface CoreModule` + `type CameraMap`
 // + `const exportThis: Starley; export = exportThis;`. While `MEMBER_DECL` read
 // only top-level `function`/`const`, `tsDefoldMembers` was `["exportThis"]`,
 // `missingMembers` was `["exportThis"]`, `addedMembers` was all 14 markdown
@@ -946,6 +950,13 @@ const PLATYPUS: LibraryRecord = {
 // The 14 documented functions do match ts-defold's 14 one-for-one, so this is not
 // gooey's member-count loss. The decision is driven by the dialect refusal plus
 // the constants, the map, and the dropped parameters.
+//
+// starly has since severed, so the snapshot every term above is read from is the
+// authored fork rather than the retired `fixtures/ts-defold/` copy. The terms are
+// unchanged across that move because the fork is the *mapped* golden and
+// `compareFidelityToTsDefold` scores no type token — it tests for an introduced
+// `unknown`, counts parameters and `void` returns, and reads `?`, none of which a
+// `hash` -> `Hash` respelling touches.
 const STARLY: LibraryRecord = {
   library: "starly",
   repo: "https://github.com/VowSoftware/starly",
@@ -956,6 +967,10 @@ const STARLY: LibraryRecord = {
   decisions: [
     { module: "starly", decision: "no-go", reason: "doc-dialect", markdown: "README.md" },
   ],
+  severedSource: {
+    path: "packages/starly/starly.starly.d.ts",
+    fixture: "fixtures/authored/starly.starly.d.ts",
+  },
 };
 
 // The recorded decision for `8bitskull/dicebag` at tag `0.3` (commit
@@ -1191,6 +1206,8 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
   "fixtures/authored/persist.persist.d.ts":
     "f79845a7b47f57f4559d7b365c32ce5527ce12e778999e5eee4db3f45793c622",
+  "fixtures/authored/starly.starly.d.ts":
+    "79bad0b84c801c6b57e03d2f208af6aea1248eeda99383f88b1bcf9b7e340e21",
   "fixtures/authored/yagames.yagames.d.ts":
     "cbb9120f25aa99f6e53c9c7210ddf3178b0f075f22dffc2f4c766bcf008e641a",
   "fixtures/markdown/bzAnim.bzLibrary.md":
@@ -1283,8 +1300,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "759ba92654f34cfc89aa300fa06ea36d1a52b1e3778e836e89f1f63ec56813fd",
   "fixtures/ts-defold/richtext.tags.d.ts":
     "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
-  "fixtures/ts-defold/starly.starly.d.ts":
-    "3e5f74791b8591f169486790c53850115a817c9988d549de7dddcfb80564e951",
 };
 
 describe("the vendored snapshots the recorded verdicts were derived from", () => {
@@ -2097,7 +2112,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
       downgradedMembers,
       signatureLossMembers,
       optionalityLossMembers,
-    } = await comparisonForMarkdown(generous(), "starly.starly");
+    } = await comparisonForMarkdown(generous(), "starly.starly", STARLY.severedSource);
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
     // The README documents the constants as prose bullets only, so no reading of
     // it reaches them; the 14 lifted headings match `CoreModule`'s 14 methods by
@@ -2115,7 +2130,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
 
   test("the `export =` handle resolves, so the verdict rests on named loss terms", () => {
     const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/ts-defold", "starly.starly.d.ts"),
+      join(PACKAGE_ROOT, targetFor("starly.starly", STARLY.severedSource).fixture),
       "utf8",
     );
     expect(tsDefold).toContain("export = exportThis;");
@@ -2150,7 +2165,11 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
   });
 
   test("even the generous emit drops 3 parameters across 2 members", async () => {
-    const { emitted } = await comparisonForMarkdown(generous(), "starly.starly");
+    const { emitted } = await comparisonForMarkdown(
+      generous(),
+      "starly.starly",
+      STARLY.severedSource,
+    );
     // Both headings declare more arguments than their `**Parameters**` list
     // documents, so the emit keeps only the documented ones.
     expect(emitted).toContain("function screen_to_world(id: Hash, visible?: boolean)");
@@ -2160,7 +2179,11 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
   });
 
   test("`shake`'s bracketed bullet names cost both their identity and their optionality", async () => {
-    const { emitted } = await comparisonForMarkdown(generous(), "starly.starly");
+    const { emitted } = await comparisonForMarkdown(
+      generous(),
+      "starly.starly",
+      STARLY.severedSource,
+    );
     // The bullets repeat the heading's brackets in the name — `* \`[duration_scalar]\`:
     // \`number\`` — which is no identifier, so the emitter synthesizes positional
     // names and `bracketedArgs` never marks the slots optional.
@@ -2171,11 +2194,30 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
   });
 
   test("`get_tight_world_area` downgrades its `table` parameter", async () => {
-    const { emitted } = await comparisonForMarkdown(generous(), "starly.starly");
+    const { emitted } = await comparisonForMarkdown(
+      generous(),
+      "starly.starly",
+      STARLY.severedSource,
+    );
     expect(emitted).toContain("positions: Record<string | number, unknown>");
+    // The forked snapshot is the mapped golden, so the surface the downgrade is
+    // measured against spells the upstream `vmath.vector3[]` as `Vector3[]`. The
+    // comparison scores no type token, so the term itself is unmoved.
     expect(
-      readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", "starly.starly.d.ts"), "utf8"),
-    ).toContain("positions: vmath.vector3[]");
+      readFileSync(
+        join(PACKAGE_ROOT, targetFor("starly.starly", STARLY.severedSource).fixture),
+        "utf8",
+      ),
+    ).toContain("positions: Vector3[]");
+  });
+
+  // Without the dropped row the lookup would throw, so the recorded verdict is
+  // only resolvable because `severedSource` supplies both fields it used to read.
+  test("the verdict still resolves once the ts-defold row is gone", () => {
+    expect(targetFor("starly.starly", STARLY.severedSource).fixture).toBe(
+      "fixtures/authored/starly.starly.d.ts",
+    );
+    expect(classificationModule("starly.starly", STARLY.severedSource)).toBe("starly.starly");
   });
 
   test("the recorded reason is doc-dialect", () => {

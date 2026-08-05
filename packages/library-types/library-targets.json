@@ -120,12 +120,6 @@
       "generated": "generated/dicebag.dicebag.d.ts"
     },
     {
-      "module": "starly.starly",
-      "path": "packages/starly/starly.starly.d.ts",
-      "fixture": "fixtures/ts-defold/starly.starly.d.ts",
-      "generated": "generated/starly.starly.d.ts"
-    },
-    {
       "module": "metrics.fps",
       "path": "packages/defold-metrics/metrics.fps.d.ts",
       "fixture": "fixtures/ts-defold/metrics.fps.d.ts",
