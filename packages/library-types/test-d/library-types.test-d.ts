@@ -19,7 +19,6 @@ import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
-import * as starly from "starly.starly";
 
 // monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
 // `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
@@ -97,11 +96,6 @@ richtextTags.register("em", () => {});
 const _dbFlip: boolean = dicebag.flip_coin();
 const _dbDraw: boolean = dicebag.bag_draw(_hash);
 
-// starly.starly — an `export =` module: `get_view` returns a `Matrix4` (upstream
-// `vmath.matrix4`) for a `Hash` camera id, and `is_shaking` returns a boolean.
-const _stView: Matrix4 = starly.get_view(_hash);
-const _stShaking: boolean = starly.is_shaking(_hash);
-
 // metrics.* — each submodule has its own Metrics interface, so fps and mem
 // accessors stay scoped to their module.
 const _fpsMetrics = fps.create();
@@ -158,8 +152,6 @@ void _richWidth;
 void _taggedNode;
 void _dbFlip;
 void _dbDraw;
-void _stView;
-void _stShaking;
 void _nakamaAccount;
 void _nakamaSession;
 void _bzInfoLevel;

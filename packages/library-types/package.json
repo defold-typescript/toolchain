@@ -76,9 +76,6 @@
     "./dicebag.dicebag": {
       "types": "./generated/dicebag.dicebag.d.ts"
     },
-    "./starly.starly": {
-      "types": "./generated/starly.starly.d.ts"
-    },
     "./nakama.nakama": {
       "types": "./generated/nakama.nakama.d.ts"
     },

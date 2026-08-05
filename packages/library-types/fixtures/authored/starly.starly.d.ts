@@ -10,27 +10,27 @@ declare module 'starly.starly' {
 		c_display_width: number;
 		c_display_height: number;
 		c_display_ratio: number;
-		c_behavior_center: hash;
-		c_behavior_expand: hash;
-		c_behavior_mixed: hash;
-		c_behavior_stretch: hash;
+		c_behavior_center: Hash;
+		c_behavior_expand: Hash;
+		c_behavior_mixed: Hash;
+		c_behavior_stretch: Hash;
 
 		/**
 		 * Creates a camera. This function is called automatically in the game object's script component.
 		 * @param id Camera game object id.
 		 */
-		create(id: hash): void;
+		create(id: Hash): void;
 		/**
 		 * Destroys a camera. This function is called automatically in the game object's script component.
 		 * @param id Camera game object id.
 		 */
-		destroy(id: hash): void;
+		destroy(id: Hash): void;
 		/**
 		 * Activates a camera. This function should be called in the render script before any making any draw calls.
 		 * @param id Camera game object id.
 		 * @returns frustum
 		 */
-		activate(id: hash): vmath.matrix4;
+		activate(id: Hash): Matrix4;
 		/**
 		 * Shakes a camera.
 		 * @param id Camera game object id.
@@ -41,7 +41,7 @@ declare module 'starly.starly' {
 		 * @param [radiusScalar] After each pingpong, the radius is scaled by this value.
 		 */
 		shake(
-			id: hash,
+			id: Hash,
 			count: number,
 			duration: number,
 			radius: number,
@@ -52,12 +52,12 @@ declare module 'starly.starly' {
 		 * Cancels an ongoing camera shake.
 		 * @param id Camera game object id.
 		 */
-		cancel_shake(id: hash): void;
+		cancel_shake(id: Hash): void;
 		/**
 		 * Checks if a camera is shaking.
 		 * @param id Camera game object id.
 		 */
-		is_shaking(id: hash): boolean;
+		is_shaking(id: Hash): boolean;
 		/**
 		 * Gets the position offset of a camera after moving distance units, accounting for zoom and rotation.
 		 * @param id Camera game object id.
@@ -65,16 +65,16 @@ declare module 'starly.starly' {
 		 * @param absolute Determines if `distance` is in absolute world coordinates, which ignore rotation.
 		 */
 		get_offset(
-			id: hash,
-			distance: vmath.vector3,
+			id: Hash,
+			distance: Vector3,
 			absolute: boolean,
-		): vmath.vector3;
+		): Vector3;
 		/**
 		 * Gets the world area of a camera, which is defined as the rectangular area of the world that the camera can see, in world coordinates.
 		 * @param id Camera game object id.
 		 * @returns x, y, width, height
 		 */
-		get_world_area(id: hash): LuaMultiReturn<[number, number, number, number]>;
+		get_world_area(id: Hash): LuaMultiReturn<[number, number, number, number]>;
 		/**
 		 * Gets the center position, minimum zoom, and minimum world area of a camera that can see all positions.
 		 *
@@ -84,9 +84,9 @@ declare module 'starly.starly' {
 		 * @returns position, zoom, x, y, width, height
 		 */
 		get_tight_world_area(
-			id: hash,
-			positions: vmath.vector3[],
-		): LuaMultiReturn<[vmath.vector3, number, number, number, number, number]>;
+			id: Hash,
+			positions: Vector3[],
+		): LuaMultiReturn<[Vector3, number, number, number, number, number]>;
 		/**
 		 * Converts screen coordinates to world coordinates.
 		 * @param id Camera game object id.
@@ -95,11 +95,11 @@ declare module 'starly.starly' {
 		 * @param [visible] Determines if the cursor must be visible to the camera. If `true`, then this function returns `undefined` when the cursor is outside the camera's viewport.
 		 */
 		screen_to_world(
-			id: hash,
+			id: Hash,
 			screenX: number,
 			screenY: number,
 			visible?: boolean,
-		): vmath.vector3 | undefined;
+		): Vector3 | undefined;
 		/**
 		 * Converts world coordinates to screen coordinates.
 		 * @param id Camera game object id.
@@ -107,31 +107,31 @@ declare module 'starly.starly' {
 		 * @param [visible] Determines if the cursor must be visible to the camera. If `true`, then this function returns `undefined` when the cursor is outside the camera's viewport.
 		 */
 		world_to_screen(
-			id: hash,
-			worldPosition: vmath.vector3,
+			id: Hash,
+			worldPosition: Vector3,
 			visible?: boolean,
-		): vmath.vector3 | undefined;
+		): Vector3 | undefined;
 		/**
 		 * Gets the viewport of a camera, in screen coordinates.
 		 * @param id Camera game object id.
 		 * @returns x, y, width, height
 		 */
-		get_viewport(id: hash): LuaMultiReturn<[number, number, number, number]>;
+		get_viewport(id: Hash): LuaMultiReturn<[number, number, number, number]>;
 		/**
 		 * Gets the view of a camera.
 		 * @param id Camera game object id.
 		 */
-		get_view(id: hash): vmath.matrix4;
+		get_view(id: Hash): Matrix4;
 		/**
 		 * Gets the projection of a camera.
 		 * @param id Camera game object id.
 		 */
-		get_projection(id: hash): vmath.matrix4;
+		get_projection(id: Hash): Matrix4;
 	}
 	type CameraMap = LuaMap<
-		hash,
+		Hash,
 		{
-			behavior: hash;
+			behavior: Hash;
 			viewport_x: number;
 			viewport_y: number;
 			viewport_width: number;
