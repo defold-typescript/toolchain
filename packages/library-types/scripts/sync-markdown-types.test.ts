@@ -14,6 +14,7 @@ import {
   type MarkdownTarget,
   readMarkdownTargets,
   tsDefoldMembers,
+  tsDefoldSurface,
 } from "./sync-markdown-types";
 import { type FetchText, loadTypeResolver } from "./sync-script-api-types";
 
@@ -417,12 +418,12 @@ describe("compareFidelityToTsDefold optionality-loss term", () => {
   });
 });
 
-// `MEMBER_DECL` reads only top-level `function`/`const`, so a ts-defold fixture
-// that publishes through `interface`/`type` plus `export = handle` presents a
-// surface of one re-export handle — or, when the handle is a type rather than a
-// const, of nothing at all. With nothing to compare against, every loss term is
-// vacuously empty and the decision reads `go` against a surface the comparator
-// never saw. The guard makes an uncomparable ts-defold side decisive on its own.
+// A ts-defold fixture whose `export = handle` names no readable shape — an
+// undeclared token, or a handle that is a type rather than a const — presents a
+// surface of one re-export handle, or of nothing at all. With nothing to compare
+// against, every loss term is vacuously empty and the decision reads `go`
+// against a surface the comparator never saw. The guard makes an uncomparable
+// ts-defold side decisive on its own.
 describe("compareFidelityToTsDefold opaque-surface term", () => {
   test("a ts-defold side that is only an `export =` handle is opaque, not comparable", () => {
     const comparison = compareFidelityToTsDefold(
@@ -532,5 +533,100 @@ describe("comment stripping treats `//*` as a line comment", () => {
     const comparison = compareFidelityToTsDefold(dts, dts);
     expect(comparison.downgradedMembers).toEqual([]);
     expect(comparison.decision).toBe("go");
+  });
+});
+
+// A module whose whole surface is published through `export = handle` puts its
+// members inside the handle's shape, where a `function`/`const` keyword scan
+// cannot reach them. Reading the handle name as the surface makes every loss
+// term vacuously empty in the same direction, so the comparison says nothing
+// about the module it was run on. `export =` is the one form where flattening
+// is right: the module *is* that object, so the shape's members are the
+// module's own flat members — the same flattening `emitLibraryDeclarations`
+// performs on the markdown side.
+describe("tsDefoldSurface resolves an `export =` handle to its shape", () => {
+  test("the handle's interface members replace the handle itself", () => {
+    const dts = [
+      "interface CoreModule {",
+      "  c_width: number;",
+      "  create(id: hash): void;",
+      "}",
+      "const exportThis: CoreModule;",
+      "export = exportThis;",
+    ].join("\n");
+    expect(tsDefoldMembers(dts)).toEqual(["c_width", "create"]);
+    const surface = tsDefoldSurface(dts);
+    expect(surface.get("create")?.kind).toBe("function");
+    expect(surface.get("c_width")?.kind).toBe("const");
+  });
+
+  test("the alias walks an intersection and unwraps `Readonly<>`, taking nothing from a non-object arm", () => {
+    const dts = [
+      "interface CoreModule {",
+      "  c_width: number;",
+      "  create(id: hash): void;",
+      "}",
+      "type CameraMap = LuaMap<hash, { behavior: hash; near: number }>;",
+      "type Starley = CameraMap & Readonly<CoreModule>;",
+      "const exportThis: Starley;",
+      "export = exportThis;",
+    ].join("\n");
+    expect(tsDefoldMembers(dts)).toEqual(["c_width", "create"]);
+  });
+
+  test("a resolved member carries a real signature, so every derived term scores it", () => {
+    const tsDefold = [
+      "interface CoreModule {",
+      "  activate(id: hash): vmath.matrix4;",
+      "  get_offset(id: hash, distance: number): number;",
+      "  get_view(id: hash): vmath.matrix4;",
+      "  shake(id: hash, radius?: number): void;",
+      "}",
+      "const exportThis: CoreModule;",
+      "export = exportThis;",
+    ].join("\n");
+    const markdown = [
+      "function activate(id: hash): void;",
+      "function get_offset(id: hash): number;",
+      "function get_view(id: hash): unknown;",
+      "function shake(id: hash, radius: number): void;",
+    ].join("\n");
+    const comparison = compareFidelityToTsDefold(markdown, tsDefold);
+    expect(comparison.missingMembers).toEqual([]);
+    expect(comparison.addedMembers).toEqual([]);
+    expect(comparison.signatureLossMembers).toEqual(["activate", "get_offset"]);
+    expect(comparison.downgradedMembers).toEqual(["get_view"]);
+    expect(comparison.optionalityLossMembers).toEqual(["shake"]);
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("a handle typed by an undeclared token stays opaque", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function create(id: hash): void;",
+      ["const exportThis: Starly;", "export = exportThis;"].join("\n"),
+    );
+    expect(comparison.tsDefoldMembers).toEqual(["exportThis"]);
+    expect(comparison.opaqueTsDefoldSurface).toBe(true);
+  });
+
+  test("a handle typed by a memberless shape stays opaque", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function create(id: hash): void;",
+      ["interface Empty {}", "const exportThis: Empty;", "export = exportThis;"].join("\n"),
+    );
+    expect(comparison.tsDefoldMembers).toEqual(["exportThis"]);
+    expect(comparison.opaqueTsDefoldSurface).toBe(true);
+  });
+
+  test("a referenced-only shape contributes nothing and a non-handle const keeps its fields nested", () => {
+    const dts = [
+      "interface Options {",
+      "  retries: number;",
+      "}",
+      "type Result = { ok: boolean };",
+      "function run(options: Options): Result;",
+      "const config: Options;",
+    ].join("\n");
+    expect(tsDefoldMembers(dts)).toEqual(["config", "run"]);
   });
 });
