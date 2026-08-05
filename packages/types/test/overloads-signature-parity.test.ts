@@ -229,9 +229,14 @@ function renderOverloadDescriptions(
   return rendered;
 }
 
+// The published arity of each hand-authored overload set: the emitter and the committed
+// store must agree on it, so the number is asserted against both sides below. Changing an
+// entry is a deliberate declaration that the overload set itself changed.
 const OVERLOAD_COUNTS: Record<string, number> = {
   "go.get": 3,
   "go.set": 3,
+  // the descriptions-side pin for this one, and its rationale, live in the
+  // "no JSDoc description" test below
   "go.property": 8,
   "msg.post": 2,
   "msg.url": 3,

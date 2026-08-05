@@ -45,6 +45,9 @@ describe("lua-stdlib signature parity", () => {
       const missing = names.filter((name) => !(name in store));
       expect(missing).toEqual([]);
       expect(names.length).toBeGreaterThan(0);
+      // "exactly one": a duplicated doc element maps two FUNCTION elements onto one store key,
+      // which name-membership alone cannot see
+      expect(new Set(names).size).toBe(names.length);
     });
 
     test(`${ns}: no store key is an orphan — every key names a ${docFixture} FUNCTION element`, async () => {
@@ -52,47 +55,6 @@ describe("lua-stdlib signature parity", () => {
       const names = new Set(await docFunctionNames(docFixture));
 
       const orphans = Object.keys(store).filter((key) => !names.has(key));
-      expect(orphans).toEqual([]);
-    });
-  }
-
-  test("string covers every string.* doc function with zero orphans", async () => {
-    const store = loadSignatureFile(STRING_SIGNATURES_PATH);
-    const names = await docFunctionNames("string_doc.json");
-
-    expect(names.length).toBeGreaterThan(0);
-    const missing = names.filter((name) => !(name in store));
-    const orphans = Object.keys(store).filter((key) => !names.includes(key));
-    expect(missing).toEqual([]);
-    expect(orphans).toEqual([]);
-  });
-
-  const COVERAGE = [
-    { ns: "table", docFixture: "table_doc.json", storePath: TABLE_SIGNATURES_PATH, count: 5 },
-    { ns: "os", docFixture: "os_doc.json", storePath: OS_SIGNATURES_PATH, count: 11 },
-    {
-      ns: "coroutine",
-      docFixture: "coroutine_doc.json",
-      storePath: COROUTINE_SIGNATURES_PATH,
-      count: 6,
-    },
-    { ns: "math", docFixture: "math_doc.json", storePath: MATH_SIGNATURES_PATH, count: 28 },
-    { ns: "bit", docFixture: "bit_doc.json", storePath: BIT_SIGNATURES_PATH, count: 12 },
-    { ns: "debug", docFixture: "debug_doc.json", storePath: DEBUG_SIGNATURES_PATH, count: 14 },
-    { ns: "package", docFixture: "package_doc.json", storePath: PACKAGE_SIGNATURES_PATH, count: 7 },
-    { ns: "base", docFixture: "base_doc.json", storePath: BASE_SIGNATURES_PATH, count: 27 },
-    { ns: "socket", docFixture: "socket_doc.json", storePath: SOCKET_SIGNATURES_PATH, count: 71 },
-  ];
-
-  for (const { ns, docFixture, storePath, count } of COVERAGE) {
-    test(`${ns} covers all ${count} ${ns}.* doc functions with zero orphans`, async () => {
-      const store = loadSignatureFile(storePath);
-      const names = await docFunctionNames(docFixture);
-
-      expect(names.length).toBe(count);
-      const missing = names.filter((name) => !(name in store));
-      const orphans = Object.keys(store).filter((key) => !names.includes(key));
-      expect(missing).toEqual([]);
       expect(orphans).toEqual([]);
     });
   }
