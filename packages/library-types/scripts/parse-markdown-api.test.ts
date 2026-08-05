@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { type MarkdownDoc, type MarkdownElement, parseMarkdownApi } from "./parse-markdown-api";
+import {
+  type MarkdownDoc,
+  type MarkdownElement,
+  type MarkdownParam,
+  parseMarkdownApi,
+} from "./parse-markdown-api";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const FIXTURE = readFileSync(
@@ -346,6 +351,72 @@ describe("parseMarkdownApi splits a comma-listed type group into a union", () =>
 
   test("empty segments are dropped", () => {
     expect(typesOf("string, , number")).toEqual(["string", "number"]);
+  });
+});
+
+describe("parseMarkdownApi reads escaped and comma-spanning header brackets", () => {
+  function paramsOf(signature: string, names: string[], bullets?: string[]): MarkdownParam[] {
+    const doc = parseMarkdownApi(
+      [
+        `### ${signature}`,
+        "Do a thing.",
+        "",
+        "**PARAMETERS**",
+        ...(bullets ?? names.map((name) => `* \`${name}\` (number) - The ${name}`)),
+        "",
+      ].join("\n"),
+    );
+    return element(doc, signature.slice(0, signature.indexOf("(")))?.parameters ?? [];
+  }
+
+  function optionalNames(params: MarkdownParam[]): string[] {
+    return params.filter((p) => p.is_optional === "True").map((p) => p.name);
+  }
+
+  test("an escaped single argument is optional under a clean bare name", () => {
+    const params = paramsOf("mod.fn(a, \\[b])", ["a", "b"]);
+    expect(params.map((p) => p.name)).toEqual(["a", "b"]);
+    expect(optionalNames(params)).toEqual(["b"]);
+  });
+
+  test("an escaped comma-spanning group marks only the bracketed argument optional", () => {
+    // rendy writes `### function rendy.shake(camera_id, radius, intensity, duration \[, scaler])`;
+    // the backslash is a README rendering artifact and must not reach a slot name.
+    const params = paramsOf("mod.fn(a, b \\[, c])", ["a", "b", "c"]);
+    expect(params.map((p) => p.name)).toEqual(["a", "b", "c"]);
+    expect(params.some((p) => p.name.includes("\\"))).toBe(false);
+    expect(optionalNames(params)).toEqual(["c"]);
+  });
+
+  test("an unescaped comma-spanning group marks only the bracketed argument optional", () => {
+    // persist writes `### persist.create(file_name, data [, overwrite])`.
+    const params = paramsOf("mod.fn(a, b [, c])", ["a", "b", "c"]);
+    expect(optionalNames(params)).toEqual(["c"]);
+  });
+
+  test("every argument inside a multi-argument group is optional", () => {
+    const params = paramsOf("mod.fn(a, [b, c])", ["a", "b", "c"]);
+    expect(optionalNames(params)).toEqual(["b", "c"]);
+  });
+
+  test("separately bracketed arguments stay optional", () => {
+    const params = paramsOf("mod.fn(a, [b], [c])", ["a", "b", "c"]);
+    expect(optionalNames(params)).toEqual(["b", "c"]);
+  });
+
+  test("a lone bracketed argument is optional", () => {
+    const params = paramsOf("mod.fn([a])", ["a"]);
+    expect(optionalNames(params)).toEqual(["a"]);
+  });
+
+  test("a `[` inside a bullet's (type) group is not an optionality marker", () => {
+    const params = paramsOf(
+      "mod.fn(opts)",
+      ["opts"],
+      ["* `opts` (table[string, number]) - a lookup"],
+    );
+    expect(params.map((p) => p.types)).toEqual([["table[string, number]"]]);
+    expect(params[0]?.is_optional).toBeUndefined();
   });
 });
 
