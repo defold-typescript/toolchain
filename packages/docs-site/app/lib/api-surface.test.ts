@@ -26,6 +26,7 @@ import {
   outerCallArity,
 } from "./api-surface";
 import {
+  libraryModuleDirs,
   libraryRouteSlug,
   listApiVersions,
   loadApiSurface,
@@ -267,6 +268,22 @@ describe("loadApiSurface library pages", () => {
     expect(meta.importString).toBe('import * as yagames from "yagames.yagames"');
   });
 
+  // starly severed under the bare namespace like yagames, and is the corpus's one
+  // `export =` surface — so this also proves the handle's members survive the
+  // authored lane far enough to render a page at all.
+  test("the severed export-handle library renders as maintained-here at its pin", () => {
+    const starly = libraryPages.find((p) => p.namespace === "starly");
+    expect(starly).toBeDefined();
+    expect(starly?.route).toBe("/api/starly");
+    const meta = starly?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.authorUrl).toBe("https://github.com/VowSoftware/starly");
+    expect(meta.commit).toBe("85d1b2af8bf0618e7f297da41d03eb55d27e49b6");
+    expect(meta.importString).toBe('import * as starly from "starly.starly"');
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -328,6 +345,19 @@ describe("loadApiSurface library descriptions", () => {
     expect(yagames).toBeDefined();
     expect(yagames?.module.description).toBe(descByDir.yagames);
     expect(yagames?.module.description?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  // starly is the case where the classification dir and the publish namespace are
+  // the same string, so no `library-description-overrides.json` key was needed.
+  // That coincidence does not make the dir half of the fallback sufficient: the
+  // dir map is keyed by *module* (`starly.starly`), never by the bare namespace,
+  // so `dir` is undefined here and the namespace half is what carries the text.
+  test("a description-less api-doc page (starly) resolves through the namespace half alone", () => {
+    const starly = libraryPages.find((p) => p.namespace === "starly");
+    expect(starly).toBeDefined();
+    expect(starly?.module.description).toBe(descByDir.starly);
+    expect(starly?.module.description?.length ?? 0).toBeGreaterThan(0);
+    expect(libraryModuleDirs(REAL_LIBRARY_TYPES_DIR).get("starly")).toBeUndefined();
   });
 
   test("a page whose api-doc fixture already carries a description keeps its own richer text", () => {

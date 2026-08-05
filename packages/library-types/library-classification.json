@@ -578,13 +578,6 @@
       "modules": [
         "platypus.platypus"
       ]
-    },
-    {
-      "dir": "starly",
-      "classification": "already-vendored",
-      "modules": [
-        "starly.starly"
-      ]
     }
   ]
 }
