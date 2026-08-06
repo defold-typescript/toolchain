@@ -142,12 +142,12 @@ describe("codemodDeclaration", () => {
 describe("rawUrl", () => {
   test("composes the pinned raw.githubusercontent URL for a target", () => {
     // Reads the real registry, so the subject must still hold a row; it moves
-    // with each Bucket-C severance (it was `monarch.monarch` until monarch
-    // severed).
-    const target = REGISTRY.targets.find((t) => t.module === "gooey.gooey");
+    // with each Bucket-C severance (it was `monarch.monarch`, then `gooey.gooey`
+    // until gooey severed).
+    const target = REGISTRY.targets.find((t) => t.module === "nakama.nakama");
     expect(target).toBeDefined();
     expect(rawUrl(REGISTRY.source, target as LibraryTarget)).toBe(
-      `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/gooey/gooey.gooey.d.ts`,
+      `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/nakama-defold/nakama.nakama.d.ts`,
     );
   });
 });

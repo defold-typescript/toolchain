@@ -3,19 +3,13 @@
 
 import * as bzAnim from "bzAnim.bzLibrary";
 import * as dicebag from "dicebag.dicebag";
-import * as gooey from "gooey.gooey";
 import * as nakama from "nakama.nakama";
 import * as platypus from "platypus.platypus";
 import * as rendy from "rendy.rendy";
 
 declare const _v3: Vector3;
 
-// gooey.gooey — a button state exposes an `Opaque<"node">` handle and a `Hash`
-// node id; the handle token was renamed without touching the property name.
 declare const _hash: Hash;
-const _button = gooey.button("id", _hash, {}, () => {});
-const _node: Opaque<"node"> = _button.node;
-const _nodeId: Hash = _button.node_id;
 
 // platypus.platypus — a lifecycle constant is a `Hash`; a `PlatypusInstance`'s
 // `velocity` is a `Vector3` and `move` accepts one (upstream `vmath.vector3`),
@@ -53,8 +47,6 @@ rendy.set("camera", _hash, 1);
 rendy.animate("camera", _hash, go.PLAYBACK_ONCE_FORWARD, _v3, go.EASING_LINEAR, 1);
 const _rendyWorld: Vector3 = rendy.screen_to_world("camera", _v3);
 
-void _node;
-void _nodeId;
 void _pFalling;
 void _pVelocity;
 void _dbFlip;
