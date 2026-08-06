@@ -503,13 +503,6 @@
       "modules": []
     },
     {
-      "dir": "gooey",
-      "classification": "already-vendored",
-      "modules": [
-        "gooey.gooey"
-      ]
-    },
-    {
       "dir": "jstodef",
       "classification": "native",
       "modules": [

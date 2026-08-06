@@ -1051,16 +1051,13 @@ describe("metrics migration integrity", () => {
     }
   });
 
-  test("neither is a ts-defold library-targets row, the defold-metrics dir is gone, and 6 rows remain", () => {
+  test("neither is a ts-defold library-targets row and the defold-metrics dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     for (const mod of MODULES) {
       expect(targets.some((t) => t.module === `metrics.${mod}`)).toBe(false);
     }
-    // The count catches a cutover that took a third row with it; the per-module
-    // absence checks above cannot.
-    expect(targets.length).toBe(6);
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -1105,5 +1102,101 @@ describe("metrics migration integrity", () => {
       expect(include).toContain(`generated/metrics.${mod}.d.ts`);
     }
     expect(include).toContain("test-d/metrics-usage.test-d.ts");
+  });
+});
+
+// The ninth Bucket-C severance, on the starly bare-namespace template: the
+// ts-defold fixture and the golden are *not* byte-identical (the golden maps
+// `hash` -> `Hash`, `node` -> `Opaque<"node">` and `vmath.vector3` -> `Vector3`
+// across the seven state interfaces), so the fork has to be taken from the
+// golden or it ships the unmapped spelling.
+//
+// The correction is `group`'s arity. Upstream `gooey/gooey.lua:191` at tag
+// 10.5.3 declares `function M.group(id, action_id, action, fn)`; ts-defold bound
+// the two parameters its LDoc block lists instead, so the three-argument call
+// every README example writes does not type-check. Unlike yagames the correction
+// moves no recorded comparison term, so the fork's own content is what proves it
+// landed — assert on the vendored fork, not only the emitted golden, because a
+// correction applied to `generated/` alone is erased by the next regen.
+describe("gooey.gooey migration integrity", () => {
+  const OTHER_FUNCTIONS = [
+    "button",
+    "checkbox",
+    "radio",
+    "static_list",
+    "dynamic_list",
+    "horizontal_dynamic_list",
+    "vertical_dynamic_list",
+    "horizontal_static_list",
+    "vertical_static_list",
+    "vertical_scrollbar",
+    "input",
+  ];
+
+  test("gooey is registered in authored-targets.json under its bare namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const gooey = targets.find((t) => t.namespace === "gooey");
+    expect(gooey).toBeDefined();
+    expect(gooey?.moduleId).toBe("gooey.gooey");
+    expect(gooey?.repo).toBe("https://github.com/britzl/gooey");
+    expect(gooey?.ref).toBe("10.5.3");
+    expect(gooey?.license).toBe("MIT");
+    expect(gooey?.authored).toBe("fixtures/authored/gooey.gooey.d.ts");
+    expect(gooey?.generated).toBe("generated/gooey.d.ts");
+    expect(gooey?.apiDoc).toBe("api-doc/gooey.json");
+  });
+
+  test("gooey.gooey is no longer a ts-defold library-targets row, the gooey dir is gone, and 5 rows remain", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "gooey.gooey")).toBe(false);
+    // The count catches a cutover that took a second row with it; the absence
+    // check above cannot.
+    expect(targets.length).toBe(5);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "gooey")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/gooey.gooey.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/gooey.gooey.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/gooey.gooey.json"))).toBe(false);
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./gooey.gooey" in exports).toBe(false);
+  });
+
+  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/gooey.d.ts");
+    expect(include).toContain("test-d/gooey-usage.test-d.ts");
+    expect(include).not.toContain("generated/gooey.gooey.d.ts");
+  });
+
+  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
+    const authored = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
+    expect(authored).toContain('node: Opaque<"node">;');
+    expect(authored).toContain("node_id: Hash;");
+    expect(authored).toContain('LuaMap<Hash, Opaque<"node">>');
+    expect(authored).toContain("scroll: Vector3;");
+    expect(authored).not.toContain(": hash;");
+    expect(authored).not.toContain("vmath.vector3");
+  });
+
+  test("the group correction landed on the vendored fork, leaving the other declarations intact", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
+    expect(fork).toMatch(
+      /export function group\(\s*group_id: Hash \| string,\s*action_id: Hash,\s*action: table,\s*group_fn: \(\) => void,\s*\): table;/,
+    );
+    expect(fork).not.toContain("export function group(group_id: string, fn: () => void): table;");
+    for (const fn of OTHER_FUNCTIONS) {
+      expect(fork).toContain(`export function ${fn}(`);
+    }
   });
 });

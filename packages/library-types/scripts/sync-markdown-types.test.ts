@@ -145,43 +145,43 @@ describe("evaluateMarkdownCandidate", () => {
   //
   // The subject has to be a library that still holds a `library-targets.json`
   // row, because `evaluateMarkdownCandidate` resolves the ts-defold snapshot
-  // from it; it moves with each Bucket-C severance (it was `monarch.monarch`
-  // until monarch severed).
-  const GOOEY: MarkdownTarget = {
-    repo: "https://github.com/britzl/gooey",
-    ref: "10.5.3",
-    license: "MIT",
+  // from it; it moves with each Bucket-C severance (it was `monarch.monarch`,
+  // then `gooey.gooey` until gooey severed).
+  const DICEBAG: MarkdownTarget = {
+    repo: "https://github.com/8bitskull/dicebag",
+    ref: "0.3",
+    license: "CC0-1.0",
     markdown: "README.md",
-    moduleId: "gooey.gooey",
-    namespace: "gooey.gooey",
-    generated: "generated/gooey.gooey.d.ts",
-    apiDoc: "api-doc/gooey.gooey.json",
-    fidelity: "fidelity/gooey.gooey.json",
+    moduleId: "dicebag.dicebag",
+    namespace: "dicebag.dicebag",
+    generated: "generated/dicebag.dicebag.d.ts",
+    apiDoc: "api-doc/dicebag.dicebag.json",
+    fidelity: "fidelity/dicebag.dicebag.json",
     decision: "no-go",
   };
 
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
-    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, GOOEY);
-    expect(result.emitted).toContain("declare module 'gooey.gooey' {");
-    expect(result.emitted).toContain("function button(");
-    expect(result.markdownMembers).toContain("button");
-    expect(result.tsDefoldMembers).toContain("button");
+    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, DICEBAG);
+    expect(result.emitted).toContain("declare module 'dicebag.dicebag' {");
+    expect(result.emitted).toContain("function flip_coin(");
+    expect(result.markdownMembers).toContain("flip_coin");
+    expect(result.tsDefoldMembers).toContain("flip_coin");
     expect(result.decision).toBe("no-go");
   });
 
   test("writes nothing — the live in-place goldens survive byte-identical", async () => {
-    const live = [GOOEY.generated, GOOEY.apiDoc].map((rel) => ({
+    const live = [DICEBAG.generated, DICEBAG.apiDoc].map((rel) => ({
       rel,
       before: readFileSync(join(PACKAGE_ROOT, rel), "utf8"),
     }));
 
-    await evaluateMarkdownCandidate(PACKAGE_ROOT, GOOEY);
+    await evaluateMarkdownCandidate(PACKAGE_ROOT, DICEBAG);
 
     for (const { rel, before } of live) {
       expect(readFileSync(join(PACKAGE_ROOT, rel), "utf8")).toBe(before);
     }
     // The fidelity path has no live occupant, so it must simply never appear.
-    expect(existsSync(join(PACKAGE_ROOT, GOOEY.fidelity))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, DICEBAG.fidelity))).toBe(false);
   });
 });
 

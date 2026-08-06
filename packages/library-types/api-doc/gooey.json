@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "gooey.gooey",
+    "namespace": "gooey",
     "brief": "",
     "description": ""
   },
@@ -1754,12 +1754,28 @@
           "name": "group_id",
           "doc": "",
           "types": [
-            "string"
+            "Hash | string"
           ],
           "is_optional": "False"
         },
         {
-          "name": "fn",
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_fn",
           "doc": "",
           "types": [
             "() => void"
