@@ -148,15 +148,6 @@
       ]
     },
     {
-      "dir": "defold-richtext",
-      "classification": "already-vendored",
-      "modules": [
-        "richtext.color",
-        "richtext.richtext",
-        "richtext.tags"
-      ]
-    },
-    {
       "dir": "defold-scene3d",
       "classification": "native",
       "modules": [

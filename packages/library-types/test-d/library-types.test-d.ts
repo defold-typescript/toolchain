@@ -9,9 +9,6 @@ import * as mem from "metrics.mem";
 import * as nakama from "nakama.nakama";
 import * as platypus from "platypus.platypus";
 import * as rendy from "rendy.rendy";
-import * as richtextColor from "richtext.color";
-import * as richtext from "richtext.richtext";
-import * as richtextTags from "richtext.tags";
 
 declare const _v3: Vector3;
 
@@ -29,19 +26,6 @@ const _pFalling: Hash = platypus.FALLING;
 declare const _pInstance: ReturnType<typeof platypus.create>;
 const _pVelocity: Vector3 = _pInstance.velocity;
 _pInstance.move(_v3);
-
-// richtext.* — color constants and created words rename Defold core types to
-// Vector4 and Opaque<"node"> while preserving passthrough LuaMultiReturn.
-const _richRed: Vector4 = richtextColor.COLORS.red;
-const [_richWords, _richMetrics] = richtext.create("hi", "default");
-declare const _richWord: (typeof _richWords)[number];
-const _richNode: Opaque<"node"> = _richWord.node;
-const _richWordColor: Vector4 = _richWord.color;
-const _richWidth: number = _richMetrics.width;
-const _taggedWords = richtext.tagged(_richWords, "em");
-declare const _taggedWord: (typeof _taggedWords)[number];
-const _taggedNode: Opaque<"node"> = _taggedWord.node;
-richtextTags.register("em", () => {});
 
 // dicebag.dicebag — `flip_coin` returns a boolean; `bag_draw` accepts a
 // `string | number | Hash`, proving the upstream `hash` reference was renamed.
@@ -87,11 +71,6 @@ void _node;
 void _nodeId;
 void _pFalling;
 void _pVelocity;
-void _richRed;
-void _richNode;
-void _richWordColor;
-void _richWidth;
-void _taggedNode;
 void _dbFlip;
 void _dbDraw;
 void _nakamaAccount;

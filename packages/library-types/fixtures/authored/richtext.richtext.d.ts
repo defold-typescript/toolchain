@@ -5,10 +5,10 @@
  */
 declare module 'richtext.richtext' {
 	type FontSettings = {
-		regular: hash;
-		italic: hash;
-		bold: hash;
-		bold_italic: hash;
+		regular: Hash;
+		italic: Hash;
+		bold: Hash;
+		bold_italic: Hash;
 	};
 
 	type FontsTable = {
@@ -16,21 +16,21 @@ declare module 'richtext.richtext' {
 	};
 
 	type LayersTable = {
-		fonts: LuaMap<hash, hash>; // { [font: hash]: hash };
-		images: LuaMap<hash, hash>; // { [texture: hash]: hash };
-		spinescenes: LuaMap<hash, hash>; // { [spinescene: hash]: hash };
+		fonts: LuaMap<Hash, Hash>; // { [font: hash]: hash };
+		images: LuaMap<Hash, Hash>; // { [texture: hash]: hash };
+		spinescenes: LuaMap<Hash, Hash>; // { [spinescene: hash]: hash };
 	};
 
 	type Settings = {
 		width?: number;
-		position?: vmath.vector3;
+		position?: Vector3;
 		size?: number;
-		parent?: node;
+		parent?: Opaque<"node">;
 		fonts?: FontsTable;
 		layers?: LayersTable;
-		color?: vmath.vector4;
-		shadow?: vmath.vector4;
-		outline?: vmath.vector4;
+		color?: Vector4;
+		shadow?: Vector4;
+		outline?: Vector4;
 		align?: Alignment;
 		valign?: VAlignment;
 		line_spacing?: number;
@@ -42,10 +42,10 @@ declare module 'richtext.richtext' {
 
 	type Word = {
 		size: number;
-		color: vmath.vector4;
-		shadow: vmath.vector4;
-		outline: vmath.vector4;
-		node: node;
+		color: Vector4;
+		shadow: Vector4;
+		outline: Vector4;
+		node: Opaque<"node">;
 		metrics: {
 			width: number;
 			height: number;
@@ -99,7 +99,7 @@ declare module 'richtext.richtext' {
 	export function on_click(
 		words: Word[],
 		action: {
-			node_id: hash;
+			node_id: Hash;
 			text: string;
 			screen_x: number;
 			screen_y: number;
@@ -113,8 +113,8 @@ declare module 'richtext.richtext' {
 	/** Returns the words created by richtext.create() as a plain text string without any formatting or tags. Linebreaks are included in the returned string. */
 	export function plaintext(words: Word[]): string;
 
-	type Alignment = hash & Readonly<{ __brand: 'richtext.alignment' }>;
-	type VAlignment = hash & Readonly<{ __brand: 'richtext.v.alignment' }>;
+	type Alignment = Hash & Readonly<{ __brand: 'richtext.alignment' }>;
+	type VAlignment = Hash & Readonly<{ __brand: 'richtext.v.alignment' }>;
 
 	export const ALIGN_LEFT: Alignment;
 	export const ALIGN_CENTER: Alignment;
