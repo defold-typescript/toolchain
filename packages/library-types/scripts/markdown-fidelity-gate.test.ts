@@ -1335,7 +1335,16 @@ const DICEBAG: LibraryRecord = {
   prefix: "dicebag.",
   classificationDir: "dicebag",
   decisions: [
-    { module: "dicebag", decision: "no-go", reason: "type-downgrade", markdown: "README.md" },
+    {
+      module: "dicebag",
+      decision: "no-go",
+      reason: "type-downgrade",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/dicebag/dicebag.dicebag.d.ts",
+        fixture: "fixtures/authored/dicebag.dicebag.d.ts",
+      },
+    },
   ],
 };
 
@@ -1535,6 +1544,8 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "467465c25b62170b0f179b5a7efea45ae260004498610d51d350b5c7faf16212",
   "fixtures/authored/bzAnim.bzLibrary.d.ts":
     "ba5d870877ae990865553a0591651a9679963d18e2ff848c712f865a14537429",
+  "fixtures/authored/dicebag.dicebag.d.ts":
+    "362638eb3d790cf3d2fe14b07a1b0c5fe66d08a3c1d9933e10e7194d537074c7",
   "fixtures/authored/platypus.platypus.d.ts":
     "94e41a19cc35e9943d3633e2db9a3bd5913364e156feba88ff3b3a0f4ce49c4a",
   "fixtures/authored/richtext.color.d.ts":
@@ -1591,8 +1602,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "2499999d90adccc01b253e41da1a6adfb97ee4f3d46481a61f5ae7b362fe0aa7",
   "fixtures/markdown/yagames.yagames.md":
     "2e62c65b4324e5fa1878cdefaea71dbf7e0e4951ac7094ba24a659754f6a8f3e",
-  "fixtures/ts-defold/dicebag.dicebag.d.ts":
-    "b8ce58a7ea3a57842fd305a659e042e4c6fea4fd4e5b0fae7fb07b79872a12f6",
   "fixtures/ts-defold/rendy.rendy.d.ts":
     "3b7d93b2abeeb5f4089dfb10110648ff66a07a3533b8e1e3b1edc07c8d3ddf03",
 };
@@ -2694,6 +2703,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
 
 describe("dicebag type-downgrade evidence at tag 0.3", () => {
   const readme = () => fixtureText(DICEBAG, decisionFor(DICEBAG, "dicebag"));
+  const severed = severedFor(DICEBAG, "dicebag");
 
   // The 11 documented functions, sorted as `compareFidelityToTsDefold` reports
   // them. Both surfaces carry exactly these.
@@ -2765,7 +2775,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
 
   test("the generous reading clears the one fixable gap and is still no-go", async () => {
     const { doc, decision, downgradedMembers, optionalityLossMembers } =
-      await comparisonForMarkdown(generous(), "dicebag.dicebag");
+      await comparisonForMarkdown(generous(), "dicebag.dicebag", severed);
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
     expect(optionalityLossMembers).toEqual([]);
     expect(downgradedMembers).toEqual(["roll_custom_dice", "table_create", "table_roll"]);
@@ -2773,17 +2783,22 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
   });
 
   test("the residue is upstream underspecification no parser can fix", async () => {
-    const { emitted } = await comparisonForMarkdown(generous(), "dicebag.dicebag");
+    const { emitted } = await comparisonForMarkdown(generous(), "dicebag.dicebag", severed);
     // `sides` and `rollable_table` are documented `(table)`, and `table_roll`
     // returns `(any)`; ts-defold types all three concretely.
     expect(emitted).toContain("sides: Record<string | number, unknown>");
     expect(emitted).toContain("rollable_table: Record<string | number, unknown>");
-    const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/ts-defold", "dicebag.dicebag.d.ts"),
+    // Read off the fork, not the retired ts-defold snapshot. The fork is the
+    // *mapped* golden, whose only difference is `hash` -> `Hash` on the `id`
+    // parameters — provably term-neutral, because `compareFidelityToTsDefold`
+    // keys `downgradedMembers` on the literal `unknown` token alone, never on a
+    // core-type spelling.
+    const snapshot = readFileSync(
+      join(PACKAGE_ROOT, targetFor("dicebag.dicebag", severed).fixture),
       "utf8",
     );
-    expect(tsDefold).toContain("sides: Array<[number, number]>");
-    expect(tsDefold).toContain("rollable_table: Array<[number, any, boolean?]>");
+    expect(snapshot).toContain("sides: Array<[number, number]>");
+    expect(snapshot).toContain("rollable_table: Array<[number, any, boolean?]>");
   });
 
   test("the recorded reason is type-downgrade", () => {

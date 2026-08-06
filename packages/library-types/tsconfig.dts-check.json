@@ -51,6 +51,7 @@
     "generated/gooey.d.ts",
     "generated/bzAnim.d.ts",
     "generated/platypus.d.ts",
+    "generated/dicebag.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",
@@ -70,6 +71,7 @@
     "test-d/gooey-usage.test-d.ts",
     "test-d/bzAnim-usage.test-d.ts",
     "test-d/platypus-usage.test-d.ts",
+    "test-d/dicebag-usage.test-d.ts",
     "test-d/fixtures/engine-handle-module.d.ts",
     "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"

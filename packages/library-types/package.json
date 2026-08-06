@@ -67,9 +67,6 @@
       "types": "./generated/richtext.tags.d.ts"
     },
     "./package.json": "./package.json",
-    "./dicebag.dicebag": {
-      "types": "./generated/dicebag.dicebag.d.ts"
-    },
     "./nakama.nakama": {
       "types": "./generated/nakama.nakama.d.ts"
     },

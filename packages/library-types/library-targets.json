@@ -6,12 +6,6 @@
   },
   "targets": [
     {
-      "module": "dicebag.dicebag",
-      "path": "packages/dicebag/dicebag.dicebag.d.ts",
-      "fixture": "fixtures/ts-defold/dicebag.dicebag.d.ts",
-      "generated": "generated/dicebag.dicebag.d.ts"
-    },
-    {
       "module": "nakama.nakama",
       "path": "packages/nakama-defold/nakama.nakama.d.ts",
       "fixture": "fixtures/ts-defold/nakama.nakama.d.ts",

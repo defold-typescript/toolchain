@@ -329,6 +329,16 @@
       "namespace": "platypus",
       "generated": "generated/platypus.d.ts",
       "apiDoc": "api-doc/platypus.json"
+    },
+    {
+      "repo": "https://github.com/8bitskull/dicebag",
+      "ref": "0.3",
+      "license": "CC0-1.0",
+      "authored": "fixtures/authored/dicebag.dicebag.d.ts",
+      "moduleId": "dicebag.dicebag",
+      "namespace": "dicebag",
+      "generated": "generated/dicebag.d.ts",
+      "apiDoc": "api-doc/dicebag.json"
     }
   ]
 }
