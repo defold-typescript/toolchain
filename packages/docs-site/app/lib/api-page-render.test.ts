@@ -1359,6 +1359,70 @@ describe("LibraryHeading — authored-pin marker", () => {
   });
 });
 
+// A fork whose surface is mostly ambient globals (`boom`, `deftest`) publishes
+// symbols the page's single `import * as …` step does not reach, so the marker
+// and the import caveat are what keep the page from reading as if it did.
+describe("apiPageMarkdown ambient-global marker", () => {
+  const noLink = (text: string) => text;
+
+  const pageWithFunctions = (functions: (Partial<ApiFunction> & { name: string })[]): ApiPage =>
+    libraryPageWithMeta({
+      module: {
+        namespace: "orthographic.camera",
+        brief: "Camera",
+        description: "Orthographic camera helpers.",
+        functions: functions.map(
+          (fn) =>
+            ({
+              brief: "",
+              description: "",
+              parameters: [],
+              returnValues: [],
+              ...fn,
+            }) as ApiFunction,
+        ),
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+    });
+
+  test("marks a global symbol's heading and leaves a module member's unmarked", () => {
+    const md = apiPageMarkdown(
+      pageWithFunctions([{ name: "describe", global: true }, { name: "camera.get_zoom" }]),
+      noLink,
+    );
+    const heading = (signature: string) =>
+      md.split("\n").find((line) => line.startsWith(`### \`${signature}\``)) ?? "";
+
+    expect(heading("describe()")).toContain(
+      'api-badge-dot--global" aria-label="Ambient global" title="Ambient global">G</span>',
+    );
+    expect(heading("camera.get_zoom()")).not.toContain("api-badge-dot");
+  });
+
+  test("a page with a global symbol adds the no-import caveat under the import step", () => {
+    const md = apiPageMarkdown(
+      pageWithFunctions([{ name: "describe", global: true }, { name: "camera.get_zoom" }]),
+      noLink,
+    );
+    expect(md).toContain('import * as camera from "orthographic.camera"');
+    expect(md).toContain("ambient globals");
+    // The caveat belongs to the import step, so it sits after the fenced import.
+    expect(md.indexOf("ambient globals")).toBeGreaterThan(
+      md.indexOf('import * as camera from "orthographic.camera"'),
+    );
+  });
+
+  test("a page with no global symbol leaves the provenance block unchanged", () => {
+    const md = apiPageMarkdown(pageWithFunctions([{ name: "camera.get_zoom" }]), noLink);
+    expect(md).toContain('import * as camera from "orthographic.camera"');
+    expect(md).not.toContain("ambient globals");
+    expect(md).not.toContain("api-badge-dot");
+  });
+});
+
 // The `@deprecated` carried from an authored `.d.ts` renders as text in the same
 // availability block that holds the engine lifecycle facts, so a `library` page —
 // which never has an availability record — still shows the fact.

@@ -21,6 +21,3762 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add",
+      "brief": "Add a game object with a set of components.",
+      "description": "Add a game object with a set of components.",
+      "parameters": [
+        {
+          "name": "comps",
+          "doc": "The components for the game object",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created game object",
+          "types": [
+            "BoomGameObject<T>"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "destroy",
+      "brief": "Destroy a game object and all of its components.",
+      "description": "Destroy a game object and all of its components.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The object to destroy",
+          "types": [
+            "BoomBlankGameObject & Partial<BoomComponent>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "destroy_all",
+      "brief": "Destroy all game objects with a certain tag.",
+      "description": "Destroy all game objects with a certain tag.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "The tag to destroy or undefined to destroy all objects",
+          "types": [
+            "BoomTag"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "object",
+      "brief": "Get game object with specific id.",
+      "description": "Get game object with specific id.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The object or undefined if it doesn't exist",
+          "types": [
+            "(BoomBlankGameObject & Partial<BoomComponent>) | undefined"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "objects",
+      "brief": "Get all game objects.",
+      "description": "Get all game objects.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "All game objects",
+          "types": [
+            "LuaSet<BoomBlankGameObject & Partial<BoomComponent>>"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Get all game objects with the specified tag.",
+      "description": "Get all game objects with the specified tag.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "The tag to get objects for, undefined to get all objects",
+          "types": [
+            "BoomTag"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "List of objects",
+          "types": [
+            "LuaSet<BoomBlankGameObject & Partial<BoomComponent>>"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "every",
+      "brief": "Run callback on every game object with a certain tag.",
+      "description": "Run callback on every game object with a certain tag.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "The tag that must exist on the object",
+          "types": [
+            "BoomTag"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "The callback to run",
+          "types": [
+            "BoomObjectCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "anchor",
+      "brief": "Anchor point for render.",
+      "description": "Anchor point for render.",
+      "parameters": [
+        {
+          "name": "anchor",
+          "doc": "",
+          "types": [
+            "'center' | 'topleft' | 'top' | 'topright' | 'left' | 'right' | 'bottomright' | 'bottom' | 'bottomleft'"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The anchor component",
+          "types": [
+            "AnchorComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "area",
+      "brief": "Create a collider area and enable collision detection.",
+      "description": "Create a collider area and enable collision detection.\nThis will create an area component which is used to describe an area\nwhich can collide with other area components.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Component options (shape, width, height, radius)",
+          "types": [
+            "{ width?: number; height?: number; radius?: number; shape?: 'auto' | 'rect' | 'circle' | 'auto-circle'; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "height",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "radius",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "shape",
+              "doc": "",
+              "types": [
+                "'auto' | 'rect' | 'circle' | 'auto-circle'"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The area component",
+          "types": [
+            "AreaComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "body",
+      "brief": "Physical body that responds to gravity. Requires `AreaComp`",
+      "description": "Physical body that responds to gravity. Requires `AreaComp`\nand `PosComp` components on the game object. This also makes the object solid.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Component options (jump_force, is_static)",
+          "types": [
+            "{ jump_force?: number; is_static?: boolean; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "jump_force",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "is_static",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The body component",
+          "types": [
+            "BodyComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "color",
+      "brief": "Control the color of the game object.",
+      "description": "Control the color of the game object.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "Red (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "g",
+          "doc": "Green (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "Blue (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "a",
+          "doc": "Optional alpha (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The color component",
+          "types": [
+            "ColorComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "double_jump",
+      "brief": "Enables double jump. Requires body component.",
+      "description": "Enables double jump. Requires body component.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Component options",
+          "types": [
+            "{ num_jumps?: number; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "num_jumps",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The double jump component",
+          "types": [
+            "DoubleJumpComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fadein",
+      "brief": "Fade in game object visual components such as sprites.",
+      "description": "Fade in game object visual components such as sprites.",
+      "parameters": [
+        {
+          "name": "time",
+          "doc": "In seconds (default is 1)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The fade in component",
+          "types": [
+            "FadeInComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fixed",
+      "brief": "Make object unaffected by camera.",
+      "description": "Make object unaffected by camera.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The component",
+          "types": [
+            "FixedComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "health",
+      "brief": "Add health related logic to game object.",
+      "description": "Add health related logic to game object.",
+      "parameters": [
+        {
+          "name": "hp",
+          "doc": "Initial health (default is 1)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The health component",
+          "types": [
+            "HealthComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lifespan",
+      "brief": "Destroy the game object after certain amount of time.",
+      "description": "Destroy the game object after certain amount of time.",
+      "parameters": [
+        {
+          "name": "time",
+          "doc": "In seconds",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Fade out duration (default 0 which is no fade out)",
+          "types": [
+            "{ fade?: number; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "fade",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LifespanComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "move",
+      "brief": "Move a game object in a direction of travel and at a specific speed.",
+      "description": "Move a game object in a direction of travel and at a specific speed.",
+      "parameters": [
+        {
+          "name": "direction",
+          "doc": "Direction of movement",
+          "types": [
+            "Vec2"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "Speed of movement in pixels per second",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "MoveComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "offscreen",
+      "brief": "Control the behavior of a game object when it goes out of view.",
+      "description": "Control the behavior of a game object when it goes out of view.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Destroy when going offscreen",
+          "types": [
+            "{ distance?: number; destroy?: boolean; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "distance",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "destroy",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "OffscreenComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "opacity",
+      "brief": "Control the opacity of a game object.",
+      "description": "Control the opacity of a game object.",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "The opacity from 0.0 to 1.0",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "OpacityComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pos",
+      "brief": "Control the position of a game object.",
+      "description": "Control the position of a game object.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "PosComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rotate",
+      "brief": "Apply rotation to the object.",
+      "description": "Apply rotation to the object.",
+      "parameters": [
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The component",
+          "types": [
+            "RotateComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scale",
+      "brief": "Apply a scale to the object.",
+      "description": "Apply a scale to the object.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "defaults to 1",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "defaults to x",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The component",
+          "types": [
+            "ScaleComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sprite",
+      "brief": "Render a sprite.",
+      "description": "Render a sprite.",
+      "parameters": [
+        {
+          "name": "anim",
+          "doc": "Animation or image to use",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Extra options (flip_x, flip_y, width, height)",
+          "types": [
+            "{ atlas?: string | Hash; flip_x?: boolean; flip_y?: boolean; width?: number; height?: number; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "atlas",
+              "doc": "",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "flip_x",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "flip_y",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "height",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "SpriteComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "stay",
+      "brief": "Do not get destroyed on scene switch.",
+      "description": "Do not get destroyed on scene switch.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "StayComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "text",
+      "brief": "Render text.",
+      "description": "Render text.",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Text options (width, font, align)",
+          "types": [
+            "{ font?: string; align?: 'left' | 'right' | 'center'; width?: number; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "font",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "align",
+              "doc": "",
+              "types": [
+                "'left' | 'right' | 'center'"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "TextComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "timer",
+      "brief": "Run certain action after some time.",
+      "description": "Run certain action after some time.",
+      "parameters": [
+        {
+          "name": "n",
+          "doc": "Number of seconds to wait",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "The function to call",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "TimerComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "z",
+      "brief": "Determines the draw order for objects.",
+      "description": "Determines the draw order for objects.\nObject will be drawn on top if z value is bigger.",
+      "parameters": [
+        {
+          "name": "index",
+          "doc": "Z-value of the object",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created component",
+          "types": [
+            "ZComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_collide",
+      "brief": "Register an event that runs when two game objects collide.",
+      "description": "Register an event that runs when two game objects collide.",
+      "parameters": [
+        {
+          "name": "tag1",
+          "doc": "Tag which the first game object must have",
+          "types": [
+            "BoomTag"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tag2",
+          "doc": "Optional tag which the second game object must have",
+          "types": [
+            "BoomTag | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Will receive (collision, cancel) as args",
+          "types": [
+            "(collision: BoomCollision, cancel: BoomCancelEvent) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Cancel event function",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_key_press",
+      "brief": "Register callback that runs when a certain key is pressed.",
+      "description": "Register callback that runs when a certain key is pressed.",
+      "parameters": [
+        {
+          "name": "key_id",
+          "doc": "The key that must be pressed or '*' for any key",
+          "types": [
+            "BoomKeyboardKey"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "The callback",
+          "types": [
+            "BoomEventCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Cancel callback",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_key_release",
+      "brief": "Register callback that runs when a certain key is released.",
+      "description": "Register callback that runs when a certain key is released.",
+      "parameters": [
+        {
+          "name": "key_id",
+          "doc": "The key that must be released or '*' for any key",
+          "types": [
+            "BoomKeyboardKey"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "The callback",
+          "types": [
+            "BoomEventCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Cancel callback",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_click",
+      "brief": "Set mouse click listener.",
+      "description": "Set mouse click listener.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "Optional click on object with tag filter",
+          "types": [
+            "BoomTag"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "Callback when mouse button is clicked",
+          "types": [
+            "BoomObjectCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Cancel listener function",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_click",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "BoomObjectCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_mouse_press",
+      "brief": "Register callback that runs when a mouse button is pressed.",
+      "description": "Register callback that runs when a mouse button is pressed.",
+      "parameters": [
+        {
+          "name": "button",
+          "doc": "Optional (`left`, `middle`, `right`, default is `left`)",
+          "types": [
+            "'left' | 'middle' | 'right'"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Cancel callback",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_mouse_press",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_mouse_release",
+      "brief": "Register callback that runs when a mouse button is released.",
+      "description": "Register callback that runs when a mouse button is released.",
+      "parameters": [
+        {
+          "name": "button",
+          "doc": "Optional (`left`, `middle`, `right`, default is `left`)",
+          "types": [
+            "'left' | 'middle' | 'right'"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Cancel callback",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_mouse_release",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_mouse_move",
+      "brief": "Register callback that runs when the mouse is moved.",
+      "description": "Register callback that runs when the mouse is moved.",
+      "parameters": [
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Cancel callback",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_update",
+      "brief": "Run a function every frame. Register an event that runs every frame,",
+      "description": "Run a function every frame. Register an event that runs every frame,\noptionally for all game objects with certain tag.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "Run event for all objects matching tag (optional)",
+          "types": [
+            "BoomTag"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "The event function to call. Will receive object and cancel function.",
+          "types": [
+            "(object: BoomBlankGameObject & Partial<BoomComponent>, cancel: BoomCancelEvent) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_update",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(cancel: BoomCancelEvent) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_level",
+      "brief": "Construct a level based on symbols.",
+      "description": "Construct a level based on symbols.",
+      "parameters": [
+        {
+          "name": "map",
+          "doc": "List of strings presenting horizontal rows of tiles",
+          "types": [
+            "string[] | LuaSet<string>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Level options (tile_width, tile_height, pos, tiles)",
+          "types": [
+            "{ tile_width: number; tile_height: number; pos?: Vec2; tiles: BoomTiles; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "tile_width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "tile_height",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "pos",
+              "doc": "",
+              "types": [
+                "Vec2"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "tiles",
+              "doc": "",
+              "types": [
+                "BoomTiles"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Game object with tiles as children",
+          "types": [
+            "BoomBlankGameObject & Partial<BoomComponent>"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rand",
+      "brief": "Get a random number. If called with no arguments the function returns a number between 0 and 1.",
+      "description": "Get a random number. If called with no arguments the function returns a number between 0 and 1.\nIf called with a single argument `a` a number between 0 and `a` is returned.\nIf called with two arguments `a` and `b` a number between `a` and `b` is returned.",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Float number",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "randi",
+      "brief": "Same as `rand()` but floored.",
+      "description": "Same as `rand()` but floored.\nIf called with two arguments `a` and `b` a number between `a` and `b` is returned.",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Integer number",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rgb",
+      "brief": "Create a color.",
+      "description": "Create a color.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "Red component (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "g",
+          "doc": "Green component (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "Blue component (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "a",
+          "doc": "Alpha component (0.0 to 1.0)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created color",
+          "types": [
+            "ColorComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "rgb.RED",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "rgb.GREEN",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "rgb.BLUE",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "rgb.BLACK",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "rgb.WHITE",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rgb.from_hex",
+      "brief": "Create color from a hex string.",
+      "description": "Create color from a hex string.",
+      "parameters": [
+        {
+          "name": "hex",
+          "doc": "Hex string in RGB, RGBA, RRGGBB or RRGGBBAA format (with optional initial #).",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created color.",
+          "types": [
+            "ColorComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RED",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "GREEN",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "BLUE",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "BLACK",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WHITE",
+      "types": [
+        "ColorComp"
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "from_hex",
+      "brief": "Create color from a hex string.",
+      "description": "Create color from a hex string.",
+      "parameters": [
+        {
+          "name": "hex",
+          "doc": "Hex string in RGB, RGBA, RRGGBB or RRGGBBAA format (with optional initial #).",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created color",
+          "types": [
+            "ColorComp"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tween",
+      "brief": "Tween a value from one to another.",
+      "description": "Tween a value from one to another.\nThe transition will happen over a certain duration using a specific easing function.",
+      "parameters": [
+        {
+          "name": "from",
+          "doc": "Start value",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "End value",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "Time in seconds to go from start to end value",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "Which easing algorithm to use (default EASING_LINEAR)",
+          "types": [
+            "BoomEasing | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "set_value",
+          "doc": "Function to call when the value has changed",
+          "types": [
+            "(endValue: number) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "A tween object",
+          "types": [
+            "Tween"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "tween",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vec2"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "Vec2"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "BoomEasing | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "set_value",
+          "doc": "",
+          "types": [
+            "(endValue: Vec2) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Tween"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "vec2",
+      "brief": "Create a Vec2.",
+      "description": "Create a Vec2.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "Horizontal position",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "y",
+          "doc": "Vertical position",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The created Vec2",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "vec2.UP",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "vec2.RIGHT",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "vec2.DOWN",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "vec2.LEFT",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "UP",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RIGHT",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DOWN",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "VARIABLE",
+      "name": "LEFT",
+      "types": [
+        "Vec2"
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene",
+      "brief": "Create a scene.",
+      "description": "Create a scene.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Unique id of the scene",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "The scene code",
+          "types": [
+            "(...args: unknown[]) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show",
+      "brief": "Show a scene.",
+      "description": "Show a scene.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the scene to show",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "args",
+          "doc": "Additional arguments to pass to the scene function",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wait",
+      "brief": "Run a callback after a certain number of seconds.",
+      "description": "Run a callback after a certain number of seconds.",
+      "parameters": [
+        {
+          "name": "seconds",
+          "doc": "Number of seconds to wait",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "Function to call",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Call to cancel the timer",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "loop",
+      "brief": "Run a callback repeatedly with a certain interval.",
+      "description": "Run a callback repeatedly with a certain interval.",
+      "parameters": [
+        {
+          "name": "seconds",
+          "doc": "Interval between calls",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "Function to call",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Call to cancel the timer",
+          "types": [
+            "BoomCancelEvent"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_key_down",
+      "brief": "Check if a certain key is down.",
+      "description": "Check if a certain key is down.",
+      "parameters": [
+        {
+          "name": "key_id",
+          "doc": "The key that must be down, or undefined for any key",
+          "types": [
+            "BoomKeyboardKey"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if down",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mouse_pos",
+      "brief": "Get mouse position (screen coordinates).",
+      "description": "Get mouse position (screen coordinates).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Mouse position",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cam_pos",
+      "brief": "Get or set camera position.",
+      "description": "Get or set camera position.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number | Vec2"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cam_pos",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cam_rot",
+      "brief": "Get or set camera rotation.",
+      "description": "Get or set camera rotation.",
+      "parameters": [
+        {
+          "name": "angle",
+          "doc": "The angle to set or undefined to get current rotation",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cam_rot",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cam_zoom",
+      "brief": "Get or set the camera zoom.",
+      "description": "Get or set the camera zoom.",
+      "parameters": [
+        {
+          "name": "zoom",
+          "doc": "The zoom to set or undefined to get the current zoom.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cam_zoom",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_gravity",
+      "brief": "Get gravity.",
+      "description": "Get gravity.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The gravity in pixels per seconds",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_gravity",
+      "brief": "Set gravity.",
+      "description": "Set gravity.",
+      "parameters": [
+        {
+          "name": "gravity",
+          "doc": "Gravity in pixels per seconds",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "width",
+      "brief": "Get screen width.",
+      "description": "Get screen width.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Width of screen",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "height",
+      "brief": "Get screen height.",
+      "description": "Get screen height.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Height of screen",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "center",
+      "brief": "Get screen center position.",
+      "description": "Get screen center position.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Center of screen",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dt",
+      "brief": "Get the delta time.",
+      "description": "Get the delta time.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Delta time",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "time",
+      "brief": "Get time since start.",
+      "description": "Get time since start.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Time since start in seconds",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BoomBlankGameObject",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "add",
+          "brief": "Add a game object as a child of this game object",
+          "description": "Add a game object as a child of this game object\nby composing it with components.",
+          "parameters": [
+            {
+              "name": "comps",
+              "doc": "The game object components",
+              "types": [
+                "T"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The game object",
+              "types": [
+                "BoomGameObject<T>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "destroy",
+          "brief": "Destroy this game object.",
+          "description": "Destroy this game object.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is",
+          "brief": "Check if there is a certain tag on this game object.",
+          "description": "Check if there is a certain tag on this game object.",
+          "parameters": [
+            {
+              "name": "tag",
+              "doc": "The tag to check",
+              "types": [
+                "BoomTag"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Returns true if the tag exists on the game object",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "use",
+          "brief": "Add a component to this game object, or a component-less tag.",
+          "description": "Add a component to this game object, or a component-less tag.",
+          "parameters": [
+            {
+              "name": "comp",
+              "doc": "The component or tag to use",
+              "types": [
+                "BoomTag | BoomComponent"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "unuse",
+          "brief": "Remove a component from this game object.",
+          "description": "Remove a component from this game object.",
+          "parameters": [
+            {
+              "name": "tag",
+              "doc": "The component tag to remove",
+              "types": [
+                "BoomTag"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "c",
+          "brief": "Get state for a specific component on this game object.",
+          "description": "Get state for a specific component on this game object.",
+          "parameters": [
+            {
+              "name": "tag",
+              "doc": "The component to get state for",
+              "types": [
+                "BoomTag"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The component state",
+              "types": [
+                "BoomBlankGameObject & Partial<BoomComponent> & { readonly tag: BoomTag; readonly __url?: Url; }"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "dirty",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "children",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap"
+          ]
+        },
+        {
+          "name": "comps",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<string | number, LuaMap<string, unknown>>"
+          ]
+        },
+        {
+          "name": "properties",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<string, unknown>"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "ids",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<Hash, Hash>"
+          ]
+        },
+        {
+          "name": "tags",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<string | Hash, boolean>"
+          ]
+        },
+        {
+          "name": "pre_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaSet<Function>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaSet<Function>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "post_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaSet<Function>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AnchorComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'anchor'"
+          ]
+        },
+        {
+          "name": "anchor",
+          "brief": "Anchor point.",
+          "description": "Anchor point.",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AreaComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "get_collisions",
+          "brief": "Get all collisions currently happening for this component.",
+          "description": "Get all collisions currently happening for this component.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Set of collisions",
+              "types": [
+                "LuaSet<BoomCollision>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "check_collision",
+          "brief": "Check collision between this component and another object.",
+          "description": "Check collision between this component and another object.",
+          "parameters": [
+            {
+              "name": "other_object",
+              "doc": "The game object to check collisions with.",
+              "types": [
+                "BoomBlankGameObject & Partial<BoomComponent>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "boolean (`true` if colliding with the other object), Collision data",
+              "types": [
+                "LuaMultiReturn<[ boolean, BoomCollision ]>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_collide",
+          "brief": "Register event listener when this component is colliding.",
+          "description": "Register event listener when this component is colliding.",
+          "parameters": [
+            {
+              "name": "tag",
+              "doc": "Optional tag which colliding object must have, undefined for all collisions",
+              "types": [
+                "BoomTag | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "cb",
+              "doc": "Function to call when collision is detected",
+              "types": [
+                "(data: BoomCollision) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_click",
+          "brief": "Register event listener when this component is clicked.",
+          "description": "Register event listener when this component is clicked.",
+          "parameters": [
+            {
+              "name": "cb",
+              "doc": "Function to call when clicked",
+              "types": [
+                "BoomObjectCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "has_point",
+          "brief": "Check if a point is within the area of this component.",
+          "description": "Check if a point is within the area of this component.",
+          "parameters": [
+            {
+              "name": "point",
+              "doc": "The point to check",
+              "types": [
+                "undefined"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "`true` if point is within area",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'area'"
+          ]
+        },
+        {
+          "name": "area_url",
+          "brief": "Url of the collision object used by the area.",
+          "description": "Url of the collision object used by the area.\nUndefined on the first frame that the object is created.",
+          "types": [
+            "Url | undefined"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pre_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "destroy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BodyComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "jump",
+          "brief": "Add upward force.",
+          "description": "Add upward force.",
+          "parameters": [
+            {
+              "name": "force",
+              "doc": "The upward force to apply",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'body'"
+          ]
+        },
+        {
+          "name": "is_jumping",
+          "brief": "If the body is jumping (velocity is pointing up).",
+          "description": "If the body is jumping (velocity is pointing up).",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_grounded",
+          "brief": "If the body is in contact with ground.",
+          "description": "If the body is in contact with ground.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_falling",
+          "brief": "If the body is falling (velocity is pointing down).",
+          "description": "If the body is falling (velocity is pointing down).",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "jump_force",
+          "brief": "The upward velocity applied to the body when jumping.",
+          "description": "The upward velocity applied to the body when jumping.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "is_static",
+          "brief": "If the body is static and not affected by gravity.",
+          "description": "If the body is static and not affected by gravity.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "destroy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pre_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ColorComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'color'"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "Current color.",
+          "description": "Current color.",
+          "types": [
+            "{ readonly darken: (n: number) => ColorComp; readonly invert: () => ColorComp; readonly clone: () => ColorComp; readonly lighten: (n: number) => ColorComp; r: number; g: number; b: number; a: number; }"
+          ],
+          "fields": [
+            {
+              "name": "darken",
+              "doc": "Darkens the color.",
+              "types": [
+                "(n: number) => ColorComp"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "invert",
+              "doc": "Invert the color.",
+              "types": [
+                "() => ColorComp"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "clone",
+              "doc": "Clone the color.",
+              "types": [
+                "() => ColorComp"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "lighten",
+              "doc": "Lighten the color.",
+              "types": [
+                "(n: number) => ColorComp"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "r",
+              "doc": "The red color component. (0.0 to 1.0).",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "g",
+              "doc": "The green color component. (0.0 to 1.0).",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "b",
+              "doc": "The blue color component. (0.0 to 1.0).",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "a",
+              "doc": "The alpha (tranparency) of the color. (0.0 to 1.0).",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DoubleJumpComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "double_jump",
+          "brief": "Performs double jump (the initial jump only happens if player is grounded).",
+          "description": "Performs double jump (the initial jump only happens if player is grounded).",
+          "parameters": [
+            {
+              "name": "force",
+              "doc": "The upward force to apply",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'double_jump'"
+          ]
+        },
+        {
+          "name": "num_jumps",
+          "brief": "Maximum number of jumps.",
+          "description": "Maximum number of jumps.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FadeInComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'fadein'"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FixedComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'fixed'"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HealthComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on_heal",
+          "brief": "Register an event that runs when `heal()` is called.",
+          "description": "Register an event that runs when `heal()` is called.",
+          "parameters": [
+            {
+              "name": "cb",
+              "doc": "Function to call",
+              "types": [
+                "(cancel: BoomCancelEvent) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_hurt",
+          "brief": "Register an event that runs when `hurt()` is called.",
+          "description": "Register an event that runs when `hurt()` is called.",
+          "parameters": [
+            {
+              "name": "cb",
+              "doc": "Function to call",
+              "types": [
+                "(cancel: BoomCancelEvent) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_death",
+          "brief": "Register an event that runs when hp is 0 or less.",
+          "description": "Register an event that runs when hp is 0 or less.",
+          "parameters": [
+            {
+              "name": "cb",
+              "doc": "Function to call",
+              "types": [
+                "(cancel: BoomCancelEvent) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "heal",
+          "brief": "Increase hp. Will trigger `on_heal`.",
+          "description": "Increase hp. Will trigger `on_heal`.",
+          "parameters": [
+            {
+              "name": "n",
+              "doc": "Amount to increase",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "hurt",
+          "brief": "Decrease hp. Will trigger `on_hurt`.",
+          "description": "Decrease hp. Will trigger `on_hurt`.",
+          "parameters": [
+            {
+              "name": "n",
+              "doc": "Amount to decrease",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'health'"
+          ]
+        },
+        {
+          "name": "hp",
+          "brief": "Current hp.",
+          "description": "Current hp.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "destroy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LifespanComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'lifespan'"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MoveComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'move'"
+          ]
+        },
+        {
+          "name": "direction",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vec2"
+          ]
+        },
+        {
+          "name": "speed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "OffscreenComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on_exit_screen",
+          "brief": "Register a callback that runs when the object goes out of view.",
+          "description": "Register a callback that runs when the object goes out of view.",
+          "parameters": [
+            {
+              "name": "cb",
+              "doc": "Function to call when the object goes out of view",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_enter_screen",
+          "brief": "Register a callback that runs when the object enters view.",
+          "description": "Register a callback that runs when the object enters view.",
+          "parameters": [
+            {
+              "name": "cb",
+              "doc": "Function to call when the object enters view",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'offscreen'"
+          ]
+        },
+        {
+          "name": "is_offscreen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "destroy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "OpacityComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'opacity'"
+          ]
+        },
+        {
+          "name": "opacity",
+          "brief": "The opacity of the component instance. (0.0 to 1.0).",
+          "description": "The opacity of the component instance. (0.0 to 1.0).",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PosComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "move",
+          "brief": "Move a number of pixels per second.",
+          "description": "Move a number of pixels per second.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "y",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'pos'"
+          ]
+        },
+        {
+          "name": "pos",
+          "brief": "Position in 2D space.",
+          "description": "Position in 2D space.",
+          "types": [
+            "Vec2"
+          ]
+        },
+        {
+          "name": "vel",
+          "brief": "Velocity.",
+          "description": "Velocity.",
+          "types": [
+            "Vec2"
+          ]
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RotateComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'rotate'"
+          ]
+        },
+        {
+          "name": "rotate",
+          "brief": "Updates rotation.",
+          "description": "Updates rotation.",
+          "types": [
+            "(angle: number) => void"
+          ]
+        },
+        {
+          "name": "angle",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ScaleComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'scale'"
+          ]
+        },
+        {
+          "name": "scale_to",
+          "brief": "Set new scale.",
+          "description": "Set new scale.",
+          "types": [
+            "(x: number, y?: number) => void"
+          ]
+        },
+        {
+          "name": "scale_by",
+          "brief": "Change scale.",
+          "description": "Change scale.",
+          "types": [
+            "(x: number, y?: number) => void"
+          ]
+        },
+        {
+          "name": "scale",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SpriteComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "play",
+          "brief": "Play an animation.",
+          "description": "Play an animation.",
+          "parameters": [
+            {
+              "name": "anim",
+              "doc": "The animation to play",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "stop",
+          "brief": "Stop the current animation.",
+          "description": "Stop the current animation.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'sprite'"
+          ]
+        },
+        {
+          "name": "anim",
+          "brief": "The current animation.",
+          "description": "The current animation.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "The width of the sprite.",
+          "description": "The width of the sprite.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "The height of the sprite.",
+          "description": "The height of the sprite.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flip_x",
+          "brief": "If sprite should be flipped horizontally.",
+          "description": "If sprite should be flipped horizontally.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "flip_y",
+          "brief": "If the sprite should be flipped vertically.",
+          "description": "If the sprite should be flipped vertically.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pre_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "destroy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "StayComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'stay'"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TextComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'text'"
+          ]
+        },
+        {
+          "name": "text",
+          "brief": "The text to render.",
+          "description": "The text to render.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "destroy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(dt: number) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TimerComp",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "wait",
+          "brief": "Run a callback function after n seconds.",
+          "description": "Run a callback function after n seconds.",
+          "parameters": [
+            {
+              "name": "n",
+              "doc": "Seconds",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "fn",
+              "doc": "The function to call",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "loop",
+          "brief": "Run a callback function every n seconds.",
+          "description": "Run a callback function every n seconds.",
+          "parameters": [
+            {
+              "name": "n",
+              "doc": "Seconds",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "fn",
+              "doc": "The function to call",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cancel",
+          "brief": "Cancel the timer.",
+          "description": "Cancel the timer.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'timer'"
+          ]
+        },
+        {
+          "name": "destroy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "init",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ZComp",
+      "properties": [
+        {
+          "name": "tag",
+          "brief": "Pushed into the `tags` map when added to a game object.",
+          "description": "Pushed into the `tags` map when added to a game object.",
+          "types": [
+            "'z'"
+          ]
+        },
+        {
+          "name": "z",
+          "brief": "The z value.",
+          "description": "The z value.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Vec2",
+      "properties": [
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "brief": "",
+          "description": "",
+          "types": [
+            "0"
+          ]
+        },
+        {
+          "name": "__type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "dist",
+          "brief": "Get distance between this and another vector.",
+          "description": "Get distance between this and another vector.",
+          "types": [
+            "(compare: Vec2) => number"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BoomCollision",
+      "properties": [
+        {
+          "name": "normal",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "distance",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "source",
+          "brief": "",
+          "description": "",
+          "types": [
+            "BoomBlankGameObject & Omit<AreaComp, 'tag'> & Partial<BoomComponent>"
+          ]
+        },
+        {
+          "name": "target",
+          "brief": "",
+          "description": "",
+          "types": [
+            "BoomBlankGameObject & Omit<AreaComp, 'tag'> & Partial<BoomComponent>"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Tween",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on_end",
+          "brief": "Register an event when finished.",
+          "description": "Register an event when finished.",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "The function to call when the tween has finished",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "finish",
+          "brief": "Finish tween now.",
+          "description": "Finish tween now.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cancel",
+          "brief": "Cancel tween.",
+          "description": "Cancel tween.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ],
+      "global": true
     }
   ]
 }

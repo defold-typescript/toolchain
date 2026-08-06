@@ -990,6 +990,56 @@ describe("apiModuleSymbols", () => {
     expect(by("Handle.tag")?.deprecated).toBe("Read `id`.");
   });
 
+  test("projects the ambient-global marker onto function, variable, and typedef-member symbols", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "describe",
+            brief: "",
+            description: "",
+            global: true,
+            parameters: [],
+            returnValues: [],
+          },
+          { name: "demo.boot", brief: "", description: "", parameters: [], returnValues: [] },
+        ],
+        variables: [
+          { name: "COUNT", brief: "", description: "", types: ["number"], global: true },
+          { name: "demo.SIZE", brief: "", description: "", types: ["number"] },
+        ],
+        typedefs: [
+          {
+            name: "AreaComp",
+            global: true,
+            functions: [
+              { name: "has_point", brief: "", description: "", parameters: [], returnValues: [] },
+            ],
+            properties: [{ name: "tag", brief: "", description: "", types: ["string"] }],
+          },
+          {
+            name: "Options",
+            properties: [{ name: "clear", brief: "", description: "", types: ["boolean"] }],
+          },
+        ],
+      }),
+    );
+    const by = (name: string) => symbols.find((s) => s.name === name);
+
+    expect(by("describe")?.global).toBe(true);
+    expect(by("COUNT")?.global).toBe(true);
+    // A typedef declared at file scope is itself ambient, so each of its members
+    // inherits the marker.
+    expect(by("AreaComp.has_point")?.global).toBe(true);
+    expect(by("AreaComp.tag")?.global).toBe(true);
+
+    for (const name of ["demo.boot", "demo.SIZE", "Options.clear"]) {
+      expect(by(name)).toBeDefined();
+      expect(by(name)?.global).toBeUndefined();
+      expect(Object.keys(by(name) ?? {})).not.toContain("global");
+    }
+  });
+
   test("a deprecated authored-override function tags every emitted row, not just the primary", () => {
     const store: SignatureStore = {
       "demo.stale": {

@@ -86,6 +86,10 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   const elements: Record<string, unknown>[] = [];
   const emittedNames = new Set<string>();
   const referencedTypeNodes: ts.TypeNode[] = [];
+  // Type nodes reached from file-scope declarations, kept apart from the module
+  // block's so an ambient global can never pull a module-block shape onto `/api`
+  // that the module surface alone did not reach.
+  const globalTypeNodes: ts.TypeNode[] = [];
   // Each alias's declaration paired with the bare element it already pushed, so
   // a reachable object-literal alias is filled in by merging into that element
   // rather than by appending a second one — element order stays as emitted.
@@ -94,17 +98,31 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   // Members nested in an `export namespace` (`bridge.bridge`) keep their
   // namespace path so same-named members across namespaces (e.g. `is_supported`)
   // stay distinct instead of colliding in `emittedNames`.
-  const collect = (nodes: readonly ts.Statement[], prefix: string): void => {
+  //
+  // `global` switches the walk to the ambient lane: the file's own statements
+  // rather than the module block's. There the gate is the `declare` modifier
+  // (there is no `export =` to suppress bare declarations, so `emitBare` does not
+  // apply), each element carries the `global` marker, and a type alias is not
+  // pushed eagerly — file scope carries far more incidental type machinery than a
+  // module block, so a shape publishes only once reachability proves a published
+  // signature names it.
+  const collect = (nodes: readonly ts.Statement[], prefix: string, global: boolean): void => {
     const qualify = (name: string): string => (prefix ? `${prefix}.${name}` : name);
+    const mark = global ? { global: true } : {};
+    const typeNodes = global ? globalTypeNodes : referencedTypeNodes;
+    // Inside an ambient namespace every member is ambient by containment, so the
+    // nested lane emits regardless of an `export` keyword.
+    const gate = (stmt: ts.HasModifiers): boolean =>
+      global ? prefix !== "" || isAmbient(stmt) || isExported(stmt) : isExported(stmt) || emitBare;
     for (const stmt of nodes) {
-      if (ts.isFunctionDeclaration(stmt) && stmt.name && (isExported(stmt) || emitBare)) {
-        collectFunctionReferenceTypes(stmt, referencedTypeNodes);
+      if (ts.isFunctionDeclaration(stmt) && stmt.name && gate(stmt)) {
+        collectFunctionReferenceTypes(stmt, typeNodes);
         const name = qualify(stmt.name.text);
-        elements.push(functionElement(stmt, name, sf));
+        elements.push({ ...functionElement(stmt, name, sf), ...mark });
         emittedNames.add(name);
-      } else if (ts.isVariableStatement(stmt) && (isExported(stmt) || emitBare)) {
+      } else if (ts.isVariableStatement(stmt) && gate(stmt)) {
         for (const decl of stmt.declarationList.declarations) {
-          if (decl.type) referencedTypeNodes.push(decl.type);
+          if (decl.type) typeNodes.push(decl.type);
           const fields = objectFields(decl.type, sf);
           const name = qualify(decl.name.getText(sf));
           elements.push({
@@ -114,10 +132,12 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
             ...(fields ? { fields } : {}),
             // The `VariableStatement` carries the JSDoc, not the declaration.
             ...deprecatedKey(stmt),
+            ...mark,
           });
           emittedNames.add(name);
         }
       } else if (ts.isTypeAliasDeclaration(stmt)) {
+        if (global) continue;
         const name = qualify(stmt.name.text);
         const element: Record<string, unknown> = { type: "TYPEDEF", name };
         elements.push(element);
@@ -125,15 +145,16 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         aliasElements.push({ node: stmt, element });
       } else if (
         ts.isModuleDeclaration(stmt) &&
+        !ts.isStringLiteral(stmt.name) &&
         stmt.body &&
         ts.isModuleBlock(stmt.body) &&
-        (isExported(stmt) || emitBare)
+        gate(stmt)
       ) {
-        collect(stmt.body.statements, qualify(stmt.name.getText(sf)));
+        collect(stmt.body.statements, qualify(stmt.name.getText(sf)), global);
       }
     }
   };
-  collect(statements, "");
+  collect(statements, "", false);
 
   const moduleValueInterfaces = exportedValueInterfaces(moduleBlock);
   for (const iface of moduleValueInterfaces) {
@@ -161,8 +182,8 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   }
 
   const moduleValueInterfaceNames = new Set(moduleValueInterfaces.map((iface) => iface.name.text));
-  const reachable = referencedTypeNames(moduleBlock, referencedTypeNodes);
   const declared = moduleBlock ? moduleTypeDeclarations(moduleBlock) : undefined;
+  const reachable = referencedTypeNames(declared, referencedTypeNodes);
 
   for (const { node, element } of aliasElements) {
     const name = node.name.text;
@@ -182,6 +203,37 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
     const typedef = typedefElement(iface, sf);
     if (!typedef) continue;
     elements.push(typedef);
+    emittedNames.add(name);
+  }
+
+  // The ambient lane runs last so every module-block element keeps the index it
+  // has today. Its shapes resolve against file-scope declarations only, by node
+  // identity, so a file-scope shape never borrows a same-named module-block one.
+  collect(sf.statements, "", true);
+  const globalDeclared = typeDeclarationsIn(sf.statements);
+  for (const name of referencedTypeNames(globalDeclared, globalTypeNodes)) {
+    if (emittedNames.has(name)) continue;
+    const alias = globalDeclared.aliases.get(name);
+    if (alias) {
+      if (!ts.isTypeLiteralNode(alias.type)) continue;
+      const { functions, properties } = shapeMembers(alias.type.members, sf);
+      if (functions.length === 0 && properties.length === 0) continue;
+      elements.push({
+        type: "TYPEDEF",
+        name,
+        ...(functions.length > 0 ? { functions } : {}),
+        ...(properties.length > 0 ? { properties } : {}),
+        ...deprecatedKey(alias),
+        global: true,
+      });
+      emittedNames.add(name);
+      continue;
+    }
+    const iface = globalDeclared.interfaces.get(name);
+    if (!iface) continue;
+    const typedef = typedefElement(iface, sf);
+    if (!typedef) continue;
+    elements.push({ ...typedef, global: true });
     emittedNames.add(name);
   }
 
@@ -299,33 +351,41 @@ function typedefElement(
   };
 }
 
-function moduleTypeDeclarations(moduleBlock: ts.ModuleBlock): {
+interface TypeDeclarations {
   aliases: Map<string, ts.TypeAliasDeclaration>;
   interfaces: Map<string, ts.InterfaceDeclaration>;
-} {
+}
+
+function typeDeclarationsIn(statements: readonly ts.Statement[]): TypeDeclarations {
   const aliases = new Map<string, ts.TypeAliasDeclaration>();
   const interfaces = new Map<string, ts.InterfaceDeclaration>();
-  for (const stmt of moduleBlock.statements) {
+  for (const stmt of statements) {
     if (ts.isTypeAliasDeclaration(stmt)) aliases.set(stmt.name.text, stmt);
     if (ts.isInterfaceDeclaration(stmt)) interfaces.set(stmt.name.text, stmt);
   }
   return { aliases, interfaces };
 }
 
+function moduleTypeDeclarations(moduleBlock: ts.ModuleBlock): TypeDeclarations {
+  return typeDeclarationsIn(moduleBlock.statements);
+}
+
 /**
- * Every module-block alias and interface name reachable from an emitted
- * member's type, in first-reached order. Both shape lanes gate on this single
- * traversal — a reachable interface becomes its own TYPEDEF element, a
- * reachable alias over an object literal has that element's members filled in —
- * so a shape no published member names stays off `/api` either way.
+ * Every alias and interface name declared in `declared` that is reachable from
+ * an emitted member's type, in first-reached order. Both shape lanes gate on
+ * this single traversal — a reachable interface becomes its own TYPEDEF element,
+ * a reachable alias over an object literal has that element's members filled in
+ * — so a shape no published member names stays off `/api` either way. The
+ * module-block and file-scope lanes each pass their own declarations, so a name
+ * declared in both resolves to the lane that named it.
  */
 function referencedTypeNames(
-  moduleBlock: ts.ModuleBlock | undefined,
+  declared: TypeDeclarations | undefined,
   typeNodes: ts.TypeNode[],
 ): Set<string> {
   const names = new Set<string>();
-  if (!moduleBlock) return names;
-  const { aliases, interfaces } = moduleTypeDeclarations(moduleBlock);
+  if (!declared) return names;
+  const { aliases, interfaces } = declared;
 
   const visit = (node: ts.Node): void => {
     if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
@@ -403,9 +463,17 @@ function memberName(name: ts.PropertyName, sf: ts.SourceFile): string {
   return name.getText(sf);
 }
 
+// string-named only: a file-scope `declare namespace` is a `ModuleDeclaration`
+// too, so an identifier-named block appearing before the real `declare
+// module '<name>'` would otherwise be mistaken for the module surface.
 function findModuleBlock(sf: ts.SourceFile): ts.ModuleBlock | undefined {
   for (const stmt of sf.statements) {
-    if (ts.isModuleDeclaration(stmt) && stmt.body && ts.isModuleBlock(stmt.body)) {
+    if (
+      ts.isModuleDeclaration(stmt) &&
+      ts.isStringLiteral(stmt.name) &&
+      stmt.body &&
+      ts.isModuleBlock(stmt.body)
+    ) {
       return stmt.body;
     }
   }
@@ -414,6 +482,10 @@ function findModuleBlock(sf: ts.SourceFile): ts.ModuleBlock | undefined {
 
 function isExported(node: ts.HasModifiers): boolean {
   return (ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Export) !== 0;
+}
+
+function isAmbient(node: ts.HasModifiers): boolean {
+  return (ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Ambient) !== 0;
 }
 
 /** The closest non-empty JSDoc summary text attached to a node, tags stripped. */
