@@ -353,9 +353,11 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
   test("attributes boom to britzl/boom as an authored-here forked library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("boom");
     expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("1.0.0");
+    expect(meta.commit).toBe("5d47820c947dc7b68d1702dfadbf27e6e74e9319");
     expect(meta.authorUrl).toBe("https://github.com/britzl/boom");
-    expect(meta.sourceUrl).toBe("https://github.com/britzl/boom/tree/1.0.0");
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/britzl/boom/tree/5d47820c947dc7b68d1702dfadbf27e6e74e9319",
+    );
     expect(meta.license).toBe("MIT");
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
