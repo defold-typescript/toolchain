@@ -279,6 +279,26 @@
       "namespace": "richtext.tags",
       "generated": "generated/richtext.tags.d.ts",
       "apiDoc": "api-doc/richtext.tags.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-metrics",
+      "ref": "1.2.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/metrics.fps.d.ts",
+      "moduleId": "metrics.fps",
+      "namespace": "metrics.fps",
+      "generated": "generated/metrics.fps.d.ts",
+      "apiDoc": "api-doc/metrics.fps.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-metrics",
+      "ref": "1.2.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/metrics.mem.d.ts",
+      "moduleId": "metrics.mem",
+      "namespace": "metrics.mem",
+      "generated": "generated/metrics.mem.d.ts",
+      "apiDoc": "api-doc/metrics.mem.json"
     }
   ]
 }
