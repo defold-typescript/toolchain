@@ -5,7 +5,7 @@
  * @noResolution
  */
 declare module 'in.keyboard' {
-	export const KEYBOARD_INPUT: hash;
+	export const KEYBOARD_INPUT: Hash;
 
 	type KeyboardTypes =
 		| typeof gui.KEYBOARD_TYPE_DEFAULT

@@ -98,22 +98,6 @@
       ]
     },
     {
-      "dir": "defold-input",
-      "classification": "already-vendored",
-      "modules": [
-        "in.accelerometer",
-        "in.button",
-        "in.cursor",
-        "in.gesture",
-        "in.keyboard",
-        "in.mapper",
-        "in.onscreen",
-        "in.state",
-        "in.textbox",
-        "in.triggers"
-      ]
-    },
-    {
       "dir": "defold-lfs",
       "classification": "native",
       "modules": [

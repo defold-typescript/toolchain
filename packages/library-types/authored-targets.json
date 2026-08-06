@@ -119,6 +119,106 @@
       "namespace": "starly",
       "generated": "generated/starly.d.ts",
       "apiDoc": "api-doc/starly.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.accelerometer.d.ts",
+      "moduleId": "in.accelerometer",
+      "namespace": "in.accelerometer",
+      "generated": "generated/in.accelerometer.d.ts",
+      "apiDoc": "api-doc/in.accelerometer.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.button.d.ts",
+      "moduleId": "in.button",
+      "namespace": "in.button",
+      "generated": "generated/in.button.d.ts",
+      "apiDoc": "api-doc/in.button.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.cursor.d.ts",
+      "moduleId": "in.cursor",
+      "namespace": "in.cursor",
+      "generated": "generated/in.cursor.d.ts",
+      "apiDoc": "api-doc/in.cursor.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.gesture.d.ts",
+      "moduleId": "in.gesture",
+      "namespace": "in.gesture",
+      "generated": "generated/in.gesture.d.ts",
+      "apiDoc": "api-doc/in.gesture.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.keyboard.d.ts",
+      "moduleId": "in.keyboard",
+      "namespace": "in.keyboard",
+      "generated": "generated/in.keyboard.d.ts",
+      "apiDoc": "api-doc/in.keyboard.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.mapper.d.ts",
+      "moduleId": "in.mapper",
+      "namespace": "in.mapper",
+      "generated": "generated/in.mapper.d.ts",
+      "apiDoc": "api-doc/in.mapper.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.onscreen.d.ts",
+      "moduleId": "in.onscreen",
+      "namespace": "in.onscreen",
+      "generated": "generated/in.onscreen.d.ts",
+      "apiDoc": "api-doc/in.onscreen.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.state.d.ts",
+      "moduleId": "in.state",
+      "namespace": "in.state",
+      "generated": "generated/in.state.d.ts",
+      "apiDoc": "api-doc/in.state.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.textbox.d.ts",
+      "moduleId": "in.textbox",
+      "namespace": "in.textbox",
+      "generated": "generated/in.textbox.d.ts",
+      "apiDoc": "api-doc/in.textbox.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-input",
+      "ref": "4.7.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/in.triggers.d.ts",
+      "moduleId": "in.triggers",
+      "namespace": "in.triggers",
+      "generated": "generated/in.triggers.d.ts",
+      "apiDoc": "api-doc/in.triggers.json"
     }
   ]
 }

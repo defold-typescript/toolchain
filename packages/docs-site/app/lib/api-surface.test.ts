@@ -27,6 +27,7 @@ import {
 } from "./api-surface";
 import {
   libraryModuleDirs,
+  libraryOwnerByDir,
   libraryRouteSlug,
   listApiVersions,
   loadApiSurface,
@@ -59,6 +60,20 @@ const MISSING_VERSION_FIXTURE_DIR = join(
 );
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+
+// The ten `britzl/defold-input` modules, severed together into the authored lane.
+const DEFOLD_INPUT_MODULES = [
+  "accelerometer",
+  "button",
+  "cursor",
+  "gesture",
+  "keyboard",
+  "mapper",
+  "onscreen",
+  "state",
+  "textbox",
+  "triggers",
+];
 
 // Every `api-doc/*.json` fixture that also has a vendored `generated/*.d.ts`
 // sibling — the exact set the loader is expected to surface as `library` pages.
@@ -284,6 +299,37 @@ describe("loadApiSurface library pages", () => {
     expect(meta.importString).toBe('import * as starly from "starly.starly"');
   });
 
+  // defold-input severed all ten modules at once under `namespace === moduleId`,
+  // so unlike every prior severance no page moved: the routes and import strings
+  // are the ones the ts-defold rows already published, and only the provenance
+  // flips to maintained-here.
+  test("the ten severed in.* pages keep their routes and import strings as maintained-here", () => {
+    for (const mod of DEFOLD_INPUT_MODULES) {
+      const namespace = `in.${mod}`;
+      const page = libraryPages.find((p) => p.namespace === namespace);
+      expect(page).toBeDefined();
+      expect(page?.route).toBe(`/api/${namespace}`);
+      const meta = page?.libraryMeta;
+      expect(meta).toBeDefined();
+      expect(meta?.authoredHere).toBe(true);
+      expect(meta?.authorUrl).toBe("https://github.com/britzl/defold-input");
+      expect(meta?.commit).toBe("4.7.1");
+      expect(meta?.importString).toBe(`import * as ${mod} from "${namespace}"`);
+    }
+  });
+
+  // The one user-visible movement the severance does cause: dropping the
+  // classification dir regroups the ten under their top namespace segment. The
+  // group only keeps its author because the authored-provenance loop attributes
+  // `in` to britzl — without it the pages would orphan under a creator named `in`.
+  test("the ten regroup under `in`, still credited to britzl, with no defold-input dir left", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    expect(libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR).get("in")).toBe("britzl");
+    for (const page of libraryPages) {
+      expect(dirs.get(page.namespace)).not.toBe("defold-input");
+    }
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -358,6 +404,22 @@ describe("loadApiSurface library descriptions", () => {
     expect(starly?.module.description).toBe(descByDir.starly);
     expect(starly?.module.description?.length ?? 0).toBeGreaterThan(0);
     expect(libraryModuleDirs(REAL_LIBRARY_TYPES_DIR).get("starly")).toBeUndefined();
+  });
+
+  // Ten pages whose description was keyed on the `defold-input` classification
+  // dir the severance deletes. The dir half of the fallback cannot be what keeps
+  // them non-empty afterwards — `libraryModuleDirs` has no entry for them at all —
+  // so the namespace half carries every one, which is why the override map had to
+  // gain ten `in.<mod>` keys rather than keep its single `defold-input` one.
+  test("the ten severed in.* pages resolve their descriptions through the namespace half alone", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    for (const mod of DEFOLD_INPUT_MODULES) {
+      const namespace = `in.${mod}`;
+      const page = libraryPages.find((p) => p.namespace === namespace);
+      expect(dirs.get(namespace)).toBeUndefined();
+      expect(page?.module.description).toBe(descByDir[namespace]);
+      expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
+    }
   });
 
   test("a page whose api-doc fixture already carries a description keeps its own richer text", () => {
