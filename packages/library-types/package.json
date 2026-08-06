@@ -72,9 +72,6 @@
     },
     "./bridge.bridge": {
       "types": "./generated/bridge.d.ts"
-    },
-    "./rendy.rendy": {
-      "types": "./generated/rendy.rendy.d.ts"
     }
   },
   "files": [

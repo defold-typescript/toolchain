@@ -1551,14 +1551,11 @@ describe("dicebag.dicebag migration integrity", () => {
     expect(dicebag?.apiDoc).toBe("api-doc/dicebag.json");
   });
 
-  test("dicebag.dicebag is no longer a ts-defold library-targets row, the dicebag dir is gone, and 2 rows remain", () => {
+  test("dicebag.dicebag is no longer a ts-defold library-targets row and the dicebag dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "dicebag.dicebag")).toBe(false);
-    // The count catches a cutover that took a second row with it; the absence
-    // check above cannot. The pin lives in the newest cutover's describe only.
-    expect(targets.length).toBe(2);
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -1613,5 +1610,121 @@ describe("dicebag.dicebag migration integrity", () => {
     expect((doc.info.description ?? "").length).toBeGreaterThan(0);
     const functions = doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name);
     expect([...functions].sort()).toEqual(FUNCTIONS);
+  });
+});
+
+// rendy's recorded markdown verdict is `signature-loss`: the README documents 11
+// members but carries no `**PARAMETERS**` or `**RETURN**` block anywhere, so a
+// markdown emit would render every one of them as a zero-arity `(): void` stub.
+// The fork therefore exists to keep the parameter lists themselves, and the
+// assertions below name the five signatures that emit would have erased rather
+// than a type the README merely underspecified (dicebag's case).
+describe("rendy.rendy migration integrity", () => {
+  const AUTHORED = "fixtures/authored/rendy.rendy.d.ts";
+  const FUNCTIONS = [
+    "animate",
+    "cancel_animations",
+    "cancel_shake",
+    "create_camera",
+    "destroy_camera",
+    "get",
+    "get_display_size",
+    "get_stack",
+    "get_window_size",
+    "screen_to_world",
+    "set",
+    "shake",
+    "world_to_screen",
+  ];
+
+  test("rendy is registered in authored-targets.json under its bare namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const rendy = targets.find((t) => t.namespace === "rendy");
+    expect(rendy).toBeDefined();
+    expect(rendy?.moduleId).toBe("rendy.rendy");
+    expect(rendy?.repo).toBe("https://github.com/whiteboxdev/library-defold-rendy");
+    expect(rendy?.ref).toBe("b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3");
+    expect(rendy?.license).toBe("Zlib");
+    expect(rendy?.authored).toBe(AUTHORED);
+    expect(rendy?.generated).toBe("generated/rendy.d.ts");
+    expect(rendy?.apiDoc).toBe("api-doc/rendy.json");
+  });
+
+  test("rendy.rendy is no longer a ts-defold library-targets row, the dir is gone, and 1 row remains", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "rendy.rendy")).toBe(false);
+    // The count catches a cutover that took a second row with it; the absence
+    // check above cannot. The pin lives in the newest cutover's describe only.
+    expect(targets.length).toBe(1);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "library-defold-rendy")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/rendy.rendy.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/rendy.rendy.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/rendy.rendy.json"))).toBe(false);
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./rendy.rendy" in exports).toBe(false);
+  });
+
+  test("the bare-namespace golden and its compile proof are in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/rendy.d.ts");
+    expect(include).toContain("test-d/rendy-usage.test-d.ts");
+    expect(include).not.toContain("generated/rendy.rendy.d.ts");
+  });
+
+  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    expect(fork).toContain("type CameraId = Hash | string;");
+    expect(fork).toContain("function get_display_size(): Vector3;");
+    expect(fork).toContain("complete_function?: (this: any, url: Url, property: Hash) => void,");
+    expect(fork).not.toContain("| hash");
+    expect(fork).not.toContain("vmath.vector3");
+    expect(fork).not.toContain("vmath.quaternion");
+    expect(fork).not.toContain("vmath.vector4");
+  });
+
+  test("the fork keeps the five signatures a zero-arity markdown emit would have discarded", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    expect(fork).toContain("function get_stack(screen_x: number, screen_y: number): CameraId[];");
+    expect(fork).toMatch(
+      /function screen_to_world\(\s*camera_id: CameraId,\s*screen_position: Vector3,\s*\): Vector3;/,
+    );
+    expect(fork).toMatch(
+      /function world_to_screen\(\s*camera_id: CameraId,\s*world_position: Vector3,\s*\): Vector3;/,
+    );
+    expect(fork).toMatch(
+      /function shake\(\s*camera_id: CameraId,\s*radius: number,\s*intensity: number,\s*duration: number,\s*scaler\?: number,\s*\): void;/,
+    );
+    // rendy is the corpus's only module written with zero `export` keywords —
+    // inside an ambient `declare module` every declaration is exported anyway.
+    for (const fn of FUNCTIONS) {
+      expect(fork).toMatch(new RegExp(`\\n\\tfunction ${fn}\\(`));
+    }
+    expect(fork).not.toContain("export function");
+  });
+
+  test("the api-doc publishes the 13 functions and the CameraId typedef with its own description", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/rendy.json"), "utf8")) as {
+      info: { namespace: string; description?: string };
+      elements: { name: string; type: string }[];
+    };
+    expect(doc.info.namespace).toBe("rendy");
+    // The page intro comes from the fork's own module JSDoc, which is why this
+    // severance owes no `library-description-overrides.json` key.
+    expect((doc.info.description ?? "").length).toBeGreaterThan(0);
+    const functions = doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name);
+    expect([...functions].sort()).toEqual(FUNCTIONS);
+    expect(doc.elements.find((e) => e.name === "CameraId")?.type).toBe("TYPEDEF");
   });
 });

@@ -43,8 +43,11 @@ async function comparison() {
 
 describe("tsDefoldMembers sees bare export-less declarations", () => {
   test("extracts bare `function` members from a module written without `export`", () => {
+    // rendy is the corpus's only module written with zero `export` keywords, and
+    // its fork exhibits that identically. Read through `targetFor` so the lane
+    // the surface lives in follows the severance instead of being hard-coded.
     const rendy = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/ts-defold", "rendy.rendy.d.ts"),
+      join(PACKAGE_ROOT, targetFor("rendy.rendy", severedFor(RENDY, "rendy")).fixture),
       "utf8",
     );
     const members = tsDefoldMembers(rendy);
@@ -1079,7 +1082,16 @@ const RENDY: LibraryRecord = {
   prefix: "rendy.",
   classificationDir: "library-defold-rendy",
   decisions: [
-    { module: "rendy", decision: "no-go", reason: "signature-loss", markdown: "README.md" },
+    {
+      module: "rendy",
+      decision: "no-go",
+      reason: "signature-loss",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/library-defold-rendy/rendy.rendy.d.ts",
+        fixture: "fixtures/authored/rendy.rendy.d.ts",
+      },
+    },
   ],
 };
 
@@ -1454,11 +1466,7 @@ for (const record of LIBRARY_RECORDS) describeLibraryDecisions(record);
  * severed, the authored fork — it was compared against. Derived from the records
  * themselves so a new library extends the coverage by existing. */
 function verdictFixturePaths(): string[] {
-  const paths = new Set<string>([
-    AUTHORED_SNAPSHOT,
-    "fixtures/markdown/orthographic.camera.md",
-    "fixtures/ts-defold/rendy.rendy.d.ts",
-  ]);
+  const paths = new Set<string>([AUTHORED_SNAPSHOT, "fixtures/markdown/orthographic.camera.md"]);
   for (const record of LIBRARY_RECORDS) {
     for (const decision of record.decisions) {
       const moduleId = `${record.prefix}${decision.module}`;
@@ -1548,6 +1556,8 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "362638eb3d790cf3d2fe14b07a1b0c5fe66d08a3c1d9933e10e7194d537074c7",
   "fixtures/authored/platypus.platypus.d.ts":
     "94e41a19cc35e9943d3633e2db9a3bd5913364e156feba88ff3b3a0f4ce49c4a",
+  "fixtures/authored/rendy.rendy.d.ts":
+    "d62d7b5527ba7b6efd9f176f0b09738cc0c70aac88ced8f8bd3609438c716772",
   "fixtures/authored/richtext.color.d.ts":
     "6e724943b4cb548c4baa283226efed0a0c9348b9529f81319a12e4239ac70a83",
   "fixtures/authored/richtext.richtext.d.ts":
@@ -1602,8 +1612,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "2499999d90adccc01b253e41da1a6adfb97ee4f3d46481a61f5ae7b362fe0aa7",
   "fixtures/markdown/yagames.yagames.md":
     "2e62c65b4324e5fa1878cdefaea71dbf7e0e4951ac7094ba24a659754f6a8f3e",
-  "fixtures/ts-defold/rendy.rendy.d.ts":
-    "3b7d93b2abeeb5f4089dfb10110648ff66a07a3533b8e1e3b1edc07c8d3ddf03",
 };
 
 describe("the vendored snapshots the recorded verdicts were derived from", () => {
@@ -2215,6 +2223,15 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
   });
 });
 
+// Re-measured against the authored fork once rendy severed. The fork is the
+// *mapped* golden, so it respells types the retired ts-defold snapshot wrote in
+// engine spelling (`hash` -> `Hash`, `url` -> `Url`, `vmath.vector3` ->
+// `Vector3`, and the quaternion/vector4 pair). That respelling is provably
+// term-neutral: every predicate `compareFidelityToTsDefold` scores keys on
+// parameter count, a literal `void` return, a literal `unknown` token, or a `?`
+// on a parameter name — never on a type name. So all six terms below must read
+// exactly as they did before the lane move; a moved term is a bug to stop and
+// record, never a digest or expectation to re-baseline.
 describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3", () => {
   const readme = () => fixtureText(RENDY, decisionFor(RENDY, "rendy"));
 
