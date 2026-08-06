@@ -449,23 +449,35 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         expect(classification.dirs.some((d) => d.dir === record.classificationDir)).toBe(false);
       });
 
+      // The two recorded fields carry identity at different strengths. The
+      // `fixture` is always `fixtures/authored/<moduleId>.d.ts`, so it is held to
+      // strict identity — that is what catches a `severedSource` copy-pasted from
+      // a sibling module. The `path` is the retired ts-defold row verbatim, whose
+      // basename is the *upstream filename* and coincides with the moduleId only
+      // by convention: `bzAnim.bzLibrary` ships in `bzAnim.bzAnim.d.ts`, so `path`
+      // is held to this library's prefix instead.
       test.each(
         noGo,
       )(`${record.prefix}$module still resolves its snapshot and classification module`, (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         const severed = severedFor(record, decision.module);
         expect(severed).toBeDefined();
-        expect(existsSync(join(PACKAGE_ROOT, targetFor(moduleId, severed).fixture))).toBe(true);
-        expect(classificationModule(moduleId, severed)).toBe(moduleId);
+        const target = targetFor(moduleId, severed);
+        expect(existsSync(join(PACKAGE_ROOT, target.fixture))).toBe(true);
+        expect(basename(target.fixture, ".d.ts")).toBe(moduleId);
+        expect(classificationModule(moduleId, severed)).toStartWith(record.prefix);
       });
 
       // Ten modules, ten distinct forks: a record-level override would resolve
-      // every one of them to whichever single snapshot it held.
+      // every one of them to whichever single snapshot it held. Both fields are
+      // checked because the prefix-shaped `path` assertion above no longer rejects
+      // a sibling's path on its own.
       test("each severed module resolves a distinct snapshot", () => {
-        const fixtures = noGo.map(
-          (d) => targetFor(`${record.prefix}${d.module}`, severedFor(record, d.module)).fixture,
+        const targets = noGo.map((d) =>
+          targetFor(`${record.prefix}${d.module}`, severedFor(record, d.module)),
         );
-        expect(new Set(fixtures).size).toBe(fixtures.length);
+        expect(new Set(targets.map((t) => t.fixture)).size).toBe(targets.length);
+        expect(new Set(targets.map((t) => t.path)).size).toBe(targets.length);
       });
     });
   }
@@ -1368,6 +1380,10 @@ const BZANIM: LibraryRecord = {
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "README.md",
+      severedSource: {
+        path: "packages/bzAnim/bzAnim.bzAnim.d.ts",
+        fixture: "fixtures/authored/bzAnim.bzLibrary.d.ts",
+      },
     },
   ],
 };
@@ -1500,6 +1516,8 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "f79845a7b47f57f4559d7b365c32ce5527ce12e778999e5eee4db3f45793c622",
   "fixtures/authored/gooey.gooey.d.ts":
     "467465c25b62170b0f179b5a7efea45ae260004498610d51d350b5c7faf16212",
+  "fixtures/authored/bzAnim.bzLibrary.d.ts":
+    "ba5d870877ae990865553a0591651a9679963d18e2ff848c712f865a14537429",
   "fixtures/authored/richtext.color.d.ts":
     "6e724943b4cb548c4baa283226efed0a0c9348b9529f81319a12e4239ac70a83",
   "fixtures/authored/richtext.richtext.d.ts":
@@ -1554,8 +1572,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "2499999d90adccc01b253e41da1a6adfb97ee4f3d46481a61f5ae7b362fe0aa7",
   "fixtures/markdown/yagames.yagames.md":
     "2e62c65b4324e5fa1878cdefaea71dbf7e0e4951ac7094ba24a659754f6a8f3e",
-  "fixtures/ts-defold/bzAnim.bzAnim.d.ts":
-    "fc109b8425acadead33b4125e822f8d19634c10c2d7a9022027ed22d6c082191",
   "fixtures/ts-defold/dicebag.dicebag.d.ts":
     "b8ce58a7ea3a57842fd305a659e042e4c6fea4fd4e5b0fae7fb07b79872a12f6",
   "fixtures/ts-defold/platypus.platypus.d.ts":
@@ -2722,6 +2738,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
 
 describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
   const readme = () => fixtureText(BZANIM, decisionFor(BZANIM, "bzLibrary"));
+  const severed = severedFor(BZANIM, "bzLibrary");
 
   // The heading form `parse-markdown-api` reads as a signature section.
   const SIGNATURE_HEADING = /^#{2,3}\s+[A-Za-z_]\w*\.[A-Za-z_]\w*\(.*\)\s*$/;
@@ -2783,7 +2800,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
 
   test("the ts-defold surface is 9 members and its entry points take an options table", () => {
     const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary").fixture),
+      join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary", severed).fixture),
       "utf8",
     );
     expect(tsDefoldMembers(tsDefold)).toEqual(TS_DEFOLD_MEMBERS);
@@ -2804,7 +2821,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
       downgradedMembers,
       signatureLossMembers,
       optionalityLossMembers,
-    } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary");
+    } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary", severed);
     expect(doc.elements.map((e) => e.name.split(".").pop())).toEqual([
       ...SHARED_FUNCTIONS,
       "setMaxPts",
@@ -2822,7 +2839,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
   });
 
   test("every generously hoisted function emits a zero-arity void stub", async () => {
-    const { emitted } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary");
+    const { emitted } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary", severed);
     for (const fn of SHARED_FUNCTIONS) {
       expect(emitted).toContain(`function ${fn}(): void;`);
     }
@@ -2837,5 +2854,29 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
 
   test("the recorded reason is no-signature-section", () => {
     expect(decisionFor(BZANIM, "bzLibrary").reason).toBe("no-signature-section");
+  });
+
+  // Without the dropped row the lookup would throw, so the recorded verdict is
+  // only resolvable because `severedSource` supplies both fields it used to read.
+  // The bare namespace is what makes the dotted golden a dead path here, so the
+  // namespace-conditional golden assertion takes its absence arm.
+  test("the verdict still resolves once the ts-defold row is gone", () => {
+    expect(targetFor("bzAnim.bzLibrary", severed).fixture).toBe(
+      "fixtures/authored/bzAnim.bzLibrary.d.ts",
+    );
+    expect(existsSync(join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary", severed).fixture))).toBe(
+      true,
+    );
+    expect(existsSync(join(PACKAGE_ROOT, "generated/bzAnim.bzLibrary.d.ts"))).toBe(false);
+  });
+
+  // The one target in the corpus whose classification name is not its moduleId,
+  // and the reason the shared severed-branch assertion is prefix-shaped rather
+  // than an identity. Recorded with its real value; a fabricated
+  // `bzAnim.bzLibrary.d.ts` path would satisfy the old form by destroying the
+  // provenance `severedSource.path` exists to carry.
+  test("the upstream filename divergence is recorded, not papered over", () => {
+    expect(classificationModule("bzAnim.bzLibrary", severed)).toBe("bzAnim.bzAnim");
+    expect(severed?.path).toBe("packages/bzAnim/bzAnim.bzAnim.d.ts");
   });
 });

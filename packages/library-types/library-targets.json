@@ -24,12 +24,6 @@
       "generated": "generated/nakama.nakama.d.ts"
     },
     {
-      "module": "bzAnim.bzLibrary",
-      "path": "packages/bzAnim/bzAnim.bzAnim.d.ts",
-      "fixture": "fixtures/ts-defold/bzAnim.bzAnim.d.ts",
-      "generated": "generated/bzAnim.bzLibrary.d.ts"
-    },
-    {
       "module": "rendy.rendy",
       "path": "packages/library-defold-rendy/rendy.rendy.d.ts",
       "fixture": "fixtures/ts-defold/rendy.rendy.d.ts",
