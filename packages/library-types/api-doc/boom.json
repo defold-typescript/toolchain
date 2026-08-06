@@ -2089,6 +2089,58 @@
     },
     {
       "type": "FUNCTION",
+      "name": "to_screen",
+      "brief": "Transform a point from world position to screen position.",
+      "description": "Transform a point from world position to screen position.",
+      "parameters": [
+        {
+          "name": "p",
+          "doc": "Point",
+          "types": [
+            "Vec2"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Screen position",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "to_world",
+      "brief": "Transform a point from screen position to world position.",
+      "description": "Transform a point from screen position to world position.",
+      "parameters": [
+        {
+          "name": "p",
+          "doc": "Point",
+          "types": [
+            "Vec2"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "World position",
+          "types": [
+            "Vec2"
+          ]
+        }
+      ],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
       "name": "get_gravity",
       "brief": "Get gravity.",
       "description": "Get gravity.",
