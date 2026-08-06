@@ -75,6 +75,11 @@ const DEFOLD_INPUT_MODULES = [
   "triggers",
 ];
 
+// The three `britzl/defold-richtext` modules, severed together into the authored
+// lane. Their classification dir is `defold-richtext` but their top namespace
+// segment is `richtext`, so the severance regroups them.
+const RICHTEXT_MODULES = ["color", "richtext", "tags"];
+
 // Every `api-doc/*.json` fixture that also has a vendored `generated/*.d.ts`
 // sibling — the exact set the loader is expected to surface as `library` pages.
 // A markdown-front-end target whose recorded fidelity `decision` is not `go`
@@ -363,6 +368,43 @@ describe("loadApiSurface library pages", () => {
     }
   });
 
+  // richtext severed all three modules under `namespace === moduleId` too, so
+  // again no route or import string moves — only the provenance flips.
+  test("the three severed richtext.* pages keep their routes and import strings as maintained-here", () => {
+    for (const mod of RICHTEXT_MODULES) {
+      const namespace = `richtext.${mod}`;
+      const page = libraryPages.find((p) => p.namespace === namespace);
+      expect(page).toBeDefined();
+      expect(page?.route).toBe(`/api/${namespace}`);
+      const meta = page?.libraryMeta;
+      expect(meta).toBeDefined();
+      expect(meta?.authoredHere).toBe(true);
+      expect(meta?.authorUrl).toBe("https://github.com/britzl/defold-richtext");
+      expect(meta?.commit).toBe("5.22.1");
+      expect(meta?.importString).toBe(`import * as ${mod} from "${namespace}"`);
+    }
+  });
+
+  // Unlike monarch — whose dir and top namespace segment were the same string —
+  // richtext's differ, so dropping `defold-richtext` moves the group key to
+  // `richtext` exactly as `defold-input` moved to `in`. The group keeps its author
+  // only because the authored-provenance loop attributes `richtext` to britzl.
+  test("the three regroup under `richtext`, still credited to britzl, with no defold-richtext dir left", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    expect(libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR).get("richtext")).toBe("britzl");
+    for (const page of libraryPages) {
+      expect(dirs.get(page.namespace)).not.toBe("defold-richtext");
+    }
+    // Three modules in the group, so the `· <leaf>` distinguisher is kept — except
+    // for `richtext.richtext`, whose leaf now equals the group key.
+    for (const mod of RICHTEXT_MODULES) {
+      const page = libraryPages.find((p) => p.namespace === `richtext.${mod}`);
+      expect(page?.displayName).toBe(
+        mod === "richtext" ? "britzl / richtext" : `britzl / richtext · ${mod}`,
+      );
+    }
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -448,6 +490,21 @@ describe("loadApiSurface library descriptions", () => {
     const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
     for (const mod of DEFOLD_INPUT_MODULES) {
       const namespace = `in.${mod}`;
+      const page = libraryPages.find((p) => p.namespace === namespace);
+      expect(dirs.get(namespace)).toBeUndefined();
+      expect(page?.module.description).toBe(descByDir[namespace]);
+      expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
+    }
+  });
+
+  // The same loss the ten in.* pages faced, and certain rather than incidental
+  // here: all three `api-doc/richtext.*.json` carry an empty `info.description`,
+  // so every page reaches the fallback, whose dir arm dies with the dropped
+  // `defold-richtext` dir. The single dir key had to become three namespace keys.
+  test("the three severed richtext.* pages resolve their descriptions through the namespace half alone", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    for (const mod of RICHTEXT_MODULES) {
+      const namespace = `richtext.${mod}`;
       const page = libraryPages.find((p) => p.namespace === namespace);
       expect(dirs.get(namespace)).toBeUndefined();
       expect(page?.module.description).toBe(descByDir[namespace]);

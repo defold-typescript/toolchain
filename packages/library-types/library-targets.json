@@ -18,24 +18,6 @@
       "generated": "generated/platypus.platypus.d.ts"
     },
     {
-      "module": "richtext.color",
-      "path": "packages/defold-richtext/richtext.color.d.ts",
-      "fixture": "fixtures/ts-defold/richtext.color.d.ts",
-      "generated": "generated/richtext.color.d.ts"
-    },
-    {
-      "module": "richtext.richtext",
-      "path": "packages/defold-richtext/richtext.richtext.d.ts",
-      "fixture": "fixtures/ts-defold/richtext.richtext.d.ts",
-      "generated": "generated/richtext.richtext.d.ts"
-    },
-    {
-      "module": "richtext.tags",
-      "path": "packages/defold-richtext/richtext.tags.d.ts",
-      "fixture": "fixtures/ts-defold/richtext.tags.d.ts",
-      "generated": "generated/richtext.tags.d.ts"
-    },
-    {
       "module": "dicebag.dicebag",
       "path": "packages/dicebag/dicebag.dicebag.d.ts",
       "fixture": "fixtures/ts-defold/dicebag.dicebag.d.ts",
