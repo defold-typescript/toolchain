@@ -220,10 +220,17 @@ same reference-entry shape as `defcon.console`. It illustrates one wrinkle: its
 `test`, `assert_*`) alongside `declare module 'deftest.deftest'`. A fork copies
 the surface **verbatim**, so those globals carry into `generated/deftest.d.ts`
 and therefore into the `dts-declaration-validity` gate's compilation. That is
-fine — they raise no duplicate-identifier clash — and the api-doc lowering still
-scopes the page to the module's exports (`add`, `run`), so the ambient globals
-never leak into the `deftest` reference page. Do not alter a vendored fork to
-suppress such globals; they are part of the library's real surface.
+fine — they raise no duplicate-identifier clash — and the api-doc lowering
+publishes them alongside the module's exports (`add`, `run`), each marked as an
+ambient global so the reference page distinguishes what the import reaches from
+what is callable without it. Do not alter a vendored fork to suppress such
+globals; they are part of the library's real surface.
+
+A file-scope *type* is held to a stricter rule than a file-scope value: it
+publishes only when a published signature names it **and** it carries members
+(an `interface`, or a `type` alias over an object literal). A union, a function
+type, or an internal generic helper stays off the page, so a fork's incidental
+type machinery does not become reference content.
 
 ## Worked example — `defmath.defmath`
 

@@ -279,6 +279,36 @@ describe("parseDefoldApiDoc", () => {
     expect(v("ns.CURRENT")?.deprecated).toBeUndefined();
   });
 
+  test("reads the ambient-global marker onto every element kind, keeping absence the module-member encoding", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        { type: "FUNCTION", name: "describe", global: true, parameters: [], returnvalues: [] },
+        { type: "FUNCTION", name: "ns.member", parameters: [], returnvalues: [] },
+        { type: "VARIABLE", name: "COUNT", global: true, types: ["number"] },
+        { type: "VARIABLE", name: "ns.SIZE", types: ["number"] },
+        { type: "CONSTANT", name: "MAX", global: true },
+        { type: "TYPEDEF", name: "AreaComp", global: true, functions: [{ name: "has_point" }] },
+        { type: "TYPEDEF", name: "ns.Options", properties: [{ name: "clear" }] },
+        // Only the literal `true` marks a global; a truthy stand-in is ignored
+        // the way the file's other defensive reads ignore a wrong-typed value.
+        { type: "FUNCTION", name: "loose", global: "yes", parameters: [], returnvalues: [] },
+      ],
+    };
+    const module = parseDefoldApiDoc(doc);
+    const find = <T extends { name: string }>(list: T[], name: string) =>
+      list.find((x) => x.name === name);
+
+    expect(find(module.functions, "describe")?.global).toBe(true);
+    expect(find(module.functions, "ns.member")?.global).toBeUndefined();
+    expect(find(module.variables, "COUNT")?.global).toBe(true);
+    expect(find(module.variables, "ns.SIZE")?.global).toBeUndefined();
+    expect(find(module.constants, "MAX")?.global).toBe(true);
+    expect(find(module.typedefs, "AreaComp")?.global).toBe(true);
+    expect(find(module.typedefs, "ns.Options")?.global).toBeUndefined();
+    expect(find(module.functions, "loose")?.global).toBeUndefined();
+  });
+
   test("every parsed ApiFunction has non-undefined name/parameters/returnValues", () => {
     const module = parseDefoldApiDoc(vmathDoc);
     expect(module.functions.length).toBeGreaterThan(0);

@@ -66,6 +66,674 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "describe",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "title",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tests",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "before",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "before",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "after",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "after",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "test",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "title",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "test",
+          "doc": "",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_equal",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_blank",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_empty",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "obj",
+          "doc": "",
+          "types": [
+            "Record<any, any>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_error",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "func",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_error",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "func",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_false",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_false",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_true",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_true",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_greater_than",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_gte",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_less_than",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_lte",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_match",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_nil",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_type",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_blank",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_empty",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_equal",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_greater_than",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_gte",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_less_than",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_lte",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_match",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_nil",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "any"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
+    },
+    {
+      "type": "FUNCTION",
+      "name": "assert_not_type",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "T"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "global": true
     }
   ]
 }

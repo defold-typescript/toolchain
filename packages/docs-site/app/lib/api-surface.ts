@@ -271,6 +271,13 @@ export interface ApiSymbol {
    * engine fact — a `library` page carries no availability record at all.
    */
   deprecated?: string;
+  /**
+   * Present when the symbol is an ambient global rather than a member of the
+   * page's imported module, carried from the api-doc. Absent for a module
+   * member, so a page whose symbols are all module members renders exactly as
+   * before.
+   */
+  global?: true;
 }
 
 export interface ApiSymbolGroup {
@@ -758,6 +765,9 @@ export function apiModuleSymbols(
     // Deprecation is a fact about the symbol, not about one overload identity,
     // so every authored-override row below carries it too.
     if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
+    // Ambient-global-ness is a fact about the declaration, not about one overload
+    // identity, so every authored-override row below carries it too.
+    if (fn.global) symbol.global = true;
     // The join keys off the raw ref-doc overload signature — the exact value
     // `api-availability.json` was derived with — so a badge lands on the one
     // overload it identifies. Authored-override extra rows below share the raw
@@ -788,6 +798,7 @@ export function apiModuleSymbols(
           parameters: entry ? projectParams(entry.parameters, mapType) : [],
           returnValues: entry ? projectParams(entry.returnValues, mapType) : [],
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
+          ...(fn.global ? { global: true } : {}),
         });
       }
     }
@@ -807,6 +818,7 @@ export function apiModuleSymbols(
     const av = joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, "");
     if (av) symbol.availability = av;
     if (v.deprecated !== undefined) symbol.deprecated = v.deprecated;
+    if (v.global) symbol.global = true;
     symbols.push(symbol);
   }
 
@@ -823,6 +835,7 @@ export function apiModuleSymbols(
     };
     const av = joinAvailability(page.availability, m.namespace, "CONSTANT", cst.name, "");
     if (av) symbol.availability = av;
+    if (cst.global) symbol.global = true;
     symbols.push(symbol);
   }
 
@@ -855,6 +868,7 @@ export function apiModuleSymbols(
       const example = exampleMarkdownFor(fn, translations);
       if (example) symbol.exampleMarkdown = example;
       if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
+      if (td.global) symbol.global = true;
       symbols.push(symbol);
     }
     for (const prop of td.properties ?? []) {
@@ -866,6 +880,7 @@ export function apiModuleSymbols(
         parameters: [],
         returnValues: [],
         ...(prop.deprecated !== undefined ? { deprecated: prop.deprecated } : {}),
+        ...(td.global ? { global: true } : {}),
       });
     }
   }
