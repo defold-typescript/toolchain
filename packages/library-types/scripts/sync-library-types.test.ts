@@ -141,10 +141,13 @@ describe("codemodDeclaration", () => {
 
 describe("rawUrl", () => {
   test("composes the pinned raw.githubusercontent URL for a target", () => {
-    const target = REGISTRY.targets.find((t) => t.module === "monarch.monarch");
+    // Reads the real registry, so the subject must still hold a row; it moves
+    // with each Bucket-C severance (it was `monarch.monarch` until monarch
+    // severed).
+    const target = REGISTRY.targets.find((t) => t.module === "gooey.gooey");
     expect(target).toBeDefined();
     expect(rawUrl(REGISTRY.source, target as LibraryTarget)).toBe(
-      `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/monarch/monarch.monarch.d.ts`,
+      `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/gooey/gooey.gooey.d.ts`,
     );
   });
 });
