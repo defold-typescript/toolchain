@@ -3,20 +3,11 @@
 
 import * as dicebag from "dicebag.dicebag";
 import * as nakama from "nakama.nakama";
-import * as platypus from "platypus.platypus";
 import * as rendy from "rendy.rendy";
 
 declare const _v3: Vector3;
 
 declare const _hash: Hash;
-
-// platypus.platypus — a lifecycle constant is a `Hash`; a `PlatypusInstance`'s
-// `velocity` is a `Vector3` and `move` accepts one (upstream `vmath.vector3`),
-// proving both core-type renames land on the real exported surface.
-const _pFalling: Hash = platypus.FALLING;
-declare const _pInstance: ReturnType<typeof platypus.create>;
-const _pVelocity: Vector3 = _pInstance.velocity;
-_pInstance.move(_v3);
 
 // dicebag.dicebag — `flip_coin` returns a boolean; `bag_draw` accepts a
 // `string | number | Hash`, proving the upstream `hash` reference was renamed.
@@ -40,8 +31,6 @@ rendy.set("camera", _hash, 1);
 rendy.animate("camera", _hash, go.PLAYBACK_ONCE_FORWARD, _v3, go.EASING_LINEAR, 1);
 const _rendyWorld: Vector3 = rendy.screen_to_world("camera", _v3);
 
-void _pFalling;
-void _pVelocity;
 void _dbFlip;
 void _dbDraw;
 void _nakamaAccount;

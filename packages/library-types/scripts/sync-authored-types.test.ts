@@ -1268,14 +1268,11 @@ describe("bzAnim.bzLibrary migration integrity", () => {
     expect(bzAnim?.apiDoc).toBe("api-doc/bzAnim.json");
   });
 
-  test("bzAnim.bzLibrary is no longer a ts-defold library-targets row, the bzAnim dir is gone, and 4 rows remain", () => {
+  test("bzAnim.bzLibrary is no longer a ts-defold library-targets row and the bzAnim dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "bzAnim.bzLibrary")).toBe(false);
-    // The count catches a cutover that took a second row with it; the absence
-    // check above cannot. The pin lives in the newest cutover's describe only.
-    expect(targets.length).toBe(4);
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -1348,5 +1345,167 @@ describe("bzAnim.bzLibrary migration integrity", () => {
     // typedef, so the emitter publishes no element for it. Asserted so the gap
     // stays deliberate — widening the rule is a separate goal.
     expect(doc.elements.some((e) => e.name === "EASING_TYPES")).toBe(false);
+  });
+});
+
+// platypus severs under the bare namespace `platypus` and lands no correction.
+// The comparator that recorded its markdown `no-go` reads top-level
+// `function`/`const` only, so it never scored the two interfaces that are the
+// whole library: `PlatypusConfig` (a required nested `collisions` shape plus 11
+// optional fields) and `PlatypusInstance extends PlatypusConfig` (19 methods plus
+// `velocity`). No markdown, LuaLS or script_api lane can express a returned-object
+// interface, so `keep` would freeze that structure in a lane nothing here
+// maintains.
+describe("platypus.platypus migration integrity", () => {
+  const AUTHORED = "fixtures/authored/platypus.platypus.d.ts";
+  const CONFIG_FIELDS = [
+    "debug",
+    "reparent",
+    "gravity",
+    "max_velocity",
+    "wall_jump_power_ratio_x",
+    "wall_jump_power_ratio_y",
+    "allow_double_jump",
+    "allow_wall_jump",
+    "const_wall_jump",
+    "allow_wall_slide",
+    "wall_slide_velocity",
+  ];
+  const INSTANCE_METHODS = [
+    "update",
+    "on_message",
+    "left",
+    "right",
+    "up",
+    "down",
+    "move",
+    "jump",
+    "force_jump",
+    "abort_jump",
+    "abort_wall_slide",
+    "has_ground_contact",
+    "has_wall_contact",
+    "is_falling",
+    "is_jumping",
+    "is_wall_jumping",
+    "is_wall_sliding",
+    "toggle_debug",
+    "set_collisions",
+  ];
+  const MESSAGE_HASHES = [
+    "FALLING",
+    "GROUND_CONTACT",
+    "WALL_CONTACT",
+    "JUMP",
+    "WALL_JUMP",
+    "DOUBLE_JUMP",
+    "WALL_SLIDE",
+  ];
+  const DIRECTIONS = ["DIR_UP", "DIR_LEFT", "DIR_RIGHT", "DIR_DOWN", "DIR_ALL"];
+
+  test("platypus is registered in authored-targets.json under its bare namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const platypus = targets.find((t) => t.namespace === "platypus");
+    expect(platypus).toBeDefined();
+    expect(platypus?.moduleId).toBe("platypus.platypus");
+    expect(platypus?.repo).toBe("https://github.com/britzl/platypus");
+    expect(platypus?.ref).toBe("4.3.1");
+    expect(platypus?.license).toBe("MIT");
+    expect(platypus?.authored).toBe(AUTHORED);
+    expect(platypus?.generated).toBe("generated/platypus.d.ts");
+    expect(platypus?.apiDoc).toBe("api-doc/platypus.json");
+  });
+
+  test("platypus.platypus is no longer a ts-defold library-targets row, the platypus dir is gone, and 3 rows remain", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "platypus.platypus")).toBe(false);
+    // The count catches a cutover that took a second row with it; the absence
+    // check above cannot. The pin lives in the newest cutover's describe only.
+    expect(targets.length).toBe(3);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "platypus")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/platypus.platypus.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/platypus.platypus.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/platypus.platypus.json"))).toBe(false);
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./platypus.platypus" in exports).toBe(false);
+  });
+
+  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/platypus.d.ts");
+    expect(include).toContain("test-d/platypus-usage.test-d.ts");
+    expect(include).not.toContain("generated/platypus.platypus.d.ts");
+  });
+
+  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    expect(fork).toContain("LuaMap<Hash, Direction>");
+    expect(fork).toContain("velocity: Vector3;");
+    expect(fork).toContain("move(velocity: Vector3): void;");
+    expect(fork).toContain("offset?: Vector3;");
+    expect(fork).toContain("on_message(message_id: Hash, message: AnyNotNil): void;");
+    expect(fork.match(/export const \w+: Hash;/g)?.length).toBe(MESSAGE_HASHES.length);
+    expect(fork).not.toContain(": hash");
+    expect(fork).not.toContain("vmath.vector3");
+  });
+
+  test("the fork keeps the config and instance interfaces the severance exists to preserve", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    // The required nested shape: four numeric bounds plus the group map, and the
+    // one optional inside it.
+    expect(fork).toMatch(
+      /\bcollisions: \{\s*groups: LuaMap<Hash, Direction>;\s*left: number;\s*right: number;\s*top: number;\s*bottom: number;\s*offset\?: Vector3;\s*\};/,
+    );
+    for (const field of CONFIG_FIELDS) {
+      expect(fork).toMatch(new RegExp(`\\b${field}\\?: (?:boolean|number);`));
+    }
+    expect(fork).toContain("interface PlatypusInstance extends PlatypusConfig {");
+    for (const method of INSTANCE_METHODS) {
+      expect(fork).toMatch(new RegExp(`\\b${method}\\(`));
+    }
+    expect(fork).toContain("export function create(config: PlatypusConfig): PlatypusInstance;");
+    for (const constant of MESSAGE_HASHES) {
+      expect(fork).toContain(`export const ${constant}: Hash;`);
+    }
+    for (const constant of DIRECTIONS) {
+      expect(fork).toContain(`export const ${constant}: Direction;`);
+    }
+  });
+
+  test("the api-doc publishes the config and instance shapes as member-bearing typedefs", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/platypus.json"), "utf8")) as {
+      info: { namespace: string; description?: string };
+      elements: {
+        name: string;
+        type: string;
+        properties?: { name: string; fields?: { name: string }[] }[];
+      }[];
+    };
+    expect(doc.info.namespace).toBe("platypus");
+    // The page intro comes from the fork's own module JSDoc, which is why this
+    // severance owes no `library-description-overrides.json` key.
+    expect((doc.info.description ?? "").length).toBeGreaterThan(0);
+
+    const config = doc.elements.find((e) => e.name === "PlatypusConfig");
+    expect(config?.type).toBe("TYPEDEF");
+    const collisions = (config?.properties ?? []).find((p) => p.name === "collisions");
+    expect(collisions).toBeDefined();
+    expect((collisions?.fields ?? []).map((f) => f.name)).toContain("groups");
+
+    const instance = doc.elements.find((e) => e.name === "PlatypusInstance");
+    expect(instance?.type).toBe("TYPEDEF");
+    expect((instance?.properties ?? []).map((p) => p.name)).toContain("velocity");
   });
 });
