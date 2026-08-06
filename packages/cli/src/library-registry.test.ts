@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { matchVendoredLibrary } from "./library-match";
 import { loadVendoredLibraryRegistry, resolveLibraryTypesPackageRoot } from "./library-registry";
 
 describe("resolveLibraryTypesPackageRoot", () => {
@@ -85,5 +86,52 @@ describe("loadVendoredLibraryRegistry", () => {
     expect(nakama[0]?.generatedStems?.["nakama.util.log"]).toBe("nakama.util.log");
     // `nakama.nakama` stays ts-defold-sourced, so it carries no authored stem.
     expect(nakama[0]?.generatedStems?.["nakama.nakama"]).toBeUndefined();
+  });
+});
+
+// The real-corpus coupling for `matchVendoredLibrary` lives here rather than in
+// the pure matcher's own test file. `buildLibraryRegistry`'s ts-defold arm is
+// being emptied library by library by the Bucket-C severance series, so a
+// declared-URL assertion pinned to a `library-targets.json` row has to be
+// re-pointed every cycle and eventually has nothing left to point at. Composed
+// through `loadVendoredLibraryRegistry`, dicebag stays matchable through the
+// authored lane no matter which lane owns it, and `library-match.ts` goes back
+// to being tested as the IO-free matcher its module header promises.
+describe("matchVendoredLibrary over the composed real registry", () => {
+  const { registry } = loadVendoredLibraryRegistry();
+
+  test("resolves dicebag's declared archive URL to its module and generated stem", () => {
+    const match = matchVendoredLibrary(
+      "https://github.com/paulomrpp/dicebag/archive/main.zip",
+      registry,
+    );
+    expect(match?.modules).toEqual(["dicebag.dicebag"]);
+    // The authored entry is keyed on `8bitskull/dicebag` and the declared URL is
+    // a fork, so a match here also proves the identity is owner-independent.
+    expect(match?.generatedStems?.["dicebag.dicebag"]).toBe("dicebag");
+  });
+
+  test("normalizes across archive-ref variants and query strings of one repo", () => {
+    for (const url of [
+      "https://github.com/paulomrpp/dicebag/archive/main.zip",
+      "https://github.com/paulomrpp/dicebag/archive/v1.2.3.zip",
+      "https://github.com/paulomrpp/dicebag/archive/refs/heads/main.zip?token=abc",
+      "https://GitHub.com/paulomrpp/dicebag",
+    ]) {
+      expect(matchVendoredLibrary(url, registry)?.modules).toEqual(["dicebag.dicebag"]);
+    }
+  });
+
+  test("returns null for a native or unknown library without throwing", () => {
+    // `applovin` is a native (bare-global) extension, not a vendored pure-Lua lib.
+    expect(matchVendoredLibrary("https://github.com/AppLovin/AppLovin-MAX-Defold", registry)).toBe(
+      null,
+    );
+    expect(
+      matchVendoredLibrary(
+        "https://github.com/nobody/not-a-real-library/archive/main.zip",
+        registry,
+      ),
+    ).toBe(null);
   });
 });

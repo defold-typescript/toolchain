@@ -1,6 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
   type AuthoredRegistryTargets,
   buildAuthoredRegistryEntries,
@@ -17,29 +15,39 @@ import {
   type VendoredLibrary,
 } from "./library-match";
 
-const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
-
-function readRegistryFixture<T>(name: string): T {
-  return JSON.parse(readFileSync(join(libraryTypesRoot, name), "utf8")) as T;
-}
-
-const realClassification = readRegistryFixture<LibraryClassification>(
-  "library-classification.json",
-);
-const realTargets = readRegistryFixture<LibraryTargets>("library-targets.json");
+// `library-match.ts` is a pure, IO-free module, and this file tests it as one:
+// every registry below is synthetic. The one assertion that needed the real
+// committed corpus lives in `library-registry.test.ts`, where the composed
+// multi-lane registry it depends on is already loaded.
+const classification: LibraryClassification = {
+  dirs: [
+    { dir: "boom", classification: "already-vendored", modules: ["boom.boom"] },
+    { dir: "starly", classification: "pure-lua", modules: ["starly.starly"] },
+    { dir: "AppLovin-MAX-Defold", classification: "native", modules: ["applovin"] },
+    { dir: "future-lib", classification: "covered-by-goal", modules: ["future.future"] },
+  ],
+};
+const targets: LibraryTargets = {
+  targets: [
+    { module: "boom.boom", path: "packages/boom/boom.boom.d.ts" },
+    { module: "starly.starly", path: "packages/starly/starly.starly.d.ts" },
+    { module: "applovin", path: "packages/AppLovin-MAX-Defold/applovin.d.ts" },
+    { module: "future.future", path: "packages/future-lib/future.future.d.ts" },
+  ],
+};
 
 describe("matchVendoredLibrary", () => {
   test("matches a declared archive URL to its vendored module list", () => {
-    const registry = buildLibraryRegistry(realClassification, realTargets);
+    const registry = buildLibraryRegistry(classification, targets);
     const match = matchVendoredLibrary(
-      "https://github.com/paulomrpp/dicebag/archive/main.zip",
+      "https://github.com/whiteboxdev/boom/archive/main.zip",
       registry,
     );
-    expect(match?.modules).toEqual(["dicebag.dicebag"]);
+    expect(match?.modules).toEqual(["boom.boom"]);
   });
 
   test("returns null for a native or unknown library without throwing", () => {
-    const registry = buildLibraryRegistry(realClassification, realTargets);
+    const registry = buildLibraryRegistry(classification, targets);
     // `applovin` is a native (bare-global) extension, not a vendored pure-Lua lib.
     expect(matchVendoredLibrary("https://github.com/AppLovin/AppLovin-MAX-Defold", registry)).toBe(
       null,
@@ -53,15 +61,15 @@ describe("matchVendoredLibrary", () => {
   });
 
   test("normalizes across archive-ref variants and query strings of one repo", () => {
-    const registry = buildLibraryRegistry(realClassification, realTargets);
+    const registry = buildLibraryRegistry(classification, targets);
     const variants = [
-      "https://github.com/paulomrpp/dicebag/archive/main.zip",
-      "https://github.com/paulomrpp/dicebag/archive/v1.2.3.zip",
-      "https://github.com/paulomrpp/dicebag/archive/refs/heads/main.zip?token=abc",
-      "https://GitHub.com/paulomrpp/dicebag",
+      "https://github.com/whiteboxdev/boom/archive/main.zip",
+      "https://github.com/whiteboxdev/boom/archive/v1.2.3.zip",
+      "https://github.com/whiteboxdev/boom/archive/refs/heads/main.zip?token=abc",
+      "https://GitHub.com/whiteboxdev/boom",
     ];
     for (const url of variants) {
-      expect(matchVendoredLibrary(url, registry)?.modules).toEqual(["dicebag.dicebag"]);
+      expect(matchVendoredLibrary(url, registry)?.modules).toEqual(["boom.boom"]);
     }
   });
 });
@@ -82,23 +90,6 @@ describe("normalizeSourceId", () => {
 });
 
 describe("buildLibraryRegistry", () => {
-  const classification: LibraryClassification = {
-    dirs: [
-      { dir: "boom", classification: "already-vendored", modules: ["boom.boom"] },
-      { dir: "starly", classification: "pure-lua", modules: ["starly.starly"] },
-      { dir: "AppLovin-MAX-Defold", classification: "native", modules: ["applovin"] },
-      { dir: "future-lib", classification: "covered-by-goal", modules: ["future.future"] },
-    ],
-  };
-  const targets: LibraryTargets = {
-    targets: [
-      { module: "boom.boom", path: "packages/boom/boom.boom.d.ts" },
-      { module: "starly.starly", path: "packages/starly/starly.starly.d.ts" },
-      { module: "applovin", path: "packages/AppLovin-MAX-Defold/applovin.d.ts" },
-      { module: "future.future", path: "packages/future-lib/future.future.d.ts" },
-    ],
-  };
-
   test("includes pure-lua and already-vendored dirs, excludes native and covered-by-goal", () => {
     const registry = buildLibraryRegistry(classification, targets);
     expect(registry).toEqual([

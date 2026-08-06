@@ -1,18 +1,12 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
-import * as dicebag from "dicebag.dicebag";
 import * as nakama from "nakama.nakama";
 import * as rendy from "rendy.rendy";
 
 declare const _v3: Vector3;
 
 declare const _hash: Hash;
-
-// dicebag.dicebag — `flip_coin` returns a boolean; `bag_draw` accepts a
-// `string | number | Hash`, proving the upstream `hash` reference was renamed.
-const _dbFlip: boolean = dicebag.flip_coin();
-const _dbDraw: boolean = dicebag.bag_draw(_hash);
 
 const _nakamaClient = nakama.create_client({
   host: "127.0.0.1",
@@ -31,8 +25,6 @@ rendy.set("camera", _hash, 1);
 rendy.animate("camera", _hash, go.PLAYBACK_ONCE_FORWARD, _v3, go.EASING_LINEAR, 1);
 const _rendyWorld: Vector3 = rendy.screen_to_world("camera", _v3);
 
-void _dbFlip;
-void _dbDraw;
 void _nakamaAccount;
 void _nakamaSession;
 void _rendyDisplay;
