@@ -802,3 +802,107 @@ describe("defold-input migration integrity", () => {
     expect(include).toContain("test-d/defold-input-usage.test-d.ts");
   });
 });
+
+// The sixth Bucket-C severance and the second multi-module one: three
+// `monarch.<mod>` modules move at once under their existing dotted namespaces, so
+// every `/api` route, export subpath and import string stays byte-identical and
+// the goldens are overwritten in place. Unlike `in`, monarch's classification dir
+// and its top namespace segment are the same string, so the nav group survives on
+// `libraryGroupKey` alone.
+//
+// Two of the three ts-defold fixtures differ from their goldens (`monarch.monarch`
+// on `hash`/`url`, `transitions.gui` on `node`/`vmath.vector3`), so forking the
+// raw snapshot would again have shipped unresolvable ambients.
+describe("monarch migration integrity", () => {
+  const MODULES = ["monarch", "transitions.easings", "transitions.gui"];
+
+  test("all three modules are registered in authored-targets.json under their dotted namespaces", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    for (const mod of MODULES) {
+      const moduleId = `monarch.${mod}`;
+      const target = targets.find((t) => t.moduleId === moduleId);
+      expect(target).toBeDefined();
+      expect(target?.namespace).toBe(moduleId);
+      expect(target?.repo).toBe("https://github.com/britzl/monarch");
+      expect(target?.ref).toBe("6.0.2");
+      expect(target?.license).toBe("MIT");
+      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
+      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
+    }
+  });
+
+  test("none of the three is a ts-defold library-targets row, the monarch dir is gone, and 11 rows remain", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    for (const mod of MODULES) {
+      expect(targets.some((t) => t.module === `monarch.${mod}`)).toBe(false);
+    }
+    // The count catches a cutover that took a fourth row with it; the per-module
+    // absence checks above cannot.
+    expect(targets.length).toBe(11);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "monarch")).toBe(false);
+  });
+
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", () => {
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    for (const mod of MODULES) {
+      const moduleId = `monarch.${mod}`;
+      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
+      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
+      expect(`./${moduleId}` in exports).toBe(true);
+    }
+  });
+
+  // Asserting the mapped names alone would also pass on the raw ts-defold
+  // snapshot, so each check excludes the unmapped spelling too.
+  test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
+    const monarch = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/authored/monarch.monarch.d.ts"),
+      "utf8",
+    );
+    expect(monarch).toContain("DONE: Hash");
+    expect(monarch).toContain("add_listener(url?: Url)");
+    expect(monarch).not.toContain(": hash;");
+    expect(monarch).not.toContain(": url,");
+
+    const gui = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/authored/monarch.transitions.gui.d.ts"),
+      "utf8",
+    );
+    expect(gui).toContain('Opaque<"node">');
+    expect(gui).toContain("Vector3");
+    expect(gui).not.toContain("node: node");
+    expect(gui).not.toContain("vmath.vector3");
+  });
+
+  // The goal was captured expecting an `on_focus_changed` -> `on_focus_change`
+  // rename. Upstream contradicts it: `monarch/monarch.lua:1295` at tag 6.0.2
+  // defines `M.on_focus_changed` and nothing else, so the fork stays verbatim and
+  // the README heading is recorded as the defect instead.
+  test("the fork is verbatim where the goal proposed changing it", () => {
+    const monarch = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/authored/monarch.monarch.d.ts"),
+      "utf8",
+    );
+    expect(monarch).toContain("on_focus_changed");
+    expect(monarch).not.toContain("on_focus_change(");
+  });
+
+  test("all three goldens joined the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    for (const mod of MODULES) {
+      expect(include).toContain(`generated/monarch.${mod}.d.ts`);
+    }
+    expect(include).toContain("test-d/monarch-usage.test-d.ts");
+  });
+});

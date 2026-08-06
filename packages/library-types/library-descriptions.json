@@ -29,6 +29,7 @@
   "immutable": "Runtime immutable Lua table implementation",
   "log": "Logger with Performance Metrics for Defold",
   "monarch": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
+  "monarch.transitions.easings": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
   "nakama-defold": "Nakama Defold Client SDK",
   "nakama.engine.defold": "Defold engine adapter for the Nakama client: UUID, HTTP, and realtime socket helpers.",
   "nakama.util.log": "Logging helpers for the Nakama Defold client.",
