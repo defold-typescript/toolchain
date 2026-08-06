@@ -13,6 +13,8 @@
   "in.textbox": "Cross-platform input handling for Defold: keyboard, mouse, gamepad, touch, and on-screen controls.",
   "in.triggers": "Cross-platform input handling for Defold: keyboard, mouse, gamepad, touch, and on-screen controls.",
   "lang": "Localization helpers for Defold: string tables, pluralization, and locale fallback.",
+  "metrics.fps": "Calculate and display performance metrics in Defold games",
+  "metrics.mem": "Calculate and display performance metrics in Defold games",
   "monarch": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
   "monarch.transitions.easings": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
   "narrator": "The Ink language parser and runtime implementation in Lua",

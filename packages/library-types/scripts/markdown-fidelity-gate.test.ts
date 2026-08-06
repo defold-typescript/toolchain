@@ -920,7 +920,8 @@ const GOOEY: LibraryRecord = {
 // `doc-dialect`: the gap is document granularity, not convention support.
 //
 // Filtering the README to one receiver before parsing yields 4 elements per
-// module and still lands `no-go`, on a single term for each:
+// module and still lands `no-go`, on a single term for each — as first recorded,
+// before the severance and the correction the closing paragraph describes:
 //
 //   term                   metrics.fps                 metrics.mem
 //   tsDefoldMembers        ["create"]                  ["create"]
@@ -950,6 +951,21 @@ const GOOEY: LibraryRecord = {
 // instead of `table`, both modules would have computed `go` while breaking every
 // existing `create()` call site. The comparator now scores that as
 // `optionalityLossMembers`.
+//
+// Both modules have since severed ts-defold for the authored lane under
+// `namespace === moduleId`, so the snapshots the terms above are read from are
+// the authored forks. This is the first record whose terms moved *because* an
+// authored correction landed rather than in spite of a lane move: the fork adds
+// the three module-level members upstream really defines — `M.update`, `M.fps`
+// (`M.mem` in `metrics.mem`) and `M.draw`, delegating to a `local singleton =
+// M.create()` at `metrics/fps.lua:42` and `metrics/mem.lua:34` — so
+// `tsDefoldMembers` is now the four `["create","draw","<mod>","update"]` and
+// `addedMembers` has collapsed from three names to `[]`. That is the whole of
+// the movement, and it is the correction's proof; every other term is unchanged,
+// which is why `addedMembers: []` must not be read as metrics having become a
+// `go`. The `no-go` stands exactly where it did: on `create`'s `table` return,
+// scored as `downgradedMembers: ["create"]`, plus the unscored-until-now
+// optionality loss on the same member.
 const METRICS: LibraryRecord = {
   library: "metrics",
   repo: "https://github.com/britzl/defold-metrics",
@@ -958,8 +974,26 @@ const METRICS: LibraryRecord = {
   prefix: "metrics.",
   classificationDir: "defold-metrics",
   decisions: [
-    { module: "fps", decision: "no-go", reason: "shared-document", markdown: "README.md" },
-    { module: "mem", decision: "no-go", reason: "shared-document", markdown: "README.md" },
+    {
+      module: "fps",
+      decision: "no-go",
+      reason: "shared-document",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/defold-metrics/metrics.fps.d.ts",
+        fixture: "fixtures/authored/metrics.fps.d.ts",
+      },
+    },
+    {
+      module: "mem",
+      decision: "no-go",
+      reason: "shared-document",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/defold-metrics/metrics.mem.d.ts",
+        fixture: "fixtures/authored/metrics.mem.d.ts",
+      },
+    },
   ],
 };
 
@@ -1437,6 +1471,10 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "ea0f15ee04f747f6253e9a91652b3dc94e2ecf47b6ad3b352c12b8e3256f7c6b",
   "fixtures/authored/orthographic.camera.d.ts":
     "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
+  "fixtures/authored/metrics.fps.d.ts":
+    "ca4d65be8b9e254972998fa3e143651bbc86235765ba8603f34c3fb34081ac58",
+  "fixtures/authored/metrics.mem.d.ts":
+    "e32ab0d3067bd569c69a11045bd6f84bd3562d0d8e73920e46022536874d30a2",
   "fixtures/authored/persist.persist.d.ts":
     "f79845a7b47f57f4559d7b365c32ce5527ce12e778999e5eee4db3f45793c622",
   "fixtures/authored/richtext.color.d.ts":
@@ -1499,10 +1537,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "b8ce58a7ea3a57842fd305a659e042e4c6fea4fd4e5b0fae7fb07b79872a12f6",
   "fixtures/ts-defold/gooey.gooey.d.ts":
     "ccb14cf1d623756f7eb014c63b47e86369d42a89dabb7fbc267e2ca580d449e3",
-  "fixtures/ts-defold/metrics.fps.d.ts":
-    "76e42a10d9a4697ae13b4cb0871ba634d65256d44404991ff2ae2f12f4e0ad6a",
-  "fixtures/ts-defold/metrics.mem.d.ts":
-    "a0538630062f9fbee67c196fb1c75b3f58817434b0749e4309f4866853b3d592",
   "fixtures/ts-defold/platypus.platypus.d.ts":
     "d1e55bb7a6bd64ea1fe31ed64e5fc4ccb4b42fa2e697851ce5afdc67ea27a959",
   "fixtures/ts-defold/rendy.rendy.d.ts":
@@ -2037,7 +2071,11 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
   const readme = (module: string) => fixtureText(METRICS, decisionFor(METRICS, module));
 
   const receiverComparison = (module: string) =>
-    comparisonForMarkdown(filterToReceiver(readme(module), module), `metrics.${module}`);
+    comparisonForMarkdown(
+      filterToReceiver(readme(module), module),
+      `metrics.${module}`,
+      severedFor(METRICS, module),
+    );
 
   test("both snapshots are the one upstream README, byte for byte", () => {
     expect(readme("fps")).toBe(readme("mem"));
@@ -2051,12 +2089,16 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
     }
   });
 
+  // `addedMembers` is `[]` here only because the authored correction landed: the
+  // three module-level members the README documents are now in the fork this
+  // comparison reads. Every other term is the one recorded before the severance,
+  // and the verdict is still `no-go` on `create`'s `table` return.
   test.each([
-    ["fps", ["draw", "fps", "update"]],
-    ["mem", ["draw", "mem", "update"]],
-  ])("a receiver-filtered metrics.%s still lands no-go on create's table return", async (module, added) => {
+    "fps",
+    "mem",
+  ])("a receiver-filtered metrics.%s still lands no-go on create's table return", async (module) => {
     const { doc, decision, missingMembers, signatureLossMembers, downgradedMembers, addedMembers } =
-      await receiverComparison(module as string);
+      await receiverComparison(module);
 
     expect(doc.elements.map((e) => e.name.split(".").pop()).sort()).toEqual(
       ["create", "draw", module, "update"].sort(),
@@ -2066,7 +2108,7 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
     expect(missingMembers).toEqual([]);
     expect(signatureLossMembers).toEqual([]);
     expect(downgradedMembers).toEqual(["create"]);
-    expect(addedMembers).toEqual(added as string[]);
+    expect(addedMembers).toEqual([]);
   });
 
   test.each([
@@ -2077,15 +2119,18 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
     expect(optionalityLossMembers).toContain("create");
   });
 
+  // The snapshot this reads is the authored fork the severance moved the verdict
+  // onto, so the surface is the corrected one: the factory plus the three
+  // module-level members. `Metrics` is still outside `MEMBER_DECL`'s surface and
+  // still never enters the comparison, which is why it is absent from the list.
   test.each([
-    "fps",
-    "mem",
-  ])("the ts-defold surface of metrics.%s is exactly the factory, so Metrics never enters the comparison", (module) => {
-    expect(
-      tsDefoldMembers(
-        readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `metrics.${module}.d.ts`), "utf8"),
-      ),
-    ).toEqual(["create"]);
+    ["fps", ["create", "draw", "fps", "update"]],
+    ["mem", ["create", "draw", "mem", "update"]],
+  ])("the severed surface of metrics.%s is the factory plus the corrected members", (module, members) => {
+    const fixture = targetFor(`metrics.${module}`, severedFor(METRICS, module as string)).fixture;
+    expect(tsDefoldMembers(readFileSync(join(PACKAGE_ROOT, fixture), "utf8"))).toEqual(
+      members as string[],
+    );
   });
 });
 

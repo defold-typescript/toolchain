@@ -112,14 +112,6 @@
       ]
     },
     {
-      "dir": "defold-metrics",
-      "classification": "already-vendored",
-      "modules": [
-        "metrics.fps",
-        "metrics.mem"
-      ]
-    },
-    {
       "dir": "defold-playable-ads",
       "classification": "native",
       "modules": [

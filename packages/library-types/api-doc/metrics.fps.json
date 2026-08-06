@@ -55,6 +55,38 @@
       ]
     },
     {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Call this once per frame. Once enough samples have been collected it is possible to call fps() to get the current FPS.",
+      "description": "Call this once per frame. Once enough samples have been collected it is possible to call fps() to get the current FPS.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fps",
+      "brief": "Get the current FPS, based on collected samples.",
+      "description": "Get the current FPS, based on collected samples.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "draw",
+      "brief": "Draw fps count text using `draw_debug_text`.",
+      "description": "Draw fps count text using `draw_debug_text`.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
       "type": "TYPEDEF",
       "name": "Metrics",
       "properties": [

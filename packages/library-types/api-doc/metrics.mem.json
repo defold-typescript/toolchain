@@ -47,6 +47,38 @@
       ]
     },
     {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Call this to get a new memory usage reading.",
+      "description": "Call this to get a new memory usage reading.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mem",
+      "brief": "Get the current memory usage, in kilobytes.",
+      "description": "Get the current memory usage, in kilobytes.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "draw",
+      "brief": "Draw memory usage text using `draw_debug_text`.",
+      "description": "Draw memory usage text using `draw_debug_text`.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
       "type": "TYPEDEF",
       "name": "Metrics",
       "properties": [
