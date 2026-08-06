@@ -546,6 +546,36 @@ describe("loadApiSurface library pages", () => {
     expect((instance?.functions ?? []).map((f) => f.name)).toContain("set_collisions");
   });
 
+  // dicebag is the first severance whose markdown verdict was *about* types
+  // rather than lost members, so the page's proof is the three types the fork
+  // exists to keep — each one a place the markdown lane would have published
+  // `unknown`. Like platypus the alias and module path do not move, so the
+  // import binding is asserted byte-identical across the cutover.
+  test("the severed dicebag page is maintained-here at its tag, keeps its import binding, and documents the surface at full precision", () => {
+    const dicebag = libraryPages.find((p) => p.namespace === "dicebag");
+    expect(dicebag).toBeDefined();
+    expect(dicebag?.route).toBe("/api/dicebag");
+    const meta = dicebag?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.authorUrl).toBe("https://github.com/8bitskull/dicebag");
+    expect(meta.commit).toBe("0.3");
+    expect(meta.license).toBe("CC0-1.0");
+    expect(meta.importString).toBe('import * as dicebag from "dicebag.dicebag"');
+
+    const functions = dicebag?.module.functions ?? [];
+    expect(functions).toHaveLength(11);
+
+    const rollCustom = functions.find((f) => f.name === "roll_custom_dice");
+    const sides = (rollCustom?.parameters ?? []).find((p) => p.name === "sides");
+    expect(sides?.types?.join("|")).not.toBe("unknown");
+
+    const bagDraw = functions.find((f) => f.name === "bag_draw");
+    expect(bagDraw?.parameters ?? []).toHaveLength(1);
+    expect((bagDraw?.returnValues ?? []).map((r) => r.types?.join("|"))).toEqual(["boolean"]);
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -705,6 +735,24 @@ describe("loadApiSurface library descriptions", () => {
     const page = libraryPages.find((p) => p.namespace === "platypus");
     expect(dirs.get("platypus")).toBeUndefined();
     expect("platypus" in overrides).toBe(false);
+    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  // dicebag repeats platypus's shape: dir and bare namespace are the same
+  // string, but the fork's module JSDoc gives `api-doc/dicebag.json` its own
+  // `info.description`, so the `descByDir` fallback is never on the path. The
+  // `dicebag.dicebag` half is what catches a partial cutover — a retained row or
+  // dir would leave that module key populated; the bare `dicebag` half was
+  // vacuous before the cutover too and is asserted only for symmetry.
+  test("the severed dicebag page keeps its description from its own api-doc, with no override written", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    const overrides = JSON.parse(
+      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-description-overrides.json"), "utf8"),
+    ) as Record<string, string>;
+    const page = libraryPages.find((p) => p.namespace === "dicebag");
+    expect(dirs.get("dicebag.dicebag")).toBeUndefined();
+    expect(dirs.get("dicebag")).toBeUndefined();
+    expect("dicebag" in overrides).toBe(false);
     expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
   });
 

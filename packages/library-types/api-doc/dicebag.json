@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "dicebag.dicebag",
+    "namespace": "dicebag",
     "brief": "Dicebag is a Defold extension containing probability functions designed specifically for games.",
     "description": "Dicebag is a Defold extension containing probability functions designed specifically for games."
   },
