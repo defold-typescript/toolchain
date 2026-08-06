@@ -65,7 +65,7 @@ declare module "bzAnim.bzLibrary" {
   };
 
   type AnimateArgs = {
-    obj: hash | string | undefined;
+    obj: Hash | string | undefined;
     easing: EASING_TYPES;
     duration?: number;
     delay?: number;
@@ -73,7 +73,7 @@ declare module "bzAnim.bzLibrary" {
   };
 
   type AnimateSequenceArgs = {
-    obj: hash | string | undefined;
+    obj: Hash | string | undefined;
     easing: EASING_TYPES;
     segments?: Array<Segment>;
     on_complete?: boolean | string;

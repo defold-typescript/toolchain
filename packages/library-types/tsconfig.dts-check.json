@@ -49,6 +49,7 @@
     "generated/metrics.fps.d.ts",
     "generated/metrics.mem.d.ts",
     "generated/gooey.d.ts",
+    "generated/bzAnim.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",
@@ -66,6 +67,7 @@
     "test-d/richtext-usage.test-d.ts",
     "test-d/metrics-usage.test-d.ts",
     "test-d/gooey-usage.test-d.ts",
+    "test-d/bzAnim-usage.test-d.ts",
     "test-d/fixtures/engine-handle-module.d.ts",
     "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"

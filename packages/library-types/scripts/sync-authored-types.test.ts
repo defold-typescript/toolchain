@@ -1193,14 +1193,11 @@ describe("gooey.gooey migration integrity", () => {
     expect(gooey?.apiDoc).toBe("api-doc/gooey.json");
   });
 
-  test("gooey.gooey is no longer a ts-defold library-targets row, the gooey dir is gone, and 5 rows remain", () => {
+  test("gooey.gooey is no longer a ts-defold library-targets row and the gooey dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "gooey.gooey")).toBe(false);
-    // The count catches a cutover that took a second row with it; the absence
-    // check above cannot.
-    expect(targets.length).toBe(5);
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -1245,5 +1242,111 @@ describe("gooey.gooey migration integrity", () => {
     for (const fn of OTHER_FUNCTIONS) {
       expect(fork).toContain(`export function ${fn}(`);
     }
+  });
+});
+
+// bzAnim severs under the bare namespace `bzAnim` and lands no correction. What
+// makes it worth forking is the pair of hand-written options tables: both entry
+// points take a single options table, which a flat signature table cannot
+// express, so `AnimateArgs`/`AnimateSequenceArgs` are the only structured
+// description of this library anywhere. `keep` would strand that surface in a
+// lane no generation path can maintain.
+describe("bzAnim.bzLibrary migration integrity", () => {
+  const AUTHORED = "fixtures/authored/bzAnim.bzLibrary.d.ts";
+  const FUNCTIONS = ["animate", "animateSequence", "cancel", "info", "isReady", "setDebugLevel"];
+
+  test("bzAnim is registered in authored-targets.json under its bare namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const bzAnim = targets.find((t) => t.namespace === "bzAnim");
+    expect(bzAnim).toBeDefined();
+    expect(bzAnim?.moduleId).toBe("bzAnim.bzLibrary");
+    expect(bzAnim?.repo).toBe("https://github.com/jbp4444/bzAnim");
+    expect(bzAnim?.ref).toBe("v.1.2");
+    expect(bzAnim?.license).toBe("Apache-2.0");
+    expect(bzAnim?.authored).toBe(AUTHORED);
+    expect(bzAnim?.generated).toBe("generated/bzAnim.d.ts");
+    expect(bzAnim?.apiDoc).toBe("api-doc/bzAnim.json");
+  });
+
+  test("bzAnim.bzLibrary is no longer a ts-defold library-targets row, the bzAnim dir is gone, and 4 rows remain", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "bzAnim.bzLibrary")).toBe(false);
+    // The count catches a cutover that took a second row with it; the absence
+    // check above cannot. The pin lives in the newest cutover's describe only.
+    expect(targets.length).toBe(4);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "bzAnim")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+    // The retired fixture is named for the *upstream filename*, not the module.
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/bzAnim.bzAnim.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/bzAnim.bzLibrary.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/bzAnim.bzLibrary.json"))).toBe(false);
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./bzAnim.bzLibrary" in exports).toBe(false);
+  });
+
+  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/bzAnim.d.ts");
+    expect(include).toContain("test-d/bzAnim-usage.test-d.ts");
+    expect(include).not.toContain("generated/bzAnim.bzLibrary.d.ts");
+  });
+
+  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
+    const authored = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    expect(authored.match(/obj: Hash \| string \| undefined;/g)?.length).toBe(2);
+    expect(authored).not.toContain("obj: hash");
+  });
+
+  test("the fork keeps the two options tables the severance exists to preserve", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    expect(fork).toMatch(
+      /type AnimateArgs = \{\s*obj: Hash \| string \| undefined;\s*easing: EASING_TYPES;\s*duration\?: number;\s*delay\?: number;\s*path\?: Array<Path>;\s*\};/,
+    );
+    expect(fork).toMatch(
+      /type AnimateSequenceArgs = \{\s*obj: Hash \| string \| undefined;\s*easing: EASING_TYPES;\s*segments\?: Array<Segment>;\s*on_complete\?: boolean \| string;\s*\};/,
+    );
+    expect(fork).toMatch(/export type Path = \{\s*x: number;\s*y: number;\s*\};/);
+    expect(fork).toMatch(
+      /export type Segment = \{\s*duration: number;\s*delay: number;\s*path: Array<Path>;\s*\};/,
+    );
+    expect(fork).toContain("export const INFO_LEVEL = 1;");
+    expect(fork).toContain("export const DEBUG_LEVEL = 2;");
+    expect(fork).toContain("export const TRACE_LEVEL = 3;");
+    for (const fn of FUNCTIONS) {
+      expect(fork).toContain(`export function ${fn}(`);
+    }
+    // The easing union is a file-scope ambient global, declared before the module
+    // block rather than inside it.
+    expect(fork.indexOf("declare type EASING_TYPES")).toBeLessThan(
+      fork.indexOf('declare module "bzAnim.bzLibrary"'),
+    );
+  });
+
+  test("the api-doc publishes the options tables as member-bearing typedefs and omits the easing union", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/bzAnim.json"), "utf8")) as {
+      info: { namespace: string };
+      elements: { name: string; type: string; properties?: { name: string }[] }[];
+    };
+    expect(doc.info.namespace).toBe("bzAnim");
+    for (const name of ["AnimateArgs", "AnimateSequenceArgs"]) {
+      const typedef = doc.elements.find((e) => e.name === name);
+      expect(typedef?.type).toBe("TYPEDEF");
+      expect((typedef?.properties ?? []).map((p) => p.name)).toContain("easing");
+    }
+    // A string-literal union is neither member-bearing nor reachable as a
+    // typedef, so the emitter publishes no element for it. Asserted so the gap
+    // stays deliberate — widening the rule is a separate goal.
+    expect(doc.elements.some((e) => e.name === "EASING_TYPES")).toBe(false);
   });
 });
