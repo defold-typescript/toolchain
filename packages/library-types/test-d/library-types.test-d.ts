@@ -4,8 +4,6 @@
 import * as bzAnim from "bzAnim.bzLibrary";
 import * as dicebag from "dicebag.dicebag";
 import * as gooey from "gooey.gooey";
-import * as fps from "metrics.fps";
-import * as mem from "metrics.mem";
 import * as nakama from "nakama.nakama";
 import * as platypus from "platypus.platypus";
 import * as rendy from "rendy.rendy";
@@ -31,18 +29,6 @@ _pInstance.move(_v3);
 // `string | number | Hash`, proving the upstream `hash` reference was renamed.
 const _dbFlip: boolean = dicebag.flip_coin();
 const _dbDraw: boolean = dicebag.bag_draw(_hash);
-
-// metrics.* — each submodule has its own Metrics interface, so fps and mem
-// accessors stay scoped to their module.
-const _fpsMetrics = fps.create();
-const _configuredFpsMetrics = fps.create(60, "%.1f", "top-left", "white");
-const _fpsValue: number = _fpsMetrics.fps();
-_fpsMetrics.update();
-_fpsMetrics.draw();
-const _memMetrics = mem.create();
-const _memValue: number = _memMetrics.mem();
-_memMetrics.update();
-_memMetrics.draw();
 
 const _nakamaClient = nakama.create_client({
   host: "127.0.0.1",

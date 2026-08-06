@@ -13,4 +13,13 @@ declare module 'metrics.mem' {
   }
 
   export function create(format?: string, position?: string, color?: string): Metrics;
+
+  /** Call this to get a new memory usage reading. */
+  export function update(): void;
+
+  /** Get the current memory usage, in kilobytes. */
+  export function mem(): number;
+
+  /** Draw memory usage text using `draw_debug_text`. */
+  export function draw(): void;
 }

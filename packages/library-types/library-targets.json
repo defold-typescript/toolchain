@@ -24,18 +24,6 @@
       "generated": "generated/dicebag.dicebag.d.ts"
     },
     {
-      "module": "metrics.fps",
-      "path": "packages/defold-metrics/metrics.fps.d.ts",
-      "fixture": "fixtures/ts-defold/metrics.fps.d.ts",
-      "generated": "generated/metrics.fps.d.ts"
-    },
-    {
-      "module": "metrics.mem",
-      "path": "packages/defold-metrics/metrics.mem.d.ts",
-      "fixture": "fixtures/ts-defold/metrics.mem.d.ts",
-      "generated": "generated/metrics.mem.d.ts"
-    },
-    {
       "module": "nakama.nakama",
       "path": "packages/nakama-defold/nakama.nakama.d.ts",
       "fixture": "fixtures/ts-defold/nakama.nakama.d.ts",
