@@ -515,13 +515,6 @@
       "modules": [
         "nakama.nakama"
       ]
-    },
-    {
-      "dir": "platypus",
-      "classification": "already-vendored",
-      "modules": [
-        "platypus.platypus"
-      ]
     }
   ]
 }

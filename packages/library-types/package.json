@@ -57,9 +57,6 @@
     "./metrics.mem": {
       "types": "./generated/metrics.mem.d.ts"
     },
-    "./platypus.platypus": {
-      "types": "./generated/platypus.platypus.d.ts"
-    },
     "./richtext.color": {
       "types": "./generated/richtext.color.d.ts"
     },

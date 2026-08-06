@@ -512,6 +512,40 @@ describe("loadApiSurface library pages", () => {
     }
   });
 
+  // platypus is the first bare-namespace severance that moves neither the import
+  // alias nor the module path: `libraryImportString` already derived the alias
+  // `platypus` from the dotted namespace's second segment, so the documented
+  // binding is byte-identical on both sides of the cutover. The severance lands no
+  // correction, so the page's proof is the config and instance shapes the fork
+  // exists to keep — neither of which any generated source documents.
+  test("the severed platypus page is maintained-here at its tag, keeps its import binding, and documents both interfaces", () => {
+    const platypus = libraryPages.find((p) => p.namespace === "platypus");
+    expect(platypus).toBeDefined();
+    expect(platypus?.route).toBe("/api/platypus");
+    const meta = platypus?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.authorUrl).toBe("https://github.com/britzl/platypus");
+    expect(meta.commit).toBe("4.3.1");
+    expect(meta.license).toBe("MIT");
+    expect(meta.importString).toBe('import * as platypus from "platypus.platypus"');
+
+    const create = (platypus?.module.functions ?? []).find((f) => f.name === "create");
+    expect(create).toBeDefined();
+    expect((create?.parameters ?? []).map((p) => p.types?.join("|"))).toEqual(["PlatypusConfig"]);
+    expect((create?.returnValues ?? []).map((r) => r.types?.join("|"))).toEqual([
+      "PlatypusInstance",
+    ]);
+
+    const typedefs = platypus?.module.typedefs ?? [];
+    const config = typedefs.find((t) => t.name === "PlatypusConfig");
+    expect((config?.properties ?? []).map((p) => p.name)).toContain("collisions");
+    const instance = typedefs.find((t) => t.name === "PlatypusInstance");
+    expect((instance?.properties ?? []).map((p) => p.name)).toContain("velocity");
+    expect((instance?.functions ?? []).map((f) => f.name)).toContain("set_collisions");
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -655,6 +689,22 @@ describe("loadApiSurface library descriptions", () => {
     const page = libraryPages.find((p) => p.namespace === "bzAnim");
     expect(dirs.get("bzAnim")).toBeUndefined();
     expect(page?.module.description).toBe(descByDir.bzAnim);
+    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  // platypus inverts gooey's and bzAnim's case. Its dir and bare namespace are
+  // the same string too, but the fallback is never reached: the fork's module
+  // JSDoc gives `api-doc/platypus.json` its own `info.description`. Writing an
+  // override key would be a second model of a description the fork already
+  // carries, so the absence of one is asserted rather than left to drift in.
+  test("the severed platypus page keeps its description from its own api-doc, with no override written", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    const overrides = JSON.parse(
+      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-description-overrides.json"), "utf8"),
+    ) as Record<string, string>;
+    const page = libraryPages.find((p) => p.namespace === "platypus");
+    expect(dirs.get("platypus")).toBeUndefined();
+    expect("platypus" in overrides).toBe(false);
     expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
   });
 

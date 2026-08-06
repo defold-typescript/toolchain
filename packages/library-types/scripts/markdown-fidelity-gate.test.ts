@@ -1129,6 +1129,14 @@ const RENDY: LibraryRecord = {
 // `velocity: vmath.vector3`) never enter the comparison at all — exactly as
 // metrics' `Metrics` interface and gooey's state aliases did not. Both collapse
 // to `Record<string | number, unknown>` in the markdown emit.
+//
+// Those two unscored interfaces are exactly why it has since severed ts-defold
+// for the authored lane, under the bare namespace `platypus`. The verdict below
+// is unchanged and final; it now reads off the forked `.d.ts` rather than the
+// retired `fixtures/ts-defold/platypus.platypus.d.ts`, and every recorded term
+// survives that move because `compareFidelityToTsDefold` scores no type token —
+// the fork is the *mapped* golden, so its `hash` -> `Hash` and
+// `vmath.vector3` -> `Vector3` respellings are invisible to the comparison.
 const PLATYPUS: LibraryRecord = {
   library: "platypus",
   repo: "https://github.com/britzl/platypus",
@@ -1137,7 +1145,16 @@ const PLATYPUS: LibraryRecord = {
   prefix: "platypus.",
   classificationDir: "platypus",
   decisions: [
-    { module: "platypus", decision: "no-go", reason: "shared-document", markdown: "README.md" },
+    {
+      module: "platypus",
+      decision: "no-go",
+      reason: "shared-document",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/platypus/platypus.platypus.d.ts",
+        fixture: "fixtures/authored/platypus.platypus.d.ts",
+      },
+    },
   ],
 };
 
@@ -1518,6 +1535,8 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "467465c25b62170b0f179b5a7efea45ae260004498610d51d350b5c7faf16212",
   "fixtures/authored/bzAnim.bzLibrary.d.ts":
     "ba5d870877ae990865553a0591651a9679963d18e2ff848c712f865a14537429",
+  "fixtures/authored/platypus.platypus.d.ts":
+    "94e41a19cc35e9943d3633e2db9a3bd5913364e156feba88ff3b3a0f4ce49c4a",
   "fixtures/authored/richtext.color.d.ts":
     "6e724943b4cb548c4baa283226efed0a0c9348b9529f81319a12e4239ac70a83",
   "fixtures/authored/richtext.richtext.d.ts":
@@ -1574,8 +1593,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "2e62c65b4324e5fa1878cdefaea71dbf7e0e4951ac7094ba24a659754f6a8f3e",
   "fixtures/ts-defold/dicebag.dicebag.d.ts":
     "b8ce58a7ea3a57842fd305a659e042e4c6fea4fd4e5b0fae7fb07b79872a12f6",
-  "fixtures/ts-defold/platypus.platypus.d.ts":
-    "d1e55bb7a6bd64ea1fe31ed64e5fc4ccb4b42fa2e697851ce5afdc67ea27a959",
   "fixtures/ts-defold/rendy.rendy.d.ts":
     "3b7d93b2abeeb5f4089dfb10110648ff66a07a3533b8e1e3b1edc07c8d3ddf03",
 };
@@ -2273,6 +2290,7 @@ describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081
 
 describe("platypus shared-document evidence at tag 4.3.1", () => {
   const readme = () => fixtureText(PLATYPUS, decisionFor(PLATYPUS, "platypus"));
+  const severed = severedFor(PLATYPUS, "platypus");
 
   // The 12 ts-defold constants, sorted as `compareFidelityToTsDefold` reports
   // them: the 7 message hashes and the 5 `DIR_*` direction values.
@@ -2340,7 +2358,11 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
 
   test("the platypus receiver alone parses to just `create` and loses every constant", async () => {
     const { doc, decision, missingMembers, addedMembers, downgradedMembers } =
-      await comparisonForMarkdown(filterToReceiver(readme(), "platypus"), "platypus.platypus");
+      await comparisonForMarkdown(
+        filterToReceiver(readme(), "platypus"),
+        "platypus.platypus",
+        severed,
+      );
     expect(doc.elements.map((e) => e.name.split(".").pop())).toEqual(["create"]);
     expect(missingMembers).toEqual(CONSTANTS);
     expect(addedMembers).toEqual([]);
@@ -2350,7 +2372,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
 
   test("the generous unified reading adds only hoisted instance methods, and still loses the constants", async () => {
     const { doc, decision, missingMembers, addedMembers, downgradedMembers } =
-      await comparisonForMarkdown(unified(), "platypus.platypus");
+      await comparisonForMarkdown(unified(), "platypus.platypus", severed);
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(
       ["create", ...INSTANCE_METHODS].sort(),
     );
@@ -2367,6 +2389,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
       await comparisonForMarkdown(
         filterToReceiver(readme(), "instance").replace(/^(#{2,3}\s+)instance\./gm, "$1platypus."),
         "platypus.platypus",
+        severed,
       );
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(INSTANCE_METHODS);
     expect(missingMembers).toEqual(["create", ...CONSTANTS].sort());
@@ -2393,6 +2416,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
       const { signatureLossMembers, optionalityLossMembers } = await comparisonForMarkdown(
         markdown,
         "platypus.platypus",
+        severed,
       );
       expect(signatureLossMembers).toEqual([]);
       expect(optionalityLossMembers).toEqual([]);
@@ -2401,7 +2425,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
 
   test("the comparator never sees the config and instance interfaces, so the recorded loss is a floor", () => {
     const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/ts-defold", "platypus.platypus.d.ts"),
+      join(PACKAGE_ROOT, targetFor("platypus.platypus", severed).fixture),
       "utf8",
     );
     // `MEMBER_DECL` reads top-level `function`/`const` only, so the 12-field
@@ -2414,6 +2438,37 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
 
   test("the recorded reason is the widened shared-document class", () => {
     expect(decisionFor(PLATYPUS, "platypus").reason).toBe("shared-document");
+  });
+
+  // Without the dropped row the lookup would throw, so the recorded verdict is
+  // only resolvable because `severedSource` supplies both fields it used to read.
+  // The bare namespace is what makes the dotted golden a dead path here, so the
+  // namespace-conditional golden assertion takes its absence arm.
+  test("the verdict still resolves once the ts-defold row is gone", () => {
+    expect(targetFor("platypus.platypus", severed).fixture).toBe(
+      "fixtures/authored/platypus.platypus.d.ts",
+    );
+    expect(existsSync(join(PACKAGE_ROOT, targetFor("platypus.platypus", severed).fixture))).toBe(
+      true,
+    );
+    expect(classificationModule("platypus.platypus", severed)).toBe("platypus.platypus");
+    expect(existsSync(join(PACKAGE_ROOT, "generated/platypus.platypus.d.ts"))).toBe(false);
+  });
+
+  // The PRD's standing rule for the forked instance surface: upstream's 19
+  // documented `instance.` headings are what `PlatypusInstance` is kept current
+  // against. Both sides are production output — the api-doc is `extractApiDoc`'s
+  // typedef member reader over the fork, and `INSTANCE_METHODS` is the same list
+  // the generous-reading test above derives from the pinned README through
+  // `parseMarkdownApi`. A divergence is a stop-and-record against
+  // `platypus/platypus.lua` at the pin, never a re-baseline of either side.
+  test("the pinned README stays the reference for the forked instance surface", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/platypus.json"), "utf8")) as {
+      elements: { name: string; functions?: { name: string }[] }[];
+    };
+    const instance = doc.elements.find((e) => e.name === "PlatypusInstance");
+    expect(instance).toBeDefined();
+    expect((instance?.functions ?? []).map((f) => f.name).sort()).toEqual(INSTANCE_METHODS);
   });
 });
 
