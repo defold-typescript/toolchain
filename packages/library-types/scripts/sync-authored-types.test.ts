@@ -707,3 +707,98 @@ describe("starly.starly migration integrity", () => {
     ]);
   });
 });
+
+// The fifth Bucket-C severance and the first multi-module one: ten `in.<mod>`
+// modules move at once, keeping `namespace === moduleId` so every `/api` route,
+// export subpath and import string stays byte-identical and the goldens are
+// overwritten in place rather than renamed. `in` is a reserved word, which is
+// why a bare `in` namespace is not an option here the way `starly` was.
+//
+// Nine of the ten ts-defold fixtures differ from their goldens (`in.triggers` on
+// 171 lines), so this is also the severance where forking the raw snapshot would
+// have shipped `hash`/`url`/`vmath.vector3` to every consumer.
+describe("defold-input migration integrity", () => {
+  const MODULES = [
+    "accelerometer",
+    "button",
+    "cursor",
+    "gesture",
+    "keyboard",
+    "mapper",
+    "onscreen",
+    "state",
+    "textbox",
+    "triggers",
+  ];
+
+  test("all ten modules are registered in authored-targets.json under their dotted namespaces", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    for (const mod of MODULES) {
+      const moduleId = `in.${mod}`;
+      const target = targets.find((t) => t.moduleId === moduleId);
+      expect(target).toBeDefined();
+      expect(target?.namespace).toBe(moduleId);
+      expect(target?.repo).toBe("https://github.com/britzl/defold-input");
+      expect(target?.ref).toBe("4.7.1");
+      expect(target?.license).toBe("MIT");
+      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
+      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
+    }
+  });
+
+  test("none of the ten is a ts-defold library-targets row and the defold-input dir is gone", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    for (const mod of MODULES) {
+      expect(targets.some((t) => t.module === `in.${mod}`)).toBe(false);
+    }
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defold-input")).toBe(false);
+  });
+
+  // `namespace === moduleId`, so unlike every prior severance nothing is renamed:
+  // only the ts-defold snapshots die, and the goldens, api-docs and the subpaths
+  // consumers import stay exactly where they were.
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", () => {
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    for (const mod of MODULES) {
+      const moduleId = `in.${mod}`;
+      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
+      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
+      expect(`./${moduleId}` in exports).toBe(true);
+    }
+  });
+
+  // The lane-guidance rule on the largest surface it applies to: a fork copies the
+  // *golden*, so the mapped spelling ships. Asserting the mapped names alone would
+  // also pass on the raw ts-defold snapshot, so the unmapped ones are excluded too.
+  test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
+    const triggers = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/in.triggers.d.ts"), "utf8");
+    expect(triggers).toContain("KEY_SPACE: Hash;");
+    expect(triggers).not.toContain(": hash;");
+
+    const accelerometer = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/authored/in.accelerometer.d.ts"),
+      "utf8",
+    );
+    expect(accelerometer).toContain("Vector3");
+    expect(accelerometer).not.toContain("vmath.vector3");
+  });
+
+  test("all ten goldens joined the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    for (const mod of MODULES) {
+      expect(include).toContain(`generated/in.${mod}.d.ts`);
+    }
+    expect(include).toContain("test-d/defold-input-usage.test-d.ts");
+  });
+});
