@@ -309,6 +309,16 @@
       "namespace": "gooey",
       "generated": "generated/gooey.d.ts",
       "apiDoc": "api-doc/gooey.json"
+    },
+    {
+      "repo": "https://github.com/jbp4444/bzAnim",
+      "ref": "v.1.2",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/bzAnim.bzLibrary.d.ts",
+      "moduleId": "bzAnim.bzLibrary",
+      "namespace": "bzAnim",
+      "generated": "generated/bzAnim.d.ts",
+      "apiDoc": "api-doc/bzAnim.json"
     }
   ]
 }
