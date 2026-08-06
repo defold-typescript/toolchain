@@ -25,9 +25,14 @@ const objectId: Hash = object.id;
 const tagged = object.c("player");
 const taggedUrl: Url | undefined = tagged.__url;
 
+const screenPoint: Vec2 = to_screen(vec2(1, 2));
+const worldPoint: Vec2 = to_world(mouse_pos());
+
 void object;
 void vector;
 void roll;
 void red;
 void objectId;
 void taggedUrl;
+void screenPoint;
+void worldPoint;
