@@ -6,7 +6,7 @@
  */
 declare module 'in.gesture' {
 	type GestureInstance = {
-		on_input(action_id: hash, action: {}): DetectedGestures;
+		on_input(action_id: Hash, action: {}): DetectedGestures;
 	};
 
 	type DetectedGestures = {
@@ -37,7 +37,7 @@ declare module 'in.gesture' {
 	};
 
 	export const SETTINGS: {
-		action_id: hash;
+		action_id: Hash;
 		tap_threshold: number;
 		double_tap_interval: number;
 		swipe_threshold: number;
@@ -58,7 +58,7 @@ declare module 'in.gesture' {
 
 	export function on_input(
 		this: any,
-		action_id: hash,
+		action_id: Hash,
 		action: {},
 	): DetectedGestures;
 }

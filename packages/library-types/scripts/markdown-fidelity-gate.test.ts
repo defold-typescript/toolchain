@@ -123,6 +123,8 @@ interface ModuleDecision {
     | "type-downgrade";
   // The upstream `.md` path at the pin, absent exactly when `no-markdown`.
   markdown?: string;
+  // Set once this module severs its ts-defold dependency; see `SeveredSource`.
+  severedSource?: SeveredSource;
 }
 
 /** One Bucket-C library's audited cutover record. `<prefix><module>` is both the
@@ -138,8 +140,6 @@ interface LibraryRecord {
   prefix: string;
   classificationDir: string;
   decisions: ModuleDecision[];
-  // Set once the library severs its ts-defold dependency; see `SeveredSource`.
-  severedSource?: SeveredSource;
 }
 
 interface LibraryTargetRow {
@@ -155,14 +155,26 @@ interface LibraryTargetRow {
  * its row — but it still owes its recorded verdict a resolvable snapshot and
  * classification module. Keeping a dead row to satisfy the lookup would make
  * `library-targets.json` stop meaning "still ts-defold-sourced", so the override
- * lives on the one record that severed. A fork starts byte-identical to the
+ * lives on the decisions that severed. A fork starts byte-identical to the
  * retired snapshot, so `fixture` may point at the vendored authored copy, and the
  * recorded comparison holds until an authored correction changes a term the
  * comparison scores — at which point the verdict is re-checked, not the pin
- * re-baselined blindly. */
+ * re-baselined blindly.
+ *
+ * The override lives on the *decision*, not the record, because a multi-module
+ * library severs one distinct snapshot per module: defold-input's ten modules
+ * have ten `packages/defold-input/in.<mod>.d.ts` paths and ten forks, so a single
+ * record-level value would score every one of them against one snapshot and pin
+ * one digest instead of ten. */
 interface SeveredSource {
   path: string;
   fixture: string;
+}
+
+/** The severance override recorded for one module of `record`, or `undefined`
+ * while the library is still ts-defold-sourced. */
+function severedFor(record: LibraryRecord, module: string): SeveredSource | undefined {
+  return record.decisions.find((d) => d.module === module)?.severedSource;
 }
 
 /** The `library-targets.json` row a moduleId ships from. The ts-defold snapshot
@@ -335,12 +347,25 @@ function describeLibraryDecisions(record: LibraryRecord): void {
     }
   });
 
+  // Severance is a whole-record move: the two branches below assert opposite
+  // things about the same shared config, so a record with some decisions severed
+  // and some not would take one branch and quietly assert the wrong half for the
+  // rest. Partial severance is therefore forbidden outright rather than
+  // supported — no library needs it, and forbidding it is what lets the branch
+  // key off `some`.
+  const severedCount = decisions.filter((d) => d.severedSource !== undefined).length;
+  describe(`${library} severs ts-defold all at once or not at all`, () => {
+    test("every decision carries a severedSource, or none does", () => {
+      expect([severedCount === 0, severedCount === decisions.length]).toContain(true);
+    });
+  });
+
   // A `no-go` retires the *markdown* front-end as this library's regeneration
   // path. Whether it also keeps the ts-defold dependency is a separate question,
   // and the two answers get opposite assertions: an unsevered library must still
   // carry its row, fixture, and classification entry; a severed one must have
   // dropped all three, its verdict now resolving through `severedSource`.
-  if (noGo.length > 0 && record.severedSource === undefined) {
+  if (noGo.length > 0 && severedCount === 0) {
     describe(`every no-go ${library} module stays ts-defold-sourced`, () => {
       const dtsCheck = readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8");
 
@@ -379,21 +404,35 @@ function describeLibraryDecisions(record: LibraryRecord): void {
     });
   }
 
-  const severed = record.severedSource;
-  if (noGo.length > 0 && severed !== undefined) {
+  if (noGo.length > 0 && severedCount > 0) {
     describe(`every no-go ${library} module severed ts-defold for the authored lane`, () => {
       const shippedModules = (
         JSON.parse(readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8")) as {
           targets: { module: string }[];
         }
       ).targets.map((t) => t.module);
+      const authoredTargets = readAuthoredTargets(PACKAGE_ROOT);
 
+      // Whether the ts-defold golden dies with the row depends on the namespace
+      // the fork publishes under, so the assertion cannot be unconditional. A
+      // library that collapses to a bare namespace (starly's `starly.starly` ->
+      // `starly`) leaves `generated/<moduleId>.d.ts` behind as a dead path; a
+      // dotted severance that keeps `namespace === moduleId` (defold-input's ten)
+      // overwrites that exact golden in place, so requiring its absence would
+      // demand deleting the file the fork still emits.
       test.each(
         noGo,
-      )(`${record.prefix}$module dropped its ts-defold row and dotted golden`, (decision) => {
+      )(`${record.prefix}$module dropped its ts-defold row, and its dotted golden per its registered namespace`, (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(shippedModules).not.toContain(moduleId);
-        expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(false);
+        const target = authoredTargets.find((t) => t.moduleId === moduleId);
+        const dottedGolden = `generated/${moduleId}.d.ts`;
+        if (target?.namespace === moduleId) {
+          expect(existsSync(join(PACKAGE_ROOT, dottedGolden))).toBe(true);
+          expect(target.generated).toBe(dottedGolden);
+        } else {
+          expect(existsSync(join(PACKAGE_ROOT, dottedGolden))).toBe(false);
+        }
       });
 
       test("no no-go module is registered as a markdown target", () => {
@@ -414,8 +453,19 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         noGo,
       )(`${record.prefix}$module still resolves its snapshot and classification module`, (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
+        const severed = severedFor(record, decision.module);
+        expect(severed).toBeDefined();
         expect(existsSync(join(PACKAGE_ROOT, targetFor(moduleId, severed).fixture))).toBe(true);
         expect(classificationModule(moduleId, severed)).toBe(moduleId);
+      });
+
+      // Ten modules, ten distinct forks: a record-level override would resolve
+      // every one of them to whichever single snapshot it held.
+      test("each severed module resolves a distinct snapshot", () => {
+        const fixtures = noGo.map(
+          (d) => targetFor(`${record.prefix}${d.module}`, severedFor(record, d.module)).fixture,
+        );
+        expect(new Set(fixtures).size).toBe(fixtures.length);
       });
     });
   }
@@ -423,7 +473,20 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 
 // The recorded per-module fidelity decision for `britzl/defold-input` at tag
 // 4.7.1 — the audit record this evaluation produced. Every module is `no-go`, so
-// all ten stay ts-defold-sourced and none is registered as a markdown target.
+// none is registered as a markdown target.
+//
+// All ten have since severed ts-defold for the authored lane — the first
+// multi-module severance, and the reason `severedSource` sits on the decision
+// rather than the record: ten modules mean ten distinct snapshots. The verdicts
+// below are unchanged and final, and they are now read off the authored forks
+// rather than the retired `fixtures/ts-defold/in.<mod>.d.ts` copies. The terms
+// survive that move because the forks are the *mapped* goldens and
+// `compareFidelityToTsDefold` (`sync-markdown-types.ts:610`) scores no type
+// token — it tests for an introduced `unknown`, counts parameters and `void`
+// returns, and reads `?`, none of which a `hash` -> `Hash` respelling touches.
+// The reserved-word blocker recorded below is likewise unaffected: it is a fact
+// about the *markdown* emitter, which the authored lane never reaches. If a term
+// does move, re-measure and record why — never relax the assertion.
 // `reason` names which evidence class drove the decision:
 //
 //   no-markdown          upstream ships no `in/<mod>.md` at the pin at all.
@@ -475,41 +538,99 @@ const DEFOLD_INPUT: LibraryRecord = {
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "in/accelerometer.md",
+      severedSource: {
+        path: "packages/defold-input/in.accelerometer.d.ts",
+        fixture: "fixtures/authored/in.accelerometer.d.ts",
+      },
     },
     {
       module: "button",
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "in/button.md",
+      severedSource: {
+        path: "packages/defold-input/in.button.d.ts",
+        fixture: "fixtures/authored/in.button.d.ts",
+      },
     },
-    { module: "cursor", decision: "no-go", reason: "surface-loss", markdown: "in/cursor.md" },
+    {
+      module: "cursor",
+      decision: "no-go",
+      reason: "surface-loss",
+      markdown: "in/cursor.md",
+      severedSource: {
+        path: "packages/defold-input/in.cursor.d.ts",
+        fixture: "fixtures/authored/in.cursor.d.ts",
+      },
+    },
     {
       module: "gesture",
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "in/gesture.md",
+      severedSource: {
+        path: "packages/defold-input/in.gesture.d.ts",
+        fixture: "fixtures/authored/in.gesture.d.ts",
+      },
     },
-    { module: "keyboard", decision: "no-go", reason: "no-markdown" },
+    {
+      module: "keyboard",
+      decision: "no-go",
+      reason: "no-markdown",
+      severedSource: {
+        path: "packages/defold-input/in.keyboard.d.ts",
+        fixture: "fixtures/authored/in.keyboard.d.ts",
+      },
+    },
     {
       module: "mapper",
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "in/mapper.md",
+      severedSource: {
+        path: "packages/defold-input/in.mapper.d.ts",
+        fixture: "fixtures/authored/in.mapper.d.ts",
+      },
     },
     {
       module: "onscreen",
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "in/onscreen.md",
+      severedSource: {
+        path: "packages/defold-input/in.onscreen.d.ts",
+        fixture: "fixtures/authored/in.onscreen.d.ts",
+      },
     },
-    { module: "state", decision: "no-go", reason: "surface-loss", markdown: "in/state.md" },
+    {
+      module: "state",
+      decision: "no-go",
+      reason: "surface-loss",
+      markdown: "in/state.md",
+      severedSource: {
+        path: "packages/defold-input/in.state.d.ts",
+        fixture: "fixtures/authored/in.state.d.ts",
+      },
+    },
     {
       module: "textbox",
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "in/textbox.md",
+      severedSource: {
+        path: "packages/defold-input/in.textbox.d.ts",
+        fixture: "fixtures/authored/in.textbox.d.ts",
+      },
     },
-    { module: "triggers", decision: "no-go", reason: "no-markdown" },
+    {
+      module: "triggers",
+      decision: "no-go",
+      reason: "no-markdown",
+      severedSource: {
+        path: "packages/defold-input/in.triggers.d.ts",
+        fixture: "fixtures/authored/in.triggers.d.ts",
+      },
+    },
   ],
 };
 
@@ -597,12 +718,17 @@ const PERSIST: LibraryRecord = {
   prefix: "persist.",
   classificationDir: "library-defold-persist",
   decisions: [
-    { module: "persist", decision: "no-go", reason: "signature-loss", markdown: "README.md" },
+    {
+      module: "persist",
+      decision: "no-go",
+      reason: "signature-loss",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/library-defold-persist/persist.persist.d.ts",
+        fixture: "fixtures/authored/persist.persist.d.ts",
+      },
+    },
   ],
-  severedSource: {
-    path: "packages/library-defold-persist/persist.persist.d.ts",
-    fixture: "fixtures/authored/persist.persist.d.ts",
-  },
 };
 
 // The recorded decision for `indiesoftby/defold-yagames` at tag `0.19.0` — the
@@ -646,12 +772,17 @@ const YAGAMES: LibraryRecord = {
   prefix: "yagames.",
   classificationDir: "defold-yagames",
   decisions: [
-    { module: "yagames", decision: "no-go", reason: "doc-dialect", markdown: "README.md" },
+    {
+      module: "yagames",
+      decision: "no-go",
+      reason: "doc-dialect",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/defold-yagames/yagames.yagames.d.ts",
+        fixture: "fixtures/authored/yagames.yagames.d.ts",
+      },
+    },
   ],
-  severedSource: {
-    path: "packages/defold-yagames/yagames.yagames.d.ts",
-    fixture: "fixtures/authored/yagames.yagames.d.ts",
-  },
 };
 
 // The recorded decision for `britzl/gooey` at tag `10.5.3` — the sixth Bucket-C
@@ -965,12 +1096,17 @@ const STARLY: LibraryRecord = {
   prefix: "starly.",
   classificationDir: "starly",
   decisions: [
-    { module: "starly", decision: "no-go", reason: "doc-dialect", markdown: "README.md" },
+    {
+      module: "starly",
+      decision: "no-go",
+      reason: "doc-dialect",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/starly/starly.starly.d.ts",
+        fixture: "fixtures/authored/starly.starly.d.ts",
+      },
+    },
   ],
-  severedSource: {
-    path: "packages/starly/starly.starly.d.ts",
-    fixture: "fixtures/authored/starly.starly.d.ts",
-  },
 };
 
 // The recorded decision for `8bitskull/dicebag` at tag `0.3` (commit
@@ -1123,7 +1259,7 @@ const comparisonFor = (record: LibraryRecord, module: string) =>
   evaluateMarkdownCandidate(
     PACKAGE_ROOT,
     candidateTarget(record, decisionFor(record, module)),
-    record.severedSource?.fixture,
+    decisionFor(record, module).severedSource?.fixture,
   );
 
 const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
@@ -1159,7 +1295,7 @@ function verdictFixturePaths(): string[] {
     for (const decision of record.decisions) {
       const moduleId = `${record.prefix}${decision.module}`;
       if (decision.reason !== "no-markdown") paths.add(`fixtures/markdown/${moduleId}.md`);
-      paths.add(targetFor(moduleId, record.severedSource).fixture);
+      paths.add(targetFor(moduleId, decision.severedSource).fixture);
     }
   }
   return [...paths].sort();
@@ -1202,6 +1338,26 @@ function driftRemedy(path: string): { digestMayBeUpdated: boolean; message: stri
  * verdicts. The lanes drift for different reasons, so `driftRemedy` reports
  * them differently. */
 const VENDORED_FIXTURE_HASHES: Record<string, string> = {
+  "fixtures/authored/in.accelerometer.d.ts":
+    "d69fcfebd4a5d2bb98c7d0b7dc6ec73cc95e6f72d4239c78271ae78d8933622e",
+  "fixtures/authored/in.button.d.ts":
+    "24c49e22b6170ce45af0056db1e3e60ed51896539579ee8e2fb14f019d007d61",
+  "fixtures/authored/in.cursor.d.ts":
+    "84e1be7786a0b147bb434fdb92254190d5de38cb961be3ca27c9bb2d0adb31fe",
+  "fixtures/authored/in.gesture.d.ts":
+    "1b433bb9d8823cbccc9edb80613e28842b370b5d84830432cfde6dc0bef3a038",
+  "fixtures/authored/in.keyboard.d.ts":
+    "e18b39a30caf3432e54d7808a74a30e7537776eb3cec8fed1eb24015b5d0e59b",
+  "fixtures/authored/in.mapper.d.ts":
+    "d52500f818de9d3b5c36ea878ee2b853ab26e4478eea4039948bb808529c93a8",
+  "fixtures/authored/in.onscreen.d.ts":
+    "cedd87bf4dbf910b8819bee3cbc72627f7305c6e83815a8f59479b71fe3a2c37",
+  "fixtures/authored/in.state.d.ts":
+    "23764519e7e88f8bd4bbc0ecfc6f06eba54e5e58c490ee29fa10a0e120330a8f",
+  "fixtures/authored/in.textbox.d.ts":
+    "d593c00d318d387b0e57535323d03314cb4d807427839ceef784a1cd3fc4179f",
+  "fixtures/authored/in.triggers.d.ts":
+    "277cc01d2ddcfdc47878f47ced9fadcaacc2a449d9830b72d8edc346c3cb32de",
   "fixtures/authored/orthographic.camera.d.ts":
     "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
   "fixtures/authored/persist.persist.d.ts":
@@ -1260,26 +1416,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "b8ce58a7ea3a57842fd305a659e042e4c6fea4fd4e5b0fae7fb07b79872a12f6",
   "fixtures/ts-defold/gooey.gooey.d.ts":
     "ccb14cf1d623756f7eb014c63b47e86369d42a89dabb7fbc267e2ca580d449e3",
-  "fixtures/ts-defold/in.accelerometer.d.ts":
-    "aaeed91bd30ab3fd1f1b5f7753d63daf30d4fcea298b8cf98fa9768d57682db1",
-  "fixtures/ts-defold/in.button.d.ts":
-    "4c6b0b341a3f210f4f3ffbdaa1d19d540f060a2dce55d536063228d83bee6d09",
-  "fixtures/ts-defold/in.cursor.d.ts":
-    "8c93001ed55f49be295ab6a7e24a77d9fae4a3f135e24fd13248f5441e2c0a0b",
-  "fixtures/ts-defold/in.gesture.d.ts":
-    "2afe9c80f2ea097f9152d0b90d61f846e6c6e3cf793dcae3cf99c825ebe99592",
-  "fixtures/ts-defold/in.keyboard.d.ts":
-    "1ac5b5ef0fb01e7d7b46d39644dcee1211fe6563139eeea1b3b56f8c68b7445a",
-  "fixtures/ts-defold/in.mapper.d.ts":
-    "d52500f818de9d3b5c36ea878ee2b853ab26e4478eea4039948bb808529c93a8",
-  "fixtures/ts-defold/in.onscreen.d.ts":
-    "344895d550bbc2b1cdb67ee05494c62ec6dff3fc9222f8458d3020deea11ad4e",
-  "fixtures/ts-defold/in.state.d.ts":
-    "9ab6bf43d2cd3b5f0e3a3a83bfac177dd831394e2d10ddaa3a245fb19b666a79",
-  "fixtures/ts-defold/in.textbox.d.ts":
-    "efab32ed7edc3d697ef23aea960dfc573dd76142db78d4511dc67addd3926406",
-  "fixtures/ts-defold/in.triggers.d.ts":
-    "57bbece64fcb6b569f1af629a9c9731cc6c955b555058e5106baee7799540909",
   "fixtures/ts-defold/metrics.fps.d.ts":
     "76e42a10d9a4697ae13b4cb0871ba634d65256d44404991ff2ae2f12f4e0ad6a",
   "fixtures/ts-defold/metrics.mem.d.ts":
@@ -1568,7 +1704,7 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
   const tsSurface = () =>
     tsDefoldMembers(
       readFileSync(
-        join(PACKAGE_ROOT, targetFor("yagames.yagames", YAGAMES.severedSource).fixture),
+        join(PACKAGE_ROOT, targetFor("yagames.yagames", severedFor(YAGAMES, "yagames")).fixture),
         "utf8",
       ),
     );
@@ -1629,10 +1765,12 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
   // Without the dropped row the lookup would throw, so the recorded verdict is
   // only resolvable because `severedSource` supplies both fields it used to read.
   test("the verdict still resolves once the ts-defold row is gone", () => {
-    expect(targetFor("yagames.yagames", YAGAMES.severedSource).fixture).toBe(
+    expect(targetFor("yagames.yagames", severedFor(YAGAMES, "yagames")).fixture).toBe(
       "fixtures/authored/yagames.yagames.d.ts",
     );
-    expect(classificationModule("yagames.yagames", YAGAMES.severedSource)).toBe("yagames.yagames");
+    expect(classificationModule("yagames.yagames", severedFor(YAGAMES, "yagames"))).toBe(
+      "yagames.yagames",
+    );
   });
 });
 
@@ -2112,7 +2250,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
       downgradedMembers,
       signatureLossMembers,
       optionalityLossMembers,
-    } = await comparisonForMarkdown(generous(), "starly.starly", STARLY.severedSource);
+    } = await comparisonForMarkdown(generous(), "starly.starly", severedFor(STARLY, "starly"));
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
     // The README documents the constants as prose bullets only, so no reading of
     // it reaches them; the 14 lifted headings match `CoreModule`'s 14 methods by
@@ -2130,7 +2268,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
 
   test("the `export =` handle resolves, so the verdict rests on named loss terms", () => {
     const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, targetFor("starly.starly", STARLY.severedSource).fixture),
+      join(PACKAGE_ROOT, targetFor("starly.starly", severedFor(STARLY, "starly")).fixture),
       "utf8",
     );
     expect(tsDefold).toContain("export = exportThis;");
@@ -2168,7 +2306,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
     const { emitted } = await comparisonForMarkdown(
       generous(),
       "starly.starly",
-      STARLY.severedSource,
+      severedFor(STARLY, "starly"),
     );
     // Both headings declare more arguments than their `**Parameters**` list
     // documents, so the emit keeps only the documented ones.
@@ -2182,7 +2320,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
     const { emitted } = await comparisonForMarkdown(
       generous(),
       "starly.starly",
-      STARLY.severedSource,
+      severedFor(STARLY, "starly"),
     );
     // The bullets repeat the heading's brackets in the name — `* \`[duration_scalar]\`:
     // \`number\`` — which is no identifier, so the emitter synthesizes positional
@@ -2197,7 +2335,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
     const { emitted } = await comparisonForMarkdown(
       generous(),
       "starly.starly",
-      STARLY.severedSource,
+      severedFor(STARLY, "starly"),
     );
     expect(emitted).toContain("positions: Record<string | number, unknown>");
     // The forked snapshot is the mapped golden, so the surface the downgrade is
@@ -2205,7 +2343,7 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
     // comparison scores no type token, so the term itself is unmoved.
     expect(
       readFileSync(
-        join(PACKAGE_ROOT, targetFor("starly.starly", STARLY.severedSource).fixture),
+        join(PACKAGE_ROOT, targetFor("starly.starly", severedFor(STARLY, "starly")).fixture),
         "utf8",
       ),
     ).toContain("positions: Vector3[]");
@@ -2214,10 +2352,12 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
   // Without the dropped row the lookup would throw, so the recorded verdict is
   // only resolvable because `severedSource` supplies both fields it used to read.
   test("the verdict still resolves once the ts-defold row is gone", () => {
-    expect(targetFor("starly.starly", STARLY.severedSource).fixture).toBe(
+    expect(targetFor("starly.starly", severedFor(STARLY, "starly")).fixture).toBe(
       "fixtures/authored/starly.starly.d.ts",
     );
-    expect(classificationModule("starly.starly", STARLY.severedSource)).toBe("starly.starly");
+    expect(classificationModule("starly.starly", severedFor(STARLY, "starly"))).toBe(
+      "starly.starly",
+    );
   });
 
   test("the recorded reason is doc-dialect", () => {

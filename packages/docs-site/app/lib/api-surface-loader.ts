@@ -125,7 +125,7 @@ export function githubOwner(url: string): string {
 // Presentation-only author-first label for a library module:
 // `<owner> / <dir>[ · <leaf>]`. The spaced slash signals "label, not a require
 // path". The `· <leaf>` tail is kept only for a genuinely multi-module dir whose
-// module leaf differs from the dir (`defold-input` -> `· button`); a single-
+// module leaf differs from the dir (`in` -> `· button`); a single-
 // module dir, or a module whose last segment equals its dir (`monarch.monarch`),
 // drops the leaf. A missing owner falls back to the bare dir part.
 export function libraryDisplayName(
