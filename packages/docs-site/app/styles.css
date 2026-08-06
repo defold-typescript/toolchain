@@ -59,10 +59,13 @@
   --color-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
   /* Availability badge colors — additive over accessible text labels. New/
-   * changed/deprecated map to green/orange/red; the pill/dot rules read these. */
+   * changed/deprecated map to green/orange/red; the pill/dot rules read these.
+   * The ambient-global marker is scope, not lifecycle, so it takes a distinct
+   * hue rather than reusing one of the three. */
   --color-badge-new: #1a7f37;
   --color-badge-changed: #bc4c00;
   --color-badge-deprecated: #cf222e;
+  --color-badge-global: #6639ba;
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -88,6 +91,7 @@
   --color-badge-new: #3fb950;
   --color-badge-changed: #db6d28;
   --color-badge-deprecated: #f85149;
+  --color-badge-global: #a371f7;
 }
 
 @layer base {
@@ -885,6 +889,10 @@
 
   .prose .api-badge-dot--deprecated {
     background: var(--color-badge-deprecated);
+  }
+
+  .prose .api-badge-dot--global {
+    background: var(--color-badge-global);
   }
 
   /* Namespace-title count pills: one per non-zero category. Inline-flex so the

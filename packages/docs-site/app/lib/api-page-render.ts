@@ -170,6 +170,15 @@ function badgeDots(category: BadgeCategory): string {
     .join("");
 }
 
+// The heading marker for an ambient global, reusing the `api-badge-dot` markup
+// (and so the heading slugger's rule that strips it) rather than a second visual
+// language. Independent of the availability categories above: a `library` page
+// carries no availability record at all, and this marker rides every page.
+function globalDot(symbol: ApiSymbol): string {
+  if (!symbol.global) return "";
+  return '<span class="api-badge-dot api-badge-dot--global" aria-label="Ambient global" title="Ambient global">G</span>';
+}
+
 const COUNT_KINDS: {
   readonly flag: keyof NamespaceBadgeCounts;
   readonly kind: string;
@@ -240,7 +249,7 @@ function symbolBlock(symbol: ApiSymbol, badges = "", dots = ""): string {
 // statement is emitted as a `ts` code block nested under an `Import` bullet (not
 // an inline span) so it renders as a `<pre>` and picks up the copy-to-clipboard
 // button; the fence also keeps the prose linkifier off the dotted module name.
-function libraryMetaBlock(meta: LibraryMeta): string[] {
+function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   // Abbreviated, still-live pin — `2fe3aed` linking to the generating source.
   const pin = `[\`${meta.commit.slice(0, 7)}\`](${meta.sourceUrl})`;
   const repo = meta.authorUrl
@@ -277,6 +286,14 @@ function libraryMetaBlock(meta: LibraryMeta): string[] {
     "     ```ts",
     `     ${meta.importString}`,
     "     ```",
+    // A fork like `boom` or `deftest` publishes most of its surface outside the
+    // `declare module` block, so the import above reaches only the symbols that
+    // carry no marker; without this the page reads as if it reached them all.
+    ...(hasGlobals
+      ? [
+          "     Symbols marked ambient globals are declared globally and need no import — call them directly.",
+        ]
+      : []),
   ];
 }
 
@@ -348,7 +365,13 @@ export function apiPageMarkdown(
   const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
   if (intro) lines.push(linkify(intro), "");
   if (page.category === "library" && page.libraryMeta) {
-    lines.push(...libraryMetaBlock(page.libraryMeta), "");
+    lines.push(
+      ...libraryMetaBlock(
+        page.libraryMeta,
+        symbols.some((s) => s.global),
+      ),
+      "",
+    );
   }
   const linkifyParam = (p: ApiSymbolParam): ApiSymbolParam => ({
     ...p,
@@ -369,9 +392,10 @@ export function apiPageMarkdown(
       indexRoute,
       symbol.deprecated,
     );
-    const dots = combinedMarkers
-      ? badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []))
-      : "";
+    const dots =
+      (combinedMarkers
+        ? badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []))
+        : "") + globalDot(symbol);
     lines.push(symbolBlock(linkified, badges, dots), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {
