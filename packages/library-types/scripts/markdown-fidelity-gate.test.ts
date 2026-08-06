@@ -640,8 +640,16 @@ const DEFOLD_INPUT: LibraryRecord = {
 // header-level widening the parser saw zero sections and the recorded reason
 // would have been a tooling artifact rather than a fidelity judgment.
 //
-// All three modules are `no-go`, so none is registered and monarch stays
-// ts-defold-sourced in full.
+// All three modules are `no-go` — the markdown front-end is not monarch's
+// regeneration path — and all three have since severed ts-defold for the authored
+// lane, keeping `namespace === moduleId` so the goldens are overwritten in place.
+//
+// The snapshots the terms below are read from are therefore the authored forks,
+// not `fixtures/ts-defold/`. Every recorded term is unchanged across that move,
+// because a verbatim fork differs from its ts-defold source only in type tokens
+// (`hash` -> `Hash`, `vmath.vector3` -> `Vector3`) and
+// `compareFidelityToTsDefold` scores no type token (`sync-markdown-types.ts:610`).
+// If a term does move, re-measure and record why — never relax the assertion.
 const MONARCH: LibraryRecord = {
   library: "monarch",
   repo: "https://github.com/britzl/monarch",
@@ -650,13 +658,34 @@ const MONARCH: LibraryRecord = {
   prefix: "monarch.",
   classificationDir: "monarch",
   decisions: [
-    { module: "monarch", decision: "no-go", reason: "surface-loss", markdown: "README_API.md" },
-    { module: "transitions.easings", decision: "no-go", reason: "no-markdown" },
+    {
+      module: "monarch",
+      decision: "no-go",
+      reason: "surface-loss",
+      markdown: "README_API.md",
+      severedSource: {
+        path: "packages/monarch/monarch.monarch.d.ts",
+        fixture: "fixtures/authored/monarch.monarch.d.ts",
+      },
+    },
+    {
+      module: "transitions.easings",
+      decision: "no-go",
+      reason: "no-markdown",
+      severedSource: {
+        path: "packages/monarch/monarch.transitions.easings.d.ts",
+        fixture: "fixtures/authored/monarch.transitions.easings.d.ts",
+      },
+    },
     {
       module: "transitions.gui",
       decision: "no-go",
       reason: "no-signature-section",
       markdown: "README_TRANSITIONS.md",
+      severedSource: {
+        path: "packages/monarch/monarch.transitions.gui.d.ts",
+        fixture: "fixtures/authored/monarch.transitions.gui.d.ts",
+      },
     },
   ],
 };
@@ -1358,6 +1387,12 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "d593c00d318d387b0e57535323d03314cb4d807427839ceef784a1cd3fc4179f",
   "fixtures/authored/in.triggers.d.ts":
     "277cc01d2ddcfdc47878f47ced9fadcaacc2a449d9830b72d8edc346c3cb32de",
+  "fixtures/authored/monarch.monarch.d.ts":
+    "3e3d4db9b74dbd75d1755dc966b37035ee8abefefb0e9143609dd2f5a2794f39",
+  "fixtures/authored/monarch.transitions.easings.d.ts":
+    "e9c3ae5b778ac553533dd1cd9a0e40ef2caecfa0a93106aa1e63386f5473d0f7",
+  "fixtures/authored/monarch.transitions.gui.d.ts":
+    "ea0f15ee04f747f6253e9a91652b3dc94e2ecf47b6ad3b352c12b8e3256f7c6b",
   "fixtures/authored/orthographic.camera.d.ts":
     "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
   "fixtures/authored/persist.persist.d.ts":
@@ -1420,12 +1455,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "76e42a10d9a4697ae13b4cb0871ba634d65256d44404991ff2ae2f12f4e0ad6a",
   "fixtures/ts-defold/metrics.mem.d.ts":
     "a0538630062f9fbee67c196fb1c75b3f58817434b0749e4309f4866853b3d592",
-  "fixtures/ts-defold/monarch.monarch.d.ts":
-    "7fd159bb27f893cca8a1e963e4b8ab506c761df54fa3d2f5a7334f34a58edeca",
-  "fixtures/ts-defold/monarch.transitions.easings.d.ts":
-    "e9c3ae5b778ac553533dd1cd9a0e40ef2caecfa0a93106aa1e63386f5473d0f7",
-  "fixtures/ts-defold/monarch.transitions.gui.d.ts":
-    "09e18232dcab53355d304796a02fe4ee0027a4e3b44fc0ff20b78164eb6cd1cc",
   "fixtures/ts-defold/platypus.platypus.d.ts":
     "d1e55bb7a6bd64ea1fe31ed64e5fc4ccb4b42fa2e697851ce5afdc67ea27a959",
   "fixtures/ts-defold/rendy.rendy.d.ts":
@@ -1566,10 +1595,26 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
     expect(decision).toBe("no-go");
   });
 
-  test("upstream renamed on_focus_changed, so the markdown surface adds on_focus_change", async () => {
+  // The `addedMembers`/`missingMembers` pair below is a README typo, not an
+  // upstream rename. Measured at the pin: `monarch/monarch.lua:1295` is
+  // `function M.on_focus_changed(id, fn)`, the file's only `on_focus` definition,
+  // and it is the spelling the fork carries. Only `README_API.md:206` writes
+  // `## monarch.on_focus_change(screen_id, fn)`. So no correction is owed to our
+  // types — binding `on_focus_change` would bind a function that does not exist
+  // at runtime — and the divergence counts as evidence for the `surface-loss`
+  // verdict rather than a defect in the surface being compared.
+  test("the README misspells on_focus_changed, so the markdown surface adds a member the runtime lacks", async () => {
     const { addedMembers, missingMembers } = await comparisonFor(MONARCH, "monarch");
     expect(addedMembers).toContain("on_focus_change");
     expect(missingMembers).toContain("on_focus_changed");
+    // Pinned together with the terms above: a later "fix" to the README spelling,
+    // or a rename of the export to match it, reds this in one edit.
+    const fork = readFileSync(
+      join(PACKAGE_ROOT, targetFor("monarch.monarch", severedFor(MONARCH, "monarch")).fixture),
+      "utf8",
+    );
+    expect(fork).toContain("on_focus_changed");
+    expect(fork).not.toContain("on_focus_change(");
   });
 
   test("monarch.transitions.easings has no upstream doc anywhere in the repo", () => {
@@ -1587,6 +1632,25 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
       /monarch\.transitions\.gui/,
     );
     expect(() => parseMarkdownApi(text, "monarch.transitions.gui")).toThrow(/signature/);
+  });
+
+  // Without the dropped rows the lookups would throw, so the three recorded
+  // verdicts are only resolvable because each decision's own `severedSource`
+  // supplies both fields it used to read. One value per module: a single
+  // record-level override would score all three against one snapshot.
+  test("each of the three verdicts still resolves once its ts-defold row is gone", () => {
+    const MODULES = ["monarch", "transitions.easings", "transitions.gui"];
+    const fixtures = MODULES.map((mod) => {
+      const moduleId = `monarch.${mod}`;
+      const severed = severedFor(MONARCH, mod);
+      expect(severed).toBeDefined();
+      const { fixture } = targetFor(moduleId, severed);
+      expect(fixture).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(existsSync(join(PACKAGE_ROOT, fixture))).toBe(true);
+      expect(classificationModule(moduleId, severed)).toBe(moduleId);
+      return fixture;
+    });
+    expect(new Set(fixtures).size).toBe(3);
   });
 });
 

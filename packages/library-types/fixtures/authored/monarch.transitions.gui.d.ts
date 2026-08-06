@@ -58,7 +58,7 @@ declare module 'monarch.transitions.gui' {
 	};
 
 	type Transition = {
-		handle: (message_id: hash | string, message: unknown, sender: url) => void;
+		handle: (message_id: Hash | string, message: unknown, sender: Url) => void;
 		show_in: (
 			fn: TransitionInFn | TransitionOutFn,
 			easing: GuiEasing,
@@ -86,30 +86,30 @@ declare module 'monarch.transitions.gui' {
 	};
 
 	type TransitionNodeless = {
-		handle: (message_id: hash | string, message: unknown, sender: url) => void;
+		handle: (message_id: Hash | string, message: unknown, sender: Url) => void;
 		show_in: (
-			node: node,
+			node: Opaque<"node">,
 			fn: TransitionInFn | TransitionOutFn,
 			easing: GuiEasing,
 			duration: number,
 			delay: number,
 		) => void;
 		show_out: (
-			node: node,
+			node: Opaque<"node">,
 			fn: TransitionInFn | TransitionOutFn,
 			easing: GuiEasing,
 			duration: number,
 			delay: number,
 		) => void;
 		back_in: (
-			node: node,
+			node: Opaque<"node">,
 			fn: TransitionInFn | TransitionOutFn,
 			easing: GuiEasing,
 			duration: number,
 			delay: number,
 		) => void;
 		back_out: (
-			node: node,
+			node: Opaque<"node">,
 			fn: TransitionInFn | TransitionOutFn,
 			easing: GuiEasing,
 			duration: number,
@@ -118,21 +118,21 @@ declare module 'monarch.transitions.gui' {
 	};
 
 	export type TransitionInFn = (
-		node: node,
-		to: vmath.vector3,
+		node: Opaque<"node">,
+		to: Vector3,
 		easing: GuiEasing,
 		duration: number,
 		delay?: number,
-		complete_function?: (this: any, node: node) => void,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
 	) => void;
 
 	export type TransitionOutFn = (
-		node: node,
-		from: vmath.vector3,
+		node: Opaque<"node">,
+		from: Vector3,
 		easing: GuiEasing,
 		duration: number,
 		delay?: number,
-		complete_function?: (this: any, node: node) => void,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
 	) => void;
 
 	export const slide_in_right: TransitionInFn;
@@ -149,31 +149,31 @@ declare module 'monarch.transitions.gui' {
 	export const fade_out: TransitionOutFn;
 
 	export function in_right_out_left(
-		node: node,
+		node: Opaque<"node">,
 		duration: number,
 		delay?: number,
 		easing?: Easing,
 	): void;
 	export function in_left_out_right(
-		node: node,
+		node: Opaque<"node">,
 		duration: number,
 		delay?: number,
 		easing?: Easing,
 	): void;
 	export function in_left_out_left(
-		node: node,
+		node: Opaque<"node">,
 		duration: number,
 		delay?: number,
 		easing?: Easing,
 	): void;
 	export function in_right_out_right(
-		node: node,
+		node: Opaque<"node">,
 		duration: number,
 		delay?: number,
 		easing?: Easing,
 	): void;
 	export function fade_in_out(
-		node: node,
+		node: Opaque<"node">,
 		duration: number,
 		delay?: number,
 		easing?: Easing,
@@ -184,14 +184,14 @@ declare module 'monarch.transitions.gui' {
 
 	/** Calls `complete_function` */
 	export function instant(
-		node: node,
-		to: vmath.vector3,
+		node: Opaque<"node">,
+		to: Vector3,
 		easing: GuiEasing,
 		duration: number,
 		delay?: number,
-		complete_function?: (this: any, node: node) => void,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
 	): void;
 
-	export function create(node: node): Transition;
+	export function create(node: Opaque<"node">): Transition;
 	export function create(): TransitionNodeless;
 }

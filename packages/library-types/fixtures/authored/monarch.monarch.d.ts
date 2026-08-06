@@ -8,7 +8,7 @@
  * @noResolution
  */
 declare module 'monarch.monarch' {
-	type ScreenId = hash | string;
+	type ScreenId = Hash | string;
 	type ShowOptions = {
 		clear?: boolean;
 		reload?: boolean;
@@ -41,25 +41,25 @@ declare module 'monarch.monarch' {
 
 	// transition messages
 	export const TRANSITION: {
-		DONE: hash;
-		SHOW_IN: hash;
-		SHOW_OUT: hash;
-		BACK_IN: hash;
-		BACK_OUT: hash;
+		DONE: Hash;
+		SHOW_IN: Hash;
+		SHOW_OUT: Hash;
+		BACK_IN: Hash;
+		BACK_OUT: Hash;
 	};
 
 	// focus messages
 	export const FOCUS: {
-		GAINED: hash;
-		LOST: hash;
+		GAINED: Hash;
+		LOST: Hash;
 	};
 
 	// listener messages
-	export const SCREEN_TRANSITION_IN_STARTED: hash;
-	export const SCREEN_TRANSITION_IN_FINISHED: hash;
-	export const SCREEN_TRANSITION_OUT_STARTED: hash;
-	export const SCREEN_TRANSITION_OUT_FINISHED: hash;
-	export const SCREEN_TRANSITION_FAILED: hash;
+	export const SCREEN_TRANSITION_IN_STARTED: Hash;
+	export const SCREEN_TRANSITION_IN_FINISHED: Hash;
+	export const SCREEN_TRANSITION_OUT_STARTED: Hash;
+	export const SCREEN_TRANSITION_OUT_FINISHED: Hash;
+	export const SCREEN_TRANSITION_FAILED: Hash;
 
 	/**
 	 * Enable verbose logging of the internals of Monarch.
@@ -122,7 +122,7 @@ declare module 'monarch.monarch' {
 	 */
 	export function register_proxy(
 		screen_id: ScreenId,
-		proxy: url,
+		proxy: Url,
 		settings: RegisterProxyOptions,
 	): void;
 
@@ -147,7 +147,7 @@ declare module 'monarch.monarch' {
 
 	export function register_factory(
 		screen_id: ScreenId,
-		factory: url,
+		factory: Url,
 		settings: RegisterProxyOptions,
 	): void;
 
@@ -310,14 +310,14 @@ declare module 'monarch.monarch' {
 	 */
 	export function post(
 		screen_id: ScreenId,
-		message_id: hash | string,
+		message_id: Hash | string,
 		message?: Message,
 	): LuaMultiReturn<[boolean, string | undefined]>;
 
 	export function on_message(
-		message_id: hash | string,
+		message_id: Hash | string,
 		message: Message,
-		sender: url,
+		sender: Url,
 	): void;
 
 	/**
@@ -364,7 +364,7 @@ declare module 'monarch.monarch' {
 	 */
 	export function on_transition(
 		screen_id: ScreenId,
-		fn: (message_id: string, message: Message, sender: url) => void,
+		fn: (message_id: string, message: Message, sender: Url) => void,
 	): void;
 
 	/**
@@ -377,7 +377,7 @@ declare module 'monarch.monarch' {
 	 */
 	export function on_focus_changed(
 		screen_id: ScreenId,
-		fn: (message_id: string, message: Message, sender: url) => void,
+		fn: (message_id: string, message: Message, sender: Url) => void,
 	): void;
 
 	/**
@@ -391,20 +391,20 @@ declare module 'monarch.monarch' {
 	 */
 	export function on_post(
 		screen_id: ScreenId,
-		fn_or_url: Callback | url | string,
+		fn_or_url: Callback | Url | string,
 	): void;
 
 	/**
 	 * Add a listener to be notified when screens are shown or hidden.
 	 * @param {url|undefined} url - The url to notify, undefined for the current url.
 	 */
-	export function add_listener(url?: url): void;
+	export function add_listener(url?: Url): void;
 
 	/**
 	 * Remove a previously added listener.
 	 * @param {url|undefined} url - The url to remove, nil for current url.
 	 */
-	export function remove_listener(url?: url): void;
+	export function remove_listener(url?: Url): void;
 
 	export function dump_stack(): string;
 

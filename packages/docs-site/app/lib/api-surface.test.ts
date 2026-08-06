@@ -232,20 +232,24 @@ describe("loadApiSurface library pages", () => {
     expect(noLib.some((p) => p.category === "library")).toBe(false);
   });
 
+  // The real-data proof that a still-vendored library reports the shared
+  // ts-defold pin rather than an upstream tag. The subject moves with each
+  // Bucket-C severance — it was `monarch.monarch` until monarch severed — and
+  // retires once `library-targets.json` reaches zero rows.
   test("builds a structured libraryMeta with author/upstream repo, commit pin, import, and license", () => {
-    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
-    expect(monarch).toBeDefined();
-    const meta = monarch?.libraryMeta;
+    const gooey = libraryPages.find((p) => p.namespace === "gooey.gooey");
+    expect(gooey).toBeDefined();
+    const meta = gooey?.libraryMeta;
     expect(meta).toBeDefined();
     if (!meta) return;
     expect(meta.author).toBe("Britzl");
-    expect(meta.authorUrl).toBe("https://github.com/britzl/monarch");
+    expect(meta.authorUrl).toBe("https://github.com/britzl/gooey");
     expect(meta.commit).toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
     // Links to the exact `.d.ts` the types were generated from, at the pin.
     expect(meta.sourceUrl).toBe(
-      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/monarch/monarch.monarch.d.ts",
+      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/gooey/gooey.gooey.d.ts",
     );
-    expect(meta.importString).toBe('import * as monarch from "monarch.monarch"');
+    expect(meta.importString).toBe('import * as gooey from "gooey.gooey"');
     expect(meta.license).toBe("MIT");
     expect("commitUrl" in meta).toBe(false);
     expect("attribution" in meta).toBe(false);
@@ -264,6 +268,35 @@ describe("loadApiSurface library pages", () => {
     expect(meta.authorUrl).toBe("https://github.com/britzl/defold-orthographic");
     expect(meta.commit).toBe("3.6.3");
     expect(meta.importString).toBe('import * as camera from "orthographic.camera"');
+  });
+
+  // monarch severed all three modules under their dotted namespaces, so nothing
+  // consumer-visible moves: same routes, same import strings, same descriptions
+  // and the same `britzl / monarch · <leaf>` grouping — only the pin banner
+  // flips from the shared ts-defold commit to the upstream tag.
+  test("the three severed monarch pages keep route, import string and display name", () => {
+    const LEAVES: Record<string, string> = {
+      "monarch.monarch": "monarch",
+      "monarch.transitions.easings": "transitions_easings",
+      "monarch.transitions.gui": "transitions_gui",
+    };
+    for (const [namespace, alias] of Object.entries(LEAVES)) {
+      const page = libraryPages.find((p) => p.namespace === namespace);
+      expect(page).toBeDefined();
+      if (!page) continue;
+      expect(page.route).toBe(`/api/${namespace}`);
+      // Every module keeps a description: two carry their own doc comment, and
+      // `transitions.easings` has an empty one, so it reads through the override.
+      expect(page.module.description).not.toBe("");
+      expect(page.displayName).toContain("britzl / monarch");
+      const meta = page.libraryMeta;
+      expect(meta).toBeDefined();
+      if (!meta) continue;
+      expect(meta.authoredHere).toBe(true);
+      expect(meta.authorUrl).toBe("https://github.com/britzl/monarch");
+      expect(meta.commit).toBe("6.0.2");
+      expect(meta.importString).toBe(`import * as ${alias} from "${namespace}"`);
+    }
   });
 
   // yagames severed under the *bare* namespace, so unlike orthographic its route
