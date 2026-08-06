@@ -1543,6 +1543,20 @@ declare function cam_zoom(zoom: number): void;
 declare function cam_zoom(): number;
 
 /**
+ * Transform a point from world position to screen position.
+ * @param p Point
+ * @returns Screen position
+ */
+declare function to_screen(p: Vec2): Vec2;
+
+/**
+ * Transform a point from screen position to world position.
+ * @param p Point
+ * @returns World position
+ */
+declare function to_world(p: Vec2): Vec2;
+
+/**
  * Get gravity.
  * @returns The gravity in pixels per seconds
  */

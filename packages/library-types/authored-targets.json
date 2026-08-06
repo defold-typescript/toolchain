@@ -52,7 +52,7 @@
     },
     {
       "repo": "https://github.com/britzl/boom",
-      "ref": "1.0.0",
+      "ref": "5d47820c947dc7b68d1702dfadbf27e6e74e9319",
       "license": "MIT",
       "authored": "fixtures/authored/boom.boom.d.ts",
       "moduleId": "boom.boom",
