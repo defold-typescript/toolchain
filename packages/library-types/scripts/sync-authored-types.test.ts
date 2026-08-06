@@ -936,16 +936,15 @@ describe("richtext migration integrity", () => {
     }
   });
 
-  test("none of the three is a ts-defold library-targets row, the defold-richtext dir is gone, and 8 rows remain", () => {
+  test("none of the three is a ts-defold library-targets row and the defold-richtext dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     for (const mod of MODULES) {
       expect(targets.some((t) => t.module === `richtext.${mod}`)).toBe(false);
     }
-    // The count catches a cutover that took a fourth row with it; the per-module
-    // absence checks above cannot.
-    expect(targets.length).toBe(8);
+    // The global row count is pinned once, in the newest cutover's describe, so
+    // it does not need an edit in every severance that came before.
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -1023,5 +1022,88 @@ describe("richtext migration integrity", () => {
       expect(include).toContain(`generated/richtext.${mod}.d.ts`);
     }
     expect(include).toContain("test-d/richtext-usage.test-d.ts");
+  });
+});
+
+// The third dotted severance that regroups (`defold-metrics` -> `metrics`), and
+// the first whose fork is a strict improvement on the surface rather than a lane
+// move: both ts-defold fixtures are byte-identical to their goldens, so nothing
+// was at stake in *which* copy was forked, but each module really exports three
+// module-level members upstream that ts-defold never hand-wrote. The fork is
+// where they land, so the assertions below read the vendored copy — a correction
+// applied to `generated/` alone would survive here and die at the next regen.
+describe("metrics migration integrity", () => {
+  const MODULES = ["fps", "mem"];
+
+  test("both modules are registered in authored-targets.json under their dotted namespaces", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    for (const mod of MODULES) {
+      const moduleId = `metrics.${mod}`;
+      const target = targets.find((t) => t.moduleId === moduleId);
+      expect(target).toBeDefined();
+      expect(target?.namespace).toBe(moduleId);
+      expect(target?.repo).toBe("https://github.com/britzl/defold-metrics");
+      expect(target?.ref).toBe("1.2.1");
+      expect(target?.license).toBe("MIT");
+      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
+      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
+    }
+  });
+
+  test("neither is a ts-defold library-targets row, the defold-metrics dir is gone, and 6 rows remain", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    for (const mod of MODULES) {
+      expect(targets.some((t) => t.module === `metrics.${mod}`)).toBe(false);
+    }
+    // The count catches a cutover that took a third row with it; the per-module
+    // absence checks above cannot.
+    expect(targets.length).toBe(6);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defold-metrics")).toBe(false);
+  });
+
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths survive", () => {
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    for (const mod of MODULES) {
+      const moduleId = `metrics.${mod}`;
+      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
+      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
+      expect(`./${moduleId}` in exports).toBe(true);
+    }
+  });
+
+  // `<mod>()` is the reading accessor and differs per module, so asserting it by
+  // name is what separates a real per-module correction from one module's block
+  // pasted into both.
+  test("the correction landed on both forks and left the factory intact", () => {
+    for (const mod of MODULES) {
+      const fork = readFileSync(
+        join(PACKAGE_ROOT, "fixtures/authored", `metrics.${mod}.d.ts`),
+        "utf8",
+      );
+      expect(fork).toContain("export function update(): void;");
+      expect(fork).toContain("export function draw(): void;");
+      expect(fork).toContain(`export function ${mod}(): number;`);
+      expect(fork).toContain("export interface Metrics {");
+      expect(fork).toContain("): Metrics;");
+    }
+  });
+
+  test("both goldens joined the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    for (const mod of MODULES) {
+      expect(include).toContain(`generated/metrics.${mod}.d.ts`);
+    }
+    expect(include).toContain("test-d/metrics-usage.test-d.ts");
   });
 });

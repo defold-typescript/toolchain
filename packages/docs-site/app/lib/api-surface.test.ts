@@ -80,6 +80,11 @@ const DEFOLD_INPUT_MODULES = [
 // segment is `richtext`, so the severance regroups them.
 const RICHTEXT_MODULES = ["color", "richtext", "tags"];
 
+// The two `britzl/defold-metrics` modules, severed together into the authored
+// lane. Their classification dir is `defold-metrics` against a `metrics` top
+// namespace segment, so the severance regroups them the way richtext's did.
+const METRICS_MODULES = ["fps", "mem"];
+
 // Every `api-doc/*.json` fixture that also has a vendored `generated/*.d.ts`
 // sibling — the exact set the loader is expected to surface as `library` pages.
 // A markdown-front-end target whose recorded fidelity `decision` is not `go`
@@ -405,6 +410,51 @@ describe("loadApiSurface library pages", () => {
     }
   });
 
+  // metrics severed under `namespace === moduleId` as well, so nothing a user
+  // imports moves here either.
+  test("the two severed metrics.* pages keep their routes and import strings as maintained-here", () => {
+    for (const mod of METRICS_MODULES) {
+      const namespace = `metrics.${mod}`;
+      const page = libraryPages.find((p) => p.namespace === namespace);
+      expect(page).toBeDefined();
+      expect(page?.route).toBe(`/api/${namespace}`);
+      const meta = page?.libraryMeta;
+      expect(meta).toBeDefined();
+      expect(meta?.authoredHere).toBe(true);
+      expect(meta?.authorUrl).toBe("https://github.com/britzl/defold-metrics");
+      expect(meta?.commit).toBe("1.2.1");
+      expect(meta?.importString).toBe(`import * as ${mod} from "${namespace}"`);
+    }
+  });
+
+  // `defold-metrics` differs from the `metrics` namespace segment, so dropping the
+  // dir moves the nav group key exactly as richtext's did. Neither leaf equals the
+  // group key, so both pages keep the `· <leaf>` distinguisher.
+  test("the two regroup under `metrics`, still credited to britzl, with no defold-metrics dir left", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    expect(libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR).get("metrics")).toBe("britzl");
+    for (const page of libraryPages) {
+      expect(dirs.get(page.namespace)).not.toBe("defold-metrics");
+    }
+    for (const mod of METRICS_MODULES) {
+      const page = libraryPages.find((p) => p.namespace === `metrics.${mod}`);
+      expect(page?.displayName).toBe(`britzl / metrics · ${mod}`);
+    }
+  });
+
+  // The authored correction is only worth anything if it reaches the page a user
+  // reads, so this asserts the three module-level members upstream defines are
+  // listed alongside the factory — the instance methods stay on the `Metrics`
+  // typedef and are deliberately not part of this list.
+  test("each severed metrics.* page lists the corrected module-level members", () => {
+    for (const mod of METRICS_MODULES) {
+      const page = libraryPages.find((p) => p.namespace === `metrics.${mod}`);
+      expect((page?.module.functions ?? []).map((f) => f.name).sort()).toEqual(
+        ["create", "draw", mod, "update"].sort(),
+      );
+    }
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -505,6 +555,21 @@ describe("loadApiSurface library descriptions", () => {
     const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
     for (const mod of RICHTEXT_MODULES) {
       const namespace = `richtext.${mod}`;
+      const page = libraryPages.find((p) => p.namespace === namespace);
+      expect(dirs.get(namespace)).toBeUndefined();
+      expect(page?.module.description).toBe(descByDir[namespace]);
+      expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
+    }
+  });
+
+  // The sharpest form of that loss so far: metrics had no
+  // `library-description-overrides.json` entry at all, only the merged artifact's
+  // `defold-metrics` dir key, so the severance would have left both pages
+  // description-less had the dir key not become two namespace keys.
+  test("the two severed metrics.* pages resolve their descriptions through the namespace half alone", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    for (const mod of METRICS_MODULES) {
+      const namespace = `metrics.${mod}`;
       const page = libraryPages.find((p) => p.namespace === namespace);
       expect(dirs.get(namespace)).toBeUndefined();
       expect(page?.module.description).toBe(descByDir[namespace]);
