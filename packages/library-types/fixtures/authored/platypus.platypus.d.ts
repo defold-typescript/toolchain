@@ -9,12 +9,12 @@
 declare module 'platypus.platypus' {
 	interface PlatypusConfig {
 		collisions: {
-			groups: LuaMap<hash, Direction>;
+			groups: LuaMap<Hash, Direction>;
 			left: number;
 			right: number;
 			top: number;
 			bottom: number;
-			offset?: vmath.vector3;
+			offset?: Vector3;
 		};
 		debug?: boolean;
 		reparent?: boolean;
@@ -31,14 +31,14 @@ declare module 'platypus.platypus' {
 
 	/** @noSelf **/
 	interface PlatypusInstance extends PlatypusConfig {
-		velocity: vmath.vector3;
+		velocity: Vector3;
 		update(dt: number): void;
-		on_message(message_id: hash, message: AnyNotNil): void;
+		on_message(message_id: Hash, message: AnyNotNil): void;
 		left(velocity: number): void;
 		right(velocity: number): void;
 		up(velocity: number): void;
 		down(velocity: number): void;
-		move(velocity: vmath.vector3): void;
+		move(velocity: Vector3): void;
 		jump(power: number): void;
 		force_jump(power: number): void;
 		abort_jump(reduction: number): void;
@@ -59,13 +59,13 @@ declare module 'platypus.platypus' {
 	}
 
 	export function create(config: PlatypusConfig): PlatypusInstance;
-	export const FALLING: hash;
-	export const GROUND_CONTACT: hash;
-	export const WALL_CONTACT: hash;
-	export const JUMP: hash;
-	export const WALL_JUMP: hash;
-	export const DOUBLE_JUMP: hash;
-	export const WALL_SLIDE: hash;
+	export const FALLING: Hash;
+	export const GROUND_CONTACT: Hash;
+	export const WALL_CONTACT: Hash;
+	export const JUMP: Hash;
+	export const WALL_JUMP: Hash;
+	export const DOUBLE_JUMP: Hash;
+	export const WALL_SLIDE: Hash;
 
 	type Direction = number;
 	export const DIR_UP: Direction;
