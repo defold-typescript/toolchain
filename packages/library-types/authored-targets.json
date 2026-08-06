@@ -299,6 +299,16 @@
       "namespace": "metrics.mem",
       "generated": "generated/metrics.mem.d.ts",
       "apiDoc": "api-doc/metrics.mem.json"
+    },
+    {
+      "repo": "https://github.com/britzl/gooey",
+      "ref": "10.5.3",
+      "license": "MIT",
+      "authored": "fixtures/authored/gooey.gooey.d.ts",
+      "moduleId": "gooey.gooey",
+      "namespace": "gooey",
+      "generated": "generated/gooey.d.ts",
+      "apiDoc": "api-doc/gooey.json"
     }
   ]
 }

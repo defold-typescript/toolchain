@@ -10,8 +10,8 @@ declare module 'gooey.gooey' {
 	type table = {};
 
 	type ButtonState = {
-		node: node;
-		node_id: hash;
+		node: Opaque<"node">;
+		node_id: Hash;
 		enabled: boolean;
 		consumed: boolean;
 		clicked: boolean;
@@ -25,8 +25,8 @@ declare module 'gooey.gooey' {
 	};
 
 	type CheckboxState = {
-		node: node;
-		node_id: hash;
+		node: Opaque<"node">;
+		node_id: Hash;
 		enabled: boolean;
 		consumed: boolean;
 		clicked: boolean;
@@ -43,8 +43,8 @@ declare module 'gooey.gooey' {
 	};
 
 	type RadioState = {
-		node: node;
-		node_id: hash;
+		node: Opaque<"node">;
+		node_id: Hash;
 		enabled: boolean;
 		consumed: boolean;
 		clicked: boolean;
@@ -65,27 +65,27 @@ declare module 'gooey.gooey' {
 		enabled: boolean;
 		consumed: boolean;
 		items: {
-			root: node;
-			nodes: LuaMap<hash, node>;
+			root: Opaque<"node">;
+			nodes: LuaMap<Hash, Opaque<"node">>;
 			data: unknown;
 			index: number;
 		}[];
 		over: boolean;
 		over_item: {
-			root: node;
-			nodes: LuaMap<hash, node>;
+			root: Opaque<"node">;
+			nodes: LuaMap<Hash, Opaque<"node">>;
 			data: unknown;
 			index: number;
 		};
 		over_item_now: {
-			root: node;
-			nodes: LuaMap<hash, node>;
+			root: Opaque<"node">;
+			nodes: LuaMap<Hash, Opaque<"node">>;
 			data: unknown;
 			index: number;
 		};
 		out_item_now: {
-			root: node;
-			nodes: LuaMap<hash, node>;
+			root: Opaque<"node">;
+			nodes: LuaMap<Hash, Opaque<"node">>;
 			data: unknown;
 			index: number;
 		};
@@ -94,7 +94,7 @@ declare module 'gooey.gooey' {
 		pressed_item_now: number | undefined;
 		long_pressed: boolean;
 		released_item_now: number | undefined;
-		scroll: vmath.vector3;
+		scroll: Vector3;
 		is_horizontal: boolean;
 	};
 
@@ -107,12 +107,12 @@ declare module 'gooey.gooey' {
 		over_now: boolean;
 		out_now: boolean;
 		clicked: boolean;
-		scroll: vmath.vector3;
+		scroll: Vector3;
 	};
 
 	type InputState = {
-		node: node;
-		node_id: hash | string;
+		node: Opaque<"node">;
+		node_id: Hash | string;
 		enabled: boolean;
 		consumed: boolean;
 		over: boolean;
@@ -136,25 +136,25 @@ declare module 'gooey.gooey' {
 	};
 
 	export function button(
-		node_id: hash | string,
-		action_id: hash,
+		node_id: Hash | string,
+		action_id: Hash,
 		action: table,
 		fn: (button: ButtonState) => void,
 		refresh_fn?: (button: ButtonState) => void,
 	): ButtonState;
 
 	export function checkbox(
-		node_id: hash | string,
-		action_id: hash,
+		node_id: Hash | string,
+		action_id: Hash,
 		action: table,
 		fn: (checkbox: CheckboxState) => void,
 		refresh_fn?: (checkbox: CheckboxState) => void,
 	): CheckboxState;
 
 	export function radio(
-		node_id: hash | string,
+		node_id: Hash | string,
 		group: string,
-		action_id: hash,
+		action_id: Hash,
 		action: table,
 		fn: (radio: RadioState) => void,
 		refresh_fn?: (radio: RadioState) => void,
@@ -162,9 +162,9 @@ declare module 'gooey.gooey' {
 
 	export function static_list(
 		list_id: string,
-		stencil_id: hash | string,
-		item_ids: (hash | string)[],
-		action_id: hash,
+		stencil_id: Hash | string,
+		item_ids: (Hash | string)[],
+		action_id: Hash,
 		action: table,
 		config: { horizontal?: boolean } | undefined,
 		fn: (list: ListState) => void,
@@ -175,10 +175,10 @@ declare module 'gooey.gooey' {
 	export function dynamic_list(
 		list_id: string,
 		root_id: string,
-		stencil_id: hash | string,
-		item_id: hash | string,
+		stencil_id: Hash | string,
+		item_id: Hash | string,
 		data: table,
-		action_id: hash,
+		action_id: Hash,
 		action: table,
 		config: { horizontal?: boolean; carousel?: boolean } | undefined,
 		fn: (list: ListState) => void,
@@ -189,10 +189,10 @@ declare module 'gooey.gooey' {
 	export function horizontal_dynamic_list(
 		list_id: string,
 		root_id: string,
-		stencil_id: hash | string,
-		item_id: hash | string,
+		stencil_id: Hash | string,
+		item_id: Hash | string,
 		data: table,
-		action_id: hash,
+		action_id: Hash,
 		action: table,
 		config: { carousel?: boolean } | undefined,
 		fn: (list: ListState) => void,
@@ -202,10 +202,10 @@ declare module 'gooey.gooey' {
 	export function vertical_dynamic_list(
 		list_id: string,
 		root_id: string,
-		stencil_id: hash | string,
-		item_id: hash | string,
+		stencil_id: Hash | string,
+		item_id: Hash | string,
 		data: table,
-		action_id: hash,
+		action_id: Hash,
 		action: table,
 		config: { carousel?: boolean } | undefined,
 		fn: (list: ListState) => void,
@@ -214,9 +214,9 @@ declare module 'gooey.gooey' {
 
 	export function horizontal_static_list(
 		list_id: string,
-		stencil_id: hash | string,
-		item_ids: (hash | string)[],
-		action_id: hash,
+		stencil_id: Hash | string,
+		item_ids: (Hash | string)[],
+		action_id: Hash,
 		action: table,
 		config: undefined,
 		fn: (list: ListState) => void,
@@ -225,9 +225,9 @@ declare module 'gooey.gooey' {
 
 	export function vertical_static_list(
 		list_id: string,
-		stencil_id: hash | string,
-		item_ids: (hash | string)[],
-		action_id: hash,
+		stencil_id: Hash | string,
+		item_ids: (Hash | string)[],
+		action_id: Hash,
 		action: table,
 		config: undefined,
 		fn: (list: ListState) => void,
@@ -235,18 +235,18 @@ declare module 'gooey.gooey' {
 	): ListState;
 
 	export function vertical_scrollbar(
-		handle_id: hash | string,
-		bounds_id: hash | string,
-		action_id: hash,
+		handle_id: Hash | string,
+		bounds_id: Hash | string,
+		action_id: Hash,
 		action: table,
 		fn: (scrollbar: ScrollbarState) => void,
 		refresh_fn?: (scrollbar: ScrollbarState) => void,
 	): ScrollbarState;
 
 	export function input(
-		node_id: hash | string,
+		node_id: Hash | string,
 		keyboard_type: number,
-		action_id: hash,
+		action_id: Hash,
 		action: table,
 		config?: {
 			max_length?: number;
@@ -257,5 +257,10 @@ declare module 'gooey.gooey' {
 		refresh_fn?: (input: InputState) => void,
 	): InputState;
 
-	export function group(group_id: string, fn: () => void): table;
+	export function group(
+		group_id: Hash | string,
+		action_id: Hash,
+		action: table,
+		group_fn: () => void,
+	): table;
 }

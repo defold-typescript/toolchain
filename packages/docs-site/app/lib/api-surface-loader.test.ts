@@ -170,14 +170,16 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
 
-  // `gooey.gooey`, not `gooey`: an unregistered namespace falls through to the
-  // vendored branch and reports `authoredHere: false` too, so the assertion has
-  // to name a namespace that actually ships or it cannot fail.
+  // A shipping namespace, not an unregistered one: an unregistered namespace
+  // falls through to the vendored branch and reports `authoredHere: false` too,
+  // so the assertion has to name a namespace that actually ships or it cannot
+  // fail. The subject moves with each severance — it was `gooey.gooey` until
+  // gooey severed.
   test("flags druid and decore authoredHere, and a vendored namespace not", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(meta("druid").authoredHere).toBe(true);
     expect(meta("decore").authoredHere).toBe(true);
-    expect(meta("gooey.gooey").authoredHere).toBe(false);
+    expect(meta("nakama.nakama").authoredHere).toBe(false);
   });
 
   test("attributes tweener to Insality/defold-tweener as an authored-here LuaLS library", () => {
@@ -256,11 +258,11 @@ describe("loadLibraryProvenance — script_api-sourced libraries", () => {
 
   test("a genuinely vendored ts-defold namespace still reports authoredHere false", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    const gooey = meta("gooey.gooey");
-    expect(gooey.authoredHere).toBe(false);
+    const nakama = meta("nakama.nakama");
+    expect(nakama.authoredHere).toBe(false);
     // Pins the subject as really vendored: an unknown namespace would take the
     // same branch but carry no ts-defold source link.
-    expect(gooey.sourceUrl).toContain("ts-defold/library");
+    expect(nakama.sourceUrl).toContain("ts-defold/library");
   });
 });
 

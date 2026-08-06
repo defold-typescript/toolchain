@@ -244,22 +244,22 @@ describe("loadApiSurface library pages", () => {
 
   // The real-data proof that a still-vendored library reports the shared
   // ts-defold pin rather than an upstream tag. The subject moves with each
-  // Bucket-C severance — it was `monarch.monarch` until monarch severed — and
-  // retires once `library-targets.json` reaches zero rows.
+  // Bucket-C severance — it was `monarch.monarch`, then `gooey.gooey` until
+  // gooey severed — and retires once `library-targets.json` reaches zero rows.
   test("builds a structured libraryMeta with author/upstream repo, commit pin, import, and license", () => {
-    const gooey = libraryPages.find((p) => p.namespace === "gooey.gooey");
-    expect(gooey).toBeDefined();
-    const meta = gooey?.libraryMeta;
+    const nakama = libraryPages.find((p) => p.namespace === "nakama.nakama");
+    expect(nakama).toBeDefined();
+    const meta = nakama?.libraryMeta;
     expect(meta).toBeDefined();
     if (!meta) return;
-    expect(meta.author).toBe("Britzl");
-    expect(meta.authorUrl).toBe("https://github.com/britzl/gooey");
+    expect(meta.author).toBe("Heroic Labs");
+    expect(meta.authorUrl).toBe("https://github.com/heroiclabs/nakama-defold");
     expect(meta.commit).toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
     // Links to the exact `.d.ts` the types were generated from, at the pin.
     expect(meta.sourceUrl).toBe(
-      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/gooey/gooey.gooey.d.ts",
+      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/nakama-defold/nakama.nakama.d.ts",
     );
-    expect(meta.importString).toBe('import * as gooey from "gooey.gooey"');
+    expect(meta.importString).toBe('import * as nakama from "nakama.nakama"');
     expect(meta.license).toBe("MIT");
     expect("commitUrl" in meta).toBe(false);
     expect("attribution" in meta).toBe(false);
@@ -455,6 +455,33 @@ describe("loadApiSurface library pages", () => {
     }
   });
 
+  // gooey severed under the bare namespace, so its route moves
+  // (`/api/gooey.gooey` -> `/api/gooey`) while the import string stays
+  // byte-identical. The severance also carries an arity correction, and the page
+  // is where a reader would see it, so `group`'s four parameters are asserted on
+  // the rendered surface rather than only in the `.d.ts`.
+  test("the severed gooey page is maintained-here at its tag and lists the corrected group arity", () => {
+    const gooey = libraryPages.find((p) => p.namespace === "gooey");
+    expect(gooey).toBeDefined();
+    expect(gooey?.route).toBe("/api/gooey");
+    const meta = gooey?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.authorUrl).toBe("https://github.com/britzl/gooey");
+    expect(meta.commit).toBe("10.5.3");
+    expect(meta.importString).toBe('import * as gooey from "gooey.gooey"');
+
+    const group = (gooey?.module.functions ?? []).find((f) => f.name === "group");
+    expect(group).toBeDefined();
+    expect((group?.parameters ?? []).map((p) => p.name)).toEqual([
+      "group_id",
+      "action_id",
+      "action",
+      "group_fn",
+    ]);
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -575,6 +602,19 @@ describe("loadApiSurface library descriptions", () => {
       expect(page?.module.description).toBe(descByDir[namespace]);
       expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
     }
+  });
+
+  // gooey is the inverse of the metrics case: its dir and its bare namespace are
+  // the same string, so the fallback hands the *same* key to the namespace arm
+  // once the dir is dropped. The description survives only because the key was
+  // written into `library-description-overrides.json` — without that the merged
+  // artifact loses a key no dir generates any more.
+  test("the severed gooey page resolves its description through the namespace half alone", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    const page = libraryPages.find((p) => p.namespace === "gooey");
+    expect(dirs.get("gooey")).toBeUndefined();
+    expect(page?.module.description).toBe(descByDir.gooey);
+    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
   });
 
   test("a page whose api-doc fixture already carries a description keeps its own richer text", () => {

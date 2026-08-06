@@ -893,6 +893,18 @@ const YAGAMES: LibraryRecord = {
 // building a fidelity report for this module would loud-fail in
 // `computeMarkdownFidelity`. No report is built for a no-go module, so nothing is
 // added — recorded here so that loud-fail is not later read as a regression.
+//
+// Since the severance the snapshot every term above is read from is the authored
+// fork, not the retired `fixtures/ts-defold/` copy. The fork also carries one
+// correction: `gooey.lua:191` declares `M.group(id, action_id, action, fn)` where
+// ts-defold bound two parameters, matching the LDoc block above that function —
+// which lists only `@param id` and `@param fn` — rather than the signature. That
+// correction is scored by nothing. Signature loss fires only when the markdown
+// side is the poorer one, and `group` runs the other way (4 documented against 2
+// declared before, 4 against 4 after), while the other three terms are
+// member-level and blind to arity. All four were re-measured against the
+// corrected fork and every one is unchanged. The `no-go` still stands on the four
+// undocumented `#####` list variants and the 8 type downgrades.
 const GOOEY: LibraryRecord = {
   library: "gooey",
   repo: "https://github.com/britzl/gooey",
@@ -901,7 +913,16 @@ const GOOEY: LibraryRecord = {
   prefix: "gooey.",
   classificationDir: "gooey",
   decisions: [
-    { module: "gooey", decision: "no-go", reason: "surface-loss", markdown: "README.md" },
+    {
+      module: "gooey",
+      decision: "no-go",
+      reason: "surface-loss",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/gooey/gooey.gooey.d.ts",
+        fixture: "fixtures/authored/gooey.gooey.d.ts",
+      },
+    },
   ],
 };
 
@@ -1477,6 +1498,8 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "e32ab0d3067bd569c69a11045bd6f84bd3562d0d8e73920e46022536874d30a2",
   "fixtures/authored/persist.persist.d.ts":
     "f79845a7b47f57f4559d7b365c32ce5527ce12e778999e5eee4db3f45793c622",
+  "fixtures/authored/gooey.gooey.d.ts":
+    "467465c25b62170b0f179b5a7efea45ae260004498610d51d350b5c7faf16212",
   "fixtures/authored/richtext.color.d.ts":
     "6e724943b4cb548c4baa283226efed0a0c9348b9529f81319a12e4239ac70a83",
   "fixtures/authored/richtext.richtext.d.ts":
@@ -1535,8 +1558,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "fc109b8425acadead33b4125e822f8d19634c10c2d7a9022027ed22d6c082191",
   "fixtures/ts-defold/dicebag.dicebag.d.ts":
     "b8ce58a7ea3a57842fd305a659e042e4c6fea4fd4e5b0fae7fb07b79872a12f6",
-  "fixtures/ts-defold/gooey.gooey.d.ts":
-    "ccb14cf1d623756f7eb014c63b47e86369d42a89dabb7fbc267e2ca580d449e3",
   "fixtures/ts-defold/platypus.platypus.d.ts":
     "d1e55bb7a6bd64ea1fe31ed64e5fc4ccb4b42fa2e697851ce5afdc67ea27a959",
   "fixtures/ts-defold/rendy.rendy.d.ts":
@@ -2033,9 +2054,15 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     expect(signatureLossMembers).toEqual(["dynamic_list"]);
   });
 
+  // Read through `targetFor` rather than a hard-coded `fixtures/ts-defold/` path
+  // so the severance moves the snapshot with it. An arity change moves no name,
+  // so the same 12 are expected against the corrected fork.
   test("the ts-defold surface the comparison runs against is these 12 functions", () => {
     const surface = tsDefoldMembers(
-      readFileSync(join(PACKAGE_ROOT, "fixtures/ts-defold", "gooey.gooey.d.ts"), "utf8"),
+      readFileSync(
+        join(PACKAGE_ROOT, targetFor("gooey.gooey", severedFor(GOOEY, "gooey")).fixture),
+        "utf8",
+      ),
     );
     expect(surface).toEqual([
       "button",
@@ -2064,6 +2091,18 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     const body = lines.slice(firstH5 + 1, nextH3 === -1 ? undefined : nextH3);
     expect(body.some((line) => /^\*\*PARAMETERS\*\*\s*$/.test(line))).toBe(false);
     expect(body.some((line) => /^\*\*RETURN\*\*\s*$/.test(line))).toBe(false);
+  });
+
+  // Without the dropped row the lookup would throw, so the recorded verdict is
+  // only resolvable because `severedSource` supplies both fields it used to read.
+  // The bare namespace is what makes the dotted golden a dead path here, so the
+  // namespace-conditional golden assertion takes its absence arm.
+  test("the verdict still resolves once the ts-defold row is gone", () => {
+    const severed = severedFor(GOOEY, "gooey");
+    expect(targetFor("gooey.gooey", severed).fixture).toBe("fixtures/authored/gooey.gooey.d.ts");
+    expect(existsSync(join(PACKAGE_ROOT, targetFor("gooey.gooey", severed).fixture))).toBe(true);
+    expect(classificationModule("gooey.gooey", severed)).toBe("gooey.gooey");
+    expect(existsSync(join(PACKAGE_ROOT, "generated/gooey.gooey.d.ts"))).toBe(false);
   });
 });
 
