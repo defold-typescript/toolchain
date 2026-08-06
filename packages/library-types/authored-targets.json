@@ -319,6 +319,16 @@
       "namespace": "bzAnim",
       "generated": "generated/bzAnim.d.ts",
       "apiDoc": "api-doc/bzAnim.json"
+    },
+    {
+      "repo": "https://github.com/britzl/platypus",
+      "ref": "4.3.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/platypus.platypus.d.ts",
+      "moduleId": "platypus.platypus",
+      "namespace": "platypus",
+      "generated": "generated/platypus.d.ts",
+      "apiDoc": "api-doc/platypus.json"
     }
   ]
 }
