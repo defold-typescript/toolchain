@@ -1,4 +1,5 @@
 {
+  "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
   "gooey": "Defold GUI system",

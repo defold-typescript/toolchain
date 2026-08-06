@@ -28,13 +28,6 @@
       ]
     },
     {
-      "dir": "bzAnim",
-      "classification": "already-vendored",
-      "modules": [
-        "bzAnim.bzAnim"
-      ]
-    },
-    {
       "dir": "def-setv",
       "classification": "native",
       "modules": [

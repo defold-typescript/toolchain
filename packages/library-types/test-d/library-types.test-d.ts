@@ -1,7 +1,6 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
-import * as bzAnim from "bzAnim.bzLibrary";
 import * as dicebag from "dicebag.dicebag";
 import * as nakama from "nakama.nakama";
 import * as platypus from "platypus.platypus";
@@ -35,12 +34,6 @@ const _nakamaAccount: { id: string; vars: unknown } = nakama.create_api_account_
 const _nakamaSession = nakama.authenticate_custom(_nakamaClient, _nakamaAccount, true, "user");
 nakama.set_bearer_token(_nakamaClient, _nakamaSession.token);
 
-const _bzInfoLevel: 1 = bzAnim.INFO_LEVEL;
-const _bzAnimId: string = bzAnim.animate({ obj: _hash, easing: "TYPE_LINEAR" });
-const _bzSeqId: string = bzAnim.animateSequence({ obj: undefined, easing: "TYPE_INQUAD" });
-bzAnim.cancel(_bzAnimId);
-const _bzReady: boolean = bzAnim.isReady();
-
 const _rendyDisplay: Vector3 = rendy.get_display_size();
 const _rendyWindow: Vector3 = rendy.get_window_size();
 rendy.set("camera", _hash, 1);
@@ -53,9 +46,6 @@ void _dbFlip;
 void _dbDraw;
 void _nakamaAccount;
 void _nakamaSession;
-void _bzInfoLevel;
-void _bzSeqId;
-void _bzReady;
 void _rendyDisplay;
 void _rendyWindow;
 void _rendyWorld;

@@ -482,6 +482,36 @@ describe("loadApiSurface library pages", () => {
     ]);
   });
 
+  // bzAnim severs under the bare namespace too, but unlike gooey its import
+  // *alias* moves: `libraryImportString` derives the alias from the page
+  // namespace, so `bzAnim.bzLibrary` -> `bzAnim` renames the binding while the
+  // module path stays byte-identical. The severance lands no correction, so the
+  // page's proof is the hand-written options tables the fork exists to keep.
+  test("the severed bzAnim page is maintained-here at its tag, keeps its module path, and documents its options tables", () => {
+    const bzAnim = libraryPages.find((p) => p.namespace === "bzAnim");
+    expect(bzAnim).toBeDefined();
+    expect(bzAnim?.route).toBe("/api/bzAnim");
+    const meta = bzAnim?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.authorUrl).toBe("https://github.com/jbp4444/bzAnim");
+    expect(meta.commit).toBe("v.1.2");
+    expect(meta.license).toBe("Apache-2.0");
+    expect(meta.importString).toBe('import * as bzAnim from "bzAnim.bzLibrary"');
+
+    const animate = (bzAnim?.module.functions ?? []).find((f) => f.name === "animate");
+    expect(animate).toBeDefined();
+    expect((animate?.parameters ?? []).map((p) => p.types?.join("|"))).toEqual(["AnimateArgs"]);
+
+    const typedefs = bzAnim?.module.typedefs ?? [];
+    for (const name of ["AnimateArgs", "AnimateSequenceArgs"]) {
+      const typedef = typedefs.find((t) => t.name === name);
+      expect(typedef).toBeDefined();
+      expect((typedef?.properties ?? []).map((p) => p.name)).toContain("easing");
+    }
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -614,6 +644,17 @@ describe("loadApiSurface library descriptions", () => {
     const page = libraryPages.find((p) => p.namespace === "gooey");
     expect(dirs.get("gooey")).toBeUndefined();
     expect(page?.module.description).toBe(descByDir.gooey);
+    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  // bzAnim is gooey's case again: dir and bare namespace are both `bzAnim`, so
+  // dropping the dir leaves the description resolvable only through the override
+  // written in the same cutover.
+  test("the severed bzAnim page resolves its description through the namespace half alone", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    const page = libraryPages.find((p) => p.namespace === "bzAnim");
+    expect(dirs.get("bzAnim")).toBeUndefined();
+    expect(page?.module.description).toBe(descByDir.bzAnim);
     expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
   });
 
