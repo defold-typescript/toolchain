@@ -257,5 +257,10 @@ declare module 'gooey.gooey' {
 		refresh_fn?: (input: InputState) => void,
 	): InputState;
 
-	export function group(group_id: string, fn: () => void): table;
+	export function group(
+		group_id: Hash | string,
+		action_id: Hash,
+		action: table,
+		group_fn: () => void,
+	): table;
 }

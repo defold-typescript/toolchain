@@ -6,12 +6,6 @@
   },
   "targets": [
     {
-      "module": "gooey.gooey",
-      "path": "packages/gooey/gooey.gooey.d.ts",
-      "fixture": "fixtures/ts-defold/gooey.gooey.d.ts",
-      "generated": "generated/gooey.gooey.d.ts"
-    },
-    {
       "module": "platypus.platypus",
       "path": "packages/platypus/platypus.platypus.d.ts",
       "fixture": "fixtures/ts-defold/platypus.platypus.d.ts",

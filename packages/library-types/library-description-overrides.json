@@ -1,6 +1,7 @@
 {
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
+  "gooey": "Defold GUI system",
   "immutable": "Runtime immutable Lua table implementation",
   "in.accelerometer": "Cross-platform input handling for Defold: keyboard, mouse, gamepad, touch, and on-screen controls.",
   "in.button": "Cross-platform input handling for Defold: keyboard, mouse, gamepad, touch, and on-screen controls.",
