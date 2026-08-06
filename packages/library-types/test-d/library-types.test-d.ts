@@ -2,11 +2,6 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as nakama from "nakama.nakama";
-import * as rendy from "rendy.rendy";
-
-declare const _v3: Vector3;
-
-declare const _hash: Hash;
 
 const _nakamaClient = nakama.create_client({
   host: "127.0.0.1",
@@ -19,14 +14,5 @@ const _nakamaAccount: { id: string; vars: unknown } = nakama.create_api_account_
 const _nakamaSession = nakama.authenticate_custom(_nakamaClient, _nakamaAccount, true, "user");
 nakama.set_bearer_token(_nakamaClient, _nakamaSession.token);
 
-const _rendyDisplay: Vector3 = rendy.get_display_size();
-const _rendyWindow: Vector3 = rendy.get_window_size();
-rendy.set("camera", _hash, 1);
-rendy.animate("camera", _hash, go.PLAYBACK_ONCE_FORWARD, _v3, go.EASING_LINEAR, 1);
-const _rendyWorld: Vector3 = rendy.screen_to_world("camera", _v3);
-
 void _nakamaAccount;
 void _nakamaSession;
-void _rendyDisplay;
-void _rendyWindow;
-void _rendyWorld;

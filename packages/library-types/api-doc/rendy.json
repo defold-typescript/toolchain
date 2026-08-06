@@ -1,6 +1,6 @@
 {
   "info": {
-    "namespace": "rendy.rendy",
+    "namespace": "rendy",
     "brief": "A versatile camera suite and render pipeline",
     "description": "A versatile camera suite and render pipeline"
   },

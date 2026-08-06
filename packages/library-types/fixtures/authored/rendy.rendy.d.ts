@@ -7,7 +7,7 @@
  * @example `import * as rendy from 'rendy.rendy'`
  */
 declare module 'rendy.rendy' {
-	type CameraId = hash | string;
+	type CameraId = Hash | string;
 
 	/**
 	 * Creates a camera. This function is called automatically by the rendy.go game object.
@@ -27,7 +27,7 @@ declare module 'rendy.rendy' {
 	 * @param property - The property to be set.
 	 * @param value - The value to set the property to.
 	 */
-	function set(camera_id: CameraId, property: hash | string, value: any): void;
+	function set(camera_id: CameraId, property: Hash | string, value: any): void;
 
 	/**
 	 * Animates a camera property. This function replaces the standard go.animate().
@@ -42,7 +42,7 @@ declare module 'rendy.rendy' {
 	 */
 	function animate(
 		camera_id: CameraId,
-		property: hash | string,
+		property: Hash | string,
 		playback:
 			| typeof go.PLAYBACK_LOOP_BACKWARD
 			| typeof go.PLAYBACK_LOOP_FORWARD
@@ -50,9 +50,9 @@ declare module 'rendy.rendy' {
 			| typeof go.PLAYBACK_ONCE_BACKWARD
 			| typeof go.PLAYBACK_ONCE_FORWARD
 			| typeof go.PLAYBACK_ONCE_PINGPONG,
-		to: vmath.quaternion | vmath.vector3 | vmath.vector4 | number,
+		to: Quaternion | Vector3 | Vector4 | number,
 		easing:
-			| vmath.vector3
+			| Vector3
 			| typeof go.EASING_INBACK
 			| typeof go.EASING_INBOUNCE
 			| typeof go.EASING_INCIRC
@@ -96,7 +96,7 @@ declare module 'rendy.rendy' {
 			| typeof go.EASING_OUTSINE,
 		duration: number,
 		delay?: number,
-		complete_function?: (this: any, url: url, property: hash) => void,
+		complete_function?: (this: any, url: Url, property: Hash) => void,
 	): void;
 
 	/**
@@ -106,7 +106,7 @@ declare module 'rendy.rendy' {
 	 */
 	function cancel_animations(
 		camera_id: CameraId,
-		property: hash | string,
+		property: Hash | string,
 	): void;
 
 	/**
@@ -115,19 +115,19 @@ declare module 'rendy.rendy' {
 	 * @param property - The property to be retrieved.
 	 * @returns The value of the specified property.
 	 */
-	function get(camera_id: CameraId, property: hash | string): unknown;
+	function get(camera_id: CameraId, property: Hash | string): unknown;
 
 	/**
 	 * Gets the initial window size specified in the game.project file.
 	 * @returns The initial window size.
 	 */
-	function get_display_size(): vmath.vector3;
+	function get_display_size(): Vector3;
 
 	/**
 	 * Gets the current window size.
 	 * @returns The current window size.
 	 */
-	function get_window_size(): vmath.vector3;
+	function get_window_size(): Vector3;
 
 	/**
 	 * Gets camera ids whose viewports intersect a screen position.
@@ -168,8 +168,8 @@ declare module 'rendy.rendy' {
 	 */
 	function screen_to_world(
 		camera_id: CameraId,
-		screen_position: vmath.vector3,
-	): vmath.vector3;
+		screen_position: Vector3,
+	): Vector3;
 
 	/**
 	 * Converts a world position to a screen position. The world position's z component maps to the camera frustum's z component.
@@ -179,6 +179,6 @@ declare module 'rendy.rendy' {
 	 */
 	function world_to_screen(
 		camera_id: CameraId,
-		world_position: vmath.vector3,
-	): vmath.vector3;
+		world_position: Vector3,
+	): Vector3;
 }

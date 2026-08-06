@@ -339,6 +339,16 @@
       "namespace": "dicebag",
       "generated": "generated/dicebag.d.ts",
       "apiDoc": "api-doc/dicebag.json"
+    },
+    {
+      "repo": "https://github.com/whiteboxdev/library-defold-rendy",
+      "ref": "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
+      "license": "Zlib",
+      "authored": "fixtures/authored/rendy.rendy.d.ts",
+      "moduleId": "rendy.rendy",
+      "namespace": "rendy",
+      "generated": "generated/rendy.d.ts",
+      "apiDoc": "api-doc/rendy.json"
     }
   ]
 }
