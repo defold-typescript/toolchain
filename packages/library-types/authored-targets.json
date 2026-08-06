@@ -219,6 +219,36 @@
       "namespace": "in.triggers",
       "generated": "generated/in.triggers.d.ts",
       "apiDoc": "api-doc/in.triggers.json"
+    },
+    {
+      "repo": "https://github.com/britzl/monarch",
+      "ref": "6.0.2",
+      "license": "MIT",
+      "authored": "fixtures/authored/monarch.monarch.d.ts",
+      "moduleId": "monarch.monarch",
+      "namespace": "monarch.monarch",
+      "generated": "generated/monarch.monarch.d.ts",
+      "apiDoc": "api-doc/monarch.monarch.json"
+    },
+    {
+      "repo": "https://github.com/britzl/monarch",
+      "ref": "6.0.2",
+      "license": "MIT",
+      "authored": "fixtures/authored/monarch.transitions.easings.d.ts",
+      "moduleId": "monarch.transitions.easings",
+      "namespace": "monarch.transitions.easings",
+      "generated": "generated/monarch.transitions.easings.d.ts",
+      "apiDoc": "api-doc/monarch.transitions.easings.json"
+    },
+    {
+      "repo": "https://github.com/britzl/monarch",
+      "ref": "6.0.2",
+      "license": "MIT",
+      "authored": "fixtures/authored/monarch.transitions.gui.d.ts",
+      "moduleId": "monarch.transitions.gui",
+      "namespace": "monarch.transitions.gui",
+      "generated": "generated/monarch.transitions.gui.d.ts",
+      "apiDoc": "api-doc/monarch.transitions.gui.json"
     }
   ]
 }

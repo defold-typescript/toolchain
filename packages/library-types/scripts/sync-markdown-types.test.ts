@@ -142,41 +142,46 @@ describe("evaluateMarkdownCandidate", () => {
   // An unregistered in-memory target for a library whose markdown namespace is
   // its live ts-defold moduleId. Evaluating it must not touch the canonical
   // paths that module already publishes under.
-  const MONARCH: MarkdownTarget = {
-    repo: "https://github.com/britzl/monarch",
-    ref: "6.0.2",
+  //
+  // The subject has to be a library that still holds a `library-targets.json`
+  // row, because `evaluateMarkdownCandidate` resolves the ts-defold snapshot
+  // from it; it moves with each Bucket-C severance (it was `monarch.monarch`
+  // until monarch severed).
+  const GOOEY: MarkdownTarget = {
+    repo: "https://github.com/britzl/gooey",
+    ref: "10.5.3",
     license: "MIT",
-    markdown: "README_API.md",
-    moduleId: "monarch.monarch",
-    namespace: "monarch.monarch",
-    generated: "generated/monarch.monarch.d.ts",
-    apiDoc: "api-doc/monarch.monarch.json",
-    fidelity: "fidelity/monarch.monarch.json",
+    markdown: "README.md",
+    moduleId: "gooey.gooey",
+    namespace: "gooey.gooey",
+    generated: "generated/gooey.gooey.d.ts",
+    apiDoc: "api-doc/gooey.gooey.json",
+    fidelity: "fidelity/gooey.gooey.json",
     decision: "no-go",
   };
 
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
-    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH);
-    expect(result.emitted).toContain("declare module 'monarch.monarch' {");
-    expect(result.emitted).toContain("function show(");
-    expect(result.markdownMembers).toContain("show");
-    expect(result.tsDefoldMembers).toContain("show");
+    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, GOOEY);
+    expect(result.emitted).toContain("declare module 'gooey.gooey' {");
+    expect(result.emitted).toContain("function button(");
+    expect(result.markdownMembers).toContain("button");
+    expect(result.tsDefoldMembers).toContain("button");
     expect(result.decision).toBe("no-go");
   });
 
   test("writes nothing — the live in-place goldens survive byte-identical", async () => {
-    const live = [MONARCH.generated, MONARCH.apiDoc].map((rel) => ({
+    const live = [GOOEY.generated, GOOEY.apiDoc].map((rel) => ({
       rel,
       before: readFileSync(join(PACKAGE_ROOT, rel), "utf8"),
     }));
 
-    await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH);
+    await evaluateMarkdownCandidate(PACKAGE_ROOT, GOOEY);
 
     for (const { rel, before } of live) {
       expect(readFileSync(join(PACKAGE_ROOT, rel), "utf8")).toBe(before);
     }
     // The fidelity path has no live occupant, so it must simply never appear.
-    expect(existsSync(join(PACKAGE_ROOT, MONARCH.fidelity))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, GOOEY.fidelity))).toBe(false);
   });
 });
 

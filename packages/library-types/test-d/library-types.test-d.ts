@@ -6,39 +6,12 @@ import * as dicebag from "dicebag.dicebag";
 import * as gooey from "gooey.gooey";
 import * as fps from "metrics.fps";
 import * as mem from "metrics.mem";
-import * as monarch from "monarch.monarch";
-import * as easings from "monarch.transitions.easings";
-import * as transitionsGui from "monarch.transitions.gui";
 import * as nakama from "nakama.nakama";
 import * as platypus from "platypus.platypus";
 import * as rendy from "rendy.rendy";
 import * as richtextColor from "richtext.color";
 import * as richtext from "richtext.richtext";
 import * as richtextTags from "richtext.tags";
-
-// monarch.monarch — a transition constant is a `Hash`; `register_proxy` accepts a
-// `Url`; `post` returns the passthrough `LuaMultiReturn` unchanged.
-const _mHash: Hash = monarch.TRANSITION.DONE;
-declare const _url: Url;
-monarch.register_proxy("main", _url, {});
-const [_ok, _err] = monarch.post("main", "message");
-
-// monarch.transitions.gui — the codemod renamed every core type: `create(node)`
-// takes an `Opaque<"node">` handle and returns a `Transition` whose `handle`
-// callback is `(message_id: Hash | string, message, sender: Url)`; `slide_in_right`
-// is a `TransitionInFn` accepting an `Opaque<"node">` and a `Vector3`.
-declare const _tNode: Opaque<"node">;
-declare const _tMsgId: Hash;
-declare const _tV3: Vector3;
-const _transition = transitionsGui.create(_tNode);
-_transition.handle(_tMsgId, {}, _url);
-transitionsGui.slide_in_right(_tNode, _tV3, gui.EASING_LINEAR, 1);
-
-// monarch.transitions.easings — no core-type renames; its only external reference
-// is the `gui` engine global via `(typeof gui)[...]`, so resolution proves the
-// indexed gui-constant lookup type-checks. `create` accepts an easing name and
-// yields an `Easing` whose `IN`/`OUT` are `gui` easing constants.
-const _easing = easings.create("BACK");
 
 declare const _v3: Vector3;
 
@@ -110,12 +83,6 @@ rendy.set("camera", _hash, 1);
 rendy.animate("camera", _hash, go.PLAYBACK_ONCE_FORWARD, _v3, go.EASING_LINEAR, 1);
 const _rendyWorld: Vector3 = rendy.screen_to_world("camera", _v3);
 
-void _mHash;
-void _ok;
-void _err;
-void _transition;
-void _easing.IN;
-void _easing.OUT;
 void _node;
 void _nodeId;
 void _pFalling;

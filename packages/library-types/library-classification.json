@@ -541,15 +541,6 @@
       ]
     },
     {
-      "dir": "monarch",
-      "classification": "already-vendored",
-      "modules": [
-        "monarch.monarch",
-        "monarch.transitions.easings",
-        "monarch.transitions.gui"
-      ]
-    },
-    {
       "dir": "nakama-defold",
       "classification": "already-vendored",
       "modules": [
