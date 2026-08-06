@@ -1416,14 +1416,11 @@ describe("platypus.platypus migration integrity", () => {
     expect(platypus?.apiDoc).toBe("api-doc/platypus.json");
   });
 
-  test("platypus.platypus is no longer a ts-defold library-targets row, the platypus dir is gone, and 3 rows remain", () => {
+  test("platypus.platypus is no longer a ts-defold library-targets row and the platypus dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "platypus.platypus")).toBe(false);
-    // The count catches a cutover that took a second row with it; the absence
-    // check above cannot. The pin lives in the newest cutover's describe only.
-    expect(targets.length).toBe(3);
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -1507,5 +1504,114 @@ describe("platypus.platypus migration integrity", () => {
     const instance = doc.elements.find((e) => e.name === "PlatypusInstance");
     expect(instance?.type).toBe("TYPEDEF");
     expect((instance?.properties ?? []).map((p) => p.name)).toContain("velocity");
+  });
+});
+
+// dicebag is the first severance whose recorded markdown verdict is
+// `type-downgrade` — the two surfaces match one-for-one on names, and the no-go
+// rests entirely on three types the README underspecifies. So the fork exists to
+// keep exactly those three, and the assertions below name them rather than a
+// structural shape no lane can express (platypus's case).
+describe("dicebag.dicebag migration integrity", () => {
+  const AUTHORED = "fixtures/authored/dicebag.dicebag.d.ts";
+  const FUNCTIONS = [
+    "bag_create",
+    "bag_draw",
+    "bag_reset",
+    "flip_coin",
+    "roll_custom_dice",
+    "roll_dice",
+    "roll_special_dice",
+    "set_up_rng",
+    "table_create",
+    "table_reset",
+    "table_roll",
+  ];
+  // The six functions whose `id` parameter carries the core-type rename the
+  // mapped golden applied.
+  const ID_BEARING = [
+    "bag_create",
+    "bag_draw",
+    "bag_reset",
+    "table_create",
+    "table_roll",
+    "table_reset",
+  ];
+
+  test("dicebag is registered in authored-targets.json under its bare namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const dicebag = targets.find((t) => t.namespace === "dicebag");
+    expect(dicebag).toBeDefined();
+    expect(dicebag?.moduleId).toBe("dicebag.dicebag");
+    expect(dicebag?.repo).toBe("https://github.com/8bitskull/dicebag");
+    expect(dicebag?.ref).toBe("0.3");
+    expect(dicebag?.license).toBe("CC0-1.0");
+    expect(dicebag?.authored).toBe(AUTHORED);
+    expect(dicebag?.generated).toBe("generated/dicebag.d.ts");
+    expect(dicebag?.apiDoc).toBe("api-doc/dicebag.json");
+  });
+
+  test("dicebag.dicebag is no longer a ts-defold library-targets row, the dicebag dir is gone, and 2 rows remain", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "dicebag.dicebag")).toBe(false);
+    // The count catches a cutover that took a second row with it; the absence
+    // check above cannot. The pin lives in the newest cutover's describe only.
+    expect(targets.length).toBe(2);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "dicebag")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/dicebag.dicebag.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/dicebag.dicebag.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/dicebag.dicebag.json"))).toBe(false);
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./dicebag.dicebag" in exports).toBe(false);
+  });
+
+  test("the bare-namespace golden and its compile proof are in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/dicebag.d.ts");
+    expect(include).toContain("test-d/dicebag-usage.test-d.ts");
+    expect(include).not.toContain("generated/dicebag.dicebag.d.ts");
+  });
+
+  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    for (const fn of ID_BEARING) {
+      expect(fork).toMatch(new RegExp(`function ${fn}\\(id: string \\| number \\| Hash\\b`));
+    }
+    expect(fork).not.toContain("| hash");
+  });
+
+  test("the fork keeps the three types the recorded downgrades are about", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    expect(fork).toContain("sides: Array<[number, number]>");
+    expect(fork).toContain("rollable_table: Array<[number, any, boolean?]>");
+    expect(fork).toContain("function set_up_rng(seed?: number): number;");
+    for (const fn of FUNCTIONS) {
+      expect(fork).toMatch(new RegExp(`export function ${fn}\\(`));
+    }
+  });
+
+  test("the api-doc publishes the 11 functions under the bare namespace with its own description", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/dicebag.json"), "utf8")) as {
+      info: { namespace: string; description?: string };
+      elements: { name: string; type: string }[];
+    };
+    expect(doc.info.namespace).toBe("dicebag");
+    // The page intro comes from the fork's own module JSDoc, which is why this
+    // severance owes no `library-description-overrides.json` key.
+    expect((doc.info.description ?? "").length).toBeGreaterThan(0);
+    const functions = doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name);
+    expect([...functions].sort()).toEqual(FUNCTIONS);
   });
 });

@@ -53,38 +53,38 @@ declare module "dicebag.dicebag" {
    * @param num_fails The number of fails marbles in the bag.
    * @param reset_on_success Whether or not the bag should reset when a successful result is drawn. If false or nil the bag will reset when all marbles have been drawn.
    */
-  export function bag_create(id: string | number | hash, num_success: number, num_fails: number, reset_on_success: boolean): void;
+  export function bag_create(id: string | number | Hash, num_success: number, num_fails: number, reset_on_success: boolean): void;
 
   /**
    * Draw a marble from a previously created bag.
    * @param id A unique identifier for the marble bag.
    * @returns True or false
    */
-  export function bag_draw(id: string | number | hash): boolean;
+  export function bag_draw(id: string | number | Hash): boolean;
 
   /**
    * Manually reset a marble bag. Will also be called when a marble bag is empty, or a success is drawn in a bag where `reset_on_success` is true.
    * @param id A unique identifier for the marble bag.
    */
-  export function bag_reset(id: string | number | hash): void;
+  export function bag_reset(id: string | number | Hash): void;
 
   /**
    * Create a rollable table. This is similar to a marble bag, except each entry can have a different weight, and can return any value (not just a boolean).
    * @param id A unique identifier for the rollable table.
    * @param rollable_table A table of weights, values and reset flags.
    */
-  export function table_create(id: string | number | hash, rollable_table: Array<[number, any, boolean?]>): void;
+  export function table_create(id: string | number | Hash, rollable_table: Array<[number, any, boolean?]>): void;
 
   /**
    * Draw a random value from the rollable table created in `table_create`. The value will be removed from the table. If `reset_on_roll` is true, the table will reset. Otherwise, the table will reset when all values are drawn.
    * @param id A unique identifier for the rollable table.
    * @returns The value specified in `table_create`.
    */
-  export function table_roll(id: string | number | hash): any;
+  export function table_roll(id: string | number | Hash): any;
 
   /**
    * Manually reset a rollable table. Will also be called when the rollable table is empty, or a drawn value where `reset_on_roll` is true.
    * @param id A unique identifier for the rollable table.
    */
-  export function table_reset(id: string | number | hash): void;
+  export function table_reset(id: string | number | Hash): void;
 }

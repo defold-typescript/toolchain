@@ -146,42 +146,43 @@ describe("evaluateMarkdownCandidate", () => {
   // The subject has to be a library that still holds a `library-targets.json`
   // row, because `evaluateMarkdownCandidate` resolves the ts-defold snapshot
   // from it; it moves with each Bucket-C severance (it was `monarch.monarch`,
-  // then `gooey.gooey` until gooey severed).
-  const DICEBAG: MarkdownTarget = {
-    repo: "https://github.com/8bitskull/dicebag",
-    ref: "0.3",
-    license: "CC0-1.0",
+  // then `gooey.gooey` until gooey severed, then `dicebag.dicebag` until dicebag
+  // severed).
+  const RENDY: MarkdownTarget = {
+    repo: "https://github.com/whiteboxdev/library-defold-rendy",
+    ref: "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
+    license: "Zlib",
     markdown: "README.md",
-    moduleId: "dicebag.dicebag",
-    namespace: "dicebag.dicebag",
-    generated: "generated/dicebag.dicebag.d.ts",
-    apiDoc: "api-doc/dicebag.dicebag.json",
-    fidelity: "fidelity/dicebag.dicebag.json",
+    moduleId: "rendy.rendy",
+    namespace: "rendy.rendy",
+    generated: "generated/rendy.rendy.d.ts",
+    apiDoc: "api-doc/rendy.rendy.json",
+    fidelity: "fidelity/rendy.rendy.json",
     decision: "no-go",
   };
 
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
-    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, DICEBAG);
-    expect(result.emitted).toContain("declare module 'dicebag.dicebag' {");
-    expect(result.emitted).toContain("function flip_coin(");
-    expect(result.markdownMembers).toContain("flip_coin");
-    expect(result.tsDefoldMembers).toContain("flip_coin");
+    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, RENDY);
+    expect(result.emitted).toContain("declare module 'rendy.rendy' {");
+    expect(result.emitted).toContain("function create_camera(");
+    expect(result.markdownMembers).toContain("create_camera");
+    expect(result.tsDefoldMembers).toContain("create_camera");
     expect(result.decision).toBe("no-go");
   });
 
   test("writes nothing — the live in-place goldens survive byte-identical", async () => {
-    const live = [DICEBAG.generated, DICEBAG.apiDoc].map((rel) => ({
+    const live = [RENDY.generated, RENDY.apiDoc].map((rel) => ({
       rel,
       before: readFileSync(join(PACKAGE_ROOT, rel), "utf8"),
     }));
 
-    await evaluateMarkdownCandidate(PACKAGE_ROOT, DICEBAG);
+    await evaluateMarkdownCandidate(PACKAGE_ROOT, RENDY);
 
     for (const { rel, before } of live) {
       expect(readFileSync(join(PACKAGE_ROOT, rel), "utf8")).toBe(before);
     }
     // The fidelity path has no live occupant, so it must simply never appear.
-    expect(existsSync(join(PACKAGE_ROOT, DICEBAG.fidelity))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, RENDY.fidelity))).toBe(false);
   });
 });
 

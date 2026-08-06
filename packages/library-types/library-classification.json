@@ -238,13 +238,6 @@
       ]
     },
     {
-      "dir": "dicebag",
-      "classification": "already-vendored",
-      "modules": [
-        "dicebag.dicebag"
-      ]
-    },
-    {
       "dir": "drawpixels",
       "classification": "native",
       "modules": [
