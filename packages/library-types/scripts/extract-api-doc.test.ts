@@ -874,3 +874,144 @@ describe("extractApiDoc alias-backed shapes", () => {
     expect(opts?.functions?.map((f) => f.name)).toEqual(["run"]);
   });
 });
+
+// A fork whose public surface lives at file scope: the `declare module` block
+// holds the single entry point, while the ambient globals — a documented
+// function, a const, an overload pair, and a namespace — sit outside it,
+// alongside supporting shapes in every reachability state (reached and
+// member-bearing, reached but memberless, unreached, and a reached alias over an
+// object literal).
+const FILE_SCOPE = `/** @noSelfInFile **/
+
+/** Callback that receives a tag. */
+declare type Cb = (target: string) => void;
+
+/** The area a framed object occupies. */
+interface AreaShape {
+	/** Whether the point is inside. */
+	has_point(x: number): boolean;
+}
+
+/** Named by nothing that is published. */
+interface Unreached {
+	/** Never published. */
+	nope(): void;
+}
+
+/** Reached, but carries no members. */
+interface Memberless {}
+
+/** Options for framing. */
+type FrameOptions = {
+	/** Clear first. */
+	clear?: boolean;
+	/** Run the transition. */
+	run(a: string): void;
+};
+
+/**
+ * Frame the world.
+ * @param tag the tag to frame
+ * @returns the framed area
+ */
+declare function frame(tag: string, options?: FrameOptions): AreaShape;
+
+/** How many frames. */
+declare const COUNT: number;
+
+declare function untouched(m: Memberless): void;
+
+declare function on_click(tag: string, cb: Cb): void;
+declare function on_click(cb: Cb): void;
+
+declare namespace rgb {
+	/** Red. */
+	export const RED: number;
+	/** Build one from hex. */
+	export function from_hex(hex: string): number;
+}
+
+/**
+ * File-scope demo.
+ * @noResolution
+ */
+declare module 'fs.fs' {
+	/** The one module export. */
+	export function boot(game: () => void): void;
+}
+`;
+
+describe("extractApiDoc file-scope ambient declarations", () => {
+  const elements = () =>
+    (extractApiDoc(FILE_SCOPE, "fs.fs") as { elements: Array<Record<string, unknown>> }).elements;
+  const element = (type: string, name: string) =>
+    elements().filter((e) => e.type === type && e.name === name);
+  const only = (type: string, name: string) => element(type, name)[0];
+
+  test("emits a file-scope function as a global FUNCTION element with its parameters and docs", () => {
+    const frame = only("FUNCTION", "frame") as
+      | { brief: string; global?: true; parameters: Array<{ name: string; is_optional: string }> }
+      | undefined;
+    expect(frame?.global).toBe(true);
+    expect(frame?.brief).toBe("Frame the world.");
+    expect(frame?.parameters.map((p) => [p.name, p.is_optional])).toEqual([
+      ["tag", "False"],
+      ["options", "True"],
+    ]);
+  });
+
+  test("emits a file-scope const as a global VARIABLE element carrying its type token", () => {
+    const count = only("VARIABLE", "COUNT") as { types: string[]; global?: true } | undefined;
+    expect(count?.global).toBe(true);
+    expect(count?.types).toEqual(["number"]);
+  });
+
+  test("qualifies file-scope namespace members and marks them global", () => {
+    expect(only("VARIABLE", "rgb.RED")).toMatchObject({ global: true, types: ["number"] });
+    expect(only("FUNCTION", "rgb.from_hex")).toMatchObject({ global: true });
+  });
+
+  test("emits one global element per file-scope overload declaration", () => {
+    const overloads = element("FUNCTION", "on_click") as Array<{
+      global?: true;
+      parameters: Array<{ name: string }>;
+    }>;
+    expect(overloads.map((o) => o.global)).toEqual([true, true]);
+    expect(overloads.map((o) => o.parameters.map((p) => p.name))).toEqual([["tag", "cb"], ["cb"]]);
+  });
+
+  test("leaves a module-block element unmarked, so absence stays the encoding of module member", () => {
+    const boot = only("FUNCTION", "boot");
+    expect(boot).toBeDefined();
+    expect(Object.hasOwn(boot ?? {}, "global")).toBe(false);
+  });
+
+  test("emits a file-scope interface only when it is reached and member-bearing", () => {
+    const area = only("TYPEDEF", "AreaShape") as
+      | { global?: true; functions?: Array<{ name: string; brief: string }> }
+      | undefined;
+    expect(area?.global).toBe(true);
+    expect(area?.functions?.map((f) => [f.name, f.brief])).toEqual([
+      ["has_point", "Whether the point is inside."],
+    ]);
+    expect(only("TYPEDEF", "Unreached")).toBeUndefined();
+    expect(only("TYPEDEF", "Memberless")).toBeUndefined();
+  });
+
+  test("fills in a reached file-scope object-literal alias the way a module-block alias is filled", () => {
+    const opts = only("TYPEDEF", "FrameOptions") as
+      | {
+          global?: true;
+          functions?: Array<{ name: string }>;
+          properties?: Array<{ name: string; is_optional?: string }>;
+        }
+      | undefined;
+    expect(opts?.global).toBe(true);
+    expect(opts?.functions?.map((f) => f.name)).toEqual(["run"]);
+    expect(opts?.properties?.map((p) => [p.name, p.is_optional])).toEqual([["clear", "True"]]);
+  });
+
+  test("emits file-scope elements after the module block's, leaving existing order untouched", () => {
+    expect(elements()[0]).toMatchObject({ type: "FUNCTION", name: "boot" });
+  });
+});

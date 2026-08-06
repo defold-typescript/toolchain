@@ -28,6 +28,16 @@ const DEFCON: AuthoredTarget = {
   fidelity: "fidelity/defcon.json",
 };
 
+// The committed api-doc JSON's element list — what the docs-site consumes for a
+// namespace, produced by `lowerAuthoredApiDoc` -> `extractApiDoc` over the
+// vendored fork.
+function apiDocElements(namespace: string): Record<string, unknown>[] {
+  const { elements } = JSON.parse(
+    readFileSync(join(PACKAGE_ROOT, "api-doc", `${namespace}.json`), "utf8"),
+  ) as { elements: Record<string, unknown>[] };
+  return elements;
+}
+
 function writeConfig(config: unknown): string {
   const root = mkdtempSync(join(tmpdir(), "authored-targets-config-"));
   writeFileSync(join(root, "authored-targets.json"), JSON.stringify(config));
@@ -175,6 +185,18 @@ describe("deftest.deftest migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/deftest.deftest.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "generated/deftest.deftest.d.ts"))).toBe(false);
   });
+
+  test("the lowered api-doc publishes the ambient test DSL alongside the unmarked module members", () => {
+    const elements = apiDocElements("deftest");
+    const byName = (name: string) => elements.find((e) => e.name === name);
+    for (const name of ["describe", "test", "assert_equal", "assert_error"]) {
+      expect(byName(name)).toMatchObject({ type: "FUNCTION", global: true });
+    }
+    for (const name of ["add", "run"]) {
+      expect(byName(name)).toMatchObject({ type: "FUNCTION" });
+      expect(Object.hasOwn(byName(name) ?? {}, "global")).toBe(false);
+    }
+  });
 });
 
 describe("defmath.defmath migration integrity", () => {
@@ -317,6 +339,31 @@ describe("boom.boom migration integrity", () => {
     for (const lowercase of [": hash", ": url", "<hash", "| hash", "| url"]) {
       expect(golden).not.toContain(lowercase);
     }
+  });
+
+  test("the lowered api-doc publishes boom's ambient globals and component members", () => {
+    const elements = apiDocElements("boom");
+    const byName = (name: string) => elements.find((e) => e.name === name);
+    for (const name of ["add", "vec2", "rand", "on_collide"]) {
+      expect(byName(name)).toMatchObject({ type: "FUNCTION", global: true });
+    }
+    for (const name of ["rgb.RED", "vec2.UP"]) {
+      expect(byName(name)).toMatchObject({ type: "VARIABLE", global: true });
+    }
+    for (const [shape, member] of [
+      ["AreaComp", "has_point"],
+      ["BodyComp", "jump"],
+      ["SpriteComp", "play"],
+    ]) {
+      const typedef = byName(shape ?? "") as
+        | { global?: true; functions?: { name: string }[] }
+        | undefined;
+      expect(typedef).toMatchObject({ type: "TYPEDEF", global: true });
+      expect(typedef?.functions?.map((f) => f.name)).toContain(member);
+    }
+    // The one symbol the page's `import * as boom from "boom.boom"` reaches.
+    expect(byName("boom")).toMatchObject({ type: "FUNCTION" });
+    expect(Object.hasOwn(byName("boom") ?? {}, "global")).toBe(false);
   });
 });
 

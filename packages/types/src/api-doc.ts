@@ -20,12 +20,16 @@ export interface ApiTypedef {
   name: string;
   functions?: ApiFunction[];
   properties?: ApiVariable[];
+  /** See {@link ApiFunction.global}. */
+  global?: true;
 }
 
 export interface ApiConstant {
   name: string;
   brief: string;
   description: string;
+  /** See {@link ApiFunction.global}. */
+  global?: true;
 }
 
 export interface ApiFunction {
@@ -47,6 +51,13 @@ export interface ApiFunction {
    * distinguishable from an untagged symbol.
    */
   deprecated?: string;
+  /**
+   * Present exactly when the source declared the symbol as an ambient global —
+   * outside the library's `declare module` block — so it is reachable without
+   * the module import. Absence is the only encoding of "module member"; the key
+   * is never written as `false`.
+   */
+  global?: true;
 }
 
 export interface ApiParameter {
@@ -81,6 +92,13 @@ export interface ApiVariable {
   isOptional?: boolean;
   /** See {@link ApiFunction.deprecated}. */
   deprecated?: string;
+  /** See {@link ApiFunction.global}. */
+  global?: true;
+}
+
+/** The `{ global }` key to spread onto a parsed element, empty for a module member. */
+function globalKey(element: Record<string, unknown>): { global?: true } {
+  return element.global === true ? { global: true } : {};
 }
 
 export function parseDefoldApiDoc(input: unknown): ApiModule {
@@ -133,6 +151,7 @@ function parseTypedef(element: Record<string, unknown>): ApiTypedef {
     name: stringOr(element.name, ""),
     ...(functions.length > 0 ? { functions } : {}),
     ...(properties.length > 0 ? { properties } : {}),
+    ...globalKey(element),
   };
 }
 
@@ -159,6 +178,7 @@ function parseConstant(element: Record<string, unknown>): ApiConstant {
     name: stringOr(element.name, ""),
     brief: stringOr(element.brief, ""),
     description: stringOr(element.description, ""),
+    ...globalKey(element),
   };
 }
 
@@ -172,6 +192,7 @@ function parseFunction(element: Record<string, unknown>): ApiFunction {
     examples: stringOr(element.examples, ""),
     ...(typeof element.generics === "string" ? { generics: element.generics } : {}),
     ...(typeof element.deprecated === "string" ? { deprecated: element.deprecated } : {}),
+    ...globalKey(element),
   };
 }
 
@@ -183,6 +204,7 @@ function parseVariable(element: Record<string, unknown>): ApiVariable {
     types: parseStringArray(element.types),
     ...(element.is_optional === "True" ? { isOptional: true } : {}),
     ...(typeof element.deprecated === "string" ? { deprecated: element.deprecated } : {}),
+    ...globalKey(element),
   };
 }
 
