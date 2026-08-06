@@ -143,46 +143,57 @@ describe("evaluateMarkdownCandidate", () => {
   // its live ts-defold moduleId. Evaluating it must not touch the canonical
   // paths that module already publishes under.
   //
-  // The subject has to be a library that still holds a `library-targets.json`
-  // row, because `evaluateMarkdownCandidate` resolves the ts-defold snapshot
-  // from it; it moves with each Bucket-C severance (it was `monarch.monarch`,
-  // then `gooey.gooey` until gooey severed, then `dicebag.dicebag` until dicebag
-  // severed).
-  const RENDY: MarkdownTarget = {
-    repo: "https://github.com/whiteboxdev/library-defold-rendy",
-    ref: "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
-    license: "Zlib",
-    markdown: "README.md",
-    moduleId: "rendy.rendy",
-    namespace: "rendy.rendy",
-    generated: "generated/rendy.rendy.d.ts",
-    apiDoc: "api-doc/rendy.rendy.json",
-    fidelity: "fidelity/rendy.rendy.json",
+  // The subject does not need a `library-targets.json` row —
+  // `evaluateMarkdownCandidate` never reads that file; it resolves the compared
+  // surface from its optional `snapshot` argument, falling back to
+  // `fixtures/ts-defold/<moduleId>.d.ts`. The real preconditions are a committed
+  // markdown fixture, a resolvable snapshot, and live goldens at the candidate's
+  // `generated`/`apiDoc` paths with no `fidelity/` occupant. That misreading is
+  // why this subject churned through `monarch.monarch` -> `gooey.gooey` ->
+  // `dicebag.dicebag` -> `rendy.rendy`, one move per Bucket-C severance.
+  //
+  // A dotted-severed library with `namespace === moduleId` satisfies all four
+  // permanently, and that equality is precisely the in-place hazard under test,
+  // so `monarch.monarch` is a stable subject rather than the next one to expire.
+  const MONARCH: MarkdownTarget = {
+    repo: "https://github.com/britzl/monarch",
+    ref: "6.0.2",
+    license: "MIT",
+    markdown: "README_API.md",
+    moduleId: "monarch.monarch",
+    namespace: "monarch.monarch",
+    generated: "generated/monarch.monarch.d.ts",
+    apiDoc: "api-doc/monarch.monarch.json",
+    fidelity: "fidelity/monarch.monarch.json",
     decision: "no-go",
   };
 
+  // monarch severed into the authored lane, so its retired ts-defold snapshot is
+  // gone and the comparison resolves against the fork it was taken from.
+  const MONARCH_SNAPSHOT = "fixtures/authored/monarch.monarch.d.ts";
+
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
-    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, RENDY);
-    expect(result.emitted).toContain("declare module 'rendy.rendy' {");
-    expect(result.emitted).toContain("function create_camera(");
-    expect(result.markdownMembers).toContain("create_camera");
-    expect(result.tsDefoldMembers).toContain("create_camera");
+    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);
+    expect(result.emitted).toContain("declare module 'monarch.monarch' {");
+    expect(result.emitted).toContain("function show(");
+    expect(result.markdownMembers).toContain("show");
+    expect(result.tsDefoldMembers).toContain("show");
     expect(result.decision).toBe("no-go");
   });
 
   test("writes nothing — the live in-place goldens survive byte-identical", async () => {
-    const live = [RENDY.generated, RENDY.apiDoc].map((rel) => ({
+    const live = [MONARCH.generated, MONARCH.apiDoc].map((rel) => ({
       rel,
       before: readFileSync(join(PACKAGE_ROOT, rel), "utf8"),
     }));
 
-    await evaluateMarkdownCandidate(PACKAGE_ROOT, RENDY);
+    await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);
 
     for (const { rel, before } of live) {
       expect(readFileSync(join(PACKAGE_ROOT, rel), "utf8")).toBe(before);
     }
     // The fidelity path has no live occupant, so it must simply never appear.
-    expect(existsSync(join(PACKAGE_ROOT, RENDY.fidelity))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, MONARCH.fidelity))).toBe(false);
   });
 });
 

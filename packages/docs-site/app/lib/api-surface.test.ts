@@ -246,6 +246,8 @@ describe("loadApiSurface library pages", () => {
   // ts-defold pin rather than an upstream tag. The subject moves with each
   // Bucket-C severance — it was `monarch.monarch`, then `gooey.gooey` until
   // gooey severed — and retires once `library-targets.json` reaches zero rows.
+  // With rendy severed, nakama is the last row, so that retirement is one
+  // severance away.
   test("builds a structured libraryMeta with author/upstream repo, commit pin, import, and license", () => {
     const nakama = libraryPages.find((p) => p.namespace === "nakama.nakama");
     expect(nakama).toBeDefined();
@@ -576,6 +578,39 @@ describe("loadApiSurface library pages", () => {
     expect((bagDraw?.returnValues ?? []).map((r) => r.types?.join("|"))).toEqual(["boolean"]);
   });
 
+  // rendy's markdown verdict was `signature-loss` — a prose-only README that
+  // documents names but no parameters or returns — so the page's proof is the
+  // parameter lists themselves, each one a place the markdown lane would have
+  // published a zero-arity stub. This is also where the upstream account rename
+  // reaches a user: nothing inside the fork was edited, but `authored-targets`
+  // carries the current `whiteboxdev` slug, which drives the page's GitHub link.
+  test("the severed rendy page is maintained-here at its pin under the current slug and documents the surface at full precision", () => {
+    const rendy = libraryPages.find((p) => p.namespace === "rendy");
+    expect(rendy).toBeDefined();
+    expect(rendy?.route).toBe("/api/rendy");
+    const meta = rendy?.libraryMeta;
+    expect(meta).toBeDefined();
+    if (!meta) return;
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.authorUrl).toBe("https://github.com/whiteboxdev/library-defold-rendy");
+    expect(meta.commit).toBe("b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3");
+    expect(meta.license).toBe("Zlib");
+    expect(meta.importString).toBe('import * as rendy from "rendy.rendy"');
+
+    const functions = rendy?.module.functions ?? [];
+    expect(functions).toHaveLength(13);
+
+    const getStack = functions.find((f) => f.name === "get_stack");
+    expect(getStack?.parameters ?? []).toHaveLength(2);
+    expect((getStack?.returnValues ?? []).map((r) => r.types?.join("|"))).not.toEqual(["unknown"]);
+
+    const shake = functions.find((f) => f.name === "shake");
+    const shakeParams = shake?.parameters ?? [];
+    expect(shakeParams).toHaveLength(5);
+    expect(shakeParams[4]?.name).toBe("scaler");
+    expect(shakeParams[4]?.isOptional).toBe(true);
+  });
+
   test("no longer prepends the prose provenance note into a library module description", () => {
     for (const page of libraryPages) {
       expect(page.module.description ?? "").not.toContain("Vendored from");
@@ -753,6 +788,23 @@ describe("loadApiSurface library descriptions", () => {
     expect(dirs.get("dicebag.dicebag")).toBeUndefined();
     expect(dirs.get("dicebag")).toBeUndefined();
     expect("dicebag" in overrides).toBe(false);
+    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  // rendy repeats dicebag's shape, except its classification dir was
+  // `library-defold-rendy` rather than the namespace string. The fork's module
+  // JSDoc gives `api-doc/rendy.json` its own `info.description`, so `descByDir`
+  // is never on the path. The `rendy.rendy` half is what catches a partial
+  // cutover; the bare `rendy` half was vacuous before it too.
+  test("the severed rendy page keeps its description from its own api-doc, with no override written", () => {
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    const overrides = JSON.parse(
+      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-description-overrides.json"), "utf8"),
+    ) as Record<string, string>;
+    const page = libraryPages.find((p) => p.namespace === "rendy");
+    expect(dirs.get("rendy.rendy")).toBeUndefined();
+    expect(dirs.get("rendy")).toBeUndefined();
+    expect("rendy" in overrides).toBe(false);
     expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
   });
 
