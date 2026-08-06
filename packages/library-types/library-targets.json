@@ -10,12 +10,6 @@
       "path": "packages/nakama-defold/nakama.nakama.d.ts",
       "fixture": "fixtures/ts-defold/nakama.nakama.d.ts",
       "generated": "generated/nakama.nakama.d.ts"
-    },
-    {
-      "module": "rendy.rendy",
-      "path": "packages/library-defold-rendy/rendy.rendy.d.ts",
-      "fixture": "fixtures/ts-defold/rendy.rendy.d.ts",
-      "generated": "generated/rendy.rendy.d.ts"
     }
   ]
 }

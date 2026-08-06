@@ -496,13 +496,6 @@
       ]
     },
     {
-      "dir": "library-defold-rendy",
-      "classification": "already-vendored",
-      "modules": [
-        "rendy.rendy"
-      ]
-    },
-    {
       "dir": "nakama-defold",
       "classification": "already-vendored",
       "modules": [
