@@ -832,16 +832,17 @@ describe("monarch migration integrity", () => {
     }
   });
 
-  test("none of the three is a ts-defold library-targets row, the monarch dir is gone, and 11 rows remain", () => {
+  // The surviving-row count is deliberately not re-asserted here: it is a global
+  // figure every later severance moves, so it lives once, with the most recent
+  // cutover (richtext's, below), rather than as a copy per library that each new
+  // severance has to re-pin.
+  test("none of the three is a ts-defold library-targets row and the monarch dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     for (const mod of MODULES) {
       expect(targets.some((t) => t.module === `monarch.${mod}`)).toBe(false);
     }
-    // The count catches a cutover that took a fourth row with it; the per-module
-    // absence checks above cannot.
-    expect(targets.length).toBe(11);
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -904,5 +905,123 @@ describe("monarch migration integrity", () => {
       expect(include).toContain(`generated/monarch.${mod}.d.ts`);
     }
     expect(include).toContain("test-d/monarch-usage.test-d.ts");
+  });
+});
+
+// The second three-module dotted severance, and the one that regroups: the
+// classification dir is `defold-richtext` while the top namespace segment is
+// `richtext`, so dropping the dir moves the nav group key the way defold-input's
+// did rather than leaving it in place the way monarch's did.
+//
+// Two of the three ts-defold fixtures differ from their goldens (`richtext.color`
+// on 22 `vmath.vector4` -> `Vector4` renames, `richtext.richtext` on `hash`,
+// `node` and both vector tokens), so forking the raw snapshot would once more
+// have shipped unresolvable ambients.
+describe("richtext migration integrity", () => {
+  const MODULES = ["color", "richtext", "tags"];
+
+  test("all three modules are registered in authored-targets.json under their dotted namespaces", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    for (const mod of MODULES) {
+      const moduleId = `richtext.${mod}`;
+      const target = targets.find((t) => t.moduleId === moduleId);
+      expect(target).toBeDefined();
+      expect(target?.namespace).toBe(moduleId);
+      expect(target?.repo).toBe("https://github.com/britzl/defold-richtext");
+      expect(target?.ref).toBe("5.22.1");
+      expect(target?.license).toBe("MIT");
+      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
+      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
+    }
+  });
+
+  test("none of the three is a ts-defold library-targets row, the defold-richtext dir is gone, and 8 rows remain", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    for (const mod of MODULES) {
+      expect(targets.some((t) => t.module === `richtext.${mod}`)).toBe(false);
+    }
+    // The count catches a cutover that took a fourth row with it; the per-module
+    // absence checks above cannot.
+    expect(targets.length).toBe(8);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "defold-richtext")).toBe(false);
+  });
+
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", () => {
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    for (const mod of MODULES) {
+      const moduleId = `richtext.${mod}`;
+      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
+      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
+      expect(`./${moduleId}` in exports).toBe(true);
+    }
+  });
+
+  // Asserting the mapped names alone would also pass on the raw ts-defold
+  // snapshot, so each check excludes the unmapped spelling too.
+  test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
+    const color = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/richtext.color.d.ts"), "utf8");
+    expect(color).toContain("Vector4");
+    expect(color).not.toContain("vmath.vector4");
+
+    const richtext = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/authored/richtext.richtext.d.ts"),
+      "utf8",
+    );
+    expect(richtext).toContain('Opaque<"node">');
+    expect(richtext).toContain("Vector3");
+    expect(richtext).toContain("LuaMap<Hash, Hash>");
+    expect(richtext).not.toContain("vmath.vector");
+    expect(richtext).not.toContain(": hash;");
+    expect(richtext).not.toContain("parent?: node;");
+  });
+
+  // The fork is verbatim, so the hand-written structure a flat markdown parse
+  // collapses survives intact — the surface the recorded `surface-loss` verdict
+  // is a judgment about.
+  test("the fork keeps the constants and named types the markdown emit loses", () => {
+    const richtext = readFileSync(
+      join(PACKAGE_ROOT, "fixtures/authored/richtext.richtext.d.ts"),
+      "utf8",
+    );
+    for (const constant of [
+      "ALIGN_LEFT",
+      "ALIGN_CENTER",
+      "ALIGN_RIGHT",
+      "ALIGN_JUSTIFY",
+      "VALIGN_TOP",
+      "VALIGN_MIDDLE",
+      "VALIGN_BOTTOM",
+    ]) {
+      expect(richtext).toContain(`export const ${constant}:`);
+    }
+    for (const named of [
+      "Alignment",
+      "VAlignment",
+      "Word",
+      "Settings",
+      "FontsTable",
+      "TextMetrics",
+    ]) {
+      expect(richtext).toContain(`type ${named} =`);
+    }
+  });
+
+  test("all three goldens joined the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    for (const mod of MODULES) {
+      expect(include).toContain(`generated/richtext.${mod}.d.ts`);
+    }
+    expect(include).toContain("test-d/richtext-usage.test-d.ts");
   });
 });

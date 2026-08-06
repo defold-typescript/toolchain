@@ -700,6 +700,23 @@ const MONARCH: LibraryRecord = {
 // headings, and a flat signature parse collapses all of it. `color` and `tags`
 // are documented nowhere as signature sections — only inside fenced Lua examples
 // and prose bullets — so both are `no-markdown`, not `no-signature-section`.
+//
+// All three have since severed ts-defold for the authored lane, keeping
+// `namespace === moduleId` so the goldens are overwritten in place. The snapshots
+// the terms below are read from are therefore the authored forks, not
+// `fixtures/ts-defold/`. Every recorded term is unchanged across that move,
+// because a verbatim fork differs from its ts-defold source only in type tokens
+// (`hash` -> `Hash`, `vmath.vector4` -> `Vector4`) and
+// `compareFidelityToTsDefold` scores no type token (`sync-markdown-types.ts:610`).
+// If a term does move, re-measure and record why — never relax the assertion.
+//
+// Unlike monarch, no upstream correction landed with this cutover, and the
+// absence is deliberate rather than unfinished work: `addedMembers` is `[]`, so
+// the markdown surface names nothing our types lack, and every module forked
+// verbatim. What the fork owes the verdict instead is the structure the flat
+// parse collapses — the 7 `ALIGN_*`/`VALIGN_*` constants and the six named types
+// the `surface-loss` case rests on — which is pinned as an assertion below rather
+// than left to this comment.
 const RICHTEXT: LibraryRecord = {
   library: "richtext",
   repo: "https://github.com/britzl/defold-richtext",
@@ -708,9 +725,34 @@ const RICHTEXT: LibraryRecord = {
   prefix: "richtext.",
   classificationDir: "defold-richtext",
   decisions: [
-    { module: "color", decision: "no-go", reason: "no-markdown" },
-    { module: "richtext", decision: "no-go", reason: "surface-loss", markdown: "README.md" },
-    { module: "tags", decision: "no-go", reason: "no-markdown" },
+    {
+      module: "color",
+      decision: "no-go",
+      reason: "no-markdown",
+      severedSource: {
+        path: "packages/defold-richtext/richtext.color.d.ts",
+        fixture: "fixtures/authored/richtext.color.d.ts",
+      },
+    },
+    {
+      module: "richtext",
+      decision: "no-go",
+      reason: "surface-loss",
+      markdown: "README.md",
+      severedSource: {
+        path: "packages/defold-richtext/richtext.richtext.d.ts",
+        fixture: "fixtures/authored/richtext.richtext.d.ts",
+      },
+    },
+    {
+      module: "tags",
+      decision: "no-go",
+      reason: "no-markdown",
+      severedSource: {
+        path: "packages/defold-richtext/richtext.tags.d.ts",
+        fixture: "fixtures/authored/richtext.tags.d.ts",
+      },
+    },
   ],
 };
 
@@ -1397,6 +1439,12 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
   "fixtures/authored/persist.persist.d.ts":
     "f79845a7b47f57f4559d7b365c32ce5527ce12e778999e5eee4db3f45793c622",
+  "fixtures/authored/richtext.color.d.ts":
+    "6e724943b4cb548c4baa283226efed0a0c9348b9529f81319a12e4239ac70a83",
+  "fixtures/authored/richtext.richtext.d.ts":
+    "35b06ed582b027ae84e395856afd015ba74bc76c05460e63c4f0adfd3da6457b",
+  "fixtures/authored/richtext.tags.d.ts":
+    "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
   "fixtures/authored/starly.starly.d.ts":
     "79bad0b84c801c6b57e03d2f208af6aea1248eeda99383f88b1bcf9b7e340e21",
   "fixtures/authored/yagames.yagames.d.ts":
@@ -1459,12 +1507,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "d1e55bb7a6bd64ea1fe31ed64e5fc4ccb4b42fa2e697851ce5afdc67ea27a959",
   "fixtures/ts-defold/rendy.rendy.d.ts":
     "3b7d93b2abeeb5f4089dfb10110648ff66a07a3533b8e1e3b1edc07c8d3ddf03",
-  "fixtures/ts-defold/richtext.color.d.ts":
-    "4cae10480441a24c1f233ae96cf3a02223e5c9989712c733d3d517dbc7df2a38",
-  "fixtures/ts-defold/richtext.richtext.d.ts":
-    "759ba92654f34cfc89aa300fa06ea36d1a52b1e3778e836e89f1f63ec56813fd",
-  "fixtures/ts-defold/richtext.tags.d.ts":
-    "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
 };
 
 describe("the vendored snapshots the recorded verdicts were derived from", () => {
@@ -1708,6 +1750,72 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
   test("richtext.richtext's decision is no-go", async () => {
     const { decision } = await comparisonFor(RICHTEXT, "richtext");
     expect(decision).toBe("no-go");
+  });
+
+  // Without the dropped rows the lookups would throw, so the three recorded
+  // verdicts are only resolvable because each decision's own `severedSource`
+  // supplies both fields it used to read. One value per module: a single
+  // record-level override would score all three against one snapshot.
+  test("each of the three verdicts still resolves once its ts-defold row is gone", () => {
+    const MODULES = ["color", "richtext", "tags"];
+    const fixtures = MODULES.map((mod) => {
+      const moduleId = `richtext.${mod}`;
+      const severed = severedFor(RICHTEXT, mod);
+      expect(severed).toBeDefined();
+      const { fixture } = targetFor(moduleId, severed);
+      expect(fixture).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(existsSync(join(PACKAGE_ROOT, fixture))).toBe(true);
+      expect(classificationModule(moduleId, severed)).toBe(moduleId);
+      return fixture;
+    });
+    expect(new Set(fixtures).size).toBe(3);
+  });
+
+  // `namespace === moduleId` for all three, so the dotted golden the fork emits is
+  // the one the ts-defold row already published — the arm of the severance
+  // assertion that requires the file to survive rather than die with its row.
+  test("each fork registers and re-emits the dotted golden it published before", () => {
+    for (const mod of ["color", "richtext", "tags"]) {
+      const moduleId = `richtext.${mod}`;
+      const target = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.moduleId === moduleId);
+      expect(target?.namespace).toBe(moduleId);
+      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
+      expect(existsSync(join(PACKAGE_ROOT, `generated/${moduleId}.d.ts`))).toBe(true);
+    }
+  });
+
+  // No upstream correction landed with this cutover — `addedMembers` is `[]`, so
+  // the markdown surface names nothing our types lack. What makes that an
+  // assertion rather than an absence is the surface the verbatim fork preserves:
+  // the exact structure the flat parse collapses, and the whole of the
+  // `surface-loss` case. A later "simplification" of the fork that erased any of
+  // it would red here alongside the `addedMembers` term it invalidates.
+  test("the fork still declares every name the markdown emit loses", () => {
+    const fork = readFileSync(
+      join(PACKAGE_ROOT, targetFor("richtext.richtext", severedFor(RICHTEXT, "richtext")).fixture),
+      "utf8",
+    );
+    for (const constant of [
+      "ALIGN_CENTER",
+      "ALIGN_JUSTIFY",
+      "ALIGN_LEFT",
+      "ALIGN_RIGHT",
+      "VALIGN_BOTTOM",
+      "VALIGN_MIDDLE",
+      "VALIGN_TOP",
+    ]) {
+      expect(fork).toContain(`export const ${constant}:`);
+    }
+    for (const named of [
+      "Alignment",
+      "VAlignment",
+      "Word",
+      "Settings",
+      "FontsTable",
+      "TextMetrics",
+    ]) {
+      expect(fork).toContain(`type ${named} =`);
+    }
   });
 });
 

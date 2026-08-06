@@ -249,6 +249,36 @@
       "namespace": "monarch.transitions.gui",
       "generated": "generated/monarch.transitions.gui.d.ts",
       "apiDoc": "api-doc/monarch.transitions.gui.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-richtext",
+      "ref": "5.22.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/richtext.color.d.ts",
+      "moduleId": "richtext.color",
+      "namespace": "richtext.color",
+      "generated": "generated/richtext.color.d.ts",
+      "apiDoc": "api-doc/richtext.color.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-richtext",
+      "ref": "5.22.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/richtext.richtext.d.ts",
+      "moduleId": "richtext.richtext",
+      "namespace": "richtext.richtext",
+      "generated": "generated/richtext.richtext.d.ts",
+      "apiDoc": "api-doc/richtext.richtext.json"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-richtext",
+      "ref": "5.22.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/richtext.tags.d.ts",
+      "moduleId": "richtext.tags",
+      "namespace": "richtext.tags",
+      "generated": "generated/richtext.tags.d.ts",
+      "apiDoc": "api-doc/richtext.tags.json"
     }
   ]
 }

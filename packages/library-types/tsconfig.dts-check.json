@@ -43,6 +43,9 @@
     "generated/monarch.monarch.d.ts",
     "generated/monarch.transitions.easings.d.ts",
     "generated/monarch.transitions.gui.d.ts",
+    "generated/richtext.color.d.ts",
+    "generated/richtext.richtext.d.ts",
+    "generated/richtext.tags.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",
@@ -57,6 +60,7 @@
     "test-d/starly-usage.test-d.ts",
     "test-d/defold-input-usage.test-d.ts",
     "test-d/monarch-usage.test-d.ts",
+    "test-d/richtext-usage.test-d.ts",
     "test-d/fixtures/engine-handle-module.d.ts",
     "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"
