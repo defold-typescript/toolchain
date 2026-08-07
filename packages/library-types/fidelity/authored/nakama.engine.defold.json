@@ -1,0 +1,21 @@
+{
+  "namespace": "nakama.engine.defold",
+  "upstreamMembers": 5,
+  "declaredMembers": 5,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [
+    {
+      "name": "http",
+      "upstream": 8,
+      "declared": 6
+    },
+    {
+      "name": "socket_send",
+      "upstream": 2,
+      "declared": 3
+    }
+  ],
+  "undocumentedMembers": 5,
+  "coverage": 0.6
+}

@@ -93,7 +93,8 @@
     "luals:fidelity": "bun scripts/sync-luals-types.ts --fidelity",
     "luals:emit": "bun scripts/sync-luals-types.ts --emit",
     "luals:api-doc": "bun scripts/sync-luals-types.ts --api-doc",
-    "fidelity:floor": "bun scripts/fidelity-floor.ts --raise"
+    "fidelity:floor": "bun scripts/fidelity-floor.ts --raise",
+    "parity": "bun scripts/authored-parity.ts"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*"

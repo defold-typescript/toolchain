@@ -17,9 +17,11 @@ import { extractApiDoc } from "./extract-api-doc";
  * `extractApiDoc` for the `api-doc/<namespace>.json` the docs-site consumes. The
  * emitted surface *is* the vendored authored source, so the go/no-go gate is a
  * forked-vs-generated identity diff (see the golden loop) — emission fidelity.
- * There is no coverage comparison against a primary source because there is
- * none; a corrected fork's accuracy rests on its manual audit against upstream
- * plus the per-library shape assertions in the sibling test.
+ * There is no *type* coverage comparison because upstream declares no types; the
+ * *surface* is another matter, and a target that vendors its upstream `.lua` under
+ * `upstreamLua` is measured on member names and arity by `authored-parity.ts`.
+ * Beyond that, a corrected fork's accuracy rests on its manual audit against
+ * upstream plus the per-library shape assertions in the sibling test.
  */
 export interface AuthoredTarget {
   repo: string;
@@ -39,6 +41,11 @@ export interface AuthoredTarget {
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
   // in the config; defaults to "".
   license: string;
+  // Package-relative paths of the vendored upstream `.lua` sources this target's
+  // surface is measured against (`authored-parity.ts`). Optional and defaulted to
+  // `[]`: a target with no vendored upstream is simply unmeasured, which is why it
+  // must not join `REQUIRED_FIELDS`.
+  upstreamLua: string[];
 }
 
 export interface AuthoredTargets {
@@ -57,7 +64,8 @@ const REQUIRED_FIELDS = [
 
 /**
  * Read `authored-targets.json`, validate every required field per entry, and fill
- * optional defaults (`fidelity` → `fidelity/<namespace>.json`, `license` → "").
+ * optional defaults (`fidelity` → `fidelity/<namespace>.json`, `license` → "",
+ * `upstreamLua` → []).
  * Throws on the first missing field naming both the field and the offending entry
  * (its `moduleId`, or its index when `moduleId` itself is absent) — the loud-fail
  * discipline `readMarkdownTargets`/`readScriptApiTargets`/`readLualsTargets` use.
@@ -85,6 +93,7 @@ export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",
+      upstreamLua: entry.upstreamLua ?? [],
     };
   });
 }

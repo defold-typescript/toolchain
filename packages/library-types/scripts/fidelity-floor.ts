@@ -12,12 +12,22 @@
  * Reports are keyed by package-root-relative POSIX path, not by namespace:
  * `fidelity/openapi/nakama.nakama.json` reports `namespace: "nakama"`, and two
  * lanes emitting the same namespace would collide on a namespace key.
+ *
+ * The walk is universal over `fidelity/` with one carve-out: `fidelity/authored/`
+ * holds *surface* parity, not *type-token* coverage. Those reports have no
+ * `totalTypeTokens` to be a fraction of, and their coverage means something else —
+ * upstream members declared at the right arity, from `authored-parity.ts`. They get
+ * their own ratchet in `authored-parity-floor.json`, so folding them in here would
+ * only mean two incompatible denominators under one floor manifest.
  */
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 export const FIDELITY_DIR = "fidelity";
+/** Directory name under `fidelity/` the token-coverage walk skips — see the
+ * module note; ratcheted by `authored-parity-floor.json` instead. */
+export const AUTHORED_PARITY_DIRNAME = "authored";
 export const FLOOR_MANIFEST_FILE = "fidelity-floor.json";
 export const FLOOR_RAISE_COMMAND = "bun run --cwd packages/library-types fidelity:floor";
 
@@ -38,8 +48,10 @@ function numberField(raw: Record<string, unknown>, field: string, path: string):
 function walkJsonFiles(dir: string, prefix: string, out: string[]): void {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const rel = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
-    if (entry.isDirectory()) walkJsonFiles(join(dir, entry.name), rel, out);
-    else if (entry.name.endsWith(".json")) out.push(rel);
+    if (entry.isDirectory()) {
+      if (prefix === "" && entry.name === AUTHORED_PARITY_DIRNAME) continue;
+      walkJsonFiles(join(dir, entry.name), rel, out);
+    } else if (entry.name.endsWith(".json")) out.push(rel);
   }
 }
 
