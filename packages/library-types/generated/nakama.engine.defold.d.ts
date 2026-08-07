@@ -13,6 +13,8 @@ declare module 'nakama.engine.defold' {
     query_params: string,
     method: string,
     post_data: string,
+    retry_policy: unknown,
+    cancellation_token: unknown,
     callback: (response: unknown) => void
   ): void;
 
@@ -20,5 +22,5 @@ declare module 'nakama.engine.defold' {
 
   export function socket_connect(socket: symbol, callback: (success: boolean, error: string) => void): void;
 
-  export function socket_send(socket: symbol, message: string, callback: () => void): void;
+  export function socket_send(socket: symbol, message: string): void;
 }

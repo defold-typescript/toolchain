@@ -90,4 +90,10 @@ declare module "bzAnim.bzLibrary" {
   export function isReady(): boolean;
 
   export function setDebugLevel(level: number): void;
+
+  export function setMaxPoints(num: number): void;
+
+  export function registerController(obj: Hash | string): void;
+
+  export function unregisterController(obj: Hash | string): void;
 }

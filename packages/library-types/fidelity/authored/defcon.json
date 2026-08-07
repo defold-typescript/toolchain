@@ -14,16 +14,10 @@
   "declaredMembers": 6,
   "missingMembers": [],
   "phantomMembers": [],
-  "arityMismatches": [
-    {
-      "name": "register_module",
-      "upstream": 2,
-      "declared": 1
-    }
-  ],
+  "arityMismatches": [],
   "undocumentedMembers": 0,
   "importedDocs": 6,
   "refusedDocBlocks": 1,
   "variadicMembers": 0,
-  "callableCoverage": 0.8333
+  "callableCoverage": 1
 }

@@ -16,7 +16,7 @@ declare module 'defcon.console' {
 
   export function update(): void;
 
-  export function register_module(module: unknown): void;
+  export function register_module(module: unknown, name?: string): void;
 
   export function register_command(command: string, description: string, callback: CommandCallback): void;
 

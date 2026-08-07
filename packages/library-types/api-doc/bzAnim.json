@@ -276,6 +276,57 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "setMaxPoints",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "num",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "registerController",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "obj",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unregisterController",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "obj",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
     }
   ]
 }
