@@ -1,0 +1,11 @@
+{
+  "namespace": "in.textbox",
+  "upstreamMembers": 7,
+  "upstreamFields": 3,
+  "declaredMembers": 7,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 5,
+  "coverage": 1
+}

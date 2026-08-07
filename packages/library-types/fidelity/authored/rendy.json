@@ -1,0 +1,14 @@
+{
+  "namespace": "rendy",
+  "upstreamMembers": 11,
+  "upstreamFields": 5,
+  "declaredMembers": 13,
+  "missingMembers": [],
+  "phantomMembers": [
+    "animate",
+    "cancel_animations"
+  ],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

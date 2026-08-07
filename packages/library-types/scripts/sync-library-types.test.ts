@@ -584,6 +584,12 @@ describe("writeClassification", () => {
             namespace,
             generated: `generated/${namespace}.d.ts`,
             apiDoc: `api-doc/${namespace}.json`,
+            // A synthetic target has no upstream to vendor, and the parity
+            // declaration is mandatory for any config `readAuthoredTargets` accepts.
+            parityVerdict: {
+              reason: "no-module-file",
+              note: "synthetic classification fixture — no upstream repository exists.",
+            },
           };
         }),
       }),

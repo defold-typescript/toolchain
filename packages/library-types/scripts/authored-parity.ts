@@ -13,7 +13,9 @@
  * parameter list, against api-doc `FUNCTION` elements. A `TYPEDEF` is a type, not a
  * runtime member, and an upstream constant field (`M.APIOPERATOR_BEST = "BEST"`) has
  * no arity to compare — folding either in would move the numbers without measuring
- * anything the report can act on.
+ * anything the report can act on. The fields are still *counted*, as
+ * `upstreamFields`, so a module whose callable surface is one function cannot post a
+ * `coverage` of 1 that reads as a complete audit.
  *
  * Every classifier here is one-sided on purpose. `missingMembers` and
  * `phantomMembers` are name-set differences, `arityMismatches` compares parameter
@@ -39,6 +41,11 @@ export interface AuthoredArityMismatch {
 export interface AuthoredParityReport {
   namespace: string;
   upstreamMembers: number;
+  /** Non-callable upstream members (`M.SOME_CONSTANT = "X"`), which the callable
+   * comparison never examines. Recorded beside `upstreamMembers` so a high
+   * `coverage` over a handful of functions cannot be read as a complete audit of
+   * the module: a non-zero count is unmeasured surface, not agreement. */
+  upstreamFields: number;
   declaredMembers: number;
   missingMembers: string[];
   phantomMembers: string[];
@@ -69,16 +76,25 @@ function round4(value: number): number {
   return Math.round(value * 10_000) / 10_000;
 }
 
-function upstreamSurface(packageRoot: string, target: AuthoredTarget): Map<string, LuaMember> {
-  const members = new Map<string, LuaMember>();
+interface UpstreamSurface {
+  callable: Map<string, LuaMember>;
+  /** Field names, minus any name that is callable somewhere in the target's
+   * sources — a name defined both ways is compared, not counted as unexamined. */
+  fields: Set<string>;
+}
+
+function upstreamSurface(packageRoot: string, target: AuthoredTarget): UpstreamSurface {
+  const callable = new Map<string, LuaMember>();
+  const fields = new Set<string>();
   for (const relative of target.upstreamLua) {
     const surface = parseLuaSurface(readFileSync(join(packageRoot, relative), "utf8"));
     for (const member of surface.members) {
-      if (member.params === undefined) continue;
-      members.set(member.name, member);
+      if (member.params === undefined) fields.add(member.name);
+      else callable.set(member.name, member);
     }
   }
-  return members;
+  for (const name of callable.keys()) fields.delete(name);
+  return { callable, fields };
 }
 
 function declaredSurface(packageRoot: string, target: AuthoredTarget): Map<string, DeclaredMember> {
@@ -111,7 +127,7 @@ export function buildAuthoredParity(
   packageRoot: string,
   target: AuthoredTarget,
 ): AuthoredParityReport {
-  const upstream = upstreamSurface(packageRoot, target);
+  const { callable: upstream, fields } = upstreamSurface(packageRoot, target);
   const declared = declaredSurface(packageRoot, target);
 
   const missingMembers: string[] = [];
@@ -136,6 +152,7 @@ export function buildAuthoredParity(
   return {
     namespace: target.namespace,
     upstreamMembers: upstream.size,
+    upstreamFields: fields.size,
     declaredMembers: declared.size,
     missingMembers: missingMembers.sort(),
     phantomMembers: phantomMembers.sort(),
@@ -158,7 +175,7 @@ if (import.meta.main) {
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, renderAuthoredParity(report));
     console.log(
-      `${target.namespace}: ${report.upstreamMembers} upstream, ${report.missingMembers.length} missing, ${report.phantomMembers.length} phantom, ${report.arityMismatches.length} arity, coverage ${report.coverage}`,
+      `${target.namespace}: ${report.upstreamMembers} upstream, ${report.missingMembers.length} missing, ${report.phantomMembers.length} phantom, ${report.arityMismatches.length} arity, coverage ${report.coverage}, ${report.upstreamFields} unexamined fields`,
     );
   }
 }

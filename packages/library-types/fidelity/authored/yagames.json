@@ -1,0 +1,45 @@
+{
+  "namespace": "yagames",
+  "upstreamMembers": 68,
+  "upstreamFields": 0,
+  "declaredMembers": 50,
+  "missingMembers": [
+    "device_info_is_tv",
+    "event_dispatch",
+    "event_off",
+    "event_on",
+    "features_gameplayapi_start",
+    "features_gameplayapi_stop",
+    "features_gamesapi_get_all_games",
+    "features_gamesapi_get_game_by_id",
+    "features_loadingapi_ready",
+    "flags_get",
+    "is_available_method",
+    "multiplayer_sessions_commit",
+    "multiplayer_sessions_init",
+    "multiplayer_sessions_push",
+    "player_get_mode",
+    "player_get_paying_status",
+    "player_get_personal_info",
+    "player_get_signature",
+    "player_is_authorized",
+    "server_time",
+    "shortcut_can_show_prompt",
+    "shortcut_show_prompt"
+  ],
+  "phantomMembers": [
+    "add_domain",
+    "get_current_domain",
+    "is_release_build",
+    "verify_domain"
+  ],
+  "arityMismatches": [
+    {
+      "name": "payments_get_catalog",
+      "upstream": 2,
+      "declared": 1
+    }
+  ],
+  "undocumentedMembers": 46,
+  "coverage": 0.6618
+}

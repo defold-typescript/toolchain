@@ -1,0 +1,11 @@
+{
+  "namespace": "dicebag",
+  "upstreamMembers": 11,
+  "upstreamFields": 2,
+  "declaredMembers": 11,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

@@ -1,0 +1,17 @@
+{
+  "namespace": "defcon",
+  "upstreamMembers": 6,
+  "upstreamFields": 3,
+  "declaredMembers": 6,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [
+    {
+      "name": "register_module",
+      "upstream": 2,
+      "declared": 1
+    }
+  ],
+  "undocumentedMembers": 6,
+  "coverage": 0.8333
+}

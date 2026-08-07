@@ -1,0 +1,32 @@
+{
+  "namespace": "defmath",
+  "upstreamMembers": 38,
+  "upstreamFields": 0,
+  "declaredMembers": 38,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [
+    {
+      "name": "average",
+      "upstream": 0,
+      "declared": 1
+    },
+    {
+      "name": "average_midpoint_of_vectors",
+      "upstream": 0,
+      "declared": 1
+    },
+    {
+      "name": "in_triangle",
+      "upstream": 3,
+      "declared": 8
+    },
+    {
+      "name": "sum",
+      "upstream": 0,
+      "declared": 1
+    }
+  ],
+  "undocumentedMembers": 0,
+  "coverage": 0.8947
+}
