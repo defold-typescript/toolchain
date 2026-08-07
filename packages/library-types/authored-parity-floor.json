@@ -1,4 +1,8 @@
 {
+  "fidelity/authored/boom.json": {
+    "callable": 0.1667,
+    "field": 1
+  },
   "fidelity/authored/bzAnim.json": {
     "callable": 0.6667,
     "field": 1
@@ -25,6 +29,10 @@
   },
   "fidelity/authored/gooey.json": {
     "callable": 0.35,
+    "field": 1
+  },
+  "fidelity/authored/in.accelerometer.json": {
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/in.button.json": {

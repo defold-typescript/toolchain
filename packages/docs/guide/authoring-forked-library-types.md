@@ -177,6 +177,15 @@ of the entry's `repo` URL — so
 the target names, never the whole repository: the digest map is per-file, and an
 unused copy is dead weight the pin still has to defend.
 
+The reader accepts two closing forms: a bare `return M`, and a callable module's
+`return setmetatable(M, { … })` — on one line or spread over several, as long as it
+starts at column 0. It **refuses** a metatable carrying `__index`, and one named by a
+variable whose keys it cannot see, in both cases throwing rather than parsing. A
+delegated member never appears at column 0, so parsing anyway would report a short
+surface as the whole one and raise the target's coverage for it. An indented
+`return setmetatable(instance, { … })` inside a factory function is not the module's
+close and is ignored, which is what the column-0 rule buys.
+
 List the vendored paths in `upstreamLua`, then regenerate:
 
 ```sh
@@ -188,12 +197,21 @@ of the upstream surface are compared, on two axes reported side by side. The
 declared side of each is the fork's `api-doc/<namespace>.json` — the surface the
 [/api](/api) page renders, so the report measures what a reader actually sees.
 
+Only the fork's *own* members are compared. An api-doc element marked `global: true`
+is a file-scope name the library installs into the environment, defined upstream in
+files the target does not vendor, so it is a member of no module and enters neither
+axis — calling one a phantom would describe real upstream API as invented.
+`declaredGlobals` records how many were set aside: 30 for `deftest`, whose telescope
+assertions are ambient, and 87 for `boom`, which declares one module member beside its
+whole ambient game API.
+
 The **callable** axis, upstream members carrying a parameter list against api-doc
 `FUNCTION` elements:
 
 | Field | What it counts |
 | ----- | -------------- |
 | `upstreamMembers` | Callable members the upstream module defines. |
+| `declaredGlobals` | Declared names the fork installs into the environment rather than onto the module. Counted, never compared. |
 | `declaredMembers` | Functions the fork declares. |
 | `missingMembers` | Upstream members the fork does not declare at all. |
 | `phantomMembers` | Declared members upstream does not have. |
@@ -238,6 +256,13 @@ rather than the digest updated.
 functions against upstream's 156, only **4** of them agree on arity, and it
 declares **none** of upstream's 12 constants.
 
+`boom` is the opposite shape: it declares **one** of the six members
+`boom/boom.lua` defines, the other five being the `final`/`init`/`on_input`/
+`on_message`/`update` lifecycle hooks `boom.script` calls rather than API a user
+writes. The gap is real and recorded, but read it beside `declaredGlobals`: nearly
+the whole library reaches its users as ambient globals, which this axis does not
+measure.
+
 ### Why the two axes are never averaged
 
 Neither number is "the" coverage of a target, and no single figure replaces them.
@@ -266,7 +291,7 @@ say what was actually looked at:
 | -------- | --------------- |
 | `unresolved-path` | The `moduleId`-derived path does not resolve at the pinned `ref`, including a repository that no longer exists there. `starly.starly` is the corpus example: `VowSoftware/starly` returns 404 at its pinned SHA. |
 | `no-module-file` | Upstream resolves, but declares no single module file this target could be measured against. |
-| `unparseable-shape` | The module file exists but is not the `local M = {} … return M` shape the reader accepts. `boom.boom` and `in.accelerometer` both close with `return setmetatable(M, { __call = ... })`, so no module-local name can be derived. |
+| `unparseable-shape` | The module file exists but closes in a way the reader refuses — a metatable carrying `__index`, or one it cannot read the keys of, either of which could delegate members no column-0 scan would find. No corpus target carries this verdict: `boom.boom` and `in.accelerometer` once did, and were lifted into measurement when the reader learned the `return setmetatable(M, { __call = … })` form they close with. |
 
 A verdict is a recorded finding, not a way to skip the work. It says someone
 looked and what stopped them, which is exactly what an absent declaration cannot

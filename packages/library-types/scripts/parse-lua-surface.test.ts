@@ -10,6 +10,10 @@ function vendored(relative: string): string {
   return readFileSync(join(PACKAGE_ROOT, UPSTREAM_DIR, relative), "utf8");
 }
 
+function upstream(relative: string): string {
+  return readFileSync(join(PACKAGE_ROOT, "fixtures/upstream-lua", relative), "utf8");
+}
+
 function byName(members: LuaMember[]): Map<string, LuaMember> {
   return new Map(members.map((member) => [member.name, member]));
 }
@@ -192,5 +196,74 @@ describe("parseLuaSurface over the vendored nakama core", () => {
       varargs: false,
       doc: "",
     });
+  });
+});
+
+describe("a module closing with `return setmetatable(<name>, {…})` is the same surface", () => {
+  const surface = parseLuaSurface(upstream("defold-input/in/accelerometer.lua"));
+
+  test("the vendored accelerometer resolves M, not the instance its inner return closes over", () => {
+    expect(surface.moduleLocal).toBe("M");
+    expect(surface.members.map((member) => member.name)).toEqual([
+      "create",
+      "reset",
+      "calibrate",
+      "on_input",
+      "calibrated",
+      "adjusted",
+      "average",
+      "zero",
+      "latest",
+      "on_window_resized",
+    ]);
+  });
+
+  test("arity is read off the same definitions the bare-return form uses", () => {
+    const members = byName(surface.members);
+    expect(members.get("create")?.params).toEqual(["samplecount"]);
+    expect(members.get("on_input")?.params).toEqual(["action", "instance"]);
+    expect(members.get("on_window_resized")?.params).toEqual(["width", "height", "instance"]);
+  });
+
+  test("the one-line form parses on the same path as the multi-line one", () => {
+    const inline = parseLuaSurface(
+      [
+        "local M = {}",
+        "function M.a(x)",
+        "end",
+        "return setmetatable(M, { __call = function() end })",
+        "",
+      ].join("\n"),
+    );
+    expect(inline.moduleLocal).toBe("M");
+    expect(inline.members).toEqual([{ name: "a", params: ["x"], varargs: false, doc: "" }]);
+  });
+});
+
+describe("a metatable that could delegate members is refused, never parsed short", () => {
+  function withMetatable(metatable: string): string {
+    return [
+      "local M = {}",
+      "function M.a()",
+      "end",
+      `return setmetatable(M, ${metatable})`,
+      "",
+    ].join("\n");
+  }
+
+  test("an `__index` key throws, naming the idiom and what it would hide", () => {
+    const thrown = () => parseLuaSurface(withMetatable("{ __index = base }"));
+    expect(thrown).toThrow("__index");
+    expect(thrown).toThrow("invisible");
+  });
+
+  test("the bracketed key form is refused too, so quoting is not an escape", () => {
+    expect(() => parseLuaSurface(withMetatable('{ ["__index"] = base }'))).toThrow("__index");
+  });
+
+  test("a metatable named by a variable is refused, its keys being unreadable", () => {
+    const thrown = () => parseLuaSurface(withMetatable("mt"));
+    expect(thrown).toThrow("setmetatable");
+    expect(thrown).toThrow("invisible");
   });
 });

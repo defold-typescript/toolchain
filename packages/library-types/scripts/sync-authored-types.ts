@@ -33,8 +33,9 @@ import { extractApiDoc } from "./extract-api-doc";
  *   pinned `ref` (including a repository that no longer exists there).
  * - `no-module-file` — the upstream resolves but declares no single module file
  *   this target could be measured against.
- * - `unparseable-shape` — the module file exists but is not the `local M = {} …
- *   return M` shape `parseLuaSurface` reads.
+ * - `unparseable-shape` — the module file exists but closes in a way
+ *   `parseLuaSurface` refuses, such as a metatable that could delegate members
+ *   no column-0 scan would find.
  */
 export const PARITY_VERDICT_REASONS = [
   "no-module-file",

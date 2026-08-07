@@ -132,11 +132,23 @@ describe("the concrete targets the survey could not measure", () => {
     expect(starly.parityVerdict?.note).not.toBe("");
   });
 
-  test("the callable-module sources record an unparseable shape", () => {
-    for (const moduleId of ["boom.boom", "in.accelerometer"]) {
+  test("the callable-module sources are measured now, their excuse having been retired", () => {
+    for (const [moduleId, upstream] of [
+      ["boom.boom", "fixtures/upstream-lua/boom/boom/boom.lua"],
+      ["in.accelerometer", "fixtures/upstream-lua/defold-input/in/accelerometer.lua"],
+    ] as const) {
       const entry = verdict(moduleId);
-      expect(entry.upstreamLua).toEqual([]);
-      expect(entry.parityVerdict?.reason).toBe("unparseable-shape");
+      expect(entry.parityVerdict).toBeUndefined();
+      expect(entry.upstreamLua).toEqual([upstream]);
     }
+  });
+
+  test("`unparseable-shape` survives with no corpus user, now describing a refused metatable", () => {
+    expect(PARITY_VERDICT_REASONS).toContain("unparseable-shape");
+    expect(
+      TARGETS.filter((entry) => entry.parityVerdict?.reason === "unparseable-shape").map(
+        (entry) => entry.moduleId,
+      ),
+    ).toEqual([]);
   });
 });
