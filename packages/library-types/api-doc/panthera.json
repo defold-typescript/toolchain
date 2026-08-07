@@ -1,0 +1,1183 @@
+{
+  "info": {
+    "namespace": "panthera",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "Customize the logging mechanism used by Panthera Runtime. You can use Defold Log library or provide a custom logger.",
+      "description": "Customize the logging mechanism used by Panthera Runtime. You can use Defold Log library or provide a custom logger.",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "A logger object that follows the specified logging interface. Pass nil to use empty logger",
+          "types": [
+            "panthera_logger | LuaTable | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_go",
+      "brief": "Load and create a game object animation state from a Lua table or JSON file.",
+      "description": "Load and create a game object animation state from a Lua table or JSON file.",
+      "parameters": [
+        {
+          "name": "animation_or_path",
+          "doc": "Lua table with animation data or path to JSON animation file in custom resources",
+          "types": [
+            "string | LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "collection_name",
+          "doc": "Collection name to load nodes from. Pass nil if no collection is used",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "objects",
+          "doc": "Table with game objects from collectionfactory. Pass nil if no objects are used",
+          "types": [
+            "LuaTable<string | Hash, string | Hash> | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "New animation state object",
+          "types": [
+            "panthera_animation"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_gui",
+      "brief": "Load and create a GUI animation state from a Lua table or JSON file.",
+      "description": "Load and create a GUI animation state from a Lua table or JSON file.",
+      "parameters": [
+        {
+          "name": "animation_or_path",
+          "doc": "Lua table with animation data or path to JSON animation file in custom resources",
+          "types": [
+            "string | LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "template",
+          "doc": "The GUI template ID to load nodes from. Pass nil if no template is used",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "nodes",
+          "doc": "Table with nodes from gui.clone_tree() function. Pass nil if no nodes are used",
+          "types": [
+            "LuaTable<string | Hash, Opaque<\"node\">> | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "New animation state object",
+          "types": [
+            "panthera_animation"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Load an animation from a Lua table or JSON file and create an animation state using a specified adapter.",
+      "description": "Load an animation from a Lua table or JSON file and create an animation state using a specified adapter.",
+      "parameters": [
+        {
+          "name": "animation_or_path",
+          "doc": "Lua table with animation data or path to JSON animation file in custom resources",
+          "types": [
+            "string | LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "adapter",
+          "doc": "An adapter object that specifies how Panthera Runtime interacts with Engine",
+          "types": [
+            "panthera_adapter"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "get_node",
+          "doc": "Function to get node by node_id. A custom function to resolve nodes by their ID",
+          "types": [
+            "(node_id: string) => Opaque<\"node\">"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "New animation state object",
+          "types": [
+            "panthera_animation"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clone_state",
+      "brief": "Clone an existing animation state object, enabling multiple instances of the same animation to play simultaneously or independently.",
+      "description": "Clone an existing animation state object, enabling multiple instances of the same animation to play simultaneously or independently.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object to clone",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "New animation state object that is a copy of the original",
+          "types": [
+            "panthera_animation"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "play",
+      "brief": "Play an animation with specified ID and options.",
+      "description": "Play an animation with specified ID and options.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object returned by `create_go` or `create_gui`",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "The ID of the animation to play",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Options for the animation playback",
+          "types": [
+            "panthera_options | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "play_tweener",
+      "brief": "Play animation with easing support using tweener. Allows for non-linear animation playback with custom easing functions.",
+      "description": "Play animation with easing support using tweener. Allows for non-linear animation playback with custom easing functions.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "The ID of the animation to play",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Options including easing function, speed, and callbacks",
+          "types": [
+            "panthera_options_tweener | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "play_detached",
+      "brief": "Play animation as a child of the current animation state, allowing multiple animations to run independently and simultaneously.\n\nThis creates a detached animation that runs in parallel with the main animation state without affecting it.\nThe child animation will be automatically cleaned up when it completes.",
+      "description": "Play animation as a child of the current animation state, allowing multiple animations to run independently and simultaneously.\n\nThis creates a detached animation that runs in parallel with the main animation state without affecting it.\nThe child animation will be automatically cleaned up when it completes.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The parent animation state object",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "The ID of the animation to play as a detached child",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Options for the detached animation playback",
+          "types": [
+            "panthera_options | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_time",
+      "brief": "Set the current time of an animation. This function stops any currently playing animation.",
+      "description": "Set the current time of an animation. This function stops any currently playing animation.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object returned by `create_go` or `create_gui`.",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "The ID of the animation to modify.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "time",
+          "doc": "The target time in seconds to which the animation should be set.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "event_callback",
+          "doc": "",
+          "types": [
+            "((event_id: string, node: Opaque<\"node\"> | undefined, string_value: string, number_value: number) => void) | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if animation state was set successfully, false if animation can't be set",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_time",
+      "brief": "Retrieve the current playback time in seconds of an animation. If the animation is not playing, the function returns 0.",
+      "description": "Retrieve the current playback time in seconds of an animation. If the animation is not playing, the function returns 0.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Current animation time in seconds",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "stop",
+      "brief": "Stop a currently playing animation. The animation will be stopped at current time.",
+      "description": "Stop a currently playing animation. The animation will be stopped at current time.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object to stop",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if animation was stopped, false if animation is not playing",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_duration",
+      "brief": "Retrieve the total duration of a specific animation.",
+      "description": "Retrieve the total duration of a specific animation.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "The ID of the animation whose duration you want to retrieve",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The total duration of the animation in seconds",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_playing",
+      "brief": "Check if an animation is currently playing.",
+      "description": "Check if an animation is currently playing.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if the animation is currently playing, false otherwise",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_latest_animation_id",
+      "brief": "Get the ID of the last animation that was started.",
+      "description": "Get the ID of the last animation that was started.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Animation ID or nil if no animation was started",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_animations",
+      "brief": "Return a list of animation IDs from the created animation state.",
+      "description": "Return a list of animation IDs from the created animation state.",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "The animation state object",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Array of animation IDs available in the animation state",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reload_animation",
+      "brief": "Reload animations from JSON files, useful for development and debugging.\n\nThe animations loaded from Lua tables will not be reloaded.\nAnimation will be reloaded only at desktop.",
+      "description": "Reload animations from JSON files, useful for development and debugging.\n\nThe animations loaded from Lua tables will not be reloaded.\nAnimation will be reloaded only at desktop.",
+      "parameters": [
+        {
+          "name": "animation_path",
+          "doc": "Specific animation to reload. If omitted, all loaded animations are reloaded",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation",
+      "properties": [
+        {
+          "name": "adapter",
+          "brief": "Adapter to use for animation",
+          "description": "Adapter to use for animation",
+          "types": [
+            "panthera_adapter"
+          ]
+        },
+        {
+          "name": "speed",
+          "brief": "Animation speed multiplier",
+          "description": "Animation speed multiplier",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "current_time",
+          "brief": "Current animation time",
+          "description": "Current animation time",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "nodes",
+          "brief": "Animation nodes used in animation",
+          "description": "Animation nodes used in animation",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "childs",
+          "brief": "List of active child animations",
+          "description": "List of active child animations",
+          "types": [
+            "panthera_animation[] | undefined"
+          ]
+        },
+        {
+          "name": "get_node",
+          "brief": "Function to get node by node_id",
+          "description": "Function to get node by node_id",
+          "types": [
+            "(node_id: string) => Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "animation_id",
+          "brief": "Current animation ID",
+          "description": "Current animation ID",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "previous_animation_id",
+          "brief": "Previous animation ID",
+          "description": "Previous animation ID",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "animation_path",
+          "brief": "Animation path to JSON file",
+          "description": "Animation path to JSON file",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "animation_keys_index",
+          "brief": "Animation keys index",
+          "description": "Animation keys index",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "events",
+          "brief": "List of events triggered in this animation loop",
+          "description": "List of events triggered in this animation loop",
+          "types": [
+            "LuaTable | undefined"
+          ]
+        },
+        {
+          "name": "timer_id",
+          "brief": "Timer ID for animation",
+          "description": "Timer ID for animation",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_options",
+      "properties": [
+        {
+          "name": "is_loop",
+          "brief": "Loop the animation. Triggers the callback at each loop end if set to `true`",
+          "description": "Loop the animation. Triggers the callback at each loop end if set to `true`",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "is_skip_init",
+          "brief": "Start animation from its current state, skipping initial setup",
+          "description": "Start animation from its current state, skipping initial setup",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "is_detached",
+          "brief": "Play animation as a detached child of the current animation state, allowing multiple animations to run independently and simultaneously.",
+          "description": "Play animation as a detached child of the current animation state, allowing multiple animations to run independently and simultaneously.",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "speed",
+          "brief": "Playback speed multiplier (default `1`). Values >1 increase speed, <1 decrease",
+          "description": "Playback speed multiplier (default `1`). Values >1 increase speed, <1 decrease",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "easing",
+          "brief": "Easing function for animation. Will use tweener for non-linear animation (slower performance)",
+          "description": "Easing function for animation. Will use tweener for non-linear animation (slower performance)",
+          "types": [
+            "string | Opaque<\"constant\"> | undefined"
+          ]
+        },
+        {
+          "name": "callback",
+          "brief": "Function called when the animation finishes. Receives `animation_id`",
+          "description": "Function called when the animation finishes. Receives `animation_id`",
+          "types": [
+            "((animation_id: string) => undefined) | undefined"
+          ]
+        },
+        {
+          "name": "callback_event",
+          "brief": "Function triggered by animation events",
+          "description": "Function triggered by animation events",
+          "types": [
+            "((event_id: string, node: Opaque<\"node\"> | undefined, string_value: string, number_value: number) => undefined) | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_options_tweener",
+      "properties": [
+        {
+          "name": "speed",
+          "brief": "Animation speed multiplier, default is 1",
+          "description": "Animation speed multiplier, default is 1",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "is_loop",
+          "brief": "If true, the animation will loop with trigger callback each loop",
+          "description": "If true, the animation will loop with trigger callback each loop",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "easing",
+          "brief": "Easing function for play animation with. Works currently only on play_tweener",
+          "description": "Easing function for play animation with. Works currently only on play_tweener",
+          "types": [
+            "string | Opaque<\"constant\"> | undefined"
+          ]
+        },
+        {
+          "name": "callback",
+          "brief": "Callback when animation is finished",
+          "description": "Callback when animation is finished",
+          "types": [
+            "((animation_id: string) => undefined) | undefined"
+          ]
+        },
+        {
+          "name": "callback_event",
+          "brief": "Callback when animation trigger event",
+          "description": "Callback when animation trigger event",
+          "types": [
+            "((event_id: string, node: Opaque<\"node\"> | undefined, string_value: string, number_value: number) => undefined) | undefined"
+          ]
+        },
+        {
+          "name": "is_reverse",
+          "brief": "If true, the animation will play in reverse",
+          "description": "If true, the animation will play in reverse",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "from",
+          "brief": "Start value for tween animation",
+          "description": "Start value for tween animation",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "to",
+          "brief": "End value for tween animation",
+          "description": "End value for tween animation",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera",
+      "properties": [
+        {
+          "name": "SPEED",
+          "brief": "Default speed of all animations",
+          "description": "Default speed of all animations",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_adapter",
+      "properties": [
+        {
+          "name": "get_node",
+          "brief": "Function to get node by node_id.",
+          "description": "Function to get node by node_id.",
+          "types": [
+            "(node_id: string) => Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "get_easing",
+          "brief": "Function to get defold easing by easing_id. Default is gui.EASING",
+          "description": "Function to get defold easing by easing_id. Default is gui.EASING",
+          "types": [
+            "(easing_id: string) => Hash"
+          ]
+        },
+        {
+          "name": "tween_animation_key",
+          "brief": "Function to tween animation key.",
+          "description": "Function to tween animation key.",
+          "types": [
+            "(node: Opaque<\"node\">, property_id: string, easing: Hash | number[], duration: number, end_value: number) => undefined"
+          ]
+        },
+        {
+          "name": "trigger_animation_key",
+          "brief": "Function to trigger animation key.",
+          "description": "Function to trigger animation key.",
+          "types": [
+            "(node: Opaque<\"node\">, property_id: string, value: unknown) => undefined"
+          ]
+        },
+        {
+          "name": "event_animation_key",
+          "brief": "Function to trigger event in animation.",
+          "description": "Function to trigger event in animation.",
+          "types": [
+            "(node: Opaque<\"node\">, key: panthera_animation_data_animation_key) => undefined"
+          ]
+        },
+        {
+          "name": "set_node_property",
+          "brief": "Function to set node property. Return true if success",
+          "description": "Function to set node property. Return true if success",
+          "types": [
+            "(node: Opaque<\"node\">, property_id: string, value: number | string) => boolean"
+          ]
+        },
+        {
+          "name": "stop_tween",
+          "brief": "Function to stop tween animation key",
+          "description": "Function to stop tween animation key",
+          "types": [
+            "(node: Opaque<\"node\">, property_id: string) => undefined"
+          ]
+        },
+        {
+          "name": "is_node_valid",
+          "brief": "Function to check if node is valid",
+          "description": "Function to check if node is valid",
+          "types": [
+            "(node: Opaque<\"node\">) => boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: panthera_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: panthera_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: panthera_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: panthera_logger, message: string, data: unknown | undefined) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(logger: panthera_logger, message: string, data: unknown | undefined) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation_data_node"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation_data_metadata",
+      "properties": [
+        {
+          "name": "gui_path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "fps",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "settings",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "gizmo_steps",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "template_animation_paths",
+          "brief": "template_animation_paths[node_id]: path. Value filled at loading animation data",
+          "description": "template_animation_paths[node_id]: path. Value filled at loading animation data",
+          "types": [
+            "LuaTable<string, string>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation_data_animation",
+      "properties": [
+        {
+          "name": "duration",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "animation_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "initial_state",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "animation_keys",
+          "brief": "",
+          "description": "",
+          "types": [
+            "panthera_animation_data_animation_key[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation_data",
+      "properties": [
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "nodes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "panthera_animation_data_node[]"
+          ]
+        },
+        {
+          "name": "animations",
+          "brief": "",
+          "description": "",
+          "types": [
+            "panthera_animation_data_animation[]"
+          ]
+        },
+        {
+          "name": "metadata",
+          "brief": "",
+          "description": "",
+          "types": [
+            "panthera_animation_data_metadata"
+          ]
+        },
+        {
+          "name": "group_animation_keys",
+          "brief": "group_animation_keys[animation_id][node_id][property_id]: keys[]. Value filled at loading animation data",
+          "description": "group_animation_keys[animation_id][node_id][property_id]: keys[]. Value filled at loading animation data",
+          "types": [
+            "LuaTable<string, LuaTable<string, LuaTable<string, panthera_animation_data_animation_key[]>>>"
+          ]
+        },
+        {
+          "name": "animations_dict",
+          "brief": "animations_dict[animation_id]: animation. Value filled at loading animation data",
+          "description": "animations_dict[animation_id]: animation. Value filled at loading animation data",
+          "types": [
+            "LuaTable<string, panthera_animation_data_animation>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation_project_file",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Animation data",
+          "description": "Animation data",
+          "types": [
+            "panthera_animation_data"
+          ]
+        },
+        {
+          "name": "format",
+          "brief": "Animation format",
+          "description": "Animation format",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "Animation version",
+          "description": "Animation version",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "Animation type. Example: \"animation_editor\", \"atlas\"",
+          "description": "Animation type. Example: \"animation_editor\", \"atlas\"",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation_data_animation_key",
+      "properties": [
+        {
+          "name": "key_type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "node_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "property_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "start_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "duration",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "start_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "end_value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "easing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "easing_custom",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number[] | Vector | undefined"
+          ]
+        },
+        {
+          "name": "start_data",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "event_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "is_editor_only",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}
