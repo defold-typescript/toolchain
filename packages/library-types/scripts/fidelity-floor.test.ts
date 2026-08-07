@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
+  AUTHORED_PARITY_DIRNAME,
   collectFidelityReports,
   type FidelityFloorReport,
   FLOOR_MANIFEST_FILE,
@@ -22,6 +23,15 @@ describe("fidelity floor gate", () => {
     // Without this the whole gate passes vacuously on a walk that descends nowhere.
     expect(Object.keys(reports).length).toBeGreaterThan(0);
     expect(reports["fidelity/openapi/nakama.nakama.json"]).toBeDefined();
+  });
+
+  test("the surface-parity lane is carved out, so the two denominators stay apart", () => {
+    // `fidelity/authored/` coverage is upstream members declared at the right
+    // arity, not type tokens — `authored-parity-floor.json` ratchets it.
+    expect(existsSync(join(PACKAGE_ROOT, "fidelity", AUTHORED_PARITY_DIRNAME))).toBe(true);
+    expect(Object.keys(reports).filter((path) => path.startsWith("fidelity/authored/"))).toEqual(
+      [],
+    );
   });
 
   test("every committed fidelity report has a floor entry", () => {
