@@ -2,6 +2,14 @@
   "namespace": "bzAnim",
   "upstreamMembers": 9,
   "upstreamFields": 0,
+  "declaredFields": 3,
+  "missingFields": [],
+  "phantomFields": [
+    "DEBUG_LEVEL",
+    "INFO_LEVEL",
+    "TRACE_LEVEL"
+  ],
+  "fieldCoverage": 1,
   "declaredMembers": 6,
   "missingMembers": [
     "registerController",
@@ -11,5 +19,5 @@
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 0.6667
+  "callableCoverage": 0.6667
 }

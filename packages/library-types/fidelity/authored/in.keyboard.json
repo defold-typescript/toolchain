@@ -2,10 +2,14 @@
   "namespace": "in.keyboard",
   "upstreamMembers": 2,
   "upstreamFields": 1,
+  "declaredFields": 1,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 2,
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 1
+  "callableCoverage": 1
 }

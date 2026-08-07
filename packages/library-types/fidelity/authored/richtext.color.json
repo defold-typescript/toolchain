@@ -2,6 +2,10 @@
   "namespace": "richtext.color",
   "upstreamMembers": 4,
   "upstreamFields": 1,
+  "declaredFields": 1,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 1,
   "missingMembers": [
     "parse",
@@ -11,5 +15,5 @@
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 0.25
+  "callableCoverage": 0.25
 }

@@ -2,6 +2,10 @@
   "namespace": "nakama.engine.defold",
   "upstreamMembers": 5,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 5,
   "missingMembers": [],
   "phantomMembers": [],
@@ -18,5 +22,5 @@
     }
   ],
   "undocumentedMembers": 5,
-  "coverage": 0.6
+  "callableCoverage": 0.6
 }
