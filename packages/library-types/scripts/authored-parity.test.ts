@@ -5,6 +5,7 @@ import {
   authoredParityPath,
   authoredParityTargets,
   buildAuthoredParity,
+  classifyArity,
   classifyFieldAxis,
   renderAuthoredParity,
 } from "./authored-parity";
@@ -99,15 +100,66 @@ describe("the nakama.engine.defold parity findings", () => {
 describe("the nakama.util.log parity findings", () => {
   const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.util.log"));
 
-  test("two of the four upstream members are not declared at all", () => {
+  test("all four upstream members are declared, at upstream arity", () => {
     expect(report.upstreamMembers).toBe(4);
-    expect(report.declaredMembers).toBe(2);
-    expect(report.missingMembers).toEqual(["custom", "format"]);
-    expect(report.callableCoverage).toBe(0.5);
+    expect(report.declaredMembers).toBe(4);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
   });
 
-  test("both declared members carry upstream LuaDoc the api-doc does not", () => {
-    expect(report.undocumentedMembers).toBe(2);
+  // `format`'s upstream block opens with a plain `--`, so the reader records no doc for
+  // it and it is not chargeable; the other three are `---` blocks the fork does not carry.
+  test("three declared members carry upstream LuaDoc the api-doc does not", () => {
+    expect(report.undocumentedMembers).toBe(3);
+  });
+});
+
+describe("the richtext.color parity findings", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("richtext.color"));
+
+  test("all four upstream members are declared, at upstream arity", () => {
+    expect(report.upstreamMembers).toBe(4);
+    expect(report.declaredMembers).toBe(4);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("the one upstream constant stays declared beside them", () => {
+    expect(report.upstreamFields).toBe(1);
+    expect(report.missingFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+});
+
+describe("the two forks exporting a name their pinned upstream does not define", () => {
+  test("monarch.transitions.easings no longer exports upstream's private `create`", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.easings"));
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.declaredMembers).toBe(10);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  // The field axis is out of this slice, so rendy's five missing constants have to be
+  // seen not to have moved: an edit that declared or invented one would show up here.
+  test("rendy drops the two go.animate replacements without touching its field gap", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("rendy"));
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.declaredMembers).toBe(11);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.missingFields).toEqual([
+      "cameras",
+      "display_height",
+      "display_width",
+      "window_height",
+      "window_width",
+    ]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(0);
   });
 });
 
@@ -288,6 +340,92 @@ describe("the either-side rule holds on name sets the corpus never produces", ()
   });
 });
 
+// A variadic upstream definition has no fixed count to disagree with, so the corpus
+// can only ever show the floor being exceeded. The declared-below-floor corner and the
+// exact-agreement corner have no measured case at all, and are pinned here on scalars
+// driven straight through the classifier `buildAuthoredParity` itself calls.
+describe("a variadic upstream member is measured against a floor, not a count", () => {
+  test("a non-variadic member still agrees on an exact count and disagrees otherwise", () => {
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: 2 })).toEqual({
+      agrees: true,
+      floorChecked: false,
+    });
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: 1 })).toEqual({
+      agrees: false,
+      floorChecked: false,
+    });
+  });
+
+  test("a variadic member with no named parameters agrees at any declared count", () => {
+    for (const declared of [0, 1, 4]) {
+      expect(classifyArity({ upstreamNamed: 0, upstreamVariadic: true, declared })).toEqual({
+        agrees: true,
+        floorChecked: true,
+      });
+    }
+  });
+
+  test("named parameters stay a floor the fork must meet", () => {
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: 2 })).toEqual({
+      agrees: true,
+      floorChecked: true,
+    });
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: 3 })).toEqual({
+      agrees: true,
+      floorChecked: true,
+    });
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: 1 })).toEqual({
+      agrees: false,
+      floorChecked: true,
+    });
+  });
+
+  test("only a floor-checked member is one the count can report", () => {
+    expect(
+      classifyArity({ upstreamNamed: 1, upstreamVariadic: false, declared: 1 }).floorChecked,
+    ).toBe(false);
+    expect(
+      classifyArity({ upstreamNamed: 1, upstreamVariadic: true, declared: 1 }).floorChecked,
+    ).toBe(true);
+  });
+});
+
+describe("the six variadic members the corpus was charging as arity gaps", () => {
+  test("deftest and zzfx reach a full callable coverage once the floor rule applies", () => {
+    const deftest = buildAuthoredParity(PACKAGE_ROOT, target("deftest"));
+    expect(deftest.callableCoverage).toBe(1);
+    expect(deftest.variadicMembers).toBe(1);
+    expect(deftest.arityMismatches).toEqual([]);
+
+    const zzfx = buildAuthoredParity(PACKAGE_ROOT, target("zzfx"));
+    expect(zzfx.callableCoverage).toBe(1);
+    expect(zzfx.variadicMembers).toBe(2);
+    expect(zzfx.arityMismatches).toEqual([]);
+  });
+
+  // `in_triangle` is the proof that only the variadic cases moved: upstream defines the
+  // name twice at column 0, and Lua's last-definition-wins shadows the 8-parameter form
+  // the fork still declares. A softening that reached non-variadic members would take it.
+  test("defmath keeps the one mismatch that is not variadic", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("defmath"));
+    expect(report.variadicMembers).toBe(3);
+    expect(report.arityMismatches).toEqual([{ name: "in_triangle", upstream: 3, declared: 8 }]);
+    expect(report.callableCoverage).toBe(0.9737);
+  });
+
+  test("the other thirty-two targets share no variadic member at all", () => {
+    const moved = new Set(["deftest", "defmath", "zzfx"]);
+    const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
+      (entry) => !moved.has(entry.namespace),
+    );
+    expect(untouched.length).toBe(32);
+    for (const entry of untouched) {
+      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
+    }
+  });
+});
+
 describe("the declared field side reads only api-doc VARIABLE elements", () => {
   function declaredTypes(entry: AuthoredTarget, type: string): string[] {
     const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, entry.apiDoc), "utf8")) as {
@@ -358,7 +496,7 @@ describe("an ambient global is not a member of the module", () => {
 
   test("excluding them moves neither ratcheted figure", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("deftest"));
-    expect(report.callableCoverage).toBe(0.5);
+    expect(report.callableCoverage).toBe(1);
     expect(report.fieldCoverage).toBe(1);
   });
 

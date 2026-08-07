@@ -5100,7 +5100,14 @@ The **callable** axis, upstream members carrying a parameter list against api-do
 | `phantomMembers` | Declared members upstream does not have. |
 | `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers. Names are not compared — a fork may rename parameters freely. |
 | `undocumentedMembers` | Shared members carrying upstream LuaDoc that the fork's api-doc does not reproduce. |
+| `variadicMembers` | Shared members compared against a floor rather than an exact count, upstream being variadic. |
 | `callableCoverage` | Fraction of upstream members that are declared *and* agree on arity. |
+
+An upstream definition ending in `...` has no fixed parameter count to disagree
+with, so `function M.play(...)` is compared against its *named* parameters as a
+floor: the fork must declare at least them, and anything beyond is the rest.
+`variadicMembers` says how many shared members that weaker check covered, so a
+`callableCoverage` of 1 over a variadic surface cannot be read as fully verified.
 
 The **field** axis, upstream constants (`M.SOME_CONSTANT = "X"`) against api-doc
 `VARIABLE` elements. A `TYPEDEF` is a type rather than a runtime member and enters

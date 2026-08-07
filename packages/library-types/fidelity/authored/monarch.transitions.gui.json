@@ -31,5 +31,6 @@
     }
   ],
   "undocumentedMembers": 1,
+  "variadicMembers": 0,
   "callableCoverage": 0.35
 }

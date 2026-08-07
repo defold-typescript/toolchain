@@ -194,31 +194,6 @@
           ]
         }
       ]
-    },
-    {
-      "type": "FUNCTION",
-      "name": "create",
-      "brief": "",
-      "description": "",
-      "parameters": [
-        {
-          "name": "name",
-          "doc": "",
-          "types": [
-            "EasingIn | EasingOut"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "",
-          "types": [
-            "Easing"
-          ]
-        }
-      ]
     }
   ]
 }
