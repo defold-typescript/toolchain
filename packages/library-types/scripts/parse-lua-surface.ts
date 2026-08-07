@@ -17,9 +17,12 @@
  *   different function bodies — out of the surface, and it is why the reader never
  *   needs to know where a block ends.
  * - **Loud failure over silent undercount.** A missing `return <name>` or a
- *   parameter list that does not close on its own line throws. The whole point of
- *   the instrument is that a dropped member is visible; a parser that quietly
- *   skips what it cannot read would inflate every coverage number it feeds.
+ *   parameter list that does not close on its own line throws, as does a
+ *   `return setmetatable(M, …)` whose metatable carries `__index` or is named by a
+ *   variable whose keys this reader cannot see — either could add members no column-0
+ *   scan will find. The whole point of the instrument is that a dropped member is
+ *   visible; a parser that quietly skips what it cannot read would inflate every
+ *   coverage number it feeds.
  */
 
 export interface LuaMember {
@@ -40,12 +43,39 @@ export interface LuaSurface {
 }
 
 const RETURN_LINE = /^return\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/;
+const RETURN_SETMETATABLE = /^return\s+setmetatable\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,/;
 const IDENTIFIER = "[A-Za-z_][A-Za-z0-9_]*";
+
+/** The metatable argument of a `return setmetatable(<name>, …)`, refused unless its
+ * keys are readable and none of them delegates. `text` runs from the comma to the end
+ * of the source rather than to the matching brace: over-reading can only refuse a file
+ * loudly, where under-reading would accept a delegating module and report its short
+ * surface as complete. */
+function assertNoDelegation(text: string): void {
+  if (text.trimStart().startsWith("{") === false) {
+    throw new Error(
+      "lua surface: the returned `setmetatable` is given a metatable this reader cannot see the keys of, so a delegated member would be invisible — inline the table literal or measure the module another way.",
+    );
+  }
+  if (text.includes("__index")) {
+    throw new Error(
+      "lua surface: the returned metatable carries `__index`, so members reached through it would be invisible to a column-0 scan and the surface would read as complete while short.",
+    );
+  }
+}
 
 function resolveModuleLocal(lines: string[]): string {
   for (let index = lines.length - 1; index >= 0; index -= 1) {
-    const match = RETURN_LINE.exec(lines[index] as string);
-    if (match) return match[1] as string;
+    const line = lines[index] as string;
+    const bare = RETURN_LINE.exec(line);
+    if (bare) return bare[1] as string;
+    const wrapped = RETURN_SETMETATABLE.exec(line);
+    if (wrapped) {
+      assertNoDelegation(
+        [line.slice((wrapped[0] as string).length), ...lines.slice(index + 1)].join("\n"),
+      );
+      return wrapped[1] as string;
+    }
   }
   throw new Error(
     "lua surface: the source has no trailing `return <name>`, so the module-local name cannot be derived.",

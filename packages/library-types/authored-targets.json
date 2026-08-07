@@ -64,10 +64,7 @@
       "namespace": "boom",
       "generated": "generated/boom.d.ts",
       "apiDoc": "api-doc/boom.json",
-      "parityVerdict": {
-        "reason": "unparseable-shape",
-        "note": "boom/boom.lua closes with `return setmetatable(M, { __call = ... })` instead of a bare `return M`, so parseLuaSurface cannot derive the module-local name."
-      }
+      "upstreamLua": ["fixtures/upstream-lua/boom/boom/boom.lua"]
     },
     {
       "repo": "https://github.com/whiteboxdev/library-defold-persist",
@@ -147,10 +144,7 @@
       "namespace": "in.accelerometer",
       "generated": "generated/in.accelerometer.d.ts",
       "apiDoc": "api-doc/in.accelerometer.json",
-      "parityVerdict": {
-        "reason": "unparseable-shape",
-        "note": "in/accelerometer.lua closes with `return setmetatable(M, { __call = ... })` instead of a bare `return M`, so parseLuaSurface cannot derive the module-local name."
-      }
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/accelerometer.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
