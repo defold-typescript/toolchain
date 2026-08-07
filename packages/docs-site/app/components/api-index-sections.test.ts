@@ -2,13 +2,13 @@ import { describe, expect, test } from "bun:test";
 import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage, ApiPageCategory } from "../lib/api-surface";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
-import { buildNav, libraryCreatorGroups } from "../lib/nav";
+import { buildNav, type LibraryOrigin, libraryOwnerGroups } from "../lib/nav";
 import { CombinedIndex } from "./api-index";
 import {
   apiCardBadgeHtml,
   apiPageCardDescription,
   groupApiIndexPages,
-  groupLibraryIndexByCreator,
+  groupLibraryIndexByOwner,
   withGlobalTypes,
 } from "./api-index-sections";
 
@@ -68,7 +68,7 @@ describe("apiPageCardDescription", () => {
   });
 });
 
-describe("groupLibraryIndexByCreator", () => {
+describe("groupLibraryIndexByOwner", () => {
   const libraryPages = [
     page("go", "engine", "/api/go"),
     {
@@ -82,20 +82,15 @@ describe("groupLibraryIndexByCreator", () => {
     page("monarch.monarch", "library", "/api/monarch.monarch"),
     page("squid.squid", "library", "/api/squid.squid"),
   ];
-  const moduleDir = new Map([
-    ["in.button", "defold-input"],
-    ["in.cursor", "defold-input"],
-    ["monarch.monarch", "monarch"],
-    ["squid.squid", "squid"],
-  ]);
-  const ownerByDir = new Map([
-    ["defold-input", "britzl"],
-    ["monarch", "britzl"],
-    ["squid", "paweljarosz"],
+  const origins = new Map<string, LibraryOrigin>([
+    ["in.button", { owner: "britzl", repo: "defold-input" }],
+    ["in.cursor", { owner: "britzl", repo: "defold-input" }],
+    ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
+    ["squid.squid", { owner: "paweljarosz", repo: "squid" }],
   ]);
 
-  test("groups libraries by creator and upstream dir", () => {
-    const groups = groupLibraryIndexByCreator(libraryPages, moduleDir, ownerByDir);
+  test("groups libraries by owner and repo", () => {
+    const groups = groupLibraryIndexByOwner(libraryPages, origins);
 
     expect(groups.map((group) => group.label)).toEqual(["britzl", "paweljarosz"]);
     expect(groups[0]?.libraries.map((library) => library.label)).toEqual([
@@ -110,27 +105,26 @@ describe("groupLibraryIndexByCreator", () => {
   });
 
   test("matches the left nav library tree order", () => {
-    const indexGroups = groupLibraryIndexByCreator(libraryPages, moduleDir, ownerByDir);
-    const navGroups = libraryCreatorGroups(
+    const indexGroups = groupLibraryIndexByOwner(libraryPages, origins);
+    const navGroups = libraryOwnerGroups(
       libraryPages
         .filter((apiPage) => apiPage.category === "library")
         .map((apiPage) => ({ namespace: apiPage.namespace, route: apiPage.route })),
-      moduleDir,
-      ownerByDir,
+      origins,
     );
 
     expect(
-      indexGroups.map((creator) => ({
-        label: creator.label,
-        libraries: creator.libraries.map((library) => ({
+      indexGroups.map((owner) => ({
+        label: owner.label,
+        libraries: owner.libraries.map((library) => ({
           label: library.label,
           modules: library.pages.map((apiPage) => apiPage.namespace),
         })),
       })),
     ).toEqual(
-      navGroups.map((creator) => ({
-        label: creator.label,
-        libraries: creator.libraries.map((library) => ({
+      navGroups.map((owner) => ({
+        label: owner.label,
+        libraries: owner.libraries.map((library) => ({
           label: library.label,
           modules: library.modules.map((module) => module.label),
         })),

@@ -1336,26 +1336,21 @@ describe("apiReplacementResolver", () => {
   });
 });
 
-describe("LibraryHeading — authored-pin marker", () => {
-  const headingHtml = (authoredHere: boolean): string =>
-    LibraryHeading({
-      creator: "Insality",
-      dir: "druid",
-      namespace: "druid",
-      authoredHere,
-    }).toString();
+describe("LibraryHeading — path", () => {
+  const headingHtml = (owner: string, repo: string, namespace: string): string =>
+    LibraryHeading({ owner, repo, namespace }).toString();
 
-  test("a LuaLS-authored library heading carries the pin and hint", () => {
-    const h1 = headingHtml(true);
-    expect(h1).toContain("authored-pin");
-    expect(h1).toContain("Type bindings maintained in this repo");
-    expect(h1).toContain("druid");
+  test("renders the owner, repo, and namespace as one accented path", () => {
+    const h1 = headingHtml("whiteboxdev", "library-defold-persist", "persist");
+    expect(h1).toContain("whiteboxdev");
+    expect(h1).toContain("library-defold-persist");
+    expect(h1).toContain('text-accent">persist');
   });
 
-  test("a vendored library heading omits the pin but keeps the path", () => {
-    const h1 = headingHtml(false);
-    expect(h1).not.toContain("authored-pin");
-    expect(h1).toContain("druid");
+  test("collapses a namespace that repeats its repo name", () => {
+    const h1 = headingHtml("Insality", "druid", "druid");
+    expect(h1.split("druid").length - 1).toBe(1);
+    expect(h1).toContain("Insality");
   });
 });
 

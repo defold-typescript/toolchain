@@ -14,8 +14,7 @@ import {
   canonicalNamespaces,
   combinedSurface,
   defaultGlobalTypePages,
-  libraryDirs,
-  libraryOwners,
+  libraryOrigins,
 } from "../../lib/api-content";
 import {
   apiLinkify,
@@ -29,30 +28,24 @@ import { combinedRedirect, redirectHtml } from "../../lib/api-redirect";
 import { withBase } from "../../lib/base";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
 import { pageHeadings } from "../../lib/headings";
-import { AUTHORED_LIBRARY_HINT, authoredLibraryPin, renderMarkdown } from "../../lib/markdown";
+import { renderMarkdown } from "../../lib/markdown";
 import { libraryLineage } from "../../lib/nav";
 import { COMBINED_VERSION_ID } from "../../lib/version-switch";
 
-// The library page heading: the styled `creator/dir/namespace` path, plus the
-// map-pin marker for a LuaLS-authored library (`authoredHere`). Exported so the
-// pin wiring is unit-testable without the route's cwd-relative surface loaders.
+// The library page heading: the styled `owner/repo/namespace` path. Exported so
+// the path wiring is unit-testable without the route's cwd-relative surface loaders.
 export function LibraryHeading({
-  creator,
-  dir,
+  owner,
+  repo,
   namespace,
-  authoredHere,
 }: {
-  creator: string;
-  dir: string;
+  owner: string;
+  repo: string;
   namespace: string;
-  authoredHere: boolean;
 }) {
   return (
     <h1>
-      <LibraryPath creator={creator} dir={dir} namespace={namespace} />
-      {authoredHere ? (
-        <span dangerouslySetInnerHTML={{ __html: authoredLibraryPin(AUTHORED_LIBRARY_HINT) }} />
-      ) : null}
+      <LibraryPath owner={owner} repo={repo} namespace={namespace} />
     </h1>
   );
 }
@@ -115,22 +108,17 @@ export default createRoute(
     // `/api/Opaque` Reference page.
     const signatureSymbolLinks = apiSignatureSymbolLinks(pages);
 
-    // Library pages render their heading as the styled `creator/dir/namespace`
+    // Library pages render their heading as the styled `owner/repo/namespace`
     // path (matching the /libraries index), so the markdown body omits its H1.
     if (page.category === "library") {
-      const { creator, dir } = libraryLineage(page.namespace, libraryDirs(), libraryOwners());
+      const { owner: repoOwner, repo } = libraryLineage(page.namespace, libraryOrigins());
       const body = await renderMarkdown(
         apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
         { highlightSignatureHeadings: true, signatureSymbolLinks },
       );
       return c.render(
         <article class="prose">
-          <LibraryHeading
-            creator={creator}
-            dir={dir}
-            namespace={page.namespace}
-            authoredHere={page.libraryMeta?.authoredHere ?? false}
-          />
+          <LibraryHeading owner={repoOwner} repo={repo} namespace={page.namespace} />
           <div dangerouslySetInnerHTML={{ __html: body }} />
         </article>,
         { title: `${page.module.namespace} API`, headings: pageHeadings(body) },

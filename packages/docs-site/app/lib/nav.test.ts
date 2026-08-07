@@ -5,8 +5,9 @@ import { listGuidePages } from "./guide-loader";
 import {
   activeCategoryId,
   buildNav,
-  libraryCreatorGroups,
+  type LibraryOrigin,
   libraryLineage,
+  libraryOwnerGroups,
   type NavLink,
 } from "./nav";
 
@@ -142,7 +143,7 @@ describe("buildNav", () => {
     }
   });
 
-  test("Libraries is a top-level category with creator, library, and namespace levels", () => {
+  test("Libraries is a top-level category with owner, repo, and namespace levels", () => {
     const nav = buildNav(realPages(), {
       globals: GLOBALS,
       globalTypes: [],
@@ -150,35 +151,32 @@ describe("buildNav", () => {
       engine: ENGINE,
       libraries: [
         {
-          creator: "britzl",
+          owner: "britzl",
           label: "britzl",
           libraries: [
             {
-              dir: "defold-input",
+              repo: "defold-input",
               label: "defold-input",
-              authoredHere: false,
               modules: [
                 { label: "in.button", route: "/api/in.button" },
                 { label: "in.cursor", route: "/api/in.cursor" },
               ],
             },
             {
-              dir: "monarch",
+              repo: "monarch",
               label: "monarch",
-              authoredHere: false,
               modules: [{ label: "monarch.monarch", route: "/api/monarch.monarch" }],
             },
           ],
         },
         {
-          creator: "subsoap",
-          label: "subsoap",
+          owner: "whiteboxdev",
+          label: "whiteboxdev",
           libraries: [
             {
-              dir: "library-defold-persist",
+              repo: "library-defold-persist",
               label: "library-defold-persist",
-              authoredHere: false,
-              modules: [{ label: "persist.persist", route: "/api/persist.persist" }],
+              modules: [{ label: "persist", route: "/api/persist" }],
             },
           ],
         },
@@ -187,21 +185,28 @@ describe("buildNav", () => {
     const libraries = nav.find((c) => c.id === "libraries");
     expect(libraries?.label).toBe("Libraries");
     expect(libraries?.route).toBe("/libraries");
-    expect(libraries?.links.map((l) => l.label)).toEqual(["britzl", "subsoap"]);
+    expect(libraries?.links.map((l) => l.label)).toEqual(["britzl", "whiteboxdev"]);
 
     const britzl = libraries?.links.find((l) => l.label === "britzl");
     expect(britzl?.route).toBeUndefined();
     expect(britzl?.children?.map((c) => c.label)).toEqual(["defold-input", "monarch"]);
 
+    // A multi-module repo keeps its expander and lists its namespaces beneath it.
+    const input = britzl?.children?.find((l) => l.label === "defold-input");
+    expect(input?.route).toBeUndefined();
+    expect(input?.children?.map((c) => c.route)).toEqual(["/api/in.button", "/api/in.cursor"]);
+
+    // A single-module repo collapses: the row is the module's link, titled with
+    // the repo it is published from rather than the namespace it imports as.
     const monarch = britzl?.children?.find((l) => l.label === "monarch");
-    expect(monarch?.route).toBeUndefined();
-    expect(monarch?.children).toEqual([
-      {
-        label: "monarch.monarch",
-        labelHtml: "monarch.monarch",
-        route: "/api/monarch.monarch",
-      },
-    ]);
+    expect(monarch?.children).toBeUndefined();
+    expect(monarch?.route).toBe("/api/monarch.monarch");
+
+    const persist = libraries?.links
+      .find((l) => l.label === "whiteboxdev")
+      ?.children?.find((l) => l.route === "/api/persist");
+    expect(persist?.label).toBe("library-defold-persist");
+    expect(persist?.children).toBeUndefined();
 
     const labels: string[] = [];
     const collectLabels = (links: NavLink[] | undefined) => {
@@ -214,7 +219,7 @@ describe("buildNav", () => {
     expect(labels.every((label) => !label.includes("/"))).toBe(true);
   });
 
-  test("appends the authored-pin marker to the LuaLS library namespace leaf only", () => {
+  test("accents the rows that link to a module and gives each its full-path tooltip", () => {
     const nav = buildNav(realPages(), {
       globals: [],
       globalTypes: [],
@@ -222,25 +227,31 @@ describe("buildNav", () => {
       engine: [],
       libraries: [
         {
-          creator: "Insality",
+          owner: "Insality",
           label: "Insality",
           libraries: [
             {
-              dir: "druid",
+              repo: "defold-saver",
+              label: "defold-saver",
+              modules: [
+                { label: "saver.saver", route: "/api/saver.saver" },
+                { label: "saver.storage", route: "/api/saver.storage" },
+              ],
+            },
+            {
+              repo: "druid",
               label: "druid",
-              authoredHere: true,
               modules: [{ label: "druid", route: "/api/druid" }],
             },
           ],
         },
         {
-          creator: "britzl",
+          owner: "britzl",
           label: "britzl",
           libraries: [
             {
-              dir: "monarch",
+              repo: "monarch",
               label: "monarch",
-              authoredHere: false,
               modules: [{ label: "monarch.monarch", route: "/api/monarch.monarch" }],
             },
           ],
@@ -248,20 +259,27 @@ describe("buildNav", () => {
       ],
     });
     const libraries = nav.find((c) => c.id === "libraries");
-    const druidGroup = libraries?.links
-      .find((l) => l.label === "Insality")
-      ?.children?.find((l) => l.label === "druid");
-    const druidLeaf = druidGroup?.children?.find((l) => l.route === "/api/druid");
-    const monarchGroup = libraries?.links
+    const insality = libraries?.links.find((l) => l.label === "Insality");
+    const saverGroup = insality?.children?.find((l) => l.label === "defold-saver");
+    const saverLeaf = saverGroup?.children?.find((l) => l.route === "/api/saver.storage");
+    expect(saverLeaf?.accent).toBe(true);
+    expect(saverLeaf?.tooltip).toBe("Insality/defold-saver/saver.storage");
+    // The repo row of a multi-module library only groups, so it stays unaccented
+    // and keeps the default label-derived tooltip.
+    expect(saverGroup?.accent).toBeUndefined();
+    expect(saverGroup?.tooltip).toBeUndefined();
+
+    // A collapsed single-module repo *is* the module row: accented, and its
+    // tooltip still names the namespace its repo-titled label leaves out.
+    const druidLeaf = insality?.children?.find((l) => l.route === "/api/druid");
+    expect(druidLeaf?.accent).toBe(true);
+    expect(druidLeaf?.tooltip).toBe("Insality/druid");
+
+    const monarchLeaf = libraries?.links
       .find((l) => l.label === "britzl")
-      ?.children?.find((l) => l.label === "monarch");
-    const monarchLeaf = monarchGroup?.children?.find((l) => l.route === "/api/monarch.monarch");
-    expect(druidLeaf?.labelHtml).toContain("authored-pin");
-    expect(druidLeaf?.labelHtml).toContain("Type bindings maintained in this repo");
-    expect(druidGroup?.labelHtml).not.toContain("authored-pin");
-    expect(monarchGroup?.labelHtml).not.toContain("authored-pin");
-    expect(monarchLeaf?.labelHtml).not.toContain("authored-pin");
-    expect(monarchLeaf?.labelHtml).toBe("monarch.monarch");
+      ?.children?.find((l) => l.route === "/api/monarch.monarch");
+    expect(monarchLeaf?.labelHtml).toBe("monarch");
+    expect(monarchLeaf?.tooltip).toBe("britzl/monarch/monarch.monarch");
   });
 
   test("activeCategoryId resolves the Libraries index and nested namespace leaves", () => {
@@ -272,13 +290,12 @@ describe("buildNav", () => {
       engine: [],
       libraries: [
         {
-          creator: "subsoap",
-          label: "subsoap",
+          owner: "Insality",
+          label: "Insality",
           libraries: [
             {
-              dir: "saver",
-              label: "saver",
-              authoredHere: true,
+              repo: "defold-saver",
+              label: "defold-saver",
               modules: [
                 { label: "saver.saver", route: "/api/saver.saver" },
                 { label: "saver.storage", route: "/api/saver.storage" },
@@ -538,29 +555,24 @@ describe("activeCategoryId", () => {
   });
 });
 
-describe("libraryCreatorGroups", () => {
-  const moduleDir = new Map<string, string>([
-    ["squid.squid", "squid"],
-    ["in.button", "defold-input"],
-    ["in.cursor", "defold-input"],
-    ["monarch.monarch", "monarch"],
-  ]);
-  const ownerByDir = new Map<string, string>([
-    ["squid", "paweljarosz"],
-    ["defold-input", "britzl"],
-    ["monarch", "britzl"],
+describe("libraryOwnerGroups", () => {
+  const origins = new Map<string, LibraryOrigin>([
+    ["squid.squid", { owner: "paweljarosz", repo: "squid" }],
+    ["in.button", { owner: "britzl", repo: "defold-input" }],
+    ["in.cursor", { owner: "britzl", repo: "defold-input" }],
+    ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
+    ["druid", { owner: "Insality", repo: "druid" }],
   ]);
 
-  test("groups pages into creator, library, and namespace levels", () => {
-    const groups = libraryCreatorGroups(
+  test("groups pages into owner, repo, and namespace levels", () => {
+    const groups = libraryOwnerGroups(
       [
         { namespace: "squid.squid", route: "/api/squid.squid" },
         { namespace: "in.cursor", route: "/api/in.cursor" },
         { namespace: "in.button", route: "/api/in.button" },
         { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
       ],
-      moduleDir,
-      ownerByDir,
+      origins,
     );
     expect(groups.map((group) => group.label)).toEqual(["britzl", "paweljarosz"]);
     expect(groups[0]?.libraries.map((lib) => lib.label)).toEqual(["defold-input", "monarch"]);
@@ -573,46 +585,45 @@ describe("libraryCreatorGroups", () => {
     ]);
   });
 
-  test("marks a namespace absent from moduleDir authoredHere, present ones not", () => {
-    const groups = libraryCreatorGroups(
+  // The repo name, not the namespace root, is what a multi-module library groups
+  // under — `in.*` belongs to `defold-input`, which is what a user installs.
+  test("groups sibling namespaces under the repo name rather than their shared prefix", () => {
+    const [group] = libraryOwnerGroups(
       [
-        { namespace: "druid", route: "/api/druid" },
-        { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
+        { namespace: "in.button", route: "/api/in.button" },
+        { namespace: "in.cursor", route: "/api/in.cursor" },
       ],
-      moduleDir,
-      ownerByDir,
+      origins,
     );
-    const flat = groups.flatMap((group) => group.libraries);
-    expect(flat.find((lib) => lib.dir === "druid")?.authoredHere).toBe(true);
-    expect(flat.find((lib) => lib.dir === "monarch")?.authoredHere).toBe(false);
+    expect(group?.libraries.map((lib) => lib.repo)).toEqual(["defold-input"]);
   });
 
-  test("falls back to the dir for uncredited libraries", () => {
-    const [group] = libraryCreatorGroups(
+  test("falls back to the top namespace segment for a library with no recorded origin", () => {
+    const [group] = libraryOwnerGroups(
       [{ namespace: "orphan.module", route: "/api/orphan.module" }],
-      new Map([["orphan.module", "orphan-lib"]]),
       new Map(),
     );
-    expect(group?.creator).toBe("orphan-lib");
-    expect(group?.libraries[0]?.label).toBe("orphan-lib");
+    expect(group?.owner).toBe("orphan");
+    expect(group?.libraries[0]?.label).toBe("orphan");
     expect(group?.libraries[0]?.modules[0]?.label).toBe("orphan.module");
   });
 
-  test("groups two authored-here modules sharing a top namespace segment into one library", () => {
-    const groups = libraryCreatorGroups(
+  test("groups two modules published from one repo into one library", () => {
+    const groups = libraryOwnerGroups(
       [
         { namespace: "saver.storage", route: "/api/saver.storage" },
         { namespace: "saver.saver", route: "/api/saver.saver" },
       ],
-      new Map(),
-      new Map([["saver", "Insality"]]),
+      new Map([
+        ["saver.saver", { owner: "Insality", repo: "defold-saver" }],
+        ["saver.storage", { owner: "Insality", repo: "defold-saver" }],
+      ]),
     );
     expect(groups.map((group) => group.label)).toEqual(["Insality"]);
     const libraries = groups[0]?.libraries ?? [];
     expect(libraries).toHaveLength(1);
-    expect(libraries[0]?.dir).toBe("saver");
-    expect(libraries[0]?.label).toBe("saver");
-    expect(libraries[0]?.authoredHere).toBe(true);
+    expect(libraries[0]?.repo).toBe("defold-saver");
+    expect(libraries[0]?.label).toBe("defold-saver");
     expect(libraries[0]?.modules).toEqual([
       { label: "saver.saver", route: "/api/saver.saver" },
       { label: "saver.storage", route: "/api/saver.storage" },
@@ -620,34 +631,38 @@ describe("libraryCreatorGroups", () => {
   });
 });
 
-// The library page heading resolves its own `creator/dir` lineage; drifting from
-// the grouping rule made an authored-here page title itself `<ns>/<ns>` while its
-// Libraries card read `<dir>/<ns>`.
+// The library page heading resolves its own `owner/repo` lineage; drifting from
+// the grouping rule made a page title itself `<ns>/<ns>` while its Libraries card
+// read `<repo>/<ns>`.
 describe("libraryLineage", () => {
-  const ownerByDir = new Map([
-    ["monarch", "britzl"],
-    ["defold-input", "britzl"],
+  const origins = new Map<string, LibraryOrigin>([
+    ["monarch.transitions.easings", { owner: "britzl", repo: "monarch" }],
+    ["in.button", { owner: "britzl", repo: "defold-input" }],
+    ["persist", { owner: "whiteboxdev", repo: "library-defold-persist" }],
   ]);
 
-  test("an authored-here namespace takes its top segment as the dir", () => {
-    expect(libraryLineage("monarch.transitions.easings", new Map(), ownerByDir)).toEqual({
-      creator: "britzl",
-      dir: "monarch",
+  test("a namespace takes the owner and repo its manifest records", () => {
+    expect(libraryLineage("monarch.transitions.easings", origins)).toEqual({
+      owner: "britzl",
+      repo: "monarch",
     });
   });
 
-  test("a vendored namespace takes its upstream dir", () => {
-    const moduleDir = new Map([["in.button", "defold-input"]]);
-    expect(libraryLineage("in.button", moduleDir, ownerByDir)).toEqual({
-      creator: "britzl",
-      dir: "defold-input",
+  test("the repo is the published name, not the namespace root", () => {
+    expect(libraryLineage("in.button", origins)).toEqual({
+      owner: "britzl",
+      repo: "defold-input",
+    });
+    expect(libraryLineage("persist", origins)).toEqual({
+      owner: "whiteboxdev",
+      repo: "library-defold-persist",
     });
   });
 
-  test("an uncredited dir stands in for its own creator", () => {
-    expect(libraryLineage("druid", new Map(), new Map())).toEqual({
-      creator: "druid",
-      dir: "druid",
+  test("a namespace with no recorded origin stands in for its own owner and repo", () => {
+    expect(libraryLineage("druid", new Map())).toEqual({
+      owner: "druid",
+      repo: "druid",
     });
   });
 });

@@ -74,6 +74,10 @@ changes are called out first because the toolchain is pre-1.0.
 
 - A new `--fail-on-drift` flag turns the [installed-editor-vs-pin drift notice](./pinning-defold-target.md) into a non-zero exit on `build`, `watch`, [`run`](./run.md), `upgrade`, and `bob build`/`bundle`/`run`, so CI stops passing on a warning nobody reads — the notice text and `--json` payload are unchanged, and a command that already failed keeps its own exit code. It is unrelated to `resolve --frozen`, which fails on a native-extension cache miss, and never appears on `resolve`.
 
+- The Libraries tree is now organized by GitHub origin: a library nests under its owner and the repo you actually install (`britzl/defold-input`, not `britzl/in`), and a repo publishing a single module collapses to one row instead of a folder holding one entry. Library page headings and index cards read the matching `owner/repo/namespace` path, and every tree row spells that path out on hover — so a collapsed row still tells you the namespace it imports as, like [persist](/api/persist) under `whiteboxdev/library-defold-persist`.
+
+- The maintained-here pin no longer appears on library pages, cards, or the sidebar. Every library's types are maintained in this repo now, so the marker sat on all of them and distinguished nothing.
+
 ### Fixed
 
 - A dependency that ships modules across two of this repo's registry lanes now resolves and materializes every module; [`resolve`](./resolve.md) previously kept only the first lane's module and silently dropped the rest.

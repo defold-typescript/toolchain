@@ -14,7 +14,7 @@ import {
   type SignaturesArtifact,
 } from "./combined-surface";
 import { parseGlobalTypes } from "./global-types";
-import { libraryGroupKey } from "./nav";
+import { type LibraryOrigin, libraryLineage } from "./nav";
 
 interface ApiTarget {
   id: string;
@@ -122,21 +122,29 @@ export function githubOwner(url: string): string {
   return path.split("/")[0] ?? "";
 }
 
-// Presentation-only author-first label for a library module:
-// `<owner> / <dir>[ · <leaf>]`. The spaced slash signals "label, not a require
-// path". The `· <leaf>` tail is kept only for a genuinely multi-module dir whose
-// module leaf differs from the dir (`in` -> `· button`); a single-
-// module dir, or a module whose last segment equals its dir (`monarch.monarch`),
-// drops the leaf. A missing owner falls back to the bare dir part.
+// The repo name is the second path segment of an origin URL
+// (`https://github.com/britzl/defold-input` -> `defold-input`); a hostless or
+// owner-only URL yields `""`.
+export function githubRepo(url: string): string {
+  const path = url.replace(/^https?:\/\/[^/]+\//, "");
+  return path.split("/")[1] ?? "";
+}
+
+// Presentation-only owner-first label for a library module:
+// `<owner> / <repo>[ · <leaf>]`. The spaced slash signals "label, not a require
+// path". The `· <leaf>` tail is kept only for a genuinely multi-module repo whose
+// module leaf differs from the repo name (`defold-input` -> `· button`); a
+// single-module repo, or a module whose last segment equals its repo
+// (`monarch.monarch`), drops the leaf. A missing owner falls back to the bare repo.
 export function libraryDisplayName(
   namespace: string,
-  dir: string,
+  repo: string,
   ownerHandle: string,
-  moduleCountInDir: number,
+  moduleCountInRepo: number,
 ): string {
   const leaf = namespace.split(".").at(-1) ?? namespace;
-  const dirPart = moduleCountInDir > 1 && leaf !== dir ? `${dir} · ${leaf}` : dir;
-  return ownerHandle ? `${ownerHandle} / ${dirPart}` : dirPart;
+  const repoPart = moduleCountInRepo > 1 && leaf !== repo ? `${repo} · ${leaf}` : repo;
+  return ownerHandle ? `${ownerHandle} / ${repoPart}` : repoPart;
 }
 
 // Parse the `NOTICE` attribution table (`- <dir> — <author>, <url>` lines) into
@@ -175,39 +183,25 @@ export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> 
   return moduleDir;
 }
 
-export function libraryOwnerByDir(libraryTypesDir: string): Map<string, string> {
-  const ownerByDir = new Map<string, string>();
-  const noticePath = join(libraryTypesDir, "NOTICE");
-  if (existsSync(noticePath)) {
-    const attribution = parseNoticeAttribution(readFileSync(noticePath, "utf8"));
-    for (const [dir, credit] of attribution) {
-      const owner = githubOwner(credit.url);
-      if (owner) ownerByDir.set(dir, owner);
-    }
-  }
-  // LuaLS-sourced libraries (druid, decore) are absent from NOTICE — their
-  // provenance lives in luals-targets.json. Attribute each to its own repo owner
-  // (keyed by namespace, which is its dir since it is not in the ts-defold
-  // classification) so it nests under that owner in the Libraries tree exactly
-  // like the ts-defold libraries do.
-  for (const [namespace, provenance] of loadLualsProvenance(libraryTypesDir)) {
+// Namespace -> GitHub origin, joined from the per-library manifests every
+// maintained library carries: `luals-targets.json` (druid, decore),
+// `script-api-targets.json` (bridge), and `authored-targets.json` (defcon, the
+// severed forks). Lineage is the origin URL and nothing else — the NOTICE credit
+// column is free-text attribution whose casing and org renames drift from the
+// handle a repo actually lives under, so it never feeds the Libraries tree.
+export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, LibraryOrigin> {
+  const origins = new Map<string, LibraryOrigin>();
+  const maintainedHere = [
+    ...loadLualsProvenance(libraryTypesDir),
+    ...loadScriptApiProvenance(libraryTypesDir),
+    ...loadAuthoredProvenance(libraryTypesDir),
+  ];
+  for (const [namespace, provenance] of maintainedHere) {
     const owner = githubOwner(provenance.repo);
-    if (owner) ownerByDir.set(libraryGroupKey(namespace), owner);
+    const repo = githubRepo(provenance.repo);
+    if (owner && repo) origins.set(namespace, { owner, repo });
   }
-  // script_api-sourced libraries (bridge) are likewise absent from NOTICE and the
-  // ts-defold classification; attribute each to its own repo owner so it nests
-  // under that owner in the Libraries tree just like the LuaLS libraries.
-  for (const [namespace, provenance] of loadScriptApiProvenance(libraryTypesDir)) {
-    const owner = githubOwner(provenance.repo);
-    if (owner) ownerByDir.set(libraryGroupKey(namespace), owner);
-  }
-  // Authored/forked libraries (defcon) are also absent from NOTICE and the
-  // classification; attribute each to its own upstream repo owner the same way.
-  for (const [namespace, provenance] of loadAuthoredProvenance(libraryTypesDir)) {
-    const owner = githubOwner(provenance.repo);
-    if (owner) ownerByDir.set(libraryGroupKey(namespace), owner);
-  }
-  return ownerByDir;
+  return origins;
 }
 
 // A LuaLS-sourced library's own pin, read from `luals-targets.json`. Unlike the
@@ -408,12 +402,15 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     .filter((namespace) => existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`)))
     .filter((namespace) => !markdownDeferred.has(namespace));
 
-  // Modules-per-dir count drives whether the display label keeps its `· <leaf>`
-  // distinguisher; a single-module dir drops it.
-  const dirCounts = new Map<string, number>();
+  // Modules-per-repo count drives whether the display label keeps its `· <leaf>`
+  // distinguisher; a single-module repo drops it. It is the same count the
+  // Libraries tree collapses a one-module repo on, resolved from the same
+  // `owner/repo` origin, so label and tree depth cannot disagree.
+  const origins = libraryOriginByNamespace(libraryTypesDir);
+  const repoCounts = new Map<string, number>();
   for (const namespace of namespaces) {
-    const dir = moduleDir.get(namespace) ?? libraryGroupKey(namespace);
-    dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
+    const { repo } = libraryLineage(namespace, origins);
+    repoCounts.set(repo, (repoCounts.get(repo) ?? 0) + 1);
   }
 
   const pages: ApiPage[] = [];
@@ -430,14 +427,10 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
       if (fallback) module.description = fallback;
     }
     const meta = metaFor(namespace);
+    const { owner, repo } = libraryLineage(namespace, origins);
     const displayName =
       displayOverrides.get(namespace) ??
-      libraryDisplayName(
-        namespace,
-        dir ?? libraryGroupKey(namespace),
-        githubOwner(meta.authorUrl),
-        dirCounts.get(dir ?? libraryGroupKey(namespace)) ?? 1,
-      );
+      libraryDisplayName(namespace, repo, owner, repoCounts.get(repo) ?? 1);
     pages.push({
       namespace,
       route: `/api/${libraryRouteSlug(namespace)}`,

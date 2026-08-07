@@ -2,8 +2,7 @@ import { join } from "node:path";
 import type { ApiPage } from "./api-surface";
 import {
   type ApiVersion,
-  libraryModuleDirs,
-  libraryOwnerByDir,
+  libraryOriginByNamespace,
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
@@ -15,6 +14,7 @@ import {
   type CombinedSurface,
   combinedNamespaceToApiPage,
 } from "./combined-surface";
+import type { LibraryOrigin } from "./nav";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
 export const LIBRARY_TYPES_DIR = join(process.cwd(), "../library-types");
@@ -151,12 +151,8 @@ export function combinedParams(): { namespace: string }[] {
   return combinedNamespaces().map((namespace) => ({ namespace }));
 }
 
-// Module -> upstream-library `dir` map for the vendored library surface, used to
-// group Libraries nav and index pages by library.
-export function libraryDirs(): Map<string, string> {
-  return libraryModuleDirs(LIBRARY_TYPES_DIR);
-}
-
-export function libraryOwners(): Map<string, string> {
-  return libraryOwnerByDir(LIBRARY_TYPES_DIR);
+// Namespace -> GitHub `<owner>/<repo>` origin, the lineage the Libraries tree,
+// the index cards, and each library page heading all group and title themselves by.
+export function libraryOrigins(): Map<string, LibraryOrigin> {
+  return libraryOriginByNamespace(LIBRARY_TYPES_DIR);
 }

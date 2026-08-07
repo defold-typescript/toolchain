@@ -54,7 +54,6 @@
   --color-accent: #1f6feb;
   --color-accent-soft: rgba(31, 111, 235, 0.08);
   --color-accent-strong: #1858c4;
-  --color-authored-pin: #15803d;
   --color-code-bg: #f6f6f7;
   --color-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
@@ -84,7 +83,6 @@
   --color-accent: #79a8ff;
   --color-accent-soft: rgba(121, 168, 255, 0.12);
   --color-accent-strong: #a9c4ff;
-  --color-authored-pin: #4ade80;
   --color-code-bg: #161618;
   --color-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 
@@ -810,20 +808,6 @@
      span wrapper positions the pin against the label baseline; the nested glyph
      carries the same class (phosphorDuotone needs a class hook), so reset its
      inherited span styles to avoid a doubled gap and compounded opacity. */
-  .authored-pin {
-    display: inline-block;
-    vertical-align: -0.1em;
-    margin-left: 0.3em;
-    color: var(--color-authored-pin);
-  }
-
-  .authored-pin .authored-pin {
-    display: block;
-    margin-left: 0;
-    vertical-align: baseline;
-    opacity: 1;
-  }
-
   .search-snippet mark {
     background: var(--color-accent-soft);
     color: inherit;

@@ -53,16 +53,20 @@ export function SidebarItems({
 function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
   if (!link.route) return null;
   const base =
-    "rounded-md px-2 py-1.5 text-text-muted transition hover:bg-surface hover:text-text " +
+    "rounded-md px-2 py-1.5 transition hover:bg-surface " +
+    (link.accent ? "text-accent " : "text-text-muted hover:text-text ") +
     (active ? "bg-accent-soft text-accent" : "");
   // A namespace leaf with Combined count pills becomes a flex row so the label
   // truncates while the badges stay visible; a plain leaf keeps the single-node
   // truncating anchor unchanged.
+  // `data-tooltip` overrides the hover tip's default (the row's own text) for a
+  // row whose label is deliberately shorter than what it identifies.
   if (link.badgeHtml) {
     return (
       <a
         href={withBase(link.route)}
         aria-current={active ? "page" : undefined}
+        data-tooltip={link.tooltip}
         class={`flex items-center gap-1 ${base}`}
       >
         <span class="truncate min-w-0" dangerouslySetInnerHTML={{ __html: link.labelHtml }} />
@@ -74,6 +78,7 @@ function SidebarLink({ link, active }: { link: NavLink; active: boolean }) {
     <a
       href={withBase(link.route)}
       aria-current={active ? "page" : undefined}
+      data-tooltip={link.tooltip}
       class={`block truncate ${base}`}
       dangerouslySetInnerHTML={{ __html: link.labelHtml }}
     />
