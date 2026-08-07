@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { emitLibraryDeclarations } from "./emit-library-dts";
+import { emitLibraryDeclarations, isPublicMethod } from "./emit-library-dts";
 import type { LibraryInterface, LibraryModel } from "./parse-luals";
 import {
+  buildTargetFidelity,
   buildTargetModel,
   type FetchText,
   fetchLualsFixtures,
@@ -709,5 +710,71 @@ describe("druid.drag's on_drag_callback override matches the runtime arity", () 
       { name: "y", type: "number" },
       { name: "touch", type: "touch" },
     ]);
+  });
+});
+
+describe("panthera ingestion spans the subtree and hides its private module function", () => {
+  const PANTHERA_MODULE_FUNCTIONS = ["create_go", "create_gui", "create", "play", "play_tweener"];
+
+  function pantheraTarget(): LualsTarget {
+    const target = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "panthera");
+    if (!target) throw new Error("panthera target missing from luals-targets.json");
+    return target;
+  }
+
+  test("the public module surface carries the constructors and both playback entry points", () => {
+    const names = buildTargetModel(PACKAGE_ROOT, pantheraTarget())
+      .moduleFunctions.filter(isPublicMethod)
+      .map((f) => f.name);
+    for (const name of PANTHERA_MODULE_FUNCTIONS) expect(names).toContain(name);
+  });
+
+  // `update_animation` is parsed (it is a real `M.` function) but tagged
+  // `---@private`, so it must survive parsing and be dropped by the public
+  // projection every emit surface shares.
+  test("update_animation is parsed private and excluded from the public projection", () => {
+    const moduleFunctions = buildTargetModel(PACKAGE_ROOT, pantheraTarget()).moduleFunctions;
+    expect(moduleFunctions.find((f) => f.name === "update_animation")?.visibility).toBe("private");
+    expect(moduleFunctions.filter(isPublicMethod).map((f) => f.name)).not.toContain(
+      "update_animation",
+    );
+  });
+
+  test("the committed api-doc declares the public functions and no private one", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/panthera.json"), "utf8")) as {
+      elements: { name: string }[];
+    };
+    const names = doc.elements.map((e) => e.name);
+    for (const name of PANTHERA_MODULE_FUNCTIONS) expect(names).toContain(name);
+    expect(names).not.toContain("update_animation");
+  });
+
+  // `panthera.adapter` is declared in `panthera_internal.lua`, not in the module
+  // file — so a `sourceGlobs` narrowed to `panthera/panthera.lua` would strand it.
+  test("the merged model declares the interfaces that live outside the module file", () => {
+    const names = buildTargetModel(PACKAGE_ROOT, pantheraTarget()).interfaces.map((i) => i.name);
+    expect(names).toContain("panthera.adapter");
+    expect(names).toContain("panthera.logger");
+    expect(names).toContain("panthera.animation.data");
+  });
+
+  // Built live rather than read off `fidelity/panthera.json`: dropping the
+  // `vector` rename must red here on the config alone, without a regen first.
+  test("every LuaLS token panthera writes resolves — no unknown fallback", () => {
+    const report = buildTargetFidelity(PACKAGE_ROOT, pantheraTarget());
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.unknownFallbacks).toBe(0);
+  });
+
+  // `panthera_internal.lua` annotates `easing_custom number[]|vector|nil`, and bare
+  // `vector` is absent from CORE_TYPE_RENAMES — only the dotted `vmath.vector` is.
+  test("the bare `vector` token is renamed by the target, not by the core map", () => {
+    expect(pantheraTarget().typeRenames.vector).toBe("Vector");
+  });
+
+  // tweener is a runtime `require` only: no annotation names a `tweener` type, so
+  // declaring it as an externalTypes dependency would be a fiction.
+  test("panthera declares no externalTypes — tweener is a runtime-only companion", () => {
+    expect(pantheraTarget().externalTypes).toBeUndefined();
   });
 });

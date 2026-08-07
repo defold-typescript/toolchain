@@ -4667,6 +4667,14 @@ type: the api-doc lowering maps through the same context, so an inline
 `import('event.event').event` would render as the user-facing signature on the
 library's `/api` page, where `externalTypes` renders the clean `event`.
 
+A runtime `require` is not by itself a type dependency, so decide from the
+annotations rather than the requires. panthera opens `panthera/panthera.lua` with
+`local tweener = require("tweener.tweener")`, yet no annotation in its subtree
+names a `tweener` type — every easing is annotated `string|constant`. It
+therefore takes no `externalTypes` entry, and a project consuming panthera needs
+`defold-tweener` installed for it to run but not for its types to resolve — the
+inverse of druid, which needs `event.event` for both.
+
 ##### Types the Lua stdlib already owns
 
 Some tokens belong to no target at all — the ambient Lua standard library already
