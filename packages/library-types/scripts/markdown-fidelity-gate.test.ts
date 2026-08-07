@@ -1056,7 +1056,7 @@ const METRICS: LibraryRecord = {
 // The dialect-aware parse lifts all 11 documented members and does not move the
 // verdict:
 //
-//   missingMembers         ["animate","cancel_animations"]  (undocumented upstream)
+//   missingMembers         []                          (both sides name the same 11)
 //   signatureLossMembers   all 11 shared members
 //   downgraded / added / optionalityLoss   []
 //
