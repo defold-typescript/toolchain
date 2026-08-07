@@ -170,16 +170,14 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
 
-  // A shipping namespace, not an unregistered one: an unregistered namespace
-  // falls through to the vendored branch and reports `authoredHere: false` too,
-  // so the assertion has to name a namespace that actually ships or it cannot
-  // fail. The subject moves with each severance — it was `gooey.gooey` until
-  // gooey severed.
-  test("flags druid and decore authoredHere, and a vendored namespace not", () => {
+  // The vendored arm dropped out with the last `library-targets.json` row: every
+  // namespace that ships is authored here now, so a real-corpus subject for
+  // `authoredHere: false` no longer exists. That branch keeps its witness
+  // against the fixture corpus below.
+  test("flags druid and decore authoredHere", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(meta("druid").authoredHere).toBe(true);
     expect(meta("decore").authoredHere).toBe(true);
-    expect(meta("nakama.nakama").authoredHere).toBe(false);
   });
 
   test("attributes tweener to Insality/defold-tweener as an authored-here LuaLS library", () => {
@@ -257,12 +255,17 @@ describe("loadLibraryProvenance — script_api-sourced libraries", () => {
   });
 
   test("a genuinely vendored ts-defold namespace still reports authoredHere false", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    const nakama = meta("nakama.nakama");
-    expect(nakama.authoredHere).toBe(false);
+    // Read from the fixture corpus, whose `library-targets.json` still holds a
+    // synthetic vendored row: the real corpus reached zero rows, so the vendored
+    // branch has no shipping subject left, but it is still live production code
+    // and a returning row would take it.
+    const meta = loadLibraryProvenance(LIBRARY_FIXTURE_DIR);
+    const alias = meta("alias.actual");
+    expect(alias.authoredHere).toBe(false);
     // Pins the subject as really vendored: an unknown namespace would take the
     // same branch but carry no ts-defold source link.
-    expect(nakama.sourceUrl).toContain("ts-defold/library");
+    expect(alias.sourceUrl).toContain("ts-defold/library");
+    expect(alias.sourceUrl).toContain("0000000000000000000000000000000000000000");
   });
 });
 
@@ -382,9 +385,12 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.importString).toBe('import * as defsave from "defsave.defsave"');
   });
 
-  test("attributes both forked nakama helpers to heroiclabs/nakama-defold as authored-here", () => {
+  test("attributes all three nakama modules to heroiclabs/nakama-defold as authored-here", () => {
+    // The core module joined its two helpers on the authored lane, so the
+    // provenance boundary this describe used to draw through `nakama-defold` is
+    // gone: one repo, one tag, one license across all three.
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {
+    for (const namespace of ["nakama", "nakama.engine.defold", "nakama.util.log"]) {
       const m = meta(namespace);
       expect(m.authoredHere).toBe(true);
       expect(m.commit).toBe("v3.4.0");
@@ -393,11 +399,6 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
       expect(m.license).toBe("Apache-2.0");
       expect(m.sourceUrl).not.toContain("ts-defold/library");
     }
-  });
-
-  test("keeps nakama.nakama ts-defold-sourced — the explicit provenance boundary", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("nakama.nakama");
-    expect(meta.authoredHere).toBe(false);
   });
 });
 
@@ -470,18 +471,34 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     );
   });
 
-  test("groups all three nakama modules under heroiclabs across the authored/ts-defold card split", () => {
+  test("merges all three nakama modules into one heroiclabs card once the split lane is gone", () => {
+    // With the `nakama-defold` classification dir dropped, no nakama module has a
+    // dir entry, so all three fall back to the `nakama` group key and the
+    // two-card split collapses into one.
     const groups = libraryGroups();
     const heroiclabs = groups.find((group) => group.creator === "heroiclabs");
     expect(heroiclabs).toBeDefined();
-    const authored = heroiclabs?.libraries.find((lib) => lib.dir === "nakama");
-    const tsDefold = heroiclabs?.libraries.find((lib) => lib.dir === "nakama-defold");
-    expect(authored?.authoredHere).toBe(true);
-    expect(authored?.modules.map((m) => m.label)).toEqual([
+    expect(heroiclabs?.libraries.map((lib) => lib.dir)).toEqual(["nakama"]);
+    const nakama = heroiclabs?.libraries.find((lib) => lib.dir === "nakama");
+    expect(nakama?.authoredHere).toBe(true);
+    // The core module is listed under its bare namespace now, not the dotted
+    // module id the retired ts-defold row carried.
+    expect(nakama?.modules.map((m) => m.label)).toEqual([
+      "nakama",
       "nakama.engine.defold",
       "nakama.util.log",
     ]);
-    expect(tsDefold?.authoredHere).toBe(false);
-    expect(tsDefold?.modules.map((m) => m.label)).toEqual(["nakama.nakama"]);
+  });
+
+  test("the merged card keeps the · <leaf> distinguisher on the two helper pages only", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    expect(pages.find((p) => p.namespace === "nakama.engine.defold")?.displayName).toBe(
+      "heroiclabs / nakama · defold",
+    );
+    expect(pages.find((p) => p.namespace === "nakama.util.log")?.displayName).toBe(
+      "heroiclabs / nakama · log",
+    );
+    // The core page's leaf is the group key itself, so it carries no suffix.
+    expect(pages.find((p) => p.namespace === "nakama")?.displayName).toBe("heroiclabs / nakama");
   });
 });

@@ -73,7 +73,7 @@ describe("loadVendoredLibraryRegistry", () => {
     expect(saver[0]?.generatedStems?.["saver.storage"]).toBe("saver.storage");
   });
 
-  test("merges nakama-defold's ts-defold and authored lanes into one entry keeping each module's provenance", () => {
+  test("keeps nakama-defold's three modules in one entry now that all come from the authored lane", () => {
     const { registry } = loadVendoredLibraryRegistry();
     const nakama = registry.filter((library) => library.sourceId === "nakama-defold");
     expect(nakama).toHaveLength(1);
@@ -84,8 +84,10 @@ describe("loadVendoredLibraryRegistry", () => {
     ]);
     expect(nakama[0]?.generatedStems?.["nakama.engine.defold"]).toBe("nakama.engine.defold");
     expect(nakama[0]?.generatedStems?.["nakama.util.log"]).toBe("nakama.util.log");
-    // `nakama.nakama` stays ts-defold-sourced, so it carries no authored stem.
-    expect(nakama[0]?.generatedStems?.["nakama.nakama"]).toBeUndefined();
+    // The core module severed onto the bare namespace, so its golden stem is
+    // `nakama` while its module id stays dotted — the one entry in the corpus
+    // where the two differ.
+    expect(nakama[0]?.generatedStems?.["nakama.nakama"]).toBe("nakama");
   });
 });
 

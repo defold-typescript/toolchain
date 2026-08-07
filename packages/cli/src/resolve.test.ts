@@ -537,7 +537,7 @@ describe("runResolve library matching", () => {
     expect(result.extensions[0]?.assetOnly).toBe(true);
   });
 
-  test("one asset-only heroiclabs/nakama-defold dependency materializes all three cross-lane modules against the real corpus", async () => {
+  test("one asset-only heroiclabs/nakama-defold dependency materializes all three authored modules against the real corpus", async () => {
     const cwd = tmp();
     const url = "https://github.com/heroiclabs/nakama-defold/archive/main.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
@@ -554,9 +554,11 @@ describe("runResolve library matching", () => {
     };
 
     // No libraryRegistry/libraryGeneratedDir override: this exercises the real
-    // merged corpus, where `nakama.nakama` (ts-defold lane) and
-    // `nakama.engine.defold` + `nakama.util.log` (authored lane) share the
-    // `nakama-defold` sourceId and must fold into one matched entry.
+    // merged corpus, where all three modules now come from the authored lane
+    // under the `nakama-defold` sourceId and must fold into one matched entry.
+    // `nakama.nakama` severed onto the bare namespace, so its golden is
+    // `generated/nakama.d.ts` while it still materializes under the module id
+    // `nakama.nakama.d.ts` — the stem is what makes that mapping happen.
     const result = await runResolve({
       cwd,
       cacheDir: tmp(),

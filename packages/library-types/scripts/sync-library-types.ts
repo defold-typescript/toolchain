@@ -349,9 +349,11 @@ export interface MaintainedHereRegistry {
 
 /**
  * The subset of `modules` this repo maintains itself rather than sourcing from
- * ts-defold/library. A live `library-targets.json` row always wins: `nakama.nakama`
- * is an OpenAPI `namespace` *and* a vendored module, and it must stay
- * ts-defold-sourced so `nakama-defold` survives as `already-vendored`.
+ * ts-defold/library. A live `library-targets.json` row always wins, so a module
+ * registered on a maintained-here lane *and* still vendored stays
+ * ts-defold-sourced and keeps its dir classified `already-vendored`. The
+ * registry is empty today, so no committed module takes that branch; it is what
+ * a returning row would take.
  */
 export function maintainedHereModules(
   modules: readonly string[],
@@ -376,7 +378,8 @@ export function maintainedHereModules(
  * unless it is filtered out first. The registries give an exact derivation with
  * no hand-maintained list: a dir is severed iff it has at least one module and
  * every module is maintained here. A dir mixing maintained-here and live modules
- * (`nakama-defold`) is still upstream-sourced and stays classified.
+ * is still upstream-sourced and stays classified — `nakama-defold` was the last
+ * such dir, and severed whole once its live row went.
  */
 export function severedDirsFromModules(
   modulesByDir: Map<string, string[]>,

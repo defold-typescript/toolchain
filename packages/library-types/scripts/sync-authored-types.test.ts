@@ -283,15 +283,19 @@ describe("nakama helpers migration integrity", () => {
     expect(targets.some((t) => t.module === "nakama.util.log")).toBe(false);
   });
 
-  test("the nakama-defold dir drops both helpers but retains nakama.nakama", () => {
+  // This severance only dropped the helpers from the dir, which survived on its
+  // one remaining live row; that row has since severed too, so the dir is gone
+  // and the surviving claim is that no classification entry anywhere still owns
+  // a helper — which is what a regen resurrecting the dir would violate.
+  test("no classification entry claims either helper, and the dir they shared is gone", () => {
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string; modules: string[] }[] };
-    const nakama = dirs.find((c) => c.dir === "nakama-defold");
-    expect(nakama).toBeDefined();
-    expect(nakama?.modules).toContain("nakama.nakama");
-    expect(nakama?.modules).not.toContain("nakama.engine.defold");
-    expect(nakama?.modules).not.toContain("nakama.util.log");
+    expect(dirs.some((c) => c.dir === "nakama-defold")).toBe(false);
+    const modules = dirs.flatMap((c) => c.modules);
+    expect(modules.length).toBeGreaterThan(0);
+    expect(modules).not.toContain("nakama.engine.defold");
+    expect(modules).not.toContain("nakama.util.log");
   });
 
   test("the retired ts-defold helper fixtures are gone (authored copies replace them)", () => {
@@ -1650,14 +1654,11 @@ describe("rendy.rendy migration integrity", () => {
     expect(rendy?.apiDoc).toBe("api-doc/rendy.json");
   });
 
-  test("rendy.rendy is no longer a ts-defold library-targets row, the dir is gone, and 1 row remains", () => {
+  test("rendy.rendy is no longer a ts-defold library-targets row and the dir is gone", () => {
     const { targets } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "rendy.rendy")).toBe(false);
-    // The count catches a cutover that took a second row with it; the absence
-    // check above cannot. The pin lives in the newest cutover's describe only.
-    expect(targets.length).toBe(1);
     const { dirs } = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
@@ -1726,5 +1727,150 @@ describe("rendy.rendy migration integrity", () => {
     const functions = doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name);
     expect([...functions].sort()).toEqual(FUNCTIONS);
     expect(doc.elements.find((e) => e.name === "CameraId")?.type).toBe("TYPEDEF");
+  });
+});
+
+// nakama.nakama's verdict comes from the openapi lane, not markdown: the REST
+// swagger plus realtime proto carry no source for the Lua client's hand-written
+// helpers and socket-lifecycle wrappers, so the recorded decision is `no-go` and
+// the fork exists to keep exactly those members. The fork is a verbatim copy —
+// the ts-defold codemod found nothing to rename in this binding — so the
+// assertions below name the members the verdict counts as missing rather than a
+// spelling the codemod moved.
+describe("nakama.nakama migration integrity", () => {
+  const AUTHORED = "fixtures/authored/nakama.nakama.d.ts";
+  // Every member `compareFidelityToTsDefold` reports missing from the openapi
+  // emit, measured at the severance. `openapi-fidelity-gate.test.ts` re-derives
+  // the set from the real emitter; this list is what the fork must still carry
+  // for that verdict to keep describing it.
+  const VERDICT_MEMBERS = [
+    "create_api_update_group_request",
+    "create_client",
+    "create_socket",
+    "on_channelmessage",
+    "on_channelpresence",
+    "on_disconnect",
+    "on_matchdata",
+    "on_matchmakermatched",
+    "on_matchpresence",
+    "on_notification",
+    "on_statuspresence",
+    "on_streamdata",
+    "on_streampresence",
+    "set_bearer_token",
+    "socket_connect",
+    "socket_send",
+    "sync",
+  ];
+
+  test("nakama is registered in authored-targets.json under its bare namespace", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const nakama = targets.find((t) => t.namespace === "nakama");
+    expect(nakama).toBeDefined();
+    expect(nakama?.moduleId).toBe("nakama.nakama");
+    // The same repo/ref/license triple both sibling helpers already carry: the
+    // upstream Lua library the types bind, not the ts-defold binding's own MIT.
+    expect(nakama?.repo).toBe("https://github.com/heroiclabs/nakama-defold");
+    expect(nakama?.ref).toBe("v3.4.0");
+    expect(nakama?.license).toBe("Apache-2.0");
+    expect(nakama?.authored).toBe(AUTHORED);
+    expect(nakama?.generated).toBe("generated/nakama.d.ts");
+    expect(nakama?.apiDoc).toBe("api-doc/nakama.json");
+    for (const sibling of ["nakama.engine.defold", "nakama.util.log"]) {
+      const helper = targets.find((t) => t.moduleId === sibling);
+      expect(helper?.repo).toBe(nakama?.repo);
+      expect(helper?.ref).toBe(nakama?.ref);
+      expect(helper?.license).toBe(nakama?.license);
+    }
+  });
+
+  test("nakama.nakama is the last ts-defold row to go, leaving 0 rows and no dir", () => {
+    const { targets } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.some((t) => t.module === "nakama.nakama")).toBe(false);
+    // The count catches a cutover that took a second row with it; the absence
+    // check above cannot. This is the last cutover the pin will ever move to.
+    expect(targets.length).toBe(0);
+    const { dirs } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as { dirs: { dir: string }[] };
+    expect(dirs.some((c) => c.dir === "nakama-defold")).toBe(false);
+  });
+
+  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.nakama.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/nakama.nakama.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/nakama.nakama.json"))).toBe(false);
+    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect("./nakama.nakama" in exports).toBe(false);
+  });
+
+  test("the bare-namespace golden and its compile proof are in the dts-check include", () => {
+    const { include } = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
+    ) as { include: string[] };
+    expect(include).toContain("generated/nakama.d.ts");
+    expect(include).toContain("test-d/nakama-usage.test-d.ts");
+    expect(include).not.toContain("generated/nakama.nakama.d.ts");
+    // nakama was the last block the shared compile proof held.
+    expect(existsSync(join(PACKAGE_ROOT, "test-d/library-types.test-d.ts"))).toBe(false);
+  });
+
+  test("the fork keeps every member the recorded openapi no-go counts as missing", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    for (const member of VERDICT_MEMBERS) {
+      expect(fork).toMatch(new RegExp(`\\bfunction ${member}\\(`));
+    }
+    expect(fork).toContain("export function create_client(config: ClientConfig): Client;");
+    expect(fork).toContain("export function set_bearer_token(client: Client, token: SessionToken)");
+    expect(fork).toContain("export function sync(fn: () => void): void;");
+  });
+
+  test("the fork declares the client brands and the config and session shapes", () => {
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    // The `symbol` brands are what make `set_bearer_token` reject a bare string;
+    // widening either to `unknown` would keep every signature above compiling.
+    expect(fork).toContain("export type Client = symbol;");
+    expect(fork).toContain("type SessionToken = symbol;");
+    const config = fork.match(/export interface ClientConfig \{([^}]*)\}/)?.[1] ?? "";
+    expect(
+      config
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0),
+    ).toEqual([
+      "host: string;",
+      "port: number;",
+      "use_ssl?: boolean;",
+      "username: string;",
+      "password: string;",
+      "engine: unknown;",
+    ]);
+    const session = fork.match(/interface Session \{([^}]*)\}/)?.[1] ?? "";
+    expect(session).toContain("token: SessionToken;");
+    expect(session).toContain("refresh_token: SessionToken;");
+    expect(session).toContain("created: boolean;");
+  });
+
+  test("the api-doc publishes all 170 elements under the bare namespace with the override description", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/nakama.json"), "utf8")) as {
+      info: { namespace: string; description?: string };
+      elements: { name: string; type: string }[];
+    };
+    expect(doc.info.namespace).toBe("nakama");
+    expect(doc.elements).toHaveLength(170);
+    for (const member of VERDICT_MEMBERS) {
+      expect(doc.elements.some((e) => e.name === member)).toBe(true);
+    }
+    // Unlike rendy and dicebag the module JSDoc is `@see` + `@noResolution`
+    // only, so the page intro has to come from the description override the
+    // dropped `nakama-defold` dir no longer supplies.
+    const overrides = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-description-overrides.json"), "utf8"),
+    ) as Record<string, string>;
+    expect(overrides.nakama?.length).toBeGreaterThan(0);
   });
 });

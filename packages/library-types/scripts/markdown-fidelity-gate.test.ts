@@ -1558,6 +1558,13 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "94e41a19cc35e9943d3633e2db9a3bd5913364e156feba88ff3b3a0f4ce49c4a",
   "fixtures/authored/rendy.rendy.d.ts":
     "d62d7b5527ba7b6efd9f176f0b09738cc0c70aac88ced8f8bd3609438c716772",
+  // The one entry whose verdict comes from the openapi lane rather than
+  // markdown: `openapi-fidelity-gate.test.ts` scores this fork against the
+  // pinned swagger + proto and records `no-go`. Pinned in the same commit as the
+  // severance that moved it here, so the digest describes the snapshot the
+  // verdict was measured on.
+  "fixtures/authored/nakama.nakama.d.ts":
+    "20c6fc93273c7de321d19de8803bc8895d0cb7f46d5f9fbc0b62a5e77f900031",
   "fixtures/authored/richtext.color.d.ts":
     "6e724943b4cb548c4baa283226efed0a0c9348b9529f81319a12e4239ac70a83",
   "fixtures/authored/richtext.richtext.d.ts":

@@ -19,6 +19,7 @@
   "metrics.mem": "Calculate and display performance metrics in Defold games",
   "monarch": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
   "monarch.transitions.easings": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
+  "nakama": "Nakama Defold Client SDK",
   "narrator": "The Ink language parser and runtime implementation in Lua",
   "orthographic.camera": "Orthographic camera functionality for the Defold game engine",
   "proto": "Protocol-buffer style message encoding for compact Defold network payloads.",
