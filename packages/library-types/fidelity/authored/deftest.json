@@ -10,13 +10,8 @@
   "declaredMembers": 2,
   "missingMembers": [],
   "phantomMembers": [],
-  "arityMismatches": [
-    {
-      "name": "add",
-      "upstream": 0,
-      "declared": 1
-    }
-  ],
+  "arityMismatches": [],
   "undocumentedMembers": 2,
-  "callableCoverage": 0.5
+  "variadicMembers": 1,
+  "callableCoverage": 1
 }

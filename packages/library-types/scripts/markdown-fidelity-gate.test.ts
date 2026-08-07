@@ -1537,7 +1537,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/monarch.monarch.d.ts":
     "3e3d4db9b74dbd75d1755dc966b37035ee8abefefb0e9143609dd2f5a2794f39",
   "fixtures/authored/monarch.transitions.easings.d.ts":
-    "e9c3ae5b778ac553533dd1cd9a0e40ef2caecfa0a93106aa1e63386f5473d0f7",
+    "5ceaab6e08ef808a91a7a23052d638a407e9b5fe2042bd20a5b4de7919836b77",
   "fixtures/authored/monarch.transitions.gui.d.ts":
     "ea0f15ee04f747f6253e9a91652b3dc94e2ecf47b6ad3b352c12b8e3256f7c6b",
   "fixtures/authored/orthographic.camera.d.ts":
@@ -1557,7 +1557,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/platypus.platypus.d.ts":
     "94e41a19cc35e9943d3633e2db9a3bd5913364e156feba88ff3b3a0f4ce49c4a",
   "fixtures/authored/rendy.rendy.d.ts":
-    "d62d7b5527ba7b6efd9f176f0b09738cc0c70aac88ced8f8bd3609438c716772",
+    "de1ba409e454a8edf72e6ec4a255d4299ff3e7d55bbc0133a04abd7b04de8d51",
   // The one entry whose verdict comes from the openapi lane rather than
   // markdown: `openapi-fidelity-gate.test.ts` scores this fork against the
   // pinned swagger + proto and records `no-go`. Pinned in the same commit as the
@@ -1566,7 +1566,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/nakama.nakama.d.ts":
     "20c6fc93273c7de321d19de8803bc8895d0cb7f46d5f9fbc0b62a5e77f900031",
   "fixtures/authored/richtext.color.d.ts":
-    "6e724943b4cb548c4baa283226efed0a0c9348b9529f81319a12e4239ac70a83",
+    "fdacac61ee40f105f63c7a15745520630818b9d14ee0ffa077912f899b2f1999",
   "fixtures/authored/richtext.richtext.d.ts":
     "35b06ed582b027ae84e395856afd015ba74bc76c05460e63c4f0adfd3da6457b",
   "fixtures/authored/richtext.tags.d.ts":
@@ -2263,9 +2263,12 @@ describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081
     expect(markdownMembers).toEqual(MEMBERS);
   });
 
-  test("the two missing members are genuinely undocumented upstream", async () => {
+  // The fork used to declare `animate` and `cancel_animations`, which the README
+  // documents nowhere and `rendy.lua` defines in no form at this pin; correcting
+  // the fork against the Lua emptied both name-set terms rather than moving them.
+  test("both sides now name the same members, the two go.animate stand-ins being gone", async () => {
     const { missingMembers, addedMembers } = await comparisonFor(RENDY, "rendy");
-    expect(missingMembers).toEqual(["animate", "cancel_animations"]);
+    expect(missingMembers).toEqual([]);
     expect(addedMembers).toEqual([]);
     // Neither name appears anywhere in the README — not as a heading, not in
     // prose. The only near-match is the word "animated" in the shake section.

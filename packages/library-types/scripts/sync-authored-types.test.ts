@@ -1627,8 +1627,6 @@ describe("dicebag.dicebag migration integrity", () => {
 describe("rendy.rendy migration integrity", () => {
   const AUTHORED = "fixtures/authored/rendy.rendy.d.ts";
   const FUNCTIONS = [
-    "animate",
-    "cancel_animations",
     "cancel_shake",
     "create_camera",
     "destroy_camera",
@@ -1689,7 +1687,6 @@ describe("rendy.rendy migration integrity", () => {
     const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
     expect(fork).toContain("type CameraId = Hash | string;");
     expect(fork).toContain("function get_display_size(): Vector3;");
-    expect(fork).toContain("complete_function?: (this: any, url: Url, property: Hash) => void,");
     expect(fork).not.toContain("| hash");
     expect(fork).not.toContain("vmath.vector3");
     expect(fork).not.toContain("vmath.quaternion");
@@ -1716,7 +1713,7 @@ describe("rendy.rendy migration integrity", () => {
     expect(fork).not.toContain("export function");
   });
 
-  test("the api-doc publishes the 13 functions and the CameraId typedef with its own description", () => {
+  test("the api-doc publishes the 11 functions and the CameraId typedef with its own description", () => {
     const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/rendy.json"), "utf8")) as {
       info: { namespace: string; description?: string };
       elements: { name: string; type: string }[];

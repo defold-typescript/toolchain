@@ -6,6 +6,21 @@
 declare module 'richtext.color' {
 	export function add(name: string, color: number | string): void;
 
+	/**
+	 * Resolves a color by name, hex string or comma-separated decimal string.
+	 */
+	export function parse(c: string): Vector4 | undefined;
+
+	/**
+	 * Parses a `#rrggbb` or `#rrggbbaa` hex string, with or without the leading `#`.
+	 */
+	export function parse_hex(hex: string): Vector4 | undefined;
+
+	/**
+	 * Parses a comma-separated `r,g,b,a` string of decimal components.
+	 */
+	export function parse_decimal(dec: string): Vector4 | undefined;
+
 	export const COLORS: {
 		aqua: Vector4;
 		black: Vector4;

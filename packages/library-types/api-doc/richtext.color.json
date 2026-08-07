@@ -31,6 +31,81 @@
       "returnvalues": []
     },
     {
+      "type": "FUNCTION",
+      "name": "parse",
+      "brief": "Resolves a color by name, hex string or comma-separated decimal string.",
+      "description": "Resolves a color by name, hex string or comma-separated decimal string.",
+      "parameters": [
+        {
+          "name": "c",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector4 | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "parse_hex",
+      "brief": "Parses a `#rrggbb` or `#rrggbbaa` hex string, with or without the leading `#`.",
+      "description": "Parses a `#rrggbb` or `#rrggbbaa` hex string, with or without the leading `#`.",
+      "parameters": [
+        {
+          "name": "hex",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector4 | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "parse_decimal",
+      "brief": "Parses a comma-separated `r,g,b,a` string of decimal components.",
+      "description": "Parses a comma-separated `r,g,b,a` string of decimal components.",
+      "parameters": [
+        {
+          "name": "dec",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector4 | undefined"
+          ]
+        }
+      ]
+    },
+    {
       "type": "VARIABLE",
       "name": "COLORS",
       "types": [
