@@ -5,6 +5,7 @@ import {
   authoredParityPath,
   authoredParityTargets,
   buildAuthoredParity,
+  classifyFieldAxis,
   renderAuthoredParity,
 } from "./authored-parity";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
@@ -213,6 +214,67 @@ describe("a name callable on either side is compared, never counted as a field",
   });
 });
 
+// The corpus exercises one half of the either-side rule — `monarch.transitions.gui`,
+// the only target declaring upstream functions as `VARIABLE`. The other three clauses
+// have no corpus case at all, so they are pinned here on synthetic name sets driven
+// straight through the classifier `buildAuthoredParity` itself calls.
+describe("the either-side rule holds on name sets the corpus never produces", () => {
+  test("an undeclared upstream field is missing, an unmatched declared variable is phantom", () => {
+    const axis = classifyFieldAxis({
+      upstreamCallable: new Set(),
+      upstreamNonCallable: new Set(["Z_UPSTREAM", "A_UPSTREAM"]),
+      declaredCallable: new Set(),
+      declaredVariables: new Set(["Z_INVENTED", "A_INVENTED"]),
+    });
+    expect(axis.missingFields).toEqual(["A_UPSTREAM", "Z_UPSTREAM"]);
+    expect(axis.phantomFields).toEqual(["A_INVENTED", "Z_INVENTED"]);
+  });
+
+  test("an upstream function declared as a VARIABLE is not a phantom field", () => {
+    const axis = classifyFieldAxis({
+      upstreamCallable: new Set(["slide_in_right"]),
+      upstreamNonCallable: new Set(),
+      declaredCallable: new Set(),
+      declaredVariables: new Set(["slide_in_right"]),
+    });
+    expect([...axis.declaredFields]).toEqual(["slide_in_right"]);
+    expect(axis.phantomFields).toEqual([]);
+  });
+
+  test("an upstream field declared as a FUNCTION is not a missing field", () => {
+    const axis = classifyFieldAxis({
+      upstreamCallable: new Set(),
+      upstreamNonCallable: new Set(["TIMEOUT"]),
+      declaredCallable: new Set(["TIMEOUT"]),
+      declaredVariables: new Set(),
+    });
+    expect([...axis.upstreamFields]).toEqual(["TIMEOUT"]);
+    expect(axis.missingFields).toEqual([]);
+  });
+
+  test("a name upstream defines both ways is not an upstream field", () => {
+    const axis = classifyFieldAxis({
+      upstreamCallable: new Set(["render"]),
+      upstreamNonCallable: new Set(["render"]),
+      declaredCallable: new Set(),
+      declaredVariables: new Set(),
+    });
+    expect([...axis.upstreamFields]).toEqual([]);
+    expect(axis.missingFields).toEqual([]);
+  });
+
+  test("a name the fork declares both ways is neither a declared field nor a phantom", () => {
+    const axis = classifyFieldAxis({
+      upstreamCallable: new Set(),
+      upstreamNonCallable: new Set(),
+      declaredCallable: new Set(["helper"]),
+      declaredVariables: new Set(["helper"]),
+    });
+    expect([...axis.declaredFields]).toEqual([]);
+    expect(axis.phantomFields).toEqual([]);
+  });
+});
+
 describe("the declared field side reads only api-doc VARIABLE elements", () => {
   function declaredTypes(entry: AuthoredTarget, type: string): string[] {
     const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, entry.apiDoc), "utf8")) as {
@@ -233,6 +295,9 @@ describe("the declared field side reads only api-doc VARIABLE elements", () => {
     );
   });
 
+  // Vacuous today — no measured target declares an upstream field as a `FUNCTION`, so
+  // this filters an empty set. It guards the corpus as it grows; the clause itself is
+  // pinned by the synthetic corner above.
   test("a name the fork declares as a FUNCTION never reads as a missing field", () => {
     for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
       const functions = new Set(declaredTypes(entry, "FUNCTION"));
