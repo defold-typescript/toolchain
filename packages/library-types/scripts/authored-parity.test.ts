@@ -78,7 +78,7 @@ describe("the nakama.engine.defold parity findings", () => {
       { name: "http", upstream: 8, declared: 6 },
       { name: "socket_send", upstream: 2, declared: 3 },
     ]);
-    expect(report.coverage).toBe(0.6);
+    expect(report.callableCoverage).toBe(0.6);
   });
 });
 
@@ -89,7 +89,7 @@ describe("the nakama.util.log parity findings", () => {
     expect(report.upstreamMembers).toBe(4);
     expect(report.declaredMembers).toBe(2);
     expect(report.missingMembers).toEqual(["custom", "format"]);
-    expect(report.coverage).toBe(0.5);
+    expect(report.callableCoverage).toBe(0.5);
   });
 
   test("both declared members carry upstream LuaDoc the api-doc does not", () => {
@@ -109,12 +109,12 @@ describe("the nakama core parity findings", () => {
     expect(report.upstreamMembers).toBe(156);
     expect(report.declaredMembers).toBe(166);
     expect(report.arityMismatches.length).toBe(136);
-    expect(report.coverage).toBeLessThan(0.03);
+    expect(report.callableCoverage).toBeLessThan(0.03);
   });
 });
 
-describe("a coverage figure cannot be read as completeness", () => {
-  test("every report records the upstream fields the comparison never examined", () => {
+describe("a callable coverage figure cannot be read as completeness", () => {
+  test("every report records the upstream fields the callable axis does not examine", () => {
     for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(report.upstreamFields).toBeGreaterThanOrEqual(0);
@@ -122,17 +122,17 @@ describe("a coverage figure cannot be read as completeness", () => {
     }
   });
 
-  test("platypus pairs a perfect callable coverage with an unexamined field surface", () => {
+  test("platypus pairs a perfect callable coverage with a far larger field surface", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("platypus"));
     expect(report.upstreamMembers).toBe(1);
-    expect(report.coverage).toBe(1);
+    expect(report.callableCoverage).toBe(1);
     expect(report.upstreamFields).toBe(14);
   });
 
-  test("the corpus contains a thin measurement, so the count is load-bearing", () => {
+  test("the corpus contains a thin measurement, so the second axis is load-bearing", () => {
     const thin = authoredParityTargets(PACKAGE_ROOT)
       .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
-      .filter((report) => report.coverage === 1 && report.upstreamFields > 0)
+      .filter((report) => report.callableCoverage === 1 && report.upstreamFields > 0)
       .map((report) => report.namespace);
     expect(thin).toContain("platypus");
   });
@@ -141,7 +141,104 @@ describe("a coverage figure cannot be read as completeness", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
     expect(report.upstreamFields).toBe(12);
     expect(report.upstreamMembers).toBe(156);
-    expect(report.coverage).toBeLessThan(0.03);
+    expect(report.callableCoverage).toBeLessThan(0.03);
+  });
+});
+
+describe("the field axis compares the non-callable surface", () => {
+  test("nakama declares none of the twelve constants upstream defines", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
+    expect(report.upstreamFields).toBe(12);
+    expect(report.declaredFields).toBe(0);
+    expect(report.missingFields.length).toBe(12);
+    expect(report.missingFields).toContain("APIOPERATOR_BEST");
+    expect(report.fieldCoverage).toBe(0);
+  });
+
+  test("platypus pairs its perfect callable coverage with a real field gap", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("platypus"));
+    expect(report.callableCoverage).toBe(1);
+    expect(report.upstreamFields).toBe(14);
+    expect(report.missingFields).toEqual(["SEPARATION_RAYS", "SEPARATION_SHAPES"]);
+    expect(report.fieldCoverage).toBe(0.8571);
+  });
+
+  test("in.triggers agrees on all 168 fields, so a large surface can still score 1", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("in.triggers"));
+    expect(report.upstreamFields).toBe(168);
+    expect(report.declaredFields).toBe(168);
+    expect(report.missingFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  // The only target carrying genuine phantoms *and* a missing field at once: names
+  // the fork invented that upstream has in neither half, beside a real gap. Coverage
+  // stays the missing-side fraction (18 of 19), so a phantom cannot drag a field
+  // score down the way a missing member does.
+  test("orthographic.camera reports invented fields without charging them to coverage", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
+    expect(report.missingFields).toEqual(["MSG_SET_AUTOMATIC_ZOOM"]);
+    expect(report.phantomFields).toEqual(["MSG_USE_PROJECTION", "ORTHOGRAPHIC_RENDER_SCRIPT_USED"]);
+    expect(report.fieldCoverage).toBe(0.9474);
+  });
+
+  test("an empty upstream field surface scores 1, as the callable axis already does", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
+    expect(report.upstreamFields).toBe(0);
+    expect(report.fieldCoverage).toBe(1);
+  });
+});
+
+describe("a name callable on either side is compared, never counted as a field", () => {
+  // monarch.transitions.gui declares its twelve transitions as `VARIABLE` while
+  // upstream defines them as functions. They are already the target's twelve
+  // `missingMembers`; reporting them as phantom fields too would count one defect
+  // on both axes and label an upstream name "invented".
+  test("a declared field that is an upstream function is not a phantom field", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
+    expect(report.declaredFields).toBe(12);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.missingMembers).toContain("slide_in_right");
+  });
+
+  test("no report charges the same name to both axes", () => {
+    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      const callable = new Set([...report.missingMembers, ...report.phantomMembers]);
+      const overlap = [...report.missingFields, ...report.phantomFields].filter((name) =>
+        callable.has(name),
+      );
+      expect(`${report.namespace}: ${overlap.join(", ")}`).toBe(`${report.namespace}: `);
+    }
+  });
+});
+
+describe("the declared field side reads only api-doc VARIABLE elements", () => {
+  function declaredTypes(entry: AuthoredTarget, type: string): string[] {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, entry.apiDoc), "utf8")) as {
+      elements: { type: string; name: string }[];
+    };
+    return doc.elements.filter((element) => element.type === type).map((element) => element.name);
+  }
+
+  test("a TYPEDEF is never counted as a declared field", () => {
+    const nakama = target("nakama");
+    expect(declaredTypes(nakama, "TYPEDEF").length).toBeGreaterThan(0);
+    expect(buildAuthoredParity(PACKAGE_ROOT, nakama).declaredFields).toBe(0);
+
+    const gui = target("monarch.transitions.gui");
+    expect(declaredTypes(gui, "TYPEDEF").length).toBeGreaterThan(0);
+    expect(buildAuthoredParity(PACKAGE_ROOT, gui).declaredFields).toBe(
+      declaredTypes(gui, "VARIABLE").length,
+    );
+  });
+
+  test("a name the fork declares as a FUNCTION never reads as a missing field", () => {
+    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+      const functions = new Set(declaredTypes(entry, "FUNCTION"));
+      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      expect(report.missingFields.filter((name) => functions.has(name))).toEqual([]);
+    }
   });
 });
 
@@ -151,8 +248,19 @@ describe("the artifact shape is diff-stable", () => {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(report.missingMembers).toEqual([...report.missingMembers].sort());
       expect(report.phantomMembers).toEqual([...report.phantomMembers].sort());
+      expect(report.missingFields).toEqual([...report.missingFields].sort());
+      expect(report.phantomFields).toEqual([...report.phantomFields].sort());
       const names = report.arityMismatches.map((mismatch) => mismatch.name);
       expect(names).toEqual([...names].sort());
+    }
+  });
+
+  test("a field score of 1 means nothing is missing, on every target", () => {
+    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      expect(report.fieldCoverage).toBeGreaterThanOrEqual(0);
+      expect(report.fieldCoverage).toBeLessThanOrEqual(1);
+      expect(report.fieldCoverage === 1).toBe(report.missingFields.length === 0);
     }
   });
 });

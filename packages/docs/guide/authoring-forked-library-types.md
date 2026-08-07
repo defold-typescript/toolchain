@@ -183,45 +183,78 @@ List the vendored paths in `upstreamLua`, then regenerate:
 bun run --cwd packages/library-types parity
 ```
 
-That writes `fidelity/authored/<namespace>.json` per measured target:
+That writes `fidelity/authored/<namespace>.json` per measured target. Both halves
+of the upstream surface are compared, on two axes reported side by side. The
+declared side of each is the fork's `api-doc/<namespace>.json` — the surface the
+[/api](/api) page renders, so the report measures what a reader actually sees.
+
+The **callable** axis, upstream members carrying a parameter list against api-doc
+`FUNCTION` elements:
 
 | Field | What it counts |
 | ----- | -------------- |
 | `upstreamMembers` | Callable members the upstream module defines. |
-| `upstreamFields` | Non-callable upstream members (`M.SOME_CONSTANT = "X"`). Counted, never compared — see the warning below. |
-| `declaredMembers` | Functions the fork's `api-doc/<namespace>.json` declares — the surface the [/api](/api) page renders, so the report measures what a reader actually sees. |
+| `declaredMembers` | Functions the fork declares. |
 | `missingMembers` | Upstream members the fork does not declare at all. |
 | `phantomMembers` | Declared members upstream does not have. |
 | `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers. Names are not compared — a fork may rename parameters freely. |
 | `undocumentedMembers` | Shared members carrying upstream LuaDoc that the fork's api-doc does not reproduce. |
-| `coverage` | Fraction of upstream members that are declared *and* agree on arity. |
+| `callableCoverage` | Fraction of upstream members that are declared *and* agree on arity. |
 
-`authored-parity-floor.json` ratchets `coverage` per artifact: it may rise, never
-fall. A regeneration that lowers a number reds the gate.
+The **field** axis, upstream constants (`M.SOME_CONSTANT = "X"`) against api-doc
+`VARIABLE` elements. A `TYPEDEF` is a type rather than a runtime member and enters
+neither axis:
 
-**A non-empty `missingMembers`, `phantomMembers`, or `arityMismatches` is a
-correction to make in the fork — never a number to re-baseline.** The measurement
-exists so the gap stays visible while it is being closed; the current numbers are
-the honest starting point, not a target. The vendored `.lua` copies are
-SHA-256-pinned for the same reason: re-vendoring at a different upstream ref would
-change what every committed number means without changing the number, so the pin
-must break loudly and the reports be re-measured rather than the digest updated.
+| Field | What it counts |
+| ----- | -------------- |
+| `upstreamFields` | Non-callable members the upstream module defines. |
+| `declaredFields` | Non-callable members the fork declares. |
+| `missingFields` | Upstream constants the fork does not declare — values its users cannot reach. |
+| `phantomFields` | Declared constants upstream has in neither half — names the fork invented. |
+| `fieldCoverage` | Fraction of upstream fields the fork declares. |
+
+A name that is callable on **either** side belongs to the callable axis and is
+never also counted as a field, so one defect is never charged twice.
+`monarch.transitions.gui` is the case that forces the rule: it declares its twelve
+transitions as `VARIABLE` while upstream defines them as functions, which the
+callable axis already reports as twelve `missingMembers`. Listing them as phantom
+fields too would double-count and describe an upstream name as invented.
+
+`authored-parity-floor.json` ratchets **both** axes per artifact, each against its
+own floor: either may rise, neither may fall. A regeneration that lowers either
+number reds the gate, and a floor entry that names only one axis is rejected at
+parse time rather than leaving the other unratcheted.
+
+**A non-empty `missingMembers`, `phantomMembers`, `arityMismatches`,
+`missingFields`, or `phantomFields` is a correction to make in the fork — never a
+number to re-baseline.** The measurement exists so the gap stays visible while it
+is being closed; the current numbers are the honest starting point, not a target.
+The vendored `.lua` copies are SHA-256-pinned for the same reason: re-vendoring at
+a different upstream ref would change what every committed number means without
+changing the number, so the pin must break loudly and the reports be re-measured
+rather than the digest updated.
 
 `nakama` is the worked example and the reason this exists: its fork declares 166
-functions against upstream's 156, and only **4** of them agree on arity.
+functions against upstream's 156, only **4** of them agree on arity, and it
+declares **none** of upstream's 12 constants.
 
-### A high `coverage` is not a complete audit
+### Why the two axes are never averaged
 
-`coverage` measures the **callable** axis only. A module whose upstream surface is
-mostly constants can post a perfect score having compared almost nothing:
-`platypus` defines one module function and 14 fields, so its `coverage` is `1`
-while 14 members went unexamined. `upstreamFields` sits beside `upstreamMembers`
-so the artifact shows this on its face.
+Neither number is "the" coverage of a target, and no single figure replaces them.
+A module can agree completely on one axis while missing the other entirely, so
+folding them into one mean would let each mask the other — exactly the reading the
+split exists to prevent.
 
-**Read `coverage: 1` next to a non-zero `upstreamFields` as a thin measurement,
-not a good one.** The ratchet compounds the hazard: a floor seeded at `1` can
-never rise, and the never-lower-a-floor rule then makes it unfixable, so the field
-count is the only signal that the number is narrow.
+`platypus` is the worked case. It defines one module function and 14 constants, so
+its `callableCoverage` is `1` over a single comparison. That figure used to sit
+beside a bare count of 14 unexamined fields and a warning to read it as thin;
+it now sits beside `fieldCoverage: 0.8571` and a named gap of `SEPARATION_RAYS`
+and `SEPARATION_SHAPES` — a second real number rather than a caveat.
+
+Read the two together. A perfect `callableCoverage` over a handful of functions
+still says nothing about a large `upstreamFields`, and a perfect `fieldCoverage`
+says nothing about arity. A phantom on either axis enters no coverage figure,
+having no upstream member to be a fraction of, so it is visible only in its list.
 
 ### When a target cannot be measured
 

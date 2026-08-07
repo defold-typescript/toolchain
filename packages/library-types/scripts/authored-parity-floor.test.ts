@@ -1,32 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { authoredParityPath, authoredParityTargets } from "./authored-parity";
-import { parseFloors } from "./fidelity-floor";
+import {
+  AUTHORED_FLOOR_MANIFEST_FILE,
+  authoredFloorRegressions,
+  authoredParityPath,
+  authoredParityTargets,
+  collectAuthoredParity,
+  parseAuthoredFloors,
+} from "./authored-parity";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const PARITY_DIR = "fidelity/authored";
-const FLOOR_MANIFEST = "authored-parity-floor.json";
+const FLOOR_MANIFEST = AUTHORED_FLOOR_MANIFEST_FILE;
 const UPSTREAM_DIR = "fixtures/upstream-lua";
 const REGENERATE = "bun run --cwd packages/library-types parity";
 
-interface ParityArtifact {
-  namespace: string;
-  coverage: number;
-}
-
-function committedArtifacts(): Record<string, ParityArtifact> {
-  const artifacts: Record<string, ParityArtifact> = {};
-  for (const name of readdirSync(join(PACKAGE_ROOT, PARITY_DIR)).sort()) {
-    if (!name.endsWith(".json")) continue;
-    const key = `${PARITY_DIR}/${name}`;
-    artifacts[key] = JSON.parse(readFileSync(join(PACKAGE_ROOT, key), "utf8")) as ParityArtifact;
-  }
-  return artifacts;
-}
-
-const ARTIFACTS = committedArtifacts();
-const FLOORS = parseFloors(
+const ARTIFACTS = collectAuthoredParity(PACKAGE_ROOT);
+const FLOORS = parseAuthoredFloors(
   JSON.parse(readFileSync(join(PACKAGE_ROOT, FLOOR_MANIFEST), "utf8")),
   FLOOR_MANIFEST,
 );
@@ -57,22 +48,102 @@ describe("the authored-lane surface-parity ratchet", () => {
     expect(stale).toEqual([]);
   });
 
-  test("no artifact's coverage sits below its floor", () => {
-    const regressions = Object.entries(ARTIFACTS)
-      .filter(([path, artifact]) => {
-        const floor = FLOORS[path];
-        return floor !== undefined && artifact.coverage < floor;
-      })
-      .map(
-        ([path, artifact]) =>
-          `${artifact.namespace}: coverage ${artifact.coverage} is below its floor ${FLOORS[path]} — correct the fork, do not lower the floor`,
-      );
-    expect(regressions).toEqual([]);
+  test("neither axis of any artifact sits below its floor", () => {
+    expect(authoredFloorRegressions(ARTIFACTS, FLOORS)).toEqual([]);
   });
 
-  test("the manifest's keys are sorted and its values are ratios", () => {
+  test("the manifest's keys are sorted", () => {
     const keys = Object.keys(FLOORS);
     expect(keys).toEqual([...keys].sort());
+  });
+});
+
+describe("a floor entry cannot silently cover one axis", () => {
+  function parse(raw: unknown): () => unknown {
+    return () => parseAuthoredFloors(raw, FLOOR_MANIFEST);
+  }
+
+  test("the committed manifest parses into two axes per artifact", () => {
+    for (const [key, floor] of Object.entries(FLOORS)) {
+      expect(typeof floor.callable).toBe("number");
+      expect(typeof floor.field).toBe("number");
+      expect(key.startsWith(`${PARITY_DIR}/`)).toBe(true);
+    }
+  });
+
+  test("the pre-migration bare-number shape is rejected, naming both axes", () => {
+    const thrown = parse({ "fidelity/authored/gooey.json": 0.35 });
+    expect(thrown).toThrow(/fidelity\/authored\/gooey\.json/);
+    expect(thrown).toThrow(/callable/);
+    expect(thrown).toThrow(/field/);
+  });
+
+  test("an entry covering only one axis is rejected, naming the absent one", () => {
+    expect(parse({ "fidelity/authored/gooey.json": { callable: 0.35 } })).toThrow(
+      /"fidelity\/authored\/gooey\.json".*"field"/s,
+    );
+    expect(parse({ "fidelity/authored/gooey.json": { field: 1 } })).toThrow(
+      /"fidelity\/authored\/gooey\.json".*"callable"/s,
+    );
+  });
+
+  test("a non-finite or out-of-range axis value is rejected, naming the key", () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, -0.1, 1.1, null, "1"]) {
+      expect(parse({ "fidelity/authored/gooey.json": { callable: 0.35, field: bad } })).toThrow(
+        /fidelity\/authored\/gooey\.json/,
+      );
+    }
+  });
+
+  test("a manifest that is not an object of entries is rejected", () => {
+    expect(parse(null)).toThrow(new RegExp(FLOOR_MANIFEST.replace(".", "\\.")));
+    expect(parse([])).toThrow(new RegExp(FLOOR_MANIFEST.replace(".", "\\.")));
+  });
+});
+
+describe("the two-axis ratchet reports each axis on its own", () => {
+  const floors = { "fidelity/authored/x.json": { callable: 0.8, field: 0.5 } };
+  const artifact = (callableCoverage: number, fieldCoverage: number) => ({
+    "fidelity/authored/x.json": { namespace: "x", callableCoverage, fieldCoverage },
+  });
+
+  test("a drop on either axis reds, and the message names the axis and both numbers", () => {
+    const callable = authoredFloorRegressions(artifact(0.7, 1), floors);
+    expect(callable.length).toBe(1);
+    expect(callable[0]).toContain("x");
+    expect(callable[0]).toContain("callable");
+    expect(callable[0]).toContain("0.7");
+    expect(callable[0]).toContain("0.8");
+    expect(callable[0]).toContain("correct the fork");
+
+    const field = authoredFloorRegressions(artifact(1, 0.25), floors);
+    expect(field.length).toBe(1);
+    expect(field[0]).toContain("field");
+    expect(field[0]).toContain("0.25");
+    expect(field[0]).toContain("0.5");
+  });
+
+  test("both axes are reported when both drop, so one cannot mask the other", () => {
+    expect(authoredFloorRegressions(artifact(0.1, 0.1), floors).length).toBe(2);
+  });
+
+  test("meeting a floor exactly is not a regression", () => {
+    expect(authoredFloorRegressions(artifact(0.8, 0.5), floors)).toEqual([]);
+  });
+});
+
+describe("the committed artifacts carry both coverage keys", () => {
+  test("a renamed or absent axis key cannot read as undefined and compare nothing", () => {
+    for (const name of readdirSync(join(PACKAGE_ROOT, PARITY_DIR)).sort()) {
+      if (!name.endsWith(".json")) continue;
+      const raw = JSON.parse(readFileSync(join(PACKAGE_ROOT, PARITY_DIR, name), "utf8")) as Record<
+        string,
+        unknown
+      >;
+      expect(typeof raw.callableCoverage).toBe("number");
+      expect(typeof raw.fieldCoverage).toBe("number");
+      expect(raw.coverage).toBeUndefined();
+    }
   });
 });
 

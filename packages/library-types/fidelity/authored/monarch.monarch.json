@@ -2,10 +2,23 @@
   "namespace": "monarch.monarch",
   "upstreamMembers": 36,
   "upstreamFields": 15,
+  "declaredFields": 7,
+  "missingFields": [
+    "FOCUS_GAINED",
+    "FOCUS_LOST",
+    "TRANSITION_BACK_IN",
+    "TRANSITION_BACK_OUT",
+    "TRANSITION_DONE",
+    "TRANSITION_SHOW_IN",
+    "TRANSITION_SHOW_OUT",
+    "register"
+  ],
+  "phantomFields": [],
+  "fieldCoverage": 0.4667,
   "declaredMembers": 36,
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 1
+  "callableCoverage": 1
 }

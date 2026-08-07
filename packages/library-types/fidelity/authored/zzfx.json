@@ -2,6 +2,10 @@
   "namespace": "zzfx",
   "upstreamMembers": 4,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 4,
   "missingMembers": [],
   "phantomMembers": [],
@@ -18,5 +22,5 @@
     }
   ],
   "undocumentedMembers": 0,
-  "coverage": 0.5
+  "callableCoverage": 0.5
 }
