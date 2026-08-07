@@ -27,7 +27,7 @@ import {
 } from "./api-surface";
 import {
   libraryModuleDirs,
-  libraryOwnerByDir,
+  libraryOriginByNamespace,
   libraryRouteSlug,
   listApiVersions,
   loadApiSurface,
@@ -388,12 +388,15 @@ describe("loadApiSurface library pages", () => {
   });
 
   // The one user-visible movement the severance does cause: dropping the
-  // classification dir regroups the ten under their top namespace segment. The
-  // group only keeps its author because the authored-provenance loop attributes
-  // `in` to britzl — without it the pages would orphan under a creator named `in`.
-  test("the ten regroup under `in`, still credited to britzl, with no defold-input dir left", () => {
+  // classification dir moves the group key onto the recorded GitHub origin. The
+  // ten group under `defold-input` — the repo a user installs — not under the
+  // `in` namespace prefix the dir used to stand in for.
+  test("the ten group under the britzl/defold-input origin, with no defold-input dir left", () => {
     const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    expect(libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR).get("in")).toBe("britzl");
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
+    for (const mod of DEFOLD_INPUT_MODULES) {
+      expect(origins.get(`in.${mod}`)).toEqual({ owner: "britzl", repo: "defold-input" });
+    }
     for (const page of libraryPages) {
       expect(dirs.get(page.namespace)).not.toBe("defold-input");
     }
@@ -416,23 +419,20 @@ describe("loadApiSurface library pages", () => {
     }
   });
 
-  // Unlike monarch — whose dir and top namespace segment were the same string —
-  // richtext's differ, so dropping `defold-richtext` moves the group key to
-  // `richtext` exactly as `defold-input` moved to `in`. The group keeps its author
-  // only because the authored-provenance loop attributes `richtext` to britzl.
-  test("the three regroup under `richtext`, still credited to britzl, with no defold-richtext dir left", () => {
+  // richtext's repo name and namespace prefix differ, so the origin-keyed group is
+  // `defold-richtext` while the modules still import as `richtext.*`.
+  test("the three group under the britzl/defold-richtext origin, with no defold-richtext dir left", () => {
     const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    expect(libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR).get("richtext")).toBe("britzl");
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
     for (const page of libraryPages) {
       expect(dirs.get(page.namespace)).not.toBe("defold-richtext");
     }
-    // Three modules in the group, so the `· <leaf>` distinguisher is kept — except
-    // for `richtext.richtext`, whose leaf now equals the group key.
+    // Three modules in the group and no leaf repeats the repo name, so every page
+    // keeps the `· <leaf>` distinguisher.
     for (const mod of RICHTEXT_MODULES) {
+      expect(origins.get(`richtext.${mod}`)).toEqual({ owner: "britzl", repo: "defold-richtext" });
       const page = libraryPages.find((p) => p.namespace === `richtext.${mod}`);
-      expect(page?.displayName).toBe(
-        mod === "richtext" ? "britzl / richtext" : `britzl / richtext · ${mod}`,
-      );
+      expect(page?.displayName).toBe(`britzl / defold-richtext · ${mod}`);
     }
   });
 
@@ -453,18 +453,19 @@ describe("loadApiSurface library pages", () => {
     }
   });
 
-  // `defold-metrics` differs from the `metrics` namespace segment, so dropping the
-  // dir moves the nav group key exactly as richtext's did. Neither leaf equals the
-  // group key, so both pages keep the `· <leaf>` distinguisher.
-  test("the two regroup under `metrics`, still credited to britzl, with no defold-metrics dir left", () => {
+  // `defold-metrics` differs from the `metrics` namespace segment, so the group key
+  // is the repo exactly as richtext's is. Neither leaf repeats the repo name, so
+  // both pages keep the `· <leaf>` distinguisher.
+  test("the two group under the britzl/defold-metrics origin, with no defold-metrics dir left", () => {
     const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    expect(libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR).get("metrics")).toBe("britzl");
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
     for (const page of libraryPages) {
       expect(dirs.get(page.namespace)).not.toBe("defold-metrics");
     }
     for (const mod of METRICS_MODULES) {
+      expect(origins.get(`metrics.${mod}`)).toEqual({ owner: "britzl", repo: "defold-metrics" });
       const page = libraryPages.find((p) => p.namespace === `metrics.${mod}`);
-      expect(page?.displayName).toBe(`britzl / metrics · ${mod}`);
+      expect(page?.displayName).toBe(`britzl / defold-metrics · ${mod}`);
     }
   });
 

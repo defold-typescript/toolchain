@@ -1,7 +1,6 @@
 import { GET_STARTED_SLUGS } from "./get-started";
 import type { GuidePage } from "./guide";
 import { GUIDE_GROUPS } from "./guide-groups";
-import { AUTHORED_LIBRARY_HINT, authoredLibraryPin } from "./markdown";
 
 export interface NavLink {
   label: string;
@@ -11,6 +10,12 @@ export interface NavLink {
   // Combined-only sidebar count pills (pre-rendered HTML), appended after the
   // label; stripped when the nav is rewritten onto an exact-version surface.
   badgeHtml?: string;
+  /** Renders the row in the accent colour — set on library rows that link to a module page. */
+  accent?: boolean;
+  // Hover-tooltip text, when the row's own label is not the whole story. A
+  // library row shows its full `owner/repo/namespace` path here, so a collapsed
+  // repo row still reveals the namespace it imports as.
+  tooltip?: string;
 }
 
 export interface NavCategory {
@@ -36,17 +41,21 @@ export interface Namespace {
   badgeHtml?: string;
 }
 
-/** One upstream library: its `modules` render as namespace leaves under a route-less library header. */
+/** A library namespace's GitHub origin — the `<owner>/<repo>` it is published from. */
+export interface LibraryOrigin {
+  owner: string;
+  repo: string;
+}
+
+/** One upstream repo: its `modules` render as namespace leaves under a route-less repo header. */
 export interface LibraryGroup {
-  dir: string;
+  repo: string;
   label: string;
-  /** `true` when every module is LuaLS-sourced (absent from `moduleDir`) — a library this repo maintains. */
-  authoredHere: boolean;
   modules: Namespace[];
 }
 
-export interface LibraryCreatorGroup {
-  creator: string;
+export interface LibraryOwnerGroup {
+  owner: string;
   label: string;
   libraries: LibraryGroup[];
 }
@@ -56,7 +65,7 @@ export interface ReferenceGroups {
   globalTypes: Namespace[];
   luaStdlib: Namespace[];
   engine: Namespace[];
-  libraries: LibraryCreatorGroup[];
+  libraries: LibraryOwnerGroup[];
 }
 
 const FALLBACK_CATEGORY_ID = "guides";
@@ -174,24 +183,35 @@ export function buildNav(
     );
   categories.push({ id: "api", label: "API", route: "/api", links: referenceLinks });
 
-  // Vendored third-party libraries live in their own top-level tab after API, so
-  // engine reference and community libraries read as distinct sections.
+  // Third-party libraries live in their own top-level tab after API, so engine
+  // reference and community libraries read as distinct sections.
   if (reference.libraries.length > 0) {
-    const libraryLinks = reference.libraries.map((creator) =>
+    const libraryLinks = reference.libraries.map((owner) =>
       toNavGroup(
-        creator.label,
-        creator.libraries.map((lib) =>
-          toNavGroup(
+        owner.label,
+        owner.libraries.map((lib) => {
+          // A row that reaches a module page takes the accent, matching the
+          // segment the page's own heading accents; the owner and repo rows above
+          // it only group, so they stay muted. Its tooltip is the full path the
+          // page titles itself with, so a row whose label omits a segment — a
+          // collapsed repo row, or a namespace row read out of its owner's
+          // context — still shows the whole lineage on hover.
+          const moduleLink = (label: string, namespace: string, route: string): NavLink => ({
+            ...toNavLink(label, route),
+            accent: true,
+            tooltip: libraryPathSegments(owner.label, lib.label, namespace).join("/"),
+          });
+          // A repo publishing a single module has nothing to expand: the module
+          // takes the repo's own label, so the tree never renders a one-child
+          // expander. The label names what the row points at either way — a repo
+          // when the row groups, a repo-titled page when it links.
+          const only = lib.modules.length === 1 ? lib.modules[0] : undefined;
+          if (only) return moduleLink(lib.label, only.label, only.route);
+          return toNavGroup(
             lib.label,
-            lib.modules.map(({ label, route }) => {
-              const leaf = toNavLink(label, route);
-              if (lib.authoredHere) {
-                leaf.labelHtml += authoredLibraryPin(AUTHORED_LIBRARY_HINT);
-              }
-              return leaf;
-            }),
-          ),
-        ),
+            lib.modules.map(({ label, route }) => moduleLink(label, label, route)),
+          );
+        }),
       ),
     );
     categories.push({
@@ -219,51 +239,59 @@ export function libraryGroupKey(namespace: string): string {
   return namespace.split(".")[0] ?? namespace;
 }
 
-// A namespace's `creator/dir` lineage, resolved the one way the nav resolves it:
-// a vendored module takes its upstream dir from `moduleDir`, an authored-here one
-// falls back to its top namespace segment. The library page heading and the
-// Libraries grouping share this so a page cannot title itself `<ns>/<ns>` while
-// its own card reads `monarch/monarch.transitions.easings`.
+// A namespace's `owner/repo` lineage, resolved the one way every library surface
+// resolves it: the GitHub origin its own manifest records. A namespace with no
+// recorded origin stands in for its own owner and repo with its top namespace
+// segment, so it nests under a named group rather than a blank one. The library
+// page heading, the Libraries tree, and the index cards share this so a page
+// cannot title itself `britzl/in` while its own card reads `britzl/defold-input`.
 export function libraryLineage(
   namespace: string,
-  moduleDir: Map<string, string>,
-  ownerByDir: Map<string, string>,
-): { creator: string; dir: string } {
-  const dir = moduleDir.get(namespace) ?? libraryGroupKey(namespace);
-  return { creator: ownerByDir.get(dir) || dir, dir };
+  origins: Map<string, LibraryOrigin>,
+): LibraryOrigin {
+  const fallback = libraryGroupKey(namespace);
+  return origins.get(namespace) ?? { owner: fallback, repo: fallback };
 }
 
-// Group vendored library pages by creator, upstream `dir`, then namespace for
-// the Libraries tab. Labels stay slash-free: owner handle, dir, and namespace.
-export function libraryCreatorGroups(
+// The `owner/repo/namespace` path a library identifies itself by. A segment equal
+// to the one before it collapses away, so a repo whose namespace repeats its own
+// name reads `8bitskull/dicebag` rather than `8bitskull/dicebag/dicebag`, while a
+// repo that renames its module keeps both
+// (`whiteboxdev/library-defold-persist/persist`). The page heading styles these
+// segments and the sidebar joins them into each row's hover tooltip, so the two
+// always name a library the same way.
+export function libraryPathSegments(owner: string, repo: string, namespace: string): string[] {
+  return [owner, repo, namespace].filter(
+    (segment, index, all) => segment !== "" && segment !== all[index - 1],
+  );
+}
+
+// Group library pages by GitHub owner, then repo, then namespace for the
+// Libraries tab. Labels stay slash-free: owner handle, repo name, and namespace.
+export function libraryOwnerGroups(
   pages: LibraryNavPage[],
-  moduleDir: Map<string, string>,
-  ownerByDir: Map<string, string>,
-): LibraryCreatorGroup[] {
-  const byCreator = new Map<string, Map<string, Namespace[]>>();
+  origins: Map<string, LibraryOrigin>,
+): LibraryOwnerGroup[] {
+  const byOwner = new Map<string, Map<string, Namespace[]>>();
   for (const page of pages) {
-    const { creator, dir } = libraryLineage(page.namespace, moduleDir, ownerByDir);
-    const libraries = byCreator.get(creator) ?? new Map<string, Namespace[]>();
-    const modules = libraries.get(dir) ?? [];
+    const { owner, repo } = libraryLineage(page.namespace, origins);
+    const libraries = byOwner.get(owner) ?? new Map<string, Namespace[]>();
+    const modules = libraries.get(repo) ?? [];
     modules.push({ label: page.namespace, route: page.route });
-    libraries.set(dir, modules);
-    byCreator.set(creator, libraries);
+    libraries.set(repo, modules);
+    byOwner.set(owner, libraries);
   }
 
-  return [...byCreator.entries()]
+  return [...byOwner.entries()]
     .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: "base" }))
-    .map(([creator, libraries]) => ({
-      creator,
-      label: creator,
+    .map(([owner, libraries]) => ({
+      owner,
+      label: owner,
       libraries: [...libraries.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([dir, modules]) => ({
-          dir,
-          label: dir,
-          // A module's `label` is its namespace; a LuaLS-authored library is one
-          // whose namespaces are all absent from `moduleDir` — the same
-          // discriminant the provenance loader uses, so the two never drift.
-          authoredHere: modules.every((m) => !moduleDir.has(m.label)),
+        .map(([repo, modules]) => ({
+          repo,
+          label: repo,
           modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
         })),
     }));

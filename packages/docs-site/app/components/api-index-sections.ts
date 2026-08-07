@@ -1,7 +1,7 @@
 import { namespaceCountBadges } from "../lib/api-page-render";
 import type { ApiPage } from "../lib/api-surface";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
-import { libraryCreatorGroups } from "../lib/nav";
+import { type LibraryOrigin, libraryOwnerGroups } from "../lib/nav";
 
 // The `/api` index renders one card grid per page category. Membership lives
 // here (a JSX-free module) so the grouping is unit-testable under root
@@ -16,13 +16,13 @@ export interface ApiIndexSections {
 }
 
 export interface LibraryIndexGroup {
-  dir: string;
+  repo: string;
   label: string;
   pages: ApiPage[];
 }
 
-export interface LibraryCreatorIndexGroup {
-  creator: string;
+export interface LibraryOwnerIndexGroup {
+  owner: string;
   label: string;
   libraries: LibraryIndexGroup[];
 }
@@ -64,22 +64,20 @@ export function apiPageCardDescription(page: ApiPage): string {
   return "";
 }
 
-export function groupLibraryIndexByCreator(
+export function groupLibraryIndexByOwner(
   pages: ApiPage[],
-  moduleDir: Map<string, string>,
-  ownerByDir: Map<string, string>,
-): LibraryCreatorIndexGroup[] {
+  origins: Map<string, LibraryOrigin>,
+): LibraryOwnerIndexGroup[] {
   const libraryPages = pages.filter((page) => page.category === "library");
   const byNamespace = new Map(libraryPages.map((page) => [page.namespace, page]));
-  return libraryCreatorGroups(
+  return libraryOwnerGroups(
     libraryPages.map((page) => ({ namespace: page.namespace, route: page.route })),
-    moduleDir,
-    ownerByDir,
-  ).map((creator) => ({
-    creator: creator.creator,
-    label: creator.label,
-    libraries: creator.libraries.map((lib) => ({
-      dir: lib.dir,
+    origins,
+  ).map((owner) => ({
+    owner: owner.owner,
+    label: owner.label,
+    libraries: owner.libraries.map((lib) => ({
+      repo: lib.repo,
       label: lib.label,
       pages: lib.modules
         .map((module) => byNamespace.get(module.label))

@@ -1,0 +1,22 @@
+{
+  "targets": [
+    {
+      "namespace": "demo.one",
+      "repo": "https://github.com/someone/demolib",
+      "ref": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "namespace": "demo.two",
+      "repo": "https://github.com/someone/demolib",
+      "ref": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "namespace": "alias.actual",
+      "repo": "https://github.com/alias/aliased",
+      "ref": "1.0.0",
+      "license": "MIT"
+    }
+  ]
+}

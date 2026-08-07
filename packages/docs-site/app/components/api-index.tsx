@@ -7,13 +7,12 @@ import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { getStartedPages } from "../lib/get-started";
 import type { GuidePage } from "../lib/guide";
 import { groupGuidePages } from "../lib/guide-groups";
-import { AUTHORED_LIBRARY_HINT, authoredLibraryPin } from "../lib/markdown";
-import { humanize } from "../lib/nav";
+import { humanize, type LibraryOrigin, libraryPathSegments } from "../lib/nav";
 import {
   apiCardBadgeHtml,
   apiPageCardDescription,
   groupApiIndexPages,
-  groupLibraryIndexByCreator,
+  groupLibraryIndexByOwner,
 } from "./api-index-sections";
 import { LandingCard, LandingCardGrid, LandingPage, LandingSection } from "./landing";
 
@@ -303,41 +302,48 @@ function dottedSegments(text: string) {
 }
 
 export function LibraryPath({
-  creator,
-  dir,
+  owner,
+  repo,
   namespace,
 }: {
-  creator: string;
-  dir: string;
+  owner: string;
+  repo: string;
   namespace: string;
 }) {
+  const segments = libraryPathSegments(owner, repo, namespace);
   return (
     <>
-      {creator && creator !== dir ? (
+      {segments.map((segment, index) => (
         <>
-          <span class="font-normal text-text-muted">{dottedSegments(creator)}</span>
-          <span class="font-normal text-text-faint/25">/</span>
-          <wbr />
+          {index > 0 ? (
+            <>
+              <span class="font-normal text-text-faint/25">/</span>
+              <wbr />
+            </>
+          ) : null}
+          <span
+            class={
+              index === segments.length - 1
+                ? "font-mono font-semibold text-accent"
+                : "font-normal text-text-muted"
+            }
+          >
+            {dottedSegments(segment)}
+          </span>
         </>
-      ) : null}
-      <span class="font-normal text-text-muted">{dottedSegments(dir)}</span>
-      <span class="font-normal text-text-faint/25">/</span>
-      <wbr />
-      <span class="font-mono font-semibold text-accent">{dottedSegments(namespace)}</span>
+      ))}
     </>
   );
 }
 
 export function LibraryIndex({
   pages,
-  moduleDir,
-  owners,
+  origins,
 }: {
   pages: ApiPage[];
-  moduleDir: Map<string, string>;
-  owners: Map<string, string>;
+  origins: Map<string, LibraryOrigin>;
 }) {
-  const groups = groupLibraryIndexByCreator(pages, moduleDir, owners);
+  const groups = groupLibraryIndexByOwner(pages, origins);
   const total = groups.reduce(
     (sum, group) => sum + group.libraries.reduce((acc, lib) => acc + lib.pages.length, 0),
     0,
@@ -359,8 +365,8 @@ export function LibraryIndex({
       }
     >
       {groups.map((group) => (
-        // One section per creator (like the API index's topic sections); the
-        // creator heads the block, so each card shows only `dir/namespace`.
+        // One section per owner (like the API index's topic sections); the owner
+        // heads the block, so each card shows only `repo/namespace`.
         <LandingSection heading={group.label}>
           <LandingCardGrid>
             {group.libraries.flatMap((lib) =>
@@ -368,13 +374,8 @@ export function LibraryIndex({
                 <LandingCard
                   mono
                   href={page.route}
-                  title={<LibraryPath creator="" dir={lib.label} namespace={page.namespace} />}
+                  title={<LibraryPath owner="" repo={lib.label} namespace={page.namespace} />}
                   description={apiPageCardDescription(page) || null}
-                  badgeHtml={
-                    page.libraryMeta?.authoredHere
-                      ? authoredLibraryPin(AUTHORED_LIBRARY_HINT)
-                      : null
-                  }
                 />
               )),
             )}

@@ -16,8 +16,7 @@ import {
   canonicalApiPages,
   combinedNamespaces,
   combinedSurface,
-  libraryDirs,
-  libraryOwners,
+  libraryOrigins,
 } from "../lib/api-content";
 import { navNamespaceBadges } from "../lib/api-page-render";
 import {
@@ -38,7 +37,7 @@ import type { Heading } from "../lib/headings";
 import {
   activeCategoryId,
   buildNav,
-  libraryCreatorGroups,
+  libraryOwnerGroups,
   type NavCategory,
   type NavLink,
 } from "../lib/nav";
@@ -251,14 +250,13 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     return { label: p.namespace, route: p.route, ...(badgeHtml ? { badgeHtml } : {}) };
   };
 
-  // Vendored library pages grouped by creator and upstream `dir` for the
-  // Libraries tab; namespace leaves keep the dotted route slug.
-  const libraries = libraryCreatorGroups(
+  // Library pages grouped by GitHub owner and repo for the Libraries tab;
+  // namespace leaves keep the dotted route slug.
+  const libraries = libraryOwnerGroups(
     allApiPages
       .filter((p) => p.category === "library")
       .map((p) => ({ namespace: p.namespace, route: p.route })),
-    libraryDirs(),
-    libraryOwners(),
+    libraryOrigins(),
   );
 
   const nav = buildNav(guidePages(), {

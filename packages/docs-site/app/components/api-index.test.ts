@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage, LibraryMeta } from "../lib/api-surface";
+import { type LibraryOrigin, libraryPathSegments } from "../lib/nav";
 import { LibraryIndex, LibraryPath } from "./api-index";
 
 function libraryPage(namespace: string, route: string, authoredHere: boolean): ApiPage {
@@ -46,29 +47,26 @@ function cardInner(html: string, route: string): string {
   return match[1] ?? "";
 }
 
-describe("LibraryIndex — authored-library card pin", () => {
+describe("LibraryIndex — card titles", () => {
   const pages = [
     libraryPage("druid", "/api/druid", true),
     libraryPage("monarch.monarch", "/api/monarch.monarch", false),
   ];
-  const moduleDir = new Map<string, string>([["monarch.monarch", "monarch"]]);
-  const owners = new Map<string, string>([
-    ["druid", "Insality"],
-    ["monarch", "britzl"],
+  const origins = new Map<string, LibraryOrigin>([
+    ["druid", { owner: "Insality", repo: "druid" }],
+    ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
   ]);
-  const render = () => String(LibraryIndex({ pages, moduleDir, owners }));
+  const render = () => String(LibraryIndex({ pages, origins }));
 
-  test("the authored library card carries the pin and its hint", () => {
-    expect(cardInner(render(), "/api/druid")).toContain('<span class="authored-pin"');
-    expect(render()).toContain("Type bindings maintained in this repo");
+  test("the owner heads its section, so each card titles itself repo-first", () => {
+    const html = render();
+    expect(html).toContain("Insality");
+    expect(html).toContain("britzl");
+    expect(cardInner(html, "/api/monarch.monarch")).toContain("monarch.<wbr");
   });
 
-  test("the vendored library card is unmarked", () => {
-    expect(cardInner(render(), "/api/monarch.monarch")).not.toContain("authored-pin");
-  });
-
-  test("the total pin count equals the authored-page count", () => {
-    expect(count(render(), '<span class="authored-pin"')).toBe(1);
+  test("a card whose namespace repeats its repo name shows that name once", () => {
+    expect(count(cardInner(render(), "/api/druid"), "druid")).toBe(1);
   });
 });
 
@@ -76,8 +74,8 @@ describe("LibraryIndex — authored-library card pin", () => {
 // without explicit break hints a long namespace overflows its heading and widens
 // the page horizontally.
 describe("LibraryPath — wrap opportunities", () => {
-  const html = (creator: string, dir: string, namespace: string) =>
-    String(LibraryPath({ creator, dir, namespace }));
+  const html = (owner: string, repo: string, namespace: string) =>
+    String(LibraryPath({ owner, repo, namespace }));
 
   test("every dot in the namespace carries a following <wbr>", () => {
     const rendered = html("britzl", "monarch", "monarch.transitions.easings");
@@ -87,10 +85,43 @@ describe("LibraryPath — wrap opportunities", () => {
   });
 
   test("each path slash carries a following <wbr>", () => {
-    expect(count(html("Insality", "druid", "druid"), "<wbr")).toBe(2);
+    expect(count(html("whiteboxdev", "library-defold-persist", "persist"), "<wbr")).toBe(2);
   });
 
-  test("a dropped creator segment drops its slash break too", () => {
-    expect(count(html("druid", "druid", "druid"), "<wbr")).toBe(1);
+  test("a namespace repeating its repo name drops that segment's slash break", () => {
+    expect(count(html("8bitskull", "dicebag", "dicebag"), "<wbr")).toBe(1);
+  });
+
+  test("an origin-less library standing in for itself collapses to one segment", () => {
+    expect(count(html("druid", "druid", "druid"), "<wbr")).toBe(0);
+  });
+});
+
+describe("LibraryPath — segments", () => {
+  test("drops a segment identical to the one before it", () => {
+    expect(libraryPathSegments("8bitskull", "dicebag", "dicebag")).toEqual([
+      "8bitskull",
+      "dicebag",
+    ]);
+    expect(libraryPathSegments("britzl", "defold-input", "in.accelerometer")).toEqual([
+      "britzl",
+      "defold-input",
+      "in.accelerometer",
+    ]);
+    expect(libraryPathSegments("", "monarch", "monarch.transitions.gui")).toEqual([
+      "monarch",
+      "monarch.transitions.gui",
+    ]);
+  });
+
+  test("the accent falls on the last surviving segment, lead-ins stay muted", () => {
+    expect(
+      String(LibraryPath({ owner: "8bitskull", repo: "dicebag", namespace: "dicebag" })),
+    ).toContain('text-accent">dicebag');
+    const persist = String(
+      LibraryPath({ owner: "whiteboxdev", repo: "library-defold-persist", namespace: "persist" }),
+    );
+    expect(persist).toContain('text-accent">persist');
+    expect(persist).toContain('text-text-muted">library-defold-persist');
   });
 });

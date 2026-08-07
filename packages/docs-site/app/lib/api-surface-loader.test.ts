@@ -5,13 +5,13 @@ import {
   githubOwner,
   libraryDisplayName,
   libraryModuleDirs,
-  libraryOwnerByDir,
+  libraryOriginByNamespace,
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadLibraryProvenance,
   loadVersionIndependentPages,
 } from "./api-surface-loader";
-import { libraryCreatorGroups } from "./nav";
+import { libraryOwnerGroups } from "./nav";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
@@ -29,37 +29,39 @@ describe("githubOwner", () => {
   });
 });
 
-describe("libraryOwnerByDir", () => {
-  test("maps credited dirs to their GitHub owner handles", () => {
-    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
-    expect(owners.get("monarch")).toBe("britzl");
-    expect(owners.get("squid")).toBe("paweljarosz");
-    expect(owners.get("defold-event")).toBe("Insality");
+describe("libraryOriginByNamespace", () => {
+  test("maps each namespace to the owner and repo its manifest records", () => {
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
+    expect(origins.get("monarch.monarch")).toEqual({ owner: "britzl", repo: "monarch" });
+    expect(origins.get("squid")).toEqual({ owner: "paweljarosz", repo: "squid" });
+    expect(origins.get("event")).toEqual({ owner: "Insality", repo: "defold-event" });
   });
 
-  test("omits an uncredited dir from the returned map", () => {
-    const owners = libraryOwnerByDir(LIBRARY_FIXTURE_DIR);
-    expect(owners.get("demolib")).toBe("someone");
-    expect(owners.has("uncredited")).toBe(false);
+  // The repo name is what a user installs, and it routinely differs from the
+  // namespace the module imports as — the whole reason lineage reads the origin
+  // URL rather than the namespace shape.
+  test("keeps a repo name that differs from the namespace it publishes", () => {
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
+    expect(origins.get("persist")).toEqual({
+      owner: "whiteboxdev",
+      repo: "library-defold-persist",
+    });
+    expect(origins.get("zzfx")).toEqual({ owner: "thejustinwalsh", repo: "defold-zzfx" });
   });
 
-  test("attributes LuaLS-sourced libraries to their repo owner so they nest under it", () => {
-    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
-    expect(owners.get("druid")).toBe("Insality");
-    expect(owners.get("decore")).toBe("Insality");
+  test("resolves LuaLS- and script_api-sourced libraries from their own manifests", () => {
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
+    expect(origins.get("druid")).toEqual({ owner: "Insality", repo: "druid" });
+    expect(origins.get("decore")).toEqual({ owner: "Insality", repo: "decore" });
+    expect(origins.get("bridge")).toEqual({ owner: "Playgama", repo: "bridge-defold" });
   });
 
-  test("attributes script_api-sourced libraries to their repo owner so they nest under it", () => {
-    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
-    expect(owners.get("bridge")).toBe("Playgama");
-  });
-
-  test("keys a multi-module same-repo library's owner on its top namespace segment", () => {
-    const owners = libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR);
-    expect(owners.get("saver")).toBe("Insality");
-    expect(owners.get("saver.saver")).toBeUndefined();
-    expect(owners.get("saver.storage")).toBeUndefined();
-    expect(owners.get("druid")).toBe("Insality");
+  test("keys a multi-module same-repo library per namespace, not on a shared prefix", () => {
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
+    const saver = { owner: "Insality", repo: "defold-saver" };
+    expect(origins.get("saver.saver")).toEqual(saver);
+    expect(origins.get("saver.storage")).toEqual(saver);
+    expect(origins.has("saver")).toBe(false);
   });
 });
 
@@ -453,40 +455,33 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR)
       .filter((p) => p.category === "library")
       .map((p) => ({ namespace: p.namespace, route: p.route }));
-    return libraryCreatorGroups(
-      pages,
-      libraryModuleDirs(REAL_LIBRARY_TYPES_DIR),
-      libraryOwnerByDir(REAL_LIBRARY_TYPES_DIR),
-    );
+    return libraryOwnerGroups(pages, libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR));
   }
 
   test("groups defold-saver's two modules into exactly one authored-here library under Insality", () => {
     const groups = libraryGroups();
-    const insality = groups.find((group) => group.creator === "Insality");
-    const saver = insality?.libraries.filter((lib) => lib.dir === "saver") ?? [];
+    const insality = groups.find((group) => group.owner === "Insality");
+    const saver = insality?.libraries.filter((lib) => lib.repo === "defold-saver") ?? [];
     expect(saver).toHaveLength(1);
-    expect(saver[0]?.label).toBe("saver");
-    expect(saver[0]?.authoredHere).toBe(true);
+    expect(saver[0]?.label).toBe("defold-saver");
     expect(saver[0]?.modules.map((m) => m.label)).toEqual(["saver.saver", "saver.storage"]);
   });
 
-  test("keeps the · <leaf> distinguisher on a shared-dir saver page whose leaf differs from the dir", () => {
+  test("keeps the · <leaf> distinguisher on a shared-repo saver page whose leaf differs from the repo", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     expect(pages.find((p) => p.namespace === "saver.storage")?.displayName).toBe(
-      "Insality / saver · storage",
+      "Insality / defold-saver · storage",
     );
   });
 
   test("merges all three nakama modules into one heroiclabs card once the split lane is gone", () => {
-    // With the `nakama-defold` classification dir dropped, no nakama module has a
-    // dir entry, so all three fall back to the `nakama` group key and the
-    // two-card split collapses into one.
+    // All three nakama modules record the same `heroiclabs/nakama-defold` origin,
+    // so they group as one library rather than splitting on namespace shape.
     const groups = libraryGroups();
-    const heroiclabs = groups.find((group) => group.creator === "heroiclabs");
+    const heroiclabs = groups.find((group) => group.owner === "heroiclabs");
     expect(heroiclabs).toBeDefined();
-    expect(heroiclabs?.libraries.map((lib) => lib.dir)).toEqual(["nakama"]);
-    const nakama = heroiclabs?.libraries.find((lib) => lib.dir === "nakama");
-    expect(nakama?.authoredHere).toBe(true);
+    expect(heroiclabs?.libraries.map((lib) => lib.repo)).toEqual(["nakama-defold"]);
+    const nakama = heroiclabs?.libraries.find((lib) => lib.repo === "nakama-defold");
     // The core module is listed under its bare namespace now, not the dotted
     // module id the retired ts-defold row carried.
     expect(nakama?.modules.map((m) => m.label)).toEqual([
@@ -496,15 +491,18 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     ]);
   });
 
-  test("the merged card keeps the · <leaf> distinguisher on the two helper pages only", () => {
+  test("the merged card distinguishes each of the three pages by its own leaf", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     expect(pages.find((p) => p.namespace === "nakama.engine.defold")?.displayName).toBe(
-      "heroiclabs / nakama · defold",
+      "heroiclabs / nakama-defold · defold",
     );
     expect(pages.find((p) => p.namespace === "nakama.util.log")?.displayName).toBe(
-      "heroiclabs / nakama · log",
+      "heroiclabs / nakama-defold · log",
     );
-    // The core page's leaf is the group key itself, so it carries no suffix.
-    expect(pages.find((p) => p.namespace === "nakama")?.displayName).toBe("heroiclabs / nakama");
+    // The core page's leaf is its namespace, which the repo name does not repeat,
+    // so it keeps a suffix too.
+    expect(pages.find((p) => p.namespace === "nakama")?.displayName).toBe(
+      "heroiclabs / nakama-defold · nakama",
+    );
   });
 });
