@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
@@ -139,15 +139,42 @@ describe("codemodDeclaration", () => {
   });
 });
 
+describe("the dormant ts-defold lane", () => {
+  test("library-targets.json still exists and pins its source, but owns no rows", () => {
+    // The severance series drained this registry to zero. The file itself stays
+    // committed because three consumers read it as a *presence* check, not a
+    // content one: the CLI's `loadVendoredLibraryRegistry` returns EMPTY — no
+    // LuaLS, script_api or authored libraries at all — when it is missing,
+    // `libraryModuleDirs` guards on `existsSync`, and `library-classification.json`
+    // asserts its commit pin against this `source` block.
+    //
+    // Stated explicitly because the two data-driven describes below (the
+    // transform-drift guard and `checkDrift`'s ok-case) now iterate nothing and
+    // pass vacuously. They are not coverage of an empty registry; the codemod
+    // and drift machinery keep their real coverage through the `writeTempTarget`
+    // synthetic roots.
+    expect(existsSync(join(PACKAGE_ROOT, "library-targets.json"))).toBe(true);
+    expect(REGISTRY.targets).toEqual([]);
+    expect(REGISTRY.source.repo).toBe("https://github.com/ts-defold/library");
+    expect(REGISTRY.source.commit).toMatch(/^[0-9a-f]{40}$/);
+    expect(REGISTRY.source.license).toBe("MIT");
+  });
+});
+
 describe("rawUrl", () => {
   test("composes the pinned raw.githubusercontent URL for a target", () => {
-    // Reads the real registry, so the subject must still hold a row; it moves
-    // with each Bucket-C severance (it was `monarch.monarch`, then `gooey.gooey`
-    // until gooey severed).
-    const target = REGISTRY.targets.find((t) => t.module === "nakama.nakama");
-    expect(target).toBeDefined();
-    expect(rawUrl(REGISTRY.source, target as LibraryTarget)).toBe(
-      `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/nakama-defold/nakama.nakama.d.ts`,
+    // Composed from a synthetic target: the real registry is permanently empty,
+    // so there is no row left to read a subject off. This is the end of the
+    // subject relay (`monarch.monarch`, then `gooey.gooey`, then
+    // `nakama.nakama`), not another move.
+    const target: LibraryTarget = {
+      module: "sample.sample",
+      path: "packages/sample-dir/sample.sample.d.ts",
+      fixture: "fixtures/ts-defold/sample.sample.d.ts",
+      generated: "generated/sample.sample.d.ts",
+    };
+    expect(rawUrl(REGISTRY.source, target)).toBe(
+      `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/sample-dir/sample.sample.d.ts`,
     );
   });
 });
@@ -202,12 +229,23 @@ describe("NOTICE", () => {
     expect(notice).toContain(REGISTRY.source.commit);
   });
 
-  test("attributes every distinct upstream library directory", () => {
+  test("the credit table survives the emptied registry, which now owes no dir", () => {
+    // NOTICE credits the ts-defold binding every severed fork descends from, so
+    // the table is historical attribution and stays populated after the last row
+    // left. What the *live* registry owes is separately zero; a returning row
+    // re-arms the per-dir loop below instead of it silently passing.
     const notice = readFileSync(join(PACKAGE_ROOT, "NOTICE"), "utf8");
+    const credited = [
+      ...notice.matchAll(/^\s+- (\S+)\s+— .+, (https:\/\/github\.com\/\S+)$/gm),
+    ].map((m) => m[1]);
+    expect(credited.length).toBeGreaterThan(0);
+    // The fork's own upstream keeps its credit: a severance moves a lane, it
+    // does not retire attribution.
+    expect(credited).toContain("nakama-defold");
     const dirs = new Set(
       REGISTRY.targets.map((t) => t.path.split("/")[1]).filter((d): d is string => d !== undefined),
     );
-    expect(dirs.size).toBeGreaterThan(0);
+    expect(dirs.size).toBe(0);
     for (const dir of dirs) {
       expect(notice).toContain(dir);
     }
@@ -341,11 +379,18 @@ describe("library-classification.json coverage", () => {
     expect(byDir.get("defold-xmath")?.classification).toBe("covered-by-goal");
   });
 
-  test("every vendored upstream dir is already-vendored", () => {
-    expect(vendoredDirs.size).toBeGreaterThan(0);
+  test("no dir is already-vendored, because the registry derives none", () => {
+    // The derivation is kept rather than replaced by a literal: a returning
+    // `library-targets.json` row re-arms the per-dir assertion instead of this
+    // test silently passing on an empty set. With the registry drained, the
+    // committed manifest must carry no `already-vendored` entry at all — the
+    // token is now reachable only through `writeClassification`'s synthetic
+    // roots.
+    expect(vendoredDirs.size).toBe(0);
     for (const dir of vendoredDirs) {
       expect(byDir.get(dir)?.classification).toBe("already-vendored");
     }
+    expect(manifest.dirs.filter((e) => e.classification === "already-vendored")).toEqual([]);
   });
 
   test("no committed module is owned by a maintained-here lane", () => {
@@ -621,8 +666,11 @@ describe("writeClassification", () => {
   });
 
   test("a surviving dir keeps its live modules and drops its maintained-here ones", async () => {
-    // The committed `nakama-defold` shape: one live ts-defold row under an
-    // openapi namespace, plus two helpers forked onto the authored lane.
+    // Modelled on what `nakama-defold` was: one live ts-defold row under an
+    // openapi namespace, plus two helpers forked onto the authored lane. That
+    // dir has since severed whole, so the mixed live/maintained-here shape is no
+    // longer a committed one anywhere — this synthetic root is the only witness
+    // the rule has left.
     const root = writeClassifyRoot({
       vendoredPaths: ["packages/nakama-defold/nakama.nakama.d.ts"],
       authoredModuleIds: ["nakama.engine.defold", "nakama.util.log"],
