@@ -1418,6 +1418,107 @@ describe("apiPageMarkdown ambient-global marker", () => {
   });
 });
 
+// An imported brief is upstream's prose, not the fork's, and the page says so
+// rather than presenting it as first-party. The marker reuses the `api-badge-dot`
+// markup so the heading slugger's strip rule already covers it — adding provenance
+// must not move an anchor a reader may have linked.
+describe("apiPageMarkdown upstream-documentation marker", () => {
+  const noLink = (text: string) => text;
+
+  const pageWithFunctions = (functions: (Partial<ApiFunction> & { name: string })[]): ApiPage =>
+    libraryPageWithMeta({
+      module: {
+        namespace: "orthographic.camera",
+        brief: "Camera",
+        description: "Orthographic camera helpers.",
+        functions: functions.map(
+          (fn) =>
+            ({
+              brief: "",
+              description: "",
+              parameters: [],
+              returnValues: [],
+              ...fn,
+            }) as ApiFunction,
+        ),
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+    });
+
+  const heading = (md: string, signature: string) =>
+    md.split("\n").find((line) => line.startsWith(`### \`${signature}\``)) ?? "";
+
+  test("marks an imported symbol's heading and leaves a fork-documented one unmarked", () => {
+    const md = apiPageMarkdown(
+      pageWithFunctions([
+        { name: "camera.start", docSource: "upstream", brief: "Start the camera" },
+        { name: "camera.get_zoom", brief: "Get the current zoom level of the camera." },
+      ]),
+      noLink,
+    );
+
+    expect(heading(md, "camera.start()")).toContain(
+      'api-badge-dot--upstream" aria-label="Documentation imported from upstream" title="Documentation imported from upstream">U</span>',
+    );
+    expect(heading(md, "camera.get_zoom()")).not.toContain("api-badge-dot");
+  });
+
+  test("a page with no imported symbol renders no marker at all", () => {
+    const md = apiPageMarkdown(pageWithFunctions([{ name: "camera.get_zoom" }]), noLink);
+    expect(md).not.toContain("api-badge-dot--upstream");
+    expect(md).not.toContain("Documentation imported from upstream");
+  });
+
+  // Through `renderMarkdown`, because the slug is derived there: the assertion has
+  // to compare the anchors the site actually emits, not the markdown they come from.
+  test("the marker leaves the heading anchor byte-identical to the unmarked page", async () => {
+    const anchors = async (fn: Partial<ApiFunction> & { name: string }) => {
+      const html = await renderMarkdown(apiPageMarkdown(pageWithFunctions([fn]), noLink));
+      return [...html.matchAll(/<h3[^>]*\bid="([^"]+)"/g)].map((m) => m[1]);
+    };
+
+    const marked = await anchors({ name: "camera.start", docSource: "upstream" });
+    const plain = await anchors({ name: "camera.start" });
+
+    expect(marked).toContain("camerastart");
+    expect(marked).toEqual(plain);
+  });
+
+  // End-to-end over the committed api-docs. Both namespaces come from the measured
+  // precedence evidence: defcon's fork documents `start` nowhere, and
+  // orthographic.camera's fork writes its own `get_zoom` brief over upstream's.
+  test("the real defcon page marks start, and orthographic.camera does not mark get_zoom", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const page = (namespace: string) => {
+      const found = pages.find((p) => p.namespace === namespace);
+      if (!found) throw new Error(`no ${namespace} page in the real surface`);
+      return apiPageMarkdown(found, apiLinkify(pages));
+    };
+    const headingFor = (md: string, signature: string) =>
+      md.split("\n").find((line) => line.startsWith(`### \`${signature}`)) ?? "";
+
+    const start = headingFor(page("defcon"), "start(");
+    expect(start).toContain("api-badge-dot--upstream");
+    expect(start).toContain("Documentation imported from upstream");
+
+    const getZoom = headingFor(page("orthographic.camera"), "get_zoom(");
+    expect(getZoom).not.toBe("");
+    expect(getZoom).not.toContain("api-badge-dot");
+  });
+
+  test("both markers ride the same heading when a symbol is global and imported", () => {
+    const md = apiPageMarkdown(
+      pageWithFunctions([{ name: "describe", global: true, docSource: "upstream" }]),
+      noLink,
+    );
+    expect(heading(md, "describe()")).toContain("api-badge-dot--global");
+    expect(heading(md, "describe()")).toContain("api-badge-dot--upstream");
+  });
+});
+
 // The `@deprecated` carried from an authored `.d.ts` renders as text in the same
 // availability block that holds the engine lifecycle facts, so a `library` page —
 // which never has an availability record — still shows the fact.

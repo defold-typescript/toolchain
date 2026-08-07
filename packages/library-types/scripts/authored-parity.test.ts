@@ -110,9 +110,11 @@ describe("the nakama.util.log parity findings", () => {
   });
 
   // `format`'s upstream block opens with a plain `--`, so the reader records no doc for
-  // it and it is not chargeable; the other three are `---` blocks the fork does not carry.
-  test("three declared members carry upstream LuaDoc the api-doc does not", () => {
-    expect(report.undocumentedMembers).toBe(3);
+  // it and it is not chargeable; the other three are `---` blocks the fork does not carry,
+  // and the api-doc now takes upstream's summary for each of them.
+  test("the three members the fork left blank carry imported upstream prose", () => {
+    expect(report.undocumentedMembers).toBe(0);
+    expect(report.importedDocs).toBe(3);
   });
 });
 
@@ -544,6 +546,27 @@ describe("an ambient global is not a member of the module", () => {
       );
       expect(`${entry.namespace}: ${compared.join(", ")}`).toBe(`${entry.namespace}: `);
     }
+  });
+});
+
+// `undocumentedMembers` means upstream prose that reached neither the fork nor the
+// import. The shortfall it used to carry did not vanish, it moved: `importedDocs` is
+// where it went, so a target the import silently skipped shows up as a non-zero
+// `undocumentedMembers` rather than as an unexplained drop.
+describe("the shortfall the import absorbed is accounted for, not merely absent", () => {
+  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
+    buildAuthoredParity(PACKAGE_ROOT, entry),
+  );
+
+  test("no upstream-documented member is left undocumented on any target", () => {
+    const stragglers = reports
+      .filter((report) => report.undocumentedMembers > 0)
+      .map((report) => `${report.namespace}: ${report.undocumentedMembers}`);
+    expect(stragglers).toEqual([]);
+  });
+
+  test("the corpus imports 184 briefs", () => {
+    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(184);
   });
 });
 

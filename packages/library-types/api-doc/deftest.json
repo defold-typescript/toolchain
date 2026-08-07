@@ -8,8 +8,9 @@
     {
       "type": "FUNCTION",
       "name": "add",
-      "brief": "",
-      "description": "",
+      "brief": "Add one or more sets of tests",
+      "description": "Add one or more sets of tests\nEach set of tests must be wrapped in a function",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "args",
@@ -25,8 +26,9 @@
     {
       "type": "FUNCTION",
       "name": "run",
-      "brief": "",
-      "description": "",
+      "brief": "Run all tests added via @{add}",
+      "description": "Run all tests added via @{add}\nThe engine will shut down with an exit code indicating success or\nfailure and the test reports will be written to console.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "options",

@@ -309,6 +309,51 @@ describe("parseDefoldApiDoc", () => {
     expect(find(module.functions, "loose")?.global).toBeUndefined();
   });
 
+  test("reads the upstream-documentation marker onto functions and variables, keeping absence the first-party encoding", () => {
+    const doc = {
+      info: { namespace: "ns" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "start",
+          brief: "Start the console",
+          description: "Start the console",
+          docSource: "upstream",
+          parameters: [],
+          returnvalues: [],
+        },
+        { type: "FUNCTION", name: "forked", brief: "Ours.", parameters: [], returnvalues: [] },
+        {
+          type: "VARIABLE",
+          name: "VERSION",
+          brief: "The version",
+          docSource: "upstream",
+          types: ["string"],
+        },
+        { type: "VARIABLE", name: "SIZE", brief: "Ours.", types: ["number"] },
+        // Only the literal `"upstream"` marks imported prose; any other value is
+        // dropped rather than passed through, so a future provenance the render
+        // layer does not know about cannot reach a page unlabelled.
+        {
+          type: "FUNCTION",
+          name: "loose",
+          docSource: "somewhere-else",
+          parameters: [],
+          returnvalues: [],
+        },
+      ],
+    };
+    const module = parseDefoldApiDoc(doc);
+    const find = <T extends { name: string }>(list: T[], name: string) =>
+      list.find((x) => x.name === name);
+
+    expect(find(module.functions, "start")?.docSource).toBe("upstream");
+    expect(find(module.functions, "forked")?.docSource).toBeUndefined();
+    expect(find(module.variables, "VERSION")?.docSource).toBe("upstream");
+    expect(find(module.variables, "SIZE")?.docSource).toBeUndefined();
+    expect(find(module.functions, "loose")?.docSource).toBeUndefined();
+  });
+
   test("every parsed ApiFunction has non-undefined name/parameters/returnValues", () => {
     const module = parseDefoldApiDoc(vmathDoc);
     expect(module.functions.length).toBeGreaterThan(0);
