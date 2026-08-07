@@ -1,0 +1,13 @@
+{
+  "namespace": "nakama.util.log",
+  "upstreamMembers": 4,
+  "declaredMembers": 2,
+  "missingMembers": [
+    "custom",
+    "format"
+  ],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 2,
+  "coverage": 0.5
+}

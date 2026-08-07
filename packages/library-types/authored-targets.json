@@ -88,7 +88,8 @@
       "moduleId": "nakama.engine.defold",
       "namespace": "nakama.engine.defold",
       "generated": "generated/nakama.engine.defold.d.ts",
-      "apiDoc": "api-doc/nakama.engine.defold.json"
+      "apiDoc": "api-doc/nakama.engine.defold.json",
+      "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/engine/defold.lua"]
     },
     {
       "repo": "https://github.com/heroiclabs/nakama-defold",
@@ -98,7 +99,8 @@
       "moduleId": "nakama.util.log",
       "namespace": "nakama.util.log",
       "generated": "generated/nakama.util.log.d.ts",
-      "apiDoc": "api-doc/nakama.util.log.json"
+      "apiDoc": "api-doc/nakama.util.log.json",
+      "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/util/log.lua"]
     },
     {
       "repo": "https://github.com/indiesoftby/defold-yagames",
@@ -358,7 +360,8 @@
       "moduleId": "nakama.nakama",
       "namespace": "nakama",
       "generated": "generated/nakama.d.ts",
-      "apiDoc": "api-doc/nakama.json"
+      "apiDoc": "api-doc/nakama.json",
+      "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/nakama.lua"]
     }
   ]
 }
