@@ -1,0 +1,11 @@
+{
+  "namespace": "in.state",
+  "upstreamMembers": 7,
+  "upstreamFields": 0,
+  "declaredMembers": 7,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 6,
+  "coverage": 1
+}

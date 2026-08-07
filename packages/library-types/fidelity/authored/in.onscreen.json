@@ -1,0 +1,11 @@
+{
+  "namespace": "in.onscreen",
+  "upstreamMembers": 5,
+  "upstreamFields": 11,
+  "declaredMembers": 5,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

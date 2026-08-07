@@ -1,0 +1,11 @@
+{
+  "namespace": "monarch.monarch",
+  "upstreamMembers": 36,
+  "upstreamFields": 15,
+  "declaredMembers": 36,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

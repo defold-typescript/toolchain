@@ -1,0 +1,11 @@
+{
+  "namespace": "richtext.tags",
+  "upstreamMembers": 2,
+  "upstreamFields": 0,
+  "declaredMembers": 2,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

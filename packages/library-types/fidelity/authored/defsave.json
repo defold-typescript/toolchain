@@ -1,0 +1,11 @@
+{
+  "namespace": "defsave",
+  "upstreamMembers": 14,
+  "upstreamFields": 16,
+  "declaredMembers": 14,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

@@ -1,6 +1,7 @@
 {
   "namespace": "nakama.engine.defold",
   "upstreamMembers": 5,
+  "upstreamFields": 0,
   "declaredMembers": 5,
   "missingMembers": [],
   "phantomMembers": [],

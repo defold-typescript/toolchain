@@ -1,0 +1,15 @@
+{
+  "namespace": "bzAnim",
+  "upstreamMembers": 9,
+  "upstreamFields": 0,
+  "declaredMembers": 6,
+  "missingMembers": [
+    "registerController",
+    "setMaxPoints",
+    "unregisterController"
+  ],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 0.6667
+}

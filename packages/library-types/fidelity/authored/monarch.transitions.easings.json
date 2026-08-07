@@ -1,0 +1,13 @@
+{
+  "namespace": "monarch.transitions.easings",
+  "upstreamMembers": 10,
+  "upstreamFields": 0,
+  "declaredMembers": 11,
+  "missingMembers": [],
+  "phantomMembers": [
+    "create"
+  ],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

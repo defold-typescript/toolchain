@@ -8,7 +8,8 @@
       "moduleId": "defcon.console",
       "namespace": "defcon",
       "generated": "generated/defcon.d.ts",
-      "apiDoc": "api-doc/defcon.json"
+      "apiDoc": "api-doc/defcon.json",
+      "upstreamLua": ["fixtures/upstream-lua/defcon/defcon/console.lua"]
     },
     {
       "repo": "https://github.com/britzl/deftest",
@@ -18,7 +19,8 @@
       "moduleId": "deftest.deftest",
       "namespace": "deftest",
       "generated": "generated/deftest.d.ts",
-      "apiDoc": "api-doc/deftest.json"
+      "apiDoc": "api-doc/deftest.json",
+      "upstreamLua": ["fixtures/upstream-lua/deftest/deftest/deftest.lua"]
     },
     {
       "repo": "https://github.com/subsoap/defmath",
@@ -28,7 +30,8 @@
       "moduleId": "defmath.defmath",
       "namespace": "defmath",
       "generated": "generated/defmath.d.ts",
-      "apiDoc": "api-doc/defmath.json"
+      "apiDoc": "api-doc/defmath.json",
+      "upstreamLua": ["fixtures/upstream-lua/defmath/defmath/defmath.lua"]
     },
     {
       "repo": "https://github.com/subsoap/defsave",
@@ -38,7 +41,8 @@
       "moduleId": "defsave.defsave",
       "namespace": "defsave",
       "generated": "generated/defsave.d.ts",
-      "apiDoc": "api-doc/defsave.json"
+      "apiDoc": "api-doc/defsave.json",
+      "upstreamLua": ["fixtures/upstream-lua/defsave/defsave/defsave.lua"]
     },
     {
       "repo": "https://github.com/thejustinwalsh/defold-zzfx",
@@ -48,7 +52,8 @@
       "moduleId": "zzfx.api",
       "namespace": "zzfx",
       "generated": "generated/zzfx.d.ts",
-      "apiDoc": "api-doc/zzfx.json"
+      "apiDoc": "api-doc/zzfx.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-zzfx/zzfx/api.lua"]
     },
     {
       "repo": "https://github.com/britzl/boom",
@@ -58,7 +63,11 @@
       "moduleId": "boom.boom",
       "namespace": "boom",
       "generated": "generated/boom.d.ts",
-      "apiDoc": "api-doc/boom.json"
+      "apiDoc": "api-doc/boom.json",
+      "parityVerdict": {
+        "reason": "unparseable-shape",
+        "note": "boom/boom.lua closes with `return setmetatable(M, { __call = ... })` instead of a bare `return M`, so parseLuaSurface cannot derive the module-local name."
+      }
     },
     {
       "repo": "https://github.com/whiteboxdev/library-defold-persist",
@@ -68,7 +77,8 @@
       "moduleId": "persist.persist",
       "namespace": "persist",
       "generated": "generated/persist.d.ts",
-      "apiDoc": "api-doc/persist.json"
+      "apiDoc": "api-doc/persist.json",
+      "upstreamLua": ["fixtures/upstream-lua/library-defold-persist/persist/persist.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-orthographic",
@@ -78,7 +88,8 @@
       "moduleId": "orthographic.camera",
       "namespace": "orthographic.camera",
       "generated": "generated/orthographic.camera.d.ts",
-      "apiDoc": "api-doc/orthographic.camera.json"
+      "apiDoc": "api-doc/orthographic.camera.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-orthographic/orthographic/camera.lua"]
     },
     {
       "repo": "https://github.com/heroiclabs/nakama-defold",
@@ -110,7 +121,8 @@
       "moduleId": "yagames.yagames",
       "namespace": "yagames",
       "generated": "generated/yagames.d.ts",
-      "apiDoc": "api-doc/yagames.json"
+      "apiDoc": "api-doc/yagames.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-yagames/yagames/yagames.lua"]
     },
     {
       "repo": "https://github.com/VowSoftware/starly",
@@ -120,7 +132,11 @@
       "moduleId": "starly.starly",
       "namespace": "starly",
       "generated": "generated/starly.d.ts",
-      "apiDoc": "api-doc/starly.json"
+      "apiDoc": "api-doc/starly.json",
+      "parityVerdict": {
+        "reason": "unresolved-path",
+        "note": "VowSoftware/starly does not resolve at the pinned SHA 85d1b2af — the repository itself returns 404, so neither starly/starly.lua nor any other upstream path can be vendored at this ref."
+      }
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -130,7 +146,11 @@
       "moduleId": "in.accelerometer",
       "namespace": "in.accelerometer",
       "generated": "generated/in.accelerometer.d.ts",
-      "apiDoc": "api-doc/in.accelerometer.json"
+      "apiDoc": "api-doc/in.accelerometer.json",
+      "parityVerdict": {
+        "reason": "unparseable-shape",
+        "note": "in/accelerometer.lua closes with `return setmetatable(M, { __call = ... })` instead of a bare `return M`, so parseLuaSurface cannot derive the module-local name."
+      }
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -140,7 +160,8 @@
       "moduleId": "in.button",
       "namespace": "in.button",
       "generated": "generated/in.button.d.ts",
-      "apiDoc": "api-doc/in.button.json"
+      "apiDoc": "api-doc/in.button.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/button.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -150,7 +171,8 @@
       "moduleId": "in.cursor",
       "namespace": "in.cursor",
       "generated": "generated/in.cursor.d.ts",
-      "apiDoc": "api-doc/in.cursor.json"
+      "apiDoc": "api-doc/in.cursor.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/cursor.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -160,7 +182,8 @@
       "moduleId": "in.gesture",
       "namespace": "in.gesture",
       "generated": "generated/in.gesture.d.ts",
-      "apiDoc": "api-doc/in.gesture.json"
+      "apiDoc": "api-doc/in.gesture.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/gesture.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -170,7 +193,8 @@
       "moduleId": "in.keyboard",
       "namespace": "in.keyboard",
       "generated": "generated/in.keyboard.d.ts",
-      "apiDoc": "api-doc/in.keyboard.json"
+      "apiDoc": "api-doc/in.keyboard.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/keyboard.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -180,7 +204,8 @@
       "moduleId": "in.mapper",
       "namespace": "in.mapper",
       "generated": "generated/in.mapper.d.ts",
-      "apiDoc": "api-doc/in.mapper.json"
+      "apiDoc": "api-doc/in.mapper.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/mapper.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -190,7 +215,8 @@
       "moduleId": "in.onscreen",
       "namespace": "in.onscreen",
       "generated": "generated/in.onscreen.d.ts",
-      "apiDoc": "api-doc/in.onscreen.json"
+      "apiDoc": "api-doc/in.onscreen.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/onscreen.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -200,7 +226,8 @@
       "moduleId": "in.state",
       "namespace": "in.state",
       "generated": "generated/in.state.d.ts",
-      "apiDoc": "api-doc/in.state.json"
+      "apiDoc": "api-doc/in.state.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/state.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -210,7 +237,8 @@
       "moduleId": "in.textbox",
       "namespace": "in.textbox",
       "generated": "generated/in.textbox.d.ts",
-      "apiDoc": "api-doc/in.textbox.json"
+      "apiDoc": "api-doc/in.textbox.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/textbox.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",
@@ -220,7 +248,8 @@
       "moduleId": "in.triggers",
       "namespace": "in.triggers",
       "generated": "generated/in.triggers.d.ts",
-      "apiDoc": "api-doc/in.triggers.json"
+      "apiDoc": "api-doc/in.triggers.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-input/in/triggers.lua"]
     },
     {
       "repo": "https://github.com/britzl/monarch",
@@ -230,7 +259,8 @@
       "moduleId": "monarch.monarch",
       "namespace": "monarch.monarch",
       "generated": "generated/monarch.monarch.d.ts",
-      "apiDoc": "api-doc/monarch.monarch.json"
+      "apiDoc": "api-doc/monarch.monarch.json",
+      "upstreamLua": ["fixtures/upstream-lua/monarch/monarch/monarch.lua"]
     },
     {
       "repo": "https://github.com/britzl/monarch",
@@ -240,7 +270,8 @@
       "moduleId": "monarch.transitions.easings",
       "namespace": "monarch.transitions.easings",
       "generated": "generated/monarch.transitions.easings.d.ts",
-      "apiDoc": "api-doc/monarch.transitions.easings.json"
+      "apiDoc": "api-doc/monarch.transitions.easings.json",
+      "upstreamLua": ["fixtures/upstream-lua/monarch/monarch/transitions/easings.lua"]
     },
     {
       "repo": "https://github.com/britzl/monarch",
@@ -250,7 +281,8 @@
       "moduleId": "monarch.transitions.gui",
       "namespace": "monarch.transitions.gui",
       "generated": "generated/monarch.transitions.gui.d.ts",
-      "apiDoc": "api-doc/monarch.transitions.gui.json"
+      "apiDoc": "api-doc/monarch.transitions.gui.json",
+      "upstreamLua": ["fixtures/upstream-lua/monarch/monarch/transitions/gui.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-richtext",
@@ -260,7 +292,8 @@
       "moduleId": "richtext.color",
       "namespace": "richtext.color",
       "generated": "generated/richtext.color.d.ts",
-      "apiDoc": "api-doc/richtext.color.json"
+      "apiDoc": "api-doc/richtext.color.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-richtext/richtext/color.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-richtext",
@@ -270,7 +303,8 @@
       "moduleId": "richtext.richtext",
       "namespace": "richtext.richtext",
       "generated": "generated/richtext.richtext.d.ts",
-      "apiDoc": "api-doc/richtext.richtext.json"
+      "apiDoc": "api-doc/richtext.richtext.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-richtext/richtext/richtext.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-richtext",
@@ -280,7 +314,8 @@
       "moduleId": "richtext.tags",
       "namespace": "richtext.tags",
       "generated": "generated/richtext.tags.d.ts",
-      "apiDoc": "api-doc/richtext.tags.json"
+      "apiDoc": "api-doc/richtext.tags.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-richtext/richtext/tags.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-metrics",
@@ -290,7 +325,8 @@
       "moduleId": "metrics.fps",
       "namespace": "metrics.fps",
       "generated": "generated/metrics.fps.d.ts",
-      "apiDoc": "api-doc/metrics.fps.json"
+      "apiDoc": "api-doc/metrics.fps.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-metrics/metrics/fps.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-metrics",
@@ -300,7 +336,8 @@
       "moduleId": "metrics.mem",
       "namespace": "metrics.mem",
       "generated": "generated/metrics.mem.d.ts",
-      "apiDoc": "api-doc/metrics.mem.json"
+      "apiDoc": "api-doc/metrics.mem.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-metrics/metrics/mem.lua"]
     },
     {
       "repo": "https://github.com/britzl/gooey",
@@ -310,7 +347,8 @@
       "moduleId": "gooey.gooey",
       "namespace": "gooey",
       "generated": "generated/gooey.d.ts",
-      "apiDoc": "api-doc/gooey.json"
+      "apiDoc": "api-doc/gooey.json",
+      "upstreamLua": ["fixtures/upstream-lua/gooey/gooey/gooey.lua"]
     },
     {
       "repo": "https://github.com/jbp4444/bzAnim",
@@ -320,7 +358,8 @@
       "moduleId": "bzAnim.bzLibrary",
       "namespace": "bzAnim",
       "generated": "generated/bzAnim.d.ts",
-      "apiDoc": "api-doc/bzAnim.json"
+      "apiDoc": "api-doc/bzAnim.json",
+      "upstreamLua": ["fixtures/upstream-lua/bzAnim/bzAnim/bzLibrary.lua"]
     },
     {
       "repo": "https://github.com/britzl/platypus",
@@ -330,7 +369,8 @@
       "moduleId": "platypus.platypus",
       "namespace": "platypus",
       "generated": "generated/platypus.d.ts",
-      "apiDoc": "api-doc/platypus.json"
+      "apiDoc": "api-doc/platypus.json",
+      "upstreamLua": ["fixtures/upstream-lua/platypus/platypus/platypus.lua"]
     },
     {
       "repo": "https://github.com/8bitskull/dicebag",
@@ -340,7 +380,8 @@
       "moduleId": "dicebag.dicebag",
       "namespace": "dicebag",
       "generated": "generated/dicebag.d.ts",
-      "apiDoc": "api-doc/dicebag.json"
+      "apiDoc": "api-doc/dicebag.json",
+      "upstreamLua": ["fixtures/upstream-lua/dicebag/dicebag/dicebag.lua"]
     },
     {
       "repo": "https://github.com/whiteboxdev/library-defold-rendy",
@@ -350,7 +391,8 @@
       "moduleId": "rendy.rendy",
       "namespace": "rendy",
       "generated": "generated/rendy.d.ts",
-      "apiDoc": "api-doc/rendy.json"
+      "apiDoc": "api-doc/rendy.json",
+      "upstreamLua": ["fixtures/upstream-lua/library-defold-rendy/rendy/rendy.lua"]
     },
     {
       "repo": "https://github.com/heroiclabs/nakama-defold",

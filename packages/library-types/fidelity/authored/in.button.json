@@ -1,0 +1,11 @@
+{
+  "namespace": "in.button",
+  "upstreamMembers": 7,
+  "upstreamFields": 1,
+  "declaredMembers": 7,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 5,
+  "coverage": 1
+}

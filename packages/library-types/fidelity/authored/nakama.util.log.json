@@ -1,6 +1,7 @@
 {
   "namespace": "nakama.util.log",
   "upstreamMembers": 4,
+  "upstreamFields": 0,
   "declaredMembers": 2,
   "missingMembers": [
     "custom",

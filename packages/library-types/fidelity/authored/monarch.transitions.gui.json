@@ -1,0 +1,30 @@
+{
+  "namespace": "monarch.transitions.gui",
+  "upstreamMembers": 20,
+  "upstreamFields": 0,
+  "declaredMembers": 8,
+  "missingMembers": [
+    "fade_in",
+    "fade_out",
+    "scale_in",
+    "scale_out",
+    "slide_in_bottom",
+    "slide_in_left",
+    "slide_in_right",
+    "slide_in_top",
+    "slide_out_bottom",
+    "slide_out_left",
+    "slide_out_right",
+    "slide_out_top"
+  ],
+  "phantomMembers": [],
+  "arityMismatches": [
+    {
+      "name": "create",
+      "upstream": 1,
+      "declared": 0
+    }
+  ],
+  "undocumentedMembers": 1,
+  "coverage": 0.35
+}

@@ -86,10 +86,19 @@ library is the sole maintainer of its namespace, so it carries its own
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
 | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
 | `fidelity` | no | Defaults to `fidelity/<namespace>.json`. A fork records no fidelity artifact (see below); the field mirrors the sibling lanes for a future hand-authored target that wants one. |
-| `upstreamLua` | no | Package-relative paths of the vendored upstream `.lua` this target's surface is measured against. Defaults to `[]` — a target that declares none is simply unmeasured. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
+| `upstreamLua` | one of two | Package-relative paths of the vendored upstream `.lua` this target's surface is measured against. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
+| `parityVerdict` | one of two | Why this target vendors no upstream `.lua`: `{ "reason": ..., "note": ... }`. Mutually exclusive with `upstreamLua`. |
 
 A missing required field fails loudly, naming both the field and the offending
 entry.
+
+`upstreamLua` and `parityVerdict` are individually optional but jointly
+**mandatory**: every entry declares exactly one. Neither field is in the required
+list, yet an entry declaring neither — or both — fails the same way, naming the
+offender. That is deliberate. A target with no declaration would otherwise sit in
+the config indistinguishable from a measured-and-clean one, so the config cannot
+express "nobody has looked at this yet"; you either measure the surface or record
+why you cannot.
 
 ## 2. Vendor the `.d.ts` and generate the artifacts
 
@@ -155,10 +164,20 @@ to measure a fork's type annotations against. It does *not* hold for the
 plain source, and those are comparable — a fork that never got a member, or that
 dropped a trailing parameter, is measurable without any type information at all.
 
-Opt a target in by vendoring the upstream `.lua` into
-`packages/library-types/fixtures/upstream-lua/`, under a per-repository directory
-mirroring upstream's own layout, taken at the same `ref` the entry pins. List the
-vendored paths in `upstreamLua`, then regenerate:
+### Opting a target in
+
+The upstream path is derived from `moduleId`: replace the dots with slashes and
+append `.lua`, so `in.button` is `in/button.lua` and `richtext.richtext` is
+`richtext/richtext.lua`. Fetch that path at the entry's pinned `ref` and vendor it
+under `packages/library-types/fixtures/upstream-lua/`, at
+`<repo-name>/<upstream-path>` within it, where `<repo-name>` is the last segment
+of the entry's `repo` URL — so
+`britzl/defold-input` at `in/button.lua` lands at
+`fixtures/upstream-lua/defold-input/in/button.lua`. Vendor only the module file
+the target names, never the whole repository: the digest map is per-file, and an
+unused copy is dead weight the pin still has to defend.
+
+List the vendored paths in `upstreamLua`, then regenerate:
 
 ```sh
 bun run --cwd packages/library-types parity
@@ -169,6 +188,7 @@ That writes `fidelity/authored/<namespace>.json` per measured target:
 | Field | What it counts |
 | ----- | -------------- |
 | `upstreamMembers` | Callable members the upstream module defines. |
+| `upstreamFields` | Non-callable upstream members (`M.SOME_CONSTANT = "X"`). Counted, never compared — see the warning below. |
 | `declaredMembers` | Functions the fork's `api-doc/<namespace>.json` declares — the surface the [/api](/api) page renders, so the report measures what a reader actually sees. |
 | `missingMembers` | Upstream members the fork does not declare at all. |
 | `phantomMembers` | Declared members upstream does not have. |
@@ -189,6 +209,35 @@ must break loudly and the reports be re-measured rather than the digest updated.
 
 `nakama` is the worked example and the reason this exists: its fork declares 166
 functions against upstream's 156, and only **4** of them agree on arity.
+
+### A high `coverage` is not a complete audit
+
+`coverage` measures the **callable** axis only. A module whose upstream surface is
+mostly constants can post a perfect score having compared almost nothing:
+`platypus` defines one module function and 14 fields, so its `coverage` is `1`
+while 14 members went unexamined. `upstreamFields` sits beside `upstreamMembers`
+so the artifact shows this on its face.
+
+**Read `coverage: 1` next to a non-zero `upstreamFields` as a thin measurement,
+not a good one.** The ratchet compounds the hazard: a floor seeded at `1` can
+never rise, and the never-lower-a-floor rule then makes it unfixable, so the field
+count is the only signal that the number is narrow.
+
+### When a target cannot be measured
+
+Record a `parityVerdict` instead of an empty `upstreamLua`. The `reason` comes
+from a closed set — an unknown one throws, naming the entry — and the `note` must
+say what was actually looked at:
+
+| `reason` | When it applies |
+| -------- | --------------- |
+| `unresolved-path` | The `moduleId`-derived path does not resolve at the pinned `ref`, including a repository that no longer exists there. `starly.starly` is the corpus example: `VowSoftware/starly` returns 404 at its pinned SHA. |
+| `no-module-file` | Upstream resolves, but declares no single module file this target could be measured against. |
+| `unparseable-shape` | The module file exists but is not the `local M = {} … return M` shape the reader accepts. `boom.boom` and `in.accelerometer` both close with `return setmetatable(M, { __call = ... })`, so no module-local name can be derived. |
+
+A verdict is a recorded finding, not a way to skip the work. It says someone
+looked and what stopped them, which is exactly what an absent declaration cannot
+say.
 
 ## 5. Cut the library over and validate
 
