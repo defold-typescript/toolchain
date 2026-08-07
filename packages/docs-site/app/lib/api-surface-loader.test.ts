@@ -228,6 +228,12 @@ describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
     expect(meta("narrator").authorUrl).toBe("https://github.com/astrochili/narrator");
   });
 
+  test("attributes panthera to Insality/panthera as an authored-here LuaLS library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(meta("panthera").authoredHere).toBe(true);
+    expect(meta("panthera").authorUrl).toBe("https://github.com/Insality/panthera");
+  });
+
   test("attributes saver.saver to Insality/defold-saver as an authored-here LuaLS library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(meta("saver.saver").authoredHere).toBe(true);

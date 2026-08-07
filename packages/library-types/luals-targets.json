@@ -178,6 +178,18 @@
           }
         }
       }
+    },
+    {
+      "repo": "https://github.com/Insality/panthera",
+      "ref": "runtime.8",
+      "license": "MIT",
+      "sourceGlobs": ["panthera/**/*.lua"],
+      "moduleId": "panthera.panthera",
+      "namespace": "panthera",
+      "typeRenames": {
+        "vector": "Vector"
+      },
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     }
   ]
 }
