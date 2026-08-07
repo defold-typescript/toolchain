@@ -18,14 +18,22 @@ function nakamaTarget(): OpenApiTarget {
 
 // The comparison runs against the *emitted* openapi `.d.ts` (the real emitter is
 // the single source of truth for type resolution), not the parsed doc.
+//
+// The snapshot side moved from `fixtures/ts-defold/` to the authored lane when
+// nakama.nakama severed: the openapi lane has no `severedSource` machinery, so
+// this one read is re-pointed by hand. The move is term-neutral by construction
+// — the fork is a verbatim copy of the retired ts-defold snapshot, byte for byte
+// — so every term below is the same measurement, not a re-baseline. A term that
+// does move is a stop-and-record: it means the fork was edited under a verdict
+// that no longer describes it.
 async function comparison() {
   const target = nakamaTarget();
   const emitted = await emitOpenApiDeclaration(PACKAGE_ROOT, target);
-  const tsDefold = readFileSync(
-    join(PACKAGE_ROOT, "fixtures/ts-defold", `${target.moduleId}.d.ts`),
+  const snapshot = readFileSync(
+    join(PACKAGE_ROOT, "fixtures/authored", `${target.moduleId}.d.ts`),
     "utf8",
   );
-  return { target, ...compareFidelityToTsDefold(emitted, tsDefold) };
+  return { target, ...compareFidelityToTsDefold(emitted, snapshot) };
 }
 
 describe("nakama openapi-vs-ts-defold fidelity gate", () => {

@@ -494,13 +494,6 @@
       "modules": [
         "jstodef"
       ]
-    },
-    {
-      "dir": "nakama-defold",
-      "classification": "already-vendored",
-      "modules": [
-        "nakama.nakama"
-      ]
     }
   ]
 }
