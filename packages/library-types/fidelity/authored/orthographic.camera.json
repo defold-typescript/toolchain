@@ -1,0 +1,41 @@
+{
+  "namespace": "orthographic.camera",
+  "upstreamMembers": 35,
+  "upstreamFields": 19,
+  "declaredMembers": 27,
+  "missingMembers": [
+    "final",
+    "get_automatic_zoom",
+    "init",
+    "send_view_projection",
+    "set_automatic_zoom",
+    "set_dpi_ratio",
+    "update",
+    "world_to_window"
+  ],
+  "phantomMembers": [],
+  "arityMismatches": [
+    {
+      "name": "add_projector",
+      "upstream": 0,
+      "declared": 2
+    },
+    {
+      "name": "get_projection_id",
+      "upstream": 0,
+      "declared": 1
+    },
+    {
+      "name": "use_projector",
+      "upstream": 0,
+      "declared": 2
+    },
+    {
+      "name": "world_to_screen",
+      "upstream": 2,
+      "declared": 3
+    }
+  ],
+  "undocumentedMembers": 0,
+  "coverage": 0.6571
+}

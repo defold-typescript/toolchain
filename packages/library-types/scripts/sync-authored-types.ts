@@ -23,6 +23,32 @@ import { extractApiDoc } from "./extract-api-doc";
  * Beyond that, a corrected fork's accuracy rests on its manual audit against
  * upstream plus the per-library shape assertions in the sibling test.
  */
+/**
+ * Why a target's surface cannot be measured against upstream. A closed set: the
+ * alternative to `upstreamLua` has to be a *chosen* category, because free prose
+ * would let "nobody looked yet" and "looked, and it is genuinely unmeasurable"
+ * read the same in the config.
+ *
+ * - `unresolved-path` — the `moduleId`-derived path does not resolve at the
+ *   pinned `ref` (including a repository that no longer exists there).
+ * - `no-module-file` — the upstream resolves but declares no single module file
+ *   this target could be measured against.
+ * - `unparseable-shape` — the module file exists but is not the `local M = {} …
+ *   return M` shape `parseLuaSurface` reads.
+ */
+export const PARITY_VERDICT_REASONS = [
+  "no-module-file",
+  "unresolved-path",
+  "unparseable-shape",
+] as const;
+
+export type ParityVerdictReason = (typeof PARITY_VERDICT_REASONS)[number];
+
+export interface ParityVerdict {
+  reason: ParityVerdictReason;
+  note: string;
+}
+
 export interface AuthoredTarget {
   repo: string;
   ref: string;
@@ -46,6 +72,11 @@ export interface AuthoredTarget {
   // `[]`: a target with no vendored upstream is simply unmeasured, which is why it
   // must not join `REQUIRED_FIELDS`.
   upstreamLua: string[];
+  // Why this target vendors no upstream `.lua`. Mutually exclusive with a
+  // non-empty `upstreamLua`, and one of the two is mandatory: neither field is
+  // required on its own, but the *disjunction* is, so a target cannot land
+  // unexamined and read as measured-and-clean. Absent on a measured target.
+  parityVerdict?: ParityVerdict;
 }
 
 export interface AuthoredTargets {
@@ -62,6 +93,38 @@ const REQUIRED_FIELDS = [
   "apiDoc",
 ] as const;
 
+/** Validate the parity declaration: exactly one of a non-empty `upstreamLua` and
+ * a well-formed `parityVerdict`. Enforced here rather than through
+ * `REQUIRED_FIELDS` because neither field is required on its own — the bijection
+ * between them is the gate. */
+function validateParityDeclaration(
+  label: string,
+  upstreamLua: string[],
+  verdict: ParityVerdict | undefined,
+): void {
+  if (upstreamLua.length > 0 && verdict !== undefined) {
+    throw new Error(
+      `authored-targets.json: entry ${label} declares both upstreamLua and parityVerdict — a measured target carries no verdict.`,
+    );
+  }
+  if (upstreamLua.length === 0 && verdict === undefined) {
+    throw new Error(
+      `authored-targets.json: entry ${label} declares neither upstreamLua nor parityVerdict — vendor its upstream .lua, or record a parityVerdict saying why it cannot be measured.`,
+    );
+  }
+  if (verdict === undefined) return;
+  if (!(PARITY_VERDICT_REASONS as readonly string[]).includes(verdict.reason)) {
+    throw new Error(
+      `authored-targets.json: entry ${label} has parityVerdict reason "${verdict.reason}", which is not one of ${PARITY_VERDICT_REASONS.join(", ")}.`,
+    );
+  }
+  if (typeof verdict.note !== "string" || verdict.note.trim() === "") {
+    throw new Error(
+      `authored-targets.json: entry ${label} has a parityVerdict with an empty note — say what was looked at and why it could not be measured.`,
+    );
+  }
+}
+
 /**
  * Read `authored-targets.json`, validate every required field per entry, and fill
  * optional defaults (`fidelity` → `fidelity/<namespace>.json`, `license` → "",
@@ -69,6 +132,8 @@ const REQUIRED_FIELDS = [
  * Throws on the first missing field naming both the field and the offending entry
  * (its `moduleId`, or its index when `moduleId` itself is absent) — the loud-fail
  * discipline `readMarkdownTargets`/`readScriptApiTargets`/`readLualsTargets` use.
+ * Also throws when an entry's parity declaration is missing, doubled, or
+ * malformed (see `validateParityDeclaration`).
  */
 export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
   const parsed = JSON.parse(readFileSync(join(packageRoot, "authored-targets.json"), "utf8")) as {
@@ -83,6 +148,8 @@ export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
         );
       }
     }
+    const upstreamLua = entry.upstreamLua ?? [];
+    validateParityDeclaration(label, upstreamLua, entry.parityVerdict);
     return {
       repo: entry.repo as string,
       ref: entry.ref as string,
@@ -93,7 +160,8 @@ export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",
-      upstreamLua: entry.upstreamLua ?? [],
+      upstreamLua,
+      ...(entry.parityVerdict === undefined ? {} : { parityVerdict: entry.parityVerdict }),
     };
   });
 }

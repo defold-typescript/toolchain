@@ -1,0 +1,11 @@
+{
+  "namespace": "in.gesture",
+  "upstreamMembers": 2,
+  "upstreamFields": 1,
+  "declaredMembers": 2,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 2,
+  "coverage": 1
+}

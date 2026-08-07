@@ -1,0 +1,11 @@
+{
+  "namespace": "in.mapper",
+  "upstreamMembers": 4,
+  "upstreamFields": 0,
+  "declaredMembers": 4,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 4,
+  "coverage": 1
+}

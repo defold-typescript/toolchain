@@ -1,0 +1,11 @@
+{
+  "namespace": "metrics.mem",
+  "upstreamMembers": 4,
+  "upstreamFields": 3,
+  "declaredMembers": 4,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

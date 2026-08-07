@@ -26,7 +26,7 @@ const DEFCON: AuthoredTarget = {
   generated: "generated/defcon.d.ts",
   apiDoc: "api-doc/defcon.json",
   fidelity: "fidelity/defcon.json",
-  upstreamLua: [],
+  upstreamLua: ["fixtures/upstream-lua/defcon/defcon/console.lua"],
 };
 
 // The committed api-doc JSON's element list — what the docs-site consumes for a

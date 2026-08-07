@@ -1,6 +1,7 @@
 {
   "namespace": "nakama",
   "upstreamMembers": 156,
+  "upstreamFields": 12,
   "declaredMembers": 166,
   "missingMembers": [
     "cancel",

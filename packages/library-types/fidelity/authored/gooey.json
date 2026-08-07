@@ -1,0 +1,46 @@
+{
+  "namespace": "gooey",
+  "upstreamMembers": 20,
+  "upstreamFields": 0,
+  "declaredMembers": 12,
+  "missingMembers": [
+    "acquire_input",
+    "create_theme",
+    "horizontal_scrollbar",
+    "is_enabled",
+    "mask_text",
+    "radiogroup",
+    "release_input",
+    "set_focus"
+  ],
+  "phantomMembers": [],
+  "arityMismatches": [
+    {
+      "name": "dynamic_list",
+      "upstream": 9,
+      "declared": 11
+    },
+    {
+      "name": "horizontal_dynamic_list",
+      "upstream": 9,
+      "declared": 10
+    },
+    {
+      "name": "static_list",
+      "upstream": 8,
+      "declared": 9
+    },
+    {
+      "name": "vertical_dynamic_list",
+      "upstream": 9,
+      "declared": 10
+    },
+    {
+      "name": "vertical_scrollbar",
+      "upstream": 7,
+      "declared": 6
+    }
+  ],
+  "undocumentedMembers": 2,
+  "coverage": 0.35
+}

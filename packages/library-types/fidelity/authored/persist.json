@@ -1,0 +1,13 @@
+{
+  "namespace": "persist",
+  "upstreamMembers": 6,
+  "upstreamFields": 0,
+  "declaredMembers": 5,
+  "missingMembers": [
+    "exists"
+  ],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 0.8333
+}
